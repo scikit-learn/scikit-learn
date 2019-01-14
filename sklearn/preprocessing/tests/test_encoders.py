@@ -748,18 +748,18 @@ def test_unary_encoder_handle_greater():
 
     # Test that encoder raises error for greater features during fit when
     # categories is explicitly set.
-    encoder = UnaryEncoder(handle_greater='error', categories=[2, 3, 4])
+    encoder = UnaryEncoder(handle_greater='error', max_value=[2, 3, 4])
     assert_raises(ValueError, encoder.fit, X)
 
-    encoder = UnaryEncoder(handle_greater='error', categories=[2, 3, 4])
+    encoder = UnaryEncoder(handle_greater='error', max_value=[2, 3, 4])
     assert_raises(ValueError, encoder.fit_transform, X)
 
-    encoder = UnaryEncoder(handle_greater='error', categories=[5, 2, 2])
+    encoder = UnaryEncoder(handle_greater='error', max_value=[5, 2, 2])
     encoder.fit(y)
     assert_array_equal(encoder.transform(y),
                        np.array([[1.,  1.,  1.,  1.,  1.,  1.]]))
 
-    encoder = UnaryEncoder(handle_greater='error', categories=[5, 2, 2])
+    encoder = UnaryEncoder(handle_greater='error', max_value=[5, 2, 2])
     assert_array_equal(encoder.fit_transform(y),
                        np.array([[1.,  1.,  1.,  1.,  1.,  1.]]))
 
@@ -770,7 +770,7 @@ def test_unary_encoder_handle_greater():
         encoder.transform(y),
         np.array([[1.,  1.,  1.,  0.,  1.,  0.,  0.]]))
 
-    encoder = UnaryEncoder(handle_greater='clip', categories=[3, 2, 2])
+    encoder = UnaryEncoder(handle_greater='clip', max_value=[3, 2, 2])
     assert_array_equal(
         encoder.fit_transform(y),
         np.array([[1.,  1.,  1.,  1.]]))
@@ -778,21 +778,21 @@ def test_unary_encoder_handle_greater():
     # Test the warn option.
     encoder = UnaryEncoder()
     encoder.fit(X)
-    w = ('Found 1 feature values which exceeds n_categories during transform, '
+    w = ('Found 1 feature values which exceeds max_value during transform, '
          'clipping them.')
     y_transformed = assert_warns_message(UserWarning, w, encoder.transform, y)
     assert_array_equal(
         y_transformed,
         np.array([[1.,  1.,  1.,  0.,  1.,  0.,  0.]]))
 
-    encoder = UnaryEncoder(categories=[3, 2, 2])
+    encoder = UnaryEncoder(max_value=[3, 2, 2])
     y_transformed = assert_warns_message(UserWarning, w,
                                          encoder.fit_transform, y)
     assert_array_equal(
         y_transformed,
         np.array([[1.,  1.,  1.,  1.]]))
 
-    encoder = UnaryEncoder(categories=[5, 2, 2])
+    encoder = UnaryEncoder(max_value=[5, 2, 2])
     assert_array_equal(
         encoder.fit_transform(y),
         np.array([[1.,  1.,  1.,  1.,  1.,  1.]]))
@@ -804,38 +804,38 @@ def test_unary_encoder_handle_greater():
 
 def test_unary_encoder_errors():
     rng = np.random.RandomState(6)
-    categories = rng.randint(2, 10)
+    max_value = rng.randint(2, 10)
     size = rng.randint(1, 10)
     n_features = rng.randint(2, 10)
     delta = rng.randint(1, 10)
 
-    encoder = UnaryEncoder(categories)
-    X = _generate_random_features_matrix(size, n_features, categories)
+    encoder = UnaryEncoder(max_value)
+    X = _generate_random_features_matrix(size, n_features, max_value)
     encoder.fit(X)
 
     # test that an error is raised when different shape
     larger_n_features = n_features + delta
     X_too_large = _generate_random_features_matrix(size, larger_n_features,
-                                                   categories)
+                                                   max_value)
     assert_raises(ValueError, encoder.transform, X_too_large)
     error_msg = ("X has different shape than during fitting."
                  " Expected {}, got {}.".format(n_features, larger_n_features))
     assert_raises_regex(ValueError, error_msg, encoder.transform, X_too_large)
 
     # test that an error is raised when out of bounds
-    encoder = UnaryEncoder(categories, handle_greater='error')
-    X = _generate_random_features_matrix(size, n_features, categories)
+    encoder = UnaryEncoder(max_value, handle_greater='error')
+    X = _generate_random_features_matrix(size, n_features, max_value)
     encoder.fit(X)
-    X[0][0] = categories + delta
+    X[0][0] = max_value + delta
     X_out_of_bounds = X
     assert_raises(ValueError, encoder.transform, X_out_of_bounds)
     error_msg = ("handle_greater='error' but found 1 feature values which "
-                 "exceeds n_categories during transform.")
+                 "exceeds max_value during transform.")
     assert_raises_regex(ValueError, error_msg, encoder.transform,
                         X_out_of_bounds)
 
     # test exception on wrong init param
-    assert_raises(TypeError, UnaryEncoder(categories=np.int).fit, X)
+    assert_raises(TypeError, UnaryEncoder(max_value=np.int).fit, X)
 
     # test negative input to fit
     encoder = UnaryEncoder()
@@ -867,63 +867,63 @@ def test_unary_encoder_edge_cases():
         assert_array_equal(transformed, expected_matrix)
 
 
-def test_unary_encoder_categories_int():
-    # Test UnaryEncoder's categories parameter when set as an int.
+def test_unary_encoder_max_value_int():
+    # Test UnaryEncoder's max_value parameter when set as an int.
     rng = np.random.RandomState(6)
-    categories = rng.randint(2, 10)
+    max_value = rng.randint(2, 10)
     size = rng.randint(1, 10)
     n_features = rng.randint(2, 10)
     delta = rng.randint(1, 10)
 
-    encoder_categories = categories + delta
-    unary_categories = encoder_categories - 1
-    enc = UnaryEncoder(categories=encoder_categories)
+    encoder_max_value = max_value + delta
+    unary_max_value = encoder_max_value - 1
+    enc = UnaryEncoder(max_value=encoder_max_value)
 
-    X = _generate_random_features_matrix(size, n_features, categories)
+    X = _generate_random_features_matrix(size, n_features, max_value)
     X_trans = enc.fit_transform(X)
-    assert_equal(X_trans.shape, (size, unary_categories * n_features))
+    assert_equal(X_trans.shape, (size, unary_max_value * n_features))
     assert_array_equal(
         enc.feature_indices_,
-        np.arange(0, (unary_categories * n_features) + 1, unary_categories)
+        np.arange(0, (unary_max_value * n_features) + 1, unary_max_value)
     )
     assert_array_equal(
-        enc.categories_,
-        np.array([encoder_categories] * n_features)
+        enc.max_value_,
+        np.array([encoder_max_value] * n_features)
     )
 
 
-def test_unary_encoder_categories_array():
-    # Test UnaryEncoder's categories parameter when set as an array.
+def test_unary_encoder_max_value_array():
+    # Test UnaryEncoder's max_value parameter when set as an array.
     rng = np.random.RandomState(6)
-    categories = rng.randint(2, 10)
+    max_value = rng.randint(2, 10)
     size = rng.randint(1, 10)
     n_features = rng.randint(2, 10)
     delta = rng.randint(1, 10)
 
     # Test ideal case is working fine
-    X = _generate_random_features_matrix(size, n_features, categories)
-    categories_array = list(np.max(X, axis=0) + 1)
-    enc = UnaryEncoder(categories=categories_array)
+    X = _generate_random_features_matrix(size, n_features, max_value)
+    max_value_array = list(np.max(X, axis=0) + 1)
+    enc = UnaryEncoder(max_value=max_value_array)
     X_trans = enc.fit_transform(X)
-    assert_equal(X_trans.shape, (size, sum(categories_array) - n_features))
+    assert_equal(X_trans.shape, (size, sum(max_value_array) - n_features))
     assert_array_equal(
         enc.feature_indices_,
-        np.cumsum(np.array([1] + categories_array) - 1)
+        np.cumsum(np.array([1] + max_value_array) - 1)
     )
     assert_array_equal(
-        enc.categories_,
-        np.array(categories_array)
+        enc.max_value_,
+        np.array(max_value_array)
     )
 
-    # Test that fit_transform raises error when len(categories) != n_features
-    categories_array = rng.randint(2, 10, n_features + delta)
-    enc = UnaryEncoder(categories=categories_array)
-    X = _generate_random_features_matrix(size, n_features, categories)
+    # Test that fit_transform raises error when len(max_value) != n_features
+    max_value_array = rng.randint(2, 10, n_features + delta)
+    enc = UnaryEncoder(max_value=max_value_array)
+    X = _generate_random_features_matrix(size, n_features, max_value)
     assert_raises(ValueError, enc.fit_transform, X)
 
-    # Test that fit_transform raises error when len(categories) != n_features
-    enc = UnaryEncoder(categories=[])
-    X = _generate_random_features_matrix(size, n_features, categories)
+    # Test that fit_transform raises error when len(max_value) != n_features
+    enc = UnaryEncoder(max_value=[])
+    X = _generate_random_features_matrix(size, n_features, max_value)
     assert_raises(ValueError, enc.fit_transform, X)
 
 

@@ -875,16 +875,16 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    categories : 'auto', int or array of ints, optional (default='auto')
+    max_value : 'auto', int or array of ints, optional (default='auto')
         Number of categories per feature.
 
         - 'auto' : determine value range from training data by looking for
           the maximum.
         - int : number of ordinal values per feature.
-          Each feature value should be in ``range(categories)``
-        - array : ``categories[i]`` is the number of ordinal values in
+          Each feature value should be in ``range(max_value)``
+        - array : ``max_value[i]`` is the number of ordinal values in
           ``X[:, i]``. Each feature value should be in
-          ``range(categories[i])``
+          ``range(max_value[i])``
 
     dtype : number type, optional (default=np.float)
         Desired dtype of output.
@@ -894,11 +894,11 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
     handle_greater : str, 'warn', 'error' or 'clip', optional (default='warn')
         Whether to raise an error or clip or warn if an
-        ordinal feature >= n_categories is passed in.
+        ordinal feature >= max_value is passed in.
 
-        - 'error': raise error if feature >= n_categories is passed in.
-        - 'clip': all the feature values >= n_categories are clipped to
-          (n_categories - 1) during transform.
+        - 'error': raise error if feature >= max_value is passed in.
+        - 'clip': all the feature values >= max_value are clipped to
+          (max_value - 1) during transform.
         - 'warn': same as clip but with warning.
 
     Attributes
@@ -907,7 +907,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         Feature ``i`` in the original data is mapped to columns
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
 
-    categories_ : array of shape (n_features,)
+    max_value_ : array of shape (n_features,)
         Maximum number of values per feature.
 
     Examples
@@ -922,9 +922,9 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     ...          [1, 1, 0],
     ...          [0, 2, 1],
     ...          [1, 0, 2]])  # doctest: +ELLIPSIS
-    UnaryEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-                 handle_greater='warn', sparse=False)
-    >>> enc.categories_
+    UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
+                 max_value='auto', sparse=False)
+    >>> enc.max_value_
     array([2, 3, 4])
     >>> enc.feature_indices_
     array([0, 1, 3, 6])
@@ -938,9 +938,9 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.OrdinalEncoder : performs an ordinal (integer)
       encoding of the categorical features.
     """
-    def __init__(self, categories="auto", dtype=np.float64, sparse=False,
+    def __init__(self, max_value="auto", dtype=np.float64, sparse=False,
                  handle_greater='warn'):
-        self.categories = categories
+        self.max_value = max_value
         self.dtype = dtype
         self.sparse = sparse
         self.handle_greater = handle_greater
@@ -962,33 +962,33 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
             raise ValueError("X needs to contain only non-negative integers.")
         _, n_features = X.shape
 
-        if isinstance(self.categories, str) and self.categories == 'auto':
-            categories = np.max(X, axis=0) + 1
-        elif isinstance(self.categories, numbers.Integral):
-            categories = np.empty(n_features, dtype=np.int)
-            categories.fill(self.categories)
+        if isinstance(self.max_value, str) and self.max_value == 'auto':
+            max_value = np.max(X, axis=0) + 1
+        elif isinstance(self.max_value, numbers.Integral):
+            max_value = np.empty(n_features, dtype=np.int)
+            max_value.fill(self.max_value)
         else:
             try:
-                categories = np.asarray(self.categories, dtype=int)
+                max_value = np.asarray(self.max_value, dtype=int)
             except (ValueError, TypeError):
                 raise TypeError(
-                    "Wrong type for parameter `categories`. Expected"
-                    " 'auto', int or array of ints, got %r" % self.categories
+                    "Wrong type for parameter `max_value`. Expected"
+                    " 'auto', int or array of ints, got %r" % self.max_value
                     )
-            if categories.ndim < 1 or categories.shape[0] != X.shape[1]:
-                raise ValueError("Shape mismatch: if categories is an array,"
+            if max_value.ndim < 1 or max_value.shape[0] != X.shape[1]:
+                raise ValueError("Shape mismatch: if max_value is an array,"
                                  " it has to be of shape (n_features,).")
 
-        self.categories_ = categories
-        categories = np.hstack([[0], categories - 1])
-        indices = np.cumsum(categories)
+        self.max_value_ = max_value
+        max_value = np.hstack([[0], max_value - 1])
+        indices = np.cumsum(max_value)
         self.feature_indices_ = indices
 
-        if self.categories != 'auto' and self.handle_greater == 'error':
-            mask = (X >= self.categories_).ravel()
+        if self.max_value != 'auto' and self.handle_greater == 'error':
+            mask = (X >= self.max_value_).ravel()
             if np.any(mask):
                 raise ValueError("handle_greater='error' but found %d feature"
-                                 " values which exceeds categories."
+                                 " values which exceeds max_value."
                                  % np.count_nonzero(mask))
         return self
 
@@ -1008,7 +1008,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
             (n_samples, n_encoded_features)
             Transformed input.
         """
-        check_is_fitted(self, 'categories_')
+        check_is_fitted(self, 'max_value_')
         X = check_array(X, dtype=np.int)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -1020,22 +1020,22 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                              " Expected %d, got %d."
                              % (indices.shape[0] - 1, n_features))
 
-        # We clip those ordinal features of X that are greater than categories_
+        # We clip those ordinal features of X that are greater than max_value_
         # using mask if self.handle_greater is "clip".
         # This means, the row_indices and col_indices corresponding to the
         # greater ordinal feature are all filled with ones.
-        mask = (X >= self.categories_).ravel()
+        mask = (X >= self.max_value_).ravel()
         if np.any(mask):
             if self.handle_greater == 'warn':
                 warnings.warn("Found %d feature values which exceeds "
-                              "n_categories during transform, clipping them."
+                              "max_value during transform, clipping them."
                               % np.count_nonzero(mask))
             elif self.handle_greater == 'error':
                 raise ValueError("handle_greater='error' but found %d feature"
-                                 " values which exceeds n_categories during "
+                                 " values which exceeds max_value during "
                                  "transform." % np.count_nonzero(mask))
 
-        X_ceil = np.where(mask.reshape(X.shape), self.categories_ - 1, X)
+        X_ceil = np.where(mask.reshape(X.shape), self.max_value_ - 1, X)
         column_start = np.tile(indices[:-1], n_samples)
         column_end = (indices[:-1] + X_ceil).ravel()
         column_indices = np.hstack([np.arange(s, e) for s, e
@@ -1064,11 +1064,11 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
             Inverse transformed array.
         """
 
-        check_is_fitted(self, 'categories_')
+        check_is_fitted(self, 'max_value_')
         X = check_array(X, accept_sparse='csr', ensure_min_features=0)
 
         n_samples, _ = X.shape
-        n_features = len(self.categories_)
+        n_features = len(self.max_value_)
         n_encoded_features = self.feature_indices_[-1]
 
         # validate shape of passed X
