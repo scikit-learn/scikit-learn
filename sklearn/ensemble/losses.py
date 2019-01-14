@@ -42,57 +42,6 @@ from ..dummy import DummyRegressor
 from ..exceptions import NotFittedError
 
 
-class QuantileEstimator(BaseEstimator):
-    """An estimator predicting the alpha-quantile of the training targets.
-
-    Parameters
-    ----------
-    alpha : float
-        The quantile
-    """
-    def __init__(self, alpha=0.9):
-        if not 0 < alpha < 1.0:
-            raise ValueError("`alpha` must be in (0, 1.0) but was %r" % alpha)
-        self.alpha = alpha
-
-    def fit(self, X, y, sample_weight=None):
-        """Fit the estimator.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data
-
-        y : array, shape (n_samples, n_targets)
-            Target values. Will be cast to X's dtype if necessary
-
-        sample_weight : numpy array of shape (n_samples,)
-            Individual weights for each sample
-        """
-        if sample_weight is None:
-            self.quantile = np.percentile(y, self.alpha * 100.0)
-        else:
-            self.quantile = _weighted_percentile(y, sample_weight,
-                                                 self.alpha * 100.0)
-
-    def predict(self, X):
-        """Predict labels
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Samples.
-
-        Returns
-        -------
-        y : array, shape (n_samples,)
-            Returns predicted values.
-        """
-        check_is_fitted(self, 'quantile')
-
-        y = np.empty((X.shape[0], 1), dtype=np.float64)
-        y.fill(self.quantile)
-        return y
 
 
 class LogOddsEstimator(BaseEstimator):
@@ -764,9 +713,11 @@ class BinomialDeviance(ClassificationLossFunction):
                 'The init estimator must have a predict_proba method '
                 'to use the binamial deviance loss.'
             )
-        probas = estimator.predict_proba(X)
+        proba_pos_class = estimator.predict_proba(X)[:, 1]
+        eps = np.finfo(np.float32).eps
+        proba_pos_class = np.clip(proba_pos_class, eps, 1 - eps)
         # log(x / (1 - x)) is the inverse of the sigmoid (expit) function
-        raw_predictions = np.log(probas[:, 1] / probas[:, 0])
+        raw_predictions = np.log(proba_pos_class / (1 - proba_pos_class))
         return raw_predictions.reshape(-1, 1)
 
 
