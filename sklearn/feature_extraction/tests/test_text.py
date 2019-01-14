@@ -1166,7 +1166,7 @@ def test_countvectorizer_sort_features_64bit_sparse_indices():
     Xs = CountVectorizer()._sort_features(X, vocabulary)
 
     assert INDICES_DTYPE == Xs.indices.dtype
-    
+
 
 @fails_if_pypy
 @pytest.mark.parametrize('Estimator',
