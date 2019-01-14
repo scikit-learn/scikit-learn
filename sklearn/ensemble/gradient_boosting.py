@@ -1496,6 +1496,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                             (losses.BinomialDeviance,
                             losses.LeastSquaresError,
                             losses.LeastAbsoluteError,
+                            losses.HuberLossFunction,
+                            losses.QuantileLossFunction,
                             )):
                 y_pred = self.loss_.get_init_raw_predictions(X, self.init_).astype(
                     np.float64, copy=False)
@@ -1675,6 +1677,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         (losses.BinomialDeviance,
                         losses.LeastSquaresError,
                         losses.LeastAbsoluteError,
+                        losses.HuberLossFunction,
+                        losses.QuantileLossFunction,
                         )):
             score = self.loss_.get_init_raw_predictions(X, self.init_).astype( np.float64)
         else:

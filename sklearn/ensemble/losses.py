@@ -486,7 +486,7 @@ class HuberLossFunction(RegressionLossFunction):
         self.gamma = None
 
     def init_estimator(self):
-        return QuantileEstimator(alpha=0.5)
+        return DummyRegressor(strategy='quantile', quantile=.5)
 
     def __call__(self, y, pred, sample_weight=None):
         """Compute the Huber loss.
@@ -563,6 +563,9 @@ class HuberLossFunction(RegressionLossFunction):
             np.sign(diff_minus_median) *
             np.minimum(np.abs(diff_minus_median), gamma))
 
+    def get_init_raw_predictions(self, X, estimator):
+        return estimator.predict(X).reshape(-1, 1)
+
 
 class QuantileLossFunction(RegressionLossFunction):
     """Loss function for quantile regression.
@@ -584,7 +587,7 @@ class QuantileLossFunction(RegressionLossFunction):
         self.percentile = alpha * 100.0
 
     def init_estimator(self):
-        return QuantileEstimator(self.alpha)
+        return DummyRegressor(strategy='quantile', quantile=self.alpha)
 
     def __call__(self, y, pred, sample_weight=None):
         """Compute the Quantile loss.
@@ -639,6 +642,9 @@ class QuantileLossFunction(RegressionLossFunction):
 
         val = _weighted_percentile(diff, sample_weight, self.percentile)
         tree.value[leaf, 0] = val
+
+    def get_init_raw_predictions(self, X, estimator):
+        return estimator.predict(X).reshape(-1, 1)
 
 
 class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
