@@ -1310,8 +1310,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 class TfidfVectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 
-    Equivalent to :class:`sklearn.feature_extraction.CountVectorizer` followed
-    by :class:`sklearn.feature_extraction.TfidfTransformer`.
+    Equivalent to :class:`CountVectorizer` followed by
+    :class:`TfidfTransformer`.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
