@@ -24,29 +24,6 @@ from .types import Y_DTYPE
 from .types cimport Y_DTYPE_C
 
 
-cdef get_threads_chunks(unsigned int total_size):
-    """Get start and end indices of threads in an array of size total_size.
-
-    The interval [0, total_size - 1] is divided into n_threads contiguous
-    regions, and the starts and ends of each region are returned. Used to
-    simulate a 'static' scheduling.
-    """
-    cdef:
-        np.ndarray[np.uint32_t] sizes
-        np.ndarray[np.uint32_t] starts
-        np.ndarray[np.uint32_t] ends
-        unsigned int n_threads
-
-    n_threads = 1  # TODO: change this
-    sizes = np.full(n_threads, total_size // n_threads, dtype=np.uint32)
-    sizes[:total_size % n_threads] += 1
-    starts = np.zeros(n_threads, dtype=np.uint32)
-    starts[1:] = np.cumsum(sizes[:-1])
-    ends = starts + sizes
-
-    return starts, ends, n_threads
-
-
 class BaseLoss(ABC):
     """Base class for a loss."""
 

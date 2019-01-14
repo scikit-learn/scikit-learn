@@ -57,23 +57,3 @@ def get_lightgbm_estimator(pygbm_estimator):
         Est = LGBMRegressor
 
     return Est(**lgbm_params)
-
-
-def get_threads_chunks(total_size):
-    """Get start and end indices of threads in an array of size total_size.
-
-    The interval [0, total_size - 1] is divided into n_threads contiguous
-    regions, and the starts and ends of each region are returned. Used to
-    simulate a 'static' scheduling.
-    """
-    n_threads = 4  # TODO: change this
-    sizes = np.full(n_threads, total_size // n_threads, dtype=np.int32)
-    if total_size % n_threads > 0:
-        # array[:0] will cause a bug in numba 0.41 so we need the if.
-        # Remove once issue numba 3554 is fixed.
-        sizes[:total_size % n_threads] += 1
-    starts = np.zeros(n_threads, dtype=np.int32)
-    starts[1:] = np.cumsum(sizes[:-1])
-    ends = starts + sizes
-
-    return starts, ends, n_threads
