@@ -332,6 +332,9 @@ class OneHotEncoder(_BaseEncoder):
             self._legacy_mode = True
 
         else:  # n_values = 'auto'
+            # n_values can also be None (default to catch usage), so set
+            # _n_values to 'auto' explicitly
+            self._n_values = 'auto'
             if self.handle_unknown == 'ignore':
                 # no change in behaviour, no need to raise deprecation warning
                 self._legacy_mode = False
@@ -367,7 +370,6 @@ class OneHotEncoder(_BaseEncoder):
                     )
                     warnings.warn(msg, FutureWarning)
                     self._legacy_mode = True
-                    self._n_values = 'auto'
 
         # if user specified categorical_features -> always use legacy mode
         if self.categorical_features is not None:
@@ -453,7 +455,7 @@ class OneHotEncoder(_BaseEncoder):
             except (ValueError, TypeError):
                 raise TypeError("Wrong type for parameter `n_values`. Expected"
                                 " 'auto', int or array of ints, got %r"
-                                % type(X))
+                                % type(self._n_values))
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
