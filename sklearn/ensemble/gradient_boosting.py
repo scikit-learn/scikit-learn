@@ -1859,10 +1859,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
            ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
-    init : estimator, optional
-        An estimator object that is used to compute the initial
-        predictions. ``init`` has to provide ``fit`` and ``predict``.
-        If None it uses ``loss.init_estimator``.
+    init : estimator or 'zero', optional (default=None)
+        An estimator object that is used to compute the initial predictions.
+        ``init`` has to provide `fit` and `predict_proba`. If 'zero', the
+        initial raw predictions are set to zero. By default, a
+        ``DummyEstimator`` predicting the classes priors is used.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -2319,10 +2320,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
            ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
-    init : estimator, optional (default=None)
-        An estimator object that is used to compute the initial
-        predictions. ``init`` has to provide ``fit`` and ``predict``.
-        If None it uses ``loss.init_estimator``.
+    init : estimator or 'zero', optional (default=None)
+        An estimator object that is used to compute the initial predictions.
+        ``init`` has to provide `fit` and `predict`. If 'zero', the initial
+        raw predictions are set to zero. By default a ``DummyEstimator`` is
+        used, predicting either the average target value (for loss='ls'), or
+        a quantile for the other losses.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
