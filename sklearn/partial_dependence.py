@@ -323,13 +323,13 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     X : array-like, shape=(n_samples, n_features)
         The data to use to build the grid of values on which the dependence
         will be evaluated. This is usually the training data.
-    features : list of ints or strings, or tuples of ints or strings
+    features : list of {int, str, pair of int, pair of str}
         The target features for which to create the PDPs.
         If features[i] is an int or a string, a one-way PDP is created; if
         features[i] is a tuple, a two-way PDP is created. Each tuple must be
         of size 2.
         if any entry is a string, then it must be in ``feature_names``.
-    feature_names : seq of str, shape=(n_features,)
+    feature_names : seq of str, shape=(n_features,), optional
         Name of each feature; feature_names[i] holds the name of the feature
         with index i.
     target : int, optional (default=None)
@@ -340,7 +340,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
           should be computed
         Ignored in binary classification or classical regression settings.
     n_cols : int, optional (default=3)
-        The number of columns in the grid plot.
+        The maximum number of columns in the grid plot.
     grid_resolution : int, optional (default=100)
         The number of equally spaced points on the axes of the plots, for each
         target feature.

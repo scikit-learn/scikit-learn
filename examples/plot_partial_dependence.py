@@ -56,7 +56,6 @@ in 3 dimensions.
 .. [2] For classification you can think of it as the regression score before
        the link function.
 """
-from __future__ import print_function
 print(__doc__)
 
 import numpy as np
@@ -64,10 +63,10 @@ import matplotlib.pyplot as plt
 
 from mpl_toolkits.mplot3d import Axes3D
 
+from sklearn.partial_dependence import partial_dependence
+from sklearn.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.neural_network import MLPRegressor
-from sklearn.partial_dependence import plot_partial_dependence
-from sklearn.partial_dependence import partial_dependence
 from sklearn.datasets.california_housing import fetch_california_housing
 
 
@@ -77,22 +76,25 @@ def main():
     X, y = cal_housing.data, cal_housing.target
     names = cal_housing.feature_names
 
-    # Center target to avoid GBDT init bias: GBDT with 'recursion' method does
-    # not account for the initial estimator (here the average target)
+    # Center target to avoid gradient boosting init bias: gradient boosting
+    # with the 'recursion' method does not account for the initial estimator
+    # (here the average target, by default)
     y -= y.mean()
 
     print("Training MLPRegressor...")
     est = MLPRegressor(activation='logistic')
     est.fit(X, y)
     print('Computing partial dependence plots...')
+    # We don't compute the 2-way PDP (5, 1) here, because it is a lot slower
+    # with the brute method.
     features = [0, 5, 1, 2]
     fig, axs = plot_partial_dependence(est, X, features, feature_names=names,
                                        n_jobs=3, grid_resolution=50)
-    fig.suptitle('Partial dependence of house value on nonlocation features\n'
+    fig.suptitle('Partial dependence of house value on non-location features\n'
                  'for the California housing dataset, with MLPRegressor')
     plt.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
 
-    print("Training GBRT...")
+    print("Training GradientBoostingRegressor...")
     est = GradientBoostingRegressor(n_estimators=100, max_depth=4,
                                     learning_rate=0.1, loss='huber',
                                     random_state=1)
@@ -101,7 +103,7 @@ def main():
     features = [0, 5, 1, 2, (5, 1)]
     fig, axs = plot_partial_dependence(est, X, features, feature_names=names,
                                        n_jobs=3, grid_resolution=50)
-    fig.suptitle('Partial dependence of house value on nonlocation features\n'
+    fig.suptitle('Partial dependence of house value on non-location features\n'
                  'for the California housing dataset, with Gradient Boosting')
     plt.subplots_adjust(top=0.9)
 
