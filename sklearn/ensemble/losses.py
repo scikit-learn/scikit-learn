@@ -158,7 +158,13 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
         super().__init__(n_classes)
 
     def check_init_estimator(self, estimator):
-        """Make sure estimator has the required fit and predict methods."""
+        """Make sure estimator has the required fit and predict methods.
+
+        Parameters
+        ----------
+        estimator : estimator
+            The init estimator to check
+        """
         if not (hasattr(estimator, 'fit') and hasattr(estimator, 'predict')):
             raise ValueError(
                 "The init parameter must be a valid estimator and "
@@ -523,7 +529,13 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
         """
 
     def check_init_estimator(self, estimator):
-        """Make sure estimator has fit and predict_proba methods."""
+        """Make sure estimator has fit and predict_proba methods.
+
+        Parameters
+        ----------
+        estimator : estimator
+            The init estimator to check
+        """
         if not (hasattr(estimator, 'fit') and
                 hasattr(estimator, 'predict_proba')):
             raise ValueError(
