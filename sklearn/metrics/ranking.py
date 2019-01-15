@@ -399,14 +399,14 @@ def roc_auc_score(y_true, y_score, labels=None,
                              " one of {1}.".format(
                                  multiclass, multiclass_options))
         if labels is not None:
-            classes = np.unique(labels)
-            if len(classes) != len(labels):
+            unique_labels = np.unique(labels)
+            if len(unique_labels) != len(labels):
                 raise ValueError("Parameter 'labels' must be unique")
-            if len(classes) != y_score.shape[1]:
+            if len(unique_labels) != y_score.shape[1]:
                 raise ValueError(
                     "Parameter 'labels' not equal to the number of columns in "
                     "'y_score'")
-            if set(np.unique(y_true)) > set(classes):
+            if set(np.unique(y_true)) > set(unique_labels):
                 raise ValueError(
                     "'y_true' contains labels not in parameter 'labels'")
         if multiclass == "ovo":
