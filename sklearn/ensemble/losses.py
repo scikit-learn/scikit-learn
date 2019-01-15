@@ -157,6 +157,14 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
                              "was %r" % n_classes)
         super().__init__(n_classes)
 
+    def check_init_estimator(self, estimator):
+        """Make sure estimator has the required fit and predict methods."""
+        if not (hasattr(estimator, 'fit') and hasattr(estimator, 'predict')):
+            raise ValueError(
+                "The init parameter must be a valid estimator and "
+                "support both fit and predict"
+            )
+
 
 class LeastSquaresError(RegressionLossFunction):
     """Loss function for least squares (LS) estimation.
@@ -241,7 +249,7 @@ class LeastSquaresError(RegressionLossFunction):
         pass
 
     def get_init_raw_predictions(self, X, estimator):
-        return estimator.predict(X).reshape(-1, 1)
+        return estimator.predict(X).reshape(-1, 1).astype(np.float64)
 
 
 class LeastAbsoluteError(RegressionLossFunction):
@@ -303,7 +311,7 @@ class LeastAbsoluteError(RegressionLossFunction):
                                                       percentile=50)
 
     def get_init_raw_predictions(self, X, estimator):
-        return estimator.predict(X).reshape(-1, 1)
+        return estimator.predict(X).reshape(-1, 1).astype(np.float64)
 
 
 class HuberLossFunction(RegressionLossFunction):
@@ -413,7 +421,7 @@ class HuberLossFunction(RegressionLossFunction):
             np.minimum(np.abs(diff_minus_median), gamma))
 
     def get_init_raw_predictions(self, X, estimator):
-        return estimator.predict(X).reshape(-1, 1)
+        return estimator.predict(X).reshape(-1, 1).astype(np.float64)
 
 
 class QuantileLossFunction(RegressionLossFunction):
@@ -493,7 +501,7 @@ class QuantileLossFunction(RegressionLossFunction):
         tree.value[leaf, 0] = val
 
     def get_init_raw_predictions(self, X, estimator):
-        return estimator.predict(X).reshape(-1, 1)
+        return estimator.predict(X).reshape(-1, 1).astype(np.float64)
 
 
 class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
@@ -513,6 +521,15 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
 
         Returns int arrays.
         """
+
+    def check_init_estimator(self, estimator):
+        """Make sure estimator has fit and predict_proba methods."""
+        if not (hasattr(estimator, 'fit') and
+                hasattr(estimator, 'predict_proba')):
+            raise ValueError(
+                "The init parameter must be a valid estimator "
+                "and support both fit and predict_proba"
+            )
 
 
 class BinomialDeviance(ClassificationLossFunction):
@@ -610,18 +627,12 @@ class BinomialDeviance(ClassificationLossFunction):
         return np.argmax(proba, axis=1)
 
     def get_init_raw_predictions(self, X, estimator):
-        # TODO: write test
-        if not hasattr(estimator, 'predict_proba'):
-            raise ValueError(
-                'The init estimator must have a predict_proba method '
-                'to use the binamial deviance loss.'
-            )
         proba_pos_class = estimator.predict_proba(X)[:, 1]
         eps = np.finfo(np.float32).eps
         proba_pos_class = np.clip(proba_pos_class, eps, 1 - eps)
         # log(x / (1 - x)) is the inverse of the sigmoid (expit) function
         raw_predictions = np.log(proba_pos_class / (1 - proba_pos_class))
-        return raw_predictions.reshape(-1, 1)
+        return raw_predictions.reshape(-1, 1).astype(np.float64)
 
 
 class MultinomialDeviance(ClassificationLossFunction):
@@ -719,13 +730,6 @@ class MultinomialDeviance(ClassificationLossFunction):
         return np.argmax(proba, axis=1)
 
     def get_init_raw_predictions(self, X, estimator):
-        # TODO: write test
-        if not hasattr(estimator, 'predict_proba'):
-            raise ValueError(
-                'The init estimator must have a predict_proba method '
-                'to use the binamial deviance loss.'
-            )
-
         probas = estimator.predict_proba(X)
         eps = np.finfo(np.float32).eps
         probas = np.clip(probas, eps, 1 - eps)
@@ -821,18 +825,13 @@ class ExponentialLoss(ClassificationLossFunction):
         return (score.ravel() >= 0.0).astype(np.int)
 
     def get_init_raw_predictions(self, X, estimator):
-        # TODO: write test
-        if not hasattr(estimator, 'predict_proba'):
-            raise ValueError(
-                'The init estimator must have a predict_proba method '
-                'to use the binamial deviance loss.'
-            )
         proba_pos_class = estimator.predict_proba(X)[:, 1]
         eps = np.finfo(np.float32).eps
         proba_pos_class = np.clip(proba_pos_class, eps, 1 - eps)
-        # log(x / (1 - x)) is the inverse of the sigmoid (expit) function
+        # according to The Elements of Statistical Learning sec. 10.5, the
+        # minimizer of the exponential loss is .5 * log odds ratio.
         raw_predictions = .5 * np.log(proba_pos_class / (1 - proba_pos_class))
-        return raw_predictions.reshape(-1, 1)
+        return raw_predictions.reshape(-1, 1).astype(np.float64)
 
 
 LOSS_FUNCTIONS = {

@@ -271,7 +271,7 @@ class PriorProbabilityEstimator(BaseEstimator):
         return y
 
 
-@deprecated("Using ZeroEstimator or init='zero' is deprecated in version "
+@deprecated("Using ZeroEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
 class ZeroEstimator(BaseEstimator):
     """An estimator that simply predicts zero.
@@ -1286,20 +1286,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                              "was %r" % self.subsample)
 
         if self.init is not None:
-            # init must be an estimator or 'zero' (undocumented and
-            # deprecated)
+            # init must be an estimator or 'zero'
             if isinstance(self.init, BaseEstimator):
-                if (not hasattr(self.init, 'fit')
-                        or not hasattr(self.init, 'predict')):
-                    raise ValueError("init=%r must be valid BaseEstimator "
-                                     "and support both fit and "
-                                     "predict" % self.init)
+                self.loss_.check_init_estimator(self.init)
             elif not (isinstance(self.init, str) and self.init == 'zero'):
                 raise ValueError(
-                    "The init parameter must be an estimator. "
+                    "The init parameter must be an estimator or 'zero'. "
                     "Got init={}".format(self.init)
                 )
-                # The deprecation warning will be raised in ZeroEstimator
 
         if not (0.0 < self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0) but "
@@ -1348,13 +1342,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
 
-        if self.init is None:
+        self.init_ = self.init
+        if self.init_ is None:
             self.init_ = self.loss_.init_estimator()
-        elif isinstance(self.init, str) and self.init == 'zero':
-            # Deprecated in version 0.21, warning raised in ZeroEstimator
-            self.init_ = ZeroEstimator()
-        else:  # we know it's an estimator
-            self.init_ = self.init
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
                                     dtype=np.object)
@@ -1478,24 +1468,22 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # init state
             self._init_state()
 
-            # fit initial model
-            try:
-                self.init_.fit(X, y, sample_weight=sample_weight)
-            except TypeError:
-                if sample_weight_is_none:
-                    self.init_.fit(X, y)
-                else:
-                    raise ValueError(
-                        "The initial estimator {} does not support sample "
-                        "weights.".format(self.init_.__class__.__name__))
-
-            # init predictions
+            # fit initial model and initialize raw predictions
             if self.init == 'zero':
-                y_pred = np.zeros(
-                    shape=(X.shape[0], self.loss_.K), dtype=np.float64)
+                y_pred = np.zeros(shape=(X.shape[0], self.loss_.K),
+                                  dtype=np.float64)
             else:
-                y_pred = self.loss_.get_init_raw_predictions(
-                    X, self.init_).astype(np.float64, copy=False)
+                try:
+                    self.init_.fit(X, y, sample_weight=sample_weight)
+                except TypeError:
+                    if sample_weight_is_none:
+                        self.init_.fit(X, y)
+                    else:
+                        raise ValueError(
+                            "The initial estimator {} does not support sample "
+                            "weights.".format(self.init_.__class__.__name__))
+                y_pred = self.loss_.get_init_raw_predictions(X, self.init_)
+
 
             begin_at_stage = 0
 

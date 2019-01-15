@@ -20,6 +20,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.ensemble._gradient_boosting import predict_stages
+from sklearn.svm import LinearSVC
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
@@ -31,6 +32,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
@@ -1049,16 +1051,8 @@ def test_complete_regression():
                  k + 1)
 
 
-# 0.23
-@pytest.mark.filterwarnings("ignore: Class ZeroEstimator is deprecated")
 def test_zero_estimator_reg():
-    # Test if ZeroEstimator works for regression.
-    est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
-                                    random_state=1, init=ZeroEstimator())
-    est.fit(boston.data, boston.target)
-    y_pred = est.predict(boston.data)
-    mse = mean_squared_error(boston.target, y_pred)
-    assert_almost_equal(mse, 33.0, decimal=0)
+    # Test if init='zero' works for regression.
 
     est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
                                     random_state=1, init='zero')
@@ -1072,17 +1066,10 @@ def test_zero_estimator_reg():
     assert_raises(ValueError, est.fit, boston.data, boston.target)
 
 
-# 0.23
-@pytest.mark.filterwarnings("ignore: Class ZeroEstimator is deprecated")
 def test_zero_estimator_clf():
-    # Test if ZeroEstimator works for classification.
+    # Test if init='zero' works for classification.
     X = iris.data
     y = np.array(iris.target)
-    est = GradientBoostingClassifier(n_estimators=20, max_depth=1,
-                                     random_state=1, init=ZeroEstimator())
-    est.fit(X, y)
-
-    assert_greater(est.score(X, y), 0.96)
 
     est = GradientBoostingClassifier(n_estimators=20, max_depth=1,
                                      random_state=1, init='zero')
@@ -1378,3 +1365,25 @@ def test_gradient_boosting_with_init(task):
     with pytest.raises(ValueError,
                        match="estimator.*does not support sample weights"):
         gb(init=init_est).fit(X, y, sample_weight=sample_weight)
+
+
+def test_gradient_boosting_init_wrong_methods():
+    # Make sure error is raised if init estimators don't have the required
+    # methods (fit, predict, predict_proba)
+
+    est = GradientBoostingClassifier(init=LinearSVC())
+    assert_raises_regex(
+        ValueError,
+        "The init parameter must be a valid estimator and support both fit "
+        "and predict_proba",
+        est.fit, X, y
+    )
+
+    from sklearn.preprocessing import OneHotEncoder
+    est = GradientBoostingRegressor(init=OneHotEncoder())  # no predict
+    assert_raises_regex(
+        ValueError,
+        "The init parameter must be a valid estimator and support both fit "
+        "and predict",
+        est.fit, X, y
+    )
