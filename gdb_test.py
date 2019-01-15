@@ -11,17 +11,18 @@ import cProfile
 import pygbm
 
 classif = True
-n_classes = 3
-n_samples = int(1e6)
+n_classes = 2
+n_features = 20
+n_samples = int(1e7)
 max_iter = 5
 
 if classif:
-    X, y = make_classification(n_samples=n_samples, random_state=0, n_classes=n_classes, n_clusters_per_class=1)
+    X, y = make_classification(n_samples=n_samples, n_features=n_features, random_state=0, n_classes=n_classes, n_clusters_per_class=1)
     GBM = GBMClassifier
     GBDT = GradientBoostingClassifier
     PYGBM_GBM = pygbm.GradientBoostingClassifier
 else:
-    X, y = make_regression(n_samples=n_samples, random_state=0)
+    X, y = make_regression(n_samples=n_samples, n_features=n_features, random_state=0)
     GBM = GBMRegressor
     GBDT = GradientBoostingRegressor
     PYGBM_GBM = pygbm.GradientBoostingRegressor
