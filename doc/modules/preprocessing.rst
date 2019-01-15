@@ -606,8 +606,10 @@ set ``max_value``. For example,::
   models, since those already work on the basis of a particular feature
   value being less or bigger than a threshold.
 
-It is possible to combine :class:`UnaryEncoder` and :class:`OrdinalEncoder`
-into a :class:`Pipeline <sklearn.pipeline.Pipeline>` like so::
+In case the input variable is not represented as a number from 0 to
+``max_value``, it is possible to combine :class:`UnaryEncoder` and
+:class:`OrdinalEncoder` into a :class:`Pipeline <sklearn.pipeline.Pipeline>`
+like so::
 
   >>> from sklearn.pipeline import make_pipeline
   >>> from sklearn.preprocessing import OrdinalEncoder, UnaryEncoder

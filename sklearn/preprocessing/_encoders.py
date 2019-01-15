@@ -881,10 +881,9 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         - 'auto' : determine value range from training data by looking for
           the maximum.
         - int : number of ordinal values per feature.
-          Each feature value should be in ``range(max_value)``
+          Each feature value should be in [0, max_value].
         - array : ``max_value[i]`` is the number of ordinal values in
-          ``X[:, i]``. Each feature value should be in
-          ``range(max_value[i])``
+          ``X[:, i]``. Each feature value should be in [0, max_value[i]].
 
     dtype : number type, optional (default=np.float)
         Desired dtype of output.
