@@ -11,7 +11,6 @@ from sklearn.datasets import load_digits, load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 
-from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -492,7 +491,7 @@ def test_feature_log_prob_bnb():
     # Tests that the feature log prob value computed by BernoulliNB when
     # alpha=1.0 is equal to the expression given in Manning, Raghavan,
     # and Schuetze's "Introduction to Information Retrieval" book:
-    # http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
+    # https://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     X = np.array([[0, 0, 0], [1, 1, 0], [0, 1, 0], [1, 0, 1], [0, 1, 0]])
     Y = np.array([0, 0, 1, 2, 2])
@@ -514,7 +513,7 @@ def test_bnb():
     # Tests that BernoulliNB when alpha=1.0 gives the same values as
     # those given for the toy example in Manning, Raghavan, and
     # Schuetze's "Introduction to Information Retrieval" book:
-    # http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
+    # https://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     # Training data points are:
     # Chinese Beijing Chinese (class: China)
@@ -558,7 +557,7 @@ def test_bnb():
 def test_cnb():
     # Tests ComplementNB when alpha=1.0 for the toy example in Manning,
     # Raghavan, and Schuetze's "Introduction to Information Retrieval" book:
-    # http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
+    # https://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     # Training data points are:
     # Chinese Beijing Chinese (class: China)

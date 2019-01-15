@@ -22,9 +22,9 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
+from scipy.special import expit
 
-from ..externals import six
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
@@ -183,7 +183,7 @@ def _rescale_data(X, y, sample_weight):
     return X, y
 
 
-class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
+class LinearModel(BaseEstimator, metaclass=ABCMeta):
     """Base class for Linear Models"""
 
     @abstractmethod
@@ -293,10 +293,7 @@ class LinearClassifierMixin(ClassifierMixin):
         multiclass is handled by normalizing that over all classes.
         """
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
+        expit(prob, out=prob)
         if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:
@@ -381,10 +378,12 @@ class LinearRegression(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    n_jobs : int, optional, default 1
-        The number of jobs to use for the computation.
-        If -1 all CPUs are used. This will only provide speedup for
-        n_targets > 1 and sufficient large problems.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use for the computation. This will only provide
+        speedup for n_targets > 1 and sufficient large problems.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -396,6 +395,23 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     intercept_ : array
         Independent term in the linear model.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.linear_model import LinearRegression
+    >>> X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    >>> # y = 1 * x_0 + 2 * x_1 + 3
+    >>> y = np.dot(X, np.array([1, 2])) + 3
+    >>> reg = LinearRegression().fit(X, y)
+    >>> reg.score(X, y)
+    1.0
+    >>> reg.coef_
+    array([1., 2.])
+    >>> reg.intercept_ # doctest: +ELLIPSIS
+    3.0000...
+    >>> reg.predict(np.array([[3, 5]]))
+    array([16.])
 
     Notes
     -----
@@ -459,8 +475,8 @@ class LinearRegression(LinearModel, RegressorMixin):
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(sparse_lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
-                self.coef_ = np.vstack(out[0] for out in outs)
-                self._residues = np.vstack(out[3] for out in outs)
+                self.coef_ = np.vstack([out[0] for out in outs])
+                self._residues = np.vstack([out[3] for out in outs])
         else:
             self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y)
@@ -500,7 +516,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
         Xy = None
 
     # precompute if n_samples > n_features
-    if isinstance(precompute, six.string_types) and precompute == 'auto':
+    if isinstance(precompute, str) and precompute == 'auto':
         precompute = (n_samples > n_features)
 
     if precompute is True:

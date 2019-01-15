@@ -420,7 +420,7 @@ class SelectPercentile(_BaseFilter):
     """
 
     def __init__(self, score_func=f_classif, percentile=10):
-        super(SelectPercentile, self).__init__(score_func)
+        super().__init__(score_func)
         self.percentile = percentile
 
     def _check_params(self, X, y):
@@ -438,8 +438,7 @@ class SelectPercentile(_BaseFilter):
             return np.zeros(len(self.scores_), dtype=np.bool)
 
         scores = _clean_nans(self.scores_)
-        threshold = stats.scoreatpercentile(scores,
-                                            100 - self.percentile)
+        threshold = np.percentile(scores, 100 - self.percentile)
         mask = scores > threshold
         ties = np.where(scores == threshold)[0]
         if len(ties):
@@ -505,7 +504,7 @@ class SelectKBest(_BaseFilter):
     """
 
     def __init__(self, score_func=f_classif, k=10):
-        super(SelectKBest, self).__init__(score_func)
+        super().__init__(score_func)
         self.k = k
 
     def _check_params(self, X, y):
@@ -584,7 +583,7 @@ class SelectFpr(_BaseFilter):
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
-        super(SelectFpr, self).__init__(score_func)
+        super().__init__(score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -650,7 +649,7 @@ class SelectFdr(_BaseFilter):
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
-        super(SelectFdr, self).__init__(score_func)
+        super().__init__(score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -713,7 +712,7 @@ class SelectFwe(_BaseFilter):
     """
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
-        super(SelectFwe, self).__init__(score_func)
+        super().__init__(score_func)
         self.alpha = alpha
 
     def _get_support_mask(self):
@@ -787,7 +786,7 @@ class GenericUnivariateSelect(_BaseFilter):
                         'fwe': SelectFwe}
 
     def __init__(self, score_func=f_classif, mode='percentile', param=1e-5):
-        super(GenericUnivariateSelect, self).__init__(score_func)
+        super().__init__(score_func)
         self.mode = mode
         self.param = param
 

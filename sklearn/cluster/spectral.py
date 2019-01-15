@@ -53,7 +53,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     Notes
     -----
@@ -237,7 +237,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
 
     Notes
     ------
@@ -358,9 +358,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Parameters (keyword arguments) and values for kernel passed as
         callable object. Ignored by other kernels.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -420,7 +422,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
-      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+      https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
 
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,

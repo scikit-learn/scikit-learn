@@ -292,7 +292,7 @@ Additional keywords are passed to the distance metric class.
 
 Attributes
 ----------
-data : np.ndarray
+data : memory view
     The training data
 
 Examples
@@ -486,7 +486,7 @@ cdef DTYPE_t _log_kernel_norm(DTYPE_t h, ITYPE_t d,
     elif kernel == EXPONENTIAL_KERNEL:
         factor = logSn(d - 1) + lgamma(d)
     elif kernel == LINEAR_KERNEL:
-        factor = logVn(d) - np.log1p(d)
+        factor = logVn(d) - log(d + 1.)
     elif kernel == COSINE_KERNEL:
         # this is derived from a chain rule integration
         factor = 0
