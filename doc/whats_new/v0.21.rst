@@ -81,11 +81,17 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`ensemble.GradientBoostingRegressor`, which didn't support
   scikit-learn estimators as initial estimator. Also added support of initial
   estimator which does not support sample weights. :issue:`12436` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`
+  :user:`Jérémie du Boisberranger <jeremiedbb>` and :issue:`12983` by
+  :user:`Nicolas Hug<NicolasHug>`.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
   problems. :issue:`12715` by :user:`Nicolas Hug<NicolasHug>`.
+
+- |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
+  the default initial prediction of a multiclass classifier would predict the
+  classes priors instead of the log of the priors. :issue:`12983` by
+  :user:`Nicolas Hug<NicolasHug>`.
 
 - |Fix| Fixed a bug in :mod:`ensemble` where the ``predict`` method would
   error for multiclass multioutput forests models if any targets were strings.
