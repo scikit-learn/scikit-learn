@@ -41,7 +41,7 @@ class LossFunction(object, metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def __call__(self, y, pred, sample_weight=None):
+    def __call__(self, y, raw_predictions, sample_weight=None):
         """Compute the loss.
 
         Parameters
@@ -49,15 +49,15 @@ class LossFunction(object, metaclass=ABCMeta):
         y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape (n_samples,)
-            Predicted labels
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves).
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
         """
 
     @abstractmethod
-    def negative_gradient(self, y, y_pred, **kargs):
+    def negative_gradient(self, y, raw_predictions, **kargs):
         """Compute the negative gradient.
 
         Parameters
@@ -65,11 +65,12 @@ class LossFunction(object, metaclass=ABCMeta):
         y : array, shape (n_samples,)
             The target labels.
 
-        y_pred : array, shape (n_samples,)
-            The predictions.
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble at iteration ``i - 1``.
         """
 
-    def update_terminal_regions(self, tree, X, y, residual, y_pred,
+    def update_terminal_regions(self, tree, X, y, residual, raw_predictions,
                                 sample_weight, sample_mask,
                                 learning_rate=0.1, k=0):
         """Update the terminal regions (=leaves) of the given tree and
@@ -86,8 +87,9 @@ class LossFunction(object, metaclass=ABCMeta):
             The target labels.
         residual : array, shape (n,)
             The residuals (usually the negative gradient).
-        y_pred : array, shape (n,)
-            The predictions.
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble at iteration ``i - 1``.
         sample_weight : array, shape (n,)
             The weight of each sample.
         sample_mask : array, shape (n,)
@@ -110,15 +112,15 @@ class LossFunction(object, metaclass=ABCMeta):
         for leaf in np.where(tree.children_left == TREE_LEAF)[0]:
             self._update_terminal_region(tree, masked_terminal_regions,
                                          leaf, X, y, residual,
-                                         y_pred[:, k], sample_weight)
+                                         raw_predictions[:, k], sample_weight)
 
         # update predictions (both in-bag and out-of-bag)
-        y_pred[:, k] += (learning_rate
-                         * tree.value[:, 0, 0].take(terminal_regions, axis=0))
+        raw_predictions[:, k] += \
+            learning_rate * tree.value[:, 0, 0].take(terminal_regions, axis=0)
 
     @abstractmethod
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
-                                residual, pred, sample_weight):
+                                residual, raw_predictions, sample_weight):
         """Template method for updating terminal regions (=leaves). """
 
     @abstractmethod
@@ -185,7 +187,7 @@ class LeastSquaresError(RegressionLossFunction):
     def init_estimator(self):
         return DummyRegressor(strategy='mean')
 
-    def __call__(self, y, pred, sample_weight=None):
+    def __call__(self, y, raw_predictions, sample_weight=None):
         """Compute the least squares loss.
 
         Parameters
@@ -193,19 +195,19 @@ class LeastSquaresError(RegressionLossFunction):
         y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape (n_samples,)
-            Predicted labels
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves)
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
         """
         if sample_weight is None:
-            return np.mean((y - pred.ravel()) ** 2.0)
+            return np.mean((y - raw_predictions.ravel()) ** 2.0)
         else:
-            return (1.0 / sample_weight.sum() *
-                    np.sum(sample_weight * ((y - pred.ravel()) ** 2.0)))
+            return (1.0 / sample_weight.sum() * np.sum(
+                sample_weight * ((y - raw_predictions.ravel()) ** 2.0)))
 
-    def negative_gradient(self, y, pred, **kargs):
+    def negative_gradient(self, y, raw_predictions, **kargs):
         """Compute the negative gradient.
 
         Parameters
@@ -213,12 +215,13 @@ class LeastSquaresError(RegressionLossFunction):
         y : array, shape (n_samples,)
             The target labels.
 
-        pred : array, shape (n_samples,)
-            The predictions.
+        raw_predictions : array, shape (n_samples,)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble at iteration ``i - 1``.
         """
-        return y - pred.ravel()
+        return y - raw_predictions.ravel()
 
-    def update_terminal_regions(self, tree, X, y, residual, y_pred,
+    def update_terminal_regions(self, tree, X, y, residual, raw_predictions,
                                 sample_weight, sample_mask,
                                 learning_rate=0.1, k=0):
         """Least squares does not need to update terminal regions.
@@ -235,8 +238,9 @@ class LeastSquaresError(RegressionLossFunction):
             The target labels.
         residual : array, shape (n,)
             The residuals (usually the negative gradient).
-        y_pred : array, shape (n,)
-            The predictions.
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble at iteration ``i - 1``.
         sample_weight : array, shape (n,)
             The weight of each sample.
         sample_mask : array, shape (n,)
@@ -248,10 +252,10 @@ class LeastSquaresError(RegressionLossFunction):
             The index of the estimator being updated.
         """
         # update predictions
-        y_pred[:, k] += learning_rate * tree.predict(X).ravel()
+        raw_predictions[:, k] += learning_rate * tree.predict(X).ravel()
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
-                                residual, pred, sample_weight):
+                                residual, raw_predictions, sample_weight):
         pass
 
     def get_init_raw_predictions(self, X, estimator):
@@ -270,7 +274,7 @@ class LeastAbsoluteError(RegressionLossFunction):
         # Predicts the median
         return DummyRegressor(strategy='quantile', quantile=.5)
 
-    def __call__(self, y, pred, sample_weight=None):
+    def __call__(self, y, raw_predictions, sample_weight=None):
         """Compute the least absolute error.
 
         Parameters
@@ -278,41 +282,42 @@ class LeastAbsoluteError(RegressionLossFunction):
         y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape (n_samples,)
-            Predicted labels
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves)
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
         """
         if sample_weight is None:
-            return np.abs(y - pred.ravel()).mean()
+            return np.abs(y - raw_predictions.ravel()).mean()
         else:
-            return (1.0 / sample_weight.sum() *
-                    np.sum(sample_weight * np.abs(y - pred.ravel())))
+            return (1.0 / sample_weight.sum() * np.sum(
+                sample_weight * np.abs(y - raw_predictions.ravel())))
 
-    def negative_gradient(self, y, pred, **kargs):
+    def negative_gradient(self, y, raw_predictions, **kargs):
         """Compute the negative gradient.
 
-        1.0 if y - pred > 0.0 else -1.0
+        1.0 if y - raw_predictions > 0.0 else -1.0
 
         Parameters
         ----------
         y : array, shape (n_samples,)
             The target labels.
 
-        pred : array, shape (n_samples,)
-            The predictions.
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble at iteration ``i - 1``.
         """
-        pred = pred.ravel()
-        return 2.0 * (y - pred > 0.0) - 1.0
+        raw_predictions = raw_predictions.ravel()
+        return 2.0 * (y - raw_predictions > 0.0) - 1.0
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
-                                residual, pred, sample_weight):
+                                residual, raw_predictions, sample_weight):
         """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
         sample_weight = sample_weight.take(terminal_region, axis=0)
-        diff = y.take(terminal_region, axis=0) - pred.take(terminal_region,
-                                                           axis=0)
+        diff = (y.take(terminal_region, axis=0) -
+                raw_predictions.take(terminal_region, axis=0))
         tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight,
                                                       percentile=50)
 
@@ -347,7 +352,7 @@ class HuberLossFunction(RegressionLossFunction):
     def init_estimator(self):
         return DummyRegressor(strategy='quantile', quantile=.5)
 
-    def __call__(self, y, pred, sample_weight=None):
+    def __call__(self, y, raw_predictions, sample_weight=None):
         """Compute the Huber loss.
 
         Parameters
@@ -355,14 +360,15 @@ class HuberLossFunction(RegressionLossFunction):
         y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape (n_samples,)
-            Predicted labels
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
         """
-        pred = pred.ravel()
-        diff = y - pred
+        raw_predictions = raw_predictions.ravel()
+        diff = y - raw_predictions
         gamma = self.gamma
         if gamma is None:
             if sample_weight is None:
@@ -385,7 +391,8 @@ class HuberLossFunction(RegressionLossFunction):
             loss = (sq_loss + lin_loss) / sample_weight.sum()
         return loss
 
-    def negative_gradient(self, y, pred, sample_weight=None, **kargs):
+    def negative_gradient(self, y, raw_predictions, sample_weight=None,
+                          **kargs):
         """Compute the negative gradient.
 
         Parameters
@@ -393,14 +400,15 @@ class HuberLossFunction(RegressionLossFunction):
         y : array, shape (n_samples,)
             The target labels.
 
-        pred : array, shape (n_samples,)
-            The predictions.
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble at iteration ``i - 1``.
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
         """
-        pred = pred.ravel()
-        diff = y - pred
+        raw_predictions = raw_predictions.ravel()
+        diff = y - raw_predictions
         if sample_weight is None:
             gamma = np.percentile(np.abs(diff), self.alpha * 100)
         else:
@@ -414,12 +422,12 @@ class HuberLossFunction(RegressionLossFunction):
         return residual
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
-                                residual, pred, sample_weight):
+                                residual, raw_predictions, sample_weight):
         terminal_region = np.where(terminal_regions == leaf)[0]
         sample_weight = sample_weight.take(terminal_region, axis=0)
         gamma = self.gamma
         diff = (y.take(terminal_region, axis=0)
-                - pred.take(terminal_region, axis=0))
+                - raw_predictions.take(terminal_region, axis=0))
         median = _weighted_percentile(diff, sample_weight, percentile=50)
         diff_minus_median = diff - median
         tree.value[leaf, 0] = median + np.mean(
@@ -452,7 +460,7 @@ class QuantileLossFunction(RegressionLossFunction):
     def init_estimator(self):
         return DummyRegressor(strategy='quantile', quantile=self.alpha)
 
-    def __call__(self, y, pred, sample_weight=None):
+    def __call__(self, y, raw_predictions, sample_weight=None):
         """Compute the Quantile loss.
 
         Parameters
@@ -460,17 +468,18 @@ class QuantileLossFunction(RegressionLossFunction):
         y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape (n_samples,)
-            Predicted labels
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
         """
-        pred = pred.ravel()
-        diff = y - pred
+        raw_predictions = raw_predictions.ravel()
+        diff = y - raw_predictions
         alpha = self.alpha
 
-        mask = y > pred
+        mask = y > raw_predictions
         if sample_weight is None:
             loss = (alpha * diff[mask].sum() -
                     (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
@@ -480,7 +489,7 @@ class QuantileLossFunction(RegressionLossFunction):
                                            diff[~mask])) / sample_weight.sum())
         return loss
 
-    def negative_gradient(self, y, pred, **kargs):
+    def negative_gradient(self, y, raw_predictions, **kargs):
         """Compute the negative gradient.
 
         Parameters
@@ -488,19 +497,20 @@ class QuantileLossFunction(RegressionLossFunction):
         y : array, shape (n_samples,)
             The target labels.
 
-        pred : array, shape (n_samples,)
-            The predictions.
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble at iteration ``i - 1``.
         """
         alpha = self.alpha
-        pred = pred.ravel()
-        mask = y > pred
+        raw_predictions = raw_predictions.ravel()
+        mask = y > raw_predictions
         return (alpha * mask) - ((1.0 - alpha) * ~mask)
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
-                                residual, pred, sample_weight):
+                                residual, raw_predictions, sample_weight):
         terminal_region = np.where(terminal_regions == leaf)[0]
         diff = (y.take(terminal_region, axis=0)
-                - pred.take(terminal_region, axis=0))
+                - raw_predictions.take(terminal_region, axis=0))
         sample_weight = sample_weight.take(terminal_region, axis=0)
 
         val = _weighted_percentile(diff, sample_weight, self.percentile)
@@ -513,8 +523,8 @@ class QuantileLossFunction(RegressionLossFunction):
 class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for classification loss functions. """
 
-    def _score_to_proba(self, score):
-        """Template method to convert scores to probabilities.
+    def _raw_prediction_to_proba(self, raw_predictions):
+        """Template method to convert raw predictions to probabilities.
 
          the does not support probabilities raises AttributeError.
         """
@@ -522,10 +532,10 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
             '%s does not support predict_proba' % type(self).__name__)
 
     @abstractmethod
-    def _score_to_decision(self, score):
-        """Template method to convert scores to decisions.
+    def _raw_prediction_to_decision(self, raw_predictions):
+        """Template method to convert raw predictions to decisions.
 
-        Returns int arrays.
+        Returns int arrays: the predicted encoded labels.
         """
 
     def check_init_estimator(self, estimator):
@@ -567,7 +577,7 @@ class BinomialDeviance(ClassificationLossFunction):
         # weights
         return DummyClassifier(strategy='prior')
 
-    def __call__(self, y, pred, sample_weight=None):
+    def __call__(self, y, raw_predictions, sample_weight=None):
         """Compute the deviance (= 2 * negative log-likelihood).
 
         Parameters
@@ -575,22 +585,24 @@ class BinomialDeviance(ClassificationLossFunction):
         y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape (n_samples,)
-            Predicted labels
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
         """
         # logaddexp(0, v) == log(1.0 + exp(v))
-        pred = pred.ravel()
+        raw_predictions = raw_predictions.ravel()
         if sample_weight is None:
-            return -2.0 * np.mean((y * pred) - np.logaddexp(0.0, pred))
+            return -2.0 * np.mean((y * raw_predictions) -
+                                  np.logaddexp(0.0, raw_predictions))
         else:
-            return (-2.0 / sample_weight.sum() *
-                    np.sum(sample_weight *
-                           ((y * pred) - np.logaddexp(0.0, pred))))
+            return (-2.0 / sample_weight.sum() * np.sum(
+                sample_weight * ((y * raw_predictions) -
+                                 np.logaddexp(0.0, raw_predictions))))
 
-    def negative_gradient(self, y, pred, **kargs):
+    def negative_gradient(self, y, raw_predictions, **kargs):
         """Compute the residual (= negative gradient).
 
         Parameters
@@ -598,13 +610,14 @@ class BinomialDeviance(ClassificationLossFunction):
         y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape (n_samples,)
-            Predicted labels
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble at iteration ``i - 1``.
         """
-        return y - expit(pred.ravel())
+        return y - expit(raw_predictions.ravel())
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
-                                residual, pred, sample_weight):
+                                residual, raw_predictions, sample_weight):
         """Make a single Newton-Raphson step.
 
         our node estimate is given by:
@@ -628,14 +641,14 @@ class BinomialDeviance(ClassificationLossFunction):
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
 
-    def _score_to_proba(self, score):
-        proba = np.ones((score.shape[0], 2), dtype=np.float64)
-        proba[:, 1] = expit(score.ravel())
+    def _raw_prediction_to_proba(self, raw_predictions):
+        proba = np.ones((raw_predictions.shape[0], 2), dtype=np.float64)
+        proba[:, 1] = expit(raw_predictions.ravel())
         proba[:, 0] -= proba[:, 1]
         return proba
 
-    def _score_to_decision(self, score):
-        proba = self._score_to_proba(score)
+    def _raw_prediction_to_decision(self, raw_predictions):
+        proba = self._raw_prediction_to_proba(raw_predictions)
         return np.argmax(proba, axis=1)
 
     def get_init_raw_predictions(self, X, estimator):
@@ -670,7 +683,7 @@ class MultinomialDeviance(ClassificationLossFunction):
     def init_estimator(self):
         return DummyClassifier(strategy='prior')
 
-    def __call__(self, y, pred, sample_weight=None):
+    def __call__(self, y, raw_predictions, sample_weight=None):
         """Compute the Multinomial deviance.
 
         Parameters
@@ -678,8 +691,9 @@ class MultinomialDeviance(ClassificationLossFunction):
         y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape (n_samples,)
-            Predicted labels
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
@@ -690,13 +704,14 @@ class MultinomialDeviance(ClassificationLossFunction):
             Y[:, k] = y == k
 
         if sample_weight is None:
-            return np.sum(-1 * (Y * pred).sum(axis=1) +
-                          logsumexp(pred, axis=1))
+            return np.sum(-1 * (Y * raw_predictions).sum(axis=1) +
+                          logsumexp(raw_predictions, axis=1))
         else:
-            return np.sum(-1 * sample_weight * (Y * pred).sum(axis=1) +
-                          logsumexp(pred, axis=1))
+            return np.sum(
+                -1 * sample_weight * (Y * raw_predictions).sum(axis=1) +
+                logsumexp(raw_predictions, axis=1))
 
-    def negative_gradient(self, y, pred, k=0, **kwargs):
+    def negative_gradient(self, y, raw_predictions, k=0, **kwargs):
         """Compute negative gradient for the ``k``-th class.
 
         Parameters
@@ -704,17 +719,18 @@ class MultinomialDeviance(ClassificationLossFunction):
         y : array, shape (n_samples,)
             The target labels.
 
-        pred : array, shape (n_samples,)
-            The predictions.
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble at iteration ``i - 1``.
 
         k : int, optional (default=0)
             The index of the class
         """
-        return y - np.nan_to_num(np.exp(pred[:, k] -
-                                        logsumexp(pred, axis=1)))
+        return y - np.nan_to_num(np.exp(raw_predictions[:, k] -
+                                        logsumexp(raw_predictions, axis=1)))
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
-                                residual, pred, sample_weight):
+                                residual, raw_predictions, sample_weight):
         """Make a single Newton-Raphson step. """
         terminal_region = np.where(terminal_regions == leaf)[0]
         residual = residual.take(terminal_region, axis=0)
@@ -733,12 +749,13 @@ class MultinomialDeviance(ClassificationLossFunction):
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
 
-    def _score_to_proba(self, score):
+    def _raw_prediction_to_proba(self, raw_predictions):
         return np.nan_to_num(
-            np.exp(score - (logsumexp(score, axis=1)[:, np.newaxis])))
+            np.exp(raw_predictions -
+                   (logsumexp(raw_predictions, axis=1)[:, np.newaxis])))
 
-    def _score_to_decision(self, score):
-        proba = self._score_to_proba(score)
+    def _raw_prediction_to_decision(self, raw_predictions):
+        proba = self._raw_prediction_to_proba(raw_predictions)
         return np.argmax(proba, axis=1)
 
     def get_init_raw_predictions(self, X, estimator):
@@ -774,7 +791,7 @@ class ExponentialLoss(ClassificationLossFunction):
     def init_estimator(self):
         return DummyClassifier(strategy='prior')
 
-    def __call__(self, y, pred, sample_weight=None):
+    def __call__(self, y, raw_predictions, sample_weight=None):
         """Compute the exponential loss
 
         Parameters
@@ -782,20 +799,21 @@ class ExponentialLoss(ClassificationLossFunction):
         y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape (n_samples,)
-            Predicted labels
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble.
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
         """
-        pred = pred.ravel()
+        raw_predictions = raw_predictions.ravel()
         if sample_weight is None:
-            return np.mean(np.exp(-(2. * y - 1.) * pred))
+            return np.mean(np.exp(-(2. * y - 1.) * raw_predictions))
         else:
-            return (1.0 / sample_weight.sum() *
-                    np.sum(sample_weight * np.exp(-(2 * y - 1) * pred)))
+            return (1.0 / sample_weight.sum() * np.sum(
+                sample_weight * np.exp(-(2 * y - 1) * raw_predictions)))
 
-    def negative_gradient(self, y, pred, **kargs):
+    def negative_gradient(self, y, raw_predictions, **kargs):
         """Compute the residual (= negative gradient).
 
         Parameters
@@ -803,23 +821,24 @@ class ExponentialLoss(ClassificationLossFunction):
         y : array, shape (n_samples,)
             True labels
 
-        pred : array, shape (n_samples,)
-            Predicted labels
+        raw_predictions : array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves) of the
+            tree ensemble at iteration ``i - 1``.
         """
         y_ = -(2. * y - 1.)
-        return y_ * np.exp(y_ * pred.ravel())
+        return y_ * np.exp(y_ * raw_predictions.ravel())
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
-                                residual, pred, sample_weight):
+                                residual, raw_predictions, sample_weight):
         terminal_region = np.where(terminal_regions == leaf)[0]
-        pred = pred.take(terminal_region, axis=0)
+        raw_predictions = raw_predictions.take(terminal_region, axis=0)
         y = y.take(terminal_region, axis=0)
         sample_weight = sample_weight.take(terminal_region, axis=0)
 
         y_ = 2. * y - 1.
 
-        numerator = np.sum(y_ * sample_weight * np.exp(-y_ * pred))
-        denominator = np.sum(sample_weight * np.exp(-y_ * pred))
+        numerator = np.sum(y_ * sample_weight * np.exp(-y_ * raw_predictions))
+        denominator = np.sum(sample_weight * np.exp(-y_ * raw_predictions))
 
         # prevents overflow and division by zero
         if abs(denominator) < 1e-150:
@@ -827,14 +846,14 @@ class ExponentialLoss(ClassificationLossFunction):
         else:
             tree.value[leaf, 0, 0] = numerator / denominator
 
-    def _score_to_proba(self, score):
-        proba = np.ones((score.shape[0], 2), dtype=np.float64)
-        proba[:, 1] = expit(2.0 * score.ravel())
+    def _raw_prediction_to_proba(self, raw_predictions):
+        proba = np.ones((raw_predictions.shape[0], 2), dtype=np.float64)
+        proba[:, 1] = expit(2.0 * raw_predictions.ravel())
         proba[:, 0] -= proba[:, 1]
         return proba
 
-    def _score_to_decision(self, score):
-        return (score.ravel() >= 0.0).astype(np.int)
+    def _raw_prediction_to_decision(self, raw_predictions):
+        return (raw_predictions.ravel() >= 0.0).astype(np.int)
 
     def get_init_raw_predictions(self, X, estimator):
         proba_pos_class = estimator.predict_proba(X)[:, 1]
