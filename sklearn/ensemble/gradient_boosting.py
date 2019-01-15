@@ -1653,9 +1653,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features_, X.shape[1]))
         if self.init == 'zero':
-            score = np.zeros(shape=(X.shape[0], self.loss_.K), dtype=np.float64)
+            score = np.zeros(shape=(X.shape[0], self.loss_.K),
+                             dtype=np.float64)
         else:
-            score = self.loss_.get_init_raw_predictions(X, self.init_).astype( np.float64)
+            score = self.loss_.get_init_raw_predictions(
+                X, self.init_).astype(np.float64)
         return score
 
     def _decision_function(self, X):
@@ -1664,7 +1666,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         score = self._init_decision_function(X)
         predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
-
 
     def _staged_decision_function(self, X):
         """Compute decision function of ``X`` for each iteration.
