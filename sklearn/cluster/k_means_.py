@@ -367,7 +367,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     else:
         raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
                          " %s" % str(algorithm))
-    if n_jobs == 1:
+    if effective_n_jobs(n_jobs) == 1:
         # For a single thread, less memory is needed if we just store one set
         # of the best results (as opposed to one set per run per thread).
         for it in range(n_init):
