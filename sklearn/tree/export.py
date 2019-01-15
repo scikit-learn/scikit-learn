@@ -782,8 +782,8 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
             out_file.close()
 
 
-def export_text(decision_tree, feature_names=None,
-                max_depth=10, spacing=3, decimals=2):
+def export_text(decision_tree, feature_names=None, max_depth=10,
+                spacing=3, decimals=2, hide_weights=False):
     """Build a text report showing the rules of a decision tree.
 
     Parameters
@@ -799,12 +799,18 @@ def export_text(decision_tree, feature_names=None,
 
     max_depth : int, optional (default=10)
         Only the first max_depth levels of the tree are exported.
+        Truncated branches will be marked with "...".
 
     spacing : int, optional (default=3)
         Number of spaces between edges. The higher it is, the wider the result.
 
-    decimals : int (default=2)
+    decimals : int, optional (default=2)
         Number of decimal digits to display.
+
+    hide_weights : bool, optional (default=False)
+        If true the classification weights will not be exported.
+        The classification weights are the number of samples
+        from each class.
 
     Returns
     -------
@@ -838,7 +844,6 @@ def export_text(decision_tree, feature_names=None,
     class_names = decision_tree.classes_
     right_child_fmt = "{}{} <= {}\n"
     left_child_fmt = "{}{} >  {}\n"
-    value_fmt = "{}{} value: {}\n"
 
     if max_depth <= 0:
         raise ValueError("max_depth bust be > 0, given %d" % max_depth)
@@ -857,13 +862,15 @@ def export_text(decision_tree, feature_names=None,
 
     if isinstance(decision_tree, DecisionTreeClassifier):
         value_fmt = "{}{} weights: {}\n"
+        if hide_weights:
+            value_fmt = "{}{}{}\n"
+    else:
+        value_fmt = "{}{} value: {}\n"
 
     if feature_names:
         feature_names_ = [feature_names[i] for i in tree_.feature]
     else:
-        feature_names_ = []
-        for i in tree_.feature:
-            feature_names_.append("feature_"+str(i))
+        feature_names_ = ["feature_{}".format(i) for i in tree_.feature]
 
     export_text.report = ""
 
@@ -908,11 +915,17 @@ def export_text(decision_tree, feature_names=None,
                 export_text.report += info_fmt_right
                 print_tree_recurse(tree_.children_right[node], depth+1)
             else:  # leaf
-                val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
-                val = '['+''.join(val)[:-2]+']'
-                if isinstance(decision_tree, DecisionTreeClassifier):
-                    val += ' -> ' + str(class_name)
+                val = ''
+                is_classification = isinstance(decision_tree,
+                                               DecisionTreeClassifier)
+                if not hide_weights or not is_classification:
+                    val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
+                    val = '['+''.join(val)[:-2]+']'
+                if is_classification:
+                    val += '-> ' + str(class_name)
                 export_text.report += value_fmt.format(indent, '', val)
+        else:
+            export_text.report = export_text.report[:-1] + ' ...\n'
 
     print_tree_recurse(0, 1)
     return export_text.report

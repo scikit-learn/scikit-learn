@@ -335,19 +335,33 @@ def test_export_text():
     clf.fit(X, y)
 
     expected_report = dedent("""|---feature_1 <= 0.00
-|   |--- weights: [3.00, 0.00] -> -1
+|   |--- weights: [3.00, 0.00]-> -1
 |---feature_1 >  0.00
-|   |--- weights: [0.00, 3.00] -> 1
+|   |--- weights: [0.00, 3.00]-> 1
 """)
     assert export_text(clf) == expected_report
 
+    expected_report = dedent("""|---b <= 0.00
+|   |--- weights: [3.00, 0.00]-> -1
+|---b >  0.00
+|   |--- weights: [0.00, 3.00]-> 1
+""")
+    assert export_text(clf, feature_names=['a', 'b']) == expected_report
+
     expected_report = dedent("""|---feature_1 <= 0.00
+|   |----> -1
 |---feature_1 >  0.00
+|   |----> 1
+""")
+    assert export_text(clf, hide_weights=True) == expected_report
+
+    expected_report = dedent("""|---feature_1 <= 0.00 ...
+|---feature_1 >  0.00 ...
 """)
     assert export_text(clf, max_depth=1) == expected_report
 
-    expected_report = dedent("""|-feature_1 <= 0.00
-|-feature_1 >  0.00
+    expected_report = dedent("""|-feature_1 <= 0.00 ...
+|-feature_1 >  0.00 ...
 """)
     assert export_text(clf, max_depth=1, spacing=1) == expected_report
 
@@ -363,6 +377,7 @@ def test_export_text():
 |   |--- value: [1.0, 1.0]
 """)
     assert export_text(reg, decimals=1) == expected_report
+    assert export_text(reg, decimals=1, hide_weights=True) == expected_report
 
 
 def test_plot_tree():
