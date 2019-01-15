@@ -215,7 +215,7 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
-.. note:: **Using custom scorers in functions where `n_jobs > 1`**
+.. note:: **Using custom scorers in functions where n_jobs > 1**
 
     While defining the custom scoring function alongside the calling function 
     should work out of the box with the default joblib backend (loky), 
