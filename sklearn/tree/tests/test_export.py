@@ -353,7 +353,7 @@ def test_export_text():
 |---feature_1 >  0.00
 |   |----> 1
 """)
-    assert export_text(clf, hide_weights=True) == expected_report
+    assert export_text(clf, show_weights=False) == expected_report
 
     expected_report = dedent("""|---feature_1 <= 0.00 ...
 |---feature_1 >  0.00 ...
@@ -377,7 +377,7 @@ def test_export_text():
 |   |--- value: [1.0, 1.0]
 """)
     assert export_text(reg, decimals=1) == expected_report
-    assert export_text(reg, decimals=1, hide_weights=True) == expected_report
+    assert export_text(reg, decimals=1, show_weights=False) == expected_report
 
 
 def test_plot_tree():

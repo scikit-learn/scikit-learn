@@ -783,7 +783,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
 
 
 def export_text(decision_tree, feature_names=None, max_depth=10,
-                spacing=3, decimals=2, hide_weights=False):
+                spacing=3, decimals=2, show_weights=True):
     """Build a text report showing the rules of a decision tree.
 
     Parameters
@@ -807,8 +807,8 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     decimals : int, optional (default=2)
         Number of decimal digits to display.
 
-    hide_weights : bool, optional (default=False)
-        If true the classification weights will not be exported.
+    show_weights : bool, optional (default=True)
+        If false the classification weights will not be exported.
         The classification weights are the number of samples
         from each class.
 
@@ -831,12 +831,12 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
     |---petal width (cm) <= 0.80
-    |   |--- weights: [50.00, 0.00, 0.00] -> 0
+    |   |--- weights: [50.00, 0.00, 0.00]-> 0
     |---petal width (cm) >  0.80
     |   |---petal width (cm) <= 1.75
-    |   |   |--- weights: [0.00, 49.00, 5.00] -> 1
+    |   |   |--- weights: [0.00, 49.00, 5.00]-> 1
     |   |---petal width (cm) >  1.75
-    |   |   |--- weights: [0.00, 1.00, 45.00] -> 2
+    |   |   |--- weights: [0.00, 1.00, 45.00]-> 2
     ...
     """
     check_is_fitted(decision_tree, 'tree_')
@@ -862,7 +862,7 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
 
     if isinstance(decision_tree, DecisionTreeClassifier):
         value_fmt = "{}{} weights: {}\n"
-        if hide_weights:
+        if not show_weights:
             value_fmt = "{}{}{}\n"
     else:
         value_fmt = "{}{} value: {}\n"
@@ -918,7 +918,7 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
                 val = ''
                 is_classification = isinstance(decision_tree,
                                                DecisionTreeClassifier)
-                if not hide_weights or not is_classification:
+                if show_weights or not is_classification:
                     val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
                     val = '['+''.join(val)[:-2]+']'
                 if is_classification:
