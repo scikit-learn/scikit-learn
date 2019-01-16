@@ -282,13 +282,13 @@ class SpectralCoclustering(BaseSpectral):
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
                  n_init=10, n_jobs=None, random_state=None):
         super().__init__(n_clusters,
-                                                   svd_method,
-                                                   n_svd_vecs,
-                                                   mini_batch,
-                                                   init,
-                                                   n_init,
-                                                   n_jobs,
-                                                   random_state)
+                         svd_method,
+                         n_svd_vecs,
+                         mini_batch,
+                         init,
+                         n_init,
+                         n_jobs,
+                         random_state)
 
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
@@ -430,6 +430,7 @@ class SpectralBiclustering(BaseSpectral):
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
                  n_init=10, n_jobs=None, random_state=None):
         super().__init__(n_clusters,
+<<<<<<< HEAD
                                                    svd_method,
                                                    n_svd_vecs,
                                                    mini_batch,
@@ -437,6 +438,15 @@ class SpectralBiclustering(BaseSpectral):
                                                    n_init,
                                                    n_jobs,
                                                    random_state)
+=======
+                         svd_method,
+                         n_svd_vecs,
+                         mini_batch,
+                         init,
+                         n_init,
+                         n_jobs,
+                         random_state)
+>>>>>>> upstream/master
         self.method = method
         self.n_components = n_components
         self.n_best = n_best

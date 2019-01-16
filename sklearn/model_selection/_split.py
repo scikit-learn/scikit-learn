@@ -494,8 +494,7 @@ class GroupKFold(_BaseKFold):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
-        super().__init__(n_splits, shuffle=False,
-                                         random_state=None)
+        super().__init__(n_splits, shuffle=False, random_state=None)
 
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
@@ -777,9 +776,7 @@ class TimeSeriesSplit(_BaseKFold):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
-        super().__init__(n_splits,
-                                              shuffle=False,
-                                              random_state=None)
+        super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
 
     def split(self, X, y=None, groups=None):
@@ -2225,10 +2222,6 @@ def train_test_split(*arrays, **options):
 
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
-
-
-# Tell nose that train_test_split is not a test
-train_test_split.__test__ = False
 
 
 def _build_repr(self):
