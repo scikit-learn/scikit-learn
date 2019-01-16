@@ -61,7 +61,7 @@ def test_max_iter():
     def ricker_function(resolution, center, width):
         """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
         x = np.linspace(0, resolution - 1, resolution)
-        x = ((2 / ((np.sqrt(3 * width) * np.pi ** 1 / 4)))
+        x = ((2 / (np.sqrt(3 * width) * np.pi ** .25))
              * (1 - ((x - center) ** 2 / width ** 2))
              * np.exp((-(x - center) ** 2) / (2 * width ** 2)))
         return x

@@ -20,9 +20,6 @@ random sampling procedures.
 - :class:`linear_model.BayesianRidge` |Fix|
 - Decision trees and derived ensembles when both `max_depth` and
   `max_leaf_nodes` are set. |Fix|
-- :func:`decomposition.sparse_encode()` with `algorithm='lasso_lars'` |Fix|
-- :func:`decomposition.dict_learning()` and
-  :func:`decomposition.dict_learning_online()` |Fix|
 - :class:`decomposition.SparseCoder`,
   :class:`decomposition.DictionaryLearning`, and
   :class:`decomposition.MiniBatchDictionaryLearning` |Fix|
@@ -69,7 +66,7 @@ Support for Python 3.4 and below has been officially dropped.
 ............................
 
 - |Fix| :func:`decomposition.sparse_encode()` now passes the `max_iter` to the
-  underlying `LassoLarse` when `algorithm='lasso_lars'`. :issue:`12650` by
+  underlying `LassoLars` when `algorithm='lasso_lars'`. :issue:`12650` by
   user:`Adrin Jalali <adrinjalali>`.
 - |Enhancement| :func:`decomposition.dict_learning()` and
   :func:`decomposition.dict_learning_online()` now accept `method_max_iter` and
