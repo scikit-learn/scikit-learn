@@ -132,14 +132,14 @@ cdef class SplittingContext:
         be ignored.
     """
     cdef public:
-        X_BINNED_DTYPE_C [:, :] X_binned
+        X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
         unsigned int max_bins
         unsigned int [:] n_bins_per_feature
-        Y_DTYPE_C [:] gradients
-        Y_DTYPE_C [:] hessians
-        Y_DTYPE_C [:] ordered_gradients
-        Y_DTYPE_C [:] ordered_hessians
+        Y_DTYPE_C [::1] gradients
+        Y_DTYPE_C [::1] hessians
+        Y_DTYPE_C [::1] ordered_gradients
+        Y_DTYPE_C [::1] ordered_hessians
         Y_DTYPE_C sum_gradients
         Y_DTYPE_C sum_hessians
         unsigned char constant_hessian
@@ -149,13 +149,13 @@ cdef class SplittingContext:
         unsigned int min_samples_leaf
         Y_DTYPE_C min_gain_to_split
 
-        unsigned int [:] partition
-        unsigned int [:] left_indices_buffer
-        unsigned int [:] right_indices_buffer
+        unsigned int [::1] partition
+        unsigned int [::1] left_indices_buffer
+        unsigned int [::1] right_indices_buffer
 
-    def __init__(self, X_BINNED_DTYPE_C [:, :] X_binned, unsigned int
+    def __init__(self, X_BINNED_DTYPE_C [::1, :] X_binned, unsigned int
                  max_bins, np.ndarray[np.uint32_t] n_bins_per_feature,
-                 Y_DTYPE_C [:] gradients, Y_DTYPE_C [:] hessians, Y_DTYPE_C
+                 Y_DTYPE_C [::1] gradients, Y_DTYPE_C [::1] hessians, Y_DTYPE_C
                  l2_regularization, Y_DTYPE_C min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20, Y_DTYPE_C
                  min_gain_to_split=0.):
@@ -200,7 +200,7 @@ cdef class SplittingContext:
 def split_indices(
     SplittingContext context,
     SplitInfo split_info,
-    unsigned int [:] sample_indices):
+    unsigned int [::1] sample_indices):
     """Split samples into left and right arrays.
 
     The split is performed according to the best possible split (split_info).
@@ -275,9 +275,9 @@ def split_indices(
 
     cdef:
         int n_samples = sample_indices.shape[0]
-        X_BINNED_DTYPE_C [:] X_binned = context.X_binned.T[split_info.feature_idx]
-        unsigned int [:] left_indices_buffer = context.left_indices_buffer
-        unsigned int [:] right_indices_buffer = context.right_indices_buffer
+        X_BINNED_DTYPE_C [::1] X_binned = context.X_binned[:, split_info.feature_idx]
+        unsigned int [::1] left_indices_buffer = context.left_indices_buffer
+        unsigned int [::1] right_indices_buffer = context.right_indices_buffer
         int n_threads = omp_get_max_threads()
         int [:] sizes = np.full(n_threads, n_samples // n_threads, dtype=np.int32)
         int [:] offset_in_buffers = np.zeros(n_threads, dtype=np.int32)
@@ -353,8 +353,8 @@ def split_indices(
 
 def find_node_split(
     SplittingContext context,
-    unsigned int [:] sample_indices,  # IN
-    hist_struct [:, :] histograms):  # OUT
+    unsigned int [::1] sample_indices,  # IN
+    hist_struct [:, ::1] histograms):  # OUT
     """For each feature, find the best bin to split on at a given node.
 
     Returns the best split info among all features, and the histograms of
@@ -441,10 +441,10 @@ def find_node_split(
 
 def find_node_split_subtraction(
     SplittingContext context,
-    unsigned int [:] sample_indices,  # IN
-    hist_struct [:, :] parent_histograms,  # IN
-    hist_struct [:, :] sibling_histograms,  # IN
-    hist_struct [:, :] histograms):  # OUT
+    unsigned int [::1] sample_indices,  # IN
+    hist_struct [:, ::1] parent_histograms,  # IN
+    hist_struct [:, ::1] sibling_histograms,  # IN
+    hist_struct [:, ::1] histograms):  # OUT
     """For each feature, find the best bin to split on at a given node.
 
     Returns the best split info among all features, and the histograms of
@@ -563,8 +563,8 @@ cdef split_info_struct _find_best_feature_to_split_helper(
 cdef split_info_struct _find_histogram_split(
     SplittingContext context,
     unsigned int feature_idx,
-    unsigned int [:] sample_indices,  # IN
-    hist_struct [:] histogram  # OUT
+    unsigned int [::1] sample_indices,  # IN
+    hist_struct [::1] histogram  # OUT
     ) nogil:
     """Compute the histogram for a given feature
 
@@ -573,11 +573,11 @@ cdef split_info_struct _find_histogram_split(
 
     cdef:
         unsigned int n_samples = sample_indices.shape[0]
-        X_BINNED_DTYPE_C [:] X_binned = context.X_binned.T[feature_idx]
+        X_BINNED_DTYPE_C [::1] X_binned = context.X_binned[:, feature_idx]
         unsigned int root_node = X_binned.shape[0] == n_samples
-        Y_DTYPE_C [:] ordered_gradients = \
+        Y_DTYPE_C [::1] ordered_gradients = \
             context.ordered_gradients[:n_samples]
-        Y_DTYPE_C [:] ordered_hessians = context.ordered_hessians[:n_samples]
+        Y_DTYPE_C [::1] ordered_hessians = context.ordered_hessians[:n_samples]
 
     if root_node:
         if context.constant_hessian:
@@ -601,9 +601,9 @@ cdef split_info_struct _find_histogram_split(
 cdef split_info_struct _find_histogram_split_subtraction(
     SplittingContext context,
     unsigned int feature_idx,
-    hist_struct [:] parent_histogram,  # IN
-    hist_struct [:] sibling_histogram,  # IN
-    hist_struct [:] histogram,  # OUT
+    hist_struct [::1] parent_histogram,  # IN
+    hist_struct [::1] sibling_histogram,  # IN
+    hist_struct [::1] histogram,  # OUT
     unsigned int n_samples
     ) nogil:
     """Compute the histogram by substraction of parent and sibling
@@ -622,7 +622,7 @@ cdef split_info_struct _find_histogram_split_subtraction(
 cdef split_info_struct _find_best_bin_to_split_helper(
     SplittingContext context,
     unsigned int feature_idx,
-    hist_struct [:] histogram,  # IN
+    hist_struct [::1] histogram,  # IN
     unsigned int n_samples) nogil:
     """Find best bin to split on, and return the corresponding SplitInfo.
 
@@ -726,8 +726,8 @@ cdef inline Y_DTYPE_C negative_loss(
 def _find_histogram_split_wrapper(
     SplittingContext context,
     unsigned int feature_idx,
-    unsigned int [:] sample_indices,
-    hist_struct [:] histogram):
+    unsigned int [::1] sample_indices,
+    hist_struct [::1] histogram):
 
     split_info = _find_histogram_split(context, feature_idx, sample_indices,
                                        histogram)

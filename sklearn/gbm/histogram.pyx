@@ -42,9 +42,9 @@ cpdef void _build_histogram_naive(
 
 cpdef void _subtract_histograms(
     unsigned int n_bins,
-    hist_struct [:] hist_a,  # IN
-    hist_struct [:] hist_b,  # IN
-    hist_struct [:] out  # OUT
+    hist_struct [::1] hist_a,  # IN
+    hist_struct [::1] hist_b,  # IN
+    hist_struct [::1] out  # OUT
     ) nogil:
     """compute (hist_a - hist_b) in out"""
 
@@ -58,11 +58,11 @@ cpdef void _subtract_histograms(
 
 cpdef void _build_histogram(
     unsigned int n_bins,
-    unsigned int [:] sample_indices,  # IN
-    X_BINNED_DTYPE_C [:] binned_feature,  # IN
-    Y_DTYPE_C [:] ordered_gradients,  # IN
-    Y_DTYPE_C [:] ordered_hessians,  # IN
-    hist_struct [:] out  # OUT
+    unsigned int [::1] sample_indices,  # IN
+    X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    Y_DTYPE_C [::1] ordered_gradients,  # IN
+    Y_DTYPE_C [::1] ordered_hessians,  # IN
+    hist_struct [::1] out  # OUT
     ) nogil:
     """Return histogram for a given feature."""
     cdef:
@@ -106,10 +106,10 @@ cpdef void _build_histogram(
 
 cpdef void _build_histogram_no_hessian(
     unsigned int n_bins,
-    unsigned int [:] sample_indices,  # IN
-    X_BINNED_DTYPE_C [:] binned_feature,  # IN
-    Y_DTYPE_C [:] ordered_gradients,  # OUT
-    hist_struct [:] out  # OUT
+    unsigned int [::1] sample_indices,  # IN
+    X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    Y_DTYPE_C [::1] ordered_gradients,  # OUT
+    hist_struct [::1] out  # OUT
     ) nogil:
     """Return histogram for a given feature."""
     cdef:
@@ -147,9 +147,9 @@ cpdef void _build_histogram_no_hessian(
 
 cpdef void _build_histogram_root_no_hessian(
     unsigned int n_bins,
-    X_BINNED_DTYPE_C [:] binned_feature,  # IN
-    Y_DTYPE_C [:] all_gradients,  # IN
-    hist_struct [:] out  # OUT
+    X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    Y_DTYPE_C [::1] all_gradients,  # IN
+    hist_struct [::1] out  # OUT
     ) nogil:
     """Special case for the root node
 
@@ -194,10 +194,10 @@ cpdef void _build_histogram_root_no_hessian(
 
 cpdef void _build_histogram_root(
     unsigned int n_bins,
-    X_BINNED_DTYPE_C [:] binned_feature,  # IN
-    Y_DTYPE_C [:] all_gradients,  # IN
-    Y_DTYPE_C [:] all_hessians,  # IN
-    hist_struct [:] out  # OUT
+    X_BINNED_DTYPE_C [::1] binned_feature,  # IN
+    Y_DTYPE_C [::1] all_gradients,  # IN
+    Y_DTYPE_C [::1] all_hessians,  # IN
+    hist_struct [::1] out  # OUT
     ) nogil:
     """Special case for the root node
 
