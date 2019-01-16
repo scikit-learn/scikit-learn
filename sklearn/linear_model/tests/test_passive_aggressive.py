@@ -1,4 +1,3 @@
-from sklearn.utils.testing import assert_true
 import numpy as np
 import scipy.sparse as sp
 
@@ -69,6 +68,8 @@ class MyPassiveAggressive(ClassifierMixin):
         return np.dot(X, self.w) + self.b
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_classifier_accuracy():
     for data in (X, X_csr):
         for fit_intercept in (True, False):
@@ -80,12 +81,14 @@ def test_classifier_accuracy():
                 score = clf.score(data, y)
                 assert_greater(score, 0.79)
                 if average:
-                    assert_true(hasattr(clf, 'average_coef_'))
-                    assert_true(hasattr(clf, 'average_intercept_'))
-                    assert_true(hasattr(clf, 'standard_intercept_'))
-                    assert_true(hasattr(clf, 'standard_coef_'))
+                    assert hasattr(clf, 'average_coef_')
+                    assert hasattr(clf, 'average_intercept_')
+                    assert hasattr(clf, 'standard_intercept_')
+                    assert hasattr(clf, 'standard_coef_')
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_classifier_partial_fit():
     classes = np.unique(y)
     for data in (X, X_csr):
@@ -98,12 +101,14 @@ def test_classifier_partial_fit():
             score = clf.score(data, y)
             assert_greater(score, 0.79)
             if average:
-                assert_true(hasattr(clf, 'average_coef_'))
-                assert_true(hasattr(clf, 'average_intercept_'))
-                assert_true(hasattr(clf, 'standard_intercept_'))
-                assert_true(hasattr(clf, 'standard_coef_'))
+                assert hasattr(clf, 'average_coef_')
+                assert hasattr(clf, 'average_intercept_')
+                assert hasattr(clf, 'standard_intercept_')
+                assert hasattr(clf, 'standard_coef_')
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_classifier_refit():
     # Classifier can be retrained on different labels and features.
     clf = PassiveAggressiveClassifier(max_iter=5).fit(X, y)
@@ -113,6 +118,8 @@ def test_classifier_refit():
     assert_array_equal(clf.classes_, iris.target_names)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 @pytest.mark.parametrize('loss', ("hinge", "squared_hinge"))
 def test_classifier_correctness(loss):
     y_bin = y.copy()
@@ -137,6 +144,8 @@ def test_classifier_undefined_methods():
         assert_raises(AttributeError, lambda x: getattr(clf, x), meth)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_class_weights():
     # Test class weights.
     X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -159,12 +168,16 @@ def test_class_weights():
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_partial_fit_weight_class_balanced():
     # partial_fit with class_weight='balanced' not supported
     clf = PassiveAggressiveClassifier(class_weight="balanced", max_iter=100)
     assert_raises(ValueError, clf.partial_fit, X, y, classes=np.unique(y))
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_equal_class_weight():
     X2 = [[1, 0], [1, 0], [0, 1], [0, 1]]
     y2 = [0, 0, 1, 1]
@@ -186,6 +199,8 @@ def test_equal_class_weight():
     assert_almost_equal(clf.coef_, clf_balanced.coef_, decimal=2)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_wrong_class_weight_label():
     # ValueError due to wrong class_weight label.
     X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -196,6 +211,8 @@ def test_wrong_class_weight_label():
     assert_raises(ValueError, clf.fit, X2, y2)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_wrong_class_weight_format():
     # ValueError due to wrong class_weight argument type.
     X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -209,6 +226,8 @@ def test_wrong_class_weight_format():
     assert_raises(ValueError, clf.fit, X2, y2)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_regressor_mse():
     y_bin = y.copy()
     y_bin[y != 1] = -1
@@ -223,12 +242,14 @@ def test_regressor_mse():
                 pred = reg.predict(data)
                 assert_less(np.mean((pred - y_bin) ** 2), 1.7)
                 if average:
-                    assert_true(hasattr(reg, 'average_coef_'))
-                    assert_true(hasattr(reg, 'average_intercept_'))
-                    assert_true(hasattr(reg, 'standard_intercept_'))
-                    assert_true(hasattr(reg, 'standard_coef_'))
+                    assert hasattr(reg, 'average_coef_')
+                    assert hasattr(reg, 'average_intercept_')
+                    assert hasattr(reg, 'standard_intercept_')
+                    assert hasattr(reg, 'standard_coef_')
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_regressor_partial_fit():
     y_bin = y.copy()
     y_bin[y != 1] = -1
@@ -243,12 +264,14 @@ def test_regressor_partial_fit():
             pred = reg.predict(data)
             assert_less(np.mean((pred - y_bin) ** 2), 1.7)
             if average:
-                assert_true(hasattr(reg, 'average_coef_'))
-                assert_true(hasattr(reg, 'average_intercept_'))
-                assert_true(hasattr(reg, 'standard_intercept_'))
-                assert_true(hasattr(reg, 'standard_coef_'))
+                assert hasattr(reg, 'average_coef_')
+                assert hasattr(reg, 'average_intercept_')
+                assert hasattr(reg, 'standard_intercept_')
+                assert hasattr(reg, 'standard_coef_')
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 @pytest.mark.parametrize(
         'loss',
         ("epsilon_insensitive", "squared_epsilon_insensitive"))

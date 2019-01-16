@@ -207,7 +207,7 @@ otherwise the features will not be mapped evenly to the columns.
 
  * Kilian Weinberger, Anirban Dasgupta, John Langford, Alex Smola and
    Josh Attenberg (2009). `Feature hashing for large scale multitask learning
-   <http://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
+   <https://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
 
  * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
 
@@ -409,7 +409,7 @@ identify and warn about some kinds of inconsistencies.
 
     .. [NQY18] J. Nothman, H. Qin and R. Yurchak (2018).
                `"Stop Word Lists in Free Open-source Software Packages"
-               <http://aclweb.org/anthology/W18-2502>`__.
+               <https://aclweb.org/anthology/W18-2502>`__.
                In *Proc. Workshop for NLP Open Source Software*.
 
 .. _tfidf:
@@ -673,7 +673,7 @@ The output is not shown here.
 
 For an introduction to Unicode and character encodings in general,
 see Joel Spolsky's `Absolute Minimum Every Software Developer Must Know
-About Unicode <http://www.joelonsoftware.com/articles/Unicode.html>`_.
+About Unicode <https://www.joelonsoftware.com/articles/Unicode.html>`_.
 
 .. _`ftfy`: https://github.com/LuminosoInsight/python-ftfy
 
@@ -735,9 +735,9 @@ decide better::
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
 
-In the above example, ``'char_wb`` analyzer is used, which creates n-grams
+In the above example, ``char_wb`` analyzer is used, which creates n-grams
 only from characters inside word boundaries (padded with space on each
-side). The ``'char'`` analyzer, alternatively, creates n-grams that
+side). The ``char`` analyzer, alternatively, creates n-grams that
 span across words::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5))
@@ -932,7 +932,7 @@ Some tips and tricks:
     scikit-learn codebase, but can be added by customizing either the
     tokenizer or the analyzer.
     Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using
-    `NLTK <http://www.nltk.org>`_::
+    `NLTK <https://www.nltk.org/>`_::
 
         >>> from nltk import word_tokenize          # doctest: +SKIP
         >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
@@ -961,7 +961,7 @@ Some tips and tricks:
         ...
         >>> class CustomVectorizer(CountVectorizer):
         ...     def build_tokenizer(self):
-        ...         tokenize = super(CustomVectorizer, self).build_tokenizer()
+        ...         tokenize = super().build_tokenizer()
         ...         return lambda doc: list(to_british(tokenize(doc)))
         ...
         >>> print(CustomVectorizer().build_analyzer()(u"color colour")) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS

@@ -18,10 +18,9 @@ from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
-from ..utils import Parallel, delayed, effective_n_jobs
-from ..externals import six
-from ..externals.six.moves import xrange
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 from ..exceptions import ConvergenceWarning
@@ -619,10 +618,10 @@ class ElasticNet(LinearModel, RegressorMixin):
     --------
     >>> from sklearn.linear_model import ElasticNet
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=2, random_state=0)
     >>> regr = ElasticNet(random_state=0)
-    >>> regr.fit(X, y)
+    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     ElasticNet(alpha=1.0, copy_X=True, fit_intercept=True, l1_ratio=0.5,
           max_iter=1000, normalize=False, positive=False, precompute=False,
           random_state=0, selection='cyclic', tol=0.0001, warm_start=False)
@@ -697,7 +696,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
 
-        if isinstance(self.precompute, six.string_types):
+        if isinstance(self.precompute, str):
             raise ValueError('precompute should be one of True, False or'
                              ' array-like. Got %r' % self.precompute)
 
@@ -741,7 +740,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
-        for k in xrange(n_targets):
+        for k in range(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
             else:
@@ -801,7 +800,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             return safe_sparse_dot(X, self.coef_.T,
                                    dense_output=True) + self.intercept_
         else:
-            return super(ElasticNet, self)._decision_function(X)
+            return super()._decision_function(X)
 
 
 ###############################################################################
@@ -902,6 +901,7 @@ class Lasso(ElasticNet):
     >>> from sklearn import linear_model
     >>> clf = linear_model.Lasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [0, 1, 2])
+    ... # doctest: +NORMALIZE_WHITESPACE
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
@@ -932,7 +932,7 @@ class Lasso(ElasticNet):
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
-        super(Lasso, self).__init__(
+        super().__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
             max_iter=max_iter, tol=tol, warm_start=warm_start,
@@ -1048,7 +1048,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     return this_mses
 
 
-class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
+class LinearModelCV(LinearModel, metaclass=ABCMeta):
     """Base class for iterative model fitting along a regularization path"""
 
     @abstractmethod
@@ -1166,14 +1166,11 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
         if alphas is None:
-            alphas = []
-            for l1_ratio in l1_ratios:
-                alphas.append(_alpha_grid(
-                    X, y, l1_ratio=l1_ratio,
-                    fit_intercept=self.fit_intercept,
-                    eps=self.eps, n_alphas=self.n_alphas,
-                    normalize=self.normalize,
-                    copy_X=self.copy_X))
+            alphas = [_alpha_grid(X, y, l1_ratio=l1_ratio,
+                                  fit_intercept=self.fit_intercept,
+                                  eps=self.eps, n_alphas=self.n_alphas,
+                                  normalize=self.normalize, copy_X=self.copy_X)
+                      for l1_ratio in l1_ratios]
         else:
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
@@ -1203,7 +1200,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
                 for train, test in folds)
         mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                             prefer="threads")(jobs)
+                             **_joblib_parallel_args(prefer="threads"))(jobs)
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
@@ -1246,7 +1243,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
 
 class LassoCV(LinearModelCV, RegressorMixin):
-    """Lasso linear model with iterative fitting along a regularization path
+    """Lasso linear model with iterative fitting along a regularization path.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The best model is selected by cross-validation.
 
@@ -1305,8 +1304,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1402,7 +1401,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv='warn', verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
-        super(LassoCV, self).__init__(
+        super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
@@ -1411,9 +1410,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
-    """Elastic Net model with iterative fitting along a regularization path
+    """Elastic Net model with iterative fitting along a regularization path.
 
-    The best model is selected by cross-validation.
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <elastic_net>`.
 
@@ -1475,8 +1474,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1546,10 +1545,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     --------
     >>> from sklearn.linear_model import ElasticNetCV
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=2, random_state=0)
     >>> regr = ElasticNetCV(cv=5, random_state=0)
-    >>> regr.fit(X, y)
+    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     ElasticNetCV(alphas=None, copy_X=True, cv=5, eps=0.001, fit_intercept=True,
            l1_ratio=0.5, max_iter=1000, n_alphas=100, n_jobs=None,
            normalize=False, positive=False, precompute='auto', random_state=0,
@@ -1793,7 +1792,7 @@ class MultiTaskElasticNet(Lasso):
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
 
-        if not self.warm_start or self.coef_ is None:
+        if not self.warm_start or not hasattr(self, "coef_"):
             self.coef_ = np.zeros((n_tasks, n_features), dtype=X.dtype.type,
                                   order='F')
 
@@ -1823,7 +1822,7 @@ class MultiTaskElasticNet(Lasso):
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
-    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     The optimization objective for Lasso is::
 
@@ -1904,6 +1903,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> from sklearn import linear_model
     >>> clf = linear_model.MultiTaskLasso(alpha=0.1)
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
+    ... # doctest: +NORMALIZE_WHITESPACE
     MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
             normalize=False, random_state=None, selection='cyclic', tol=0.0001,
             warm_start=False)
@@ -1943,6 +1943,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     """Multi-task L1/L2 ElasticNet with built-in cross-validation.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -2011,8 +2013,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -2130,7 +2132,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
-    """Multi-task L1/L2 Lasso with built-in cross-validation.
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for MultiTaskLasso is::
 
@@ -2188,8 +2192,8 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -2278,7 +2282,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
                  cv='warn', verbose=False, n_jobs=None, random_state=None,
                  selection='cyclic'):
-        super(MultiTaskLassoCV, self).__init__(
+        super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             max_iter=max_iter, tol=tol, copy_X=copy_X,

@@ -137,7 +137,7 @@ def _average_precision_slow(y_true, y_score):
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-       <http://en.wikipedia.org/wiki/Average_precision>`_
+       <https://en.wikipedia.org/wiki/Average_precision>`_
     """
     precision, recall, threshold = precision_recall_curve(y_true, y_score)
     precision = list(reversed(precision))
@@ -682,15 +682,21 @@ def test_average_precision_constant_values():
     assert_equal(average_precision_score(y_true, y_score), .25)
 
 
-def test_average_precision_score_pos_label_multilabel_indicator():
+def test_average_precision_score_pos_label_errors():
+    # Raise an error when pos_label is not in binary y_true
+    y_true = np.array([0, 1])
+    y_pred = np.array([0, 1])
+    error_message = ("pos_label=2 is invalid. Set it to a label in y_true.")
+    assert_raise_message(ValueError, error_message, average_precision_score,
+                         y_true, y_pred, pos_label=2)
     # Raise an error for multilabel-indicator y_true with
     # pos_label other than 1
     y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
     y_pred = np.array([[0.9, 0.1], [0.1, 0.9], [0.8, 0.2], [0.2, 0.8]])
-    erorr_message = ("Parameter pos_label is fixed to 1 for multilabel"
+    error_message = ("Parameter pos_label is fixed to 1 for multilabel"
                      "-indicator y_true. Do not set pos_label or set "
                      "pos_label to 1.")
-    assert_raise_message(ValueError, erorr_message, average_precision_score,
+    assert_raise_message(ValueError, error_message, average_precision_score,
                          y_true, y_pred, pos_label=0)
 
 

@@ -594,21 +594,20 @@ learners. Decision trees have a number of abilities that make them
 valuable for boosting, namely the ability to handle data of mixed type
 and the ability to model complex functions.
 
-Similar to other boosting algorithms GBRT builds the additive model in
-a forward stagewise fashion:
+Similar to other boosting algorithms, GBRT builds the additive model in
+a greedy fashion:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
+    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x),
 
-At each stage the decision tree :math:`h_m(x)` is chosen to
-minimize the loss function :math:`L` given the current model
-:math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
+where the newly added tree :math:`h_m` tries to minimize the loss :math:`L`,
+given the previous ensemble :math:`F_{m-1}`:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) + h(x))
+    h_m =  \arg\min_{h} \sum_{i=1}^{n} L(y_i,
+    F_{m-1}(x_i) + h(x_i)).
 
 The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.
@@ -1034,19 +1033,20 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
 
    >>> # Loading some example data
    >>> iris = datasets.load_iris()
-   >>> X = iris.data[:, [0,2]]
+   >>> X = iris.data[:, [0, 2]]
    >>> y = iris.target
 
    >>> # Training classifiers
    >>> clf1 = DecisionTreeClassifier(max_depth=4)
    >>> clf2 = KNeighborsClassifier(n_neighbors=7)
    >>> clf3 = SVC(gamma='scale', kernel='rbf', probability=True)
-   >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)], voting='soft', weights=[2,1,2])
+   >>> eclf = VotingClassifier(estimators=[('dt', clf1), ('knn', clf2), ('svc', clf3)],
+   ...                         voting='soft', weights=[2, 1, 2])
 
-   >>> clf1 = clf1.fit(X,y)
-   >>> clf2 = clf2.fit(X,y)
-   >>> clf3 = clf3.fit(X,y)
-   >>> eclf = eclf.fit(X,y)
+   >>> clf1 = clf1.fit(X, y)
+   >>> clf2 = clf2.fit(X, y)
+   >>> clf3 = clf3.fit(X, y)
+   >>> eclf = eclf.fit(X, y)
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_decision_regions_001.png
     :target: ../auto_examples/ensemble/plot_voting_decision_regions.html
@@ -1066,7 +1066,7 @@ to tune the hyperparameters of the individual estimators::
    >>> clf3 = GaussianNB()
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
 
-   >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200],}
+   >>> params = {'lr__C': [1.0, 100.0], 'rf__n_estimators': [20, 200]}
 
    >>> grid = GridSearchCV(estimator=eclf, param_grid=params, cv=5)
    >>> grid = grid.fit(iris.data, iris.target)
@@ -1082,4 +1082,5 @@ must support ``predict_proba`` method)::
 
 Optionally, weights can be provided for the individual classifiers::
 
-   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft', weights=[2,5,1])
+   >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+   ...                         voting='soft', weights=[2, 5, 1])

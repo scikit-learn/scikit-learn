@@ -76,7 +76,7 @@ Loading an example dataset
 
 `scikit-learn` comes with a few standard datasets, for instance the
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
-<http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
+<https://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
 datasets for classification and the `boston house prices dataset
 <https://archive.ics.uci.edu/ml/machine-learning-databases/housing/>`_ for regression.
 
@@ -238,19 +238,19 @@ joblib's replacement for pickle (``joblib.dump`` & ``joblib.load``),
 which is more efficient on big data but it can only pickle to the disk
 and not to a string::
 
-  >>> from sklearn.externals import joblib
-  >>> joblib.dump(clf, 'filename.joblib') # doctest: +SKIP
+  >>> from joblib import dump, load
+  >>> dump(clf, 'filename.joblib') # doctest: +SKIP
 
 Later, you can reload the pickled model (possibly in another Python process)
 with::
 
-  >>> clf = joblib.load('filename.joblib') # doctest:+SKIP
+  >>> clf = load('filename.joblib') # doctest:+SKIP
 
 .. note::
 
     ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
     instead of filenames. More information on data persistence with Joblib is
-    available `here <https://pythonhosted.org/joblib/persistence.html>`_.
+    available `here <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 
 Note that pickle has some security and maintainability issues. Please refer to
 section :ref:`model_persistence` for more detailed information about model
@@ -391,15 +391,15 @@ Note that the fourth and fifth instances returned all zeroes, indicating that
 they matched none of the three labels ``fit`` upon. With multilabel outputs, it
 is similarly possible for an instance to be assigned multiple labels::
 
-  >> from sklearn.preprocessing import MultiLabelBinarizer
-  >> y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
-  >> y = MultiLabelBinarizer().fit_transform(y)
-  >> classif.fit(X, y).predict(X)
+  >>> from sklearn.preprocessing import MultiLabelBinarizer
+  >>> y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
+  >>> y = MultiLabelBinarizer().fit_transform(y)
+  >>> classif.fit(X, y).predict(X)
   array([[1, 1, 0, 0, 0],
          [1, 0, 1, 0, 0],
          [0, 1, 0, 1, 0],
-         [1, 0, 1, 1, 0],
-         [0, 0, 1, 0, 1]])
+         [1, 0, 1, 0, 0],
+         [1, 0, 1, 0, 0]])
 
 In this case, the classifier is fit upon instances each assigned multiple labels.
 The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>` is

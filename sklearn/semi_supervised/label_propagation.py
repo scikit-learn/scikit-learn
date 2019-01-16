@@ -64,7 +64,6 @@ from scipy import sparse
 from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..externals import six
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors.unsupervised import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
@@ -73,8 +72,7 @@ from ..utils.validation import check_X_y, check_is_fitted, check_array
 from ..exceptions import ConvergenceWarning
 
 
-class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
-                                              ClassifierMixin)):
+class BaseLabelPropagation(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
     """Base class for label propagation module.
 
     Parameters
@@ -193,11 +191,9 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                                              'bsr', 'lil', 'dia'])
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
-            probabilities = []
-            for weight_matrix in weight_matrices:
-                ine = np.sum(self.label_distributions_[weight_matrix], axis=0)
-                probabilities.append(ine)
-            probabilities = np.array(probabilities)
+            probabilities = np.array([
+                np.sum(self.label_distributions_[weight_matrix], axis=0)
+                for weight_matrix in weight_matrices])
         else:
             weight_matrices = weight_matrices.T
             probabilities = np.dot(weight_matrices, self.label_distributions_)
@@ -322,13 +318,6 @@ class LabelPropagation(BaseLabelPropagation):
     n_neighbors : integer > 0
         Parameter for knn kernel
 
-    alpha : float
-        Clamping factor.
-
-        .. deprecated:: 0.19
-            This parameter will be removed in 0.21.
-            'alpha' is fixed to zero in 'LabelPropagation'.
-
     max_iter : integer
         Change maximum number of iterations allowed
 
@@ -388,10 +377,10 @@ class LabelPropagation(BaseLabelPropagation):
     _variant = 'propagation'
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=None, max_iter=1000, tol=1e-3, n_jobs=None):
-        super(LabelPropagation, self).__init__(
-            kernel=kernel, gamma=gamma, n_neighbors=n_neighbors, alpha=alpha,
-            max_iter=max_iter, tol=tol, n_jobs=n_jobs)
+                 max_iter=1000, tol=1e-3, n_jobs=None):
+        super().__init__(kernel=kernel, gamma=gamma,
+                         n_neighbors=n_neighbors, max_iter=max_iter,
+                         tol=tol, n_jobs=n_jobs, alpha=None)
 
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -410,13 +399,7 @@ class LabelPropagation(BaseLabelPropagation):
         return affinity_matrix
 
     def fit(self, X, y):
-        if self.alpha is not None:
-            warnings.warn(
-                "alpha is deprecated since 0.19 and will be removed in 0.21.",
-                DeprecationWarning
-            )
-            self.alpha = None
-        return super(LabelPropagation, self).fit(X, y)
+        return super().fit(X, y)
 
 
 class LabelSpreading(BaseLabelPropagation):
@@ -511,11 +494,9 @@ class LabelSpreading(BaseLabelPropagation):
                  max_iter=30, tol=1e-3, n_jobs=None):
 
         # this one has different base parameters
-        super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
-                                             n_neighbors=n_neighbors,
-                                             alpha=alpha, max_iter=max_iter,
-                                             tol=tol,
-                                             n_jobs=n_jobs)
+        super().__init__(kernel=kernel, gamma=gamma,
+                         n_neighbors=n_neighbors, alpha=alpha,
+                         max_iter=max_iter, tol=tol, n_jobs=n_jobs)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""

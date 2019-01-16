@@ -3,6 +3,7 @@ from __future__ import division, print_function
 from functools import partial
 from itertools import product
 from itertools import chain
+from itertools import permutations
 
 import numpy as np
 import scipy.sparse as sp
@@ -17,6 +18,7 @@ from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
@@ -40,10 +42,12 @@ from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import log_loss
+from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import median_absolute_error
+from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
@@ -89,6 +93,7 @@ from sklearn.metrics.base import _average_binary_score
 #
 
 REGRESSION_METRICS = {
+    "max_error": max_error,
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
@@ -113,6 +118,9 @@ CLASSIFICATION_METRICS = {
             *args, **kwargs).sum(axis=1)[:, np.newaxis]
     ),
 
+    "unnormalized_multilabel_confusion_matrix": multilabel_confusion_matrix,
+    "unnormalized_multilabel_confusion_matrix_sample":
+        partial(multilabel_confusion_matrix, samplewise=True),
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
@@ -241,6 +249,7 @@ METRIC_UNDEFINED_BINARY = {
     "samples_precision_score",
     "samples_recall_score",
     "coverage_error",
+    "unnormalized_multilabel_confusion_matrix_sample",
     "label_ranking_loss",
     "label_ranking_average_precision_score",
 }
@@ -332,6 +341,8 @@ METRICS_WITH_LABELS = {
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+    "unnormalized_multilabel_confusion_matrix",
+    "unnormalized_multilabel_confusion_matrix_sample",
 
     "cohen_kappa_score",
 }
@@ -373,6 +384,7 @@ MULTILABELS_METRICS = {
 
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
+    "unnormalized_multilabel_confusion_matrix",
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
@@ -399,7 +411,7 @@ SYMMETRIC_METRICS = {
     "micro_precision_score", "micro_recall_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
-    "median_absolute_error",
+    "median_absolute_error", "max_error",
 
     "cohen_kappa_score",
 }
@@ -419,7 +431,7 @@ NOT_SYMMETRIC_METRICS = {
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_precision_score",
+    "weighted_precision_score", "unnormalized_multilabel_confusion_matrix",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss"
@@ -429,6 +441,7 @@ NOT_SYMMETRIC_METRICS = {
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "median_absolute_error",
+    "max_error"
 }
 
 
@@ -1190,3 +1203,47 @@ def test_no_averaging_labels():
             score_labels = metric(y_true, y_pred, labels=labels, average=None)
             score = metric(y_true, y_pred, average=None)
             assert_array_equal(score_labels, score[inverse_labels])
+
+
+@pytest.mark.parametrize(
+    'name', MULTILABELS_METRICS - {"unnormalized_multilabel_confusion_matrix"})
+def test_multilabel_label_permutations_invariance(name):
+    random_state = check_random_state(0)
+    n_samples, n_classes = 20, 4
+
+    y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
+    y_score = random_state.randint(0, 2, size=(n_samples, n_classes))
+
+    metric = ALL_METRICS[name]
+    score = metric(y_true, y_score)
+
+    for perm in permutations(range(n_classes), n_classes):
+        y_score_perm = y_score[:, perm]
+        y_true_perm = y_true[:, perm]
+
+        current_score = metric(y_true_perm, y_score_perm)
+        assert_almost_equal(score, current_score)
+
+
+@pytest.mark.parametrize(
+    'name', THRESHOLDED_MULTILABEL_METRICS | MULTIOUTPUT_METRICS)
+def test_thresholded_multilabel_multioutput_permutations_invariance(name):
+    random_state = check_random_state(0)
+    n_samples, n_classes = 20, 4
+    y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
+    y_score = random_state.normal(size=y_true.shape)
+
+    # Makes sure all samples have at least one label. This works around errors
+    # when running metrics where average="sample"
+    y_true[y_true.sum(1) == 4, 0] = 0
+    y_true[y_true.sum(1) == 0, 0] = 1
+
+    metric = ALL_METRICS[name]
+    score = metric(y_true, y_score)
+
+    for perm in permutations(range(n_classes), n_classes):
+        y_score_perm = y_score[:, perm]
+        y_true_perm = y_true[:, perm]
+
+        current_score = metric(y_true_perm, y_score_perm)
+        assert_almost_equal(score, current_score)
