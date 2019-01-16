@@ -4,6 +4,9 @@ from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.gbm.types import HISTOGRAM_DTYPE
+from sklearn.gbm.types import X_DTYPE
+from sklearn.gbm.types import X_BINNED_DTYPE
+from sklearn.gbm.types import Y_DTYPE
 from sklearn.gbm.splitting import SplittingContext
 from sklearn.gbm.splitting import find_node_split
 from pygbm.splitting import SplittingContext as SplittingContext_pygbm
@@ -24,10 +27,10 @@ n_exp = 10
 
 n_samples = 10**max_pow
 
-X_binned_ = rng.randint(0, n_bins, size=(n_samples, n_features), dtype=np.uint8)
+X_binned_ = rng.randint(0, n_bins, size=(n_samples, n_features), dtype=X_BINNED_DTYPE)
 sample_indices_ = np.arange(n_samples, dtype=np.uint32)
-all_gradients_ = rng.randn(n_samples).astype(np.float32)
-all_hessians_ = rng.lognormal(size=n_samples).astype(np.float32)
+all_gradients_ = rng.randn(n_samples).astype(Y_DTYPE)
+all_hessians_ = rng.lognormal(size=n_samples).astype(Y_DTYPE)
 
 def one_run(n_samples):
 
@@ -44,6 +47,8 @@ def one_run(n_samples):
                             all_gradients, all_hessians,
                             l2_regularization, min_hessian_to_split,
                             min_samples_leaf, min_gain_to_split)
+    all_gradients = all_gradients.astype(np.float32)
+    all_hessians = all_hessians.astype(np.float32)
     pygbm_context = SplittingContext_pygbm(X_binned, n_bins,
                                            n_bins_per_feature,
                                            all_gradients, all_hessians,

@@ -17,26 +17,28 @@ from pygbm.histogram import _build_histogram_root as pygbm_build_histogram_root
 from pygbm.histogram import _build_histogram_root_no_hessian as pygbm_build_histogram_root_no_hessian
 from pygbm.histogram import _subtract_histograms as pygbm_subtract_histograms
 
-from sklearn.ensemble.gbm.histogram import _build_histogram_naive
-from sklearn.ensemble.gbm.histogram import _build_histogram
-from sklearn.ensemble.gbm.histogram import _build_histogram_no_hessian
-from sklearn.ensemble.gbm.histogram import _build_histogram_root
-from sklearn.ensemble.gbm.histogram import _build_histogram_root_no_hessian
-from sklearn.ensemble.gbm.histogram import _subtract_histograms
-from sklearn.ensemble.gbm.types import HISTOGRAM_DTYPE
+from sklearn.gbm.histogram import _build_histogram_naive
+from sklearn.gbm.histogram import _build_histogram
+from sklearn.gbm.histogram import _build_histogram_no_hessian
+from sklearn.gbm.histogram import _build_histogram_root
+from sklearn.gbm.histogram import _build_histogram_root_no_hessian
+from sklearn.gbm.histogram import _subtract_histograms
+from sklearn.gbm.types import HISTOGRAM_DTYPE
+from sklearn.gbm.types import X_DTYPE
+from sklearn.gbm.types import X_BINNED_DTYPE
+from sklearn.gbm.types import Y_DTYPE
 
 
 m = Memory(location='/tmp')
 
 @m.cache
-def make_data(n_bins=256, n_samples=int(1e8), loss_dtype=np.float32,
-              binned_feature_dtype=np.uint8, seed=42):
+def make_data(n_bins=256, n_samples=int(1e8), seed=42):
     rng = np.random.RandomState(seed)
 
     sample_indices = np.arange(n_samples, dtype=np.uint32)
-    ordered_gradients = rng.randn(n_samples).astype(loss_dtype)
-    ordered_hessians = rng.exponential(size=n_samples).astype(loss_dtype)
-    binned_feature = rng.randint(0, n_bins, size=n_samples, dtype=np.uint8)
+    ordered_gradients = rng.randn(n_samples).astype(Y_DTYPE)
+    ordered_hessians = rng.exponential(size=n_samples).astype(Y_DTYPE)
+    binned_feature = rng.randint(0, n_bins, size=n_samples, dtype=X_BINNED_DTYPE)
     return sample_indices, binned_feature, ordered_gradients, ordered_hessians
 
 
@@ -63,7 +65,6 @@ def one_run(sklearn_fun, pygbm_fun):
         # specal case for subtract... crappy
         a = pygbm_build_histogram(n_bins, sample_indices, binned_feature, gradients, hessians)
         b = pygbm_build_histogram(n_bins, sample_indices, binned_feature, gradients, hessians)
-        histogram = np.zeros(n_bins, dtype=HISTOGRAM_DTYPE)
 
         args = [n_bins, a, b]
         tic = time()
@@ -71,7 +72,11 @@ def one_run(sklearn_fun, pygbm_fun):
         pygbm_duration = time() - tic
         print(f"pygbm: Built in {pygbm_duration:.3f}s")
 
+        a = a.astype(HISTOGRAM_DTYPE)
+        b = b.astype(HISTOGRAM_DTYPE)
+        args = [n_bins, a, b]
         tic = time()
+        histogram = np.zeros(n_bins, dtype=HISTOGRAM_DTYPE)
         args.append(histogram)
         sklearn_fun(*args)
         sklearn_duration = time() - tic

@@ -390,6 +390,12 @@ def find_node_split(
         # For some reason, we need to use local variables for prange reduction.
         Y_DTYPE_C sum_gradients = 0.
         Y_DTYPE_C sum_hessians = 0.
+        # Also, need local views to avoid python interactions
+        Y_DTYPE_C [::1] ordered_gradients = context.ordered_gradients
+        Y_DTYPE_C [::1] gradients = context.gradients
+        Y_DTYPE_C [::1] ordered_hessians = context.ordered_hessians
+        Y_DTYPE_C [::1] hessians = context.hessians
+
 
     with nogil:
         n_samples = sample_indices.shape[0]
@@ -399,28 +405,25 @@ def find_node_split(
         if sample_indices.shape[0] != context.gradients.shape[0]:
             if context.constant_hessian:
                 for i in prange(n_samples, schedule='static'):
-                    context.ordered_gradients[i] = \
-                        context.gradients[sample_indices[i]]
+                    ordered_gradients[i] = gradients[sample_indices[i]]
             else:
                 for i in prange(n_samples, schedule='static'):
-                    context.ordered_gradients[i] = \
-                        context.gradients[sample_indices[i]]
-                    context.ordered_hessians[i] = \
-                        context.hessians[sample_indices[i]]
+                    ordered_gradients[i] = gradients[sample_indices[i]]
+                    ordered_hessians[i] = hessians[sample_indices[i]]
 
         # Compute context.sum_gradients and context.sum_hessians
-        for i in prange(n_samples, schedule='static'):
-            sum_gradients += context.ordered_gradients[i]
+        # for i in prange(n_samples, schedule='static'):
+        for i in range(n_samples):
+            sum_gradients += ordered_gradients[i]
         context.sum_gradients = sum_gradients
 
         if context.constant_hessian:
             sum_hessians = context.constant_hessian_value * n_samples
         else:
             for i in prange(n_samples, schedule='static'):
-                sum_hessians += context.ordered_hessians[i]
+                sum_hessians += ordered_hessians[i]
         context.sum_hessians = sum_hessians
 
-        # TODO: this needs to be freed at some point
         split_infos = <split_info_struct *> malloc(
             context.n_features * sizeof(split_info_struct))
         for feature_idx in prange(context.n_features):
@@ -430,7 +433,7 @@ def find_node_split(
 
         split_info = _find_best_feature_to_split_helper(context, split_infos)
 
-    return SplitInfo(
+    out = SplitInfo(
         split_info.gain,
         split_info.feature_idx,
         split_info.bin_idx,
@@ -441,7 +444,8 @@ def find_node_split(
         split_info.n_samples_left,
         split_info.n_samples_right,
     )
-
+    free(split_infos)
+    return out
 
 def find_node_split_subtraction(
     SplittingContext context,
@@ -503,7 +507,6 @@ def find_node_split_subtraction(
         context.sum_gradients = sum_gradients
         context.sum_hessians = sum_hessians
 
-        # TODO: this needs to be freed at some point
         split_infos = <split_info_struct *> malloc(
             context.n_features * sizeof(split_info_struct))
         for feature_idx in prange(context.n_features):
@@ -515,7 +518,7 @@ def find_node_split_subtraction(
 
         split_info = _find_best_feature_to_split_helper(context, split_infos)
 
-    return SplitInfo(
+    out = SplitInfo(
         split_info.gain,
         split_info.feature_idx,
         split_info.bin_idx,
@@ -526,6 +529,8 @@ def find_node_split_subtraction(
         split_info.n_samples_left,
         split_info.n_samples_right,
     )
+    free(split_infos)
+    return out
 
 
 cdef split_info_struct _find_best_feature_to_split_helper(
