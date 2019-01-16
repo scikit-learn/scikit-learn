@@ -146,6 +146,12 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
 
+- |Enhancement| Add `min_fpr`, `min_tpr`, and `max_tpr` options to
+  :func:`metrics.roc_auc_score` to calculate the standardize partial AUC
+  over the range of [`min_fpr`, `max_fpr`].
+  :issue:`11668` by :user:`Joel Nothman`_ and
+  `Zijie (ZJ) Poh <poh.zijie@gmail.com>`
+
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
