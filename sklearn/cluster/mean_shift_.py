@@ -78,7 +78,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-   
+
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
@@ -209,7 +209,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-   
+
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
