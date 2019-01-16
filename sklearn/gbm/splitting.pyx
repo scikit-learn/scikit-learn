@@ -446,6 +446,8 @@ def find_node_split(
 def find_node_split_subtraction(
     SplittingContext context,
     unsigned int [::1] sample_indices,  # IN
+    Y_DTYPE_C sum_gradients,
+    Y_DTYPE_C sum_hessians,
     hist_struct [:, ::1] parent_histograms,  # IN
     hist_struct [:, ::1] sibling_histograms,  # IN
     hist_struct [:, ::1] histograms):  # OUT
@@ -498,26 +500,8 @@ def find_node_split_subtraction(
     with nogil:
         n_samples = sample_indices.shape[0]
 
-        # TODO: maybe change this computation... we could probably store sum_g/h in
-        # the SplitInfo for a speed gain
-        # Compute sum_hessians and sum_gradients.
-        # We can pick any feature (here the first) in the histograms to
-        # compute the gradients: they must be the same across all features
-        # anyway, we have tests ensuring this. Maybe a more robust way would
-        # be to compute an average but it's probably not worth it.
-        context.sum_gradients = 0.
-        for i in range(context.max_bins):
-            context.sum_gradients += (parent_histograms[0, i].sum_gradients -
-                                      sibling_histograms[0, i].sum_gradients)
-
-        if context.constant_hessian:
-            context.sum_hessians = \
-                context.constant_hessian_value * n_samples
-        else:
-            context.sum_hessians = 0.
-            for i in range(context.max_bins):
-                context.sum_hessians += (parent_histograms[0, i].sum_hessians -
-                                         sibling_histograms[0, i].sum_hessians)
+        context.sum_gradients = sum_gradients
+        context.sum_hessians = sum_hessians
 
         # TODO: this needs to be freed at some point
         split_infos = <split_info_struct *> malloc(

@@ -93,10 +93,6 @@ def test_split_vs_split_subtraction(constant_hessian):
                                l2_regularization, min_hessian_to_split,
                                min_samples_leaf, min_gain_to_split)
 
-    mask = rng.randint(0, 2, n_samples).astype(np.bool)
-    sample_indices_left = sample_indices[mask]
-    sample_indices_right = sample_indices[~mask]
-
     hists_parent = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
     hists_left = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
     hists_right = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
@@ -104,17 +100,21 @@ def test_split_vs_split_subtraction(constant_hessian):
     hists_right_sub = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
 
     # first split parent, left and right with classical method
-    _ = find_node_split(context, sample_indices, hists_parent)
+    si_parent = find_node_split(context, sample_indices, hists_parent)
+    sample_indices_left, sample_indices_right, _ = split_indices(
+        context, si_parent, sample_indices)
     si_left = find_node_split(context, sample_indices_left, hists_left)
     si_right = find_node_split(context, sample_indices_right, hists_right)
 
     # split left with subtraction method
     si_left_sub = find_node_split_subtraction(
-        context, sample_indices_left, hists_parent, hists_right, hists_left_sub)
+        context, sample_indices_left, si_parent.gradient_left,
+        si_parent.hessian_left, hists_parent, hists_right, hists_left_sub)
 
     # split right with subtraction method
     si_right_sub = find_node_split_subtraction(
-        context, sample_indices_right, hists_parent, hists_left, hists_right_sub)
+        context, sample_indices_right, si_parent.gradient_right,
+        si_parent.hessian_right, hists_parent, hists_left, hists_right_sub)
 
     # make sure histograms from classical and subtraction method are the same
     for hists, hists_sub in ((hists_left, hists_left_sub),
@@ -179,10 +179,6 @@ def test_gradient_and_hessian_sanity(constant_hessian):
                                l2_regularization, min_hessian_to_split,
                                min_samples_leaf, min_gain_to_split)
 
-    mask = rng.randint(0, 2, n_samples).astype(np.bool)
-    sample_indices_left = sample_indices[mask]
-    sample_indices_right = sample_indices[~mask]
-
     hists_parent = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
     hists_left = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
     hists_right = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
@@ -191,16 +187,21 @@ def test_gradient_and_hessian_sanity(constant_hessian):
 
     # first split parent, left and right with classical method
     si_parent = find_node_split(context, sample_indices, hists_parent)
+    sample_indices_left, sample_indices_right, _ = split_indices(
+        context, si_parent, sample_indices)
+
     si_left = find_node_split(context, sample_indices_left, hists_left)
     si_right = find_node_split(context, sample_indices_right, hists_right)
 
     # split left with subtraction method
     si_left_sub = find_node_split_subtraction(
-        context, sample_indices_left, hists_parent, hists_right, hists_left_sub)
+        context, sample_indices_left, si_parent.gradient_left,
+        si_parent.hessian_left, hists_parent, hists_right, hists_left_sub)
 
     # split right with subtraction method
     si_right_sub = find_node_split_subtraction(
-        context, sample_indices_right, hists_parent, hists_left, hists_right_sub)
+        context, sample_indices_right, si_parent.gradient_right,
+        si_parent.hessian_right, hists_parent, hists_left, hists_right_sub)
 
     # make sure that si.gradient_left + si.gradient_right have their expected
     # value, same for hessians

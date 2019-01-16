@@ -313,9 +313,16 @@ class TreeGrower:
             histograms = np.zeros(shape=(self.n_features, self.max_bins),
                                   dtype=HISTOGRAM_DTYPE)
             if node.hist_subtraction:
+                if node is node.parent.right_child:
+                    sum_gradients = node.parent.split_info.gradient_right
+                    sum_hessians = node.parent.split_info.hessian_right
+                else:
+                    sum_gradients = node.parent.split_info.gradient_left
+                    sum_hessians = node.parent.split_info.hessian_left
                 split_info = find_node_split_subtraction(
                     self.splitting_context, node.sample_indices,
-                    node.parent.histograms, node.sibling.histograms, histograms)
+                    sum_gradients, sum_hessians, node.parent.histograms,
+                    node.sibling.histograms, histograms)
             else:
                 split_info = find_node_split(
                     self.splitting_context, node.sample_indices, histograms)
