@@ -757,7 +757,6 @@ Kernels:
    linear_model.enet_path
    linear_model.lars_path
    linear_model.lasso_path
-   linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
    linear_model.ridge_regression
@@ -847,6 +846,7 @@ details.
    metrics.jaccard_similarity_score
    metrics.log_loss
    metrics.matthews_corrcoef
+   metrics.multilabel_confusion_matrix
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -866,6 +866,7 @@ details.
    :template: function.rst
 
    metrics.explained_variance_score
+   metrics.max_error
    metrics.mean_absolute_error
    metrics.mean_squared_error
    metrics.mean_squared_log_error
@@ -904,7 +905,7 @@ details.
 
    metrics.adjusted_mutual_info_score
    metrics.adjusted_rand_score
-   metrics.calinski_harabaz_score
+   metrics.calinski_harabasz_score
    metrics.davies_bouldin_score
    metrics.completeness_score
    metrics.cluster.contingency_matrix
@@ -1399,6 +1400,7 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
+   tree.plot_tree
 
 
 .. _utils_ref:
@@ -1428,7 +1430,6 @@ Low-level methods
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
-   utils.bench.total_seconds
    utils.check_X_y
    utils.check_array
    utils.check_consistent_length
@@ -1480,21 +1481,32 @@ Utilities from joblib:
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: function.rst
+
+   utils.parallel_backend
+   utils.register_parallel_backend
+
+Recently deprecated
+===================
+
+To be removed in 0.23
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
 
    utils.Memory
    utils.Parallel
 
 .. autosummary::
    :toctree: generated/
-   :template: function.rst
+   :template: deprecated_function.rst
 
    utils.cpu_count
    utils.delayed
-   utils.parallel_backend
-
-Recently deprecated
-===================
+   metrics.calinski_harabaz_score
+   linear_model.logistic_regression_path
 
 
 To be removed in 0.22
@@ -1514,22 +1526,3 @@ To be removed in 0.22
 
    covariance.graph_lasso
    datasets.fetch_mldata
-
-
-To be removed in 0.21
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   linear_model.RandomizedLasso
-   linear_model.RandomizedLogisticRegression
-   neighbors.LSHForest
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   datasets.load_mlcomp
-   linear_model.lasso_stability_path

@@ -488,7 +488,7 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-  >>> enc.fit(X)  # doctest: +ELLIPSIS
+  >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
   OneHotEncoder(categorical_features=None, categories=None,
          dtype=<... 'numpy.float64'>, handle_unknown='error',
          n_values=None, sparse=True)
@@ -514,7 +514,7 @@ dataset::
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X) # doctest: +ELLIPSIS
+    >>> enc.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None,
            categories=[...],
            dtype=<... 'numpy.float64'>, handle_unknown='error',
@@ -532,7 +532,7 @@ columns for this feature will be all zeros
 
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X) # doctest: +ELLIPSIS
+    >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None, categories=None,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
