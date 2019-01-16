@@ -204,17 +204,19 @@ def test_non_negative_factorization_consistency():
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    for solver in ('cd', 'mu'):
-        W_nmf, H, _ = non_negative_factorization(
-            A, solver=solver, random_state=1, tol=1e-2)
-        W_nmf_2, _, _ = non_negative_factorization(
-            A, H=H, update_H=False, solver=solver, random_state=1, tol=1e-2)
+    for init in ['random', 'nndsvd']:
+        for solver in ('cd', 'mu'):
+            W_nmf, H, _ = non_negative_factorization(
+                A, init=init, solver=solver, random_state=1, tol=1e-2)
+            W_nmf_2, _, _ = non_negative_factorization(
+                A, H=H, update_H=False, init=init, solver=solver,
+                random_state=1, tol=1e-2)
 
-        model_class = NMF(solver=solver, random_state=1, tol=1e-2)
-        W_cls = model_class.fit_transform(A)
-        W_cls_2 = model_class.transform(A)
-        assert_array_almost_equal(W_nmf, W_cls, decimal=10)
-        assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
+            model_class = NMF(init=init, solver=solver, random_state=1, tol=1e-2)
+            W_cls = model_class.fit_transform(A)
+            W_cls_2 = model_class.transform(A)
+            assert_array_almost_equal(W_nmf, W_cls, decimal=10)
+            assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
 
 
 def test_non_negative_factorization_checking():
