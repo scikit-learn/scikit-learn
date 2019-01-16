@@ -372,21 +372,24 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
             # Calculate the corresponding min_fpr
             if not 0 <= min_tpr < max_tpr:
                 raise ValueError(
-                    f"Expected min_tpr in [0, max_tpr), got: {max_tpr}."
+                    "Expected min_tpr in [0, max_tpr), "
+                    "got: {}.".format(max_tpr)
                 )
             min_fpr = _get_fpr_from_tpr(tpr, fpr, min_tpr, "left")
         if max_tpr != 1:
             # Calculate the corresponding max_fpr
             if not min_tpr < max_tpr <= 1:
                 raise ValueError(
-                    f"Expected max_tpr in (min_tpr, 1], got: {max_tpr}."
+                    "Expected max_tpr in (min_tpr, 1], "
+                    "got: {}.".format(max_tpr)
                 )
             max_fpr = _get_fpr_from_tpr(tpr, fpr, max_tpr, "right")
 
         if min_fpr != 0:
             if not 0 <= min_fpr < max_fpr:
                 raise ValueError(
-                    f"Expected min_fpr in [0, max_fpr), got: {min_fpr}."
+                    "Expected min_fpr in [0, max_fpr), "
+                    "got: {}.".format(min_fpr)
                 )
             # Find index to insert min_fpr into fpr
             min_fpr_idx = np.searchsorted(fpr, min_fpr, "left")
@@ -406,7 +409,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         if max_fpr != 1:
             if not min_fpr < max_fpr <= 1:
                 raise ValueError(
-                    f"Expected max_fpr in (min_fpr, 1], got: {max_fpr}."
+                    "Expected max_fpr in (min_fpr, 1], "
+                    "got: {}.".format(max_fpr)
                 )
             # Find index to insert max_fpr into fpr
             max_fpr_idx = np.searchsorted(fpr, max_fpr, "right")
