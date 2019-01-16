@@ -256,7 +256,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     # We use n_jobs=1 because this will be used in nested calls under
     # parallel calls to _mean_shift_single_seed so there is no need for
     # for further parallelism.
-    nbrs = NearestNeighbors(radius=bandwidth, 
+    nbrs = NearestNeighbors(radius=bandwidth,
                             metric=metric, p=p, metric_params=metric_params,
                             n_jobs=1).fit(X)
 
@@ -298,7 +298,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     cluster_centers = sorted_centers[unique]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-    nbrs = NearestNeighbors(n_neighbors=1, 
+    nbrs = NearestNeighbors(n_neighbors=1,
                             metric=metric, p=p, metric_params=metric_params,
                             n_jobs=n_jobs).fit(cluster_centers)
     labels = np.zeros(n_samples, dtype=np.int)
@@ -496,7 +496,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
             mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
                        min_bin_freq=self.min_bin_freq,
                        bin_seeding=self.bin_seeding,
-                       metric=self.metric, p=self.p, metric_params=self.metric_params,
+                       metric=self.metric, p=self.p,
+                       metric_params=self.metric_params,
                        cluster_all=self.cluster_all, n_jobs=self.n_jobs)
         return self
 
@@ -515,6 +516,6 @@ class MeanShift(BaseEstimator, ClusterMixin):
         """
         check_is_fitted(self, "cluster_centers_")
 
-        return pairwise_distances_argmin(X, self.cluster_centers_, 
-                                         metric=self.metric, 
+        return pairwise_distances_argmin(X, self.cluster_centers_,
+                                         metric=self.metric,
                                          metric_kwargs=self.metric_kwargs)
