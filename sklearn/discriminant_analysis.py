@@ -14,7 +14,6 @@ import warnings
 import numpy as np
 from .exceptions import ChangedBehaviorWarning
 from scipy import linalg
-from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model.base import LinearClassifierMixin
