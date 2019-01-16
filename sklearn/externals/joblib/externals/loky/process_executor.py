@@ -159,7 +159,7 @@ class _ThreadWakeup:
             self._reader.recv_bytes()
 
 
-class _ExecutorFlags:
+class _ExecutorFlags(object):
     """necessary references to maintain executor states without preventing gc
 
     It permits to keep the information needed by queue_management_thread
@@ -237,7 +237,7 @@ def _rebuild_exc(exc, tb):
     return exc
 
 
-class _WorkItem:
+class _WorkItem(object):
 
     __slots__ = ["future", "fn", "args", "kwargs"]
 
@@ -248,7 +248,7 @@ class _WorkItem:
         self.kwargs = kwargs
 
 
-class _ResultItem:
+class _ResultItem(object):
 
     def __init__(self, work_id, exception=None, result=None):
         self.work_id = work_id
@@ -256,7 +256,7 @@ class _ResultItem:
         self.result = result
 
 
-class _CallItem:
+class _CallItem(object):
 
     def __init__(self, work_id, fn, args, kwargs):
         self.work_id = work_id
@@ -283,7 +283,7 @@ class _SafeQueue(Queue):
         self.thread_wakeup = thread_wakeup
         self.pending_work_items = pending_work_items
         self.running_work_items = running_work_items
-        super().__init__(max_size, reducers=reducers, ctx=ctx)
+        super(_SafeQueue, self).__init__(max_size, reducers=reducers, ctx=ctx)
 
     def _on_queue_feeder_error(self, e, obj):
         if isinstance(obj, _CallItem):
@@ -309,7 +309,7 @@ class _SafeQueue(Queue):
                 del work_item
             self.thread_wakeup.wakeup()
         else:
-            super()._on_queue_feeder_error(e, obj)
+            super(_SafeQueue, self)._on_queue_feeder_error(e, obj)
 
 
 def _get_chunks(chunksize, *iterables):
@@ -1070,7 +1070,7 @@ class ProcessPoolExecutor(_base.Executor):
         if chunksize < 1:
             raise ValueError("chunksize must be >= 1.")
 
-        results = super().map(
+        results = super(ProcessPoolExecutor, self).map(
             partial(_process_chunk, fn), _get_chunks(chunksize, *iterables),
             timeout=timeout)
         return _chain_from_iterable_of_lists(results)

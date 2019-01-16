@@ -21,7 +21,7 @@ if sys.platform == 'win32':
 
 
 if sys.version_info[:2] >= (3, 4) and sys.platform == 'win32':
-    class DupHandle:
+    class DupHandle(object):
         def __init__(self, handle, access, pid=None):
             # duplicate handle for process with given pid
             if pid is None:

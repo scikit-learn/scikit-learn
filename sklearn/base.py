@@ -258,8 +258,8 @@ class BaseEstimator:
             pickle_version = state.pop("_sklearn_version", "pre-0.18")
             if pickle_version != __version__:
                 warnings.warn(
-                    "Trying to unpickle estimator {} from version {} when "
-                    "using version {}. This might lead to breaking code or "
+                    "Trying to unpickle estimator {0} from version {1} when "
+                    "using version {2}. This might lead to breaking code or "
                     "invalid results. Use at your own risk.".format(
                         self.__class__.__name__, pickle_version, __version__),
                     UserWarning)

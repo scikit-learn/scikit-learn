@@ -60,7 +60,7 @@ def pformat(obj, indent=0, depth=3):
 ###############################################################################
 # class `Logger`
 ###############################################################################
-class Logger:
+class Logger(object):
     """ Base class for logging messages.
     """
 
@@ -88,7 +88,7 @@ class Logger:
 ###############################################################################
 # class `PrintTime`
 ###############################################################################
-class PrintTime:
+class PrintTime(object):
     """ Print and log messages while keeping track of time.
     """
 

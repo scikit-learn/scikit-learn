@@ -776,7 +776,7 @@ def check_min_samples_split(name):
     node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
 
     assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
-                   "Failed with {}".format(name))
+                   "Failed with {0}".format(name))
 
     est = ForestEstimator(min_samples_split=0.5, n_estimators=1,
                           random_state=0)
@@ -785,7 +785,7 @@ def check_min_samples_split(name):
     node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
 
     assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
-                   "Failed with {}".format(name))
+                   "Failed with {0}".format(name))
 
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
@@ -813,7 +813,7 @@ def check_min_samples_leaf(name):
     # drop inner nodes
     leaf_count = node_counts[node_counts != 0]
     assert_greater(np.min(leaf_count), 4,
-                   "Failed with {}".format(name))
+                   "Failed with {0}".format(name))
 
     est = ForestEstimator(min_samples_leaf=0.25, n_estimators=1,
                           random_state=0)
@@ -823,7 +823,7 @@ def check_min_samples_leaf(name):
     # drop inner nodes
     leaf_count = node_counts[node_counts != 0]
     assert_greater(np.min(leaf_count), len(X) * 0.25 - 1,
-                   "Failed with {}".format(name))
+                   "Failed with {0}".format(name))
 
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
@@ -858,8 +858,8 @@ def check_min_weight_fraction_leaf(name):
         assert_greater_equal(
             np.min(leaf_weights),
             total_weight * est.min_weight_fraction_leaf,
-            "Failed with {} "
-            "min_weight_fraction_leaf={}".format(
+            "Failed with {0} "
+            "min_weight_fraction_leaf={1}".format(
                 name, est.min_weight_fraction_leaf))
 
 
@@ -1108,11 +1108,11 @@ def check_warm_start(name, random_state=42):
                                 warm_start=False)
     clf_no_ws.fit(X, y)
 
-    assert_equal({tree.random_state for tree in clf_ws},
-                 {tree.random_state for tree in clf_no_ws})
+    assert_equal(set([tree.random_state for tree in clf_ws]),
+                 set([tree.random_state for tree in clf_no_ws]))
 
     assert_array_equal(clf_ws.apply(X), clf_no_ws.apply(X),
-                       err_msg="Failed with {}".format(name))
+                       err_msg="Failed with {0}".format(name))
 
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)

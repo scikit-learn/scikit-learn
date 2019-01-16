@@ -103,8 +103,8 @@ class BaseSpectral(BaseEstimator, BiclusterMixin, metaclass=ABCMeta):
     def _check_parameters(self):
         legal_svd_methods = ('randomized', 'arpack')
         if self.svd_method not in legal_svd_methods:
-            raise ValueError("Unknown SVD method: '{}'. svd_method must be"
-                             " one of {}.".format(self.svd_method,
+            raise ValueError("Unknown SVD method: '{0}'. svd_method must be"
+                             " one of {1}.".format(self.svd_method,
                                                    legal_svd_methods))
 
     def fit(self, X, y=None):
@@ -430,15 +430,6 @@ class SpectralBiclustering(BaseSpectral):
                  n_svd_vecs=None, mini_batch=False, init='k-means++',
                  n_init=10, n_jobs=None, random_state=None):
         super().__init__(n_clusters,
-<<<<<<< HEAD
-                                                   svd_method,
-                                                   n_svd_vecs,
-                                                   mini_batch,
-                                                   init,
-                                                   n_init,
-                                                   n_jobs,
-                                                   random_state)
-=======
                          svd_method,
                          n_svd_vecs,
                          mini_batch,
@@ -446,7 +437,6 @@ class SpectralBiclustering(BaseSpectral):
                          n_init,
                          n_jobs,
                          random_state)
->>>>>>> upstream/master
         self.method = method
         self.n_components = n_components
         self.n_best = n_best
@@ -455,8 +445,8 @@ class SpectralBiclustering(BaseSpectral):
         super()._check_parameters()
         legal_methods = ('bistochastic', 'scale', 'log')
         if self.method not in legal_methods:
-            raise ValueError("Unknown method: '{}'. method must be"
-                             " one of {}.".format(self.method, legal_methods))
+            raise ValueError("Unknown method: '{0}'. method must be"
+                             " one of {1}.".format(self.method, legal_methods))
         try:
             int(self.n_clusters)
         except TypeError:

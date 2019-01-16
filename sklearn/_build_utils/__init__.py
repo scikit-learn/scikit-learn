@@ -74,7 +74,7 @@ def maybe_cythonize_extensions(top_path, config):
         try:
             import Cython
             if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
-                message += ' Your version of Cython was {}.'.format(
+                message += ' Your version of Cython was {0}.'.format(
                     Cython.__version__)
                 raise ValueError(message)
             from Cython.Build import cythonize

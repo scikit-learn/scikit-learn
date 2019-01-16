@@ -486,19 +486,19 @@ def test_scorer_sample_weight():
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
             assert_not_equal(weighted, unweighted,
-                             msg="scorer {} behaves identically when "
-                             "called with sample weights: {} vs "
-                             "{}".format(name, weighted, unweighted))
+                             msg="scorer {0} behaves identically when "
+                             "called with sample weights: {1} vs "
+                             "{2}".format(name, weighted, unweighted))
             assert_almost_equal(weighted, ignored,
-                                err_msg="scorer {} behaves differently when "
+                                err_msg="scorer {0} behaves differently when "
                                 "ignoring samples and setting sample_weight to"
-                                " 0: {} vs {}".format(name, weighted,
+                                " 0: {1} vs {2}".format(name, weighted,
                                                         ignored))
 
         except TypeError as e:
             assert "sample_weight" in str(e), (
-                "scorer {} raises unhelpful exception when called "
-                "with sample weights: {}".format(name, str(e)))
+                "scorer {0} raises unhelpful exception when called "
+                "with sample weights: {1}".format(name, str(e)))
 
 
 @ignore_warnings  # UndefinedMetricWarning for P / R scores

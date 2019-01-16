@@ -73,7 +73,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier:
+class MockClassifier(object):
     """Dummy classifier to test the parameter search algorithms"""
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
@@ -156,10 +156,10 @@ def test_parameter_grid():
     # loop to assert we can iterate over the grid multiple times
     for i in range(2):
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
-        points = {tuple(chain(*(sorted(p.items())))) for p in grid2}
+        points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
         assert_equal(points,
-                     {("bar", x, "foo", y)
-                         for x, y in product(params2["bar"], params2["foo"])})
+                     set(("bar", x, "foo", y)
+                         for x, y in product(params2["bar"], params2["foo"])))
     assert_grid_iter_equals_getitem(grid2)
 
     # Special case: empty grid (useful to get default estimator settings)

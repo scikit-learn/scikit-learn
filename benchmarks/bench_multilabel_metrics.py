@@ -184,7 +184,7 @@ if __name__ == "__main__":
     if args.plot is not None:
         print('Displaying plot', file=sys.stderr)
         title = ('Multilabel metrics with %s' %
-                 ', '.join('{}={}'.format(field, getattr(args, field))
+                 ', '.join('{0}={1}'.format(field, getattr(args, field))
                            for field in ['samples', 'classes', 'density']
                            if args.plot != field))
         _plot(results, args.metrics, args.formats, title, steps, args.plot)

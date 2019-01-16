@@ -453,7 +453,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
     elif axis == -2:
         axis = 0
     elif X.format != 'csr':
-        raise TypeError('Expected CSR sparse format, got {}'.format(X.format))
+        raise TypeError('Expected CSR sparse format, got {0}'.format(X.format))
 
     # We rely here on the fact that np.diff(Y.indptr) for a CSR
     # will return the number of nonzero entries in each row.
@@ -478,7 +478,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
             return np.bincount(X.indices, minlength=X.shape[1],
                             weights=weights)
     else:
-        raise ValueError('Unsupported axis: {}'.format(axis))
+        raise ValueError('Unsupported axis: {0}'.format(axis))
 
 
 def _get_median(data, n_zeros):

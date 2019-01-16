@@ -169,12 +169,12 @@ if __name__ == "__main__":
     print()
     print("Classification performance:")
     print("===========================")
-    print("{: <24} {: >10} {: >11} {: >12}"
+    print("{0: <24} {1: >10} {2: >11} {3: >12}"
           "".format("Classifier  ", "train-time", "test-time", "error-rate"))
     print("-" * 60)
     for name in sorted(args["classifiers"], key=error.get):
 
-        print("{: <23} {: >10.2f}s {: >10.2f}s {: >12.4f}"
+        print("{0: <23} {1: >10.2f}s {2: >10.2f}s {3: >12.4f}"
               "".format(name, train_time[name], test_time[name], error[name]))
 
     print()

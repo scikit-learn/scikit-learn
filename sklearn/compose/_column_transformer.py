@@ -374,7 +374,7 @@ boolean mask array or callable
         for Xs, name in zip(result, names):
             if not getattr(Xs, 'ndim', 0) == 2:
                 raise ValueError(
-                    "The output of the '{}' transformer should be 2D (scipy "
+                    "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
 
     def _fit_transform(self, X, y, func, fitted=False):

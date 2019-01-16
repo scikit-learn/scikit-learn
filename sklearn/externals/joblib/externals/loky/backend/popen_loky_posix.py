@@ -27,7 +27,7 @@ if sys.platform != "win32":
     # Wrapper for an fd used while launching a process
     #
 
-    class _DupFd:
+    class _DupFd(object):
         def __init__(self, fd):
             self.fd = reduction._mk_inheritable(fd)
 
@@ -40,7 +40,7 @@ if sys.platform != "win32":
 
     __all__.append('Popen')
 
-    class Popen:
+    class Popen(object):
         method = 'loky'
         DupFd = _DupFd
 

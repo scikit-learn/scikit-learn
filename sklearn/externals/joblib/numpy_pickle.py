@@ -43,7 +43,7 @@ register_compressor('lz4', LZ4CompressorWrapper())
 # Utility objects for persistence.
 
 
-class NumpyArrayWrapper:
+class NumpyArrayWrapper(object):
     """An object to be persisted instead of numpy arrays.
 
     This object is used to hack into the pickle machinery and read numpy

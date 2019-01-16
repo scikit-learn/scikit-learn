@@ -172,7 +172,7 @@ class _ThresholdScorer(_BaseScorer):
         """
         y_type = type_of_target(y)
         if y_type not in ("binary", "multilabel-indicator"):
-            raise ValueError("{} format is not supported".format(y_type))
+            raise ValueError("{0} format is not supported".format(y_type))
 
         if is_regressor(clf):
             y_pred = clf.predict(X)
@@ -296,7 +296,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
     elif isinstance(scoring, Iterable):
         raise ValueError("For evaluating multiple scores, use "
                          "sklearn.model_selection.cross_validate instead. "
-                         "{} was passed.".format(scoring))
+                         "{0} was passed.".format(scoring))
     else:
         raise ValueError("scoring value should either be a callable, string or"
                          " None. %r was passed" % scoring)
@@ -537,6 +537,6 @@ for name, metric in [('precision', precision_score),
                      ('recall', recall_score), ('f1', f1_score)]:
     SCORERS[name] = make_scorer(metric)
     for average in ['macro', 'micro', 'samples', 'weighted']:
-        qualified_name = '{}_{}'.format(name, average)
+        qualified_name = '{0}_{1}'.format(name, average)
         SCORERS[qualified_name] = make_scorer(metric, pos_label=None,
                                               average=average)

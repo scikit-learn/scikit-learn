@@ -360,8 +360,8 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
             raise ValueError("y must have at least two dimensions for "
                              "multi target classification but has only one")
         if y.shape[1] != n_outputs_:
-            raise ValueError("The number of outputs of Y for fit {} and"
-                             " score {} should be same".
+            raise ValueError("The number of outputs of Y for fit {0} and"
+                             " score {1} should be same".
                              format(n_outputs_, y.shape[1]))
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))

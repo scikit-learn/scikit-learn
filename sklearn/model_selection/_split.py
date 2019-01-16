@@ -282,11 +282,11 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
             raise ValueError(
                 "k-fold cross-validation requires at least one"
                 " train/test split by setting n_splits=2 or more,"
-                " got n_splits={}.".format(n_splits))
+                " got n_splits={0}.".format(n_splits))
 
         if not isinstance(shuffle, bool):
             raise TypeError("shuffle must be True or False;"
-                            " got {}".format(shuffle))
+                            " got {0}".format(shuffle))
 
         self.n_splits = n_splits
         self.shuffle = shuffle

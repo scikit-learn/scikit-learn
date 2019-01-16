@@ -99,7 +99,7 @@ class CustomizablePickler(Pickler):
             self.dispatch_table[type] = reduce_func
 
 
-class CustomizablePicklingQueue:
+class CustomizablePicklingQueue(object):
     """Locked Pipe implementation that uses a customizable pickler.
 
     This class is an alternative to the multiprocessing implementation
@@ -204,7 +204,7 @@ class PicklingPool(Pool):
         self._backward_reducers = backward_reducers
         poolargs = dict(processes=processes)
         poolargs.update(kwargs)
-        super().__init__(**poolargs)
+        super(PicklingPool, self).__init__(**poolargs)
 
     def _setup_queues(self):
         context = getattr(self, '_ctx', mp)
@@ -310,13 +310,13 @@ class MemmappingPool(PicklingPool):
             forward_reducers=forward_reducers,
             backward_reducers=backward_reducers)
         poolargs.update(kwargs)
-        super().__init__(**poolargs)
+        super(MemmappingPool, self).__init__(**poolargs)
 
     def terminate(self):
         n_retries = 10
         for i in range(n_retries):
             try:
-                super().terminate()
+                super(MemmappingPool, self).terminate()
                 break
             except OSError as e:
                 if isinstance(e, WindowsError):

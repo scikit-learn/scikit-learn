@@ -548,8 +548,8 @@ def test_ovo_partial_fit_predict():
     # raises error when mini-batch does not have classes from all_classes
     ovo = OneVsOneClassifier(MultinomialNB())
     error_y = [0, 1, 2, 3, 4, 5, 2]
-    message_re = escape("Mini-batch contains {} while "
-                        "it must be subset of {}".format(np.unique(error_y),
+    message_re = escape("Mini-batch contains {0} while "
+                        "it must be subset of {1}".format(np.unique(error_y),
                                                           np.unique(y)))
     assert_raises_regexp(ValueError, message_re, ovo.partial_fit, X[:7],
                          error_y, np.unique(y))
@@ -595,7 +595,7 @@ def test_ovo_decision_function():
         # binary classifiers.
         # Therefore, sorting predictions based on votes would yield
         # mostly tied predictions:
-        assert set(votes[:, class_idx]).issubset({0., 1., 2.})
+        assert set(votes[:, class_idx]).issubset(set([0., 1., 2.]))
 
         # The OVO decision function on the other hand is able to resolve
         # most of the ties on this data as it combines both the vote counts

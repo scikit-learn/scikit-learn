@@ -783,7 +783,7 @@ class CloudPickler(Pickler):
 
     def save_attrgetter(self, obj):
         """attrgetter serializer"""
-        class Dummy:
+        class Dummy(object):
             def __init__(self, attrs, index=None):
                 self.attrs = attrs
                 self.index = index
@@ -1028,7 +1028,7 @@ def instance(cls):
 
 
 @instance
-class _empty_cell_value:
+class _empty_cell_value(object):
     """sentinel for empty closures
     """
     @classmethod

@@ -367,12 +367,12 @@ def _check_param_grid(param_grid):
 
             if (isinstance(v, str) or
                     not isinstance(v, (np.ndarray, Sequence))):
-                raise ValueError("Parameter values for parameter ({}) need "
+                raise ValueError("Parameter values for parameter ({0}) need "
                                  "to be a sequence(but not a string) or"
                                  " np.ndarray.".format(name))
 
             if len(v) == 0:
-                raise ValueError("Parameter values for parameter ({}) need "
+                raise ValueError("Parameter values for parameter ({0}) need "
                                  "to be a non-empty sequence.".format(name))
 
 
@@ -655,8 +655,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 n_candidates = len(candidate_params)
 
                 if self.verbose > 0:
-                    print("Fitting {} folds for each of {} candidates,"
-                          " totalling {} fits".format(
+                    print("Fitting {0} folds for each of {1} candidates,"
+                          " totalling {2} fits".format(
                               n_splits, n_candidates, n_candidates * n_splits))
 
                 out = parallel(delayed(_fit_and_score)(clone(base_estimator),

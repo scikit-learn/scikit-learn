@@ -66,7 +66,7 @@ def _color_brew(n):
     return color_list
 
 
-class Sentinel:
+class Sentinel(object):
     def __repr__(self):
         return '"tree.dot"'
 
@@ -176,7 +176,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     return exporter.export(decision_tree, ax=ax)
 
 
-class _BaseTreeExporter:
+class _BaseTreeExporter(object):
     def __init__(self, max_depth=None, feature_names=None,
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,

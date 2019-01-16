@@ -78,15 +78,15 @@ def _check_targets(y_true, y_pred):
         y_type = {"multiclass"}
 
     if len(y_type) > 1:
-        raise ValueError("Classification metrics can't handle a mix of {} "
-                         "and {} targets".format(type_true, type_pred))
+        raise ValueError("Classification metrics can't handle a mix of {0} "
+                         "and {1} targets".format(type_true, type_pred))
 
     # We can't have more than one value on y_type => The set is no more needed
     y_type = y_type.pop()
 
     # No metrics support "multiclass-multioutput" format
     if (y_type not in ["binary", "multiclass", "multilabel-indicator"]):
-        raise ValueError("{} is not supported".format(y_type))
+        raise ValueError("{0} is not supported".format(y_type))
 
     if y_type in ["binary", "multiclass"]:
         y_true = column_or_1d(y_true)
@@ -1074,9 +1074,9 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
         axis0, axis1 = axis1, axis0
 
     if metric in warn_for and 'f-score' in warn_for:
-        msg_start = '{} and F-score are'.format(metric.title())
+        msg_start = '{0} and F-score are'.format(metric.title())
     elif metric in warn_for:
-        msg_start = '{} is'.format(metric.title())
+        msg_start = '{0} is'.format(metric.title())
     elif 'f-score' in warn_for:
         msg_start = 'F-score is'
     else:
@@ -1087,7 +1087,7 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     if len(mask) == 1:
         msg = msg.format('due to')
     else:
-        msg = msg.format('in {}s with'.format(axis1))
+        msg = msg.format('in {0}s with'.format(axis1))
     warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
     return result
 
@@ -1713,13 +1713,13 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     if target_names is not None and len(labels) != len(target_names):
         if labels_given:
             warnings.warn(
-                "labels size, {}, does not match size of target_names, {}"
+                "labels size, {0}, does not match size of target_names, {1}"
                 .format(len(labels), len(target_names))
             )
         else:
             raise ValueError(
-                "Number of classes, {}, does not match size of "
-                "target_names, {}. Try specifying the labels "
+                "Number of classes, {0}, does not match size of "
+                "target_names, {1}. Try specifying the labels "
                 "parameter".format(len(labels), len(target_names))
             )
     if target_names is None:
@@ -1894,7 +1894,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
     else:
-        raise ValueError("{} is not supported".format(y_type))
+        raise ValueError("{0} is not supported".format(y_type))
 
 
 def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
@@ -1974,13 +1974,13 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
 
     if len(lb.classes_) == 1:
         if labels is None:
-            raise ValueError('y_true contains only one label ({}). Please '
+            raise ValueError('y_true contains only one label ({0}). Please '
                              'provide the true labels explicitly through the '
                              'labels argument.'.format(lb.classes_[0]))
         else:
             raise ValueError('The labels array needs to contain at least two '
                              'labels for log_loss, '
-                             'got {}.'.format(lb.classes_))
+                             'got {0}.'.format(lb.classes_))
 
     transformed_labels = lb.transform(y_true)
 
@@ -2003,16 +2003,16 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     if len(lb.classes_) != y_pred.shape[1]:
         if labels is None:
             raise ValueError("y_true and y_pred contain different number of "
-                             "classes {}, {}. Please provide the true "
+                             "classes {0}, {1}. Please provide the true "
                              "labels explicitly through the labels argument. "
                              "Classes found in "
-                             "y_true: {}".format(transformed_labels.shape[1],
+                             "y_true: {2}".format(transformed_labels.shape[1],
                                                   y_pred.shape[1],
                                                   lb.classes_))
         else:
             raise ValueError('The number of classes in labels is different '
                              'from that in y_pred. Classes found in '
-                             'labels: {}'.format(lb.classes_))
+                             'labels: {0}'.format(lb.classes_))
 
     # Renormalize
     y_pred /= y_pred.sum(axis=1)[:, np.newaxis]

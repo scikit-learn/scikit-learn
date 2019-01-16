@@ -119,7 +119,7 @@ def get_active_backend(prefer=None, require=None, verbose=0):
     return backend, DEFAULT_N_JOBS
 
 
-class parallel_backend:
+class parallel_backend(object):
     """Change the default backend used by Parallel inside a with block.
 
     If ``backend`` is a string it must match a previously registered
@@ -203,7 +203,7 @@ if hasattr(mp, 'get_context'):
         DEFAULT_MP_CONTEXT = mp.get_context(method=method)
 
 
-class BatchedCalls:
+class BatchedCalls(object):
     """Wrap a sequence of (func, args, kwargs) tuples as a single callable"""
 
     def __init__(self, iterator_slice, backend_and_jobs, pickle_cache=None):
@@ -281,7 +281,7 @@ def delayed(function, check_pickle=None):
 
 
 ###############################################################################
-class BatchCompletionCallBack:
+class BatchCompletionCallBack(object):
     """Callback used by joblib.Parallel's multiprocessing backend.
 
     This callable is executed by the parent process whenever a worker process

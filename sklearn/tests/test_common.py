@@ -172,7 +172,7 @@ def test_import_all_consistency():
         for name in getattr(package, '__all__', ()):
             if getattr(package, name, None) is None:
                 raise AttributeError(
-                    "Module '{}' has no attribute '{}'".format(
+                    "Module '{0}' has no attribute '{1}'".format(
                         modname, name))
 
 
@@ -195,14 +195,13 @@ def test_all_tests_are_importable():
                                       \._
                                       ''')
     lookup = {name: ispkg
-                  for _, name, ispkg
-                  in pkgutil.walk_packages(sklearn.__path__,
-                                           prefix='sklearn.')}
+              for _, name, ispkg
+              in pkgutil.walk_packages(sklearn.__path__, prefix='sklearn.')}
     missing_tests = [name for name, ispkg in lookup.items()
                      if ispkg
                      and not HAS_TESTS_EXCEPTIONS.search(name)
                      and name + '.tests' not in lookup]
     assert_equal(missing_tests, [],
-                 '{} do not have `tests` subpackages. Perhaps they require '
+                 '{0} do not have `tests` subpackages. Perhaps they require '
                  '__init__.py or an add_subpackage directive in the parent '
                  'setup.py'.format(missing_tests))

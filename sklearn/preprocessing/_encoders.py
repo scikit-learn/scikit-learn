@@ -81,7 +81,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                 if handle_unknown == 'error':
                     diff = _encode_check_unknown(Xi, cats)
                     if diff:
-                        msg = ("Found unknown categories {} in column {}"
+                        msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
             self.categories_.append(cats)
@@ -100,7 +100,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
             if not np.all(valid_mask):
                 if handle_unknown == 'error':
-                    msg = ("Found unknown categories {} in column {}"
+                    msg = ("Found unknown categories {0} in column {1}"
                            " during transform".format(diff, i))
                     raise ValueError(msg)
                 else:
@@ -414,7 +414,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         if self.handle_unknown not in ('error', 'ignore'):
             msg = ("handle_unknown should be either 'error' or 'ignore', "
-                   "got {}.".format(self.handle_unknown))
+                   "got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
 
         self._handle_deprecations(X)
@@ -504,7 +504,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         if self.handle_unknown not in ('error', 'ignore'):
             msg = ("handle_unknown should be either 'error' or 'ignore', "
-                   "got {}.".format(self.handle_unknown))
+                   "got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
 
         self._handle_deprecations(X)

@@ -24,7 +24,7 @@ else:
     Pickler = pickle.Pickler
 
 
-class _ConsistentSet:
+class _ConsistentSet(object):
     """ Class used to ensure the hash of Sets is preserved
         whatever the order of its items.
     """
@@ -42,7 +42,7 @@ class _ConsistentSet:
             self._sequence = sorted((hash(e) for e in set_sequence))
 
 
-class _MyHash:
+class _MyHash(object):
     """ Class used to hash objects that won't normally pickle """
 
     def __init__(self, *args):

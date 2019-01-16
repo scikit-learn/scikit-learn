@@ -101,11 +101,11 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         `base_estimator_` attribute."""
         if not isinstance(self.n_estimators, (numbers.Integral, np.integer)):
             raise ValueError("n_estimators must be an integer, "
-                             "got {}.".format(type(self.n_estimators)))
+                             "got {0}.".format(type(self.n_estimators)))
 
         if self.n_estimators <= 0:
             raise ValueError("n_estimators must be greater than zero, "
-                             "got {}.".format(self.n_estimators))
+                             "got {0}.".format(self.n_estimators))
 
         if self.base_estimator is not None:
             self.base_estimator_ = self.base_estimator

@@ -318,18 +318,18 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         if n_subsamples is not None:
             if n_subsamples > n_samples:
                 raise ValueError("Invalid parameter since n_subsamples > "
-                                 "n_samples ({} > {}).".format(n_subsamples,
+                                 "n_samples ({0} > {1}).".format(n_subsamples,
                                                                  n_samples))
             if n_samples >= n_features:
                 if n_dim > n_subsamples:
                     plus_1 = "+1" if self.fit_intercept else ""
-                    raise ValueError("Invalid parameter since n_features{} "
-                                     "> n_subsamples ({} > {})."
+                    raise ValueError("Invalid parameter since n_features{0} "
+                                     "> n_subsamples ({1} > {2})."
                                      "".format(plus_1, n_dim, n_samples))
             else:  # if n_samples < n_features
                 if n_subsamples != n_samples:
                     raise ValueError("Invalid parameter since n_subsamples != "
-                                     "n_samples ({} != {}) while n_samples "
+                                     "n_samples ({0} != {1}) while n_samples "
                                      "< n_features.".format(n_subsamples,
                                                             n_samples))
         else:
@@ -337,7 +337,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
 
         if self.max_subpopulation <= 0:
             raise ValueError("Subpopulation must be strictly positive "
-                             "({} <= 0).".format(self.max_subpopulation))
+                             "({0} <= 0).".format(self.max_subpopulation))
 
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))
         n_subpopulation = int(min(self.max_subpopulation, all_combinations))
@@ -366,11 +366,11 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         self.breakdown_ = _breakdown_point(n_samples, n_subsamples)
 
         if self.verbose:
-            print("Breakdown point: {}".format(self.breakdown_))
-            print("Number of samples: {}".format(n_samples))
+            print("Breakdown point: {0}".format(self.breakdown_))
+            print("Number of samples: {0}".format(n_samples))
             tol_outliers = int(self.breakdown_ * n_samples)
-            print("Tolerable outliers: {}".format(tol_outliers))
-            print("Number of subpopulations: {}".format(
+            print("Tolerable outliers: {0}".format(tol_outliers))
+            print("Number of subpopulations: {0}".format(
                 self.n_subpopulation_))
 
         # Determine indices of subpopulation

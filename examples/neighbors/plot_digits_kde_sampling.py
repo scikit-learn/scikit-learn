@@ -30,7 +30,7 @@ params = {'bandwidth': np.logspace(-1, 1, 20)}
 grid = GridSearchCV(KernelDensity(), params, cv=5)
 grid.fit(data)
 
-print("best bandwidth: {}".format(grid.best_estimator_.bandwidth))
+print("best bandwidth: {0}".format(grid.best_estimator_.bandwidth))
 
 # use the best estimator to compute the kernel density estimate
 kde = grid.best_estimator_

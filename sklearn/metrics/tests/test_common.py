@@ -633,26 +633,26 @@ def test_classification_invariance_string_vs_numbers_labels(name):
         measure_with_str = metric_str(y1_str, y2_str)
 
         assert_array_equal(measure_with_number, measure_with_str,
-                           err_msg="{} failed string vs number invariance "
+                           err_msg="{0} failed string vs number invariance "
                                    "test".format(name))
 
         measure_with_strobj = metric_str(y1_str.astype('O'),
                                          y2_str.astype('O'))
         assert_array_equal(measure_with_number, measure_with_strobj,
-                           err_msg="{} failed string object vs number "
+                           err_msg="{0} failed string object vs number "
                                    "invariance test".format(name))
 
         if name in METRICS_WITH_LABELS:
             metric_str = partial(metric_str, labels=labels_str)
             measure_with_str = metric_str(y1_str, y2_str)
             assert_array_equal(measure_with_number, measure_with_str,
-                               err_msg="{} failed string vs number  "
+                               err_msg="{0} failed string vs number  "
                                        "invariance test".format(name))
 
             measure_with_strobj = metric_str(y1_str.astype('O'),
                                              y2_str.astype('O'))
             assert_array_equal(measure_with_number, measure_with_strobj,
-                               err_msg="{} failed string vs number  "
+                               err_msg="{0} failed string vs number  "
                                        "invariance test".format(name))
 
 
@@ -678,12 +678,12 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
             measure_with_number = metric(y1, y2)
             measure_with_str = metric_str(y1_str, y2)
             assert_array_equal(measure_with_number, measure_with_str,
-                               err_msg="{} failed string vs number "
+                               err_msg="{0} failed string vs number "
                                        "invariance test".format(name))
 
             measure_with_strobj = metric_str(y1_str.astype('O'), y2)
             assert_array_equal(measure_with_number, measure_with_strobj,
-                               err_msg="{} failed string object vs number "
+                               err_msg="{0} failed string object vs number "
                                        "invariance test".format(name))
         else:
             # TODO those metrics doesn't support string label yet

@@ -477,8 +477,8 @@ def test_parallel_classification():
 
     X_err = np.hstack((X_test, np.zeros((X_test.shape[0], 1))))
     assert_raise_message(ValueError, "Number of features of the model "
-                         "must match the input. Model n_features is {} "
-                         "and input n_features is {} "
+                         "must match the input. Model n_features is {0} "
+                         "and input n_features is {1} "
                          "".format(X_test.shape[1], X_err.shape[1]),
                          ensemble.decision_function, X_err)
 

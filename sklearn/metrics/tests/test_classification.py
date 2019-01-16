@@ -1584,14 +1584,14 @@ def test__check_targets():
             if type1 != type2:
                 assert_raise_message(
                     ValueError,
-                    "Classification metrics can't handle a mix of {} and {} "
+                    "Classification metrics can't handle a mix of {0} and {1} "
                     "targets".format(type1, type2),
                     _check_targets, y1, y2)
 
             else:
                 if type1 not in (BIN, MC, IND):
                     assert_raise_message(ValueError,
-                                         "{} is not supported".format(type1),
+                                         "{0} is not supported".format(type1),
                                          _check_targets, y1, y2)
 
         else:

@@ -143,7 +143,7 @@ def _sem_timedwait(handle, timeout):
         delay += 1e-3
 
 
-class SemLock:
+class SemLock(object):
     """ctypes wrapper to the unix semaphore"""
 
     _rand = tempfile._RandomNameSequence()

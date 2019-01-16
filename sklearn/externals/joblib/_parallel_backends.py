@@ -193,7 +193,7 @@ class SequentialBackend(ParallelBackendBase):
         return get_active_backend()
 
 
-class PoolManagerMixin:
+class PoolManagerMixin(object):
     """A helper class for managing pool of workers."""
 
     _pool = None
@@ -234,7 +234,7 @@ class PoolManagerMixin:
                            **self.parallel._backend_args)
 
 
-class AutoBatchingMixin:
+class AutoBatchingMixin(object):
     """A helper class for automagically batching jobs."""
 
     # In seconds, should be big enough to hide multiprocessing dispatching
@@ -418,7 +418,7 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
                     stacklevel=3)
             return 1
 
-        return super().effective_n_jobs(n_jobs)
+        return super(MultiprocessingBackend, self).effective_n_jobs(n_jobs)
 
     def configure(self, n_jobs=1, parallel=None, prefer=None, require=None,
                   **memmappingpool_args):
@@ -450,7 +450,7 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
 
     def terminate(self):
         """Shutdown the process or thread pool"""
-        super().terminate()
+        super(MultiprocessingBackend, self).terminate()
         if self.JOBLIB_SPAWNED_PROCESS in os.environ:
             del os.environ[self.JOBLIB_SPAWNED_PROCESS]
 
@@ -542,7 +542,7 @@ class LokyBackend(AutoBatchingMixin, ParallelBackendBase):
             self.configure(n_jobs=self.parallel.n_jobs, parallel=self.parallel)
 
 
-class ImmediateResult:
+class ImmediateResult(object):
     def __init__(self, batch):
         # Don't delay the application, to avoid keeping the input
         # arguments in memory
@@ -552,7 +552,7 @@ class ImmediateResult:
         return self.results
 
 
-class SafeFunction:
+class SafeFunction(object):
     """Wrapper that handles the serialization of exception tracebacks.
 
     If an exception is triggered when calling the inner function, a copy of

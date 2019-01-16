@@ -226,7 +226,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # Handle the out_of_bounds argument by setting bounds_error
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
             raise ValueError("The argument ``out_of_bounds`` must be in "
-                             "'nan', 'clip', 'raise'; got {}"
+                             "'nan', 'clip', 'raise'; got {0}"
                              .format(self.out_of_bounds))
 
         bounds_error = self.out_of_bounds == "raise"
@@ -352,7 +352,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # Handle the out_of_bounds argument by clipping if needed
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
             raise ValueError("The argument ``out_of_bounds`` must be in "
-                             "'nan', 'clip', 'raise'; got {}"
+                             "'nan', 'clip', 'raise'; got {0}"
                              .format(self.out_of_bounds))
 
         if self.out_of_bounds == "clip":

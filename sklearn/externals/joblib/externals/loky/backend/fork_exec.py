@@ -19,11 +19,11 @@ def close_fds(keep_fds):  # pragma: no cover
 
     # We try to retrieve all the open fds
     try:
-        open_fds = {int(fd) for fd in os.listdir('/proc/self/fd')}
+        open_fds = set(int(fd) for fd in os.listdir('/proc/self/fd'))
     except FileNotFoundError:
         import resource
         max_nfds = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-        open_fds = {fd for fd in range(3, max_nfds)}
+        open_fds = set(fd for fd in range(3, max_nfds))
         open_fds.add(0)
 
     for i in open_fds - keep_fds:
