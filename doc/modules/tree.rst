@@ -197,12 +197,12 @@ of external libraries and is more compact:
     >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
     |---petal width (cm) <= 0.80
-    |   |--- weights: [50.00, 0.00, 0.00]-> 0
+    |   |--- class: 0
     |---petal width (cm) >  0.80
     |   |---petal width (cm) <= 1.75
-    |   |   |--- weights: [0.00, 49.00, 5.00]-> 1
+    |   |   |--- class: 1
     |   |---petal width (cm) >  1.75
-    |   |   |--- weights: [0.00, 1.00, 45.00]-> 2
+    |   |   |--- class: 2
     <BLANKLINE>
 
 .. topic:: Examples:
