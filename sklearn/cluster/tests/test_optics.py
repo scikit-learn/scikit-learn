@@ -11,6 +11,7 @@ from sklearn.cluster.optics_ import OPTICS
 from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
 from sklearn.cluster.optics_ import _find_local_maxima
 from sklearn.metrics.cluster import contingency_matrix
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
 from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_equal
@@ -87,15 +88,25 @@ def test_empty_extract():
 
 def test_bad_extract():
     # Test an extraction of eps too close to original eps
-    msg = "Specify an epsilon smaller than 0.015. Got 0.3."
+    msg = "Specify an epsilon smaller than 0.15. Got 0.3."
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10)
+    clust = OPTICS(max_eps=5.0 * 0.03, min_samples=10)
     clust2 = clust.fit(X)
     assert_raise_message(ValueError, msg, clust2.extract_dbscan, 0.3)
+
+
+def test_bad_reachability():
+    msg = "All reachability values are inf. Set a larger max_eps."
+    centers = [[1, 1], [-1, -1], [1, -1]]
+    X, labels_true = make_blobs(n_samples=750, centers=centers,
+                                cluster_std=0.4, random_state=0)
+
+    clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10)
+    assert_raise_message(ValueError, msg, clust.fit, X)
 
 
 def test_close_extract():
@@ -436,3 +447,15 @@ def test_reach_dists():
     else:
         # we compare to truncated decimals, so use atol
         assert_allclose(clust.reachability_, np.array(v), atol=1e-5)
+
+
+def test_precomputed_dists():
+    redX = X[::10]
+    dists = pairwise_distances(redX, metric='euclidean')
+    clust1 = OPTICS(min_samples=10, algorithm='brute',
+                    metric='precomputed').fit(dists)
+    clust2 = OPTICS(min_samples=10, algorithm='brute',
+                    metric='euclidean').fit(redX)
+
+    assert_allclose(clust1.reachability_, clust2.reachability_)
+    assert_array_equal(clust1.labels_, clust2.labels_)

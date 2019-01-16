@@ -21,13 +21,14 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import linear_model, datasets, metrics
-from sklearn.base import clone
+from sklearn.base import clone, is_classifier
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import sgd_fast
+from sklearn.model_selection import RandomizedSearchCV
 
 
 class SparseSGDClassifier(SGDClassifier):
@@ -278,14 +279,13 @@ class CommonTest(object):
                       alpha=0, learning_rate="optimal")
 
     def test_early_stopping(self):
+        X = iris.data[iris.target > 0]
+        Y = iris.target[iris.target > 0]
         for early_stopping in [True, False]:
             max_iter = 1000
             clf = self.factory(early_stopping=early_stopping, tol=1e-3,
                                max_iter=max_iter).fit(X, Y)
             assert clf.n_iter_ < max_iter
-            assert not hasattr(clf, '_X_val')
-            assert not hasattr(clf, '_y_val')
-            assert not hasattr(clf, '_sample_weight_val')
 
     def test_adaptive_longer_than_constant(self):
         clf1 = self.factory(learning_rate="adaptive", eta0=0.01, tol=1e-3,
@@ -299,28 +299,37 @@ class CommonTest(object):
     def test_validation_set_not_used_for_training(self):
         X, Y = iris.data, iris.target
         validation_fraction = 0.4
-        random_state = 42
+        seed = 42
         shuffle = False
-        clf1 = self.factory(early_stopping=True, random_state=random_state,
+        max_iter = 10
+        clf1 = self.factory(early_stopping=True,
+                            random_state=np.random.RandomState(seed),
                             validation_fraction=validation_fraction,
                             learning_rate='constant', eta0=0.01,
-                            tol=None, max_iter=1000, shuffle=shuffle)
+                            tol=None, max_iter=max_iter, shuffle=shuffle)
         clf1.fit(X, Y)
+        assert clf1.n_iter_ == max_iter
 
-        idx_train, idx_val = train_test_split(
-            np.arange(X.shape[0]), test_size=validation_fraction,
-            random_state=random_state)
         clf2 = self.factory(early_stopping=False,
-                            random_state=random_state,
+                            random_state=np.random.RandomState(seed),
                             learning_rate='constant', eta0=0.01,
-                            tol=None, max_iter=1000, shuffle=shuffle)
+                            tol=None, max_iter=max_iter, shuffle=shuffle)
+
+        if is_classifier(clf2):
+            cv = StratifiedShuffleSplit(test_size=validation_fraction,
+                                        random_state=seed)
+        else:
+            cv = ShuffleSplit(test_size=validation_fraction,
+                              random_state=seed)
+        idx_train, idx_val = next(cv.split(X, Y))
         idx_train = np.sort(idx_train)  # remove shuffling
-        clf2.fit(X[idx_train], np.array(Y)[idx_train])
+        clf2.fit(X[idx_train], Y[idx_train])
+        assert clf2.n_iter_ == max_iter
 
         assert_array_equal(clf1.coef_, clf2.coef_)
 
-    @ignore_warnings(category=ConvergenceWarning)
     def test_n_iter_no_change(self):
+        X, Y = iris.data, iris.target
         # test that n_iter_ increases monotonically with n_iter_no_change
         for early_stopping in [True, False]:
             n_iter_list = [self.factory(early_stopping=early_stopping,
@@ -1471,3 +1480,31 @@ def test_gradient_squared_epsilon_insensitive():
         (2.0, 2.2, -0.2), (-2.0, 1.0, -5.8)
     ]
     _test_gradient_common(loss, cases)
+
+
+def test_multi_thread_multi_class_and_early_stopping():
+    # This is a non-regression test for a bad interaction between
+    # early stopping internal attribute and thread-based parallelism.
+    clf = SGDClassifier(alpha=1e-3, tol=1e-3, max_iter=1000,
+                        early_stopping=True, n_iter_no_change=100,
+                        random_state=0, n_jobs=2)
+    clf.fit(iris.data, iris.target)
+    assert clf.n_iter_ > clf.n_iter_no_change
+    assert clf.n_iter_ < clf.n_iter_no_change + 20
+    assert clf.score(iris.data, iris.target) > 0.8
+
+
+def test_multi_core_gridsearch_and_early_stopping():
+    # This is a non-regression test for a bad interaction between
+    # early stopping internal attribute and process-based multi-core
+    # parallelism.
+    param_grid = {
+        'alpha': np.logspace(-4, 4, 9),
+        'n_iter_no_change': [5, 10, 50],
+    }
+    clf = SGDClassifier(tol=1e-3, max_iter=1000, early_stopping=True,
+                        random_state=0)
+    search = RandomizedSearchCV(clf, param_grid, n_iter=10, cv=5, n_jobs=2,
+                                random_state=0)
+    search.fit(iris.data, iris.target)
+    assert search.best_score_ > 0.8

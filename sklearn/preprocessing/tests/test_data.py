@@ -157,6 +157,17 @@ def test_polynomial_feature_names():
                        feature_names)
 
 
+def test_polynomial_feature_array_order():
+    X = np.arange(10).reshape(5, 2)
+
+    def is_c_contiguous(a):
+        return np.isfortran(a.T)
+
+    assert is_c_contiguous(PolynomialFeatures().fit_transform(X))
+    assert is_c_contiguous(PolynomialFeatures(order='C').fit_transform(X))
+    assert np.isfortran(PolynomialFeatures(order='F').fit_transform(X))
+
+
 @pytest.mark.parametrize(['deg', 'include_bias', 'interaction_only', 'dtype'],
                          [(1, True, False, int),
                           (2, True, False, int),
