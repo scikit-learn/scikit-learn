@@ -20,9 +20,13 @@ behavior of missForest, a popular imputation package for R. In this example,
 we have chosen to use ``ExtraTreesRegressor`` instead of
 ``RandomForestRegressor`` (as in missForest) due to its increased speed.
 
+Note that ``KNeighborsRegressor``is different from KNN imputation, which
+learns from samples with missing values by using a distance metric that
+accounts for missing values, rather than imputing them.
+
 The goal is to compare different predictors to see which one is best for
 the `IterativeImputer` when using a ``BayesianRidge`` estimator on the
-California housing dataset.
+California housing dataset with a single value randomly removed from each row.
 
 For this particular pattern of missing values we see that
 ``ExtraTreesRegressor`` gives the best results.
@@ -59,10 +63,9 @@ mses[0, :] = cross_val_score(br_estimator, X_full, y_full,
 
 # Add a single missing value to each row
 X_missing = X_full.copy()
-y_missing = y_full.copy()
-n_missing_samples = int(np.floor(n_samples))
-missing_samples = rng.choice(n_samples, n_missing_samples, replace=False)
-missing_features = rng.choice(n_features, n_missing_samples, replace=True)
+y_missing = y_full
+missing_samples = np.arange(n_samples)
+missing_features = rng.choice(n_features, n_samples, replace=True)
 X_missing[missing_samples, missing_features] = np.nan
 
 # Estimate the score after imputation (mean strategy) of the missing values
