@@ -17,7 +17,7 @@ from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
@@ -327,7 +327,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         eclf.set_params(rf=None)
 
         """
-        super(VotingClassifier, self)._set_params('estimators', **params)
+        super()._set_params('estimators', **params)
         return self
 
     def get_params(self, deep=True):

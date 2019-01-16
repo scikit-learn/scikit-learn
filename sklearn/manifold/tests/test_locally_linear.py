@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -58,7 +57,7 @@ def test_lle_simple_grid():
     for solver in eigen_solvers:
         clf.set_params(eigen_solver=solver)
         clf.fit(X)
-        assert_true(clf.embedding_.shape[1] == n_components)
+        assert clf.embedding_.shape[1] == n_components
         reconstruction_error = linalg.norm(
             np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
 
@@ -92,7 +91,7 @@ def test_lle_manifold():
         for solver in eigen_solvers:
             clf.set_params(eigen_solver=solver)
             clf.fit(X)
-            assert_true(clf.embedding_.shape[1] == n_components)
+            assert clf.embedding_.shape[1] == n_components
             reconstruction_error = linalg.norm(
                 np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
             details = ("solver: %s, method: %s" % (solver, method))

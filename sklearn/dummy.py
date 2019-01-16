@@ -220,8 +220,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                              k in range(self.n_outputs_)], [n_samples, 1])
 
             elif self.strategy == "stratified":
-                y = np.vstack(classes_[k][proba[k].argmax(axis=1)] for
-                              k in range(self.n_outputs_)).T
+                y = np.vstack([classes_[k][proba[k].argmax(axis=1)] for
+                               k in range(self.n_outputs_)]).T
 
             elif self.strategy == "uniform":
                 ret = [classes_[k][rs.randint(n_classes_[k], size=n_samples)]
@@ -349,7 +349,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
-        return super(DummyClassifier, self).score(X, y, sample_weight)
+        return super().score(X, y, sample_weight)
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
@@ -548,4 +548,4 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
-        return super(DummyRegressor, self).score(X, y, sample_weight)
+        return super().score(X, y, sample_weight)

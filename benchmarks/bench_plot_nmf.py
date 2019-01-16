@@ -14,6 +14,7 @@ import numbers
 
 import numpy as np
 import matplotlib.pyplot as plt
+from joblib import Memory
 import pandas
 
 from sklearn.utils.testing import ignore_warnings
@@ -22,7 +23,6 @@ from sklearn.decomposition.nmf import NMF
 from sklearn.decomposition.nmf import _initialize_nmf
 from sklearn.decomposition.nmf import _beta_divergence
 from sklearn.decomposition.nmf import INTEGER_TYPES, _check_init
-from sklearn.utils import Memory
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
 from sklearn.utils import check_array
