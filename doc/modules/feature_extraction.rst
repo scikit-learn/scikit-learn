@@ -507,7 +507,7 @@ Each row is normalized to have unit Euclidean norm:
 v{_2}^2 + \dots + v{_n}^2}}`
 
 For example, we can compute the tf-idf of the first term in the first
-document in the `counts` array as follows:
+document in the ``counts`` array as follows:
 
 :math:`n_{d} = 6`
 

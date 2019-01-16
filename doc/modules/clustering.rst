@@ -217,7 +217,7 @@ each job).
 .. warning::
 
     The parallel version of K-Means is broken on OS X when `numpy` uses the
-    `Accelerate` Framework. This is expected behavior: `Accelerate` can be called
+    **Accelerate** Framework. This is expected behavior: **Accelerate** can be called
     after a fork but you need to execv the subprocess with the Python binary
     (which multiprocessing does not do under posix).
 
@@ -515,7 +515,7 @@ Spectral Clustering Graphs
 
 Spectral Clustering can also be used to cluster graphs by their spectral
 embeddings.  In this case, the affinity matrix is the adjacency matrix of the
-graph, and SpectralClustering is initialized with `affinity='precomputed'`::
+graph, and SpectralClustering is initialized with ``affinity='precomputed'``::
 
     >>> from sklearn.cluster import SpectralClustering
     >>> sc = SpectralClustering(3, affinity='precomputed', n_init=100,
