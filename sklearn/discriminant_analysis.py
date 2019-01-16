@@ -530,9 +530,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         C : array, shape (n_samples, n_classes)
             Estimated probabilities.
         """
+        check_is_fitted(self, 'classes_')
 
         if len(self.classes_) == 2:
-            return super(LinearDiscriminantAnalysis, self)._predict_proba_lr(X)
+            return self._predict_proba_lr(X)
         else:
             prob = self.decision_function(X)
             return softmax(prob)
