@@ -58,6 +58,16 @@ Support for Python 3.4 and below has been officially dropped.
     :class:`datasets.svmlight_format` :issue:`10727` by
     :user:`Bryan K Woods <bryan-woods>`,
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
+  `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
+  `n_components < n_features` instead of
+  `n_components <= min(n_samples, n_features)`. 
+  :issue:`11650` by :user:`Hossein Pourbozorg <hossein-pourbozorg>` and
+  `Zijie (ZJ) Poh <zjpoh>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
