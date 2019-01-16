@@ -502,7 +502,7 @@ class OutlierMixin(object):
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
-        """Performs outlier detection on X.
+        """Performs fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
 
