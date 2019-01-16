@@ -8,7 +8,7 @@ from heapq import heappush, heappop
 import numpy as np
 from time import time
 
-from .splitting import (SplittingContext, split_indices, find_node_split,
+from .splitting import (SplittingContext, find_node_split,
                         find_node_split_subtraction, SplitInfo)
 from .predictor import TreePredictor, PREDICTOR_RECORD_DTYPE
 
@@ -365,8 +365,8 @@ class TreeGrower:
         node = heappop(self.splittable_nodes)
 
         tic = time()
-        (sample_indices_left, sample_indices_right, i) = split_indices(
-            self.splitting_context, node.split_info, node.sample_indices)
+        (sample_indices_left, sample_indices_right, i) = self.splitting_context.split_indices(
+            node.split_info, node.sample_indices)
         toc = time()
         node.apply_split_time = toc - tic
         self.total_apply_split_time += node.apply_split_time

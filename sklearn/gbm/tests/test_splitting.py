@@ -8,7 +8,6 @@ from sklearn.gbm.types import Y_DTYPE
 from sklearn.gbm.types import X_BINNED_DTYPE
 from sklearn.gbm.splitting import SplittingContext
 from sklearn.gbm.splitting import find_node_split
-from sklearn.gbm.splitting import split_indices
 from sklearn.gbm.splitting import find_node_split_subtraction
 from sklearn.gbm.splitting import _find_histogram_split_wrapper
 
@@ -101,8 +100,8 @@ def test_split_vs_split_subtraction(constant_hessian):
 
     # first split parent, left and right with classical method
     si_parent = find_node_split(context, sample_indices, hists_parent)
-    sample_indices_left, sample_indices_right, _ = split_indices(
-        context, si_parent, sample_indices)
+    sample_indices_left, sample_indices_right, _ = context.split_indices(
+        si_parent, sample_indices)
     si_left = find_node_split(context, sample_indices_left, hists_left)
     si_right = find_node_split(context, sample_indices_right, hists_right)
 
@@ -187,8 +186,8 @@ def test_gradient_and_hessian_sanity(constant_hessian):
 
     # first split parent, left and right with classical method
     si_parent = find_node_split(context, sample_indices, hists_parent)
-    sample_indices_left, sample_indices_right, _ = split_indices(
-        context, si_parent, sample_indices)
+    sample_indices_left, sample_indices_right, _ = context.split_indices(
+        si_parent, sample_indices)
 
     si_left = find_node_split(context, sample_indices_left, hists_left)
     si_right = find_node_split(context, sample_indices_right, hists_right)
@@ -291,8 +290,8 @@ def test_split_indices():
     assert si_root.feature_idx == 1
     assert si_root.bin_idx == 3
 
-    samples_left, samples_right, position_right = split_indices(
-        context, si_root, context.partition)
+    samples_left, samples_right, position_right = context.split_indices(
+        si_root, context.partition)
     assert set(samples_left) == set([0, 1, 3, 4, 5, 6, 8])
     assert set(samples_right) == set([2, 7, 9])
 
