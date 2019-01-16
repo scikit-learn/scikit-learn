@@ -14,8 +14,8 @@ space while controlling the distortion in the pairwise distances.
 Theoretical bounds
 ==================
 
-The distortion introduced by a random projection `p` is asserted by
-the fact that `p` is defining an eps-embedding with good probability
+The distortion introduced by a random projection ``p`` is asserted by
+the fact that ``p`` is defining an eps-embedding with good probability
 as defined by:
 
 .. math::

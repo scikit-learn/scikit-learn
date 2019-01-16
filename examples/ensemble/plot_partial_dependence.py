@@ -17,8 +17,8 @@ housing dataset. The example is taken from [1]_.
 
 The plot shows four one-way and one two-way partial dependence plots.
 The target variables for the one-way PDP are:
-median income (`MedInc`), avg. occupants per household (`AvgOccup`),
-median house age (`HouseAge`), and avg. rooms per household (`AveRooms`).
+median income (``MedInc``), avg. occupants per household (``AvgOccup``),
+median house age (``HouseAge``), and avg. rooms per household (``AveRooms``).
 
 We can clearly see that the median house price shows a linear relationship
 with the median income (top left) and that the house price drops when the

@@ -9,7 +9,7 @@ penalized logistic regression with either a One-Vs-Rest or multinomial setting,
 and Gaussian process classification.
 
 Linear SVC is not a probabilistic classifier by default but it has a built-in
-calibration option enabled in this example (`probability=True`).
+calibration option enabled in this example (``probability=True``).
 
 The logistic regression with One-Vs-Rest is not a multiclass classifier out of
 the box. As a result it has more trouble in separating class 2 and 3 than the

@@ -9,7 +9,7 @@ predicted by three different classifiers and averaged by the
 
 First, three examplary classifiers are initialized (`LogisticRegression`,
 `GaussianNB`, and `RandomForestClassifier`) and used to initialize a
-soft-voting `VotingClassifier` with weights `[1, 1, 5]`, which means that
+soft-voting `VotingClassifier` with weights ``[1, 1, 5]``, which means that
 the predicted probabilities of the `RandomForestClassifier` count 5 times
 as much as the weights of the other classifiers when the averaged probability
 is calculated.

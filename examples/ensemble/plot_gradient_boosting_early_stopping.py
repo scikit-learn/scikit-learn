@@ -17,7 +17,7 @@ training to assess the validation loss of the model. The gradient boosting
 model is trained using the training set and evaluated using the validation set.
 When each additional stage of regression tree is added, the validation set is
 used to score the model.  This is continued until the scores of the model in
-the last ``n_iter_no_change`` stages do not improve by atleast `tol`. After
+the last ``n_iter_no_change`` stages do not improve by atleast ``tol``. After
 that the model is considered to have converged and further addition of stages
 is "stopped early".
 

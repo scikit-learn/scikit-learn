@@ -10,7 +10,7 @@ We start by training a label propagation model with only 10 labeled points,
 then we select the top five most uncertain points to label. Next, we train
 with 15 labeled points (original 10 + 5 new ones). We repeat this process
 four times to have a model trained with 30 labeled examples. Note you can
-increase this to label more than 30 by changing `max_iterations`. Labeling
+increase this to label more than 30 by changing ``max_iterations``. Labeling
 more than 30 can be useful to get a sense for the speed of convergence of
 this active learning technique.
 

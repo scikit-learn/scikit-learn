@@ -7,7 +7,7 @@ Vector Quantization Example
 =========================================================
 
 Face, a 1024 x 768 size image of a raccoon face,
-is used here to illustrate how `k`-means is
+is used here to illustrate how **k**-means is
 used for vector quantization.
 
 """

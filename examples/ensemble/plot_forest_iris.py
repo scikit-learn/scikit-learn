@@ -24,7 +24,7 @@ we see::
     AdaBoost(DecisionTree(max_depth=3))  # 0.94 score
     DecisionTree(max_depth=None)  # 0.94 score
 
-Increasing `max_depth` for AdaBoost lowers the standard deviation of
+Increasing ``max_depth`` for AdaBoost lowers the standard deviation of
 the scores (but the average score does not improve).
 
 See the console's output for further details about each model.

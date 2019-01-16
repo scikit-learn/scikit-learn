@@ -11,7 +11,7 @@ given a single underlying feature. As a result, it learns local linear
 regressions approximating the circle.
 
 We can see that if the maximum depth of the tree (controlled by the
-`max_depth` parameter) is set too high, the decision trees learn too fine
+``max_depth`` parameter) is set too high, the decision trees learn too fine
 details of the training data and learn from the noise, i.e. they overfit.
 """
 print(__doc__)

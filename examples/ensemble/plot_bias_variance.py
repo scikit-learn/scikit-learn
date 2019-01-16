@@ -32,13 +32,13 @@ The lower left figure plots the pointwise decomposition of the expected mean
 squared error of a single decision tree. It confirms that the bias term (in
 blue) is low while the variance is large (in green). It also illustrates the
 noise part of the error which, as expected, appears to be constant and around
-`0.01`.
+``0.01``.
 
 The right figures correspond to the same plots but using instead a bagging
 ensemble of decision trees. In both figures, we can observe that the bias term
 is larger than in the previous case. In the upper right figure, the difference
 between the average prediction (in cyan) and the best possible model is larger
-(e.g., notice the offset around `x=2`). In the lower right figure, the bias
+(e.g., notice the offset around ``x=2``). In the lower right figure, the bias
 curve is also slightly higher than in the lower left figure. In terms of
 variance however, the beam of predictions is narrower, which suggests that the
 variance is lower. Indeed, as the lower right figure confirms, the variance

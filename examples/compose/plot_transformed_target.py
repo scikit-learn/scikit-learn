@@ -49,8 +49,8 @@ else:
 # non-negative and (ii) applying an exponential function to obtain non-linear
 # targets which cannot be fitted using a simple linear model.
 #
-# Therefore, a logarithmic (`np.log1p`) and an exponential function
-# (`np.expm1`) will be used to transform the targets before training a linear
+# Therefore, a logarithmic (```np.log1p``) and an exponential function
+# (``np.expm1```) will be used to transform the targets before training a linear
 # regression model and using it for prediction.
 
 X, y = make_regression(n_samples=10000, noise=100, random_state=0)

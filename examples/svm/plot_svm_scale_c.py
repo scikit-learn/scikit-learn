@@ -17,9 +17,9 @@ equation:
 where
 
     - :math:`C` is used to set the amount of regularization
-    - :math:`\mathcal{L}` is a `loss` function of our samples
+    - :math:`\mathcal{L}` is a *loss* function of our samples
       and our model parameters.
-    - :math:`\Omega` is a `penalty` function of our model parameters
+    - :math:`\Omega` is a *penalty* function of our model parameters
 
 If we consider the loss function to be the individual error per
 sample, then the data-fit term, or the sum of the error for each sample, will
@@ -27,28 +27,28 @@ increase as we add more samples. The penalization term, however, will not
 increase.
 
 When using, for example, :ref:`cross validation <cross_validation>`, to
-set the amount of regularization with `C`, there will be a
+set the amount of regularization with ``C``, there will be a
 different amount of samples between the main problem and the smaller problems
 within the folds of the cross validation.
 
 Since our loss function is dependent on the amount of samples, the latter
-will influence the selected value of `C`.
-The question that arises is `How do we optimally adjust C to
-account for the different amount of training samples?`
+will influence the selected value of ``C``.
+The question that arises is *How do we optimally adjust C to
+account for the different amount of training samples?*
 
 The figures below are used to illustrate the effect of scaling our
-`C` to compensate for the change in the number of samples, in the
-case of using an `l1` penalty, as well as the `l2` penalty.
+``C`` to compensate for the change in the number of samples, in the
+case of using an ``l1`` penalty, as well as the ``l2`` penalty.
 
 l1-penalty case
 -----------------
-In the `l1` case, theory says that prediction consistency
+In the ``l1`` case, theory says that prediction consistency
 (i.e. that under given hypothesis, the estimator
 learned predicts as well as a model knowing the true distribution)
-is not possible because of the bias of the `l1`. It does say, however,
+is not possible because of the bias of the ``l1``. It does say, however,
 that model consistency, in terms of finding the right set of non-zero
 parameters as well as their signs, can be achieved by scaling
-`C1`.
+``C1``.
 
 l2-penalty case
 -----------------
@@ -59,21 +59,21 @@ as the number of samples grow.
 Simulations
 ------------
 
-The two figures below plot the values of `C` on the `x-axis` and the
-corresponding cross-validation scores on the `y-axis`, for several different
+The two figures below plot the values of ``C`` on the **x-axis** and the
+corresponding cross-validation scores on the **y-axis**, for several different
 fractions of a generated data-set.
 
-In the `l1` penalty case, the cross-validation-error correlates best with
-the test-error, when scaling our `C` with the number of samples, `n`,
+In the ``l1`` penalty case, the cross-validation-error correlates best with
+the test-error, when scaling our ``C`` with the number of samples, ``n``,
 which can be seen in the first figure.
 
-For the `l2` penalty case, the best result comes from the case where `C`
+For the ``l2`` penalty case, the best result comes from the case where ``C``
 is not scaled.
 
 .. topic:: Note:
 
     Two separate datasets are used for the two different plots. The reason
-    behind this is the `l1` case works better on sparse data, while `l2`
+    behind this is the ``l1`` case works better on sparse data, while ``l2``
     is better suited to the non-sparse case.
 """
 print(__doc__)

@@ -5,7 +5,7 @@
 =========================================================
 Linear Regression Example
 =========================================================
-This example uses the only the first feature of the `diabetes` dataset, in
+This example uses the only the first feature of the **diabetes** dataset, in
 order to illustrate a two-dimensional plot of this regression technique. The
 straight line can be seen in the plot, showing how linear regression attempts
 to draw a straight line that will best minimize the residual sum of squares

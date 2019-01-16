@@ -9,7 +9,7 @@ An example of estimating sources from noisy data.
 Imagine 3 instruments playing simultaneously and 3 microphones
 recording the mixed signals. ICA is used to recover the sources
 ie. what is played by each instrument. Importantly, PCA fails
-at recovering our `instruments` since the related signals reflect
+at recovering our **instruments** since the related signals reflect
 non-Gaussian processes.
 
 """
@@ -59,7 +59,7 @@ plt.figure()
 models = [X, S, S_, H]
 names = ['Observations (mixed signal)',
          'True Sources',
-         'ICA recovered signals', 
+         'ICA recovered signals',
          'PCA recovered signals']
 colors = ['red', 'steelblue', 'orange']
 

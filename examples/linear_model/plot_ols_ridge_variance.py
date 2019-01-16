@@ -13,7 +13,7 @@ can vary quite a bit for each prediction due to the noise
 induced in the observations.
 
 Ridge regression is basically minimizing a penalised version
-of the least-squared function. The penalising `shrinks` the
+of the least-squared function. The penalising **shrinks** the
 value of the regression coefficients.
 Despite the few data points in each dimension, the slope
 of the prediction is much more stable and the variance
