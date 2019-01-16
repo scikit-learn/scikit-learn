@@ -28,7 +28,7 @@ from ..utils._joblib import delayed
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
-                       n_jobs=None):
+                       metric='minkowski', p=2, metric_params=None, n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
     That this function takes time at least quadratic in n_samples. For large
@@ -52,6 +52,35 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
         deterministic.
         See :term:`Glossary <random_state>`.
 
+    metric : string or callable, default 'minkowski'
+        Metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+        Distance matrices are not supported.
+        Valid values for metric are:
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
+    p : integer, optional (default = 2)
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+    
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -72,7 +101,8 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
     n_neighbors = int(X.shape[0] * quantile)
     if n_neighbors < 1:  # cannot fit NearestNeighbors with n_neighbors = 0
         n_neighbors = 1
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors,
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, 
+                            metric=metric, p=p, metric_params=metric_params, 
                             n_jobs=n_jobs)
     nbrs.fit(X)
 
@@ -108,7 +138,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
-               n_jobs=None):
+               metric='minkowski', p=2, metric_params=None, n_jobs=None):
     """Perform mean shift clustering of data using a flat kernel.
 
     Read more in the :ref:`User Guide <mean_shift>`.
@@ -153,6 +183,35 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         Maximum number of iterations, per seed point before the clustering
         operation terminates (for that seed point), if has not converged yet.
 
+    metric : string or callable, default 'minkowski'
+        Metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+        Distance matrices are not supported.
+        Valid values for metric are:
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+          'manhattan']
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
+    p : integer, optional (default = 2)
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+    
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
         each of the n_init runs in parallel.
@@ -196,7 +255,9 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     # We use n_jobs=1 because this will be used in nested calls under
     # parallel calls to _mean_shift_single_seed so there is no need for
     # for further parallelism.
-    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=1).fit(X)
+    nbrs = NearestNeighbors(radius=bandwidth,  
+                            metric=metric, p=p, metric_params=metric_params, 
+                            n_jobs=1).fit(X)
 
     # execute iterations on all seeds in parallel
     all_res = Parallel(n_jobs=n_jobs)(
@@ -224,7 +285,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                                  reverse=True)
     sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
     unique = np.ones(len(sorted_centers), dtype=np.bool)
-    nbrs = NearestNeighbors(radius=bandwidth,
+    nbrs = NearestNeighbors(radius=bandwidth, 
+                            metric=metric, p=p, metric_params=metric_params,
                             n_jobs=n_jobs).fit(sorted_centers)
     for i, center in enumerate(sorted_centers):
         if unique[i]:
@@ -235,7 +297,9 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     cluster_centers = sorted_centers[unique]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-    nbrs = NearestNeighbors(n_neighbors=1, n_jobs=n_jobs).fit(cluster_centers)
+    nbrs = NearestNeighbors(n_neighbors=1,  
+                            metric=metric, p=p, metric_params=metric_params,
+                            n_jobs=n_jobs).fit(cluster_centers)
     labels = np.zeros(n_samples, dtype=np.int)
     distances, idxs = nbrs.kneighbors(X)
     if cluster_all:
@@ -397,13 +461,23 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     """
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
-                 min_bin_freq=1, cluster_all=True, n_jobs=None):
+                 min_bin_freq=1, cluster_all=True, metric='minkowski', 
+                 p=2, metric_params=None, n_jobs=None):
         self.bandwidth = bandwidth
         self.seeds = seeds
         self.bin_seeding = bin_seeding
         self.cluster_all = cluster_all
         self.min_bin_freq = min_bin_freq
+        self.metric=metric 
+        self.p=p 
+        self.metric_params=metric_params
         self.n_jobs = n_jobs
+
+        self.metric_kwargs=metric_params
+        if self.metric=='minkowski':
+            if metric_params==None:
+                self.metric_kwargs={}
+            self.metric_kwargs['p']=self.p
 
     def fit(self, X, y=None):
         """Perform clustering.
@@ -421,6 +495,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
             mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
                        min_bin_freq=self.min_bin_freq,
                        bin_seeding=self.bin_seeding,
+                       metric=self.metric, p=self.p, metric_params=self.metric_params,
                        cluster_all=self.cluster_all, n_jobs=self.n_jobs)
         return self
 
@@ -439,4 +514,5 @@ class MeanShift(BaseEstimator, ClusterMixin):
         """
         check_is_fitted(self, "cluster_centers_")
 
-        return pairwise_distances_argmin(X, self.cluster_centers_)
+        return pairwise_distances_argmin(X, self.cluster_centers_,  
+                                         metric=self.metric, metric_kwargs=self.metric_kwargs)
