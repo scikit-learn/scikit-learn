@@ -443,94 +443,94 @@ cdef class SplittingContext:
         free(split_infos)
         return out
 
-def find_node_split_subtraction(
-    SplittingContext context,
-    unsigned int [::1] sample_indices,  # IN
-    Y_DTYPE_C sum_gradients,
-    Y_DTYPE_C sum_hessians,
-    hist_struct [:, ::1] parent_histograms,  # IN
-    hist_struct [:, ::1] sibling_histograms,  # IN
-    hist_struct [:, ::1] histograms):  # OUT
-    """For each feature, find the best bin to split on at a given node.
+    def find_node_split_subtraction(
+        SplittingContext self,
+        unsigned int [::1] sample_indices,  # IN
+        Y_DTYPE_C sum_gradients,
+        Y_DTYPE_C sum_hessians,
+        hist_struct [:, ::1] parent_histograms,  # IN
+        hist_struct [:, ::1] sibling_histograms,  # IN
+        hist_struct [:, ::1] histograms):  # OUT
+        """For each feature, find the best bin to split on at a given node.
 
-    Returns the best split info among all features, and the histograms of
-    all the features.
+        Returns the best split info among all features, and the histograms of
+        all the features.
 
-    This does the same job as ``find_node_split()`` but uses the histograms
-    of the parent and sibling of the node to split. This allows to use the
-    identity: ``histogram(parent) = histogram(node) - histogram(sibling)``,
-    which is significantly faster than computing the histograms from data.
+        This does the same job as ``find_node_split()`` but uses the histograms
+        of the parent and sibling of the node to split. This allows to use the
+        identity: ``histogram(parent) = histogram(node) - histogram(sibling)``,
+        which is significantly faster than computing the histograms from data.
 
-    Returns the best SplitInfo among all features, along with all the feature
-    histograms that can be latter used to compute the sibling or children
-    histograms by substraction.
+        Returns the best SplitInfo among all features, along with all the feature
+        histograms that can be latter used to compute the sibling or children
+        histograms by substraction.
 
-    Parameters
-    ----------
-    context : SplittingContext
-        The splitting context
-    sample_indices : array of int
-        The indices of the samples at the node to split.
-    parent_histograms : array of HISTOGRAM_DTYPE of shape(n_features, max_bins)
-        The histograms of the parent
-    sibling_histograms : array of HISTOGRAM_DTYPE of \
-        shape(n_features, max_bins)
-        The histograms of the sibling
-    histograms : array of HISTOGRAM_DTYPE of \
-        shape(n_features, max_bins)
-        The computed histograms
+        Parameters
+        ----------
+        self : SplittingContext
+            The splitting self
+        sample_indices : array of int
+            The indices of the samples at the node to split.
+        parent_histograms : array of HISTOGRAM_DTYPE of shape(n_features, max_bins)
+            The histograms of the parent
+        sibling_histograms : array of HISTOGRAM_DTYPE of \
+            shape(n_features, max_bins)
+            The histograms of the sibling
+        histograms : array of HISTOGRAM_DTYPE of \
+            shape(n_features, max_bins)
+            The computed histograms
 
-    Returns
-    -------
-    best_split_info : SplitInfo
-        The info about the best possible split among all features.
-    histograms : array of HISTOGRAM_DTYPE, shape=(n_features, max_bins)
-        The histograms of each feature. A histogram is an array of
-        HISTOGRAM_DTYPE of size ``max_bins`` (only
-        ``n_bins_per_features[feature]`` entries are relevant).
-    """
+        Returns
+        -------
+        best_split_info : SplitInfo
+            The info about the best possible split among all features.
+        histograms : array of HISTOGRAM_DTYPE, shape=(n_features, max_bins)
+            The histograms of each feature. A histogram is an array of
+            HISTOGRAM_DTYPE of size ``max_bins`` (only
+            ``n_bins_per_features[feature]`` entries are relevant).
+        """
 
-    cdef:
-        int feature_idx
-        unsigned int n_samples
-        split_info_struct split_info
-        split_info_struct * split_infos
-        int i
+        cdef:
+            int feature_idx
+            unsigned int n_samples
+            split_info_struct split_info
+            split_info_struct * split_infos
+            int i
 
-    with nogil:
-        n_samples = sample_indices.shape[0]
+        with nogil:
+            n_samples = sample_indices.shape[0]
 
-        context.sum_gradients = sum_gradients
-        context.sum_hessians = sum_hessians
+            self.sum_gradients = sum_gradients
+            self.sum_hessians = sum_hessians
 
-        split_infos = <split_info_struct *> malloc(
-            context.n_features * sizeof(split_info_struct))
-        for feature_idx in prange(context.n_features):
-            split_info = _find_histogram_split_subtraction(
-                context, feature_idx, parent_histograms[feature_idx],
-                sibling_histograms[feature_idx], histograms[feature_idx],
-                n_samples)
-            split_infos[feature_idx] = split_info
+            split_infos = <split_info_struct *> malloc(
+                self.n_features * sizeof(split_info_struct))
+            for feature_idx in prange(self.n_features):
+                split_info = _find_histogram_split_subtraction(
+                    self, feature_idx, parent_histograms[feature_idx],
+                    sibling_histograms[feature_idx], histograms[feature_idx],
+                    n_samples)
+                split_infos[feature_idx] = split_info
 
-        split_info = _find_best_feature_to_split_helper(context, split_infos)
+            split_info = _find_best_feature_to_split_helper(self, split_infos)
 
-    out = SplitInfo(
-        split_info.gain,
-        split_info.feature_idx,
-        split_info.bin_idx,
-        split_info.gradient_left,
-        split_info.hessian_left,
-        split_info.gradient_right,
-        split_info.hessian_right,
-        split_info.n_samples_left,
-        split_info.n_samples_right,
-    )
-    free(split_infos)
-    return out
+        out = SplitInfo(
+            split_info.gain,
+            split_info.feature_idx,
+            split_info.bin_idx,
+            split_info.gradient_left,
+            split_info.hessian_left,
+            split_info.gradient_right,
+            split_info.hessian_right,
+            split_info.n_samples_left,
+            split_info.n_samples_right,
+        )
+        free(split_infos)
+        return out
 
 
 cdef split_info_struct _find_best_feature_to_split_helper(
-    SplittingContext context,
+    SplittingContext self,
     split_info_struct * split_infos  # IN
     ) nogil:
     cdef:
@@ -541,7 +541,7 @@ cdef split_info_struct _find_best_feature_to_split_helper(
         unsigned int feature_idx
 
     best_gain = -1.
-    for feature_idx in range(context.n_features):
+    for feature_idx in range(self.n_features):
         split_info = split_infos[feature_idx]
         gain = split_info.gain
         if best_gain == -1 or gain > best_gain:

@@ -7,7 +7,6 @@ from sklearn.gbm.types import HISTOGRAM_DTYPE
 from sklearn.gbm.types import Y_DTYPE
 from sklearn.gbm.types import X_BINNED_DTYPE
 from sklearn.gbm.splitting import SplittingContext
-from sklearn.gbm.splitting import find_node_split_subtraction
 from sklearn.gbm.splitting import _find_histogram_split_wrapper
 
 
@@ -105,13 +104,13 @@ def test_split_vs_split_subtraction(constant_hessian):
     si_right = context.find_node_split(sample_indices_right, hists_right)
 
     # split left with subtraction method
-    si_left_sub = find_node_split_subtraction(
-        context, sample_indices_left, si_parent.gradient_left,
+    si_left_sub = context.find_node_split_subtraction(
+        sample_indices_left, si_parent.gradient_left,
         si_parent.hessian_left, hists_parent, hists_right, hists_left_sub)
 
     # split right with subtraction method
-    si_right_sub = find_node_split_subtraction(
-        context, sample_indices_right, si_parent.gradient_right,
+    si_right_sub = context.find_node_split_subtraction(
+        sample_indices_right, si_parent.gradient_right,
         si_parent.hessian_right, hists_parent, hists_left, hists_right_sub)
 
     # make sure histograms from classical and subtraction method are the same
@@ -192,13 +191,13 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     si_right = context.find_node_split(sample_indices_right, hists_right)
 
     # split left with subtraction method
-    si_left_sub = find_node_split_subtraction(
-        context, sample_indices_left, si_parent.gradient_left,
+    si_left_sub = context.find_node_split_subtraction(
+        sample_indices_left, si_parent.gradient_left,
         si_parent.hessian_left, hists_parent, hists_right, hists_left_sub)
 
     # split right with subtraction method
-    si_right_sub = find_node_split_subtraction(
-        context, sample_indices_right, si_parent.gradient_right,
+    si_right_sub = context.find_node_split_subtraction(
+        sample_indices_right, si_parent.gradient_right,
         si_parent.hessian_right, hists_parent, hists_left, hists_right_sub)
 
     # make sure that si.gradient_left + si.gradient_right have their expected

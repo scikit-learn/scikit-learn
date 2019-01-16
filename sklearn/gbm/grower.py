@@ -8,8 +8,7 @@ from heapq import heappush, heappop
 import numpy as np
 from time import time
 
-from .splitting import (SplittingContext, 
-                        find_node_split_subtraction, SplitInfo)
+from .splitting import SplittingContext, SplitInfo
 from .predictor import TreePredictor, PREDICTOR_RECORD_DTYPE
 
 from .types import HISTOGRAM_DTYPE
@@ -319,8 +318,8 @@ class TreeGrower:
                 else:
                     sum_gradients = node.parent.split_info.gradient_left
                     sum_hessians = node.parent.split_info.hessian_left
-                split_info = find_node_split_subtraction(
-                    self.splitting_context, node.sample_indices,
+                split_info = self.splitting_context.find_node_split_subtraction(
+                    node.sample_indices,
                     sum_gradients, sum_hessians, node.parent.histograms,
                     node.sibling.histograms, histograms)
             else:
