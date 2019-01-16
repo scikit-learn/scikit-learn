@@ -340,7 +340,7 @@ def test_export_text():
 |   |--- class: 1
 """)
     assert export_text(clf) == expected_report
-    
+
     expected_report = dedent("""|---feature_1 <= 0.00 ...1 hidden layer/s
 |---feature_1 >  0.00 ...1 hidden layer/s
 """)
