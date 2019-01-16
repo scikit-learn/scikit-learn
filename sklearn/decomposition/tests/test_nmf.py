@@ -215,6 +215,7 @@ def test_non_negative_factorization_consistency():
             model_class = NMF(init=init, solver=solver, random_state=1, tol=1e-2)
             W_cls = model_class.fit_transform(A)
             W_cls_2 = model_class.transform(A)
+
             assert_array_almost_equal(W_nmf, W_cls, decimal=10)
             assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
 
