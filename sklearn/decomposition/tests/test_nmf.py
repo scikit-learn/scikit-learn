@@ -10,6 +10,7 @@ from scipy.sparse import csc_matrix
 import pytest
 
 from sklearn.utils.testing import assert_raise_message, assert_no_warnings
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -213,7 +214,8 @@ def test_non_negative_factorization_checking():
     A = np.ones((2, 2))
     # Test parameters checking is public function
     nnmf = non_negative_factorization
-    assert_no_warnings(nnmf, A, A, A, np.int64(1))
+    msg = "The default value of init will change from random to None in 0.23."
+    assert_warns_message(FutureWarning, msg, nnmf, A, A, A, np.int64(1))
     msg = ("Number of components must be a positive integer; "
            "got (n_components=1.5)")
     assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5)

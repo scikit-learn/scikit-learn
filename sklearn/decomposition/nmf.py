@@ -986,11 +986,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
 
-    if init == "warn":
-        warnings.warn("The default value of init will change from "
-                      "random to None in 0.22.", FutureWarning)
-        init = "random"
-
     X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
@@ -1013,6 +1008,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     if not isinstance(tol, numbers.Number) or tol < 0:
         raise ValueError("Tolerance for stopping criteria must be "
                          "positive; got (tol=%r)" % tol)
+
+    if init == "warn" and n_components <= min(n_samples, n_features):
+        warnings.warn("The default value of init will change from "
+                      "random to None in 0.23.", FutureWarning)
+        init = "random"
 
     # check W and H, or initialize them
     if init == 'custom' and update_H:
