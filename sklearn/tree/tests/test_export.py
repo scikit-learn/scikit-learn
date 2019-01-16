@@ -317,8 +317,8 @@ def test_export_text_errors():
     clf.fit(X, y)
 
     assert_raise_message(ValueError,
-                         "max_depth bust be > 0, given 0",
-                         export_text, clf, max_depth=0)
+                         "max_depth bust be >= 0, given -1",
+                         export_text, clf, max_depth=-1)
     assert_raise_message(ValueError,
                          "feature_names must contain 2 elements, got 1",
                          export_text, clf, feature_names=['a'])
@@ -335,35 +335,37 @@ def test_export_text():
     clf.fit(X, y)
 
     expected_report = dedent("""|---feature_1 <= 0.00
-|   |--- weights: [3.00, 0.00]-> -1
+|   |--- class: -1
 |---feature_1 >  0.00
-|   |--- weights: [0.00, 3.00]-> 1
+|   |--- class: 1
 """)
     assert export_text(clf) == expected_report
+    
+    expected_report = dedent("""|---feature_1 <= 0.00 ...1 hidden layer/s
+|---feature_1 >  0.00 ...1 hidden layer/s
+""")
+    assert export_text(clf, max_depth=0) == expected_report
 
     expected_report = dedent("""|---b <= 0.00
-|   |--- weights: [3.00, 0.00]-> -1
+|   |--- class: -1
 |---b >  0.00
-|   |--- weights: [0.00, 3.00]-> 1
+|   |--- class: 1
 """)
     assert export_text(clf, feature_names=['a', 'b']) == expected_report
 
     expected_report = dedent("""|---feature_1 <= 0.00
-|   |----> -1
+|   |--- weights: [3.00, 0.00] class: -1
 |---feature_1 >  0.00
-|   |----> 1
+|   |--- weights: [0.00, 3.00] class: 1
 """)
-    assert export_text(clf, show_weights=False) == expected_report
+    assert export_text(clf, show_weights=True) == expected_report
 
-    expected_report = dedent("""|---feature_1 <= 0.00 ...
-|---feature_1 >  0.00 ...
+    expected_report = dedent("""|-feature_1 <= 0.00
+| |- class: -1
+|-feature_1 >  0.00
+| |- class: 1
 """)
-    assert export_text(clf, max_depth=1) == expected_report
-
-    expected_report = dedent("""|-feature_1 <= 0.00 ...
-|-feature_1 >  0.00 ...
-""")
-    assert export_text(clf, max_depth=1, spacing=1) == expected_report
+    assert export_text(clf, spacing=1) == expected_report
 
     X_mo = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
     y_mo = [[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1], [1, 1]]
@@ -377,7 +379,7 @@ def test_export_text():
 |   |--- value: [1.0, 1.0]
 """)
     assert export_text(reg, decimals=1) == expected_report
-    assert export_text(reg, decimals=1, show_weights=False) == expected_report
+    assert export_text(reg, decimals=1, show_weights=True) == expected_report
 
 
 def test_plot_tree():

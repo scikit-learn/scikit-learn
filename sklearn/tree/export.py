@@ -782,8 +782,28 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
             out_file.close()
 
 
+def _compute_depth(tree, node):
+    """
+    Returns the depth of the subtree rooted in node.
+    """
+    def compute_depth_(current_node, current_depth,
+                       children_left, children_right, depths):
+        depths += [current_depth]
+        left = children_left[current_node]
+        right = children_right[current_node]
+        if left != -1 and right != -1:
+            compute_depth_(left, current_depth+1,
+                           children_left, children_right, depths)
+            compute_depth_(right, current_depth+1,
+                           children_left, children_right, depths)
+
+    depths = []
+    compute_depth_(node, 1, tree.children_left, tree.children_right, depths)
+    return max(depths)
+
+
 def export_text(decision_tree, feature_names=None, max_depth=10,
-                spacing=3, decimals=2, show_weights=True):
+                spacing=3, decimals=2, show_weights=False):
     """Build a text report showing the rules of a decision tree.
 
     Parameters
@@ -807,10 +827,10 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     decimals : int, optional (default=2)
         Number of decimal digits to display.
 
-    show_weights : bool, optional (default=True)
-        If false the classification weights will not be exported.
-        The classification weights are the number of samples
-        from each class.
+    show_weights : bool, optional (default=False)
+        If true the classification weights will not be exported
+        on each leaf. The classification weights are the number
+        of samples each class.
 
     Returns
     -------
@@ -831,12 +851,12 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
     |---petal width (cm) <= 0.80
-    |   |--- weights: [50.00, 0.00, 0.00]-> 0
+    |   |--- class: 0
     |---petal width (cm) >  0.80
     |   |---petal width (cm) <= 1.75
-    |   |   |--- weights: [0.00, 49.00, 5.00]-> 1
+    |   |   |--- class: 1
     |   |---petal width (cm) >  1.75
-    |   |   |--- weights: [0.00, 1.00, 45.00]-> 2
+    |   |   |--- class: 2
     ...
     """
     check_is_fitted(decision_tree, 'tree_')
@@ -845,8 +865,8 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     right_child_fmt = "{}{} <= {}\n"
     left_child_fmt = "{}{} >  {}\n"
 
-    if max_depth <= 0:
-        raise ValueError("max_depth bust be > 0, given %d" % max_depth)
+    if max_depth < 0:
+        raise ValueError("max_depth bust be >= 0, given %d" % max_depth)
 
     if (feature_names is not None and
             len(feature_names) != tree_.n_features):
@@ -878,7 +898,7 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
         indent = ("|" + (" " * spacing)) * depth
         indent = indent[:-spacing] + "-" * spacing
 
-        if depth <= max_depth:
+        if depth <= max_depth+1:
             value = None
             if tree_.n_outputs == 1:
                 value = tree_.value[node][0]
@@ -922,10 +942,11 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
                     val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
                     val = '['+''.join(val)[:-2]+']'
                 if is_classification:
-                    val += '-> ' + str(class_name)
+                    val += ' class: ' + str(class_name)
                 export_text.report += value_fmt.format(indent, '', val)
         else:
-            export_text.report = export_text.report[:-1] + ' ...\n'
+            remaining = ' ...%d hidden layer/s\n' % _compute_depth(tree_, node)
+            export_text.report = export_text.report[:-1] + remaining
 
     print_tree_recurse(0, 1)
     return export_text.report
