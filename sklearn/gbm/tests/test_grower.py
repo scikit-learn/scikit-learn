@@ -141,7 +141,8 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     # Check the values of the leaves:
     assert grower.root.left_child.value == approx(shrinkage)
     assert grower.root.right_child.left_child.value == approx(shrinkage)
-    assert grower.root.right_child.right_child.value == approx(-shrinkage, rel=1e-3)
+    assert grower.root.right_child.right_child.value == approx(-shrinkage,
+                                                               rel=1e-3)
 
 
 @pytest.mark.skip('Removed predict_binned')

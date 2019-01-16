@@ -8,7 +8,7 @@ from heapq import heappush, heappop
 import numpy as np
 from time import time
 
-from .splitting import Splitter, SplitInfo
+from .splitting import Splitter
 from .predictor import TreePredictor, PREDICTOR_RECORD_DTYPE
 
 from .types import HISTOGRAM_DTYPE
@@ -250,17 +250,16 @@ class TreeGrower:
         """Initialize root node and finalize it if needed."""
         n_samples = self.X_binned.shape[0]
         depth = 0
+        sum_gradients = np.sum(self.splitter.gradients)
         if self.splitter.constant_hessian:
-            hessian = self.splitter.hessians[0] * n_samples
+            sum_hessians = self.splitter.hessians[0] * n_samples
         else:
-            hessian = np.sum(self.splitter.hessians)
+            sum_hessians = np.sum(self.splitter.hessians)
         self.root = TreeNode(
             depth=depth,
-            #sample_indices=self.splitter.partition.view(),
             sample_indices=self.splitter.partition,
-            #sum_gradients=self.splitter.gradients.sum(),
-            sum_gradients=np.sum(self.splitter.gradients),
-            sum_hessians=hessian
+            sum_gradients=sum_gradients,
+            sum_hessians=sum_hessians
         )
 
         self.root.start = 0
@@ -364,8 +363,10 @@ class TreeGrower:
         node = heappop(self.splittable_nodes)
 
         tic = time()
-        (sample_indices_left, sample_indices_right, i) = self.splitter.split_indices(
-            node.split_info, node.sample_indices)
+        (sample_indices_left,
+         sample_indices_right,
+         right_child_pos) = self.splitter.split_indices(node.split_info,
+                                                        node.sample_indices)
         toc = time()
         node.apply_split_time = toc - tic
         self.total_apply_split_time += node.apply_split_time
@@ -391,8 +392,8 @@ class TreeGrower:
 
         # set start and stop indices
         left_child_node.start = node.start
-        left_child_node.stop = node.start + i
-        right_child_node.start = left_child_node.stop
+        left_child_node.stop = node.start + right_child_pos
+        right_child_node.start = left_child_node.stop 
         right_child_node.stop = node.stop
 
         self.n_nodes += 2

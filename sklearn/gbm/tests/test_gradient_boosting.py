@@ -1,8 +1,3 @@
-import os
-import warnings
-
-import numpy as np
-from numpy.testing import assert_allclose
 import pytest
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.datasets import make_classification, make_regression
@@ -10,7 +5,6 @@ from sklearn.utils.estimator_checks import check_estimator
 
 from sklearn.gbm import GBMClassifier
 from sklearn.gbm import GBMRegressor
-from sklearn.gbm.binning import BinMapper
 
 
 X_classification, y_classification = make_classification(random_state=0)
@@ -108,12 +102,12 @@ def test_early_stopping_regression(scoring, validation_split,
     X, y = make_regression(random_state=0)
 
     gb = GBMRegressor(verbose=1,  # just for coverage
-                                   scoring=scoring,
-                                   tol=tol,
-                                   validation_split=validation_split,
-                                   max_iter=max_iter,
-                                   n_iter_no_change=n_iter_no_change,
-                                   random_state=0)
+                      scoring=scoring,
+                      tol=tol,
+                      validation_split=validation_split,
+                      max_iter=max_iter,
+                      n_iter_no_change=n_iter_no_change,
+                      random_state=0)
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
@@ -141,12 +135,12 @@ def test_early_stopping_classification(data, scoring, validation_split,
     X, y = data
 
     gb = GBMClassifier(verbose=1,  # just for coverage
-                                    scoring=scoring,
-                                    tol=tol,
-                                    validation_split=validation_split,
-                                    max_iter=max_iter,
-                                    n_iter_no_change=n_iter_no_change,
-                                    random_state=0)
+                       scoring=scoring,
+                       tol=tol,
+                       validation_split=validation_split,
+                       max_iter=max_iter,
+                       n_iter_no_change=n_iter_no_change,
+                       random_state=0)
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
@@ -159,7 +153,7 @@ def test_should_stop():
 
     def should_stop(scores, n_iter_no_change, tol):
         gbdt = GBMClassifier(n_iter_no_change=n_iter_no_change,
-                                          tol=tol)
+                             tol=tol)
         return gbdt._should_stop(scores)
 
     # not enough iterations

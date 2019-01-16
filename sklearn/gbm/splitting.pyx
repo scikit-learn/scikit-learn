@@ -29,8 +29,8 @@ from .types import HISTOGRAM_DTYPE
 
 
 cdef struct split_info_struct:
-    # Same as the SplitInfo class, but we need a C struct to use it in nogil
-    # mode.
+    # Same as the SplitInfo class, but we need a C struct to use it in the
+    # nogil sections
     Y_DTYPE_C gain
     unsigned int feature_idx
     unsigned int bin_idx
@@ -98,10 +98,10 @@ cdef class SplitInfo:
 cdef class Splitter:
     """Splitter used to find the best possible split at each node.
 
-    The 'best' split is computed accross all features and all bins.
+    A split (see SplitInfo) is characterized by a feature and a bin.
 
     The Splitter is also responsible for partitioning the samples among the
-    leaf nodes (see split_indices() and the partition attribute).
+    leaves of the tree (see split_indices() and the partition attribute).
 
     Parameters
     ----------
@@ -155,10 +155,10 @@ cdef class Splitter:
 
     def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned, unsigned int
                  max_bins, np.ndarray[np.uint32_t] n_bins_per_feature,
-                 Y_DTYPE_C [::1] gradients, Y_DTYPE_C [::1] hessians, Y_DTYPE_C
-                 l2_regularization, Y_DTYPE_C min_hessian_to_split=1e-3,
-                 unsigned int min_samples_leaf=20, Y_DTYPE_C
-                 min_gain_to_split=0.):
+                 Y_DTYPE_C [::1] gradients, Y_DTYPE_C [::1] hessians,
+                 Y_DTYPE_C l2_regularization, Y_DTYPE_C
+                 min_hessian_to_split=1e-3, unsigned int
+                 min_samples_leaf=20, Y_DTYPE_C min_gain_to_split=0.):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -199,20 +199,21 @@ cdef class Splitter:
                       sample_indices):
         """Split samples into left and right arrays.
 
-        The split is performed according to the best possible split (split_info).
+        The split is performed according to the best possible split
+        (split_info).
 
-        Ultimately, this is nothing but a partition of the sample_indices array
-        with a given pivot, exactly like a quicksort subroutine.
+        Ultimately, this is nothing but a partition of the sample_indices
+        array with a given pivot, exactly like a quicksort subroutine.
 
         Parameters
         ----------
         split_info : SplitInfo
             The SplitInfo of the node to split
         sample_indices : array of unsigned int
-            The indices of the samples at the node to split. This is a view on
-            self.partition, and it is modified inplace by placing the indices
-            of the left child at the beginning, and the indices of the right child
-            at the end.
+            The indices of the samples at the node to split. This is a view
+            on self.partition, and it is modified inplace by placing the
+            indices of the left child at the beginning, and the indices of
+            the right child at the end.
 
         Returns
         -------
@@ -225,27 +226,27 @@ cdef class Splitter:
         right_child_position : int
             The position of the right child in ``sample_indices``
         """
-        # This is a multi-threaded implementation inspired by lightgbm.
-        # Here is a quick break down. Let's suppose we want to split a node with
-        # 24 samples named from a to x. self.partition looks like this (the *
-        # are indices in other leaves that we don't care about):
+        # This is a multi-threaded implementation inspired by lightgbm. Here
+        # is a quick break down. Let's suppose we want to split a node with 24
+        # samples named from a to x. self.partition looks like this (the * are
+        # indices in other leaves that we don't care about):
         # partition = [*************abcdefghijklmnopqrstuvwx****************]
         #                           ^                       ^
         #                     node_position     node_position + node.n_samples
 
-        # Ultimately, we want to reorder the samples inside the boundaries of the
-        # leaf (which becomes a node) to now represent the samples in its left and
-        # right child. For example:
+        # Ultimately, we want to reorder the samples inside the boundaries of
+        # the leaf (which becomes a node) to now represent the samples in its
+        # left and right child. For example:
         # partition = [*************abefilmnopqrtuxcdghjksvw*****************]
         #                           ^              ^
         #                   left_child_pos     right_child_pos
-        # Note that left_child_pos always takes the value of node_position, and
-        # right_child_pos = left_child_pos + left_child.n_samples. The order of
-        # the samples inside a leaf is irrelevant.
+        # Note that left_child_pos always takes the value of node_position,
+        # and right_child_pos = left_child_pos + left_child.n_samples. The
+        # order of the samples inside a leaf is irrelevant.
 
         # 1. samples_indices is a view on this region a..x. We conceptually
-        #    divide it into n_threads regions. Each thread will be responsible for
-        #    its own region. Here is an example with 4 threads:
+        #    divide it into n_threads regions. Each thread will be responsible
+        #    for its own region. Here is an example with 4 threads:
         #    samples_indices = [abcdef|ghijkl|mnopqr|stuvwx]
         # 2. Each thread processes 6 = 24 // 4 entries and maps them into
         #    left_indices_buffer or right_indices_buffer. For example, we could
@@ -253,27 +254,29 @@ cdef class Splitter:
         #    - left_indices_buffer =  [abef..|il....|mnopqr|tux...]
         #    - right_indices_buffer = [cd....|ghjk..|......|svw...]
         # 3. We keep track of the start positions of the regions (the '|') in
-        #    ``offset_in_buffers`` as well as the size of each region. We also keep
-        #    track of the number of samples put into the left/right child by each
-        #    thread. Concretely:
+        #    ``offset_in_buffers`` as well as the size of each region. We also
+        #    keep track of the number of samples put into the left/right child
+        #    by each thread. Concretely:
         #    - left_counts =  [4, 2, 6, 3]
         #    - right_counts = [2, 4, 0, 3]
         # 4. Finally, we put left/right_indices_buffer back into the
-        #    samples_indices, without any undefined entries and the partition looks
-        #    as expected
+        #    samples_indices, without any undefined entries and the partition
+        #    looks as expected
         #    partition = [*************abefilmnopqrtuxcdghjksvw*****************]
 
-        # Note: We here show left/right_indices_buffer as being the same size as
-        # sample_indices for simplicity, but in reality they are of the same size
-        # as partition.
+        # Note: We here show left/right_indices_buffer as being the same size
+        # as sample_indices for simplicity, but in reality they are of the
+        # same size as partition.
 
         cdef:
             int n_samples = sample_indices.shape[0]
-            const X_BINNED_DTYPE_C [::1] X_binned = self.X_binned[:, split_info.feature_idx]
+            const X_BINNED_DTYPE_C [::1] X_binned = \
+                self.X_binned[:, split_info.feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             int n_threads = omp_get_max_threads()
-            int [:] sizes = np.full(n_threads, n_samples // n_threads, dtype=np.int32)
+            int [:] sizes = np.full(n_threads, n_samples // n_threads,
+                                    dtype=np.int32)
             int [:] offset_in_buffers = np.zeros(n_threads, dtype=np.int32)
             int [:] left_counts = np.empty(n_threads, dtype=np.int32)
             int [:] right_counts = np.empty(n_threads, dtype=np.int32)
@@ -320,8 +323,8 @@ cdef class Splitter:
             for thread_idx in range(n_threads):
                 right_child_position += left_counts[thread_idx]
 
-            # offset of each thread in samples_indices for left and right child, i.e.
-            # where each thread will start to write.
+            # offset of each thread in samples_indices for left and right
+            # child, i.e. where each thread will start to write.
             right_offset[0] = right_child_position
             for thread_idx in range(1, n_threads):
                 left_offset[thread_idx] = \
@@ -329,8 +332,9 @@ cdef class Splitter:
                 right_offset[thread_idx] = \
                     right_offset[thread_idx - 1] + right_counts[thread_idx - 1]
 
-            # map indices in left/right_indices_buffer back into samples_indices. This
-            # also updates self.partition since samples_indice is a view.
+            # map indices in left/right_indices_buffer back into
+            # samples_indices. This also updates self.partition since
+            # samples_indice is a view.
             for thread_idx in prange(n_threads):
 
                 for i in range(left_counts[thread_idx]):
@@ -363,10 +367,6 @@ cdef class Splitter:
         -------
         best_split_info : SplitInfo
             The info about the best possible split among all features.
-        histograms : array of HISTOGRAM_DTYPE, shape=(n_features, max_bins)
-            The histograms of each feature. A histogram is an array of
-            HISTOGRAM_DTYPE of size ``max_bins`` (only
-            ``n_bins_per_features[feature]`` entries are relevant).
         """
         cdef:
             unsigned int n_samples
@@ -447,23 +447,22 @@ cdef class Splitter:
         const unsigned int [::1] sample_indices,  # IN
         hist_struct [::1] histogram  # OUT
         ) nogil:
-        """Compute the histogram for a given feature
-
-        Returns the best SplitInfo among all the possible bins of the feature.
-        """
+        """Compute the histogram for a given feature."""
 
         cdef:
             unsigned int n_samples = sample_indices.shape[0]
-            const X_BINNED_DTYPE_C [::1] X_binned = self.X_binned[:, feature_idx]
+            const X_BINNED_DTYPE_C [::1] X_binned = \
+                self.X_binned[:, feature_idx]
             unsigned int root_node = X_binned.shape[0] == n_samples
             Y_DTYPE_C [::1] ordered_gradients = \
                 self.ordered_gradients[:n_samples]
-            Y_DTYPE_C [::1] ordered_hessians = self.ordered_hessians[:n_samples]
+            Y_DTYPE_C [::1] ordered_hessians = \
+                self.ordered_hessians[:n_samples]
 
         if root_node:
             if self.constant_hessian:
                 _build_histogram_root_no_hessian(self.max_bins, X_binned,
-                                                ordered_gradients, histogram)
+                                                 ordered_gradients, histogram)
             else:
                 _build_histogram_root(self.max_bins, X_binned,
                                     ordered_gradients,
@@ -471,10 +470,12 @@ cdef class Splitter:
         else:
             if self.constant_hessian:
                 _build_histogram_no_hessian(self.max_bins, sample_indices,
-                                            X_binned, ordered_gradients, histogram)
+                                            X_binned, ordered_gradients,
+                                            histogram)
             else:
                 _build_histogram(self.max_bins, sample_indices, X_binned,
-                                ordered_gradients, ordered_hessians, histogram)
+                                 ordered_gradients, ordered_hessians,
+                                 histogram)
 
     def find_node_split_subtraction(
         Splitter self,
@@ -489,19 +490,24 @@ cdef class Splitter:
         Returns the best split info among all features, and the histograms of
         all the features.
 
-        This does the same job as ``find_node_split()`` but uses the histograms
-        of the parent and sibling of the node to split. This allows to use the
-        identity: ``histogram(parent) = histogram(node) - histogram(sibling)``,
-        which is significantly faster than computing the histograms from data.
+        This does the same job as ``find_node_split()`` but uses the
+        histograms of the parent and sibling of the node to split. This
+        allows to use the identity: ``histogram(parent) = histogram(node) -
+        histogram(sibling)``, which is significantly faster than computing
+        the histograms from data.
 
-        Returns the best SplitInfo among all features, along with all the feature
-        histograms that can be latter used to compute the sibling or children
-        histograms by substraction.
+        Returns the best SplitInfo among all features, along with all the
+        feature histograms that can be later used to compute the sibling or
+        children histograms by substraction.
 
         Parameters
         ----------
         sample_indices : array of int
             The indices of the samples at the node to split.
+        sum_gradients : float
+            Sum of the samples gradients at the current node
+        sum_hessians : float
+            Sum of the samples hessians at the current node
         parent_histograms : array of HISTOGRAM_DTYPE of shape(n_features, max_bins)
             The histograms of the parent
         sibling_histograms : array of HISTOGRAM_DTYPE of \
@@ -515,10 +521,6 @@ cdef class Splitter:
         -------
         best_split_info : SplitInfo
             The info about the best possible split among all features.
-        histograms : array of HISTOGRAM_DTYPE, shape=(n_features, max_bins)
-            The histograms of each feature. A histogram is an array of
-            HISTOGRAM_DTYPE of size ``max_bins`` (only
-            ``n_bins_per_features[feature]`` entries are relevant).
         """
 
         cdef:
@@ -566,6 +568,7 @@ cdef class Splitter:
     cdef split_info_struct _find_best_feature_to_split_helper(self,
         split_info_struct * split_infos  # IN
         ) nogil:
+        """Returns the best split_info among those in splits_infos."""
         cdef:
             Y_DTYPE_C gain
             Y_DTYPE_C best_gain
@@ -589,12 +592,13 @@ cdef class Splitter:
         unsigned int n_samples,
         Y_DTYPE_C sum_gradients,
         Y_DTYPE_C sum_hessians) nogil:
-        """Find best bin to split on, and return the corresponding SplitInfo.
+        """Find best bin to split on for a given feature.
 
-        Splits that do not satisfy the splitting constraints (min_gain_to_split,
-        etc.) are discarded here. If no split can satisfy the constraints, a
-        SplitInfo with a gain of -1 is returned. If for a given node the best
-        SplitInfo has a gain of -1, it is finalized into a leaf.
+        Splits that do not satisfy the splitting constraints
+        (min_gain_to_split, etc.) are discarded here. If no split can
+        satisfy the constraints, a SplitInfo with a gain of -1 is returned.
+        If for a given node the best SplitInfo has a gain of -1, it is
+        finalized into a leaf.
         """
         cdef:
             unsigned int bin_idx
@@ -656,7 +660,8 @@ cdef class Splitter:
 
         return best_split
 
-    # Only used for tests... not great
+    # Only used for tests (python code cannot use cdef functions)
+    # Not sure if this is a good practice...
     def find_best_split_wrapper(
         self,
         unsigned int feature_idx,

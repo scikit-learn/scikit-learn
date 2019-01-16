@@ -256,14 +256,15 @@ class CategoricalCrossEntropy(BaseLoss):
 
 
 cdef inline Y_DTYPE_C _logsumexp(Y_DTYPE_C [:, :] a, const int row) nogil:
-    # Need to pass the whole array, else prange won't work. See issue Cython
+    # Need to pass the whole array, else prange won't work. See Cython issue
     # #2798
     cdef:
         int k
         Y_DTYPE_C out = 0.
         # Y_DTYPE_C amax
 
-    # TODO: use the numerically safer option:
+    # TODO: use the numerically safer option
+    # But I don't now how to properly write a max()
     # amax = max(a[i])
     # for k in range(a.shape[1]):
     #     out += exp(a[i, k] - amax)

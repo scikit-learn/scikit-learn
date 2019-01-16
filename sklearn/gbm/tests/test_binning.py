@@ -8,7 +8,6 @@ from sklearn.gbm.binning import _map_to_bins
 from sklearn.gbm.types import X_DTYPE, X_BINNED_DTYPE
 
 
-
 DATA = np.random.RandomState(42).normal(
     loc=[0, 10], scale=[1, 0.01], size=(int(1e6), 2)
 ).astype(X_DTYPE)

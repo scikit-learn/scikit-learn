@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.testing import assert_allclose
 from sklearn.datasets import load_boston
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score

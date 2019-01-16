@@ -103,12 +103,12 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
     est_pygbm = GBMClassifier(loss='binary_crossentropy',
-                                           max_iter=max_iter,
-                                           max_bins=max_bins,
-                                           learning_rate=1,
-                                           n_iter_no_change=None,
-                                           min_samples_leaf=min_samples_leaf,
-                                           max_leaf_nodes=max_leaf_nodes)
+                              max_iter=max_iter,
+                              max_bins=max_bins,
+                              learning_rate=1,
+                              n_iter_no_change=None,
+                              min_samples_leaf=min_samples_leaf,
+                              max_leaf_nodes=max_leaf_nodes)
     est_lightgbm = get_lightgbm_estimator(est_pygbm)
 
     est_lightgbm.fit(X_train, y_train)
@@ -164,12 +164,12 @@ def test_same_predictions_multiclass_classification(
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
     est_pygbm = GBMClassifier(loss='categorical_crossentropy',
-                                           max_iter=max_iter,
-                                           max_bins=max_bins,
-                                           learning_rate=lr,
-                                           n_iter_no_change=None,
-                                           min_samples_leaf=min_samples_leaf,
-                                           max_leaf_nodes=max_leaf_nodes)
+                              max_iter=max_iter,
+                              max_bins=max_bins,
+                              learning_rate=lr,
+                              n_iter_no_change=None,
+                              min_samples_leaf=min_samples_leaf,
+                              max_leaf_nodes=max_leaf_nodes)
     est_lightgbm = get_lightgbm_estimator(est_pygbm)
 
     est_lightgbm.fit(X_train, y_train)
