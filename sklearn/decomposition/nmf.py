@@ -1097,7 +1097,7 @@ class NMF(BaseEstimator, TransformerMixin):
     init :  'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
         Default: 'nndsvd' if n_components <= min(n_samples, n_features),
-            otherwise random.
+            otherwise 'random'.
         Valid options:
 
         - 'random': non-negative random matrices, scaled with:
