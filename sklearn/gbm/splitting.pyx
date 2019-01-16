@@ -347,101 +347,101 @@ cdef class SplittingContext:
                 right_child_position)
 
 
-def find_node_split(
-    SplittingContext context,
-    const unsigned int [::1] sample_indices,  # IN
-    hist_struct [:, ::1] histograms):  # OUT
-    """For each feature, find the best bin to split on at a given node.
+    def find_node_split(
+        self,
+        const unsigned int [::1] sample_indices,  # IN
+        hist_struct [:, ::1] histograms):  # OUT
+        """For each feature, find the best bin to split on at a given node.
 
-    Returns the best split info among all features, and the histograms of
-    all the features. The histograms are computed by scanning the whole
-    data.
+        Returns the best split info among all features, and the histograms of
+        all the features. The histograms are computed by scanning the whole
+        data.
 
-    Parameters
-    ----------
-    context : SplittingContext
-        The splitting context
-    sample_indices : array of int
-        The indices of the samples at the node to split.
+        Parameters
+        ----------
+        self : SplittingContext
+            The splitting self
+        sample_indices : array of int
+            The indices of the samples at the node to split.
 
-    Returns
-    -------
-    best_split_info : SplitInfo
-        The info about the best possible split among all features.
-    histograms : array of HISTOGRAM_DTYPE, shape=(n_features, max_bins)
-        The histograms of each feature. A histogram is an array of
-        HISTOGRAM_DTYPE of size ``max_bins`` (only
-        ``n_bins_per_features[feature]`` entries are relevant).
-    """
-    cdef:
-        unsigned int n_samples
-        int feature_idx
-        int i
-        unsigned int thread_idx
-        unsigned int [:] starts
-        unsigned int [:] ends
-        unsigned int n_threads
-        split_info_struct split_info
-        split_info_struct * split_infos
-        # For some reason, we need to use local variables for prange reduction.
-        Y_DTYPE_C sum_gradients = 0.
-        Y_DTYPE_C sum_hessians = 0.
-        # Also, need local views to avoid python interactions
-        Y_DTYPE_C [::1] ordered_gradients = context.ordered_gradients
-        Y_DTYPE_C [::1] gradients = context.gradients
-        Y_DTYPE_C [::1] ordered_hessians = context.ordered_hessians
-        Y_DTYPE_C [::1] hessians = context.hessians
+        Returns
+        -------
+        best_split_info : SplitInfo
+            The info about the best possible split among all features.
+        histograms : array of HISTOGRAM_DTYPE, shape=(n_features, max_bins)
+            The histograms of each feature. A histogram is an array of
+            HISTOGRAM_DTYPE of size ``max_bins`` (only
+            ``n_bins_per_features[feature]`` entries are relevant).
+        """
+        cdef:
+            unsigned int n_samples
+            int feature_idx
+            int i
+            unsigned int thread_idx
+            unsigned int [:] starts
+            unsigned int [:] ends
+            unsigned int n_threads
+            split_info_struct split_info
+            split_info_struct * split_infos
+            # For some reason, we need to use local variables for prange reduction.
+            Y_DTYPE_C sum_gradients = 0.
+            Y_DTYPE_C sum_hessians = 0.
+            # Also, need local views to avoid python interactions
+            Y_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
+            Y_DTYPE_C [::1] gradients = self.gradients
+            Y_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
+            Y_DTYPE_C [::1] hessians = self.hessians
 
 
-    with nogil:
-        n_samples = sample_indices.shape[0]
+        with nogil:
+            n_samples = sample_indices.shape[0]
 
-        # Populate ordered_gradients and ordered_hessians. (Already done for root)
-        # Ordering the gradients and hessians helps to improve cache hit.
-        if sample_indices.shape[0] != context.gradients.shape[0]:
-            if context.constant_hessian:
-                for i in prange(n_samples, schedule='static'):
-                    ordered_gradients[i] = gradients[sample_indices[i]]
+            # Populate ordered_gradients and ordered_hessians. (Already done for root)
+            # Ordering the gradients and hessians helps to improve cache hit.
+            if sample_indices.shape[0] != self.gradients.shape[0]:
+                if self.constant_hessian:
+                    for i in prange(n_samples, schedule='static'):
+                        ordered_gradients[i] = gradients[sample_indices[i]]
+                else:
+                    for i in prange(n_samples, schedule='static'):
+                        ordered_gradients[i] = gradients[sample_indices[i]]
+                        ordered_hessians[i] = hessians[sample_indices[i]]
+
+            # Compute self.sum_gradients and self.sum_hessians
+            # for i in prange(n_samples, schedule='static'):
+            for i in range(n_samples):
+                sum_gradients += ordered_gradients[i]
+            self.sum_gradients = sum_gradients
+
+            if self.constant_hessian:
+                sum_hessians = self.constant_hessian_value * n_samples
             else:
                 for i in prange(n_samples, schedule='static'):
-                    ordered_gradients[i] = gradients[sample_indices[i]]
-                    ordered_hessians[i] = hessians[sample_indices[i]]
+                    sum_hessians += ordered_hessians[i]
+            self.sum_hessians = sum_hessians
 
-        # Compute context.sum_gradients and context.sum_hessians
-        # for i in prange(n_samples, schedule='static'):
-        for i in range(n_samples):
-            sum_gradients += ordered_gradients[i]
-        context.sum_gradients = sum_gradients
+            split_infos = <split_info_struct *> malloc(
+                self.n_features * sizeof(split_info_struct))
+            for feature_idx in prange(self.n_features):
+                split_info = _find_histogram_split(
+                    self, feature_idx, sample_indices, histograms[feature_idx])
+                split_infos[feature_idx] = split_info
 
-        if context.constant_hessian:
-            sum_hessians = context.constant_hessian_value * n_samples
-        else:
-            for i in prange(n_samples, schedule='static'):
-                sum_hessians += ordered_hessians[i]
-        context.sum_hessians = sum_hessians
+            split_info = _find_best_feature_to_split_helper(self, split_infos)
 
-        split_infos = <split_info_struct *> malloc(
-            context.n_features * sizeof(split_info_struct))
-        for feature_idx in prange(context.n_features):
-            split_info = _find_histogram_split(
-                context, feature_idx, sample_indices, histograms[feature_idx])
-            split_infos[feature_idx] = split_info
-
-        split_info = _find_best_feature_to_split_helper(context, split_infos)
-
-    out = SplitInfo(
-        split_info.gain,
-        split_info.feature_idx,
-        split_info.bin_idx,
-        split_info.gradient_left,
-        split_info.hessian_left,
-        split_info.gradient_right,
-        split_info.hessian_right,
-        split_info.n_samples_left,
-        split_info.n_samples_right,
-    )
-    free(split_infos)
-    return out
+        out = SplitInfo(
+            split_info.gain,
+            split_info.feature_idx,
+            split_info.bin_idx,
+            split_info.gradient_left,
+            split_info.hessian_left,
+            split_info.gradient_right,
+            split_info.hessian_right,
+            split_info.n_samples_left,
+            split_info.n_samples_right,
+        )
+        free(split_infos)
+        return out
 
 def find_node_split_subtraction(
     SplittingContext context,

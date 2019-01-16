@@ -7,7 +7,6 @@ from sklearn.gbm.types import HISTOGRAM_DTYPE
 from sklearn.gbm.types import Y_DTYPE
 from sklearn.gbm.types import X_BINNED_DTYPE
 from sklearn.gbm.splitting import SplittingContext
-from sklearn.gbm.splitting import find_node_split
 from sklearn.gbm.splitting import find_node_split_subtraction
 from sklearn.gbm.splitting import _find_histogram_split_wrapper
 
@@ -99,11 +98,11 @@ def test_split_vs_split_subtraction(constant_hessian):
     hists_right_sub = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
 
     # first split parent, left and right with classical method
-    si_parent = find_node_split(context, sample_indices, hists_parent)
+    si_parent = context.find_node_split(sample_indices, hists_parent)
     sample_indices_left, sample_indices_right, _ = context.split_indices(
         si_parent, sample_indices)
-    si_left = find_node_split(context, sample_indices_left, hists_left)
-    si_right = find_node_split(context, sample_indices_right, hists_right)
+    si_left = context.find_node_split(sample_indices_left, hists_left)
+    si_right = context.find_node_split(sample_indices_right, hists_right)
 
     # split left with subtraction method
     si_left_sub = find_node_split_subtraction(
@@ -185,12 +184,12 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     hists_right_sub = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
 
     # first split parent, left and right with classical method
-    si_parent = find_node_split(context, sample_indices, hists_parent)
+    si_parent = context.find_node_split(sample_indices, hists_parent)
     sample_indices_left, sample_indices_right, _ = context.split_indices(
         si_parent, sample_indices)
 
-    si_left = find_node_split(context, sample_indices_left, hists_left)
-    si_right = find_node_split(context, sample_indices_right, hists_right)
+    si_left = context.find_node_split(sample_indices_left, hists_left)
+    si_right = context.find_node_split(sample_indices_right, hists_right)
 
     # split left with subtraction method
     si_left_sub = find_node_split_subtraction(
@@ -284,7 +283,7 @@ def test_split_indices():
     assert_array_almost_equal(sample_indices, context.partition)
 
     histograms = np.zeros(shape=(2, n_bins), dtype=HISTOGRAM_DTYPE)
-    si_root = find_node_split(context, sample_indices, histograms)
+    si_root = context.find_node_split(sample_indices, histograms)
 
     # sanity checks for best split
     assert si_root.feature_idx == 1
