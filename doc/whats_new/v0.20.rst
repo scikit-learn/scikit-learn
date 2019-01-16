@@ -54,7 +54,6 @@ random sampling procedures.
 Changelog
 ---------
 
-
 :mod:`sklearn.compose`
 ......................
 
@@ -494,6 +493,7 @@ Support for Python 3.3 has been officially dropped.
 - |API| Deprecate ``pooling_func`` unused parameter in
   :class:`cluster.AgglomerativeClustering`.
   :issue:`9875` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
 
 :mod:`sklearn.compose`
 ......................
