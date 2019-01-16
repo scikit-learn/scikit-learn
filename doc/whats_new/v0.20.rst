@@ -54,6 +54,7 @@ random sampling procedures.
 Changelog
 ---------
 
+
 :mod:`sklearn.compose`
 ......................
 
