@@ -291,13 +291,13 @@ to the prediction function.
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
-.. _random_trees_embedding:
-
 .. topic:: References
 
  .. [L2014] G. Louppe,
          "Understanding Random Forests: From Theory to Practice",
          PhD Thesis, U. of Liege, 2014.
+
+.. _random_trees_embedding:
 
 Totally Random Trees Embedding
 ------------------------------
