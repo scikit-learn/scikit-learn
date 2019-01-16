@@ -1,15 +1,8 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 import os
-import sys
 
 import numpy
-
-
-def get_openmp_flag():
-    if sys.platform == "win32":
-        return '/openmp'
-    return '-fopenmp'
 
 
 def configuration(parent_package='', top_path=None):
@@ -39,16 +32,12 @@ def configuration(parent_package='', top_path=None):
     config.add_extension('_k_means_lloyd',
                          sources=['_k_means_lloyd.pyx'],
                          include_dirs=[numpy.get_include()],
-                         libraries=libraries,
-                         extra_link_args=[get_openmp_flag()],
-                         extra_compile_args=[get_openmp_flag()])
+                         libraries=libraries)
 
     config.add_extension('_k_means_elkan',
                          sources=['_k_means_elkan.pyx'],
                          include_dirs=[numpy.get_include()],
-                         libraries=libraries,
-                         extra_link_args=[get_openmp_flag()],
-                         extra_compile_args=[get_openmp_flag()])
+                         libraries=libraries)
 
     config.add_subpackage('tests')
 

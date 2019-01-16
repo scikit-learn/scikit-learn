@@ -9,6 +9,7 @@ import os
 import platform
 import shutil
 from distutils.command.clean import clean as Clean
+from numpy.distutils.command.build_ext import build_ext
 from pkg_resources import parse_version
 import traceback
 import builtins
@@ -102,7 +103,37 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'clean': CleanCommand}
+def get_openmp_flag(compiler):
+    if sys.platform == "win32" and compiler.startswith('ic'):
+        return ['/Qopenmp']
+    elif sys.platform == "win32":
+        return ['/openmp']
+    elif sys.platform == "darwin" and compiler.startswith('ic'):
+        return ['-openmp']
+    return ['-fopenmp']
+
+
+OPENMP_EXTENSIONS = ["sklearn.cluster._k_means_lloyd",
+                     "sklearn.cluster._k_means_elkan"]
+
+
+# custom build_ext command to set OpenMP compile flags depending on os and
+# compiler
+class build_ext_subclass(build_ext):
+    def build_extensions(self):
+        compiler = self.compiler.compiler[0]
+        openmp_flag = get_openmp_flag(compiler)
+
+        for e in self.extensions:
+            if e.name in OPENMP_EXTENSIONS:
+                e.extra_compile_args += openmp_flag
+                e.extra_link_args += openmp_flag
+
+        build_ext.build_extensions(self)
+
+
+cmdclass = {'clean': CleanCommand, 'build_ext': build_ext_subclass}
+
 
 # Optional wheelhouse-uploader features
 # To automate release of binary packages for scikit-learn we need a tool
