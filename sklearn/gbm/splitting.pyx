@@ -132,7 +132,7 @@ cdef class SplittingContext:
         be ignored.
     """
     cdef public:
-        X_BINNED_DTYPE_C [::1, :] X_binned
+        const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
         unsigned int max_bins
         unsigned int [:] n_bins_per_feature
@@ -153,7 +153,7 @@ cdef class SplittingContext:
         unsigned int [::1] left_indices_buffer
         unsigned int [::1] right_indices_buffer
 
-    def __init__(self, X_BINNED_DTYPE_C [::1, :] X_binned, unsigned int
+    def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned, unsigned int
                  max_bins, np.ndarray[np.uint32_t] n_bins_per_feature,
                  Y_DTYPE_C [::1] gradients, Y_DTYPE_C [::1] hessians, Y_DTYPE_C
                  l2_regularization, Y_DTYPE_C min_hessian_to_split=1e-3,
@@ -275,7 +275,7 @@ def split_indices(
 
     cdef:
         int n_samples = sample_indices.shape[0]
-        X_BINNED_DTYPE_C [::1] X_binned = context.X_binned[:, split_info.feature_idx]
+        const X_BINNED_DTYPE_C [::1] X_binned = context.X_binned[:, split_info.feature_idx]
         unsigned int [::1] left_indices_buffer = context.left_indices_buffer
         unsigned int [::1] right_indices_buffer = context.right_indices_buffer
         int n_threads = omp_get_max_threads()
@@ -353,7 +353,7 @@ def split_indices(
 
 def find_node_split(
     SplittingContext context,
-    unsigned int [::1] sample_indices,  # IN
+    const unsigned int [::1] sample_indices,  # IN
     hist_struct [:, ::1] histograms):  # OUT
     """For each feature, find the best bin to split on at a given node.
 
@@ -387,6 +387,9 @@ def find_node_split(
         unsigned int n_threads
         split_info_struct split_info
         split_info_struct * split_infos
+        # For some reason, we need to use local variables for prange reduction.
+        Y_DTYPE_C sum_gradients = 0.
+        Y_DTYPE_C sum_hessians = 0.
 
     with nogil:
         n_samples = sample_indices.shape[0]
@@ -405,16 +408,17 @@ def find_node_split(
                     context.ordered_hessians[i] = \
                         context.hessians[sample_indices[i]]
 
-        context.sum_gradients = 0.
-        for i in range(n_samples):
-            context.sum_gradients += context.ordered_gradients[i]
+        # Compute context.sum_gradients and context.sum_hessians
+        for i in prange(n_samples, schedule='static'):
+            sum_gradients += context.ordered_gradients[i]
+        context.sum_gradients = sum_gradients
 
         if context.constant_hessian:
-            context.sum_hessians = context.constant_hessian_value * n_samples
+            sum_hessians = context.constant_hessian_value * n_samples
         else:
-            context.sum_hessians = 0.
-            for i in range(n_samples):
-                context.sum_hessians += context.ordered_hessians[i]
+            for i in prange(n_samples, schedule='static'):
+                sum_hessians += context.ordered_hessians[i]
+        context.sum_hessians = sum_hessians
 
         # TODO: this needs to be freed at some point
         split_infos = <split_info_struct *> malloc(
@@ -563,7 +567,7 @@ cdef split_info_struct _find_best_feature_to_split_helper(
 cdef split_info_struct _find_histogram_split(
     SplittingContext context,
     unsigned int feature_idx,
-    unsigned int [::1] sample_indices,  # IN
+    const unsigned int [::1] sample_indices,  # IN
     hist_struct [::1] histogram  # OUT
     ) nogil:
     """Compute the histogram for a given feature
@@ -573,7 +577,7 @@ cdef split_info_struct _find_histogram_split(
 
     cdef:
         unsigned int n_samples = sample_indices.shape[0]
-        X_BINNED_DTYPE_C [::1] X_binned = context.X_binned[:, feature_idx]
+        const X_BINNED_DTYPE_C [::1] X_binned = context.X_binned[:, feature_idx]
         unsigned int root_node = X_binned.shape[0] == n_samples
         Y_DTYPE_C [::1] ordered_gradients = \
             context.ordered_gradients[:n_samples]
@@ -622,7 +626,7 @@ cdef split_info_struct _find_histogram_split_subtraction(
 cdef split_info_struct _find_best_bin_to_split_helper(
     SplittingContext context,
     unsigned int feature_idx,
-    hist_struct [::1] histogram,  # IN
+    const hist_struct [::1] histogram,  # IN
     unsigned int n_samples) nogil:
     """Find best bin to split on, and return the corresponding SplitInfo.
 
