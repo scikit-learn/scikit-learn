@@ -95,13 +95,13 @@ cdef class SplitInfo:
 
 
 @cython.final
-cdef class SplittingContext:
-    """Pure data class defining a splitting context.
+cdef class Splitter:
+    """Splitter used to find the best possible split at each node.
 
-    Ideally it would also have methods but numba does not support annotating
-    jitclasses (so we can't use parallel=True). This structure is
-    instanciated in the grower and stores all the required information to
-    compute the SplitInfo and histograms of each node.
+    The 'best' split is computed accross all features and all bins.
+
+    The Splitter is also responsible for partitioning the samples among the
+    leaf nodes (see split_indices() and the partition attribute).
 
     Parameters
     ----------
@@ -171,8 +171,6 @@ cdef class SplittingContext:
         # for root node, gradients and hessians are already ordered
         self.ordered_gradients = gradients.copy()
         self.ordered_hessians = hessians.copy()
-        self.sum_gradients = np.sum(gradients)
-        self.sum_hessians = np.sum(hessians)
         self.constant_hessian = hessians.shape[0] == 1
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
@@ -346,7 +344,6 @@ cdef class SplittingContext:
                 sample_indices[right_child_position:],
                 right_child_position)
 
-
     def find_node_split(
         self,
         const unsigned int [::1] sample_indices,  # IN
@@ -359,8 +356,6 @@ cdef class SplittingContext:
 
         Parameters
         ----------
-        self : SplittingContext
-            The splitting self
         sample_indices : array of int
             The indices of the samples at the node to split.
 
@@ -383,7 +378,6 @@ cdef class SplittingContext:
             unsigned int n_threads
             split_info_struct split_info
             split_info_struct * split_infos
-            # For some reason, we need to use local variables for prange reduction.
             Y_DTYPE_C sum_gradients = 0.
             Y_DTYPE_C sum_hessians = 0.
             # Also, need local views to avoid python interactions
@@ -392,12 +386,12 @@ cdef class SplittingContext:
             Y_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
             Y_DTYPE_C [::1] hessians = self.hessians
 
-
         with nogil:
             n_samples = sample_indices.shape[0]
 
-            # Populate ordered_gradients and ordered_hessians. (Already done for root)
-            # Ordering the gradients and hessians helps to improve cache hit.
+            # Populate ordered_gradients and ordered_hessians. (Already done
+            # for root) Ordering the gradients and hessians helps to improve
+            # cache hit.
             if sample_indices.shape[0] != self.gradients.shape[0]:
                 if self.constant_hessian:
                     for i in prange(n_samples, schedule='static'):
@@ -407,26 +401,31 @@ cdef class SplittingContext:
                         ordered_gradients[i] = gradients[sample_indices[i]]
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
-            # Compute self.sum_gradients and self.sum_hessians
+            # Compute sums of gradients and hessians at the node
             for i in prange(n_samples, schedule='static'):
                 sum_gradients += ordered_gradients[i]
-            self.sum_gradients = sum_gradients
-
             if self.constant_hessian:
                 sum_hessians = self.constant_hessian_value * n_samples
             else:
                 for i in prange(n_samples, schedule='static'):
                     sum_hessians += ordered_hessians[i]
-            self.sum_hessians = sum_hessians
 
             split_infos = <split_info_struct *> malloc(
                 self.n_features * sizeof(split_info_struct))
             for feature_idx in prange(self.n_features):
-                split_info = _find_histogram_split(
-                    self, feature_idx, sample_indices, histograms[feature_idx])
+                # Compute histogram of each feature
+                self._compute_histogram(feature_idx, sample_indices,
+                                        histograms[feature_idx])
+
+                # and get the best possible split for the feature among all
+                # bins
+                split_info = self._find_best_bin_to_split_helper(
+                    feature_idx, histograms[feature_idx], n_samples,
+                    sum_gradients, sum_hessians)
                 split_infos[feature_idx] = split_info
 
-            split_info = _find_best_feature_to_split_helper(self, split_infos)
+            # then compute best possible split among all feature
+            split_info = self._find_best_feature_to_split_helper(split_infos)
 
         out = SplitInfo(
             split_info.gain,
@@ -442,8 +441,43 @@ cdef class SplittingContext:
         free(split_infos)
         return out
 
+    cdef void _compute_histogram(
+        self,
+        unsigned int feature_idx,
+        const unsigned int [::1] sample_indices,  # IN
+        hist_struct [::1] histogram  # OUT
+        ) nogil:
+        """Compute the histogram for a given feature
+
+        Returns the best SplitInfo among all the possible bins of the feature.
+        """
+
+        cdef:
+            unsigned int n_samples = sample_indices.shape[0]
+            const X_BINNED_DTYPE_C [::1] X_binned = self.X_binned[:, feature_idx]
+            unsigned int root_node = X_binned.shape[0] == n_samples
+            Y_DTYPE_C [::1] ordered_gradients = \
+                self.ordered_gradients[:n_samples]
+            Y_DTYPE_C [::1] ordered_hessians = self.ordered_hessians[:n_samples]
+
+        if root_node:
+            if self.constant_hessian:
+                _build_histogram_root_no_hessian(self.max_bins, X_binned,
+                                                ordered_gradients, histogram)
+            else:
+                _build_histogram_root(self.max_bins, X_binned,
+                                    ordered_gradients,
+                                    ordered_hessians, histogram)
+        else:
+            if self.constant_hessian:
+                _build_histogram_no_hessian(self.max_bins, sample_indices,
+                                            X_binned, ordered_gradients, histogram)
+            else:
+                _build_histogram(self.max_bins, sample_indices, X_binned,
+                                ordered_gradients, ordered_hessians, histogram)
+
     def find_node_split_subtraction(
-        SplittingContext self,
+        Splitter self,
         unsigned int [::1] sample_indices,  # IN
         Y_DTYPE_C sum_gradients,
         Y_DTYPE_C sum_hessians,
@@ -466,8 +500,6 @@ cdef class SplittingContext:
 
         Parameters
         ----------
-        self : SplittingContext
-            The splitting self
         sample_indices : array of int
             The indices of the samples at the node to split.
         parent_histograms : array of HISTOGRAM_DTYPE of shape(n_features, max_bins)
@@ -499,19 +531,23 @@ cdef class SplittingContext:
         with nogil:
             n_samples = sample_indices.shape[0]
 
-            self.sum_gradients = sum_gradients
-            self.sum_hessians = sum_hessians
-
             split_infos = <split_info_struct *> malloc(
                 self.n_features * sizeof(split_info_struct))
             for feature_idx in prange(self.n_features):
-                split_info = _find_histogram_split_subtraction(
-                    self, feature_idx, parent_histograms[feature_idx],
-                    sibling_histograms[feature_idx], histograms[feature_idx],
-                    n_samples)
+                # Compute histogram of each feature
+                _subtract_histograms(self.max_bins,
+                                     parent_histograms[feature_idx],
+                                     sibling_histograms[feature_idx],
+                                     histograms[feature_idx])
+                # and get the best possible split for the feature among all
+                # bins
+                split_info = self._find_best_bin_to_split_helper(
+                    feature_idx, histograms[feature_idx], n_samples,
+                    sum_gradients, sum_hessians)
                 split_infos[feature_idx] = split_info
 
-            split_info = _find_best_feature_to_split_helper(self, split_infos)
+            # then compute best possible split among all feature
+            split_info = self._find_best_feature_to_split_helper(split_infos)
 
         out = SplitInfo(
             split_info.gain,
@@ -527,157 +563,125 @@ cdef class SplittingContext:
         free(split_infos)
         return out
 
+    cdef split_info_struct _find_best_feature_to_split_helper(self,
+        split_info_struct * split_infos  # IN
+        ) nogil:
+        cdef:
+            Y_DTYPE_C gain
+            Y_DTYPE_C best_gain
+            split_info_struct split_info
+            split_info_struct best_split_info
+            unsigned int feature_idx
 
-cdef split_info_struct _find_best_feature_to_split_helper(
-    SplittingContext self,
-    split_info_struct * split_infos  # IN
-    ) nogil:
-    cdef:
-        Y_DTYPE_C gain
-        Y_DTYPE_C best_gain
-        split_info_struct split_info
-        split_info_struct best_split_info
-        unsigned int feature_idx
+        best_gain = -1.
+        for feature_idx in range(self.n_features):
+            split_info = split_infos[feature_idx]
+            gain = split_info.gain
+            if best_gain == -1 or gain > best_gain:
+                best_gain = gain
+                best_split_info = split_info
+        return best_split_info
 
-    best_gain = -1.
-    for feature_idx in range(self.n_features):
-        split_info = split_infos[feature_idx]
-        gain = split_info.gain
-        if best_gain == -1 or gain > best_gain:
-            best_gain = gain
-            best_split_info = split_info
-    return best_split_info
+    cdef split_info_struct _find_best_bin_to_split_helper(
+        self,
+        unsigned int feature_idx,
+        const hist_struct [::1] histogram,  # IN
+        unsigned int n_samples,
+        Y_DTYPE_C sum_gradients,
+        Y_DTYPE_C sum_hessians) nogil:
+        """Find best bin to split on, and return the corresponding SplitInfo.
 
-cdef split_info_struct _find_histogram_split(
-    SplittingContext context,
-    unsigned int feature_idx,
-    const unsigned int [::1] sample_indices,  # IN
-    hist_struct [::1] histogram  # OUT
-    ) nogil:
-    """Compute the histogram for a given feature
+        Splits that do not satisfy the splitting constraints (min_gain_to_split,
+        etc.) are discarded here. If no split can satisfy the constraints, a
+        SplitInfo with a gain of -1 is returned. If for a given node the best
+        SplitInfo has a gain of -1, it is finalized into a leaf.
+        """
+        cdef:
+            unsigned int bin_idx
+            unsigned int n_samples_left
+            unsigned int n_samples_right
+            unsigned int n_samples_ = n_samples
+            Y_DTYPE_C hessian_left
+            Y_DTYPE_C hessian_right
+            Y_DTYPE_C gradient_left
+            Y_DTYPE_C gradient_right
+            Y_DTYPE_C gain
+            split_info_struct best_split
 
-    Returns the best SplitInfo among all the possible bins of the feature.
-    """
+        best_split.gain = -1.
+        gradient_left, hessian_left = 0., 0.
+        n_samples_left = 0
 
-    cdef:
-        unsigned int n_samples = sample_indices.shape[0]
-        const X_BINNED_DTYPE_C [::1] X_binned = context.X_binned[:, feature_idx]
-        unsigned int root_node = X_binned.shape[0] == n_samples
-        Y_DTYPE_C [::1] ordered_gradients = \
-            context.ordered_gradients[:n_samples]
-        Y_DTYPE_C [::1] ordered_hessians = context.ordered_hessians[:n_samples]
+        for bin_idx in range(self.n_bins_per_feature[feature_idx]):
+            n_samples_left += histogram[bin_idx].count
+            n_samples_right = n_samples_ - n_samples_left
 
-    if root_node:
-        if context.constant_hessian:
-            _build_histogram_root_no_hessian(context.max_bins, X_binned,
-                                             ordered_gradients, histogram)
-        else:
-            _build_histogram_root(context.max_bins, X_binned,
-                                  ordered_gradients,
-                                  ordered_hessians, histogram)
-    else:
-        if context.constant_hessian:
-            _build_histogram_no_hessian(context.max_bins, sample_indices,
-                                        X_binned, ordered_gradients, histogram)
-        else:
-            _build_histogram(context.max_bins, sample_indices, X_binned,
-                             ordered_gradients, ordered_hessians, histogram)
+            if self.constant_hessian:
+                hessian_left += (histogram[bin_idx].count
+                                * self.constant_hessian_value)
+            else:
+                hessian_left += histogram[bin_idx].sum_hessians
+            hessian_right = sum_hessians - hessian_left
 
-    return _find_best_bin_to_split_helper(context, feature_idx, histogram,
-                                          n_samples)
+            gradient_left += histogram[bin_idx].sum_gradients
+            gradient_right = sum_gradients - gradient_left
 
-cdef split_info_struct _find_histogram_split_subtraction(
-    SplittingContext context,
-    unsigned int feature_idx,
-    hist_struct [::1] parent_histogram,  # IN
-    hist_struct [::1] sibling_histogram,  # IN
-    hist_struct [::1] histogram,  # OUT
-    unsigned int n_samples
-    ) nogil:
-    """Compute the histogram by substraction of parent and sibling
+            if n_samples_left < self.min_samples_leaf:
+                continue
+            if n_samples_right < self.min_samples_leaf:
+                # won't get any better
+                break
 
-    Uses the identity: hist(parent) = hist(left) + hist(right).
-    Returns the best SplitInfo among all the possible bins of the feature.
-    """
+            if hessian_left < self.min_hessian_to_split:
+                continue
+            if hessian_right < self.min_hessian_to_split:
+                # won't get any better (hessians are > 0 since loss is convex)
+                break
 
-    _subtract_histograms(context.max_bins, parent_histogram,
-                         sibling_histogram, histogram)
+            gain = _split_gain(gradient_left, hessian_left,
+                               gradient_right, hessian_right,
+                               sum_gradients, sum_hessians,
+                               self.l2_regularization)
 
-    return _find_best_bin_to_split_helper(context, feature_idx, histogram,
-                                          n_samples)
+            if gain > best_split.gain and gain > self.min_gain_to_split:
+                best_split.gain = gain
+                best_split.feature_idx = feature_idx
+                best_split.bin_idx = bin_idx
+                best_split.gradient_left = gradient_left
+                best_split.gradient_right = gradient_right
+                best_split.hessian_left = hessian_left
+                best_split.hessian_right = hessian_right
+                best_split.n_samples_left = n_samples_left
+                best_split.n_samples_right = n_samples_right
 
+        return best_split
 
-cdef split_info_struct _find_best_bin_to_split_helper(
-    SplittingContext context,
-    unsigned int feature_idx,
-    const hist_struct [::1] histogram,  # IN
-    unsigned int n_samples) nogil:
-    """Find best bin to split on, and return the corresponding SplitInfo.
+    # Only used for tests... not great
+    def find_best_split_wrapper(
+        self,
+        unsigned int feature_idx,
+        unsigned int [::1] sample_indices,
+        hist_struct [::1] histogram,
+        Y_DTYPE_C sum_gradients,
+        Y_DTYPE_C sum_hessians):
 
-    Splits that do not satisfy the splitting constraints (min_gain_to_split,
-    etc.) are discarded here. If no split can satisfy the constraints, a
-    SplitInfo with a gain of -1 is returned. If for a given node the best
-    SplitInfo has a gain of -1, it is finalized into a leaf.
-    """
-    cdef:
-        unsigned int bin_idx
-        unsigned int n_samples_left
-        unsigned int n_samples_right
-        unsigned int n_samples_ = n_samples
-        Y_DTYPE_C hessian_left
-        Y_DTYPE_C hessian_right
-        Y_DTYPE_C gradient_left
-        Y_DTYPE_C gradient_right
-        Y_DTYPE_C gain
-        split_info_struct best_split
+        self._compute_histogram(feature_idx, sample_indices, histogram)
+        n_samples = sample_indices.shape[0]
+        split_info = self._find_best_bin_to_split_helper(
+            feature_idx, histogram, n_samples,
+            sum_gradients, sum_hessians)
 
-    best_split.gain = -1.
-    gradient_left, hessian_left = 0., 0.
-    n_samples_left = 0
-
-    for bin_idx in range(context.n_bins_per_feature[feature_idx]):
-        n_samples_left += histogram[bin_idx].count
-        n_samples_right = n_samples_ - n_samples_left
-
-        if context.constant_hessian:
-            hessian_left += (histogram[bin_idx].count
-                             * context.constant_hessian_value)
-        else:
-            hessian_left += histogram[bin_idx].sum_hessians
-        hessian_right = context.sum_hessians - hessian_left
-
-        gradient_left += histogram[bin_idx].sum_gradients
-        gradient_right = context.sum_gradients - gradient_left
-
-        if n_samples_left < context.min_samples_leaf:
-            continue
-        if n_samples_right < context.min_samples_leaf:
-            # won't get any better
-            break
-
-        if hessian_left < context.min_hessian_to_split:
-            continue
-        if hessian_right < context.min_hessian_to_split:
-            # won't get any better (hessians are > 0 since loss is convex)
-            break
-
-        gain = _split_gain(gradient_left, hessian_left,
-                           gradient_right, hessian_right,
-                           context.sum_gradients, context.sum_hessians,
-                           context.l2_regularization)
-
-        if gain > best_split.gain and gain > context.min_gain_to_split:
-            best_split.gain = gain
-            best_split.feature_idx = feature_idx
-            best_split.bin_idx = bin_idx
-            best_split.gradient_left = gradient_left
-            best_split.gradient_right = gradient_right
-            best_split.hessian_left = hessian_left
-            best_split.hessian_right = hessian_right
-            best_split.n_samples_left = n_samples_left
-            best_split.n_samples_right = n_samples_right
-
-    return best_split
+        return SplitInfo(
+            split_info.gain,
+            split_info.feature_idx,
+            split_info.bin_idx,
+            split_info.gradient_left,
+            split_info.hessian_left,
+            split_info.gradient_right,
+            split_info.hessian_right,
+            split_info.n_samples_left,
+            split_info.n_samples_right,
+        )
 
 
 cdef inline Y_DTYPE_C _split_gain(
@@ -709,24 +713,3 @@ cdef inline Y_DTYPE_C negative_loss(
     Y_DTYPE_C hessian,
     Y_DTYPE_C l2_regularization) nogil:
     return (gradient * gradient) / (hessian + l2_regularization)
-
-# Only used for tests... not great
-def _find_histogram_split_wrapper(
-    SplittingContext context,
-    unsigned int feature_idx,
-    unsigned int [::1] sample_indices,
-    hist_struct [::1] histogram):
-
-    split_info = _find_histogram_split(context, feature_idx, sample_indices,
-                                       histogram)
-    return SplitInfo(
-        split_info.gain,
-        split_info.feature_idx,
-        split_info.bin_idx,
-        split_info.gradient_left,
-        split_info.hessian_left,
-        split_info.gradient_right,
-        split_info.hessian_right,
-        split_info.n_samples_left,
-        split_info.n_samples_right,
-    )

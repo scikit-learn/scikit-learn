@@ -8,7 +8,7 @@ from heapq import heappush, heappop
 import numpy as np
 from time import time
 
-from .splitting import SplittingContext, SplitInfo
+from .splitting import Splitter, SplitInfo
 from .predictor import TreePredictor, PREDICTOR_RECORD_DTYPE
 
 from .types import HISTOGRAM_DTYPE
@@ -78,9 +78,9 @@ class TreeNode:
     apply_split_time = 0.
     hist_subtraction = False
 
-    # start and stop indices of the node in the splitting_context.partition
+    # start and stop indices of the node in the splitter.partition
     # array. Concretely,
-    # self.sample_indices = view(self.splitting_context.partition[start:stop])
+    # self.sample_indices = view(self.splitter.partition[start:stop])
     # Only used in _update_raw_prediction, because we need to iterate over the
     # leaves and I don't know how to efficiently store the sample_indices views
     # because they're all of different sizes. TODO: ask Olivier what he thinks
@@ -188,7 +188,7 @@ class TreeGrower:
                 [n_bins_per_feature] * X_binned.shape[1],
                 dtype=np.uint32)
 
-        self.splitting_context = SplittingContext(
+        self.splitter = Splitter(
             X_binned, max_bins, n_bins_per_feature, gradients,
             hessians, l2_regularization, min_hessian_to_split,
             min_samples_leaf, min_gain_to_split)
@@ -212,7 +212,7 @@ class TreeGrower:
                              l2_regularization, min_hessian_to_split):
         """Validate parameters passed to __init__.
 
-        Also validate parameters passed to SplittingContext because we cannot
+        Also validate parameters passed to splitter  because we cannot
         raise exceptions in a jitclass.
         """
         if X_binned.dtype != np.uint8:
@@ -250,16 +250,16 @@ class TreeGrower:
         """Initialize root node and finalize it if needed."""
         n_samples = self.X_binned.shape[0]
         depth = 0
-        if self.splitting_context.constant_hessian:
-            hessian = self.splitting_context.hessians[0] * n_samples
+        if self.splitter.constant_hessian:
+            hessian = self.splitter.hessians[0] * n_samples
         else:
-            hessian = np.sum(self.splitting_context.hessians)
+            hessian = np.sum(self.splitter.hessians)
         self.root = TreeNode(
             depth=depth,
-            #sample_indices=self.splitting_context.partition.view(),
-            sample_indices=self.splitting_context.partition,
-            #sum_gradients=self.splitting_context.gradients.sum(),
-            sum_gradients=np.sum(self.splitting_context.gradients),
+            #sample_indices=self.splitter.partition.view(),
+            sample_indices=self.splitter.partition,
+            #sum_gradients=self.splitter.gradients.sum(),
+            sum_gradients=np.sum(self.splitter.gradients),
             sum_hessians=hessian
         )
 
@@ -318,12 +318,12 @@ class TreeGrower:
                 else:
                     sum_gradients = node.parent.split_info.gradient_left
                     sum_hessians = node.parent.split_info.hessian_left
-                split_info = self.splitting_context.find_node_split_subtraction(
+                split_info = self.splitter.find_node_split_subtraction(
                     node.sample_indices,
                     sum_gradients, sum_hessians, node.parent.histograms,
                     node.sibling.histograms, histograms)
             else:
-                split_info = self.splitting_context.find_node_split(
+                split_info = self.splitter.find_node_split(
                     node.sample_indices, histograms)
             toc = time()
             node.find_split_time = toc - tic
@@ -364,7 +364,7 @@ class TreeGrower:
         node = heappop(self.splittable_nodes)
 
         tic = time()
-        (sample_indices_left, sample_indices_right, i) = self.splitting_context.split_indices(
+        (sample_indices_left, sample_indices_right, i) = self.splitter.split_indices(
             node.split_info, node.sample_indices)
         toc = time()
         node.apply_split_time = toc - tic
@@ -436,7 +436,7 @@ class TreeGrower:
         https://arxiv.org/abs/1603.02754
         """
         node.value = -self.shrinkage * node.sum_gradients / (
-            node.sum_hessians + self.splitting_context.l2_regularization)
+            node.sum_hessians + self.splitter.l2_regularization)
         self.finalized_leaves.append(node)
 
     def _finalize_splittable_nodes(self):

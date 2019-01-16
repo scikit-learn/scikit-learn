@@ -6,8 +6,7 @@ import pytest
 from sklearn.gbm.types import HISTOGRAM_DTYPE
 from sklearn.gbm.types import Y_DTYPE
 from sklearn.gbm.types import X_BINNED_DTYPE
-from sklearn.gbm.splitting import SplittingContext
-from sklearn.gbm.splitting import _find_histogram_split_wrapper
+from sklearn.gbm.splitting import Splitter
 
 
 @pytest.mark.parametrize('n_bins', [3, 32, 256])
@@ -24,6 +23,7 @@ def test_histogram_split(n_bins):
     sample_indices = np.arange(binned_feature.shape[0], dtype=np.uint32)
     ordered_hessians = np.ones_like(binned_feature, dtype=Y_DTYPE)
     all_hessians = ordered_hessians
+    sum_hessians = all_hessians.sum()
 
 
     for true_bin in range(1, n_bins - 1):
@@ -32,10 +32,11 @@ def test_histogram_split(n_bins):
                                              dtype=Y_DTYPE)
             ordered_gradients[binned_feature <= true_bin] *= -1
             all_gradients = ordered_gradients
+            sum_gradients = all_gradients.sum()
 
             n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
                                           dtype=np.uint32)
-            context = SplittingContext(X_binned,
+            splitter = Splitter(X_binned,
                                        n_bins,
                                        n_bins_per_feature,
                                        all_gradients, all_hessians,
@@ -44,8 +45,9 @@ def test_histogram_split(n_bins):
                                        min_samples_leaf, min_gain_to_split)
 
             histogram = np.zeros(shape=(n_bins), dtype=HISTOGRAM_DTYPE)
-            split_info = _find_histogram_split_wrapper(
-                context, feature_idx, sample_indices, histogram)
+            split_info = splitter.find_best_split_wrapper(
+                feature_idx, sample_indices, histogram, sum_gradients,
+                sum_hessians)
 
             assert split_info.bin_idx == true_bin
             assert split_info.gain >= 0
@@ -84,11 +86,9 @@ def test_split_vs_split_subtraction(constant_hessian):
 
     n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)
-    context = SplittingContext(X_binned, n_bins,
-                               n_bins_per_feature,
-                               all_gradients, all_hessians,
-                               l2_regularization, min_hessian_to_split,
-                               min_samples_leaf, min_gain_to_split)
+    splitter = Splitter(X_binned, n_bins, n_bins_per_feature, all_gradients,
+                        all_hessians, l2_regularization, min_hessian_to_split,
+                        min_samples_leaf, min_gain_to_split)
 
     hists_parent = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
     hists_left = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
@@ -97,19 +97,19 @@ def test_split_vs_split_subtraction(constant_hessian):
     hists_right_sub = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
 
     # first split parent, left and right with classical method
-    si_parent = context.find_node_split(sample_indices, hists_parent)
-    sample_indices_left, sample_indices_right, _ = context.split_indices(
+    si_parent = splitter.find_node_split(sample_indices, hists_parent)
+    sample_indices_left, sample_indices_right, _ = splitter.split_indices(
         si_parent, sample_indices)
-    si_left = context.find_node_split(sample_indices_left, hists_left)
-    si_right = context.find_node_split(sample_indices_right, hists_right)
+    si_left = splitter.find_node_split(sample_indices_left, hists_left)
+    si_right = splitter.find_node_split(sample_indices_right, hists_right)
 
     # split left with subtraction method
-    si_left_sub = context.find_node_split_subtraction(
+    si_left_sub = splitter.find_node_split_subtraction(
         sample_indices_left, si_parent.gradient_left,
         si_parent.hessian_left, hists_parent, hists_right, hists_left_sub)
 
     # split right with subtraction method
-    si_right_sub = context.find_node_split_subtraction(
+    si_right_sub = splitter.find_node_split_subtraction(
         sample_indices_right, si_parent.gradient_right,
         si_parent.hessian_right, hists_parent, hists_left, hists_right_sub)
 
@@ -170,7 +170,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
 
     n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)
-    context = SplittingContext(X_binned, n_bins,
+    splitter = Splitter(X_binned, n_bins,
                                n_bins_per_feature,
                                all_gradients, all_hessians,
                                l2_regularization, min_hessian_to_split,
@@ -183,20 +183,20 @@ def test_gradient_and_hessian_sanity(constant_hessian):
     hists_right_sub = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
 
     # first split parent, left and right with classical method
-    si_parent = context.find_node_split(sample_indices, hists_parent)
-    sample_indices_left, sample_indices_right, _ = context.split_indices(
+    si_parent = splitter.find_node_split(sample_indices, hists_parent)
+    sample_indices_left, sample_indices_right, _ = splitter.split_indices(
         si_parent, sample_indices)
 
-    si_left = context.find_node_split(sample_indices_left, hists_left)
-    si_right = context.find_node_split(sample_indices_right, hists_right)
+    si_left = splitter.find_node_split(sample_indices_left, hists_left)
+    si_right = splitter.find_node_split(sample_indices_right, hists_right)
 
     # split left with subtraction method
-    si_left_sub = context.find_node_split_subtraction(
+    si_left_sub = splitter.find_node_split_subtraction(
         sample_indices_left, si_parent.gradient_left,
         si_parent.hessian_left, hists_parent, hists_right, hists_left_sub)
 
     # split right with subtraction method
-    si_right_sub = context.find_node_split_subtraction(
+    si_right_sub = splitter.find_node_split_subtraction(
         sample_indices_right, si_parent.gradient_right,
         si_parent.hessian_right, hists_parent, hists_left, hists_right_sub)
 
@@ -245,7 +245,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
 
 def test_split_indices():
     # Check that split_indices returns the correct splits and that
-    # splitting_context.partition is consistent with what is returned.
+    # splitter.partition is consistent with what is returned.
     rng = np.random.RandomState(421)
 
     n_bins = 5
@@ -273,30 +273,30 @@ def test_split_indices():
 
     n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)
-    context = SplittingContext(X_binned, n_bins,
+    splitter = Splitter(X_binned, n_bins,
                                n_bins_per_feature,
                                all_gradients, all_hessians,
                                l2_regularization, min_hessian_to_split,
                                min_samples_leaf, min_gain_to_split)
 
-    assert_array_almost_equal(sample_indices, context.partition)
+    assert_array_almost_equal(sample_indices, splitter.partition)
 
     histograms = np.zeros(shape=(2, n_bins), dtype=HISTOGRAM_DTYPE)
-    si_root = context.find_node_split(sample_indices, histograms)
+    si_root = splitter.find_node_split(sample_indices, histograms)
 
     # sanity checks for best split
     assert si_root.feature_idx == 1
     assert si_root.bin_idx == 3
 
-    samples_left, samples_right, position_right = context.split_indices(
-        si_root, context.partition)
+    samples_left, samples_right, position_right = splitter.split_indices(
+        si_root, splitter.partition)
     assert set(samples_left) == set([0, 1, 3, 4, 5, 6, 8])
     assert set(samples_right) == set([2, 7, 9])
 
     assert_array_almost_equal(samples_left,
-                              context.partition[:position_right])
+                              splitter.partition[:position_right])
     assert_array_almost_equal(samples_right,
-                              context.partition[position_right:])
+                              splitter.partition[position_right:])
 
     # Check that the resulting split indices sizes are consistent with the
     # count statistics anticipated when looking for the best split.
@@ -323,16 +323,19 @@ def test_min_gain_to_split():
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     all_hessians = np.ones_like(binned_feature, dtype=Y_DTYPE)
     all_gradients = np.ones_like(binned_feature, dtype=Y_DTYPE)
+    sum_gradients = all_gradients.sum()
+    sum_hessians = all_hessians.sum()
 
     n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)
-    context = SplittingContext(X_binned, n_bins, n_bins_per_feature,
+    splitter = Splitter(X_binned, n_bins, n_bins_per_feature,
                                all_gradients, all_hessians,
                                l2_regularization,
                                min_hessian_to_split,
                                min_samples_leaf, min_gain_to_split)
 
     histogram = np.zeros(shape=(n_bins), dtype=HISTOGRAM_DTYPE)
-    split_info = _find_histogram_split_wrapper(context, feature_idx,
-                                               sample_indices, histogram)
+    split_info = splitter.find_best_split_wrapper(
+        feature_idx, sample_indices, histogram, sum_gradients,
+        sum_hessians)
     assert split_info.gain == -1
