@@ -408,8 +408,7 @@ cdef class SplittingContext:
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
             # Compute self.sum_gradients and self.sum_hessians
-            # for i in prange(n_samples, schedule='static'):
-            for i in range(n_samples):
+            for i in prange(n_samples, schedule='static'):
                 sum_gradients += ordered_gradients[i]
             self.sum_gradients = sum_gradients
 
