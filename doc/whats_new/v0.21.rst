@@ -109,10 +109,6 @@ Support for Python 3.4 and below has been officially dropped.
   weights would not be correctly updated in some cases.
   :issue:`11646` by `Tom Dupre la Tour`_.
 
-- |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
-  :class:`linear_model.MultiTaskLasso` which were breaking when
-  ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
-
 - |API| :func:`linear_model.logistic_regression_path` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
