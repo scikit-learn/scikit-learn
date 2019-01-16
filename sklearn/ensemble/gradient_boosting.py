@@ -771,7 +771,7 @@ class BinomialDeviance(ClassificationLossFunction):
     """
     def __init__(self, n_classes):
         if n_classes != 2:
-            raise ValueError("{:s} requires 2 classes; got {:d} class(es)"
+            raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
         super().__init__(1)
@@ -865,7 +865,7 @@ class MultinomialDeviance(ClassificationLossFunction):
 
     def __init__(self, n_classes):
         if n_classes < 3:
-            raise ValueError("{:s} requires more than 2 classes.".format(
+            raise ValueError("{0:s} requires more than 2 classes.".format(
                 self.__class__.__name__))
         super().__init__(n_classes)
 
@@ -960,7 +960,7 @@ class ExponentialLoss(ClassificationLossFunction):
     """
     def __init__(self, n_classes):
         if n_classes != 2:
-            raise ValueError("{:s} requires 2 classes; got {:d} class(es)"
+            raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
         super().__init__(1)
@@ -1106,9 +1106,9 @@ class VerboseReporter:
             remaining_time = ((est.n_estimators - (j + 1)) *
                               (time() - self.start_time) / float(i + 1))
             if remaining_time > 60:
-                remaining_time = '{:.2f}m'.format(remaining_time / 60.0)
+                remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
             else:
-                remaining_time = '{:.2f}s'.format(remaining_time)
+                remaining_time = '{0:.2f}s'.format(remaining_time)
             print(self.verbose_fmt.format(iter=j + 1,
                                           train_score=est.train_score_[j],
                                           oob_impr=oob_impr,
@@ -1220,7 +1220,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if (self.loss not in self._SUPPORTED_LOSS
                 or self.loss not in LOSS_FUNCTIONS):
-            raise ValueError("Loss '{:s}' not supported. ".format(self.loss))
+            raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
         if self.loss == 'deviance':
             loss_class = (MultinomialDeviance
@@ -1580,7 +1580,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self._check_initialized()
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
         if X.shape[1] != self.n_features_:
-            raise ValueError("X.shape[1] should be {:d}, not {:d}.".format(
+            raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features_, X.shape[1]))
         score = self.init_.predict(X).astype(np.float64)
         return score

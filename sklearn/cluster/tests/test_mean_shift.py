@@ -122,14 +122,14 @@ def test_bin_seeds():
     # found
     ground_truth = {(1., 1.), (2., 1.), (0., 0.)}
     test_bins = get_bin_seeds(X, 1, 1)
-    test_result = {tuple(p) for p in test_bins}
+    test_result = set(tuple(p) for p in test_bins)
     assert len(ground_truth.symmetric_difference(test_result)) == 0
 
     # With a bin coarseness of 1.0 and min_bin_freq of 2, 2 bins should be
     # found
     ground_truth = {(1., 1.), (2., 1.)}
     test_bins = get_bin_seeds(X, 1, 2)
-    test_result = {tuple(p) for p in test_bins}
+    test_result = set(tuple(p) for p in test_bins)
     assert len(ground_truth.symmetric_difference(test_result)) == 0
 
     # With a bin size of 0.01 and min_bin_freq of 1, 6 bins should be found
