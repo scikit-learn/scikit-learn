@@ -296,7 +296,7 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
 # Configure custom autosummary to add a suffix to modules that overlap with
 # a upper case module, i.e. `sklearn.cluster.DBSCAN` and
 # `sklearn.cluster.dbscan`
-custom_autosummary_file_map = {
-    "sklearn.cluster.dbscan": "sklearn.cluster.dbscan_lowercase",
-    "sklearn.cluster.optics": "sklearn.cluster.optics_lowercase"
+custom_autosummary_include_hash_in_suffix = {
+    "sklearn.cluster.dbscan", "sklearn.cluster.optics",
+    "sklearn.covariance.oas", "sklearn.decomposition.fastica"
 }
