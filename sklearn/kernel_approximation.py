@@ -73,7 +73,7 @@ class TensorSketch(BaseEstimator, TransformerMixin):
     items in data streams. In International Colloquium on Automata, Languages, and
     Programming (pp. 693-703). Springer, Berlin, Heidelberg.
     (http://www.vldb.org/pvldb/1/1454225.pdf)
-    
+
     """
 
     def __init__(self, degree=2, n_components=100, random_state=None):
