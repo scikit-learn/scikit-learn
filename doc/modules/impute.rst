@@ -115,7 +115,7 @@ round are returned.
     >>> print(np.round(imp.transform(X_test)))
     [[ 1.  2.]
      [ 6.  3.]
-     [26.  6.]]
+     [24.  6.]]
 
 Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a Pipeline
 as a way to build a composite estimator that supports imputation.
