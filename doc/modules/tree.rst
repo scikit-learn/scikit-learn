@@ -124,9 +124,20 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(iris.data, iris.target)
 
-Once trained, we can export the tree in `Graphviz
-<http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. If you use the `conda <http://conda.io>`_ package manager, the graphviz binaries  
+Once trained, you can plot the tree with the plot_tree function::
+
+
+    >>> tree.plot_tree(clf.fit(iris.data, iris.target)) # doctest: +SKIP
+
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_002.png
+   :target: ../auto_examples/tree/plot_iris.html
+   :scale: 75
+   :align: center
+
+We can also export the tree in `Graphviz
+<https://www.graphviz.org/>`_ format using the :func:`export_graphviz`
+exporter. If you use the `conda <https://conda.io>`_ package manager, the graphviz binaries  
+
 and the python package can be installed with 
 
     conda install python-graphviz
@@ -149,10 +160,10 @@ using explicit variable and class names if desired. Jupyter notebooks also
 render these plots inline automatically::
 
     >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
-                             feature_names=iris.feature_names,  # doctest: +SKIP
-                             class_names=iris.target_names,  # doctest: +SKIP
-                             filled=True, rounded=True,  # doctest: +SKIP
-                             special_characters=True)  # doctest: +SKIP
+    ...                      feature_names=iris.feature_names,  # doctest: +SKIP
+    ...                      class_names=iris.target_names,  # doctest: +SKIP
+    ...                      filled=True, rounded=True,  # doctest: +SKIP
+    ...                      special_characters=True)  # doctest: +SKIP
     >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
     >>> graph # doctest: +SKIP
 
@@ -389,7 +400,8 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimised version of the CART algorithm.
+scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn 
+implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
 .. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29
@@ -453,7 +465,7 @@ Common measures of impurity are Gini
 
     H(X_m) = \sum_k p_{mk} (1 - p_{mk})
 
-Cross-Entropy
+Entropy
 
 .. math::
 

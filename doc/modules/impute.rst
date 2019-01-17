@@ -170,3 +170,44 @@ whether or not they contain missing values::
          [False,  True, False, False]])
   >>> indicator.features_
   array([0, 1, 2, 3])
+
+When using the :class:`MissingIndicator` in a :class:`Pipeline`, be sure to use
+the :class:`FeatureUnion` or :class:`ColumnTransformer` to add the indicator
+features to the regular features. First we obtain the `iris` dataset, and add
+some missing values to it.
+
+  >>> from sklearn.datasets import load_iris
+  >>> from sklearn.impute import SimpleImputer, MissingIndicator
+  >>> from sklearn.model_selection import train_test_split
+  >>> from sklearn.pipeline import FeatureUnion, make_pipeline
+  >>> from sklearn.tree import DecisionTreeClassifier
+  >>> X, y = load_iris(return_X_y=True)
+  >>> mask = np.random.randint(0, 2, size=X.shape).astype(np.bool)
+  >>> X[mask] = np.nan
+  >>> X_train, X_test, y_train, _ = train_test_split(X, y, test_size=100,
+  ...                                                random_state=0)
+
+Now we create a :class:`FeatureUnion`. All features will be imputed using
+:class:`SimpleImputer`, in order to enable classifiers to work with this data.
+Additionally, it adds the the indicator variables from
+:class:`MissingIndicator`.
+
+  >>> transformer = FeatureUnion(
+  ...     transformer_list=[
+  ...         ('features', SimpleImputer(strategy='mean')),
+  ...         ('indicators', MissingIndicator())])
+  >>> transformer = transformer.fit(X_train, y_train)
+  >>> results = transformer.transform(X_test)
+  >>> results.shape
+  (100, 8)
+
+Of course, we cannot use the transformer to make any predictions. We should
+wrap this in a :class:`Pipeline` with a classifier (e.g., a
+:class:`DecisionTreeClassifier`) to be able to make predictions.
+
+  >>> clf = make_pipeline(transformer, DecisionTreeClassifier())
+  >>> clf = clf.fit(X_train, y_train)
+  >>> results = clf.predict(X_test)
+  >>> results.shape
+  (100,)
+

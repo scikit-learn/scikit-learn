@@ -14,10 +14,6 @@ from ..utils import deprecated
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..externals import six
-
-zip = six.moves.zip
-map = six.moves.map
 
 __all__ = [
     'Imputer',

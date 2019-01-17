@@ -16,7 +16,6 @@ from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
-from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..metrics.pairwise import rbf_kernel
@@ -246,11 +245,11 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
         # /lobpcg/lobpcg.py#L237
         # or matlab:
-        # http://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
+        # https://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # Here we'll use shift-invert mode for fast eigenvalues
-        # (see http://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
+        # (see https://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
         #  for a short explanation of what this means)
         # Because the normalized Laplacian has eigenvalues between 0 and 2,
         # I - L has eigenvalues between -1 and 1.  ARPACK is most efficient
@@ -510,9 +509,9 @@ class SpectralEmbedding(BaseEstimator):
         X = check_array(X, ensure_min_samples=2, estimator=self)
 
         random_state = check_random_state(self.random_state)
-        if isinstance(self.affinity, six.string_types):
-            if self.affinity not in set(("nearest_neighbors", "rbf",
-                                         "precomputed")):
+        if isinstance(self.affinity, str):
+            if self.affinity not in {"nearest_neighbors", "rbf",
+                                     "precomputed"}:
                 raise ValueError(("%s is not a valid affinity. Expected "
                                   "'precomputed', 'rbf', 'nearest_neighbors' "
                                   "or a callable.") % self.affinity)

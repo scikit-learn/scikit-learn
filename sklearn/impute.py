@@ -25,10 +25,6 @@ from .neighbors.base import _get_weights
 from .utils.fixes import _object_dtype_isnan
 from .utils import is_scalar_nan
 
-from .externals import six
-
-zip = six.moves.zip
-map = six.moves.map
 
 __all__ = [
     'MissingIndicator',
@@ -419,11 +415,18 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 class MissingIndicator(BaseEstimator, TransformerMixin):
     """Binary indicators for missing values.
 
+    Note that this component typically should not not be used in a vanilla
+    :class:`Pipeline` consisting of transformers and a classifier, but rather
+    could be added using a :class:`FeatureUnion` or :class:`ColumnTransformer`.
+
+    Read more in the :ref:`User Guide <impute>`.
+
     Parameters
     ----------
     missing_values : number, string, np.nan (default) or None
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed.
+        `missing_values` will be indicated (True in the output array), the
+        other values will be marked as False.
 
     features : str, optional
         Whether the imputer mask should represent all or a subset of
@@ -444,7 +447,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     error_on_new : boolean, optional
         If True (default), transform will raise an error when there are
         features with missing values in transform that have no missing values
-        in fit This is applicable only when ``features="missing-only"``.
+        in fit. This is applicable only when ``features="missing-only"``.
 
     Attributes
     ----------
@@ -464,7 +467,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     ...                [np.nan, 2, 3],
     ...                [2, 4, 0]])
     >>> indicator = MissingIndicator()
-    >>> indicator.fit(X1)
+    >>> indicator.fit(X1)  # doctest: +NORMALIZE_WHITESPACE
     MissingIndicator(error_on_new=True, features='missing-only',
              missing_values=nan, sparse='auto')
     >>> X2_tr = indicator.transform(X2)
@@ -565,7 +568,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'features' has to be either 'missing-only' or "
                              "'all'. Got {} instead.".format(self.features))
 
-        if not ((isinstance(self.sparse, six.string_types) and
+        if not ((isinstance(self.sparse, str) and
                 self.sparse == "auto") or isinstance(self.sparse, bool)):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
