@@ -15,6 +15,7 @@
 from __future__ import print_function
 import sys
 import os
+import warnings
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -292,6 +293,10 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
 
+warnings.filterwarnings("ignore", category=UserWarning,
+                        module="matplotlib",
+                        message='Matplotlib is currently using agg, which is a'
+                                ' non-GUI backend, so cannot show the figure.')
 
 # Configure custom autosummary to add a suffix to modules that overlap with
 # a upper case module, i.e. `sklearn.cluster.DBSCAN` and

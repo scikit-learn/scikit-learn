@@ -52,11 +52,11 @@ Support for Python 3.4 and below has been officially dropped.
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
 
 :mod:`sklearn.datasets`
-  ......................
+.......................
 
-  - |Fix| Added support for 64-bit group IDs and pointers in SVMLight files
-    :class:`datasets.svmlight_format` :issue:`10727` by
-    :user:`Bryan K Woods <bryan-woods>`,
+- |Fix| Added support for 64-bit group IDs and pointers in SVMLight files
+  :class:`datasets.svmlight_format` :issue:`10727` by
+  :user:`Bryan K Woods <bryan-woods>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -109,9 +109,14 @@ Support for Python 3.4 and below has been officially dropped.
   weights would not be correctly updated in some cases.
   :issue:`11646` by `Tom Dupre la Tour`_.
 
-- |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
-  :class:`linear_model.MultiTaskLasso` which were breaking when
-  ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
+- |Fix| Fixed the posterior mean, posterior covariance and returned
+  regularization parameters in :class:`linear_model.BayesianRidge`. The
+  posterior mean and the posterior covariance were not the ones computed
+  with the last update of the regularization parameters and the returned
+  regularization parameters were not the final ones. Also fixed the formula of
+  the log marginal likelihood used to compute the score when
+  `compute_score=True`. :issue:`12174` by
+  :user:`Albert Thomas <albertcthomas>`.
 
 - |API| :func:`linear_model.logistic_regression_path` is deprecated
   in version 0.21 and will be removed in version 0.23.
@@ -163,7 +168,7 @@ Support for Python 3.4 and below has been officially dropped.
   to add flexibility in identifying the best
   estimator. An example for this interface has been added.
   :issue:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
-  `Joel Nothman`_ and `Adrin Jalali`_
+  `Joel Nothman`_ and :user:`Adrin Jalali <adrinjalali>`.
 
 - |Enhancement| Classes :class:`~model_selection.GridSearchCV`,
   :class:`~model_selection.RandomizedSearchCV`, and methods
@@ -233,18 +238,6 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
-
-:mod:`sklearn.linear_model`
-...........................
-
-- |Fix| Fixed the posterior mean, posterior covariance and returned
-  regularization parameters in :class:`linear_model.BayesianRidge`. The
-  posterior mean and the posterior covariance were not the ones computed
-  with the last update of the regularization parameters and the returned
-  regularization parameters were not the final ones. Also fixed the formula of
-  the log marginal likelihood used to compute the score when
-  `compute_score=True`. :issue:`12174` by
-  :user:`Albert Thomas <albertcthomas>`.
 
 Multiple modules
 ................
