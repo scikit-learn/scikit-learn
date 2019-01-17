@@ -102,12 +102,12 @@ def test_early_stopping_regression(scoring, validation_split,
     X, y = make_regression(random_state=0)
 
     gb = FastGradientBoostingRegressor(verbose=1,  # just for coverage
-                      scoring=scoring,
-                      tol=tol,
-                      validation_split=validation_split,
-                      max_iter=max_iter,
-                      n_iter_no_change=n_iter_no_change,
-                      random_state=0)
+                                       scoring=scoring,
+                                       tol=tol,
+                                       validation_split=validation_split,
+                                       max_iter=max_iter,
+                                       n_iter_no_change=n_iter_no_change,
+                                       random_state=0)
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
@@ -135,12 +135,12 @@ def test_early_stopping_classification(data, scoring, validation_split,
     X, y = data
 
     gb = FastGradientBoostingClassifier(verbose=1,  # just for coverage
-                       scoring=scoring,
-                       tol=tol,
-                       validation_split=validation_split,
-                       max_iter=max_iter,
-                       n_iter_no_change=n_iter_no_change,
-                       random_state=0)
+                                        scoring=scoring,
+                                        tol=tol,
+                                        validation_split=validation_split,
+                                        max_iter=max_iter,
+                                        n_iter_no_change=n_iter_no_change,
+                                        random_state=0)
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
@@ -152,8 +152,9 @@ def test_early_stopping_classification(data, scoring, validation_split,
 def test_should_stop():
 
     def should_stop(scores, n_iter_no_change, tol):
-        gbdt = FastGradientBoostingClassifier(n_iter_no_change=n_iter_no_change,
-                             tol=tol)
+        gbdt = FastGradientBoostingClassifier(
+            n_iter_no_change=n_iter_no_change,
+            tol=tol)
         return gbdt._should_stop(scores)
 
     # not enough iterations
@@ -177,7 +178,8 @@ def test_should_stop():
 
 @pytest.mark.parametrize('Estimator', (
     FastGradientBoostingRegressor(),
-    FastGradientBoostingClassifier(scoring=None, validation_split=None, min_samples_leaf=5),
+    FastGradientBoostingClassifier(scoring=None, validation_split=None,
+                                   min_samples_leaf=5),
     ))
 def test_estimator_checks(Estimator):
     # Run the check_estimator() test suite on GBRegressor and GBClassifier.

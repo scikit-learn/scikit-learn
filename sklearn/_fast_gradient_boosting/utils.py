@@ -1,5 +1,4 @@
 """This module contains utility routines."""
-import numpy as np
 
 
 def get_lightgbm_estimator(pygbm_estimator):

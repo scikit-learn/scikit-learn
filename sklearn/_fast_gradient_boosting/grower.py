@@ -393,7 +393,7 @@ class TreeGrower:
         # set start and stop indices
         left_child_node.start = node.start
         left_child_node.stop = node.start + right_child_pos
-        right_child_node.start = left_child_node.stop 
+        right_child_node.start = left_child_node.stop
         right_child_node.stop = node.stop
 
         self.n_nodes += 2

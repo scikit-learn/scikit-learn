@@ -6,8 +6,10 @@ from numpy.testing import assert_array_equal
 
 from sklearn._fast_gradient_boosting.histogram import _build_histogram_naive
 from sklearn._fast_gradient_boosting.histogram import _build_histogram
-from sklearn._fast_gradient_boosting.histogram import _build_histogram_no_hessian
-from sklearn._fast_gradient_boosting.histogram import _build_histogram_root_no_hessian
+from sklearn._fast_gradient_boosting.histogram import \
+    _build_histogram_no_hessian
+from sklearn._fast_gradient_boosting.histogram import \
+    _build_histogram_root_no_hessian
 from sklearn._fast_gradient_boosting.histogram import _build_histogram_root
 from sklearn._fast_gradient_boosting.histogram import _subtract_histograms
 from sklearn._fast_gradient_boosting.types import HISTOGRAM_DTYPE
