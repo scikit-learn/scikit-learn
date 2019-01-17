@@ -28,10 +28,9 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
 from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
-from ..utils.validation import check_X_y
+from ..utils.validation import check_X_y, check_is_fitted
 from ..utils import deprecated
-from ..exceptions import (NotFittedError, ConvergenceWarning,
-                          ChangedBehaviorWarning)
+from ..exceptions import (ConvergenceWarning, ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
 from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..utils.fixes import _joblib_parallel_args
@@ -216,8 +215,8 @@ def _logistic_grad_hess(w, X, y, alpha, sample_weight=None):
     # The mat-vec product of the Hessian
     d = sample_weight * z * (1 - z)
     if sparse.issparse(X):
-        dX = safe_sparse_dot(sparse.dia_matrix((d, 0),
-                             shape=(n_samples, n_samples)), X)
+        dX = safe_sparse_dot(sparse.dia_matrix((d, 0), shape=(n_samples,
+                                                              n_samples)), X)
     else:
         # Precompute as much as possible
         dX = d[:, np.newaxis] * X
@@ -1496,8 +1495,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.penalty == 'elasticnet':
             if (not isinstance(self.l1_ratio, numbers.Number) or
                     self.l1_ratio < 0 or self.l1_ratio > 1):
-                        raise ValueError("l1_ratio must be between 0 and 1;"
-                                         " got (l1_ratio=%r)" % self.l1_ratio)
+                raise ValueError("l1_ratio must be between 0 and 1;"
+                                 " got (l1_ratio=%r)" % self.l1_ratio)
         elif self.l1_ratio is not None:
             warnings.warn("l1_ratio parameter is only used when penalty is "
                           "'elasticnet'. Got "
@@ -1642,8 +1641,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
-        if not hasattr(self, "coef_"):
-            raise NotFittedError("Call fit before prediction")
+        check_is_fitted(self, 'coef_')
 
         ovr = (self.multi_class in ["ovr", "warn"] or
                (self.multi_class == 'auto' and (self.classes_.size <= 2 or
@@ -1924,6 +1922,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     LogisticRegression
 
     """
+
     def __init__(self, Cs=10, fit_intercept=True, cv='warn', dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=None, verbose=0,
@@ -2100,7 +2099,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         if multi_class == 'multinomial':
             coefs_paths = np.reshape(
                 coefs_paths,
-                (len(folds),  len(l1_ratios_) * len(self.Cs_), n_classes, -1)
+                (len(folds), len(l1_ratios_) * len(self.Cs_), n_classes, -1)
             )
             # equiv to coefs_paths = np.moveaxis(coefs_paths, (0, 1, 2, 3),
             #                                                 (1, 2, 0, 3))
