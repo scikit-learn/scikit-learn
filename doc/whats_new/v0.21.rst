@@ -54,9 +54,9 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.datasets`
 .......................
 
-  - |Fix| Added support for 64-bit group IDs and pointers in SVMLight files
-    :class:`datasets.svmlight_format` :issue:`10727` by
-    :user:`Bryan K Woods <bryan-woods>`,
+- |Fix| Added support for 64-bit group IDs and pointers in SVMLight files
+  :class:`datasets.svmlight_format` :issue:`10727` by
+  :user:`Bryan K Woods <bryan-woods>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
