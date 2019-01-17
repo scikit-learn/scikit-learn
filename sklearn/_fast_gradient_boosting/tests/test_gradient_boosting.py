@@ -12,7 +12,7 @@ X_regression, y_regression = make_regression(random_state=0)
 
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
-    # (GBMClassifier, X_classification, y_classification),  TODO: unskip
+    (FastGradientBoostingClassifier, X_classification, y_classification),
     (FastGradientBoostingRegressor, X_regression, y_regression)
 ])
 def test_init_parameters_validation(GradientBoosting, X, y):
@@ -184,7 +184,8 @@ def test_should_stop():
 def test_estimator_checks(Estimator):
     # Run the check_estimator() test suite on GBRegressor and GBClassifier.
 
-    # Notes:
+    # Default parameters to the estimators have to be changed to pass the
+    # tests:
     # - Can't do early stopping with classifier because often
     #   validation_split=.1 leads to test_size=2 < n_classes and
     #   train_test_split raises an error.

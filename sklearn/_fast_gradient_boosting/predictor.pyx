@@ -32,6 +32,7 @@ PREDICTOR_RECORD_DTYPE = np.dtype([
     ('bin_threshold', X_BINNED_DTYPE),
 ])
 
+
 cdef packed struct node_struct:
     Y_DTYPE_C value
     unsigned int count
@@ -110,7 +111,5 @@ cdef void _predict_from_numeric_data(
     cdef:
         int i
 
-    # TODO: Why does prange fail??
-    # for i in range(numeric_data.shape[0]):
     for i in prange(numeric_data.shape[0], schedule='static'):
         out[i] = _predict_one_from_numeric_data(nodes, numeric_data, i)

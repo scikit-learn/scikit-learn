@@ -82,9 +82,8 @@ class TreeNode:
     # array. Concretely,
     # self.sample_indices = view(self.splitter.partition[start:stop])
     # Only used in _update_raw_prediction, because we need to iterate over the
-    # leaves and I don't know how to efficiently store the sample_indices views
-    # because they're all of different sizes. TODO: ask Olivier what he thinks
-    # about # this
+    # leaves and I don't know how to efficiently store the sample_indices
+    # views because they're all of different sizes.
     start = 0
     stop = 0
 

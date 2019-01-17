@@ -92,9 +92,6 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         acc_apply_split_time = 0.  # time spent splitting nodes
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.
-        # TODO: add support for mixed-typed (numerical + categorical) data
-        # TODO: add support for missing data
-        # TODO: add support for pre-binned data (pass-through)?
         X, y = check_X_y(X, y, dtype=[X_DTYPE])
         y = self._encode_y(y)
         rng = check_random_state(self.random_state)

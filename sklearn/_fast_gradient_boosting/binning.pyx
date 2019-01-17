@@ -42,14 +42,16 @@ def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
         subset = rng.choice(np.arange(data.shape[0]), subsample)
         data = data[subset]
 
-    # TODO: DONT USE NEGATIVE INDEXING (see warning when compiling with cython)
-    percentiles = np.linspace(0, 100, num=max_bins + 1)[1:-1]
+    percentiles = np.linspace(0, 100, num=max_bins + 1)
+    end = percentiles.shape[0]  # no negative indexing!
+    percentiles = percentiles[1:end - 1]
     binning_thresholds = []
     for f_idx in range(data.shape[1]):
         col_data = np.ascontiguousarray(data[:, f_idx], dtype=X_DTYPE)
         distinct_values = np.unique(col_data)
         if len(distinct_values) <= max_bins:
-            midpoints = (distinct_values[:-1] + distinct_values[1:])
+            end = distinct_values.shape[0]  # no negative indexing!
+            midpoints = (distinct_values[:end - 1] + distinct_values[1:])
             midpoints *= .5
         else:
             # We sort again the data in this case. We could compute
