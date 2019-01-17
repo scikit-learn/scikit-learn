@@ -22,7 +22,7 @@ from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
-        
+
 class TensorSketch( BaseEstimator, TransformerMixin):
     """Tensor Sketch [1] approximates the feature map of the homogeneous polynomial kernel by efficiently computing
     a Count Sketch [2] of the outer product of a vector with itself.
@@ -101,7 +101,7 @@ class TensorSketch( BaseEstimator, TransformerMixin):
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         
-        self.indexHash_ = random_state.randint(0, high=self.n_components,size=(self.degree, n_features))
+        self.indexHash_ = random_state.randint(0, high=self.n_components, size=(self.degree, n_features))
         self.bitHash_ = random_state.choice(a=[-1.,1.], size=(self.degree, n_features)).astype(np.float32)
         
         return self
@@ -130,9 +130,9 @@ class TensorSketch( BaseEstimator, TransformerMixin):
             for j in range(X.shape[1]):
                 for d in range(self.degree):
                     iHashIndex = self.indexHash_[d, j]
-                    iHashBit   = self.bitHash_[d, j]
-                    Ps[i, d, iHashIndex] += iHashBit * X[i,j] 
-
+                    iHashBit = self.bitHash_[d, j]
+                    Ps[i, d, iHashIndex] += iHashBit * X[i,j]
+                    
         Ps = fftpack.fft(Ps, axis=2, overwrite_x=True)
         temps = np.prod(Ps, axis=1)
         data_sketch = np.real(fftpack.ifft(temps, overwrite_x=True))
@@ -140,7 +140,6 @@ class TensorSketch( BaseEstimator, TransformerMixin):
         return data_sketch
 
 
-    
 class RBFSampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
