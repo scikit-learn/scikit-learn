@@ -106,11 +106,11 @@ round are returned.
     >>> import numpy as np
     >>> from sklearn.impute import IterativeImputer
     >>> imp = IterativeImputer(n_iter=10, random_state=0)
-    >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
+    >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])  # doctest: +NORMALIZE_WHITESPACE
     IterativeImputer(imputation_order='ascending', initial_strategy='mean',
-             max_value=None, min_value=None, missing_values=nan, n_iter=10,
-             n_nearest_features=None, predictor=None, random_state=0,
-             sample_posterior=False, verbose=0)
+        max_value=None, min_value=None, missing_values=nan, n_iter=10,
+        n_nearest_features=None, predictor=None, random_state=0,
+        sample_posterior=False, verbose=False)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     >>> print(np.round(imp.transform(X_test)))
     [[ 1.  2.]

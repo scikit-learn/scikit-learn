@@ -494,6 +494,7 @@ Support for Python 3.3 has been officially dropped.
   :class:`cluster.AgglomerativeClustering`.
   :issue:`9875` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
+
 :mod:`sklearn.compose`
 ......................
 
