@@ -105,10 +105,10 @@ class TensorSketch(BaseEstimator, TransformerMixin):
         n_features = X.shape[1]
 
         self.indexHash_ = random_state.randint(0, high=self.n_components,
-                                              size=(self.degree, n_features))
+                                               size=(self.degree, n_features))
 
         self.bitHash_ = random_state.choice(a=[-1., 1.],
-                                           size=(self.degree, n_features)
+                                            size=(self.degree, n_features)
                                            ).astype(np.float32)
         return self
 

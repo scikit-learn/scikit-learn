@@ -22,6 +22,7 @@ Y = rng.random_sample(size=(300, 50))
 X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
+
 def test_tensor_sketch():
     # test that TensorSketch approximates homogeneous
     # polynomial kernel on random data
