@@ -66,12 +66,12 @@ class TensorSketch(BaseEstimator, TransformerMixin):
 
     [1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
     kernels via explicit feature maps. In Proceedings of the 19th ACM SIGKDD
-    international conference on Knowledge discovery and data mining (pp. 239-247)
-    (http://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
+    international conference on Knowledge discovery and data mining
+    (pp. 239-247) (http://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
 
-    [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002, July). Finding frequent
-    items in data streams. In International Colloquium on Automata, Languages, and
-    Programming (pp. 693-703). Springer, Berlin, Heidelberg.
+    [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002). Finding frequent
+    items in data streams. In International Colloquium on Automata,
+    Languages, and Programming (pp. 693-703). Springer, Berlin, Heidelberg.
     (http://www.vldb.org/pvldb/1/1454225.pdf)
 
     """
