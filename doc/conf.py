@@ -292,12 +292,3 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          u'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
-
-
-# Removes 'any' reference target not found from logging
-def filter_any_references(record):
-    return "'any' reference target not found:" not in record.getMessage()
-
-
-post_transform_logger = logging.getLogger("sphinx.transforms.post_transforms")
-post_transform_logger.addFilter(filter_any_references)
