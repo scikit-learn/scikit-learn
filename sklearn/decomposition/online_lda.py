@@ -19,9 +19,8 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices)
 from ..utils.fixes import logsumexp
-from ..utils.validation import check_non_negative
+from ..utils.validation import check_non_negative, check_is_fitted
 from ..utils._joblib import Parallel, delayed, effective_n_jobs
-from ..exceptions import NotFittedError
 
 from ._online_lda import (mean_change, _dirichlet_expectation_1d,
                           _dirichlet_expectation_2d)
@@ -379,7 +378,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         n_jobs = effective_n_jobs(self.n_jobs)
         if parallel is None:
             parallel = Parallel(n_jobs=n_jobs, verbose=max(0,
-                                self.verbose - 1))
+                                                           self.verbose - 1))
         results = parallel(
             delayed(_update_doc_distribution)(X[idx_slice, :],
                                               self.exp_dirichlet_component_,
@@ -501,7 +500,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,
-                      self.verbose - 1)) as parallel:
+                                                 self.verbose - 1)) as parallel:
             for idx_slice in gen_batches(n_samples, batch_size):
                 self._em_step(X[idx_slice, :],
                               total_samples=self.total_samples,
@@ -542,7 +541,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         last_bound = None
         n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,
-                      self.verbose - 1)) as parallel:
+                                                 self.verbose - 1)) as parallel:
             for i in range(max_iter):
                 if learning_method == 'online':
                     for idx_slice in gen_batches(n_samples, batch_size):
@@ -594,9 +593,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         doc_topic_distr : shape=(n_samples, n_components)
             Document topic distribution for X.
         """
-        if not hasattr(self, 'components_'):
-            raise NotFittedError("no 'components_' attribute in model."
-                                 " Please fit model first.")
+        check_is_fitted(self, 'components_')
 
         # make sure feature size is the same in fitted model and in X
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.transform")
@@ -750,9 +747,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score : float
             Perplexity score.
         """
-        if not hasattr(self, 'components_'):
-            raise NotFittedError("no 'components_' attribute in model."
-                                 " Please fit model first.")
+        check_is_fitted(self, 'components_')
 
         X = self._check_non_neg_array(X,
                                       "LatentDirichletAllocation.perplexity")
