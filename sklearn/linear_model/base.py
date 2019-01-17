@@ -34,7 +34,6 @@ from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils.validation import check_is_fitted
-from ..exceptions import NotFittedError
 from ..preprocessing.data import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
@@ -250,9 +249,7 @@ class LinearClassifierMixin(ClassifierMixin):
             case, confidence score for self.classes_[1] where >0 means this
             class would be predicted.
         """
-        if not hasattr(self, 'coef_') or self.coef_ is None:
-            raise NotFittedError("This %(name)s instance is not fitted "
-                                 "yet" % {'name': type(self).__name__})
+        check_is_fitted(self, 'coef_')
 
         X = check_array(X, accept_sparse='csr')
 
@@ -505,8 +502,8 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
             X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy,
             check_input=check_input)
     if hasattr(precompute, '__array__') and (
-            fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
-            normalize and not np.allclose(X_scale, np.ones(n_features))):
+            fit_intercept and not np.allclose(X_offset, np.zeros(n_features))
+            or normalize and not np.allclose(X_scale, np.ones(n_features))):
         warnings.warn("Gram matrix was provided but X was centered"
                       " to fit intercept, "
                       "or X was normalized : recomputing Gram matrix.",
