@@ -85,7 +85,7 @@ class TensorSketch(BaseEstimator, TransformerMixin):
     def fit(self, X, Y=None):
         """Fit the model with X.
 
-        Initializes the internal variables. The method is data-independent, 
+        Initializes the internal variables. The method is data-independent,
         so we only care about the dimension of samples in X.
 
         Parameters
