@@ -57,7 +57,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
-from ..exceptions import DataConversionWarning, NotFittedError
+from ..exceptions import DataConversionWarning
 from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import parallel_helper, _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
@@ -352,9 +352,7 @@ class BaseForest(BaseEnsemble, metaclass=ABCMeta):
 
     def _validate_X_predict(self, X):
         """Validate X whenever one tries to predict, apply, predict_proba"""
-        if self.estimators_ is None or len(self.estimators_) == 0:
-            raise NotFittedError("Estimator not fitted, "
-                                 "call `fit` before exploiting the model.")
+        check_is_fitted(self, 'estimators_')
 
         return self.estimators_[0]._validate_X_predict(X, check_input=True)
 
@@ -480,7 +478,8 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
 
         y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
         for k in range(self.n_outputs_):
-            classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k], return_inverse=True)
+            classes_k, y_store_unique_indices[:, k] = np.unique(
+                y[:, k], return_inverse=True)
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
         y = y_store_unique_indices
@@ -490,18 +489,18 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
             if isinstance(self.class_weight, str):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
-                                     '"balanced" and "balanced_subsample". Given "%s".'
-                                     % self.class_weight)
+                                     '"balanced" and "balanced_subsample". '
+                                     'Given "%s".' % self.class_weight)
                 if self.warm_start:
-                    warn('class_weight presets "balanced" or "balanced_subsample" are '
-                         'not recommended for warm_start if the fitted data '
-                         'differs from the full dataset. In order to use '
-                         '"balanced" weights, use compute_class_weight("balanced", '
-                         'classes, y). In place of y you can use a large '
-                         'enough sample of the full training set target to '
-                         'properly estimate the class frequency '
-                         'distributions. Pass the resulting weights as the '
-                         'class_weight parameter.')
+                    warn('class_weight presets "balanced" or '
+                         '"balanced_subsample" are not recommended for '
+                         'warm_start if the fitted data differs from the full '
+                         'dataset. In order to use "balanced" weights, use '
+                         'compute_class_weight("balanced", classes, y). In '
+                         'place of y you can use a large enough sample of the '
+                         'full training set target to properly estimate the '
+                         'class frequency distributions. Pass the resulting '
+                         'weights as the class_weight parameter.')
 
             if (self.class_weight != 'balanced_subsample' or
                     not self.bootstrap):
@@ -558,8 +557,8 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
 
         The predicted class probabilities of an input sample are computed as
         the mean predicted class probabilities of the trees in the forest. The
-        class probability of a single tree is the fraction of samples of the same
-        class in a leaf.
+        class probability of a single tree is the fraction of samples of the
+        same class in a leaf.
 
         Parameters
         ----------
@@ -990,6 +989,7 @@ class RandomForestClassifier(ForestClassifier):
     --------
     DecisionTreeClassifier, ExtraTreesClassifier
     """
+
     def __init__(self,
                  n_estimators='warn',
                  criterion="gini",
@@ -1250,6 +1250,7 @@ class RandomForestRegressor(ForestRegressor):
     --------
     DecisionTreeRegressor, ExtraTreesRegressor
     """
+
     def __init__(self,
                  n_estimators='warn',
                  criterion="mse",
@@ -1446,8 +1447,9 @@ class ExtraTreesClassifier(ForestClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-        The "balanced_subsample" mode is the same as "balanced" except that weights are
-        computed based on the bootstrap sample for every tree grown.
+        The "balanced_subsample" mode is the same as "balanced" except that
+        weights are computed based on the bootstrap sample for every tree
+        grown.
 
         For multi-output, the weights of each column of y will be multiplied.
 
@@ -1505,6 +1507,7 @@ class ExtraTreesClassifier(ForestClassifier):
     RandomForestClassifier : Ensemble Classifier based on trees with optimal
         splits.
     """
+
     def __init__(self,
                  n_estimators='warn',
                  criterion="gini",
@@ -1729,6 +1732,7 @@ class ExtraTreesRegressor(ForestRegressor):
     sklearn.tree.ExtraTreeRegressor: Base estimator for this ensemble.
     RandomForestRegressor: Ensemble regressor using trees with optimal splits.
     """
+
     def __init__(self,
                  n_estimators='warn',
                  criterion="mse",
