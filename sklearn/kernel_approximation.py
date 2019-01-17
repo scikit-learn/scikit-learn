@@ -86,7 +86,7 @@ class TensorSketch(BaseEstimator, TransformerMixin):
         """Fit the model with X.
 
         Initializes the internal variables. The method is data-independent, 
-        so we only care about the dimension of samples in X, not their distribution.
+        so we only care about the dimension of samples in X.
 
         Parameters
         ----------
