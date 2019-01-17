@@ -12,18 +12,10 @@ at which the fixe is no longer needed.
 
 from distutils.version import LooseVersion
 
-from collections.abc import Sequence as _Sequence  # noqa
-from collections.abc import Iterable as _Iterable  # noqa
-from collections.abc import Mapping as _Mapping  # noqa
-from collections.abc import Sized as _Sized  # noqa
-
 import numpy as np
 import scipy.sparse as sp
 import scipy
-from scipy.special import boxcox  # noqa
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
-from numpy import nanpercentile  # noqa
-from numpy import nanmedian  # noqa
 
 
 def _parse_version(version_string):

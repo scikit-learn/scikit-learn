@@ -51,7 +51,6 @@ from scipy.sparse import hstack as sparse_hstack
 
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..utils._joblib import Parallel, delayed
-from ..externals import six
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
@@ -124,7 +123,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, MultiOutputMixin)):
+class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -143,7 +142,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, MultiOutputMixin)):
                  verbose=0,
                  warm_start=False,
                  class_weight=None):
-        super(BaseForest, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params)
@@ -314,11 +313,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, MultiOutputMixin)):
                 # would have got if we hadn't used a warm_start.
                 random_state.randint(MAX_INT, size=len(self.estimators_))
 
-            trees = []
-            for i in range(n_more_estimators):
-                tree = self._make_estimator(append=False,
-                                            random_state=random_state)
-                trees.append(tree)
+            trees = [self._make_estimator(append=False,
+                                          random_state=random_state)
+                     for i in range(n_more_estimators)]
 
             # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
@@ -396,8 +393,7 @@ def _accumulate_prediction(predict, X, out, lock):
                 out[i] += prediction[i]
 
 
-class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
-                                          ClassifierMixin)):
+class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -416,7 +412,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  verbose=0,
                  warm_start=False,
                  class_weight=None):
-        super(ForestClassifier, self).__init__(
+        super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
@@ -437,10 +433,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         oob_decision_function = []
         oob_score = 0.0
-        predictions = []
-
-        for k in range(self.n_outputs_):
-            predictions.append(np.zeros((n_samples, n_classes_[k])))
+        predictions = [np.zeros((n_samples, n_classes_[k]))
+                       for k in range(self.n_outputs_)]
 
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
@@ -494,7 +488,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         if self.class_weight is not None:
             valid_presets = ('balanced', 'balanced_subsample')
-            if isinstance(self.class_weight, six.string_types):
+            if isinstance(self.class_weight, str):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
                                      '"balanced" and "balanced_subsample". Given "%s".'
@@ -548,7 +542,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         else:
             n_samples = proba[0].shape[0]
-            predictions = np.zeros((n_samples, self.n_outputs_))
+            # all dtypes should be the same, so just take the first
+            class_type = self.classes_[0].dtype
+            predictions = np.empty((n_samples, self.n_outputs_),
+                                   dtype=class_type)
 
             for k in range(self.n_outputs_):
                 predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
@@ -637,7 +634,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             return proba
 
 
-class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
+class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes
@@ -655,7 +652,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
                  random_state=None,
                  verbose=0,
                  warm_start=False):
-        super(ForestRegressor, self).__init__(
+        super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
@@ -1012,7 +1009,7 @@ class RandomForestClassifier(ForestClassifier):
                  verbose=0,
                  warm_start=False,
                  class_weight=None):
-        super(RandomForestClassifier, self).__init__(
+        super().__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -1271,7 +1268,7 @@ class RandomForestRegressor(ForestRegressor):
                  random_state=None,
                  verbose=0,
                  warm_start=False):
-        super(RandomForestRegressor, self).__init__(
+        super().__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -1527,7 +1524,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  verbose=0,
                  warm_start=False,
                  class_weight=None):
-        super(ExtraTreesClassifier, self).__init__(
+        super().__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -1750,7 +1747,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  random_state=None,
                  verbose=0,
                  warm_start=False):
-        super(ExtraTreesRegressor, self).__init__(
+        super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -1925,7 +1922,7 @@ class RandomTreesEmbedding(BaseForest):
                  random_state=None,
                  verbose=0,
                  warm_start=False):
-        super(RandomTreesEmbedding, self).__init__(
+        super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -2006,8 +2003,7 @@ class RandomTreesEmbedding(BaseForest):
 
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
-        super(RandomTreesEmbedding, self).fit(X, y,
-                                              sample_weight=sample_weight)
+        super().fit(X, y, sample_weight=sample_weight)
 
         self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output,
                                               categories='auto')
@@ -2028,4 +2024,5 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
+        check_is_fitted(self, 'one_hot_encoder_')
         return self.one_hot_encoder_.transform(self.apply(X))

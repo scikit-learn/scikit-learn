@@ -1429,7 +1429,6 @@ Low-level methods
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
-   utils.bench.total_seconds
    utils.check_X_y
    utils.check_array
    utils.check_consistent_length
@@ -1448,6 +1447,7 @@ Low-level methods
    utils.graph.single_source_shortest_path_length
    utils.graph_shortest_path.graph_shortest_path
    utils.indexable
+   utils.metaestimators.if_delegate_has_method
    utils.multiclass.type_of_target
    utils.multiclass.is_multilabel
    utils.multiclass.unique_labels

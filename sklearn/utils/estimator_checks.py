@@ -13,10 +13,8 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from sklearn.externals.six import text_type
-from sklearn.externals.six.moves import zip
 from sklearn.utils import IS_PYPY
-import sklearn.utils._joblib as _joblib
+from sklearn.utils import _joblib
 from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
@@ -2161,8 +2159,7 @@ def check_parameters_default_constructible(name, Estimator):
             else:
                 assert_in(type(init_param.default),
                           [str, int, float, bool, tuple, type(None),
-                           np.float64, types.FunctionType, _joblib.Memory,
-                           text_type])
+                           np.float64, types.FunctionType, _joblib.Memory])
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
                 assert init_param.default is None
@@ -2420,10 +2417,9 @@ def check_fit_idempotent(name, estimator_orig):
     # Fit for the first time
     estimator.fit(X_train, y_train)
 
-    result = {}
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X_test)
+    result = {method: getattr(estimator, method)(X_test)
+              for method in check_methods
+              if hasattr(estimator, method)}
 
     # Fit again
     estimator.fit(X_train, y_train)
