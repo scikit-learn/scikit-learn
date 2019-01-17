@@ -24,8 +24,9 @@ from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
 class TensorSketch( BaseEstimator, TransformerMixin):
-    """Tensor Sketch [1] approximates the feature map of the homogeneous polynomial kernel by efficiently computing
-    a Count Sketch [2] of the outer product of a vector with itself.
+    """Tensor Sketch [1] approximates the feature map of the homogeneous
+    polynomial kernel by efficiently computing a Count Sketch [2]
+    of the outer product of a vector with itself.
 
     Parameters
     ----------
@@ -63,12 +64,14 @@ class TensorSketch( BaseEstimator, TransformerMixin):
     Notes
     -----
 
-    [1]Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial kernels via explicit feature maps. 
-    In Proceedings of the 19th ACM SIGKDD international conference on Knowledge discovery and data mining (pp. 239-247). ACM.
-    (https://pdfs.semanticscholar.org/76ca/15e975b0dee581d5d04dca26dfae636372de.pdf)
+    [1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
+    kernels via explicit feature maps. In Proceedings of the 19th ACM SIGKDD
+    international conference on Knowledge discovery and data mining (pp. 239-247).
+    ACM. (https://pdfs.semanticscholar.org/76ca/15e975b0dee581d5d04dca26dfae636372de.pdf)
     
-    [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002, July). Finding frequent items in data streams. 
-    In International Colloquium on Automata, Languages, and Programming (pp. 693-703). Springer, Berlin, Heidelberg.
+    [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002, July). Finding frequent
+    items in data streams. In International Colloquium on Automata, Languages, and
+    Programming (pp. 693-703). Springer, Berlin, Heidelberg.
     (http://www.vldb.org/pvldb/1/1454225.pdf)
     
     """
@@ -82,8 +85,8 @@ class TensorSketch( BaseEstimator, TransformerMixin):
     def fit(self, X, Y=None):
         """Fit the model with X.
 
-        Initializes the internal variables. The method is data-independent, so we only care about
-        the dimension of samples in X, not their distribution.
+        Initializes the internal variables. The method is data-independent, 
+        so we only care about the dimension of samples in X, not their distribution.
 
         Parameters
         ----------
@@ -100,12 +103,12 @@ class TensorSketch( BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr')
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
-        
-        self.indexHash_ = random_state.randint(0, high=self.n_components, size=(self.degree, n_features))
-        self.bitHash_ = random_state.choice(a=[-1.,1.], size=(self.degree, n_features)).astype(np.float32)
-        
+
+        self.indexHash_ = random_state.randint(0, high=self.n_components,
+                                               size=(self.degree, n_features))
+        self.bitHash_ = random_state.choice(a=[-1., 1.],
+                                            size=(self.degree, n_features)).astype(np.float32)
         return self
-    
 
     def transform(self, X, Y=None):
         """Generate the feature map approximation for X.
@@ -131,8 +134,8 @@ class TensorSketch( BaseEstimator, TransformerMixin):
                 for d in range(self.degree):
                     iHashIndex = self.indexHash_[d, j]
                     iHashBit = self.bitHash_[d, j]
-                    Ps[i, d, iHashIndex] += iHashBit * X[i,j]
-                    
+                    Ps[i, d, iHashIndex] += iHashBit * X[i, j]
+
         Ps = fftpack.fft(Ps, axis=2, overwrite_x=True)
         temps = np.prod(Ps, axis=1)
         data_sketch = np.real(fftpack.ifft(temps, overwrite_x=True))
