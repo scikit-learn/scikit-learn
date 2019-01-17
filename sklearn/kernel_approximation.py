@@ -99,7 +99,7 @@ class TensorSketch(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
-        
+
         X = check_array(X, accept_sparse='csr')
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
