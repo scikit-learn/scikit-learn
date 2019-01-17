@@ -27,7 +27,6 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-
 def test_classification_toy():
     # Check classification on a toy dataset, including sparse versions.
     clf = NearestCentroid()
@@ -53,6 +52,9 @@ def test_classification_toy():
     clf = NearestCentroid()
     clf.fit(X_csr.tocoo(), y)
     assert_array_equal(clf.predict(T_csr.tolil()), true_result)
+
+
+
 
 
 def test_precomputed():
@@ -147,3 +149,20 @@ def test_manhattan_metric():
     clf.fit(X_csr, y)
     assert_array_equal(clf.centroids_, dense_centroid)
     assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])
+
+
+def test_partial_fit():
+    # Test the partial fitting
+
+    clf = NearestCentroid()
+    clf.partial_fit(X[:3], y[:3], classes=[-1, 1])
+    clf.partial_fit(X[3:], y[3:])
+    assert_array_equal(clf.predict(T), true_result)
+
+    X2 = [[-2, -1], [-1, -2], [1, 1], [-1, -1], [1, 2], [2, 1]]
+    y2 = [-1, -1, 1, -1, 1, 1]
+    clf = NearestCentroid()
+    clf.partial_fit(X2[:3], y2[:3], classes=[-1, 1])
+    assert_array_equal(clf.predict(T), [-1, 1, 1])
+    clf.partial_fit(X2[3:], y2[3:])
+    assert_array_equal(clf.predict(T), true_result)
