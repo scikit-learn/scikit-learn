@@ -26,7 +26,6 @@ def patch_os_path_join(hashed_set_with_suffix, suffix):
         if len(p) != 1:
             return path
         name_with_suffix = p[0]
-        print(a, p, name_with_suffix)
 
         if name_with_suffix not in hashed_set_with_suffix:
             return path
