@@ -170,7 +170,7 @@ Support for Python 3.4 and below has been officially dropped.
   to add flexibility in identifying the best
   estimator. An example for this interface has been added.
   :issue:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
-  `Joel Nothman`_ and `Adrin Jalali <adrinjalali>`.
+  `Joel Nothman`_ and `Adrin Jalali`_
 
 - |Enhancement| Classes :class:`~model_selection.GridSearchCV`,
   :class:`~model_selection.RandomizedSearchCV`, and methods
