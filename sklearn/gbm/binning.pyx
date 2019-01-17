@@ -17,6 +17,7 @@ cimport numpy as np
 from cython.parallel import prange
 
 from ..utils import check_random_state, check_array
+from ..utils.validation import check_is_fitted
 from ..base import BaseEstimator, TransformerMixin
 from .types import X_DTYPE, X_BINNED_DTYPE
 from .types cimport X_DTYPE_C, X_BINNED_DTYPE_C
@@ -182,6 +183,13 @@ class BinMapper(BaseEstimator, TransformerMixin):
             The binned data
         """
         X = check_array(X, dtype=[X_DTYPE])
+        check_is_fitted(self, ['bin_thresholds_', 'n_bins_per_feature_'])
+        if X.shape[1] != self.n_bins_per_feature_.shape[0]:
+            raise ValueError(
+                'This estimator was fitted with {} features but {} got passed '
+                'to transform()'.format(self.n_bins_per_feature_.shape[0],
+                                        X.shape[1])
+            )
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
         _map_to_bins(X, self.bin_thresholds_, binned)
         return binned
