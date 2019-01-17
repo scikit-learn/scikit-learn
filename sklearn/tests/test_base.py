@@ -480,9 +480,9 @@ def test_tag_inheritance():
     assert not no_nan_tag_est._get_tags()['allow_nan']
 
     invalid_tags_est = OverrideTag()
-    with pytest.raises(TypeError, message="Inconsistent values for tag"):
+    with pytest.raises(TypeError, match="Inconsistent values for tag"):
         invalid_tags_est._get_tags()
 
     diamond_tag_est = DiamondOverwriteTag()
-    with pytest.raises(TypeError, message="Inconsistent values for tag"):
+    with pytest.raises(TypeError, match="Inconsistent values for tag"):
         diamond_tag_est._get_tags()
