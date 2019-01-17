@@ -806,6 +806,8 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
                 spacing=3, decimals=2, show_weights=False):
     """Build a text report showing the rules of a decision tree.
 
+    Note that backwards compatibility may not be supported.
+
     Parameters
     ----------
     decision_tree : object
