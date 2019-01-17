@@ -1,39 +1,48 @@
-"""
-Patches os.path.join when process_generate_options to map filenames.
-
-The custom_autosummary_file_map sphinx configuration option is used to map
-filenames to custom filenames:
-
-custom_autosummary_include_hash_in_suffix = [
-    "sklearn.cluster.dbscan", "sklearn.cluster.optics",
-    "sklearn.covariance.oas"
-]
+"""Patches process_generate_options in sphinx.ext.autosummary to add a hash
+to files that have the same case insensitive name.
 """
 import os
 import inspect
 from contextlib import contextmanager
+from collections import defaultdict
+from hashlib import sha1
 
 from sphinx.ext.autosummary import get_rst_suffix
 from sphinx.ext.autosummary import process_generate_options
 
 
 @contextmanager
-def patch_os_path_join(hashed_set_with_suffix, suffix):
+def patch_os_path_join(generated_dirname, suffix):
     orig_os_path_join = os.path.join
+    all_names = defaultdict(set)
 
     def custom_os_path_join(a, *p):
         path = orig_os_path_join(a, *p)
         if len(p) != 1:
             return path
-        dirname, name_with_suffix = os.path.split(path)
 
-        if name_with_suffix not in hashed_set_with_suffix:
+        dirname, name_with_suffix = os.path.split(path)
+        if not dirname.endswith(generated_dirname):
             return path
 
+        name_with_suffix_lower = name_with_suffix.lower()
+        if name_with_suffix_lower not in all_names:
+            all_names[name_with_suffix_lower].add(name_with_suffix)
+            return path
+
+        if name_with_suffix in all_names[name_with_suffix_lower]:
+            return path
+
+        all_names[name_with_suffix_lower].add(name_with_suffix)
+
+        # Include hash with name
         name_wo_suffix = name_with_suffix.rstrip(suffix)
-        return orig_os_path_join(
-            dirname, name_wo_suffix + str(hash(name_wo_suffix)) + suffix
+        new_name_w_suffix = "{}{}{}".format(
+            name_wo_suffix,
+            sha1(name_wo_suffix.encode()).hexdigest(),
+            suffix
         )
+        return orig_os_path_join(dirname, new_name_w_suffix)
 
     os.path.join = custom_os_path_join
     yield
@@ -41,25 +50,15 @@ def patch_os_path_join(hashed_set_with_suffix, suffix):
 
 
 def process_generate_options_custom_files(app):
-    """Patches os.path.join to replace filenames with ones that are in
-    custom_autosummary_file_map
+    """Patches os.path.join to add a hash to files that have the same case
+    insensitive name in the generated directory.
     """
-
-    suffix = get_rst_suffix(app)
-
-    hashed_set_with_suffix = {
-        name + suffix for name in
-        app.config.custom_autosummary_include_hash_in_suffix
-    }
-
-    with patch_os_path_join(hashed_set_with_suffix, suffix):
+    with patch_os_path_join("generated", get_rst_suffix(app)):
         process_generate_options(app)
 
 
 def setup(app):
     app.setup_extension('sphinx.ext.autosummary')
-    app.add_config_value(
-        "custom_autosummary_include_hash_in_suffix", [], None)
 
     # Override process_generate_options added by sphinx.ext.autosummary
     builder_inited_listeners = app.events.listeners["builder-inited"]

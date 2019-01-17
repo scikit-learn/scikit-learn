@@ -297,11 +297,3 @@ warnings.filterwarnings("ignore", category=UserWarning,
                         module="matplotlib",
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
-
-# Configure custom autosummary to add a suffix to modules that overlap with
-# a upper case module, i.e. `sklearn.cluster.DBSCAN` and
-# `sklearn.cluster.dbscan`
-custom_autosummary_include_hash_in_suffix = [
-    "sklearn.cluster.dbscan", "sklearn.cluster.optics",
-    "sklearn.covariance.oas", "sklearn.decomposition.fastica"
-]
