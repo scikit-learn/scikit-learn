@@ -211,8 +211,7 @@ class TreeGrower:
                              l2_regularization, min_hessian_to_split):
         """Validate parameters passed to __init__.
 
-        Also validate parameters passed to splitter  because we cannot
-        raise exceptions in a jitclass.
+        Also validate parameters passed to splitter.
         """
         if X_binned.dtype != np.uint8:
             raise NotImplementedError(

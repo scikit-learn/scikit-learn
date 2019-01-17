@@ -1,4 +1,5 @@
 """This module contains utility routines."""
+from .binning import BinMapper
 
 
 def get_lightgbm_estimator(pygbm_estimator):
@@ -30,7 +31,7 @@ def get_lightgbm_estimator(pygbm_estimator):
     lgbm_params = {
         'objective': loss_mapping[pygbm_params['loss']],
         'learning_rate': pygbm_params['learning_rate'],
-        'n_estimators': pygbm_params['max_iter'],
+        'n_estimators': pygbm_params['n_estimators'],
         'num_leaves': pygbm_params['max_leaf_nodes'],
         'max_depth': pygbm_params['max_depth'],
         'min_data_in_leaf': pygbm_params['min_samples_leaf'],
@@ -41,6 +42,9 @@ def get_lightgbm_estimator(pygbm_estimator):
         'min_gain_to_split': 0,
         'verbosity': 10 if pygbm_params['verbose'] else 0,
         'boost_from_average': True,
+        'enable_bundle': False,  # also makes feature order consistent
+        'min_data_in_bin': 1,
+        'bin_construct_sample_cnt': BinMapper().subsample,
     }
     # TODO: change hardcoded values when / if they're arguments to the
     # estimator.

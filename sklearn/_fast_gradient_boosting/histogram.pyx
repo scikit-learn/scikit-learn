@@ -2,7 +2,7 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: language_level=3
-"""This module contains njitted routines for building histograms.
+"""This module contains routines for building histograms.
 
 A histogram is an array with n_bins entry of type HISTOGRAM_DTYPE. Each
 feature has its own histogram. A histogram contains the sum of gradients and

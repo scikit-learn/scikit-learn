@@ -32,8 +32,8 @@ def test_init_parameters_validation(GradientBoosting, X, y):
 
     assert_raises_regex(
         ValueError,
-        f"max_iter=0 must not be smaller than 1",
-        GradientBoosting(max_iter=0).fit, X, y
+        f"n_estimators=0 must not be smaller than 1",
+        GradientBoosting(n_estimators=0).fit, X, y
     )
 
     assert_raises_regex(
@@ -73,11 +73,11 @@ def test_init_parameters_validation(GradientBoosting, X, y):
         GradientBoosting(n_iter_no_change=-1).fit, X, y
     )
 
-    for validation_split in (-1, 0):
+    for validation_fraction in (-1, 0):
         assert_raises_regex(
             ValueError,
-            f"validation_split={validation_split} must be strictly positive",
-            GradientBoosting(validation_split=validation_split).fit, X, y
+            f"validation_fraction={validation_fraction} must be strictly positive",
+            GradientBoosting(validation_fraction=validation_fraction).fit, X, y
         )
 
     assert_raises_regex(
@@ -87,66 +87,66 @@ def test_init_parameters_validation(GradientBoosting, X, y):
     )
 
 
-@pytest.mark.parametrize('scoring, validation_split, n_iter_no_change, tol', [
+@pytest.mark.parametrize('scoring, validation_fraction, n_iter_no_change, tol', [
     ('neg_mean_squared_error', .1, 5, 1e-7),  # use scorer
     ('neg_mean_squared_error', None, 5, 1e-1),  # use scorer on training data
     (None, .1, 5, 1e-7),  # use loss
     (None, None, 5, 1e-1),  # use loss on training data
     (None, None, None, None),  # no early stopping
 ])
-def test_early_stopping_regression(scoring, validation_split,
+def test_e(scoring, validation_fraction,
                                    n_iter_no_change, tol):
 
-    max_iter = 500
+    n_estimators = 500
 
     X, y = make_regression(random_state=0)
 
     gb = FastGradientBoostingRegressor(verbose=1,  # just for coverage
                                        scoring=scoring,
                                        tol=tol,
-                                       validation_split=validation_split,
-                                       max_iter=max_iter,
+                                       validation_fraction=validation_fraction,
+                                       n_estimators=n_estimators,
                                        n_iter_no_change=n_iter_no_change,
                                        random_state=0)
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
-        assert n_iter_no_change <= gb.n_iter_ < max_iter
+        assert n_iter_no_change <= gb.n_iter_ < n_estimators
     else:
-        assert gb.n_iter_ == max_iter
+        assert gb.n_iter_ == n_estimators
 
 
 @pytest.mark.parametrize('data', (
     make_classification(random_state=0),
     make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
 ))
-@pytest.mark.parametrize('scoring, validation_split, n_iter_no_change, tol', [
+@pytest.mark.parametrize('scoring, validation_fraction, n_iter_no_change, tol', [
     ('accuracy', .1, 5, 1e-7),  # use scorer
     ('accuracy', None, 5, 1e-1),  # use scorer on training data
     (None, .1, 5, 1e-7),  # use loss
     (None, None, 5, 1e-1),  # use loss on training data
     (None, None, None, None),  # no early stopping
 ])
-def test_early_stopping_classification(data, scoring, validation_split,
+def test_early_stopping_classification(data, scoring, validation_fraction,
                                        n_iter_no_change, tol):
 
-    max_iter = 500
+    n_estimators = 500
 
     X, y = data
 
     gb = FastGradientBoostingClassifier(verbose=1,  # just for coverage
                                         scoring=scoring,
                                         tol=tol,
-                                        validation_split=validation_split,
-                                        max_iter=max_iter,
+                                        validation_fraction=validation_fraction,
+                                        n_estimators=n_estimators,
                                         n_iter_no_change=n_iter_no_change,
                                         random_state=0)
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
-        assert n_iter_no_change <= gb.n_iter_ < max_iter
+        assert n_iter_no_change <= gb.n_iter_ < n_estimators
     else:
-        assert gb.n_iter_ == max_iter
+        assert gb.n_iter_ == n_estimators
 
 
 def test_should_stop():
@@ -178,7 +178,7 @@ def test_should_stop():
 
 @pytest.mark.parametrize('Estimator', (
     FastGradientBoostingRegressor(),
-    FastGradientBoostingClassifier(scoring=None, validation_split=None,
+    FastGradientBoostingClassifier(scoring=None, validation_fraction=None,
                                    min_samples_leaf=5),
     ))
 def test_estimator_checks(Estimator):
@@ -187,7 +187,7 @@ def test_estimator_checks(Estimator):
     # Default parameters to the estimators have to be changed to pass the
     # tests:
     # - Can't do early stopping with classifier because often
-    #   validation_split=.1 leads to test_size=2 < n_classes and
+    #   validation_fraction=.1 leads to test_size=2 < n_classes and
     #   train_test_split raises an error.
     # - Also, need to set a low min_samples_leaf for
     #   check_classifiers_classes() to pass: with only 30 samples on the
