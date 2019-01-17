@@ -3,10 +3,10 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 import pytest
 
-from sklearn.gbm.types import HISTOGRAM_DTYPE
-from sklearn.gbm.types import Y_DTYPE
-from sklearn.gbm.types import X_BINNED_DTYPE
-from sklearn.gbm.splitting import Splitter
+from sklearn._fast_gradient_boosting.types import HISTOGRAM_DTYPE
+from sklearn._fast_gradient_boosting.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
+from sklearn._fast_gradient_boosting.splitting import Splitter
 
 
 @pytest.mark.parametrize('n_bins', [3, 32, 256])

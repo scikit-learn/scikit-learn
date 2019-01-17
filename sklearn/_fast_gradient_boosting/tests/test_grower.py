@@ -4,10 +4,10 @@ import pytest
 from pytest import approx
 
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.gbm.grower import TreeGrower
-from sklearn.gbm.binning import BinMapper
-from sklearn.gbm.types import X_BINNED_DTYPE
-from sklearn.gbm.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.grower import TreeGrower
+from sklearn._fast_gradient_boosting.binning import BinMapper
+from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
+from sklearn._fast_gradient_boosting.types import Y_DTYPE
 
 
 def _make_training_data(n_bins=256, constant_hessian=True):

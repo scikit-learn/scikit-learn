@@ -17,16 +17,16 @@ from pygbm.histogram import _build_histogram_root as pygbm_build_histogram_root
 from pygbm.histogram import _build_histogram_root_no_hessian as pygbm_build_histogram_root_no_hessian
 from pygbm.histogram import _subtract_histograms as pygbm_subtract_histograms
 
-from sklearn.gbm.histogram import _build_histogram_naive
-from sklearn.gbm.histogram import _build_histogram
-from sklearn.gbm.histogram import _build_histogram_no_hessian
-from sklearn.gbm.histogram import _build_histogram_root
-from sklearn.gbm.histogram import _build_histogram_root_no_hessian
-from sklearn.gbm.histogram import _subtract_histograms
-from sklearn.gbm.types import HISTOGRAM_DTYPE
-from sklearn.gbm.types import X_DTYPE
-from sklearn.gbm.types import X_BINNED_DTYPE
-from sklearn.gbm.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.histogram import _build_histogram_naive
+from sklearn._fast_gradient_boosting.histogram import _build_histogram
+from sklearn._fast_gradient_boosting.histogram import _build_histogram_no_hessian
+from sklearn._fast_gradient_boosting.histogram import _build_histogram_root
+from sklearn._fast_gradient_boosting.histogram import _build_histogram_root_no_hessian
+from sklearn._fast_gradient_boosting.histogram import _subtract_histograms
+from sklearn._fast_gradient_boosting.types import HISTOGRAM_DTYPE
+from sklearn._fast_gradient_boosting.types import X_DTYPE
+from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
+from sklearn._fast_gradient_boosting.types import Y_DTYPE
 
 
 m = Memory(location='/tmp')

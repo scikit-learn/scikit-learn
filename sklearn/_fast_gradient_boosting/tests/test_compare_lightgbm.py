@@ -4,9 +4,9 @@ from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-from sklearn.gbm import FastGradientBoostingRegressor, FastGradientBoostingClassifier
-from sklearn.gbm.binning import BinMapper
-from sklearn.gbm.utils import get_lightgbm_estimator
+from sklearn.ensemble import FastGradientBoostingRegressor, FastGradientBoostingClassifier
+from sklearn._fast_gradient_boosting.binning import BinMapper
+from sklearn._fast_gradient_boosting.utils import get_lightgbm_estimator
 
 
 pytest.importorskip("lightgbm")

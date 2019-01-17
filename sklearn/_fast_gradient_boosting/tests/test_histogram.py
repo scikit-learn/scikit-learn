@@ -4,15 +4,15 @@ import pytest
 from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 
-from sklearn.gbm.histogram import _build_histogram_naive
-from sklearn.gbm.histogram import _build_histogram
-from sklearn.gbm.histogram import _build_histogram_no_hessian
-from sklearn.gbm.histogram import _build_histogram_root_no_hessian
-from sklearn.gbm.histogram import _build_histogram_root
-from sklearn.gbm.histogram import _subtract_histograms
-from sklearn.gbm.types import HISTOGRAM_DTYPE
-from sklearn.gbm.types import Y_DTYPE
-from sklearn.gbm.types import X_BINNED_DTYPE
+from sklearn._fast_gradient_boosting.histogram import _build_histogram_naive
+from sklearn._fast_gradient_boosting.histogram import _build_histogram
+from sklearn._fast_gradient_boosting.histogram import _build_histogram_no_hessian
+from sklearn._fast_gradient_boosting.histogram import _build_histogram_root_no_hessian
+from sklearn._fast_gradient_boosting.histogram import _build_histogram_root
+from sklearn._fast_gradient_boosting.histogram import _subtract_histograms
+from sklearn._fast_gradient_boosting.types import HISTOGRAM_DTYPE
+from sklearn._fast_gradient_boosting.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
 
 
 @pytest.mark.parametrize(

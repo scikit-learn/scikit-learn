@@ -2,10 +2,10 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 import pytest
 
-from sklearn.gbm.binning import BinMapper
-from sklearn.gbm.binning import _find_binning_thresholds
-from sklearn.gbm.binning import _map_to_bins
-from sklearn.gbm.types import X_DTYPE, X_BINNED_DTYPE
+from sklearn._fast_gradient_boosting.binning import BinMapper
+from sklearn._fast_gradient_boosting.binning import _find_binning_thresholds
+from sklearn._fast_gradient_boosting.binning import _map_to_bins
+from sklearn._fast_gradient_boosting.types import X_DTYPE, X_BINNED_DTYPE
 
 
 DATA = np.random.RandomState(42).normal(

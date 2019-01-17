@@ -4,9 +4,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 import pytest
 
-from sklearn.gbm.binning import BinMapper
-from sklearn.gbm.grower import TreeGrower
-from sklearn.gbm.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.binning import BinMapper
+from sklearn._fast_gradient_boosting.grower import TreeGrower
+from sklearn._fast_gradient_boosting.types import Y_DTYPE
 
 
 @pytest.mark.parametrize('max_bins', [200, 256])

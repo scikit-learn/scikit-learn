@@ -3,8 +3,8 @@ from time import time
 from sklearn.datasets import make_regression, make_classification
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.gbm import FastGradientBoostingRegressor
-from sklearn.gbm import FastGradientBoostingClassifier
+from sklearn.ensemble import FastGradientBoostingRegressor
+from sklearn.ensemble import FastGradientBoostingClassifier
 
 import pstats
 import cProfile

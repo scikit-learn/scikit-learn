@@ -9,7 +9,7 @@ import pygbm
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_regression
 
-from sklearn.ensemble.gbm.binning import BinMapper
+from sklearn._fast_gradient_boosting.binning import BinMapper
 
 
 n_features = 5

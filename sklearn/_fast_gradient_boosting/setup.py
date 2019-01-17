@@ -3,7 +3,7 @@ from numpy.distutils.misc_util import Configuration
 
 
 def configuration(parent_package="", top_path=None):
-    config = Configuration("gbm", parent_package, top_path)
+    config = Configuration("_fast_gradient_boosting", parent_package, top_path)
 
     config.add_extension("_gradient_boosting",
                          sources=["_gradient_boosting.pyx"],

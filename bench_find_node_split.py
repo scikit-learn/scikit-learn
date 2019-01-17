@@ -3,12 +3,12 @@ from time import time
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.gbm.types import HISTOGRAM_DTYPE
-from sklearn.gbm.types import X_DTYPE
-from sklearn.gbm.types import X_BINNED_DTYPE
-from sklearn.gbm.types import Y_DTYPE
-from sklearn.gbm.splitting import SplittingContext
-from sklearn.gbm.splitting import find_node_split
+from sklearn._fast_gradient_boosting.types import HISTOGRAM_DTYPE
+from sklearn._fast_gradient_boosting.types import X_DTYPE
+from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
+from sklearn._fast_gradient_boosting.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.splitting import SplittingContext
+from sklearn._fast_gradient_boosting.splitting import find_node_split
 from pygbm.splitting import SplittingContext as SplittingContext_pygbm
 from pygbm.splitting import find_node_split as find_node_split_pygbm
 

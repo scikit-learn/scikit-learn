@@ -10,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_regression, make_classification
-from sklearn.gbm import FastGradientBoostingRegressor
-from sklearn.gbm import FastGradientBoostingClassifier
+from sklearn._fast_gradient_boosting import FastGradientBoostingRegressor
+from sklearn._fast_gradient_boosting import FastGradientBoostingClassifier
 
 classif = False
 n_classes = 3

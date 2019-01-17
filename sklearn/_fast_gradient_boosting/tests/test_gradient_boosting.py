@@ -3,8 +3,8 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.datasets import make_classification, make_regression
 from sklearn.utils.estimator_checks import check_estimator
 
-from sklearn.gbm import FastGradientBoostingClassifier
-from sklearn.gbm import FastGradientBoostingRegressor
+from sklearn.ensemble import FastGradientBoostingClassifier
+from sklearn.ensemble import FastGradientBoostingRegressor
 
 
 X_classification, y_classification = make_classification(random_state=0)
