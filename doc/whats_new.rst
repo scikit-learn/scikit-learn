@@ -1,6 +1,7 @@
 .. currentmodule:: sklearn
 .. include:: includes/big_toc_css.rst
 .. include:: whats_new/_contributors.rst
+.. default-role:: term
 
 Release History
 ===============

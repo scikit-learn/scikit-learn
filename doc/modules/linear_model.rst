@@ -997,7 +997,7 @@ fraction of data that can be outlying for the fit to start missing the
 inlying data.
 
 Note that in general, robust fitting in high-dimensional setting (large
-`n_features`) is very hard. The robust models here will probably not work
+:term:`n_features`) is very hard. The robust models here will probably not work
 in these settings.
 
 

@@ -3,6 +3,8 @@
 
 .. currentmodule:: {{ module }}
 
+.. default-role:: term
+
 .. autofunction:: {{ objname }}
 
 .. include:: {{module}}.{{objname}}.examples
