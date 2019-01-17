@@ -406,6 +406,8 @@ class SelectPercentile(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
+    Allows NaN/Inf in the input if the underlying score_func does as well.
+
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
@@ -490,6 +492,8 @@ class SelectKBest(_BaseFilter):
     Ties between features with equal scores will be broken in an unspecified
     way.
 
+    Allows NaN/Inf in the input if the underlying score_func does as well.
+
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
@@ -569,6 +573,10 @@ class SelectFpr(_BaseFilter):
     >>> X_new.shape
     (569, 16)
 
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying score_func does as well.
+
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
@@ -635,6 +643,10 @@ class SelectFdr(_BaseFilter):
     ----------
     https://en.wikipedia.org/wiki/False_discovery_rate
 
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying score_func does as well.
+
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
@@ -699,6 +711,10 @@ class SelectFwe(_BaseFilter):
 
     pvalues_ : array-like, shape=(n_features,)
         p-values of feature scores.
+
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying score_func does as well.
 
     See also
     --------
@@ -766,6 +782,10 @@ class GenericUnivariateSelect(_BaseFilter):
     >>> X_new.shape
     (569, 20)
 
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying score_func does as well.
+    
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.

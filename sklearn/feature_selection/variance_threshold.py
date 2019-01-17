@@ -29,6 +29,10 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
     variances_ : array, shape (n_features,)
         Variances of individual features.
 
+    Notes
+    -----
+    Allows NaN/Inf in the input.
+
     Examples
     --------
     The following dataset has integer features, two of which are the same

@@ -102,6 +102,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying estimator does as well.
+
     See also
     --------
     RFECV : Recursive feature elimination with built-in cross-validated
@@ -413,6 +417,8 @@ class RFECV(RFE, MetaEstimatorMixin):
     The size of ``grid_scores_`` is equal to
     ``ceil((n_features - min_features_to_select) / step) + 1``,
     where step is the number of features removed at each iteration.
+
+    Allows NaN/Inf in the input if the underlying estimator does as well.
 
     Examples
     --------
