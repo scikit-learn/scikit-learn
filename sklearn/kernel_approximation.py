@@ -23,7 +23,7 @@ from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
-class TensorSketch( BaseEstimator, TransformerMixin):
+class TensorSketch(BaseEstimator, TransformerMixin):
     """Tensor Sketch [1] approximates the feature map of the homogeneous
     polynomial kernel by efficiently computing a Count Sketch [2]
     of the outer product of a vector with itself.
@@ -31,8 +31,8 @@ class TensorSketch( BaseEstimator, TransformerMixin):
     Parameters
     ----------
     degree : int
-        Degree of the homogeneous polynomial kernel whose feature map will be approximated.
-        The kernel is K(x,y) = <x,y>^d.
+        Degree of the homogeneous polynomial kernel whose feature map
+        will be approximated. The kernel is K(x,y) = <x,y>^d.
 
     n_components : int
         Dimensionality of the output feature space.
@@ -61,14 +61,14 @@ class TensorSketch( BaseEstimator, TransformerMixin):
     >>> clf.score(X_features, y)
     1.0
 
-    Notes
-    -----
+    References
+    ----------
 
     [1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
     kernels via explicit feature maps. In Proceedings of the 19th ACM SIGKDD
-    international conference on Knowledge discovery and data mining (pp. 239-247).
-    ACM. (https://pdfs.semanticscholar.org/76ca/15e975b0dee581d5d04dca26dfae636372de.pdf)
-    
+    international conference on Knowledge discovery and data mining (pp. 239-247)
+    (https://pdfs.semanticscholar.org/76ca/15e975b0dee581d5d04dca26dfae636372de.pdf)
+
     [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002, July). Finding frequent
     items in data streams. In International Colloquium on Automata, Languages, and
     Programming (pp. 693-703). Springer, Berlin, Heidelberg.
@@ -77,11 +77,11 @@ class TensorSketch( BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, degree=2, n_components=100, random_state=None):
-        
+
         self.degree = degree
         self.n_components = n_components
         self.random_state = random_state
-    
+
     def fit(self, X, Y=None):
         """Fit the model with X.
 
@@ -105,9 +105,9 @@ class TensorSketch( BaseEstimator, TransformerMixin):
         n_features = X.shape[1]
 
         self.indexHash_ = random_state.randint(0, high=self.n_components,
-                                               size=(self.degree, n_features))
+                                            size=(self.degree, n_features))
         self.bitHash_ = random_state.choice(a=[-1., 1.],
-                                            size=(self.degree, n_features)).astype(np.float32)
+                         size=(self.degree, n_features)).astype(np.float32)
         return self
 
     def transform(self, X, Y=None):
