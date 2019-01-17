@@ -4,7 +4,7 @@ from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-from sklearn.gbm import GBMRegressor, GBMClassifier
+from sklearn.gbm import FastGradientBoostingRegressor, FastGradientBoostingClassifier
 from sklearn.gbm.binning import BinMapper
 from sklearn.gbm.utils import get_lightgbm_estimator
 
@@ -51,7 +51,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-    est_sklearn = GBMRegressor(max_iter=max_iter,
+    est_sklearn = FastGradientBoostingRegressor(max_iter=max_iter,
                                max_bins=max_bins,
                                learning_rate=1,
                                n_iter_no_change=None,
@@ -102,7 +102,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-    est_pygbm = GBMClassifier(loss='binary_crossentropy',
+    est_pygbm = FastGradientBoostingClassifier(loss='binary_crossentropy',
                               max_iter=max_iter,
                               max_bins=max_bins,
                               learning_rate=1,
@@ -163,7 +163,7 @@ def test_same_predictions_multiclass_classification(
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-    est_pygbm = GBMClassifier(loss='categorical_crossentropy',
+    est_pygbm = FastGradientBoostingClassifier(loss='categorical_crossentropy',
                               max_iter=max_iter,
                               max_bins=max_bins,
                               learning_rate=lr,

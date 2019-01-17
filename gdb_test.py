@@ -3,8 +3,8 @@ from time import time
 from sklearn.datasets import make_regression, make_classification
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.gbm import GBMRegressor
-from sklearn.gbm import GBMClassifier
+from sklearn.gbm import FastGradientBoostingRegressor
+from sklearn.gbm import FastGradientBoostingClassifier
 
 import pstats
 import cProfile
@@ -18,12 +18,12 @@ max_iter = 5
 
 if classif:
     X, y = make_classification(n_samples=n_samples, n_features=n_features, random_state=0, n_classes=n_classes, n_clusters_per_class=1)
-    GBM = GBMClassifier
+    GBM = FastGradientBoostingClassifier
     GBDT = GradientBoostingClassifier
     PYGBM_GBM = pygbm.GradientBoostingClassifier
 else:
     X, y = make_regression(n_samples=n_samples, n_features=n_features, random_state=0)
-    GBM = GBMRegressor
+    GBM = FastGradientBoostingRegressor
     GBDT = GradientBoostingRegressor
     PYGBM_GBM = pygbm.GradientBoostingRegressor
 

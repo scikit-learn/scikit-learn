@@ -20,8 +20,8 @@ from .grower import TreeGrower
 from .loss import _LOSSES
 
 
-class BaseGradientBoostingMachine(BaseEstimator, ABC):
-    """Base class for gradient boosting estimators."""
+class BaseFastGradientBoosting(BaseEstimator, ABC):
+    """Base class for fast gradient boosting estimators."""
 
     @abstractmethod
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
@@ -401,7 +401,7 @@ class BaseGradientBoostingMachine(BaseEstimator, ABC):
         return len(self.predictors_)
 
 
-class GradientBoostingRegressor(BaseGradientBoostingMachine, RegressorMixin):
+class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
     """Scikit-learn compatible Gradient Boosting Tree for regression.
 
     Parameters
@@ -479,7 +479,7 @@ class GradientBoostingRegressor(BaseGradientBoostingMachine, RegressorMixin):
                  min_samples_leaf=20, l2_regularization=0., max_bins=256,
                  scoring=None, validation_split=0.1, n_iter_no_change=5,
                  tol=1e-7, verbose=0, random_state=None):
-        super(GradientBoostingRegressor, self).__init__(
+        super(FastGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
@@ -516,7 +516,8 @@ class GradientBoostingRegressor(BaseGradientBoostingMachine, RegressorMixin):
         return _LOSSES[self.loss]()
 
 
-class GradientBoostingClassifier(BaseGradientBoostingMachine, ClassifierMixin):
+class FastGradientBoostingClassifier(BaseFastGradientBoosting,
+                                     ClassifierMixin):
     """Scikit-learn compatible Gradient Boosting Tree for classification.
 
     Parameters
@@ -598,7 +599,7 @@ class GradientBoostingClassifier(BaseGradientBoostingMachine, ClassifierMixin):
                  l2_regularization=0., max_bins=256, scoring=None,
                  validation_split=0.1, n_iter_no_change=5, tol=1e-7,
                  verbose=0, random_state=None):
-        super(GradientBoostingClassifier, self).__init__(
+        super(FastGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,

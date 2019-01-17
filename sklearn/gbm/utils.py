@@ -12,7 +12,7 @@ def get_lightgbm_estimator(pygbm_estimator):
     from lightgbm import LGBMClassifier
 
     # Import here to avoid cyclic dependencies
-    from .gradient_boosting import GradientBoostingClassifier
+    from .gradient_boosting import FastGradientBoostingClassifier
 
     pygbm_params = pygbm_estimator.get_params()
 
@@ -51,7 +51,7 @@ def get_lightgbm_estimator(pygbm_estimator):
         lgbm_params['min_sum_hessian_in_leaf'] *= 2
         lgbm_params['learning_rate'] *= 2
 
-    if isinstance(pygbm_estimator, GradientBoostingClassifier):
+    if isinstance(pygbm_estimator, FastGradientBoostingClassifier):
         Est = LGBMClassifier
     else:
         Est = LGBMRegressor

@@ -3,8 +3,8 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.datasets import make_classification, make_regression
 from sklearn.utils.estimator_checks import check_estimator
 
-from sklearn.gbm import GBMClassifier
-from sklearn.gbm import GBMRegressor
+from sklearn.gbm import FastGradientBoostingClassifier
+from sklearn.gbm import FastGradientBoostingRegressor
 
 
 X_classification, y_classification = make_classification(random_state=0)
@@ -13,7 +13,7 @@ X_regression, y_regression = make_regression(random_state=0)
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
     # (GBMClassifier, X_classification, y_classification),  TODO: unskip
-    (GBMRegressor, X_regression, y_regression)
+    (FastGradientBoostingRegressor, X_regression, y_regression)
 ])
 def test_init_parameters_validation(GradientBoosting, X, y):
 
@@ -101,7 +101,7 @@ def test_early_stopping_regression(scoring, validation_split,
 
     X, y = make_regression(random_state=0)
 
-    gb = GBMRegressor(verbose=1,  # just for coverage
+    gb = FastGradientBoostingRegressor(verbose=1,  # just for coverage
                       scoring=scoring,
                       tol=tol,
                       validation_split=validation_split,
@@ -134,7 +134,7 @@ def test_early_stopping_classification(data, scoring, validation_split,
 
     X, y = data
 
-    gb = GBMClassifier(verbose=1,  # just for coverage
+    gb = FastGradientBoostingClassifier(verbose=1,  # just for coverage
                        scoring=scoring,
                        tol=tol,
                        validation_split=validation_split,
@@ -152,7 +152,7 @@ def test_early_stopping_classification(data, scoring, validation_split,
 def test_should_stop():
 
     def should_stop(scores, n_iter_no_change, tol):
-        gbdt = GBMClassifier(n_iter_no_change=n_iter_no_change,
+        gbdt = FastGradientBoostingClassifier(n_iter_no_change=n_iter_no_change,
                              tol=tol)
         return gbdt._should_stop(scores)
 
@@ -176,8 +176,8 @@ def test_should_stop():
 
 
 @pytest.mark.parametrize('Estimator', (
-    GBMRegressor(),
-    GBMClassifier(scoring=None, validation_split=None, min_samples_leaf=5),
+    FastGradientBoostingRegressor(),
+    FastGradientBoostingClassifier(scoring=None, validation_split=None, min_samples_leaf=5),
     ))
 def test_estimator_checks(Estimator):
     # Run the check_estimator() test suite on GBRegressor and GBClassifier.

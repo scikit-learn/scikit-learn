@@ -1,4 +1,4 @@
-from .gradient_boosting import GradientBoostingClassifier as GBMClassifier
-from .gradient_boosting import GradientBoostingRegressor as GBMRegressor
+from .gradient_boosting import FastGradientBoostingClassifier
+from .gradient_boosting import FastGradientBoostingRegressor
 
-__all__ = ["GBMClassifier", "GBMRegressor"]
+__all__ = ["FastGradientBoostingClassifier", "FastGradientBoostingRegressor"]

@@ -10,8 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_regression, make_classification
-from sklearn.gbm import GBMRegressor
-from sklearn.gbm import GBMClassifier
+from sklearn.gbm import FastGradientBoostingRegressor
+from sklearn.gbm import FastGradientBoostingClassifier
 
 classif = False
 n_classes = 3
@@ -24,12 +24,12 @@ if classif:
     X, y = make_classification(n_samples=n_samples, n_features=n_features,
                                random_state=0, n_classes=n_classes,
                                n_clusters_per_class=1)
-    GBM = GBMClassifier
+    GBM = FastGradientBoostingClassifier
     PYGBM_GBM = pygbm.GradientBoostingClassifier
 else:
     X, y = make_regression(n_samples=n_samples, n_features=n_features,
                            random_state=0)
-    GBM = GBMRegressor
+    GBM = FastGradientBoostingRegressor
     PYGBM_GBM = pygbm.GradientBoostingRegressor
 
 
