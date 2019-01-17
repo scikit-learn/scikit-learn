@@ -52,7 +52,7 @@ Support for Python 3.4 and below has been officially dropped.
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
 
 :mod:`sklearn.datasets`
-  ......................
+.......................
 
   - |Fix| Added support for 64-bit group IDs and pointers in SVMLight files
     :class:`datasets.svmlight_format` :issue:`10727` by
@@ -168,7 +168,7 @@ Support for Python 3.4 and below has been officially dropped.
   to add flexibility in identifying the best
   estimator. An example for this interface has been added.
   :issue:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
-  `Joel Nothman`_ and `Adrin Jalali`_
+  `Joel Nothman`_ and :user:`Adrin Jalali <adrinjalali>`.
 
 - |Enhancement| Classes :class:`~model_selection.GridSearchCV`,
   :class:`~model_selection.RandomizedSearchCV`, and methods
