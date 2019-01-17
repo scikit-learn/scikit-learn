@@ -1,5 +1,6 @@
 """Patches process_generate_options in sphinx.ext.autosummary to add a hash
-to files that have the same case insensitive name.
+to filenames that have the same case-insensitive name as another generated
+file.
 """
 import os
 import inspect
@@ -50,8 +51,8 @@ def patch_os_path_join(generated_dirname, suffix):
 
 
 def process_generate_options_custom_files(app):
-    """Patches os.path.join to add a hash to files that have the same case
-    insensitive name in the generated directory.
+    """Patches os.path.join to add a hash to files that have the same
+    case-insensitive name as another generated file.
     """
     with patch_os_path_join("generated", get_rst_suffix(app)):
         process_generate_options(app)
