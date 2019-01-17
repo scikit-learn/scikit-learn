@@ -785,7 +785,7 @@ class GenericUnivariateSelect(_BaseFilter):
     Notes
     -----
     Allows NaN/Inf in the input if the underlying score_func does as well.
-    
+
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
