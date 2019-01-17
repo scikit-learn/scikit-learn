@@ -196,12 +196,12 @@ of external libraries and is more compact:
     >>> decision_tree = decision_tree.fit(X, y)
     >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
-    |---petal width (cm) <= 0.80
+    |--- petal width (cm) <= 0.80
     |   |--- class: 0
-    |---petal width (cm) >  0.80
-    |   |---petal width (cm) <= 1.75
+    |--- petal width (cm) >  0.80
+    |   |--- petal width (cm) <= 1.75
     |   |   |--- class: 1
-    |   |---petal width (cm) >  1.75
+    |   |--- petal width (cm) >  1.75
     |   |   |--- class: 2
     <BLANKLINE>
 

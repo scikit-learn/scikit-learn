@@ -850,20 +850,21 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
     >>> decision_tree = decision_tree.fit(X, y)
     >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
     >>> print(r)
-    |---petal width (cm) <= 0.80
+    |--- petal width (cm) <= 0.80
     |   |--- class: 0
-    |---petal width (cm) >  0.80
-    |   |---petal width (cm) <= 1.75
+    |--- petal width (cm) >  0.80
+    |   |--- petal width (cm) <= 1.75
     |   |   |--- class: 1
-    |   |---petal width (cm) >  1.75
+    |   |--- petal width (cm) >  1.75
     |   |   |--- class: 2
     ...
     """
     check_is_fitted(decision_tree, 'tree_')
     tree_ = decision_tree.tree_
     class_names = decision_tree.classes_
-    right_child_fmt = "{}{} <= {}\n"
-    left_child_fmt = "{}{} >  {}\n"
+    right_child_fmt = "{} {} <= {}\n"
+    left_child_fmt = "{} {} >  {}\n"
+    truncation_fmt = "{} {}\n"
 
     if max_depth < 0:
         raise ValueError("max_depth bust be >= 0, given %d" % max_depth)
@@ -894,27 +895,34 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
 
     export_text.report = ""
 
+    def _add_leaf(value, class_name, indent):
+        val = ''
+        is_classification = isinstance(decision_tree,
+                                       DecisionTreeClassifier)
+        if show_weights or not is_classification:
+            val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
+            val = '['+''.join(val)[:-2]+']'
+        if is_classification:
+            val += ' class: ' + str(class_name)
+        export_text.report += value_fmt.format(indent, '', val)
+
     def print_tree_recurse(node, depth):
         indent = ("|" + (" " * spacing)) * depth
         indent = indent[:-spacing] + "-" * spacing
 
-        if depth <= max_depth+1:
-            value = None
-            if tree_.n_outputs == 1:
-                value = tree_.value[node][0]
-            else:
-                value = tree_.value[node].T[0]
-            class_name = np.argmax(value)
-            right_child = tree_.children_right[node]
-            left_child = tree_.children_left[node]
-            class_name_right = np.argmax(tree_.value[right_child][0])
-            class_name_left = np.argmax(tree_.value[left_child][0])
-            if (tree_.n_classes[0] != 1 and
-                    tree_.n_outputs == 1):
-                class_name = class_names[class_name]
-                class_name_right = class_names[class_name_right]
-                class_name_left = class_names[class_name_left]
+        value = None
+        if tree_.n_outputs == 1:
+            value = tree_.value[node][0]
+        else:
+            value = tree_.value[node].T[0]
+        class_name = np.argmax(value)
+        right_child = tree_.children_right[node]
+        left_child = tree_.children_left[node]
+        if (tree_.n_classes[0] != 1 and
+                tree_.n_outputs == 1):
+            class_name = class_names[class_name]
 
+        if depth <= max_depth+1:
             info_fmt = ""
             info_fmt_left = info_fmt
             info_fmt_right = info_fmt
@@ -935,18 +943,15 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
                 export_text.report += info_fmt_right
                 print_tree_recurse(tree_.children_right[node], depth+1)
             else:  # leaf
-                val = ''
-                is_classification = isinstance(decision_tree,
-                                               DecisionTreeClassifier)
-                if show_weights or not is_classification:
-                    val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
-                    val = '['+''.join(val)[:-2]+']'
-                if is_classification:
-                    val += ' class: ' + str(class_name)
-                export_text.report += value_fmt.format(indent, '', val)
+                _add_leaf(value, class_name, indent)
         else:
-            remaining = ' ...%d hidden layer/s\n' % _compute_depth(tree_, node)
-            export_text.report = export_text.report[:-1] + remaining
+            subtree_depth = _compute_depth(tree_, node)
+            if subtree_depth == 1:
+                _add_leaf(value, class_name, indent)
+            else:
+                trunc_report = 'truncated branch of depth %d' % subtree_depth
+                export_text.report += truncation_fmt.format(indent,
+                                                            trunc_report)
 
     print_tree_recurse(0, 1)
     return export_text.report
