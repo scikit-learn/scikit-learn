@@ -916,8 +916,7 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
         else:
             value = tree_.value[node].T[0]
         class_name = np.argmax(value)
-        right_child = tree_.children_right[node]
-        left_child = tree_.children_left[node]
+
         if (tree_.n_classes[0] != 1 and
                 tree_.n_outputs == 1):
             class_name = class_names[class_name]
