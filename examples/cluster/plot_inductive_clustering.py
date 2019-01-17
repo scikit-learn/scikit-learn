@@ -3,13 +3,20 @@
 Inductive Clustering
 ==============================================
 
-Clustering is expensive, especially when our dataset contains millions of
-datapoints. Recomputing the clusters everytime we receive some new data
-is thus in many cases, intractable. With more data, there is also the
-possibility of degrading the previous clustering.
-One solution to this problem, is to first infer the target classes using
-some unsupervised learning algorithm and then fit a classifier on the
-inferred targets, treating it as a supervised problem.
+Clustering can be expensive, especially when our dataset contains millions
+of datapoints. Many clustering algorithms are not :term:`inductive` and so
+cannot be directly applied to new data samples without recomputing the
+clustering, which may be intractable. Instead, we can use clustering to then
+learn an inductive model with a classifier, which has several benefits:
+
+- it allows the clusters to scale and apply to new data
+- unlike re-fitting the clusters to new samples, it makes sure the labelling
+  procedure is consistent over time
+- it allows us to use the inferential capabilities of the classifier to
+  describe or explain the clusters
+
+This example illustrates a generic implementation of a meta-estimator which
+extends clustering by inducing a classifier from the cluster labels.
 """
 print(__doc__)
 
