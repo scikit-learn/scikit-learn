@@ -385,28 +385,28 @@ and Cython optimizations.
    sections.
 
 Continuous Integration (CI)
-............................
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   * Travis is used for testing on Linux platforms
-   * Appveyor is used for testing on Windows platforms
-   * CircleCI is used to build the docs for viewing, for linting with flake8, and
-     for testing with PyPy on Linux 
+* Travis is used for testing on Linux platforms
+* Appveyor is used for testing on Windows platforms
+* CircleCI is used to build the docs for viewing, for linting with flake8, and
+    for testing with PyPy on Linux 
 
-   Please note that if one of the following markers appear in the latest commit
-   message, the following actions are taken.
+Please note that if one of the following markers appear in the latest commit
+message, the following actions are taken.
 
-     ====================== ===================
-     Commit Message Marker  Action Taken by CI
-     ---------------------- -------------------
-     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
-     [ci skip]              CI is skipped completely
-     [doc skip]             Docs are not built
-     [doc quick]            Docs built, but excludes example gallery plots
-     [doc build]            Docs built including example gallery plots
-     ====================== ===================
+    ====================== ===================
+    Commit Message Marker  Action Taken by CI
+    ---------------------- -------------------
+    [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
+    [ci skip]              CI is skipped completely
+    [doc skip]             Docs are not built
+    [doc quick]            Docs built, but excludes example gallery plots
+    [doc build]            Docs built including example gallery plots
+    ====================== ===================
 
 Stalled pull requests
-......................
+^^^^^^^^^^^^^^^^^^^^^
 
 As contributing a feature can be a lengthy process, some
 pull requests appear inactive but unfinished. In such a case, taking
