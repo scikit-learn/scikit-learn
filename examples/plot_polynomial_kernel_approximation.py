@@ -11,8 +11,8 @@ of an Homogeneoys Polynomial kernel.
 It shows how to use :class:`TensorSketch` and :class:`Nystroem` to
 approximate the feature map of an Homogeneous Polynomial kernel for
 classification with an SVM on the digits dataset. Results using a linear
-SVM in the original space, a linear SVM using the approximate mappings 
-and a kernelized SVM are compared. 
+SVM in the original space, a linear SVM using the approximate mappings
+and a kernelized SVM are compared.
 
 The first plot shows the classification accuracy of Nystroem [2] and
 TensorSketch [1] as the output dimension (n_components) grows. It also shows
@@ -35,7 +35,7 @@ items in data streams. In International Colloquium on Automata, Languages, and
 Programming (pp. 693-703). Springer, Berlin, Heidelberg.
 (http://www.vldb.org/pvldb/1/1454225.pdf)
 
-"""    
+"""
 print(__doc__)
 
 # Author: Daniel Lopez-Sanchez <lope@usal.es>
