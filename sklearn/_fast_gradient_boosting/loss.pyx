@@ -135,8 +135,8 @@ class LeastSquares(BaseLoss):
 
 cdef void _update_gradients_least_squares(
     Y_DTYPE_C [:] gradients,
-    Y_DTYPE_C [:] y_true,
-    Y_DTYPE_C [:] raw_predictions) nogil:
+    const Y_DTYPE_C [:] y_true,
+    const Y_DTYPE_C [:] raw_predictions) nogil:
     cdef:
         unsigned int n_samples
         int i
@@ -199,8 +199,8 @@ class BinaryCrossEntropy(BaseLoss):
 cdef void _update_gradients_hessians_binary_crossentropy(
     Y_DTYPE_C [:] gradients,
     Y_DTYPE_C [:] hessians,
-    Y_DTYPE_C [:] y_true,
-    Y_DTYPE_C [:] raw_predictions) nogil:
+    const Y_DTYPE_C [:] y_true,
+    const Y_DTYPE_C [:] raw_predictions) nogil:
     cdef:
         unsigned int n_samples
         Y_DTYPE_C gradient_abs
@@ -255,31 +255,28 @@ class CategoricalCrossEntropy(BaseLoss):
                       logsumexp(raw_predictions, axis=1)[:, np.newaxis])
 
 
-cdef inline Y_DTYPE_C _logsumexp(Y_DTYPE_C [:, :] a, const int row) nogil:
+cdef inline Y_DTYPE_C _logsumexp(const Y_DTYPE_C [:, :] a, const int row) nogil:
     # Need to pass the whole array, else prange won't work. See Cython issue
     # #2798
     cdef:
         int k
         Y_DTYPE_C out = 0.
-        # Y_DTYPE_C amax
+        Y_DTYPE_C amax = a[row, 0]
 
-    # TODO: use the numerically safer option
-    # But I don't now how to properly write a max()
-    # amax = max(a[i])
-    # for k in range(a.shape[1]):
-    #     out += exp(a[i, k] - amax)
-    # return log(out) + amax
+    for k in range(1, a.shape[1]):
+        if amax < a[row, k]:
+            amax = a[row, k]
 
     for k in range(a.shape[1]):
-        out += exp(a[row, k])
-    return log(out)
+        out += exp(a[row, k] - amax)
+    return log(out) + amax
 
 
 cdef void _update_gradients_hessians_categorical_crossentropy(
     Y_DTYPE_C [:] gradients,  # shape (n_samples * prediction_dim,), OUT
     Y_DTYPE_C [:] hessians,  # shape (n_samples * prediction_dim,), OUT
-    Y_DTYPE_C [:] y_true,  # shape (n_samples,), IN
-    Y_DTYPE_C [:, :] raw_predictions  # shape (n_samples, n_tree_per_iter), IN
+    const Y_DTYPE_C [:] y_true,  # shape (n_samples,), IN
+    const Y_DTYPE_C [:, :] raw_predictions  # shape (n_samples, n_tree_per_iter), IN
     ) nogil:
     cdef:
         unsigned int n_samples
