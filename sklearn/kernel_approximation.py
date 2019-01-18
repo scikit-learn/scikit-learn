@@ -130,8 +130,8 @@ class TensorSketch(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr')
 
         if X.shape[1] != self.indexHash_.shape[1]:
-            raise ValueError("Number of features of test samples does not match "
-                             "that of training samples.")
+            raise ValueError("Number of features of test samples does not"
+                             " match that of training samples.")
 
         Ps = np.zeros((X.shape[0], self.degree, self.n_components))
         for j in range(X.shape[1]):
