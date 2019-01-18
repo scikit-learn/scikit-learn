@@ -755,7 +755,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         raise ValueError(
             "n_samples=%d should be larger than k=%d" % (n_samples, k))
 
-    if isinstance(init, string_types) and init == 'k-means++':
+    if isinstance(init, str) and init == 'k-means++':
         centers, _ = _k_init(X, k, random_state=random_state,
                           x_squared_norms=x_squared_norms)
     elif isinstance(init, string_types) and init == 'random':
