@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
@@ -25,8 +25,7 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.utils.validation import (check_X_y, check_array,
-                                      LARGE_SPARSE_SUPPORTED)
+from sklearn.utils.validation import check_X_y, check_array
 
 
 class CorrectNotFittedError(ValueError):
@@ -96,7 +95,7 @@ class RaisesErrorInSetParams(BaseEstimator):
             if p < 0:
                 raise ValueError("p can't be less than 0")
             self.p = p
-        return super(RaisesErrorInSetParams, self).set_params(**kwargs)
+        return super().set_params(**kwargs)
 
     def fit(self, X, y=None):
         X, y = check_X_y(X, y)
@@ -350,10 +349,8 @@ def test_check_estimator():
     # Large indices test on bad estimator
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
            r'support \S{3}_64 matrix, and is not failing gracefully.*')
-    # only supported by scipy version more than 0.14.0
-    if LARGE_SPARSE_SUPPORTED:
-        assert_raises_regex(AssertionError, msg, check_estimator,
-                            LargeSparseNotSupportedClassifier)
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        LargeSparseNotSupportedClassifier)
 
     # non-regression test for estimators transforming to sparse data
     check_estimator(SparseTransformer())

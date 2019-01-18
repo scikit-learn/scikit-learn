@@ -7,12 +7,12 @@ import traceback
 import pickle
 from copy import deepcopy
 from functools import partial
+from inspect import signature
 
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from sklearn.externals.six.moves import zip
 from sklearn.utils import IS_PYPY, _IS_32BIT
 from sklearn.utils import _joblib
 from sklearn.utils._joblib import Memory
@@ -58,9 +58,7 @@ from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
                                       pairwise_distances)
 
 from sklearn.utils import shuffle
-from sklearn.utils.fixes import signature
-from sklearn.utils.validation import (has_fit_parameter, _num_samples,
-                                      LARGE_SPARSE_SUPPORTED)
+from sklearn.utils.validation import has_fit_parameter, _num_samples
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
 
@@ -468,18 +466,17 @@ def _generate_sparse_matrix(X_csr):
     for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csc', 'coo']:
         yield sparse_format, X_csr.asformat(sparse_format)
 
-    if LARGE_SPARSE_SUPPORTED:
-        # Generate large indices matrix only if its supported by scipy
-        X_coo = X_csr.asformat('coo')
-        X_coo.row = X_coo.row.astype('int64')
-        X_coo.col = X_coo.col.astype('int64')
-        yield "coo_64", X_coo
+    # Generate large indices matrix only if its supported by scipy
+    X_coo = X_csr.asformat('coo')
+    X_coo.row = X_coo.row.astype('int64')
+    X_coo.col = X_coo.col.astype('int64')
+    yield "coo_64", X_coo
 
-        for sparse_format in ['csc', 'csr']:
-            X = X_csr.asformat(sparse_format)
-            X.indices = X.indices.astype('int64')
-            X.indptr = X.indptr.astype('int64')
-            yield sparse_format + "_64", X
+    for sparse_format in ['csc', 'csr']:
+        X = X_csr.asformat(sparse_format)
+        X.indices = X.indices.astype('int64')
+        X.indptr = X.indptr.astype('int64')
+        yield sparse_format + "_64", X
 
 
 def check_estimator_sparse_data(name, estimator_orig):
@@ -2245,9 +2242,11 @@ def check_set_params(name, estimator_orig):
             except (TypeError, ValueError) as e:
                 e_type = e.__class__.__name__
                 # Exception occurred, possibly parameter validation
-                warnings.warn("{} occurred during set_params. "
-                              "It is recommended to delay parameter "
-                              "validation until fit.".format(e_type))
+                warnings.warn("{0} occurred during set_params of param {1} on "
+                              "{2}. It is recommended to delay parameter "
+                              "validation until fit.".format(e_type,
+                                                             param_name,
+                                                             name))
 
                 change_warning_msg = "Estimator's parameters changed after " \
                                      "set_params raised {}".format(e_type)
@@ -2370,10 +2369,9 @@ def check_fit_idempotent(name, estimator_orig):
     # Fit for the first time
     estimator.fit(X_train, y_train)
 
-    result = {}
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X_test)
+    result = {method: getattr(estimator, method)(X_test)
+              for method in check_methods
+              if hasattr(estimator, method)}
 
     # Fit again
     estimator.fit(X_train, y_train)

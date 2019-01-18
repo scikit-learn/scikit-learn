@@ -12,7 +12,7 @@ from scipy import stats, linalg
 
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets.samples_generator import make_spd_matrix
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture.gaussian_mixture import GaussianMixture
 from sklearn.mixture.gaussian_mixture import (
