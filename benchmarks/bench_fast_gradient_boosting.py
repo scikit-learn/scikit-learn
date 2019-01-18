@@ -22,7 +22,7 @@ parser.add_argument('--n-leaf-nodes', type=int, default=31)
 parser.add_argument('--n-trees', type=int, default=10)
 parser.add_argument('--lightgbm', action="store_true", default=False,
                     help='also plot lightgbm')
-parser.add_argument('--learning-rate', type=float, default=1.)
+parser.add_argument('--learning-rate', type=float, default=.1)
 parser.add_argument('--problem', type=str, default='classification',
                     choices=['classification', 'regression'])
 parser.add_argument('--n-classes', type=int, default=2)
