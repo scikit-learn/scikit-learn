@@ -43,9 +43,9 @@ def test_histogram_split(n_bins):
                                 min_hessian_to_split,
                                 min_samples_leaf, min_gain_to_split)
 
-            histogram = np.zeros(shape=(n_bins), dtype=HISTOGRAM_DTYPE)
+            histograms = np.zeros(shape=(1, n_bins), dtype=HISTOGRAM_DTYPE)
             split_info = splitter.find_best_split_wrapper(
-                feature_idx, sample_indices, histogram, sum_gradients,
+                feature_idx, sample_indices, histograms, sum_gradients,
                 sum_hessians)
 
             assert split_info.bin_idx == true_bin
@@ -336,8 +336,8 @@ def test_min_gain_to_split():
                         min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split)
 
-    histogram = np.zeros(shape=(n_bins), dtype=HISTOGRAM_DTYPE)
+    histograms = np.zeros(shape=(1, n_bins), dtype=HISTOGRAM_DTYPE)
     split_info = splitter.find_best_split_wrapper(
-        feature_idx, sample_indices, histogram, sum_gradients,
+        feature_idx, sample_indices, histograms, sum_gradients,
         sum_hessians)
     assert split_info.gain == -1
