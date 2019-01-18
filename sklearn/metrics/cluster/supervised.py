@@ -205,8 +205,8 @@ def adjusted_rand_score(labels_true, labels_pred):
     References
     ----------
 
-    .. [Hubert1985] `L. Hubert and P. Arabie, Comparing Partitions,
-      Journal of Classification 1985`
+    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
+      Journal of Classification 1985
       https://link.springer.com/article/10.1007%2FBF01908075
 
     .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
