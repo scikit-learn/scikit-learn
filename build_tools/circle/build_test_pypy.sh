@@ -18,7 +18,7 @@ source pypy-env/bin/activate
 python --version
 which python
 
-pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu numpy Cython pytest
+pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu "numpy==1.5.*" Cython pytest
 pip install "scipy>=1.1.0" sphinx numpydoc docutils joblib
 
 ccache -M 512M
