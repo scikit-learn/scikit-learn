@@ -377,8 +377,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         # TODO: make Parallel._effective_n_jobs public instead?
         n_jobs = effective_n_jobs(self.n_jobs)
         if parallel is None:
-            parallel = Parallel(n_jobs=n_jobs, verbose=max(0,
-                                                           self.verbose - 1))
+            parallel = Parallel(n_jobs=n_jobs,
+                                verbose=max(0, self.verbose - 1))
         results = parallel(
             delayed(_update_doc_distribution)(X[idx_slice, :],
                                               self.exp_dirichlet_component_,
