@@ -112,7 +112,7 @@ class TensorSketch(BaseEstimator, TransformerMixin):
                                             ).astype(np.float32)
         return self
 
-    def transform(self, X, Y=None):
+    def transform(self, X):
         """Generate the feature map approximation for X.
 
         Parameters
@@ -129,14 +129,16 @@ class TensorSketch(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'indexHash_')
         X = check_array(X, accept_sparse='csr')
 
-        # These loops can be accelerated a lot with numba
+        if X.shape[1] != self.indexHash_.shape[1]:
+            raise ValueError("Number of features of test samples does not match "
+                             "that of training samples.")
+
         Ps = np.zeros((X.shape[0], self.degree, self.n_components))
-        for i in range(X.shape[0]):
-            for j in range(X.shape[1]):
-                for d in range(self.degree):
-                    iHashIndex = self.indexHash_[d, j]
-                    iHashBit = self.bitHash_[d, j]
-                    Ps[i, d, iHashIndex] += iHashBit * X[i, j]
+        for j in range(X.shape[1]):
+            for d in range(self.degree):
+                iHashIndex = self.indexHash_[d, j]
+                iHashBit = self.bitHash_[d, j]
+                Ps[:, d, iHashIndex] += iHashBit * X[:, j]
 
         Ps = fftpack.fft(Ps, axis=2, overwrite_x=True)
         temps = np.prod(Ps, axis=1)
