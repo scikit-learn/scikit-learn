@@ -492,7 +492,7 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
         the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. Empty if no early
         stopping.
-    train_score_ : array, shape=(n_estimators + 1)
+    validation_score_ : array, shape=(n_estimators + 1)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
@@ -630,7 +630,7 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
         the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. Empty if no early
         stopping.
-    train_score_ : array, shape=(n_estimators + 1)
+    validation_score_ : array, shape=(n_estimators + 1)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
