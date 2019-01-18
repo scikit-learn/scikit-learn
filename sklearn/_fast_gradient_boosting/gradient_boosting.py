@@ -53,7 +53,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             raise ValueError(
                 "Loss {} is not supported for {}. Accepted losses: "
                 "{}.".format(self.loss, self.__class__.__name__,
-                                 ', '.join(self._VALID_LOSSES)))
+                             ', '.join(self._VALID_LOSSES)))
 
         if self.learning_rate <= 0:
             raise ValueError('learning_rate={} must '
@@ -64,7 +64,8 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         if self.n_iter_no_change is not None and self.n_iter_no_change < 0:
             raise ValueError('n_iter_no_change={} must be '
                              'positive.'.format(self.n_iter_no_change))
-        if self.validation_fraction is not None and self.validation_fraction <= 0:
+        if (self.validation_fraction is not None and
+                self.validation_fraction <= 0):
             raise ValueError(
                 'validation_fraction={} must be strictly '
                 'positive, or None.'.format(self.validation_fraction))
@@ -363,8 +364,8 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             name = 'neg-loss' if self.scoring == 'loss' else 'score'
             log_msg += "train {}: {:.5f}, ".format(name, self.train_score_[-1])
             if self.validation_fraction is not None:
-                log_msg += "val {}: {:.5f}, ".format(name,
-                    self.validation_score_[-1])
+                log_msg += "val {}: {:.5f}, ".format(
+                    name, self.validation_score_[-1])
 
         iteration_time = time() - iteration_start_time
         log_msg += "in {:0.3f}s".format(iteration_time)

@@ -114,8 +114,8 @@ def test_unrolled_equivalent_to_naive(constant_hessian):
     hist_ghc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     hist_naive = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
 
-    _build_histogram_root_no_hessian(0, n_bins, binned_feature, ordered_gradients,
-                                     hist_gc_root)
+    _build_histogram_root_no_hessian(0, n_bins, binned_feature,
+                                     ordered_gradients, hist_gc_root)
     _build_histogram_root(0, n_bins, binned_feature, ordered_gradients,
                           ordered_hessians, hist_ghc_root)
     _build_histogram_no_hessian(0, n_bins, sample_indices, binned_feature,

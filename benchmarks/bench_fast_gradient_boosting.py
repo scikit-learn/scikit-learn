@@ -1,15 +1,8 @@
-from urllib.request import urlretrieve
-import os
-from gzip import GzipFile
 from time import time
 import argparse
 
-import numpy as np
-import pandas as pd
-from joblib import Memory
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.ensemble import FastGradientBoostingClassifier
 from sklearn.ensemble import FastGradientBoostingRegressor
 from sklearn.datasets import make_classification
@@ -35,6 +28,7 @@ n_leaf_nodes = args.n_leaf_nodes
 n_trees = args.n_trees
 lr = args.learning_rate
 max_bins = args.max_bins
+
 
 def get_estimator_and_data():
     if args.problem == 'classification':
@@ -103,6 +97,7 @@ def one_run(n_samples):
 
     return (sklearn_score, sklearn_fit_duration, sklearn_score_duration,
             None, None, None)
+
 
 n_samples_list = [1000, 10000, 100000, 500000, 1000000, 5000000, 10000000]
 n_samples_list = [n_samples for n_samples in n_samples_list

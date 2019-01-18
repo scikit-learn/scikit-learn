@@ -89,15 +89,16 @@ def test_init_parameters_validation(GradientBoosting, X, y):
     )
 
 
-@pytest.mark.parametrize('scoring, validation_fraction, n_iter_no_change, tol', [
-    ('neg_mean_squared_error', .1, 5, 1e-7),  # use scorer
-    ('neg_mean_squared_error', None, 5, 1e-1),  # use scorer on training data
-    (None, .1, 5, 1e-7),  # same with default scorer
-    (None, None, 5, 1e-1),
-    ('loss', .1, 5, 1e-7),  # use loss
-    ('loss', None, 5, 1e-1),  # use loss on training data
-    (None, None, None, None),  # no early stopping
-])
+@pytest.mark.parametrize(
+    'scoring, validation_fraction, n_iter_no_change, tol', [
+        ('neg_mean_squared_error', .1, 5, 1e-7),  # use scorer
+        ('neg_mean_squared_error', None, 5, 1e-1),  # use scorer on train data
+        (None, .1, 5, 1e-7),  # same with default scorer
+        (None, None, 5, 1e-1),
+        ('loss', .1, 5, 1e-7),  # use loss
+        ('loss', None, 5, 1e-1),  # use loss on training data
+        (None, None, None, None),  # no early stopping
+        ])
 def test_early_stopping_regression(scoring, validation_fraction,
                                    n_iter_no_change, tol):
 
@@ -124,15 +125,16 @@ def test_early_stopping_regression(scoring, validation_fraction,
     make_classification(random_state=0),
     make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
 ))
-@pytest.mark.parametrize('scoring, validation_fraction, n_iter_no_change, tol', [
-    ('accuracy', .1, 5, 1e-7),  # use scorer
-    ('accuracy', None, 5, 1e-1),  # use scorer on training data
-    (None, .1, 5, 1e-7),  # same with default scorerscor
-    (None, None, 5, 1e-1),
-    ('loss', .1, 5, 1e-7),  # use loss
-    ('loss', None, 5, 1e-1),  # use loss on training data
-    (None, None, None, None),  # no early stopping
-])
+@pytest.mark.parametrize(
+    'scoring, validation_fraction, n_iter_no_change, tol', [
+        ('accuracy', .1, 5, 1e-7),  # use scorer
+        ('accuracy', None, 5, 1e-1),  # use scorer on training data
+        (None, .1, 5, 1e-7),  # same with default scorerscor
+        (None, None, 5, 1e-1),
+        ('loss', .1, 5, 1e-7),  # use loss
+        ('loss', None, 5, 1e-1),  # use loss on training data
+        (None, None, None, None),  # no early stopping
+        ])
 def test_early_stopping_classification(data, scoring, validation_fraction,
                                        n_iter_no_change, tol):
 
@@ -140,13 +142,14 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
 
     X, y = data
 
-    gb = FastGradientBoostingClassifier(verbose=1,  # just for coverage
-                                        scoring=scoring,
-                                        tol=tol,
-                                        validation_fraction=validation_fraction,
-                                        n_estimators=n_estimators,
-                                        n_iter_no_change=n_iter_no_change,
-                                        random_state=0)
+    gb = FastGradientBoostingClassifier(
+        verbose=1,  # just for coverage
+        scoring=scoring,
+        tol=tol,
+        validation_fraction=validation_fraction,
+        n_estimators=n_estimators,
+        n_iter_no_change=n_iter_no_change,
+        random_state=0)
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
