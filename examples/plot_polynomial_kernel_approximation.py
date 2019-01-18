@@ -28,7 +28,7 @@ initializing some random variables (because is data-independent).
 [1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
 kernels via explicit feature maps. In Proceedings of the 19th ACM SIGKDD
 international conference on Knowledge discovery and data mining (pp. 239-247)
-(https://pdfs.semanticscholar.org/76ca/15e975b0dee581d5d04dca26dfae636372de.pdf)
+(http://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
 
 [2] Charikar, M., Chen, K., & Farach-Colton, M. (2002, July). Finding frequent
 items in data streams. In International Colloquium on Automata, Languages, and
@@ -41,7 +41,7 @@ print(__doc__)
 # Author: Daniel Lopez-Sanchez <lope@usal.es>
 # License: BSD 3 clause
 
-# Load data manipulation functions 
+# Load data manipulation functions
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
 
@@ -52,14 +52,14 @@ import numpy as np
 # Will use this for timing results
 from time import time
 
-# Import SVM classifiers and feature map approximation algorithms 
+# Import SVM classifiers and feature map approximation algorithms
 from sklearn.svm import LinearSVC, SVC
 from sklearn.kernel_approximation import Nystroem, TensorSketch
 from sklearn.pipeline import Pipeline
 
 # Split data in train and test sets
 X, Y = load_digits()["data"], load_digits()["target"]
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = 0.7)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size=0.7)
 
 # Set the range of n_components for our experiments
 out_dims = range(20, 400, 20)
@@ -76,7 +76,7 @@ ksvm_score = 100*ksvm.score(X_test, Y_test)
 ts_svm_scores = []
 n_test = 5
 
-# To compensate for the stochasticity of the method, we make n_tets runs 
+# To compensate for the stochasticity of the method, we make n_tets runs
 for k in out_dims:
     score_avg = 0
     for _ in range(n_test):
@@ -85,25 +85,30 @@ for k in out_dims:
         score_avg += ts_svm.fit(X_train, Y_train).score(X_test, Y_test)
     ts_svm_scores.append(100*score_avg/n_test)
 
-# Evaluate Nystroem + LinearSVM 
+# Evaluate Nystroem + LinearSVM
 ny_svm_scores = []
 n_test = 5
 
 for k in out_dims:
     score_avg = 0
     for _ in range(n_test):
-        ny_svm = Pipeline([("TS", Nystroem(kernel="poly", gamma=1., degree=2, coef0=0, n_components=k)),
+        ny_svm = Pipeline([("TS", Nystroem(kernel="poly", gamma=1., degree=2,
+                                           coef0=0, n_components=k)),
                            ("SVM", LinearSVC())])
         score_avg += ny_svm.fit(X_train, Y_train).score(X_test, Y_test)
-    ny_svm_scores.append(100*score_avg/n_test)     
+    ny_svm_scores.append(100*score_avg/n_test)
 
-# Show results        
+# Show results
 plt.figure(figsize=(6, 4))
 plt.title("Accuracy results")
-plt.plot(out_dims, ts_svm_scores, label="TensorSketch + linear SVM", c="orange")
-plt.plot(out_dims, ny_svm_scores, label="Nystroem + linear SVM", c="blue")
-plt.plot([out_dims[0], out_dims[-1]], [lsvm_score, lsvm_score], label="Linear SVM", c="black", dashes=[2,2])
-plt.plot([out_dims[0], out_dims[-1]], [ksvm_score, ksvm_score], label="Poly-kernel SVM", c="red", dashes=[2,2])
+plt.plot(out_dims, ts_svm_scores, label="TensorSketch + linear SVM",
+         c="orange")
+plt.plot(out_dims, ny_svm_scores, label="Nystroem + linear SVM",
+         c="blue")
+plt.plot([out_dims[0], out_dims[-1]], [lsvm_score, lsvm_score],
+         label="Linear SVM", c="black", dashes=[2, 2])
+plt.plot([out_dims[0], out_dims[-1]], [ksvm_score, ksvm_score],
+         label="Poly-kernel SVM", c="red", dashes=[2, 2])
 plt.legend()
 plt.xlabel("N_components for TensorSketch and Nystroem")
 plt.ylabel("Accuracy (%)")
@@ -128,8 +133,8 @@ for k in out_dims:
     ts.transform(fakeData)
     ts_svm_times.append(time() - start)
 
-# Evaluate scalability of Nystroem as n_components grows  
-# This can take a while due to the inefficient training phase 
+# Evaluate scalability of Nystroem as n_components grows
+# This can take a while due to the inefficient training phase
 ny_svm_times = []
 for k in out_dims:
     ny = Nystroem(kernel="poly", gamma=1., degree=2, coef0=0, n_components=k)
