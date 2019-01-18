@@ -663,7 +663,7 @@ cdef class Splitter:
 
         return best_split
 
-    # Only used for tests (python code cannot use cdef functions)
+    # Only used for tests (python code cannot use cdef types)
     # Not sure if this is a good practice...
     def find_best_split_wrapper(
         self,

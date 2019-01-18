@@ -312,7 +312,6 @@ def test_min_gain_to_split():
     # possible gain = -1). Note: before the strict inequality comparison, this
     # test would fail because the node would be split with a gain of 0.
     rng = np.random.RandomState(42)
-    feature_idx = 0
     l2_regularization = 0
     min_hessian_to_split = 0
     min_samples_leaf = 1
@@ -320,13 +319,11 @@ def test_min_gain_to_split():
     n_bins = 255
     n_samples = 100
     X_binned = np.asfortranarray(
-        rng.randint(0, n_bins, size=(n_samples, 2)), dtype=X_BINNED_DTYPE)
-    binned_feature = X_binned.T[feature_idx]
+        rng.randint(0, n_bins, size=(n_samples, 1)), dtype=X_BINNED_DTYPE)
+    binned_feature = X_binned[:, 0]
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     all_hessians = np.ones_like(binned_feature, dtype=Y_DTYPE)
     all_gradients = np.ones_like(binned_feature, dtype=Y_DTYPE)
-    sum_gradients = all_gradients.sum()
-    sum_hessians = all_hessians.sum()
 
     n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)
@@ -337,7 +334,5 @@ def test_min_gain_to_split():
                         min_samples_leaf, min_gain_to_split)
 
     histograms = np.zeros(shape=(1, n_bins), dtype=HISTOGRAM_DTYPE)
-    split_info = splitter.find_best_split_wrapper(
-        feature_idx, sample_indices, histograms, sum_gradients,
-        sum_hessians)
+    split_info = splitter.find_node_split(sample_indices, histograms)
     assert split_info.gain == -1

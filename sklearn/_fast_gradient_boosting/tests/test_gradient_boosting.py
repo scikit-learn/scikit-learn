@@ -99,7 +99,7 @@ def test_init_parameters_validation(GradientBoosting, X, y):
 def test_early_stopping_regression(scoring, validation_fraction,
                                    n_iter_no_change, tol):
 
-    n_estimators = 500
+    n_estimators = 200
 
     X, y = make_regression(random_state=0)
 
@@ -113,9 +113,9 @@ def test_early_stopping_regression(scoring, validation_fraction,
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
-        assert n_iter_no_change <= gb.n_iter_ < n_estimators
+        assert n_iter_no_change <= gb.n_estimators_ < n_estimators
     else:
-        assert gb.n_iter_ == n_estimators
+        assert gb.n_estimators_ == n_estimators
 
 
 @pytest.mark.parametrize('data', (
@@ -129,11 +129,12 @@ def test_early_stopping_regression(scoring, validation_fraction,
     (None, None, 5, 1e-1),
     ('loss', .1, 5, 1e-7),  # use loss
     ('loss', None, 5, 1e-1),  # use loss on training data
+    (None, None, None, None),  # no early stopping
 ])
 def test_early_stopping_classification(data, scoring, validation_fraction,
                                        n_iter_no_change, tol):
 
-    n_estimators = 500
+    n_estimators = 50
 
     X, y = data
 
@@ -146,7 +147,10 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
                                         random_state=0)
     gb.fit(X, y)
 
-    assert n_iter_no_change <= gb.n_iter_ < n_estimators
+    if n_iter_no_change is not None:
+        assert n_iter_no_change <= gb.n_estimators_ < n_estimators
+    else:
+        assert gb.n_estimators_ == n_estimators
 
 
 def test_should_stop():

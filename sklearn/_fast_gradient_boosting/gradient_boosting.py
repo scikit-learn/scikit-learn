@@ -87,7 +87,6 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         self : object
         """
 
-        self._in_fit = True  # TODO: document this
         fit_start_time = time()
         acc_find_split_time = 0.  # time spent finding the best splits
         acc_apply_split_time = 0.  # time spent splitting nodes
@@ -100,6 +99,13 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         self._validate_parameters()
         self.n_features_ = X.shape[1]  # used for validation in predict()
 
+        # we need this stateful variable to tell raw_predict() that it was
+        # called from fit(), which only passes pre-binned data to
+        # raw_predict() via the scorer_ attribute. predicting is faster on
+        # pre-binned data.
+        self._in_fit = True
+
+        # bin the data
         if self.verbose:
             print(f"Binning {X.nbytes / 1e9:.3f} GB of data: ", end="",
                   flush=True)
@@ -117,6 +123,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         self.do_early_stopping_ = (self.n_iter_no_change is not None and
                                    self.n_iter_no_change > 0)
 
+        # create validation data if needed
         if self.do_early_stopping_ and self.validation_fraction is not None:
             # stratify for classification
             stratify = y if hasattr(self.loss_, 'predict_proba') else None
@@ -139,9 +146,9 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             X_binned_train, y_train = X_binned, y
             X_binned_val, y_val = None, None
 
-        # Subsample the training set for early stopping
+        # Subsample the training set for early stopping and score monitoring
         if self.do_early_stopping_:
-            subsample_size = 10000  # should we expose this?
+            subsample_size = 10000  # should we expose this parameter?
             indices = np.arange(X_binned_train.shape[0])
             if X_binned_train.shape[0] > subsample_size:
                 indices = rng.choice(indices, subsample_size)
@@ -153,27 +160,29 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         if self.verbose:
             print("Fitting gradient boosted rounds:")
 
+        # initialize raw_predictions: those are the accumulated values
+        # predicted by the trees for the training data. raw_predictions has
+        # shape (n_samples, n_trees_per_iteration) where n_trees_per_iterations
+        # is n_classes in multiclass classification, else 1.
         n_samples = X_binned_train.shape[0]
         self.baseline_prediction_ = self.loss_.get_baseline_prediction(
             y_train, self.n_trees_per_iteration_)
-        # raw_predictions are the accumulated values predicted by the trees
-        # for the training data.
         raw_predictions = np.zeros(
             shape=(n_samples, self.n_trees_per_iteration_),
             dtype=self.baseline_prediction_.dtype
         )
         raw_predictions += self.baseline_prediction_
 
-        # gradients and hessians are 1D arrays of size
-        # n_samples * n_trees_per_iteration
+        # initialize gradients and hessians (empty arrays). Those 1D arrays of
+        # size (n_samples * n_trees_per_iteration).
         gradients, hessians = self.loss_.init_gradients_and_hessians(
             n_samples=n_samples,
             prediction_dim=self.n_trees_per_iteration_
         )
 
-        # predictors_ is a matrix (list of lists) of TreePredictor objects
+        # estimators_ is a matrix (list of lists) of TreePredictor objects
         # with shape (n_iter_, n_trees_per_iteration)
-        self.predictors_ = predictors = []
+        self.estimators_ = estimators = []
 
         # scorer_ is a callable with signature (est, X, y) and calls
         # est.predict() or est.predict_proba() depending on its nature.
@@ -181,15 +190,15 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             self.scorer_ = check_scoring(self, self.scoring)
         else:
             self.scorer_ = None
-        self.train_scores_ = []
-        self.validation_scores_ = []
+        self.train_score_ = []
+        self.validation_score_ = []
         if self.do_early_stopping_:
             # Add predictions of the initial model (before the first tree)
-            self.train_scores_.append(
+            self.train_score_.append(
                 self._get_scores(X_binned_small_train, y_small_train))
 
             if self.validation_fraction is not None:
-                self.validation_scores_.append(
+                self.validation_score_.append(
                     self._get_scores(X_binned_val, y_val))
 
         for iteration in range(self.n_estimators):
@@ -203,7 +212,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             self.loss_.update_gradients_and_hessians(gradients, hessians,
                                                      y_train, raw_predictions)
 
-            predictors.append([])
+            estimators.append([])
 
             # Build `n_trees_per_iteration` trees.
             for k, (gradients_at_k, hessians_at_k) in enumerate(zip(
@@ -228,9 +237,9 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
                 acc_apply_split_time += grower.total_apply_split_time
                 acc_find_split_time += grower.total_find_split_time
 
-                predictor = grower.make_predictor(
+                estimator = grower.make_predictor(
                     bin_thresholds=self.bin_mapper_.bin_thresholds_)
-                predictors[-1].append(predictor)
+                estimators[-1].append(estimator)
 
                 tic_pred = time()
                 _update_raw_predictions(raw_predictions[:, k], grower)
@@ -246,23 +255,19 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             if self.verbose:
                 self._print_iteration_stats(iteration_start_time)
 
-            # if the only trees we could build are stumps, stop training
-            if all(predictor.get_n_leaf_nodes() == 1
-                   for predictor in self.predictors_[-1]):
-                should_early_stop = True
-
+            # maybe we could also early stop if all the trees are stumps?
             if should_early_stop:
                 break
 
         if self.verbose:
             duration = time() - fit_start_time
             n_total_leaves = sum(
-                predictor.get_n_leaf_nodes()
-                for predictors_at_ith_iteration in self.predictors_
-                for predictor in predictors_at_ith_iteration)
+                estimator.get_n_leaf_nodes()
+                for predictors_at_ith_iteration in self.estimators_
+                for estimator in predictors_at_ith_iteration)
             n_predictors = sum(
                 len(predictors_at_ith_iteration)
-                for predictors_at_ith_iteration in self.predictors_)
+                for predictors_at_ith_iteration in self.estimators_)
             print(f"Fit {n_predictors} trees in {duration:.3f} s, "
                   f"({n_total_leaves} total leaves)")
             print(f"{'Time spent finding best splits:':<32} "
@@ -272,8 +277,8 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             print(f"{'Time spent predicting:':<32} "
                   f"{acc_prediction_time:.3f}s")
 
-        self.train_scores_ = np.asarray(self.train_scores_)
-        self.validation_scores_ = np.asarray(self.validation_scores_)
+        self.train_score_ = np.asarray(self.train_score_)
+        self.validation_score_ = np.asarray(self.validation_score_)
         self._in_fit = False
         return self
 
@@ -284,15 +289,15 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         Scores are computed on validation data or on training data.
         """
 
-        self.train_scores_.append(
+        self.train_score_.append(
             self._get_scores(X_binned_train, y_train))
 
         if self.validation_fraction is not None:
-            self.validation_scores_.append(
+            self.validation_score_.append(
                 self._get_scores(X_binned_val, y_val))
-            return self._should_stop(self.validation_scores_)
+            return self._should_stop(self.validation_score_)
 
-        return self._should_stop(self.train_scores_)
+        return self._should_stop(self.train_score_)
 
     def _should_stop(self, scores):
         """
@@ -334,14 +339,14 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         log_msg = ''
 
         predictors_of_ith_iteration = [
-            predictors_list for predictors_list in self.predictors_[-1]
+            predictors_list for predictors_list in self.estimators_[-1]
             if predictors_list
         ]
         n_trees = len(predictors_of_ith_iteration)
-        max_depth = max(predictor.get_max_depth()
-                        for predictor in predictors_of_ith_iteration)
-        n_leaves = sum(predictor.get_n_leaf_nodes()
-                       for predictor in predictors_of_ith_iteration)
+        max_depth = max(estimator.get_max_depth()
+                        for estimator in predictors_of_ith_iteration)
+        n_leaves = sum(estimator.get_n_leaf_nodes()
+                       for estimator in predictors_of_ith_iteration)
 
         if n_trees == 1:
             log_msg += (f"{n_trees} tree, {n_leaves} leaves, ")
@@ -352,10 +357,10 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         log_msg += f"max depth = {max_depth}, "
 
         if self.do_early_stopping_:
-            log_msg += f"{self.scoring} train: {self.train_scores_[-1]:.5f}, "
+            log_msg += f"{self.scoring} train: {self.train_score_[-1]:.5f}, "
             if self.validation_fraction is not None:
                 log_msg += (f"{self.scoring} val: "
-                            f"{self.validation_scores_[-1]:.5f}, ")
+                            f"{self.validation_score_[-1]:.5f}, ")
 
         iteration_time = time() - iteration_start_time
         log_msg += f"in {iteration_time:0.3f}s"
@@ -376,7 +381,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             The raw predicted values.
         """
         X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE])
-        check_is_fitted(self, 'predictors_')
+        check_is_fitted(self, 'estimators_')
         if X.shape[1] != self.n_features_:
             raise ValueError(
                 f'X has {X.shape[1]} features but this estimator was '
@@ -389,10 +394,10 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             dtype=self.baseline_prediction_.dtype
         )
         raw_predictions += self.baseline_prediction_
-        for predictors_of_ith_iteration in self.predictors_:
-            for k, predictor in enumerate(predictors_of_ith_iteration):
-                predict = (predictor.predict_binned if is_binned
-                           else predictor.predict)
+        for predictors_of_ith_iteration in self.estimators_:
+            for k, estimator in enumerate(predictors_of_ith_iteration):
+                predict = (estimator.predict_binned if is_binned
+                           else estimator.predict)
                 raw_predictions[:, k] += predict(X)
 
         return raw_predictions
@@ -406,13 +411,13 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         pass
 
     @property
-    def n_iter_(self):
-        check_is_fitted(self, 'predictors_')
-        return len(self.predictors_)
+    def n_estimators_(self):
+        check_is_fitted(self, 'estimators_')
+        return len(self.estimators_)
 
 
 class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
-    """Scikit-learn compatible Gradient Boosting Tree for regression.
+    """Fast Gradient Boosting Regression Tree.
 
     Parameters
     ----------
@@ -470,6 +475,24 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
         binning process, and the train/validation data split if early stopping
         is enabled. See :term:`random_state`.
 
+    Attributes
+    ----------
+    n_estimators_ : int
+        The number of estimators as selected by early stopping (if
+        n_iter_no_change is not None). Otherwise it is set to n_estimators.
+    estimators_ : list of lists, shape=(n_estimators, n_trees_per_iteration)
+        The collection of fitted sub-estimators. The number of trees per
+        iteration is ``n_classes`` in multiclass classification, else 1.
+    train_score_ : array, shape=(n_estimators + 1)
+        The scores at each iteration on the training data. The first entry is
+        the score of the ensemble before the first iteration. Scores are
+        computed according to the ``scoring`` parameter. Empty if no early
+        stopping.
+    train_score_ : array, shape=(n_estimators + 1)
+        The scores at each iteration on the held-out validation data. The
+        first entry is the score of the ensemble before the first iteration.
+        Scores are computed according to the ``scoring`` parameter. Empty if
+        no early stopping or if ``validation_fraction`` is None.
 
     Examples
     --------
@@ -526,7 +549,7 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
 
 class FastGradientBoostingClassifier(BaseFastGradientBoosting,
                                      ClassifierMixin):
-    """Scikit-learn compatible Gradient Boosting Tree for classification.
+    """Fast Gradient Boosting Classification Tree.
 
     Parameters
     ----------
@@ -589,6 +612,25 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled. See :term:`random_state`.
+
+    Attributes
+    ----------
+    n_estimators_ : int
+        The number of estimators as selected by early stopping (if
+        n_iter_no_change is not None). Otherwise it is set to n_estimators.
+    estimators_ : list of lists, shape=(n_estimators, n_trees_per_iteration)
+        The collection of fitted sub-estimators. The number of trees per
+        iteration is ``n_classes`` in multiclass classification, else 1.
+    train_score_ : array, shape=(n_estimators + 1)
+        The scores at each iteration on the training data. The first entry is
+        the score of the ensemble before the first iteration. Scores are
+        computed according to the ``scoring`` parameter. Empty if no early
+        stopping.
+    train_score_ : array, shape=(n_estimators + 1)
+        The scores at each iteration on the held-out validation data. The
+        first entry is the score of the ensemble before the first iteration.
+        Scores are computed according to the ``scoring`` parameter. Empty if
+        no early stopping or if ``validation_fraction`` is None.
 
     Examples
     --------
