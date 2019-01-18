@@ -17,7 +17,7 @@ import warnings
 import numpy as np
 from scipy import linalg, sparse
 
-from . import check_random_state
+from . import check_random_state, safe_acc_op
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
@@ -708,12 +708,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    if np.issubdtype(X.dtype, np.floating) and X.dtype.itemsize < 8:
-        # Use at least float64 for the accumulator to avoid precision issues;
-        # see https://github.com/numpy/numpy/issues/9393
-        new_sum = np.nansum(X, axis=0, dtype=np.float64).astype(X.dtype)
-    else:
-        new_sum = np.nansum(X, axis=0)
+    new_sum = safe_acc_op(np.nansum, X, axis=0)
 
     new_sample_count = np.sum(~np.isnan(X), axis=0)
     updated_sample_count = last_sample_count + new_sample_count
@@ -723,7 +718,7 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     if last_variance is None:
         updated_variance = None
     else:
-        new_unnormalized_variance = np.nanvar(X, axis=0) * new_sample_count
+        new_unnormalized_variance = safe_acc_op(np.nanvar, X, axis=0) * new_sample_count
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):

@@ -34,14 +34,18 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 
 def _assert_all_finite(X, allow_nan=False):
     """Like assert_all_finite, but only for ndarray."""
+    # The top level utils module also depends on validation
+    from . import safe_acc_op
+
     if _get_config()['assume_finite']:
         return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
     # false positives from overflow in sum method.
+    # The sum is calculated safely to reduce dtype induced overflows
     is_float = X.dtype.kind in 'fc'
-    if is_float and np.isfinite(X.sum()):
+    if is_float and (np.isfinite(safe_acc_op(np.sum, X))):
         pass
     elif is_float:
         msg_err = "Input contains {} or a value too large for {!r}."
