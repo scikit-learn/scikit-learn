@@ -1367,7 +1367,12 @@ Methods
         If the estimator was not already :term:`fitted`, calling this method
         should raise a :class:`exceptions.NotFittedError`.
 
-        :term:`transform` does not preserve the order (memory layout) of the input array.
+        During transformation, the order of the input samples may not be
+        preserved, though :term:`transform` will often preserve dtype where
+        possible. If copy=False, the input samples will be modified directly,
+        if possible. Where copy is unavailable, the input's memory order will be
+        retained. See `<https://docs.scipy.org/doc/numpy/glossary.html#term-row-major>`_ 
+        for more information on row ordering.
 
 .. _glossary_parameters:
 
