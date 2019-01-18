@@ -43,14 +43,7 @@ def configuration(parent_package="", top_path=None):
                          sources=["types.pyx"],
                          include_dirs=[numpy.get_include()])
 
-    config.add_extension("playground",
-                         sources=["playground.pyx"],
-                         include_dirs=[numpy.get_include()],
-                         extra_compile_args=['-fopenmp'],
-                         extra_link_args=['-fopenmp'])
-
     config.add_subpackage("tests")
-    # config.add_data_files("histogram.pxd")
 
     return config
 
