@@ -14,7 +14,7 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.validation import check_is_fitted
-from ..exceptions import NotFittedError, ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from .hierarchical import AgglomerativeClustering
 
 
@@ -133,6 +133,7 @@ class _CFNode(object):
         view of ``init_sq_norm_``.
 
     """
+
     def __init__(self, threshold, branching_factor, is_leaf, n_features):
         self.threshold = threshold
         self.branching_factor = branching_factor
@@ -274,6 +275,7 @@ class _CFSubcluster(object):
         Squared norm of the subcluster. Used to prevent recomputing when
         pairwise minimum distances are computed.
     """
+
     def __init__(self, linear_sum=None):
         if linear_sum is None:
             self.n_samples_ = 0
@@ -537,16 +539,11 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
             return self._fit(X)
 
     def _check_fit(self, X):
-        is_fitted = hasattr(self, 'subcluster_centers_')
+        check_is_fitted(self, ['subcluster_centers_', 'partial_fit_'],
+                        all_or_any=any)
 
-        # Called by partial_fit, before fitting.
-        has_partial_fit = hasattr(self, 'partial_fit_')
-
-        # Should raise an error if one does not fit before predicting.
-        if not (is_fitted or has_partial_fit):
-            raise NotFittedError("Fit training data before predicting")
-
-        if is_fitted and X.shape[1] != self.subcluster_centers_.shape[1]:
+        if hasattr(self, 'subcluster_centers_') and X.shape[1] != \
+                self.subcluster_centers_.shape[1]:
             raise ValueError(
                 "Training data and predicted data do "
                 "not have same number of features.")
