@@ -44,7 +44,7 @@ print(__doc__)
 
 # Load data manipulation functions 
 from sklearn.datasets import load_digits
-from sklearn.model_selection import  train_test_split
+from sklearn.model_selection import train_test_split
 
 # Some common libraries
 import matplotlib.pyplot as plt
@@ -59,8 +59,8 @@ from sklearn.kernel_approximation import Nystroem, TensorSketch
 from sklearn.pipeline import Pipeline
 
 # Split data in train and test sets
-X,Y = load_digits()["data"], load_digits()["target"]
-X_train, X_test, Y_train, Y_test = train_test_split(X,Y, train_size = 0.7)
+X, Y = load_digits()["data"], load_digits()["target"]
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size = 0.7)
 
 # Set the range of n_components for our experiments
 out_dims = range(20, 400, 20)
@@ -85,7 +85,7 @@ for k in out_dims:
                            ("SVM", LinearSVC())])
         score_avg += ts_svm.fit(X_train, Y_train).score(X_test, Y_test)
     ts_svm_scores.append(100*score_avg/n_test)
-    
+
 # Evaluate Nystroem + LinearSVM 
 ny_svm_scores = []
 n_test = 5
@@ -111,32 +111,31 @@ plt.ylabel("Accuracy (%)")
 plt.xlim([out_dims[0], out_dims[-1]])
 plt.tight_layout()
 
-
 # Now lets evaluate the scalability of TensorSketch vs Nystroem
 # First we generate some fake data with a lot of samples
 
 fakeData = np.random.randn(10000, 100)
-fakeDataY = np.random.randint(0,high=10, size=(10000))
+fakeDataY = np.random.randint(0, high=10, size=(10000))
 
-out_dims = range(500, 7000, 500)
+out_dims = range(500, 6000, 500)
 
 # Evaluate scalability of TensorSketch as n_components grows
 ts_svm_times = []
 for k in out_dims:
     ts = TensorSketch(degree=2, n_components=k)
     ts.fit(fakeData, None)
-        
+
     start = time()
     ts.transform(fakeData)
     ts_svm_times.append(time() - start)
-    
+
 # Evaluate scalability of Nystroem as n_components grows  
 # This can take a while due to the inefficient training phase 
 ny_svm_times = []
 for k in out_dims:
     ny = Nystroem(kernel="poly", gamma=1., degree=2, coef0=0, n_components=k)
     ny.fit(fakeData, None)
-        
+
     start = time()
     ny.transform(fakeData)
     ny_svm_times.append(time() - start)
