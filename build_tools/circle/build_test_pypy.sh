@@ -18,6 +18,8 @@ source pypy-env/bin/activate
 python --version
 which python
 
+# XXX: numpy version pinning can be reverted once PyPy
+#      compatibility is resolved for numpy v1.6.x (see numpy/numpy#12740)
 pip install --extra-index https://antocuni.github.io/pypy-wheels/ubuntu "numpy==1.5.*" Cython pytest
 pip install "scipy>=1.1.0" sphinx numpydoc docutils joblib
 
