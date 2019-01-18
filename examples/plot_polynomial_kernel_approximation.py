@@ -144,8 +144,8 @@ for k in out_dims:
 # Show results
 plt.figure(figsize=(6, 4))
 plt.title("Scalability results")
-plt.plot(out_dims, ts_svm_times, label="TensorSketch + linear SVM", c="orange")
-plt.plot(out_dims, ny_svm_times, label="Nystroem + linear SVM", c="blue")
+plt.plot(out_dims, ts_svm_times, label="TensorSketch", c="orange")
+plt.plot(out_dims, ny_svm_times, label="Nystroem", c="blue")
 plt.legend()
 plt.xlabel("N_components for TensorSketch and Nystroem")
 plt.ylabel("Inference Time \n(s/10.000 samples)")
