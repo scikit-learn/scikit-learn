@@ -567,7 +567,14 @@ transformation with a :class:`KNeighborsClassifier` instance that performs the
 classification in the embedding space. Here is an example using the two
 classes:
 
+    >>> from sklearn.neighbors import (NeighborhoodComponentsAnalysis,
+    ... KNeighborsClassifier)
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.pipeline import Pipeline
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ... stratify=y, test_size=0.7, random_state=42)
     >>> nca = NeighborhoodComponentsAnalysis(random_state=42)
     >>> knn = KNeighborsClassifier(n_neighbors=3)
     >>> nca_pipe = Pipeline([('nca', nca), ('knn', knn)])
