@@ -696,6 +696,27 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
         raw_predictions = self._raw_predict(X)
         return self.loss_.predict_proba(raw_predictions)
 
+    def decision_function(self, X):
+        """Compute the decision function of X
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            The input samples.
+
+        Returns
+        -------
+        decision : array, shape (n_samples,) or \
+                (n_samples, n_trees_per_iteration)
+            The raw predicted values (i.e. the sum of the trees leaves) for
+            each sample. n_trees_per_iteration is equal to the number of
+            classes in multiclass classification.
+        """
+        decision = self._raw_predict(X)
+        if decision.shape[1] == 1:
+            decision = decision.ravel()
+        return decision
+
     def _encode_y(self, y):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
         # and n_trees_per_iteration_
