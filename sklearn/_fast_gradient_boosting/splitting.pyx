@@ -580,7 +580,7 @@ cdef class Splitter:
         for feature_idx in range(self.n_features):
             split_info = split_infos[feature_idx]
             gain = split_info.gain
-            if best_gain == -1 or gain > best_gain:
+            if best_gain < 0. or gain > best_gain:
                 best_gain = gain
                 best_split_info = split_info
         return best_split_info
