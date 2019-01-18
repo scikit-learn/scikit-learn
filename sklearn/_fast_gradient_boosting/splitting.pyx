@@ -136,7 +136,7 @@ cdef class Splitter:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
         unsigned int max_bins
-        unsigned int [:] n_bins_per_feature
+        unsigned int [::1] n_bins_per_feature
         Y_DTYPE_C [::1] gradients
         Y_DTYPE_C [::1] hessians
         Y_DTYPE_C [::1] ordered_gradients
@@ -376,7 +376,7 @@ cdef class Splitter:
             split_info_struct * split_infos
             Y_DTYPE_C sum_gradients = 0.
             Y_DTYPE_C sum_hessians = 0.
-            # Also, need local views to avoid python interactions
+            # need local views to avoid python interactions
             Y_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
             Y_DTYPE_C [::1] gradients = self.gradients
             Y_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
@@ -596,7 +596,7 @@ cdef class Splitter:
         (min_gain_to_split, etc.) are discarded here. If no split can
         satisfy the constraints, a SplitInfo with a gain of -1 is returned.
         If for a given node the best SplitInfo has a gain of -1, it is
-        finalized into a leaf.
+        finalized into a leaf in the grower.
         """
         cdef:
             unsigned int bin_idx

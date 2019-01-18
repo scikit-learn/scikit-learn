@@ -35,8 +35,8 @@ def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
         be used to separate the bins. len(binning_thresholds) == n_features.
     """
     if not (2 <= max_bins <= 256):
-        raise ValueError(f'max_bins={max_bins} should be no smaller than 2 '
-                         f'and no larger than 256.')
+        raise ValueError('max_bins={} should be no smaller than 2 '
+                         'and no larger than 256.'.format(max_bins))
     rng = check_random_state(random_state)
     if subsample is not None and data.shape[0] > subsample:
         subset = rng.choice(np.arange(data.shape[0]), subsample)

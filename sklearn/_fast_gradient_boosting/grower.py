@@ -98,11 +98,11 @@ class TreeNode:
 
     def __repr__(self):
         # To help with debugging
-        out = f"TreeNode: depth={self.depth}, "
-        out += f"samples={len(self.sample_indices)}"
+        out = "TreeNode: depth={}, ".format(self.depth)
+        out += "samples={}".format(len(self.sample_indices))
         if self.split_info is not None:
-            out += f", feature_idx={self.split_info.feature_idx}"
-            out += f", bin_idx={self.split_info.bin_idx}"
+            out += ", feature_idx={}".format(self.split_info.feature_idx)
+            out += ", bin_idx={}".format(self.split_info.bin_idx)
         return out
 
     def __lt__(self, other_node):
@@ -221,23 +221,23 @@ class TreeGrower:
                 "X_binned should be passed as Fortran contiguous "
                 "array for maximum efficiency.")
         if max_leaf_nodes is not None and max_leaf_nodes < 1:
-            raise ValueError(f'max_leaf_nodes={max_leaf_nodes} should not be'
-                             f' smaller than 1')
+            raise ValueError('max_leaf_nodes={} should not be'
+                             ' smaller than 1'.format(max_leaf_nodes))
         if max_depth is not None and max_depth < 1:
-            raise ValueError(f'max_depth={max_depth} should not be'
-                             f' smaller than 1')
+            raise ValueError('max_depth={} should not be'
+                             ' smaller than 1'.format(max_depth))
         if min_samples_leaf < 1:
-            raise ValueError(f'min_samples_leaf={min_samples_leaf} should '
-                             f'not be smaller than 1')
+            raise ValueError('min_samples_leaf={} should '
+                             'not be smaller than 1'.format(min_samples_leaf))
         if min_gain_to_split < 0:
-            raise ValueError(f'min_gain_to_split={min_gain_to_split} '
-                             f'must be positive.')
+            raise ValueError('min_gain_to_split={} '
+                             'must be positive.'.format(min_gain_to_split))
         if l2_regularization < 0:
-            raise ValueError(f'l2_regularization={l2_regularization} must be '
-                             f'positive.')
+            raise ValueError('l2_regularization={} must be '
+                             'positive.'.format(l2_regularization))
         if min_hessian_to_split < 0:
-            raise ValueError(f'min_hessian_to_split={min_hessian_to_split} '
-                             f'must be positive.')
+            raise ValueError('min_hessian_to_split={} '
+                             'must be positive.'.format(min_hessian_to_split))
 
     def grow(self):
         """Grow the tree, from root to leaves."""

@@ -26,63 +26,65 @@ def test_init_parameters_validation(GradientBoosting, X, y):
     for learning_rate in (-1, 0):
         assert_raises_regex(
             ValueError,
-            f"learning_rate={learning_rate} must be strictly positive",
+            "learning_rate={} must be strictly positive".format(learning_rate),
             GradientBoosting(learning_rate=learning_rate).fit, X, y
         )
 
     assert_raises_regex(
         ValueError,
-        f"n_estimators=0 must not be smaller than 1",
+        "n_estimators=0 must not be smaller than 1",
         GradientBoosting(n_estimators=0).fit, X, y
     )
 
     assert_raises_regex(
         ValueError,
-        f"max_leaf_nodes=0 should not be smaller than 1",
+        "max_leaf_nodes=0 should not be smaller than 1",
         GradientBoosting(max_leaf_nodes=0).fit, X, y
     )
 
     assert_raises_regex(
         ValueError,
-        f"max_depth=0 should not be smaller than 1",
+        "max_depth=0 should not be smaller than 1",
         GradientBoosting(max_depth=0).fit, X, y
     )
 
     assert_raises_regex(
         ValueError,
-        f"min_samples_leaf=0 should not be smaller than 1",
+        "min_samples_leaf=0 should not be smaller than 1",
         GradientBoosting(min_samples_leaf=0).fit, X, y
     )
 
     assert_raises_regex(
         ValueError,
-        f"l2_regularization=-1 must be positive",
+        "l2_regularization=-1 must be positive",
         GradientBoosting(l2_regularization=-1).fit, X, y
     )
 
     for max_bins in (1, 257):
         assert_raises_regex(
             ValueError,
-            f"max_bins={max_bins} should be no smaller than 2 and no larger",
+            "max_bins={} should be no smaller than 2 and no larger".format(
+                max_bins),
             GradientBoosting(max_bins=max_bins).fit, X, y
         )
 
     assert_raises_regex(
         ValueError,
-        f"n_iter_no_change=-1 must be positive",
+        "n_iter_no_change=-1 must be positive",
         GradientBoosting(n_iter_no_change=-1).fit, X, y
     )
 
     for validation_fraction in (-1, 0):
         assert_raises_regex(
             ValueError,
-            f"validation_fraction={validation_fraction} must be strictly positive",
+            "validation_fraction={} must be strictly positive".format(
+                validation_fraction),
             GradientBoosting(validation_fraction=validation_fraction).fit, X, y
         )
 
     assert_raises_regex(
         ValueError,
-        f"tol=-1 must not be smaller than 0",
+        "tol=-1 must not be smaller than 0",
         GradientBoosting(tol=-1).fit, X, y
     )
 

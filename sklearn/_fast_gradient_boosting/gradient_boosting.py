@@ -56,20 +56,21 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
                                  ', '.join(self._VALID_LOSSES)))
 
         if self.learning_rate <= 0:
-            raise ValueError(f'learning_rate={self.learning_rate} must '
-                             f'be strictly positive')
+            raise ValueError('learning_rate={} must '
+                             'be strictly positive'.format(self.learning_rate))
         if self.n_estimators < 1:
-            raise ValueError(f'n_estimators={self.n_estimators} must '
-                             f'not be smaller than 1.')
+            raise ValueError('n_estimators={} must not be smaller '
+                             'than 1.'.format(self.n_estimators))
         if self.n_iter_no_change is not None and self.n_iter_no_change < 0:
-            raise ValueError(f'n_iter_no_change={self.n_iter_no_change} '
-                             f'must be positive.')
+            raise ValueError('n_iter_no_change={} must be '
+                             'positive.'.format(self.n_iter_no_change))
         if self.validation_fraction is not None and self.validation_fraction <= 0:
-            raise ValueError(f'validation_fraction={self.validation_fraction} '
-                             f'must be strictly positive, or None.')
+            raise ValueError(
+                'validation_fraction={} must be strictly '
+                'positive, or None.'.format(self.validation_fraction))
         if self.tol is not None and self.tol < 0:
-            raise ValueError(f'tol={self.tol} '
-                             f'must not be smaller than 0.')
+            raise ValueError('tol={} '
+                             'must not be smaller than 0.'.format(self.tol))
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
@@ -107,7 +108,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
 
         # bin the data
         if self.verbose:
-            print(f"Binning {X.nbytes / 1e9:.3f} GB of data: ", end="",
+            print("Binning {:.3f} GB of data: ".format(X.nbytes / 1e9), end="",
                   flush=True)
         tic = time()
         self.bin_mapper_ = BinMapper(max_bins=self.max_bins, random_state=rng)
@@ -116,7 +117,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         if self.verbose:
             duration = toc - tic
             troughput = X.nbytes / duration
-            print(f"{duration:.3f} s ({troughput / 1e6:.3f} MB/s)")
+            print("{:.3f} s ({:.3f} MB/s)".format(duration, troughput / 1e6))
 
         self.loss_ = self._get_loss()
 
@@ -133,10 +134,12 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
                 stratify=stratify, random_state=rng)
             if X_binned_train.size == 0 or X_binned_val.size == 0:
                 raise ValueError(
-                    f'Not enough data (n_samples={X_binned.shape[0]}) to '
-                    f'perform early stopping with validation_fraction='
-                    f'{self.validation_fraction}. Use more training data or '
-                    f'adjust validation_fraction.'
+                    'Not enough data (n_samples={}) to '
+                    'perform early stopping with validation_fraction='
+                    '{}. Use more training data or '
+                    'adjust validation_fraction.'.format(
+                        X_binned.shape[0],
+                        self.validation_fraction)
                 )
             # Predicting is faster of C-contiguous arrays, training is faster
             # on Fortran arrays.
@@ -205,8 +208,8 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
 
             if self.verbose:
                 iteration_start_time = time()
-                print(f"[{iteration + 1}/{self.n_estimators}] ", end='',
-                      flush=True)
+                print("[{}/{}] ".format(iteration + 1, self.n_estimators),
+                      end='', flush=True)
 
             # Update gradients and hessians, inplace
             self.loss_.update_gradients_and_hessians(gradients, hessians,
@@ -268,14 +271,14 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             n_predictors = sum(
                 len(predictors_at_ith_iteration)
                 for predictors_at_ith_iteration in self.estimators_)
-            print(f"Fit {n_predictors} trees in {duration:.3f} s, "
-                  f"({n_total_leaves} total leaves)")
-            print(f"{'Time spent finding best splits:':<32} "
-                  f"{acc_find_split_time:.3f}s")
-            print(f"{'Time spent applying splits:':<32} "
-                  f"{acc_apply_split_time:.3f}s")
-            print(f"{'Time spent predicting:':<32} "
-                  f"{acc_prediction_time:.3f}s")
+            print("Fit {} trees in {:.3f} s, ({} total leaves)".format(
+                n_predictors, duration, n_total_leaves))
+            print("{:<32} {:.3f}s".format('Time spent finding best splits:',
+                                          acc_find_split_time))
+            print("{:<32} {:.3f}s".format('Time spent applying splits:',
+                                          acc_apply_split_time))
+            print("{:<32} {:.3f}s".format('Time spent predicting:',
+                                          acc_prediction_time))
 
         self.train_score_ = np.asarray(self.train_score_)
         self.validation_score_ = np.asarray(self.validation_score_)
@@ -349,21 +352,22 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
                        for estimator in predictors_of_ith_iteration)
 
         if n_trees == 1:
-            log_msg += (f"{n_trees} tree, {n_leaves} leaves, ")
+            log_msg += ("{} tree, {} leaves, ".format(n_trees, n_leaves))
         else:
-            log_msg += (f"{n_trees} trees, {n_leaves} leaves ")
-            log_msg += (f"({int(n_leaves / n_trees)} on avg), ")
+            log_msg += ("{} trees, {} leaves ".format(n_trees, n_leaves))
+            log_msg += ("({} on avg), ".format(int(n_leaves / n_trees)))
 
-        log_msg += f"max depth = {max_depth}, "
+        log_msg += "max depth = {}, ".format(max_depth)
 
         if self.do_early_stopping_:
-            log_msg += f"{self.scoring} train: {self.train_score_[-1]:.5f}, "
+            name = 'neg-loss' if self.scoring == 'loss' else 'score'
+            log_msg += "train {}: {:.5f}, ".format(name, self.train_score_[-1])
             if self.validation_fraction is not None:
-                log_msg += (f"{self.scoring} val: "
-                            f"{self.validation_score_[-1]:.5f}, ")
+                log_msg += "val {}: {:.5f}, ".format(name,
+                    self.validation_score_[-1])
 
         iteration_time = time() - iteration_start_time
-        log_msg += f"in {iteration_time:0.3f}s"
+        log_msg += "in {:0.3f}s".format(iteration_time)
 
         print(log_msg)
 
@@ -384,8 +388,8 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         check_is_fitted(self, 'estimators_')
         if X.shape[1] != self.n_features_:
             raise ValueError(
-                f'X has {X.shape[1]} features but this estimator was '
-                f'trained with {self.n_features_} features.'
+                'X has {} features but this estimator was trained with '
+                '{} features.'.format(X.shape[1], self.n_features_)
             )
         is_binned = self._in_fit and X.dtype == X_BINNED_DTYPE
         n_samples = X.shape[0]
