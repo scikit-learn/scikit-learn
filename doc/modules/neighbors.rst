@@ -537,9 +537,8 @@ data  visualization and fast classification.
 
 .. centered:: |nca_illustration_1| |nca_illustration_2|
 
-
 In the above illustrating figure, we consider some points from a randomly
-generated dataset. We focus on the stochastic KNN classification of point n°3,
+generated dataset. We focus on the stochastic KNN classification of point no. 3,
 the thickness of a bond representing a softmax distance hence the weight of the
 neighbor vote in the classification. In the original space, sample 3 has many
 stochastic neighbors from various classes, so the right class is not very
@@ -567,26 +566,6 @@ To use this model for classification, one needs to combine a
 transformation with a :class:`KNeighborsClassifier` instance that performs the
 classification in the embedding space. Here is an example using the two
 classes:
-
-    >>> from sklearn.neighbors import NeighborhoodComponentsAnalysis
-    >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.model_selection import train_test_split
-    >>> X, y = load_iris(return_X_y=True)
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
-    ... stratify=y, test_size=0.7, random_state=42)
-    >>> nca = NeighborhoodComponentsAnalysis(random_state=42)
-    >>> nca.fit(X_train, y_train) # doctest: +ELLIPSIS
-    NeighborhoodComponentsAnalysis(...)
-    >>> # Apply the learned transformation when using KNeighborsClassifier
-    >>> knn = KNeighborsClassifier(n_neighbors=3)
-    >>> knn.fit(nca.transform(X_train), y_train) # doctest: +ELLIPSIS
-    KNeighborsClassifier(...)
-    >>> print(knn.score(nca.transform(X_test), y_test)) # doctest: +ELLIPSIS
-    0.96190476...
-
-Alternatively, one can create a :class:`sklearn.pipeline.Pipeline` instance
-that automatically applies the transformation when fitting or predicting:
 
     >>> from sklearn.pipeline import Pipeline
     >>> nca = NeighborhoodComponentsAnalysis(random_state=42)

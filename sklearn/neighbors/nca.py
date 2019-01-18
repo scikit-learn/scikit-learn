@@ -12,7 +12,7 @@ import numpy as np
 import sys
 import time
 from scipy.optimize import minimize
-from ..utils.fixes import logsumexp
+from ..utils.extmath import softmax
 from ..metrics import pairwise_distances
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelEncoder
@@ -27,18 +27,25 @@ from ..exceptions import ConvergenceWarning
 class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     """Neighborhood Components Analysis
 
+    Neighborhood Component Analysis (NCA) is a machine learning algorithm for
+    metric learning. It learns a linear transformation in a supervised fashion
+    to improve the classification accuracy of a stochastic nearest neighbors
+    rule in the transformed space.
+
+    Read more in the :ref:`User Guide <NeighborhoodComponentsAnalysis>`.
+
     Parameters
     ----------
     n_components : int, optional (default=None)
         Preferred dimensionality of the embedding.
-        If None it is inferred from ``init``.
+        If None it will be set to ``n_features``.
 
     init : string or numpy array, optional (default='auto')
         Initialization of the linear transformation. Possible options are
         'auto', 'pca', 'lda', 'identity', 'random', and a numpy array of shape
         (n_features_a, n_features_b).
 
-        'auto':
+        'auto'
             Depending on ``n_components``, the most reasonable initialization
             will be chosen among the following ones. First, we try to use
             'lda', as it uses labels information: if ``n_components <=
@@ -47,29 +54,29 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             if ``n_components < min(n_features, n_samples)``, ``init = 'pca'``.
             Otherwise, we just use 'identity'.
 
-        pca:
-            ``n_components`` many principal components of the inputs passed
+        'pca'
+            ``n_components`` principal components of the inputs passed
             to :meth:`fit` will be used to initialize the transformation.
-            (See :class:`~sklearn.decomposition.PCA`)
+            (See :class:`PCA`)
 
-        lda:
-            ``min(n_components, n_classes)`` many most discriminative
+        'lda'
+            ``min(n_components, n_classes)`` most discriminative
             components of the inputs passed to :meth:`fit` will be used to
             initialize the transformation. (If ``n_components > n_classes``,
             the rest of the components will be zero.) (See
-            :class:`~sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
+            :class:`LinearDiscriminantAnalysis`)
 
-        identity:
+        'identity'
             If ``n_components`` is strictly smaller than the
             dimensionality of the inputs passed to :meth:`fit`, the identity
             matrix will be truncated to the first ``n_components`` rows.
 
-        random:
+        'random'
             The initial transformation will be a random array of shape
             (n_components, n_features). Each value is sampled from the
             standard normal distribution.
 
-        numpy array:
+        numpy array
             n_features_b must match the dimensionality of the inputs passed to
             :meth:`fit` and n_features_a must be less than or equal to that.
             If ``n_components`` is not None, n_features_a must match it.
@@ -162,13 +169,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     >>> print(knn.score(nca.transform(X_test), y_test)) # doctest: +ELLIPSIS
     0.961904...
 
-    Notes
-    -----
-    Neighborhood Component Analysis (NCA) is a machine learning algorithm for
-    metric learning. It learns a linear transformation in a supervised fashion
-    to improve the classification accuracy of a stochastic nearest neighbors
-    rule in the transformed space.
-
     References
     ----------
     .. [1] J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov.
@@ -184,8 +184,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     def __init__(self, n_components=None, init='auto', warm_start=False,
                  max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
                  verbose=0, random_state=None):
-
-        # Parameters
         self.n_components = n_components
         self.init = init
         self.warm_start = warm_start
@@ -215,7 +213,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         # Verify inputs X and y and NCA parameters, and transform a copy if
         # needed
-        X_valid, y_valid, init = self._validate_params(X, y)
+        X, y, init = self._validate_params(X, y)
 
         # Initialize the random generator
         self.random_state_ = check_random_state(self.random_state)
@@ -223,18 +221,18 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         # Measure the total training time
         t_train = time.time()
 
-        # Compute mask that stays fixed during optimization:
-        mask = y_valid[:, np.newaxis] == y_valid[np.newaxis, :]
+        # Compute a mask that stays fixed during optimization:
+        same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
         # (n_samples, n_samples)
 
         # Initialize the transformation
-        transformation = self._initialize(X_valid, y_valid, init)
+        transformation = self._initialize(X, y, init)
 
         # Create a dictionary of parameters to be passed to the optimizer
         disp = self.verbose - 2 if self.verbose > 1 else -1
         optimizer_params = {'method': 'L-BFGS-B',
                             'fun': self._loss_grad_lbfgs,
-                            'args': (X_valid, mask, -1.0),
+                            'args': (X, same_class_mask, -1.0),
                             'jac': True,
                             'x0': transformation,
                             'tol': self.tol,
@@ -247,7 +245,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         opt_result = minimize(**optimizer_params)
 
         # Reshape the solution found by the optimizer
-        self.components_ = opt_result.x.reshape(-1, X_valid.shape[1])
+        self.components_ = opt_result.x.reshape(-1, X.shape[1])
 
         # Stop timer
         t_train = time.time() - t_train
@@ -305,10 +303,10 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_valid : array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The validated training samples.
 
-        y_valid : array, shape (n_samples,)
+        y : array, shape (n_samples,)
             The validated training labels, encoded to be integers in
             the range(0, n_classes).
 
@@ -326,9 +324,9 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         """
 
         # Validate the inputs X and y, and converts y to numerical classes.
-        X_valid, y_valid = check_X_y(X, y, ensure_min_samples=2)
-        check_classification_targets(y_valid)
-        y_valid = LabelEncoder().fit_transform(y_valid)
+        X, y = check_X_y(X, y, ensure_min_samples=2)
+        check_classification_targets(y)
+        y = LabelEncoder().fit_transform(y)
 
         # Check the preferred embedding dimensionality
         if self.n_components is not None:
@@ -366,12 +364,12 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             init = check_array(init)
 
             # Assert that init.shape[1] = X.shape[1]
-            if init.shape[1] != X_valid.shape[1]:
+            if init.shape[1] != X.shape[1]:
                 raise ValueError(
                     'The input dimensionality ({}) of the given '
                     'linear transformation `init` must match the '
                     'dimensionality of the given inputs `X` ({}).'
-                    .format(init.shape[1], X_valid.shape[1]))
+                    .format(init.shape[1], X.shape[1]))
 
             # Assert that init.shape[0] <= init.shape[1]
             if init.shape[0] > init.shape[1]:
@@ -397,7 +395,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                 "`init` must be 'auto', 'pca', 'lda', 'identity', 'random' "
                 "or a numpy array of shape (n_components, n_features).")
 
-        return X_valid, y_valid, init
+        return X, y, init
 
     def _initialize(self, X, y, init):
         """Initialize the transformation.
@@ -423,7 +421,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         transformation = init
         if self.warm_start and hasattr(self, 'components_'):
             transformation = self.components_
-
         elif isinstance(init, np.ndarray):
             pass
         else:
@@ -479,19 +476,19 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         self.n_iter_ += 1
 
-    def _loss_grad_lbfgs(self, transformation, X, mask, sign=1.0):
+    def _loss_grad_lbfgs(self, transformation, X, same_class_mask, sign=1.0):
         """Compute the loss and the loss gradient w.r.t. ``transformation``.
 
         Parameters
         ----------
-        transformation : array, shape (n_components, n_features)
-            The linear transformation on which to compute loss and evaluate
-            gradient
+        transformation : array, shape (n_components * n_features,)
+            The raveled linear transformation on which to compute loss and evaluate
+            gradient.
 
         X : array, shape (n_samples, n_features)
             The training samples.
 
-        mask : array, shape (n_samples, n_samples)
+        same_class_mask : array, shape (n_samples, n_samples)
             A mask where ``mask[i, j] == 1`` if ``X[i]`` and ``X[j]`` belong
             to the same class, and ``0`` otherwise.
 
@@ -523,20 +520,20 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         # Compute softmax distances
         p_ij = pairwise_distances(X_embedded, squared=True)
         np.fill_diagonal(p_ij, np.inf)
-        p_ij = np.exp(-p_ij - logsumexp(-p_ij, axis=1)[:, np.newaxis])
-        # (n_samples, n_samples)
+        p_ij = softmax(-p_ij)  # (n_samples, n_samples)
 
         # Compute loss
-        masked_p_ij = p_ij * mask
+        masked_p_ij = p_ij * same_class_mask
         p = np.sum(masked_p_ij, axis=1, keepdims=True)  # (n_samples, 1)
         loss = np.sum(p)
 
         # Compute gradient of loss w.r.t. `transform`
         weighted_p_ij = masked_p_ij - p_ij * p
         weighted_p_ij_sym = weighted_p_ij + weighted_p_ij.T
-        np.fill_diagonal(weighted_p_ij_sym, - weighted_p_ij.sum(axis=0))
-        gradient = 2 * (X_embedded.T.dot(weighted_p_ij_sym)).dot(X)
+        np.fill_diagonal(weighted_p_ij_sym, -weighted_p_ij.sum(axis=0))
+        gradient = 2 * X_embedded.T.dot(weighted_p_ij_sym).dot(X)
         # time complexity of the gradient: O(n_components x n_samples x (
+
         # n_samples + n_features))
 
         if self.verbose:
@@ -572,7 +569,7 @@ def _check_scalar(x, name, target_type, min_val=None, max_val=None):
         The minimum value value the parameter can take. If None (default) it
         is implied that the parameter does not have a lower bound.
 
-    max_val: float or int, optional (default=None)
+    max_val : float or int, optional (default=None)
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
