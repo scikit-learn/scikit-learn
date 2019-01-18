@@ -34,17 +34,18 @@ def get_lightgbm_estimator(pygbm_estimator):
         'n_estimators': pygbm_params['n_estimators'],
         'num_leaves': pygbm_params['max_leaf_nodes'],
         'max_depth': pygbm_params['max_depth'],
-        'min_data_in_leaf': pygbm_params['min_samples_leaf'],
-        'lambda_l2': pygbm_params['l2_regularization'],
+        'min_child_samples': pygbm_params['min_samples_leaf'],
+        'reg_lambda': pygbm_params['l2_regularization'],
         'max_bin': pygbm_params['max_bins'],
         'min_data_in_bin': 1,
+        'min_child_weight': 1e-3,
         'min_sum_hessian_in_leaf': 1e-3,
-        'min_gain_to_split': 0,
-        'verbosity': 10 if pygbm_params['verbose'] else 0,
+        'min_split_gain': 0,
+        'verbosity': 10 if pygbm_params['verbose'] else -10,
         'boost_from_average': True,
         'enable_bundle': False,  # also makes feature order consistent
         'min_data_in_bin': 1,
-        'bin_construct_sample_cnt': BinMapper().subsample,
+        'subsample_for_bin': BinMapper().subsample,
     }
     # TODO: change hardcoded values when / if they're arguments to the
     # estimator.

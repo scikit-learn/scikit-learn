@@ -51,8 +51,8 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
 
         if self.loss not in self._VALID_LOSSES:
             raise ValueError(
-                "Loss {} is not supported for {}. Accepted losses"
-                "are {}.".format(self.loss, self.__class__.__name__,
+                "Loss {} is not supported for {}. Accepted losses: "
+                "{}.".format(self.loss, self.__class__.__name__,
                                  ', '.join(self._VALID_LOSSES)))
 
         if self.learning_rate <= 0:
