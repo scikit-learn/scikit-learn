@@ -82,7 +82,7 @@ class TensorSketch(BaseEstimator, TransformerMixin):
         self.n_components = n_components
         self.random_state = random_state
 
-    def fit(self, X, Y=None):
+    def fit(self, X, y=None):
         """Fit the model with X.
 
         Initializes the internal variables. The method is data-independent,
