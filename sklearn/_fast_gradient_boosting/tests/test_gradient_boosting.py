@@ -178,12 +178,8 @@ def test_should_stop():
 
 @pytest.mark.parametrize('Estimator', (
     FastGradientBoostingRegressor(),
-    FastGradientBoostingClassifier(min_samples_leaf=5),
+    FastGradientBoostingClassifier(),
     ))
 def test_estimator_checks(Estimator):
     # Run the check_estimator() test suite on GBRegressor and GBClassifier.
-
-    # need to set a low min_samples_leaf for check_classifiers_classes() to
-    # pass: with only 30 samples on the dataset, the root is never split with
-    # min_samples_leaf=20 and only the majority class is predicted.
     check_estimator(Estimator)

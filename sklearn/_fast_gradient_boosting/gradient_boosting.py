@@ -431,7 +431,7 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
     max_depth : int or None, optional(default=None)
         The maximum depth of each tree. The depth of a tree is the number of
         nodes to go from the root to the deepest leaf.
-    min_samples_leaf : int, optional(default=20)
+    min_samples_leaf : int, optional(default=5)
         The minimum number of samples per leaf.
     l2_regularization : float, optional(default=0)
         The L2 regularization parameter. Use 0 for no regularization.
@@ -478,14 +478,14 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
     >>> X, y = load_boston(return_X_y=True)
     >>> est = FastGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
-    0.98...
+    0.99...
     """
 
     _VALID_LOSSES = ('least_squares',)
 
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  n_estimators=100, max_leaf_nodes=31, max_depth=None,
-                 min_samples_leaf=20, l2_regularization=0., max_bins=256,
+                 min_samples_leaf=5, l2_regularization=0., max_bins=256,
                  scoring=None, validation_fraction=0.1, n_iter_no_change=None,
                  tol=1e-7, verbose=0, random_state=None):
         super(FastGradientBoostingRegressor, self).__init__(
@@ -551,7 +551,7 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
     max_depth : int or None, optional(default=None)
         The maximum depth of each tree. The depth of a tree is the number of
         nodes to go from the root to the deepest leaf.
-    min_samples_leaf : int, optional(default=20)
+    min_samples_leaf : int, optional(default=5)
         The minimum number of samples per leaf.
     l2_regularization : float, optional(default=0)
         The L2 regularization parameter. Use 0 for no regularization.
@@ -604,7 +604,7 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
                      'auto')
 
     def __init__(self, loss='auto', learning_rate=0.1, n_estimators=100,
-                 max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
+                 max_leaf_nodes=31, max_depth=None, min_samples_leaf=5,
                  l2_regularization=0., max_bins=256, scoring=None,
                  validation_fraction=0.1, n_iter_no_change=None, tol=1e-7,
                  verbose=0, random_state=None):
