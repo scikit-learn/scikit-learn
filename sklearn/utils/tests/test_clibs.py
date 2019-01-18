@@ -11,6 +11,16 @@ from sklearn.utils._clibs import (get_thread_limits, set_thread_limits,
 SKIP_OPENBLAS = get_openblas_version() is None
 
 
+def test_openmp_enabled():
+    # Check that an OpenMP library is loaded
+    limits = get_thread_limits()
+
+    assert not all([lib is None for lib in [limits['openmp_llvm'],
+                                            limits['openmp_gnu'],
+                                            limits['openmp_win32'],
+                                            limits['openmp_intel']]])
+
+
 @pytest.mark.parametrize("clib", _CLibsWrapper.SUPPORTED_CLIBS)
 def test_set_thread_limits_dict(clib):
     # Check that the number of threads used by the multithreaded C-libs can be
