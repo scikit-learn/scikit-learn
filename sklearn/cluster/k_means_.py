@@ -30,7 +30,6 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils._clibs import thread_limits_context
 from ..utils._joblib import effective_n_jobs
-from ..externals.six import string_types
 from ..exceptions import ConvergenceWarning
 from ._k_means import (_inertia_dense,
                        _inertia_sparse,
