@@ -482,8 +482,8 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         transformation : array, shape (n_components * n_features,)
-            The raveled linear transformation on which to compute loss and evaluate
-            gradient.
+            The raveled linear transformation on which to compute loss and
+            evaluate gradient.
 
         X : array, shape (n_samples, n_features)
             The training samples.
