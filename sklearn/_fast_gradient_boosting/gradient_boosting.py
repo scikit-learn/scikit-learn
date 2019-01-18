@@ -13,7 +13,7 @@ from sklearn.metrics import check_scoring
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
-from .types import Y_DTYPE, X_DTYPE
+from .types import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 
 from .binning import BinMapper
 from .grower import TreeGrower
@@ -87,6 +87,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         self : object
         """
 
+        self._in_fit = True  # TODO: document this
         fit_start_time = time()
         acc_find_split_time = 0.  # time spent finding the best splits
         acc_apply_split_time = 0.  # time spent splitting nodes
@@ -176,13 +177,16 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
 
         # scorer_ is a callable with signature (est, X, y) and calls
         # est.predict() or est.predict_proba() depending on its nature.
-        self.scorer_ = check_scoring(self, self.scoring)
+        if self.scoring != 'loss':
+            self.scorer_ = check_scoring(self, self.scoring)
+        else:
+            self.scorer_ = None
         self.train_scores_ = []
         self.validation_scores_ = []
         if self.do_early_stopping_:
             # Add predictions of the initial model (before the first tree)
             self.train_scores_.append(
-                self._get_scores(X_binned_train, y_train))
+                self._get_scores(X_binned_small_train, y_small_train))
 
             if self.validation_fraction is not None:
                 self.validation_scores_.append(
@@ -242,6 +246,11 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             if self.verbose:
                 self._print_iteration_stats(iteration_start_time)
 
+            # if the only trees we could build are stumps, stop training
+            if all(predictor.get_n_leaf_nodes() == 1
+                   for predictor in self.predictors_[-1]):
+                should_early_stop = True
+
             if should_early_stop:
                 break
 
@@ -265,6 +274,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
 
         self.train_scores_ = np.asarray(self.train_scores_)
         self.validation_scores_ = np.asarray(self.validation_scores_)
+        self._in_fit = False
         return self
 
     def _check_early_stopping(self, X_binned_train, y_train,
@@ -307,11 +317,12 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
     def _get_scores(self, X, y):
         """Compute scores on data X with target y.
 
-        Scores are either computed with a scorer if scoring parameter is not
-        None, else with the loss. As higher is always better, we return
+        Scores are computed with a scorer if scoring parameter is not
+        'loss', else with the loss. As higher is always better, we return
         -loss_value.
         """
-        if self.scoring is not None:
+
+        if not isinstance(self.scoring, str) and self.scoring != 'loss':
             return self.scorer_(self, X, y)
 
         # Else, use loss
@@ -364,13 +375,14 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         raw_predictions : array, shape (n_samples * n_trees_per_iteration,)
             The raw predicted values.
         """
-        X = check_array(X, dtype=X_DTYPE)
+        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE])
         check_is_fitted(self, 'predictors_')
         if X.shape[1] != self.n_features_:
             raise ValueError(
                 f'X has {X.shape[1]} features but this estimator was '
                 f'trained with {self.n_features_} features.'
             )
+        is_binned = self._in_fit and X.dtype == X_BINNED_DTYPE
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
             shape=(n_samples, self.n_trees_per_iteration_),
@@ -379,7 +391,9 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         raw_predictions += self.baseline_prediction_
         for predictors_of_ith_iteration in self.predictors_:
             for k, predictor in enumerate(predictors_of_ith_iteration):
-                raw_predictions[:, k] += predictor.predict(X)
+                predict = (predictor.predict_binned if is_binned
+                           else predictor.predict)
+                raw_predictions[:, k] += predict(X)
 
         return raw_predictions
 
@@ -430,14 +444,14 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
     scoring : str or callable or None, optional (default=None)
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer (if
-        available) is used. If ``scoring='loss'``, early stopping is checked
-        w.r.t the loss value. Only used if ``n_iter_no_change`` is not None.
+        :ref:`scoring`). If None, the estimator's default scorer is used. If
+        ``scoring='loss'``, early stopping is checked w.r.t the loss value.
+        Only used if ``n_iter_no_change`` is not None.
     validation_fraction : int or float or None, optional(default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data. Only used if ``n_iter_no_change`` is not None.
-    n_iter_no_change : int or None, optional (default=5)
+    n_iter_no_change : int or None, optional (default=None)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1``th-to-last one, up to some
@@ -460,11 +474,11 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
     Examples
     --------
     >>> from sklearn.datasets import load_boston
-    >>> from pygbm import GradientBoostingRegressor
+    >>> from sklearn.ensemble import FastGradientBoostingRegressor
     >>> X, y = load_boston(return_X_y=True)
-    >>> est = GradientBoostingRegressor().fit(X, y)
+    >>> est = FastGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
-    0.92...
+    0.98...
     """
 
     _VALID_LOSSES = ('least_squares',)
@@ -472,7 +486,7 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
     def __init__(self, loss='least_squares', learning_rate=0.1,
                  n_estimators=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=20, l2_regularization=0., max_bins=256,
-                 scoring=None, validation_fraction=0.1, n_iter_no_change=5,
+                 scoring=None, validation_fraction=0.1, n_iter_no_change=None,
                  tol=1e-7, verbose=0, random_state=None):
         super(FastGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -550,14 +564,14 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
     scoring : str or callable or None, optional (default=None)
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
-        :ref:`scoring`). If None, the estimator's default scorer (if
-        available) is used. If ``scoring='loss'``, early stopping is checked
+        :ref:`scoring`). If None, the estimator's default scorer
+        is used. If ``scoring='loss'``, early stopping is checked
         w.r.t the loss value. Only used if ``n_iter_no_change`` is not None.
     validation_fraction : int or float or None, optional(default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data.
-    n_iter_no_change : int or None, optional (default=5)
+    n_iter_no_change : int or None, optional (default=None)
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1``th-to-last one, up to some
@@ -579,11 +593,11 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
     Examples
     --------
     >>> from sklearn.datasets import load_iris
-    >>> from pygbm import GradientBoostingClassifier
+    >>> from sklearn.ensemble import FastGradientBoostingClassifier
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = GradientBoostingClassifier().fit(X, y)
+    >>> clf = FastGradientBoostingClassifier().fit(X, y)
     >>> clf.score(X, y)
-    0.97...
+    1.0
     """
 
     _VALID_LOSSES = ('binary_crossentropy', 'categorical_crossentropy',
@@ -592,7 +606,7 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
     def __init__(self, loss='auto', learning_rate=0.1, n_estimators=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=20,
                  l2_regularization=0., max_bins=256, scoring=None,
-                 validation_fraction=0.1, n_iter_no_change=5, tol=1e-7,
+                 validation_fraction=0.1, n_iter_no_change=None, tol=1e-7,
                  verbose=0, random_state=None):
         super(FastGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,

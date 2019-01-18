@@ -13,7 +13,7 @@ import pygbm
 classif = False
 n_classes = 2
 n_features = 20
-n_samples = int(1e7)
+n_samples = int(1e6)
 max_iter = 5
 
 if classif:
@@ -28,20 +28,20 @@ else:
     PYGBM_GBM = pygbm.GradientBoostingRegressor
 
 
-pygbm_est = PYGBM_GBM(
-    max_iter=max_iter,
-    scoring=None,  # no early stopping
-    validation_split=None,
-    random_state=0,
-    verbose=False)
-print("compiling pygbm code")
-pygbm_est.fit(X[:1000], y[:1000])
-print("done")
+# pygbm_est = PYGBM_GBM(
+#     max_iter=max_iter,
+#     scoring=None,  # no early stopping
+#     validation_split=None,
+#     random_state=0,
+#     verbose=False)
+# print("compiling pygbm code")
+# pygbm_est.fit(X[:1000], y[:1000])
+# print("done")
 
 gbm = GBM(
-    max_iter=max_iter,
-    scoring=None,  # no early stopping
-    validation_split=None,
+    n_estimators=max_iter,
+    scoring=None,
+    validation_fraction=None,
     n_iter_no_change=None,
     random_state=0,
     verbose=True)
@@ -55,15 +55,15 @@ print(f'sklearn gbm fit_duration: {fit_duration:.3f}s')
 print(f'sklearn gbm score_duration {score_duration:.3f}s')
 
 
-pygbm_est.set_params(verbose=True)
-tic = time()
-pygbm_est.fit(X, y)
-fit_duration = time() - tic
-tic = time()
-print(f'score: {pygbm_est.score(X, y)}')
-score_duration = time() - tic
-print(f'pygbm fit_duration: {fit_duration:.3f}s')
-print(f'pygbm score_duration {score_duration:.3f}s')
+# pygbm_est.set_params(verbose=True)
+# tic = time()
+# pygbm_est.fit(X, y)
+# fit_duration = time() - tic
+# tic = time()
+# print(f'score: {pygbm_est.score(X, y)}')
+# score_duration = time() - tic
+# print(f'pygbm fit_duration: {fit_duration:.3f}s')
+# print(f'pygbm score_duration {score_duration:.3f}s')
 
 # cProfile.runctx("gbm.fit(X, y)", globals(), locals(), "Profile.prof")
 # s = pstats.Stats("Profile.prof")

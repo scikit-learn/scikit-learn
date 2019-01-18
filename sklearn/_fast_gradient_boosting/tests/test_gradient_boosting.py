@@ -90,11 +90,13 @@ def test_init_parameters_validation(GradientBoosting, X, y):
 @pytest.mark.parametrize('scoring, validation_fraction, n_iter_no_change, tol', [
     ('neg_mean_squared_error', .1, 5, 1e-7),  # use scorer
     ('neg_mean_squared_error', None, 5, 1e-1),  # use scorer on training data
-    (None, .1, 5, 1e-7),  # use loss
-    (None, None, 5, 1e-1),  # use loss on training data
+    (None, .1, 5, 1e-7),  # same with default scorer
+    (None, None, 5, 1e-1),
+    ('loss', .1, 5, 1e-7),  # use loss
+    ('loss', None, 5, 1e-1),  # use loss on training data
     (None, None, None, None),  # no early stopping
 ])
-def test_e(scoring, validation_fraction,
+def test_early_stopping_regression(scoring, validation_fraction,
                                    n_iter_no_change, tol):
 
     n_estimators = 500
@@ -123,9 +125,10 @@ def test_e(scoring, validation_fraction,
 @pytest.mark.parametrize('scoring, validation_fraction, n_iter_no_change, tol', [
     ('accuracy', .1, 5, 1e-7),  # use scorer
     ('accuracy', None, 5, 1e-1),  # use scorer on training data
-    (None, .1, 5, 1e-7),  # use loss
-    (None, None, 5, 1e-1),  # use loss on training data
-    (None, None, None, None),  # no early stopping
+    (None, .1, 5, 1e-7),  # same with default scorerscor
+    (None, None, 5, 1e-1),
+    ('loss', .1, 5, 1e-7),  # use loss
+    ('loss', None, 5, 1e-1),  # use loss on training data
 ])
 def test_early_stopping_classification(data, scoring, validation_fraction,
                                        n_iter_no_change, tol):
@@ -143,10 +146,7 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
                                         random_state=0)
     gb.fit(X, y)
 
-    if n_iter_no_change is not None:
-        assert n_iter_no_change <= gb.n_iter_ < n_estimators
-    else:
-        assert gb.n_iter_ == n_estimators
+    assert n_iter_no_change <= gb.n_iter_ < n_estimators
 
 
 def test_should_stop():
@@ -178,19 +178,12 @@ def test_should_stop():
 
 @pytest.mark.parametrize('Estimator', (
     FastGradientBoostingRegressor(),
-    FastGradientBoostingClassifier(scoring=None, validation_fraction=None,
-                                   min_samples_leaf=5),
+    FastGradientBoostingClassifier(min_samples_leaf=5),
     ))
 def test_estimator_checks(Estimator):
     # Run the check_estimator() test suite on GBRegressor and GBClassifier.
 
-    # Default parameters to the estimators have to be changed to pass the
-    # tests:
-    # - Can't do early stopping with classifier because often
-    #   validation_fraction=.1 leads to test_size=2 < n_classes and
-    #   train_test_split raises an error.
-    # - Also, need to set a low min_samples_leaf for
-    #   check_classifiers_classes() to pass: with only 30 samples on the
-    #   dataset, the root is never split with min_samples_leaf=20 and only the
-    #   majority class is predicted.
+    # need to set a low min_samples_leaf for check_classifiers_classes() to
+    # pass: with only 30 samples on the dataset, the root is never split with
+    # min_samples_leaf=20 and only the majority class is predicted.
     check_estimator(Estimator)

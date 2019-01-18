@@ -145,7 +145,6 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
                                                                rel=1e-3)
 
 
-@pytest.mark.skip('Removed predict_binned')
 def test_predictor_from_grower():
     # Build a tree on the toy 3-leaf dataset to extract the predictor.
     n_bins = 256

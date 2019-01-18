@@ -82,6 +82,22 @@ class TreePredictor:
         _predict_from_numeric_data(self.nodes, X, out)
         return out
 
+    def predict_binned(self, X):
+        """Predict raw values for binned data.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            The input samples.
+
+        Returns
+        -------
+        y : array, shape (n_samples,)
+            The raw predicted values.
+        """
+        out = np.empty(X.shape[0], dtype=Y_DTYPE)
+        _predict_from_binned_data(self.nodes, X, out)
+        return out
 
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
     node_struct [:] nodes,
@@ -113,3 +129,35 @@ cdef void _predict_from_numeric_data(
 
     for i in prange(numeric_data.shape[0], schedule='static'):
         out[i] = _predict_one_from_numeric_data(nodes, numeric_data, i)
+
+
+cdef inline Y_DTYPE_C _predict_one_from_binned_data(
+    node_struct [:] nodes,
+    const X_BINNED_DTYPE_C [:, :] binned_data,
+    const int row
+    ) nogil:
+    # Need to pass the whole array, else prange won't work. See issue Cython
+    # #2798
+
+    cdef:
+        node_struct node = nodes[0]
+
+    while True:
+        if node.is_leaf:
+            return node.value
+        if binned_data[row, node.feature_idx] <= node.bin_threshold:
+            node = nodes[node.left]
+        else:
+            node = nodes[node.right]
+
+
+cdef void _predict_from_binned_data(
+    node_struct [:] nodes,
+    const X_BINNED_DTYPE_C [:, :] binned_data,
+    Y_DTYPE_C [:] out) nogil:
+
+    cdef:
+        int i
+
+    for i in prange(binned_data.shape[0], schedule='static'):
+        out[i] = _predict_one_from_binned_data(nodes, binned_data, i)
