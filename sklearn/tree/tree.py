@@ -359,6 +359,7 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
                                                 self.presort)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
+
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
             builder = DepthFirstTreeBuilder(splitter, min_samples_split,
