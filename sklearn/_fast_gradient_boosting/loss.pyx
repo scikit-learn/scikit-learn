@@ -16,7 +16,6 @@ from cython.parallel import prange
 import numpy as np
 cimport numpy as np
 from scipy.special import expit, logsumexp
-from scipy.special.cython_special cimport expit as cexpit
 
 from libc.math cimport fabs, exp, log
 
@@ -258,23 +257,6 @@ class CategoricalCrossEntropy(BaseLoss):
                       logsumexp(raw_predictions, axis=1)[:, np.newaxis])
 
 
-cdef inline Y_DTYPE_C _logsumexp(const Y_DTYPE_C [:, :] a, const int row) nogil:
-    # Need to pass the whole array, else prange won't work. See Cython issue
-    # #2798
-    cdef:
-        int k
-        Y_DTYPE_C out = 0.
-        Y_DTYPE_C amax = a[row, 0]
-
-    for k in range(1, a.shape[1]):
-        if amax < a[row, k]:
-            amax = a[row, k]
-
-    for k in range(a.shape[1]):
-        out += exp(a[row, k] - amax)
-    return log(out) + amax
-
-
 cdef void _update_gradients_hessians_categorical_crossentropy(
     Y_DTYPE_C [:] gradients,  # shape (n_samples * prediction_dim,), OUT
     Y_DTYPE_C [:] hessians,  # shape (n_samples * prediction_dim,), OUT
@@ -298,9 +280,33 @@ cdef void _update_gradients_hessians_categorical_crossentropy(
         for i in prange(n_samples, schedule='static'):
             # p_k is the probability that class(ith sample) == k.
             # This is a regular softmax.
-            p_k = exp(raw_predictions[i, k] - _logsumexp(raw_predictions, i))
+            p_k = exp(raw_predictions[i, k] - clogsumexp(raw_predictions, i))
             gradients_at_k[i] = p_k - (y_true[i] == k)
             hessians_at_k[i] = p_k * (1. - p_k)
+
+
+cdef inline Y_DTYPE_C cexpit(const Y_DTYPE_C x) nogil:
+    return 1. / (1 + exp(-x))
+
+
+cdef inline Y_DTYPE_C clogsumexp(
+    const Y_DTYPE_C [:, :] a,
+    const int row) nogil:
+    # Need to pass the whole array, else prange won't work. See Cython issue
+    # #2798
+    cdef:
+        int k
+        Y_DTYPE_C out = 0.
+        Y_DTYPE_C amax = a[row, 0]
+
+    for k in range(1, a.shape[1]):
+        if amax < a[row, k]:
+            amax = a[row, k]
+
+    for k in range(a.shape[1]):
+        out += exp(a[row, k] - amax)
+    return log(out) + amax
+
 
 
 _LOSSES = {
