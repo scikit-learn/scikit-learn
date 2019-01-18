@@ -154,6 +154,24 @@ above for the :class:`RBFSampler`. The only difference is in the free
 parameter, that is called :math:`c`.
 For a motivation for this mapping and the mathematical details see [LS2010]_.
 
+Tensor Sketch Method for Polynomial Kernel Approximation
+--------------------------------------------------------
+
+The Tensor Sketch [PP2013]_ method, as implemented in :class:`TensorSketch` is a scalable,
+data-independent method for polynomial kernel approximation. This method obtains
+a Count Sketch [CCF2002]_ of the outer product of two vectors (or a vector with itself),
+which an be used as an approximation of the polynomial kernel feature space.
+In particular, instead of explicitly computing the outer product, TensorSketch
+computes the Count Sketch of the vectors and then uses polynomial multiplication
+via the Fast Fourier Transform to compute the Count Sketch of their outer product.
+
+Conveniently, the training phase of TensorSketch simply consists of initializing
+some random variables, thus being a data-independent method. In addition, this
+method can transform samples in :math:`\mathcal{O}(n(d + k \text{log} k))`, where
+:math:`n` is the number of samples, :math:`d` the dimension of input samples
+and :math:`k` the desired output dimension, determined by (``n_components``). 
+
+.. _tensor_sketch_kernel_approx:
 
 Mathematical Details
 --------------------
@@ -206,3 +224,9 @@ or store training examples.
     .. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
       <https://www.robots.ox.ac.uk/~vgg/publications/2010/Sreekanth10/sreekanth10.pdf>`_
       Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
+    .. [PP2013] `"Fast and scalable polynomial kernels via explicit feature maps"
+      <http://chbrown.github.io/kdd-2013-usb/kdd/p239.pdf>`_
+      Pham, N., & Pagh, R. - 2013
+    .. [CCF2002] `"Finding frequent items in data streams"
+      <http://www.vldb.org/pvldb/1/1454225.pdf>`_
+      Charikar, M., Chen, K., & Farach-Colton - 2002
