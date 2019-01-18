@@ -281,10 +281,9 @@ issues_user_uri = 'https://github.com/{user}'
 
 # Ignores warning when any roles have a missing reference
 def ignore_warnings_on_missing_reference(app, env, node, contnode):
-    if node['reftype'] in ['any']:
+    if node['reftype'] == 'any':
         return contnode
-    else:
-        return None
+    return None
 
 
 def setup(app):
