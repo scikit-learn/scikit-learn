@@ -279,9 +279,9 @@ issues_github_path = 'scikit-learn/scikit-learn'
 issues_user_uri = 'https://github.com/{user}'
 
 
-# Ignores warning when any roles have a missing reference
-def ignore_warnings_on_missing_reference(app, env, node, contnode):
+def maps_any_missing_reference_to_code_block(app, env, node, contnode):
     if node['reftype'] == 'any':
+        contnode['classes'] = []
         return contnode
     return None
 
@@ -291,7 +291,7 @@ def setup(app):
     app.add_javascript('js/copybutton.js')
     app.add_javascript('js/extra.js')
     app.connect('build-finished', make_carousel_thumbs)
-    app.connect('missing-reference', ignore_warnings_on_missing_reference)
+    app.connect('missing-reference', maps_any_missing_reference_to_code_block)
 
 
 # The following is used by sphinx.ext.linkcode to provide links to github
