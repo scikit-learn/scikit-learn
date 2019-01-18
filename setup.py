@@ -53,7 +53,7 @@ SETUPTOOLS_COMMANDS = set([
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
     'bdist_wininst', 'install_egg_info', 'build_sphinx',
     'egg_info', 'easy_install', 'upload', 'bdist_wheel',
-    '--single-version-externally-managed',
+    '--single-version-externally-managed', 'build_ext',
 ])
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     import setuptools
@@ -102,7 +102,50 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'clean': CleanCommand}
+def get_openmp_flag(compiler):
+    if sys.platform == "win32" and ('icc' in compiler or 'icl' in compiler):
+        return ['/Qopenmp']
+    elif sys.platform == "win32":
+        return ['/openmp']
+    elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
+        return ['-openmp']
+    return ['-fopenmp']
+
+
+OPENMP_EXTENSIONS = [
+    "sklearn._fast_gradient_boosting._gradient_boosting",
+    "sklearn._fast_gradient_boosting.splitting",
+    "sklearn._fast_gradient_boosting.binning",
+    "sklearn._fast_gradient_boosting.predictor",
+    "sklearn._fast_gradient_boosting.loss",
+]
+
+
+# custom build_ext command to set OpenMP compile flags depending on os and
+# compiler
+# build_ext has to be imported after setuptools
+from numpy.distutils.command.build_ext import build_ext  # noqa
+
+
+class build_ext_subclass(build_ext):
+    def build_extensions(self):
+        if hasattr(self.compiler, 'compiler'):
+            compiler = self.compiler.compiler[0]
+        else:
+            compiler = self.compiler.__class__.__name__
+
+        openmp_flag = get_openmp_flag(compiler)
+
+        for e in self.extensions:
+            print(e.name)
+            if e.name in OPENMP_EXTENSIONS:
+                e.extra_compile_args += openmp_flag
+                e.extra_link_args += openmp_flag
+
+        build_ext.build_extensions(self)
+
+
+cmdclass = {'clean': CleanCommand, 'build_ext': build_ext_subclass}
 
 # Optional wheelhouse-uploader features
 # To automate release of binary packages for scikit-learn we need a tool

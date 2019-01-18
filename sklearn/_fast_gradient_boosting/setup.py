@@ -7,9 +7,7 @@ def configuration(parent_package="", top_path=None):
 
     config.add_extension("_gradient_boosting",
                          sources=["_gradient_boosting.pyx"],
-                         include_dirs=[numpy.get_include()],
-                         extra_compile_args=['-fopenmp'],
-                         extra_link_args=['-fopenmp'])
+                         include_dirs=[numpy.get_include()])
 
     config.add_extension("histogram",
                          sources=["histogram.pyx"],
@@ -17,27 +15,19 @@ def configuration(parent_package="", top_path=None):
 
     config.add_extension("splitting",
                          sources=["splitting.pyx"],
-                         include_dirs=[numpy.get_include()],
-                         extra_compile_args=['-fopenmp'],
-                         extra_link_args=['-fopenmp'])
+                         include_dirs=[numpy.get_include()])
 
     config.add_extension("binning",
                          sources=["binning.pyx"],
-                         include_dirs=[numpy.get_include()],
-                         extra_compile_args=['-fopenmp'],
-                         extra_link_args=['-fopenmp'])
+                         include_dirs=[numpy.get_include()])
 
     config.add_extension("predictor",
                          sources=["predictor.pyx"],
-                         include_dirs=[numpy.get_include()],
-                         extra_compile_args=['-fopenmp'],
-                         extra_link_args=['-fopenmp'])
+                         include_dirs=[numpy.get_include()])
 
     config.add_extension("loss",
                          sources=["loss.pyx"],
-                         include_dirs=[numpy.get_include()],
-                         extra_compile_args=['-fopenmp'],
-                         extra_link_args=['-fopenmp'])
+                         include_dirs=[numpy.get_include()])
 
     config.add_extension("types",
                          sources=["types.pyx"],
