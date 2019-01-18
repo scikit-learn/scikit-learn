@@ -9,7 +9,6 @@ import os
 import platform
 import shutil
 from distutils.command.clean import clean as Clean
-from numpy.distutils.command.build_ext import build_ext
 from pkg_resources import parse_version
 import traceback
 import builtins
@@ -54,7 +53,7 @@ SETUPTOOLS_COMMANDS = set([
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
     'bdist_wininst', 'install_egg_info', 'build_sphinx',
     'egg_info', 'easy_install', 'upload', 'bdist_wheel',
-    '--single-version-externally-managed',
+    '--single-version-externally-managed', 'build_ext'
 ])
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     import setuptools
@@ -104,11 +103,11 @@ class CleanCommand(Clean):
 
 
 def get_openmp_flag(compiler):
-    if sys.platform == "win32" and compiler.startswith('ic'):
+    if sys.platform == "win32" and ('icc' in compiler or 'icl' in compiler):
         return ['/Qopenmp']
     elif sys.platform == "win32":
         return ['/openmp']
-    elif sys.platform == "darwin" and compiler.startswith('ic'):
+    elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
         return ['-openmp']
     return ['-fopenmp']
 
@@ -119,9 +118,17 @@ OPENMP_EXTENSIONS = ["sklearn.cluster._k_means_lloyd",
 
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
+# build_ext has to be imported after setuptools
+from numpy.distutils.command.build_ext import build_ext
+
+
 class build_ext_subclass(build_ext):
     def build_extensions(self):
-        compiler = self.compiler.compiler[0]
+        if hasattr(self.compiler, 'compiler'):
+            compiler = self.compiler.compiler[0]
+        else:
+            compiler = self.compiler.__class__.__name__
+
         openmp_flag = get_openmp_flag(compiler)
 
         for e in self.extensions:
