@@ -38,8 +38,7 @@ Programming (pp. 693-703). Springer, Berlin, Heidelberg.
 """    
 print(__doc__)
 
-# Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-#         Andreas Mueller <amueller@ais.uni-bonn.de>
+# Author: Daniel Lopez-Sanchez <lope@usal.es>
 # License: BSD 3 clause
 
 # Load data manipulation functions 
