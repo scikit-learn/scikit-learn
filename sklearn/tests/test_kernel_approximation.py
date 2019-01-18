@@ -24,14 +24,30 @@ Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
 def test_tensor_sketch():
-    # test that TensorSketch approximates homogeneous
-    # polynomial kernel on random data
+    # test that TensorSketch approximates polynomial
+    # kernel on random data
 
     # compute exact kernel for degree=2
     kernel = np.dot(X, Y.T)**2
 
     # approximate kernel mapping
     ts_transform = TensorSketch(n_components=1000, degree=2, random_state=42)
+    X_trans = ts_transform.fit_transform(X)
+    Y_trans = ts_transform.transform(Y)
+    kernel_approx = np.dot(X_trans, Y_trans.T)
+
+    error = kernel - kernel_approx
+    assert_less_equal(np.abs(np.mean(error)), 0.01)  # close to unbiased
+    np.abs(error, out=error)
+    assert_less_equal(np.max(error), 0.1)  # nothing too far off
+    assert_less_equal(np.mean(error), 0.05)  # mean is fairly close
+
+    # compute exact kernel for degree=3, coef0=4
+    kernel = (np.dot(X, Y.T)+4)**3
+
+    # approximate kernel mapping
+    ts_transform = TensorSketch(n_components=4000, coef0=4,
+                                degree=3, random_state=42)
     X_trans = ts_transform.fit_transform(X)
     Y_trans = ts_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)

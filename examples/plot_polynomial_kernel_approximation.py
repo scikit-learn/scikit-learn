@@ -9,7 +9,7 @@ of an Homogeneoys Polynomial kernel.
 .. currentmodule:: sklearn.kernel_approximation
 
 It shows how to use :class:`TensorSketch` and :class:`Nystroem` to
-approximate the feature map of an Homogeneous Polynomial kernel for
+approximate the feature map of a polynomial kernel for
 classification with an SVM on the digits dataset. Results using a linear
 SVM in the original space, a linear SVM using the approximate mappings
 and a kernelized SVM are compared.

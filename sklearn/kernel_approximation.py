@@ -24,15 +24,19 @@ from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
 class TensorSketch(BaseEstimator, TransformerMixin):
-    """Tensor Sketch [1] approximates the feature map of the homogeneous
-    polynomial kernel by efficiently computing a Count Sketch [2]
+    """Tensor Sketch [1] approximates the feature map of the polynomial
+    kernel by efficiently computing a Count Sketch [2]
     of the outer product of a vector with itself.
 
     Parameters
     ----------
     degree : int
         Degree of the homogeneous polynomial kernel whose feature map
-        will be approximated. The kernel is K(x,y) = <x,y>^d.
+        will be approximated. The kernel is K(x,y) = <x,y+coef0>^degree.
+
+    coef0 : int
+        Constant term of the polynomial kernel whose feature map
+        will be approximated. The kernel is K(x,y) = <x,y+coef0>^degree.
 
     n_components : int
         Dimensionality of the output feature space.
@@ -76,9 +80,10 @@ class TensorSketch(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, degree=2, n_components=100, random_state=None):
+    def __init__(self, degree=2, coef0=0, n_components=100, random_state=None):
 
         self.degree = degree
+        self.coef0 = coef0
         self.n_components = n_components
         self.random_state = random_state
 
@@ -90,7 +95,7 @@ class TensorSketch(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like}, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -100,8 +105,12 @@ class TensorSketch(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X)
         random_state = check_random_state(self.random_state)
+
+        if self.coef0 != 0:
+            X = np.hstack([X, np.sqrt(self.coef0)*np.ones((X.shape[0], 1))])
+
         n_features = X.shape[1]
 
         self.indexHash_ = random_state.randint(0, high=self.n_components,
@@ -117,7 +126,7 @@ class TensorSketch(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like}, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -127,7 +136,10 @@ class TensorSketch(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self, 'indexHash_')
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X)
+
+        if self.coef0 != 0:
+            X = np.hstack([X, np.sqrt(self.coef0)*np.ones((X.shape[0], 1))])
 
         if X.shape[1] != self.indexHash_.shape[1]:
             raise ValueError("Number of features of test samples does not"
