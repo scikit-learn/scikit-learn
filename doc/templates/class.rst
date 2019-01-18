@@ -3,8 +3,6 @@
 
 .. currentmodule:: {{ module }}
 
-.. default-role:: meth
-
 .. autoclass:: {{ objname }}
 
    {% block methods %}

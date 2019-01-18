@@ -1,7 +1,5 @@
 .. include:: _contributors.rst
 
-.. default-role:: term
-
 .. currentmodule:: sklearn
 
  .. _changes_0_20_3:
