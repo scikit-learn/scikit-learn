@@ -143,8 +143,7 @@ cdef class Splitter:
         Y_DTYPE_C [::1] ordered_hessians
         Y_DTYPE_C sum_gradients
         Y_DTYPE_C sum_hessians
-        unsigned char constant_hessian
-        Y_DTYPE_C constant_hessian_value
+        unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
         unsigned int min_samples_leaf
@@ -172,15 +171,11 @@ cdef class Splitter:
         # for root node, gradients and hessians are already ordered
         self.ordered_gradients = gradients.copy()
         self.ordered_hessians = hessians.copy()
-        self.constant_hessian = hessians.shape[0] == 1
+        self.hessians_are_constant = hessians.shape[0] == 1
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
         self.min_samples_leaf = min_samples_leaf
         self.min_gain_to_split = min_gain_to_split
-        if self.constant_hessian:
-            self.constant_hessian_value = hessians[0]  # 1 scalar
-        else:
-            self.constant_hessian_value = 1.  # won't be used anyway
 
         # The partition array maps each sample index into the leaves of the
         # tree (a leaf in this context is a node that isn't splitted yet, not
@@ -394,7 +389,7 @@ cdef class Splitter:
             # for root) Ordering the gradients and hessians helps to improve
             # cache hit.
             if sample_indices.shape[0] != gradients.shape[0]:
-                if self.constant_hessian:
+                if self.hessians_are_constant:
                     for i in prange(n_samples, schedule='static'):
                         ordered_gradients[i] = gradients[sample_indices[i]]
                 else:
@@ -405,8 +400,8 @@ cdef class Splitter:
             # Compute sums of gradients and hessians at the node
             for i in prange(n_samples, schedule='static'):
                 sum_gradients += ordered_gradients[i]
-            if self.constant_hessian:
-                sum_hessians = self.constant_hessian_value * n_samples
+            if self.hessians_are_constant:
+                sum_hessians = n_samples
             else:
                 for i in prange(n_samples, schedule='static'):
                     sum_hessians += ordered_hessians[i]
@@ -461,7 +456,7 @@ cdef class Splitter:
                 self.ordered_hessians[:n_samples]
 
         if root_node:
-            if self.constant_hessian:
+            if self.hessians_are_constant:
                 _build_histogram_root_no_hessian(feature_idx, self.max_bins, X_binned,
                                                  ordered_gradients, histograms)
             else:
@@ -469,7 +464,7 @@ cdef class Splitter:
                                     ordered_gradients,
                                     ordered_hessians, histograms)
         else:
-            if self.constant_hessian:
+            if self.hessians_are_constant:
                 _build_histogram_no_hessian(feature_idx, self.max_bins, sample_indices,
                                             X_binned, ordered_gradients,
                                             histograms)
@@ -623,9 +618,8 @@ cdef class Splitter:
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 
-            if self.constant_hessian:
-                hessian_left += (histograms[feature_idx, bin_idx].count
-                                * self.constant_hessian_value)
+            if self.hessians_are_constant:
+                hessian_left += histograms[feature_idx, bin_idx].count
             else:
                 hessian_left += histograms[feature_idx, bin_idx].sum_hessians
             hessian_right = sum_hessians - hessian_left

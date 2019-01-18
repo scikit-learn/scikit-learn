@@ -249,7 +249,7 @@ class TreeGrower:
         n_samples = self.X_binned.shape[0]
         depth = 0
         sum_gradients = np.sum(self.splitter.gradients)
-        if self.splitter.constant_hessian:
+        if self.splitter.hessians_are_constant:
             sum_hessians = self.splitter.hessians[0] * n_samples
         else:
             sum_hessians = np.sum(self.splitter.hessians)

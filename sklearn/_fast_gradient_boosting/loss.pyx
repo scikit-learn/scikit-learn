@@ -52,7 +52,10 @@ class BaseLoss(ABC):
         """
         shape = n_samples * prediction_dim
         gradients = np.empty(shape=shape, dtype=Y_DTYPE)
-        if self.hessian_is_constant:
+        if self.hessians_are_constant:
+            # if the hessians are constant, we consider they are equal to 1.
+            # this is correct as long as we adjust the gradients. See e.g. LS
+            # loss
             hessians = np.ones(shape=1, dtype=Y_DTYPE)
         else:
             hessians = np.empty(shape=shape, dtype=Y_DTYPE)
@@ -111,7 +114,7 @@ class LeastSquares(BaseLoss):
         loss(x_i) = (y_true_i - raw_pred_i)**2
     """
 
-    hessian_is_constant = True
+    hessians_are_constant = True
 
     def __call__(self, y_true, raw_predictions, average=True):
         # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
@@ -160,7 +163,7 @@ class BinaryCrossEntropy(BaseLoss):
     See The Elements of Statistical Learning, by Hastie, Tibshirani, Friedman.
     """
 
-    hessian_is_constant = False
+    hessians_are_constant = False
     inverse_link_function = staticmethod(expit)
 
     def __call__(self, y_true, raw_predictions, average=True):
@@ -221,7 +224,7 @@ class CategoricalCrossEntropy(BaseLoss):
     cross-entropy to more than 2 classes.
     """
 
-    hessian_is_constant = False
+    hessians_are_constant = False
 
     def __call__(self, y_true, raw_predictions, average=True):
         one_hot_true = np.zeros_like(raw_predictions)
