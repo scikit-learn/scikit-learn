@@ -418,13 +418,15 @@ def roc_auc_score(y_true, y_score, labels=None,
                 y_true_multiclass = np.empty_like(y_true, dtype=np.int32)
                 for i, label in enumerate(labels):
                     y_true_multiclass[y_true == label] = i
-                y_true = y_true_multiclass
             else:
-                _, y_true = np.unique(y_true, return_inverse=True)
+                _, y_true_multiclass = np.unique(y_true, return_inverse=True)
 
             # Hand & Till (2001) implementation
             return _average_multiclass_ovo_score(
-                _binary_roc_auc_score, y_true, y_score, average=average)
+                _binary_roc_auc_score,
+                y_true_multiclass,
+                y_score,
+                average=average)
         else:
             # ovr is same as multi-label
             # Order y_true by labels
