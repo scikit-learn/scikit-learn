@@ -1311,24 +1311,24 @@ more broadly common names.
    Machine Learning Research 3: 583–617.
    `doi:10.1162/153244303321897735 <http://strehl.com/download/strehl-jmlr02.pdf>`_.
 
- * [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
-   for clusterings comparison". Proceedings of the 26th Annual International
-   Conference on Machine Learning - ICML '09.
-   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
-   ISBN 9781605585161.
-
- * [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
-   Clusterings Comparison: Variants, Properties, Normalization and
-   Correction for Chance". JMLR
-   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
-
  * `Wikipedia entry for the (normalized) Mutual Information
    <https://en.wikipedia.org/wiki/Mutual_Information>`_
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
    
- * [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
+ .. [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
+   for clusterings comparison". Proceedings of the 26th Annual International
+   Conference on Machine Learning - ICML '09.
+   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
+   ISBN 9781605585161.
+
+ .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
+   Clusterings Comparison: Variants, Properties, Normalization and
+   Correction for Chance". JMLR
+   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+   
+ .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
    detection algorithms on artificial networks". Scientific Reports 6: 30750.
    `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
@@ -1655,7 +1655,8 @@ Drawbacks
 .. _calinski_harabasz_index:
 
 Calinski-Harabasz Index
-----------------------
+-----------------------
+
 If the ground truth labels are not known, the Calinski-Harabasz index
 (:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 
@@ -1748,7 +1749,7 @@ symmetric is:
 Then the Davies-Bouldin index is defined as:
 
 .. math::
-   DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
+   DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
 
 Zero is the lowest possible score. Values closer to zero indicate a better
 partition.
@@ -1789,12 +1790,12 @@ Drawbacks
    "A Cluster Separation Measure"
    IEEE Transactions on Pattern Analysis and Machine Intelligence.
    PAMI-1 (2): 224-227.
-   `doi:10.1109/TPAMI.1979.4766909 <http://dx.doi.org/10.1109/TPAMI.1979.4766909>`_.
+   `doi:10.1109/TPAMI.1979.4766909 <https://doi.org/10.1109/TPAMI.1979.4766909>`_.
 
  * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
    "On Clustering Validation Techniques"
    Journal of Intelligent Information Systems, 17(2-3), 107-145.
-   `doi:10.1023/A:1012801612483 <http://dx.doi.org/10.1023/A:1012801612483>`_.
+   `doi:10.1023/A:1012801612483 <https://doi.org/10.1023/A:1012801612483>`_.
 
  * `Wikipedia entry for Davies-Bouldin index
    <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.

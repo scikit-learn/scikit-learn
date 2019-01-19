@@ -9,11 +9,9 @@ import pytest
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
@@ -31,7 +29,7 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
 
 
@@ -107,8 +105,8 @@ def test_labels_assignment_and_inertia():
         labels_gold[dist < mindist] = center_id
         mindist = np.minimum(dist, mindist)
     inertia_gold = mindist.sum()
-    assert_true((mindist >= 0.0).all())
-    assert_true((labels_gold != -1).all())
+    assert (mindist >= 0.0).all()
+    assert (labels_gold != -1).all()
 
     sample_weight = None
 
@@ -238,10 +236,6 @@ def test_k_means_new_centers():
 
 @if_safe_multiprocessing_with_blas
 def test_k_means_plus_plus_init_2_jobs():
-    if sys.version_info[:2] < (3, 4):
-        raise SkipTest(
-            "Possible multi-process bug with some BLAS under Python < 3.4")
-
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                 random_state=42).fit(X)
     _check_fitted_model(km)
@@ -565,9 +559,9 @@ def test_k_means_non_collapsed():
     assert_equal(len(np.unique(km.labels_)), 3)
 
     centers = km.cluster_centers_
-    assert_true(np.linalg.norm(centers[0] - centers[1]) >= 0.1)
-    assert_true(np.linalg.norm(centers[0] - centers[2]) >= 0.1)
-    assert_true(np.linalg.norm(centers[1] - centers[2]) >= 0.1)
+    assert np.linalg.norm(centers[0] - centers[1]) >= 0.1
+    assert np.linalg.norm(centers[0] - centers[2]) >= 0.1
+    assert np.linalg.norm(centers[1] - centers[2]) >= 0.1
 
 
 @pytest.mark.parametrize('algo', ['full', 'elkan'])
@@ -689,7 +683,7 @@ def test_n_init():
     failure_msg = ("Inertia %r should be decreasing"
                    " when n_init is increasing.") % list(inertia)
     for i in range(len(n_init_range) - 1):
-        assert_true(inertia[i] >= inertia[i + 1], failure_msg)
+        assert inertia[i] >= inertia[i + 1], failure_msg
 
 
 def test_k_means_function():

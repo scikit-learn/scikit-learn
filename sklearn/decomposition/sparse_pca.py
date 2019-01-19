@@ -348,7 +348,7 @@ class MiniBatchSparsePCA(SparsePCA):
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=None, method='lars', random_state=None,
                  normalize_components=False):
-        super(MiniBatchSparsePCA, self).__init__(
+        super().__init__(
             n_components=n_components, alpha=alpha, verbose=verbose,
             ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
             random_state=random_state,

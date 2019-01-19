@@ -16,7 +16,7 @@ from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
@@ -790,8 +790,8 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
