@@ -627,7 +627,7 @@ def _get_column_indices(X, key):
 
     """
     n_columns = X.shape[1]
-    
+
     if _check_key_type(key, int):
         if isinstance(key, int):
             return [key if key >= 0 else key + n_columns]
