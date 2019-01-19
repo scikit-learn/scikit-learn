@@ -25,9 +25,9 @@ from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
-from ..utils._joblib import Parallel
-from ..utils._joblib import delayed
-from ..utils._joblib import effective_n_jobs
+from ..utils import Parallel
+from ..utils import delayed
+from ..utils import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
@@ -440,23 +440,45 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
                                          metric_kwargs=metric_kwargs,
                                          batch_size=batch_size)[0]
 
-def haversine_distance(X, Y=None):
+
+def haversine_distances(X, Y=None):
     """ Compute the haversine distance between samples in X and Y
 
+    The Haversine distance is the angular distance between two points on
+    the surface of a sphere. The first distance of each point is assumed
+    to be the latitude, the second is the longitude, given in radians.
+    The dimension of the points must be 2.
 
-    This metric is used from `DistanceMetric.get_metric('haversine')`
+    .. math::
+       D(x, y) = 2\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
+                                + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+
     Parameters
     ----------
-    X : {array-like}, shape (n_samples_1, 2)
+    X : array_like, shape (n_samples_1, 2)
 
-    Y : {array-like}, shape (n_samples_2, 2)
+    Y : array_like, shape (n_samples_2, 2), optional
 
     Returns
     -------
     distance : {array}, shape (n_samples_1, n_samples_2)
-    """
 
+    Examples
+    --------
+    We want to calculate the distance between the Ezeiza Airport
+    (Buenos Aires, Argentina) and the Charles de Gaulle Airport (Paris, France)
+
+    >>> from sklearn.metrics.pairwise import haversine_distances
+    >>> bsas = [-34.83333, -58.5166646]
+    >>> paris = [49.0083899664, 2.53844117956]
+    >>> result = haversine_distances([bsas, paris])
+    >>> result * 6371000/1000
+    array([[    0.        , 11279.45379464],
+           [11279.45379464,     0.        ]])
+    """
+    from sklearn.neighbors import DistanceMetric
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
+
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
@@ -1033,7 +1055,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'cityblock': manhattan_distances,
     'cosine': cosine_distances,
     'euclidean': euclidean_distances,
-    'haversine': haversine_distance,
+    'haversine': haversine_distances,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
@@ -1056,6 +1078,7 @@ def distance_metrics():
     'cityblock'      metrics.pairwise.manhattan_distances
     'cosine'         metrics.pairwise.cosine_distances
     'euclidean'      metrics.pairwise.euclidean_distances
+    'haversine'      metrics.pairwise.haversine_distances
     'l1'             metrics.pairwise.manhattan_distances
     'l2'             metrics.pairwise.euclidean_distances
     'manhattan'      metrics.pairwise.manhattan_distances
