@@ -33,7 +33,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
-from ..preprocessing import LabelBinarizer, label_binarize, LabelEncoder
+from ..preprocessing import LabelBinarizer, label_binarize
 
 from .base import _average_binary_score, _average_multiclass_ovo_score
 
@@ -414,7 +414,6 @@ def roc_auc_score(y_true, y_score, labels=None,
                 raise ValueError("Parameter 'sample_weight' is not supported"
                                  " for multiclass one-vs-one ROC AUC."
                                  " 'sample_weight' must be None in this case.")
-            # Hand & Till (2001) implementation
             if labels is not None:
                 y_true_multiclass = np.empty_like(y_true, dtype=np.int32)
                 for i, label in enumerate(labels):
@@ -422,6 +421,8 @@ def roc_auc_score(y_true, y_score, labels=None,
                 y_true = y_true_multiclass
             else:
                 _, y_true = np.unique(y_true, return_inverse=True)
+
+            # Hand & Till (2001) implementation
             return _average_multiclass_ovo_score(
                 _binary_roc_auc_score, y_true, y_score, average=average)
         else:
