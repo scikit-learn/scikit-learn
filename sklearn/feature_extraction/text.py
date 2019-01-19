@@ -1205,12 +1205,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     References
     ----------
 
-    .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
-                   Information Retrieval. Addison Wesley, pp. 68-74.`
+    .. [Yates2011] R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
+                   Information Retrieval. Addison Wesley, pp. 68-74.
 
-    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schütze  (2008).
+    .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
                    Introduction to Information Retrieval. Cambridge University
-                   Press, pp. 118-120.`
+                   Press, pp. 118-120.
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
