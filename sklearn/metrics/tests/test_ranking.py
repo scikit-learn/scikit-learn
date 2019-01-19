@@ -528,7 +528,8 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
     "y_true, labels",
     [(np.array([0, 1, 2, 2]), None),
      (["a", "b", "c", "c"], None),
-     (["c", "b", "a", "a"], ["c", "b", "a"])])
+     (["c", "b", "a", "a"], ["c", "b", "a"]),
+     (["c", "a", "b", "b"], ["c", "a", "b"])])
 def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     # Tests the unweighted, one-vs-rest multiclass ROC AUC algorithm
     # on a small example, representative of an expected use case.

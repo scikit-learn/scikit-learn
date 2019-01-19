@@ -33,7 +33,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
-from ..preprocessing import LabelBinarizer, label_binarize
+from ..preprocessing import LabelBinarizer, label_binarize, LabelEncoder
 
 from .base import _average_binary_score, _average_multiclass_ovo_score
 
@@ -427,10 +427,13 @@ def roc_auc_score(y_true, y_score, labels=None,
         else:
             # ovr is same as multi-label
             # Order y_true by labels
+            lb = LabelBinarizer()
             if labels is not None:
-                for i, label in enumerate(labels):
-                    y_true[y_true == label] = i
-            y_true_multilabel = LabelBinarizer().fit_transform(y_true)
+                lb.fit(labels)
+                lb.classes_ = labels
+            else:
+                lb.fit(y_true)
+            y_true_multilabel = lb.transform(y_true)
             return _average_binary_score(
                  _binary_roc_auc_score, y_true_multilabel, y_score, average,
                  sample_weight=sample_weight)
