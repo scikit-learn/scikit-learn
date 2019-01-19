@@ -63,7 +63,14 @@ class CustomReferencesResolver(ReferencesResolver):
 
 
 def setup(app):
-    post_transforms = app.registry.get_post_transforms()
+
+    if (hasattr(app.registry, "get_post_transforms")
+            and callable(app.registry.get_post_transforms)):
+        post_transforms = app.registry.get_post_transforms()
+    else:
+        # Support sphinx 1.6.*
+        post_transforms = app.post_transforms
+
     for i, transform_class in enumerate(post_transforms):
         if transform_class == ReferencesResolver:
             post_transforms[i] = CustomReferencesResolver
