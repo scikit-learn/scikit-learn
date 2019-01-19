@@ -450,6 +450,23 @@ def test_scaler_2d_arrays():
     assert X_scaled is not X
 
 
+def test_scaler_float16_overflow():
+    # Test if the scaler will not overflow on float16 numpy arrays
+    rng = np.random.RandomState(0)
+    # float16 has a maximum of 65500.0. On the worst case 5 * 200000 is 100000
+    # which is enough to overflow the data type
+    X = rng.uniform(5, 10, [200_000, 1]).astype(np.float16)
+
+    with np.errstate(over='raise'):
+        scaler = StandardScaler().fit(X)
+        X_scaled = scaler.transform(X)
+
+    # Overflow calculations may cause -inf, inf, or nan. Since there is no nan
+    # input, all of the outputs should be finite. This may be redundant since a
+    # FloatingPointError exception will be thrown on overflow above.
+    assert np.all(np.isfinite(X_scaled))
+
+
 def test_handle_zeros_in_scale():
     s1 = np.array([0, 1, 2, 3])
     s2 = _handle_zeros_in_scale(s1, copy=True)
