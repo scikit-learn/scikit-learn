@@ -157,7 +157,7 @@ def test_baseline_binary_crossentropy():
         baseline_prediction = loss.get_baseline_prediction(y_train, 1)
         assert_all_finite(baseline_prediction)
         assert_almost_equal(loss.inverse_link_function(baseline_prediction),
-                            y_train[0])
+                            y_train[0], decimal=6)
 
     # Make sure baseline prediction is equal to link_function(p), where p
     # is the proba of the positive class. We want predict_proba() to return p,
