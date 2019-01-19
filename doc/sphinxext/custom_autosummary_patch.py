@@ -3,7 +3,7 @@
 class name.
 
 Assumptions:
-1. Class names always have a capitalized name.
+1. Class names always begins with a capitalized letter.
 2. If a function name matches a class name (case-insensitive), then it is the
 only function that matches.
 """
