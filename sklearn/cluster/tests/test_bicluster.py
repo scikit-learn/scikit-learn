@@ -249,6 +249,7 @@ def test_compare_svd_methods():
     assert_array_equal(model_rand.column_labels_,
                        model_arpack.column_labels_)
 
+
 def test_errors():
     data = np.arange(25).reshape((5, 5))
 
