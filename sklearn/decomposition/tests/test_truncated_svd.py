@@ -177,7 +177,7 @@ def test_singular_values():
 
     apca = TruncatedSVD(n_components=2, algorithm='arpack',
                         random_state=rng).fit(X)
-    rpca = TruncatedSVD(n_components=2, algorithm='arpack',
+    rpca = TruncatedSVD(n_components=2, algorithm='randomized',
                         random_state=rng).fit(X)
     assert_array_almost_equal(apca.singular_values_, rpca.singular_values_, 12)
 
