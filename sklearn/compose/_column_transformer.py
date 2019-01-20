@@ -628,7 +628,8 @@ def _get_column_indices(X, key):
     """
     n_columns = X.shape[1]
 
-    if _check_key_type(key, int) or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
+    if (_check_key_type(key, int)
+            or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
         return np.atleast_1d(np.arange(n_columns)[key]).tolist()
     elif _check_key_type(key, str):
         try:
