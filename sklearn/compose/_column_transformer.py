@@ -628,14 +628,8 @@ def _get_column_indices(X, key):
     """
     n_columns = X.shape[1]
 
-    if _check_key_type(key, int):
-        if isinstance(key, int):
-            return [key if key >= 0 else key + n_columns]
-        elif isinstance(key, slice):
-            return list(range(n_columns)[key])
-        else:
-            return [idx if idx >= 0 else idx + n_columns for idx in key]
-
+    if _check_key_type(key, int) or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
+        return np.atleast_1d(np.arange(n_columns)[key]).tolist()
     elif _check_key_type(key, str):
         try:
             all_columns = list(X.columns)
@@ -658,10 +652,6 @@ def _get_column_indices(X, key):
             columns = list(key)
 
         return [all_columns.index(col) for col in columns]
-
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
-        # boolean mask
-        return list(np.arange(n_columns)[key])
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
