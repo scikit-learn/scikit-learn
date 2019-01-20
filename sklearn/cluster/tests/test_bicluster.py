@@ -231,6 +231,7 @@ def test_perfect_checkerboard():
     assert_equal(consensus_score(model.biclusters_,
                                  (rows, cols)), 1)
 
+
 def test_compare_svd_methods():
     data = np.array([[-2, -4, 2],
                      [-2, 1, 2],
