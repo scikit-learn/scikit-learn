@@ -2372,8 +2372,13 @@ def check_fit_idempotent(name, estimator_orig):
 
     # Fit for the first time
     print()
+    print('X_train')
     print(X_train)
+    print('X_test')
+    print(X_train)
+    print('y_train')
     print(y_train)
+    print('y_test')
     print(y_test)
     estimator.fit(X_train, y_train)
 
@@ -2394,7 +2399,16 @@ def check_fit_idempotent(name, estimator_orig):
                     for method in check_methods
                     if hasattr(estimator, method)}
 
-    print('second')
+    print('AFTER SECOND FIT')
+    print()
+    print('X_train')
+    print(X_train)
+    print('X_test')
+    print(X_train)
+    print('y_train')
+    print(y_train)
+    print('y_test')
+    print(y_test)
     for k, v in new_result.items():
         print(k)
         print(v)
@@ -2403,3 +2417,5 @@ def check_fit_idempotent(name, estimator_orig):
         if hasattr(estimator, method):
             print(method)
             assert_allclose_dense_sparse(result[method], new_result[method])
+
+    print('-' * 10)
