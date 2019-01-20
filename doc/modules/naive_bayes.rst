@@ -222,6 +222,37 @@ It is advisable to evaluate both models, if time permits.
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.61.5542>`_
    3rd Conf. on Email and Anti-Spam (CEAS).
 
+.. _categorical_naive_bayes:
+
+Categorical Naive Bayes
+-----------------------
+
+:class:`CategoricalNB` (CatNB) implements the categorical naive Bayes 
+algorithm for categorically distributed data. The difference between 
+``MultinomialNB`` and CatNB is that the former assumes one 
+categorical distribution for all features given a class. 
+To sample from it, one draws `n` times out of the categorical distribution
+given the respective class and increases the corresponding feature by one.
+
+CatNB, however, assumes that each feature has its own
+categorical distribution. To sample from the distribution for CatNB, one draws
+a sample :math:`x_i` for each feature :math:`i` out of the specific set of categories for 
+the specific feature :math:`i`, which are categorically distributed, given the 
+respective class :math:`y`.
+
+Mathematically, the distribution :math:`P(x_i \mid y)` can be seen to be
+further parametrized by a paramater :math:`\theta_i`, that determines the categorical
+distribution to choose from:
+
+.. math::
+
+    P(x_i \mid y) = P(x_i \mid y ; \theta_i),
+
+where :math:`\theta_i` depends on the index :math:`i` of the sample :math:`x_i`.
+
+It is therefore possible and common that each categorical distribtuion, which
+is parametrized by :math:`\theta_i`, has its own unique set of categories.
+
 
 Out-of-core naive Bayes model fitting
 -------------------------------------
