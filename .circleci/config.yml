@@ -117,6 +117,7 @@ workflows:
             branches:
               only:
                 - 0.20.X
+                - /.*pypy.*/
       - deploy:
           requires:
             - doc
