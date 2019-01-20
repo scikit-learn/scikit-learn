@@ -238,33 +238,32 @@ def _yield_outliers_checks(name, estimator):
 
 
 def _yield_all_checks(name, estimator):
-    # for check in _yield_non_meta_checks(name, estimator):
-    #      yield check
-    # if is_classifier(estimator):
-    #     for check in _yield_classifier_checks(name, estimator):
-    #         yield check
-    # if is_regressor(estimator):
-    #     for check in _yield_regressor_checks(name, estimator):
-    #         yield check
-    # if hasattr(estimator, 'transform'):
-    #     for check in _yield_transformer_checks(name, estimator):
-    #         yield check
-    # if isinstance(estimator, ClusterMixin):
-    #     for check in _yield_clustering_checks(name, estimator):
-    #         yield check
-    # if is_outlier_detector(estimator):
-    #     for check in _yield_outliers_checks(name, estimator):
-    #         yield check
-    # yield check_fit2d_predict1d
-    # yield check_methods_subset_invariance
-    # yield check_fit2d_1sample
-    # yield check_fit2d_1feature
-    # yield check_fit1d
-    # yield check_get_params_invariance
-    # yield check_set_params
-    # yield check_dict_unchanged
-    # yield check_dont_overwrite_parameters
-    yield check_fit_idempotent
+    for check in _yield_non_meta_checks(name, estimator):
+        yield check
+    if is_classifier(estimator):
+        for check in _yield_classifier_checks(name, estimator):
+            yield check
+    if is_regressor(estimator):
+        for check in _yield_regressor_checks(name, estimator):
+            yield check
+    if hasattr(estimator, 'transform'):
+        for check in _yield_transformer_checks(name, estimator):
+            yield check
+    if isinstance(estimator, ClusterMixin):
+        for check in _yield_clustering_checks(name, estimator):
+            yield check
+    if is_outlier_detector(estimator):
+        for check in _yield_outliers_checks(name, estimator):
+            yield check
+    yield check_fit2d_predict1d
+    yield check_methods_subset_invariance
+    yield check_fit2d_1sample
+    yield check_fit2d_1feature
+    yield check_fit1d
+    yield check_get_params_invariance
+    yield check_set_params
+    yield check_dict_unchanged
+    yield check_dont_overwrite_parameters
     yield check_fit_idempotent
 
 
@@ -2294,9 +2293,6 @@ def check_decision_proba_consistency(name, estimator_orig):
 
     if (hasattr(estimator, "decision_function") and
             hasattr(estimator, "predict_proba")):
-
-        from scipy.special import expit
-        from numpy.testing import assert_array_almost_equal
 
         estimator.fit(X, y)
         a = estimator.predict_proba(X_test)[:, 1]
