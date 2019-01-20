@@ -186,9 +186,11 @@ def test_should_stop():
 
 
 @pytest.mark.parametrize('Estimator', (
-    FastGradientBoostingRegressor(),
+    # FastGradientBoostingRegressor(),
     FastGradientBoostingClassifier(),
     ))
 def test_estimator_checks(Estimator):
     # Run the check_estimator() test suite on GBRegressor and GBClassifier.
-    check_estimator(Estimator)
+    for _ in range(100):
+        print(_)
+        check_estimator(Estimator)
