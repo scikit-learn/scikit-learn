@@ -97,6 +97,10 @@ def test_non_meta_estimators(name, Estimator, check):
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         estimator = Estimator()
+        from sklearn._fast_gradient_boosting.gradient_boosting import BaseFastGradientBoosting
+        if not isinstance(estimator, BaseFastGradientBoosting):
+            return
+
         set_checking_parameters(estimator)
         check(name, estimator)
 
