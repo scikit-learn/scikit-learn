@@ -37,6 +37,8 @@ from .externals import six
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
 
+_old_numpy = parse_version(np.__version__) < parse_version('1.9.0')
+
 
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
     """Abstract base class for naive Bayes estimators"""
@@ -1022,15 +1024,16 @@ class CategoricalNB(BaseDiscreteNB):
     class_log_prior_ : array, shape (n_classes, )
         Smoothed empirical log probability for each class.
 
-    feature_log_prob_ : array, shape (n_classes, n_features)
-        Empirical log probability of features
-        given a class, ``P(x_i|y)``.
+    feature_log_prob_ : list of arrays, len n_features
+        Holds arrays of shape (n_classes, n_categories of respective feature)
+        for each feature. Each array provides the empirical log probability
+        of categories given the respective feature and class, ``P(x_i|y)``.
 
     class_count_ : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    category_count_ : dict of arrays, len n_features
+    category_count_ : list of arrays, len n_features
         Holds arrays of shape (n_classes, n_categories of respective feature)
         for each feature. Each array provides the number of samples
         encountered for each class and category of the specific feature.
@@ -1052,15 +1055,13 @@ class CategoricalNB(BaseDiscreteNB):
     [3]
     """
 
-    old_numpy_ = parse_version(np.__version__) < parse_version('1.9.0')
-
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
                  handle_unknown='warn'):
-        if CategoricalNB.old_numpy_:
+        if _old_numpy:
             warnings.warn(
-                ('numpy is older than 1.9.0. Therefore assure that X is'
-                 'castable to int without loss of information and all '
-                 'features of X are greater or equal 0.'))
+                'numpy is older than 1.9.0. Therefore assure that X is'
+                'castable to int without loss of information and all '
+                'features of X are greater or equal 0.')
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -1128,7 +1129,7 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _check_input(self, X, Y=None):
         if Y is None:
-            if CategoricalNB.old_numpy_:
+            if _old_numpy:
                 X = check_array(X, accept_sparse=False)
                 if not np.isfinite(X).all():
                     raise ValueError("Input contains NaN or infinity.")
@@ -1136,7 +1137,7 @@ class CategoricalNB(BaseDiscreteNB):
             else:
                 return check_array(X, accept_sparse=False)
         else:
-            if CategoricalNB.old_numpy_:
+            if _old_numpy:
                 X, Y = check_X_y(X, Y, accept_sparse=False)
                 if not np.isfinite(X).all():
                     raise ValueError("Input contains NaN or infinity.")
@@ -1147,10 +1148,9 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.category_count_ = {i: np.zeros((self.class_count_.shape[0], 0))
-                                for i in range(n_features)}
-        self.feature_cat_index_mapping_ = {i: dict() for i in
-                                           range(n_features)}
+        self.category_count_ = [np.zeros((self.class_count_.shape[0], 0))
+                                for _ in range(n_features)]
+        self.feature_cat_index_mapping_ = [{} for _ in range(n_features)]
 
     def _count(self, X, Y):
         if np.any((X.data if issparse(X) else X) < 0):
@@ -1169,7 +1169,7 @@ class CategoricalNB(BaseDiscreteNB):
                                         self.category_count_[i])
 
     def _count_categories(self, X_feature):
-        if CategoricalNB.old_numpy_:
+        if _old_numpy:
             bins = np.bincount(X_feature)
             non_zero_bins = np.nonzero(bins)[0]
             return non_zero_bins, bins[non_zero_bins]
@@ -1177,7 +1177,7 @@ class CategoricalNB(BaseDiscreteNB):
             return np.unique(X_feature, return_counts=True)
 
     def _update_mapping(self, cat_mapping, categories):
-        for category in np.nditer(categories):
+        for category in categories:
             category = float(category)
             if category not in cat_mapping:
                 cat_mapping[category] = len(cat_mapping)
@@ -1195,10 +1195,10 @@ class CategoricalNB(BaseDiscreteNB):
             X_feature_class = X_feature[Y[:, j] == 1]
             if len(X_feature_class) == 0:
                 continue
-            class_cats, n_feature_class = \
-                self._count_categories(X_feature_class)
+            class_cats, n_feature_class = (
+                self._count_categories(X_feature_class))
             indices = [cat_mapping[float(category)] for category
-                       in np.nditer(class_cats)]
+                       in class_cats]
             cat_count[j, indices] = n_feature_class
 
     def _update_feature_log_prob(self, alpha):
