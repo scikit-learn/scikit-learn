@@ -1020,7 +1020,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
 
             neigh.fit(X[:, feature_sl])
             results[algorithm] = neigh.kneighbors(test[:, feature_sl],
-                                                   return_distance=True)
+                                                  return_distance=True)
 
         assert_array_almost_equal(results['brute'][0], results['ball_tree'][0])
         assert_array_almost_equal(results['brute'][1], results['ball_tree'][1])
@@ -1064,7 +1064,7 @@ def test_valid_brute_metric_for_auto_algorithm():
     require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
     for metric in VALID_METRICS['brute']:
         if metric != 'precomputed' and metric not in require_params:
-            if  metric != 'haversine':
+            if metric != 'haversine':
                 nn = neighbors.NearestNeighbors(n_neighbors=3,
                                                 algorithm='auto',
                                                 metric=metric).fit(X)
