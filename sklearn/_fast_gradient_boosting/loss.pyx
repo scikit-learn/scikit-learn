@@ -290,7 +290,7 @@ cdef void _update_gradients_hessians_categorical_crossentropy(
 
 
 cdef inline Y_DTYPE_C cexpit(const Y_DTYPE_C x) nogil:
-    return 1. / (1 + exp(-x))
+    return 1. / (1. + exp(-x))
 
 
 cdef inline Y_DTYPE_C clogsumexp(
@@ -310,7 +310,6 @@ cdef inline Y_DTYPE_C clogsumexp(
     for k in range(a.shape[1]):
         out += exp(a[row, k] - amax)
     return log(out) + amax
-
 
 
 _LOSSES = {

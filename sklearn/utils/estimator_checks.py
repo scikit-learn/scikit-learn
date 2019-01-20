@@ -2297,6 +2297,10 @@ def check_decision_proba_consistency(name, estimator_orig):
         estimator.fit(X, y)
         a = estimator.predict_proba(X_test)[:, 1]
         b = estimator.decision_function(X_test)
+        # truncate arrays to the 10th decimal to avoid rank discrepancies that
+        # woulde caused by floating point precision issue
+        a = np.around(a, decimals=10)
+        b = np.around(b, decimals=10)
         assert_array_equal(rankdata(a), rankdata(b))
 
 
