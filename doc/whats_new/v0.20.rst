@@ -22,6 +22,13 @@ Changelog
   threaded when `n_jobs > 1` or `n_jobs = -1`.
   :issue:`12949` by :user:`Prabakaran Kumaresshan <nixphix>`.
 
+:mod:`sklearn.decomposition`
+...........................
+
+- |Fix| Fixed a bug in :func:`decomposition.sparse_encode` where computation was single
+  threaded when `n_jobs > 1` or `n_jobs = -1`.
+  :issue:`13005` by :user:`Prabakaran Kumaresshan <nixphix>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
