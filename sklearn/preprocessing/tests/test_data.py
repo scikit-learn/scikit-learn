@@ -455,7 +455,7 @@ def test_scaler_float16_overflow():
     rng = np.random.RandomState(0)
     # float16 has a maximum of 65500.0. On the worst case 5 * 200000 is 100000
     # which is enough to overflow the data type
-    X = rng.uniform(5, 10, [200_000, 1]).astype(np.float16)
+    X = rng.uniform(5, 10, [200000, 1]).astype(np.float16)
 
     with np.errstate(over='raise'):
         scaler = StandardScaler().fit(X)

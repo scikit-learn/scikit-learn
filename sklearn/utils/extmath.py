@@ -750,8 +750,8 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count):
     if last_variance is None:
         updated_variance = None
     else:
-        new_unnormalized_variance = \
-            _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count
+        new_unnormalized_variance = (
+            _safe_accumulator_op(np.nanvar, X, axis=0) * new_sample_count)
         last_unnormalized_variance = last_variance * last_sample_count
 
         with np.errstate(divide='ignore', invalid='ignore'):
