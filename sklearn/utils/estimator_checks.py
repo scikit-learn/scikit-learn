@@ -2381,14 +2381,19 @@ def check_fit_idempotent(name, estimator_orig):
               for method in check_methods
               if hasattr(estimator, method)}
 
-    print(result['predict'])
-    print(result['predict_proba'])
+
+    for k, v in result.items():
+        print(k)
+        print(v)
 
     # Fit again
     set_random_state(estimator, random_state=0)
     estimator.fit(X_train, y_train)
 
+    print('second')
     for method in check_methods:
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(X_test)
+            print(method)
+            print(new_result)
             assert_allclose_dense_sparse(result[method], new_result)
