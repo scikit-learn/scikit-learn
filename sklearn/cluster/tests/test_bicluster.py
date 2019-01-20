@@ -246,7 +246,7 @@ def test_compare_svd_methods():
                                         random_state=0)
     model_arpack.fit(data)
 
-    assert_array_equal(model_rand.column_labels_, 
+    assert_array_equal(model_rand.column_labels_,
                        model_arpack.column_labels_)
 
 def test_errors():
