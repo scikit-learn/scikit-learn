@@ -136,6 +136,10 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
             u, _, vt = randomized_svd(array, n_components,
                                       random_state=self.random_state,
                                       **kwargs)
+            assert_all_finite(u)
+            assert_all_finite(vt)
+            u = u[:, n_discard:]
+            vt = vt[n_discard:]
 
         elif self.svd_method == 'arpack':
             u, _, vt = svds(array, k=n_components, ncv=self.n_svd_vecs)
@@ -156,10 +160,11 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                 v0 = random_state.uniform(-1, 1, A.shape[0])
                 _, u = eigsh(A, ncv=self.n_svd_vecs, v0=v0)
 
-        assert_all_finite(u)
-        assert_all_finite(vt)
-        u = u[:, n_discard:]
-        vt = vt[n_discard:]
+            assert_all_finite(u)
+            assert_all_finite(vt)
+            u = u[:, :-n_discard]
+            vt = vt[:-n_discard]
+
         return u, vt.T
 
     def _k_means(self, data, n_clusters):
