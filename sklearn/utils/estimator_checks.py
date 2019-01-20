@@ -2390,10 +2390,16 @@ def check_fit_idempotent(name, estimator_orig):
     set_random_state(estimator, random_state=0)
     estimator.fit(X_train, y_train)
 
+    new_result = {method: getattr(estimator, method)(X_test)
+                    for method in check_methods
+                    if hasattr(estimator, method)}
+
     print('second')
+    for k, v in new_result.items():
+        print(k)
+        print(v)
+
     for method in check_methods:
         if hasattr(estimator, method):
-            new_result = getattr(estimator, method)(X_test)
             print(method)
-            print(new_result)
-            assert_allclose_dense_sparse(result[method], new_result)
+            assert_allclose_dense_sparse(result[method], new_result[method])
