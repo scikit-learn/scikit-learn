@@ -6,6 +6,8 @@ Assumptions:
 1. Class names always begins with a capitalized letter.
 2. If a function name matches a class name (case-insensitive), then it is the
 only function that matches.
+3. Classes are generated first. This guaranteed by:
+https://github.com/sphinx-doc/sphinx/blob/v1.6.2/sphinx/ext/autosummary/generate.py#L153
 """
 import os
 import inspect
