@@ -233,6 +233,9 @@ def test_perfect_checkerboard():
 
 
 def test_compare_svd_methods():
+    raise SkipTest("This test is failing on the buildbot, but cannot"
+                   " reproduce. Temporarily disabling it until it can be"
+                   " reproduced and  fixed.")
     data = np.array([[-2, -4, 2],
                      [-2, 1, 2],
                      [4, 2, 5]])

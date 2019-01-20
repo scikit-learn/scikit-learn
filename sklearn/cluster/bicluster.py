@@ -160,7 +160,6 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
         assert_all_finite(vt)
         u = u[:, n_discard:]
         vt = vt[n_discard:]
-
         return u, vt.T
 
     def _k_means(self, data, n_clusters):
