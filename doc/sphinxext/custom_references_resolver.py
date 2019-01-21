@@ -76,8 +76,10 @@ class CustomReferencesResolver(ReferencesResolver):
                     if res and isinstance(res[0], nodes.Element):
                         result = ('%s:%s' % (domain.name, role), res)
                         return self.create_node(result)
-        # no results
-        return None
+
+        # no results considered to be double backticked
+        contnode['classes'] = []
+        return contnode
 
     def create_node(self, result):
         res_role, newnode = result
