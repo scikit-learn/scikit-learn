@@ -242,7 +242,7 @@ def _logistic_grad_hess(w, X, y, alpha, sample_weight=None):
     return grad, Hs
 
 
-def _multinomial_loss(w, X, Y, alpha, sample_weight):
+def _multinomial_loss(w, X, Y, alpha, sample_weight=None):
     """Computes multinomial loss and class probabilities.
 
     Parameters
@@ -284,7 +284,10 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
     n_features = X.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
     w = w.reshape(n_classes, -1)
-    sample_weight = sample_weight[:, np.newaxis]
+    if sample_weight is None:
+        sample_weight = np.ones((X.shape[0], 1))
+    else:
+        sample_weight = sample_weight.reshape((-1, 1))
     if fit_intercept:
         intercept = w[:, -1]
         w = w[:, :-1]
@@ -299,7 +302,7 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
     return loss, p, w
 
 
-def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
+def _multinomial_loss_grad(w, X, Y, alpha, sample_weight=None):
     """Computes the multinomial loss, gradient and class probabilities.
 
     Parameters
@@ -342,8 +345,11 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     fit_intercept = (w.size == n_classes * (n_features + 1))
     grad = np.zeros((n_classes, n_features + bool(fit_intercept)),
                     dtype=X.dtype)
+    if sample_weight is None:
+        sample_weight = np.ones((X.shape[0], 1))
+    else:
+        sample_weight = sample_weight.reshape((-1, 1))
     loss, p, w = _multinomial_loss(w, X, Y, alpha, sample_weight)
-    sample_weight = sample_weight[:, np.newaxis]
     diff = sample_weight * (p - Y)
     grad[:, :n_features] = safe_sparse_dot(diff.T, X)
     grad[:, :n_features] += alpha * w
@@ -352,7 +358,7 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     return loss, grad.ravel(), p
 
 
-def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
+def _multinomial_grad_hess(w, X, Y, alpha, sample_weight=None):
     """
     Computes the gradient and the Hessian, in the case of a multinomial loss.
 
@@ -394,10 +400,14 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
     n_classes = Y.shape[1]
     fit_intercept = w.size == (n_classes * (n_features + 1))
 
+    if sample_weight is None:
+        sample_weight = np.ones((X.shape[0], 1))
+    else:
+        sample_weight = sample_weight.reshape((-1, 1))
+
     # `loss` is unused. Refactoring to avoid computing it does not
     # significantly speed up the computation and decreases readability
     loss, grad, p = _multinomial_loss_grad(w, X, Y, alpha, sample_weight)
-    sample_weight = sample_weight[:, np.newaxis]
 
     # Hessian-vector product derived by applying the R-operator on the gradient
     # of the multinomial loss function.
