@@ -461,10 +461,18 @@ def test_scaler_float16_overflow():
         scaler = StandardScaler().fit(X)
         X_scaled = scaler.transform(X)
 
+    # Calculate the float64 equivalent to verify result
+    X_scaled_f64 = StandardScaler().fit_transform(X.astype(np.float64))
+
     # Overflow calculations may cause -inf, inf, or nan. Since there is no nan
     # input, all of the outputs should be finite. This may be redundant since a
     # FloatingPointError exception will be thrown on overflow above.
     assert np.all(np.isfinite(X_scaled))
+
+    # The normal distribution is very unlikely to go above 4. At 4.0-8.0 the
+    # float16 precision is 2^-8 which is around 0.004. Thus only 2 decimals are
+    # checked to account for precision differences.
+    assert_array_almost_equal(X_scaled, X_scaled_f64, decimal=2)
 
 
 def test_handle_zeros_in_scale():
