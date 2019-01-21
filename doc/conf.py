@@ -104,6 +104,9 @@ exclude_patterns = ['_build', 'templates', 'includes', 'themes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
+# sklearn uses a custom extension: `custom_references_resolver` to modify
+# the order of link resolution for the 'any' role. It resolves python class
+# links first before resolving 'std' domain links.
 default_role = 'any'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
