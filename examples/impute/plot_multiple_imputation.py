@@ -50,6 +50,10 @@ larger with multiple imputation than with single imputation.
 In Example 2 we show how to set up a prediction model using multiple
 imputation. We combine the predictions from multiple imputations and show that
 this results in better regression performance.
+
+# Authors: Rianne Schouten <r.m.schouten@uu.nl>
+           Sergey Feldman <sergeyfeldman@gmail.com>
+# License: BSD 3 clause
 """
 
 import numpy as np
