@@ -106,7 +106,8 @@ exclude_patterns = ['_build', 'templates', 'includes', 'themes']
 # documents.
 # sklearn uses a custom extension: `custom_references_resolver` to modify
 # the order of link resolution for the 'any' role. It resolves python class
-# links first before resolving 'std' domain links.
+# links first before resolving 'std' domain links. Unresolved roles are
+# considered to be <code> blocks.
 default_role = 'any'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
