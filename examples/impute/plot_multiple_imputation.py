@@ -371,8 +371,7 @@ def get_mse_single_imputation(X_train, X_test, y_train, y_test):
 
 
 # We average the predictions of the m datasets.
-def get_mse_multiple_imputation_approach(X_train, X_test,
-                                             y_train, y_test):
+def get_mse_multiple_imputation_approach(X_train, X_test, y_train, y_test):
     m = 5
     multiple_predictions = []
     for i in range(m):
@@ -420,7 +419,6 @@ def perform_simulation(dataset, X_incomplete, n_sim=10):
                 X_incomplete_train, X_incomplete_test, y_train, y_test)
         mse_multiple = get_mse_multiple_imputation_approach(
                 X_incomplete_train, X_incomplete_test, y_train, y_test)
-
 
         # Save the outcome of every simulation round
         outcome.append((mse_full, mse_single, mse_multiple))
