@@ -94,7 +94,6 @@ class CustomReferencesResolver(ReferencesResolver):
 
 
 def setup(app):
-
     if (hasattr(app.registry, "get_post_transforms")
             and callable(app.registry.get_post_transforms)):
         post_transforms = app.registry.get_post_transforms()
@@ -107,4 +106,4 @@ def setup(app):
             post_transforms[i] = CustomReferencesResolver
             break
     else:
-        raise RuntimeError
+        raise RuntimeError("ReferencesResolver not found")
