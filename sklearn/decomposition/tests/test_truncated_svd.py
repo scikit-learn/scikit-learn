@@ -185,9 +185,9 @@ def test_singular_values():
     X_apca = apca.transform(X)
     X_rpca = rpca.transform(X)
     assert_array_almost_equal(np.sum(apca.singular_values_**2.0),
-                              np.linalg.norm(X_apca, "fro")**2.0, 12)
+                              np.linalg.norm(X_apca, "fro")**2.0, 11)
     assert_array_almost_equal(np.sum(rpca.singular_values_**2.0),
-                              np.linalg.norm(X_rpca, "fro")**2.0, 12)
+                              np.linalg.norm(X_rpca, "fro")**2.0, 11)
 
     # Compare to the 2-norms of the score vectors
     assert_array_almost_equal(apca.singular_values_,
