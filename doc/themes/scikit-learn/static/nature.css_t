@@ -540,9 +540,9 @@ div.body h3 {
     padding: 5px;
     border-radius: 10px;
 }
-div.body h4 {
-    font-size: 110%;
-    background-color: #F4F4F4;
+div.body h4 { 
+    font-size: 110%; 
+    background-color: #F4F4F4; 
     padding: 5px;
     border-radius: 10px;
 }
@@ -676,12 +676,6 @@ tt, code {
     font-family: monospace;
     border: none;
     padding: none;
-}
-
-span.std-term {
-    font-size: 1.1em;
-    font-family: monospace;
-    font-weight: bold;
 }
 
 a tt {
