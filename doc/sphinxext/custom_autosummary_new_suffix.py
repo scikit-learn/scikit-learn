@@ -12,6 +12,10 @@ custom_autosummary_names_with_new_suffix = {
 }
 custom_autosummary_new_suffix = "-lowercase.rst"
 custom_autosummary_generated_dirname = os.path.join('modules', 'generated')
+
+This extension monkeypatches `os.path.join` used by
+https://github.com/sphinx-doc/sphinx/blob/7ffd6ccee8b0c6316159c4295e2f44f8c57b90d6/sphinx/ext/autosummary/generate.py#L168
+to return a filename with a new suffix.
 ```
 """
 import os
