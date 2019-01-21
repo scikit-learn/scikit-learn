@@ -110,6 +110,15 @@ cdef inline void setup_cat_cache(UINT32_t *cachebits, UINT64_t cat_split,
             for j in range(n_categories):
                 val = rand_int(0, 2, &rng_seed)
                 cachebits[j // 32] |= val << (j % 32)
+            """
+            rng_seed = cat_split >> 32
+            10
+            1111111111 bits
+            2 bytes
+            for j in range((n_categories + 31) // 32):
+                cachebits[j] = rand_int(0, 1 << 32, &rng_seed)
+            cachebits[j] &= (1 << (n_categories - (32 * j))) - 1
+            """
         else:
             # BestSplitter
             for j in range((n_categories + 31) // 32):

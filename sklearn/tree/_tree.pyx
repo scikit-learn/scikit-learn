@@ -552,7 +552,8 @@ cdef class CategoryCacheMgr:
                 free(self.bits[i])
         free(self.bits)
 
-    cdef void populate(self, Node *nodes, SIZE_t n_nodes, INT32_t *n_categories):
+    cdef void populate(self, Node *nodes, SIZE_t n_nodes,
+                       INT32_t *n_categories):
         cdef SIZE_t i
         cdef INT32_t ncat
 
@@ -566,8 +567,12 @@ cdef class CategoryCacheMgr:
             if nodes[i].left_child != _TREE_LEAF:
                 ncat = n_categories[nodes[i].feature]
                 if ncat > 0:
-                    safe_realloc(&self.bits[i], (ncat + 31) // 32, sizeof(UINT32_t))
-                    setup_cat_cache(self.bits[i], nodes[i].split_value.cat_split, ncat)
+                    safe_realloc(&self.bits[i],
+                                 (ncat + 31) // 32,
+                                 sizeof(UINT32_t))
+                    setup_cat_cache(self.bits[i],
+                                    nodes[i].split_value.cat_split,
+                                    ncat)
 
 
 # =============================================================================

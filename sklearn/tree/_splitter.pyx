@@ -340,8 +340,9 @@ cdef class BestSplitter(BaseDenseSplitter):
                                self.presort), self.__getstate__())
 
 
-    cdef void _breiman_sort_categories(self, SIZE_t start, SIZE_t end, INT32_t ncat,
-                                       SIZE_t ncat_present, const INT32_t *cat_offs,
+    cdef void _breiman_sort_categories(self, SIZE_t start, SIZE_t end,
+                                       INT32_t ncat, SIZE_t ncat_present,
+                                       const INT32_t *cat_offset,
                                        SIZE_t *sorted_cat) nogil:
         """The Breiman shortcut for finding the best split involves a
         preprocessing step wherein we sort the categories by
@@ -360,23 +361,22 @@ cdef class BestSplitter(BaseDenseSplitter):
             SIZE_t cat, localcat
             SIZE_t q, partition_end
             DTYPE_t sort_value[64]
-            DTYPE_t sort_den[64]
+            DTYPE_t sort_density[64]
 
-        for cat in range(ncat):
-            sort_value[cat] = 0
-            sort_den[cat] = 0
+        memset(sort_value, 0, 64 * sizeof(DTYPE_t))
+        memset(sort_density, 0, 64 * sizeof(DTYPE_t))
 
         for q in range(start, end):
             cat = <SIZE_t> Xf[q]
             w = sample_weight[samples[q]] if sample_weight else 1.0
             sort_value[cat] += w * (y[y_stride * samples[q]])
-            sort_den[cat] += w
+            sort_density[cat] += w
 
         for localcat in range(ncat_present):
-            cat = localcat + cat_offs[localcat]
-            if sort_den[cat] == 0:  # Avoid dividing zero by zero
-                sort_den[cat] = 1
-            sort_value[localcat] = sort_value[cat] / sort_den[cat]
+            cat = localcat + cat_offset[localcat]
+            if sort_density[cat] == 0:  # Avoid dividing zero by zero
+                sort_density[cat] = 1
+            sort_value[localcat] = sort_value[cat] / sort_density[cat]
             sorted_cat[localcat] = cat
 
         sort(&sort_value[0], sorted_cat, ncat_present)
