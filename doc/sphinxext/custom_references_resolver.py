@@ -77,7 +77,7 @@ class CustomReferencesResolver(ReferencesResolver):
                         result = ('%s:%s' % (domain.name, role), res)
                         return self.create_node(result)
 
-        # no results considered to be double backticked
+        # no results considered to be <code>
         contnode['classes'] = []
         return contnode
 
