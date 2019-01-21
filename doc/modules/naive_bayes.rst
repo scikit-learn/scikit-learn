@@ -228,17 +228,14 @@ Categorical Naive Bayes
 -----------------------
 
 :class:`CategoricalNB` (CatNB) implements the categorical naive Bayes 
-algorithm for categorically distributed data. The difference between 
-``MultinomialNB`` and CatNB is that the former assumes one 
-categorical distribution for all features given a class. 
-To sample from it, one draws `n` times out of the categorical distribution
-given the respective class and increases the corresponding feature by one.
+algorithm for categorically distributed data. It assumes that each feature, 
+which is described by the index :math:`i`, has its own categorical 
+distribution. 
 
-CatNB, however, assumes that each feature has its own
-categorical distribution. To sample from the distribution for CatNB, one draws
-a sample :math:`x_i` for each feature :math:`i` out of the specific set of categories for 
-the specific feature :math:`i`, which are categorically distributed, given the 
-respective class :math:`y`.
+To sample from the distribution for CatNB, one draws a sample
+:math:`x_i` for each feature :math:`i` out of the specific categorical distribution
+for feature :math:`i`, given class :math:`y`. It is, therefore, possible and common
+that each categorical distribution has its own unique set of categories.
 
 Mathematically, the distribution :math:`P(x_i \mid y)` can be seen to be
 further parametrized by a paramater :math:`\theta_i`, that determines the categorical
@@ -246,12 +243,9 @@ distribution to choose from:
 
 .. math::
 
-    P(x_i \mid y) = P(x_i \mid y ; \theta_i),
+    P(x_i \mid y) = P(x_i \mid y \: ;\, \theta_i),
 
-where :math:`\theta_i` depends on the index :math:`i` of the sample :math:`x_i`.
-
-It is therefore possible and common that each categorical distribtuion, which
-is parametrized by :math:`\theta_i`, has its own unique set of categories.
+where :math:`\theta_i` also depends on the feature index :math:`i` of the sample :math:`x_i`.
 
 
 Out-of-core naive Bayes model fitting
