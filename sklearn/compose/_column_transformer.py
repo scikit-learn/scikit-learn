@@ -630,7 +630,9 @@ def _get_column_indices(X, key):
 
     if (_check_key_type(key, int)
             or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
-        return np.atleast_1d(np.arange(n_columns)[key]).tolist()
+        # Convert key into positive indexes
+        idx = np.arange(n_columns)[key]
+        return np.atleast_1d(idx).tolist()
     elif _check_key_type(key, str):
         try:
             all_columns = list(X.columns)
