@@ -71,6 +71,9 @@ jobs:
       - run:
           name: flake8
           command: ./build_tools/circle/flake8_diff.sh
+      - run:
+          name: check_pypy_marker
+          command: ./build_tools/circle/check_pypy_marker.sh
 
   pypy3:
     docker:
@@ -112,11 +115,6 @@ workflows:
       - doc
       - doc-min-dependencies
       - lint
-      - pypy3:
-          filters:
-            branches:
-              only:
-                - 0.20.X
       - deploy:
           requires:
             - doc
