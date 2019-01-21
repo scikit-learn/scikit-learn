@@ -106,3 +106,5 @@ def setup(app):
         if transform_class == ReferencesResolver:
             post_transforms[i] = CustomReferencesResolver
             break
+    else:
+        raise RuntimeError
