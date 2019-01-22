@@ -69,8 +69,8 @@ from sklearn.metrics import mean_squared_error as mse
 
 rng = np.random.RandomState(0)
 
-N_ITER = 25  # number of iterations in IterativeImputer
-N_SIM = 5  # number of simulations in Example 2
+N_ITER = 20  # number of iterations in IterativeImputer
+N_SIM = 3  # number of simulations in Example 2
 
 
 # Start by defining a basic amputation function
