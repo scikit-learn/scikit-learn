@@ -1178,7 +1178,7 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _update_mapping(self, cat_mapping, categories):
         for category in categories:
-            category = float(category)
+            category = category
             if category not in cat_mapping:
                 cat_mapping[category] = len(cat_mapping)
 
@@ -1197,7 +1197,7 @@ class CategoricalNB(BaseDiscreteNB):
                 continue
             class_cats, n_feature_class = (
                 self._count_categories(X_feature_class))
-            indices = [cat_mapping[float(category)] for category
+            indices = [cat_mapping[category] for category
                        in class_cats]
             cat_count[j, indices] = n_feature_class
 
@@ -1220,10 +1220,10 @@ class CategoricalNB(BaseDiscreteNB):
         for i in range(self.n_features_):
             X_feature = X[:, i]
             indices = []
-            for sample, category in enumerate(np.nditer(X_feature)):
+            for sample, category in enumerate(X_feature):
                 try:
                     indices.append(
-                        self.feature_cat_index_mapping_[i][float(category)])
+                        self.feature_cat_index_mapping_[i][category])
                 except KeyError:
                     if self.handle_unknown == 'warn':
                         warnings.warn(
