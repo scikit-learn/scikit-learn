@@ -1009,9 +1009,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         raise ValueError("Tolerance for stopping criteria must be "
                          "positive; got (tol=%r)" % tol)
 
-    if init == "warn" and n_components < n_features:
-        warnings.warn("The default value of init will change from "
-                      "random to None in 0.23.", FutureWarning)
+    if init == "warn":
+        if n_components < n_features:
+            warnings.warn("The default value of init will change from "
+                          "random to None in 0.23.", FutureWarning)
         init = "random"
 
     # check W and H, or initialize them
