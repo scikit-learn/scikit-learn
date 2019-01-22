@@ -382,8 +382,8 @@ def test_nmf_negative_beta_loss():
 
     def _assert_nmf_no_nan(X, beta_loss):
         W, H, _ = non_negative_factorization(
-            X, n_components=n_components, solver='mu', beta_loss=beta_loss,
-            random_state=0, max_iter=1000)
+            X, init='random', n_components=n_components, solver='mu',
+            beta_loss=beta_loss, random_state=0, max_iter=1000)
         assert not np.any(np.isnan(W))
         assert not np.any(np.isnan(H))
 
