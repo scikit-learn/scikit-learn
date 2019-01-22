@@ -238,32 +238,32 @@ def _yield_outliers_checks(name, estimator):
 
 
 def _yield_all_checks(name, estimator):
-    # for check in _yield_non_meta_checks(name, estimator):
-    #     yield check
-    # if is_classifier(estimator):
-    #     for check in _yield_classifier_checks(name, estimator):
-    #         yield check
-    # if is_regressor(estimator):
-    #     for check in _yield_regressor_checks(name, estimator):
-    #         yield check
-    # if hasattr(estimator, 'transform'):
-    #     for check in _yield_transformer_checks(name, estimator):
-    #         yield check
-    # if isinstance(estimator, ClusterMixin):
-    #     for check in _yield_clustering_checks(name, estimator):
-    #         yield check
-    # if is_outlier_detector(estimator):
-    #     for check in _yield_outliers_checks(name, estimator):
-    #         yield check
-    # yield check_fit2d_predict1d
-    # yield check_methods_subset_invariance
-    # yield check_fit2d_1sample
-    # yield check_fit2d_1feature
-    # yield check_fit1d
-    # yield check_get_params_invariance
-    # yield check_set_params
-    # yield check_dict_unchanged
-    # yield check_dont_overwrite_parameters
+    for check in _yield_non_meta_checks(name, estimator):
+        yield check
+    if is_classifier(estimator):
+        for check in _yield_classifier_checks(name, estimator):
+            yield check
+    if is_regressor(estimator):
+        for check in _yield_regressor_checks(name, estimator):
+            yield check
+    if hasattr(estimator, 'transform'):
+        for check in _yield_transformer_checks(name, estimator):
+            yield check
+    if isinstance(estimator, ClusterMixin):
+        for check in _yield_clustering_checks(name, estimator):
+            yield check
+    if is_outlier_detector(estimator):
+        for check in _yield_outliers_checks(name, estimator):
+            yield check
+    yield check_fit2d_predict1d
+    yield check_methods_subset_invariance
+    yield check_fit2d_1sample
+    yield check_fit2d_1feature
+    yield check_fit1d
+    yield check_get_params_invariance
+    yield check_set_params
+    yield check_dict_unchanged
+    yield check_dont_overwrite_parameters
     yield check_fit_idempotent
 
 
@@ -2371,51 +2371,17 @@ def check_fit_idempotent(name, estimator_orig):
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
     # Fit for the first time
-    print()
-    print('X_train')
-    print(X_train)
-    print('X_test')
-    print(X_train)
-    print('y_train')
-    print(y_train)
-    print('y_test')
-    print(y_test)
     estimator.fit(X_train, y_train)
 
     result = {method: getattr(estimator, method)(X_test)
               for method in check_methods
               if hasattr(estimator, method)}
 
-
-    for k, v in result.items():
-        print(k)
-        print(v)
-
     # Fit again
     set_random_state(estimator, random_state=0)
     estimator.fit(X_train, y_train)
 
-    new_result = {method: getattr(estimator, method)(X_test)
-                    for method in check_methods
-                    if hasattr(estimator, method)}
-
-    print('AFTER SECOND FIT')
-    print()
-    print('X_train')
-    print(X_train)
-    print('X_test')
-    print(X_train)
-    print('y_train')
-    print(y_train)
-    print('y_test')
-    print(y_test)
-    for k, v in new_result.items():
-        print(k)
-        print(v)
-
     for method in check_methods:
         if hasattr(estimator, method):
-            print(method)
-            assert_allclose_dense_sparse(result[method], new_result[method])
-
-    print('-' * 10)
+            new_result = getattr(estimator, method)(X_test)
+            assert_allclose_dense_sparse(result[method], new_result)
