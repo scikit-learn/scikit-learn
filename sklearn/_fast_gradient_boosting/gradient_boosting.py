@@ -424,6 +424,12 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
 class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
     """Fast Gradient Boosting Regression Tree.
 
+    This estimator is much faster than
+    :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
+    for big datasets (n_samples >= 10 000). The input data `X` is pre-binned
+    into integer-valued bins, which considerably reduces the number of
+    splitting points to consider.
+
     Parameters
     ----------
     loss : {'least_squares'}, optional(default='least_squares')
@@ -555,6 +561,12 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
 class FastGradientBoostingClassifier(BaseFastGradientBoosting,
                                      ClassifierMixin):
     """Fast Gradient Boosting Classification Tree.
+
+    This estimator is much faster than
+    :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
+    for big datasets (n_samples >= 10 000). The input data `X` is pre-binned
+    into integer-valued bins, which considerably reduces the number of
+    splitting points to consider.
 
     Parameters
     ----------
