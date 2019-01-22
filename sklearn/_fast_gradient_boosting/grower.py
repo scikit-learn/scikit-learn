@@ -24,7 +24,7 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root
-    samples_indices : array of int
+    sample_indices : array of int
         The indices of the samples at the node
     sum_gradients : float
         The sum of the gradients of the samples at the node
@@ -37,7 +37,7 @@ class TreeNode:
     ----------
     depth : int
         The depth of the node, i.e. its distance from the root
-    samples_indices : array of int
+    sample_indices : array of int
         The indices of the samples at the node
     sum_gradients : float
         The sum of the gradients of the samples at the node
@@ -61,9 +61,13 @@ class TreeNode:
         The Number of samples at the node divided find_split_time.
     apply_split_time : float
         The total time spent actually splitting the node, e.g. splitting
-        samples_indices into left and right child.
+        sample_indices into left and right child.
     hist_subtraction : bool
         Wheter the subtraction method was used for computing the histograms.
+    start : int
+        start position of the node's sample_indices in splitter.partition
+    stop : int
+        stop position of the node's sample_indices in splitter.partition
     """
 
     split_info = None

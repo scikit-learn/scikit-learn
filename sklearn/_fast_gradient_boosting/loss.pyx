@@ -1,4 +1,3 @@
-# cython: profile=True
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -140,9 +139,9 @@ class LeastSquares(BaseLoss):
 
 
 cdef void _update_gradients_least_squares(
-    Y_DTYPE_C [:] gradients,
-    const Y_DTYPE_C [:] y_true,
-    const Y_DTYPE_C [:] raw_predictions) nogil:
+        Y_DTYPE_C [:] gradients,
+        const Y_DTYPE_C [:] y_true,
+        const Y_DTYPE_C [:] raw_predictions) nogil:
     cdef:
         unsigned int n_samples
         int i
@@ -202,11 +201,12 @@ class BinaryCrossEntropy(BaseLoss):
         proba[:, 0] = 1 - proba[:, 1]
         return proba
 
+
 cdef void _update_gradients_hessians_binary_crossentropy(
-    Y_DTYPE_C [:] gradients,
-    Y_DTYPE_C [:] hessians,
-    const Y_DTYPE_C [:] y_true,
-    const Y_DTYPE_C [:] raw_predictions) nogil:
+        Y_DTYPE_C [:] gradients,
+        Y_DTYPE_C [:] hessians,
+        const Y_DTYPE_C [:] y_true,
+        const Y_DTYPE_C [:] raw_predictions) nogil:
     cdef:
         unsigned int n_samples
         Y_DTYPE_C gradient_abs
@@ -262,11 +262,11 @@ class CategoricalCrossEntropy(BaseLoss):
 
 
 cdef void _update_gradients_hessians_categorical_crossentropy(
-    Y_DTYPE_C [:] gradients,  # shape (n_samples * prediction_dim,), OUT
-    Y_DTYPE_C [:] hessians,  # shape (n_samples * prediction_dim,), OUT
-    const Y_DTYPE_C [:] y_true,  # shape (n_samples,), IN
-    const Y_DTYPE_C [:, :] raw_predictions  # shape (n_samples, n_tree_per_iter), IN
-    ) nogil:
+        Y_DTYPE_C [:] gradients,  # shape (n_samples * prediction_dim,), OUT
+        Y_DTYPE_C [:] hessians,  # shape (n_samples * prediction_dim,), OUT
+        const Y_DTYPE_C [:] y_true,  # shape (n_samples,), IN
+        # shape (n_samples, n_tree_per_iter), IN
+        const Y_DTYPE_C [:, :] raw_predictions) nogil:
     cdef:
         unsigned int n_samples
         unsigned int prediction_dim
@@ -290,14 +290,16 @@ cdef void _update_gradients_hessians_categorical_crossentropy(
 
 
 cdef inline Y_DTYPE_C cexpit(const Y_DTYPE_C x) nogil:
+    """Custom expit (logistic sigmoid function)"""
     return 1. / (1. + exp(-x))
 
 
 cdef inline Y_DTYPE_C clogsumexp(
-    const Y_DTYPE_C [:, :] a,
-    const int row) nogil:
-    # Need to pass the whole array, else prange won't work. See Cython issue
-    # #2798
+        const Y_DTYPE_C [:, :] a,
+        const int row) nogil:
+    """Custom logsumexp, with numerical stability"""
+    # Need to pass the whole array and the row index, else prange won't work.
+    # See issue Cython #2798
     cdef:
         int k
         Y_DTYPE_C out = 0.

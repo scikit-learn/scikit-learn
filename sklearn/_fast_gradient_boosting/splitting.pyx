@@ -1,4 +1,3 @@
-# cython: profile=True
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -29,11 +28,18 @@ from .types cimport hist_struct
 from .types import HISTOGRAM_DTYPE
 
 
+# Note: in a lot of functions here we pass feature_idx and the whole 2d
+# histograms arrays instead a lot just histograms[feature_idx]. This is
+# because Cython generated C code will have strange Python interactions (likely
+# related to the GIL release and the custom histogram dtype) when using 1d
+# histogram arrays.
+
+
 cdef struct split_info_struct:
     # Same as the SplitInfo class, but we need a C struct to use it in the
     # nogil sections
     Y_DTYPE_C gain
-    unsigned int feature_idx
+    int feature_idx
     unsigned int bin_idx
     Y_DTYPE_C gradient_left
     Y_DTYPE_C gradient_right
@@ -70,7 +76,7 @@ cdef class SplitInfo:
     """
     cdef public:
         Y_DTYPE_C gain
-        unsigned int feature_idx
+        int feature_idx
         unsigned int bin_idx
         Y_DTYPE_C gradient_left
         Y_DTYPE_C gradient_right
@@ -79,7 +85,7 @@ cdef class SplitInfo:
         unsigned int n_samples_left
         unsigned int n_samples_right
 
-    def __init__(self, Y_DTYPE_C gain=-1., unsigned int feature_idx=0, unsigned
+    def __init__(self, Y_DTYPE_C gain=-1., int feature_idx=0, unsigned
                  int bin_idx=0, Y_DTYPE_C gradient_left=0., Y_DTYPE_C
                  hessian_left=0., Y_DTYPE_C gradient_right=0., Y_DTYPE_C
                  hessian_right=0., unsigned int n_samples_left=0, unsigned
@@ -238,10 +244,10 @@ cdef class Splitter:
         # and right_child_pos = left_child_pos + left_child.n_samples. The
         # order of the samples inside a leaf is irrelevant.
 
-        # 1. samples_indices is a view on this region a..x. We conceptually
+        # 1. sample_indices is a view on this region a..x. We conceptually
         #    divide it into n_threads regions. Each thread will be responsible
         #    for its own region. Here is an example with 4 threads:
-        #    samples_indices = [abcdef|ghijkl|mnopqr|stuvwx]
+        #    sample_indices = [abcdef|ghijkl|mnopqr|stuvwx]
         # 2. Each thread processes 6 = 24 // 4 entries and maps them into
         #    left_indices_buffer or right_indices_buffer. For example, we could
         #    have the following mapping ('.' denotes an undefined entry):
@@ -254,9 +260,9 @@ cdef class Splitter:
         #    - left_counts =  [4, 2, 6, 3]
         #    - right_counts = [2, 4, 0, 3]
         # 4. Finally, we put left/right_indices_buffer back into the
-        #    samples_indices, without any undefined entries and the partition
+        #    sample_indices, without any undefined entries and the partition
         #    looks as expected
-        #    partition = [*************abefilmnopqrtuxcdghjksvw*****************]
+        #    partition = [*************abefilmnopqrtuxcdghjksvw***************]
 
         # Note: We here show left/right_indices_buffer as being the same size
         # as sample_indices for simplicity, but in reality they are of the
@@ -293,7 +299,7 @@ cdef class Splitter:
                 offset_in_buffers[thread_idx] = \
                     offset_in_buffers[thread_idx - 1] + sizes[thread_idx - 1]
 
-            # map indices from samples_indices to left/right_indices_buffer
+            # map indices from sample_indices to left/right_indices_buffer
             for thread_idx in prange(n_threads):
                 left_count = 0
                 right_count = 0
@@ -317,7 +323,7 @@ cdef class Splitter:
             for thread_idx in range(n_threads):
                 right_child_position += left_counts[thread_idx]
 
-            # offset of each thread in samples_indices for left and right
+            # offset of each thread in sample_indices for left and right
             # child, i.e. where each thread will start to write.
             right_offset[0] = right_child_position
             for thread_idx in range(1, n_threads):
@@ -327,8 +333,8 @@ cdef class Splitter:
                     right_offset[thread_idx - 1] + right_counts[thread_idx - 1]
 
             # map indices in left/right_indices_buffer back into
-            # samples_indices. This also updates self.partition since
-            # samples_indice is a view.
+            # sample_indices. This also updates self.partition since
+            # sample_indices is a view.
             for thread_idx in prange(n_threads):
 
                 for i in range(left_counts[thread_idx]):
@@ -342,13 +348,12 @@ cdef class Splitter:
                 sample_indices[right_child_position:],
                 right_child_position)
 
-    def find_node_split(
-        self,
-        const unsigned int [::1] sample_indices,  # IN
-        hist_struct [:, ::1] histograms):  # OUT
+    def find_node_split(self,
+                        const unsigned int [::1] sample_indices,  # IN
+                        hist_struct [:, ::1] histograms):  # OUT
         """For each feature, find the best bin to split on at a given node.
 
-        Returns the best split info among all features, and the histograms of
+        Return the best split info among all features, and the histograms of
         all the features. The histograms are computed by scanning the whole
         data.
 
@@ -356,6 +361,9 @@ cdef class Splitter:
         ----------
         sample_indices : array of int
             The indices of the samples at the node to split.
+        histograms : array of HISTOGRAM_DTYPE of \
+                shape(n_features, max_bins)
+            The histograms of the current node (to be computed)
 
         Returns
         -------
@@ -397,13 +405,24 @@ cdef class Splitter:
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
             # Compute sums of gradients and hessians at the node
+
+            # TODO: ideally use:
             # for i in prange(n_samples, schedule='static'):
+            # we should be using prange here, but for some reason it
+            # leads to slightly incorrect values (1 out of ~100 times) and
+            # test check_estimator() does not pass anymore
+            # (check_fit_idempotent). It only seems to be a problem for
+            # classifiers which is very strange because the loop isn't
+            # classifier-specific. Maybe it has to do with the array
+            # population above (hessians aren't constant for classification
+            # losses). I tried to create a minimal reproducing example, without
+            # sucess.
             for i in range(n_samples):
                 sum_gradients += ordered_gradients[i]
             if self.hessians_are_constant:
                 sum_hessians = n_samples
             else:
-                # for i in range(n_samples):
+                # Using prange seems to be OK here
                 for i in prange(n_samples, schedule='static'):
                     sum_hessians += ordered_hessians[i]
 
@@ -440,12 +459,11 @@ cdef class Splitter:
         free(split_infos)
         return out
 
-    cdef void _compute_histogram(
-        self,
-        const unsigned int feature_idx,
-        const unsigned int [::1] sample_indices,  # IN
-        hist_struct [:, ::1] histograms  # OUT
-        ) nogil:
+    cdef void _compute_histogram(self,
+                                 const int feature_idx,
+                                 const unsigned int [::1] sample_indices,  # IN
+                                 hist_struct [:, ::1] histograms  # OUT
+                                 ) nogil:
         """Compute the histogram for a given feature."""
 
         cdef:
@@ -460,33 +478,35 @@ cdef class Splitter:
 
         if root_node:
             if self.hessians_are_constant:
-                _build_histogram_root_no_hessian(feature_idx, self.max_bins, X_binned,
-                                                 ordered_gradients, histograms)
+                _build_histogram_root_no_hessian(feature_idx, self.max_bins,
+                                                 X_binned,
+                                                 ordered_gradients,
+                                                 histograms)
             else:
                 _build_histogram_root(feature_idx, self.max_bins, X_binned,
-                                    ordered_gradients,
-                                    ordered_hessians, histograms)
+                                      ordered_gradients, ordered_hessians,
+                                      histograms)
         else:
             if self.hessians_are_constant:
-                _build_histogram_no_hessian(feature_idx, self.max_bins, sample_indices,
-                                            X_binned, ordered_gradients,
-                                            histograms)
+                _build_histogram_no_hessian(feature_idx, self.max_bins,
+                                            sample_indices, X_binned,
+                                            ordered_gradients, histograms)
             else:
-                _build_histogram(feature_idx, self.max_bins, sample_indices, X_binned,
-                                 ordered_gradients, ordered_hessians,
-                                 histograms)
+                _build_histogram(feature_idx, self.max_bins, sample_indices,
+                                 X_binned, ordered_gradients,
+                                 ordered_hessians, histograms)
 
     def find_node_split_subtraction(
-        Splitter self,
-        unsigned int [::1] sample_indices,  # IN
-        Y_DTYPE_C sum_gradients,
-        Y_DTYPE_C sum_hessians,
-        hist_struct [:, ::1] parent_histograms,  # IN
-        hist_struct [:, ::1] sibling_histograms,  # IN
-        hist_struct [:, ::1] histograms):  # OUT
+            Splitter self,
+            unsigned int [::1] sample_indices,  # IN
+            Y_DTYPE_C sum_gradients,
+            Y_DTYPE_C sum_hessians,
+            hist_struct [:, ::1] parent_histograms,  # IN
+            hist_struct [:, ::1] sibling_histograms,  # IN
+            hist_struct [:, ::1] histograms):  # OUT
         """For each feature, find the best bin to split on at a given node.
 
-        Returns the best split info among all features, and the histograms of
+        Return the best split info among all features, and the histograms of
         all the features.
 
         This does the same job as ``find_node_split()`` but uses the
@@ -507,14 +527,15 @@ cdef class Splitter:
             Sum of the samples gradients at the current node
         sum_hessians : float
             Sum of the samples hessians at the current node
-        parent_histograms : array of HISTOGRAM_DTYPE of shape(n_features, max_bins)
+        parent_histograms : array of HISTOGRAM_DTYPE of \
+                shape(n_features, max_bins)
             The histograms of the parent
         sibling_histograms : array of HISTOGRAM_DTYPE of \
-            shape(n_features, max_bins)
+                shape(n_features, max_bins)
             The histograms of the sibling
         histograms : array of HISTOGRAM_DTYPE of \
-            shape(n_features, max_bins)
-            The computed histograms
+                shape(n_features, max_bins)
+            The histograms of the current node (to be computed)
 
         Returns
         -------
@@ -567,27 +588,27 @@ cdef class Splitter:
         free(split_infos)
         return out
 
-    cdef int _find_best_feature_to_split_helper(self,
-        split_info_struct * split_infos  # IN
-        ) nogil:
-        """Returns the best split_info among those in splits_infos."""
+    cdef int _find_best_feature_to_split_helper(
+            self,
+            split_info_struct * split_infos) nogil:  # IN
+        """Returns the best feature among those in splits_infos."""
         cdef:
             int feature_idx
             int best_feature_idx = 0
 
         for feature_idx in range(1, self.n_features):
-            if split_infos[feature_idx].gain > split_infos[best_feature_idx].gain:
+            if (split_infos[feature_idx].gain >
+                    split_infos[best_feature_idx].gain):
                 best_feature_idx = feature_idx
         return best_feature_idx
 
     cdef split_info_struct _find_best_bin_to_split_helper(
-        self,
-        unsigned int feature_idx,
-        const hist_struct [:, ::1] histograms,  # IN
-        unsigned int n_samples,
-        Y_DTYPE_C sum_gradients,
-        Y_DTYPE_C sum_hessians,
-        ) nogil:
+            self,
+            unsigned int feature_idx,
+            const hist_struct [:, ::1] histograms,  # IN
+            unsigned int n_samples,
+            Y_DTYPE_C sum_gradients,
+            Y_DTYPE_C sum_hessians) nogil:
         """Find best bin to split on for a given feature.
 
         Splits that do not satisfy the splitting constraints
@@ -658,12 +679,12 @@ cdef class Splitter:
     # Only used for tests (python code cannot use cdef types)
     # Not sure if this is a good practice...
     def find_best_split_wrapper(
-        self,
-        unsigned int feature_idx,
-        unsigned int [::1] sample_indices,
-        hist_struct [:, ::1] histograms,
-        Y_DTYPE_C sum_gradients,
-        Y_DTYPE_C sum_hessians):
+            self,
+            int feature_idx,
+            unsigned int [::1] sample_indices,
+            hist_struct [:, ::1] histograms,
+            Y_DTYPE_C sum_gradients,
+            Y_DTYPE_C sum_hessians):
 
         self._compute_histogram(feature_idx, sample_indices, histograms)
         n_samples = sample_indices.shape[0]
@@ -685,13 +706,13 @@ cdef class Splitter:
 
 
 cdef inline Y_DTYPE_C _split_gain(
-    Y_DTYPE_C gradient_left,
-    Y_DTYPE_C hessian_left,
-    Y_DTYPE_C gradient_right,
-    Y_DTYPE_C hessian_right,
-    Y_DTYPE_C sum_gradients,
-    Y_DTYPE_C sum_hessians,
-    Y_DTYPE_C l2_regularization) nogil:
+        Y_DTYPE_C gradient_left,
+        Y_DTYPE_C hessian_left,
+        Y_DTYPE_C gradient_right,
+        Y_DTYPE_C hessian_right,
+        Y_DTYPE_C sum_gradients,
+        Y_DTYPE_C sum_hessians,
+        Y_DTYPE_C l2_regularization) nogil:
     """Loss reduction
 
     Compute the reduction in loss after taking a split, compared to keeping
@@ -709,7 +730,7 @@ cdef inline Y_DTYPE_C _split_gain(
     return gain
 
 cdef inline Y_DTYPE_C negative_loss(
-    Y_DTYPE_C gradient,
-    Y_DTYPE_C hessian,
-    Y_DTYPE_C l2_regularization) nogil:
+        Y_DTYPE_C gradient,
+        Y_DTYPE_C hessian,
+        Y_DTYPE_C l2_regularization) nogil:
     return (gradient * gradient) / (hessian + l2_regularization)

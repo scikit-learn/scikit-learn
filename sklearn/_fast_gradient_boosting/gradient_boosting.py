@@ -245,6 +245,8 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
                     bin_thresholds=self.bin_mapper_.bin_thresholds_)
                 estimators[-1].append(estimator)
 
+                # Update raw_predictions with the predictions of the newly
+                # created tree.
                 tic_pred = time()
                 _update_raw_predictions(raw_predictions[:, k], grower)
                 toc_pred = time()

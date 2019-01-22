@@ -1,4 +1,3 @@
-# cython: profile=True
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -13,29 +12,36 @@ from .types import Y_DTYPE
 from .types cimport Y_DTYPE_C
 
 
-def _update_raw_predictions(Y_DTYPE_C [:] raw_predictions, grower):
+def _update_raw_predictions(
+        Y_DTYPE_C [:] raw_predictions,  # OUT
+        grower):
+    """Update raw_predictions with the predictions of the newest tree
+
+    This is equivalent to
+    raw_predictions += last_estimator.predict(X_train)
+    """
     cdef:
-        unsigned int [:] starts
-        unsigned int [:] stops
-        unsigned int [:] partition
-        Y_DTYPE_C [:] values
+        unsigned int [:] starts  # start of each leaf in partition
+        unsigned int [:] stops  # end of each leaf in partition
+        Y_DTYPE_C [:] values  # value of each leaf
+        const unsigned int [:] partition = grower.splitter.partition
         list leaves
 
     leaves = grower.finalized_leaves
     starts = np.array([leaf.start for leaf in leaves], dtype=np.uint32)
     stops = np.array([leaf.stop for leaf in leaves], dtype=np.uint32)
     values = np.array([leaf.value for leaf in leaves], dtype=Y_DTYPE)
-    partition = grower.splitter.partition
 
     _update_raw_predictions_helper(raw_predictions, starts, stops, partition,
                                    values)
 
+
 cdef void _update_raw_predictions_helper(
-    Y_DTYPE_C [:] raw_predictions,
-    const unsigned int [:] starts,
-    const unsigned int [:] stops,
-    const unsigned int [:] partition,
-    Y_DTYPE_C [:] values) nogil:
+        Y_DTYPE_C [:] raw_predictions,  # OUT
+        const unsigned int [:] starts,
+        const unsigned int [:] stops,
+        const unsigned int [:] partition,
+        const Y_DTYPE_C [:] values) nogil:
 
     cdef:
         unsigned int position

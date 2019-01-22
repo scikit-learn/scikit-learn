@@ -1,4 +1,3 @@
-# cython: profile=True
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -34,6 +33,8 @@ PREDICTOR_RECORD_DTYPE = np.dtype([
 
 
 cdef packed struct node_struct:
+    # Equivalent struct to PREDICTOR_RECORD_DTYPE to use in memory views. It
+    # needs to be packed since by default numpy dtypes aren't aligned
     Y_DTYPE_C value
     unsigned int count
     unsigned int feature_idx
@@ -99,13 +100,13 @@ class TreePredictor:
         _predict_from_binned_data(self.nodes, X, out)
         return out
 
+
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
-    node_struct [:] nodes,
-    const X_DTYPE_C [:, :] numeric_data,
-    const int row
-    ) nogil:
-    # Need to pass the whole array, else prange won't work. See issue Cython
-    # #2798
+        node_struct [:] nodes,
+        const X_DTYPE_C [:, :] numeric_data,
+        const int row) nogil:
+    # Need to pass the whole array and the row index, else prange won't work.
+    # See issue Cython #2798
 
     cdef:
         node_struct node = nodes[0]
@@ -120,9 +121,9 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 
 
 cdef void _predict_from_numeric_data(
-    node_struct [:] nodes,
-    const X_DTYPE_C [:, :] numeric_data,
-    Y_DTYPE_C [:] out) nogil:
+        node_struct [:] nodes,
+        const X_DTYPE_C [:, :] numeric_data,
+        Y_DTYPE_C [:] out) nogil:
 
     cdef:
         int i
@@ -132,12 +133,11 @@ cdef void _predict_from_numeric_data(
 
 
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
-    node_struct [:] nodes,
-    const X_BINNED_DTYPE_C [:, :] binned_data,
-    const int row
-    ) nogil:
-    # Need to pass the whole array, else prange won't work. See issue Cython
-    # #2798
+        node_struct [:] nodes,
+        const X_BINNED_DTYPE_C [:, :] binned_data,
+        const int row) nogil:
+    # Need to pass the whole array and the row index, else prange won't work.
+    # See issue Cython #2798
 
     cdef:
         node_struct node = nodes[0]
@@ -152,9 +152,9 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 
 
 cdef void _predict_from_binned_data(
-    node_struct [:] nodes,
-    const X_BINNED_DTYPE_C [:, :] binned_data,
-    Y_DTYPE_C [:] out) nogil:
+        node_struct [:] nodes,
+        const X_BINNED_DTYPE_C [:, :] binned_data,
+        Y_DTYPE_C [:] out) nogil:
 
     cdef:
         int i
