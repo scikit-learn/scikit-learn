@@ -968,6 +968,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 predictor=predictor_triplet.predictor,
                 fit_mode=False
             )
+            print(it, 'int:', predictor_triplet.predictor.intercept_,
+                  'coef:', predictor_triplet.predictor.coef_)
+            print('out:', Xt)
             if not (it + 1) % imputations_per_round:
                 if self.verbose > 1:
                     print('[IterativeImputer] Ending imputation round '
