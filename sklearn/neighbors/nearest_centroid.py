@@ -18,6 +18,8 @@ from ..preprocessing import LabelEncoder
 from ..utils.validation import check_array, check_X_y, check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets, _check_partial_fit_first_call
+from copy import deepcopy
+
 
 class NearestCentroid(BaseEstimator, ClassifierMixin):
     """Nearest centroid classifier.
@@ -126,8 +128,6 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         """
         if self.metric == 'manhattan':
             raise ValueError("Partial fitting with manhattan is not supported.")
-        if self.shrink_threshold:
-            raise ValueError("Partial fitting with shrunken centroids is not supported.")
         return self._partial_fit(X, y, classes, _refit=False)
 
     def _partial_fit(self, X, y, classes=None, _refit=False):
@@ -177,6 +177,10 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             # Number of clusters in each class.
             self.nk_ = np.zeros(classes.size)
 
+            if self.shrink_threshold:
+                self.ssd_ = np.zeros((classes.size, n_features), dtype=np.float64)
+                self.dataset_centroid_ = np.mean(X, axis=0)
+
         le = LabelEncoder()
         le.fit(self.true_classes_)
         y_ind = le.transform(y)
@@ -184,6 +188,9 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         if n_classes < 2:
             raise ValueError('The number of classes has to be greater than'
                              ' one; got %d class' % (n_classes))
+
+        old_nk = deepcopy(self.nk_)
+        old_centroids = deepcopy(self.true_centroids_)
 
         for cur_class in range(n_classes):
             center_mask = y_ind == cur_class
@@ -219,19 +226,33 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         self.centroids_ = self.true_centroids_[self.nk_ != 0]
 
         if self.shrink_threshold:
-            total_samples = np.sum(self.nk_)
-            dataset_centroid_ = np.mean(X, axis=0)
+            n_total = np.sum(self.nk_)
+            self.dataset_centroid_ = (self.dataset_centroid_ * old_nk.sum(axis=0) + np.sum(X, axis=0)) / n_total
+
+            # Update sum of square distances of each class
+            for cur_class in range(n_classes):
+                n_old = old_nk[cur_class]
+                n_new = self.nk_[cur_class] - n_old
+                if n_new == 0:
+                    continue
+                center_mask = y_ind == cur_class
+                old_ssd = self.ssd_[cur_class]
+                new_ssd = ((X[center_mask] - X[center_mask].mean(axis=0))**2).sum(axis=0)
+                self.ssd_[cur_class] = (old_ssd + new_ssd +
+                         (n_old / float(n_new * (n_new + n_old))) *
+                         (n_new * old_centroids[cur_class] - n_new * X[center_mask].mean(axis=0)) ** 2)
+
             # m parameter for determining deviation
-            m = np.sqrt((1. / self.nk_) - (1. / total_samples))
+            m = np.sqrt((1. / self.nk_) - (1. / np.sum(self.nk_)))
+
             # Calculate deviation using the standard deviation of centroids.
-            variance = (X - self.true_centroids_[y_ind]) ** 2
-            variance = variance.sum(axis=0)
-            s = np.sqrt(variance / (total_samples - n_classes))
+            ssd = self.ssd_.sum(axis=0)
+            s = np.sqrt(ssd / (n_total - n_classes))
             s += np.median(s)  # To deter outliers from affecting the results.
-            print(s)
             mm = m.reshape(len(m), 1)  # Reshape to allow broadcasting.
             ms = mm * s
-            deviation = ((self.true_centroids_ - dataset_centroid_) / ms)
+            deviation = ((self.true_centroids_ - self.dataset_centroid_) / ms)
+
             # Soft thresholding: if the deviation crosses 0 during shrinking,
             # it becomes zero.
             signs = np.sign(deviation)
@@ -240,7 +261,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
             deviation *= signs
             # Now adjust the centroids using the deviation
             msd = ms * deviation
-            self.centroids_ = dataset_centroid_[np.newaxis, :] + msd
+            self.centroids_ = self.dataset_centroid_[np.newaxis, :] + msd
         return self
 
     def predict(self, X):
