@@ -89,7 +89,7 @@ def test_enet_toy():
     T = [[2.], [3.], [4.]]  # test sample
 
     # Be careful with tests for the saga solver for this very small dataset.
-    # The result depends on random_state and my give wrong resultsself.
+    # The result depends on random_state, it may give wrong results.
     # See issue #13021.
 
     for solver in ['cd', 'saga']:

@@ -635,7 +635,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     n_iter_ : array-like, shape (n_targets,)
         For ``solver='cd'``, the number of iterations run by the solver to
         reach the specified tolerance.
-        For ``solver='saga'``, the number of full pass on all samples.
+        For ``solver='saga'``, the number of full passes on all samples.
 
     Examples
     --------
@@ -646,8 +646,9 @@ class ElasticNet(LinearModel, RegressorMixin):
     >>> regr = ElasticNet(random_state=0)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     ElasticNet(alpha=1.0, copy_X=True, fit_intercept=True, l1_ratio=0.5,
-          max_iter=1000, normalize=False, positive=False, precompute=False,
-          random_state=0, selection='cyclic', tol=0.0001, warm_start=False)
+           max_iter=1000, normalize=False, positive=False, precompute=False,
+           random_state=0, selection='cyclic', solver='cd', tol=0.0001,
+           warm_start=False)
     >>> print(regr.coef_) # doctest: +ELLIPSIS
     [18.83816048 64.55968825]
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
