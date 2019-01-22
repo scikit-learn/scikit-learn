@@ -22,6 +22,13 @@ Changelog
   threaded when `n_jobs > 1` or `n_jobs = -1`.
   :issue:`12949` by :user:`Prabakaran Kumaresshan <nixphix>`.
 
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed a bug in :class:`compose.ColumnTransformer` to handle
+  negative indexes in the columns list of the transformers.
+  :issue:`12946` by :user:`Pierre Tallotte <pierretallotte>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -36,13 +43,6 @@ Changelog
   deprecation of ``categorical_features`` was handled incorrectly in
   combination with ``handle_unknown='ignore'``.
   :issue:`12881` by `Joris Van den Bossche`_.
-
-:mod:`sklearn.compose`
-............................
-
-- |Fix| Fixed a bug in :class:`compose.ColumnTransformer` to handle
-  negative indexes in the columns list of the transformers.
-  :issue:`12946` by :user:`Pierre Tallotte <pierretallotte>`.
 
 .. _changes_0_20_2:
 
