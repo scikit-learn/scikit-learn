@@ -53,6 +53,11 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
+
+- |Fix| Fixed a bug in :class:`cluster.BaseCluster`, the implementation of
+  function  ``_svd`` incorrectly assumed that the scipy based arpack call 
+  returns singular values in descending order. :issue:`12898` by 
+  :user:`Gyorgy Kovacs <gykovacs>`.
   
 :mod:`sklearn.discriminant_analysis`
 ....................................
