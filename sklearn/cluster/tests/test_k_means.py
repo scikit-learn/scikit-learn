@@ -9,7 +9,6 @@ import pytest
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -30,7 +29,7 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
 
 
@@ -237,10 +236,6 @@ def test_k_means_new_centers():
 
 @if_safe_multiprocessing_with_blas
 def test_k_means_plus_plus_init_2_jobs():
-    if sys.version_info[:2] < (3, 4):
-        raise SkipTest(
-            "Possible multi-process bug with some BLAS under Python < 3.4")
-
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                 random_state=42).fit(X)
     _check_fitted_model(km)
