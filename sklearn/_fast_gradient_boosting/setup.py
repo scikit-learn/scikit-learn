@@ -33,10 +33,6 @@ def configuration(parent_package="", top_path=None):
                          sources=["types.pyx"],
                          include_dirs=[numpy.get_include()])
 
-    config.add_extension("playground",
-                         sources=["playground.pyx"],
-                         include_dirs=[numpy.get_include()])
-
     config.add_subpackage("tests")
 
     return config
