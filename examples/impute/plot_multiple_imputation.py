@@ -425,7 +425,7 @@ def perform_simulation(dataset, X_incomplete, n_sim=10):
                 X_incomplete_train, X_incomplete_test, y_train, y_test)
 
         # Save the outcome of every simulation round
-        outcome.append((mse_full, mse_single, mse_multiple))
+        outcome.append((mse_full[0], mse_single, mse_multiple))
 
     # Return the mean and standard deviation of the n_sim outcome values
     return np.mean(outcome, axis=0), np.std(outcome, axis=0)

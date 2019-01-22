@@ -111,11 +111,11 @@ round are returned.
         max_value=None, min_value=None, missing_values=nan, n_iter=10,
         n_nearest_features=None, predictor=None, random_state=0,
         sample_posterior=False, verbose=False)
-    >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
+    >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 2]]
     >>> print(np.round(imp.transform(X_test)))
-    [[ 1.  2.]
-     [ 6.  3.]
-     [24.  6.]]
+    [[1. 2.]
+     [6. 3.]
+     [1. 2.]]
 
 Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a Pipeline
 as a way to build a composite estimator that supports imputation.
