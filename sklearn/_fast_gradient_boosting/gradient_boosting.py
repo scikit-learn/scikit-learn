@@ -115,8 +115,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         toc = time()
         if self.verbose:
             duration = toc - tic
-            troughput = X.nbytes / duration
-            print("{:.3f} s ({:.3f} MB/s)".format(duration, troughput / 1e6))
+            print("{:.3f} s".format(duration))
 
         self.loss_ = self._get_loss()
 
