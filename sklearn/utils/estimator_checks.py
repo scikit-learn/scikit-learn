@@ -2299,8 +2299,8 @@ def check_decision_proba_consistency(name, estimator_orig):
         b = estimator.decision_function(X_test)
         # truncate arrays to the 10th decimal to avoid rank discrepancies that
         # woulde caused by floating point precision issue
-        a = np.around(a, decimals=10)
-        b = np.around(b, decimals=10)
+        a = np.around(a, decimals=6)
+        b = np.around(b, decimals=6)
         assert_array_equal(rankdata(a), rankdata(b))
 
 
