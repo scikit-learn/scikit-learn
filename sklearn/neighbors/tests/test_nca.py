@@ -7,8 +7,7 @@ from sklearn import clone
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_raises, assert_equal,
-                                   assert_raise_message, assert_warns_message,
-                                   assert_true)
+                                   assert_raise_message, assert_warns_message)
 from sklearn.datasets import load_iris, make_classification, make_blobs
 from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
@@ -319,13 +318,13 @@ def test_warm_start_effectiveness():
     diff_cold = np.sum(np.abs(transformation_cold_plus_one -
                               transformation_cold))
 
-    assert_true(diff_warm < 3.0,
-                "Transformer changed significantly after one iteration even "
-                "though it was warm-started.")
+    assert (diff_warm < 3.0,
+            "Transformer changed significantly after one iteration even "
+            "though it was warm-started.")
 
-    assert_true(diff_cold > diff_warm,
-                "Cold-started transformer changed less significantly than "
-                "warm-started transformer after one iteration.")
+    assert (diff_cold > diff_warm,
+            "Cold-started transformer changed less significantly than "
+            "warm-started transformer after one iteration.")
 
 
 @pytest.mark.parametrize('init_name', ['pca', 'lda', 'identity', 'random',
