@@ -57,8 +57,6 @@ class TreeNode:
     find_split_time : float
         The total time spent computing the histogram and finding the best
         split at the node.
-    construction_speed : float
-        The Number of samples at the node divided find_split_time.
     apply_split_time : float
         The total time spent actually splitting the node, e.g. splitting
         sample_indices into left and right child.
@@ -78,7 +76,6 @@ class TreeNode:
     sibling = None
     parent = None
     find_split_time = 0.
-    construction_speed = 0.
     apply_split_time = 0.
     hist_subtraction = False
 
@@ -332,7 +329,6 @@ class TreeGrower:
             toc = time()
             node.find_split_time = toc - tic
             self.total_find_split_time += node.find_split_time
-            node.construction_speed = node.n_samples / node.find_split_time
             node.split_info = split_info
             node.histograms = histograms
 
