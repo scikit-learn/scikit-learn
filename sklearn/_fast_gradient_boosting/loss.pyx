@@ -143,7 +143,7 @@ cdef void _update_gradients_least_squares(
         const Y_DTYPE_C [:] y_true,
         const Y_DTYPE_C [:] raw_predictions) nogil:
     cdef:
-        unsigned int n_samples
+        int n_samples
         int i
 
     n_samples = raw_predictions.shape[0]
@@ -208,7 +208,7 @@ cdef void _update_gradients_hessians_binary_crossentropy(
         const Y_DTYPE_C [:] y_true,
         const Y_DTYPE_C [:] raw_predictions) nogil:
     cdef:
-        unsigned int n_samples
+        int n_samples
         Y_DTYPE_C gradient_abs
         int i
 
@@ -268,7 +268,7 @@ cdef void _update_gradients_hessians_categorical_crossentropy(
         # shape (n_samples, n_tree_per_iter), IN
         const Y_DTYPE_C [:, :] raw_predictions) nogil:
     cdef:
-        unsigned int n_samples
+        int n_samples
         unsigned int prediction_dim
         unsigned int k
         int i

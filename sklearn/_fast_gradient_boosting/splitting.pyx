@@ -371,9 +371,10 @@ cdef class Splitter:
             The info about the best possible split among all features.
         """
         cdef:
-            unsigned int n_samples
+            int n_samples
             int feature_idx
             int best_feature_idx
+            int n_features = self.n_features
             int i
             unsigned int thread_idx
             unsigned int [:] starts
@@ -428,7 +429,7 @@ cdef class Splitter:
 
             split_infos = <split_info_struct *> malloc(
                 self.n_features * sizeof(split_info_struct))
-            for feature_idx in prange(self.n_features):
+            for feature_idx in prange(n_features):
                 # Compute histogram of each feature
                 self._compute_histogram(feature_idx, sample_indices,
                                         histograms)
@@ -545,6 +546,7 @@ cdef class Splitter:
 
         cdef:
             int feature_idx
+            int n_features = self.n_features
             unsigned int n_samples
             split_info_struct split_info
             split_info_struct * split_infos
@@ -555,7 +557,7 @@ cdef class Splitter:
 
             split_infos = <split_info_struct *> malloc(
                 self.n_features * sizeof(split_info_struct))
-            for feature_idx in prange(self.n_features):
+            for feature_idx in prange(n_features):
                 # Compute histogram of each feature
                 _subtract_histograms(feature_idx,
                                      self.max_bins,
