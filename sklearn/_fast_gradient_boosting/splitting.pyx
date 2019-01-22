@@ -397,11 +397,13 @@ cdef class Splitter:
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
             # Compute sums of gradients and hessians at the node
-            for i in prange(n_samples, schedule='static'):
+            # for i in prange(n_samples, schedule='static'):
+            for i in range(n_samples):
                 sum_gradients += ordered_gradients[i]
             if self.hessians_are_constant:
                 sum_hessians = n_samples
             else:
+                # for i in range(n_samples):
                 for i in prange(n_samples, schedule='static'):
                     sum_hessians += ordered_hessians[i]
 
