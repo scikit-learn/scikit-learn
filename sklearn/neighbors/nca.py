@@ -98,11 +98,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         and the number of iterations. This might be useful in case one wants
         to examine or store the transformation found after each iteration.
 
-    store_opt_result : bool, optional (default=False)
-        If True, the :class:`scipy.optimize.OptimizeResult` object returned by
-        :meth:`minimize` of `scipy.optimize` will be stored as attribute
-        ``opt_result_``.
-
     verbose : int, optional (default=0)
         If 0, no progress messages will be printed.
         If 1, progress messages will be printed to stdout.
@@ -123,29 +118,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
     n_iter_ : int
         Counts the number of iterations performed by the optimizer.
-
-    opt_result_ : scipy.optimize.OptimizeResult (optional)
-        A dictionary of information representing the optimization result.
-        This is stored only if ``store_opt_result`` is True. It contains the
-        following attributes:
-
-        x : ndarray
-            The solution of the optimization.
-        success : bool
-            Whether or not the optimizer exited successfully.
-        status : int
-            Termination status of the optimizer.
-        message : str
-            Description of the cause of the termination.
-        fun, jac : ndarray
-            Values of objective function and its Jacobian.
-        hess_inv : scipy.sparse.linalg.LinearOperator
-            the product of a vector with the approximate inverse of the
-            Hessian of the objective function..
-        nfev : int
-            Number of evaluations of the objective function..
-        nit : int
-            Number of iterations performed by the optimizer.
 
     Examples
     --------
@@ -182,15 +154,14 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=None, init='auto', warm_start=False,
-                 max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
-                 verbose=0, random_state=None):
+                 max_iter=50, tol=1e-5, callback=None, verbose=0,
+                 random_state=None):
         self.n_components = n_components
         self.init = init
         self.warm_start = warm_start
         self.max_iter = max_iter
         self.tol = tol
         self.callback = callback
-        self.store_opt_result = store_opt_result
         self.verbose = verbose
         self.random_state = random_state
 
@@ -259,10 +230,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                      ConvergenceWarning)
 
             print('[{}] Training took {:8.2f}s.'.format(cls_name, t_train))
-
-        # Optionally store information returned by the optimizer
-        if self.store_opt_result:
-            self.opt_result_ = opt_result
 
         return self
 

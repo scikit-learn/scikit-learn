@@ -54,13 +54,32 @@ def test_toy_example_collapse_points():
     two_points = rng.randn(2, input_dim)
     X = np.vstack([two_points, two_points.mean(axis=0)[np.newaxis, :]])
     y = [0, 0, 1]
+
+    class LossStorer:
+
+        def __init__(self, X, y):
+            self.loss = np.inf  # initialize the loss to very high
+            # Initialize a fake NCA and variables needed to compute the loss:
+            self.fake_nca = NeighborhoodComponentsAnalysis()
+            self.fake_nca.n_iter_ = np.inf
+            self.X, y, _ = self.fake_nca._validate_params(X, y)
+            self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
+
+        def callback(self, transformation, n_iter):
+            """Stores the last value of the loss function"""
+            self.loss, _ = self.fake_nca._loss_grad_lbfgs(transformation,
+                                                          self.X,
+                                                          self.same_class_mask,
+                                                          -1.0)
+
+    loss_storer = LossStorer(X, y)
     nca = NeighborhoodComponentsAnalysis(random_state=42,
-                                         store_opt_result=True)
+                                         callback=loss_storer.callback)
     X_t = nca.fit_transform(X, y)
     print(X_t)
     # test that points are collapsed into one point
     assert_array_almost_equal(X_t - X_t[0], 0.)
-    assert nca.opt_result_.fun + 1 < 1e-10
+    assert abs(loss_storer.loss + 1) < 1e-10
 
 
 def test_finite_differences():
@@ -444,15 +463,31 @@ def test_callback(capsys):
     assert('{} iterations remaining...'.format(max_iter - 1) in out)
 
 
-def test_store_opt_result():
+def test_expected_transformation_shape():
+    """Test that the transformation has the expected shape."""
     X = iris_data
     y = iris_target
 
-    nca = NeighborhoodComponentsAnalysis(max_iter=5,
-                                         store_opt_result=True)
+    class TransformationStorer:
+
+        def __init__(self, X, y):
+            # Initialize a fake NCA and variables needed to call the loss
+            # function:
+            self.fake_nca = NeighborhoodComponentsAnalysis()
+            self.fake_nca.n_iter_ = np.inf
+            self.X, y, _ = self.fake_nca._validate_params(X, y)
+            self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
+
+        def callback(self, transformation, n_iter):
+            """Stores the last value of the transformation taken as input by
+            the optimizer"""
+            self.transformation = transformation
+
+    transformation_storer = TransformationStorer(X, y)
+    cb = transformation_storer.callback
+    nca = NeighborhoodComponentsAnalysis(max_iter=5, callback=cb)
     nca.fit(X, y)
-    transformation = nca.opt_result_.x
-    assert_equal(transformation.size, X.shape[1]**2)
+    assert_equal(transformation_storer.transformation.size, X.shape[1]**2)
 
 
 def test_convergence_warning():
