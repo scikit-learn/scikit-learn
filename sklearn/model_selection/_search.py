@@ -668,8 +668,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                                in product(candidate_params,
                                           cv.split(X, y, groups)))
 
-                if out is None or len(out) < 1:
-                    raise ValueError('No fits were performed. Was the CV'
+                if len(out) < 1:
+                    raise ValueError('No fits were performed. Was the CV '
                                      'iterator empty? Were there no '
                                      'candidates?')
                 elif len(out) != n_candidates * n_splits:

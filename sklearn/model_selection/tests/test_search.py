@@ -1745,5 +1745,8 @@ def test_empty_cv_iterator_error():
                                cv=cv, n_jobs=-1)
 
     # assert that this raises an error
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError,
+                       message='No fits were performed. Was the CV '
+                               'iterator empty? Were there no '
+                               'candidates?'):
         ridge.fit(X[:train_size], y[:train_size])
