@@ -318,7 +318,7 @@ def test_warm_start_effectiveness():
     diff_cold = np.sum(np.abs(transformation_cold_plus_one -
                               transformation_cold))
     assert diff_warm < 3.0, ("Transformer changed significantly after one "
-                              "iteration even though it was warm-started.")
+                             "iteration even though it was warm-started.")
 
     assert diff_cold > diff_warm, ("Cold-started transformer changed less "
                                    "significantly than warm-started "
