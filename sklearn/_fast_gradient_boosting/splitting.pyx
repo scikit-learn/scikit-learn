@@ -141,8 +141,6 @@ cdef class Splitter:
         Y_DTYPE_C [::1] hessians
         Y_DTYPE_C [::1] ordered_gradients
         Y_DTYPE_C [::1] ordered_hessians
-        Y_DTYPE_C sum_gradients
-        Y_DTYPE_C sum_hessians
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
