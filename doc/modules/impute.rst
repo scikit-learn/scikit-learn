@@ -119,7 +119,7 @@ round are returned.
 
 Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a Pipeline
 as a way to build a composite estimator that supports imputation.
-See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+See :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
 
 .. _multiple_imputation:
 
