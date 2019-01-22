@@ -917,6 +917,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 Xt, predictor = self._impute_one_feature(
                     Xt, mask_missing_values, feat_idx, neighbor_feat_idx,
                     predictor=None, fit_mode=True)
+                print(Xt)
                 predictor_triplet = ImputerTriplet(feat_idx,
                                                    neighbor_feat_idx,
                                                    predictor)
