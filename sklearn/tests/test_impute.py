@@ -939,6 +939,6 @@ def test_heisenbug():
     X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     assert_allclose(
         np.round(imp.transform(X_test)),
-        [[1., 2.]
-         [6., 3.]
+        [[1., 2.],
+         [6., 3.],
          [26., 6.]])
