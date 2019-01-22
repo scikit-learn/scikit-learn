@@ -270,9 +270,9 @@ class TreeGrower:
             # Do not even bother computing any splitting statistics.
             self._finalize_leaf(self.root)
             return
-        # if sum_hessians < self.splitter.min_hessian_to_split:
-        #     self._finalize_leaf(self.root)
-        #     return
+        if sum_hessians < self.splitter.min_hessian_to_split:
+            self._finalize_leaf(self.root)
+            return
 
         self._compute_spittability(self.root)
 
