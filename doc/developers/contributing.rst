@@ -1457,7 +1457,7 @@ decide what tests to run and what input data is appropriate. Tags can depends on
 estimator parameters or even system architecture and can in general only be
 determined at runtime.
 
-The default value of all tags buy ``X_types`` is ``False``.
+The default value of all tags except for ``X_types`` is ``False``.
 
 The current set of estimator tags are:
 
@@ -1484,7 +1484,12 @@ allow_nan
     whether the estimator supports data with missing values encoded as np.NaN
 
 poor_score
-    whether the estimator fails to provide a "reasonable" test-set score.
+    whether the estimator fails to provide a "reasonable" test-set score, which
+    currently for regression is an R2 of 0.5 on a subset of the boston housing
+    dataset, and for classification an accuracy of 0.83 on
+    ``make_blobs(n_samples=300, random_state=0)``. These datasets and values
+    are based on current estimators in sklearn and might be replaced by
+    something more systematic.
 
 multioutput_only
     whether estimator supports only multi-output classification or regression.
@@ -1495,17 +1500,22 @@ _skip_test
 X_types
     Supported input types for X as list of strings. Tests are currently only run if '2darray' is contained
     in the list, signifying that the estimator takes continuous 2d numpy arrays as input. The default
-    value is ['2darray']. Other possible types are ``'string'``, ``'sparse'``, ``'categorical'``, ``'1dlabels'`` and ``'2dlabels'``.
-    The goals is that in the future the supported input type will determine the data used during testsing,
-    in particular for ``'string'``, ``'sparse'`` and ``'categorical'`` data.
-    For now, the test for sparse data do not make use of the ``'sparse'`` tag.
+    value is ['2darray']. Other possible types are ``'string'``, ``'sparse'``,
+    ``'categorical'``, ``dict``, ``'1dlabels'`` and ``'2dlabels'``.
+    The goals is that in the future the supported input type will determine the
+    data used during testsing, in particular for ``'string'``, ``'sparse'`` and
+    ``'categorical'`` data.  For now, the test for sparse data do not make use
+    of the ``'sparse'`` tag.
 
 
 In addition to the tags, estimators are also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
-which is a list or tuple.  If ``_required_parameters`` is only ``["estimator"]`` or ``["base_estimator"]``, then the
-estimator will be instantiated with an instance of
-``LinearDiscriminantAnalysis`` (or ``RidgeRegression`` if the estimator is a regressor) in the tests.
+which is a list or tuple.  If ``_required_parameters`` is only
+``["estimator"]`` or ``["base_estimator"]``, then the estimator will be
+instantiated with an instance of ``LinearDiscriminantAnalysis`` (or
+``RidgeRegression`` if the estimator is a regressor) in the tests. The choice
+of these two models is somewhat idiosyncratic but both should provide robust
+closed-form solutions.
 
 .. _reading-code:
 

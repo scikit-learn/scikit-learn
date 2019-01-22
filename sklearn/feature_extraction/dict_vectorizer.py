@@ -364,4 +364,4 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         return self
 
     def _more_tags(self):
-        return {'X_types': [dict]}
+        return {'X_types': ["dict"]}
