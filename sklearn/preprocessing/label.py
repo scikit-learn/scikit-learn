@@ -33,6 +33,60 @@ __all__ = [
 ]
 
 
+def _nanencode_numpy(values, uniques=None, encode=False):
+    if uniques is None:
+        values_is_nan = np.isnan(values)
+        values_no_nan = values[~values_is_nan]
+
+        uniques = np.unique(values_no_nan)
+        if encode:
+            encoded = np.searchsorted(uniques, values)
+            return uniques, encoded, values_is_nan
+        else:
+            return uniques
+
+    if encode:
+        values_is_nan = np.isnan(values)
+        values_no_nan = values[~values_is_nan]
+
+        diff = _encode_check_unknown(values_no_nan, uniques)
+        if diff:
+            raise ValueError("y contains previously unseen labels: %s"
+                             % str(diff))
+        encoded = np.searchsorted(uniques, values)
+        return uniques, encoded, values_is_nan
+    else:
+        return uniques
+
+
+def _nanencode_python(values, uniques=None, encode=False):
+    if uniques is None:
+        uniques = set(values)
+        uniques.discard(None)
+        uniques = sorted(uniques)
+        uniques = np.array(uniques, dtype=values.dtype)
+    if encode:
+        na_index = len(uniques)
+        table = {val: i for i, val in enumerate(uniques)}
+        table[None] = na_index
+        try:
+            encoded = np.array([table[v] for v in values])
+            encoded_nan = (encoded == na_index)
+        except KeyError as e:
+            raise ValueError("y contains previously unseen labels: %s"
+                             % str(e))
+        return uniques, encoded, encoded_nan
+    else:
+        return uniques
+
+
+def _nanencode(values, uniques=None, encode=False):
+    if values.dtype == object:
+        return _nanencode_python(values, uniques, encode)
+    else:
+        return _nanencode_numpy(values, uniques, encode)
+
+
 def _encode_numpy(values, uniques=None, encode=False):
     # only used in _encode below, see docstring there for details
     if uniques is None:
