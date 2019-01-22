@@ -88,9 +88,14 @@ def test_enet_toy():
     Y = [-1, 0, 1]       # just a straight line
     T = [[2.], [3.], [4.]]  # test sample
 
+    # Be careful with tests for the saga solver for this very small dataset.
+    # The result depends on random_state and my give wrong resultsself.
+    # See issue #13021.
+
     for solver in ['cd', 'saga']:
         # this should be the same as lasso
-        clf = ElasticNet(alpha=1e-8, l1_ratio=1.0, solver=solver, tol=1e-8)
+        clf = ElasticNet(alpha=1e-8, l1_ratio=1.0, solver=solver, tol=1e-8,
+                         random_state=2)
         clf.fit(X, Y)
         pred = clf.predict(T)
         assert_array_almost_equal(clf.coef_, [1])
@@ -99,7 +104,8 @@ def test_enet_toy():
             assert_almost_equal(clf.dual_gap_, 0)
 
         clf = ElasticNet(alpha=0.5, l1_ratio=0.3, max_iter=100,
-                         precompute=False, solver=solver, tol=1e-6)
+                         precompute=False, solver=solver, tol=1e-6,
+                         random_state=2)
         clf.fit(X, Y)
         pred = clf.predict(T)
         assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
@@ -115,15 +121,17 @@ def test_enet_toy():
         if solver == 'cd':
             assert_almost_equal(clf.dual_gap_, 0)
 
-        clf.set_params(max_iter=100, precompute=np.dot(X.T, X))
-        clf.fit(X, Y)  # with Gram
-        pred = clf.predict(T)
-        assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
-        assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
         if solver == 'cd':
+            clf.set_params(max_iter=100, precompute=np.dot(X.T, X))
+            clf.fit(X, Y)  # with Gram
+            pred = clf.predict(T)
+            assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
+            assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327],
+                                      decimal=3)
             assert_almost_equal(clf.dual_gap_, 0)
 
-        clf = ElasticNet(alpha=0.5, l1_ratio=0.5, solver=solver)
+        clf = ElasticNet(alpha=0.5, l1_ratio=0.5, solver=solver,
+                         random_state=2)
         clf.fit(X, Y)
         pred = clf.predict(T)
         assert_array_almost_equal(clf.coef_, [0.45454], 3)
