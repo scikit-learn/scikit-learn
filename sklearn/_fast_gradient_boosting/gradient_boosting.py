@@ -1,6 +1,4 @@
-"""
-Gradient Boosting decision trees for classification and regression.
-"""
+"""Fast Gradient Boosting decision trees for classification and regression."""
 from abc import ABC, abstractmethod
 
 import numpy as np

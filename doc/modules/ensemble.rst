@@ -456,6 +456,21 @@ The module :mod:`sklearn.ensemble` provides methods
 for both classification and regression via gradient boosted regression
 trees.
 
+
+.. note::
+  :class:`FastGradientBoostingClassifier` and
+  :class:`FastGradientBoostingRegressor` were introduced in version 0.21 and
+  are considerably faster than :class:`GradientBoostingClassifier` and
+  :class:`GradientBoostingRegressor` when the number of samples is bigger than
+  ``10 000``. These fast estimators first bin the input samples `X` into
+  integer-valued bins (typically 256 bins) which tremendously reduces the
+  number of splitting points to consider. The API of these new estimators is
+  slightly different, and some features are not yet supported.
+
+  The following doc focuses on :class:`GradientBoostingClassifier` and
+  :class:`GradientBoostingRegressor` only.
+
+
 Classification
 ---------------
 
