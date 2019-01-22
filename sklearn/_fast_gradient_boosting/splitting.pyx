@@ -367,6 +367,7 @@ cdef class Splitter:
         cdef:
             unsigned int n_samples
             int feature_idx
+            int best_feature_idx
             int i
             unsigned int thread_idx
             unsigned int [:] starts
@@ -421,7 +422,9 @@ cdef class Splitter:
                 split_infos[feature_idx] = split_info
 
             # then compute best possible split among all feature
-            split_info = self._find_best_feature_to_split_helper(split_infos)
+            best_feature_idx = self._find_best_feature_to_split_helper(
+                split_infos)
+            split_info = split_infos[best_feature_idx]
 
         out = SplitInfo(
             split_info.gain,
@@ -546,7 +549,9 @@ cdef class Splitter:
                 split_infos[feature_idx] = split_info
 
             # then compute best possible split among all feature
-            split_info = self._find_best_feature_to_split_helper(split_infos)
+            best_feature_idx = self._find_best_feature_to_split_helper(
+                split_infos)
+            split_info = split_infos[best_feature_idx]
 
         out = SplitInfo(
             split_info.gain,
@@ -562,25 +567,18 @@ cdef class Splitter:
         free(split_infos)
         return out
 
-    cdef split_info_struct _find_best_feature_to_split_helper(self,
+    cdef int _find_best_feature_to_split_helper(self,
         split_info_struct * split_infos  # IN
         ) nogil:
         """Returns the best split_info among those in splits_infos."""
         cdef:
-            Y_DTYPE_C gain
-            Y_DTYPE_C best_gain
-            split_info_struct split_info
-            split_info_struct best_split_info
-            unsigned int feature_idx
+            int feature_idx
+            int best_feature_idx = 0
 
-        best_gain = -1.
-        for feature_idx in range(self.n_features):
-            split_info = split_infos[feature_idx]
-            gain = split_info.gain
-            if best_gain < 0. or gain > best_gain:
-                best_gain = gain
-                best_split_info = split_info
-        return best_split_info
+        for feature_idx in range(1, self.n_features):
+            if split_infos[feature_idx].gain > split_infos[best_feature_idx].gain:
+                best_feature_idx = feature_idx
+        return best_feature_idx
 
     cdef split_info_struct _find_best_bin_to_split_helper(
         self,
