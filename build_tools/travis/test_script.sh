@@ -21,7 +21,7 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
-    TEST_CMD="pytest --showlocals --durations=20 --pyargs"
+    TEST_CMD="pytest -n auto --showlocals --durations=20 --pyargs"
 
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
@@ -34,6 +34,7 @@ run_tests() {
     # usage as travis workers are stateless and therefore traditional local
     # disk caching does not work.
     export SKLEARN_SKIP_NETWORK_TESTS=1
+    export PYTHONHASHSEED=0
 
     if [[ "$COVERAGE" == "true" ]]; then
         TEST_CMD="$TEST_CMD --cov sklearn"
