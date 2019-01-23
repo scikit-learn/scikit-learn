@@ -17,12 +17,13 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 
 from ..utils.sparsefuncs import min_max_axis
-from ..utils import column_or_1d
+from ..utils import column_or_1d, is_scalar_nan
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
+from ..impute import _get_mask
 
 
 __all__ = [
@@ -33,45 +34,61 @@ __all__ = [
 ]
 
 
-def _nanencode_numpy(values, uniques=None, encode=False):
-    if uniques is None:
-        values_is_nan = np.isnan(values)
-        values_no_nan = values[~values_is_nan]
-
-        uniques = np.unique(values_no_nan)
-        if encode:
-            encoded = np.searchsorted(uniques, values)
-            return uniques, encoded, values_is_nan
-        else:
-            return uniques
-
-    if encode:
-        values_is_nan = np.isnan(values)
-        values_no_nan = values[~values_is_nan]
-
-        diff = _encode_check_unknown(values_no_nan, uniques)
-        if diff:
-            raise ValueError("y contains previously unseen labels: %s"
-                             % str(diff))
-        encoded = np.searchsorted(uniques, values)
-        return uniques, encoded, values_is_nan
+def _nanunique(ar):
+    uniques = np.unique(ar)
+    # np.nan is always sorted last
+    if is_scalar_nan(uniques[-1]):
+        nan_idx = np.searchsorted(uniques, np.nan)
+        return uniques[:nan_idx+1]
     else:
         return uniques
 
 
-def _nanencode_python(values, uniques=None, encode=False):
+def _nanencode_numpy(values, uniques=None, encode=False,
+                     missing_value=np.nan):
+    check_values = True
+    if uniques is None:
+        uniques = _nanunique(values)
+        u_mask = _get_mask(uniques, missing_value)
+        uniques = uniques[~u_mask]
+        check_values = False
+
+    if encode:
+        if check_values:
+            unique_v = _nanunique(values)
+            if is_scalar_nan(uniques[-1]) and is_scalar_nan(unique_v[-1]):
+                unique_v = unique_v[:-1]
+            unseen = np.setdiff1d(unique_v, uniques)
+            unseen = unseen[~_get_mask(unseen, missing_value)]
+            if unseen:
+                raise ValueError("y contains previously unseen labels: %s"
+                                 % str(unseen))
+
+        encoded = np.searchsorted(uniques, values)
+        e_mask = _get_mask(values, missing_value)
+        return uniques, encoded, e_mask
+    else:
+        return uniques
+
+
+def _nanencode_python(values, uniques=None, encode=False,
+                      missing_value=None):
     if uniques is None:
         uniques = set(values)
-        uniques.discard(None)
-        uniques = sorted(uniques)
+        uniques.discard(missing_value)
+        # Put None at the end of the sort, similar to numpy.unique
+        uniques = sorted(uniques, key=lambda x: (x is None, x))
         uniques = np.array(uniques, dtype=values.dtype)
     if encode:
-        na_index = len(uniques)
+        # Use index -1 so that the number encoding will not cause failures
+        # if used by the consumer for indexing. It will still fail when used for
+        # indexing an empty array but so is any other index.
+        nan_index = -1
         table = {val: i for i, val in enumerate(uniques)}
-        table[None] = na_index
+        table[missing_value] = nan_index
         try:
             encoded = np.array([table[v] for v in values])
-            encoded_nan = (encoded == na_index)
+            encoded_nan = (encoded == nan_index)
         except KeyError as e:
             raise ValueError("y contains previously unseen labels: %s"
                              % str(e))
@@ -80,11 +97,11 @@ def _nanencode_python(values, uniques=None, encode=False):
         return uniques
 
 
-def _nanencode(values, uniques=None, encode=False):
+def _nanencode(values, uniques=None, encode=False, *args, **kwargs):
     if values.dtype == object:
-        return _nanencode_python(values, uniques, encode)
+        return _nanencode_python(values, uniques, encode, *args, **kwargs)
     else:
-        return _nanencode_numpy(values, uniques, encode)
+        return _nanencode_numpy(values, uniques, encode, *args, **kwargs)
 
 
 def _encode_numpy(values, uniques=None, encode=False):
