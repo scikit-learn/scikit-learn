@@ -868,13 +868,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 .format(self.n_iter))
 
         if self.predictor is None:
-            if self.sample_posterior:
-                from .linear_model import BayesianRidge
-                self._predictor = BayesianRidge()
-            else:
-                from .linear_model import RidgeCV
-                # including a very small alpha to approximate OLS
-                self._predictor = RidgeCV(alphas=np.array([1e-5, 0.1,  1, 10]))
+            from .linear_model import BayesianRidge
+            self._predictor = BayesianRidge()
         else:
             self._predictor = clone(self.predictor)
 
