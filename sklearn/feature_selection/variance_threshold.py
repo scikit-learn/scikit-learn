@@ -31,7 +31,7 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
 
     Notes
     -----
-    Allows NaN/Inf in the input.
+    Allows NaN in the input.
 
     Examples
     --------
@@ -66,7 +66,7 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
         self
         """
         X = check_array(X, ('csr', 'csc'), dtype=np.float64,
-                        force_all_finite=False)
+                        force_all_finite='allow-nan')
 
         if hasattr(X, "toarray"):   # sparse matrix
             _, self.variances_ = mean_variance_axis(X, axis=0)

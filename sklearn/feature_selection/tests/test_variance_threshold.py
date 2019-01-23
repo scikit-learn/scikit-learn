@@ -29,11 +29,10 @@ def test_variance_threshold():
         assert_equal((len(data), 1), X.shape)
 
 
-def test_variance_nan_inf():
+def test_variance_nan():
     arr = np.array(data, dtype=np.float64)
     arr[0, 0] = np.NaN
-    arr[0, 1] = np.Inf
 
     for X in [arr, csr_matrix(arr), csc_matrix(arr), bsr_matrix(arr)]:
         sel = VarianceThreshold().fit(X)
-        assert_array_equal([0, 3, 4], sel.get_support(indices=True))
+        assert_array_equal([0, 1, 3, 4], sel.get_support(indices=True))
