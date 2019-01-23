@@ -106,7 +106,7 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`feature_selection.SelectFwe`, :class:`feature_selection.SelectKBest`,
   :class:`feature_selection.SelectPercentile`,
   and :class:`feature_selection.VarianceThreshold`. Note that if the underlying
-  estimator of the feature selector does not allow NaN/Inf then it will still
+  estimator or score function of the feature selector does not allow NaN/Inf then it will still
   error, but the feature selectors themselves no longer enforce this
   restriction unnecessarily. :issue:`11635` by :user:`Alec Peters <adpeters>`.
 
