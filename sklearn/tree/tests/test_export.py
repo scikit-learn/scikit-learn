@@ -314,6 +314,7 @@ def test_precision():
 def test_plot_tree():
     # mostly smoke tests
     pytest.importorskip("matplotlib.pyplot")
+    import matplotlib.pyplot as plt
     # Check correctness of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3,
                                  min_samples_split=2,
@@ -323,7 +324,8 @@ def test_plot_tree():
 
     # Test export code
     feature_names = ['first feat', 'sepal_width']
-    nodes = plot_tree(clf, feature_names=feature_names)
+    _, ax = plt.subplots()
+    nodes = plot_tree(clf, feature_names=feature_names, ax=ax)
     assert len(nodes) == 3
     assert nodes[0].get_text() == ("first feat <= 0.0\nentropy = 0.5\n"
                                    "samples = 6\nvalue = [3, 3]")
