@@ -455,13 +455,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         computed during the final round. A round is a single imputation of each
         feature with missing values.
 
-    predictor : estimator object, default=RidgeCV() or BayesianRidge()
+    predictor : estimator object, default=BayesianRidge()
         The predictor to use at each step of the round-robin imputation.
         If ``sample_posterior`` is True, the predictor must support
-        ``return_std`` in its ``predict`` method. Also, if
-        ``sample_posterior=True`` the default predictor will be
-        :class:`sklearn.linear_model.BayesianRidge` and
-        :class:`sklearn.linear_model.RidgeCV` otherwise.
+        ``return_std`` in its ``predict`` method.
 
     sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
