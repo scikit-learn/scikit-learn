@@ -674,8 +674,6 @@ class ElasticNet(LinearModel, RegressorMixin):
             verbose, return_n_iter, positive,
             check_input, **params)
 
-    path.__doc__ = enet_path.__doc__
-
     def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
 
@@ -812,6 +810,9 @@ class ElasticNet(LinearModel, RegressorMixin):
                                    dense_output=True) + self.intercept_
         else:
             return super()._decision_function(X)
+
+
+ElasticNet.path.__doc__ = enet_path.__doc__
 
 
 ###############################################################################
@@ -959,7 +960,8 @@ class Lasso(ElasticNet):
             verbose, return_n_iter, positive,
             check_input, **params)
 
-    path.__doc__ = enet_path.__doc__
+
+Lasso.path.__doc__ = enet_path.__doc__
 
 
 ###############################################################################
@@ -1436,7 +1438,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
             X, y, eps, n_alphas, alphas, precompute, Xy, copy_X, coef_init,
             verbose, return_n_iter, positive, **params)
 
-    path.__doc__ = lasso_path.__doc__
+
+LassoCV.path.__doc__ = lasso_path.__doc__
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1656,7 +1659,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
             verbose, return_n_iter, positive,
             check_input, **params)
 
-    path.__doc__ = enet_path.__doc__
+
+ElasticNetCV.path.__doc__ = enet_path.__doc__
 
 
 ###############################################################################
@@ -2149,8 +2153,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
-    path = staticmethod(enet_path)
-
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
@@ -2170,6 +2172,20 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.selection = selection
+
+    @staticmethod
+    def path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+             precompute='auto', Xy=None, copy_X=True, coef_init=None,
+             verbose=False, return_n_iter=False, positive=False,
+             check_input=True, **params):
+        return enet_path(
+            X, y, l1_ratio, eps, n_alphas, alphas,
+            precompute, Xy, copy_X, coef_init,
+            verbose, return_n_iter, positive,
+            check_input, **params)
+
+
+MultiTaskElasticNetCV.path.__doc__ = enet_path.__doc__
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
@@ -2336,4 +2352,5 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             X, y, eps, n_alphas, alphas, precompute, Xy, copy_X, coef_init,
             verbose, return_n_iter, positive, **params)
 
-    path.__doc__ = lasso_path.__doc__
+
+MultiTaskLassoCV.path.__doc__ = lasso_path.__doc__
