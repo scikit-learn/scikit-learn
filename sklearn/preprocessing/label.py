@@ -71,24 +71,71 @@ def _nanencode_numpy(values, uniques=None, encode=False,
         return uniques
 
 
+def _sort_nankey(x):
+    if is_scalar_nan(x):
+        return 1, 0
+    else:
+        return 0, x
+
+
+def _dict_to_mapper(d, use_nan, nan_value):
+    if use_nan:
+        def mapper(x):
+            try:
+                return d[x]
+            except KeyError:
+                if is_scalar_nan(x):
+                    return nan_value
+                else:
+                    raise
+        return mapper
+    else:
+        return lambda x: d[x]
+
+
 def _nanencode_python(values, uniques=None, encode=False,
                       missing_values=None):
     if uniques is None:
-        uniques = set(values)
-        uniques.discard(missing_values)
-        # Put None at the end of the sort, similar to numpy.unique
-        uniques = sorted(uniques, key=lambda x: (x is None, x))
+        items = set(values)
+        items.discard(missing_values)
+        try:
+            items.remove(None)
+            has_none = True
+        except KeyError:
+            has_none = False
+
+        items_not_na = [i for i in items if not is_scalar_nan(i)]
+        has_na = len(items) > len(items_not_na)
+
+        uniques = sorted(items_not_na)
+        if has_none:
+            uniques.append(None)
+        if has_na and not is_scalar_nan(missing_values):
+            uniques.append(np.nan)
+
         uniques = np.array(uniques, dtype=values.dtype)
+
     if encode:
         # Use index -1 so that the number encoding will not cause failures
         # if used by the consumer for indexing. It will still fail when used
         # for indexing an empty array but so is any other index.
-        nan_index = -1
-        table = {val: i for i, val in enumerate(uniques)}
-        table[missing_values] = nan_index
+        missing_index = -1
+        if is_scalar_nan(uniques[-1]):
+            table = {val: i for i, val in enumerate(uniques[:-1])}
+            nan_index = len(table)
+            table[missing_values] = missing_index
+            table_mapper = _dict_to_mapper(table, True, nan_index)
+        else:
+            table = {val: i for i, val in enumerate(uniques)}
+            if is_scalar_nan(missing_values):
+                table_mapper = _dict_to_mapper(table, True, missing_index)
+            else:
+                table[missing_values] = missing_index
+                table_mapper = _dict_to_mapper(table, False, None)
+
         try:
-            encoded = np.array([table[v] for v in values])
-            encoded_nan = encoded == nan_index
+            encoded = np.array([table_mapper(v) for v in values])
+            encoded_nan = encoded == missing_index
         except KeyError as e:
             raise ValueError("y contains previously unseen labels: %s"
                              % str(e))
