@@ -706,7 +706,7 @@ THRESHOLDED_REGRESSION_METRICS.update(REGRESSION_METRICS)
         'name',
         sorted(THRESHOLDED_REGRESSION_METRICS))
 def test_regression_thresholded_inf_nan_input(name):
-    metric = THRESHOLDED_MULTILABEL_METRICS[name]
+    metric = THRESHOLDED_REGRESSION_METRICS[name]
     for y_true, y_score in invalids:
         assert_raise_message(ValueError,
                              "contains NaN, infinity",
