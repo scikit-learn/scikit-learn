@@ -19,7 +19,6 @@ from collections.abc import Mapping
 import numbers
 from operator import itemgetter
 import re
-import struct
 import unicodedata
 import warnings
 
