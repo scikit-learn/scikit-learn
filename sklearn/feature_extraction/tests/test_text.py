@@ -35,7 +35,8 @@ from sklearn.utils.testing import (assert_equal, assert_not_equal,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
                                    SkipTest, assert_raises, assert_no_warnings,
-                                   fails_if_pypy, assert_allclose_dense_sparse)
+                                   fails_if_pypy, assert_allclose_dense_sparse,
+                                   skip_if_32bit)
 from sklearn.utils.fixes import _Mapping as Mapping
 from collections import defaultdict
 from functools import partial
@@ -1144,10 +1145,15 @@ def test_vectorizer_stop_words_inconsistent():
                          ['hello world'])
 
 
+@skip_if_32bit
 def test_countvectorizer_sort_features_64bit_sparse_indices():
     """
     Check that CountVectorizer._sort_features preserves the dtype of its sparse
     feature matrix.
+
+    This test is skipped on 32bit platforms, see:
+        https://github.com/scikit-learn/scikit-learn/pull/11295
+    for more details.
     """
 
     X = sparse.csr_matrix((5, 5), dtype=np.int64)
