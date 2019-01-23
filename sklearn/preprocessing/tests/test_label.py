@@ -25,7 +25,7 @@ from sklearn.preprocessing.label import label_binarize
 
 from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
-from sklearn.preprocessing.label import _encode
+from sklearn.preprocessing.label import _encode, _nanencode
 
 from sklearn import datasets
 
@@ -605,3 +605,24 @@ def test_encode_util(values, expected):
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
     _, encoded = _encode(values, uniques, encode=True)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+
+
+@pytest.mark.parametrize(
+        "values, expected",
+        [(np.array([2, 1, 3, 1, 3], dtype='int64'),
+          np.array([1, 2, 3], dtype='int64')),
+         (np.array(['b', 'a', 'c', 'a', 'c'], dtype=object),
+          np.array(['a', 'b', 'c'], dtype=object)),
+         (np.array(['b', 'a', 'c', 'a', 'c']),
+          np.array(['a', 'b', 'c']))],
+        ids=['int64', 'object', 'str'])
+def test_nanencode_util_as_encode(values, expected):
+    uniques = _nanencode(values)
+    assert_array_equal(uniques, expected)
+    uniques, encoded, na_mask = _nanencode(values, encode=True)
+    assert_array_equal(uniques, expected)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+    assert_array_equal(na_mask, np.zeros_like(values, dtype=np.bool))
+    _, encoded, na_mask = _nanencode(values, uniques, encode=True)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+    assert_array_equal(na_mask, np.zeros_like(values, dtype=np.bool))
