@@ -212,7 +212,8 @@ def test_non_negative_factorization_consistency():
                 A, H=H, update_H=False, init=init, solver=solver,
                 random_state=1, tol=1e-2)
 
-            model_class = NMF(init=init, solver=solver, random_state=1, tol=1e-2)
+            model_class = NMF(init=init, solver=solver, random_state=1,
+                              tol=1e-2)
             W_cls = model_class.fit_transform(A)
             W_cls_2 = model_class.transform(A)
 
