@@ -4,6 +4,7 @@ from functools import partial
 from itertools import product
 from itertools import chain
 from itertools import permutations
+from collections import OrderedDict
 
 import numpy as np
 import scipy.sparse as sp
@@ -696,19 +697,25 @@ invalids = [([0, 1], [np.inf, np.inf]),
             ([0, 1], [np.nan, np.inf])]
 
 
-@pytest.mark.parametrize(
-        'metric',
-        chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values()))
-def test_regression_thresholded_inf_nan_input(metric):
+THRESHOLDED_REGRESSION_METRICS = OrderedDict()
+THRESHOLDED_REGRESSION_METRICS.update(THRESHOLDED_METRICS)
+THRESHOLDED_REGRESSION_METRICS.update(REGRESSION_METRICS)
 
+
+@pytest.mark.parametrize(
+        'name',
+        sorted(THRESHOLDED_REGRESSION_METRICS))
+def test_regression_thresholded_inf_nan_input(name):
+    metric = THRESHOLDED_MULTILABEL_METRICS[name]
     for y_true, y_score in invalids:
         assert_raise_message(ValueError,
                              "contains NaN, infinity",
                              metric, y_true, y_score)
 
 
-@pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
-def test_classification_inf_nan_input(metric):
+@pytest.mark.parametrize('name', sorted(CLASSIFICATION_METRICS))
+def test_classification_inf_nan_input(name):
+    metric = CLASSIFICATION_METRICS[name]
     # Classification metrics all raise a mixed input exception
     for y_true, y_score in invalids:
         assert_raise_message(ValueError,
