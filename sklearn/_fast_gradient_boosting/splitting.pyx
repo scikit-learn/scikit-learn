@@ -28,12 +28,16 @@ from .types cimport hist_struct
 from .types import HISTOGRAM_DTYPE
 
 
-# Note: in a lot of functions here we pass feature_idx and the whole 2d
+# Note: in a lot of functions here, we pass feature_idx and the whole 2d
 # histograms arrays instead a lot just histograms[feature_idx]. This is
 # because Cython generated C code will have strange Python interactions (likely
 # related to the GIL release and the custom histogram dtype) when using 1d
 # histogram arrays.
 
+# epsilon for comparing gains to avoid floating precision issues that might be
+# caused by the (slightly non-deterministic) parallel sums over gradients and
+# hessians
+cdef Y_DTYPE_C EPS = 1e-13
 
 cdef struct split_info_struct:
     # Same as the SplitInfo class, but we need a C struct to use it in the
@@ -406,19 +410,7 @@ cdef class Splitter:
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
             # Compute sums of gradients and hessians at the node
-
-            # TODO: ideally use:
-            # for i in prange(n_samples, schedule='static'):
-            # we should be using prange here, but for some reason it
-            # leads to slightly incorrect values (1 out of ~100 times) and
-            # test check_estimator() does not pass anymore
-            # (check_fit_idempotent). It only seems to be a problem for
-            # classifiers which is very strange because the loop isn't
-            # classifier-specific. Maybe it has to do with the array
-            # population above (hessians aren't constant for classification
-            # losses). I tried to create a minimal reproducing example, without
-            # sucess.
-            for i in range(n_samples):
+            for i in prange(n_samples, schedule='static'):
                 sum_gradients += ordered_gradients[i]
             if self.hessians_are_constant:
                 sum_hessians = n_samples
@@ -599,8 +591,8 @@ cdef class Splitter:
             int best_feature_idx = 0
 
         for feature_idx in range(1, self.n_features):
-            if (split_infos[feature_idx].gain >
-                    split_infos[best_feature_idx].gain):
+            if (split_infos[feature_idx].gain -
+                    split_infos[best_feature_idx].gain) > EPS:
                 best_feature_idx = feature_idx
         return best_feature_idx
 
@@ -665,7 +657,7 @@ cdef class Splitter:
                                sum_gradients, sum_hessians,
                                self.l2_regularization)
 
-            if gain > best_split.gain and gain > self.min_gain_to_split:
+            if gain - best_split.gain > EPS and gain > self.min_gain_to_split:
                 best_split.gain = gain
                 best_split.feature_idx = feature_idx
                 best_split.bin_idx = bin_idx
