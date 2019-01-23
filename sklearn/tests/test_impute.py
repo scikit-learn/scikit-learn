@@ -931,14 +931,3 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
 
     with pytest.raises(ValueError, match=err_msg):
         imputer.fit_transform(X)
-
-
-def test_heisenbug():
-    imp = IterativeImputer(n_iter=10, random_state=0)
-    imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
-    X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
-    assert_allclose(
-        np.round(imp.transform(X_test)),
-        [[1., 2.],
-         [6., 3.],
-         [26., 6.]])

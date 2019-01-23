@@ -232,6 +232,25 @@ def test_perfect_checkerboard():
                                  (rows, cols)), 1)
 
 
+def test_compare_svd_methods():
+    data = np.array([[-2, -4, 2],
+                     [-2, 1, 2],
+                     [4, 2, 5]])
+
+    model_rand = SpectralCoclustering(n_clusters=2,
+                                      svd_method='randomized',
+                                      random_state=0)
+    model_rand.fit(data)
+
+    model_arpack = SpectralCoclustering(n_clusters=2,
+                                        svd_method='arpack',
+                                        random_state=0)
+    model_arpack.fit(data)
+
+    assert_array_equal(model_rand.column_labels_,
+                       model_arpack.column_labels_)
+
+
 def test_errors():
     data = np.arange(25).reshape((5, 5))
 
