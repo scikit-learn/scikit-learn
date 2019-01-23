@@ -208,7 +208,7 @@ positive_class = 'acq'
 
 # Here are some classifiers that support the `partial_fit` method
 partial_fit_classifiers = {
-    'SGD': SGDClassifier(max_iter=5),
+    'SGD': SGDClassifier(max_iter=5, tol=1e-3),
     'Perceptron': Perceptron(tol=1e-3),
     'NB Multinomial': MultinomialNB(alpha=0.01),
     'Passive-Aggressive': PassiveAggressiveClassifier(tol=1e-3),
@@ -359,9 +359,8 @@ plt.legend(cls_names, loc='best')
 # Plot fitting times
 plt.figure()
 fig = plt.gcf()
-cls_runtime = []
-for cls_name, stats in sorted(cls_stats.items()):
-    cls_runtime.append(stats['total_fit_time'])
+cls_runtime = [stats['total_fit_time']
+               for cls_name, stats in sorted(cls_stats.items())]
 
 cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')

@@ -2,6 +2,55 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_20_3:
+
+Version 0.20.3
+==============
+
+**??, 2019**
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.20.0.
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where computation was single
+  threaded when `n_jobs > 1` or `n_jobs = -1`.
+  :issue:`12949` by :user:`Prabakaran Kumaresshan <nixphix>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed a bug in :class:`compose.ColumnTransformer` to handle
+  negative indexes in the columns list of the transformers.
+  :issue:`12946` by :user:`Pierre Tallotte <pierretallotte>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :func:`decomposition.sparse_encode` where computation was single
+  threaded when `n_jobs > 1` or `n_jobs = -1`.
+  :issue:`13005` by :user:`Prabakaran Kumaresshan <nixphix>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
+  :class:`linear_model.MultiTaskLasso` which were breaking when
+  ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the
+  deprecation of ``categorical_features`` was handled incorrectly in
+  combination with ``handle_unknown='ignore'``.
+  :issue:`12881` by `Joris Van den Bossche`_.
+
 .. _changes_0_20_2:
 
 Version 0.20.2

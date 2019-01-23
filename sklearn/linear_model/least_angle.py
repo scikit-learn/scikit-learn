@@ -1097,12 +1097,12 @@ class LarsCV(Lars):
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
-        super(LarsCV, self).__init__(fit_intercept=fit_intercept,
-                                     verbose=verbose, normalize=normalize,
-                                     precompute=precompute,
-                                     n_nonzero_coefs=500,
-                                     eps=eps, copy_X=copy_X, fit_path=True,
-                                     positive=positive)
+        super().__init__(fit_intercept=fit_intercept,
+                         verbose=verbose, normalize=normalize,
+                         precompute=precompute,
+                         n_nonzero_coefs=500,
+                         eps=eps, copy_X=copy_X, fit_path=True,
+                         positive=positive)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -1344,7 +1344,7 @@ class LassoLarsCV(LarsCV):
         self.eps = eps
         self.copy_X = copy_X
         self.positive = positive
-        # XXX : we don't use super(LarsCV, self).__init__
+        # XXX : we don't use super().__init__
         # to avoid setting n_nonzero_coefs
 
 

@@ -169,10 +169,13 @@ Contributing code
 
 .. note::
 
-  To avoid duplicating work, it is highly advised that you contact the
-  developers on the mailing list before starting work on a non-trivial feature.
-
-  https://mail.python.org/mailman/listinfo/scikit-learn
+  To avoid duplicating work, it is highly advised that you search through the
+  `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_ and
+  the `PR list <https://github.com/scikit-learn/scikit-learn/pulls>`_.
+  If in doubt about duplicated work, or if you want to work on a non-trivial
+  feature, it's recommended to first open an issue in
+  the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+  to get some feedbacks from core developers.
 
 How to contribute
 -----------------
@@ -196,15 +199,22 @@ then submit a "pull request" (PR):
         $ git clone git@github.com:YourLogin/scikit-learn.git
         $ cd scikit-learn
 
- 4. Create a branch to hold your development changes::
+ 4. Install library in editable mode::
+
+        $ pip install --editable .
+
+    for more details about advanced installation, see the 
+    :ref:`install_bleeding_edge` section.
+
+ 5. Create a branch to hold your development changes::
 
         $ git checkout -b my-feature
 
     and start making changes. Always use a ``feature`` branch. It's good practice to
     never work on the ``master`` branch!
 
- 5. Develop the feature on your feature branch on your computer, using Git to do the 
-    version control. When you're done editing, add changed files using ``git add`` 
+ 6. Develop the feature on your feature branch on your computer, using Git to do the
+    version control. When you're done editing, add changed files using ``git add``
     and then ``git commit`` files::
 
         $ git add modified_files
@@ -214,11 +224,16 @@ then submit a "pull request" (PR):
 
         $ git push -u origin my-feature
 
- 6. Follow `these
+ 7. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an email to the
     mailing list for more visibility.
+
+.. note::
+
+  If you are modifying a Cython module, you have to re-run step 4 after modifications
+  and before testing them.
 
 .. note::
 
@@ -369,25 +384,60 @@ and Cython optimizations.
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
 
-.. topic:: Continuous Integration (CI)
+Continuous Integration (CI)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   * Travis is used for testing on Linux platforms
-   * Appveyor is used for testing on Windows platforms
-   * CircleCI is used to build the docs for viewing, for linting with flake8, and
-     for testing with PyPy on Linux 
+* Travis is used for testing on Linux platforms
+* Appveyor is used for testing on Windows platforms
+* CircleCI is used to build the docs for viewing, for linting with flake8, and
+    for testing with PyPy on Linux 
 
-   Please note that if one of the following markers appear in the latest commit
-   message, the following actions are taken.
+Please note that if one of the following markers appear in the latest commit
+message, the following actions are taken.
 
-     ====================== ===================
-     Commit Message Marker  Action Taken by CI
-     ---------------------- -------------------
-     [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
-     [ci skip]              CI is skipped completely
-     [doc skip]             Docs are not built
-     [doc quick]            Docs built, but excludes example gallery plots
-     [doc build]            Docs built including example gallery plots
-     ====================== ===================
+    ====================== ===================
+    Commit Message Marker  Action Taken by CI
+    ---------------------- -------------------
+    [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
+    [ci skip]              CI is skipped completely
+    [doc skip]             Docs are not built
+    [doc quick]            Docs built, but excludes example gallery plots
+    [doc build]            Docs built including example gallery plots
+    ====================== ===================
+
+Stalled pull requests
+^^^^^^^^^^^^^^^^^^^^^
+
+As contributing a feature can be a lengthy process, some
+pull requests appear inactive but unfinished. In such a case, taking
+them over is a great service for the project.
+
+A good etiquette to take over is:
+
+* **Determine if a PR is stalled**
+
+  * A pull request may have the label "stalled" or "help wanted" if we
+    have already identified it as a candidate for other contributors.
+
+  * To decide whether an inactive PR is stalled, ask the contributor if
+    she/he plans to continue working on the PR in the near future.
+    Failure to respond within 2 weeks with an activity that moves the PR
+    forward suggests that the PR is stalled and will result in tagging
+    that PR with "help wanted".
+
+    Note that if a PR has received earlier comments on the contribution
+    that have had no reply in a month, it is safe to assume that the PR
+    is stalled and to shorten the wait time to one day.
+
+    After a sprint, follow-up for un-merged PRs opened during sprint will
+    be communicated to participants at the sprint, and those PRs will be
+    tagged "sprint". PRs tagged with "sprint" can be reassigned or
+    declared stalled by sprint leaders.
+
+* **Taking over a stalled PR**: To take over a PR, it is important to
+  comment on the stalled PR that you are taking over and to link from the
+  new PR to the old one. The new PR should be created by pulling from the
+  old one.
 
 .. _new_contributors:
 

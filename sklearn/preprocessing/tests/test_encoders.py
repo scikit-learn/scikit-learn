@@ -226,6 +226,18 @@ def test_one_hot_encoder_categorical_features():
     assert_raises(ValueError, oh.fit, X)
 
 
+def test_one_hot_encoder_categorical_features_ignore_unknown():
+    # GH12881 bug in combination of categorical_features with ignore
+    X = np.array([[1, 2, 3], [4, 5, 6], [2, 3, 2]]).T
+    oh = OneHotEncoder(categorical_features=[2], handle_unknown='ignore')
+
+    with ignore_warnings(category=DeprecationWarning):
+        res = oh.fit_transform(X)
+
+    expected = np.array([[1, 0, 1], [0, 1, 0], [1, 2, 3], [4, 5, 6]]).T
+    assert_array_equal(res.toarray(), expected)
+
+
 def test_one_hot_encoder_handle_unknown():
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
     X2 = np.array([[4, 1, 1]])

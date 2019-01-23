@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from collections.abc import Mapping
 import re
 import warnings
 
@@ -37,7 +38,6 @@ from sklearn.utils.testing import (assert_equal, assert_not_equal,
                                    SkipTest, assert_raises, assert_no_warnings,
                                    fails_if_pypy, assert_allclose_dense_sparse,
                                    skip_if_32bit)
-from sklearn.utils.fixes import _Mapping as Mapping
 from collections import defaultdict
 from functools import partial
 import pickle
@@ -583,9 +583,9 @@ def test_feature_names():
 
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
 def test_vectorizer_max_features(Vectorizer):
-    expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
-    expected_stop_words = set([u'celeri', u'tomato', u'copyright', u'coke',
-                               u'sparkling', u'water', u'the'])
+    expected_vocabulary = {'burger', 'beer', 'salad', 'pizza'}
+    expected_stop_words = {u'celeri', u'tomato', u'copyright', u'coke',
+                           u'sparkling', u'water', u'the'}
 
     # test bounded number of extracted features
     vectorizer = Vectorizer(max_df=0.6, max_features=4)

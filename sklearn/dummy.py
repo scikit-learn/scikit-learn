@@ -349,7 +349,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
-        return super(DummyClassifier, self).score(X, y, sample_weight)
+        return super().score(X, y, sample_weight)
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
@@ -548,4 +548,4 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
-        return super(DummyRegressor, self).score(X, y, sample_weight)
+        return super().score(X, y, sample_weight)
