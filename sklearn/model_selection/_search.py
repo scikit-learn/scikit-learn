@@ -669,9 +669,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                                           cv.split(X, y, groups)))
 
                 if len(out) < 1:
-                    raise ValueError('No fits were performed. Was the CV '
-                                     'iterator empty? Were there no '
-                                     'candidates?')
+                    raise ValueError('No fits were performed. '
+                                     'Was the CV iterator empty? '
+                                     'Were there no candidates?')
                 elif len(out) != n_candidates * n_splits:
                     raise ValueError('cv.split and cv.get_n_splits returned '
                                      'inconsistent results. Expected {} '
