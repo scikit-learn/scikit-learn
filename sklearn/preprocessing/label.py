@@ -81,8 +81,8 @@ def _nanencode_python(values, uniques=None, encode=False,
         uniques = np.array(uniques, dtype=values.dtype)
     if encode:
         # Use index -1 so that the number encoding will not cause failures
-        # if used by the consumer for indexing. It will still fail when used for
-        # indexing an empty array but so is any other index.
+        # if used by the consumer for indexing. It will still fail when used
+        # for indexing an empty array but so is any other index.
         nan_index = -1
         table = {val: i for i, val in enumerate(uniques)}
         table[missing_value] = nan_index
