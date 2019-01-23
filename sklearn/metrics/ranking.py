@@ -242,7 +242,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
-                  min_fpr=0., max_fpr=1., min_tpr=0., max_tpr=1.):
+                  fpr_range=(0, 1), tpr_range=(0, 1)):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
@@ -284,27 +284,18 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    min_fpr : float, optional (default=0)
-        If not 0, the standardized partial AUC [3]_ over the range
-        [min_fpr, max_fpr] is returned.  Must be in between 0 and max_fpr.
-        Can only specify one of min_fpr or min_tpr.
+    fpr_range : tuple of float or int, optional (default=(0, 1))
+        Tuple represents [minimum fpr, maximum fpr].
+        If not (0, 1), the standardized partial AUC [3]_ over fpr_range
+        is returned.  Values must be in [0, 1].
+        Can only specify fpr_range or tpr_range.
 
-    max_fpr : float, optional (default=1)
-        If not 1, the standardized partial AUC [3]_ over the range
-        [min_fpr, max_fpr] is returned.  Must be in between min_fpr and 1.
-        Can only specify one of max_fpr or max_tpr.
-
-    min_tpr : float, optional (default=0)
-        If not 0, the corresponding min_fpr is calculated and
-        the standardized partial AUC [3]_ over the range
-        [min_fpr, max_fpr] is returned.  Must be in between 0 and max_tpr.
-        Can only specify one of min_fpr or min_tpr.
-
-    max_tpr : float, optional (default=1)
-        If not 1, the corresponding max_fpr is calculated and
-        the standardized partial AUC [3]_ over the range
-        [min_fpr, max_fpr] is returned.  Must be in between min_tpr and 1.
-        Can only specify one of max_fpr or max_tpr.
+    tpr_range : tuple of float, optional (default=(0, 1))
+        Tuple represents [minimum tpr, maximum tpr].
+        If not (0, 1), the associated fpr_range will be calculated,
+        and the standardized partial AUC [3]_ over fpr_range
+        is returned.  Values must be in [0, 1].
+        Can only specify fpr_range or tpr_range.
 
     Returns
     -------
@@ -350,7 +341,6 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         return np.interp(tpr_boundary, tpr_interp, fpr_interp)
 
     def _binary_roc_auc_score(y_true, y_score, sample_weight=None):
-        nonlocal min_fpr, max_fpr
 
         if len(np.unique(y_true)) != 2:
             raise ValueError("Only one class present in y_true. ROC AUC score "
@@ -359,38 +349,35 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         fpr, tpr, _ = roc_curve(y_true, y_score,
                                 sample_weight=sample_weight)
 
+        min_fpr, max_fpr = fpr_range[0], fpr_range[1]
+        min_tpr, max_tpr = tpr_range[0], tpr_range[1]
+
         if min_fpr == min_tpr == 0 and max_fpr == max_tpr == 1:
             return auc(fpr, tpr)
 
-        if min_fpr != 0 and min_tpr != 0:
-            raise ValueError("Can only specify min_fpr or min_tpr.")
-        if max_fpr != 1 and max_tpr != 1:
-            raise ValueError("Can only specify max_fpr or max_tpr.")
+        if (min_fpr != 0 or max_fpr != 1) and (min_tpr != 0 or max_tpr != 1):
+            raise ValueError("Can only specify fpr_range or tpr_range.")
+
+        if min_fpr < 0 or max_fpr > 1 or min_fpr > max_fpr:
+            raise ValueError(
+                "Expected fpr_range in [0, 1] "
+                "and fpr_range[0] < fpr_range[1], "
+                "got {}.".format(fpr_range)
+            )
+        if min_tpr < 0 or max_tpr > 1 or min_tpr > max_tpr:
+            raise ValueError(
+                "Expected tpr_range in [0, 1] "
+                "and tpr_range[0] < tpr_range[1], "
+                "got {}.".format(tpr_range)
+            )
 
         # PAUC Calculation
         if min_tpr != 0:
-            # Calculate the corresponding min_fpr
-            if not 0 <= min_tpr < max_tpr:
-                raise ValueError(
-                    "Expected min_tpr in [0, max_tpr), "
-                    "got: {}.".format(max_tpr)
-                )
             min_fpr = _get_fpr_from_tpr(tpr, fpr, min_tpr, "left")
         if max_tpr != 1:
-            # Calculate the corresponding max_fpr
-            if not min_tpr < max_tpr <= 1:
-                raise ValueError(
-                    "Expected max_tpr in (min_tpr, 1], "
-                    "got: {}.".format(max_tpr)
-                )
             max_fpr = _get_fpr_from_tpr(tpr, fpr, max_tpr, "right")
 
         if min_fpr != 0:
-            if not 0 <= min_fpr < max_fpr:
-                raise ValueError(
-                    "Expected min_fpr in [0, max_fpr), "
-                    "got: {}.".format(min_fpr)
-                )
             # Find index to insert min_fpr into fpr
             min_fpr_idx = np.searchsorted(fpr, min_fpr, "left")
 
@@ -407,11 +394,6 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
             ))
 
         if max_fpr != 1:
-            if not min_fpr < max_fpr <= 1:
-                raise ValueError(
-                    "Expected max_fpr in (min_fpr, 1], "
-                    "got: {}.".format(max_fpr)
-                )
             # Find index to insert max_fpr into fpr
             max_fpr_idx = np.searchsorted(fpr, max_fpr, "right")
 
@@ -433,7 +415,11 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         # standardize result to be 0.5 if non-discriminant and 1 if maximal
         min_area = 0.5 * (max_fpr ** 2 - min_fpr ** 2)
         max_area = max_fpr - min_fpr
-        return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
+        denom = max_area - min_area
+        if denom == 0:
+            return 0
+        else:
+            return 0.5 * (1 + (partial_auc - min_area) / denom)
 
     y_type = type_of_target(y_true)
     if y_type == "binary":

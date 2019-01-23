@@ -148,12 +148,12 @@ def _average_precision_slow(y_true, y_score):
     return average_precision
 
 
-def _partial_roc_auc_score(y_true, y_predict, max_fpr):
+def _partial_roc_auc_score(y_true, y_predict, min_fpr, max_fpr):
     """Alternative implementation to check for correctness of `roc_auc_score`
     with `max_fpr` set.
     """
 
-    def _partial_roc(y_true, y_predict, max_fpr):
+    def _partial_roc(y_true, y_predict, min_fpr, max_fpr):
         fpr, tpr, _ = roc_curve(y_true, y_predict)
         new_fpr = fpr[fpr <= max_fpr]
         new_fpr = np.append(new_fpr, max_fpr)
@@ -165,11 +165,11 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
         new_tpr = np.append(new_tpr, np.interp(max_fpr, x_interp, y_interp))
         return (new_fpr, new_tpr)
 
-    new_fpr, new_tpr = _partial_roc(y_true, y_predict, max_fpr)
+    new_fpr, new_tpr = _partial_roc(y_true, y_predict, min_fpr, max_fpr)
     partial_auc = auc(new_fpr, new_tpr)
 
     # Formula (5) from McClish 1989
-    fpr1 = 0
+    fpr1 = min_fpr
     fpr2 = max_fpr
     min_area = 0.5 * (fpr2 - fpr1) * (fpr2 + fpr1)
     max_area = fpr2 - fpr1
@@ -1100,56 +1100,71 @@ def test_ranking_loss_ties_handling():
 def test_partial_roc_auc_score():
     y_true = np.array([0, 0, 1, 1])
 
-    assert_equal(roc_auc_score(y_true, y_true, min_fpr=0.1), 1)
-    assert_equal(roc_auc_score(y_true, y_true, min_fpr=0.001), 1)
-    assert_equal(roc_auc_score(y_true, y_true, max_fpr=0.1), 1)
-    assert_equal(roc_auc_score(y_true, y_true, max_fpr=0.001), 1)
+    assert_equal(roc_auc_score(y_true, y_true, fpr_range=[0.1, 1]), 1)
+    assert_equal(roc_auc_score(y_true, y_true, fpr_range=[0.001, 1]), 1)
+    assert_equal(roc_auc_score(y_true, y_true, fpr_range=[0, 0.1]), 1)
+    assert_equal(roc_auc_score(y_true, y_true, fpr_range=[0, 0.001]), 1)
 
-    assert_equal(roc_auc_score(y_true, y_true, min_tpr=0.1), 1)
-    assert_equal(roc_auc_score(y_true, y_true, min_tpr=0.001), 1)
+    assert_equal(roc_auc_score(y_true, y_true, tpr_range=[0.1, 1.]), 1)
+    assert_equal(roc_auc_score(y_true, y_true, tpr_range=[0.001, 1.]), 1)
+    assert_equal(roc_auc_score(y_true, y_true, tpr_range=[0, 0.1]), 0)
+    assert_equal(roc_auc_score(y_true, y_true, tpr_range=[0, 0.001]), 0)
 
     y_scores = np.array([0.1, 0, 0.1, 0.01])
 
-    assert_almost_equal(roc_auc_score(y_true, y_scores, min_fpr=0.2),
+    assert_almost_equal(roc_auc_score(y_true, y_scores, fpr_range=[0.2, 1]),
                         0.6953125)
-    assert_almost_equal(roc_auc_score(y_true, y_scores, min_tpr=0.2),
+    assert_almost_equal(roc_auc_score(y_true, y_scores, tpr_range=[0.2, 1]),
                         0.6953125)
-    assert_almost_equal(roc_auc_score(y_true, y_scores, max_fpr=0.8),
+    assert_almost_equal(roc_auc_score(y_true, y_scores, fpr_range=[0, 0.8]),
                         0.609375)
-    assert_equal(roc_auc_score(y_true, y_scores, max_tpr=0.8), 0.5)
+    assert_equal(roc_auc_score(y_true, y_scores, tpr_range=[0, 0.8]), 0.5)
 
-    assert_equal(roc_auc_score(y_true, y_scores, max_tpr=0.3), 0.5)
-    assert_equal(roc_auc_score(y_true, y_scores, max_fpr=0.3), 0.5)
+    assert_equal(roc_auc_score(y_true, y_scores, fpr_range=[0, 0.3]), 0.5)
+    assert_equal(roc_auc_score(y_true, y_scores, tpr_range=[0, 0.3]), 0.5)
 
     # Unconstraint check
     assert_equal(roc_auc_score(y_true, y_scores),
-                 roc_auc_score(y_true, y_scores, min_fpr=0))
+                 roc_auc_score(y_true, y_scores, fpr_range=[0, 1]))
     assert_equal(roc_auc_score(y_true, y_scores),
-                 roc_auc_score(y_true, y_scores, max_fpr=1))
+                 roc_auc_score(y_true, y_scores, fpr_range=[0., 1.]))
     assert_equal(roc_auc_score(y_true, y_scores),
-                 roc_auc_score(y_true, y_scores, min_tpr=0))
+                 roc_auc_score(y_true, y_scores, tpr_range=[0, 1]))
     assert_equal(roc_auc_score(y_true, y_scores),
-                 roc_auc_score(y_true, y_scores, max_tpr=1))
+                 roc_auc_score(y_true, y_scores, tpr_range=[0., 1.]))
 
-    # Value error check
-    assert_raises(ValueError, roc_auc_score, y_true, y_true, min_fpr=1.1)
-    assert_raises(ValueError, roc_auc_score, y_true, y_true, min_tpr=1.1)
-    assert_raises(ValueError, roc_auc_score, y_true, y_true, max_fpr=-0.1)
-    assert_raises(ValueError, roc_auc_score, y_true, y_true, max_tpr=-0.1)
+    # Out of range check
+    assert_raises(ValueError, roc_auc_score, y_true, y_true,
+                  fpr_range=[0, 1.1])
+    assert_raises(ValueError, roc_auc_score, y_true, y_true,
+                  tpr_range=[0, 1.1])
+    assert_raises(ValueError, roc_auc_score, y_true, y_true,
+                  fpr_range=[-0.1, 1])
+    assert_raises(ValueError, roc_auc_score, y_true, y_true,
+                  tpr_range=[-0.1, 1])
 
-    # max_tpr error value check
-    assert_raises(ValueError, roc_auc_score, y_true, y_true, max_tpr=0.1)
+    # Both specified check.
+    assert_equal(
+        roc_auc_score(y_true, y_true, fpr_range=[0, 1], tpr_range=[0, 1]), 1
+    )
+    assert_equal(
+        roc_auc_score(y_true, y_true, fpr_range=[0., 1.],
+                      tpr_range=[0., 1.]),
+        1
+    )
+    assert_raises(ValueError, roc_auc_score, y_true, y_true,
+                  fpr_range=[0.0, 0.9], tpr_range=[0.0, 0.9])
 
     # Over specified check
-    assert_raises(ValueError, roc_auc_score, y_true, y_true,
-                  min_fpr=0.9, min_tpr=0.9)
-    assert_raises(ValueError, roc_auc_score, y_true, y_true,
-                  max_fpr=0.9, max_tpr=0.9)
+    #assert_raises(ValueError, roc_auc_score, y_true, y_true,
+    #              min_fpr=0.9, min_tpr=0.9)
+    #assert_raises(ValueError, roc_auc_score, y_true, y_true,
+    #              max_fpr=0.9, max_tpr=0.9)
 
     # max_fpr alternate calculation
     y_true, y_pred, _ = make_prediction(binary=True)
     for max_fpr in np.linspace(1e-4, 1, 5):
         assert_almost_equal(
-            roc_auc_score(y_true, y_pred, max_fpr=max_fpr),
-            _partial_roc_auc_score(y_true, y_pred, max_fpr)
+            roc_auc_score(y_true, y_pred, fpr_range=[0, max_fpr]),
+            _partial_roc_auc_score(y_true, y_pred, 0, max_fpr)
         )
