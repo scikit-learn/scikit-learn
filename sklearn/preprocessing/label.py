@@ -60,7 +60,7 @@ def _nanencode_numpy(values, uniques=None, encode=False,
                 unique_v = unique_v[:-1]
             unseen = np.setdiff1d(unique_v, uniques)
             unseen = unseen[~_get_mask(unseen, missing_values)]
-            if unseen:
+            if len(unseen):
                 raise ValueError("y contains previously unseen labels: %s"
                                  % str(unseen))
 
