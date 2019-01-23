@@ -640,7 +640,7 @@ def test_nanencode_util_as_encode(values, expected):
          (np.array([2, 1, 3, 1, 3, 4, 2, 4], dtype='int64'),
           np.array([1, 2, 3], dtype='int64'),
           4),
-         (np.array(['b', 'a', 'c', 'a', 'c', None, 'b', None,], dtype=object),
+         (np.array(['b', 'a', 'c', 'a', 'c', None, 'b', None], dtype=object),
           np.array(['a', 'b', 'c'], dtype=object),
           None),
          (np.array(['b', 'a', None, 'a', None, 'c', 'b', 'c', ], dtype=object),
