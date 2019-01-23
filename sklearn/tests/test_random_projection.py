@@ -116,7 +116,7 @@ def check_input_with_sparse_random_matrix(random_matrix):
                       random_matrix, n_components, n_features, density=density)
 
 
-@pytest.mark.parametrize("random_matrix", all_random_matrix)
+@pytest.mark.parametrize("random_matrix", sorted(all_random_matrix))
 def test_basic_property_of_random_matrix(random_matrix):
     # Check basic properties of random matrix generation
     check_input_size_random_matrix(random_matrix)
