@@ -88,7 +88,7 @@ def _nanencode_python(values, uniques=None, encode=False,
         table[missing_values] = nan_index
         try:
             encoded = np.array([table[v] for v in values])
-            encoded_nan = (encoded == nan_index)
+            encoded_nan = encoded == nan_index
         except KeyError as e:
             raise ValueError("y contains previously unseen labels: %s"
                              % str(e))
