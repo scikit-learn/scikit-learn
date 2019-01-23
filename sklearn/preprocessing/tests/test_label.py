@@ -630,7 +630,7 @@ def test_nanencode_util_as_encode(values, expected):
 
 
 @pytest.mark.parametrize(
-        "values, expected, missing_value",
+        "values, expected, missing_values",
         [(np.array([2, 1, 3, 1, 3, np.nan, 2, np.nan], dtype='float64'),
           np.array([1, 2, 3], dtype='float64'),
           np.nan),
@@ -651,18 +651,18 @@ def test_nanencode_util_as_encode(values, expected):
           'd')],
         ids=['float64_nan', 'float64_value', 'int64_value',
              'object_none', 'object_value', 'str_value'])
-def test_nanencode_util_with_missing(values, expected, missing_value):
+def test_nanencode_util_with_missing(values, expected, missing_values):
     encoding_answer = np.array([1, 0, 2, 0, 2, 1])
     na_mask_answer = np.array([0, 0, 0, 0, 0, 1, 0, 1], dtype=np.bool)
-    uniques = _nanencode(values, missing_value=missing_value)
+    uniques = _nanencode(values, missing_values=missing_values)
     assert_array_equal(uniques, expected)
     uniques, encoded, na_mask = _nanencode(values, encode=True,
-                                           missing_value=missing_value)
+                                           missing_values=missing_values)
     assert_array_equal(uniques, expected)
     assert_array_equal(na_mask, na_mask_answer)
     assert_array_equal(encoded[~na_mask], encoding_answer)
     uniques_, encoded, na_mask = _nanencode(values, uniques, encode=True,
-                                            missing_value=missing_value)
+                                            missing_values=missing_values)
     assert_array_equal(uniques_, uniques)
     assert_array_equal(na_mask, na_mask_answer)
     assert_array_equal(encoded[~na_mask], encoding_answer)

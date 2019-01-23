@@ -45,11 +45,11 @@ def _nanunique(ar):
 
 
 def _nanencode_numpy(values, uniques=None, encode=False,
-                     missing_value=np.nan):
+                     missing_values=np.nan):
     check_values = True
     if uniques is None:
         uniques = _nanunique(values)
-        u_mask = _get_mask(uniques, missing_value)
+        u_mask = _get_mask(uniques, missing_values)
         uniques = uniques[~u_mask]
         check_values = False
 
@@ -59,23 +59,23 @@ def _nanencode_numpy(values, uniques=None, encode=False,
             if is_scalar_nan(uniques[-1]) and is_scalar_nan(unique_v[-1]):
                 unique_v = unique_v[:-1]
             unseen = np.setdiff1d(unique_v, uniques)
-            unseen = unseen[~_get_mask(unseen, missing_value)]
+            unseen = unseen[~_get_mask(unseen, missing_values)]
             if unseen:
                 raise ValueError("y contains previously unseen labels: %s"
                                  % str(unseen))
 
         encoded = np.searchsorted(uniques, values)
-        e_mask = _get_mask(values, missing_value)
+        e_mask = _get_mask(values, missing_values)
         return uniques, encoded, e_mask
     else:
         return uniques
 
 
 def _nanencode_python(values, uniques=None, encode=False,
-                      missing_value=None):
+                      missing_values=None):
     if uniques is None:
         uniques = set(values)
-        uniques.discard(missing_value)
+        uniques.discard(missing_values)
         # Put None at the end of the sort, similar to numpy.unique
         uniques = sorted(uniques, key=lambda x: (x is None, x))
         uniques = np.array(uniques, dtype=values.dtype)
@@ -85,7 +85,7 @@ def _nanencode_python(values, uniques=None, encode=False,
         # for indexing an empty array but so is any other index.
         nan_index = -1
         table = {val: i for i, val in enumerate(uniques)}
-        table[missing_value] = nan_index
+        table[missing_values] = nan_index
         try:
             encoded = np.array([table[v] for v in values])
             encoded_nan = (encoded == nan_index)
