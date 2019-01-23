@@ -47,9 +47,14 @@ def _get_mask(X, value_to_mask):
             # np.isnan does not work on object dtypes.
             return _object_dtype_isnan(X)
     else:
-        # X == value_to_mask with object dytpes does not always perform
-        # element-wise for old versions of numpy
-        return np.equal(X, value_to_mask)
+        if X.dtype.kind in ["S", "U"]:
+            # np.equal does not work for byte string and unicode types.
+            # However the == sign works fine.
+            return X == value_to_mask
+        else:
+            # X == value_to_mask with object dytpes does not always perform
+            # element-wise for old versions of numpy
+            return np.equal(X, value_to_mask)
 
 
 def _most_frequent(array, extra_value, n_repeat):
