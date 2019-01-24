@@ -1,5 +1,4 @@
 extraction:
   cpp:
-    index:
-      build_command:
-        - python setup.py install
+    before_index:
+      - python setup.py install
