@@ -9,19 +9,19 @@ Imputation of missing values
 For various reasons, many real world datasets contain missing values, often
 encoded as blanks, NaNs or other placeholders. Such datasets however are
 incompatible with scikit-learn estimators which assume that all values in an
-array are numerical, and that all have and hold meaning. A basic strategy to use
-incomplete datasets is to discard entire rows and/or columns containing missing
-values. However, this comes at the price of losing data which may be valuable
-(even though incomplete). A better strategy is to impute the missing values,
-i.e., to infer them from the known part of the data. See the :ref:`glossary`
-entry on imputation.
+array are numerical, and that all have and hold meaning. A basic strategy to
+use incomplete datasets is to discard entire rows and/or columns containing
+missing values. However, this comes at the price of losing data which may be
+valuable (even though incomplete). A better strategy is to impute the missing
+values, i.e., to infer them from the known part of the data. See the
+:ref:`glossary` entry on imputation.
 
 
 Univariate vs. Multivariate Imputation
 ======================================
 
-One type of imputation algorithm is univariate, which imputes values in the i-th
-feature dimension using only non-missing values in that feature dimension
+One type of imputation algorithm is univariate, which imputes values in the
+i-th feature dimension using only non-missing values in that feature dimension
 (e.g. :class:`impute.SimpleImputer`). By contrast, multivariate imputation
 algorithms use the entire set of available feature dimensions to estimate the
 missing values (e.g. :class:`impute.IterativeImputer`).
@@ -66,9 +66,9 @@ The :class:`SimpleImputer` class also supports sparse matrices::
      [6. 3.]
      [7. 6.]]
 
-Note that this format is not meant to be used to implicitly store missing values
-in the matrix because it would densify it at transform time. Missing values encoded
-by 0 must be used with dense input.
+Note that this format is not meant to be used to implicitly store missing
+values in the matrix because it would densify it at transform time. Missing
+values encoded by 0 must be used with dense input.
 
 The :class:`SimpleImputer` class also supports categorical data represented as
 string values or pandas categoricals when using the ``'most_frequent'`` or
@@ -118,8 +118,8 @@ round are returned.
      [ 6. 12.]
      [ 3.  6.]]
 
-Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a Pipeline
-as a way to build a composite estimator that supports imputation.
+Both :class:`SimpleImputer` and :class:`IterativeImputer` can be used in a
+Pipeline as a way to build a composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_impute_plot_missing_values.py`.
 
 Flexibility of IterativeImputer
@@ -128,9 +128,9 @@ Flexibility of IterativeImputer
 There are many well-established imputation packages in the R data science
 ecosystem: Amelia, mi, mice, missForest, etc. missForest is popular, and turns
 out to be a particular instance of different sequential imputation algorithms
-that can all be implemented with :class:`IterativeImputer` by passing in different
-regressors to be used for predicting missing feature values. In the case of missForest,
-this regressor is a Random Forest.
+that can all be implemented with :class:`IterativeImputer` by passing in
+different regressors to be used for predicting missing feature values. In the
+case of missForest, this regressor is a Random Forest.
 See :ref:`sphx_glr_auto_examples_plot_iterative_imputer_variants_comparison.py`.
 
 
@@ -139,14 +139,14 @@ See :ref:`sphx_glr_auto_examples_plot_iterative_imputer_variants_comparison.py`.
 Multiple vs. Single Imputation
 ------------------------------
 
-In the statistics community, it is common practice to perform multiple imputations,
-generating, for example, ``m`` separate imputations for a single feature matrix.
-Each of these ``m`` imputations is then put through the subsequent analysis pipeline
-(e.g. feature engineering, clustering, regression, classification). The ``m`` final
-analysis results (e.g. held-out validation errors) allow the data scientist
-to obtain understanding of how analytic results may differ as a consequence
-of the inherent uncertainty caused by the missing values. The above practice
-is called multiple imputation.
+In the statistics community, it is common practice to perform multiple
+imputations, generating, for example, ``m`` separate imputations for a single
+feature matrix. Each of these ``m`` imputations is then put through the
+subsequent analysis pipeline (e.g. feature engineering, clustering, regression,
+classification). The ``m`` final analysis results (e.g. held-out validation
+errors) allow the data scientist to obtain understanding of how analytic
+results may differ as a consequence of the inherent uncertainty caused by the
+missing values. The above practice is called multiple imputation.
 
 Our implementation of :class:`IterativeImputer` was inspired by the R MICE
 package (Multivariate Imputation by Chained Equations) [1]_, but differs from
@@ -156,13 +156,13 @@ it repeatedly to the same dataset with different random seeds when
 ``sample_posterior=True``. See [2]_, chapter 4 for more discussion on multiple
 vs. single imputations.
 
-It is still an open problem as to how useful single vs. multiple imputation is in
-the context of prediction and classification when the user is not interested in
-measuring uncertainty due to missing values.
+It is still an open problem as to how useful single vs. multiple imputation is
+in the context of prediction and classification when the user is not
+interested in measuring uncertainty due to missing values.
 
-Note that a call to the ``transform`` method of :class:`IterativeImputer` is not
-allowed to change the number of samples. Therefore multiple imputations cannot be
-achieved by a single call to ``transform``.
+Note that a call to the ``transform`` method of :class:`IterativeImputer` is
+not allowed to change the number of samples. Therefore multiple imputations
+cannot be achieved by a single call to ``transform``.
 
 References
 ==========
