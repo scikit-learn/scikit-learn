@@ -43,7 +43,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from sklearn.datasets import fetch_california_housing
-from sklearn.impute import SimpleImputer, IterativeImputer
+from sklearn.impute import SimpleImputer
+from sklearn.impute import IterativeImputer
 from sklearn.linear_model import BayesianRidge
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import ExtraTreesRegressor
