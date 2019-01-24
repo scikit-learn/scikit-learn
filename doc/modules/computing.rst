@@ -222,7 +222,7 @@ allows you to set this configuration within a specified context::
 
   >>> import sklearn
   >>> with sklearn.config_context(assume_finite=True):
-  ...    pass  # do learning/prediction here with reduced validation
+  ...     pass  # do learning/prediction here with reduced validation
 
 Note that this will affect all uses of
 :func:`sklearn.utils.assert_all_finite` within the context.
@@ -463,7 +463,7 @@ memory to 128 MiB::
 
   >>> import sklearn
   >>> with sklearn.config_context(working_memory=128):
-  ...    pass  # do chunked work here
+  ...     pass  # do chunked work here
 
 An example of a chunked operation adhering to this setting is
 :func:`metric.pairwise_distances_chunked`, which facilitates computing
@@ -567,9 +567,9 @@ These environment variables should be set before importing scikit-learn.
     scikit-learn uses the site joblib rather than its vendored version.
     Consequently, joblib must be installed for scikit-learn to run.
     Note that using the site joblib is at your own risks: the versions of
-    scikt-learn and joblib need to be compatible. In addition, dumps from
-    joblib.Memory might be incompatible, and you might loose some caches
-    and have to redownload some datasets.
+    scikit-learn and joblib need to be compatible. Currently, joblib 0.11+
+    is supported. In addition, dumps from joblib.Memory might be incompatible,
+    and you might loose some caches and have to redownload some datasets.
 
 :SKLEARN_ASSUME_FINITE:
 

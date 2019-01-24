@@ -19,6 +19,15 @@ Note that the word "experiment" is not intended
 to denote academic use only,
 because even in commercial settings
 machine learning usually starts out experimentally.
+Here is a flowchart of typical cross validation workflow in model training.
+The best parameters can be determined by
+:ref:`grid search <grid_search>` techniques.
+
+.. image:: ../images/grid_search_workflow.png
+   :width: 400px
+   :height: 240px
+   :alt: Grid Search Workflow
+   :align: center
 
 In scikit-learn a random split into training and test sets
 can be quickly computed with the :func:`train_test_split` helper function.
@@ -90,6 +99,10 @@ but does not waste too much data
 which is a major advantage in problems such as inverse inference
 where the number of samples is very small.
 
+.. image:: ../images/grid_search_cross_validation.png
+   :width: 500px
+   :height: 300px
+   :align: center
 
 Computing cross-validated metrics
 =================================
@@ -141,6 +154,21 @@ validation iterator instead, for instance::
   >>> cv = ShuffleSplit(n_splits=5, test_size=0.3, random_state=0)
   >>> cross_val_score(clf, iris.data, iris.target, cv=cv)  # doctest: +ELLIPSIS
   array([0.977..., 0.977..., 1.  ..., 0.955..., 1.        ])
+
+Another option is to use an iterable yielding (train, test) splits as arrays of
+indices, for example::
+
+  >>> def custom_cv_2folds(X):
+  ...     n = X.shape[0]
+  ...     i = 1
+  ...     while i <= 2:
+  ...         idx = np.arange(n * (i - 1) / 2, n * i / 2, dtype=int)
+  ...         yield idx, idx
+  ...         i += 1
+  ...
+  >>> custom_cv = custom_cv_2folds(iris.data)
+  >>> cross_val_score(clf, iris.data, iris.target, cv=custom_cv)
+  array([1.        , 0.973...])
 
 .. topic:: Data transformation with held out data
 
@@ -422,7 +450,7 @@ fold cross validation should be preferred to LOO.
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
    <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
-   Statistical Learning <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013.
+   Statistical Learning <https://www-bcf.usc.edu/~gareth/ISL/>`_, Springer 2013.
 
 
 Leave P Out (LPO)

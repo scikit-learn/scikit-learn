@@ -7,7 +7,6 @@ Data comes from a random square matrix.
 from datetime import datetime
 import numpy as np
 from sklearn import linear_model
-from sklearn.utils.bench import total_seconds
 
 
 if __name__ == '__main__':
@@ -34,17 +33,17 @@ if __name__ == '__main__':
         start = datetime.now()
         ridge = linear_model.Ridge(alpha=1.)
         ridge.fit(X, Y)
-        time_ridge[i] = total_seconds(datetime.now() - start)
+        time_ridge[i] = (datetime.now() - start).total_seconds()
 
         start = datetime.now()
         ols = linear_model.LinearRegression()
         ols.fit(X, Y)
-        time_ols[i] = total_seconds(datetime.now() - start)
+        time_ols[i] = (datetime.now() - start).total_seconds()
 
         start = datetime.now()
         lasso = linear_model.LassoLars()
         lasso.fit(X, Y)
-        time_lasso[i] = total_seconds(datetime.now() - start)
+        time_lasso[i] = (datetime.now() - start).total_seconds()
 
     plt.figure('scikit-learn GLM benchmark results')
     plt.xlabel('Dimensions')

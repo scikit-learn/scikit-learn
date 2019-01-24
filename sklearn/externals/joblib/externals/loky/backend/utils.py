@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import errno
 import signal
 import warnings
@@ -9,6 +10,9 @@ try:
     import psutil
 except ImportError:
     psutil = None
+
+
+WIN32 = sys.platform == "win32"
 
 
 def _flag_current_thread_clean_exit():
@@ -110,3 +114,59 @@ def _recursive_terminate(pid):
             # level function raise a warning and retry to kill the process.
             if e.errno != errno.ESRCH:
                 raise
+
+
+def get_exitcodes_terminated_worker(processes):
+    """Return a formated string with the exitcodes of terminated workers.
+
+    If necessary, wait (up to .25s) for the system to correctly set the
+    exitcode of one terminated worker.
+    """
+    patience = 5
+
+    # Catch the exitcode of the terminated workers. There should at least be
+    # one. If not, wait a bit for the system to correctly set the exitcode of
+    # the terminated worker.
+    exitcodes = [p.exitcode for p in processes.values()
+                 if p.exitcode is not None]
+    while len(exitcodes) == 0 and patience > 0:
+        patience -= 1
+        exitcodes = [p.exitcode for p in processes.values()
+                     if p.exitcode is not None]
+        time.sleep(.05)
+
+    return _format_exitcodes(exitcodes)
+
+
+def _format_exitcodes(exitcodes):
+    """Format a list of exit code with names of the signals if possible"""
+    str_exitcodes = ["{}({})".format(_get_exitcode_name(e), e)
+                     for e in exitcodes if e is not None]
+    return "{" + ", ".join(str_exitcodes) + "}"
+
+
+def _get_exitcode_name(exitcode):
+    if sys.platform == "win32":
+        # The exitcode are unreliable  on windows (see bpo-31863).
+        # For this case, return UNKNOWN
+        return "UNKNOWN"
+
+    if exitcode < 0:
+        try:
+            import signal
+            if sys.version_info > (3, 5):
+                return signal.Signals(-exitcode).name
+
+            # construct an inverse lookup table
+            for v, k in signal.__dict__.items():
+                if (v.startswith('SIG') and not v.startswith('SIG_') and
+                        k == -exitcode):
+                        return v
+        except ValueError:
+            return "UNKNOWN"
+    elif exitcode != 255:
+        # The exitcode are unreliable on forkserver were 255 is always returned
+        # (see bpo-30589). For this case, return UNKNOWN
+        return "EXIT"
+
+    return "UNKNOWN"
