@@ -10,7 +10,7 @@ variable as an output in turn.
 In this example we compare some predictors for the purpose of missing feature
 imputation with `IterativeImputer`::
 
-    RidgeCV: regularized linear regression
+    BayesianRidge: regularized linear regression
     DecisionTreeRegressor: non-linear regression
     KNeighborsRegressor: comparable to other KNN imputation approaches
     ExtraTreesRegressor: similar to missForest in R
@@ -81,7 +81,7 @@ for i, strategy in enumerate(['mean', 'median']):
 # Estimate the score after iterative imputation of the missing values
 # with different predictors
 predictors = [
-    RidgeCV(alphas=(1e-7, 0.01, 0.1, 1.0, 10.0)),
+    BayesianRidge(),
     DecisionTreeRegressor(random_state=0, max_features='sqrt'),
     KNeighborsRegressor(n_neighbors=15),
     ExtraTreesRegressor(n_estimators=10)
@@ -101,7 +101,7 @@ for i, predictor in enumerate(predictors):
 x_labels = ['Full Data',
             'SimpleImputer w/ Mean Strategy',
             'SimpleImputer w/ Median Strategy',
-            'IterativeImputer w/ RidgeCV',
+            'IterativeImputer w/ BayesianRidge',
             'IterativeImputer w/ DecisionTreeRegressor',
             'IterativeImputer w/ KNeighborsRegressor',
             'IterativeImputer w/ ExtraTreesRegressor']
