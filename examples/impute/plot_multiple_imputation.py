@@ -315,9 +315,9 @@ def get_mse_single_imputation(X_train, X_test, y_train, y_test):
 
 # We average the predictions of the m datasets.
 def get_mse_multiple_imputation_approach(X_train, X_test, y_train, y_test):
-    m = 5
+    num_mice_runs = 5
     multiple_predictions = []
-    for i in range(m):
+    for i in range(num_mice_runs):
         # Fit the imputer for every i in m
         # Be aware that you fit the imputer on the train data
         # And apply to the test data
