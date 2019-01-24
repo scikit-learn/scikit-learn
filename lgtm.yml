@@ -1,5 +1,4 @@
 extraction:
   cpp:
-    configure:
-      command:
-        - python setup.py install
+    after_prepare:
+      - python setup.py install
