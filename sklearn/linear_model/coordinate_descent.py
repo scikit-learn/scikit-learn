@@ -663,17 +663,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
-    @staticmethod
-    def path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-             precompute='auto', Xy=None, copy_X=True, coef_init=None,
-             verbose=False, return_n_iter=False, positive=False,
-             check_input=True, **params):
-        return enet_path(
-            X, y, l1_ratio, eps, n_alphas, alphas,
-            precompute, Xy, copy_X, coef_init,
-            verbose, return_n_iter, positive,
-            check_input, **params)
-
     def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
 
@@ -810,6 +799,17 @@ class ElasticNet(LinearModel, RegressorMixin):
                                    dense_output=True) + self.intercept_
         else:
             return super()._decision_function(X)
+
+    @staticmethod
+    def path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+             precompute='auto', Xy=None, copy_X=True, coef_init=None,
+             verbose=False, return_n_iter=False, positive=False,
+             check_input=True, **params):
+        return enet_path(
+            X, y, l1_ratio, eps, n_alphas, alphas,
+            precompute, Xy, copy_X, coef_init,
+            verbose, return_n_iter, positive,
+            check_input, **params)
 
 
 ElasticNet.path.__doc__ = enet_path.__doc__
