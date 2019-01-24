@@ -3,5 +3,7 @@ extraction:
     prepare:
       packages:
         - python3
+        - python3-pip
     before_index:
+      - pip3 install numpy scipy Cython
       - python3 setup.py build_ext -i
