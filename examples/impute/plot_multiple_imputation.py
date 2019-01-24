@@ -58,7 +58,7 @@ this results in better regression performance.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy import stats
+from scipy import stats, special
 
 from sklearn.datasets import load_boston
 from sklearn.linear_model import RidgeCV
@@ -73,57 +73,31 @@ N_ITER = 20  # number of iterations in IterativeImputer
 N_SIM = 3  # number of simulations in Example 2
 
 
-# Start by defining a basic amputation function
 def ampute(X, missing_rate=0.75, mech="MCAR"):
-	X_out = X.copy()
-	n_drop_per_feature = int(missing_rate * X.shape[0])
-	for x in np.transpose(X_out):
-	    # insert missing values for each feature
-	    if mech == 'MCAR':
-	        prob = None
-	    else:
-	        weights = scipy.special.expit(x - x.mean())
-	        prob = weights / weights.sum()
-	    drop_idx = np.random.choice(X.shape[0], p=prob, replace=False,
-	                                size=n_drop_per_feature)
-	    x[drop_idx] = np.nan
-	return X_out
-    n_samples = X.shape[0]
-    n_features = X.shape[1]
-    X_incomplete = X.copy()
+    """Ampute (opposite of impute) function to simulate missing data in X
 
-    n_samples_range = np.arange(n_samples)
-    size = int(missing_rate * n_samples)
-
-    # MCAR mechanism
-    if mech == 'MCAR':
-        for i in np.arange(n_features):
-            dropped_indices = np.array(np.random.choice(n_samples_range,
-                                                        size=size,
-                                                        replace=False))
-            X_incomplete[dropped_indices[:, None], i] = None
-
-    # MNAR mechanism
-    if mech == "MNAR":
-        for i in np.arange(n_features):
-            data_values = -np.mean(X[:, i]) + X[:, i]
-            weights = 1 / (1 + np.exp(-data_values))
-            probs = np.array(weights) / np.sum(np.array(weights))
-            dropped_indices = np.array(np.random.choice(n_samples_range,
-                                                        size=size,
-                                                        p=probs,
-                                                        replace=False))
-            X_incomplete[dropped_indices[:, None], i] = None
-
-    return X_incomplete
+    MCAR - missing completely at random
+    MNCAR - missing not completely at random
+    """
+    X_out = X.copy()
+    n_drop_per_feature = int(missing_rate * X.shape[0])
+    for x in np.transpose(X_out):
+        # insert missing values for each feature
+        if mech == 'MCAR':
+            prob = None
+        else:
+            weights = special.expit(x - x.mean())
+            prob = weights / weights.sum()
+        drop_idx = np.random.choice(X.shape[0], p=prob, replace=False,
+                                    size=n_drop_per_feature)
+        x[drop_idx] = np.nan
+    return X_out
 
 
-# Make a function that calculates the variance of the beta estimates. This is
-# necessary because the linear regression model from sklearn does not provide
-# these values.
+# Make a function that calculates the variance of the beta estimates.
 def calculate_variance_of_beta_estimates(y_true, y_pred, X):
-    residuals = np.sum((y_true - y_pred)**2)
-    sigma_hat_squared = (1 / (len(y_true) - 2)) * residuals
+    sum_sq_errors = np.sum((y_true - y_pred)**2)
+    sigma_hat_squared = sum_sq_errors / (len(y_true) - 2)
     X_prime_X = np.dot(X.T, X)
     covariance_matrix = sigma_hat_squared / X_prime_X
     vars = np.diag(covariance_matrix)
@@ -138,17 +112,17 @@ def calculate_variance_of_beta_estimates(y_true, y_pred, X):
 # estimates (B).
 #
 # Make a function that calculates Qbar from m estimates
-def calculate_Qbar(m_estimates):
+def pool_coefs(m_estimates):
     m = len(m_estimates)
-    Qbar = 1/m * np.sum(m_estimates, axis=0)
+    Qbar = np.sum(m_estimates, axis=0) / m
     return Qbar
 
 
 # Make a function that calculates T from m estimates and their variances
-def calculate_T(m_estimates, m_variances, Qbar):
+def pool_variances(m_estimates, m_variances, Qbar):
     m = len(m_estimates)
-    Ubar = 1/m * np.sum(m_variances, axis=0)
-    B = 1/(m - 1) * np.sum((Qbar - m_estimates) ** 2, axis=0)
+    Ubar = np.sum(m_variances, axis=0) / m
+    B = np.sum((Qbar - m_estimates) ** 2, axis=0) / (m - 1)
     T = Ubar + B + (B/m)
 
     return T
@@ -173,17 +147,16 @@ def get_results_full_dataset(X, y):
     # confidence interval.
     full_coefs = estimator.coef_
     full_vars = calculate_variance_of_beta_estimates(y, y_predict, X)
-    full_errorbar = 1.96 * np.sqrt(full_vars)
 
-    return full_coefs, full_vars, full_errorbar
+    return full_coefs, full_vars
 
 
-def get_results_chained_imputation(X_incomplete, y):
+def get_results_chained_imputation(X_incomplete, y, random_state=0):
     # Impute incomplete data with IterativeImputer using single imputation
     # We perform N_ITER imputations and only use the last imputation.
     imputer = IterativeImputer(n_iter=N_ITER,
                                sample_posterior=True,
-                               random_state=0)
+                               random_state=random_state)
     imputer.fit(X_incomplete)
     X_imputed = imputer.transform(X_incomplete)
 
@@ -198,43 +171,26 @@ def get_results_chained_imputation(X_incomplete, y):
     chained_coefs = estimator.coef_
     chained_vars = calculate_variance_of_beta_estimates(
             y, y_predict, X_imputed)
-    chained_errorbar = 1.96 * np.sqrt(chained_vars)
 
-    return chained_coefs, chained_vars, chained_errorbar
+    return chained_coefs, chained_vars
 
 
-def get_results_mice_imputation(X_incomplete, y):
-    # Impute incomplete data using the IterativeImputer to perform multiple
-    # imputation. We perform N_ITER imputations and only use the last
-    # imputation, and loop this procedure m times.
-    m = 5
-    multiple_imputations = []
-    for i in range(m):
-        imputer = IterativeImputer(n_iter=N_ITER,
-                                   sample_posterior=True,
-                                   random_state=i)
-        imputer.fit(X_incomplete)
-        X_imputed = imputer.transform(X_incomplete)
-        multiple_imputations.append(X_imputed)
-
+def get_results_mice_imputation(X_incomplete, y, m=5):
     # Perform a model on each of the m imputed datasets
     # Estimate the estimates for each model/dataset
     m_coefs = []
     m_vars = []
     for i in range(m):
-        estimator = RidgeCV()
-        estimator.fit(multiple_imputations[i], y)
-        y_predict = estimator.predict(multiple_imputations[i])
-        m_coefs.append(estimator.coef_)
-        m_vars.append(calculate_variance_of_beta_estimates(
-                y, y_predict, multiple_imputations[i]))
+        m_coef, m_var = get_results_chained_imputation(X_incomplete, y,
+                                                         random_state=i)
+        m_coefs.append(m_coef)
+        m_vars.append(m_var)
 
     # Calculate the end estimates by applying Rubin's rules.
-    Qbar = calculate_Qbar(m_coefs)
-    T = calculate_T(m_coefs, m_vars, Qbar)
-    mice_errorbar = 1.96 * np.sqrt(T)
+    Qbar = pool_coefs(m_coefs)
+    T = pool_variances(m_coefs, m_vars, Qbar)
 
-    return Qbar, T, mice_errorbar
+    return Qbar, T
 
 
 # The original multiple imputation procedure as developed under the name
@@ -242,42 +198,10 @@ def get_results_mice_imputation(X_incomplete, y):
 # variable. The reason to do this is that the imputation model should at least
 # contain the analysis model to result in unbiased estimates. In this function,
 # we will also include y in the imputation process.
-def get_results_mice_imputation_includingy(X_incomplete, y):
-    # Impute incomplete data using the IterativeImputer as a MICEImputer
-    # Now using the output variable in the imputation loop
-    m = 5
-    multiple_imputations = []
-    for i in range(m):
-        Xy = np.column_stack((X_incomplete, y))
-        imputer = IterativeImputer(n_iter=N_ITER,
-                                   sample_posterior=True,
-                                   random_state=i)
-        imputer.fit(Xy)
-        data_imputed = imputer.transform(Xy)
-
-        # We save only the X imputed data because we do not want to use y to
-        # predict y later on.
-        X_imputed = data_imputed[:, :-1]
-        multiple_imputations.append(X_imputed)
-
-    # Perform linear regression on mice multiple imputed data
-    # Estimate beta estimates and their variances
-    m_coefs = []
-    m_vars = []
-    for i in range(m):
-        estimator = RidgeCV()
-        estimator.fit(multiple_imputations[i], y)
-        y_predict = estimator.predict(multiple_imputations[i])
-        m_coefs.append(estimator.coef_)
-        m_vars.append(calculate_variance_of_beta_estimates(
-                y, y_predict, multiple_imputations[i]))
-
-    # Calculate the end estimates by applying Rubin's rules.
-    Qbar = calculate_Qbar(m_coefs)
-    T = calculate_T(m_coefs, m_vars, Qbar)
-    mice_errorbar = 1.96 * np.sqrt(T)
-
-    return Qbar, T, mice_errorbar
+def get_results_mice_imputation_includingy(X_incomplete, y, m=5):
+    Xy = np.column_stack((X_incomplete, y))
+    Qbar, T = get_results_mice_imputation(Xy, y, m=5)
+    return Qbar, T
 
 
 # Now lets run all these imputation procedures.
@@ -302,20 +226,18 @@ print("Executing Example 1 MCAR Missingness...")
 X_incomplete = ampute(X_scaled, mech="MCAR")
 
 # Second, run all the imputation procedures as described above.
-full_coefs, full_vars, full_errorbar = get_results_full_dataset(
-        X_scaled, y_scaled)
-chained_coefs, chained_vars, chained_errorbar = get_results_chained_imputation(
+full_coefs, full_vars = get_results_full_dataset(X_scaled, y_scaled)
+chained_coefs, chained_vars = get_results_chained_imputation(
         X_incomplete, y_scaled)
-mice_coefs, mice_vars, mice_errorbar = get_results_mice_imputation(
+mice_coefs, mice_vars = get_results_mice_imputation(
         X_incomplete, y_scaled)
-mice_y_coefs, mice_y_vars, mice_y_errorbar = \
-    get_results_mice_imputation_includingy(
+mice_y_coefs, mice_y_vars = get_results_mice_imputation_includingy(
         X_incomplete, y_scaled)
 
 # Combine the results from the four imputation procedures.
-coefs = (full_coefs, chained_coefs, mice_coefs, mice_y_coefs)
-vars = (full_vars, chained_vars, mice_vars, mice_y_vars)
-errorbars = (full_errorbar, chained_errorbar, mice_errorbar, mice_y_errorbar)
+coefs = [full_coefs, chained_coefs, mice_coefs, mice_y_coefs]
+vars = [full_vars, chained_vars, mice_vars, mice_y_vars]
+errorbars = [1.96 * np.sqrt(v) for v in vars]
 
 # And plot the results
 n_situations = 4
