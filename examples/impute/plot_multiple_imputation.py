@@ -3,18 +3,18 @@
 Imputing missing values using multiple imputation
 =================================================
 
-By default, the `sklearn.impute.IterativeImputer` performs single imputation:
-a method where every missing value is replaced with one imputed value.
-The chained character of the method and the possibility to draw imputation
-values from the posterior distribution of a Bayesian imputation model allows
-for the finding of unbiased statistical estimates. However, the disadvantage is
-that every imputed value is treated as if the value was observed, leading to an
-imputed dataset that does not reflect the uncertainty that occurs due to the
-presence of missing values. This makes it hard to find valid statistical
-inferences because the variance (and standard error) of statistical estimates
-become too small.
+By default, :class:`sklearn.impute.IterativeImputer` performs single
+imputation: a method where every missing value is replaced with one imputed
+value. The chained character of the method and the possibility to draw
+imputation values from the posterior distribution of a Bayesian imputation
+model allows for the finding of unbiased statistical estimates. However, the
+disadvantage is that every imputed value is treated as if the value was
+observed, leading to an imputed dataset that does not reflect the uncertainty
+that occurs due to the presence of missing values. This makes it hard to find
+valid statistical inferences because the variance (and standard error) of
+statistical estimates become too small.
 
-An alternative is using the `sklearn.impute.IterativeImputer` to perform
+An alternative is using :class:`sklearn.impute.IterativeImputer` to perform
 multiple imputation: a method where every missing value is imputed multiple
 times. The procedure results in multiple datasets where the observed data is
 identical in every dataset, but the imputed data is different.
@@ -22,15 +22,7 @@ All desired steps after imputation are performed on every dataset, such as
 standardization, feature engineering and model fitting.
 
 One final model is obtained by combining the estimates of each model with
-Rubin's pooling rules. These rules assume that the parameters of interest are
-normally distributed which is the case with, for example, estimates of the mean
-and regression coefficients. Other parameters, such as correlation
-coefficients need transformation to suit the assumption of normality.
-If it is not possible to approximate a normal distribution, it is better to use
-robust summary measures such as medians or ranges instead of using Rubin's
-pooling rules. This applies to an estimate like explained variance.
-
-In sum, Rubin's pooling rules are as follows. The overall point estimate after
+Rubin's pooling rules, which are as follows. The overall point estimate after
 multiple imputation (denoted by Qbar) is the average of all the m point
 estimates. The variance of the overall point estimate is a combination of
 so-called within imputation variance (Ubar) and between imputation
@@ -41,7 +33,15 @@ difference between Qbar and the m point estimates, corrected with a factor
 1 / (m – 1). Then, the total variance (T) of the MI overall point estimate is
 Ubar + B + B/m.
 
-In this Example we will show how to use the `sklearn.impute.IterativeImputer`
+These rules assume that the parameters of interest are normally distributed
+which is the case with, for example, estimates of the mean and regression
+coefficients. Other parameters, such as correlation coefficients need
+transformation to suit the assumption of normality. If it is not possible to
+approximate a normal distribution, it is better to use robust summary measures
+such as medians or ranges instead of using Rubin's pooling rules. This applies
+to an estimate like explained variance.
+
+In this Example we show how to use :class:`sklearn.impute.IterativeImputer`
 to perform multiple imputation. In Example 1 we show the effect of Rubin’s
 pooling rules on the variance of regression estimates. Due to the between
 imputation variance, the standard errors of all regression coefficients are
@@ -74,10 +74,31 @@ N_SIM = 3  # number of simulations in Example 2
 
 
 def ampute(X, missing_rate=0.75, mech="MCAR"):
-    """Ampute (opposite of impute) function to simulate missing data in X
+    """Insert missing data into X.
 
-    MCAR - missing completely at random
-    MNCAR - missing not completely at random
+    Ampute is the inverse of impute and serves at simulating a dataset with
+    missing data. Two strategies are implemented to remove data: (1) missing
+    completely at random (MCAR) and (2) missing not completely at random
+    (MNCAR).
+
+    For NMCAR: values that are farther from the feature mean are more likely to
+    be made missing.
+
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, n_features)
+        The data without missing samples.
+
+    missing_rate : float, default=0.75
+        The amount of missing data in ``X``.
+
+    mech : str, default='MCAR'
+        The strategy for removing data. Must be 'MCAR' or 'NMCAR'.
+
+    Returns
+    -------
+    X_out : ndarray, shape (n_samples, n_features)
+        Output data with missing entries.
     """
     X_out = X.copy()
     n_drop_per_feature = int(missing_rate * X.shape[0])
@@ -85,8 +106,8 @@ def ampute(X, missing_rate=0.75, mech="MCAR"):
         # insert missing values for each feature
         if mech == 'MCAR':
             prob = None
-        else:
-            weights = special.expit(x - x.mean())
+        elif mech == 'NMCAR':
+            weights = special.expit(np.abs(x - x.mean()))
             prob = weights / weights.sum()
         drop_idx = np.random.choice(X.shape[0], p=prob, replace=False,
                                     size=n_drop_per_feature)
@@ -98,11 +119,8 @@ def ampute(X, missing_rate=0.75, mech="MCAR"):
 def calculate_variance_of_beta_estimates(y_true, y_pred, X):
     sum_sq_errors = np.sum((y_true - y_pred)**2)
     sigma_hat_squared = sum_sq_errors / (len(y_true) - 2)
-    X_prime_X = np.dot(X.T, X)
-    covariance_matrix = sigma_hat_squared / X_prime_X
-    vars = np.diag(covariance_matrix)
-
-    return vars
+    covariance_matrix = sigma_hat_squared / np.dot(X.T, X)
+    return np.diag(covariance_matrix)
 
 
 # Apply Rubin's pooling rules as follows.
@@ -110,11 +128,10 @@ def calculate_variance_of_beta_estimates(y_true, y_pred, X):
 # datasets (Qbar). The variance of these estimates is a combination of the
 # variance of each of the m estimates (Ubar) and the variance between the m
 # estimates (B).
-#
+
 # Make a function that calculates Qbar from m estimates
 def pool_coefs(m_estimates):
-    m = len(m_estimates)
-    Qbar = np.sum(m_estimates, axis=0) / m
+    Qbar = np.sum(m_estimates, axis=0) / len(m_estimates)
     return Qbar
 
 
@@ -124,7 +141,6 @@ def pool_variances(m_estimates, m_variances, Qbar):
     Ubar = np.sum(m_variances, axis=0) / m
     B = np.sum((Qbar - m_estimates) ** 2, axis=0) / (m - 1)
     T = Ubar + B + (B/m)
-
     return T
 
 
@@ -166,8 +182,7 @@ def get_results_chained_imputation(X_incomplete, y, random_state=0):
     estimator.fit(X_imputed, y)
     y_predict = estimator.predict(X_imputed)
 
-    # Save the beta estimates, the variance of these estimates and 1.96 *
-    # standard error of the estimates
+    # Save the beta estimates, the variance of these estimates
     chained_coefs = estimator.coef_
     chained_vars = calculate_variance_of_beta_estimates(
             y, y_predict, X_imputed)
@@ -175,12 +190,12 @@ def get_results_chained_imputation(X_incomplete, y, random_state=0):
     return chained_coefs, chained_vars
 
 
-def get_results_mice_imputation(X_incomplete, y, m=5):
+def get_results_mice_imputation(X_incomplete, y, num_imputations=5):
     # Perform a model on each of the m imputed datasets
     # Estimate the estimates for each model/dataset
     m_coefs = []
     m_vars = []
-    for i in range(m):
+    for i in range(num_imputations):
         m_coef, m_var = get_results_chained_imputation(X_incomplete, y,
                                                        random_state=i)
         m_coefs.append(m_coef)
@@ -198,9 +213,9 @@ def get_results_mice_imputation(X_incomplete, y, m=5):
 # variable. The reason to do this is that the imputation model should at least
 # contain the analysis model to result in unbiased estimates. In this function,
 # we will also include y in the imputation process.
-def get_results_mice_imputation_includingy(X_incomplete, y, m=5):
+def get_results_mice_imputation_includingy(X_incomplete, y, num_imputations=5):
     Xy = np.column_stack((X_incomplete, y))
-    Qbar, T = get_results_mice_imputation(Xy, y, m=5)
+    Qbar, T = get_results_mice_imputation(Xy, y, num_imputations)
     return Qbar, T
 
 
