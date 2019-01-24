@@ -115,20 +115,23 @@ def ampute(X, missing_rate=0.75, mech="MCAR"):
     return X_out
 
 
-# Make a function that calculates the variance of the beta estimates.
 def calculate_variance_of_beta_estimates(y_true, y_pred, X):
+    """Calculates variance of the beta estimates.
+    """
     sum_sq_errors = np.sum((y_true - y_pred)**2)
     sigma_hat_squared = sum_sq_errors / (len(y_true) - 2)
     covariance_matrix = sigma_hat_squared / np.dot(X.T, X)
     return np.diag(covariance_matrix)
 
 
-# Apply Rubin's pooling rules as follows.
-# The value of every estimate is the mean of the estimates in each of the m
-# datasets (Qbar). The variance of these estimates is a combination of the
-# variance of each of the m estimates (Ubar) and the variance between the m
-# estimates (B).
 def rubins_pooling_rules(m_estimates, m_variances):
+    """Applies Rubin's pooling rules.
+
+    The value of every estimate is the mean of the estimates in each of the m
+    datasets (Qbar). The variance of these estimates is a combination of the
+    variance of each of the m estimates (Ubar) and the variance between the m
+    estimates (B).
+    """
     m = len(m_estimates)
     Qbar = np.sum(m_estimates, axis=0) / m
     Ubar = np.sum(m_variances, axis=0) / m
@@ -138,11 +141,8 @@ def rubins_pooling_rules(m_estimates, m_variances):
 
 
 ###############################################################################
-
 # EXAMPLE 1. COMPARE STATISTICAL ESTIMATES AND THEIR VARIANCE USING MULTIPLE
 # IMPUTATION IN A LINEAR REGRESSION MODEL.
-
-###############################################################################
 
 
 def get_results_full_dataset(X, y):
@@ -273,11 +273,9 @@ plt1.set_xlabel("Features")
 plt2.set_xlabel("Features")
 plt.show()
 
-###############################################################################
 
+###############################################################################
 # EXAMPLE 2. SHOW MULTIPLE IMPUTATION IN A PREDICTION CONTEXT.
-
-###############################################################################
 
 
 # In this example, we show how to apply multiple imputation in a train/test
@@ -286,7 +284,7 @@ plt.show()
 # later average these values. In approach 2 you average the predictions of
 # every i in m and then calculate the evaluation metric. We test both
 # approaches.
-#
+
 # Apply the regression model on the full dataset as a way of comparison.
 def get_mse(X_train, X_test, y_train, y_test):
     # Standardize data
@@ -304,7 +302,6 @@ def get_mse(X_train, X_test, y_train, y_test):
 
 # Use the IterativeImputer as a single imputation procedure.
 def get_mse_single_imputation(X_train, X_test, y_train, y_test):
-    # Apply imputation
     imputer = IterativeImputer(n_iter=N_ITER,
                                sample_posterior=True,
                                random_state=0)
@@ -330,8 +327,8 @@ def get_mse_multiple_imputation_approach(X_train, X_test, y_train, y_test):
         X_train_imputed = imputer.fit_transform(X_train)
         X_test_imputed = imputer.transform(X_test)
 
-        _, y_predict = get_mse(
-            X_train_imputed, X_test_imputed, y_train, y_test)
+        _, y_predict = get_mse(X_train_imputed, X_test_imputed, y_train,
+                               y_test)
         multiple_predictions.append(y_predict)
 
     # Average the predictions over the m loops
@@ -347,7 +344,7 @@ def perform_simulation(dataset, X_incomplete, n_sim=10):
     outcome = []
 
     # Start a simulation process that executes the process n_sim times.
-    for j in np.arange(n_sim):
+    for j in range(n_sim):
         # First, split the data in train and test dataset.
         train_indices, test_indices = train_test_split(
                 np.arange(X_full.shape[0]), random_state=j)
