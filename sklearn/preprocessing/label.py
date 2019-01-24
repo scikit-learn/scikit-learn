@@ -44,13 +44,31 @@ def _nanunique(ar):
         return uniques
 
 
+def _remove_from_sorted(sorted_arr, value):
+    if is_scalar_nan(value):
+        try:
+            if is_scalar_nan(sorted_arr[-1]):
+                return sorted_arr[:-1]
+        except IndexError:
+            return sorted_arr
+
+    index = np.searchsorted(sorted_arr, value)
+
+    try:
+        arr_value = sorted_arr[index]
+    except IndexError:
+        return sorted_arr
+
+    if arr_value == value:
+        return np.delete(sorted_arr, index)
+
+
 def _nanencode_numpy(values, uniques=None, encode=False,
                      missing_values=np.nan):
     check_values = True
     if uniques is None:
         uniques = _nanunique(values)
-        u_mask = _get_mask(uniques, missing_values)
-        uniques = uniques[~u_mask]
+        uniques = _remove_from_sorted(uniques, missing_values)
         check_values = False
 
     if encode:
@@ -59,7 +77,7 @@ def _nanencode_numpy(values, uniques=None, encode=False,
             if is_scalar_nan(uniques[-1]) and is_scalar_nan(unique_v[-1]):
                 unique_v = unique_v[:-1]
             unseen = np.setdiff1d(unique_v, uniques, assume_unique=True)
-            unseen = unseen[~_get_mask(unseen, missing_values)]
+            unseen = _remove_from_sorted(unseen, missing_values)
             if len(unseen):
                 raise ValueError("y contains previously unseen labels: %s"
                                  % str(unseen))
