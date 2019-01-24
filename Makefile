@@ -24,9 +24,9 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
-	$(PYTEST) -n auto --dist=loadscope --showlocals -v sklearn --durations=20
+	$(PYTEST) -n auto --dist=loadfile --showlocals -v sklearn --durations=20
 test-sphinxext:
-	$(PYTEST) -n auto --dist=loadscope --showlocals -v doc/sphinxext/
+	$(PYTEST) --showlocals -v doc/sphinxext/
 test-doc:
 ifeq ($(BITS),64)
 	$(PYTEST) $(shell find doc -name '*.rst' | sort)
@@ -34,7 +34,7 @@ endif
 
 test-coverage:
 	rm -rf coverage .coverage
-	$(PYTEST) sklearn -n auto --dist=loadscope --showlocals -v --cov=sklearn --cov-report=html:coverage
+	$(PYTEST) sklearn -n auto --dist=loadfile --showlocals -v --cov=sklearn --cov-report=html:coverage
 
 test: test-code test-sphinxext test-doc
 
