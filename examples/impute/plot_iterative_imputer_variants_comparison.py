@@ -65,7 +65,8 @@ score_full_data = pd.DataFrame(
     cross_val_score(
         br_estimator, X_full, y_full, scoring='neg_mean_squared_error',
         cv=N_SPLITS
-    )
+    ),
+    columns=['Full Data']
 )
 
 # Add a single missing value to each row
@@ -75,7 +76,7 @@ missing_samples = np.arange(n_samples)
 missing_features = rng.choice(n_features, n_samples, replace=True)
 X_missing[missing_samples, missing_features] = np.nan
 
-# Estimate the score after imputation (mean and median strategies) of the missing values
+# Estimate the score after imputation (mean and median strategies)
 score_simple_imputer = pd.DataFrame()
 for strategy in ('mean', 'median'):
     estimator = make_pipeline(
@@ -112,14 +113,6 @@ scores = pd.concat(
     keys=['Original', 'SimpleImputer', 'IterativeImputer'], axis=1
 )
 
-labels = ['Full Data',
-          'SimpleImputer w/ Mean Strategy',
-          'SimpleImputer w/ Median Strategy',
-          'IterativeImputer w/ BayesianRidge',
-          'IterativeImputer w/ DecisionTreeRegressor',
-          'IterativeImputer w/ KNeighborsRegressor',
-          'IterativeImputer w/ ExtraTreesRegressor']
-
 # plot boston results
 fig, ax = plt.subplots(figsize=(13, 6))
 means = -scores.mean()
@@ -128,7 +121,6 @@ means.plot.barh(xerr=errors, ax=ax)
 ax.set_title('California Housing Regression with Different Imputation Methods')
 ax.set_xlabel('MSE (smaller is better)')
 ax.set_yticks(np.arange(means.shape[0]))
-ax.invert_yaxis()
-ax.set_yticklabels(labels)
+ax.set_yticklabels([" w/ ".join(label) for label in means.index.get_values()])
 plt.tight_layout(pad=1)
 plt.show()
