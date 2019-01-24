@@ -128,20 +128,13 @@ def calculate_variance_of_beta_estimates(y_true, y_pred, X):
 # datasets (Qbar). The variance of these estimates is a combination of the
 # variance of each of the m estimates (Ubar) and the variance between the m
 # estimates (B).
-
-# Make a function that calculates Qbar from m estimates
-def pool_coefs(m_estimates):
-    Qbar = np.sum(m_estimates, axis=0) / len(m_estimates)
-    return Qbar
-
-
-# Make a function that calculates T from m estimates and their variances
-def pool_variances(m_estimates, m_variances, Qbar):
+def rubins_pooling_rules(m_estimates, m_variances):
     m = len(m_estimates)
+    Qbar = np.sum(m_estimates, axis=0) / m
     Ubar = np.sum(m_variances, axis=0) / m
     B = np.sum((Qbar - m_estimates) ** 2, axis=0) / (m - 1)
     T = Ubar + B + (B/m)
-    return T
+    return Qbar, T
 
 
 ###############################################################################
@@ -202,8 +195,7 @@ def get_results_mice_imputation(X_incomplete, y, num_imputations=5):
         m_vars.append(m_var)
 
     # Calculate the end estimates by applying Rubin's rules.
-    Qbar = pool_coefs(m_coefs)
-    T = pool_variances(m_coefs, m_vars, Qbar)
+    Qbar, T = rubins_pooling_rules(m_coefs, m_vars)
 
     return Qbar, T
 
