@@ -182,7 +182,7 @@ def get_results_mice_imputation(X_incomplete, y, m=5):
     m_vars = []
     for i in range(m):
         m_coef, m_var = get_results_chained_imputation(X_incomplete, y,
-                                                         random_state=i)
+                                                       random_state=i)
         m_coefs.append(m_coef)
         m_vars.append(m_var)
 
