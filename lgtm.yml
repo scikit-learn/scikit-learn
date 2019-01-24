@@ -1,0 +1,5 @@
+extraction:
+  cpp:
+    configure:
+      command:
+        - python setup.py install
