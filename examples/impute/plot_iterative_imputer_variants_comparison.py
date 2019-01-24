@@ -57,8 +57,7 @@ N_SPLITS = 5
 rng = np.random.RandomState(0)
 
 X_full, y_full = fetch_california_housing(return_X_y=True)
-n_samples = X_full.shape[0]
-n_features = X_full.shape[1]
+n_samples, n_features = X_full.shape
 
 # Estimate the score on the entire dataset, with no missing values
 br_estimator = BayesianRidge()
