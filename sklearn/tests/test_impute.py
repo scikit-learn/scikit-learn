@@ -547,7 +547,7 @@ def test_iterative_imputer_imputation_order(imputation_order):
 
 @pytest.mark.parametrize(
     "predictor",
-    [DummyRegressor(), BayesianRidge(), ARDRegression(), RidgeCV()]
+    [None, DummyRegressor(), BayesianRidge(), ARDRegression(), RidgeCV()]
 )
 def test_iterative_imputer_predictors(predictor):
     rng = np.random.RandomState(0)
@@ -565,7 +565,9 @@ def test_iterative_imputer_predictors(predictor):
     # check that types are correct for predictors
     hashes = []
     for triplet in imputer.imputation_sequence_:
-        assert isinstance(triplet.predictor, type(predictor))
+        expected_type = (type(predictor) if predictor is not None
+                         else type(BayesianRidge()))
+        assert isinstance(triplet.predictor, expected_type)
         hashes.append(id(triplet.predictor))
 
     # check that each predictor is unique
