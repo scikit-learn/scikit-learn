@@ -112,6 +112,14 @@ scores = pd.concat(
     keys=['Original', 'SimpleImputer', 'IterativeImputer'], axis=1
 )
 
+labels = ['Full Data',
+          'SimpleImputer w/ Mean Strategy',
+          'SimpleImputer w/ Median Strategy',
+          'IterativeImputer w/ BayesianRidge',
+          'IterativeImputer w/ DecisionTreeRegressor',
+          'IterativeImputer w/ KNeighborsRegressor',
+          'IterativeImputer w/ ExtraTreesRegressor']
+
 # plot boston results
 fig, ax = plt.subplots(figsize=(13, 6))
 means = -scores.mean()
@@ -119,5 +127,8 @@ errors = scores.std()
 means.plot.barh(xerr=errors, ax=ax)
 ax.set_title('California Housing Regression with Different Imputation Methods')
 ax.set_xlabel('MSE (smaller is better)')
+ax.set_yticks(np.arange(means.shape[0]))
+ax.invert_yaxis()
+ax.set_yticklabels(labels)
 plt.tight_layout(pad=1)
 plt.show()
