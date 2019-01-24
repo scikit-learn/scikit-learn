@@ -58,7 +58,7 @@ def _nanencode_numpy(values, uniques=None, encode=False,
             unique_v = _nanunique(values)
             if is_scalar_nan(uniques[-1]) and is_scalar_nan(unique_v[-1]):
                 unique_v = unique_v[:-1]
-            unseen = np.setdiff1d(unique_v, uniques)
+            unseen = np.setdiff1d(unique_v, uniques, assume_unique=True)
             unseen = unseen[~_get_mask(unseen, missing_values)]
             if len(unseen):
                 raise ValueError("y contains previously unseen labels: %s"
