@@ -71,13 +71,6 @@ def _nanencode_numpy(values, uniques=None, encode=False,
         return uniques
 
 
-def _sort_nankey(x):
-    if is_scalar_nan(x):
-        return 1, 0
-    else:
-        return 0, x
-
-
 def _dict_to_mapper(d, use_nan, nan_value):
     if use_nan:
         def mapper(x):
