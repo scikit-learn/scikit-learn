@@ -33,7 +33,7 @@ The goal is to compare different predictors to see which one is best for the
 dataset with a single value randomly removed from each row.
 
 For this particular pattern of missing values we see that
-:class:`sklearn.ensemble.ExtraTreesRegressor`` and
+:class:`sklearn.ensemble.ExtraTreesRegressor` and
 :class:`sklearn.linear_model.BayesianRidge` give the best results.
 """
 print(__doc__)
@@ -75,7 +75,7 @@ missing_samples = np.arange(n_samples)
 missing_features = rng.choice(n_features, n_samples, replace=True)
 X_missing[missing_samples, missing_features] = np.nan
 
-# Estimate the score after imputation (mean strategy) of the missing values
+# Estimate the score after imputation (mean and median strategies) of the missing values
 score_simple_imputer = pd.DataFrame()
 for strategy in ('mean', 'median'):
     estimator = make_pipeline(
