@@ -1,4 +1,7 @@
 extraction:
   cpp:
+    prepare:
+      packages:
+        - python3
     before_index:
-      - python setup.py install
+      - python3 setup.py build_ext -i
