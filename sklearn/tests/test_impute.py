@@ -572,6 +572,24 @@ def test_iterative_imputer_predictors(predictor):
     assert len(set(hashes)) == len(hashes)
 
 
+def test_iterative_imputer_bayesianridge_default():
+    rng = np.random.RandomState(0)
+
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+
+    imputer = IterativeImputer(missing_values=0,
+                               n_iter=1,
+                               predictor=None,
+                               random_state=rng)
+    imputer.fit_transform(X)
+
+    # check that types are correct for predictors
+    for triplet in imputer.imputation_sequence_:
+        assert isinstance(triplet.predictor, type(BayesianRidge()))
+
+
 def test_iterative_imputer_clip():
     rng = np.random.RandomState(0)
     n = 100
