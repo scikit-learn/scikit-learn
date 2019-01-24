@@ -565,7 +565,7 @@ def test_iterative_imputer_predictors(predictor):
     # check that types are correct for predictors
     hashes = []
     for triplet in imputer.imputation_sequence_:
-        assert triplet.predictor
+        assert isinstance(triplet.predictor, type(predictor))
         hashes.append(id(triplet.predictor))
 
     # check that each predictor is unique
