@@ -8,9 +8,11 @@ from __future__ import division
 import warnings
 import numbers
 from time import time
+from distutils.version import LooseVersion
 
 import numpy as np
 import numpy.ma as ma
+import scipy
 from scipy import sparse
 from scipy import stats
 from collections import namedtuple
@@ -647,14 +649,24 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             good_sigmas = sigmas > 0
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
             imputed_values[~good_sigmas] = mus[~good_sigmas]
+            mus = mus[good_sigmas]
+            sigmas = sigmas[good_sigmas]
             a = (self._min_value - mus) / sigmas
             b = (self._max_value - mus) / sigmas
-            truncated_normal = stats.truncnorm(a=a,
-                                               b=b,
-                                               loc=mus[good_sigmas],
-                                               scale=sigmas[good_sigmas])
-            imputed_values[good_sigmas] = truncated_normal.rvs(
-                random_state=self.random_state_)
+
+            if scipy.__version__ < LooseVersion('0.18'):
+                # bug with vector-valued `a` in old scipy
+                imputed_values[good_sigmas] = [
+                    stats.truncnorm(a=a_, b=b_,
+                                    loc=loc_, scale=scale_).rvs(
+                                        random_state=self.random_state_)
+                    for a_, b_, loc_, scale_
+                    in zip(a, b, mus, sigmas)]
+            else:
+                truncated_normal = stats.truncnorm(a=a, b=b,
+                                                   loc=mus, scale=sigmas)
+                imputed_values[good_sigmas] = truncated_normal.rvs(
+                    random_state=self.random_state_)
         else:
             imputed_values = predictor.predict(X_test)
             imputed_values = np.clip(imputed_values,
