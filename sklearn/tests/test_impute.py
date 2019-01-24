@@ -565,8 +565,8 @@ def test_iterative_imputer_predictors(predictor):
     # check that types are correct for predictors
     hashes = []
     for triplet in imputer.imputation_sequence_:
-        expected_type = type(predictor) if predictor is not None \
-            else type(BayesianRidge())
+        expected_type = (type(predictor) if predictor is not None
+                         else type(BayesianRidge()))
         assert isinstance(triplet.predictor, expected_type)
         hashes.append(id(triplet.predictor))
 
