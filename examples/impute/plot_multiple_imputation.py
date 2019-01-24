@@ -75,6 +75,19 @@ N_SIM = 3  # number of simulations in Example 2
 
 # Start by defining a basic amputation function
 def ampute(X, missing_rate=0.75, mech="MCAR"):
+	X_out = X.copy()
+	n_drop_per_feature = int(missing_rate * X.shape[0])
+	for x in np.transpose(X_out):
+	    # insert missing values for each feature
+	    if mech == 'MCAR':
+	        prob = None
+	    else:
+	        weights = scipy.special.expit(x - x.mean())
+	        prob = weights / weights.sum()
+	    drop_idx = np.random.choice(X.shape[0], p=prob, replace=False,
+	                                size=n_drop_per_feature)
+	    x[drop_idx] = np.nan
+	return X_out
     n_samples = X.shape[0]
     n_features = X.shape[1]
     X_incomplete = X.copy()
