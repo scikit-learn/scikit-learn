@@ -3,6 +3,7 @@ from numpy.testing import assert_array_almost_equal, assert_allclose
 
 from sklearn.manifold import mds
 from sklearn.utils.testing import assert_raises
+from sklearn.utils import check_random_state
 
 
 def test_smacof():
@@ -62,17 +63,21 @@ def test_MDS():
 
 
 def test_normed_stress():
-    sim = np.array([[0, 5, 3, 4],
-                    [5, 0, 2, 2],
-                    [3, 2, 0, 1],
-                    [4, 2, 1, 0]])
+    # Generate a random symmetric matrix
+    random_state = check_random_state(10)
+    N = 100
+    sim = random_state.randint(0, 2000, size=(N, N))
+    sim = (sim + sim.T)/2
 
     # Calculate normed stress for matrix
     # and its multiplied copy
     k = 2
-    stress1 = mds.smacof(sim, normalize=True)[1]
-    stress2 = mds.smacof(k * sim, normalize=True)[1]
+    stress1 = mds.smacof(sim, normalize=True, random_state=0)[1]
+    stress2 = mds.smacof(k * sim, normalize=True, random_state=0)[1]
 
     # Normed stress should be the same for
     # values multiplied by some factor "k"
+    # for a big enough matrix starting at same init
+    # configuration of the embedding to initialize the
+    # SMACOF algorithm..
     assert_allclose(stress1, stress2)
