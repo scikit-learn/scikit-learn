@@ -962,19 +962,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                  " contain stop words")
 
         if indptr[-1] > 2147483648:  # = 2**31 - 1
-            if sp_version >= (0, 14) and not _IS_32BIT:
-                indices_dtype = np.int64
-            elif _IS_32BIT:
+            if _IS_32BIT:
                 raise ValueError(('sparse CSR array has {} non-zero '
                                   'elements and requires 64 bit indexing, '
                                   'which is unsupported with 32 bit Python.')
                                  .format(indptr[-1]))
-            else:
-                raise ValueError(('sparse CSR array has {} non-zero '
-                                  'elements and requires 64 bit indexing, '
-                                  'which is unsupported with scipy {}. '
-                                  'Please upgrade to scipy >=0.14')
-                                 .format(indptr[-1], '.'.join(sp_version)))
+            indices_dtype = np.int64
 
         else:
             indices_dtype = np.int32
