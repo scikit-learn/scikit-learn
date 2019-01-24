@@ -37,7 +37,7 @@ test-code-parallel: in
 test-coverage:
 	rm -rf coverage .coverage
 	$(PYTEST) sklearn --showlocals -v --cov=sklearn --cov-report=html:coverage
-test-coverage-parallel: in
+test-coverage-parallel:
 	rm -rf coverage .coverage
 	$(PYTEST) sklearn -n auto --dist=loadfile --showlocals -v --cov=sklearn --cov-report=html:coverage
 
