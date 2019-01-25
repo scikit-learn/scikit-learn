@@ -511,8 +511,9 @@ class OneHotEncoder(_BaseEncoder):
                     msg = ("The following categories were supposed to be "
                            "dropped, but were not found in the training "
                            "data.\n{}".format(
-                               "\n".join(["Category: {}, Feature: {}".format(c, v)
-                                         for c, v in missing_drops])))
+                               "\n".join(
+                                    ["Category: {}, Feature: {}".format(c, v)
+                                        for c, v in missing_drops])))
                     raise ValueError(msg)
                 self.drop_ = np.array([cat for i, cat in enumerate(self.drop)
                                        if len(self.categories_[i]) > 1],
