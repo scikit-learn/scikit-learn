@@ -11,7 +11,6 @@ from sklearn.datasets import load_digits, load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 
-from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal

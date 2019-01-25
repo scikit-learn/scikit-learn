@@ -29,7 +29,6 @@ from abc import abstractmethod
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..externals import six
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -300,7 +299,7 @@ class ZeroEstimator(object):
         return y
 
 
-class LossFunction(six.with_metaclass(ABCMeta, object)):
+class LossFunction(object, metaclass=ABCMeta):
     """Abstract base class for various loss functions.
 
     Parameters
@@ -356,7 +355,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
-                                learning_rate=1.0, k=0):
+                                learning_rate=0.1, k=0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
         and invokes template method `_update_terminal_region`.
@@ -407,7 +406,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         """Template method for updating terminal regions (=leaves). """
 
 
-class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
+class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for regression loss functions.
 
     Parameters
@@ -419,7 +418,7 @@ class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
         if n_classes != 1:
             raise ValueError("``n_classes`` must be 1 for regression but "
                              "was %r" % n_classes)
-        super(RegressionLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
 
 
 class LeastSquaresError(RegressionLossFunction):
@@ -470,7 +469,7 @@ class LeastSquaresError(RegressionLossFunction):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
-                                learning_rate=1.0, k=0):
+                                learning_rate=0.1, k=0):
         """Least squares does not need to update terminal regions.
 
         But it has to update the predictions.
@@ -581,7 +580,7 @@ class HuberLossFunction(RegressionLossFunction):
     """
 
     def __init__(self, n_classes, alpha=0.9):
-        super(HuberLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
         self.alpha = alpha
         self.gamma = None
 
@@ -679,7 +678,7 @@ class QuantileLossFunction(RegressionLossFunction):
         The percentile
     """
     def __init__(self, n_classes, alpha=0.9):
-        super(QuantileLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
         self.alpha = alpha
         self.percentile = alpha * 100.0
 
@@ -741,7 +740,7 @@ class QuantileLossFunction(RegressionLossFunction):
         tree.value[leaf, 0] = val
 
 
-class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
+class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for classification loss functions. """
 
     def _score_to_proba(self, score):
@@ -775,7 +774,7 @@ class BinomialDeviance(ClassificationLossFunction):
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
-        super(BinomialDeviance, self).__init__(1)
+        super().__init__(1)
 
     def init_estimator(self):
         return LogOddsEstimator()
@@ -868,7 +867,7 @@ class MultinomialDeviance(ClassificationLossFunction):
         if n_classes < 3:
             raise ValueError("{0:s} requires more than 2 classes.".format(
                 self.__class__.__name__))
-        super(MultinomialDeviance, self).__init__(n_classes)
+        super().__init__(n_classes)
 
     def init_estimator(self):
         return PriorProbabilityEstimator()
@@ -964,7 +963,7 @@ class ExponentialLoss(ClassificationLossFunction):
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
-        super(ExponentialLoss, self).__init__(1)
+        super().__init__(1)
 
     def init_estimator(self):
         return ScaledLogOddsEstimator()
@@ -1119,7 +1118,7 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
@@ -1202,7 +1201,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # update tree leaves
             loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
                                          sample_weight, sample_mask,
-                                         self.learning_rate, k=k)
+                                         learning_rate=self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -1240,7 +1239,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                              "was %r" % self.subsample)
 
         if self.init is not None:
-            if isinstance(self.init, six.string_types):
+            if isinstance(self.init, str):
                 if self.init not in INIT_ESTIMATORS:
                     raise ValueError('init="%s" is not supported' % self.init)
             else:
@@ -1254,7 +1253,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("alpha must be in (0.0, 1.0) but "
                              "was %r" % self.alpha)
 
-        if isinstance(self.max_features, six.string_types):
+        if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 # if is_classification
                 if self.n_classes_ > 1:
@@ -1299,7 +1298,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.init is None:
             self.init_ = self.loss_.init_estimator()
-        elif isinstance(self.init, six.string_types):
+        elif isinstance(self.init, str):
             self.init_ = INIT_ESTIMATORS[self.init]()
         else:
             self.init_ = self.init
@@ -1949,7 +1948,7 @@ shape (n_estimators, ``loss_.K``)
                  presort='auto', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4):
 
-        super(GradientBoostingClassifier, self).__init__(
+        super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
             criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
@@ -2403,7 +2402,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  warm_start=False, presort='auto', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4):
 
-        super(GradientBoostingRegressor, self).__init__(
+        super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
             criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
@@ -2475,6 +2474,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             return the index of the leaf x ends up in each estimator.
         """
 
-        leaves = super(GradientBoostingRegressor, self).apply(X)
+        leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves

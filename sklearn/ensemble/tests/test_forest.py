@@ -1311,11 +1311,11 @@ def test_nestimators_future_warning(forest):
 class MyBackend(DEFAULT_JOBLIB_BACKEND):
     def __init__(self, *args, **kwargs):
         self.count = 0
-        super(MyBackend, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def start_call(self):
         self.count += 1
-        return super(MyBackend, self).start_call()
+        return super().start_call()
 
 
 register_parallel_backend('testing', MyBackend)
