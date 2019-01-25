@@ -62,9 +62,9 @@ class TreeNode:
         sample_indices into left and right child.
     hist_subtraction : bool
         Wheter the subtraction method was used for computing the histograms.
-    start : int
+    partition_start : int
         start position of the node's sample_indices in splitter.partition
-    stop : int
+    partition_stop : int
         stop position of the node's sample_indices in splitter.partition
     """
 
@@ -85,8 +85,8 @@ class TreeNode:
     # Only used in _update_raw_prediction, because we need to iterate over the
     # leaves and I don't know how to efficiently store the sample_indices
     # views because they're all of different sizes.
-    start = 0
-    stop = 0
+    partition_start = 0
+    partition_stop = 0
 
     def __init__(self, depth, sample_indices, sum_gradients,
                  sum_hessians, parent=None):
@@ -261,8 +261,8 @@ class TreeGrower:
             sum_hessians=sum_hessians
         )
 
-        self.root.start = 0
-        self.root.stop = n_samples
+        self.root.partition_start = 0
+        self.root.partition_stop = n_samples
 
         if (self.max_leaf_nodes is not None and self.max_leaf_nodes == 1):
             self._finalize_leaf(self.root)
@@ -392,10 +392,10 @@ class TreeGrower:
         node.left_child = left_child_node
 
         # set start and stop indices
-        left_child_node.start = node.start
-        left_child_node.stop = node.start + right_child_pos
-        right_child_node.start = left_child_node.stop
-        right_child_node.stop = node.stop
+        left_child_node.partition_start = node.partition_start
+        left_child_node.partition_stop = node.partition_start + right_child_pos
+        right_child_node.partition_start = left_child_node.partition_stop
+        right_child_node.partition_stop = node.partition_stop
 
         self.n_nodes += 2
 
