@@ -25,6 +25,13 @@ then
 	# export CCACHE_LOGFILE=/tmp/ccache.log
 	# ~60M is used by .ccache when compiling from scratch at the time of writing
 	ccache --max-size 100M --show-stats
+elif [ $TRAVIS_OS_NAME = "osx" ]
+then
+    # use clang installed by conda which supports OpenMP
+    export CC=clang
+    export CXX=clang
+    # avoid error due to multiple openmp libraries loaded simultaneously
+    export KMP_DUPLICATE_LIB_OK=TRUE
 fi
 
 make_conda() {
@@ -38,6 +45,8 @@ make_conda() {
     if [ $TRAVIS_OS_NAME = "osx" ]
 	then
 		fname=Miniconda3-latest-MacOSX-x86_64.sh
+        # we need to install a version on clang which supports OpenMP
+        TO_INSTALL="$TO_INSTALL llvm-openmp clang"
 	else
 		fname=Miniconda3-latest-Linux-x86_64.sh
 	fi

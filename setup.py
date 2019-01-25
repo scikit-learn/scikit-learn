@@ -102,7 +102,47 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'clean': CleanCommand}
+def get_openmp_flag(compiler):
+    if sys.platform == "win32" and ('icc' in compiler or 'icl' in compiler):
+        return ['/Qopenmp']
+    elif sys.platform == "win32":
+        return ['/openmp']
+    elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
+        return ['-openmp']
+    elif sys.platform == "darwin" and 'openmp' in os.getenv('CC', ''):
+        # -fopenmp can't be passed as compile arg when using apple clang
+        return ['']
+    return ['-fopenmp']
+
+
+OPENMP_EXTENSIONS = []
+
+
+# custom build_ext command to set OpenMP compile flags depending on os and
+# compiler
+# build_ext has to be imported after setuptools
+from numpy.distutils.command.build_ext import build_ext  # noqa
+
+
+class build_ext_subclass(build_ext):
+    def build_extensions(self):
+        if hasattr(self.compiler, 'compiler'):
+            compiler = self.compiler.compiler[0]
+        else:
+            compiler = self.compiler.__class__.__name__
+
+        openmp_flag = get_openmp_flag(compiler)
+
+        for e in self.extensions:
+            if e.name in OPENMP_EXTENSIONS:
+                e.extra_compile_args += openmp_flag
+                e.extra_link_args += openmp_flag
+
+        build_ext.build_extensions(self)
+
+
+cmdclass = {'clean': CleanCommand, 'build_ext': build_ext_subclass}
+
 
 # Optional wheelhouse-uploader features
 # To automate release of binary packages for scikit-learn we need a tool
