@@ -272,7 +272,6 @@ Loaders
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.load_wine
-   datasets.mldata_filename
 
 Samples generator
 -----------------
@@ -1537,4 +1536,5 @@ To be removed in 0.21
    :template: deprecated_function.rst
 
    datasets.load_mlcomp
+   datasets.mldata_filename
    linear_model.lasso_stability_path
