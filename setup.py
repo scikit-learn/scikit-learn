@@ -53,7 +53,7 @@ SETUPTOOLS_COMMANDS = set([
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
     'bdist_wininst', 'install_egg_info', 'build_sphinx',
     'egg_info', 'easy_install', 'upload', 'bdist_wheel',
-    '--single-version-externally-managed', 'build_ext'
+    '--single-version-externally-managed',
 ])
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     import setuptools
