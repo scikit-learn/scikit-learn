@@ -10,11 +10,11 @@ variable as an output in turn.
 In this example we compare some predictors for the purpose of missing feature
 imputation with :class:`sklearn.imputeIterativeImputer`::
 
-    :class:`sklearn.linear_model.BayesianRidge`: regularized linear regression
-    :class:`sklearn.tree.DecisionTreeRegressor`: non-linear regression
-    :class:`sklearn.neighbors.KNeighborsRegressor`: comparable to other KNN
+    :class:`~sklearn.linear_model.BayesianRidge`: regularized linear regression
+    :class:`~sklearn.tree.DecisionTreeRegressor`: non-linear regression
+    :class:`~sklearn.ensemble.ExtraTreesRegressor`: similar to missForest in R
+    :class:`~sklearn.neighbors.KNeighborsRegressor`: comparable to other KNN
     imputation approaches
-    :class:`sklearn.ensemble.ExtraTreesRegressor`: similar to missForest in R
 
 Of particular interest is the ability of
 :class:`sklearn.impute.IterativeImputer` to mimic the behavior of missForest, a
@@ -93,8 +93,8 @@ for strategy in ('mean', 'median'):
 predictors = [
     BayesianRidge(),
     DecisionTreeRegressor(max_features='sqrt', random_state=0),
-    KNeighborsRegressor(n_neighbors=15),
-    ExtraTreesRegressor(n_estimators=10, n_jobs=-1, random_state=0)
+    ExtraTreesRegressor(n_estimators=10, n_jobs=-1, random_state=0),
+    KNeighborsRegressor(n_neighbors=15)
 ]
 score_iterative_imputer = pd.DataFrame()
 for predictor in predictors:
