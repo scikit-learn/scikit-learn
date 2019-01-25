@@ -272,7 +272,7 @@ plt.show()
 
 # In this example, we show how to apply multiple imputation in a train/test
 # situation. To do so, you average the predictions of the models fit on every
-# imputed dataset, and then calculate the evaluation metric. 
+# imputed dataset, and then calculate the evaluation metric.
 
 N_SIM = 3  # number of simulations in Example 2
 ESTIMATOR_IMPUTER = Pipeline(steps=[('imputer', IterativeImputer()),
