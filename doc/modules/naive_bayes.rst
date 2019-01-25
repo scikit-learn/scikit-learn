@@ -227,25 +227,25 @@ It is advisable to evaluate both models, if time permits.
 Categorical Naive Bayes
 -----------------------
 
-:class:`CategoricalNB` (CatNB) implements the categorical naive Bayes 
+:class:`CategoricalNB` implements the categorical naive Bayes 
 algorithm for categorically distributed data. It assumes that each feature, 
 which is described by the index :math:`i`, has its own categorical 
 distribution. 
 
-To sample from the distribution for CatNB, one draws a sample
-:math:`x_i` for each feature :math:`i` out of the specific categorical distribution
-for feature :math:`i`, given class :math:`y`. It is, therefore, possible and common
-that each categorical distribution has its own unique set of categories.
+For each feature :math:`i` in the training set :math:`X`, :class:`CategoricalNB` assumes an own categorical
+distribution dependent on class :math:`y`. The index set of the samples is defined as :math:`J = \{ 1, \dots, m \}`,
+with :math:`m` as the number of samples.
 
-Mathematically, the distribution :math:`P(x_i \mid y)` can be seen to be
-further parametrized by a paramater :math:`\theta_i`, that determines the categorical
-distribution to choose from:
+The probability of category :math:`t` in feature :math:`i` given class :math:`c` is estimated as:
 
 .. math::
 
-    P(x_i \mid y) = P(x_i \mid y \: ;\, \theta_i),
+    P(x_i = t \mid y = c \: ;\, \alpha) = \frac{ N_{tic} + \alpha}{N_{c} + \alpha n_i},
 
-where :math:`\theta_i` also depends on the feature index :math:`i` of the sample :math:`x_i`.
+where :math:`N_{tic} = |\{j \in J \mid x_{ij} = t, y_j = c\}|` is the number of times category :math:`t` appears in the samples 
+:math:`x_{i}`, which belong to class :math:`c`, :math:`N_{c} = |\{ j \in J\mid y_j = c\}|` is the total count of  all features for class :math:`c`, 
+:math:`\alpha` is a smoothing parameter and :math:`n_i` is the number of available
+categories of feature :math:`x_i`.
 
 
 Out-of-core naive Bayes model fitting
