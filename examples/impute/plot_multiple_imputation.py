@@ -3,23 +3,19 @@
 Imputing missing values using multiple imputation
 =================================================
 
-By default, :class:`sklearn.impute.IterativeImputer` performs single
-imputation: a method where every missing value is replaced with one imputed
-value. The chained character of the method and the possibility to draw
-imputation values from the posterior distribution of a Bayesian imputation
-model allows for the finding of unbiased statistical estimates. However, the
-disadvantage is that every imputed value is treated as if the value was
-observed, leading to an imputed dataset that does not reflect the uncertainty
-that occurs due to the presence of missing values. This makes it hard to find
-valid statistical inferences because the variance (and standard error) of
-statistical estimates become too small.
+The :class:`sklearn.impute.IterativeImputer` is able to generate multiple
+imputations of the same incomplete dataset. We can then learn a regression
+or classification model on different imputations of the same dataset.
+This allows us to quantify how much the regressor varies due to the uncertainty
+inherent in missing values. Specifically, we can estimate the variance of
+predictions, or of the model coefficients, using multiple imputation.
 
-An alternative is using :class:`sklearn.impute.IterativeImputer` to perform
-multiple imputation: a method where every missing value is imputed multiple
-times. The procedure results in multiple datasets where the observed data is
-identical in every dataset, but the imputed data is different.
-All desired steps after imputation are performed on every dataset, such as
-standardization, feature engineering and model fitting.
+Setting :class:`sklearn.impute.IterativeImputer`'s `sample_posterior=True` will
+randomly draw values to fill each missing value from the Gaussian posterior of
+:class:`sklearn.linear_model.BayesianRidge` predictions. If each
+:class:`sklearn.impute.IterativeImputer` uses a different `random_state`, this
+results in multiple imputations, each of which can be used to train a
+predictive model.
 
 One final model is obtained by combining the estimates of each model with
 Rubin's pooling rules, which are as follows. The overall point estimate after
