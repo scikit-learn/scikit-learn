@@ -1,5 +1,9 @@
 extraction:
   cpp:
+    configure:
+      - pip3 install numpy scipy Cython
     before_index:
       - export PYTHON=python3
-      - pip3 install numpy scipy Cython
+    index:
+      build_command:
+        - make inplace
