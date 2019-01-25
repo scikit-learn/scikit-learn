@@ -1,8 +1,10 @@
 extraction:
   cpp:
-    before_index:
-      - export PYTHON=python3
-      - pip3 install numpy scipy Cython
+    prepare:
+      packages:
+         - "python3-numpy"
+         - "python3-scipy"
+         - "cython3"
     index:
       build_command:
         - python3 setup.py build_ext -i
