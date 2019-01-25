@@ -495,6 +495,33 @@ def test_predict_proba_multilabel():
     assert_array_equal(y_log_proba, np.log(y_proba))
 
 
+def test_shuffle():
+    # Test that the shuffle parameter affects the training process (it should)
+    X, y = make_regression(n_samples=50, n_features=5, n_targets=1,
+                           random_state=0)
+
+    # The coefficients will be identical if both do or do not shuffle
+    for shuffle in [True, False]:
+        mlp1 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                            random_state=0, shuffle=shuffle)
+        mlp2 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                            random_state=0, shuffle=shuffle)
+        mlp1.fit(X, y)
+        mlp2.fit(X, y)
+
+        assert np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
+
+    # The coefficients will be slightly different if shuffle=True
+    mlp1 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                        random_state=0, shuffle=True)
+    mlp2 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                        random_state=0, shuffle=False)
+    mlp1.fit(X, y)
+    mlp2.fit(X, y)
+
+    assert not np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
+
+
 def test_sparse_matrices():
     # Test that sparse and dense input matrices output the same results.
     X = X_digits_binary[:50]

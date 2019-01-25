@@ -192,6 +192,13 @@ Support for Python 3.4 and below has been officially dropped.
   when called before ``fit`` :issue:`12279` by :user:`Krishna Sangeeth
   <whiletruelearn>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| Fixed a bug in :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor` where the option :code:`shuffle=False`
+  was being ignored. :issue:`12582` by :user:`Sam Waterbury <samwaterbury>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
