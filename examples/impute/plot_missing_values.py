@@ -12,12 +12,13 @@ Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
 round-robin linear regression, treating every variable as an output in
 turn. The version implemented assumes Gaussian (output) variables. If your
 features are obviously non-Normal, consider transforming them to look more
-Normal so as to improve performance.
+Normal so as to potentially improve performance.
 
 In addition of using an imputing method, we can also keep an indication of the
 missing information using :func:`sklearn.impute.MissingIndicator` which might
 carry some information.
 """
+print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,6 +32,19 @@ from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
 
+N_SPLITS = 5
+REGRESSOR = RandomForestRegressor(random_state=0, n_estimators=100)
+
+
+def get_scores_for_imputer(imputer, X_missing, y_missing):
+    estimator = make_pipeline(
+        make_union(imputer, MissingIndicator(missing_values=0)),
+        REGRESSOR)
+    impute_scores = cross_val_score(estimator, X_missing, y_missing,
+                                    scoring='neg_mean_squared_error',
+                                    cv=N_SPLITS)
+    return impute_scores
+
 
 def get_results(dataset):
     X_full, y_full = dataset.data, dataset.target
@@ -38,9 +52,9 @@ def get_results(dataset):
     n_features = X_full.shape[1]
 
     # Estimate the score on the entire dataset, with no missing values
-    estimator = RandomForestRegressor(random_state=0, n_estimators=100)
-    full_scores = cross_val_score(estimator, X_full, y_full,
-                                  scoring='neg_mean_squared_error', cv=5)
+    full_scores = cross_val_score(REGRESSOR, X_full, y_full,
+                                  scoring='neg_mean_squared_error',
+                                  cv=N_SPLITS)
 
     # Add missing values in 75% of the lines
     missing_rate = 0.75
@@ -51,35 +65,27 @@ def get_results(dataset):
                                          dtype=np.bool)))
     rng.shuffle(missing_samples)
     missing_features = rng.randint(0, n_features, n_missing_samples)
+    X_missing = X_full.copy()
+    X_missing[np.where(missing_samples)[0], missing_features] = 0
+    y_missing = y_full.copy()
 
     # Estimate the score after replacing missing values by 0
-    X_missing = X_full.copy()
-    X_missing[np.where(missing_samples)[0], missing_features] = 0
-    y_missing = y_full.copy()
-    estimator = RandomForestRegressor(random_state=0, n_estimators=100)
-    zero_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                         scoring='neg_mean_squared_error',
-                                         cv=5)
+    imputer = SimpleImputer(missing_values=0,
+                            strategy='constant',
+                            fill_value=0)
+    zero_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
 
     # Estimate the score after imputation (mean strategy) of the missing values
-    X_missing = X_full.copy()
-    X_missing[np.where(missing_samples)[0], missing_features] = 0
-    y_missing = y_full.copy()
-    estimator = make_pipeline(
-        make_union(SimpleImputer(missing_values=0, strategy="mean"),
-                   MissingIndicator(missing_values=0)),
-        RandomForestRegressor(random_state=0, n_estimators=100))
-    mean_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                         scoring='neg_mean_squared_error',
-                                         cv=5)
+    imputer = SimpleImputer(missing_values=0, strategy="mean")
+    mean_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
 
     # Estimate the score after iterative imputation of the missing values
-    estimator = make_pipeline(
-        make_union(IterativeImputer(missing_values=0, random_state=0),
-                   MissingIndicator(missing_values=0)),
-        RandomForestRegressor(random_state=0, n_estimators=100))
-    iterative_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                              scoring='neg_mean_squared_error')
+    imputer = IterativeImputer(missing_values=0,
+                               random_state=0,
+                               n_nearest_features=5)
+    iterative_impute_scores = get_scores_for_imputer(imputer,
+                                                     X_missing,
+                                                     y_missing)
 
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),

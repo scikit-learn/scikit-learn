@@ -556,7 +556,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                  initial_strategy="mean",
                  min_value=None,
                  max_value=None,
-                 verbose=False,
+                 verbose=0,
                  random_state=None):
 
         self.missing_values = missing_values
