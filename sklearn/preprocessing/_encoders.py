@@ -8,6 +8,7 @@ import numbers
 import warnings
 
 import numpy as np
+import six
 from scipy import sparse
 
 from .. import get_config as _get_config
@@ -168,7 +169,7 @@ class OneHotEncoder(_BaseEncoder):
         column of ones.
 
         - None : retain all features.
-        - 'first' : drop the first feature in each category.
+        - 'first' : drop the first category in each feature.
         - array : ``drop[i]`` is the value of the feature in ``X[:,i]``
                   that should be dropped.
 
@@ -222,7 +223,7 @@ class OneHotEncoder(_BaseEncoder):
         of ``transform``).
 
     drop_ : array
-        The category for each feature to be dropped. None if all features
+        The category to be dropped for each feature. None if all features
         will be retained.
 
     active_features_ : array
@@ -275,12 +276,7 @@ class OneHotEncoder(_BaseEncoder):
            [None, 2]], dtype=object)
     >>> enc.get_feature_names()
     array(['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3'], dtype=object)
-    >>> drop_enc = OneHotEncoder(drop='first')
-    >>> drop_enc.fit(X)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features=None, categories=None, drop='first',
-        dtype=<class 'numpy.float64'>, handle_unknown='error',
-        n_values=None, sparse=True)
+    >>> drop_enc = OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> drop_enc.transform([['Female', 1], ['Male', 2]]).toarray()
@@ -509,14 +505,14 @@ class OneHotEncoder(_BaseEncoder):
                            "of features ({}), got {}")
                     raise ValueError(msg.format(len(self.categories_),
                                                 len(self.drop)))
-                missing_drops = [(val, i) for i, val in enumerate(self.drop)
+                missing_drops = [(i, val) for i, val in enumerate(self.drop)
                                  if val not in self.categories_[i]]
                 if any(missing_drops):
-                    msg = ("The following features were supposed to be "
+                    msg = ("The following categories were supposed to be "
                            "dropped, but were not found in the training "
                            "data.\n{}".format(
-                               "\n".join(["Val: {}, Col: {}".format(v, c)
-                                         for v, c in missing_drops])))
+                               "\n".join(["Category: {}, Feature: {}".format(c, v)
+                                         for c, v in missing_drops])))
                     raise ValueError(msg)
                 self.drop_ = np.array([cat for i, cat in enumerate(self.drop)
                                        if len(self.categories_[i]) > 1],

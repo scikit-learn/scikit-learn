@@ -746,7 +746,7 @@ def test_one_hot_encoder_invalid_params():
     enc = OneHotEncoder(drop=['ghi', 3, 59])
     assert_raises_regex(
         ValueError,
-        "The following features were supposed to be",
+        "The following categories were supposed",
         enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
 
 
