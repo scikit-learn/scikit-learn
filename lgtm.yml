@@ -2,6 +2,4 @@ extraction:
   cpp:
     before_index:
       - export PYTHON=python3
-    index:
       - pip3 install numpy scipy Cython
-      - make inplace
