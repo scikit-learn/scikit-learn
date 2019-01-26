@@ -54,7 +54,6 @@ from .utils.metaestimators import _safe_split, if_delegate_has_method
 
 from .utils._joblib import Parallel
 from .utils._joblib import delayed
-from .externals.six.moves import zip as izip
 
 __all__ = [
     "OneVsRestClassifier",
@@ -268,7 +267,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_binary)(estimator, X, column)
-            for estimator, column in izip(self.estimators_, columns))
+            for estimator, column in zip(self.estimators_, columns))
 
         return self
 
@@ -557,7 +556,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             n_jobs=self.n_jobs)(
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
-                for estimator, (i, j) in izip(self.estimators_,
+                for estimator, (i, j) in zip(self.estimators_,
                                               (combinations)))
 
         self.pairwise_indices_ = None

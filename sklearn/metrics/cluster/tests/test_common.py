@@ -15,7 +15,7 @@ from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import calinski_harabasz_score
 from sklearn.metrics.cluster import davies_bouldin_score
 
-from sklearn.utils.testing import assert_allclose, ignore_warnings
+from sklearn.utils.testing import assert_allclose
 
 
 # Dictionaries of metrics

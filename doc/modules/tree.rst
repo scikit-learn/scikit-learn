@@ -129,8 +129,8 @@ Once trained, you can plot the tree with the plot_tree function::
 
     >>> tree.plot_tree(clf.fit(iris.data, iris.target)) # doctest: +SKIP
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_002.png
-   :target: ../auto_examples/tree/plot_iris.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
+   :target: ../auto_examples/tree/plot_iris_dtc.html
    :scale: 75
    :align: center
 
@@ -177,14 +177,14 @@ render these plots inline automatically::
     .. figure:: ../images/iris.pdf
        :align: center
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
-   :target: ../auto_examples/tree/plot_iris.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_001.png
+   :target: ../auto_examples/tree/plot_iris_dtc.html
    :align: center
    :scale: 75
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_tree_plot_iris.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
 
 
 .. _tree_regression:

@@ -25,7 +25,6 @@ from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
-from ..externals.six import string_types
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -680,7 +679,7 @@ class TSNE(BaseEstimator):
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.metric == "precomputed":
-            if isinstance(self.init, string_types) and self.init == 'pca':
+            if isinstance(self.init, str) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
