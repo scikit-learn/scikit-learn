@@ -78,11 +78,12 @@ def test_lasso_toy():
     assert_almost_equal(clf.dual_gap_, 0)
 
 
-def test_enet_toy():
+@pytest.mark.parametrize('solver', ['cd', 'saga'])
+def test_enet_toy(solver):
     # Test ElasticNet for various parameters of alpha and l1_ratio.
-    # Actually, the parameters alpha = 0 should not be allowed. However,
+    # Actually, the parameter alpha = 0 should not be allowed for cd. However,
     # we test it as a border case.
-    # ElasticNet is tested with and without precomputed Gram matrix
+    # ElasticNet is tested with and without precomputed Gram matrix.
 
     X = np.array([[-1.], [0.], [1.]])
     Y = [-1, 0, 1]       # just a straight line
@@ -92,52 +93,51 @@ def test_enet_toy():
     # The result depends on random_state, it may give wrong results.
     # See issue #13021.
 
-    for solver in ['cd', 'saga']:
-        # this should be the same as lasso
-        clf = ElasticNet(alpha=1e-8, l1_ratio=1.0, solver=solver, tol=1e-8,
-                         random_state=2)
-        clf.fit(X, Y)
-        pred = clf.predict(T)
-        assert_array_almost_equal(clf.coef_, [1])
-        assert_array_almost_equal(pred, [2, 3, 4])
-        if solver == 'cd':
-            assert_almost_equal(clf.dual_gap_, 0)
+    # this should be the same as lasso
+    clf = ElasticNet(alpha=1e-8, l1_ratio=1.0, solver=solver, tol=1e-8,
+                     random_state=2)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [1])
+    assert_array_almost_equal(pred, [2, 3, 4])
+    if solver == 'cd':
+        assert_almost_equal(clf.dual_gap_, 0)
 
-        clf = ElasticNet(alpha=0.5, l1_ratio=0.3, max_iter=100,
-                         precompute=False, solver=solver, tol=1e-6,
-                         random_state=2)
-        clf.fit(X, Y)
-        pred = clf.predict(T)
-        assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
-        assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
-        if solver == 'cd':
-            assert_almost_equal(clf.dual_gap_, 0)
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.3, max_iter=100,
+                     precompute=False, solver=solver, tol=1e-6,
+                     random_state=2)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
+    assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
+    if solver == 'cd':
+        assert_almost_equal(clf.dual_gap_, 0)
 
-        clf.set_params(max_iter=100, precompute=True)
+    clf.set_params(max_iter=100, precompute=True)
+    clf.fit(X, Y)  # with Gram
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
+    assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
+    if solver == 'cd':
+        assert_almost_equal(clf.dual_gap_, 0)
+
+    if solver == 'cd':
+        clf.set_params(max_iter=100, precompute=np.dot(X.T, X))
         clf.fit(X, Y)  # with Gram
         pred = clf.predict(T)
         assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
-        assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
-        if solver == 'cd':
-            assert_almost_equal(clf.dual_gap_, 0)
+        assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327],
+                                  decimal=3)
+        assert_almost_equal(clf.dual_gap_, 0)
 
-        if solver == 'cd':
-            clf.set_params(max_iter=100, precompute=np.dot(X.T, X))
-            clf.fit(X, Y)  # with Gram
-            pred = clf.predict(T)
-            assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
-            assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327],
-                                      decimal=3)
-            assert_almost_equal(clf.dual_gap_, 0)
-
-        clf = ElasticNet(alpha=0.5, l1_ratio=0.5, solver=solver,
-                         random_state=2)
-        clf.fit(X, Y)
-        pred = clf.predict(T)
-        assert_array_almost_equal(clf.coef_, [0.45454], 3)
-        assert_array_almost_equal(pred, [0.9090, 1.3636, 1.8181], 3)
-        if solver == 'cd':
-            assert_almost_equal(clf.dual_gap_, 0)
+    clf = ElasticNet(alpha=0.5, l1_ratio=0.5, solver=solver,
+                     random_state=2)
+    clf.fit(X, Y)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [0.45454], 3)
+    assert_array_almost_equal(pred, [0.9090, 1.3636, 1.8181], 3)
+    if solver == 'cd':
+        assert_almost_equal(clf.dual_gap_, 0)
 
 
 def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
@@ -316,17 +316,20 @@ def test_path_parameters():
     assert_equal(50, len(clf.alphas_))
 
 
-def test_warm_start():
+@pytest.mark.parametrize('solver, steps, decimal',
+                         zip(['cd', 'saga'], [5, 100], [6, 3]))
+def test_warm_start(solver, steps, decimal):
     X, y, _, _ = build_dataset()
-    for sol, i, dig in zip(['cd', 'saga'], [5, 100], [6, 3]):
-        clf = ElasticNet(alpha=0.1, max_iter=i, warm_start=True,
-                         solver=sol, random_state=42)
-        ignore_warnings(clf.fit)(X, y)
-        ignore_warnings(clf.fit)(X, y)  # do a second round with i iterations
 
-        clf2 = ElasticNet(alpha=0.1, max_iter=2*i, solver=sol, random_state=42)
-        ignore_warnings(clf2.fit)(X, y)
-        assert_array_almost_equal(clf2.coef_, clf.coef_, decimal=dig)
+    clf = ElasticNet(alpha=0.1, max_iter=steps, warm_start=True,
+                     solver=solver, random_state=42)
+    ignore_warnings(clf.fit)(X, y)
+    ignore_warnings(clf.fit)(X, y)  # do a second round with i iterations
+
+    clf2 = ElasticNet(alpha=0.1, max_iter=2*steps, solver=solver,
+                      random_state=42)
+    ignore_warnings(clf2.fit)(X, y)
+    assert_array_almost_equal(clf2.coef_, clf.coef_, decimal=decimal)
 
 
 def test_lasso_alpha_warning():
@@ -359,7 +362,8 @@ def test_enet_positive_constraint():
     assert min(enet.coef_) >= 0
 
     enet = ElasticNet(alpha=0.1, max_iter=1000, positive=True, solver='saga')
-    assert_raises(ValueError, enet.fit, X, y)
+    with pytest.raises(ValueError):
+        enet.fit(X, y)
 
 
 def test_enet_cv_positive_constraint():
@@ -451,23 +455,24 @@ def test_multi_task_lasso_readonly_data():
         assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
 
-def test_enet_multitarget():
+@pytest.mark.parametrize('solver', ['cd', 'saga'])
+def test_enet_multitarget(solver):
     n_targets = 3
     X, y, _, _ = build_dataset(n_samples=10, n_features=8,
                                n_informative_features=10, n_targets=n_targets)
-    for solver in ['cd', 'saga']:
-        estimator = ElasticNet(alpha=0.01, fit_intercept=True,
-                               solver=solver, random_state=42)
-        estimator.fit(X, y)
-        coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
-                                     estimator.dual_gap_)
 
-        for k in range(n_targets):
-            estimator.fit(X, y[:, k])
-            assert_array_almost_equal(coef[k, :], estimator.coef_)
-            assert_array_almost_equal(intercept[k], estimator.intercept_)
-            if solver == 'cd':
-                assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
+    estimator = ElasticNet(alpha=0.01, fit_intercept=True,
+                           solver=solver, random_state=42)
+    estimator.fit(X, y)
+    coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
+                                 estimator.dual_gap_)
+
+    for k in range(n_targets):
+        estimator.fit(X, y[:, k])
+        assert_array_almost_equal(coef[k, :], estimator.coef_)
+        assert_array_almost_equal(intercept[k], estimator.intercept_)
+        if solver == 'cd':
+            assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
 
 
 def test_multioutput_enetcv_error():
