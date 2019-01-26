@@ -502,6 +502,21 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     return alphas, coefs, dual_gaps
 
 
+class _LassoStaticMixin:
+    """Mixin to add lasso_path as a staticmethod named path"""
+
+    @staticmethod
+    def path(X, y, eps=1e-3, n_alphas=100, alphas=None,
+             precompute='auto', Xy=None, copy_X=True, coef_init=None,
+             verbose=False, return_n_iter=False, positive=False, **params):
+        return lasso_path(X, y, eps, n_alphas, alphas,
+                          precompute, Xy, copy_X, coef_init,
+                          verbose, return_n_iter, positive, **params)
+
+
+_LassoStaticMixin.path.__doc__ = lasso_path.__doc__
+
+
 ###############################################################################
 # ElasticNet model
 
@@ -1242,7 +1257,7 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
         return self
 
 
-class LassoCV(LinearModelCV, RegressorMixin):
+class LassoCV(LinearModelCV, RegressorMixin, _LassoStaticMixin):
     """Lasso linear model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1405,17 +1420,6 @@ class LassoCV(LinearModelCV, RegressorMixin):
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive,
             random_state=random_state, selection=selection)
-
-    @staticmethod
-    def path(X, y, eps=1e-3, n_alphas=100, alphas=None,
-             precompute='auto', Xy=None, copy_X=True, coef_init=None,
-             verbose=False, return_n_iter=False, positive=False, **params):
-        return lasso_path(
-            X, y, eps, n_alphas, alphas, precompute, Xy, copy_X, coef_init,
-            verbose, return_n_iter, positive, **params)
-
-
-LassoCV.path.__doc__ = lasso_path.__doc__
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
@@ -2140,7 +2144,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.selection = selection
 
 
-class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
+class MultiTaskLassoCV(LinearModelCV, RegressorMixin, _LassoStaticMixin):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2295,14 +2299,3 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
-
-    @staticmethod
-    def path(X, y, eps=1e-3, n_alphas=100, alphas=None,
-             precompute='auto', Xy=None, copy_X=True, coef_init=None,
-             verbose=False, return_n_iter=False, positive=False, **params):
-        return lasso_path(
-            X, y, eps, n_alphas, alphas, precompute, Xy, copy_X, coef_init,
-            verbose, return_n_iter, positive, **params)
-
-
-MultiTaskLassoCV.path.__doc__ = lasso_path.__doc__
