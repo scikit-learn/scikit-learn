@@ -81,6 +81,12 @@ Support for Python 3.4 and below has been officially dropped.
    error for multiclass multioutput forests models if any targets were strings.
    :issue:`12834` by :user:`Elizabeth Sander <elsander>`.
 
+:mod:`sklearn.externals`
+........................
+
+- |API| Deprecate :mod:`externals.six` since we've dropped support for
+  Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
