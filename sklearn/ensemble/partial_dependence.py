@@ -10,9 +10,7 @@ import numpy as np
 from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
-from ..utils import Parallel, delayed
-from ..externals import six
-from ..externals.six.moves import map, range, zip
+from ..utils._joblib import Parallel, delayed
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
@@ -165,7 +163,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
 
 def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             label=None, n_cols=3, grid_resolution=100,
-                            percentiles=(0.05, 0.95), n_jobs=1,
+                            percentiles=(0.05, 0.95), n_jobs=None,
                             verbose=0, ax=None, line_kw=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
@@ -203,9 +201,10 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
-    n_jobs : int
-        The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
-        Defaults to 1.
+    n_jobs : int or None, optional (default=None)
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
     verbose : int
         Verbose output during PD computations. Defaults to 0.
     ax : Matplotlib axis object, default None
@@ -274,7 +273,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         feature_names = feature_names.tolist()
 
     def convert_feature(fx):
-        if isinstance(fx, six.string_types):
+        if isinstance(fx, str):
             try:
                 fx = feature_names.index(fx)
             except ValueError:
@@ -284,7 +283,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
-        if isinstance(fxs, (numbers.Integral,) + six.string_types):
+        if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
         try:
             fxs = np.array([convert_feature(fx) for fx in fxs], dtype=np.int32)

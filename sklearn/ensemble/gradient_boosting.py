@@ -29,7 +29,6 @@ from abc import abstractmethod
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..externals import six
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -38,7 +37,6 @@ from ._gradient_boosting import _random_sample_mask
 import numbers
 import numpy as np
 
-from scipy import stats
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -91,7 +89,7 @@ class QuantileEstimator(object):
             Individual weights for each sample
         """
         if sample_weight is None:
-            self.quantile = stats.scoreatpercentile(y, self.alpha * 100.0)
+            self.quantile = np.percentile(y, self.alpha * 100.0)
         else:
             self.quantile = _weighted_percentile(y, sample_weight,
                                                  self.alpha * 100.0)
@@ -301,7 +299,7 @@ class ZeroEstimator(object):
         return y
 
 
-class LossFunction(six.with_metaclass(ABCMeta, object)):
+class LossFunction(object, metaclass=ABCMeta):
     """Abstract base class for various loss functions.
 
     Parameters
@@ -357,7 +355,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
-                                learning_rate=1.0, k=0):
+                                learning_rate=0.1, k=0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
         and invokes template method `_update_terminal_region`.
@@ -408,7 +406,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         """Template method for updating terminal regions (=leaves). """
 
 
-class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
+class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for regression loss functions.
 
     Parameters
@@ -420,7 +418,7 @@ class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
         if n_classes != 1:
             raise ValueError("``n_classes`` must be 1 for regression but "
                              "was %r" % n_classes)
-        super(RegressionLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
 
 
 class LeastSquaresError(RegressionLossFunction):
@@ -471,7 +469,7 @@ class LeastSquaresError(RegressionLossFunction):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
-                                learning_rate=1.0, k=0):
+                                learning_rate=0.1, k=0):
         """Least squares does not need to update terminal regions.
 
         But it has to update the predictions.
@@ -582,7 +580,7 @@ class HuberLossFunction(RegressionLossFunction):
     """
 
     def __init__(self, n_classes, alpha=0.9):
-        super(HuberLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
         self.alpha = alpha
         self.gamma = None
 
@@ -608,7 +606,7 @@ class HuberLossFunction(RegressionLossFunction):
         gamma = self.gamma
         if gamma is None:
             if sample_weight is None:
-                gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+                gamma = np.percentile(np.abs(diff), self.alpha * 100)
             else:
                 gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
 
@@ -641,7 +639,7 @@ class HuberLossFunction(RegressionLossFunction):
         pred = pred.ravel()
         diff = y - pred
         if sample_weight is None:
-            gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
+            gamma = np.percentile(np.abs(diff), self.alpha * 100)
         else:
             gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
         gamma_mask = np.abs(diff) <= gamma
@@ -680,7 +678,7 @@ class QuantileLossFunction(RegressionLossFunction):
         The percentile
     """
     def __init__(self, n_classes, alpha=0.9):
-        super(QuantileLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
         self.alpha = alpha
         self.percentile = alpha * 100.0
 
@@ -742,7 +740,7 @@ class QuantileLossFunction(RegressionLossFunction):
         tree.value[leaf, 0] = val
 
 
-class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
+class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for classification loss functions. """
 
     def _score_to_proba(self, score):
@@ -776,7 +774,7 @@ class BinomialDeviance(ClassificationLossFunction):
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
-        super(BinomialDeviance, self).__init__(1)
+        super().__init__(1)
 
     def init_estimator(self):
         return LogOddsEstimator()
@@ -869,7 +867,7 @@ class MultinomialDeviance(ClassificationLossFunction):
         if n_classes < 3:
             raise ValueError("{0:s} requires more than 2 classes.".format(
                 self.__class__.__name__))
-        super(MultinomialDeviance, self).__init__(n_classes)
+        super().__init__(n_classes)
 
     def init_estimator(self):
         return PriorProbabilityEstimator()
@@ -965,7 +963,7 @@ class ExponentialLoss(ClassificationLossFunction):
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
-        super(ExponentialLoss, self).__init__(1)
+        super().__init__(1)
 
     def init_estimator(self):
         return ScaledLogOddsEstimator()
@@ -1120,7 +1118,7 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
@@ -1164,11 +1162,17 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         loss = self.loss_
         original_y = y
 
+        # Need to pass a copy of y_pred to negative_gradient() because y_pred
+        # is partially updated at the end of the loop in
+        # update_terminal_regions(), and gradients need to be evaluated at
+        # iteration i - 1.
+        y_pred_copy = y_pred.copy()
+
         for k in range(loss.K):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
-            residual = loss.negative_gradient(y, y_pred, k=k,
+            residual = loss.negative_gradient(y, y_pred_copy, k=k,
                                               sample_weight=sample_weight)
 
             # induce regression tree on residuals
@@ -1190,22 +1194,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
-            if X_csc is not None:
-                tree.fit(X_csc, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
-            else:
-                tree.fit(X, residual, sample_weight=sample_weight,
-                         check_input=False, X_idx_sorted=X_idx_sorted)
+            X = X_csr if X_csr is not None else X
+            tree.fit(X, residual, sample_weight=sample_weight,
+                     check_input=False, X_idx_sorted=X_idx_sorted)
 
             # update tree leaves
-            if X_csr is not None:
-                loss.update_terminal_regions(tree.tree_, X_csr, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
-            else:
-                loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
+            loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
+                                         sample_weight, sample_mask,
+                                         learning_rate=self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -1243,7 +1239,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                              "was %r" % self.subsample)
 
         if self.init is not None:
-            if isinstance(self.init, six.string_types):
+            if isinstance(self.init, str):
                 if self.init not in INIT_ESTIMATORS:
                     raise ValueError('init="%s" is not supported' % self.init)
             else:
@@ -1257,7 +1253,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("alpha must be in (0.0, 1.0) but "
                              "was %r" % self.alpha)
 
-        if isinstance(self.max_features, six.string_types):
+        if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 # if is_classification
                 if self.n_classes_ > 1:
@@ -1302,7 +1298,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.init is None:
             self.init_ = self.loss_.init_estimator()
-        elif isinstance(self.init, six.string_types):
+        elif isinstance(self.init, str):
             self.init_ = INIT_ESTIMATORS[self.init]()
         else:
             self.init_ = self.init
@@ -1366,9 +1362,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         y : array-like, shape (n_samples,)
             Target values (strings or integers in classification, real numbers
@@ -1513,7 +1510,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         X_csr = csr_matrix(X) if issparse(X) else None
 
         if self.n_iter_no_change is not None:
-            loss_history = np.ones(self.n_iter_no_change) * np.inf
+            loss_history = np.full(self.n_iter_no_change, np.inf)
             # We create a generator to get the predictions for X_val after
             # the addition of each successive stage
             y_val_pred_iter = self._staged_decision_function(X_val)
@@ -1747,7 +1744,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -1786,14 +1787,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     init : estimator, optional
         An estimator object that is used to compute the initial
@@ -1946,7 +1948,7 @@ shape (n_estimators, ``loss_.K``)
                  presort='auto', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4):
 
-        super(GradientBoostingClassifier, self).__init__(
+        super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
             criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
@@ -2202,7 +2204,11 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
            Added float values for fractions.
 
     min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
+        The minimum number of samples required to be at a leaf node.
+        A split point at any depth will only be considered if it leaves at
+        least ``min_samples_leaf`` training samples in each of the left and
+        right branches.  This may have the effect of smoothing the model,
+        especially in regression.
 
         - If int, then consider `min_samples_leaf` as the minimum number.
         - If float, then `min_samples_leaf` is a fraction and
@@ -2241,14 +2247,15 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         .. versionadded:: 0.19
 
-    min_impurity_split : float,
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
 
         .. deprecated:: 0.19
            ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
-           Use ``min_impurity_decrease`` instead.
+           ``min_impurity_decrease`` in 0.19. The default value of
+           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
+           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     init : estimator, optional (default=None)
         An estimator object that is used to compute the initial
@@ -2311,7 +2318,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
-        Only used if early_stopping is True
+        Only used if ``n_iter_no_change`` is set to an integer.
 
         .. versionadded:: 0.20
 
@@ -2395,7 +2402,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  warm_start=False, presort='auto', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4):
 
-        super(GradientBoostingRegressor, self).__init__(
+        super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
             criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
@@ -2467,6 +2474,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             return the index of the leaf x ends up in each estimator.
         """
 
-        leaves = super(GradientBoostingRegressor, self).apply(X)
+        leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves

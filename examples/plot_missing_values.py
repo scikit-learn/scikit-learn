@@ -39,7 +39,7 @@ def get_results(dataset):
     # Estimate the score on the entire dataset, with no missing values
     estimator = RandomForestRegressor(random_state=0, n_estimators=100)
     full_scores = cross_val_score(estimator, X_full, y_full,
-                                  scoring='neg_mean_squared_error')
+                                  scoring='neg_mean_squared_error', cv=5)
 
     # Add missing values in 75% of the lines
     missing_rate = 0.75
@@ -57,7 +57,8 @@ def get_results(dataset):
     y_missing = y_full.copy()
     estimator = RandomForestRegressor(random_state=0, n_estimators=100)
     zero_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                         scoring='neg_mean_squared_error')
+                                         scoring='neg_mean_squared_error',
+                                         cv=5)
 
     # Estimate the score after imputation (mean strategy) of the missing values
     X_missing = X_full.copy()
@@ -68,7 +69,8 @@ def get_results(dataset):
                    MissingIndicator(missing_values=0)),
         RandomForestRegressor(random_state=0, n_estimators=100))
     mean_impute_scores = cross_val_score(estimator, X_missing, y_missing,
-                                         scoring='neg_mean_squared_error')
+                                         scoring='neg_mean_squared_error',
+                                         cv=5)
 
 
     return ((full_scores.mean(), full_scores.std()),

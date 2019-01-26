@@ -5,7 +5,6 @@ import numpy as np
 import scipy.sparse as sp
 import warnings
 
-from sklearn.externals.six.moves import xrange as range
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.testing import (
@@ -52,7 +51,7 @@ def test_invalid_n_bins():
 
 def test_invalid_n_bins_array():
     # Bad shape
-    n_bins = np.ones((2, 4)) * 2
+    n_bins = np.full((2, 4), 2.)
     est = KBinsDiscretizer(n_bins=n_bins)
     assert_raise_message(ValueError,
                          "n_bins must be a scalar or array of shape "
@@ -167,9 +166,6 @@ def test_encode_options():
                            categories=[np.arange(i) for i in [2, 3, 3, 3]],
                            sparse=False)
                        .fit_transform(Xt_1), Xt_2)
-    assert_raise_message(ValueError, "inverse_transform only supports "
-                         "'encode = ordinal'. Got encode='onehot-dense' "
-                         "instead.", est.inverse_transform, Xt_2)
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='onehot').fit(X)
     Xt_3 = est.transform(X)
@@ -179,9 +175,6 @@ def test_encode_options():
                            sparse=True)
                        .fit_transform(Xt_1).toarray(),
                        Xt_3.toarray())
-    assert_raise_message(ValueError, "inverse_transform only supports "
-                         "'encode = ordinal'. Got encode='onehot' "
-                         "instead.", est.inverse_transform, Xt_2)
 
 
 def test_invalid_strategy_option():
@@ -195,10 +188,10 @@ def test_invalid_strategy_option():
 @pytest.mark.parametrize(
     'strategy, expected_2bins, expected_3bins',
     [('uniform', [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 2, 2]),
-     ('kmeans', [0, 0, 0, 0, 1, 1], [0, 1, 1, 1, 2, 2]),
+     ('kmeans', [0, 0, 0, 0, 1, 1], [0, 0, 1, 1, 2, 2]),
      ('quantile', [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 2, 2])])
 def test_nonuniform_strategies(strategy, expected_2bins, expected_3bins):
-    X = np.array([0, 1, 2, 3, 9, 10]).reshape(-1, 1)
+    X = np.array([0, 0.5, 2, 3, 9, 10]).reshape(-1, 1)
 
     # with 2 bins
     est = KBinsDiscretizer(n_bins=2, strategy=strategy, encode='ordinal')
@@ -212,16 +205,23 @@ def test_nonuniform_strategies(strategy, expected_2bins, expected_3bins):
 
 
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
-def test_inverse_transform(strategy):
+@pytest.mark.parametrize('encode', ['ordinal', 'onehot', 'onehot-dense'])
+def test_inverse_transform(strategy, encode):
     X = np.random.RandomState(0).randn(100, 3)
-    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode='ordinal')
+    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode=encode)
     Xt = kbd.fit_transform(X)
-    assert_array_equal(Xt.max(axis=0) + 1, kbd.n_bins_)
-
     X2 = kbd.inverse_transform(Xt)
     X2t = kbd.fit_transform(X2)
+    if encode == 'onehot':
+        assert_array_equal(Xt.todense(), X2t.todense())
+    else:
+        assert_array_equal(Xt, X2t)
+    if 'onehot' in encode:
+        Xt = kbd._encoder.inverse_transform(Xt)
+        X2t = kbd._encoder.inverse_transform(X2t)
+
+    assert_array_equal(Xt.max(axis=0) + 1, kbd.n_bins_)
     assert_array_equal(X2t.max(axis=0) + 1, kbd.n_bins_)
-    assert_array_equal(Xt, X2t)
 
 
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])

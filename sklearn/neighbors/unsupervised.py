@@ -74,9 +74,11 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Examples
     --------
@@ -114,8 +116,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30, metric='minkowski',
-                 p=2, metric_params=None, n_jobs=1, **kwargs):
-        super(NearestNeighbors, self).__init__(
+                 p=2, metric_params=None, n_jobs=None, **kwargs):
+        super().__init__(
               n_neighbors=n_neighbors,
               radius=radius,
               algorithm=algorithm,

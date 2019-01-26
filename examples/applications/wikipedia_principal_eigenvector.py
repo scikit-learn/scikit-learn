@@ -44,10 +44,10 @@ import numpy as np
 
 from scipy import sparse
 
+from joblib import Memory
+
 from sklearn.decomposition import randomized_svd
-from sklearn.utils import Memory
-from sklearn.externals.six.moves.urllib.request import urlopen
-from sklearn.externals.six import iteritems
+from urllib.request import urlopen
 
 
 print(__doc__)
@@ -172,7 +172,7 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
 # stop after 5M links to make it possible to work in RAM
 X, redirects, index_map = get_adjacency_matrix(
     redirects_filename, page_links_filename, limit=5000000)
-names = dict((i, name) for name, i in iteritems(index_map))
+names = dict((i, name) for name, i in index_map.items())
 
 print("Computing the principal singular vectors using randomized_svd")
 t0 = time()
@@ -207,7 +207,7 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
     dangle = np.asarray(np.where(np.isclose(X.sum(axis=1), 0),
                                  1.0 / n, 0)).ravel()
 
-    scores = np.ones(n, dtype=np.float32) / n  # initial guess
+    scores = np.full(n, 1. / n, dtype=np.float32)  # initial guess
     for i in range(max_iter):
         print("power iteration #%d" % i)
         prev_scores = scores
