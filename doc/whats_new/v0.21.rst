@@ -37,7 +37,6 @@ Changelog
 ---------
 
 Support for Python 3.4 and below has been officially dropped.
-``sklearn.externals.six`` is removed at the same time.
 
 ..
     See version doc/whats_new/v0.20.rst for structure. Entries should be
