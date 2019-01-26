@@ -603,12 +603,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
-    solver : str, {'auto', 'cd', 'saga'}, optional, default 'cd'
+    solver : str, {'cd', 'saga'}, default 'cd'
         Algorithm to use in the optimization problem.
-
-        - 'auto' chooses the solver automatically based on the type of data.
-          If the data is F-contiguous or a sparse 'csc' matrix, it chooses
-          'cd'. Otherwise it chooses 'saga'.
 
         - 'cd' is a coordinate descent solver.
 
@@ -740,25 +736,16 @@ class ElasticNet(LinearModel, RegressorMixin):
             raise ValueError('precompute should be one of True, False or'
                              ' array-like. Got %r' % self.precompute)
 
-        all_solvers = ['auto', 'cd', 'saga']
+        all_solvers = ['cd', 'saga']
         if self.solver not in all_solvers:
             raise ValueError("ElasticNet Regression supports only solvers in"
                              " {}, got {}.".format(all_solvers, self.solver))
 
-        if self.solver == 'auto':
-            if (isinstance(X, np.ndarray) and X.flags['F_CONTIGUOUS']) or \
-             (sparse.issparse(X) and sparse.isspmatrix_csc(X)):
-                solver = 'cd'
-            else:
-                solver = 'saga'
-        else:
-            solver = self.solver
-
-        if self.positive and solver == 'saga':
+        if self.positive and self.solver == 'saga':
             raise ValueError("ElasticNet supports positive contraints for "
                              "coefficients only for solver 'cd', "
                              "got solver={}, positive={}"
-                             .format(solver, self.positive))
+                             .format(self.solver, self.positive))
 
         # Remember if X is copied
         X_copied = False
@@ -767,7 +754,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         # For 'saga' we expect float64 C ordered arrays
         if check_input:
             X_copied = self.copy_X and self.fit_intercept
-            if solver == 'cd':
+            if self.solver == 'cd':
                 X, y = check_X_y(X, y, accept_sparse='csc',
                                  order='F', dtype=[np.float64, np.float32],
                                  copy=X_copied, multi_output=True,
@@ -786,7 +773,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         # Ensure copying happens only once, don't do it again if done above
         should_copy = self.copy_X and not X_copied
-        if solver == 'cd':
+        if self.solver == 'cd':
             precompute_ = self.precompute
         else:
             precompute_ = False
@@ -806,7 +793,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         if self.selection not in ['cyclic', 'random']:
             raise ValueError("selection should be either random or cyclic.")
 
-        if solver == 'saga':
+        if self.solver == 'saga':
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
@@ -819,14 +806,14 @@ class ElasticNet(LinearModel, RegressorMixin):
             if coef_.ndim == 1:
                 coef_ = coef_[np.newaxis, :]
 
-        if solver == 'cd':
+        if self.solver == 'cd':
             dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         else:
             dual_gaps_ = None
         self.n_iter_ = []
 
         for k in range(n_targets):
-            if solver == 'cd':
+            if self.solver == 'cd':
                 if Xy is not None:
                     this_Xy = Xy[:, k]
                 else:
@@ -864,13 +851,13 @@ class ElasticNet(LinearModel, RegressorMixin):
         if n_targets == 1:
             self.n_iter_ = self.n_iter_[0]
             self.coef_ = coef_[0]
-            if solver == 'cd':
+            if self.solver == 'cd':
                 self.dual_gap_ = dual_gaps_[0]
             else:
                 self.dual_gap_ = None
         else:
             self.coef_ = coef_
-            if solver == 'cd':
+            if self.solver == 'cd':
                 self.dual_gap_ = dual_gaps_
             else:
                 self.dual_gap_ = None
