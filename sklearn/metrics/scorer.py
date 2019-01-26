@@ -19,10 +19,11 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 from abc import ABCMeta
+from collections.abc import Iterable
 
 import numpy as np
 
-from . import (r2_score, median_absolute_error, mean_absolute_error,
+from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
@@ -39,12 +40,10 @@ from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 
 from ..utils.multiclass import type_of_target
-from ..utils.fixes import _Iterable as Iterable
-from ..externals import six
 from ..base import is_regressor
 
 
-class _BaseScorer(six.with_metaclass(ABCMeta, object)):
+class _BaseScorer(object, metaclass=ABCMeta):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
@@ -126,7 +125,13 @@ class _ProbaScorer(_BaseScorer):
         y_type = type_of_target(y)
         y_pred = clf.predict_proba(X)
         if y_type == "binary":
-            y_pred = y_pred[:, 1]
+            if y_pred.shape[1] == 2:
+                y_pred = y_pred[:, 1]
+            else:
+                raise ValueError('got predict_proba of shape {},'
+                                 ' but need classifier with two'
+                                 ' classes for {} scoring'.format(
+                                     y_pred.shape, self._score_func.__name__))
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
@@ -177,13 +182,20 @@ class _ThresholdScorer(_BaseScorer):
 
                 # For multi-output multi-class estimator
                 if isinstance(y_pred, list):
-                    y_pred = np.vstack(p for p in y_pred).T
+                    y_pred = np.vstack([p for p in y_pred]).T
 
             except (NotImplementedError, AttributeError):
                 y_pred = clf.predict_proba(X)
 
                 if y_type == "binary":
-                    y_pred = y_pred[:, 1]
+                    if y_pred.shape[1] == 2:
+                        y_pred = y_pred[:, 1]
+                    else:
+                        raise ValueError('got predict_proba of shape {},'
+                                         ' but need classifier with two'
+                                         ' classes for {} scoring'.format(
+                                             y_pred.shape,
+                                             self._score_func.__name__))
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
@@ -211,7 +223,7 @@ def get_scorer(scoring):
     scorer : callable
         The scorer.
     """
-    if isinstance(scoring, six.string_types):
+    if isinstance(scoring, str):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
@@ -256,7 +268,7 @@ def check_scoring(estimator, scoring=None, allow_none=False):
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
-    if isinstance(scoring, six.string_types):
+    if isinstance(scoring, str):
         return get_scorer(scoring)
     elif callable(scoring):
         # Heuristic to ensure user has not passed a metric
@@ -326,7 +338,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
         False if scorer is None/str/callable
     """
     if callable(scoring) or scoring is None or isinstance(scoring,
-                                                          six.string_types):
+                                                          str):
         scorers = {"score": check_scoring(estimator, scoring=scoring)}
         return scorers, False
     else:
@@ -352,7 +364,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
                 raise ValueError(err_msg + "Duplicate elements were found in"
                                  " the given list. %r" % repr(scoring))
             elif len(keys) > 0:
-                if not all(isinstance(k, six.string_types) for k in keys):
+                if not all(isinstance(k, str) for k in keys):
                     if any(callable(k) for k in keys):
                         raise ValueError(err_msg +
                                          "One or more of the elements were "
@@ -372,7 +384,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
 
         elif isinstance(scoring, dict):
             keys = set(scoring)
-            if not all(isinstance(k, six.string_types) for k in keys):
+            if not all(isinstance(k, str) for k in keys):
                 raise ValueError("Non-string types were found in the keys of "
                                  "the given dict. scoring=%r" % repr(scoring))
             if len(keys) == 0:
@@ -454,6 +466,8 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 # Standard regression scores
 explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
+max_error_scorer = make_scorer(max_error,
+                               greater_is_better=False)
 neg_mean_squared_error_scorer = make_scorer(mean_squared_error,
                                             greater_is_better=False)
 neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
@@ -498,6 +512,7 @@ fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
 SCORERS = dict(explained_variance=explained_variance_scorer,
                r2=r2_scorer,
+               max_error=max_error_scorer,
                neg_median_absolute_error=neg_median_absolute_error_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,

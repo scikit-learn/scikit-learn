@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
     fig = plt.figure('scikit-learn OMP vs. LARS benchmark results')
-    for i, (label, timings) in enumerate(sorted(six.iteritems(results))):
+    for i, (label, timings) in enumerate(sorted(results.items())):
         ax = fig.add_subplot(1, 2, i+1)
         vmax = max(1 - timings.min(), -1 + timings.max())
         plt.matshow(timings, fignum=False, vmin=1 - vmax, vmax=1 + vmax)

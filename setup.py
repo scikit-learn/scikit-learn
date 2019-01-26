@@ -11,11 +11,7 @@ import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
 import traceback
-
-if sys.version_info[0] < 3:
-    import __builtin__ as builtins
-else:
-    import builtins
+import builtins
 
 # This is a bit (!) hackish: we are setting a global variable so that the main
 # sklearn __init__ can detect if it is being loaded by the setup routine, to
@@ -45,8 +41,8 @@ if platform.python_implementation() == 'PyPy':
     SCIPY_MIN_VERSION = '1.1.0'
     NUMPY_MIN_VERSION = '1.14.0'
 else:
-    SCIPY_MIN_VERSION = '0.13.3'
-    NUMPY_MIN_VERSION = '1.8.2'
+    SCIPY_MIN_VERSION = '0.17.0'
+    NUMPY_MIN_VERSION = '1.11.0'
 
 
 # Optional setuptools features
@@ -183,10 +179,7 @@ def setup_package():
                                  'Operating System :: POSIX',
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
-                                 'Programming Language :: Python :: 2',
-                                 'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.4',
                                  'Programming Language :: Python :: 3.5',
                                  'Programming Language :: Python :: 3.6',
                                  'Programming Language :: Python :: 3.7',
