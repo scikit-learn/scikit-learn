@@ -646,6 +646,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     SGDClassifier: implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """
+    path = staticmethod(enet_path)
+
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
@@ -800,20 +802,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         else:
             return super()._decision_function(X)
 
-    @staticmethod
-    def path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-             precompute='auto', Xy=None, copy_X=True, coef_init=None,
-             verbose=False, return_n_iter=False, positive=False,
-             check_input=True, **params):
-        return enet_path(
-            X, y, l1_ratio, eps, n_alphas, alphas,
-            precompute, Xy, copy_X, coef_init,
-            verbose, return_n_iter, positive,
-            check_input, **params)
-
-
-ElasticNet.path.__doc__ = enet_path.__doc__
-
 
 ###############################################################################
 # Lasso model
@@ -938,6 +926,8 @@ class Lasso(ElasticNet):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
+    path = staticmethod(enet_path)
+
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
@@ -948,20 +938,6 @@ class Lasso(ElasticNet):
             max_iter=max_iter, tol=tol, warm_start=warm_start,
             positive=positive, random_state=random_state,
             selection=selection)
-
-    @staticmethod
-    def path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-             precompute='auto', Xy=None, copy_X=True, coef_init=None,
-             verbose=False, return_n_iter=False, positive=False,
-             check_input=True, **params):
-        return enet_path(
-            X, y, l1_ratio, eps, n_alphas, alphas,
-            precompute, Xy, copy_X, coef_init,
-            verbose, return_n_iter, positive,
-            check_input, **params)
-
-
-Lasso.path.__doc__ = enet_path.__doc__
 
 
 ###############################################################################
@@ -1626,6 +1602,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     ElasticNet
 
     """
+    path = staticmethod(enet_path)
+
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
@@ -1647,20 +1625,6 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
         self.random_state = random_state
         self.selection = selection
-
-    @staticmethod
-    def path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-             precompute='auto', Xy=None, copy_X=True, coef_init=None,
-             verbose=False, return_n_iter=False, positive=False,
-             check_input=True, **params):
-        return enet_path(
-            X, y, l1_ratio, eps, n_alphas, alphas,
-            precompute, Xy, copy_X, coef_init,
-            verbose, return_n_iter, positive,
-            check_input, **params)
-
-
-ElasticNetCV.path.__doc__ = enet_path.__doc__
 
 
 ###############################################################################
@@ -2153,6 +2117,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
+    path = staticmethod(enet_path)
+
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
@@ -2172,20 +2138,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.selection = selection
-
-    @staticmethod
-    def path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-             precompute='auto', Xy=None, copy_X=True, coef_init=None,
-             verbose=False, return_n_iter=False, positive=False,
-             check_input=True, **params):
-        return enet_path(
-            X, y, l1_ratio, eps, n_alphas, alphas,
-            precompute, Xy, copy_X, coef_init,
-            verbose, return_n_iter, positive,
-            check_input, **params)
-
-
-MultiTaskElasticNetCV.path.__doc__ = enet_path.__doc__
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
