@@ -20,9 +20,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils import check_X_y, effective_n_jobs
-from ..utils import Parallel, delayed
-from ..externals.six.moves import xrange as range
+from ..utils import check_X_y
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -275,6 +274,18 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
     n_subpopulation_ : int
         Number of combinations taken into account from 'n choose k', where n is
         the number of samples and k is the number of subsamples.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import TheilSenRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(
+    ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
+    >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9884...
+    >>> reg.predict(X[:1,])
+    array([-31.5871...])
 
     References
     ----------

@@ -11,7 +11,6 @@ from math import sqrt
 
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
-from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.validation import check_is_fitted
@@ -29,7 +28,7 @@ def _iterate_sparse_X(X):
     X_data = X.data
     X_indptr = X.indptr
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         row = np.zeros(X.shape[1])
         startptr, endptr = X_indptr[i], X_indptr[i + 1]
         nonzero_indices = X_indices[startptr:endptr]
@@ -404,7 +403,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
     ----------
     * Tian Zhang, Raghu Ramakrishnan, Maron Livny
       BIRCH: An efficient data clustering method for large databases.
-      http://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+      https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
 
     * Roberto Perdisci
       JBirch - Java implementation of BIRCH clustering algorithm

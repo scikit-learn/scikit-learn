@@ -19,14 +19,15 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
 from ..utils.validation import _num_samples
+from ..utils.validation import check_non_negative
 from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
-from ..utils import Parallel
-from ..utils import delayed
-from ..utils import effective_n_jobs
+from ..utils._joblib import Parallel
+from ..utils._joblib import delayed
+from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
@@ -357,8 +358,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     indices = np.concatenate(indices)
     values = np.concatenate(values)
 
-    if metric == "euclidean" and not metric_kwargs.get("squared", False):
-        np.sqrt(values, values)
     return indices, values
 
 
@@ -442,8 +441,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
                                          batch_size=batch_size)[0]
 
 
-def manhattan_distances(X, Y=None, sum_over_features=True,
-                        size_threshold=None):
+def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -463,9 +461,6 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         If True the function returns the pairwise distance matrix
         else it returns the componentwise L1 pairwise-distances.
         Not supported for sparse matrix inputs.
-
-    size_threshold : int, default=5e8
-        Unused parameter.
 
     Returns
     -------
@@ -496,10 +491,6 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     array([[1., 1.],
            [1., 1.]])
     """
-    if size_threshold is not None:
-        warnings.warn('Use of the "size_threshold" is deprecated '
-                      'in 0.19 and it will be removed version '
-                      '0.21 of scikit-learn', DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
@@ -742,7 +733,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     gamma : float, default None
         if None, defaults to 1.0 / n_features
 
-    coef0 : int, default 1
+    coef0 : float, default 1
 
     Returns
     -------
@@ -776,7 +767,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     gamma : float, default None
         If None, defaults to 1.0 / n_features
 
-    coef0 : int, default 1
+    coef0 : float, default 1
 
     Returns
     -------
@@ -946,7 +937,7 @@ def additive_chi2_kernel(X, Y=None):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
 
     See also
@@ -1004,7 +995,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
     See also
     --------
@@ -1138,6 +1129,24 @@ def _check_chunk_size(reduced, chunk_size):
                           chunk_size))
 
 
+def _precompute_metric_params(X, Y, metric=None, **kwds):
+    """Precompute data-derived metric parameters if not provided
+    """
+    if metric == "seuclidean" and 'V' not in kwds:
+        if X is Y:
+            V = np.var(X, axis=0, ddof=1)
+        else:
+            V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
+        return {'V': V}
+    if metric == "mahalanobis" and 'VI' not in kwds:
+        if X is Y:
+            VI = np.linalg.inv(np.cov(X.T)).T
+        else:
+            VI = np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T
+        return {'VI': VI}
+    return {}
+
+
 def pairwise_distances_chunked(X, Y=None, reduce_func=None,
                                metric='euclidean', n_jobs=None,
                                working_memory=None, **kwds):
@@ -1210,6 +1219,8 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     --------
     Without reduce_func:
 
+    >>> import numpy as np
+    >>> from sklearn.metrics import pairwise_distances_chunked
     >>> X = np.random.RandomState(0).rand(5, 3)
     >>> D_chunk = next(pairwise_distances_chunked(X))
     >>> D_chunk  # doctest: +ELLIPSIS
@@ -1273,6 +1284,10 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
                                         working_memory=working_memory)
         slices = gen_batches(n_samples_X, chunk_n_rows)
 
+    # precompute data-derived metric params
+    params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+    kwds.update(**params)
+
     for sl in slices:
         if sl.start == 0 and sl.stop == n_samples_X:
             X_chunk = X  # enable optimised paths for X is Y
@@ -1280,6 +1295,12 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
             X_chunk = X[sl]
         D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
                                      n_jobs=n_jobs, **kwds)
+        if ((X is Y or Y is None)
+                and PAIRWISE_DISTANCE_FUNCTIONS.get(metric, None)
+                is euclidean_distances):
+            # zeroing diagonal, taking care of aliases of "euclidean",
+            # i.e. "l2"
+            D_chunk.flat[sl.start::_num_samples(X) + 1] = 0
         if reduce_func is not None:
             chunk_size = D_chunk.shape[0]
             D_chunk = reduce_func(D_chunk, sl.start)
@@ -1381,6 +1402,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
+
+        whom = ("`pairwise_distances`. Precomputed distance "
+                " need to have non-negative values.")
+        check_non_negative(X, whom=whom)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
@@ -1393,6 +1418,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
         X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+
+        # precompute data-derived metric params
+        params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+        kwds.update(**params)
 
         if effective_n_jobs(n_jobs) == 1 and X is Y:
             return distance.squareform(distance.pdist(X, metric=metric,

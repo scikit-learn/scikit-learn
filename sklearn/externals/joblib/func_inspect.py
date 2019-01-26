@@ -275,7 +275,7 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
         else:
             position = arg_position - len(arg_names)
             if arg_name in kwargs:
-                arg_dict[arg_name] = kwargs.pop(arg_name)
+                arg_dict[arg_name] = kwargs[arg_name]
             else:
                 try:
                     arg_dict[arg_name] = arg_defaults[position]

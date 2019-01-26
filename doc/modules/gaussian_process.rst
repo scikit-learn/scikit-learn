@@ -45,7 +45,7 @@ The :class:`GaussianProcessRegressor` implements Gaussian processes (GP) for
 regression purposes. For this, the prior of the GP needs to be specified. The
 prior mean is assumed to be constant and zero (for ``normalize_y=False``) or the
 training data's mean (for ``normalize_y=True``). The prior's
-covariance is specified by a passing a :ref:`kernel <gp_kernels>` object. The
+covariance is specified by passing a :ref:`kernel <gp_kernels>` object. The
 hyperparameters of the kernel are optimized during fitting of
 GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
 on the passed ``optimizer``. As the LML may have multiple local optima, the
@@ -252,7 +252,7 @@ Gaussian based on the Laplace approximation. More details can be found in
 Chapter 3 of [RW2006]_.
 
 The GP prior mean is assumed to be zero. The prior's
-covariance is specified by a passing a :ref:`kernel <gp_kernels>` object. The
+covariance is specified by passing a :ref:`kernel <gp_kernels>` object. The
 hyperparameters of the kernel are optimized during fitting of
 GaussianProcessRegressor by maximizing the log-marginal-likelihood (LML) based
 on the passed ``optimizer``. As the LML may have multiple local optima, the
@@ -382,7 +382,7 @@ equivalent call to ``__call__``: ``np.diag(k(X, X)) == k.diag(X)``
 
 Kernels are parameterized by a vector :math:`\theta` of hyperparameters. These
 hyperparameters can for instance control length-scales or periodicity of a
-kernel (see below). All kernels support computing analytic gradients of
+kernel (see below). All kernels support computing analytic gradients 
 of the kernel's auto-covariance with respect to :math:`\theta` via setting
 ``eval_gradient=True`` in the ``__call__`` method. This gradient is used by the
 Gaussian process (both regressor and classifier) in computing the gradient
@@ -438,7 +438,7 @@ kernel but with the hyperparameters set to ``theta``. An illustrative example:
 
 All Gaussian process kernels are interoperable with :mod:`sklearn.metrics.pairwise`
 and vice versa: instances of subclasses of :class:`Kernel` can be passed as
-``metric`` to pairwise_kernels`` from :mod:`sklearn.metrics.pairwise`. Moreover,
+``metric`` to ``pairwise_kernels`` from :mod:`sklearn.metrics.pairwise`. Moreover,
 kernel functions from pairwise can be used as GP kernels by using the wrapper
 class :class:`PairwiseKernel`. The only caveat is that the gradient of
 the hyperparameters is not analytic but numeric and all those kernels support
@@ -460,7 +460,7 @@ It depends on a parameter :math:`constant\_value`. It is defined as:
 The main use-case of the :class:`WhiteKernel` kernel is as part of a
 sum-kernel where it explains the noise-component of the signal. Tuning its
 parameter :math:`noise\_level` corresponds to estimating the noise-level.
-It is defined as:e
+It is defined as:
 
 .. math::
     k(x_i, x_j) = noise\_level \text{ if } x_i == x_j \text{ else } 0

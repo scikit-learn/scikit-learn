@@ -262,7 +262,6 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     """
     random_state = check_random_state(random_state)
-    n_samples, n_features = X.shape
 
     if isinstance(n_trials, numbers.Integral):
         run_from_estimates = False
@@ -433,9 +432,9 @@ def fast_mcd(X, support_fraction=None,
         except MemoryError:
             # The above is too big. Let's try with something much small
             # (and less optimal)
+            n_best_tot = 10
             all_best_covariances = np.zeros((n_best_tot, n_features,
                                              n_features))
-            n_best_tot = 10
             n_best_sub = 2
         for i in range(n_subsets):
             low_bound = i * n_samples_subsets
@@ -581,17 +580,35 @@ class MinCovDet(EmpiricalCovariance):
         Mahalanobis distances of the training set (on which `fit` is called)
         observations.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import MinCovDet
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = MinCovDet(random_state=0).fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7411..., 0.2535...],
+           [0.2535..., 0.3053...]])
+    >>> cov.location_
+    array([0.0813... , 0.0427...])
+
     References
     ----------
 
-    .. [Rouseeuw1984] `P. J. Rousseeuw. Least median of squares regression.
-        J. Am Stat Ass, 79:871, 1984.`
-    .. [Rousseeuw] `A Fast Algorithm for the Minimum Covariance Determinant
+    .. [Rouseeuw1984] P. J. Rousseeuw. Least median of squares regression.
+        J. Am Stat Ass, 79:871, 1984.
+    .. [Rousseeuw] A Fast Algorithm for the Minimum Covariance Determinant
         Estimator, 1999, American Statistical Association and the American
-        Society for Quality, TECHNOMETRICS`
-    .. [ButlerDavies] `R. W. Butler, P. L. Davies and M. Jhun,
+        Society for Quality, TECHNOMETRICS
+    .. [ButlerDavies] R. W. Butler, P. L. Davies and M. Jhun,
         Asymptotics For The Minimum Covariance Determinant Estimator,
-        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400`
+        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
 
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
@@ -668,9 +685,9 @@ class MinCovDet(EmpiricalCovariance):
         References
         ----------
 
-        .. [RVD] `A Fast Algorithm for the Minimum Covariance
+        .. [RVD] A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
-            and the American Society for Quality, TECHNOMETRICS`
+            and the American Society for Quality, TECHNOMETRICS
 
         Returns
         -------
@@ -709,9 +726,9 @@ class MinCovDet(EmpiricalCovariance):
         References
         ----------
 
-        .. [RVDriessen] `A Fast Algorithm for the Minimum Covariance
+        .. [RVDriessen] A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
-            and the American Society for Quality, TECHNOMETRICS`
+            and the American Society for Quality, TECHNOMETRICS
 
         Returns
         -------
