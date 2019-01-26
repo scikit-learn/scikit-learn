@@ -33,21 +33,21 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
 
     $ git push origin --tags
 
-4. create tarballs:
+4. create the source tarball:
 
    - Wipe clean your repo::
 
        $ git clean -xfd
 
-   - Register and upload on PyPI::
+   - Generate the tarball::
 
-       $ python setup.py sdist register upload
+       $ python setup.py sdist
 
+   The result should be in the `dist/` folder. We will upload it later
+   with the wheels. Check that you can install it in a new virtualenv and
+   that the tests pass.
 
-5. Push the documentation to the website. Circle CI should do this
-   automatically for master and <N>.<N>.X branches.
-
-6. Build binaries using dedicated CI servers by updating the git submodule
+5. Build binaries using dedicated CI servers by updating the git submodule
    reference to the new scikit-learn tag of the release at:
 
    https://github.com/MacPython/scikit-learn-wheels
@@ -56,9 +56,21 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
    packages and upload them to PyPI by running the following commands in the
    scikit-learn source folder (checked out at the release tag)::
 
-       $ pip install -U wheelhouse_uploader
-       $ python setup.py sdist fetch_artifacts upload_all
+       $ pip install -U wheelhouse_uploader twine
+       $ python setup.py fetch_artifacts
 
+   Check the content of the `dist/` folder: it should contain all the wheels
+   along with the source tarball ("scikit-learn-XXX.tar.gz").
+
+   Make sure that you do not have developer versions or older versions of
+   the scikit-learn package in that folder.
+
+   Upload everything at once to https://pypi.org::
+
+       $ twine upload dist/
+
+6. Push the documentation to the website. Circle CI should do this
+   automatically for master and <N>.<N>.X branches.
 
 7. FOR FINAL RELEASE: Update the release date in What's New
 

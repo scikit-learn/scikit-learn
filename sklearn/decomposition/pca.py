@@ -19,8 +19,6 @@ from scipy.special import gammaln
 from scipy.sparse import issparse
 from scipy.sparse.linalg import svds
 
-from ..externals import six
-
 from .base import _BasePCA
 from ..utils import check_random_state
 from ..utils import check_array
@@ -253,8 +251,8 @@ class PCA(_BasePCA):
 
     References
     ----------
-    For n_components == 'mle', this class uses the method of `Minka, T. P.
-    "Automatic choice of dimensionality for PCA". In NIPS, pp. 598-604`
+    For n_components == 'mle', this class uses the method of *Minka, T. P.
+    "Automatic choice of dimensionality for PCA". In NIPS, pp. 598-604*
 
     Implements the probabilistic PCA model from:
     `Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
@@ -266,13 +264,13 @@ class PCA(_BasePCA):
     For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
 
     For svd_solver == 'randomized', see:
-    `Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
+    *Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
     "Finding structure with randomness: Probabilistic algorithms for
     constructing approximate matrix decompositions".
-    SIAM review, 53(2), 217-288.` and also
-    `Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
+    SIAM review, 53(2), 217-288.* and also
+    *Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
     "A randomized algorithm for the decomposition of matrices".
-    Applied and Computational Harmonic Analysis, 30(1), 47-68.`
+    Applied and Computational Harmonic Analysis, 30(1), 47-68.*
 
     For svd_solver == 'lobpcg', see: :func:`utils.extmath.lobpcg_svd`
     `Andrew V. Knyazev (2001). "Toward the Optimal Preconditioned Eigensolver:
@@ -286,7 +284,7 @@ class PCA(_BasePCA):
     >>> from sklearn.decomposition import PCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> pca = PCA(n_components=2)
-    >>> pca.fit(X)
+    >>> pca.fit(X)  # doctest: +NORMALIZE_WHITESPACE
     PCA(copy=True, iterated_power='auto', n_components=2, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
@@ -304,7 +302,7 @@ class PCA(_BasePCA):
     [6.30061... 0.54980...]
 
     >>> pca = PCA(n_components=1, svd_solver='arpack')
-    >>> pca.fit(X)
+    >>> pca.fit(X)  # doctest: +NORMALIZE_WHITESPACE
     PCA(copy=True, iterated_power='auto', n_components=1, random_state=None,
       svd_solver='arpack', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_ratio_)  # doctest: +ELLIPSIS
@@ -490,7 +488,7 @@ class PCA(_BasePCA):
         """
         n_samples, n_features = X.shape
 
-        if isinstance(n_components, six.string_types):
+        if isinstance(n_components, str):
             raise ValueError("n_components=%r cannot be a string "
                              "with svd_solver='%s'"
                              % (n_components, svd_solver))

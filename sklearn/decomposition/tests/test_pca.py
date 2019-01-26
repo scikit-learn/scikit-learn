@@ -6,7 +6,6 @@ import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
@@ -619,10 +618,7 @@ def test_infer_dim_1():
     pca = PCA(n_components=p, svd_solver='full')
     pca.fit(X)
     spect = pca.explained_variance_
-    ll = []
-    for k in range(p):
-        ll.append(_assess_dimension_(spect, k, n, p))
-    ll = np.array(ll)
+    ll = np.array([_assess_dimension_(spect, k, n, p) for k in range(p)])
     assert_greater(ll[1], ll.max() - .01 * n)
 
 
@@ -702,7 +698,7 @@ def test_pca_score2():
         pca = PCA(n_components=2, whiten=True, svd_solver=solver)
         pca.fit(X)
         ll2 = pca.score(X)
-        assert_true(ll1 > ll2)
+        assert ll1 > ll2
 
 
 def test_pca_score3():
@@ -719,7 +715,7 @@ def test_pca_score3():
         pca.fit(Xl)
         ll[k] = pca.score(Xt)
 
-    assert_true(ll.argmax() == 1)
+    assert ll.argmax() == 1
 
 
 def test_pca_score_with_different_solvers():
@@ -841,8 +837,9 @@ def check_pca_float_dtype_preservation(svd_solver):
     assert pca_64.transform(X_64).dtype == np.float64
     assert pca_32.transform(X_32).dtype == np.float32
 
+    # decimal=5 fails on mac with scipy = 1.1.0
     assert_array_almost_equal(pca_64.components_, pca_32.components_,
-                              decimal=5)
+                              decimal=4)
 
 
 def check_pca_int_dtype_upcast_to_double(svd_solver):

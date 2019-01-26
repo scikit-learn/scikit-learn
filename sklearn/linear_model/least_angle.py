@@ -23,9 +23,7 @@ from ..base import RegressorMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
-from ..utils import Parallel, delayed
-from ..externals.six.moves import xrange
-from ..externals.six import string_types
+from ..utils._joblib import Parallel, delayed
 
 solve_triangular_args = {'check_finite': False}
 
@@ -181,7 +179,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             # and allows to easily swap columns
             X = X.copy('F')
 
-    elif isinstance(Gram, string_types) and Gram == 'auto' or Gram is True:
+    elif isinstance(Gram, str) and Gram == 'auto' or Gram is True:
         if Gram is True or X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
         else:
@@ -431,7 +429,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 idx]
 
             n_active -= 1
-            m, n = idx, n_active
             # handle the case when idx is not length of 1
             drop_idx = [active.pop(ii) for ii in idx]
 
@@ -637,7 +634,7 @@ class Lars(LinearModel, RegressorMixin):
         if fit_path:
             self.active_ = []
             self.coef_path_ = []
-            for k in xrange(n_targets):
+            for k in range(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, active, coef_path, n_iter_ = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
@@ -657,7 +654,7 @@ class Lars(LinearModel, RegressorMixin):
                                    self.coef_)]
                 self.n_iter_ = self.n_iter_[0]
         else:
-            for k in xrange(n_targets):
+            for k in range(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, _, self.coef_[k], n_iter_ = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
@@ -1008,8 +1005,8 @@ class LarsCV(Lars):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1100,12 +1097,12 @@ class LarsCV(Lars):
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
-        super(LarsCV, self).__init__(fit_intercept=fit_intercept,
-                                     verbose=verbose, normalize=normalize,
-                                     precompute=precompute,
-                                     n_nonzero_coefs=500,
-                                     eps=eps, copy_X=copy_X, fit_path=True,
-                                     positive=positive)
+        super().__init__(fit_intercept=fit_intercept,
+                         verbose=verbose, normalize=normalize,
+                         precompute=precompute,
+                         n_nonzero_coefs=500,
+                         eps=eps, copy_X=copy_X, fit_path=True,
+                         positive=positive)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -1231,8 +1228,8 @@ class LassoLarsCV(LarsCV):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
@@ -1347,7 +1344,7 @@ class LassoLarsCV(LarsCV):
         self.eps = eps
         self.copy_X = copy_X
         self.positive = positive
-        # XXX : we don't use super(LarsCV, self).__init__
+        # XXX : we don't use super().__init__
         # to avoid setting n_nonzero_coefs
 
 

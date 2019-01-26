@@ -64,6 +64,7 @@ def make_ellipses(gmm, ax):
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(0.5)
         ax.add_artist(ell)
+        ax.set_aspect('equal', 'datalim')
 
 iris = datasets.load_iris()
 
