@@ -38,7 +38,7 @@ test-coverage:
 	rm -rf coverage .coverage
 	$(PYTEST) sklearn --showlocals -v --cov=sklearn --cov-report=html:coverage
 test-coverage-parallel:
-	rm -rf coverage .coverage
+	rm -rf coverage .coverage .coverage.*
 	$(PYTEST) sklearn -n auto --showlocals -v --cov=sklearn --cov-report=html:coverage
 
 test: test-code test-sphinxext test-doc
