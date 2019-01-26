@@ -54,6 +54,7 @@ make_conda() {
 
 if [[ "$DISTRIB" == "conda" ]]; then
     TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
+                pytest-xdist \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION"
 
@@ -89,7 +90,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages --python=python3 testvenv
     source testvenv/bin/activate
-    pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
+    pip install pytest pytest-cov pytest-xdist cython joblib==$JOBLIB_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     make_conda python=3.7
@@ -101,7 +102,7 @@ elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
     export SKLEARN_SITE_JOBLIB=1
-    pip install pytest pytest-cov
+    pip install pytest pytest-xdist pytest-cov
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
