@@ -129,8 +129,8 @@ Once trained, you can plot the tree with the plot_tree function::
 
     >>> tree.plot_tree(clf.fit(iris.data, iris.target)) # doctest: +SKIP
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_002.png
-   :target: ../auto_examples/tree/plot_iris.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_002.png
+   :target: ../auto_examples/tree/plot_iris_dtc.html
    :scale: 75
    :align: center
 
@@ -177,14 +177,14 @@ render these plots inline automatically::
     .. figure:: ../images/iris.pdf
        :align: center
 
-.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
-   :target: ../auto_examples/tree/plot_iris.html
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_dtc_001.png
+   :target: ../auto_examples/tree/plot_iris_dtc.html
    :align: center
    :scale: 75
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_tree_plot_iris.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
 
 
 .. _tree_regression:
@@ -400,7 +400,8 @@ it differs in that it supports numerical target variables (regression) and
 does not compute rule sets. CART constructs binary trees using the feature
 and threshold that yield the largest information gain at each node.
 
-scikit-learn uses an optimised version of the CART algorithm.
+scikit-learn uses an optimised version of the CART algorithm; however, scikit-learn 
+implementation does not support categorical variables for now.
 
 .. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
 .. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29

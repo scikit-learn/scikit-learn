@@ -9,8 +9,6 @@ import numpy as np
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
@@ -93,7 +91,7 @@ def test_fit_transform_parallel(norm_comp):
     spca = SparsePCA(n_components=3, n_jobs=2, method='lars', alpha=alpha,
                      random_state=0, normalize_components=norm_comp).fit(Y)
     U2 = spca.transform(Y)
-    assert_true(not np.all(spca_lars.components_ == 0))
+    assert not np.all(spca_lars.components_ == 0)
     assert_array_almost_equal(U1, U2)
 
 
@@ -106,7 +104,7 @@ def test_transform_nan(norm_comp):
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
     Y[:, 0] = 0
     estimator = SparsePCA(n_components=8, normalize_components=norm_comp)
-    assert_false(np.any(np.isnan(estimator.fit_transform(Y))))
+    assert not np.any(np.isnan(estimator.fit_transform(Y)))
 
 
 @pytest.mark.filterwarnings("ignore:normalize_components")
@@ -186,7 +184,7 @@ def test_mini_batch_fit_transform(norm_comp):
                                   random_state=0,
                                   normalize_components=norm_comp)
         U2 = spca.fit(Y).transform(Y)
-    assert_true(not np.all(spca_lars.components_ == 0))
+    assert not np.all(spca_lars.components_ == 0)
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
     spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd', alpha=alpha,
