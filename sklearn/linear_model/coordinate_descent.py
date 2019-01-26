@@ -502,7 +502,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     return alphas, coefs, dual_gaps
 
 
-class _LassoStaticMixin:
+class _LassoPathStaticMixin:
     """Mixin to add lasso_path as a staticmethod named path"""
 
     @staticmethod
@@ -514,7 +514,7 @@ class _LassoStaticMixin:
                           verbose, return_n_iter, positive, **params)
 
 
-_LassoStaticMixin.path.__doc__ = lasso_path.__doc__
+_LassoPathStaticMixin.path.__doc__ = lasso_path.__doc__
 
 
 ###############################################################################
@@ -1257,7 +1257,7 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
         return self
 
 
-class LassoCV(LinearModelCV, RegressorMixin, _LassoStaticMixin):
+class LassoCV(LinearModelCV, RegressorMixin, _LassoPathStaticMixin):
     """Lasso linear model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2144,7 +2144,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.selection = selection
 
 
-class MultiTaskLassoCV(LinearModelCV, RegressorMixin, _LassoStaticMixin):
+class MultiTaskLassoCV(LinearModelCV, RegressorMixin, _LassoPathStaticMixin):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     See glossary entry for :term:`cross-validation estimator`.
