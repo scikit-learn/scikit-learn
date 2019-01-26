@@ -27,6 +27,7 @@ from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
+from sklearn.mimic_calibration import _MimicCalibration
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
@@ -352,6 +353,8 @@ class _CalibratedClassifier(object):
                 calibrator = IsotonicRegression(out_of_bounds='clip')
             elif self.method == 'sigmoid':
                 calibrator = _SigmoidCalibration()
+            elif self.method == 'mimic':
+                calibrator = _MimicCalibration()
             else:
                 raise ValueError('method should be "sigmoid" or '
                                  '"isotonic". Got %s.' % self.method)
