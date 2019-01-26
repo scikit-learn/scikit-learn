@@ -222,6 +222,10 @@ Support for Python 3.4 and below has been officially dropped.
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
 
+- |Fix| Fixed the calculation overflow when using a float16 dtype with
+  :class:`preprocessing.StandardScaler`. :issue:`13007` by
+  :user:`Raffaello Baluyot <baluyotraf>`
+
 :mod:`sklearn.tree`
 ...................
 - |Feature| Decision Trees can now be plotted with matplotlib using
