@@ -560,11 +560,17 @@ class ElasticNet(LinearModel, RegressorMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
+    precompute : True | False | array-like
+        relevant only if ``solver='cd'``
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. The Gram matrix can also be passed as argument.
+        For sparse input this option is always ``True`` to preserve sparsity.
 
     max_iter : int, optional
         The maximum number of iterations
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
 
     tol : float, optional
         The tolerance for the optimization: if the updates are
@@ -572,9 +578,32 @@ class ElasticNet(LinearModel, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    solver : str, {'auto', 'cd', 'saga'}, \
-             optional (default='cd').
+    warm_start : bool, optional
+        When set to ``True``, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+        See :term:`the Glossary <warm_start>`.
 
+    positive : bool, optional
+        If ``solver='cd'`` and set to ``True``, forces the coefficients to be
+        positive. ``solver='saga'`` can only be used if set to ``False`` as
+        it can't enforce positive coefficients.
+
+    random_state : int, RandomState instance or None, optional, default None
+        The seed of the pseudo random number generator that selects a random
+        feature to update.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``selection`` ==
+        'random'.
+
+    selection : str, default 'cyclic'
+        relevant only if ``solver='cd'``
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
+
+    solver : str, {'auto', 'cd', 'saga'}, optional, default 'cd'
         Algorithm to use in the optimization problem.
 
         - 'auto' chooses the solver automatically based on the type of data.
@@ -589,36 +618,6 @@ class ElasticNet(LinearModel, RegressorMixin):
           data with a scaler from sklearn.preprocessing.
 
           .. versionadded:: TODO
-
-    warm_start : bool, optional
-        When set to ``True``, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
-        See :term:`the Glossary <warm_start>`.
-
-    random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator that selects a random
-        feature to update.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'.
-
-    precompute : True | False | array-like
-        Only if ``solver='cd'``.
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. The Gram matrix can also be passed as argument.
-        For sparse input this option is always ``True`` to preserve sparsity.
-
-    positive : bool, optional
-        Only if ``solver='cd'``.
-        When set to ``True``, forces the coefficients to be positive.
-
-    selection : str, default 'cyclic'
-        Only if ``solver='cd'``.
-        If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default. This
-        (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4.
 
     Attributes
     ----------
@@ -684,22 +683,22 @@ class ElasticNet(LinearModel, RegressorMixin):
     path = staticmethod(enet_path)
 
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
-                 normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
-                 solver='cd', warm_start=False, random_state=None,
-                 precompute=False, positive=False, selection='cyclic'):
+                 normalize=False, precompute=False, max_iter=1000,
+                 copy_X=True, tol=1e-4, warm_start=False, positive=False,
+                 random_state=None, selection='cyclic', solver='cd'):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-        self.copy_X = copy_X
-        self.max_iter = max_iter
-        self.tol = tol
-        self.solver = solver
-        self.warm_start = warm_start
-        self.random_state = random_state
         self.precompute = precompute
+        self.max_iter = max_iter
+        self.copy_X = copy_X
+        self.tol = tol
+        self.warm_start = warm_start
         self.positive = positive
+        self.random_state = random_state
         self.selection = selection
+        self.solver = solver
 
     def fit(self, X, y, check_input=True):
         """Fit model with coordinate descent.
