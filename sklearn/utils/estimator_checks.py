@@ -74,10 +74,10 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
-
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
              'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
              'PowerTransformer', 'QuantileTransformer']
+SUPPORT_STRING = ['SimpleImputer', 'MissingIndicator']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -625,9 +625,14 @@ def check_dtype_object(name, estimator_orig):
         if "Unknown label type" not in str(e):
             raise
 
-    X[0, 0] = {'foo': 'bar'}
-    msg = "argument must be a string or a number"
-    assert_raises_regex(TypeError, msg, estimator.fit, X, y)
+    if name not in SUPPORT_STRING:
+        X[0, 0] = {'foo': 'bar'}
+        msg = "argument must be a string or a number"
+        assert_raises_regex(TypeError, msg, estimator.fit, X, y)
+    else:
+        # If the estimator support strings passed as object dtype,
+        # it should not raise an error
+        estimator.fit(X, y)
 
 
 def check_complex_data(name, estimator_orig):
