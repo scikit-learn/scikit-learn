@@ -21,7 +21,7 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
-    TEST_CMD="pytest -n2 --dist=loadfile --showlocals --durations=20 --pyargs"
+    TEST_CMD="pytest -n2 --dist=loadscope --showlocals --durations=20 --pyargs"
 
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
