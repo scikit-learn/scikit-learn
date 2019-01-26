@@ -125,7 +125,7 @@ try:
 except ImportError:
     pass
 "
-python setup.py develop
+pip install -e .
 if [ $TRAVIS_OS_NAME = "linux" ]
 then
 	ccache --show-stats

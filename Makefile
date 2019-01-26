@@ -32,14 +32,14 @@ ifeq ($(BITS),64)
 	$(PYTEST) $(shell find doc -name '*.rst' | sort)
 endif
 test-code-parallel: in
-	$(PYTEST) -n auto --showlocals -v sklearn --durations=20 --dist=loadscope
+	$(PYTEST) -n auto --showlocals -v sklearn --durations=20
 
 test-coverage:
 	rm -rf coverage .coverage
 	$(PYTEST) sklearn --showlocals -v --cov=sklearn --cov-report=html:coverage
 test-coverage-parallel:
 	rm -rf coverage .coverage .coverage.*
-	$(PYTEST) sklearn -n auto --showlocals -v --cov=sklearn --cov-report=html:coverage --dist=loadscope
+	$(PYTEST) sklearn -n auto --showlocals -v --cov=sklearn --cov-report=html:coverage
 
 test: test-code test-sphinxext test-doc
 
