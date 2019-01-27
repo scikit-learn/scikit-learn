@@ -16,6 +16,7 @@ from sklearn.datasets import load_iris
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
 
@@ -30,7 +31,9 @@ X = np.hstack((X, 2 * np.random.random((X.shape[0], 36))))
 # Create a feature-selection transform and an instance of SVM that we
 # combine together to have an full-blown estimator
 transform = SelectPercentile(chi2)
-clf = Pipeline([('anova', transform), ('svc', SVC(gamma="auto"))])
+clf = Pipeline([('anova', transform),
+                ('scaler', StandardScaler()),
+                ('svc', SVC(gamma="auto"))])
 
 # #############################################################################
 # Plot the cross-validation score as a function of percentile of features
