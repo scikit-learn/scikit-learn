@@ -51,6 +51,6 @@ plt.title(
     'Performance of the SVM-Anova varying the percentile of features selected')
 plt.xticks(np.linspace(0, 100, 11, endpoint=True))
 plt.xlabel('Percentile')
-plt.ylabel('Score')
+plt.ylabel('Accuracy Score')
 plt.axis('tight')
 plt.show()
