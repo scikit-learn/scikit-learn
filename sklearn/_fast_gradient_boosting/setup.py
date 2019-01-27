@@ -33,6 +33,10 @@ def configuration(parent_package="", top_path=None):
                          sources=["types.pyx"],
                          include_dirs=[numpy.get_include()])
 
+    config.add_extension("utils",
+                         sources=["utils.pyx"],
+                         include_dirs=[numpy.get_include()])
+
     config.add_subpackage("tests")
 
     return config

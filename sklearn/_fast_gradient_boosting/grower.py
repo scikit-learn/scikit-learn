@@ -10,7 +10,7 @@ from time import time
 
 from .splitting import Splitter
 from .predictor import TreePredictor, PREDICTOR_RECORD_DTYPE
-
+from .utils import sum_parallel
 from .types import HISTOGRAM_DTYPE
 
 
@@ -249,7 +249,8 @@ class TreeGrower:
         """Initialize root node and finalize it if needed."""
         n_samples = self.X_binned.shape[0]
         depth = 0
-        sum_gradients = np.sum(self.splitter.gradients)
+        # sum_gradients = np.sum(self.splitter.gradients)
+        sum_gradients = sum_parallel(self.splitter.gradients)
         if self.splitter.hessians_are_constant:
             sum_hessians = self.splitter.hessians[0] * n_samples
         else:

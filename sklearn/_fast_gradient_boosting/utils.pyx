@@ -1,5 +1,13 @@
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
+# cython: language_level=3
 """This module contains utility routines."""
+
+from cython.parallel import prange
+
 from .binning import BinMapper
+from .types cimport Y_DTYPE_C
 
 
 def get_lightgbm_estimator(pygbm_estimator):
@@ -61,3 +69,16 @@ def get_lightgbm_estimator(pygbm_estimator):
         Est = LGBMRegressor
 
     return Est(**lgbm_params)
+
+
+def sum_parallel(Y_DTYPE_C [:] array):
+
+    cdef:
+        Y_DTYPE_C out = 0.
+        int i = 0
+
+    with nogil:
+        for i in prange(array.shape[0], schedule='static'):
+            out += array[i]
+
+    return out
