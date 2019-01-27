@@ -28,10 +28,9 @@ np.random.seed(0)
 X = np.hstack((X, 2 * np.random.random((X.shape[0], 36))))
 
 # #############################################################################
-# Create a feature-selection transform and an instance of SVM that we
+# Create a feature-selection transform, a scaler and an instance of SVM that we
 # combine together to have an full-blown estimator
-transform = SelectPercentile(chi2)
-clf = Pipeline([('anova', transform),
+clf = Pipeline([('anova', SelectPercentile(chi2)),
                 ('scaler', StandardScaler()),
                 ('svc', SVC(gamma="auto"))])
 
