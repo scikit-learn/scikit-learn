@@ -191,8 +191,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     def _validate_n_bins(self, n_features):
         """Returns n_bins_, the number of bins per feature.
-
-        Also ensures that ignored bins are zero.
         """
         orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
