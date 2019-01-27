@@ -91,6 +91,12 @@ Support for Python 3.4 and below has been officially dropped.
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
 
+:mod:`sklearn.externals`
+........................
+
+- |API| Deprecated :mod:`externals.six` since we have dropped support for
+  Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
