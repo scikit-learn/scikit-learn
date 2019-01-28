@@ -21,7 +21,7 @@ class LossFunction(object, metaclass=ABCMeta):
     Parameters
     ----------
     n_classes : int
-        Number of classes
+        Number of classes.
 
     Attributes
     ----------
@@ -46,11 +46,11 @@ class LossFunction(object, metaclass=ABCMeta):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
-            True labels
+        y : 1d array, shape (n_samples,)
+            True labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves).
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves).
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
@@ -62,11 +62,11 @@ class LossFunction(object, metaclass=ABCMeta):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : 1d array, shape (n_samples,)
             The target labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
 
@@ -81,23 +81,23 @@ class LossFunction(object, metaclass=ABCMeta):
         ----------
         tree : tree.Tree
             The tree object.
-        X : array, shape (n, m)
+        X : 2d array, shape (n, m)
             The data array.
-        y : array, shape (n,)
+        y : 1d array, shape (n,)
             The target labels.
-        residual : array, shape (n,)
+        residual : 1d array, shape (n,)
             The residuals (usually the negative gradient).
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
-        sample_weight : array, shape (n,)
+        sample_weight : 1d array, shape (n,)
             The weight of each sample.
-        sample_mask : array, shape (n,)
+        sample_mask : 1d array, shape (n,)
             The sample mask to be used.
         learning_rate : float, default=0.1
-            learning rate shrinks the contribution of each tree by
+            Learning rate shrinks the contribution of each tree by
              ``learning_rate``.
-        k : int, default 0
+        k : int, default=0
             The index of the estimator being updated.
 
         """
@@ -121,23 +121,23 @@ class LossFunction(object, metaclass=ABCMeta):
     @abstractmethod
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, raw_predictions, sample_weight):
-        """Template method for updating terminal regions (=leaves). """
+        """Template method for updating terminal regions (i.e., leaves)."""
 
     @abstractmethod
     def get_init_raw_predictions(self, X, estimator):
         """
-        Return the initial raw predictions
+        Return the initial raw predictions.
 
         Parameters
         ----------
-        X : array, shape = (n_samples, n_features)
+        X : 2d array, shape (n_samples, n_features)
             The data array.
-        estimator : Estimator
-            The estimator to use to compute the predictions
+        estimator : estimator instance
+            The estimator to use to compute the predictions.
 
         Returns
         -------
-        raw_predictions : 2d array of shape (n_samples, K)
+        raw_predictions : 2d array, shape (n_samples, K)
             The initial raw predictions. K is equal to 1 for binary
             classification and regression, and equal to the number of classes
             for multiclass classification.
@@ -151,7 +151,7 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
     Parameters
     ----------
     n_classes : int
-        Number of classes
+        Number of classes.
     """
     def __init__(self, n_classes):
         if n_classes != 1:
@@ -164,24 +164,24 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
 
         Parameters
         ----------
-        estimator : estimator
-            The init estimator to check
+        estimator : estimator instance
+            The init estimator to check.
         """
         if not (hasattr(estimator, 'fit') and hasattr(estimator, 'predict')):
             raise ValueError(
                 "The init parameter must be a valid estimator and "
-                "support both fit and predict"
+                "support both fit and predict."
             )
 
 
 class LeastSquaresError(RegressionLossFunction):
     """Loss function for least squares (LS) estimation.
-    Terminal regions need not to be updated for least squares.
+    Terminal regions do not need to be updated for least squares.
 
     Parameters
     ----------
     n_classes : int
-        Number of classes
+        Number of classes.
     """
 
     def init_estimator(self):
@@ -192,31 +192,31 @@ class LeastSquaresError(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
-            True labels
+        y : 1d array, shape (n_samples,)
+            True labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves)
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw_predictions (i.e. values from the tree leaves).
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
         """
         if sample_weight is None:
-            return np.mean((y - raw_predictions.ravel()) ** 2.0)
+            return np.mean((y - raw_predictions.ravel()) ** 2)
         else:
-            return (1.0 / sample_weight.sum() * np.sum(
-                sample_weight * ((y - raw_predictions.ravel()) ** 2.0)))
+            return (1 / sample_weight.sum() * np.sum(
+                sample_weight * ((y - raw_predictions.ravel()) ** 2)))
 
     def negative_gradient(self, y, raw_predictions, **kargs):
         """Compute the negative gradient.
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : 1d array, shape (n_samples,)
             The target labels.
 
-        raw_predictions : array, shape (n_samples,)
-            The raw_predictions (i.e. values from the tree leaves) of the
+        raw_predictions : 1d array, shape (n_samples,)
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
         return y - raw_predictions.ravel()
@@ -232,23 +232,23 @@ class LeastSquaresError(RegressionLossFunction):
         ----------
         tree : tree.Tree
             The tree object.
-        X : array, shape (n, m)
+        X : 2d array, shape (n, m)
             The data array.
-        y : array, shape (n,)
+        y : 1d array, shape (n,)
             The target labels.
-        residual : array, shape (n,)
+        residual : 1d array, shape (n,)
             The residuals (usually the negative gradient).
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
-        sample_weight : array, shape (n,)
+        sample_weight : 1d array, shape (n,)
             The weight of each sample.
-        sample_mask : array, shape (n,)
+        sample_mask : 1d array, shape (n,)
             The sample mask to be used.
         learning_rate : float, default=0.1
-            learning rate shrinks the contribution of each tree by
+            Learning rate shrinks the contribution of each tree by
              ``learning_rate``.
-        k : int, default 0
+        k : int, default=0
             The index of the estimator being updated.
         """
         # update predictions
@@ -280,7 +280,7 @@ class LeastAbsoluteError(RegressionLossFunction):
         Parameters
         ----------
         y : array, shape (n_samples,)
-            True labels
+            True labels.
 
         raw_predictions : array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves).
@@ -291,7 +291,7 @@ class LeastAbsoluteError(RegressionLossFunction):
         if sample_weight is None:
             return np.abs(y - raw_predictions.ravel()).mean()
         else:
-            return (1.0 / sample_weight.sum() * np.sum(
+            return (1 / sample_weight.sum() * np.sum(
                 sample_weight * np.abs(y - raw_predictions.ravel())))
 
     def negative_gradient(self, y, raw_predictions, **kargs):
@@ -301,19 +301,19 @@ class LeastAbsoluteError(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : 1d array, shape (n_samples,)
             The target labels.
 
         raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
         raw_predictions = raw_predictions.ravel()
-        return 2.0 * (y - raw_predictions > 0.0) - 1.0
+        return 2 * (y - raw_predictions > 0) - 1
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, raw_predictions, sample_weight):
-        """LAD updates terminal regions to median estimates. """
+        """LAD updates terminal regions to median estimates."""
         terminal_region = np.where(terminal_regions == leaf)[0]
         sample_weight = sample_weight.take(terminal_region, axis=0)
         diff = (y.take(terminal_region, axis=0) -
@@ -338,10 +338,10 @@ class HuberLossFunction(RegressionLossFunction):
     Parameters
     ----------
     n_classes : int
-        Number of classes
+        Number of classes.
 
-    alpha : float
-        Percentile at which to extract score
+    alpha : float, default=0.9
+        Percentile at which to extract score.
     """
 
     def __init__(self, n_classes, alpha=0.9):
@@ -357,12 +357,12 @@ class HuberLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
-            True labels
+        y : 1d array, shape (n_samples,)
+            True labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
-            tree ensemble
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
+            tree ensemble.
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
@@ -379,15 +379,15 @@ class HuberLossFunction(RegressionLossFunction):
 
         gamma_mask = np.abs(diff) <= gamma
         if sample_weight is None:
-            sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2.0)
+            sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2)
             lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) -
-                                       gamma / 2.0))
+                                       gamma / 2))
             loss = (sq_loss + lin_loss) / y.shape[0]
         else:
             sq_loss = np.sum(0.5 * sample_weight[gamma_mask] *
-                             diff[gamma_mask] ** 2.0)
+                             diff[gamma_mask] ** 2)
             lin_loss = np.sum(gamma * sample_weight[~gamma_mask] *
-                              (np.abs(diff[~gamma_mask]) - gamma / 2.0))
+                              (np.abs(diff[~gamma_mask]) - gamma / 2))
             loss = (sq_loss + lin_loss) / sample_weight.sum()
         return loss
 
@@ -397,11 +397,11 @@ class HuberLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : 1d array, shape (n_samples,)
             The target labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
 
         sample_weight : array-like, shape (n_samples,), optional
@@ -450,12 +450,12 @@ class QuantileLossFunction(RegressionLossFunction):
         Number of classes.
 
     alpha : float, optional (default = 0.9)
-        The percentile
+        The percentile.
     """
     def __init__(self, n_classes, alpha=0.9):
         super().__init__(n_classes)
         self.alpha = alpha
-        self.percentile = alpha * 100.0
+        self.percentile = alpha * 100
 
     def init_estimator(self):
         return DummyRegressor(strategy='quantile', quantile=self.alpha)
@@ -465,12 +465,12 @@ class QuantileLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
-            True labels
+        y : 1d array, shape (n_samples,)
+            True labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
-            tree ensemble
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
+            tree ensemble.
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
@@ -482,10 +482,10 @@ class QuantileLossFunction(RegressionLossFunction):
         mask = y > raw_predictions
         if sample_weight is None:
             loss = (alpha * diff[mask].sum() -
-                    (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
+                    (1 - alpha) * diff[~mask].sum()) / y.shape[0]
         else:
             loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) -
-                    (1.0 - alpha) * np.sum(sample_weight[~mask] *
+                    (1 - alpha) * np.sum(sample_weight[~mask] *
                                            diff[~mask])) / sample_weight.sum())
         return loss
 
@@ -494,17 +494,17 @@ class QuantileLossFunction(RegressionLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : 1d array, shape (n_samples,)
             The target labels.
 
-        raw_predictions : array, shape (n_samples, K)
+        raw_predictions : 2d array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
         alpha = self.alpha
         raw_predictions = raw_predictions.ravel()
         mask = y > raw_predictions
-        return (alpha * mask) - ((1.0 - alpha) * ~mask)
+        return (alpha * mask) - ((1 - alpha) * ~mask)
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, raw_predictions, sample_weight):
@@ -535,7 +535,10 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
     def _raw_prediction_to_decision(self, raw_predictions):
         """Template method to convert raw predictions to decisions.
 
-        Returns int arrays: the predicted encoded labels.
+        Returns
+        -------
+        encoded_predictions : 2d array, shape (n_samples, K)
+            The predicted encoded labels.
         """
 
     def check_init_estimator(self, estimator):
@@ -543,14 +546,14 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
 
         Parameters
         ----------
-        estimator : estimator
-            The init estimator to check
+        estimator : estimator instance
+            The init estimator to check.
         """
         if not (hasattr(estimator, 'fit') and
                 hasattr(estimator, 'predict_proba')):
             raise ValueError(
                 "The init parameter must be a valid estimator "
-                "and support both fit and predict_proba"
+                "and support both fit and predict_proba".
             )
 
 
@@ -570,7 +573,7 @@ class BinomialDeviance(ClassificationLossFunction):
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
-        super().__init__(1)
+        super().__init__(n_classes=1)
 
     def init_estimator(self):
         # return the most common class, taking into account the samples
