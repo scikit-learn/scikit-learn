@@ -1,5 +1,5 @@
 """
-sk-learn copy of scipy\sparse\linalg\eigen\lobpcg\lobpcg.py ver. 1.3.0
+sk-learn copy of scipy/sparse/linalg/eigen/lobpcg/lobpcg.py ver. 1.3.0
 to be deleted after scipy 1.3.0 becomes a dependency in sk-learn
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
