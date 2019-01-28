@@ -52,7 +52,7 @@ class LossFunction(object, metaclass=ABCMeta):
         raw_predictions : 2d array, shape (n_samples, K)
             The raw predictions (i.e. values from the tree leaves).
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), optional
             Sample weights.
         """
 
@@ -125,8 +125,7 @@ class LossFunction(object, metaclass=ABCMeta):
 
     @abstractmethod
     def get_init_raw_predictions(self, X, estimator):
-        """
-        Return the initial raw predictions.
+        """Return the initial raw predictions.
 
         Parameters
         ----------
@@ -140,7 +139,8 @@ class LossFunction(object, metaclass=ABCMeta):
         raw_predictions : 2d array, shape (n_samples, K)
             The initial raw predictions. K is equal to 1 for binary
             classification and regression, and equal to the number of classes
-            for multiclass classification.
+            for multiclass classification. ``raw_predictions`` is casted
+            into float64.
         """
         pass
 
@@ -198,7 +198,7 @@ class LeastSquaresError(RegressionLossFunction):
         raw_predictions : 2d array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves).
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), optional
             Sample weights.
         """
         if sample_weight is None:
@@ -271,7 +271,6 @@ class LeastAbsoluteError(RegressionLossFunction):
         Number of classes
     """
     def init_estimator(self):
-        # Predicts the median
         return DummyRegressor(strategy='quantile', quantile=.5)
 
     def __call__(self, y, raw_predictions, sample_weight=None):
@@ -285,7 +284,7 @@ class LeastAbsoluteError(RegressionLossFunction):
         raw_predictions : array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves).
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), optional
             Sample weights.
         """
         if sample_weight is None:
@@ -364,7 +363,7 @@ class HuberLossFunction(RegressionLossFunction):
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), optional
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
@@ -404,7 +403,7 @@ class HuberLossFunction(RegressionLossFunction):
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), optional
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
@@ -472,7 +471,7 @@ class QuantileLossFunction(RegressionLossFunction):
             The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), optional
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()
@@ -486,7 +485,7 @@ class QuantileLossFunction(RegressionLossFunction):
         else:
             loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) -
                     (1 - alpha) * np.sum(sample_weight[~mask] *
-                                           diff[~mask])) / sample_weight.sum())
+                                         diff[~mask])) / sample_weight.sum())
         return loss
 
     def negative_gradient(self, y, raw_predictions, **kargs):
@@ -524,16 +523,29 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for classification loss functions. """
 
     def _raw_prediction_to_proba(self, raw_predictions):
-        """Template method to convert raw predictions to probabilities.
+        """Template method to convert raw predictions into probabilities.
 
-         the does not support probabilities raises AttributeError.
+        Parameters
+        ----------
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
+            tree ensemble.
+
+        Returns
+        -------
+        probas : 2d array, shape (n_samples, K)
+            The predicted probabilities.
         """
-        raise TypeError(
-            '%s does not support predict_proba' % type(self).__name__)
 
     @abstractmethod
     def _raw_prediction_to_decision(self, raw_predictions):
         """Template method to convert raw predictions to decisions.
+
+        Parameters
+        ----------
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
+            tree ensemble.
 
         Returns
         -------
@@ -553,7 +565,7 @@ class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
                 hasattr(estimator, 'predict_proba')):
             raise ValueError(
                 "The init parameter must be a valid estimator "
-                "and support both fit and predict_proba".
+                "and support both fit and predict_proba."
             )
 
 
@@ -592,7 +604,7 @@ class BinomialDeviance(ClassificationLossFunction):
             The raw_predictions (i.e. values from the tree leaves) of the
             tree ensemble
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : 1d array , shape (n_samples,), optional
             Sample weights.
         """
         # logaddexp(0, v) == log(1.0 + exp(v))
@@ -698,7 +710,7 @@ class MultinomialDeviance(ClassificationLossFunction):
             The raw_predictions (i.e. values from the tree leaves) of the
             tree ensemble
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), optional
             Sample weights.
         """
         # create one-hot label encoding
@@ -806,7 +818,7 @@ class ExponentialLoss(ClassificationLossFunction):
             The raw_predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : 1d array, shape (n_samples,), optional
             Sample weights.
         """
         raw_predictions = raw_predictions.ravel()

@@ -59,11 +59,12 @@ from ..utils import deprecated
 from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
+from ..utils.validation import has_fit_parameter
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
 
-# 0.23
+# FIXME: 0.23
 # All the losses and corresponding init estimators have been moved to the
 # _losses module in 0.21. We deprecate them and keep them here for now in case
 # someone has imported them. None of these losses can be used as a parameter
@@ -1473,15 +1474,17 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 raw_predictions = np.zeros(shape=(X.shape[0], self.loss_.K),
                                            dtype=np.float64)
             else:
-                try:
-                    self.init_.fit(X, y, sample_weight=sample_weight)
-                except TypeError:
-                    if sample_weight_is_none:
-                        self.init_.fit(X, y)
-                    else:
+                supports_sample_weight = has_fit_parameter(self.init_,
+                                                           "sample_weight")
+                if sample_weight_is_none:
+                    self.init_.fit(X, y)
+                else:
+                    if not supports_sample_weight:
                         raise ValueError(
                             "The initial estimator {} does not support sample "
                             "weights.".format(self.init_.__class__.__name__))
+                    self.init_.fit(X, y, sample_weight=sample_weight)
+
                 raw_predictions = \
                     self.loss_.get_init_raw_predictions(X, self.init_)
 
