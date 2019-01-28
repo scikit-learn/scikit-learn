@@ -900,7 +900,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             print("[IterativeImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
-        self.actual_iter = self.max_iter
+        self.n_iter_ = self.max_iter
         if not self.sample_posterior:
             Xt_previous = np.copy(Xt)
             norm_diff_previous = np.inf
@@ -934,7 +934,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                     self.imputation_sequence_ = \
                         self.imputation_sequence_[:-len(ordered_idx)]
                     Xt = np.copy(Xt_previous)
-                    self.actual_iter = i_rnd
+                    self.n_iter_ = i_rnd
                     print('[IterativeImputer] Early stopping criterion '
                           'reached. Using result of round %d' % i_rnd)
                     break
@@ -965,10 +965,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
-        if self.actual_iter == 0:
+        if self.n_iter_ == 0:
             return Xt
 
-        imps_per_round = len(self.imputation_sequence_) // self.actual_iter
+        imps_per_round = len(self.imputation_sequence_) // self.n_iter_
         i_rnd = 0
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s"
@@ -987,7 +987,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 if self.verbose > 1:
                     print('[IterativeImputer] Ending imputation round '
                           '%d/%d, elapsed time %0.2f'
-                          % (i_rnd + 1, self.actual_iter, time() - start_t))
+                          % (i_rnd + 1, self.n_iter_, time() - start_t))
                 i_rnd += 1
 
         Xt[~mask_missing_values] = X[~mask_missing_values]

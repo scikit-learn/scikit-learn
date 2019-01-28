@@ -532,7 +532,7 @@ def test_iterative_imputer_imputation_order(imputation_order):
     imputer.fit_transform(X)
     ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
 
-    assert len(ordered_idx) // imputer.actual_iter \
+    assert len(ordered_idx) // imputer.n_iter_ \
         == imputer.n_features_with_missing_
 
     if imputation_order == 'roman':
