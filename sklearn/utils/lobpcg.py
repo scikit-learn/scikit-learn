@@ -245,16 +245,15 @@ def lobpcg(A, X,
 
     The convergence speed depends basically on two factors:
 
-    1.  How well relatively separated the seeking eigenvalues are
-        from the rest of the eigenvalues.
-        One can try to vary ``m`` to make this better.
+    1. How well relatively separated the seeking eigenvalues are from the rest
+       of the eigenvalues. One can try to vary ``m`` to make this better.
 
-    2.  How well conditioned the problem is. This can be changed by using proper
-        preconditioning. For example, a rod vibration test problem (under tests
-        directory) is ill-conditioned for large ``n``, so convergence will be
-        slow, unless efficient preconditioning is used.
-        For this specific problem, a good simple preconditioner function would
-        be a linear solve for A, which is easy to code since A is tridiagonal.
+    2. How well conditioned the problem is. This can be changed by using proper
+       preconditioning. For example, a rod vibration test problem (under tests
+       directory) is ill-conditioned for large ``n``, so convergence will be
+       slow, unless efficient preconditioning is used. For this specific
+       problem, a good simple preconditioner function would be a linear solve
+       for A, which is easy to code since A is tridiagonal.
 
     *Acknowledgements*
 
@@ -270,13 +269,12 @@ def lobpcg(A, X,
            SIAM Journal on Scientific Computing 23, no. 2,
            pp. 517-541. http://dx.doi.org/10.1137/S1064827500366124
 
-    .. [2] A. V. Knyazev, I. Lashuk, M. E. Argentati, and E. Ovchinnikov (2007),
-           Block Locally Optimal Preconditioned Eigenvalue Xolvers (BLOPEX)
-           in hypre and PETSc.  https://arxiv.org/abs/0705.2626
+    .. [2] A. V. Knyazev, I. Lashuk, M. E. Argentati, and E. Ovchinnikov
+           (2007), Block Locally Optimal Preconditioned Eigenvalue Xolvers
+           (BLOPEX) in hypre and PETSc. https://arxiv.org/abs/0705.2626
 
     .. [3] A. V. Knyazev's C and MATLAB implementations:
            https://bitbucket.org/joseroman/blopex
-
     """
     blockVectorX = X
     blockVectorY = Y
