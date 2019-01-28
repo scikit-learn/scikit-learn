@@ -709,7 +709,3 @@ def test_nanencode_util_with_missing(values, expected,
     assert_array_equal(na_mask, unk_na_mask_answer)
     assert_array_equal(unk_mask, unk_mask_answer)
     assert_array_equal(encoded[~(na_mask | unk_mask)], encoding_answer)
-
-
-
-
