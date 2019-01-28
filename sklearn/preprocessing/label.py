@@ -138,6 +138,7 @@ def _nanunique_object(ar, exclude_value):
     return uniques
 
 
+# Since nan comes in multiple forms, hash is not enough to identify it
 def _dict_to_mapper(d, **kwargs):
     try:
         nan_value = kwargs['nan_value']
@@ -155,6 +156,24 @@ def _dict_to_mapper(d, **kwargs):
         return lambda x: d[x]
 
 
+def _make_mapper(uniques, missing_values, missing_index):
+    if is_scalar_nan(uniques[-1]):
+        # Nan value is the len(uniques) - 1
+        table = {val: i for i, val in enumerate(uniques[:-1])}
+        table[missing_values] = missing_index
+        table_mapper = _dict_to_mapper(table, nan_value=len(uniques) - 1)
+    else:
+        table = {val: i for i, val in enumerate(uniques)}
+        if is_scalar_nan(missing_values):
+            # Nan value is the missing index
+            table_mapper = _dict_to_mapper(table, nan_value=missing_index)
+        else:
+            # No need for nan value
+            table[missing_values] = missing_index
+            table_mapper = _dict_to_mapper(table)
+    return table_mapper
+
+
 def _nanencode_python(values, uniques=None, encode=False,
                       missing_values=None):
     if uniques is None:
@@ -166,21 +185,11 @@ def _nanencode_python(values, uniques=None, encode=False,
         # if used by the consumer for indexing. It will still fail when used
         # for indexing an empty array but so is any other index.
         missing_index = -1
-        if is_scalar_nan(uniques[-1]):
-            table = {val: i for i, val in enumerate(uniques[:-1])}
-            nan_index = len(table)
-            table[missing_values] = missing_index
-            table_mapper = _dict_to_mapper(table, nan_value=nan_index)
-        else:
-            table = {val: i for i, val in enumerate(uniques)}
-            if is_scalar_nan(missing_values):
-                table_mapper = _dict_to_mapper(table, nan_value=missing_index)
-            else:
-                table[missing_values] = missing_index
-                table_mapper = _dict_to_mapper(table)
+        mapper = _make_mapper(uniques, missing_values, missing_index)
+        mapper = np.frompyfunc(mapper, 1, 1)
 
         try:
-            encoded = np.array([table_mapper(v) for v in values])
+            encoded = mapper(values).astype(np.int)
             encoded_nan = encoded == missing_index
         except KeyError as e:
             raise ValueError("y contains previously unseen labels: %s"
