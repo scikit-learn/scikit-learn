@@ -283,7 +283,7 @@ class LeastAbsoluteError(RegressionLossFunction):
             True labels
 
         raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves)
+            The raw_predictions (i.e. values from the tree leaves).
 
         sample_weight : array-like, shape (n_samples,), optional
             Sample weights.
