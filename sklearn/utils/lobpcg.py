@@ -1,16 +1,17 @@
 """
-Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG)
+sk-learn copy of scipy\sparse\linalg\eigen\lobpcg\lobpcg.py ver. 1.3.0
+to be deleted after scipy 1.3.0 becomes a dependency in sk-learn
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Pure SciPy implementation of
+Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG), see
+https://bitbucket.org/joseroman/blopex
+License: BSD
+Authors: Robert Cimrman, Andrew Knyazev
+Examples in tests directory contributed by Nils Wagner.
 """
 
-# sk-learn copy of scipy\sparse\linalg\eigen\lobpcg\lobpcg.py
-
-# Author: Robert Cimrman,
-#         Andrew Knyazev
-# Examples in tests directory contributed by Nils Wagner.
-# License: BSD
-
+from __future__ import division, print_function, absolute_import
 import numpy as np
-
 from scipy.linalg import (inv, eigh, cho_factor, cho_solve, cholesky,
                           LinAlgError)
 from scipy.sparse.linalg import aslinearoperator
