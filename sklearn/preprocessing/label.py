@@ -79,7 +79,7 @@ def _nansetdiff1d(ar1, ar2, assume_unique=False):
 
 
 def _nanencode_numpy(values, uniques=None, encode=False,
-                     missing_values=np.nan):
+                     missing_values=np.nan, encode_unknown=False):
     check_values = True
     if uniques is None:
         uniques = _nanunique(values)
@@ -91,13 +91,23 @@ def _nanencode_numpy(values, uniques=None, encode=False,
             unique_values = _nanunique(values)
             unseen = _nansetdiff1d(unique_values, [missing_values], True)
             unseen = _nansetdiff1d(unseen, uniques, True)
-            if len(unseen):
-                raise ValueError("y contains previously unseen labels: %s"
-                                 % str(unseen))
+
+            if not encode_unknown:
+                if len(unseen):
+                    raise ValueError("y contains previously unseen labels: %s"
+                                     % str(unseen))
 
         encoded = np.searchsorted(uniques, values)
-        e_mask = _get_mask(values, missing_values)
-        return uniques, encoded, e_mask
+        missing_mask = _get_mask(values, missing_values)
+
+        if encode_unknown:
+            if check_values:
+                unknown_mask = _nanin1d(values, unseen)
+            else:
+                unknown_mask = np.zeros_like(values, dtype=np.bool)
+            return uniques, encoded, missing_mask, unknown_mask
+        else:
+            return uniques, encoded, missing_mask
     else:
         return uniques
 
