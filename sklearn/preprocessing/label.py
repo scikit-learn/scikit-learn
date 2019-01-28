@@ -141,7 +141,7 @@ def _nanunique_object(ar, exclude_value):
         uniques.append(None)
 
     # Being back nan if needed. Since nan comes in different forms, nan might
-    # exists despite being an excluded value
+    # exists despite discarding it from the set
     if has_na and not is_scalar_nan(exclude_value):
         uniques.append(np.nan)
 
@@ -185,7 +185,7 @@ def _make_mapper(uniques, missing_values, missing_index):
 
 
 def _nanencode_python(values, uniques=None, encode=False,
-                      missing_values=None):
+                      missing_values=None, ):
     if uniques is None:
         uniques = _nanunique_object(values, missing_values)
         uniques = np.array(uniques, dtype=values.dtype)
