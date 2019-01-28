@@ -98,7 +98,7 @@ predictors = [
 score_iterative_imputer = pd.DataFrame()
 for predictor in predictors:
     estimator = make_pipeline(
-        IterativeImputer(random_state=0, predictor=predictor,verbose=1),
+        IterativeImputer(random_state=0, predictor=predictor),
         br_estimator
     )
     score_iterative_imputer[predictor.__class__.__name__] = \
