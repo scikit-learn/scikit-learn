@@ -261,8 +261,10 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
     init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise 'random'.
+        Default: None.
         Valid options:
+
+        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -878,10 +880,16 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Number of components, if n_components is not set all features
         are kept.
 
-    init :  None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
+    init : None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
         Default: 'random'.
+
+        The default value will change from 'random' to None in version 0.23
+        to make it consistent with decomposition.NMF.
+
         Valid options:
+
+        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -1093,10 +1101,12 @@ class NMF(BaseEstimator, TransformerMixin):
         Number of components, if n_components is not set all features
         are kept.
 
-    init :  'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
+    init : None | 'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
-        Default: 'nndsvd' if n_components < n_features, otherwise random.
+        Default: None.
         Valid options:
+
+        - None: 'nndsvd' if n_components < n_features, otherwise random.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
