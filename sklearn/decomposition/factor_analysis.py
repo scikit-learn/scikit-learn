@@ -239,7 +239,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         self.components_ = W
         if self.rotation is not None:
-            self._rotate(method=self.rotation, n_components=rot_components)
+            self.components_ = self._rotate(W, method=self.rotation)
         self.noise_variance_ = psi
         self.loglike_ = loglike
         self.n_iter_ = i + 1
@@ -360,23 +360,24 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         """
         return np.mean(self.score_samples(X))
 
-    def _rotate(self, method="varimax", n_components=None, tol=1e-6):
+    def _rotate(self, components, method="varimax", n_components=None,
+                tol=1e-6):
         "Rotate the factor analysis solution."
-        implemented = {"varimax", "quartimax"}
+        implemented = ("varimax", "quartimax")
         if method in implemented:
-            self.components_ = _ortho_rotation(
-                self.components_.T, method=method, eps=tol)[:n_components]
+            return _ortho_rotation(components.T, method=method,
+                                   tol=tol)[:self.n_components]
         else:
             raise ValueError("'method' must be in %s, not %s"
                              % (implemented, method))
 
-def _ortho_rotation(components, method='varimax', eps=1e-6, itermax=100):
+def _ortho_rotation(components, method='varimax', tol=1e-6, max_iter=100):
     """Return rotated components."""
     nrow, ncol = components.shape
     rotation_matrix = np.eye(ncol)
     var = 0
 
-    for _ in range(itermax):
+    for _ in range(max_iter):
         comp_rot = np.dot(components, rotation_matrix)
         if method == "varimax":
             tmp = np.diag((comp_rot ** 2).sum(axis=0)) / nrow
@@ -387,7 +388,7 @@ def _ortho_rotation(components, method='varimax', eps=1e-6, itermax=100):
             np.dot(components.T, comp_rot ** 3 - tmp))
         rotation_matrix = np.dot(u, v)
         var_new = np.sum(s)
-        if var != 0 and var_new < var * (1 + eps):
+        if var != 0 and var_new < var * (1 + tol):
             break
         var = var_new
 

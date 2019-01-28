@@ -18,8 +18,6 @@ positively on sepal width.
 # Authors: Jona Sassenhagen
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -48,19 +46,20 @@ ax.set_yticklabels(list(feature_names))
 
 plt.colorbar(im).ax.set_ylabel("$r$", rotation=0)
 ax.set_title("Iris feature correlation matrix")
+plt.tight_layout()
 
 # #############################################################################
 # Run factor analysis with Varimax rotation
 n_comps = 2
 
-methods = ("PCA", None, "varimax")
+methods = [('PCA', PCA()),
+           ('Unrotated FA', FactorAnalysis()),
+           ('Varimax FA', FactorAnalysis(rotation='varimax'))]
 fig, axes = plt.subplots(ncols=len(methods), figsize=(10, 8))
 
-for ax, method in zip(axes, methods):
-    if method == "PCA":
-        fa = PCA(n_components=n_comps).fit(X)
-    else:
-        fa = FactorAnalysis(n_components=n_comps, rotation=method).fit(X)
+for ax, (method, fa) in zip(axes, methods):
+    fa.set_params(n_components=n_comps)
+    fa.fit(X)
 
     components = fa.components_.T
     print("\n\n %s :\n" % method)
@@ -77,4 +76,5 @@ for ax, method in zip(axes, methods):
     ax.set_xticks([0, 1])
     ax.set_xticklabels(["Comp. 1", "Comp. 2"])
 fig.suptitle("Factors")
+plt.tight_layout()
 plt.show()

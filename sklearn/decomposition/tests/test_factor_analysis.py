@@ -89,19 +89,21 @@ def test_factor_analysis():
     # test rotation
     n_components = 2
 
-    results = {}
+    results, projections = {}, {}
     for method in (None, "varimax", 'quartimax'):
         fa_var = FactorAnalysis(n_components=n_components,
                                 rotation=method)
-        results[method] = fa_var.fit_transform(X)
+        results[method] = result = fa_var.fit_transform(X)
+        projections[method] = fa_var.get_covariance()
     for rot1, rot2 in combinations([None, 'varimax', 'quartimax'], 2):
         assert not np.allclose(results[rot1], results[rot2])
+        assert np.allclose(projections[rot1], projections[rot2], atol=3)
 
     assert_raises(ValueError,
                   FactorAnalysis(rotation='not_implemented').fit_transform, X)
 
     # test against R's psych::principal with rotate="varimax"
-    # (i.e., the values below stem from computing the rotation in R)
+    # (i.e., the values below stem from rotating the components in R)
     # R's factor analysis returns quite different values; therefore, we only
     # test the rotation itself
     factors = np.array(
