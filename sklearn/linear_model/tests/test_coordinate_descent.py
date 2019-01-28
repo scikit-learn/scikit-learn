@@ -114,20 +114,28 @@ def test_enet_toy(solver):
         assert_almost_equal(clf.dual_gap_, 0)
 
     clf.set_params(max_iter=100, precompute=True)
-    clf.fit(X, Y)  # with Gram
+    if solver == 'saga':
+        with pytest.warns(UserWarning):
+            clf.fit(X, Y)
+    else:
+        clf.fit(X, Y)  # with Gram
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
     assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327], decimal=3)
     if solver == 'cd':
         assert_almost_equal(clf.dual_gap_, 0)
 
-    if solver == 'cd':
-        clf.set_params(max_iter=100, precompute=np.dot(X.T, X))
+    clf.set_params(max_iter=100, precompute=np.dot(X.T, X))
+    if solver == 'saga':
+        with pytest.warns(UserWarning):
+            clf.fit(X, Y)
+    else:
         clf.fit(X, Y)  # with Gram
-        pred = clf.predict(T)
-        assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
-        assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327],
-                                  decimal=3)
+    pred = clf.predict(T)
+    assert_array_almost_equal(clf.coef_, [0.50819], decimal=3)
+    assert_array_almost_equal(pred, [1.0163, 1.5245, 2.0327],
+                              decimal=3)
+    if solver == 'cd':
         assert_almost_equal(clf.dual_gap_, 0)
 
     clf = ElasticNet(alpha=0.5, l1_ratio=0.5, solver=solver,

@@ -732,14 +732,17 @@ class ElasticNet(LinearModel, RegressorMixin):
                     raise ValueError("l1_ratio must be between 0 and 1;"
                                      " got (l1_ratio=%r)" % self.l1_ratio)
 
-        if isinstance(self.precompute, str):
-            raise ValueError('precompute should be one of True, False or'
-                             ' array-like. Got %r' % self.precompute)
-
         all_solvers = ['cd', 'saga']
         if self.solver not in all_solvers:
             raise ValueError("ElasticNet Regression supports only solvers in"
                              " {}, got {}.".format(all_solvers, self.solver))
+
+        if isinstance(self.precompute, str):
+            raise ValueError('precompute should be one of True, False or'
+                             ' array-like. Got %r' % self.precompute)
+        elif self.precompute is not False and self.solver == 'saga':
+            warnings.warn("The solver 'saga' does not use the precomputed "
+                          " Gram matrix", category=UserWarning)
 
         if self.positive and self.solver == 'saga':
             raise ValueError("ElasticNet supports positive contraints for "
