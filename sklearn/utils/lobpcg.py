@@ -2,12 +2,23 @@
 sk-learn copy of scipy\sparse\linalg\eigen\lobpcg\lobpcg.py ver. 1.3.0
 to be deleted after scipy 1.3.0 becomes a dependency in sk-learn
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Pure SciPy implementation of
-Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG), see
-https://bitbucket.org/joseroman/blopex
-License: BSD
-Authors: Robert Cimrman, Andrew Knyazev
-Examples in tests directory contributed by Nils Wagner.
+
+Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG).
+
+References
+----------
+.. [1] A. V. Knyazev (2001),
+       Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+       Block Preconditioned Conjugate Gradient Method.
+       SIAM Journal on Scientific Computing 23, no. 2,
+       pp. 517-541. http://dx.doi.org/10.1137/S1064827500366124
+
+.. [2] A. V. Knyazev, I. Lashuk, M. E. Argentati, and E. Ovchinnikov (2007),
+       Block Locally Optimal Preconditioned Eigenvalue Xolvers (BLOPEX)
+       in hypre and PETSc.  https://arxiv.org/abs/0705.2626
+
+.. [3] A. V. Knyazev's C and MATLAB implementations:
+       https://bitbucket.org/joseroman/blopex
 """
 
 from __future__ import division, print_function, absolute_import
@@ -35,7 +46,7 @@ def _report_nonhermitian(M, a, b, name):
     nmd = norm(md, 1)
     tol = np.spacing(max(10**a, (10**b)*norm(M, 1)))
     if nmd > tol:
-        print('matrix %s is not enough Hermitian for a=%d, b=%d:'
+        print('matrix %s is not sufficiently Hermitian for a=%d, b=%d:'
               % (name, a, b))
         print('condition: %.e < %e' % (nmd, tol))
 
@@ -198,7 +209,7 @@ def lobpcg(A, X,
     ...     return invA  * x
     >>> M = LinearOperator(matvec=precond, shape=(n, n), dtype=float)
 
-    Here, ``invA`` could of course have been used directly as a preconditioner
+    Here, ``invA`` could of course have been used directly as a preconditioner.
     Let us then solve the problem:
 
     >>> eigs, vecs = lobpcg(A, X, Y=Y, M=M, largest=False)
@@ -230,7 +241,7 @@ def lobpcg(A, X,
     ratio ``n``/``m`` should be large. It you call LOBPCG with ``m``=1
     and ``n``=10, it works though ``n`` is small. The method is intended
     for extremely large ``n``/``m``, see e.g., reference [28] in
-    http://arxiv.org/abs/0705.2626
+    https://arxiv.org/abs/0705.2626
 
     The convergence speed depends basically on two factors:
 
@@ -238,8 +249,12 @@ def lobpcg(A, X,
         from the rest of the eigenvalues.
         One can try to vary ``m`` to make this better.
 
-    2.  How well conditioned the problem is. This can be changed by proper
-        preconditioning.
+    2.  How well conditioned the problem is. This can be changed by using proper
+        preconditioning. For example, a rod vibration test problem (under tests
+        directory) is ill-conditioned for large ``n``, so convergence will be
+        slow, unless efficient preconditioning is used.
+        For this specific problem, a good simple preconditioner function would
+        be a linear solve for A, which is easy to code since A is tridiagonal.
 
     *Acknowledgements*
 
@@ -255,9 +270,9 @@ def lobpcg(A, X,
            SIAM Journal on Scientific Computing 23, no. 2,
            pp. 517-541. http://dx.doi.org/10.1137/S1064827500366124
 
-    .. [2] A.V. Knyazev, I. Lashuk, M.E. Argentati, and E. Ovchinnikov (2007),
+    .. [2] A. V. Knyazev, I. Lashuk, M. E. Argentati, and E. Ovchinnikov (2007),
            Block Locally Optimal Preconditioned Eigenvalue Xolvers (BLOPEX)
-           in hypre and PETSc.  http://arxiv.org/abs/0705.2626
+           in hypre and PETSc.  https://arxiv.org/abs/0705.2626
 
     .. [3] A. V. Knyazev's C and MATLAB implementations:
            https://bitbucket.org/joseroman/blopex
