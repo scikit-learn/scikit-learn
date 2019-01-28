@@ -45,8 +45,9 @@ def test_mimic_calibration_2():
     result = mimicObject.run_merge_function(current_binning, record_history=False)
 
     # test 4.
-    history_result = mimicObject.run_merge_function(current_binning, record_history=True)
-    import matplotlib.pylab as plt
+    mimicObject._mimic_calibration(y_score, y_target)
+    # history_result = mimicObject.run_merge_function(current_binning, record_history=True)
+    import matplotlib.pyplot as plt
     for hist_trail in history_result:
         print(hist_trail)
         plt.plot(hist_trail)
