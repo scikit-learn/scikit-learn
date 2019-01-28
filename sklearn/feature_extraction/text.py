@@ -1147,16 +1147,16 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     corpus.
 
     The formula that is used to compute the tf-idf for a term t of a document d
-    in a document set D is tf-idf(t, d, D) = tf(t, d) * idf(t, D), and the idf
-    is computed as idf(t, D) = log [ |D| / df(t, D) ] + 1 (if
-    ``smooth_idf=False``), where df(t, D) is the document frequency; the
-    document frequency is the number of documents in D that contain the term t.
-    The effect of adding "1" to the idf in the equation above is that terms
-    with zero idf, i.e., terms  that occur in all documents in a training set,
-    will not be entirely ignored.
+    tf-idf(t, d) = tf(t, d) * idf(t), and the idf is computed as idf(t) = log [
+    n / df(t) ] + 1 (if ``smooth_idf=False``), where n is the total number of
+    documents and df(t) is the document frequency of t; the document frequency
+    is the number of documents that contain the term t. The effect of adding
+    "1" to the idf in the equation above is that terms with zero idf, i.e.,
+    terms  that occur in all documents in a training set, will not be entirely
+    ignored.
     (Note that the idf formula above differs from the standard textbook
     notation that defines the idf as
-    idf(t, D) = log [ |D| / (df(t, D) + 1) ]).
+    idf(t) = log [ n / (df(t) + 1) ]).
 
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen
