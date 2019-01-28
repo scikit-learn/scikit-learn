@@ -11,7 +11,7 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         self.threshold_pos = threshold_pos
         self.boundary_choice = boundary_choice
         self.record_history = record_history
-        self.record_history_table = None
+        self.history_record_table = []
 
     def get_bin_boundary(self, current_binning, boundary_choice=2):
         """
@@ -151,13 +151,12 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
     def _mimic_calibration(self,
                            y_score,
                            y_target,
-                           number_positive_within_bin=5,
-                           sample_weight=None):
+                           number_positive_within_bin=5):
         """ y_score: the prediction from the model, probability
         y_target: 0 or 1
         """
         assert ((y_score.min() >= 0) & (y_score.max() <= 1.0)), "y_score is a probability which is between 0 and 1."
-        assert (np.unique(y_target) == np.array([0, 1])), "y_traget must be 0 and 1."
+        assert np.array_equal(np.unique(y_target), np.array([0, 1])), "y_traget must be 0 and 1."
         y_score = column_or_1d(y_score)
         y_target = column_or_1d(y_target)
         # sort y_score
@@ -165,7 +164,7 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         y_score = y_score[sorted_index]
         y_target = y_target[sorted_index]
         threshold_pos = number_positive_within_bin
-        initial_binning = self.construct_initial_bin(y_score, y_target, threshold_pos)
+        initial_binning, total_number_pos = self.construct_initial_bin(y_score, y_target, threshold_pos)
         final_binning = self.run_merge_function(initial_binning, self.record_history)
         latest_bin_temp = final_binning[-1]
         calibrated_model = latest_bin_temp
@@ -200,3 +199,35 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
                 y = self.calibrated_model[which_bin-1][6] + \
                     (1.0*delta_y/delta_x) * (x - self.boundary_table[which_bin-1])
             return y
+
+    def get_one_history(self, one_history):
+        score_array = []
+        nP_array = []
+        for row in one_history:
+            # the mean of score at each bin
+            score = row[3]
+            # the nPos rate at each bin
+            nP = row[6]
+            score_array += [score]
+            nP_array += [nP]
+        return score_array, nP_array
+
+    def plot_merge_result(self):
+        import matplotlib.pyplot as plt
+        # self.calibrated_model
+        data = None
+        if (self.record_history):
+            data = self.history_record_table
+        else:
+            data = self.calibrated_model
+
+        number_of_history = len(data)
+        print("plot history size: {x}".format(x=number_of_history))
+        for i in range(number_of_history):
+            one_history = data[i]
+            score_array, nPosRate_array = self.get_one_history(one_history)
+            plt.plot(score_array, nPosRate_array, label=str(i))
+        plt.xlabel("score")
+        plt.ylabel("nPos Rate")
+        plt.legend()
+        plt.show()
