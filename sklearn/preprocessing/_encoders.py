@@ -165,13 +165,15 @@ class OneHotEncoder(_BaseEncoder):
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
         into a neural network or an unregularized regression. If only one
-        feature appears in a column, that column will be retained as a
-        column of ones.
+        feature appears in a column, that column will be dropped from the
+        transformed version (unless this is overriden by manually
+        specifying that no category ought to be dropped from that column).
 
         - None : retain all features.
         - 'first' : drop the first category in each feature.
         - array : ``drop[i]`` is the value of the feature in ``X[:,i]``
-                  that should be dropped.
+                  that should be dropped. None means all categories should
+                  be retained.
 
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
@@ -222,9 +224,9 @@ class OneHotEncoder(_BaseEncoder):
         (in order of the features in X and corresponding with the output
         of ``transform``).
 
-    drop_ : array
-        The category to be dropped for each feature. None if all features
-        will be retained.
+    drop_idx_ : array of shape (n_features,)
+        The index in ``categories_ of`` the category to be dropped for
+        each feature. None if all features will be retained.
 
     active_features_ : array
         Indices for active features, meaning values that actually occur
@@ -486,12 +488,11 @@ class OneHotEncoder(_BaseEncoder):
         else:
             self._fit(X, handle_unknown=self.handle_unknown)
             if self.drop is None:
-                self.drop_ = None
+                self.drop_idx_ = None
             elif (isinstance(self.drop, six.string_types) and
                     self.drop == 'first'):
-                self.drop_ = np.array([cats[0] if len(cats) > 1 else None
-                                      for cats in self.categories_],
-                                      dtype=object)
+                self.drop_idx_ = np.zeros(len(self.categories_),
+                                          dtype=np.int8)
             elif not isinstance(self.drop, six.string_types):
                 try:
                     self.drop = np.asarray(self.drop, dtype=object)
@@ -506,7 +507,8 @@ class OneHotEncoder(_BaseEncoder):
                     raise ValueError(msg.format(len(self.categories_),
                                                 len(self.drop)))
                 missing_drops = [(i, val) for i, val in enumerate(self.drop)
-                                 if val not in self.categories_[i]]
+                                 if val not in self.categories_[i] and
+                                 val is not None]
                 if any(missing_drops):
                     msg = ("The following categories were supposed to be "
                            "dropped, but were not found in the training "
@@ -515,9 +517,10 @@ class OneHotEncoder(_BaseEncoder):
                                     ["Category: {}, Feature: {}".format(c, v)
                                         for c, v in missing_drops])))
                     raise ValueError(msg)
-                self.drop_ = np.array([cat for i, cat in enumerate(self.drop)
-                                       if len(self.categories_[i]) > 1],
-                                      dtype=object)
+                self.drop_idx_ = np.array([np.where(cat_list == val)[0][0]
+                                           if val in cat_list else None
+                                           for (val, cat_list) in
+                                           zip(self.drop, self.categories_)])
             else:
                 msg = ("Wrong input for parameter `drop`. Expected "
                        "'first', None or array of objects, got {}")
@@ -672,9 +675,7 @@ class OneHotEncoder(_BaseEncoder):
             for i in range(n_features):
                 Xii = X_int[:, i]
                 Xmi = X_mask[:, i]
-                uniques = self.categories_[i]
-                drop_loc = np.where(uniques == self.drop_[i])
-                drop_value = drop_loc[0][0] if len(drop_loc[0]) == 1 else None
+                drop_value = self.drop_idx_[i]
                 """
                 Add the cells where the drop value is present to the list
                 of those to be masked-out. Decrement the indices of the values
@@ -685,7 +686,7 @@ class OneHotEncoder(_BaseEncoder):
                     np.logical_and(Xmi, keep_cells, out=Xmi)
                     Xii[Xii > drop_value] -= 1
             n_values = [len(cats) - 1
-                        if self.drop_[i] is not None
+                        if self.drop_idx_[i] is not None
                         else len(cats)
                         for i, cats in enumerate(self.categories_)]
         else:
@@ -758,7 +759,7 @@ class OneHotEncoder(_BaseEncoder):
                                          for cats in self.categories_)
         else:
             n_transformed_features = sum(len(cats) - 1
-                                         if self.drop_[i] is not None
+                                         if self.drop_idx_[i] is not None
                                          else len(cats)
                                          for i, cats in
                                          enumerate(self.categories_)
@@ -781,26 +782,28 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop is None:
                 cats = self.categories_[i]
             else:
-                cats = np.array([cat for cat in self.categories_[i]
-                                 if cat != self.drop_[i]])
+                cats = np.array([cat for idx, cat in
+                                 enumerate(self.categories_[i])
+                                 if idx != self.drop_idx_[i]])
             n_categories = len(cats)
+            if n_categories == 0:
+                X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
+                j += n_categories
+                continue
             sub = X[:, j:j + n_categories]
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(_argmax(sub, axis=1)).flatten()
             X_tr[:, i] = cats[labels]
-
-            '''
-            In this case, we can safely assume that all of the nulls in
-            each column are the dropped value
-            '''
-            if self.drop is not None:
-                unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
-                if unknown.any():
-                    X_tr[unknown, i] = self.drop_[i]
-            elif self.handle_unknown == 'ignore':
-                # ignored unknown categories: we have a row of all zero's
-                unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
-                if unknown.any():
+            unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
+            if unknown.any():
+                '''
+                In this case, we can safely assume that all of the nulls in
+                each column are the dropped value
+                '''
+                if self.drop is not None:
+                    X_tr[unknown, i] = self.categories_[i][self.drop_idx_[i]]
+                elif self.handle_unknown == 'ignore':
+                    # ignored unknown categories: we have a row of all zero's
                     found_unknown[i] = unknown
 
             j += n_categories

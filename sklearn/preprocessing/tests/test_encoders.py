@@ -404,7 +404,7 @@ def test_one_hot_encoder_inverse(sparse_, drop):
     exp = np.array(X)
     assert_array_equal(enc.inverse_transform(X_tr), exp)
 
-    if drop is not None:
+    if drop is None:
         # with unknown categories
         # drop_first is incompatible with handle_unknown=ignore
         X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
@@ -712,6 +712,15 @@ def test_one_hot_encoder_warning():
     exp = np.array([[1., 0., 1., 1.],
                     [0., 1., 0., 1.],
                     [0., 0., 0., 0.]], dtype='float64')
+    assert_array_equal(enc.fit_transform(X).toarray(), exp)
+
+
+def test_one_hot_encoder_none_drop():
+    enc = OneHotEncoder(drop=['def', 3, None])
+    X = [['abc', 2, 55], ['def', 1, 55], ['def', 3, 56]]
+    exp = np.array([[1., 0., 1., 1., 0.],
+                    [0., 1., 0., 1., 0.],
+                    [0., 0., 0., 0., 1.]], dtype='float64')
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
 
 
