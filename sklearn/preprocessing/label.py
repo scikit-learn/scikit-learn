@@ -102,8 +102,46 @@ def _nanencode_numpy(values, uniques=None, encode=False,
         return uniques
 
 
-def _dict_to_mapper(d, use_nan, nan_value):
-    if use_nan:
+# Since it is more efficient to remove an item from a set, object exclusion
+# in included in the _nanunique_object. Also since None and np.nan are not
+# sortable, they are handled separately after the sort.
+def _nanunique_object(ar, exclude_value):
+    items = set(ar)
+
+    # nan might not be discarded since nan comes in different forms
+    items.discard(exclude_value)
+
+    # Handle None afterwards if it is in the items. Set a flag for now.
+    try:
+        items.remove(None)
+        has_none = True
+    except KeyError:
+        has_none = False
+
+    # Handle nan afterwards if it is in the items. Set a flag for now. Since
+    # nan can come in different forms, we check everything.
+    items_not_na = [i for i in items if not is_scalar_nan(i)]
+    has_na = len(items) > len(items_not_na)
+
+    # Sort without None and nan
+    uniques = sorted(items_not_na)
+
+    # Bring back None if needed
+    if has_none:
+        uniques.append(None)
+
+    # Being back nan if needed. Since nan comes in different forms, nan might
+    # exists despite being an excluded value
+    if has_na and not is_scalar_nan(exclude_value):
+        uniques.append(np.nan)
+
+    return uniques
+
+
+def _dict_to_mapper(d, **kwargs):
+    try:
+        nan_value = kwargs['nan_value']
+
         def mapper(x):
             try:
                 return d[x]
@@ -113,30 +151,14 @@ def _dict_to_mapper(d, use_nan, nan_value):
                 else:
                     raise
         return mapper
-    else:
+    except KeyError:
         return lambda x: d[x]
 
 
 def _nanencode_python(values, uniques=None, encode=False,
                       missing_values=None):
     if uniques is None:
-        items = set(values)
-        items.discard(missing_values)
-        try:
-            items.remove(None)
-            has_none = True
-        except KeyError:
-            has_none = False
-
-        items_not_na = [i for i in items if not is_scalar_nan(i)]
-        has_na = len(items) > len(items_not_na)
-
-        uniques = sorted(items_not_na)
-        if has_none:
-            uniques.append(None)
-        if has_na and not is_scalar_nan(missing_values):
-            uniques.append(np.nan)
-
+        uniques = _nanunique_object(values, missing_values)
         uniques = np.array(uniques, dtype=values.dtype)
 
     if encode:
@@ -148,14 +170,14 @@ def _nanencode_python(values, uniques=None, encode=False,
             table = {val: i for i, val in enumerate(uniques[:-1])}
             nan_index = len(table)
             table[missing_values] = missing_index
-            table_mapper = _dict_to_mapper(table, True, nan_index)
+            table_mapper = _dict_to_mapper(table, nan_value=nan_index)
         else:
             table = {val: i for i, val in enumerate(uniques)}
             if is_scalar_nan(missing_values):
-                table_mapper = _dict_to_mapper(table, True, missing_index)
+                table_mapper = _dict_to_mapper(table, nan_value=missing_index)
             else:
                 table[missing_values] = missing_index
-                table_mapper = _dict_to_mapper(table, False, None)
+                table_mapper = _dict_to_mapper(table)
 
         try:
             encoded = np.array([table_mapper(v) for v in values])
