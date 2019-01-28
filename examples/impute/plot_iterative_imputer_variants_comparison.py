@@ -33,8 +33,7 @@ The goal is to compare different predictors to see which one is best for the
 dataset with a single value randomly removed from each row.
 
 For this particular pattern of missing values we see that
-:class:`sklearn.ensemble.ExtraTreesRegressor` and
-:class:`sklearn.linear_model.BayesianRidge` give the best results.
+:class:`sklearn.ensemble.ExtraTreesRegressor` give the best results.
 """
 print(__doc__)
 
@@ -99,7 +98,7 @@ predictors = [
 score_iterative_imputer = pd.DataFrame()
 for predictor in predictors:
     estimator = make_pipeline(
-        IterativeImputer(random_state=0, predictor=predictor),
+        IterativeImputer(random_state=0, predictor=predictor,verbose=1),
         br_estimator
     )
     score_iterative_imputer[predictor.__class__.__name__] = \

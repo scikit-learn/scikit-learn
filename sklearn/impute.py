@@ -436,25 +436,6 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         The placeholder for the missing values. All occurrences of
         ``missing_values`` will be imputed.
 
-    imputation_order : str, optional (default="ascending")
-        The order in which the features will be imputed. Possible values:
-
-        "ascending"
-            From features with fewest missing values to most.
-        "descending"
-            From features with most missing values to fewest.
-        "roman"
-            Left to right.
-        "arabic"
-            Right to left.
-        "random"
-            A random order for each round.
-
-    n_iter : int, optional (default=10)
-        Number of imputation rounds to perform before returning the imputations
-        computed during the final round. A round is a single imputation of each
-        feature with missing values.
-
     predictor : estimator object, default=BayesianRidge()
         The predictor to use at each step of the round-robin imputation.
         If ``sample_posterior`` is True, the predictor must support
@@ -465,6 +446,14 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         fitted predictor for each imputation. Predictor must support
         ``return_std`` in its ``predict`` method if set to ``True``. Set to
         ``True`` if using ``IterativeImputer`` for multiple imputations.
+
+    max_iter : int, optional (default=10)
+        Maximum number of imputation rounds to perform before returning the
+        imputations computed during the final round. A round is a single
+        imputation of each feature with missing values. As with the missForest
+        package, the stopping criterion is met once the difference between the
+        consecutive imputations increases for the first time. Note that early
+        stopping is only possible if ``sample_posterior=False``.
 
     n_nearest_features : int, optional (default=None)
         Number of other features to use to estimate the missing values of
@@ -480,6 +469,20 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         Which strategy to use to initialize the missing values. Same as the
         ``strategy`` parameter in :class:`sklearn.impute.SimpleImputer`
         Valid values: {"mean", "median", "most_frequent", or "constant"}.
+
+    imputation_order : str, optional (default="ascending")
+        The order in which the features will be imputed. Possible values:
+
+        "ascending"
+            From features with fewest missing values to most.
+        "descending"
+            From features with most missing values to fewest.
+        "roman"
+            Left to right.
+        "arabic"
+            Right to left.
+        "random"
+            A random order for each round.
 
     min_value : float, optional (default=None)
         Minimum possible imputed value. Default of ``None`` will set minimum
@@ -511,7 +514,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         ``feat_idx`` is the current feature to be imputed,
         ``neighbor_feat_idx`` is the array of other features used to impute the
         current feature, and ``predictor`` is the trained predictor used for
-        the imputation. Length is ``self.n_features_with_missing_ * n_iter``.
+        the imputation. Length is ``self.n_features_with_missing_ * max_iter``.
 
     n_features_with_missing_ : int
         Number of features with missing values.
@@ -548,24 +551,24 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     def __init__(self,
                  missing_values=np.nan,
-                 imputation_order='ascending',
-                 n_iter=10,
                  predictor=None,
                  sample_posterior=False,
+                 max_iter=10,
                  n_nearest_features=None,
                  initial_strategy="mean",
+                 imputation_order='ascending',
                  min_value=None,
                  max_value=None,
                  verbose=0,
                  random_state=None):
 
         self.missing_values = missing_values
-        self.imputation_order = imputation_order
-        self.n_iter = n_iter
         self.predictor = predictor
         self.sample_posterior = sample_posterior
+        self.max_iter = max_iter
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
+        self.imputation_order = imputation_order
         self.min_value = min_value
         self.max_value = max_value
         self.verbose = verbose
@@ -859,10 +862,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.random_state_ = getattr(self, "random_state_",
                                      check_random_state(self.random_state))
 
-        if self.n_iter < 0:
+        if self.max_iter < 0:
             raise ValueError(
-                "'n_iter' should be a positive integer. Got {} instead."
-                .format(self.n_iter))
+                "'max_iter' should be a positive integer. Got {} instead."
+                .format(self.max_iter))
 
         if self.predictor is None:
             from .linear_model import BayesianRidge
@@ -879,7 +882,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.initial_imputer_ = None
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
-        if self.n_iter == 0:
+        if self.max_iter == 0:
             return Xt
 
         # order in which to impute
@@ -891,14 +894,17 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         abs_corr_mat = self._get_abs_corr_mat(Xt)
 
-        # impute data
         n_samples, n_features = Xt.shape
         self.imputation_sequence_ = []
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
-        for i_rnd in range(self.n_iter):
+        self.actual_iter = self.max_iter
+        if not self.sample_posterior:
+            Xt_previous = np.copy(Xt)
+            norm_diff_previous = np.inf
+        for i_rnd in range(self.max_iter):
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
 
@@ -917,7 +923,24 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             if self.verbose > 0:
                 print('[IterativeImputer] Ending imputation round '
                       '%d/%d, elapsed time %0.2f'
-                      % (i_rnd + 1, self.n_iter, time() - start_t))
+                      % (i_rnd + 1, self.max_iter, time() - start_t))
+
+            # stop early if difference between consecutive imputations goes up.
+            # if so, back off to previous imputation
+            if not self.sample_posterior:
+                norm_diff = np.linalg.norm(Xt - Xt_previous) \
+                            / np.linalg.norm(Xt)
+                if norm_diff > norm_diff_previous:
+                    self.imputation_sequence_ = \
+                        self.imputation_sequence_[:-len(ordered_idx)]
+                    Xt = np.copy(Xt_previous)
+                    self.actual_iter = i_rnd
+                    print('[IterativeImputer] Early stopping criterion '
+                          'reached. Using result of round %d' %i_rnd)
+                    break
+                else:
+                    Xt_previous = np.copy(Xt)
+                    norm_diff_previous = norm_diff
 
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return Xt
@@ -942,10 +965,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
-        if self.n_iter == 0:
+        if self.actual_iter == 0:
             return Xt
 
-        imputations_per_round = len(self.imputation_sequence_) // self.n_iter
+        imps_per_round = len(self.imputation_sequence_) // self.actual_iter
         i_rnd = 0
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s"
@@ -960,11 +983,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 predictor=predictor_triplet.predictor,
                 fit_mode=False
             )
-            if not (it + 1) % imputations_per_round:
+            if not (it + 1) % imps_per_round:
                 if self.verbose > 1:
                     print('[IterativeImputer] Ending imputation round '
                           '%d/%d, elapsed time %0.2f'
-                          % (i_rnd + 1, self.n_iter, time() - start_t))
+                          % (i_rnd + 1, self.actual_iter, time() - start_t))
                 i_rnd += 1
 
         Xt[~mask_missing_values] = X[~mask_missing_values]

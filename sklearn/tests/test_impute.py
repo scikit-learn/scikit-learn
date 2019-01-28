@@ -516,22 +516,24 @@ def test_iterative_imputer_imputation_order(imputation_order):
     rng = np.random.RandomState(0)
     n = 100
     d = 10
+    max_iter = 2
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
     X[:, 0] = 1  # this column should not be discarded by IterativeImputer
 
-    n_iter = 2
     imputer = IterativeImputer(missing_values=0,
-                               n_iter=n_iter,
+                               max_iter=max_iter,
                                n_nearest_features=5,
+                               sample_posterior=False,
                                min_value=0,
                                max_value=1,
-                               verbose=False,
+                               verbose=1,
                                imputation_order=imputation_order,
                                random_state=rng)
     imputer.fit_transform(X)
     ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
 
-    assert len(ordered_idx) // n_iter == imputer.n_features_with_missing_
+    assert len(ordered_idx) // imputer.actual_iter \
+        == imputer.n_features_with_missing_
 
     if imputation_order == 'roman':
         assert np.all(ordered_idx[:d-1] == np.arange(1, d))
@@ -542,7 +544,7 @@ def test_iterative_imputer_imputation_order(imputation_order):
         ordered_idx_round_2 = ordered_idx[d-1:]
         assert ordered_idx_round_1 != ordered_idx_round_2
     elif 'ending' in imputation_order:
-        assert len(ordered_idx) == n_iter * (d - 1)
+        assert len(ordered_idx) == max_iter * (d - 1)
 
 
 @pytest.mark.parametrize(
@@ -557,7 +559,7 @@ def test_iterative_imputer_predictors(predictor):
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
 
     imputer = IterativeImputer(missing_values=0,
-                               n_iter=1,
+                               max_iter=1,
                                predictor=predictor,
                                random_state=rng)
     imputer.fit_transform(X)
@@ -582,11 +584,34 @@ def test_iterative_imputer_clip():
                              random_state=rng).toarray()
 
     imputer = IterativeImputer(missing_values=0,
-                               n_iter=1,
+                               max_iter=1,
                                min_value=0.1,
                                max_value=0.2,
                                random_state=rng)
 
+    Xt = imputer.fit_transform(X)
+    assert_allclose(np.min(Xt[X == 0]), 0.1)
+    assert_allclose(np.max(Xt[X == 0]), 0.2)
+    assert_allclose(Xt[X != 0], X[X != 0])
+
+
+def test_iterative_imputer_clip_truncnorm():
+    rng = np.random.RandomState(0)
+    n = 100
+    d = 10
+    max_iter = 2
+    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    X[:, 0] = 1
+
+    imputer = IterativeImputer(missing_values=0,
+                               max_iter=max_iter,
+                               n_nearest_features=5,
+                               sample_posterior=True,
+                               min_value=0,
+                               max_value=1,
+                               verbose=1,
+                               imputation_order='random',
+                               random_state=rng)
     Xt = imputer.fit_transform(X)
     assert_allclose(np.min(Xt[X == 0]), 0.1)
     assert_allclose(np.max(Xt[X == 0]), 0.2)
@@ -641,7 +666,7 @@ def test_iterative_imputer_missing_at_transform(strategy):
     X_test[0, 0] = 0  # definitely missing value in 0th column
 
     imputer = IterativeImputer(missing_values=0,
-                               n_iter=1,
+                               max_iter=1,
                                initial_strategy=strategy,
                                random_state=rng).fit(X_train)
     initial_imputer = SimpleImputer(missing_values=0,
@@ -664,7 +689,7 @@ def test_iterative_imputer_transform_stochasticity():
 
     # when sample_posterior=True, two transforms shouldn't be equal
     imputer = IterativeImputer(missing_values=0,
-                               n_iter=1,
+                               max_iter=1,
                                sample_posterior=True,
                                random_state=rng1)
     imputer.fit(X)
@@ -679,14 +704,14 @@ def test_iterative_imputer_transform_stochasticity():
     # and imputation_order is not random
     # the two transforms should be identical even if rng are different
     imputer1 = IterativeImputer(missing_values=0,
-                                n_iter=1,
+                                max_iter=1,
                                 sample_posterior=False,
                                 n_nearest_features=None,
                                 imputation_order='ascending',
                                 random_state=rng1)
 
     imputer2 = IterativeImputer(missing_values=0,
-                                n_iter=1,
+                                max_iter=1,
                                 sample_posterior=False,
                                 n_nearest_features=None,
                                 imputation_order='ascending',
@@ -706,8 +731,8 @@ def test_iterative_imputer_no_missing():
     rng = np.random.RandomState(0)
     X = rng.rand(100, 100)
     X[:, 0] = np.nan
-    m1 = IterativeImputer(n_iter=10, random_state=rng)
-    m2 = IterativeImputer(n_iter=10, random_state=rng)
+    m1 = IterativeImputer(max_iter=10, random_state=rng)
+    m2 = IterativeImputer(max_iter=10, random_state=rng)
     pred1 = m1.fit(X).transform(X)
     pred2 = m2.fit_transform(X)
     # should exclude the first column entirely
@@ -726,7 +751,7 @@ def test_iterative_imputer_rank_one():
     X_missing = X.copy()
     X_missing[nan_mask] = np.nan
 
-    imputer = IterativeImputer(n_iter=5,
+    imputer = IterativeImputer(max_iter=5,
                                verbose=1,
                                random_state=rng)
     X_filled = imputer.fit_transform(X_missing)
@@ -755,7 +780,7 @@ def test_iterative_imputer_transform_recovery(rank):
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = IterativeImputer(n_iter=10,
+    imputer = IterativeImputer(max_iter=10,
                                verbose=1,
                                random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
@@ -783,19 +808,46 @@ def test_iterative_imputer_additive_matrix():
     X_test_filled = X_filled[n:]
     X_test = X_missing[n:]
 
-    imputer = IterativeImputer(n_iter=10,
-                               verbose=2,
+    imputer = IterativeImputer(max_iter=10,
+                               verbose=1,
                                random_state=rng).fit(X_train)
     X_test_est = imputer.transform(X_test)
-    assert_allclose(X_test_filled, X_test_est, atol=0.01)
+    assert_allclose(X_test_filled, X_test_est, rtol=1e-3, atol=0.01)
 
 
 def test_iterative_imputer_error_param():
     rng = np.random.RandomState(42)
     X = rng.randn(100, 2)
-    imputer = IterativeImputer(n_iter=-1)
+    imputer = IterativeImputer(max_iter=-1)
     with pytest.raises(ValueError, match='should be a positive integer'):
         imputer.fit_transform(X)
+
+
+def test_iterative_imputer_early_stopping():
+    rng = np.random.RandomState(0)
+    n = 50
+    d = 5
+    max_iter = 100
+    A = rng.rand(n, 1)
+    B = rng.rand(1, d)
+    X = np.dot(A, B)
+    nan_mask = rng.rand(n, d) < 0.5
+    X_missing = X.copy()
+    X_missing[nan_mask] = np.nan
+
+    imputer = IterativeImputer(max_iter=max_iter,
+                               sample_posterior=False,
+                               verbose=1,
+                               random_state=rng)
+    X_filled_100 = imputer.fit_transform(X_missing)
+    assert(len(imputer.imputation_sequence_) == d * 5)
+
+    imputer = IterativeImputer(max_iter=5,
+                               sample_posterior=False,
+                               verbose=1,
+                               random_state=rng)
+    X_filled_5 = imputer.fit_transform(X_missing)
+    assert_allclose(X_filled_100, X_filled_5, atol=1e-7)
 
 
 @pytest.mark.parametrize(
