@@ -936,7 +936,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                     Xt = np.copy(Xt_previous)
                     self.actual_iter = i_rnd
                     print('[IterativeImputer] Early stopping criterion '
-                          'reached. Using result of round %d' %i_rnd)
+                          'reached. Using result of round %d' % i_rnd)
                     break
                 else:
                     Xt_previous = np.copy(Xt)
