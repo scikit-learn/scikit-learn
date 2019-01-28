@@ -185,7 +185,7 @@ def _make_mapper(uniques, missing_values, missing_index):
 
 
 def _nanencode_python(values, uniques=None, encode=False,
-                      missing_values=None, ):
+                      missing_values=None, encode_unknown=False):
     if uniques is None:
         uniques = _nanunique_object(values, missing_values)
         uniques = np.array(uniques, dtype=values.dtype)
@@ -196,15 +196,32 @@ def _nanencode_python(values, uniques=None, encode=False,
         # for indexing an empty array but so is any other index.
         missing_index = -1
         mapper = _make_mapper(uniques, missing_values, missing_index)
-        mapper = np.frompyfunc(mapper, 1, 1)
+
+        if encode_unknown:
+            unknown_index = -2
+
+            def safe_mapper(x):
+                try:
+                    return mapper(x)
+                except KeyError:
+                    return unknown_index
+
+            np_mapper = np.frompyfunc(safe_mapper, 1, 1)
+        else:
+            np_mapper = np.frompyfunc(mapper, 1, 1)
 
         try:
-            encoded = mapper(values).astype(np.int)
-            encoded_nan = encoded == missing_index
+            encoded = np_mapper(values).astype(np.int)
+            missing_mask = encoded == missing_index
         except KeyError as e:
             raise ValueError("y contains previously unseen labels: %s"
                              % str(e))
-        return uniques, encoded, encoded_nan
+
+        if encode_unknown:
+            unknown_mask = encoded == unknown_index
+            return uniques, encoded, missing_mask, unknown_mask
+        else:
+            return uniques, encoded, missing_mask
     else:
         return uniques
 
