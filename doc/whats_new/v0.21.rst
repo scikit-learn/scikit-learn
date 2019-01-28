@@ -91,6 +91,12 @@ Support for Python 3.4 and below has been officially dropped.
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
 
+:mod:`sklearn.externals`
+........................
+
+- |API| Deprecated :mod:`externals.six` since we have dropped support for
+  Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -192,6 +198,13 @@ Support for Python 3.4 and below has been officially dropped.
   when called before ``fit`` :issue:`12279` by :user:`Krishna Sangeeth
   <whiletruelearn>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| Fixed a bug in :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor` where the option :code:`shuffle=False`
+  was being ignored. :issue:`12582` by :user:`Sam Waterbury <samwaterbury>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
@@ -214,6 +227,10 @@ Support for Python 3.4 and below has been officially dropped.
 - |Efficiency| |API| Speed improvement in :class:`preprocessing.PolynomialFeatures`,
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
+
+- |Fix| Fixed the calculation overflow when using a float16 dtype with
+  :class:`preprocessing.StandardScaler`. :issue:`13007` by
+  :user:`Raffaello Baluyot <baluyotraf>`
 
 :mod:`sklearn.tree`
 ...................

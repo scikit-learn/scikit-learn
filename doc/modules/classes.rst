@@ -274,7 +274,6 @@ Loaders
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.load_wine
-   datasets.mldata_filename
 
 Samples generator
 -----------------
@@ -1526,3 +1525,4 @@ To be removed in 0.22
 
    covariance.graph_lasso
    datasets.fetch_mldata
+   datasets.mldata_filename
