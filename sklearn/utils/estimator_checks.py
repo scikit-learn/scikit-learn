@@ -630,8 +630,10 @@ def check_dtype_object(name, estimator_orig):
         msg = "argument must be a string or a number"
         assert_raises_regex(TypeError, msg, estimator.fit, X, y)
     else:
-        # If the estimator support strings passed as object dtype,
-        # it should not raise an error
+        # Estimators supporting string will not call np.asarray to convert the
+        # data to numeric and therefore, the error will not be raised.
+        # Checking for each element dtype in the input array will be costly.
+        # Refer to #11401 for full discussion.
         estimator.fit(X, y)
 
 
