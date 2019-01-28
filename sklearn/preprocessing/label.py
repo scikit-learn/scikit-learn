@@ -34,33 +34,48 @@ __all__ = [
 ]
 
 
-def _nanunique(ar):
-    uniques = np.unique(ar)
+def _nanunique(ar, return_inverse=False):
+    if return_inverse:
+        uniques, reverse = np.unique(ar, return_inverse=return_inverse)
+    else:
+        uniques = np.unique(ar)
+
     # np.nan is always sorted last
     if is_scalar_nan(uniques[-1]):
         nan_idx = np.searchsorted(uniques, np.nan)
-        return uniques[:nan_idx+1]
+        uniques = uniques[:nan_idx+1]
+        if return_inverse:
+            reverse[reverse > nan_idx] = nan_idx
+
+    if return_inverse:
+        return uniques, reverse
     else:
         return uniques
 
 
-def _remove_from_sorted(sorted_arr, value):
-    if is_scalar_nan(value):
-        try:
-            if is_scalar_nan(sorted_arr[-1]):
-                return sorted_arr[:-1]
-        except IndexError:
-            return sorted_arr
+def _nanin1d(ar1, ar2, assume_unique=False):
+    ar1 = np.ravel(ar1)
+    ar2 = np.ravel(ar2)
 
-    index = np.searchsorted(sorted_arr, value)
+    if not assume_unique:
+        ar1, rev = _nanunique(ar1, return_inverse=True)
+        ar2 = _nanunique(ar2)
 
-    try:
-        arr_value = sorted_arr[index]
-    except IndexError:
-        return sorted_arr
+    in1d = np.in1d(ar1, ar2, True)
+    in1d[-1] = in1d[-1] or (is_scalar_nan(ar1[-1]) and is_scalar_nan(ar2[-1]))
+    if assume_unique:
+        return in1d
+    else:
+        return in1d[rev]
 
-    if arr_value == value:
-        return np.delete(sorted_arr, index)
+
+def _nansetdiff1d(ar1, ar2, assume_unique=False):
+    if assume_unique:
+        ar1 = np.ravel(ar1)
+    else:
+        ar1 = _nanunique(ar1)
+        ar2 = _nanunique(ar2)
+    return ar1[~_nanin1d(ar1, ar2, True)]
 
 
 def _nanencode_numpy(values, uniques=None, encode=False,
@@ -68,16 +83,14 @@ def _nanencode_numpy(values, uniques=None, encode=False,
     check_values = True
     if uniques is None:
         uniques = _nanunique(values)
-        uniques = _remove_from_sorted(uniques, missing_values)
+        uniques = _nansetdiff1d(uniques, [missing_values], True)
         check_values = False
 
     if encode:
         if check_values:
-            unique_v = _nanunique(values)
-            if is_scalar_nan(uniques[-1]) and is_scalar_nan(unique_v[-1]):
-                unique_v = unique_v[:-1]
-            unseen = np.setdiff1d(unique_v, uniques, assume_unique=True)
-            unseen = _remove_from_sorted(unseen, missing_values)
+            unique_values = _nanunique(values)
+            unseen = _nansetdiff1d(unique_values, [missing_values], True)
+            unseen = _nansetdiff1d(unseen, uniques, True)
             if len(unseen):
                 raise ValueError("y contains previously unseen labels: %s"
                                  % str(unseen))
