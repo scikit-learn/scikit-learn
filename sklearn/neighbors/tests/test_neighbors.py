@@ -948,6 +948,15 @@ def test_neighbors_badargs():
                       cls, p=-1)
         assert_raises(ValueError,
                       cls, algorithm='blah')
+
+        nbrs = cls(algorithm='ball_tree', metric='haversine')
+        assert_raises(ValueError,
+                      nbrs.predict,
+                      X)
+        assert_raises(ValueError,
+                      ignore_warnings(nbrs.fit),
+                      Xsparse, y)
+
         nbrs = cls(metric='haversine', algorithm='brute')
         nbrs.fit(X, y)
         assert_raise_message(ValueError,
@@ -1015,8 +1024,10 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                                                algorithm=algorithm,
                                                metric=metric, p=p,
                                                metric_params=metric_params)
-            feature_sl = slice(None, 2) if metric == 'haversine'\
-                else slice(None)
+
+            # Haversine distance only accepts 2D data
+            feature_sl = (slice(None, 2) 
+                         if metric == 'haversine' else slice(None))
 
             neigh.fit(X[:, feature_sl])
             results[algorithm] = neigh.kneighbors(test[:, feature_sl],
@@ -1072,8 +1083,8 @@ def test_valid_brute_metric_for_auto_algorithm():
             else:
                 nn = neighbors.NearestNeighbors(n_neighbors=3,
                                                 algorithm='auto',
-                                                metric=metric).fit(X[:, :2])
-                nn.kneighbors(X[:, :2])
+                                                metric=metric).fit(X[slice(None, 2)])
+                nn.kneighbors(X[slice(None, 2)])
         elif metric == 'precomputed':
             X_precomputed = rng.random_sample((10, 4))
             Y_precomputed = rng.random_sample((3, 4))
@@ -1086,8 +1097,6 @@ def test_valid_brute_metric_for_auto_algorithm():
 
     for metric in VALID_METRICS_SPARSE['brute']:
         if metric != 'precomputed' and metric not in require_params:
-            if metric in VALID_METRICS_SPARSE['brute']:
-                continue
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
             nn.kneighbors(Xcsr)

@@ -442,7 +442,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 
 
 def haversine_distances(X, Y=None):
-    """ Compute the haversine distance between samples in X and Y
+    """Compute the Haversine distance between samples in X and Y
 
     The Haversine distance is the angular distance between two points on
     the surface of a sphere. The first distance of each point is assumed
@@ -472,7 +472,7 @@ def haversine_distances(X, Y=None):
     >>> bsas = [-34.83333, -58.5166646]
     >>> paris = [49.0083899664, 2.53844117956]
     >>> result = haversine_distances([bsas, paris])
-    >>> result * 6371000/1000
+    >>> result * 6371000/1000  # multiply by Earth radius to get a distance in km
     array([[    0.        , 11279.45379464],
            [11279.45379464,     0.        ]])
     """
