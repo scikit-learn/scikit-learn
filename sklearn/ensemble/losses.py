@@ -597,12 +597,12 @@ class BinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
-            True labels
+        y : 1d array, shape (n_samples,)
+            True labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
-            tree ensemble
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
+            tree ensemble.
 
         sample_weight : 1d array , shape (n_samples,), optional
             Sample weights.
@@ -610,22 +610,22 @@ class BinomialDeviance(ClassificationLossFunction):
         # logaddexp(0, v) == log(1.0 + exp(v))
         raw_predictions = raw_predictions.ravel()
         if sample_weight is None:
-            return -2.0 * np.mean((y * raw_predictions) -
-                                  np.logaddexp(0.0, raw_predictions))
+            return -2 * np.mean((y * raw_predictions) -
+                                  np.logaddexp(0, raw_predictions))
         else:
-            return (-2.0 / sample_weight.sum() * np.sum(
+            return (-2 / sample_weight.sum() * np.sum(
                 sample_weight * ((y * raw_predictions) -
-                                 np.logaddexp(0.0, raw_predictions))))
+                                 np.logaddexp(0, raw_predictions))))
 
     def negative_gradient(self, y, raw_predictions, **kargs):
         """Compute the residual (= negative gradient).
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
-            True labels
+        y : 1d array, shape (n_samples,)
+            True labels.
 
-        raw_predictions : array, shape (n_samples, K)
+        raw_predictions : 2d array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
@@ -684,7 +684,7 @@ class MultinomialDeviance(ClassificationLossFunction):
     Parameters
     ----------
     n_classes : int
-        Number of classes
+        Number of classes.
     """
 
     is_multi_class = True
@@ -703,12 +703,12 @@ class MultinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
-            True labels
+        y : 1d array, shape (n_samples,)
+            True labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
-            tree ensemble
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
+            tree ensemble.
 
         sample_weight : 1d array, shape (n_samples,), optional
             Sample weights.
@@ -731,15 +731,15 @@ class MultinomialDeviance(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
+        y : 1d array, shape (n_samples,)
             The target labels.
 
-        raw_predictions : array, shape (n_samples, K)
+        raw_predictions : 2d array, shape (n_samples, K)
             The raw_predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
 
-        k : int, optional (default=0)
-            The index of the class
+        k : int, optional default=0
+            The index of the class.
         """
         return y - np.nan_to_num(np.exp(raw_predictions[:, k] -
                                         logsumexp(raw_predictions, axis=1)))
@@ -756,7 +756,7 @@ class MultinomialDeviance(ClassificationLossFunction):
         numerator *= (self.K - 1) / self.K
 
         denominator = np.sum(sample_weight * (y - residual) *
-                             (1.0 - y + residual))
+                             (1 - y + residual))
 
         # prevents overflow and division by zero
         if abs(denominator) < 1e-150:
@@ -801,7 +801,7 @@ class ExponentialLoss(ClassificationLossFunction):
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
-        super().__init__(1)
+        super().__init__(n_classes=1)
 
     def init_estimator(self):
         return DummyClassifier(strategy='prior')
@@ -811,11 +811,11 @@ class ExponentialLoss(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
-            True labels
+        y : 1d array, shape (n_samples,)
+            True labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble.
 
         sample_weight : 1d array, shape (n_samples,), optional
@@ -833,11 +833,11 @@ class ExponentialLoss(ClassificationLossFunction):
 
         Parameters
         ----------
-        y : array, shape (n_samples,)
-            True labels
+        y : 1d array, shape (n_samples,)
+            True labels.
 
-        raw_predictions : array, shape (n_samples, K)
-            The raw_predictions (i.e. values from the tree leaves) of the
+        raw_predictions : 2d array, shape (n_samples, K)
+            The raw predictions (i.e. values from the tree leaves) of the
             tree ensemble at iteration ``i - 1``.
         """
         y_ = -(2. * y - 1.)
@@ -868,7 +868,7 @@ class ExponentialLoss(ClassificationLossFunction):
         return proba
 
     def _raw_prediction_to_decision(self, raw_predictions):
-        return (raw_predictions.ravel() >= 0.0).astype(np.int)
+        return (raw_predictions.ravel() >= 0).astype(np.int)
 
     def get_init_raw_predictions(self, X, estimator):
         proba_pos_class = estimator.predict_proba(X)[:, 1]
