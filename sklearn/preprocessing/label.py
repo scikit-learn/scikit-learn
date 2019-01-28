@@ -41,7 +41,7 @@ def _nanunique(ar, return_inverse=False):
         uniques = np.unique(ar)
 
     # np.nan is always sorted last
-    if is_scalar_nan(uniques[-1]):
+    if len(uniques) and is_scalar_nan(uniques[-1]):
         nan_idx = np.searchsorted(uniques, np.nan)
         uniques = uniques[:nan_idx+1]
         if return_inverse:
@@ -185,7 +185,7 @@ def _make_mapper(uniques, missing_values, missing_index):
 
 
 def _nanencode_python(values, uniques=None, encode=False,
-                      missing_values=None, encode_unknown=False):
+                      missing_values=np.nan, encode_unknown=False):
     if uniques is None:
         uniques = _nanunique_object(values, missing_values)
         uniques = np.array(uniques, dtype=values.dtype)
@@ -226,11 +226,14 @@ def _nanencode_python(values, uniques=None, encode=False,
         return uniques
 
 
-def _nanencode(values, uniques=None, encode=False, *args, **kwargs):
+def _nanencode(values, uniques=None, encode=False,
+               missing_values=np.nan, encode_unknown=False):
     if values.dtype == object:
-        return _nanencode_python(values, uniques, encode, *args, **kwargs)
+        return _nanencode_python(values, uniques, encode,
+                                 missing_values, encode_unknown)
     else:
-        return _nanencode_numpy(values, uniques, encode, *args, **kwargs)
+        return _nanencode_numpy(values, uniques, encode,
+                                missing_values, encode_unknown)
 
 
 def _encode_numpy(values, uniques=None, encode=False):
