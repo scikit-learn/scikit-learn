@@ -611,7 +611,7 @@ class BinomialDeviance(ClassificationLossFunction):
         raw_predictions = raw_predictions.ravel()
         if sample_weight is None:
             return -2 * np.mean((y * raw_predictions) -
-                                  np.logaddexp(0, raw_predictions))
+                                np.logaddexp(0, raw_predictions))
         else:
             return (-2 / sample_weight.sum() * np.sum(
                 sample_weight * ((y * raw_predictions) -
