@@ -79,8 +79,8 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor`, which didn't support
-  scikit-learn estimators as initial estimator. Also added support of initial
-  estimator which does not support sample weights. :issue:`12436` by
+  scikit-learn estimators as the initial estimator. Also added support of
+  initial estimator which does not support sample weights. :issue:`12436` by
   :user:`Jérémie du Boisberranger <jeremiedbb>` and :issue:`12983` by
   :user:`Nicolas Hug<NicolasHug>`.
 

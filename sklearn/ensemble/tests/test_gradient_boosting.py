@@ -20,6 +20,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.ensemble._gradient_boosting import predict_stages
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.svm import LinearSVC
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -32,7 +33,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
@@ -1340,17 +1340,16 @@ def _make_multiclass():
 
 
 @pytest.mark.parametrize(
-    "task",
+    "gb, dataset_maker, init_estimator",
     [(GradientBoostingClassifier, make_classification, DummyClassifier),
      (GradientBoostingClassifier, _make_multiclass, DummyClassifier),
      (GradientBoostingRegressor, make_regression, DummyRegressor)],
     ids=["binary classification", "multiclass classification", "regression"])
-def test_gradient_boosting_with_init(task):
+def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     # Check that GradientBoostingRegressor works when init is a sklearn
     # estimator.
     # Check that an error is raised if trying to fit with sample weight but
     # inital estimator does not support sample weight
-    gb, dataset_maker, init_estimator = task
 
     X, y = dataset_maker()
     sample_weight = np.random.RandomState(42).rand(100)
@@ -1367,23 +1366,15 @@ def test_gradient_boosting_with_init(task):
         gb(init=init_est).fit(X, y, sample_weight=sample_weight)
 
 
-def test_gradient_boosting_init_wrong_methods():
+@pytest.mark.parametrize('estimator, missing_method', [
+    (GradientBoostingClassifier(init=LinearSVC()), 'predict_proba'),
+    (GradientBoostingRegressor(init=OneHotEncoder()), 'predict')
+])
+def test_gradient_boosting_init_wrong_methods(estimator, missing_method):
     # Make sure error is raised if init estimators don't have the required
     # methods (fit, predict, predict_proba)
 
-    est = GradientBoostingClassifier(init=LinearSVC())
-    assert_raises_regex(
-        ValueError,
-        "The init parameter must be a valid estimator and support both fit "
-        "and predict_proba",
-        est.fit, X, y
-    )
-
-    from sklearn.preprocessing import OneHotEncoder
-    est = GradientBoostingRegressor(init=OneHotEncoder())  # no predict
-    assert_raises_regex(
-        ValueError,
-        "The init parameter must be a valid estimator and support both fit "
-        "and predict",
-        est.fit, X, y
-    )
+    message = ("The init parameter must be a valid estimator and support "
+               "both fit and " + missing_method)
+    with pytest.raises(ValueError, match=message):
+        estimator.fit(X, y)

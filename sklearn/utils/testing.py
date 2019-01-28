@@ -598,14 +598,14 @@ DONT_TEST = ['SparseCoder', 'DictVectorizer',
              'TruncatedSVD', 'PolynomialFeatures',
              'GaussianRandomProjectionHash', 'HashingVectorizer',
              'CheckingClassifier', 'PatchExtractor', 'CountVectorizer',
+             '_SigmoidCalibration', 'VotingClassifier',
              # GradientBoosting base estimators, maybe should
              # exclude them in another way
-             # 0.23: remove all of those that aren't in ensemble.losses
-             # anymore
+             # FIXME: 0.23 remove all of those
              'ZeroEstimator', 'ScaledLogOddsEstimator',
              'QuantileEstimator', 'MeanEstimator',
              'LogOddsEstimator', 'PriorProbabilityEstimator',
-             '_SigmoidCalibration', 'VotingClassifier']
+             ]
 
 
 def all_estimators(include_meta_estimators=False,
