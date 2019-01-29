@@ -46,7 +46,8 @@ Scikit-learn requires:
 
 Building Scikit-learn also requires
 
-- Cython >=0.23 
+- Cython >=0.23
+- OpenMP
 
 Running tests requires
 
@@ -102,6 +103,27 @@ On Unix-like systems, you can simply type ``make`` in the top-level folder to
 build in-place and launch all the tests. Have a look at the ``Makefile`` for
 additional utilities.
 
+Mac OSX
+-------
+
+The default C compiler, Apple-clang, on Mac OSX does not directly support
+OpenMP. The first solution to build scikit-learn is to install another C
+compiler such as gcc or llvm-clang. Another solution is to enable OpenMP
+support on the default Apple-clang.
+
+You first need to install the OpenMP library::
+
+    brew install libomp
+
+Then you need to set the following environment variables::
+
+    export CC="clang -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+
+Finally you can build the package using the standard command.
+
 Installing build dependencies
 =============================
 
@@ -111,7 +133,7 @@ Linux
 Installing from source requires you to have installed the scikit-learn runtime
 dependencies, Python development headers and a working C/C++ compiler.
 Under Debian-based operating systems, which include Ubuntu::
-    
+
     sudo apt-get install build-essential python3-dev python3-setuptools \
                      python3-numpy python3-scipy \
                      libatlas-dev libatlas3-base
