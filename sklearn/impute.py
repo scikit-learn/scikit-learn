@@ -655,7 +655,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             imputed_values[mus_too_low] = self._min_value
             mus_too_high = mus > self._max_value
             imputed_values[mus_too_high] = self._max_value
-            # the rest can legally sampled
+            # the rest can be sampled without statistical issues
             sample_flag = positive_sigmas & ~mus_too_low & ~mus_too_high
             mus = mus[sample_flag]
             sigmas = sigmas[sample_flag]
