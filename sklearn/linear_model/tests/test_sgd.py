@@ -584,12 +584,12 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            "available for loss={!r}".format(loss))
                 assert not hasattr(clf, 'predict_proba')
                 assert not hasattr(clf, 'predict_log_proba')
-                with pytest.raises(AttributeError,
-                                   match=message):
+                with pytest.raises(AttributeError) as excinfo:
                     clf.predict_proba
-                with pytest.raises(AttributeError,
-                                   match=message):
+                    assert message == str(excinfo.value)
+                with pytest.raises(AttributeError) as excinfo:
                     clf.predict_log_proba
+                    assert message == str(excinfo.value)
 
     def test_sgd_proba(self):
         # Check SGD.predict_proba
