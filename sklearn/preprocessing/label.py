@@ -62,9 +62,11 @@ def _nanin1d(ar1, ar2, assume_unique=False):
         ar2 = _nanunique(ar2)
 
     in1d = np.in1d(ar1, ar2, True)
-    if len(in1d):
+    try:
         in1d[-1] = (in1d[-1] or
                     (is_scalar_nan(ar1[-1]) and is_scalar_nan(ar2[-1])))
+    except IndexError:
+        pass
 
     if assume_unique:
         return in1d
