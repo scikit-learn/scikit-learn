@@ -173,6 +173,9 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
                 "support both fit and predict."
             )
 
+    def get_init_raw_predictions(self, X, estimator):
+        return estimator.predict(X).reshape(-1, 1).astype(np.float64)
+
 
 class LeastSquaresError(RegressionLossFunction):
     """Loss function for least squares (LS) estimation.
@@ -258,9 +261,6 @@ class LeastSquaresError(RegressionLossFunction):
                                 residual, raw_predictions, sample_weight):
         pass
 
-    def get_init_raw_predictions(self, X, estimator):
-        return estimator.predict(X).reshape(-1, 1).astype(np.float64)
-
 
 class LeastAbsoluteError(RegressionLossFunction):
     """Loss function for least absolute deviation (LAD) regression.
@@ -319,9 +319,6 @@ class LeastAbsoluteError(RegressionLossFunction):
                 raw_predictions.take(terminal_region, axis=0))
         tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight,
                                                       percentile=50)
-
-    def get_init_raw_predictions(self, X, estimator):
-        return estimator.predict(X).reshape(-1, 1).astype(np.float64)
 
 
 class HuberLossFunction(RegressionLossFunction):
@@ -433,9 +430,6 @@ class HuberLossFunction(RegressionLossFunction):
             np.sign(diff_minus_median) *
             np.minimum(np.abs(diff_minus_median), gamma))
 
-    def get_init_raw_predictions(self, X, estimator):
-        return estimator.predict(X).reshape(-1, 1).astype(np.float64)
-
 
 class QuantileLossFunction(RegressionLossFunction):
     """Loss function for quantile regression.
@@ -514,9 +508,6 @@ class QuantileLossFunction(RegressionLossFunction):
 
         val = _weighted_percentile(diff, sample_weight, self.percentile)
         tree.value[leaf, 0] = val
-
-    def get_init_raw_predictions(self, X, estimator):
-        return estimator.predict(X).reshape(-1, 1).astype(np.float64)
 
 
 class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
