@@ -56,7 +56,6 @@ def _check_statistics(X, X_true,
               err_msg=err_msg.format(True))
     assert_ae(X_trans, X_true, err_msg=err_msg.format(True))
 
-
 def test_imputation_shape():
     # Verify the shapes of the imputed matrix for different strategies.
     X = np.random.randn(10, 2)
@@ -513,7 +512,7 @@ def test_imputation_copy():
       "'sparse' has to be a boolean or 'auto'"),
      (np.array([['a', 'b'], ['c', 'a']], dtype=str),
       np.array([['a', 'b'], ['c', 'a']], dtype=str),
-      {}, "Missing indicator does not support data with dtype")]
+      {}, "MissingIndicator does not support data with dtype")]
 )
 def test_missing_indicator_error(X_fit, X_trans, params, msg_err):
     indicator = MissingIndicator(missing_values=-1)
