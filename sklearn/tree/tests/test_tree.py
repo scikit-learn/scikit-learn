@@ -1832,7 +1832,7 @@ def test_empty_leaf_infinite_threshold():
 
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS)
 @pytest.mark.parametrize(
-    "dataset", set(DATASETS.keys()) - {"reg_small", "boston"})
+    "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "boston"}))
 @pytest.mark.parametrize(
     "tree_cls", [DecisionTreeClassifier, ExtraTreeClassifier])
 def test_prune_tree_clf_are_subtrees(criterion, dataset, tree_cls):
