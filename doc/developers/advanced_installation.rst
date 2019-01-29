@@ -35,8 +35,8 @@ Building from source
 Scikit-learn requires:
 
 - Python (>= 3.5),
-- NumPy (>= 1.8.2),
-- SciPy (>= 0.13.3).
+- NumPy (>= 1.11),
+- SciPy (>= 0.17).
 
 .. note::
 
@@ -46,7 +46,7 @@ Scikit-learn requires:
 
 Building Scikit-learn also requires
 
-- Cython >=0.23 
+- Cython >=0.28.5 
 
 Running tests requires
 
