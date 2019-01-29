@@ -86,7 +86,7 @@ Occasionally, sensitive discussion occurs on a private list.
 
 Scikit-learn uses a "consensus seeking" process for making decisions. The group
 tries to find a resolution that has no open objections among core developers.
-If no concensus can be reached, any core-developer can call for a vote, which will
+At any point during the discussion, any core-developer can call for a vote, which will
 conclude one month from the call for the vote. Any vote must be backed by a
 `SLEP <slep>`. If no option can gather two thirds of the votes cast, the
 decision is escalated to the TC, which in turn will use consensus seeking with
