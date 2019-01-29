@@ -46,7 +46,7 @@ Scikit-learn requires:
 
 Building Scikit-learn also requires
 
-- Cython >=0.23
+- Cython >=0.23 
 - OpenMP
 
 Running tests requires
