@@ -9,11 +9,11 @@ from numpy.testing import assert_equal
 
 from sklearn.utils import check_random_state
 from sklearn.utils.stats import _weighted_percentile
-from sklearn.ensemble.losses import BinomialDeviance
-from sklearn.ensemble.losses import RegressionLossFunction
-from sklearn.ensemble.losses import LeastSquaresError
-from sklearn.ensemble.losses import QuantileLossFunction
-from sklearn.ensemble.losses import LOSS_FUNCTIONS
+from sklearn.ensemble._gb_losses import BinomialDeviance
+from sklearn.ensemble._gb_losses import RegressionLossFunction
+from sklearn.ensemble._gb_losses import LeastSquaresError
+from sklearn.ensemble._gb_losses import QuantileLossFunction
+from sklearn.ensemble._gb_losses import LOSS_FUNCTIONS
 
 
 def test_binomial_deviance():

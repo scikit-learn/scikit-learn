@@ -48,7 +48,7 @@ from ..model_selection import train_test_split
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE
 from ..tree._tree import TREE_LEAF
-from . import losses
+from . import _gb_losses
 
 from ..utils import check_random_state
 from ..utils import check_array
@@ -1267,15 +1267,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                              "was %r" % self.learning_rate)
 
         if (self.loss not in self._SUPPORTED_LOSS
-                or self.loss not in losses.LOSS_FUNCTIONS):
+                or self.loss not in _gb_losses.LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
         if self.loss == 'deviance':
-            loss_class = (losses.MultinomialDeviance
+            loss_class = (_gb_losses.MultinomialDeviance
                           if len(self.classes_) > 2
-                          else losses.BinomialDeviance)
+                          else _gb_losses.BinomialDeviance)
         else:
-            loss_class = losses.LOSS_FUNCTIONS[self.loss]
+            loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
 
         if self.loss in ('huber', 'quantile'):
             self.loss_ = loss_class(self.n_classes_, self.alpha)
