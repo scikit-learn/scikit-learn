@@ -1020,7 +1020,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     if init == "warn":
         if n_components < n_features:
             warnings.warn("The default value of init will change from "
-                          "random to None in 0.23.", FutureWarning)
+                          "random to None in 0.23 to make it consistent "
+                          "with decomposition.NMF.", FutureWarning)
         init = "random"
 
     # check W and H, or initialize them
