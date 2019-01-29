@@ -646,7 +646,6 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                                missing_row_mask)
         if self.sample_posterior:
             mus, sigmas = predictor.predict(X_test, return_std=True)
-            print(mus, sigmas, predictor.coef_, predictor.intercept_)
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
             # two types of problems: (1) non-positive sigmas, (2) mus outside
             # legal range of min_value and max_value (results in inf sample)
