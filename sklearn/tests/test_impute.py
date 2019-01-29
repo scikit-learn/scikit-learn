@@ -532,8 +532,8 @@ def test_iterative_imputer_imputation_order(imputation_order):
     imputer.fit_transform(X)
     ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
 
-    assert len(ordered_idx) // imputer.n_iter_ \
-        == imputer.n_features_with_missing_
+    assert (len(ordered_idx) // imputer.n_iter_ ==
+            imputer.n_features_with_missing_)
 
     if imputation_order == 'roman':
         assert np.all(ordered_idx[:d-1] == np.arange(1, d))
@@ -817,11 +817,14 @@ def test_iterative_imputer_additive_matrix():
     assert_allclose(X_test_filled, X_test_est, rtol=1e-3, atol=0.01)
 
 
-def test_iterative_imputer_error_param():
-    rng = np.random.RandomState(42)
+@pytest.mark.parametrize("max_iter, tol, warning_type, warning", [
+    (-1, 1e-3, ValueError, 'should be a positive integer'),
+    (1, -1e-3, ValueError, 'should be a non-negative float')
+])
+def test_iterative_imputer_error_param(max_iter, tol, warning_type, warning):
     X = rng.randn(100, 2)
-    imputer = IterativeImputer(max_iter=-1)
-    with pytest.raises(ValueError, match='should be a positive integer'):
+    imputer = IterativeImputer(max_iter=max_iter, tol=tol)
+    with pytest.raises(warning_type, match=warning):
         imputer.fit_transform(X)
 
 
@@ -848,8 +851,8 @@ def test_iterative_imputer_early_stopping():
                                sample_posterior=False,
                                verbose=1,
                                random_state=rng)
-    X_filled_5 = imputer.fit_transform(X_missing)
-    assert_allclose(X_filled_100, X_filled_5, atol=1e-7)
+    X_filled_early = imputer.fit_transform(X_missing)
+    assert_allclose(X_filled_100, X_filled_early, atol=1e-7)
 
     imputer = IterativeImputer(max_iter=100,
                                tol=0,
@@ -857,7 +860,7 @@ def test_iterative_imputer_early_stopping():
                                verbose=1,
                                random_state=rng)
     imputer.fit(X_missing)
-    assert imputer.max_iter == imputer.n_iter_
+    assert imputer.n_iter_ == imputer.max_iter
 
 
 @pytest.mark.parametrize(

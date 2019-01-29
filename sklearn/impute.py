@@ -19,6 +19,7 @@ from collections import namedtuple
 
 from .base import BaseEstimator, TransformerMixin
 from .base import clone
+from .exceptions import ConvergenceWarning
 from .preprocessing import normalize
 from .utils import check_array, check_random_state, safe_indexing
 from .utils.sparsefuncs import _get_median
@@ -884,6 +885,12 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 "'max_iter' should be a positive integer. Got {} instead."
                 .format(self.max_iter))
 
+        if self.tol < 0:
+            raise ValueError(
+                "'tol' should be a non-negative float. Got {} instead."
+                .format(self.tol)
+            )
+
         if self.predictor is None:
             from .linear_model import BayesianRidge
             self._predictor = BayesianRidge()
@@ -956,6 +963,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 else:
                     Xt_previous = Xt.copy()
 
+        if not self.sample_posterior:
+            warnings.warn("[IterativeImputer] Early stopping criterion not "
+                          "reached.", ConvergenceWarning)
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return Xt
 
@@ -982,7 +992,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         if self.n_iter_ == 0:
             return Xt
 
-        imps_per_round = len(self.imputation_sequence_) // self.n_iter_
+        imputations_per_round = len(self.imputation_sequence_) // self.n_iter_
         i_rnd = 0
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s"
@@ -997,7 +1007,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 predictor=predictor_triplet.predictor,
                 fit_mode=False
             )
-            if not (it + 1) % imps_per_round:
+            if not (it + 1) % imputations_per_round:
                 if self.verbose > 1:
                     print('[IterativeImputer] Ending imputation round '
                           '%d/%d, elapsed time %0.2f'

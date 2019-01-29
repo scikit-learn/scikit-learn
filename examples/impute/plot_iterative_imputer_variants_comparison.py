@@ -33,7 +33,8 @@ The goal is to compare different predictors to see which one is best for the
 dataset with a single value randomly removed from each row.
 
 For this particular pattern of missing values we see that
-:class:`sklearn.ensemble.ExtraTreesRegressor` give the best results.
+:class:`sklearn.ensemble.ExtraTreesRegressor` and
+:class:`sklearn.linear_model.BayesianRidge` give the best results.
 """
 print(__doc__)
 
