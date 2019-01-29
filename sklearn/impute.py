@@ -646,6 +646,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                                missing_row_mask)
         if self.sample_posterior:
             mus, sigmas = predictor.predict(X_test, return_std=True)
+            print(mus, sigmas, predictor.coef_, predictor.intercept_)
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
             # two types of problems: (1) non-positive sigmas, (2) mus outside
             # legal range of min_value and max_value (results in inf sample)
@@ -936,12 +937,14 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             # stop early if difference between consecutive imputations goes up.
             # if so, back off to previous imputation
             if not self.sample_posterior:
-                norm_diff = np.linalg.norm(Xt - Xt_previous) \
-                            / np.linalg.norm(Xt)
+                # norm difference is defined in section 2 for missForest here:
+                # academic.oup.com/bioinformatics/article/28/1/112/219101
+                norm_diff = (np.linalg.norm(Xt - Xt_previous)
+                             / np.linalg.norm(Xt))
                 if norm_diff > norm_diff_previous:
                     self.imputation_sequence_ = \
                         self.imputation_sequence_[:-len(ordered_idx)]
-                    Xt = np.copy(Xt_previous)
+                    Xt = Xt_previous
                     self.n_iter_ = i_rnd
                     print('[IterativeImputer] Early stopping criterion '
                           'reached. Using result of round %d' % i_rnd)
