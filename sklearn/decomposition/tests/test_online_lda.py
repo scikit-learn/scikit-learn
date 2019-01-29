@@ -390,12 +390,12 @@ def check_verbosity(verbose, evaluate_every, expected_lines,
 
 
 @pytest.mark.parametrize(
-    'verbose,evaluate_every,expected_lines,expected_perplexities',
-    [(False, 1, 0, 0),
-     (False, 0, 0, 0),
-     (True, 0, 3, 0),
-     (True, 1, 3, 3),
-     (True, 2, 3, 1)])
+        'verbose,evaluate_every,expected_lines,expected_perplexities',
+        [(False, 1, 0, 0),
+         (False, 0, 0, 0),
+         (True, 0, 3, 0),
+         (True, 1, 3, 3),
+         (True, 2, 3, 1)])
 def test_verbosity(verbose, evaluate_every, expected_lines,
                    expected_perplexities):
     check_verbosity(verbose, evaluate_every, expected_lines,
