@@ -635,77 +635,133 @@ def test_nanencode_util_as_encode(values, expected, extra_value):
     assert_raises(ValueError, _nanencode, unclean_value, uniques, encode=True)
 
 
+# There is a bug with assert_array_equal when comparing object arrays with
+# nans. Since nans are only seen at the end, the last items are asserted
+# separately. See https://github.com/numpy/numpy/issues/9023
+def nanassert_array_equal(a, b):
+    # The sklearn assert_equal does not support nans
+    np.testing.assert_equal(a[-1], b[-1])
+    assert_array_equal(a[:-1], b[:-1])
+
+
 @pytest.mark.parametrize(
-        "values, expected, missing_values, unknown_value",
+        "values, expected, missing_values",
         [(np.array([2, 1, 3, 1, 3, np.nan, 2, np.float('nan')],
                    dtype='float64'),
-          np.array([1, 2, 3], dtype='float64'),
-          np.nan, 4),
+          np.array([1, 2, 3], dtype='float64'), np.nan),
          (np.array([2, 1, np.nan, 1, np.float('nan'), 3, 2, 3],
                    dtype='float64'),
-          np.array([1, 2, np.nan], dtype='float64'),
-          3, 4),
+          np.array([1, 2, np.nan], dtype='float64'), 3),
          (np.array([2, 1, 3, 1, 3, 4, 2, 4], dtype='int64'),
-          np.array([1, 2, 3], dtype='int64'),
-          4, 5),
+          np.array([1, 2, 3], dtype='int64'), 4),
          (np.array(['b', 'a', np.nan, 'a', np.float('nan'), None, 'b', None],
                    dtype=object),
-          np.array(['a', 'b', np.nan], dtype=object),
-          None, 'e'),
+          np.array(['a', 'b', np.nan], dtype=object), None),
          (np.array(['b', 'a', None, 'a', None, np.float('nan'), 'b', np.nan],
                    dtype=object),
-          np.array(['a', 'b', None], dtype=object),
-          np.nan, 'e'),
+          np.array(['a', 'b', None], dtype=object), np.nan),
          (np.array(['b', 'a', None, 'a', None, 'c', 'b', 'c', ], dtype=object),
-          np.array(['a', 'b', None], dtype=object),
-          'c', 'e'),
+          np.array(['a', 'b', None], dtype=object), 'c'),
          (np.array(['b', 'a', 'c', 'a', 'c', 'd', 'b', 'd']),
-          np.array(['a', 'b', 'c']),
-          'd', 'e')],
+          np.array(['a', 'b', 'c']), 'd')],
         ids=['float64_nan', 'float64_value', 'int64_value',
              'object_none', 'object_nan', 'object_value', 'str_value'])
-def test_nanencode_util_with_missing(values, expected,
-                                     missing_values, unknown_value):
-    # There is a bug with assert_array_equal when comparing object arrays with
-    # nans. Since nans are only seen at the end, the last items are asserted
-    # separately. See https://github.com/numpy/numpy/issues/9023
-    def _nanassert_array_equal(a, b):
-        # The sklearn assert_equal does not support nans
-        np.testing.assert_equal(a[-1], b[-1])
-        assert_array_equal(a[:-1], b[:-1])
-
+def test_nanencode_util_missing(values, expected, missing_values):
     encoding_answer = np.array([1, 0, 2, 0, 2, 1])
     na_mask_answer = np.array([0, 0, 0, 0, 0, 1, 0, 1], dtype=np.bool)
 
     uniques = _nanencode(values, missing_values=missing_values)
-    _nanassert_array_equal(uniques, expected)
+    nanassert_array_equal(uniques, expected)
 
-    uniques, encoded, na_mask = _nanencode(values, encode=True,
-                                           missing_values=missing_values)
-    _nanassert_array_equal(uniques, expected)
+    uniques_ = _nanencode(values, uniques, False, missing_values)
+    nanassert_array_equal(uniques_, uniques)
+
+    res = _nanencode(values, None, True, missing_values)
+    uniques, encoded, na_mask = res
+    nanassert_array_equal(uniques, expected)
     assert_array_equal(na_mask, na_mask_answer)
     assert_array_equal(encoded[~na_mask], encoding_answer)
 
-    uniques_, encoded, na_mask = _nanencode(values, uniques, encode=True,
-                                            missing_values=missing_values)
-    _nanassert_array_equal(uniques_, uniques)
+    res = _nanencode(values, uniques, True, missing_values)
+    uniques_, encoded, na_mask = res
+    nanassert_array_equal(uniques_, uniques)
     assert_array_equal(na_mask, na_mask_answer)
     assert_array_equal(encoded[~na_mask], encoding_answer)
 
-    unk_na_mask_answer = np.append(na_mask_answer, False)
-    unk_values = np.append(values, unknown_value)
-    unk_mask_answer = np.zeros_like(unk_na_mask_answer, dtype=np.bool)
-    unk_mask_answer[-1] = 1
 
-    assert_raises(ValueError, _nanencode, unk_values, uniques,
-                  encode=True, missing_values=missing_values,
-                  encode_unknown=False)
+@pytest.mark.parametrize(
+        "fit_values, tr_values, expected, missing_values",
+        [(np.array([2, 1, 3, 1, 3, np.nan, 2, np.float('nan')],
+                   dtype='float64'),
+          np.array([4, 2, 1, 5, 3, 1, 3, np.nan, 2, np.float('nan')],
+                   dtype='float64'),
+          np.array([1, 2, 3], dtype='float64'), np.nan),
+         (np.array([2, 1, np.nan, 1, np.float('nan'), 3, 2, 3],
+                   dtype='float64'),
+          np.array([4, 2, 1, 5, np.nan, 1, np.float('nan'), 3, 2, 3],
+                   dtype='float64'),
+          np.array([1, 2, np.nan], dtype='float64'), 3),
+         (np.array([2, 1, 3, 1, 3, 4, 2, 4], dtype='int64'),
+          np.array([5, 2, 1, 6, 3, 1, 3, 4, 2, 4], dtype='int64'),
+          np.array([1, 2, 3], dtype='int64'), 4),
+         (np.array(['b', 'a', np.nan, 'a', np.float('nan'), None, 'b', None],
+                   dtype=object),
+          np.array(['d', 'b', 'a', 'e', np.nan, 'a', np.float('nan'),
+                    None, 'b', None], dtype=object),
+          np.array(['a', 'b', np.nan], dtype=object), None),
+         (np.array(['b', 'a', None, 'a', None, np.float('nan'), 'b', np.nan],
+                   dtype=object),
+          np.array(['c', 'b', 'a', 'd', None, 'a', None, np.float('nan'),
+                    'b', np.nan], dtype=object),
+          np.array(['a', 'b', None], dtype=object), np.nan),
+         (np.array(['b', 'a', None, 'a', None, 'c', 'b', 'c', ], dtype=object),
+          np.array(['d', 'b', 'a', 'e', None, 'a', None, 'c', 'b', 'c', ],
+                   dtype=object),
+          np.array(['a', 'b', None], dtype=object), 'c'),
+         (np.array(['b', 'a', 'c', 'a', 'c', 'd', 'b', 'd']),
+          np.array(['e', 'b', 'a', 'f', 'c', 'a', 'c', 'd', 'b', 'd']),
+          np.array(['a', 'b', 'c']), 'd')],
+        ids=['float64_nan', 'float64_value', 'int64_value',
+             'object_none', 'object_nan', 'object_value', 'str_value'])
+def test_nanencode_util_missing_unknown(fit_values, tr_values,
+                                        expected, missing_values):
+    encoding_answer = np.array([1, 0, 2, 0, 2, 1])
+    fit_na_mask_answer = np.array([0, 0, 0, 0, 0, 1, 0, 1], dtype=np.bool)
+    fit_unk_mask_answer = np.zeros_like(fit_na_mask_answer)
+    tr_na_mask_answer = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+                                 dtype=np.bool)
+    tr_unk_mask_answer = np.array([1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                                  dtype=np.bool)
 
-    result = _nanencode(unk_values, uniques, encode=True,
-                        missing_values=missing_values,
-                        encode_unknown=True)
-    uniques_, encoded, na_mask, unk_mask = result
-    _nanassert_array_equal(uniques_, expected)
-    assert_array_equal(na_mask, unk_na_mask_answer)
-    assert_array_equal(unk_mask, unk_mask_answer)
+    uniques = _nanencode(fit_values, None, False, missing_values, True)
+    nanassert_array_equal(uniques, expected)
+
+    uniques_ = _nanencode(fit_values, uniques, False, missing_values, True)
+    nanassert_array_equal(uniques_, uniques)
+
+    res = _nanencode(fit_values, None, True, missing_values, True)
+    uniques, encoded, na_mask, unk_mask = res
+    nanassert_array_equal(uniques, expected)
+    assert_array_equal(na_mask, fit_na_mask_answer)
+    assert_array_equal(unk_mask, fit_unk_mask_answer)
+    assert_array_equal(encoded[~(na_mask | unk_mask)], encoding_answer)
+
+    res = _nanencode(fit_values, uniques, True, missing_values, True)
+    uniques_, encoded, na_mask, unk_mask = res
+    nanassert_array_equal(uniques_, uniques)
+    assert_array_equal(na_mask, fit_na_mask_answer)
+    assert_array_equal(unk_mask, fit_unk_mask_answer)
+    assert_array_equal(encoded[~(na_mask | unk_mask)], encoding_answer)
+
+    uniques_ = _nanencode(tr_values, uniques, False, missing_values, True)
+    nanassert_array_equal(uniques_, uniques)
+
+    assert_raises(ValueError, _nanencode, tr_values, uniques, True,
+                  missing_values, False)
+
+    res = _nanencode(tr_values, uniques, True, missing_values, True)
+    uniques_, encoded, na_mask, unk_mask = res
+    nanassert_array_equal(uniques_, uniques)
+    assert_array_equal(na_mask, tr_na_mask_answer)
+    assert_array_equal(unk_mask, tr_unk_mask_answer)
     assert_array_equal(encoded[~(na_mask | unk_mask)], encoding_answer)
