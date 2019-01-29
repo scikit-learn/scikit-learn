@@ -599,16 +599,15 @@ def test_iterative_imputer_clip_truncnorm():
     rng = np.random.RandomState(0)
     n = 100
     d = 10
-    max_iter = 2
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
     X[:, 0] = 1
 
     imputer = IterativeImputer(missing_values=0,
-                               max_iter=max_iter,
+                               max_iter=2,
                                n_nearest_features=5,
                                sample_posterior=True,
-                               min_value=0,
-                               max_value=1,
+                               min_value=0.1,
+                               max_value=0.2,
                                verbose=1,
                                imputation_order='random',
                                random_state=rng)
