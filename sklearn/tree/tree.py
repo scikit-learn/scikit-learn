@@ -16,7 +16,6 @@ randomized trees. Single and multi-output problems are both handled.
 
 from __future__ import division
 
-
 import numbers
 import warnings
 from abc import ABCMeta
@@ -45,11 +44,10 @@ from ._tree import Tree
 from ._tree import build_pruned_tree
 from . import _tree, _splitter, _criterion
 
-__all__ = ["DecisionTreeClassifier",
-           "DecisionTreeRegressor",
-           "ExtraTreeClassifier",
-           "ExtraTreeRegressor"]
-
+__all__ = [
+    "DecisionTreeClassifier", "DecisionTreeRegressor", "ExtraTreeClassifier",
+    "ExtraTreeRegressor"
+]
 
 # =============================================================================
 # Types and constants
@@ -59,14 +57,21 @@ DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
-CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE,
-                "mae": _criterion.MAE}
+CRITERIA_REG = {
+    "mse": _criterion.MSE,
+    "friedman_mse": _criterion.FriedmanMSE,
+    "mae": _criterion.MAE
+}
 
-DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
-                   "random": _splitter.RandomSplitter}
+DENSE_SPLITTERS = {
+    "best": _splitter.BestSplitter,
+    "random": _splitter.RandomSplitter
+}
 
-SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
-                    "random": _splitter.RandomSparseSplitter}
+SPARSE_SPLITTERS = {
+    "best": _splitter.BestSparseSplitter,
+    "random": _splitter.RandomSparseSplitter
+}
 
 # =============================================================================
 # Base decision tree
@@ -126,7 +131,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         check_is_fitted(self, 'tree_')
         return self.tree_.n_leaves
 
-    def fit(self, X, y, sample_weight=None, check_input=True,
+    def fit(self,
+            X,
+            y,
+            sample_weight=None,
+            check_input=True,
             X_idx_sorted=None):
 
         random_state = check_random_state(self.random_state)
@@ -166,8 +175,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             y_encoded = np.zeros(y.shape, dtype=np.int)
             for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k],
-                                                       return_inverse=True)
+                classes_k, y_encoded[:, k] = np.unique(
+                    y[:, k], return_inverse=True)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
             y = y_encoded
@@ -186,37 +195,34 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
-        max_depth = ((2 ** 31) - 1 if self.max_depth is None
-                     else self.max_depth)
-        max_leaf_nodes = (-1 if self.max_leaf_nodes is None
-                          else self.max_leaf_nodes)
+        max_depth = ((2**31) - 1 if self.max_depth is None else self.max_depth)
+        max_leaf_nodes = (-1 if self.max_leaf_nodes is None else
+                          self.max_leaf_nodes)
 
         if isinstance(self.min_samples_leaf, (numbers.Integral, np.integer)):
             if not 1 <= self.min_samples_leaf:
-                raise ValueError("min_samples_leaf must be at least 1 "
-                                 "or in (0, 0.5], got %s"
-                                 % self.min_samples_leaf)
+                raise ValueError(
+                    "min_samples_leaf must be at least 1 "
+                    "or in (0, 0.5], got %s" % self.min_samples_leaf)
             min_samples_leaf = self.min_samples_leaf
         else:  # float
             if not 0. < self.min_samples_leaf <= 0.5:
-                raise ValueError("min_samples_leaf must be at least 1 "
-                                 "or in (0, 0.5], got %s"
-                                 % self.min_samples_leaf)
+                raise ValueError(
+                    "min_samples_leaf must be at least 1 "
+                    "or in (0, 0.5], got %s" % self.min_samples_leaf)
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
             if not 2 <= self.min_samples_split:
                 raise ValueError("min_samples_split must be an integer "
                                  "greater than 1 or a float in (0.0, 1.0]; "
-                                 "got the integer %s"
-                                 % self.min_samples_split)
+                                 "got the integer %s" % self.min_samples_split)
             min_samples_split = self.min_samples_split
         else:  # float
             if not 0. < self.min_samples_split <= 1.:
                 raise ValueError("min_samples_split must be an integer "
                                  "greater than 1 or a float in (0.0, 1.0]; "
-                                 "got the float %s"
-                                 % self.min_samples_split)
+                                 "got the float %s" % self.min_samples_split)
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
@@ -266,18 +272,18 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                               "or larger than 1").format(max_leaf_nodes))
 
         if sample_weight is not None:
-            if (getattr(sample_weight, "dtype", None) != DOUBLE or
-                    not sample_weight.flags.contiguous):
+            if (getattr(sample_weight, "dtype", None) != DOUBLE
+                    or not sample_weight.flags.contiguous):
                 sample_weight = np.ascontiguousarray(
                     sample_weight, dtype=DOUBLE)
             if len(sample_weight.shape) > 1:
-                raise ValueError("Sample weights array has more "
-                                 "than one dimension: %d" %
-                                 len(sample_weight.shape))
+                raise ValueError(
+                    "Sample weights array has more "
+                    "than one dimension: %d" % len(sample_weight.shape))
             if len(sample_weight) != n_samples:
-                raise ValueError("Number of weights=%d does not match "
-                                 "number of samples=%d" %
-                                 (len(sample_weight), n_samples))
+                raise ValueError(
+                    "Number of weights=%d does not match "
+                    "number of samples=%d" % (len(sample_weight), n_samples))
 
         if expanded_class_weight is not None:
             if sample_weight is not None:
@@ -287,18 +293,18 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Set min_weight_leaf from min_weight_fraction_leaf
         if sample_weight is None:
-            min_weight_leaf = (self.min_weight_fraction_leaf *
-                               n_samples)
+            min_weight_leaf = (self.min_weight_fraction_leaf * n_samples)
         else:
-            min_weight_leaf = (self.min_weight_fraction_leaf *
-                               np.sum(sample_weight))
+            min_weight_leaf = (
+                self.min_weight_fraction_leaf * np.sum(sample_weight))
 
         if self.min_impurity_split is not None:
-            warnings.warn("The min_impurity_split parameter is deprecated. "
-                          "Its default value will change from 1e-7 to 0 in "
-                          "version 0.23, and it will be removed in 0.25. "
-                          "Use the min_impurity_decrease parameter instead.",
-                          DeprecationWarning)
+            warnings.warn(
+                "The min_impurity_split parameter is deprecated. "
+                "Its default value will change from 1e-7 to 0 in "
+                "version 0.23, and it will be removed in 0.25. "
+                "Use the min_impurity_decrease parameter instead.",
+                DeprecationWarning)
             min_impurity_split = self.min_impurity_split
         else:
             min_impurity_split = 1e-7
@@ -313,8 +319,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         allowed_presort = ('auto', True, False)
         if self.presort not in allowed_presort:
-            raise ValueError("'presort' should be in {}. Got {!r} instead."
-                             .format(allowed_presort, self.presort))
+            raise ValueError(
+                "'presort' should be in {}. Got {!r} instead.".format(
+                    allowed_presort, self.presort))
 
         if self.presort is True and issparse(X):
             raise ValueError("Presorting is not supported for sparse "
@@ -332,8 +339,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         # which desire presorting must do presorting themselves and pass that
         # matrix into each tree.
         if X_idx_sorted is None and presort:
-            X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
-                                             dtype=np.int32)
+            X_idx_sorted = np.asfortranarray(
+                np.argsort(X, axis=0), dtype=np.int32)
 
         if presort and X_idx_sorted.shape != X.shape:
             raise ValueError("The shape of X (X.shape = {}) doesn't match "
@@ -355,31 +362,22 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
-            splitter = SPLITTERS[self.splitter](criterion,
-                                                self.max_features_,
-                                                min_samples_leaf,
-                                                min_weight_leaf,
-                                                random_state,
-                                                self.presort)
+            splitter = SPLITTERS[self.splitter](
+                criterion, self.max_features_, min_samples_leaf,
+                min_weight_leaf, random_state, self.presort)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
-            builder = DepthFirstTreeBuilder(splitter, min_samples_split,
-                                            min_samples_leaf,
-                                            min_weight_leaf,
-                                            max_depth,
-                                            self.min_impurity_decrease,
-                                            min_impurity_split)
+            builder = DepthFirstTreeBuilder(
+                splitter, min_samples_split, min_samples_leaf, min_weight_leaf,
+                max_depth, self.min_impurity_decrease, min_impurity_split)
         else:
-            builder = BestFirstTreeBuilder(splitter, min_samples_split,
-                                           min_samples_leaf,
-                                           min_weight_leaf,
-                                           max_depth,
-                                           max_leaf_nodes,
-                                           self.min_impurity_decrease,
-                                           min_impurity_split)
+            builder = BestFirstTreeBuilder(
+                splitter, min_samples_split, min_samples_leaf, min_weight_leaf,
+                max_depth, max_leaf_nodes, self.min_impurity_decrease,
+                min_impurity_split)
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
@@ -395,17 +393,17 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         """Validate X whenever one tries to predict, apply, predict_proba"""
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csr")
-            if issparse(X) and (X.indices.dtype != np.intc or
-                                X.indptr.dtype != np.intc):
+            if issparse(X) and (X.indices.dtype != np.intc
+                                or X.indptr.dtype != np.intc):
                 raise ValueError("No support for np.int64 index based "
                                  "sparse matrices")
 
         n_features = X.shape[1]
         if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is %s and "
-                             "input n_features is %s "
-                             % (self.n_features_, n_features))
+            raise ValueError(
+                "Number of features of the model must "
+                "match the input. Model n_features is %s and "
+                "input n_features is %s " % (self.n_features_, n_features))
 
         return X
 
@@ -447,8 +445,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
                 for k in range(self.n_outputs_):
                     predictions[:, k] = self.classes_[k].take(
-                        np.argmax(proba[:, k], axis=1),
-                        axis=0)
+                        np.argmax(proba[:, k], axis=1), axis=0)
 
                 return predictions
 
@@ -537,36 +534,36 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         # find parent node ids and leaves
         child_l = self.tree_.children_left
         child_r = self.tree_.children_right
-        parents = np.zeros(shape=n_nodes, dtype=np.intp)
+        parent = np.zeros(shape=n_nodes, dtype=np.intp)
 
         # Uses uint8 to avoid casting when passing to generate_pruned_tree
         leaves_in_subtree = np.zeros(shape=n_nodes, dtype=np.uint8)
 
         stack = [(0, -1)]
-        while len(stack) > 0:
-            node_id, parent = stack.pop()
-            parents[node_id] = parent
-            if child_l[node_id] == child_r[node_id]:
-                leaves_in_subtree[node_id] = 1
+        while stack:
+            node_idx, parent_idx = stack.pop()
+            parent[node_idx] = parent_idx
+            if child_l[node_idx] == child_r[node_idx]:
+                leaves_in_subtree[node_idx] = 1
             else:
-                stack.append((child_l[node_id], node_id))
-                stack.append((child_r[node_id], node_id))
+                stack.append((child_l[node_idx], node_idx))
+                stack.append((child_r[node_idx], node_idx))
 
         # computes number of leaves in all branches and the overall impurity of
         # the branch. The overall impurity is the sum of r_node in its leaves.
         n_leaves = np.zeros(shape=n_nodes, dtype=np.int32)
-        leaf_idicies, = np.where(leaves_in_subtree)
+        leaf_indicies, = np.where(leaves_in_subtree)
         r_branch = np.zeros(shape=n_nodes, dtype=DTYPE)
-        r_branch[leaf_idicies] = r_node[leaf_idicies]
+        r_branch[leaf_indicies] = r_node[leaf_indicies]
 
         # bubble up values to ancestor nodes
-        for idx in leaf_idicies:
-            cur_R = r_node[idx]
-            while idx != 0:
-                par_idx = parents[idx]
-                r_branch[par_idx] += cur_R
+        for leaf_idx in leaf_indicies:
+            cur_r = r_node[leaf_idx]
+            while leaf_idx != 0:
+                par_idx = parent[leaf_idx]
+                r_branch[par_idx] += cur_r
                 n_leaves[par_idx] += 1
-                idx = par_idx
+                leaf_idx = par_idx
 
         # non-leaves that can be pruned
         inner_nodes = np.logical_not(leaves_in_subtree)
@@ -588,30 +585,31 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             # descendants of branch are not in subtree
             stack = [cur_idx]
-            while len(stack) > 0:
-                idx = stack.pop()
-                inner_nodes[idx] = False
-                leaves_in_subtree[idx] = 0
-                in_subtree[idx] = False
-                n_left, n_right = child_l[idx], child_r[idx]
-                if n_left != n_right:
-                    stack.append(n_left)
-                    stack.append(n_right)
+            while stack:
+                leaf_idx = stack.pop()
+                inner_nodes[leaf_idx] = False
+                leaves_in_subtree[leaf_idx] = 0
+                in_subtree[leaf_idx] = False
+                child_l_idx, child_r_idx = child_l[leaf_idx], child_r[leaf_idx]
+                if child_l_idx != child_r_idx:
+                    stack.append(child_l_idx)
+                    stack.append(child_r_idx)
             leaves_in_subtree[cur_idx] = 1
 
             # updates number of leaves
-            cur_leaves, n_leaves[cur_idx] = n_leaves[cur_idx], 0
+            n_pruned_leaves = n_leaves[cur_idx] - 1
+            n_leaves[cur_idx] = 0
 
             # computes the increase in r_branch to bubble up
-            R_diff = r_node[cur_idx] - r_branch[cur_idx]
+            r_diff = r_node[cur_idx] - r_branch[cur_idx]
             r_branch[cur_idx] = r_node[cur_idx]
 
             # bubble up values to ancestors
-            cur_idx = parents[cur_idx]
-            while cur_idx != _tree.TREE_LEAF:
-                n_leaves[cur_idx] -= cur_leaves - 1
-                r_branch[cur_idx] += R_diff
-                cur_idx = parents[cur_idx]
+            cur_idx = parent[cur_idx]
+            while cur_idx != -1:
+                n_leaves[cur_idx] -= n_pruned_leaves
+                r_branch[cur_idx] += r_diff
+                cur_idx = parent[cur_idx]
 
         # build pruned treee
         n_classes = np.atleast_1d(self.n_classes_)
@@ -640,6 +638,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 # =============================================================================
 # Public estimators
 # =============================================================================
+
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
@@ -857,6 +856,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
+
     def __init__(self,
                  criterion="gini",
                  splitter="best",
@@ -888,7 +888,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             presort=presort,
             alpha=alpha)
 
-    def fit(self, X, y, sample_weight=None, check_input=True,
+    def fit(self,
+            X,
+            y,
+            sample_weight=None,
+            check_input=True,
             X_idx_sorted=None):
         """Build a decision tree classifier from the training set (X, y).
 
@@ -925,7 +929,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         """
 
         super(DecisionTreeClassifier, self).fit(
-            X, y,
+            X,
+            y,
             sample_weight=sample_weight,
             check_input=check_input,
             X_idx_sorted=X_idx_sorted)
@@ -1206,6 +1211,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
             0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
     """
+
     def __init__(self,
                  criterion="mse",
                  splitter="best",
@@ -1235,7 +1241,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             presort=presort,
             alpha=alpha)
 
-    def fit(self, X, y, sample_weight=None, check_input=True,
+    def fit(self,
+            X,
+            y,
+            sample_weight=None,
+            check_input=True,
             X_idx_sorted=None):
         """Build a decision tree regressor from the training set (X, y).
 
@@ -1271,7 +1281,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         """
 
         super(DecisionTreeRegressor, self).fit(
-            X, y,
+            X,
+            y,
             sample_weight=sample_weight,
             check_input=check_input,
             X_idx_sorted=X_idx_sorted)
@@ -1437,6 +1448,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
+
     def __init__(self,
                  criterion="gini",
                  splitter="random",
@@ -1610,6 +1622,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
+
     def __init__(self,
                  criterion="mse",
                  splitter="random",
