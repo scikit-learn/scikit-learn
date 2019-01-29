@@ -80,15 +80,14 @@ and the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_.
 Occasionally, sensitive discussion occurs on a private list.
 
 Scikit-learn uses a "consensus seeking" process for making decisions. The group
-tries to find a resolution that has no open objections among core developers
-within a month. If no consensus can be reached in this time frame, a
-core-developer can ask for a single extension of the discussion period by
-another month. If no consensus is reached after the discussion time-frame ended
-a vote among core developers is called. If no option can gather two thirds of
-the votes cast, the decision is escalated to the TC, which in turn will use
-consensus seeking with the fallback option of a simple majority vote; the same
-time frame rules apply here within the TC. This is what we hereafter may refer
-to as “the decision making process”.
+tries to find a resolution that has no open objections among core developers.
+If no concensus can be reached, any core-developer can call for a vote, which will
+conclude one month from the call for the vote. Any vote must be backed by a
+`SLEP <slep>`. If no option can gather two thirds of the votes cast, the
+decision is escalated to the TC, which in turn will use consensus seeking with
+the fallback option of a simple majority vote if no consensus can be found
+within a month. This is what we hereafter may refer to as “the decision making
+process”.
 
 Decisions (in addition to adding core developers and TC membership as above)
 are made according to the following rules:
