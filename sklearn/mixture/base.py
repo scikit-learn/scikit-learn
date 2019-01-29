@@ -15,7 +15,6 @@ import numpy as np
 from .. import cluster
 from ..base import BaseEstimator
 from ..base import DensityMixin
-from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
 from ..utils.fixes import logsumexp
@@ -64,7 +63,7 @@ def _check_X(X, n_components=None, n_features=None, ensure_min_samples=1):
     return X
 
 
-class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
+class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for mixture models.
 
     This abstract class specifies an interface for all mixture classes and
