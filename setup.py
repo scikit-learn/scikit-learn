@@ -110,8 +110,18 @@ def get_openmp_flag(compiler):
     elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
         return ['-openmp']
     elif sys.platform == "darwin" and 'openmp' in os.getenv('CC', ''):
-        # -fopenmp can't be passed as compile arg when using apple clang
+        # -fopenmp can't be passed as compile flag when using Apple-clang.
+        # OpenMP support has to be enabled during preprocessing.
+        #
+        # For example, our macOS wheel build jobs use the following environment
+        # variables to build with Apple clang and the brew installed "libomp":
+        #
+        # export CC="clang -Xpreprocessor -fopenmp"
+        # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+        # export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+        # export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
         return ['']
+    # Default flag for GCC and clang:
     return ['-fopenmp']
 
 
