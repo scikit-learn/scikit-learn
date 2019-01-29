@@ -1140,7 +1140,7 @@ cdef class Tree:
 cpdef build_pruned_tree(
     Tree tree,
     Tree orig_tree,
-    np.ndarray[np.npy_uint8, ndim=1] leaves_in_subtree):
+    const np.npy_uint8[:] leaves_in_subtree):
     """Builds a pruned tree.
 
     Builds a pruned tree from the original tree. The values and nodes from the
