@@ -822,7 +822,7 @@ def test_iterative_imputer_additive_matrix():
     (1, -1e-3, ValueError, 'should be a non-negative float')
 ])
 def test_iterative_imputer_error_param(max_iter, tol, warning_type, warning):
-    X = rng.randn(100, 2)
+    X = np.zeros((100, 2))
     imputer = IterativeImputer(max_iter=max_iter, tol=tol)
     with pytest.raises(warning_type, match=warning):
         imputer.fit_transform(X)
