@@ -451,8 +451,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         Maximum number of imputation rounds to perform before returning the
         imputations computed during the final round. A round is a single
         imputation of each feature with missing values. The stopping criterion
-        is met once abs(max(X_i - X_{i-1})) < tol. Note that early stopping is
-        only applied if ``sample_posterior=False``.
+        is met once `abs(max(X_i - X_{i-1}))/abs(max(X[known_vals]))` < tol.
+        Note that early stopping is only applied if ``sample_posterior=False``.
 
     tol : float, optional (default=1e-3)
         Tolerance of the stopping condition.
@@ -517,8 +517,11 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         ``neighbor_feat_idx`` is the array of other features used to impute the
         current feature, and ``predictor`` is the trained predictor used for
         the imputation. Length is ``self.n_features_with_missing_ *
-        self.n_iter_``. ``self.n_iter_`` is the number of iteration rounds that
-        actually occurred, taking early stopping into account.
+        self.n_iter_``.
+
+    n_iter_ : int
+        Number of iteration rounds that occurred. Will be less than
+        ``self.max_iter`` if early stopping criterion was reached.
 
     n_features_with_missing_ : int
         Number of features with missing values.
@@ -662,15 +665,15 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             mus_too_high = mus > self._max_value
             imputed_values[mus_too_high] = self._max_value
             # the rest can be sampled without statistical issues
-            sample_flag = positive_sigmas & ~mus_too_low & ~mus_too_high
-            mus = mus[sample_flag]
-            sigmas = sigmas[sample_flag]
+            inrange_mask = positive_sigmas & ~mus_too_low & ~mus_too_high
+            mus = mus[inrange_mask]
+            sigmas = sigmas[inrange_mask]
             a = (self._min_value - mus) / sigmas
             b = (self._max_value - mus) / sigmas
 
             if scipy.__version__ < LooseVersion('0.18'):
                 # bug with vector-valued `a` in old scipy
-                imputed_values[sample_flag] = [
+                imputed_values[inrange_mask] = [
                     stats.truncnorm(a=a_, b=b_,
                                     loc=loc_, scale=scale_).rvs(
                                         random_state=self.random_state_)
@@ -679,7 +682,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             else:
                 truncated_normal = stats.truncnorm(a=a, b=b,
                                                    loc=mus, scale=sigmas)
-                imputed_values[sample_flag] = truncated_normal.rvs(
+                imputed_values[inrange_mask] = truncated_normal.rvs(
                     random_state=self.random_state_)
         else:
             imputed_values = predictor.predict(X_test)
@@ -916,7 +919,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         start_t = time()
         self.n_iter_ = self.max_iter
         if not self.sample_posterior:
-            Xt_previous = np.copy(Xt)
+            Xt_previous = Xt.copy()
+            normalized_tol = self.tol * np.max(np.abs(X[~mask_missing_values]))
         for i_rnd in range(self.max_iter):
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
@@ -941,14 +945,16 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             # stop early if difference between consecutive imputations goes up.
             # if so, back off to previous imputation
             if not self.sample_posterior:
-                if np.max(np.abs(Xt - Xt_previous)) < self.tol:
+                inf_norm = np.linalg.norm(Xt - Xt_previous, ord=np.inf,
+                                          axis=None)
+                if inf_norm < normalized_tol:
                     self.n_iter_ = i_rnd + 1
                     if self.verbose > 0:
                         print('[IterativeImputer] Early stopping criterion '
                               'reached.')
                     break
                 else:
-                    Xt_previous = np.copy(Xt)
+                    Xt_previous = Xt.copy()
 
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return Xt
