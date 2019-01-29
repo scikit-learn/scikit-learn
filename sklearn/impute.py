@@ -646,17 +646,25 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                                missing_row_mask)
         if self.sample_posterior:
             mus, sigmas = predictor.predict(X_test, return_std=True)
-            good_sigmas = sigmas > 0
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
-            imputed_values[~good_sigmas] = mus[~good_sigmas]
-            mus = mus[good_sigmas]
-            sigmas = sigmas[good_sigmas]
+            # two types of problems: (1) non-positive sigmas, (2) mus outside
+            # legal range of min_value and max_value (results in inf sample)
+            positive_sigmas = sigmas > 0
+            imputed_values[~positive_sigmas] = mus[~positive_sigmas]
+            mus_too_low = mus < self._min_value
+            imputed_values[mus_too_low] = self._min_value
+            mus_too_high = mus > self._max_value
+            imputed_values[mus_too_high] = self._max_value
+            # the rest can legally sampled
+            sample_flag = positive_sigmas & ~mus_too_low & ~mus_too_high
+            mus = mus[sample_flag]
+            sigmas = sigmas[sample_flag]
             a = (self._min_value - mus) / sigmas
             b = (self._max_value - mus) / sigmas
 
             if scipy.__version__ < LooseVersion('0.18'):
                 # bug with vector-valued `a` in old scipy
-                imputed_values[good_sigmas] = [
+                imputed_values[sample_flag] = [
                     stats.truncnorm(a=a_, b=b_,
                                     loc=loc_, scale=scale_).rvs(
                                         random_state=self.random_state_)
@@ -665,7 +673,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             else:
                 truncated_normal = stats.truncnorm(a=a, b=b,
                                                    loc=mus, scale=sigmas)
-                imputed_values[good_sigmas] = truncated_normal.rvs(
+                imputed_values[sample_flag] = truncated_normal.rvs(
                     random_state=self.random_state_)
         else:
             imputed_values = predictor.predict(X_test)
