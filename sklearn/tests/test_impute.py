@@ -838,6 +838,7 @@ def test_iterative_imputer_early_stopping():
     X_missing[nan_mask] = np.nan
 
     imputer = IterativeImputer(max_iter=max_iter,
+                               tol=1e-3,
                                sample_posterior=False,
                                verbose=1,
                                random_state=rng)

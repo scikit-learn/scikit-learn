@@ -110,7 +110,7 @@ imputation round are returned.
     IterativeImputer(imputation_order='ascending', initial_strategy='mean',
                      max_iter=10, max_value=None, min_value=None,
                      missing_values=nan, n_nearest_features=None, predictor=None,
-                     random_state=0, sample_posterior=False, verbose=0)
+                     random_state=0, sample_posterior=False, tol=0.001, verbose=0)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     >>> # the model learns that the second feature is double the first
     >>> print(np.round(imp.transform(X_test)))

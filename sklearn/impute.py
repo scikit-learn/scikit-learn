@@ -450,10 +450,12 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
     max_iter : int, optional (default=10)
         Maximum number of imputation rounds to perform before returning the
         imputations computed during the final round. A round is a single
-        imputation of each feature with missing values. As with the missForest
-        package, the stopping criterion is met once the difference between the
-        consecutive imputations increases for the first time. Note that early
-        stopping is only possible if ``sample_posterior=False``.
+        imputation of each feature with missing values. The stopping criterion
+        is met once abs(max(X_i - X_{i-1})) < tol. Note that early stopping is
+        only applied if ``sample_posterior=False``.
+
+    tol : float, optional (default=1e-3)
+        Tolerance of the stopping condition.
 
     n_nearest_features : int, optional (default=None)
         Number of other features to use to estimate the missing values of
@@ -514,7 +516,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         ``feat_idx`` is the current feature to be imputed,
         ``neighbor_feat_idx`` is the array of other features used to impute the
         current feature, and ``predictor`` is the trained predictor used for
-        the imputation. Length is ``self.n_features_with_missing_ * max_iter``.
+        the imputation. Length is ``self.n_features_with_missing_ *
+        self.n_iter_``. ``self.n_iter_`` is the number of iteration rounds that
+        actually occurred, taking early stopping into account.
 
     n_features_with_missing_ : int
         Number of features with missing values.
@@ -554,6 +558,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                  predictor=None,
                  sample_posterior=False,
                  max_iter=10,
+                 tol=1e-3,
                  n_nearest_features=None,
                  initial_strategy="mean",
                  imputation_order='ascending',
@@ -566,6 +571,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.predictor = predictor
         self.sample_posterior = sample_posterior
         self.max_iter = max_iter
+        self.tol = tol
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
         self.imputation_order = imputation_order
@@ -911,7 +917,6 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.n_iter_ = self.max_iter
         if not self.sample_posterior:
             Xt_previous = np.copy(Xt)
-            norm_diff_previous = np.inf
         for i_rnd in range(self.max_iter):
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
@@ -936,21 +941,14 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             # stop early if difference between consecutive imputations goes up.
             # if so, back off to previous imputation
             if not self.sample_posterior:
-                # norm difference is defined in section 2 for missForest here:
-                # academic.oup.com/bioinformatics/article/28/1/112/219101
-                norm_diff = (np.linalg.norm(Xt - Xt_previous)
-                             / np.linalg.norm(Xt))
-                if norm_diff > norm_diff_previous:
-                    self.imputation_sequence_ = \
-                        self.imputation_sequence_[:-len(ordered_idx)]
-                    Xt = Xt_previous
-                    self.n_iter_ = i_rnd
-                    print('[IterativeImputer] Early stopping criterion '
-                          'reached. Using result of round %d' % i_rnd)
+                if np.max(np.abs(Xt - Xt_previous)) < self.tol:
+                    self.n_iter_ = i_rnd + 1
+                    if self.verbose > 0:
+                        print('[IterativeImputer] Early stopping criterion '
+                              'reached.')
                     break
                 else:
                     Xt_previous = np.copy(Xt)
-                    norm_diff_previous = norm_diff
 
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return Xt
