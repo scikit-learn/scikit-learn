@@ -25,7 +25,7 @@ Contributors
 ------------
 Contributors are community members who contribute in concrete ways to the
 project. Anyone can become a contributor, and contributions can take many forms
-– not only code – as detailed in the `contributors guide <contributing>`.
+– not only code – as detailed in the `contributors guide <contributing>`_.
 
 Core developers
 ---------------
@@ -58,7 +58,12 @@ Technical Committee
 The Technical Committee (TC) members are core developers who have additional
 responsibilities to ensure the smooth running of the project. TC members are expected to
 participate in strategic planning, and approve changes to the governance model.
-
+The purpose of the TC is to ensure a smooth progress from the big-picture
+perspective. Indeed changes that impact the full project require a synthetic
+analysis and a consensus that is both explicit and informed. In cases that the
+core developer community (which includes the TC members) fails to reach such a
+consensus in the required time frame, the TC is the entity to resolve the
+issue.
 Membership of the TC is by nomination by a core developer. A nomination will
 result in discussion which cannot take more than a month and then a vote by
 the core developers which will stay open for a week. TC membership votes are
