@@ -542,7 +542,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                         force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
-            raise ValueError("Missing indicator does not support data with "
+            raise ValueError("MissingIndicator does not support data with "
                              "dtype {0}. Please provide either a numeric array"
                              " (with a floating point or integer dtype) or "
                              "categorical data represented either as an array "
