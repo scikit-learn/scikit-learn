@@ -183,12 +183,6 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             y_2d = y
         self._fit_transformer(y_2d)
 
-        if self.regressor is None:
-            from ..linear_model import LinearRegression
-            self.regressor_ = LinearRegression()
-        else:
-            self.regressor_ = clone(self.regressor)
-
         # transform y and convert back to 1d array if needed
         y_trans = self.transformer_.transform(y_2d)
         # FIXME: a FunctionTransformer can return a 1D array even when validate
@@ -196,6 +190,13 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         # first.
         if y_trans.ndim == 2 and y_trans.shape[1] == 1:
             y_trans = y_trans.squeeze(axis=1)
+
+        if self.regressor is None:
+            from ..linear_model import LinearRegression
+            self.regressor_ = LinearRegression()
+        else:
+            self.regressor_ = clone(self.regressor)
+
         if sample_weight is None:
             self.regressor_.fit(X, y_trans)
         else:
