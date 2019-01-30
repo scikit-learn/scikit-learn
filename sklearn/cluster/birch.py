@@ -540,8 +540,8 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         check_is_fitted(self, ['subcluster_centers_', 'partial_fit_'],
                         all_or_any=any)
 
-        if hasattr(self, 'subcluster_centers_') and X.shape[1] != \
-                self.subcluster_centers_.shape[1]:
+        if (hasattr(self, 'subcluster_centers_') and
+            X.shape[1] != self.subcluster_centers_.shape[1]):
             raise ValueError(
                 "Training data and predicted data do "
                 "not have same number of features.")
