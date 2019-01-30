@@ -19,6 +19,7 @@ cimport numpy as np
 from .types import HISTOGRAM_DTYPE
 from .types cimport X_BINNED_DTYPE_C
 from .types cimport Y_DTYPE_C
+from .types cimport G_H_DTYPE_C
 from .types cimport hist_struct
 
 """compute (hist_a - hist_b) in out"""
@@ -37,8 +38,8 @@ cpdef void _build_histogram(
     unsigned int n_bins,
     const unsigned int [::1] sample_indices,  # IN
     const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-    const Y_DTYPE_C [::1] ordered_gradients,  # IN
-    const Y_DTYPE_C [::1] ordered_hessians,  # IN
+    const G_H_DTYPE_C [::1] ordered_gradients,  # IN
+    const G_H_DTYPE_C [::1] ordered_hessians,  # IN
     hist_struct [:, ::1] out) nogil  # OUT
 
 
@@ -49,7 +50,7 @@ cpdef void _build_histogram_no_hessian(
     unsigned int n_bins,
     const unsigned int [::1] sample_indices,  # IN
     const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-    const Y_DTYPE_C [::1] ordered_gradients,  # IN
+    const G_H_DTYPE_C [::1] ordered_gradients,  # IN
     hist_struct [:, ::1] out) nogil  # OUT
 
 """Compute histogram of the root node.
@@ -60,8 +61,8 @@ cpdef void _build_histogram_root(
     const int feature_idx,
     unsigned int n_bins,
     const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-    const Y_DTYPE_C [::1] all_gradients,  # IN
-    const Y_DTYPE_C [::1] all_hessians,  # IN
+    const G_H_DTYPE_C [::1] all_gradients,  # IN
+    const G_H_DTYPE_C [::1] all_hessians,  # IN
     hist_struct [:, ::1] out) nogil  # OUT
 
 """Compute histogram of the root node, not updating hessians.
@@ -70,5 +71,5 @@ cpdef void _build_histogram_root_no_hessian(
     const int feature_idx,
     unsigned int n_bins,
     const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-    const Y_DTYPE_C [::1] all_gradients,  # IN
+    const G_H_DTYPE_C [::1] all_gradients,  # IN
     hist_struct [:, ::1] out) nogil  # OUT

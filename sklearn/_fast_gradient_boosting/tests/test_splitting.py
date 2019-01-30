@@ -4,7 +4,7 @@ from numpy.testing import assert_array_almost_equal
 import pytest
 
 from sklearn._fast_gradient_boosting.types import HISTOGRAM_DTYPE
-from sklearn._fast_gradient_boosting.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.types import G_H_DTYPE
 from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
 from sklearn._fast_gradient_boosting.splitting import Splitter
 
@@ -21,14 +21,14 @@ def test_histogram_split(n_bins):
         rng.randint(0, n_bins, size=(int(1e4), 2)), dtype=X_BINNED_DTYPE)
     binned_feature = X_binned.T[feature_idx]
     sample_indices = np.arange(binned_feature.shape[0], dtype=np.uint32)
-    ordered_hessians = np.ones_like(binned_feature, dtype=Y_DTYPE)
+    ordered_hessians = np.ones_like(binned_feature, dtype=G_H_DTYPE)
     all_hessians = ordered_hessians
     sum_hessians = all_hessians.sum()
 
     for true_bin in range(1, n_bins - 1):
         for sign in [-1, 1]:
             ordered_gradients = np.full_like(binned_feature, sign,
-                                             dtype=Y_DTYPE)
+                                             dtype=G_H_DTYPE)
             ordered_gradients[binned_feature <= true_bin] *= -1
             all_gradients = ordered_gradients
             sum_gradients = all_gradients.sum()
@@ -77,11 +77,11 @@ def test_split_vs_split_subtraction(constant_hessian):
                            dtype=X_BINNED_DTYPE)
     X_binned = np.asfortranarray(X_binned)
     sample_indices = np.arange(n_samples, dtype=np.uint32)
-    all_gradients = rng.randn(n_samples).astype(Y_DTYPE)
+    all_gradients = rng.randn(n_samples).astype(G_H_DTYPE)
     if constant_hessian:
-        all_hessians = np.ones(1, dtype=Y_DTYPE)
+        all_hessians = np.ones(1, dtype=G_H_DTYPE)
     else:
-        all_hessians = rng.lognormal(size=n_samples).astype(Y_DTYPE)
+        all_hessians = rng.lognormal(size=n_samples).astype(G_H_DTYPE)
 
     n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)
@@ -163,11 +163,11 @@ def test_gradient_and_hessian_sanity(constant_hessian):
                            dtype=X_BINNED_DTYPE)
     X_binned = np.asfortranarray(X_binned)
     sample_indices = np.arange(n_samples, dtype=np.uint32)
-    all_gradients = rng.randn(n_samples).astype(Y_DTYPE)
+    all_gradients = rng.randn(n_samples).astype(G_H_DTYPE)
     if constant_hessian:
-        all_hessians = np.ones(1, dtype=Y_DTYPE)
+        all_hessians = np.ones(1, dtype=G_H_DTYPE)
     else:
-        all_hessians = rng.lognormal(size=n_samples).astype(Y_DTYPE)
+        all_hessians = rng.lognormal(size=n_samples).astype(G_H_DTYPE)
 
     n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)
@@ -270,8 +270,8 @@ def test_split_indices():
                 [0, 4]]
     X_binned = np.asfortranarray(X_binned, dtype=X_BINNED_DTYPE)
     sample_indices = np.arange(n_samples, dtype=np.uint32)
-    all_gradients = rng.randn(n_samples).astype(Y_DTYPE)
-    all_hessians = np.ones(1, dtype=Y_DTYPE)
+    all_gradients = rng.randn(n_samples).astype(G_H_DTYPE)
+    all_hessians = np.ones(1, dtype=G_H_DTYPE)
 
     n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)
@@ -322,8 +322,8 @@ def test_min_gain_to_split():
         rng.randint(0, n_bins, size=(n_samples, 1)), dtype=X_BINNED_DTYPE)
     binned_feature = X_binned[:, 0]
     sample_indices = np.arange(n_samples, dtype=np.uint32)
-    all_hessians = np.ones_like(binned_feature, dtype=Y_DTYPE)
-    all_gradients = np.ones_like(binned_feature, dtype=Y_DTYPE)
+    all_hessians = np.ones_like(binned_feature, dtype=G_H_DTYPE)
+    all_gradients = np.ones_like(binned_feature, dtype=G_H_DTYPE)
 
     n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
                                   dtype=np.uint32)

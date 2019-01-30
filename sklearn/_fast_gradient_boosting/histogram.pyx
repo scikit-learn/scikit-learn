@@ -13,8 +13,6 @@ cimport cython
 import numpy as np
 cimport numpy as np
 
-from .types import HISTOGRAM_DTYPE
-
 # Note: IN views are read-only, OUT views are write-only
 # See histogram.pxd for docstrings and details
 
@@ -24,8 +22,8 @@ cpdef void _build_histogram_naive(
         unsigned int n_bins,
         unsigned int [:] sample_indices,  # IN
         X_BINNED_DTYPE_C [:] binned_feature,  # IN
-        Y_DTYPE_C [:] ordered_gradients,  # IN
-        Y_DTYPE_C [:] ordered_hessians,  # IN
+        G_H_DTYPE_C [:] ordered_gradients,  # IN
+        G_H_DTYPE_C [:] ordered_hessians,  # IN
         hist_struct [:, :] out) nogil:  # OUT
     """Build histogram in a naive way, without optimizing for cache hit.
 
@@ -72,8 +70,8 @@ cpdef void _build_histogram(
         unsigned int n_bins,
         const unsigned int [::1] sample_indices,  # IN
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-        const Y_DTYPE_C [::1] ordered_gradients,  # IN
-        const Y_DTYPE_C [::1] ordered_hessians,  # IN
+        const G_H_DTYPE_C [::1] ordered_gradients,  # IN
+        const G_H_DTYPE_C [::1] ordered_hessians,  # IN
         hist_struct [:, ::1] out) nogil:  # OUT
     cdef:
         unsigned int i = 0
@@ -119,7 +117,7 @@ cpdef void _build_histogram_no_hessian(
         unsigned int n_bins,
         const unsigned int [::1] sample_indices,  # IN
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-        const Y_DTYPE_C [::1] ordered_gradients,  # IN
+        const G_H_DTYPE_C [::1] ordered_gradients,  # IN
         hist_struct [:, ::1] out) nogil:  # OUT
     cdef:
         unsigned int i = 0
@@ -158,8 +156,8 @@ cpdef void _build_histogram_root(
         const int feature_idx,
         unsigned int n_bins,
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-        const Y_DTYPE_C [::1] all_gradients,  # IN
-        const Y_DTYPE_C [::1] all_hessians,  # IN
+        const G_H_DTYPE_C [::1] all_gradients,  # IN
+        const G_H_DTYPE_C [::1] all_hessians,  # IN
         hist_struct [:, ::1] out) nogil:  # OUT
     cdef:
         unsigned int i = 0
@@ -205,7 +203,7 @@ cpdef void _build_histogram_root_no_hessian(
         const int feature_idx,
         unsigned int n_bins,
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
-        const Y_DTYPE_C [::1] all_gradients,  # IN
+        const G_H_DTYPE_C [::1] all_gradients,  # IN
         hist_struct [:, ::1] out) nogil:  # OUT
     cdef:
         unsigned int i = 0

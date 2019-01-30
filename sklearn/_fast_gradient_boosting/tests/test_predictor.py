@@ -6,7 +6,7 @@ import pytest
 
 from sklearn._fast_gradient_boosting.binning import BinMapper
 from sklearn._fast_gradient_boosting.grower import TreeGrower
-from sklearn._fast_gradient_boosting.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.types import G_H_DTYPE
 
 
 @pytest.mark.parametrize('max_bins', [200, 256])
@@ -19,8 +19,8 @@ def test_boston_dataset(max_bins):
     X_train_binned = mapper.fit_transform(X_train)
 
     # Init gradients and hessians to that of least squares loss
-    gradients = -y_train.astype(Y_DTYPE)
-    hessians = np.ones(1, dtype=Y_DTYPE)
+    gradients = -y_train.astype(G_H_DTYPE)
+    hessians = np.ones(1, dtype=G_H_DTYPE)
 
     min_samples_leaf = 8
     max_leaf_nodes = 31

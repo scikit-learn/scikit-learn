@@ -24,6 +24,8 @@ from libc.math cimport fabs, exp, log
 
 from .types import Y_DTYPE
 from .types cimport Y_DTYPE_C
+from .types import G_H_DTYPE
+from .types cimport G_H_DTYPE_C
 
 
 class BaseLoss(ABC):
@@ -53,14 +55,14 @@ class BaseLoss(ABC):
             is (1,) and the array is initialized to ``1``.
         """
         shape = n_samples * prediction_dim
-        gradients = np.empty(shape=shape, dtype=Y_DTYPE)
+        gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
         if self.hessians_are_constant:
             # if the hessians are constant, we consider they are equal to 1.
             # this is correct as long as we adjust the gradients. See e.g. LS
             # loss
-            hessians = np.ones(shape=1, dtype=Y_DTYPE)
+            hessians = np.ones(shape=1, dtype=G_H_DTYPE)
         else:
-            hessians = np.empty(shape=shape, dtype=Y_DTYPE)
+            hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
 
         return gradients, hessians
 
@@ -139,7 +141,7 @@ class LeastSquares(BaseLoss):
 
 
 cdef void _update_gradients_least_squares(
-        Y_DTYPE_C [:] gradients,
+        G_H_DTYPE_C [:] gradients,
         const Y_DTYPE_C [:] y_true,
         const Y_DTYPE_C [:] raw_predictions) nogil:
     cdef:
@@ -203,13 +205,13 @@ class BinaryCrossEntropy(BaseLoss):
 
 
 cdef void _update_gradients_hessians_binary_crossentropy(
-        Y_DTYPE_C [:] gradients,
-        Y_DTYPE_C [:] hessians,
+        G_H_DTYPE_C [:] gradients,
+        G_H_DTYPE_C [:] hessians,
         const Y_DTYPE_C [:] y_true,
         const Y_DTYPE_C [:] raw_predictions) nogil:
     cdef:
         int n_samples
-        Y_DTYPE_C gradient_abs
+        G_H_DTYPE_C gradient_abs
         int i
 
     n_samples = raw_predictions.shape[0]
@@ -262,8 +264,8 @@ class CategoricalCrossEntropy(BaseLoss):
 
 
 cdef void _update_gradients_hessians_categorical_crossentropy(
-        Y_DTYPE_C [:] gradients,  # shape (n_samples * prediction_dim,), OUT
-        Y_DTYPE_C [:] hessians,  # shape (n_samples * prediction_dim,), OUT
+        G_H_DTYPE_C [:] gradients,  # shape (n_samples * prediction_dim,), OUT
+        G_H_DTYPE_C [:] hessians,  # shape (n_samples * prediction_dim,), OUT
         const Y_DTYPE_C [:] y_true,  # shape (n_samples,), IN
         # shape (n_samples, n_tree_per_iter), IN
         const Y_DTYPE_C [:, :] raw_predictions) nogil:
@@ -273,8 +275,8 @@ cdef void _update_gradients_hessians_categorical_crossentropy(
         unsigned int k
         int i
         Y_DTYPE_C p_k
-        Y_DTYPE_C [:] gradients_at_k,
-        Y_DTYPE_C [:] hessians_at_k,
+        G_H_DTYPE_C [:] gradients_at_k,
+        G_H_DTYPE_C [:] hessians_at_k,
 
     n_samples = raw_predictions.shape[0]
     prediction_dim = raw_predictions.shape[1]

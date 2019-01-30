@@ -7,6 +7,7 @@
 from cython.parallel import prange
 
 from .binning import BinMapper
+from .types cimport G_H_DTYPE_C
 from .types cimport Y_DTYPE_C
 
 
@@ -71,7 +72,7 @@ def get_lightgbm_estimator(pygbm_estimator):
     return Est(**lgbm_params)
 
 
-def sum_parallel(Y_DTYPE_C [:] array):
+def sum_parallel(G_H_DTYPE_C [:] array):
 
     cdef:
         Y_DTYPE_C out = 0.

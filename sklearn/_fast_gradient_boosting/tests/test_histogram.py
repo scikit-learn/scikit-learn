@@ -13,7 +13,7 @@ from sklearn._fast_gradient_boosting.histogram import \
 from sklearn._fast_gradient_boosting.histogram import _build_histogram_root
 from sklearn._fast_gradient_boosting.histogram import _subtract_histograms
 from sklearn._fast_gradient_boosting.types import HISTOGRAM_DTYPE
-from sklearn._fast_gradient_boosting.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.types import G_H_DTYPE
 from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
 
 
@@ -23,8 +23,8 @@ def test_build_histogram(build_func):
     binned_feature = np.array([0, 2, 0, 1, 2, 0, 2, 1], dtype=X_BINNED_DTYPE)
 
     # Small sample_indices (below unrolling threshold)
-    ordered_gradients = np.array([0, 1, 3], dtype=Y_DTYPE)
-    ordered_hessians = np.array([1, 1, 2], dtype=Y_DTYPE)
+    ordered_gradients = np.array([0, 1, 3], dtype=G_H_DTYPE)
+    ordered_hessians = np.array([1, 1, 2], dtype=G_H_DTYPE)
 
     sample_indices = np.array([0, 2, 3], dtype=np.uint32)
     hist = np.zeros((1, 3), dtype=HISTOGRAM_DTYPE)
@@ -37,8 +37,8 @@ def test_build_histogram(build_func):
 
     # Larger sample_indices (above unrolling threshold)
     sample_indices = np.array([0, 2, 3, 6, 7], dtype=np.uint32)
-    ordered_gradients = np.array([0, 1, 3, 0, 1], dtype=Y_DTYPE)
-    ordered_hessians = np.array([1, 1, 2, 1, 0], dtype=Y_DTYPE)
+    ordered_gradients = np.array([0, 1, 3, 0, 1], dtype=G_H_DTYPE)
+    ordered_hessians = np.array([1, 1, 2, 1, 0], dtype=G_H_DTYPE)
 
     hist = np.zeros((1, 3), dtype=HISTOGRAM_DTYPE)
     build_func(0, 3, sample_indices, binned_feature, ordered_gradients,
@@ -59,12 +59,12 @@ def test_histogram_sample_order_independence():
                                  dtype=X_BINNED_DTYPE)
     sample_indices = rng.choice(np.arange(n_samples, dtype=np.uint32),
                                 n_sub_samples, replace=False)
-    ordered_gradients = rng.randn(n_sub_samples).astype(Y_DTYPE)
+    ordered_gradients = rng.randn(n_sub_samples).astype(G_H_DTYPE)
     hist_gc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     _build_histogram_no_hessian(0, n_bins, sample_indices, binned_feature,
                                 ordered_gradients, hist_gc)
 
-    ordered_hessians = rng.exponential(size=n_sub_samples).astype(Y_DTYPE)
+    ordered_hessians = rng.exponential(size=n_sub_samples).astype(G_H_DTYPE)
     hist_ghc = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     _build_histogram(0, n_bins, sample_indices, binned_feature,
                      ordered_gradients, ordered_hessians, hist_ghc)
@@ -102,11 +102,11 @@ def test_unrolled_equivalent_to_naive(constant_hessian):
     n_bins = 5
     sample_indices = np.arange(n_samples).astype(np.uint32)
     binned_feature = rng.randint(0, n_bins - 1, size=n_samples, dtype=np.uint8)
-    ordered_gradients = rng.randn(n_samples).astype(Y_DTYPE)
+    ordered_gradients = rng.randn(n_samples).astype(G_H_DTYPE)
     if constant_hessian:
-        ordered_hessians = np.ones(n_samples, dtype=Y_DTYPE)
+        ordered_hessians = np.ones(n_samples, dtype=G_H_DTYPE)
     else:
-        ordered_hessians = rng.lognormal(size=n_samples).astype(Y_DTYPE)
+        ordered_hessians = rng.lognormal(size=n_samples).astype(G_H_DTYPE)
 
     hist_gc_root = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     hist_ghc_root = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
@@ -148,11 +148,11 @@ def test_hist_subtraction(constant_hessian):
     n_bins = 5
     sample_indices = np.arange(n_samples).astype(np.uint32)
     binned_feature = rng.randint(0, n_bins - 1, size=n_samples, dtype=np.uint8)
-    ordered_gradients = rng.randn(n_samples).astype(Y_DTYPE)
+    ordered_gradients = rng.randn(n_samples).astype(G_H_DTYPE)
     if constant_hessian:
-        ordered_hessians = np.ones(n_samples, dtype=Y_DTYPE)
+        ordered_hessians = np.ones(n_samples, dtype=G_H_DTYPE)
     else:
-        ordered_hessians = rng.lognormal(size=n_samples).astype(Y_DTYPE)
+        ordered_hessians = rng.lognormal(size=n_samples).astype(G_H_DTYPE)
 
     hist_parent = np.zeros((1, n_bins), dtype=HISTOGRAM_DTYPE)
     if constant_hessian:

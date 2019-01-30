@@ -7,6 +7,7 @@ import pytest
 
 from sklearn._fast_gradient_boosting.loss import _LOSSES
 from sklearn._fast_gradient_boosting.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.types import G_H_DTYPE
 
 
 def get_derivatives_helper(loss):
@@ -16,8 +17,8 @@ def get_derivatives_helper(loss):
     def get_gradients(y_true, raw_predictions):
         # create gradients and hessians array, update inplace, and return
         shape = raw_predictions.shape[0] * raw_predictions.shape[1]
-        gradients = np.empty(shape=shape, dtype=Y_DTYPE)
-        hessians = np.empty(shape=shape, dtype=Y_DTYPE)
+        gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
+        hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
         loss.update_gradients_and_hessians(gradients, hessians, y_true,
                                            raw_predictions)
 
@@ -29,8 +30,8 @@ def get_derivatives_helper(loss):
     def get_hessians(y_true, raw_predictions):
         # create gradients and hessians array, update inplace, and return
         shape = raw_predictions.shape[0] * raw_predictions.shape[1]
-        gradients = np.empty(shape=shape, dtype=Y_DTYPE)
-        hessians = np.empty(shape=shape, dtype=Y_DTYPE)
+        gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
+        hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
         loss.update_gradients_and_hessians(gradients, hessians, y_true,
                                            raw_predictions)
 

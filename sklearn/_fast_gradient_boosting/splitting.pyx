@@ -24,6 +24,7 @@ from .histogram cimport _subtract_histograms
 # from .histogram cimport _subtract_histograms
 from .types cimport X_BINNED_DTYPE_C
 from .types cimport Y_DTYPE_C
+from .types cimport G_H_DTYPE_C
 from .types cimport hist_struct
 from .types import HISTOGRAM_DTYPE
 
@@ -147,10 +148,10 @@ cdef class Splitter:
         unsigned int n_features
         unsigned int max_bins
         unsigned int [::1] n_bins_per_feature
-        Y_DTYPE_C [::1] gradients
-        Y_DTYPE_C [::1] hessians
-        Y_DTYPE_C [::1] ordered_gradients
-        Y_DTYPE_C [::1] ordered_hessians
+        G_H_DTYPE_C [::1] gradients
+        G_H_DTYPE_C [::1] hessians
+        G_H_DTYPE_C [::1] ordered_gradients
+        G_H_DTYPE_C [::1] ordered_hessians
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
@@ -163,7 +164,7 @@ cdef class Splitter:
 
     def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned, unsigned int
                  max_bins, np.ndarray[np.uint32_t] n_bins_per_feature,
-                 Y_DTYPE_C [::1] gradients, Y_DTYPE_C [::1] hessians,
+                 G_H_DTYPE_C [::1] gradients, G_H_DTYPE_C [::1] hessians,
                  Y_DTYPE_C l2_regularization, Y_DTYPE_C
                  min_hessian_to_split=1e-3, unsigned int
                  min_samples_leaf=20, Y_DTYPE_C min_gain_to_split=0.):
@@ -389,10 +390,10 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradients = 0.
             Y_DTYPE_C sum_hessians = 0.
             # need local views to avoid python interactions
-            Y_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
-            Y_DTYPE_C [::1] gradients = self.gradients
-            Y_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
-            Y_DTYPE_C [::1] hessians = self.hessians
+            G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
+            G_H_DTYPE_C [::1] gradients = self.gradients
+            G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
+            G_H_DTYPE_C [::1] hessians = self.hessians
 
         with nogil:
             n_samples = sample_indices.shape[0]
@@ -464,9 +465,9 @@ cdef class Splitter:
             const X_BINNED_DTYPE_C [::1] X_binned = \
                 self.X_binned[:, feature_idx]
             unsigned int root_node = X_binned.shape[0] == n_samples
-            Y_DTYPE_C [::1] ordered_gradients = \
+            G_H_DTYPE_C [::1] ordered_gradients = \
                 self.ordered_gradients[:n_samples]
-            Y_DTYPE_C [::1] ordered_hessians = \
+            G_H_DTYPE_C [::1] ordered_hessians = \
                 self.ordered_hessians[:n_samples]
 
         if root_node:

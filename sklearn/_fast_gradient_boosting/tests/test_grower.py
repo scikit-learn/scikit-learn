@@ -8,6 +8,7 @@ from sklearn._fast_gradient_boosting.grower import TreeGrower
 from sklearn._fast_gradient_boosting.binning import BinMapper
 from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
 from sklearn._fast_gradient_boosting.types import Y_DTYPE
+from sklearn._fast_gradient_boosting.types import G_H_DTYPE
 
 
 def _make_training_data(n_bins=256, constant_hessian=True):
@@ -40,9 +41,9 @@ def _make_training_data(n_bins=256, constant_hessian=True):
 
     # Assume a square loss applied to an initial model that always predicts 0
     # (hardcoded for this test):
-    all_gradients = target
+    all_gradients = target.astype(G_H_DTYPE)
     if constant_hessian:
-        all_hessians = np.ones(shape=1, dtype=Y_DTYPE)
+        all_hessians = np.ones(shape=1, dtype=G_H_DTYPE)
     else:
         all_hessians = np.ones_like(all_gradients)
     return X_binned, all_gradients, all_hessians
@@ -209,9 +210,9 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
     mapper = BinMapper(max_bins=n_bins)
     X = mapper.fit_transform(X)
 
-    all_gradients = y.astype(Y_DTYPE)
+    all_gradients = y.astype(G_H_DTYPE)
     if constant_hessian:
-        all_hessians = np.ones(shape=1, dtype=Y_DTYPE)
+        all_hessians = np.ones(shape=1, dtype=G_H_DTYPE)
     else:
         all_hessians = np.ones_like(all_gradients)
     grower = TreeGrower(X, all_gradients, all_hessians,
@@ -248,8 +249,8 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
     mapper = BinMapper(max_bins=max_bins)
     X = mapper.fit_transform(X)
 
-    all_gradients = y.astype(Y_DTYPE)
-    all_hessians = np.ones(shape=1, dtype=Y_DTYPE)
+    all_gradients = y.astype(G_H_DTYPE)
+    all_hessians = np.ones(shape=1, dtype=G_H_DTYPE)
     grower = TreeGrower(X, all_gradients, all_hessians,
                         max_bins=max_bins, shrinkage=1.,
                         min_samples_leaf=min_samples_leaf,
