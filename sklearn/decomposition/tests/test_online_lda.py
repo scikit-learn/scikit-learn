@@ -179,6 +179,15 @@ def test_lda_negative_input():
     assert_raises_regexp(ValueError, regex, lda.fit, X)
 
 
+def test_lda_no_component_error():
+    # test `transform` and `perplexity` before `fit`
+    rng = np.random.RandomState(0)
+    X = rng.randint(4, size=(20, 10))
+    lda = LatentDirichletAllocation()
+    regex = ("This LatentDirichletAllocation instance is not fitted yet. "
+             "Call 'fit' with appropriate arguments before using this method.")
+    assert_raises_regexp(NotFittedError, regex, lda.perplexity, X)
+
 
 def test_lda_transform_mismatch():
     # test `n_features` mismatch in partial_fit and transform
