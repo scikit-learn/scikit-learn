@@ -293,7 +293,7 @@ def test_one_hot_encoder_no_categorical_features():
     enc = OneHotEncoder(categorical_features=cat)
     with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
         X_tr = enc.fit_transform(X)
-    expected_features = np.array(list(), dtype='object')
+    expected_features = np.array([], dtype='object')
     assert_array_equal(X, X_tr)
     assert_array_equal(enc.get_feature_names(), expected_features)
     assert enc.categories_ == []
