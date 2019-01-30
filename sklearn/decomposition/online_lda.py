@@ -19,7 +19,8 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices)
 from ..utils.fixes import logsumexp
-from ..utils.validation import check_non_negative, check_is_fitted
+from ..utils.validation import check_non_negative
+from ..utils.validation import check_is_fitted
 from ..utils._joblib import Parallel, delayed, effective_n_jobs
 
 from ._online_lda import (mean_change, _dirichlet_expectation_1d,

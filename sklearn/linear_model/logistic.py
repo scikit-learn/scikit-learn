@@ -28,7 +28,8 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
 from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
-from ..utils.validation import check_X_y, check_is_fitted
+from ..utils.validation import check_X_y
+from ..utils.validation import check_is_fitted
 from ..utils import deprecated
 from ..exceptions import (ConvergenceWarning, ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
