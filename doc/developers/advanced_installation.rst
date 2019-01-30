@@ -35,8 +35,8 @@ Building from source
 Scikit-learn requires:
 
 - Python (>= 3.5),
-- NumPy (>= 1.8.2),
-- SciPy (>= 0.13.3).
+- NumPy (>= 1.11),
+- SciPy (>= 0.17).
 
 .. note::
 
@@ -46,7 +46,7 @@ Scikit-learn requires:
 
 Building Scikit-learn also requires
 
-- Cython >=0.23 
+- Cython >=0.28.5 
 
 Running tests requires
 
@@ -165,25 +165,16 @@ Windows
 To build scikit-learn on Windows you need a working C/C++ compiler in
 addition to numpy, scipy and setuptools.
 
-Picking the right compiler depends on the version of Python (2 or 3)
-and the architecture of the Python interpreter, 32-bit or 64-bit.
-You can check the Python version by running the following in ``cmd`` or
-``powershell`` console::
-
-    python --version
-
-and the architecture with::
+The building command depends on the architecture of the Python interpreter,
+32-bit or 64-bit. You can check the architecture by running the following in
+``cmd`` or ``powershell`` console::
 
     python -c "import struct; print(struct.calcsize('P') * 8)"
 
 The above commands assume that you have the Python installation folder in your
 PATH environment variable.
 
-
-Python >= 3.5
--------------
-
-For Python versions as of 3.5, you need `Build Tools for Visual Studio 2017
+You will need `Build Tools for Visual Studio 2017
 <https://visualstudio.microsoft.com/de/downloads/>`_.
 
 For 64-bit Python, configure the build environment with::
@@ -196,53 +187,6 @@ And build scikit-learn from this environment::
     python setup.py install
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
-
-
-32-bit Python (<= 3.4)
-----------------------
-
-For 32-bit Python versions up to 3.4 use Microsoft Visual C++ Express 2010.
-
-Once installed you should be able to build scikit-learn without any
-particular configuration by running the following command in the scikit-learn
-folder::
-
-   python setup.py install
-
-
-64-bit Python (<= 3.4)
-----------------------
-
-For 64-bit Python versions up to 3.4, you either need the full Visual Studio or
-the free Windows SDKs that can be downloaded from the links below.
-
-The Windows SDKs include the MSVC compilers both for 32 and 64-bit
-architectures. They come as a ``GRMSDKX_EN_DVD.iso`` file that can be mounted
-as a new drive with a ``setup.exe`` installer in it.
-
-- For Python  you need SDK **v7.1**: `MS Windows SDK for Windows 7 and .NET
-  Framework 4
-  <https://www.microsoft.com/en-us/download/details.aspx?id=8442>`_
-
-Both SDKs can be installed in parallel on the same host. To use the Windows
-SDKs, you need to setup the environment of a ``cmd`` console launched with the
-following flags ::
-
-    cmd /E:ON /V:ON /K
-
-Then configure the build environment with::
-
-    SET DISTUTILS_USE_SDK=1
-    SET MSSdk=1
-    "C:\Program Files\Microsoft SDKs\Windows\v7.1\Setup\WindowsSdkVer.exe" -q -version:v7.1
-    "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 /release
-
-Finally you can build scikit-learn in the same ``cmd`` console::
-
-    python setup.py install
-
-Replace ``/x64`` by ``/x86`` to build for 32-bit Python instead of 64-bit
-Python.
 
 
 Building binary packages and installers
