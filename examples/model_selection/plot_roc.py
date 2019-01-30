@@ -97,19 +97,19 @@ fpr["micro"], tpr["micro"], _ = roc_curve(
       y_test_binarized.ravel(), y_score.ravel())
 roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
-plt.figure()
+fig, ax = plt.subplots()
 lw = 2
-plt.plot(fpr[2], tpr[2], color='darkorange',
-         lw=lw, label='ROC curve (area = %0.2f)' % roc_auc[2])
-plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('Receiver operating characteristic example for {}'
+ax.plot(fpr[2], tpr[2], color='darkorange',
+        lw=lw, label='ROC curve (area = %0.2f)' % roc_auc[2])
+ax.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+ax.set_xlim([0.0, 1.0])
+ax.set_ylim([0.0, 1.05])
+ax.set_xlabel('False Positive Rate')
+ax.set_ylabel('True Positive Rate')
+ax.set_title('Receiver operating characteristic example for {}'
           .format(iris.target_names[2]))
-plt.legend(loc="lower right")
-plt.show()
+ax.legend(loc="lower right")
+fig.show()
 
 ###############################################################################
 # Plot ROC curves for the multiclass problem using One-vs-Rest
@@ -139,16 +139,16 @@ tpr["macro"] = mean_tpr
 roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
 
 # Plot all ROC curves
-plt.figure()
-plt.plot(fpr["micro"], tpr["micro"],
-         label='micro-average ROC curve (area = {0:0.2f})'
-               ''.format(roc_auc["micro"]),
-         color='deeppink', linestyle=':', linewidth=4)
+fig, ax = plt.subplots()
+ax.plot(fpr["micro"], tpr["micro"],
+        label='micro-average ROC curve (area = {0:0.2f})'
+              ''.format(roc_auc["micro"]),
+        color='deeppink', linestyle=':', linewidth=4)
 
-plt.plot(fpr["macro"], tpr["macro"],
-         label='macro-average ROC curve (area = {0:0.2f})'
-               ''.format(roc_auc["macro"]),
-         color='navy', linestyle=':', linewidth=4)
+ax.plot(fpr["macro"], tpr["macro"],
+        label='macro-average ROC curve (area = {0:0.2f})'
+              ''.format(roc_auc["macro"]),
+        color='navy', linestyle=':', linewidth=4)
 
 colors = cycle(['aqua', 'darkorange', 'cornflowerblue'])
 for i, color in zip(range(n_classes), colors):
@@ -156,14 +156,14 @@ for i, color in zip(range(n_classes), colors):
              label='ROC curve of class {0} (area = {1:0.2f})'
              ''.format(i, roc_auc[i]))
 
-plt.plot([0, 1], [0, 1], 'k--', lw=lw)
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('An extension of ROC to multi-class using One-vs-Rest')
-plt.legend(loc="lower right")
-plt.show()
+ax.plot([0, 1], [0, 1], 'k--', lw=lw)
+ax.set_xlim([0.0, 1.0])
+ax.set_ylim([0.0, 1.05])
+ax.set_xlabel('False Positive Rate')
+ax.set_ylabel('True Positive Rate')
+ax.set_title('An extension of ROC to multi-class using One-vs-Rest')
+ax.legend(loc="lower right")
+fig.show()
 
 ###############################################################################
 # One-vs-One
