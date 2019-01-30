@@ -375,7 +375,7 @@ def test_unfitted_feature_importances(name):
     err_msg = ("This {} instance is not fitted yet. Call 'fit' with "
                "appropriate arguments before using this method.".format(name))
     with pytest.raises(NotFittedError, match=err_msg):
-         getattr(FOREST_ESTIMATORS[name](), 'feature_importances_')
+        getattr(FOREST_ESTIMATORS[name](), 'feature_importances_')
 
 
 def check_oob_score(name, X, y, n_estimators=20):
