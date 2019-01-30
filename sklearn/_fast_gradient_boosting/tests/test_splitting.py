@@ -54,7 +54,7 @@ def test_histogram_split(n_bins):
             assert (split_info.n_samples_left + split_info.n_samples_right
                     == sample_indices.shape[0])
             # Constant hessian: 1. per sample.
-            assert split_info.n_samples_left == split_info.hessian_left
+            assert split_info.n_samples_left == split_info.sum_hessian_left
 
 
 @pytest.mark.parametrize('constant_hessian', [True, False])
@@ -106,13 +106,13 @@ def test_split_vs_split_subtraction(constant_hessian):
 
     # split left with subtraction method
     si_left_sub = splitter.find_node_split_subtraction(
-        sample_indices_left, si_parent.gradient_left,
-        si_parent.hessian_left, hists_parent, hists_right, hists_left_sub)
+        sample_indices_left, si_parent.sum_gradient_left,
+        si_parent.sum_hessian_left, hists_parent, hists_right, hists_left_sub)
 
     # split right with subtraction method
     si_right_sub = splitter.find_node_split_subtraction(
-        sample_indices_right, si_parent.gradient_right,
-        si_parent.hessian_right, hists_parent, hists_left, hists_right_sub)
+        sample_indices_right, si_parent.sum_gradient_right,
+        si_parent.sum_hessian_right, hists_parent, hists_left, hists_right_sub)
 
     # make sure histograms from classical and subtraction method are the same
     for hists, hists_sub in ((hists_left, hists_left_sub),
@@ -125,19 +125,22 @@ def test_split_vs_split_subtraction(constant_hessian):
     for si, si_sub in ((si_left, si_left_sub), (si_right, si_right_sub)):
         assert_almost_equal(si.gain, si_sub.gain, decimal=3)
         assert_almost_equal(si.feature_idx, si_sub.feature_idx, decimal=3)
-        assert_almost_equal(si.gradient_left, si_sub.gradient_left, decimal=3)
-        assert_almost_equal(si.gradient_right, si_sub.gradient_right,
+        assert_almost_equal(si.sum_gradient_left, si_sub.sum_gradient_left,
                             decimal=3)
-        assert_almost_equal(si.hessian_right, si_sub.hessian_right, decimal=3)
-        assert_almost_equal(si.hessian_left, si_sub.hessian_left, decimal=3)
+        assert_almost_equal(si.sum_gradient_right, si_sub.sum_gradient_right,
+                            decimal=3)
+        assert_almost_equal(si.sum_hessian_right, si_sub.sum_hessian_right,
+                            decimal=3)
+        assert_almost_equal(si.sum_hessian_left, si_sub.sum_hessian_left,
+                            decimal=3)
 
 
 @pytest.mark.parametrize('constant_hessian', [True, False])
 def test_gradient_and_hessian_sanity(constant_hessian):
     # This test checks that the values of gradients and hessians are
     # consistent in different places:
-    # - in split_info: si.gradient_left + si.gradient_right must be equal to
-    #   the gradient at the node. Same for hessians.
+    # - in split_info: si.sum_gradient_left + si.sum_gradient_right must be
+    #   equal to the gradient at the node. Same for hessians.
     # - in the histograms: summing 'sum_gradients' over the bins must be
     #   constant across all features, and those sums must be equal to the
     #   node's gradient. Same for hessians.
@@ -194,25 +197,25 @@ def test_gradient_and_hessian_sanity(constant_hessian):
 
     # split left with subtraction method
     si_left_sub = splitter.find_node_split_subtraction(
-        sample_indices_left, si_parent.gradient_left,
-        si_parent.hessian_left, hists_parent, hists_right, hists_left_sub)
+        sample_indices_left, si_parent.sum_gradient_left,
+        si_parent.sum_hessian_left, hists_parent, hists_right, hists_left_sub)
 
     # split right with subtraction method
     si_right_sub = splitter.find_node_split_subtraction(
-        sample_indices_right, si_parent.gradient_right,
-        si_parent.hessian_right, hists_parent, hists_left, hists_right_sub)
+        sample_indices_right, si_parent.sum_gradient_right,
+        si_parent.sum_hessian_right, hists_parent, hists_left, hists_right_sub)
 
-    # make sure that si.gradient_left + si.gradient_right have their expected
-    # value, same for hessians
+    # make sure that si.sum_gradient_left + si.sum_gradient_right have their
+    # expected value, same for hessians
     for si, indices in (
             (si_parent, sample_indices),
             (si_left, sample_indices_left),
             (si_left_sub, sample_indices_left),
             (si_right, sample_indices_right),
             (si_right_sub, sample_indices_right)):
-        gradient = si.gradient_right + si.gradient_left
+        gradient = si.sum_gradient_right + si.sum_gradient_left
         expected_gradient = all_gradients[indices].sum()
-        hessian = si.hessian_right + si.hessian_left
+        hessian = si.sum_hessian_right + si.sum_hessian_left
         if constant_hessian:
             expected_hessian = indices.shape[0] * all_hessians[0]
         else:

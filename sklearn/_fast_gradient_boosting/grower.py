@@ -315,11 +315,11 @@ class TreeGrower:
                                   dtype=HISTOGRAM_DTYPE)
             if node.hist_subtraction:
                 if node is node.parent.right_child:
-                    sum_gradients = node.parent.split_info.gradient_right
-                    sum_hessians = node.parent.split_info.hessian_right
+                    sum_gradients = node.parent.split_info.sum_gradient_right
+                    sum_hessians = node.parent.split_info.sum_hessian_right
                 else:
-                    sum_gradients = node.parent.split_info.gradient_left
-                    sum_hessians = node.parent.split_info.hessian_left
+                    sum_gradients = node.parent.split_info.sum_gradient_left
+                    sum_hessians = node.parent.split_info.sum_hessian_left
                 split_info = self.splitter.find_node_split_subtraction(
                     node.sample_indices,
                     sum_gradients, sum_hessians, node.parent.histograms,
@@ -379,13 +379,13 @@ class TreeGrower:
 
         left_child_node = TreeNode(depth,
                                    sample_indices_left,
-                                   node.split_info.gradient_left,
-                                   node.split_info.hessian_left,
+                                   node.split_info.sum_gradient_left,
+                                   node.split_info.sum_hessian_left,
                                    parent=node)
         right_child_node = TreeNode(depth,
                                     sample_indices_right,
-                                    node.split_info.gradient_right,
-                                    node.split_info.hessian_right,
+                                    node.split_info.sum_gradient_right,
+                                    node.split_info.sum_hessian_right,
                                     parent=node)
         left_child_node.sibling = right_child_node
         right_child_node.sibling = left_child_node
