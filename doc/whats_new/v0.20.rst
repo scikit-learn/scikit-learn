@@ -41,7 +41,7 @@ Changelog
 
 - |Fix| add support for non-numeric data in
   :class:`sklearn.impute.MissingIndicator` which was not supported while
-  :class:`sklearn.impute.SimpleImputer` was supporting these inputs for some
+  :class:`sklearn.impute.SimpleImputer` was supporting this for some
   imputation strategies.
   :issue:`13046` by :user:`Guillaume Lemaitre <glemaitre>`.
 
