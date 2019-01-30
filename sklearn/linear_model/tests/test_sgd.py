@@ -42,19 +42,19 @@ class SparseSGDClassifier(SGDClassifier):
 
     def fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).fit(X, y, *args, **kw)
+        return super().fit(X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).partial_fit(X, y, *args, **kw)
+        return super().partial_fit(X, y, *args, **kw)
 
     def decision_function(self, X):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).decision_function(X)
+        return super().decision_function(X)
 
     def predict_proba(self, X):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).predict_proba(X)
+        return super().predict_proba(X)
 
 
 class SparseSGDRegressor(SGDRegressor):

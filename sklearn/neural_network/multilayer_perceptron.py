@@ -502,7 +502,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         try:
             for it in range(self.max_iter):
-                X, y = shuffle(X, y, random_state=self._random_state)
+                if self.shuffle:
+                    X, y = shuffle(X, y, random_state=self._random_state)
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
                     activations[0] = X[batch_slice]
@@ -894,19 +895,19 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
                  epsilon=1e-8, n_iter_no_change=10):
 
-        sup = super(MLPClassifier, self)
-        sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
-                     activation=activation, solver=solver, alpha=alpha,
-                     batch_size=batch_size, learning_rate=learning_rate,
-                     learning_rate_init=learning_rate_init, power_t=power_t,
-                     max_iter=max_iter, loss='log_loss', shuffle=shuffle,
-                     random_state=random_state, tol=tol, verbose=verbose,
-                     warm_start=warm_start, momentum=momentum,
-                     nesterovs_momentum=nesterovs_momentum,
-                     early_stopping=early_stopping,
-                     validation_fraction=validation_fraction,
-                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
-                     n_iter_no_change=n_iter_no_change)
+        super().__init__(
+            hidden_layer_sizes=hidden_layer_sizes,
+            activation=activation, solver=solver, alpha=alpha,
+            batch_size=batch_size, learning_rate=learning_rate,
+            learning_rate_init=learning_rate_init, power_t=power_t,
+            max_iter=max_iter, loss='log_loss', shuffle=shuffle,
+            random_state=random_state, tol=tol, verbose=verbose,
+            warm_start=warm_start, momentum=momentum,
+            nesterovs_momentum=nesterovs_momentum,
+            early_stopping=early_stopping,
+            validation_fraction=validation_fraction,
+            beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
+            n_iter_no_change=n_iter_no_change)
 
     def _validate_input(self, X, y, incremental):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -1013,7 +1014,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             else:
                 self._label_binarizer.fit(classes)
 
-        super(MLPClassifier, self)._partial_fit(X, y)
+        super()._partial_fit(X, y)
 
         return self
 
@@ -1275,19 +1276,19 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
                  epsilon=1e-8, n_iter_no_change=10):
 
-        sup = super(MLPRegressor, self)
-        sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
-                     activation=activation, solver=solver, alpha=alpha,
-                     batch_size=batch_size, learning_rate=learning_rate,
-                     learning_rate_init=learning_rate_init, power_t=power_t,
-                     max_iter=max_iter, loss='squared_loss', shuffle=shuffle,
-                     random_state=random_state, tol=tol, verbose=verbose,
-                     warm_start=warm_start, momentum=momentum,
-                     nesterovs_momentum=nesterovs_momentum,
-                     early_stopping=early_stopping,
-                     validation_fraction=validation_fraction,
-                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
-                     n_iter_no_change=n_iter_no_change)
+        super().__init__(
+            hidden_layer_sizes=hidden_layer_sizes,
+            activation=activation, solver=solver, alpha=alpha,
+            batch_size=batch_size, learning_rate=learning_rate,
+            learning_rate_init=learning_rate_init, power_t=power_t,
+            max_iter=max_iter, loss='squared_loss', shuffle=shuffle,
+            random_state=random_state, tol=tol, verbose=verbose,
+            warm_start=warm_start, momentum=momentum,
+            nesterovs_momentum=nesterovs_momentum,
+            early_stopping=early_stopping,
+            validation_fraction=validation_fraction,
+            beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
+            n_iter_no_change=n_iter_no_change)
 
     def predict(self, X):
         """Predict using the multi-layer perceptron model.

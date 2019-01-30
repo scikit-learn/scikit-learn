@@ -418,7 +418,7 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
         if n_classes != 1:
             raise ValueError("``n_classes`` must be 1 for regression but "
                              "was %r" % n_classes)
-        super(RegressionLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
 
 
 class LeastSquaresError(RegressionLossFunction):
@@ -580,7 +580,7 @@ class HuberLossFunction(RegressionLossFunction):
     """
 
     def __init__(self, n_classes, alpha=0.9):
-        super(HuberLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
         self.alpha = alpha
         self.gamma = None
 
@@ -678,7 +678,7 @@ class QuantileLossFunction(RegressionLossFunction):
         The percentile
     """
     def __init__(self, n_classes, alpha=0.9):
-        super(QuantileLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
         self.alpha = alpha
         self.percentile = alpha * 100.0
 
@@ -774,7 +774,7 @@ class BinomialDeviance(ClassificationLossFunction):
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
-        super(BinomialDeviance, self).__init__(1)
+        super().__init__(1)
 
     def init_estimator(self):
         return LogOddsEstimator()
@@ -867,7 +867,7 @@ class MultinomialDeviance(ClassificationLossFunction):
         if n_classes < 3:
             raise ValueError("{0:s} requires more than 2 classes.".format(
                 self.__class__.__name__))
-        super(MultinomialDeviance, self).__init__(n_classes)
+        super().__init__(n_classes)
 
     def init_estimator(self):
         return PriorProbabilityEstimator()
@@ -963,7 +963,7 @@ class ExponentialLoss(ClassificationLossFunction):
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
-        super(ExponentialLoss, self).__init__(1)
+        super().__init__(1)
 
     def init_estimator(self):
         return ScaledLogOddsEstimator()
@@ -1948,7 +1948,7 @@ shape (n_estimators, ``loss_.K``)
                  presort='auto', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4):
 
-        super(GradientBoostingClassifier, self).__init__(
+        super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
             criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
@@ -2402,7 +2402,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  warm_start=False, presort='auto', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4):
 
-        super(GradientBoostingRegressor, self).__init__(
+        super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
             criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
@@ -2474,6 +2474,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             return the index of the leaf x ends up in each estimator.
         """
 
-        leaves = super(GradientBoostingRegressor, self).apply(X)
+        leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
