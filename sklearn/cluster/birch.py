@@ -541,7 +541,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
                         all_or_any=any)
 
         if (hasattr(self, 'subcluster_centers_') and
-            X.shape[1] != self.subcluster_centers_.shape[1]):
+                X.shape[1] != self.subcluster_centers_.shape[1]):
             raise ValueError(
                 "Training data and predicted data do "
                 "not have same number of features.")
