@@ -771,7 +771,6 @@ def test_iterative_imputer_transform_recovery(rank):
     A = rng.rand(n, rank)
     B = rng.rand(rank, d)
     X_filled = np.dot(A, B)
-    # half is randomly missing
     nan_mask = rng.rand(n, d) < 0.5
     X_missing = X_filled.copy()
     X_missing[nan_mask] = np.nan
