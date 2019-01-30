@@ -340,16 +340,13 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     --------
     >>> from sklearn.datasets import load_sample_images
     >>> from sklearn.feature_extraction import image
-    >>>
     >>> # Use the array data from the first image in this dataset:
     >>> one_image = load_sample_images().images[0]
     >>> print('Image shape: {}'.format(one_image.shape))
     Image shape: (427, 640, 3)
-    >>>
     >>> patches = image.extract_patches_2d(one_image, (2, 2))
     >>> print('Patches shape: {}'.format(patches.shape))
     Patches shape: (272214, 2, 2, 3)
-    >>>
     >>> # Here are just two of these patches:
     >>> print(patches[1]) # doctest: +NORMALIZE_WHITESPACE
     [[[174 201 231]
@@ -467,12 +464,10 @@ class PatchExtractor(BaseEstimator):
     --------
     >>> from sklearn.datasets import load_sample_images
     >>> from sklearn.feature_extraction import image
-    >>>
     >>> # Use the array data from the second image in this dataset:
     >>> X = load_sample_images().images[1]
     >>> print('Image shape: {}'.format(X.shape))
     Image shape: (427, 640, 3)
-    >>>
     >>> pe = image.PatchExtractor(patch_size=(2, 2))
     >>> pe_fit = pe.fit(X)
     >>> pe_trans = pe.transform(X)
