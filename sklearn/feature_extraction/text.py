@@ -31,6 +31,7 @@ from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils.fixes import sp_version
+from ..utils import _IS_32BIT
 
 
 __all__ = ['HashingVectorizer',
@@ -871,7 +872,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         Returns a reordered matrix and modifies the vocabulary in place
         """
         sorted_features = sorted(vocabulary.items())
-        map_index = np.empty(len(sorted_features), dtype=np.int32)
+        map_index = np.empty(len(sorted_features), dtype=X.indices.dtype)
         for new_val, (term, old_val) in enumerate(sorted_features):
             vocabulary[term] = new_val
             map_index[old_val] = new_val
@@ -961,14 +962,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                  " contain stop words")
 
         if indptr[-1] > 2147483648:  # = 2**31 - 1
-            if sp_version >= (0, 14):
-                indices_dtype = np.int64
-            else:
+            if _IS_32BIT:
                 raise ValueError(('sparse CSR array has {} non-zero '
                                   'elements and requires 64 bit indexing, '
-                                  ' which is unsupported with scipy {}. '
-                                  'Please upgrade to scipy >=0.14')
-                                 .format(indptr[-1], '.'.join(sp_version)))
+                                  'which is unsupported with 32 bit Python.')
+                                 .format(indptr[-1]))
+            indices_dtype = np.int64
 
         else:
             indices_dtype = np.int32
