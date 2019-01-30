@@ -225,7 +225,7 @@ class OneHotEncoder(_BaseEncoder):
         of ``transform``).
 
     drop_idx_ : array of shape (n_features,)
-        The index in ``categories_ of`` the category to be dropped for
+        The index in ``categories_`` of the category to be dropped for
         each feature. None if all features will be retained.
 
     active_features_ : array
@@ -685,10 +685,10 @@ class OneHotEncoder(_BaseEncoder):
                     keep_cells = ~np.in1d(Xii, [drop_value])
                     np.logical_and(Xmi, keep_cells, out=Xmi)
                     Xii[Xii > drop_value] -= 1
-            n_values = [len(cats) - 1
-                        if self.drop_idx_[i] is not None
+            n_values = [len(cats) - 1 if to_drop is not None
                         else len(cats)
-                        for i, cats in enumerate(self.categories_)]
+                        for cats, to_drop in
+                        zip(self.categories_, self.drop_idx_)]
         else:
             n_values = [cats.shape[0] for cats in self.categories_]
 
@@ -758,12 +758,9 @@ class OneHotEncoder(_BaseEncoder):
             n_transformed_features = sum(len(cats)
                                          for cats in self.categories_)
         else:
-            n_transformed_features = sum(len(cats) - 1
-                                         if self.drop_idx_[i] is not None
-                                         else len(cats)
-                                         for i, cats in
-                                         enumerate(self.categories_)
-                                         )
+            n_transformed_features = sum(len(cats) - (drop_idx is not None)
+                                         for cats, drop_idx in
+                                         zip(self.categories_, self.drop_idx_))
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
@@ -779,12 +776,10 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
-            if self.drop is None:
+            if (self.drop is None) or self.drop_idx_[i] is None:
                 cats = self.categories_[i]
             else:
-                cats = np.array([cat for idx, cat in
-                                 enumerate(self.categories_[i])
-                                 if idx != self.drop_idx_[i]])
+                cats = np.delete(self.categories_[i], self.drop_idx_[i])
             n_categories = len(cats)
             if n_categories == 0:
                 X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
