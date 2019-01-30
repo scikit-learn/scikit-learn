@@ -58,6 +58,16 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`datasets.svmlight_format` :issue:`10727` by
   :user:`Bryan K Woods <bryan-woods>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |API| The default value of the :code:`init` argument in
+  :func:`decomposition.non_negative_factorization` will change from
+  :code:`random` to :code:`None` in version 0.23 to make it consistent with
+  :class:`decomposition.NMF`. A FutureWarning is raised when
+  the default value is used.
+  :issue:`12988` by :user:`Zijie (ZJ) Poh <zjpoh>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
