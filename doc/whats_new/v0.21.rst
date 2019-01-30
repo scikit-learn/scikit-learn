@@ -286,3 +286,6 @@ These changes mostly affect library developers.
   when `fit` is called twice with the same data, the ouput of
   `predict`, `predict_proba`, `transform`, and `decision_function` does not
   change. :issue:`12328` by :user:`Nicolas Hug <NicolasHug>`
+
+- Replace manual checks with ``check_is_fitted` and ensure that error messages
+  are consistent. :issue:`12991` by :user:`Agamemnon Krasoulis <agamemnonc>`.
