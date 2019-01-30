@@ -180,7 +180,7 @@ def test_lda_negative_input():
 
 
 def test_lda_no_component_error():
-    # test `transform` and `perplexity` before `fit`
+    # test and `perplexity` before `fit`
     rng = np.random.RandomState(0)
     X = rng.randint(4, size=(20, 10))
     lda = LatentDirichletAllocation()
