@@ -960,8 +960,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                         print('[IterativeImputer] Early stopping criterion '
                               'reached.')
                     break
-                else:
-                    Xt_previous = Xt.copy()
+                Xt_previous = Xt.copy()
 
         if not self.sample_posterior:
             warnings.warn("[IterativeImputer] Early stopping criterion not "
