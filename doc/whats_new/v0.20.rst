@@ -56,7 +56,7 @@ Changelog
 
 - |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer` which 
   would result in the sparse feature matrix having conflicting `indptr` and
-  `index` precisions under very large vocabularies. :issue:`11295` by
+  `indices` precisions under very large vocabularies. :issue:`11295` by
   :user:`Gabriel Vacaliuc <gvacaliuc>`.
 
 .. _changes_0_20_2:
