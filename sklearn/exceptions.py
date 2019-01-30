@@ -29,9 +29,9 @@ class NotFittedError(ValueError, AttributeError):
     ...     LinearSVC().predict([[1, 2], [2, 3], [3, 4]])
     ... except NotFittedError as e:
     ...     print(repr(e))
-    ...                        # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    ...                        # doctest: +NORMALIZE_WHITESPACE
     NotFittedError("This LinearSVC instance is not fitted yet. Call 'fit' with
-    appropriate arguments before using this method."...)
+    appropriate arguments before using this method.")
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
