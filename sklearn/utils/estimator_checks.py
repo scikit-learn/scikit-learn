@@ -51,6 +51,7 @@ from sklearn.linear_model.stochastic_gradient import BaseSGD
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import ShuffleSplit
 from sklearn.model_selection._validation import _safe_split
@@ -1586,9 +1587,7 @@ def check_estimators_fit_returns_self(name, estimator_orig,
 def check_estimators_unfitted(name, estimator_orig):
     """Check that predict raises an exception in an unfitted estimator.
 
-    Unfitted estimators should raise either AttributeError or ValueError.
-    The specific exception type NotFittedError inherits from both and can
-    therefore be adequately raised for that purpose.
+    Unfitted estimators should raise a NotFittedError.
     """
 
     # Common test for Regressors, Classifiers and Outlier detection estimators
@@ -1596,23 +1595,14 @@ def check_estimators_unfitted(name, estimator_orig):
 
     estimator = clone(estimator_orig)
 
-    msg = "fit"
+    msg = ("{} instance is not fitted yet. Call 'fit' with appropriate "
+           "arguments".format(estimator.__class__.__name__))
 
-    if hasattr(estimator, 'predict'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict, X)
-
-    if hasattr(estimator, 'decision_function'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.decision_function, X)
-
-    if hasattr(estimator, 'predict_proba'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict_proba, X)
-
-    if hasattr(estimator, 'predict_log_proba'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict_log_proba, X)
+    for method in ('decision_function', 'predict', 'predict_proba',
+                   'predict_log_proba'):
+        if getattr(estimator, method, None) is not None:
+            assert_raises_regex(NotFittedError, msg,
+                                getattr(estimator, method), X)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
