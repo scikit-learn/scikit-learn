@@ -56,6 +56,7 @@ def _check_statistics(X, X_true,
               err_msg=err_msg.format(True))
     assert_ae(X_trans, X_true, err_msg=err_msg.format(True))
 
+
 def test_imputation_shape():
     # Verify the shapes of the imputed matrix for different strategies.
     X = np.random.randn(10, 2)
@@ -631,7 +632,13 @@ def test_missing_indicator_string():
       np.array([['b', 'b', True, False], ['b', 'b', False, True]],
                dtype=object)),
      (np.array([[np.nan, 1.], [1., np.nan]]), np.nan,
-      np.array([[1., 1., True, False], [1., 1., False, True]]))]
+      np.array([[1., 1., True, False], [1., 1., False, True]])),
+     (np.array([[np.nan, 'b'], ['b', np.nan]], dtype=object), np.nan,
+      np.array([['b', 'b', True, False], ['b', 'b', False, True]],
+               dtype=object)),
+     (np.array([[None, 'b'], ['b', None]], dtype=object), None,
+      np.array([['b', 'b', True, False], ['b', 'b', False, True]],
+               dtype=object))]
 )
 def test_missing_indicator_with_imputer(X, missing_values, X_trans_exp):
     trans = make_union(
