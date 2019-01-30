@@ -287,5 +287,5 @@ These changes mostly affect library developers.
   `predict`, `predict_proba`, `transform`, and `decision_function` does not
   change. :issue:`12328` by :user:`Nicolas Hug <NicolasHug>`
 
-- Replace manual checks with ``check_is_fitted` and ensure that error messages
+- Replace manual checks with ``check_is_fitted`` and ensure that error messages
   are consistent. :issue:`12991` by :user:`Agamemnon Krasoulis <agamemnonc>`.
