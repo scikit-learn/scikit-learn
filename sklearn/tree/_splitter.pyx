@@ -374,7 +374,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
         for localcat in range(ncat_present):
             cat = localcat + cat_offset[localcat]
-            if sort_density[cat] == 0:  # Avoid dividing zero by zero
+            if sort_density[cat] == 0:  # Avoid dividing by zero
                 sort_density[cat] = 1
             sort_value[localcat] = sort_value[cat] / sort_density[cat]
             sorted_cat[localcat] = cat
