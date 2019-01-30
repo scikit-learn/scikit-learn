@@ -572,7 +572,7 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
         in_subtree = np.ones(shape=n_nodes, dtype=np.bool)
 
         cur_alpha = 0
-        while cur_alpha < self.alpha:
+        while True:
             # If root node is a leaf
             if not inner_nodes[0]:
                 break
@@ -584,6 +584,11 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
             # smallest value is the weakest link which is pruned
             cur_idx = np.argmin(g_node)
             cur_alpha = g_node[cur_idx]
+
+            # The subtree on the previous iteration has the greatest alpha
+            # less than or equal to self.alpha
+            if cur_alpha > self.alpha:
+                break
 
             # descendants of branch are not in subtree
             stack = [cur_idx]
@@ -777,7 +782,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         speed up the training.
 
     alpha : float, optional (default=0.0)
-        Complexity parameter used for Minimal Cost-Complexity Pruning.
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``alpha`` will be choosen.
 
     Attributes
     ----------
@@ -1134,7 +1141,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         speed up the training.
 
     alpha : float, optional (default=0.0)
-        Complexity parameter used for Minimal Cost-Complexity Pruning.
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``alpha`` will be choosen.
 
     Attributes
     ----------
@@ -1416,7 +1425,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         through the fit method) if sample_weight is specified.
 
     alpha : float, optional (default=0.0)
-        Complexity parameter used for Minimal Cost-Complexity Pruning.
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``alpha`` will be choosen.
 
     See also
     --------
@@ -1589,7 +1600,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         If None then unlimited number of leaf nodes.
 
     alpha : float, optional (default=0.0)
-        Complexity parameter used for Minimal Cost-Complexity Pruning.
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``alpha`` will be choosen.
 
     See also
     --------
