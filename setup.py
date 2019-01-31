@@ -109,14 +109,14 @@ def get_openmp_flag(compiler):
         return ['/openmp']
     elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
         return ['-openmp']
-    elif sys.platform == "darwin" and 'openmp' in os.getenv('CC', ''):
+    elif sys.platform == "darwin" and 'openmp' in os.getenv('CPPFLAGS', ''):
         # -fopenmp can't be passed as compile flag when using Apple-clang.
         # OpenMP support has to be enabled during preprocessing.
         #
         # For example, our macOS wheel build jobs use the following environment
-        # variables to build with Apple clang and the brew installed "libomp":
+        # variables to build with Apple-clang and the brew installed "libomp":
         #
-        # export CC="clang -Xpreprocessor -fopenmp"
+        # export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
         # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
         # export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
         # export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
@@ -125,7 +125,8 @@ def get_openmp_flag(compiler):
     return ['-fopenmp']
 
 
-OPENMP_EXTENSIONS = []
+OPENMP_EXTENSIONS = ["sklearn.cluster._k_means_lloyd",
+                     "sklearn.cluster._k_means_elkan"]
 
 
 # custom build_ext command to set OpenMP compile flags depending on os and
