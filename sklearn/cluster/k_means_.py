@@ -327,7 +327,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
     # Validate init array
     if hasattr(init, '__array__'):
-        init = check_array(init, dtype=X.dtype.type, copy=True)
+        init = check_array(init, dtype=X.dtype.type, copy=True, order='C')
         _validate_center_shape(X, n_clusters, init)
 
         if n_init != 1:
