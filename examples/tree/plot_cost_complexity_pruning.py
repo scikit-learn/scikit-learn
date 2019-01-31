@@ -22,10 +22,10 @@ from sklearn.tree import DecisionTreeClassifier
 X, y = load_breast_cancer(return_X_y=True)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-alphas = np.linspace(0, 0.04, 40)
+ccp_alphas = np.linspace(0, 0.04, 40)
 clfs = []
-for alpha in alphas:
-    clf = DecisionTreeClassifier(random_state=0, alpha=alpha)
+for ccp_alpha in ccp_alphas:
+    clf = DecisionTreeClassifier(random_state=0, ccp_alpha=ccp_alpha)
     clf.fit(X_train, y_train)
     clfs.append(clf)
 
@@ -48,8 +48,8 @@ fig, ax = plt.subplots()
 ax.set_xlabel("alpha")
 ax.set_ylabel("accuracy")
 ax.set_title("Accuracy vs alpha for training and testing sets")
-ax.plot(alphas, train_scores, label="train")
-ax.plot(alphas, test_scores, label="test")
+ax.plot(ccp_alphas, train_scores, label="train")
+ax.plot(ccp_alphas, test_scores, label="test")
 ax.legend()
 fig.show()
 
@@ -63,5 +63,5 @@ fig, ax = plt.subplots()
 ax.set_xlabel("alpha")
 ax.set_ylabel("number of nodes")
 ax.set_title("Number of nodes vs alpha")
-ax.plot(alphas, node_counts)
+ax.plot(ccp_alphas, node_counts)
 fig.show()
