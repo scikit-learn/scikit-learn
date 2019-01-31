@@ -430,24 +430,6 @@ and in this
 from Daniel Nouri which has some nice step by step install instructions for
 Debian / Ubuntu.
 
-.. warning::
-
-    Multithreaded BLAS libraries sometimes conflict with Python's
-    ``multiprocessing`` module, which is used by e.g. ``GridSearchCV`` and
-    most other estimators that take an ``n_jobs`` argument (with the exception
-    of ``SGDClassifier``, ``SGDRegressor``, ``Perceptron``,
-    ``PassiveAggressiveClassifier`` and tree-based methods such as random
-    forests). This is true of Apple's Accelerate and OpenBLAS when built with
-    OpenMP support.
-
-    Besides scikit-learn, NumPy and SciPy also use BLAS internally, as
-    explained earlier.
-
-    If you experience hanging subprocesses with ``n_jobs>1`` or ``n_jobs=-1``,
-    make sure you have a single-threaded BLAS library, or set ``n_jobs=1``,
-    or upgrade to Python 3.4 which has a new version of ``multiprocessing``
-    that should be immune to this problem.
-
 .. _working_memory:
 
 Limiting Working Memory

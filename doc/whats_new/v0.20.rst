@@ -51,6 +51,14 @@ Changelog
   combination with ``handle_unknown='ignore'``.
   :issue:`12881` by `Joris Van den Bossche`_.
 
+:mod:`sklearn.feature_extraction.text`
+......................................
+
+- |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer` which 
+  would result in the sparse feature matrix having conflicting `indptr` and
+  `indices` precisions under very large vocabularies. :issue:`11295` by
+  :user:`Gabriel Vacaliuc <gvacaliuc>`.
+
 .. _changes_0_20_2:
 
 Version 0.20.2

@@ -3,8 +3,6 @@ from __future__ import print_function
 from collections import defaultdict
 from time import time
 
-import six
-
 import numpy as np
 from numpy import random as nr
 
