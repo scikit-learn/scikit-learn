@@ -46,8 +46,8 @@ Scikit-learn requires:
 
 Building Scikit-learn also requires
 
-- OpenMP
 - Cython >=0.28.5
+- OpenMP
 
 Running tests requires
 
@@ -117,8 +117,11 @@ You first need to install the OpenMP library::
 
 Then you need to set the following environment variables::
 
-    export CC="clang -Xpreprocessor -fopenmp"
+    export CC=clang
+    export CXX=clang++
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
     export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
