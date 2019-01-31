@@ -22,7 +22,7 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
 
-cpdef floating _inertia_dense(np.ndarray[floating, ndim=2, mode='c'] X,
+cpdef floating _inertia_dense(np.ndarray[floating, ndim=2] X,
                               floating[::1] sample_weight, 
                               floating[:, ::1] centers,
                               int[::1] labels):
@@ -88,7 +88,7 @@ cpdef floating _inertia_sparse(X,
     return inertia
 
 
-cdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c'] X,
+cdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2] X,
                                          floating[::1] sample_weight,
                                          floating[:, ::1] centers,
                                          floating[::1] weight_in_clusters,
