@@ -127,7 +127,7 @@ def test_gemv(dtype, opA, transA, order):
     alpha, beta = 2.5, -0.5
 
     expected = alpha * opA(A).dot(x) + beta * y
-    gemv(order, transA, alpha, A, x, beta, y)
+    gemv(transA, alpha, A, x, beta, y)
 
     assert_allclose(y, expected, rtol=RTOL[dtype])
 
@@ -146,7 +146,7 @@ def test_ger(dtype, order):
     alpha = 2.5
 
     expected = alpha * np.outer(x, y) + A
-    ger(order, alpha, x, y, A)
+    ger(alpha, x, y, A)
 
     assert_allclose(A, expected, rtol=RTOL[dtype])
 
@@ -173,6 +173,6 @@ def test_gemm(dtype, opA, transA, opB, transB, order):
     alpha, beta = 2.5, -0.5
 
     expected = alpha * opA(A).dot(opB(B)) + beta * C
-    gemm(order, transA, transB, alpha, A, B, beta, C)
+    gemm(transA, transB, alpha, A, B, beta, C)
 
     assert_allclose(C, expected, rtol=RTOL[dtype])

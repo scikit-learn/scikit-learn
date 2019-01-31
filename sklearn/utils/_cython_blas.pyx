@@ -104,19 +104,19 @@ cdef void _gemv(BLAS_Order order, BLAS_Trans ta, int m, int n, floating alpha,
             sgemv(&ta_, &n, &m, &alpha, A, &lda, x, &incx, &beta, y, &incy)
         else:
             dgemv(&ta_, &n, &m, &alpha, A, &lda, x, &incx, &beta, y, &incy)
-    elif order == ColMajor:
+    else:
         if floating is float:
             sgemv(&ta_, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy)
         else:
             dgemv(&ta_, &m, &n, &alpha, A, &lda, x, &incx, &beta, y, &incy)
 
 
-cpdef _gemv_memview(BLAS_Order order, BLAS_Trans ta, floating alpha,
-                    floating[:, :] A, floating[::1] x, floating beta,
-                    floating[::1] y):
+cpdef _gemv_memview(BLAS_Trans ta, floating alpha, floating[:, :] A,
+                    floating[::1] x, floating beta, floating[::1] y):
     cdef:
         int m = A.shape[0]
         int n = A.shape[1]
+        BLAS_Order order = ColMajor if A.strides[0] == A.itemsize else RowMajor
         int lda = m if order == ColMajor else n
 
     _gemv(order, ta, m, n, alpha, &A[0, 0], lda, &x[0], 1, beta, &y[0], 1)
@@ -130,22 +130,22 @@ cdef void _ger(BLAS_Order order, int m, int n, floating alpha, floating *x,
             sger(&n, &m, &alpha, y, &incy, x, &incx, A, &lda)
         else:
             dger(&n, &m, &alpha, y, &incy, x, &incx, A, &lda)
-    elif order == ColMajor:
+    else:
         if floating is float:
             sger(&m, &n, &alpha, x, &incx, y, &incy, A, &lda)
         else:
             dger(&m, &n, &alpha, x, &incx, y, &incy, A, &lda)
 
 
-cpdef _ger_memview(BLAS_Order order, floating alpha, floating[::1] x,
-                   floating[::] y, floating[:, :] A):
+cpdef _ger_memview(floating alpha, floating[::1] x, floating[::] y,
+                   floating[:, :] A):
     cdef:
-        BLAS_Order order_ = ColMajor if order == ColMajor else RowMajor
         int m = A.shape[0]
         int n = A.shape[1]
+        BLAS_Order order = ColMajor if A.strides[0] == A.itemsize else RowMajor
         int lda = m if order == ColMajor else n
 
-    _ger(order_, m, n, alpha, &x[0], 1, &y[0], 1, &A[0, 0], lda)
+    _ger(order, m, n, alpha, &x[0], 1, &y[0], 1, &A[0, 0], lda)
 
 
 ################
@@ -166,7 +166,7 @@ cdef void _gemm(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb, int m, int n,
         else:
             dgemm(&tb_, &ta_, &n, &m, &k, &alpha, B,
                   &ldb, A, &lda, &beta, C, &ldc)
-    elif order == ColMajor:
+    else:
         if floating is float:
             sgemm(&ta_, &tb_, &m, &n, &k, &alpha, A,
                   &lda, B, &ldb, &beta, C, &ldc)
@@ -175,23 +175,24 @@ cdef void _gemm(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb, int m, int n,
                   &lda, B, &ldb, &beta, C, &ldc)
 
 
-cpdef _gemm_memview(BLAS_Order order, BLAS_Trans ta, BLAS_Trans tb,
-                    floating alpha, floating[:, :] A, floating[:, :] B,
-                    floating beta, floating[:, :] C):
+cpdef _gemm_memview(BLAS_Trans ta, BLAS_Trans tb, floating alpha,
+                    floating[:, :] A, floating[:, :] B, floating beta,
+                    floating[:, :] C):
     cdef:
         int m = A.shape[0] if ta == NoTrans else A.shape[1]
         int n = B.shape[1] if tb == NoTrans else B.shape[0]
         int k = A.shape[1] if ta == NoTrans else A.shape[0]
         int lda, ldb, ldc
+        BLAS_Order order = ColMajor if A.strides[0] == A.itemsize else RowMajor
 
-    if order == ColMajor:
-        lda = m if ta == NoTrans else k
-        ldb = k if tb == NoTrans else n
-        ldc = m
-    else:
+    if order == RowMajor:
         lda = k if ta == NoTrans else m
         ldb = n if tb == NoTrans else k
         ldc = n
+    else:
+        lda = m if ta == NoTrans else k
+        ldb = k if tb == NoTrans else n
+        ldc = m
 
     _gemm(order, ta, tb, m, n, k, alpha, &A[0, 0],
           lda, &B[0, 0], ldb, beta, &C[0, 0], ldc)
