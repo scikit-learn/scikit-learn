@@ -94,7 +94,7 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
                  min_impurity_split,
                  class_weight=None,
                  presort=False,
-                 alpha=0.0):
+                 ccp_alpha=0.0):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -108,7 +108,7 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
-        self.alpha = alpha
+        self.ccp_alpha = ccp_alpha
 
     def get_depth(self):
         """Returns the depth of the decision tree.
@@ -521,7 +521,7 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self, 'tree_')
 
-        if self.alpha == 0.0:
+        if self.ccp_alpha == 0.0:
             return
 
         n_nodes = self.tree_.node_count
@@ -571,23 +571,23 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
         inner_nodes = np.logical_not(leaves_in_subtree)
         in_subtree = np.ones(shape=n_nodes, dtype=np.bool)
 
-        cur_alpha = 0
+        cur_ccp_alpha = 0
         while True:
             # If root node is a leaf
             if not inner_nodes[0]:
                 break
 
-            # computes alpha for subtrees
+            # computes ccp_alpha for subtrees
             g_node = (r_node - r_branch) / (n_leaves - 1)
             g_node[~inner_nodes] = np.inf
 
             # smallest value is the weakest link which is pruned
             cur_idx = np.argmin(g_node)
-            cur_alpha = g_node[cur_idx]
+            cur_ccp_alpha = g_node[cur_idx]
 
-            # The subtree on the previous iteration has the greatest alpha
-            # less than or equal to self.alpha
-            if cur_alpha > self.alpha:
+            # The subtree on the previous iteration has the greatest ccp_alpha
+            # less than or equal to self.ccp_alpha
+            if cur_ccp_alpha > self.ccp_alpha:
                 break
 
             # descendants of branch are not in subtree
@@ -781,10 +781,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
-    alpha : float, optional (default=0.0)
+    ccp_alpha : float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``alpha`` will be choosen.
+        ``ccp_alpha`` will be choosen.
 
     Attributes
     ----------
@@ -878,7 +878,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_impurity_split=None,
                  class_weight=None,
                  presort=False,
-                 alpha=0.0):
+                 ccp_alpha=0.0):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -893,7 +893,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
             presort=presort,
-            alpha=alpha)
+            ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -1140,10 +1140,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
-    alpha : float, optional (default=0.0)
+    ccp_alpha : float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``alpha`` will be choosen.
+        ``ccp_alpha`` will be choosen.
 
     Attributes
     ----------
@@ -1228,7 +1228,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  presort=False,
-                 alpha=0.0):
+                 ccp_alpha=0.0):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1242,7 +1242,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
             presort=presort,
-            alpha=alpha)
+            ccp_alpha=ccp_alpha)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -1424,10 +1424,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    alpha : float, optional (default=0.0)
+    ccp_alpha : float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``alpha`` will be choosen.
+        ``ccp_alpha`` will be choosen.
 
     See also
     --------
@@ -1461,7 +1461,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None,
-                 alpha=0.0):
+                 ccp_alpha=0.0):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1475,7 +1475,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
             random_state=random_state,
-            alpha=alpha)
+            ccp_alpha=ccp_alpha)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -1599,10 +1599,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
 
-    alpha : float, optional (default=0.0)
+    ccp_alpha : float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``alpha`` will be choosen.
+        ``ccp_alpha`` will be choosen.
 
     See also
     --------
@@ -1635,7 +1635,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  max_leaf_nodes=None,
-                 alpha=0.0):
+                 ccp_alpha=0.0):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1648,4 +1648,4 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
             random_state=random_state,
-            alpha=alpha)
+            ccp_alpha=ccp_alpha)

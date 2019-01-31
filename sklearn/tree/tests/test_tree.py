@@ -1853,9 +1853,9 @@ def test_prune_tree_reg_are_subtrees(criterion, dataset, tree_cls):
 
 def assert_pruning_creates_subtree(estimator_cls, X, y):
     estimators = []
-    for alpha in np.linspace(0.0, 0.2, 11):
+    for ccp_alpha in np.linspace(0.0, 0.2, 11):
         est = estimator_cls(
-            max_leaf_nodes=20, alpha=alpha, random_state=0).fit(X, y)
+            max_leaf_nodes=20, ccp_alpha=ccp_alpha, random_state=0).fit(X, y)
         estimators.append(est)
 
     for prev_est, next_est in zip(estimators[:-1], estimators[1:]):
