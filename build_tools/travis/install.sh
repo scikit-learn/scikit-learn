@@ -27,10 +27,19 @@ then
 	ccache --max-size 100M --show-stats
 elif [ $TRAVIS_OS_NAME = "osx" ]
 then
-    # use clang installed by conda which supports OpenMP
+    # install OpenMP not present by default on osx
+    brew install libomp
+
+    # enable OpenMP support for Apple-clang
     export CC=clang
-    export CXX=clang
-    # avoid error due to multiple openmp libraries loaded simultaneously
+    export CXX=clang++
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+
+    # avoid error due to multiple OpenMP libraries loaded simultaneously
     export KMP_DUPLICATE_LIB_OK=TRUE
 fi
 
@@ -45,8 +54,6 @@ make_conda() {
     if [ $TRAVIS_OS_NAME = "osx" ]
 	then
 		fname=Miniconda3-latest-MacOSX-x86_64.sh
-        # we need to install a version on clang which supports OpenMP
-        TO_INSTALL="$TO_INSTALL llvm-openmp clang"
 	else
 		fname=Miniconda3-latest-Linux-x86_64.sh
 	fi
