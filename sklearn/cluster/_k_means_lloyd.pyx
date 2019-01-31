@@ -31,7 +31,7 @@ cdef void xgemm(char *ta, char *tb, int *m, int *n, int *k, floating *alpha,
         dgemm(ta, tb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
 
 
-cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
+cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2] X,
                                      floating[::1] sample_weight,
                                      floating[::1] x_squared_norms,
                                      floating[:, ::1] centers_old,

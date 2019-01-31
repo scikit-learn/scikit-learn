@@ -43,7 +43,7 @@ cdef floating euclidean_dist(floating* a, floating* b, int n_features) nogil:
     return sqrt(result)
 
 
-cpdef _init_bounds(np.ndarray[floating, ndim=2, mode='c'] X,
+cpdef _init_bounds(np.ndarray[floating, ndim=2] X,
                    floating[:, ::1] centers,
                    floating[:, ::1] center_half_distances,
                    int[::1] labels,
@@ -109,7 +109,7 @@ cpdef _init_bounds(np.ndarray[floating, ndim=2, mode='c'] X,
         upper_bounds[i] = min_dist
 
 
-cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
+cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2] X,
                                      floating[::1] sample_weight,
                                      floating[:, ::1] centers_old,
                                      floating[:, ::1] centers_new,
