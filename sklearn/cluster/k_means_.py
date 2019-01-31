@@ -302,9 +302,8 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
     """
     if precompute_distances != 'not-used':
-            warnings.warn("'precompute_distances' was deprecated in version"
-                          "0.21 and will be removed in 0.23.",
-                          DeprecationWarning)
+        warnings.warn("'precompute_distances' was deprecated in version"
+                      "0.21 and will be removed in 0.23.", DeprecationWarning)
 
     if n_init <= 0:
         raise ValueError("Invalid number of initializations."

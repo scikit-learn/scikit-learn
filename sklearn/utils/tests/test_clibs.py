@@ -26,7 +26,7 @@ def test_set_thread_limits_dict(clib):
     # Check that the number of threads used by the multithreaded C-libs can be
     # modified dynamically.
 
-    if clib is "openblas" and SKIP_OPENBLAS:
+    if clib == "openblas" and SKIP_OPENBLAS:
         raise SkipTest("Possible bug in getting maximum number of threads with"
                        " OpenBLAS < 0.2.16 and OpenBLAS does not expose it's "
                        "version before 0.3.4.")
