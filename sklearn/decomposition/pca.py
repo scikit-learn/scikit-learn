@@ -24,9 +24,10 @@ from ..externals import six
 from .base import _BasePCA
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
+from ..utils.extmath import fast_logdet, randomized_pca, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
+from ..utils.sparsefuncs import mean_variance_axis
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -370,14 +371,8 @@ class PCA(_BasePCA):
 
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
-
-        # Raise an error for sparse input.
-        # This is more informative than the generic one raised by check_array.
-        if issparse(X):
-            raise TypeError('PCA does not support sparse input. See '
-                            'TruncatedSVD for a possible alternative.')
-
-        X = check_array(X, dtype=[np.float64, np.float32], ensure_2d=True,
+        X = check_array(X, accept_sparse=['csr', 'csc'],
+                        dtype=[np.float64, np.float32], ensure_2d=True,
                         copy=self.copy)
 
         # Handle n_components==None
@@ -392,14 +387,23 @@ class PCA(_BasePCA):
         # Handle svd_solver
         self._fit_svd_solver = self.svd_solver
         if self._fit_svd_solver == 'auto':
+            # Sparse data can only be handled with the randomized solver
+            if issparse(X):
+                self._fit_svd_solver = 'randomized'
             # Small problem or n_components == 'mle', just call full PCA
-            if max(X.shape) <= 500 or n_components == 'mle':
+            elif max(X.shape) <= 500 or n_components == 'mle':
                 self._fit_svd_solver = 'full'
             elif n_components >= 1 and n_components < .8 * min(X.shape):
                 self._fit_svd_solver = 'randomized'
             # This is also the case of n_components in (0,1)
             else:
                 self._fit_svd_solver = 'full'
+
+        # Ensure we don't try call arpack or full on a sparse matrix
+        if issparse(X) and self._fit_svd_solver != 'randomized':
+            raise ValueError(
+                'only the randomized solver supports sparse matrices'
+            )
 
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver == 'full':
@@ -503,11 +507,15 @@ class PCA(_BasePCA):
 
         random_state = check_random_state(self.random_state)
 
-        # Center data
-        self.mean_ = np.mean(X, axis=0)
-        X -= self.mean_
+        if issparse(X):
+            self.mean_, total_var = mean_variance_axis(X, axis=0, ddof=1)
+        else:
+            self.mean_ = np.mean(X, axis=0)
+            total_var = np.var(X, axis=0, ddof=1)
 
         if svd_solver == 'arpack':
+            # Center data
+            X -= self.mean_
             # random init solution, as ARPACK does it internally
             v0 = random_state.uniform(-1, 1, size=min(X.shape))
             U, S, V = svds(X, k=n_components, tol=self.tol, v0=v0)
@@ -519,7 +527,7 @@ class PCA(_BasePCA):
 
         elif svd_solver == 'randomized':
             # sign flipping is done inside
-            U, S, V = randomized_svd(X, n_components=n_components,
+            U, S, V = randomized_pca(X, n_components=n_components,
                                      n_iter=self.iterated_power,
                                      flip_sign=True,
                                      random_state=random_state)
@@ -530,7 +538,6 @@ class PCA(_BasePCA):
 
         # Get variance explained by singular values
         self.explained_variance_ = (S ** 2) / (n_samples - 1)
-        total_var = np.var(X, ddof=1, axis=0)
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()
         self.singular_values_ = S.copy()  # Store the singular values.

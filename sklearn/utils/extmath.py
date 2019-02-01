@@ -360,6 +360,153 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
+def _normalize_power_iteration(x, power_iteration_normalizer):
+    """Normalize the matrix when doing power iterations for stability."""
+    if power_iteration_normalizer == "none":
+        return x
+    elif power_iteration_normalizer == "LU":
+        Q, _ = linalg.lu(x, permute_l=True)
+        return Q
+    elif power_iteration_normalizer == "QR":
+        Q, _ = linalg.qr(x, mode="economic")
+        return Q
+    else:
+        raise ValueError("Unrecognized normalization method `%s`" %
+                         power_iteration_normalizer)
+
+
+def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
+                   power_iteration_normalizer="auto", flip_sign=True,
+                   random_state=0):
+    """Computes a truncated randomized PCA decomposition.
+
+    Parameters
+    ----------
+    A : ndarray or sparse matrix
+        Matrix to decompose
+
+    n_components : int
+        Number of singular values and vectors to extract.
+
+    n_oversamples : int (default is 10)
+        Additional number of random vectors to sample the range of M so as
+        to ensure proper conditioning. The total number of random vectors
+        used to find the range of M is n_components + n_oversamples. Smaller
+        number can improve speed but can negatively impact the quality of
+        approximation of singular vectors and singular values.
+
+    n_iter : int or 'auto' (default is 'auto')
+        Number of power iterations. It can be used to deal with very noisy
+        problems. When 'auto', it is set to 4, unless `n_components` is small
+        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
+        This improves precision with few components.
+
+        .. versionchanged:: 0.18
+
+    power_iteration_normalizer : 'auto' (default), 'QR', 'LU', 'none'
+        Whether the power iterations are normalized with step-by-step
+        QR factorization (the slowest but most accurate), 'none'
+        (the fastest but numerically unstable when `n_iter` is large, e.g.
+        typically 5 or larger), or 'LU' factorization (numerically stable
+        but can lose slightly in accuracy). The 'auto' mode applies no
+        normalization if `n_iter` <= 2 and switches to LU otherwise.
+
+        .. versionadded:: 0.18
+
+    flip_sign : boolean, (True by default)
+        The output of a singular value decomposition is only unique up to a
+        permutation of the signs of the singular vectors. If `flip_sign` is
+        set to `True`, the sign ambiguity is resolved by making the largest
+        loadings for each component in the left singular vectors positive.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
+
+    Notes
+    -----
+    This algorithm finds a (usually very good) approximate truncated principal
+    component analysis decomposition using randomized methods to speed up the
+    computations. It is particulary useful on large, sparse matrices since this
+    implementation doesn't require centering the original matrix (which would
+    center and therefore densify potentially large sparse matrices, leading to
+    memory issues). In order to obtain further speed up, `n_iter` can be set
+    <=2 (at the cost of loss of precision).
+
+    References
+    ----------
+    * Algorithm 971: An implementation of a randomized algorithm for principal
+      component analysis
+      Li, Huamin, et al. 2017
+
+    """
+    if n_iter == "auto":
+        # Checks if the number of iterations is explicitly specified
+        # Adjust n_iter. 7 was found a good compromise for PCA. See sklearn #5299
+        n_iter = 7 if n_components < .1 * min(A.shape) else 4
+
+    # Deal with "auto" mode
+    if power_iteration_normalizer == "auto":
+        if n_iter <= 2:
+            power_iteration_normalizer = "none"
+        else:
+            power_iteration_normalizer = "LU"
+
+    n_samples, n_features = A.shape
+
+    c = np.atleast_2d(A.mean(axis=0))
+
+    if n_samples >= n_features:
+        Q = random_state.normal(size=(n_features, n_components + n_oversamples))
+        if A.dtype.kind == "f":
+            # Ensure f32 is preserved as f32
+            Q = Q.astype(A.dtype, copy=False)
+
+        Q = safe_sparse_dot(A, Q) - safe_sparse_dot(c, Q)
+
+        # Normalized power iterations
+        for _ in range(n_iter):
+            Q = safe_sparse_dot(A.T, Q) - safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
+            Q = _normalize_power_iteration(Q, power_iteration_normalizer)
+            Q = safe_sparse_dot(A, Q) - safe_sparse_dot(c, Q)
+            Q = _normalize_power_iteration(Q, power_iteration_normalizer)
+
+        Q, _ = linalg.qr(Q, mode="economic")
+
+        QA = safe_sparse_dot(A.T, Q) - safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
+        R, s, V = linalg.svd(QA.T, full_matrices=False)
+        U = Q.dot(R)
+
+    else:  # n_features > n_samples
+        Q = random_state.normal(size=(n_samples, n_components + n_oversamples))
+        if A.dtype.kind == "f":
+            # Ensure f32 is preserved as f32
+            Q = Q.astype(A.dtype, copy=False)
+
+        Q = safe_sparse_dot(A.T, Q) - safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
+
+        # Normalized power iterations
+        for _ in range(n_iter):
+            Q = safe_sparse_dot(A, Q) - safe_sparse_dot(c, Q)
+            Q = _normalize_power_iteration(Q, power_iteration_normalizer)
+            Q = safe_sparse_dot(A.T, Q) - safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
+            Q = _normalize_power_iteration(Q, power_iteration_normalizer)
+
+        Q, _ = linalg.qr(Q, mode="economic")
+
+        QA = safe_sparse_dot(A, Q) - safe_sparse_dot(c, Q)
+        U, s, R = linalg.svd(QA, full_matrices=False)
+        V = R.dot(Q.T)
+
+    if flip_sign:
+        U, V = svd_flip(U, V)
+
+    return U[:, :n_components], s[:n_components], V[:n_components, :]
+
+
 def weighted_mode(a, w, axis=0):
     """Returns an array of the weighted modal (most common) value in a
 
