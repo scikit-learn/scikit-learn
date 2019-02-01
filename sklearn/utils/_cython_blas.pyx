@@ -99,6 +99,11 @@ cdef void _rotg(floating *a, floating *b, floating *c, floating *s) nogil:
         drotg(a, b, c, s)
 
 
+cpdef _rotg_memview(floating a, floating b, floating c, floating s):
+    _rotg(&a, &b, &c, &s)
+    return a, b, c, s
+
+
 cdef void _rot(int n, floating *x, int incx, floating *y, int incy,
                floating c, floating s) nogil:
     """Apply plane rotation"""
@@ -106,6 +111,10 @@ cdef void _rot(int n, floating *x, int incx, floating *y, int incy,
         srot(&n, x, &incx, y, &incy, &c, &s)
     else:
         drot(&n, x, &incx, y, &incy, &c, &s)
+
+
+cpdef _rot_memview(floating[::1] x, floating[::1] y, floating c, floating s):
+    _rot(x.shape[0], &x[0], 1, &y[0], 1, c, s)
 
 
 ################
