@@ -58,14 +58,19 @@ cdef double _double_min_pos(double *X, Py_ssize_t size):
 def cholesky_delete(np.ndarray[floating, ndim=2] L, int go_out):
    cdef:
       int n = L.shape[0]
-      int m = L.shape[1]
+      int m = L.strides[0]
       floating c, s
       floating *L1
       int i
+   
+   if floating is float:
+      m /= sizeof(float)
+   else:
+      m /= sizeof(double)
 
    # delete row go_out
    L1 = &L[0, 0] + (go_out * m)
-   for i in range(go_out, n - 1):
+   for i in range(go_out, n-1):
       _copy(i + 2, L1 + m, 1, L1, 1)
       L1 += m
 
