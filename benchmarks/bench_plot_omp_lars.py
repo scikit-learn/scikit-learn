@@ -7,8 +7,6 @@ import gc
 import sys
 from time import time
 
-import six
-
 import numpy as np
 
 from sklearn.linear_model import lars_path, orthogonal_mp

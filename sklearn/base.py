@@ -244,7 +244,7 @@ class BaseEstimator(object):
 
     def __getstate__(self):
         try:
-            state = super(BaseEstimator, self).__getstate__()
+            state = super().__getstate__()
         except AttributeError:
             state = self.__dict__.copy()
 
@@ -264,7 +264,7 @@ class BaseEstimator(object):
                         self.__class__.__name__, pickle_version, __version__),
                     UserWarning)
         try:
-            super(BaseEstimator, self).__setstate__(state)
+            super().__setstate__(state)
         except AttributeError:
             self.__dict__.update(state)
 
@@ -502,7 +502,7 @@ class OutlierMixin(object):
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
-        """Performs outlier detection on X.
+        """Performs fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
 

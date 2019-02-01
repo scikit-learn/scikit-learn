@@ -21,6 +21,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
+from scipy.special import expit
 
 from ..utils._joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -291,10 +292,7 @@ class LinearClassifierMixin(ClassifierMixin):
         multiclass is handled by normalizing that over all classes.
         """
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
+        expit(prob, out=prob)
         if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:

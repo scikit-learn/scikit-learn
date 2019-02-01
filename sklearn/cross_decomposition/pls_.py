@@ -588,7 +588,7 @@ class PLSRegression(_PLS):
 
     def __init__(self, n_components=2, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
-        super(PLSRegression, self).__init__(
+        super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="regression", mode="A",
             norm_y_weights=False, max_iter=max_iter, tol=tol,
@@ -734,7 +734,7 @@ class PLSCanonical(_PLS):
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
-        super(PLSCanonical, self).__init__(
+        super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="canonical", mode="A",
             norm_y_weights=True, algorithm=algorithm,

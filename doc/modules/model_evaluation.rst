@@ -215,6 +215,25 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
+.. note:: **Using custom scorers in functions where n_jobs > 1**
+
+    While defining the custom scoring function alongside the calling function 
+    should work out of the box with the default joblib backend (loky), 
+    importing it from another module will be a more robust approach and work
+    independently of the joblib backend. 
+
+    For example, to use, ``n_jobs`` greater than 1 in the example below, 
+    ``custom_scoring_function`` function is saved in a user-created module 
+    (``custom_scorer_module.py``) and imported::
+
+        >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
+        >>> cross_val_score(model,
+        ...  X_train,
+        ...  y_train,
+        ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
+        ...  cv=5,
+        ...  n_jobs=-1) # doctest: +SKIP
+
 .. _multimetric_scoring:
 
 Using multiple metric evaluation
