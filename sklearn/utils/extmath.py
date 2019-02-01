@@ -440,7 +440,8 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
     """
     if n_iter == "auto":
         # Checks if the number of iterations is explicitly specified
-        # Adjust n_iter. 7 was found a good compromise for PCA. See sklearn #5299
+        # Adjust n_iter. 7 was found a good compromise for PCA.
+        # See sklearn #5299
         n_iter = 7 if n_components < .1 * min(A.shape) else 4
 
     # Deal with "auto" mode
@@ -455,7 +456,9 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
     c = np.atleast_2d(A.mean(axis=0))
 
     if n_samples >= n_features:
-        Q = random_state.normal(size=(n_features, n_components + n_oversamples))
+        Q = random_state.normal(
+            size=(n_features, n_components + n_oversamples)
+        )
         if A.dtype.kind == "f":
             # Ensure f32 is preserved as f32
             Q = Q.astype(A.dtype, copy=False)
@@ -464,30 +467,36 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
 
         # Normalized power iterations
         for _ in range(n_iter):
-            Q = safe_sparse_dot(A.T, Q) - safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
+            Q = safe_sparse_dot(A.T, Q) - \
+                safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
             Q = _normalize_power_iteration(Q, power_iteration_normalizer)
             Q = safe_sparse_dot(A, Q) - safe_sparse_dot(c, Q)
             Q = _normalize_power_iteration(Q, power_iteration_normalizer)
 
         Q, _ = linalg.qr(Q, mode="economic")
 
-        QA = safe_sparse_dot(A.T, Q) - safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
+        QA = safe_sparse_dot(A.T, Q) - \
+            safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
         R, s, V = linalg.svd(QA.T, full_matrices=False)
         U = Q.dot(R)
 
     else:  # n_features > n_samples
-        Q = random_state.normal(size=(n_samples, n_components + n_oversamples))
+        Q = random_state.normal(
+            size=(n_samples, n_components + n_oversamples)
+        )
         if A.dtype.kind == "f":
             # Ensure f32 is preserved as f32
             Q = Q.astype(A.dtype, copy=False)
 
-        Q = safe_sparse_dot(A.T, Q) - safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
+        Q = safe_sparse_dot(A.T, Q) - \
+            safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
 
         # Normalized power iterations
         for _ in range(n_iter):
             Q = safe_sparse_dot(A, Q) - safe_sparse_dot(c, Q)
             Q = _normalize_power_iteration(Q, power_iteration_normalizer)
-            Q = safe_sparse_dot(A.T, Q) - safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
+            Q = safe_sparse_dot(A.T, Q) - \
+                safe_sparse_dot(c.T, Q.sum(axis=0)[None, :])
             Q = _normalize_power_iteration(Q, power_iteration_normalizer)
 
         Q, _ = linalg.qr(Q, mode="economic")
