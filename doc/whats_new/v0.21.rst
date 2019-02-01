@@ -176,6 +176,10 @@ Support for Python 3.4 and below has been officially dropped.
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
   :issue:`12855` by :user:`Pawel Sendyk <psendyk>.`
 
+- |Efficiency| The pairwise manhattan distances with sparse input now uses the
+  BLAS shipped with scipy instead of the bundled BLAS. :issue:`12732` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
