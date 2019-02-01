@@ -12,7 +12,6 @@ import numpy as np
 cimport numpy as np
 from cython cimport floating
 
-
 from ..utils._cython_blas cimport _asum
 
 
