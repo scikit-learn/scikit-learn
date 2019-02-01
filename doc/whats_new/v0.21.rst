@@ -276,6 +276,14 @@ Multiple modules
   :func:`sklearn.set_config`. :issue:`11705` by :user:`Nicolas Hug
   <NicolasHug>`.
 
+
+Miscellaneous
+.............
+
+- |API| Replace manual checks with ``check_is_fitted``. Not fitted errors are
+  now more uniform. :issue:`12991` by :user:`Agamemnon Krasoulis <agamemnonc>`.
+
+
 Changes to estimator checks
 ---------------------------
 
@@ -287,5 +295,8 @@ These changes mostly affect library developers.
   `predict`, `predict_proba`, `transform`, and `decision_function` does not
   change. :issue:`12328` by :user:`Nicolas Hug <NicolasHug>`
 
-- Replace manual checks with ``check_is_fitted`` and ensure that error messages
-  are consistent. :issue:`12991` by :user:`Agamemnon Krasoulis <agamemnonc>`.
+- ``check_estimators_unfitted`` should now raise a ``NotFittedError`` for an
+  unfitted estimator. Previously raised ``AttributeError`` and ``ValueError``
+  have been deprecated. The old error message "fit" has been deprecated in favor
+  of "<class_name> instance is not fitted yet. Call 'fit' with appropriate arguments".
+  by :user:`Agamemnon Krasoulis <agamemnonc>` and `Guillaume Lemaitre <glemaitre>`.
