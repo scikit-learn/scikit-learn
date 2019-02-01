@@ -87,13 +87,13 @@ def mean_variance_axis(X, axis, ddof=0):
         Feature-wise variances
 
     """
+    _raise_error_wrong_axis(axis)
+
     if ddof < 0:
         raise ValueError('ddof cannot be <0')
 
     if ddof >= X.shape[axis]:
         raise ValueError('ddof cannot be <N')
-
-    _raise_error_wrong_axis(axis)
 
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
