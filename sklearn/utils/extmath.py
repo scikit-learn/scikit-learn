@@ -214,15 +214,10 @@ def randomized_range_finder(A, size, n_iter,
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
     for i in range(n_iter):
-        if power_iteration_normalizer == 'none':
-            Q = safe_sparse_dot(A, Q)
-            Q = safe_sparse_dot(A.T, Q)
-        elif power_iteration_normalizer == 'LU':
-            Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
-            Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
-        elif power_iteration_normalizer == 'QR':
-            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
-            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode='economic')
+        Q = safe_sparse_dot(A, Q)
+        Q = _normalize_power_iteration(Q, power_iteration_normalizer)
+        Q = safe_sparse_dot(A.T, Q)
+        Q = _normalize_power_iteration(Q, power_iteration_normalizer)
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
