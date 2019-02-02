@@ -32,8 +32,6 @@ of the latent structured data of the Wikipedia content.
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 from bz2 import BZ2File
 import os
 from datetime import datetime
