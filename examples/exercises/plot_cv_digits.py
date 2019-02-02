@@ -32,8 +32,7 @@ for C in C_s:
 
 # Do the plotting
 import matplotlib.pyplot as plt
-plt.figure(1, figsize=(4, 3))
-plt.clf()
+plt.figure()
 plt.semilogx(C_s, scores)
 plt.semilogx(C_s, np.array(scores) + np.array(scores_std), 'b--')
 plt.semilogx(C_s, np.array(scores) - np.array(scores_std), 'b--')

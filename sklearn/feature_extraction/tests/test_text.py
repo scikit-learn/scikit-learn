@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from collections.abc import Mapping
 import re
 import warnings
 
 import pytest
 from scipy import sparse
 
-from sklearn.externals.six import PY2
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -36,8 +36,8 @@ from sklearn.utils.testing import (assert_equal, assert_not_equal,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
                                    SkipTest, assert_raises, assert_no_warnings,
-                                   fails_if_pypy, assert_allclose_dense_sparse)
-from sklearn.utils.fixes import _Mapping as Mapping
+                                   fails_if_pypy, assert_allclose_dense_sparse,
+                                   skip_if_32bit)
 from collections import defaultdict
 from functools import partial
 import pickle
@@ -583,9 +583,9 @@ def test_feature_names():
 
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
 def test_vectorizer_max_features(Vectorizer):
-    expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
-    expected_stop_words = set([u'celeri', u'tomato', u'copyright', u'coke',
-                               u'sparkling', u'water', u'the'])
+    expected_vocabulary = {'burger', 'beer', 'salad', 'pizza'}
+    expected_stop_words = {u'celeri', u'tomato', u'copyright', u'coke',
+                           u'sparkling', u'water', u'the'}
 
     # test bounded number of extracted features
     vectorizer = Vectorizer(max_df=0.6, max_features=4)
@@ -1143,6 +1143,35 @@ def test_vectorizer_stop_words_inconsistent():
     vec.set_params(stop_words=["you've", "you", "you'll", 'blah', 'AND'])
     assert_warns_message(UserWarning, message, vec.fit_transform,
                          ['hello world'])
+
+
+@skip_if_32bit
+def test_countvectorizer_sort_features_64bit_sparse_indices():
+    """
+    Check that CountVectorizer._sort_features preserves the dtype of its sparse
+    feature matrix.
+
+    This test is skipped on 32bit platforms, see:
+        https://github.com/scikit-learn/scikit-learn/pull/11295
+    for more details.
+    """
+
+    X = sparse.csr_matrix((5, 5), dtype=np.int64)
+
+    # force indices and indptr to int64.
+    INDICES_DTYPE = np.int64
+    X.indices = X.indices.astype(INDICES_DTYPE)
+    X.indptr = X.indptr.astype(INDICES_DTYPE)
+
+    vocabulary = {
+            "scikit-learn": 0,
+            "is": 1,
+            "great!": 2
+            }
+
+    Xs = CountVectorizer()._sort_features(X, vocabulary)
+
+    assert INDICES_DTYPE == Xs.indices.dtype
 
 
 @fails_if_pypy
