@@ -1763,7 +1763,7 @@ def test_random_search_bad_cv():
             return 1
 
     # create bad cv
-    cv = BrokenKFold()
+    cv = BrokenKFold(n_splits=3)
 
     train_size = 100
     ridge = RandomizedSearchCV(Ridge(), {'alpha': [1e-3, 1e-2, 1e-1]},
