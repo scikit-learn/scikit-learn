@@ -9,7 +9,6 @@
 from functools import partial
 from distutils.version import LooseVersion
 
-import sys
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -439,7 +438,7 @@ class KNeighborsMixin(object):
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
             old_joblib = LooseVersion(joblib_version) < LooseVersion('0.12')
-            if sys.version_info < (3,) or old_joblib:
+            if old_joblib:
                 # Deal with change of API in joblib
                 check_pickle = False if old_joblib else None
                 delayed_query = delayed(_tree_query_parallel_helper,
