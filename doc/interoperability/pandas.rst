@@ -26,15 +26,15 @@ capability of supporting heterogenous data in one data structure.
 
 Every Scikit-learn estimator supports the use of DataFrames which is achieved
 by obtaining a `NumPy array <https://docs.scipy.org/doc/numpy/user/>`__ using
-the :meth:`.values` property of the DataFrame class.
+the :meth:`.to_numpy` property of the DataFrame class.
 
 .. note::
   Starting with pandas version 0.24.0, it is encouraged to obtain
   NumPy arrays from DataFrames or Series via :meth:`.to_numpy()` instead of
   using :meth:`.values`. More details on this can be found in the
   `release notes <http://pandas-docs.github.io/pandas-docs-travis/whatsnew/v0.24.0.html#accessing-the-values-in-a-series-or-index>`__
-  and the documentation `here <http://pandas.pydata.org/pandas-docs/stable/basics.html#basics-dtypes>`__
-  and `here <http://pandas.pydata.org/pandas-docs/stable/basics.html#attributes-and-underlying-data>`__.
+  and the documentation `here <http://pandas.pydata.org/pandas-docs/stable/getting_started/basics.html#basics-dtypes>`__
+  and `here <http://pandas.pydata.org/pandas-docs/stable/getting_started/basics.html#attributes-and-underlying-data>`__.
 
 There are several
 conditions on such an input DataFrame one of which is that the data in the
@@ -60,12 +60,12 @@ processes that will pass a DataFrame along "as is" to the nested estimators
 of the issues with this are outlined below and sources (where available) of
 discussions and work-arounds (the latter is provided without guarantee that the
 workaround will still work) are provided. It should also be mentioned that if
-the DataFrame contains heterogenous data, the :meth:`.values` property will
+the DataFrame contains heterogenous data, the :meth:`.to_numpy()` property will
 create an in-memory copy of the DataFrame, thus using a NumPy array in the
 first place can be more memory efficient as well as avoiding some of the
 potential pitfalls when using DataFrames. If the DataFrame contains only
 homogenous data in the first place, no in-memory copy will be created using
-:meth:`.values`.
+:meth:`.to_numpy`.
 
 Pandas in Pandas out
 ====================
@@ -161,25 +161,25 @@ API, thanks to `SauceCat <https://github.com/scikit-learn/scikit-learn/issues/72
 ...                         solver='lbfgs', multi_class='auto')
 >>> lg.fit(train[feature_columns_train], train['target'])
 LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-          intercept_scaling=1, max_iter=100, multi_class='auto', n_jobs=4,
-          penalty='l2', random_state=123, solver='lbfgs', tol=0.0001,
-          verbose=0, warm_start=False)
+                   intercept_scaling=1, l1_ratio=None, max_iter=100,
+                   multi_class='auto', n_jobs=4, penalty='l2', random_state=123,
+                   solver='lbfgs', tol=0.0001, verbose=0, warm_start=False)
 >>>
 >>> prob1 = lg.predict_proba(test[feature_columns_train])
 >>> prob1[:5]
-array([[4.09709461e-03, 8.21100411e-01, 1.74802495e-01],
-       [9.42618164e-01, 5.73813720e-02, 4.64354721e-07],
-       [2.72655051e-07, 5.28875447e-03, 9.94710973e-01],
-       [6.86315850e-03, 7.80379358e-01, 2.12757484e-01],
-       [1.64263139e-03, 7.43621534e-01, 2.54735834e-01]])
+array([[4.11775575e-03, 8.20651654e-01, 1.75230591e-01],
+       [9.42197387e-01, 5.78021174e-02, 4.96014488e-07],
+       [2.80792378e-07, 5.36112664e-03, 9.94638593e-01],
+       [6.92583081e-03, 7.79167290e-01, 2.13906879e-01],
+       [1.64170075e-03, 7.43560544e-01, 2.54797756e-01]])
 >>> # result is actually
 >>> prob2 = lg.predict_proba(test[feature_columns_test])
 >>> prob2[:5]
-array([[7.92829716e-01, 1.79085973e-01, 2.80843105e-02],
-       [9.95986933e-01, 4.01303839e-03, 2.87377384e-08],
-       [2.47995509e-03, 7.79557758e-03, 9.89724467e-01],
-       [7.09780229e-01, 2.39891794e-01, 5.03279763e-02],
-       [5.62705633e-01, 3.48565301e-01, 8.87290655e-02]])
+array([[7.97326265e-01, 1.74068589e-01, 2.86051460e-02],
+       [9.96001477e-01, 3.99849230e-03, 3.08998201e-08],
+       [2.50514227e-03, 7.47234078e-03, 9.90022517e-01],
+       [7.15353463e-01, 2.33443544e-01, 5.12029929e-02],
+       [5.67215000e-01, 3.41931708e-01, 9.08532926e-02]])
 
 
 At the time of writing, it is the users responsibility to ensure that the
