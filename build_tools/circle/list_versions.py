@@ -7,14 +7,8 @@ import json
 import re
 import sys
 
-try:
-    from urllib.request import urlopen
-except ImportError:
-    # Python 2
-    from urllib import urlopen
-
 from distutils.version import LooseVersion
-
+from urllib.request import urlopen
 
 def json_urlread(url):
     try:

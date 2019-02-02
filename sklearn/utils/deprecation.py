@@ -1,4 +1,3 @@
-import sys
 import warnings
 import functools
 
@@ -95,9 +94,6 @@ class deprecated(object):
 
 def _is_deprecated(func):
     """Helper to check if func is wraped by our deprecated decorator"""
-    if sys.version_info < (3, 5):
-        raise NotImplementedError("This is only available for python3.5 "
-                                  "or above")
     closures = getattr(func, '__closure__', [])
     if closures is None:
         closures = []

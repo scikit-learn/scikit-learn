@@ -2020,9 +2020,7 @@ shape (n_estimators, ``loss_.K``)
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        for dec in self._staged_decision_function(X):
-            # no yield from in Python2.X
-            yield dec
+        yield from self._staged_decision_function(X)
 
     def predict(self, X):
         """Predict class for X.
