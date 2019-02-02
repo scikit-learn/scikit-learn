@@ -24,9 +24,14 @@ pandas specific or 3rd party libraries that extend the NumPy type system. The
 difficulty of supporting pandas data structure thus comes from pandas
 capability of supporting heterogenous data in one data structure.
 
-Every Scikit-learn estimator supports the use of DataFrames which is achieved
-by obtaining a `NumPy array <https://docs.scipy.org/doc/numpy/user/>`__ using
-the :meth:`.to_numpy` property of the DataFrame class.
+Every Scikit-learn estimator/transformer/pipeline
+(for the rest of this section we shall call these primitives)
+supports the use of DataFrames as inputs which is achieved by obtaining a
+`NumPy array <https://docs.scipy.org/doc/numpy/user/>`__ using
+the :meth:`.values` property of the DataFrame class. The only exception where a
+a DataFrame is being used explicitly is the
+:class:`~sklearn.compose.ColumnTransformer` which is briefly
+discussed below `Dealing with heterogenous data`_.
 
 .. note::
   Starting with pandas version 0.24.0, it is encouraged to obtain
@@ -36,8 +41,8 @@ the :meth:`.to_numpy` property of the DataFrame class.
   and the documentation `here <http://pandas.pydata.org/pandas-docs/stable/getting_started/basics.html#basics-dtypes>`__
   and `here <http://pandas.pydata.org/pandas-docs/stable/getting_started/basics.html#attributes-and-underlying-data>`__.
 
-There are several
-conditions on such an input DataFrame one of which is that the data in the
+There are several conditions on using a DataFrame as an input to
+Scikit-learn primitives, one of which is that the data in the
 DataFrame columns used by the estimator are of numerical type. Other conditions
 and pitfalls are described in subsequent sections. The numerical condition can
 be checked e.g. using something like:
@@ -57,23 +62,25 @@ be checked e.g. using something like:
 There are also a variety of classes such as pipelines and model selection
 processes that will pass a DataFrame along "as is" to the nested estimators
 (see the next section for an example). However, this is not guaranteed and some
-of the issues with this are outlined below and sources (where available) of
+of the issues arising as a result are outlined below and sources
+(where available) of
 discussions and work-arounds (the latter is provided without guarantee that the
 workaround will still work) are provided. It should also be mentioned that if
-the DataFrame contains heterogenous data, the :meth:`.to_numpy()` property will
+the DataFrame contains heterogenous data, the :meth:`.to_numpy` property will
 create an in-memory copy of the DataFrame, thus using a NumPy array in the
 first place can be more memory efficient as well as avoiding some of the
 potential pitfalls when using DataFrames. If the DataFrame contains only
 homogenous data in the first place, no in-memory copy will be created using
 :meth:`.to_numpy`.
 
-Pandas in Pandas out
-====================
+Pandas in **not** Pandas out
+============================
 
-It is currently not the case that all estimators in Scikit-learn return a
-DataFrame as an output when provided with a DataFrame as an input.
+Some primitives in Scikit-learn support the pandas in pandas out, however it
+should generally be assumed that you get a Numpy array as an output when
+providing a DataFrame as an input.
 
-Example for pandas working with Scikit-learn estimator/transformer:
+Example for Pandas working with Scikit-learn primitive:
 
 >>> import numpy as np
 >>> from sklearn.datasets import load_iris
@@ -109,7 +116,7 @@ array instead of a DataFrame even though we use a DataFrame as input.
 <class 'numpy.ndarray'>
 
 As this example shows, at the moment it is not guaranteed that Scikit-learn
-operators with :meth:`.fit`, :meth:`.transform` (and :meth:`.predict`)
+primitivies with :meth:`.fit`, :meth:`.transform` (and :meth:`.predict`)
 capability support pandas in pandas out. However, there are ways around this
 such as an example given
 `here <https://github.com/scikit-learn/scikit-learn/issues/5523#issuecomment-171674105>`__
@@ -217,7 +224,7 @@ sparse matrices or pandas DataFrames.
 Dealing with missing values
 ===========================
 
-As per the glosary, most Scikit-learn estimators do not work with missing
+As per the glosary, most Scikit-learn primitives do not work with missing
 values. If they do, NaN is the preferred representation of missing values. For
 more details, see https://scikit-learn.org/stable/glossary.html#term-missing-values.
 
