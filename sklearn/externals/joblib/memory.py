@@ -7,8 +7,9 @@ is called with the same input arguments.
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
 # License: BSD Style, 3 clauses.
-from __future__ import print_function
 
+
+from __future__ import with_statement
 import os
 import time
 import pydoc
