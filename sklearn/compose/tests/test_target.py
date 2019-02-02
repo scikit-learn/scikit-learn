@@ -16,6 +16,8 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 
+from sklearn.impute import SimpleImputer
+
 from sklearn.linear_model import LinearRegression, Lasso
 
 from sklearn import datasets
@@ -265,3 +267,26 @@ def test_transform_target_regressor_ensure_y_array():
     tt.predict(X.tolist())
     assert_raises(AssertionError, tt.fit, X, y.tolist())
     assert_raises(AssertionError, tt.predict, X)
+
+
+def test_transform_target_regressor_allow_nan():
+    # check if the TransformedTargetRegressor allows missing value in
+    # the target array
+
+    X, y = datasets.load_linnerud(return_X_y=True)
+
+    y[5, 1] = np.NaN
+
+    class DummyInvertibleImputer(SimpleImputer):
+        """ add a dummy inverse transform to simple impute"""
+        def inverse_transform(self, X):
+            return X
+
+    estimator = TransformedTargetRegressor(
+        regressor=LinearRegression(),
+        transformer=DummyInvertibleImputer(),
+        check_inverse=False
+    )
+
+    estimator.fit(X, y)
+    estimator.predict(X)

@@ -151,7 +151,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape (n_samples,)
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
             Target values.
 
         sample_weight : array-like, shape (n_samples,) optional
@@ -162,7 +162,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         -------
         self : object
         """
-        y = check_array(y, accept_sparse=False, force_all_finite=True,
+        y = check_array(y, accept_sparse=False, force_all_finite=False,
                         ensure_2d=False, dtype='numeric')
 
         # store the number of dimension of the target to predict an array of

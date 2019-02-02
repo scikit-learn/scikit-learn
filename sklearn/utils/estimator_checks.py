@@ -177,7 +177,8 @@ def _yield_regressor_checks(name, regressor):
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
     yield check_supervised_y_2d
-    yield check_supervised_y_no_nan
+    if name != 'TransformedTargetRegressor':
+        yield check_supervised_y_no_nan
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
