@@ -36,7 +36,12 @@ from .forest import BaseForest
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
-from ..utils import check_array, check_X_y, check_random_state
+from ..utils import (
+    check_array,
+    check_X_y,
+    check_random_state,
+    _get_feature_importances
+)
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
 from sklearn.utils.validation import has_fit_parameter, check_is_fitted
@@ -53,6 +58,8 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
+    norm_order = 2  # same as <numpy.linalg.norm>'s `ard` parameter
 
     @abstractmethod
     def __init__(self,
@@ -236,8 +243,9 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     @property
     def feature_importances_(self):
-        """Return the feature importances (the higher, the more important the
-           feature).
+        """Return the feature importances.
+
+         The higher the value, the more important the feature.
 
         Returns
         -------
@@ -249,15 +257,21 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         try:
             norm = self.estimator_weights_.sum()
-            return (sum(weight * clf.feature_importances_ for weight, clf
-                    in zip(self.estimator_weights_, self.estimators_))
-                    / norm)
+            estimator_feature_importances_ = [
+                _get_feature_importances(estimator, self.norm_order)
+                for estimator in self.estimators_]
 
-        except AttributeError:
+            return (sum(weight * feature_importances_
+                        for weight, feature_importances_ in zip(
+                            self.estimator_weights_,
+                            estimator_feature_importances_)) / norm)
+
+        except ValueError:
             raise AttributeError(
                 "Unable to compute feature importances "
-                "since base_estimator does not have a "
-                "feature_importances_ attribute")
+                "since base_estimator neither has a "
+                "feature_importances_ attribute nor a "
+                "coef_ attribute")
 
     def _validate_X_predict(self, X):
         """Ensure that X is in the proper format"""
@@ -369,6 +383,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     .. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 
     """
+
     def __init__(self,
                  base_estimator=None,
                  n_estimators=50,
@@ -914,6 +929,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
 
     """
+
     def __init__(self,
                  base_estimator=None,
                  n_estimators=50,

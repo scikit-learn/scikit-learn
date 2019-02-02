@@ -265,6 +265,15 @@ def test_importances():
         assert_equal((importances[:3, np.newaxis] >= importances[3:]).all(),
                      True)
 
+    clf_with_coef_ = SVC(kernel='linear')
+    clf = AdaBoostClassifier(base_estimator=clf_with_coef_, algorithm="SAMME")
+
+    clf.fit(X, y)
+    importances = clf.feature_importances_
+
+    assert_equal(importances.shape[0], 10)
+    assert_equal((importances[:3, np.newaxis] >= importances[3:]).all(), True)
+
 
 def test_error():
     # Test that it gives proper exception on deficient input.
@@ -414,7 +423,7 @@ def test_sparse_classification():
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
         assert all([(t == csc_matrix or t == csr_matrix)
-                   for t in types])
+                    for t in types])
 
 
 def test_sparse_regression():
@@ -465,7 +474,7 @@ def test_sparse_regression():
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
         assert all([(t == csc_matrix or t == csr_matrix)
-                   for t in types])
+                    for t in types])
 
 
 def test_sample_weight_adaboost_regressor():
