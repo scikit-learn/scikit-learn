@@ -14,7 +14,6 @@ The module contains:
 
 """
 from __future__ import division
-
 cimport cython
 
 import numpy as np
