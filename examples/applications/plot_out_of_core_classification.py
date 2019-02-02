@@ -28,25 +28,27 @@ feeding them to the learner.
 # License: BSD 3 clause
 
 from __future__ import print_function
-from glob import glob
+
 import itertools
 import os.path
 import re
+import sys
 import tarfile
 import time
-import sys
+from glob import glob
+
+from matplotlib import rcParams
+import matplotlib.pyplot as plt
 
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
 
-from html.parser import HTMLParser
-from urllib.request import urlretrieve
 from sklearn.datasets import get_data_home
+from sklearn.externals.six.moves import html_parser
+from sklearn.externals.six.moves.urllib.request import urlretrieve
 from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.linear_model import Perceptron
+from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import MultinomialNB
 
 
@@ -60,16 +62,19 @@ def _not_in_sphinx():
 #
 
 
-class ReutersParser(HTMLParser):
+class ReutersParser(html_parser.HTMLParser):
     """Utility class to parse a SGML file and yield documents one at a time."""
 
     def __init__(self, encoding='latin-1'):
-        HTMLParser.__init__(self)
+        html_parser.HTMLParser.__init__(self)
         self._reset()
         self.encoding = encoding
 
     def handle_starttag(self, tag, attrs):
         method = 'start_' + tag
+        for attr in attrs:
+            if attr[0] == 'lewissplit':
+                self.lewis_split = attr[1]
         getattr(self, method, lambda x: None)(attrs)
 
     def handle_endtag(self, tag):
@@ -85,6 +90,7 @@ class ReutersParser(HTMLParser):
         self.body = ""
         self.topics = []
         self.topic_d = ""
+        self.lewis_split = ""
 
     def parse(self, fd):
         self.docs = []
@@ -110,7 +116,8 @@ class ReutersParser(HTMLParser):
         self.body = re.sub(r'\s+', r' ', self.body)
         self.docs.append({'title': self.title,
                           'body': self.body,
-                          'topics': self.topics})
+                          'topics': self.topics,
+                          'lewissplit': self.lewis_split})
         self._reset()
 
     def start_title(self, attributes):
@@ -140,20 +147,22 @@ class ReutersParser(HTMLParser):
         self.topic_d = ""
 
 
-def stream_reuters_documents(data_path=None):
+def stream_reuters_documents(data_path=None, subset="TRAIN"):
     """Iterate over documents of the Reuters dataset.
 
     The Reuters archive will automatically be downloaded and uncompressed if
     the `data_path` directory does not exist.
 
-    Documents are represented as dictionaries with 'body' (str),
-    'title' (str), 'topics' (list(str)) keys.
+    Documents are represented as dictionaries with 'body' (str)
+    'title' (str), 'topics' (list(str)), 'lewissplit' (str) keys.
+
+    'lewissplit' key is useful to separate Training/Test Split
 
     """
 
     DOWNLOAD_URL = ('http://archive.ics.uci.edu/ml/machine-learning-databases/'
                     'reuters21578-mld/reuters21578.tar.gz')
-    ARCHIVE_FILENAME = 'reuters21578.tar.gz'
+    archive_filename = 'reuters21578.tar.gz'
 
     if data_path is None:
         data_path = os.path.join(get_data_home(), "reuters")
@@ -170,7 +179,7 @@ def stream_reuters_documents(data_path=None):
                 sys.stdout.write(
                     '\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb))
 
-        archive_path = os.path.join(data_path, ARCHIVE_FILENAME)
+        archive_path = os.path.join(data_path, archive_filename)
         urlretrieve(DOWNLOAD_URL, filename=archive_path,
                     reporthook=progress)
         if _not_in_sphinx():
@@ -182,8 +191,8 @@ def stream_reuters_documents(data_path=None):
     parser = ReutersParser()
     for filename in glob(os.path.join(data_path, "*.sgm")):
         for doc in parser.parse(open(filename, 'rb')):
-            yield doc
-
+            if doc['lewissplit'] == subset:
+                yield doc
 
 ###############################################################################
 # Main
@@ -192,12 +201,16 @@ def stream_reuters_documents(data_path=None):
 # Create the vectorizer and limit the number of features to a reasonable
 # maximum
 
-vectorizer = HashingVectorizer(decode_error='ignore', n_features=2 ** 18,
-                               alternate_sign=False)
 
+vectorizer = HashingVectorizer(
+    decode_error='ignore', n_features=2 ** 18, alternate_sign=False)
 
 # Iterator over parsed Reuters SGML files.
-data_stream = stream_reuters_documents()
+# Train Datasets
+data_stream_train = stream_reuters_documents(subset="TRAIN")
+
+# Test Datasets
+data_stream_test = stream_reuters_documents(subset="TEST")
 
 # We learn a binary classification between the "acq" class and all the others.
 # "acq" was chosen as it is more or less evenly distributed in the Reuters
@@ -214,44 +227,67 @@ partial_fit_classifiers = {
     'Passive-Aggressive': PassiveAggressiveClassifier(tol=1e-3),
 }
 
+# test data statistics
+test_stats = {'n_test': 0, 'n_test_pos': 0}
 
-def get_minibatch(doc_iter, size, pos_class=positive_class):
+
+def get_test_data(doc_iter_test, pos_class=positive_class):
     """Extract a minibatch of examples, return a tuple X_text, y.
 
     Note: size is before excluding invalid docs with no topics assigned.
 
     """
-    data = [(u'{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
-            for doc in itertools.islice(doc_iter, size)
-            if doc['topics']]
-    if not len(data):
+
+    data_test = [(
+        u'{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
+        for doc in doc_iter_test
+        if doc['topics']]
+
+    if not len(data_test):
         return np.asarray([], dtype=int), np.asarray([], dtype=int)
-    X_text, y = zip(*data)
-    return X_text, np.asarray(y, dtype=int)
 
+    X_text_test, y_test = zip(*data_test)
 
-def iter_minibatches(doc_iter, minibatch_size):
-    """Generator of minibatches."""
-    X_text, y = get_minibatch(doc_iter, minibatch_size)
-    while len(X_text):
-        yield X_text, y
-        X_text, y = get_minibatch(doc_iter, minibatch_size)
+    return X_text_test, np.asarray(y_test, dtype=int)
 
-
-# test data statistics
-test_stats = {'n_test': 0, 'n_test_pos': 0}
-
-# First we hold out a number of examples to estimate accuracy
-n_test_documents = 1000
 tick = time.time()
-X_test_text, y_test = get_minibatch(data_stream, 1000)
+X_text_test, y_test = get_test_data(data_stream_test, positive_class)
 parsing_time = time.time() - tick
+
+# Vectorized Test Data
 tick = time.time()
-X_test = vectorizer.transform(X_test_text)
+X_test = vectorizer.transform(X_text_test)
 vectorizing_time = time.time() - tick
-test_stats['n_test'] += len(y_test)
-test_stats['n_test_pos'] += sum(y_test)
-print("Test set is %d documents (%d positive)" % (len(y_test), sum(y_test)))
+
+test_stats['n_test'] = len(y_test)
+test_stats['n_test_pos'] = sum(y_test)
+n_test_documents = len(y_test)
+
+
+def get_minibatch(doc_iter_train, size, pos_class=positive_class):
+    """Extract a minibatch of examples, return a tuple X_text, y.
+
+    Note: size is before excluding invalid docs with no topics assigned.
+
+    """
+    data_train = [(
+        u'{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
+        for doc in itertools.islice(doc_iter_train, size)
+        if doc['topics']]
+
+    if not len(data_train):
+        return np.asarray([], dtype=int), np.asarray([], dtype=int)
+
+    X_text_test, y_train = zip(*data_train)
+    return X_text_test, np.asarray(y_train, dtype=int)
+
+
+def iter_minibatches(doc_iter_train, minibatch_size):
+    """Generator of minibatches."""
+    X_text_test, y_train = get_minibatch(doc_iter_train, minibatch_size)
+    while len(X_text_test):
+        yield X_text_test, y_train
+        X_text_test, y_train = get_minibatch(doc_iter_train, minibatch_size)
 
 
 def progress(cls_name, stats):
@@ -264,7 +300,6 @@ def progress(cls_name, stats):
     s += "in %.2fs (%5d docs/s)" % (duration, stats['n_train'] / duration)
     return s
 
-
 cls_stats = {}
 
 for cls_name in partial_fit_classifiers:
@@ -273,9 +308,6 @@ for cls_name in partial_fit_classifiers:
              'runtime_history': [(0, 0)], 'total_fit_time': 0.0}
     cls_stats[cls_name] = stats
 
-get_minibatch(data_stream, n_test_documents)
-# Discard test set
-
 # We will feed the classifier with mini-batches of 1000 documents; this means
 # we have at most 1000 docs in memory at any time.  The smaller the document
 # batch, the bigger the relative overhead of the partial fit methods.
@@ -283,14 +315,14 @@ minibatch_size = 1000
 
 # Create the data_stream that parses Reuters SGML files and iterates on
 # documents as a stream.
-minibatch_iterators = iter_minibatches(data_stream, minibatch_size)
+minibatch_iterators = iter_minibatches(data_stream_train, minibatch_size)
 total_vect_time = 0.0
 
 # Main loop : iterate on mini-batches of examples
-for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
+for i, (X_TrainText, y_train) in enumerate(minibatch_iterators):
 
     tick = time.time()
-    X_train = vectorizer.transform(X_train_text)
+    X_train = vectorizer.transform(X_TrainText)
     total_vect_time += time.time() - tick
 
     for cls_name, cls in partial_fit_classifiers.items():
@@ -316,7 +348,6 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
             print(progress(cls_name, cls_stats[cls_name]))
     if i % 3 == 0:
         print('\n')
-
 
 ###############################################################################
 # Plot results
