@@ -10,7 +10,6 @@ from __future__ import print_function
 
 import os
 import csv
-import sys
 import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
@@ -860,18 +859,16 @@ def _pkl_filepath(*args, **kwargs):
     manages by Python 2 and Python 3 in the same SCIKIT_LEARN_DATA folder so as
     to avoid conflicts.
 
-    args[-1] is expected to be the ".pkl" filename. Under Python 3, a suffix is
-    inserted before the extension to s
+    args[-1] is expected to be the ".pkl" filename. In order to keep backward
+    compatibility, under Python 3, a suffix is inserted before the extension.
 
     _pkl_filepath('/path/to/folder', 'filename.pkl') returns:
-      - /path/to/folder/filename.pkl under Python 2
       - /path/to/folder/filename_py3.pkl under Python 3+
 
     """
     py3_suffix = kwargs.get("py3_suffix", "_py3")
     basename, ext = splitext(args[-1])
-    if sys.version_info[0] >= 3:
-        basename += py3_suffix
+    basename += py3_suffix
     new_args = args[:-1] + (basename + ext,)
     return join(*new_args)
 
