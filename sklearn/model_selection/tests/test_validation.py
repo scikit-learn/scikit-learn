@@ -1,5 +1,4 @@
 """Test the validation module"""
-from __future__ import division
 
 import sys
 import warnings
@@ -68,7 +67,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.multiclass import OneVsRestClassifier
@@ -155,7 +154,7 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
         assert not hasattr(self, 'fit_called_'), \
                    'fit is called the second time'
         self.fit_called_ = True
-        return super(type(self), self).fit(X_subset, y_subset)
+        return super().fit(X_subset, y_subset)
 
     def predict(self, X):
         raise NotImplementedError
@@ -453,10 +452,10 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
                    {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
 
-    keys_sans_train = set(('test_r2', 'test_neg_mean_squared_error',
-                           'fit_time', 'score_time'))
+    keys_sans_train = {'test_r2', 'test_neg_mean_squared_error',
+                       'fit_time', 'score_time'}
     keys_with_train = keys_sans_train.union(
-        set(('train_r2', 'train_neg_mean_squared_error')))
+            {'train_r2', 'train_neg_mean_squared_error'})
 
     for return_train_score in (True, False):
         for scoring in all_scoring:

@@ -1120,9 +1120,7 @@ def _check_chunk_size(reduced, chunk_size):
                         'Expected sequence(s) of length %d.' %
                         (reduced if is_tuple else reduced[0], chunk_size))
     if any(_num_samples(r) != chunk_size for r in reduced):
-        # XXX: we use int(_num_samples...) because sometimes _num_samples
-        #      returns a long in Python 2, even for small numbers.
-        actual_size = tuple(int(_num_samples(r)) for r in reduced)
+        actual_size = tuple(_num_samples(r) for r in reduced)
         raise ValueError('reduce_func returned object of length %s. '
                          'Expected same length as input: %d.' %
                          (actual_size if is_tuple else actual_size[0],
@@ -1219,6 +1217,8 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     --------
     Without reduce_func:
 
+    >>> import numpy as np
+    >>> from sklearn.metrics import pairwise_distances_chunked
     >>> X = np.random.RandomState(0).rand(5, 3)
     >>> D_chunk = next(pairwise_distances_chunked(X))
     >>> D_chunk  # doctest: +ELLIPSIS

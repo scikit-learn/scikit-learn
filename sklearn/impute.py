@@ -19,10 +19,6 @@ from .utils.validation import FLOAT_DTYPES
 from .utils.fixes import _object_dtype_isnan
 from .utils import is_scalar_nan
 
-from .externals import six
-
-zip = six.moves.zip
-map = six.moves.map
 
 __all__ = [
     'MissingIndicator',
@@ -464,7 +460,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     ...                [np.nan, 2, 3],
     ...                [2, 4, 0]])
     >>> indicator = MissingIndicator()
-    >>> indicator.fit(X1)
+    >>> indicator.fit(X1)  # doctest: +NORMALIZE_WHITESPACE
     MissingIndicator(error_on_new=True, features='missing-only',
              missing_values=nan, sparse='auto')
     >>> X2_tr = indicator.transform(X2)
@@ -537,6 +533,23 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         return imputer_mask, features_with_missing
 
+    def _validate_input(self, X):
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
+        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=None,
+                        force_all_finite=force_all_finite)
+        _check_inputs_dtype(X, self.missing_values)
+        if X.dtype.kind not in ("i", "u", "f", "O"):
+            raise ValueError("MissingIndicator does not support data with "
+                             "dtype {0}. Please provide either a numeric array"
+                             " (with a floating point or integer dtype) or "
+                             "categorical data represented either as an array "
+                             "with integer dtype or an array of string values "
+                             "with an object dtype.".format(X.dtype))
+        return X
+
     def fit(self, X, y=None):
         """Fit the transformer on X.
 
@@ -551,21 +564,14 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
-        else:
-            force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite=force_all_finite)
-        _check_inputs_dtype(X, self.missing_values)
-
+        X = self._validate_input(X)
         self._n_features = X.shape[1]
 
         if self.features not in ('missing-only', 'all'):
             raise ValueError("'features' has to be either 'missing-only' or "
                              "'all'. Got {} instead.".format(self.features))
 
-        if not ((isinstance(self.sparse, six.string_types) and
+        if not ((isinstance(self.sparse, str) and
                 self.sparse == "auto") or isinstance(self.sparse, bool)):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
@@ -592,14 +598,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         """
         check_is_fitted(self, "features_")
-
-        if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
-        else:
-            force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite=force_all_finite)
-        _check_inputs_dtype(X, self.missing_values)
+        X = self._validate_input(X)
 
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "

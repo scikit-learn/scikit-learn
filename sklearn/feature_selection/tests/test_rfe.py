@@ -1,7 +1,6 @@
 """
 Testing Recursive feature elimination
 """
-from __future__ import division
 
 import pytest
 import numpy as np
@@ -214,7 +213,7 @@ def test_rfecv_mockclassifier():
 
 def test_rfecv_verbose_output():
     # Check verbose=1 is producing an output.
-    from sklearn.externals.six.moves import cStringIO as StringIO
+    from io import StringIO
     import sys
     sys.stdout = StringIO()
 

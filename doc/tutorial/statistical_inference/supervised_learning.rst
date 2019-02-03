@@ -257,7 +257,6 @@ This is an example of **bias/variance tradeoff**: the larger the ridge
 We can choose ``alpha`` to minimize left out error, this time using the
 diabetes dataset rather than our synthetic data::
 
-    >>> from __future__ import print_function
     >>> alphas = np.logspace(-4, -1, 6)
     >>> print([regr.set_params(alpha=alpha)
     ...            .fit(diabetes_X_train, diabetes_y_train)
@@ -334,6 +333,7 @@ application of Occam's razor: *prefer simpler models*.
     >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
+    ... # doctest: +NORMALIZE_WHITESPACE
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
        max_iter=1000, normalize=False, positive=False, precompute=False,
        random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
@@ -451,7 +451,7 @@ the separating line (less regularization).
 
 .. topic:: Example:
 
- - :ref:`sphx_glr_auto_examples_svm_plot_iris.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in

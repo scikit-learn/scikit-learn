@@ -1,11 +1,9 @@
-from __future__ import absolute_import
 
 import pytest
 import numpy as np
 import scipy.sparse as sp
 import warnings
 
-from sklearn.externals.six.moves import xrange as range
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.testing import (

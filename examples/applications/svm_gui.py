@@ -13,7 +13,6 @@ negative examples click the right button.
 If all examples are from the same class, it uses a one-class SVM.
 
 """
-from __future__ import division, print_function
 
 print(__doc__)
 
@@ -29,18 +28,12 @@ from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 from matplotlib.contour import ContourSet
 
-try:
-    import tkinter as Tk
-except ImportError:
-    # Backward compat for Python 2
-    import Tkinter as Tk
-
 import sys
 import numpy as np
+import tkinter as Tk
 
 from sklearn import svm
 from sklearn.datasets import dump_svmlight_file
-from sklearn.externals.six.moves import xrange
 
 y_min, y_max = -50, 50
 x_min, x_max = -50, 50
@@ -168,8 +161,8 @@ class View(object):
 
     def plot_kernels(self):
         self.ax.text(-50, -60, "Linear: $u^T v$")
-        self.ax.text(-20, -60, "RBF: $\exp (-\gamma \| u-v \|^2)$")
-        self.ax.text(10, -60, "Poly: $(\gamma \, u^T v + r)^d$")
+        self.ax.text(-20, -60, r"RBF: $\exp (-\gamma \| u-v \|^2)$")
+        self.ax.text(10, -60, r"Poly: $(\gamma \, u^T v + r)^d$")
 
     def onclick(self, event):
         if event.xdata and event.ydata:
@@ -188,7 +181,7 @@ class View(object):
 
     def update(self, event, model):
         if event == "examples_loaded":
-            for i in xrange(len(model.data)):
+            for i in range(len(model.data)):
                 self.update_example(model, i)
 
         if event == "example_added":
