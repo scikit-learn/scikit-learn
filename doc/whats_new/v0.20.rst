@@ -36,6 +36,15 @@ Changelog
   threaded when `n_jobs > 1` or `n_jobs = -1`.
   :issue:`13005` by :user:`Prabakaran Kumaresshan <nixphix>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| add support for non-numeric data in
+  :class:`sklearn.impute.MissingIndicator` which was not supported while
+  :class:`sklearn.impute.SimpleImputer` was supporting this for some
+  imputation strategies.
+  :issue:`13046` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
