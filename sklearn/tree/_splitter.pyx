@@ -36,6 +36,8 @@ from ._utils cimport RAND_R_MAX
 from ._utils cimport safe_realloc
 from ._utils cimport setup_cat_cache
 from ._utils cimport goes_left
+from ._utils cimport BitSet
+
 
 cdef double INFINITY = np.inf
 
@@ -288,6 +290,7 @@ cdef class BaseDenseSplitter(Splitter):
         self.X_idx_sorted_stride = 0
         self.sample_mask = NULL
         self.presort = presort
+        self.cat_split = BitSet()
 
     def __dealloc__(self):
         """Destructor."""
@@ -436,7 +439,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
         cdef bint is_categorical
-        cdef UINT64_t cat_split, cat_idx, ncat_present
+        cdef UINT64_t cat_idx, ncat_present
         cdef INT32_t cat_offs[64]
         cdef bint breiman_shortcut = self.breiman_shortcut
         cdef SIZE_t sorted_cat[64]
@@ -527,13 +530,13 @@ cdef class BestSplitter(BaseDenseSplitter):
                     # Identify the number of categories present in this node
                     is_categorical = self.n_categories[current.feature] > 0
                     if is_categorical:
-                        cat_split = 0
+                        self.cat_split.reset_all()
                         ncat_present = 0
                         for i in range(start, end):
                             # Xf[i] < 64 already verified in tree.py
-                            cat_split |= (<UINT64_t> 1) << (<SIZE_t> Xf[i])
+                            self.cat_split.set(<SIZE_t>Xf[i])
                         for i in range(self.n_categories[current.feature]):
-                            if (cat_split >> i) & 1:
+                            if self.cat_split.get(i):
                                 cat_offs[ncat_present] = i - ncat_present
                                 ncat_present += 1
                         if ncat_present <= 3:
@@ -555,38 +558,41 @@ cdef class BestSplitter(BaseDenseSplitter):
                                 if cat_idx >= ncat_present:
                                     break
 
-                                cat_split = 0
+                                self.cat_split.reset_all()
                                 for ui in range(cat_idx):
-                                    cat_split |= (<UINT64_t> 1) << sorted_cat[ui]
-                                if cat_split & 1:
-                                    cat_split = (~cat_split) & (
-                                        (~(<UINT64_t> 0)) >> (64 - self.n_categories[current.feature]))
+                                    self.cat_split.set(sorted_cat[ui])
+                                # check if the first bit is 1, if yes, flip all
+                                if self.cat_split.get(0):
+                                    self.cat_split.flip_all(
+                                        self.n_categories[current.feature])
                             else:
                                 if cat_idx >= (<UINT64_t> 1) << (ncat_present - 1):
                                     break
 
-                                # Expand the bits of (2 * cat_idx) out into cat_split
-                                # We double cat_idx to avoid double-counting equivalent splits
-                                # This also ensures that cat_split & 1 == 0 as required
-                                cat_split = 0
-                                for ui in range(ncat_present):
-                                    cat_split |= ((cat_idx << 1) &
-                                                  ((<UINT64_t> 1) << ui)) << cat_offs[ui]
+                                # Expand the bits of (2 * cat_idx) out into
+                                # cat_split. We double cat_idx to avoid
+                                # double-counting equivalent splits. This also
+                                # ensures that cat_split & 1 == 0 as required
+                                self.cat_split.from_template(cat_idx << 1,
+                                                             cat_offs,
+                                                             ncat_present)
 
                             # Partition
                             j = start
                             partition_end = end
                             while j < partition_end:
-                                if (cat_split >> (<SIZE_t> Xf[j])) & 1:
+                                if self.cat_split.get(<SIZE_t>Xf[j]):
                                     j += 1
                                 else:
                                     partition_end -= 1
-                                    Xf[j], Xf[partition_end] = Xf[partition_end], Xf[j]
+                                    Xf[j], Xf[partition_end] = (
+                                        Xf[partition_end], Xf[j])
                                     samples[j], samples[partition_end] = (
                                         samples[partition_end], samples[j])
                             current.pos = j
 
-                            # Must reset criterion since we've reordered the samples
+                            # Must reset criterion since we've reordered the
+                            # samples
                             self.criterion.reset()
                         else:
                             # Non-categorical feature
@@ -622,7 +628,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                         if current_proxy_improvement > best_proxy_improvement:
                             best_proxy_improvement = current_proxy_improvement
                             if is_categorical:
-                                current.split_value.cat_split = cat_split
+                                current.split_value.cat_split = self.cat_split.value
                             else:
                                 current.split_value.threshold = (Xf[p - 1] + Xf[p]) / 2.0
                             if (current.split_value.threshold == Xf[p]

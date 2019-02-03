@@ -723,3 +723,36 @@ cdef class WeightedMedianCalculator:
         if self.sum_w_0_k > (self.total_weight / 2.0):
             # whole median
             return self.samples.get_value_from_index(self.k-1)
+
+
+cdef class BitSet:
+    """Easy bit operations on a UINT64_t value"""
+    def __cinit__(self):
+        self.value = 0
+
+    cdef inline void reset_all(self) nogil:
+        self.value = 0
+
+    cdef inline void set(self, SIZE_t i) nogil:
+        self.value |= (<UINT64_t> 1) << i
+
+    cdef inline void reset(self, SIZE_t i) nogil:
+        self.value &= ~((<UINT64_t> 1) << i)
+
+    cdef inline void flip(self, SIZE_t i) nogil:
+        self.value ^= (<UINT64_t> 1) << i
+
+    cdef inline void flip_all(self, SIZE_t n_low_bits) nogil:
+        self.value = (~self.value) & ((~(<UINT64_t> 0)) >> (64 - n_low_bits))
+
+    cdef inline int get(self, SIZE_t i) nogil:
+        return (self.value >> i) & (<UINT64_t> 1)
+
+    cdef inline void from_template(self, UINT64_t template,
+                                   INT32_t *cat_offs,
+                                   SIZE_t ncats_present) nogil:
+        cdef SIZE_t i
+        self.value = 0
+        for i in range(ncats_present):
+            self.value |= (template &
+                          ((<UINT64_t> 1) << i)) << cat_offs[i]

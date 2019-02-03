@@ -230,3 +230,17 @@ cdef class WeightedMedianCalculator:
         self, DOUBLE_t data, DOUBLE_t weight,
         DOUBLE_t original_median) nogil
     cdef DOUBLE_t get_median(self) nogil
+
+
+cdef class BitSet:
+    cdef UINT64_t value
+
+    cdef inline void reset_all(self) nogil
+    cdef inline void set(self, SIZE_t i) nogil
+    cdef inline void reset(self, SIZE_t i) nogil
+    cdef inline void flip(self, SIZE_t i) nogil
+    cdef inline void flip_all(self, SIZE_t n_low_bits) nogil
+    cdef inline int get(self, SIZE_t i) nogil
+    cdef inline void from_template(self, UINT64_t template,
+                                   INT32_t *cat_offs,
+                                   SIZE_t ncats_present) nogil
