@@ -180,7 +180,8 @@ cdef class Splitter:
         self.weighted_n_samples = weighted_n_samples
 
         cdef SIZE_t n_features = X.shape[1]
-        cdef SIZE_t* features = safe_realloc(&self.features, n_features, sizeof(SIZE_t))
+        cdef SIZE_t* features = safe_realloc(&self.features, n_features,
+                                             sizeof(SIZE_t))
 
         for i in range(n_features):
             features[i] = i
@@ -197,15 +198,17 @@ cdef class Splitter:
 
         # Initialize the number of categories for each feature
         # A value of -1 indicates a non-categorical feature
-        self.n_categories = np.zeros((n_features,), dtype=np.int32)
-        for i in range(n_features):
-            self.n_categories[i] = (-1 if n_categories is None
-                                    else n_categories[i])
+        if n_categories is None:
+            self.n_categories = np.array([-1] * n_features, dtype=np.int32)
+        else:
+            self.n_categories = np.empty_like(n_categories, dtype=np.int32)
+            self.n_categories[:] = n_categories
 
         # If needed, allocate cache space for categorical splits
         cdef INT32_t max_n_categories = max(self.n_categories)
         if max_n_categories > 0:
-            safe_realloc(&self.cat_cache, (max_n_categories + 31) // 32, sizeof(UINT32_t))
+            safe_realloc(&self.cat_cache, (max_n_categories + 31) // 32,
+                         sizeof(UINT32_t))
 
         return 0
 
@@ -360,6 +363,8 @@ cdef class BestSplitter(BaseDenseSplitter):
             DTYPE_t sort_value[64]
             DTYPE_t sort_density[64]
 
+        # categorical features with more than 64 categories are not supported
+        # here.
         memset(sort_value, 0, 64 * sizeof(DTYPE_t))
         memset(sort_density, 0, 64 * sizeof(DTYPE_t))
 
