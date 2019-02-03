@@ -6,7 +6,6 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
-from __future__ import division
 
 from itertools import chain
 
