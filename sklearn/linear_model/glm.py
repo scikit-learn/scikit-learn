@@ -8,7 +8,7 @@ Generalized Linear Models with Exponential Dispersion Family
 
 # TODO: Write more examples.
 # TODO: Make option self.copy_X more meaningful.
-# So far, fit uses Xnew instead of X.
+#       So far, fit uses Xnew instead of X.
 # TODO: Should the option `normalize` be included (like other linear models)?
 #       So far, it is not included. User must pass a normalized X.
 # TODO: Add cross validation support?
@@ -28,7 +28,7 @@ Generalized Linear Models with Exponential Dispersion Family
 # - Allow for finer control of penalty terms:
 #   L1: ||P1*w||_1 with P1*w as element-wise product, this allows to exclude
 #       factors from the L1 penalty.
-#   L2: w*P2*w with P2 a (demi-) positive definite matrix, e.g. P2 could be
+#   L2: w*P2*w with P2 a (semi-) positive definite matrix, e.g. P2 could be
 #   a 1st or 2nd order difference matrix (compare B-spline penalties and
 #   Tikhonov regularization).
 # - The link funtion (instance of class Link) is necessary for the evaluation
@@ -59,6 +59,8 @@ from ..utils.validation import check_is_fitted, check_random_state
 
 
 def _check_weights(sample_weight, n_samples):
+    """Check that weights are non-negative and have the right shape
+    """
     if sample_weight is None:
         weights = np.ones(n_samples)
     elif np.isscalar(sample_weight):
@@ -594,6 +596,7 @@ class TweedieDistribution(ExponentialDispersionModel):
     power : float (default=0)
             The variance power of the `unit_variance`
             :math:`v(\mu) = \mu^{power}`.
+            For ``0<power<1``, no distribution exists.
     """
     def __init__(self, power=0):
         self.power = power
@@ -826,12 +829,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     Minimizes the objective function::
 
-            1/(2s) * deviance(y, h(X*w))
+            1/(2*sum(s)) * deviance(y, h(X*w); s)
             + alpha * l1_ratio * ||P1*w||_1
             + 1/2 * alpha * (1 - l1_ratio) * w*P2*w
 
-    with inverse link function `h` and s=sum of `sample_weight` (which equals
-    n_samples for `sample_weight=None`).
+    with inverse link function `h` and s=`sample_weight` (for
+    `sample_weight=Nones` one has s=1 and sum(s) equals `n_samples`).
     For `P1=P2=identity`, the penalty is the elastic net::
 
             alpha * l1_ratio * ||w||_1
@@ -852,29 +855,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
-    The fit itself does not need Y to be from an EDM, but only assumes
-    the first two moments :math:`E[Y_i]=\\mu_i=h(\\eta_i)` and
-    :math:`Var[Y_i]=\\frac{\\phi}{w_i} v(\\mu_i)`.
-
-    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
-    (penalized) maximum likelihood which is equivalent to minimizing the
-    deviance.
-
-    For `alpha` > 0, the feature matrix `X` should be standardized in order to
-    penalize features equally strong. Call
-    :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``.
-
-    TODO: Estimation of the dispersion parameter phi.
-
-    If the target `y` is a ratio, appropriate weights `w` should be provided.
-    As an example, consider Poission distributed counts `z` (integers) and
-    weights `w=exposure` (time, money, persons years, ...). Then you fit
-    `y = z/w`, i.e. ``GeneralizedLinearModel(family='poisson').fit(X, y,
-    sample_weight=w)``. The weights are necessary for the right meanself.
-    Consider :math:`\\bar{y} = \\frac{\\sum_i w_i y_i}{\\sum_i w_i}`,
-    in this case one might say that `y` has a 'scaled' Poisson distributions.
-    The same holds for other distributions.
-
     Parameters
     ----------
     alpha : float, optional (default=1)
@@ -891,22 +871,21 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
         combination of L1 and L2.
 
-    P1 : {None, array-like}, shape (n_features*,), optional \
+    P1 : {None, array-like}, shape (n_features,), optional \
             (default=None)
         With this array, you can exclude coefficients from the L1 penalty.
         Set the corresponding value to 1 (include) or 0 (exclude). The
         default value ``None`` is the same as a 1d array of ones.
-        Note that n_features* = X.shape[1] = length of coef_ (intercept
-        always excluded from counting).
+        Note that n_features = X.shape[1].
 
     P2 : {None, array-like, sparse matrix}, shape \
-            (n_features*, n_features*), optional (default=None)
+            (n_features, n_features), optional (default=None)
         With this square matrix the L2 penalty is calculated as `w P2 w`.
         This gives a fine control over this penalty (Tikhonov
-        regularization).
-        The default value ``None`` is the same as the idendity matrix.
-        Note that n_features* = X.shape[1] = length of coef_ (intercept
-        always excluded from counting). P2 must be positive semi-definite.
+        regularization). The diagonal zeros of a diagonal P2, for example,
+        exclude all corresponding coefficients from the L2 penalty.
+        The default value ``None`` is the same as the identity matrix.
+        Note that n_features = X.shape[1]. P2 must be positive semi-definite.
 
     fit_intercept : boolean, optional (default=True)
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -929,18 +908,22 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     solver : {'auto', 'irls', 'newton-cg', 'lbfgs', 'cd'}, \
             optional (default='auto')
-        Algorithm to use in the optimization problem.
+        Algorithm to use in the optimization problem:
 
-        - 'auto' sets 'irls' if l1_ratio equals 0, else 'cd'.
+        'auto'
+            Sets 'irls' if l1_ratio equals 0, else 'cd'.
 
-        - 'irls' is iterated reweighted least squares (Fisher scoring).
+        'irls'
+            iterated reweighted least squares (Fisher scoring).
             It is the standard algorithm for GLMs. Cannot deal with
             L1 penalties.
 
-        - 'newton-cg', 'lbfgs'. Cannot deal with L1 penalties.
+        'newton-cg', 'lbfgs'
+            Cannot deal with L1 penalties.
 
-        - 'cd' is the coordinate descent algorithm. It can
-            deal with L1 as well as L2 penalties.
+        'cd'
+            coordinate descent algorithm. It can deal with L1 as well as L2
+            penalties.
 
     max_iter : int, optional (default=100)
         The maximal number of iterations for solver algorithms.
@@ -959,10 +942,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         starting values for ``coef_`` and ``intercept_``.
 
     start_params : {None, 'least_squares', 'zero', array of shape \
-            (n_features, )}, optional (default=None)
-        If an array of size n_features is supplied, use these as start values
+            (n_features*, )}, optional (default=None)
+        If an array of size n_features* is supplied, use it as start values
         for ``coef_`` in the fit. If ``fit_intercept=True``, the first element
         is assumed to be the start value for the ``intercept_``.
+        Note that n_features* = X.shape[1] + fit_intercept includes the
+        intercept in counting.
         If 'least_squares' is set, the result of a least squares fit in the
         link space (linear predictor) is taken.
         If 'zero' is set, all coefficients start with zero.
@@ -1013,6 +998,30 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     n_iter_ : int
         Actual number of iterations of the solver.
 
+    Notes
+    -----
+    The fit itself does not need Y to be from an EDM, but only assumes
+    the first two moments :math:`E[Y_i]=\\mu_i=h((Xw)_i)` and
+    :math:`Var[Y_i]=\\frac{\\phi}{s_i} v(\\mu_i)`.
+
+    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
+    (penalized) maximum likelihood which is equivalent to minimizing the
+    deviance.
+
+    For `alpha` > 0, the feature matrix `X` should be standardized in order to
+    penalize features equally strong. Call
+    :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``.
+
+    If the target `y` is a ratio, appropriate sample weights `s` should be
+    provided.
+    As an example, consider Poission distributed counts `z` (integers) and
+    weights `s=exposure` (time, money, persons years, ...). Then you fit
+    `y = z/s`, i.e. ``GeneralizedLinearModel(family='poisson').fit(X, y,
+    sample_weight=s)``. The weights are necessary for the right (finite
+    sample) mean.
+    Consider :math:`\\bar{y} = \\frac{\\sum_i s_i y_i}{\\sum_i s_i}`,
+    in this case one might say that `y` has a 'scaled' Poisson distributions.
+    The same holds for other distributions.
 
     References
     ----------
@@ -1138,10 +1147,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             else:
                 solver = 'cd'
         if (self.alpha > 0 and self.l1_ratio > 0 and solver not in ['cd']):
-                raise ValueError("The chosen solver (solver={0}) can't deal "
-                                 "with L1 penalties, which are included with "
-                                 "(alpha={1}) and (l1_ratio={2})."
-                                 .format(solver, self.alpha, self.l1_ratio))
+            raise ValueError("The chosen solver (solver={0}) can't deal "
+                             "with L1 penalties, which are included with "
+                             "(alpha={1}) and (l1_ratio={2})."
+                             .format(solver, self.alpha, self.l1_ratio))
         if (not isinstance(self.max_iter, int)
                 or self.max_iter <= 0):
             raise ValueError("Maximum number of iteration must be a positive "
@@ -1340,14 +1349,17 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 elif self.l1_ratio <= 0.01:
                     # ElasticNet says l1_ratio <= 0.01 is not reliable
                     # => use Ridge
+                    # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
                     reg = Ridge(copy_X=True, fit_intercept=False,
-                                alpha=self.alpha)
+                                alpha=self.alpha*n_samples,
+                                tol=np.max([self.tol, np.sqrt(self.tol)]))
                     reg.fit(Xnew, link.link(y))
                     coef = reg.coef_
                 else:
                     # TODO: Does this make sense at all?
                     reg = ElasticNet(copy_X=True, fit_intercept=False,
-                                     alpha=self.alpha, l1_ratio=self.l1_ratio)
+                                     alpha=self.alpha, l1_ratio=self.l1_ratio,
+                                     tol=np.max([self.tol, np.sqrt(self.tol)]))
                     reg.fit(Xnew, link.link(y))
                     coef = reg.coef_
         else:
@@ -1557,7 +1569,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                         # minimize_z: a z + 1/2 b z^2 + c |d+z|
                         # a = A_j
                         # b = B_jj > 0
-                        # c = |P1_j| = P1_j > 0, ee 1.3
+                        # c = |P1_j| = P1_j > 0, see 1.3
                         # d = w_j + d_j
                         # cf. https://arxiv.org/abs/0708.1485 Eqs. (3) - (4)
                         # with beta = z+d, beta_hat = d-a/b and gamma = c/b

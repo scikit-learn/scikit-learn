@@ -890,7 +890,7 @@ Secondly, the squared loss function is replaced by the deviance :math:`D` of an
 exponential dispersion model (EDM) [11]_. The objective function beeing minimized
 becomes
 
-.. math::    \frac{1}{2s}D(y, \hat{y}) + \alpha \rho ||P_1w||_1
+.. math::    \frac{1}{2\mathrm{sum}(s)}D(y, \hat{y}; s) + \alpha \rho ||P_1w||_1
             +\frac{\alpha(1-\rho)}{2} w^T P_2 w
 
 with sample weights :math:`s`.
@@ -914,7 +914,7 @@ are the following:
 Since the linear predictor :math:`Xw` can be negative and
 Poisson, Gamma and Inverse Gaussian distributions don't support negative values,
 it is convenient to apply a link function different from the identity link
-:math:`h(x)=x` that guarantees the non-negativeness, e.g. the log-link with
+:math:`h(Xw)=Xw` that guarantees the non-negativeness, e.g. the log-link with
 :math:`h(Xw)=\exp(Xw)`.
 
 Note that the feature matrix `X` should be standardized before fitting. This
@@ -964,17 +964,19 @@ e.g. accounting for the dependence structure of :math:`y`.
 The objective function, which is independent of :math:`\phi`, is minimized with
 respect to the coefficients :math:`w`.
 
-The deviance is defined by the log of the EDM likelihood as
+The deviance is defined by the log of the :math:`\mathrm{EDM}(\mu, \phi)`
+likelihood as
 
-.. math::     D(y, \mu) = -2\phi\cdot
-              \left(loglike(y,\mu,\frac{\phi}{s})
-              - loglike(y,y,\frac{\phi}{s})\right)
+.. math::     d(y, \mu) = -2\phi\cdot
+              \left(loglike(y,\mu,\phi)
+              - loglike(y,y,\phi)\right) \\
+              D(y, \mu; s) = \sum_i s_i \cdot d(y_i, \mu_i)
 
 ===================================== ===============================  ================================= ============================================
-Distribution                          Target Domain                    Variance Function :math:`v(\mu)`  Deviance :math:`D(y, \mu)`
+Distribution                          Target Domain                    Variance Function :math:`v(\mu)`  Unit Deviance :math:`d(y, \mu)`
 ===================================== ===============================  ================================= ============================================
 Normal ("normal")                     :math:`y \in (-\infty, \infty)`  :math:`1`                         :math:`(y-\mu)^2`
-Poisson ("poisson")                   :math:`y \in [0, \infty)`        :math:`\mu`                       :math:`2(y\log\frac{y}{/mu}-y+\mu)`
+Poisson ("poisson")                   :math:`y \in [0, \infty)`        :math:`\mu`                       :math:`2(y\log\frac{y}{\mu}-y+\mu)`
 Gamma ("gamma")                       :math:`y \in (0, \infty)`        :math:`\mu^2`                     :math:`2(\log\frac{\mu}{y}+\frac{y}{\mu}-1)`
 Inverse Gaussian ("inverse.gaussian") :math:`y \in (0, \infty)`        :math:`\mu^3`                     :math:`\frac{(y-\mu)^2}{y\mu^2}`
 ===================================== ===============================  ================================= ============================================
