@@ -285,6 +285,19 @@ Support for Python 3.4 and below has been officially dropped.
   method). :issue:`12599` by :user:`Trevor Stephens <trevorstephens>` and
   :user:`Nicolas Hug <NicolasHug>`.
 
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed the posterior mean, posterior covariance and returned
+  regularization parameters in :class:`linear_model.BayesianRidge`. The
+  posterior mean and the posterior covariance were not the ones computed
+  with the last update of the regularization parameters and the returned
+  regularization parameters were not the final ones. Also fixed the formula of
+  the log marginal likelihood used to compute the score when
+  `compute_score=True`. :issue:`12174` by
+  :user:`Albert Thomas <albertcthomas>`.
+
 Multiple modules
 ................
 
