@@ -183,7 +183,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef INT32_t *n_categories_ptr = NULL
         if n_categories is not None:
             n_categories = np.asarray(n_categories, dtype=np.int32, order='C')
-            n_categories_ptr = <INT32_t *> n_categories.data
 
         # Initial capacity
         cdef int init_capacity
@@ -205,7 +204,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_split = self.min_impurity_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, n_categories_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr, n_categories, X_idx_sorted)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -359,7 +358,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef INT32_t *n_categories_ptr = NULL
         if n_categories is not None:
             n_categories = np.asarray(n_categories, dtype=np.int32, order='C')
-            n_categories_ptr = <INT32_t *> n_categories.data
 
         # Parameters
         cdef Splitter splitter = self.splitter
@@ -369,7 +367,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, n_categories_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr, n_categories, X_idx_sorted)
 
         cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
         cdef PriorityHeapRecord record
