@@ -8,27 +8,19 @@ cimport numpy as np
 cimport openmp
 from cython cimport floating
 from cython.parallel import prange, parallel
-from scipy.linalg.cython_blas cimport sgemm, dgemm
 from libc.math cimport sqrt
 from libc.stdlib cimport calloc, free
 from libc.string cimport memset, memcpy
 from libc.float cimport DBL_MAX, FLT_MAX
 
+from ..utils._cython_blas cimport _gemm
+from ..utils._cython_blas cimport RowMajor, Trans, NoTrans
 from ._k_means cimport (_relocate_empty_clusters_dense,
                         _relocate_empty_clusters_sparse,
                         _mean_and_center_shift)
 
 
 np.import_array()
-
-
-cdef void xgemm(char *ta, char *tb, int *m, int *n, int *k, floating *alpha,
-                floating *A, int *lda, floating *B, int *ldb, floating *beta,
-                floating *C, int *ldc) nogil:
-    if floating is float:
-        sgemm(ta, tb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
-    else:
-        dgemm(ta, tb, m, n, k, alpha, A, lda, B, ldb, beta, C, ldc)
 
 
 cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2] X,
@@ -194,12 +186,6 @@ cdef void _update_chunk_dense(floating *X,
     cdef:
         floating sq_dist, min_sq_dist
         int i, j, k, best_cluster
-    
-        # parameters for the BLAS gemm
-        floating alpha = -2.0
-        floating beta = 1.0
-        char *trans_data = 'n'
-        char *trans_centers = 't'
 
     # Instead of computing the full pairwise squared distances matrix,
     # ||X - C||² = ||X||² - 2 X.C^T + ||C||², we only need to store
@@ -209,9 +195,9 @@ cdef void _update_chunk_dense(floating *X,
         for j in range(n_clusters):
             pairwise_distances[i * n_clusters + j] = centers_squared_norms[j]
     
-    xgemm(trans_centers, trans_data, &n_clusters, &n_samples, &n_features,
-          &alpha, centers_old, &n_features, X, &n_features,
-          &beta, pairwise_distances, &n_clusters)
+    _gemm(RowMajor, NoTrans, Trans, n_samples, n_clusters, n_features,
+          -2.0, X, n_features, centers_old, n_features,
+          1.0, pairwise_distances, n_clusters)
 
     for i in range(n_samples):
         min_sq_dist = pairwise_distances[i * n_clusters]
