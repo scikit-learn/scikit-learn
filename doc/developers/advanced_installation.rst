@@ -109,7 +109,8 @@ Mac OSX
 The default C compiler, Apple-clang, on Mac OSX does not directly support
 OpenMP. The first solution to build scikit-learn is to install another C
 compiler such as gcc or llvm-clang. Another solution is to enable OpenMP
-support on the default Apple-clang.
+support on the default Apple-clang. In the following we present how to
+configure this second option.
 
 You first need to install the OpenMP library::
 
