@@ -111,22 +111,21 @@ cdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c'] 
         int new_cluster_id, old_cluster_id, far_idx, idx, k
         floating weight
 
-    if n_empty > 0:
-        for idx in range(n_empty):
+    for idx in range(n_empty):
 
-            new_cluster_id = empty_clusters[idx]
+        new_cluster_id = empty_clusters[idx]
 
-            far_idx = far_from_centers[idx]
-            weight = sample_weight[far_idx]
+        far_idx = far_from_centers[idx]
+        weight = sample_weight[far_idx]
 
-            old_cluster_id = labels[far_idx]
+        old_cluster_id = labels[far_idx]
 
-            for k in range(n_features):
-                centers[new_cluster_id, k] = X[far_idx, k] * weight
-                centers[old_cluster_id, k] -= X[far_idx, k] * weight
+        for k in range(n_features):
+            centers[new_cluster_id, k] = X[far_idx, k] * weight
+            centers[old_cluster_id, k] -= X[far_idx, k] * weight
 
-            weight_in_clusters[new_cluster_id] = weight
-            weight_in_clusters[old_cluster_id] -= weight
+        weight_in_clusters[new_cluster_id] = weight
+        weight_in_clusters[old_cluster_id] -= weight
 
 
 cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
@@ -163,22 +162,21 @@ cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
         int new_cluster_id, old_cluster_id, far_idx, idx
         floating weight
  
-    if n_empty > 0:
-        for idx in range(n_empty):
+    for idx in range(n_empty):
 
-            new_cluster_id = empty_clusters[idx]
+        new_cluster_id = empty_clusters[idx]
 
-            far_idx = far_from_centers[idx]
-            weight = sample_weight[far_idx]
+        far_idx = far_from_centers[idx]
+        weight = sample_weight[far_idx]
 
-            old_cluster_id = labels[far_idx]
-            
-            for k in range(X_indptr[far_idx], X_indptr[far_idx + 1]):
-                centers[new_cluster_id, X_indices[k]] += X_data[k] * weight
-                centers[old_cluster_id, X_indices[k]] -= X_data[k] * weight
+        old_cluster_id = labels[far_idx]
+        
+        for k in range(X_indptr[far_idx], X_indptr[far_idx + 1]):
+            centers[new_cluster_id, X_indices[k]] += X_data[k] * weight
+            centers[old_cluster_id, X_indices[k]] -= X_data[k] * weight
 
-            weight_in_clusters[new_cluster_id] = weight
-            weight_in_clusters[old_cluster_id] -= weight
+        weight_in_clusters[new_cluster_id] = weight
+        weight_in_clusters[old_cluster_id] -= weight
 
 
 cdef void _mean_and_center_shift(floating[:, ::1] centers_old,
