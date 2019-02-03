@@ -6,7 +6,7 @@ cimport numpy as np
 
 
 cdef void _relocate_empty_clusters_dense(
-    np.ndarray[floating, ndim=2],
+    np.ndarray[floating, ndim=2, mode='c'],
     floating[::1],
     floating[:, ::1],
     floating[::1],

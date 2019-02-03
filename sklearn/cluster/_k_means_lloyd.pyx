@@ -23,7 +23,7 @@ from ._k_means cimport (_relocate_empty_clusters_dense,
 np.import_array()
 
 
-cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2] X,
+cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[::1] sample_weight,
                                      floating[::1] x_squared_norms,
                                      floating[:, ::1] centers_old,

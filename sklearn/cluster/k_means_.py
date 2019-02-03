@@ -259,11 +259,11 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
         the data first.  If copy_x is True (default), then the original data is
-        not modified, ensuring X is C-contiguous.  If False, the original data
-        is modified, and put back before the function returns, but small
-        numerical differences may be introduced by subtracting and then adding
-        the data mean, in this case it will also not ensure that data is
-        C-contiguous which may cause a significant slowdown.
+        not modified. If False, the original data is modified, and put back
+        before the function returns, but small numerical differences may be
+        introduced by subtracting and then adding the data mean. Note that if
+        the original data is not C-contiguous, a copy will be made even if
+        copy_x is False.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
@@ -313,10 +313,8 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         raise ValueError('Number of iterations should be a positive number,'
                          ' got %d instead' % max_iter)
 
-    # avoid forcing order when copy_x=False
-    order = "C" if copy_x else None
     X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                    order=order, copy=copy_x)
+                    order='C', copy=copy_x)
     # verify that the number of samples given is larger than k
     if _num_samples(X) < n_clusters:
         raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
