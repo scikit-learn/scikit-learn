@@ -285,7 +285,6 @@ Support for Python 3.4 and below has been officially dropped.
   method). :issue:`12599` by :user:`Trevor Stephens <trevorstephens>` and
   :user:`Nicolas Hug <NicolasHug>`.
 
-
 :mod:`sklearn.linear_model`
 ...........................
 
