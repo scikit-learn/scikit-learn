@@ -149,40 +149,6 @@ def _num_samples(x):
         return len(x)
 
 
-def _shape_repr(shape):
-    """Return a platform independent representation of an array shape
-
-    Under Python 2, the `long` type introduces an 'L' suffix when using the
-    default %r format for tuples of integers (typically used to store the shape
-    of an array).
-
-    Under Windows 64 bit (and Python 2), the `long` type is used by default
-    in numpy shapes even when the integer dimensions are well below 32 bit.
-    The platform specific type causes string messages or doctests to change
-    from one platform to another which is not desirable.
-
-    Under Python 3, there is no more `long` type so the `L` suffix is never
-    introduced in string representation.
-
-    >>> _shape_repr((1, 2))
-    '(1, 2)'
-    >>> one = 2 ** 64 / 2 ** 64  # force an upcast to `long` under Python 2
-    >>> _shape_repr((one, 2 * one))
-    '(1, 2)'
-    >>> _shape_repr((1,))
-    '(1,)'
-    >>> _shape_repr(())
-    '()'
-    """
-    if len(shape) == 0:
-        return "()"
-    joined = ", ".join("%d" % e for e in shape)
-    if len(shape) == 1:
-        # special notation for singleton tuples
-        joined += ','
-    return "(%s)" % joined
-
-
 def check_memory(memory):
     """Check that ``memory`` is joblib.Memory-like.
 
@@ -571,13 +537,12 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             _assert_all_finite(array,
                                allow_nan=force_all_finite == 'allow-nan')
 
-    shape_repr = _shape_repr(array.shape)
     if ensure_min_samples > 0:
         n_samples = _num_samples(array)
         if n_samples < ensure_min_samples:
             raise ValueError("Found array with %d sample(s) (shape=%s) while a"
                              " minimum of %d is required%s."
-                             % (n_samples, shape_repr, ensure_min_samples,
+                             % (n_samples, array.shape, ensure_min_samples,
                                 context))
 
     if ensure_min_features > 0 and array.ndim == 2:
@@ -585,7 +550,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         if n_features < ensure_min_features:
             raise ValueError("Found array with %d feature(s) (shape=%s) while"
                              " a minimum of %d is required%s."
-                             % (n_features, shape_repr, ensure_min_features,
+                             % (n_features, array.shape, ensure_min_features,
                                 context))
 
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
