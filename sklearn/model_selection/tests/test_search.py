@@ -1729,12 +1729,10 @@ def test_deprecated_grid_search_iid():
 
 def test_empty_cv_iterator_error():
     # Generate sample data
-    rng = np.random.RandomState(0)
-    X = 5 * rng.rand(10000, 1)
-    y = np.sin(X).ravel()
+    X, y = make_blobs(n_samples=54, random_state=0, centers=2)
 
     # create cv
-    cv = KFold(n_splits=5).split(X)
+    cv = KFold(n_splits=3).split(X)
 
     # pop all of it, this should cause the expected ValueError
     [u for u in cv]
@@ -1754,9 +1752,7 @@ def test_empty_cv_iterator_error():
 
 def test_random_search_bad_cv():
     # Generate sample data
-    rng = np.random.RandomState(0)
-    X = 5 * rng.rand(10000, 1)
-    y = np.sin(X).ravel()
+    X, y = make_blobs(n_samples=54, random_state=0, centers=2)
 
     class BrokenKFold(KFold):
         def get_n_splits(self, *args, **kw):
