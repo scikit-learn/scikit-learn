@@ -300,7 +300,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         n_components = min(n, p)
     if (n_components > min(n, p)):
         n_components = min(n, p)
-        warnings.warn('n_components is too large: it will be set to %s' % n_components)
+        warnings.warn(
+            'n_components is too large: it will be set to %s' %
+            n_components)
 
     if whiten:
         # Centering the columns (ie the variables)
@@ -323,8 +325,12 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         X1 = as_float_array(X, copy=False)  # copy has been taken care of
 
     if w_init is None:
-        w_init = np.asarray(random_state.normal(size=(n_components,
-                            n_components)), dtype=X1.dtype)
+        w_init = np.asarray(
+            random_state.normal(
+                size=(
+                    n_components,
+                    n_components)),
+            dtype=X1.dtype)
 
     else:
         w_init = np.asarray(w_init)
@@ -350,6 +356,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     if whiten:
         if compute_sources:
             S = np.dot(np.dot(W, K), X).T
+            S /= np.sqrt(np.var(S))
         else:
             S = None
         if return_X_mean:
@@ -393,9 +400,10 @@ class FastICA(BaseEstimator, TransformerMixin):
     algorithm : {'parallel', 'deflation'}
         Apply parallel or deflational algorithm for FastICA.
 
-    whiten : boolean, optional
-        If whiten is false, the data is already considered to be
-        whitened, and no whitening is performed.
+    whiten : string or boolean, optional. Default: 'unit-variance'
+        If whiten is True or 'unit-variance', whitening is performed.
+        If not, the data is already considered to be whitened, and no
+        whitening is performed.
 
     fun : string or function, optional. Default: 'logcosh'
         The functional form of the G function used in the
@@ -460,9 +468,18 @@ class FastICA(BaseEstimator, TransformerMixin):
     pp. 411-430*
 
     """
-    def __init__(self, n_components=None, algorithm='parallel', whiten=True,
-                 fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
-                 w_init=None, random_state=None):
+
+    def __init__(
+            self,
+            n_components=None,
+            algorithm='parallel',
+            whiten='unit-variance',
+            fun='logcosh',
+            fun_args=None,
+            max_iter=200,
+            tol=1e-4,
+            w_init=None,
+            random_state=None):
         super().__init__()
         if max_iter < 1:
             raise ValueError("max_iter should be greater than 1, got "
@@ -495,13 +512,21 @@ class FastICA(BaseEstimator, TransformerMixin):
             X_new : array-like, shape (n_samples, n_components)
         """
         fun_args = {} if self.fun_args is None else self.fun_args
+
+        if self.whiten is True:
+            warnings.warn(
+                "From version 0.23, whiten='unit-variance' by default, "
+                "and whiten=True will behave like whiten='unit-variance'.",
+                category=DeprecationWarning)
+        elif self.whiten == 'unit-variance':
+            self.whiten = True
+
         whitening, unmixing, sources, X_mean, self.n_iter_ = fastica(
             X=X, n_components=self.n_components, algorithm=self.algorithm,
             whiten=self.whiten, fun=self.fun, fun_args=fun_args,
             max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
             random_state=self.random_state, return_X_mean=True,
             compute_sources=compute_sources, return_n_iter=True)
-
         if self.whiten:
             self.components_ = np.dot(unmixing, whitening)
             self.mean_ = X_mean

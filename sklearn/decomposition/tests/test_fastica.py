@@ -276,3 +276,32 @@ def test_fastica_errors():
     assert_raises_regex(ValueError,
                         'Invalid algorithm.+must be.+parallel.+or.+deflation',
                         fastica, X, algorithm='pizza')
+
+
+def test_fastica_whiten_true_raises_warning():
+    """Test raise warning when setting `whiten` parameter as True
+
+    Bug #13056
+    """
+    signal = np.random.rand(10, 5)
+    ch_num = signal.shape[0]
+    signal = signal.transpose()
+    ica = FastICA(n_components=ch_num, whiten=True)
+    _ = ica.fit_transform(signal)
+    # TODO: Assert DeprecationWarning
+    # From version 0.23, whiten='unit-variance' by default, and whiten=True
+    # will behave like whiten='unit-variance'.
+
+
+def test_fastica_whiten_unit_variance():
+    """Test unit variance of transformed data using FastICA algorithm.
+
+    Bug #13056
+    """
+    signal = np.random.rand(10, 5)
+    ch_num = signal.shape[0]
+    signal = signal.transpose()
+    ica = FastICA(n_components=ch_num, whiten='unit-variance')
+    unmixed = ica.fit_transform(signal)
+
+    assert_almost_equal(np.var(unmixed), 1.0)
