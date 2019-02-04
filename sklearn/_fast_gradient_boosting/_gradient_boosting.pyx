@@ -21,10 +21,10 @@ def _update_raw_predictions(
     raw_predictions += last_estimator.predict(X_train)
     """
     cdef:
-        unsigned int [:] starts  # start of each leaf in partition
-        unsigned int [:] stops  # end of each leaf in partition
-        Y_DTYPE_C [:] values  # value of each leaf
-        const unsigned int [:] partition = grower.splitter.partition
+        unsigned int [::1] starts  # start of each leaf in partition
+        unsigned int [::1] stops  # end of each leaf in partition
+        Y_DTYPE_C [::1] values  # value of each leaf
+        const unsigned int [::1] partition = grower.splitter.partition
         list leaves
 
     leaves = grower.finalized_leaves
@@ -40,17 +40,16 @@ def _update_raw_predictions(
 
 cdef void _update_raw_predictions_helper(
         Y_DTYPE_C [::1] raw_predictions,  # OUT
-        const unsigned int [:] starts,
-        const unsigned int [:] stops,
-        const unsigned int [:] partition,
-        const Y_DTYPE_C [:] values) nogil:
+        const unsigned int [::1] starts,
+        const unsigned int [::1] stops,
+        const unsigned int [::1] partition,
+        const Y_DTYPE_C [::1] values) nogil:
 
     cdef:
         unsigned int position
         int leaf_idx
-        int n_leaves
+        int n_leaves = starts.shape[0]
 
-    n_leaves = starts.shape[0]
     for leaf_idx in prange(n_leaves):
         for position in range(starts[leaf_idx], stops[leaf_idx]):
             raw_predictions[partition[position]] += values[leaf_idx]

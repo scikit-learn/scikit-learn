@@ -50,18 +50,18 @@ class BaseLoss(ABC):
 
         Returns
         -------
-        gradients : array-like, shape=(n_samples * prediction_dim)
-        hessians : array-like, shape=(n_samples * prediction_dim).
-            If hessians are constant (e.g. for ``LeastSquares`` loss, shape
-            is (1,) and the array is initialized to ``1``.
+        gradients : array-like, shape=(prediction_dim, n_samples)
+        hessians : array-like, shape=(prediction_dim, n_samples).
+            If hessians are constant (e.g. for ``LeastSquares`` loss, the
+            array is initialized to ``1``.
         """
-        shape = n_samples * prediction_dim
+        shape = (prediction_dim, n_samples)
         gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
         if self.hessians_are_constant:
             # if the hessians are constant, we consider they are equal to 1.
             # this is correct as long as we adjust the gradients. See e.g. LS
             # loss
-            hessians = np.ones(shape=1, dtype=G_H_DTYPE)
+            hessians = np.ones(shape=shape, dtype=G_H_DTYPE)
         else:
             hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
 
@@ -81,7 +81,7 @@ class BaseLoss(ABC):
 
         Returns
         -------
-        baseline_prediction: float or array of shape (prediction_dim, 1)
+        baseline_prediction: float or array of shape (1, prediction_dim)
             The baseline prediction.
         """
         pass
@@ -97,14 +97,14 @@ class BaseLoss(ABC):
 
         Parameters
         ----------
-        gradients : array-like, shape=(n_samples * prediction_dim)
+        gradients : array-like, shape=(prediction_dim, n_samples)
             The gradients (treated as OUT array).
-        hessians : array-like, shape=(n_samples * prediction_dim) or \
+        hessians : array-like, shape=(prediction_dim, n_samples) or \
             (1,)
             The hessians (treated as OUT array).
         y_true : array-like, shape=(n_samples,)
             The true target values or each training sample.
-        raw_predictions : array-like, shape=(n_samples, prediction_dim)
+        raw_predictions : array-like, shape=(prediction_dim, n_samples)
             The raw_predictions (i.e. values from the trees) of the tree
             ensemble at iteration ``i - 1``.
         """
@@ -122,7 +122,7 @@ class LeastSquares(BaseLoss):
     hessians_are_constant = True
 
     def __call__(self, y_true, raw_predictions, average=True):
-        # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
+        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         loss = np.power(y_true - raw_predictions, 2)
@@ -137,7 +137,10 @@ class LeastSquares(BaseLoss):
 
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
                                       raw_predictions):
+        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
+        # return a view.
         raw_predictions = raw_predictions.reshape(-1)
+        gradients = gradients.reshape(-1)
         return _update_gradients_least_squares(gradients, y_true,
                                                raw_predictions)
 
@@ -173,7 +176,7 @@ class BinaryCrossEntropy(BaseLoss):
     inverse_link_function = staticmethod(expit)
 
     def __call__(self, y_true, raw_predictions, average=True):
-        # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
+        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         # logaddexp(0, x) = log(1 + exp(x))
@@ -190,14 +193,16 @@ class BinaryCrossEntropy(BaseLoss):
 
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
                                       raw_predictions):
-        # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
+        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
+        gradients = gradients.reshape(-1)
+        hessians = hessians.reshape(-1)
         return _update_gradients_hessians_binary_crossentropy(
             gradients, hessians, y_true, raw_predictions)
 
     def predict_proba(self, raw_predictions):
-        # shape (n_samples, 1) --> (n_samples,). reshape(-1) is more likely to
+        # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         proba = np.empty((raw_predictions.shape[0], 2), dtype=Y_DTYPE)
@@ -267,21 +272,19 @@ class CategoricalCrossEntropy(BaseLoss):
 
 
 cdef void _update_gradients_hessians_categorical_crossentropy(
-        G_H_DTYPE_C [::1] gradients,  # shape (n_samples * pred_dim,), OUT
-        G_H_DTYPE_C [::1] hessians,  # shape (n_samples * pred_dim,), OUT
+        G_H_DTYPE_C [:, ::1] gradients,  # shape (pred_dim, n_samples), OUT
+        G_H_DTYPE_C [:, ::1] hessians,  # shape (pred_dim, n_samples), OUT
         const Y_DTYPE_C [::1] y_true,  # shape (n_samples,), IN
-        # shape (n_samples, n_tree_per_iter), IN
+        # shape (pred_dim, n_samples), IN
         const Y_DTYPE_C [:, ::1] raw_predictions) nogil:
     cdef:
-        unsigned int prediction_dim = raw_predictions.shape[0]
+        int prediction_dim = raw_predictions.shape[0]
         int n_samples = raw_predictions.shape[1]
-        unsigned int k
+        int k
         int i
         Y_DTYPE_C * p = <Y_DTYPE_C *> malloc(sizeof(Y_DTYPE_C) *
                                              (prediction_dim * n_samples))
         Y_DTYPE_C p_k
-        G_H_DTYPE_C [::1] gradients_at_k,
-        G_H_DTYPE_C [::1] hessians_at_k,
 
     for i in prange(n_samples, schedule='static'):
         # first compute softmaxes of sample i for each class
@@ -292,8 +295,8 @@ cdef void _update_gradients_hessians_categorical_crossentropy(
         for k in range(prediction_dim):
             # p_k is the probability that class(ith sample) == k.
             p_k = p[i * prediction_dim + k]
-            gradients[n_samples * k + i] = p_k - (y_true[i] == k)
-            hessians[n_samples * k + i] = p_k * (1. - p_k)
+            gradients[k, i] = p_k - (y_true[i] == k)
+            hessians[k, i] = p_k * (1. - p_k)
     free(p)
 
 

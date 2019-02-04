@@ -16,9 +16,8 @@ def get_derivatives_helper(loss):
 
     def get_gradients(y_true, raw_predictions):
         # create gradients and hessians array, update inplace, and return
-        shape = raw_predictions.shape[0] * raw_predictions.shape[1]
-        gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
-        hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
+        gradients = np.empty_like(raw_predictions, dtype=G_H_DTYPE)
+        hessians = np.empty_like(raw_predictions, dtype=G_H_DTYPE)
         loss.update_gradients_and_hessians(gradients, hessians, y_true,
                                            raw_predictions)
 
@@ -29,15 +28,14 @@ def get_derivatives_helper(loss):
 
     def get_hessians(y_true, raw_predictions):
         # create gradients and hessians array, update inplace, and return
-        shape = raw_predictions.shape[0] * raw_predictions.shape[1]
-        gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
-        hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
+        gradients = np.empty_like(raw_predictions, dtype=G_H_DTYPE)
+        hessians = np.empty_like(raw_predictions, dtype=G_H_DTYPE)
         loss.update_gradients_and_hessians(gradients, hessians, y_true,
                                            raw_predictions)
 
         if loss.__class__ is _LOSSES['least_squares']:
             # hessians aren't updated because they're constant
-            hessians = np.full_like(y_true, fill_value=2)
+            hessians = np.full_like(raw_predictions, fill_value=2)
 
         return hessians
 
@@ -107,9 +105,9 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     loss = _LOSSES[loss]()
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
-    # [:n_samples] to only take gradients and hessians of first tree.
-    gradients = get_gradients(y_true, raw_predictions)[:n_samples]
-    hessians = get_hessians(y_true, raw_predictions)[:n_samples]
+    # only take gradients and hessians of first tree / class.
+    gradients = get_gradients(y_true, raw_predictions)[0, :].ravel()
+    hessians = get_hessians(y_true, raw_predictions)[0, :].ravel()
 
     # Approximate gradients
     # For multiclass loss, we should only change the predictions of one tree

@@ -163,8 +163,9 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
 
         # initialize raw_predictions: those are the accumulated values
         # predicted by the trees for the training data. raw_predictions has
-        # shape (n_samples, n_trees_per_iteration) where n_trees_per_iterations
-        # is n_classes in multiclass classification, else 1.
+        # shape (n_trees_per_iteration, n_samples) where
+        # n_trees_per_iterations is n_classes in multiclass classification,
+        # else 1.
         n_samples = X_binned_train.shape[0]
         self.baseline_prediction_ = self.loss_.get_baseline_prediction(
             y_train, self.n_trees_per_iteration_)
@@ -174,8 +175,8 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         )
         raw_predictions += self.baseline_prediction_
 
-        # initialize gradients and hessians (empty arrays). Those 1D arrays of
-        # size (n_samples * n_trees_per_iteration).
+        # initialize gradients and hessians (empty arrays).
+        # shape = (n_trees_per_iteration, n_samples).
         gradients, hessians = self.loss_.init_gradients_and_hessians(
             n_samples=n_samples,
             prediction_dim=self.n_trees_per_iteration_
@@ -216,16 +217,10 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             estimators.append([])
 
             # Build `n_trees_per_iteration` trees.
-            for k, (gradients_at_k, hessians_at_k) in enumerate(zip(
-                    np.array_split(gradients, self.n_trees_per_iteration_),
-                    np.array_split(hessians, self.n_trees_per_iteration_))):
-                # the xxxx_at_k arrays are **views** on the original arrays.
-                # Note that for binary classif and regressions,
-                # n_trees_per_iteration is 1 and xxxx_at_k is equivalent to the
-                # whole array.
+            for k in range(self.n_trees_per_iteration_):
 
                 grower = TreeGrower(
-                    X_binned_train, gradients_at_k, hessians_at_k,
+                    X_binned_train, gradients[k, :], hessians[k, :],
                     max_bins=self.max_bins,
                     n_bins_per_feature=self.bin_mapper_.n_bins_per_feature_,
                     max_leaf_nodes=self.max_leaf_nodes,
