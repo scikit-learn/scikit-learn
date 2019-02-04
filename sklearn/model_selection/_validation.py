@@ -477,7 +477,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     estimator : estimator object
         The fitted estimator
     """
-    if verbose > 1:
+    if verbose > 2:
         if parameters is None:
             msg = ''
         else:
