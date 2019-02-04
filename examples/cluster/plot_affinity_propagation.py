@@ -35,7 +35,8 @@ print("V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels))
 print("Adjusted Rand Index: %0.3f"
       % metrics.adjusted_rand_score(labels_true, labels))
 print("Adjusted Mutual Information: %0.3f"
-      % metrics.adjusted_mutual_info_score(labels_true, labels))
+      % metrics.adjusted_mutual_info_score(labels_true, labels,
+                                           average_method='arithmetic'))
 print("Silhouette Coefficient: %0.3f"
       % metrics.silhouette_score(X, labels, metric='sqeuclidean'))
 

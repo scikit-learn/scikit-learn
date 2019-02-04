@@ -9,10 +9,6 @@ functions to split the data based on a preset strategy.
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-
-from __future__ import print_function
-from __future__ import division
-
 from collections.abc import Iterable
 import warnings
 from itertools import chain, combinations
@@ -2223,10 +2219,6 @@ def train_test_split(*arrays, **options):
 
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
-
-
-# Tell nose that train_test_split is not a test
-train_test_split.__test__ = False
 
 
 def _build_repr(self):
