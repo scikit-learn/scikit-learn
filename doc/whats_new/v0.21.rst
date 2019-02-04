@@ -167,8 +167,6 @@ Support for Python 3.4 and below has been officially dropped.
   multilabel problem.
   :issue:`10083` by :user:`Gaurav Dhingra <gxyd>` and `Joel Nothman`_.
 
-:mod:`sklearn.model_selection`
-......................
 - |Enhancement| Use label `accuracy` instead of `micro-average` on
   :func:`metrics.classification_report` to avoid confusion. `micro-average` is
   only shown for multi-label or multi-class with a subset of classes because
@@ -176,15 +174,14 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
 
+- |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
+  and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
+  :issue:`12855` by :user:`Pawel Sendyk <psendyk>.`
+
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
   Mitrovic <SandraMNE>`.
->>>>>>> master
-
-- |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
-  and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
-  :issue:`12855` by :user:`Pawel Sendyk <psendyk>.`
 
 :mod:`sklearn.model_selection`
 ..............................
