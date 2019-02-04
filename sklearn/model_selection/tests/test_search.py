@@ -1728,8 +1728,7 @@ def test_deprecated_grid_search_iid():
 
 
 def test_empty_cv_iterator_error():
-    # Generate sample data
-    X, y = make_blobs(n_samples=54, random_state=0, centers=2)
+    # Use global X, y
 
     # create cv
     cv = KFold(n_splits=3).split(X)
@@ -1751,8 +1750,7 @@ def test_empty_cv_iterator_error():
 
 
 def test_random_search_bad_cv():
-    # Generate sample data
-    X, y = make_blobs(n_samples=54, random_state=0, centers=2)
+    # Use global X, y
 
     class BrokenKFold(KFold):
         def get_n_splits(self, *args, **kw):
