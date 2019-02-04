@@ -16,6 +16,7 @@ import warnings
 
 import numpy as np
 from scipy import linalg, sparse
+from sklearn.utils.sparsefuncs import mean_variance_axis
 
 from . import check_random_state
 from .fixes import np_version
@@ -453,7 +454,14 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
 
     n_samples, n_features = A.shape
 
-    c = np.atleast_2d(A.mean(axis=0))
+    # Use `mean_variance_axis` instead of `A.sum` as it is much more memory
+    # efficient than scipy's implementation. See GH
+    # https://github.com/scikit-learn/scikit-learn/pull/12841#issuecomment-460238233
+    if sparse.issparse(A):
+        means, _ = mean_variance_axis(A, axis=0)
+    else:
+        means = np.mean(A, axis=0)
+    c = np.atleast_2d(means)
 
     if n_samples >= n_features:
         Q = random_state.normal(
