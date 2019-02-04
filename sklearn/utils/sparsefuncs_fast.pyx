@@ -137,7 +137,11 @@ def _csr_mean_variance_axis0(np.ndarray[floating, ndim=1, mode="c"] X_data,
 
     for i in xrange(n_features):
         variances[i] += (n_samples - counts_nan[i] - counts[i]) * means[i]**2
-        variances[i] /= (n_samples - ddof - counts_nan[i])
+        # int(n_samples) is necessary to convert from unsigned int to any int
+        if int(n_samples) - ddof - counts_nan[i] > 0:
+            variances[i] /= n_samples - ddof - counts_nan[i]
+        else:
+            variances[i] = np.nan
 
     return means, variances, counts_nan
 
@@ -222,7 +226,11 @@ def _csc_mean_variance_axis0(np.ndarray[floating, ndim=1] X_data,
                 variances[i] += diff * diff
 
         variances[i] += (n_samples - counts_nan[i] - counts) * means[i]**2
-        variances[i] /= (n_samples - ddof - counts_nan[i])
+        # int(n_samples) is necessary to convert from unsigned int to any int
+        if int(n_samples) - ddof - counts_nan[i] > 0:
+            variances[i] /= n_samples - ddof - counts_nan[i]
+        else:
+            variances[i] = np.nan
 
     return means, variances, counts_nan
 

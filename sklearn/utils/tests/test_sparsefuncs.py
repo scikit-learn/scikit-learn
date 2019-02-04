@@ -104,18 +104,40 @@ def test_mean_variance_with_ddof(axis):
     assert_allclose(variance, np.var(X, axis=axis, ddof=1))
 
 
-def test_negative_ddof():
+def test_mean_variance_negative_ddof():
     X, _ = make_classification(5, 4, random_state=0)
     X = sp.csr_matrix(X)
 
     assert_raises(ValueError, mean_variance_axis, X, axis=0, ddof=-5)
 
 
-def test_too_large_ddof():
+def test_mean_variance_too_large_ddof():
     X, _ = make_classification(5, 4, random_state=0)
     X = sp.csr_matrix(X)
 
     assert_raises(ValueError, mean_variance_axis, X, axis=0, ddof=10)
+
+
+@pytest.mark.parametrize("axis", (0, 1))
+@pytest.mark.parametrize("sparse_constructor", [sp.csc_matrix, sp.csr_matrix])
+def test_mean_variance_with_ddof_and_nan_values(axis, sparse_constructor):
+    """Test that data with larger ddofs and many nans are properly converted to
+    NaNs. When we compute the variance, we compute 1 / (N - ddof). When ddof is
+    large, and the data contain NaNs, we could potentially divide by a negative
+    number. We have to avoid this."""
+    x = np.full((5, 5), fill_value=0, dtype=np.float64)
+    x = sparse_constructor(x)
+
+    # Fill in the (almost) entire first row and column with nans
+    x[:-1, 0] = np.nan
+    x[0, :-1] = np.nan
+
+    assert_equal(mean_variance_axis(x, axis=axis, ddof=0)[1],
+                 [0] * 5)
+    assert_equal(mean_variance_axis(x, axis=axis, ddof=2)[1],
+                 [np.nan] + [0] * 4)
+    assert_equal(mean_variance_axis(x, axis=axis, ddof=4)[1],
+                 [np.nan] * 4 + [0])
 
 
 def test_incr_mean_variance_axis():
