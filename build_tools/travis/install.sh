@@ -27,10 +27,19 @@ then
 	ccache --max-size 100M --show-stats
 elif [ $TRAVIS_OS_NAME = "osx" ]
 then
-    # use clang installed by conda which supports OpenMP
-    export CC=clang
-    export CXX=clang
-    # avoid error due to multiple openmp libraries loaded simultaneously
+    # install OpenMP not present by default on osx
+    brew install libomp
+
+    # enable OpenMP support for Apple-clang
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+
+    # avoid error due to multiple OpenMP libraries loaded simultaneously
     export KMP_DUPLICATE_LIB_OK=TRUE
 fi
 
@@ -110,6 +119,8 @@ elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
     export SKLEARN_SITE_JOBLIB=1
+    echo "Installing pillow master"
+    pip install https://github.com/python-pillow/Pillow/archive/master.zip
     pip install pytest pytest-cov
 fi
 

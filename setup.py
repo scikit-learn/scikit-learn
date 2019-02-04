@@ -109,6 +109,19 @@ def get_openmp_flag(compiler):
         return ['/openmp']
     elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
         return ['-openmp']
+    elif sys.platform == "darwin" and 'openmp' in os.getenv('CPPFLAGS', ''):
+        # -fopenmp can't be passed as compile flag when using Apple-clang.
+        # OpenMP support has to be enabled during preprocessing.
+        #
+        # For example, our macOS wheel build jobs use the following environment
+        # variables to build with Apple-clang and the brew installed "libomp":
+        #
+        # export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+        # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+        # export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+        # export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+        return ['']
+    # Default flag for GCC and clang:
     return ['-fopenmp']
 
 
@@ -137,7 +150,6 @@ class build_ext_subclass(build_ext):
         openmp_flag = get_openmp_flag(compiler)
 
         for e in self.extensions:
-            print(e.name)
             if e.name in OPENMP_EXTENSIONS:
                 e.extra_compile_args += openmp_flag
                 e.extra_link_args += openmp_flag
@@ -146,6 +158,7 @@ class build_ext_subclass(build_ext):
 
 
 cmdclass = {'clean': CleanCommand, 'build_ext': build_ext_subclass}
+
 
 # Optional wheelhouse-uploader features
 # To automate release of binary packages for scikit-learn we need a tool

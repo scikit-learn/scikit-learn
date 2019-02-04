@@ -20,9 +20,6 @@ The module structure is the following:
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
-from __future__ import print_function
-from __future__ import division
-
 from abc import ABCMeta
 from abc import abstractmethod
 
@@ -2020,9 +2017,7 @@ shape (n_estimators, ``loss_.K``)
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        for dec in self._staged_decision_function(X):
-            # no yield from in Python2.X
-            yield dec
+        yield from self._staged_decision_function(X)
 
     def predict(self, X):
         """Predict class for X.
