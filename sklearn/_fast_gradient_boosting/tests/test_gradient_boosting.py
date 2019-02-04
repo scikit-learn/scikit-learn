@@ -180,4 +180,6 @@ def test_should_stop():
     ))
 def test_estimator_checks(Estimator):
     # Run the check_estimator() test suite on GBRegressor and GBClassifier.
+    # Just here for convenience, must be removed before merging since these
+    # tests are run in test_common anyways
     check_estimator(Estimator)
