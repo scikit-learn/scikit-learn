@@ -1,5 +1,4 @@
 import pytest
-from sklearn.utils.testing import assert_raises_regex
 from sklearn.datasets import make_classification, make_regression
 from sklearn.utils.estimator_checks import check_estimator
 
@@ -17,76 +16,66 @@ X_regression, y_regression = make_regression(random_state=0)
 ])
 def test_init_parameters_validation(GradientBoosting, X, y):
 
-    assert_raises_regex(
-        ValueError,
-        "Loss blah is not supported for",
-        GradientBoosting(loss='blah').fit, X, y
-    )
+    with pytest.raises(
+            ValueError,
+            match="Loss blah is not supported for"):
+        GradientBoosting(loss='blah').fit(X, y)
 
     for learning_rate in (-1, 0):
-        assert_raises_regex(
+        with pytest.raises(
+                ValueError,
+                match="learning_rate={} must be strictly positive".format(
+                    learning_rate)):
+            GradientBoosting(learning_rate=learning_rate).fit(X, y)
+
+    with pytest.raises(
             ValueError,
-            "learning_rate={} must be strictly positive".format(learning_rate),
-            GradientBoosting(learning_rate=learning_rate).fit, X, y
-        )
+            match="n_estimators=0 must not be smaller than 1"):
+        GradientBoosting(n_estimators=0).fit(X, y)
 
-    assert_raises_regex(
-        ValueError,
-        "n_estimators=0 must not be smaller than 1",
-        GradientBoosting(n_estimators=0).fit, X, y
-    )
+    with pytest.raises(
+            ValueError,
+            match="max_leaf_nodes=0 should not be smaller than 1"):
+        GradientBoosting(max_leaf_nodes=0).fit(X, y)
 
-    assert_raises_regex(
-        ValueError,
-        "max_leaf_nodes=0 should not be smaller than 1",
-        GradientBoosting(max_leaf_nodes=0).fit, X, y
-    )
+    with pytest.raises(
+            ValueError,
+            match="max_depth=0 should not be smaller than 1"):
+        GradientBoosting(max_depth=0).fit(X, y)
 
-    assert_raises_regex(
-        ValueError,
-        "max_depth=0 should not be smaller than 1",
-        GradientBoosting(max_depth=0).fit, X, y
-    )
+    with pytest.raises(
+            ValueError,
+            match="min_samples_leaf=0 should not be smaller than 1"):
+        GradientBoosting(min_samples_leaf=0).fit(X, y)
 
-    assert_raises_regex(
-        ValueError,
-        "min_samples_leaf=0 should not be smaller than 1",
-        GradientBoosting(min_samples_leaf=0).fit, X, y
-    )
-
-    assert_raises_regex(
-        ValueError,
-        "l2_regularization=-1 must be positive",
-        GradientBoosting(l2_regularization=-1).fit, X, y
-    )
+    with pytest.raises(
+            ValueError,
+            match="l2_regularization=-1 must be positive"):
+        GradientBoosting(l2_regularization=-1).fit(X, y)
 
     for max_bins in (1, 257):
-        assert_raises_regex(
-            ValueError,
-            "max_bins={} should be no smaller than 2 and no larger".format(
-                max_bins),
-            GradientBoosting(max_bins=max_bins).fit, X, y
-        )
+        with pytest.raises(
+                ValueError,
+                match="max_bins={} should be no smaller than 2 and "
+                      "no larger".format(max_bins)):
+            GradientBoosting(max_bins=max_bins).fit(X, y)
 
-    assert_raises_regex(
-        ValueError,
-        "n_iter_no_change=-1 must be positive",
-        GradientBoosting(n_iter_no_change=-1).fit, X, y
-    )
+    with pytest.raises(
+            ValueError,
+            match="n_iter_no_change=-1 must be positive"):
+        GradientBoosting(n_iter_no_change=-1).fit(X, y)
 
     for validation_fraction in (-1, 0):
-        assert_raises_regex(
+        with pytest.raises(
             ValueError,
-            "validation_fraction={} must be strictly positive".format(
-                validation_fraction),
-            GradientBoosting(validation_fraction=validation_fraction).fit, X, y
-        )
+            match="validation_fraction={} must be strictly positive".format(
+                validation_fraction)):
+            GradientBoosting(validation_fraction=validation_fraction).fit(X, y)
 
-    assert_raises_regex(
-        ValueError,
-        "tol=-1 must not be smaller than 0",
-        GradientBoosting(tol=-1).fit, X, y
-    )
+    with pytest.raises(
+            ValueError,
+            match="tol=-1 must not be smaller than 0"):
+        GradientBoosting(tol=-1).fit(X, y)
 
 
 @pytest.mark.parametrize(

@@ -130,6 +130,7 @@ class LeastSquares(BaseLoss):
     def get_baseline_prediction(self, y_train, prediction_dim):
         return np.mean(y_train).astype(Y_DTYPE)
 
+    @staticmethod
     def inverse_link_function(self, raw_predictions):
         return raw_predictions
 

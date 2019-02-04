@@ -44,7 +44,7 @@ def test_histogram_split(n_bins):
                                 min_samples_leaf, min_gain_to_split)
 
             histograms = np.zeros(shape=(1, n_bins), dtype=HISTOGRAM_DTYPE)
-            split_info = splitter.find_best_split_wrapper(
+            split_info = splitter._find_best_split_wrapper(
                 feature_idx, sample_indices, histograms, sum_gradients,
                 sum_hessians)
 

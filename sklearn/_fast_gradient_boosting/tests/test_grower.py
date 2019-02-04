@@ -3,7 +3,6 @@ from numpy.testing import assert_array_almost_equal
 import pytest
 from pytest import approx
 
-from sklearn.utils.testing import assert_raises_regex
 from sklearn._fast_gradient_boosting.grower import TreeGrower
 from sklearn._fast_gradient_boosting.binning import BinMapper
 from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
@@ -267,29 +266,23 @@ def test_init_parameters_validation():
     X_binned, all_gradients, all_hessians = _make_training_data()
 
     X_binned_float = X_binned.astype(np.float32)
-    assert_raises_regex(
-        NotImplementedError,
-        "Explicit feature binning required for now",
-        TreeGrower, X_binned_float, all_gradients, all_hessians
-    )
+    with pytest.raises(NotImplementedError,
+                       match="Explicit feature binning required for now"):
+        TreeGrower(X_binned_float, all_gradients, all_hessians)
 
     X_binned_C_array = np.ascontiguousarray(X_binned)
-    assert_raises_regex(
-        ValueError,
-        "X_binned should be passed as Fortran contiguous array",
-        TreeGrower, X_binned_C_array, all_gradients, all_hessians
-    )
+    with pytest.raises(
+            ValueError,
+            match="X_binned should be passed as Fortran contiguous array"):
+        TreeGrower(X_binned_C_array, all_gradients, all_hessians)
 
-    assert_raises_regex(
-        ValueError,
-        "min_gain_to_split=-1 must be positive",
-        TreeGrower, X_binned, all_gradients, all_hessians,
-        min_gain_to_split=-1
-    )
+    with pytest.raises(ValueError,
+                       match="min_gain_to_split=-1 must be positive"):
 
-    assert_raises_regex(
-        ValueError,
-        "min_hessian_to_split=-1 must be positive",
-        TreeGrower, X_binned, all_gradients, all_hessians,
-        min_hessian_to_split=-1
-    )
+        TreeGrower(X_binned, all_gradients, all_hessians,
+                   min_gain_to_split=-1)
+
+    with pytest.raises(ValueError,
+                       match="min_hessian_to_split=-1 must be positive"):
+        TreeGrower(X_binned, all_gradients, all_hessians,
+                   min_hessian_to_split=-1)

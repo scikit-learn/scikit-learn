@@ -674,7 +674,7 @@ cdef class Splitter:
 
     # Only used for tests (python code cannot use cdef types)
     # Not sure if this is a good practice...
-    def find_best_split_wrapper(
+    def _find_best_split_wrapper(
             self,
             int feature_idx,
             unsigned int [::1] sample_indices,

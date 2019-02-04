@@ -330,7 +330,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         -loss_value.
         """
 
-        if not isinstance(self.scoring, str) and self.scoring != 'loss':
+        if self.scoring != 'loss':
             return self.scorer_(self, X, y)
 
         # Else, use loss
