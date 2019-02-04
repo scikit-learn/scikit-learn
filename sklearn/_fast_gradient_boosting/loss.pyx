@@ -80,7 +80,7 @@ class BaseLoss(ABC):
 
         Returns
         -------
-        baseline_prediction: float or array of shape (1, prediction_dim)
+        baseline_prediction: float or array of shape (prediction_dim, 1)
             The baseline prediction.
         """
         pass
@@ -131,7 +131,7 @@ class LeastSquares(BaseLoss):
         return np.mean(y_train).astype(Y_DTYPE)
 
     @staticmethod
-    def inverse_link_function(self, raw_predictions):
+    def inverse_link_function(raw_predictions):
         return raw_predictions
 
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
@@ -142,9 +142,9 @@ class LeastSquares(BaseLoss):
 
 
 cdef void _update_gradients_least_squares(
-        G_H_DTYPE_C [:] gradients,
-        const Y_DTYPE_C [:] y_true,
-        const Y_DTYPE_C [:] raw_predictions) nogil:
+        G_H_DTYPE_C [::1] gradients,
+        const Y_DTYPE_C [::1] y_true,
+        const Y_DTYPE_C [::1] raw_predictions) nogil:
     cdef:
         int n_samples
         int i
@@ -206,10 +206,10 @@ class BinaryCrossEntropy(BaseLoss):
 
 
 cdef void _update_gradients_hessians_binary_crossentropy(
-        G_H_DTYPE_C [:] gradients,
-        G_H_DTYPE_C [:] hessians,
-        const Y_DTYPE_C [:] y_true,
-        const Y_DTYPE_C [:] raw_predictions) nogil:
+        G_H_DTYPE_C [::1] gradients,
+        G_H_DTYPE_C [::1] hessians,
+        const Y_DTYPE_C [::1] y_true,
+        const Y_DTYPE_C [::1] raw_predictions) nogil:
     cdef:
         int n_samples
         G_H_DTYPE_C gradient_abs
@@ -234,21 +234,21 @@ class CategoricalCrossEntropy(BaseLoss):
 
     def __call__(self, y_true, raw_predictions, average=True):
         one_hot_true = np.zeros_like(raw_predictions)
-        prediction_dim = raw_predictions.shape[1]
+        prediction_dim = raw_predictions.shape[0]
         for k in range(prediction_dim):
-            one_hot_true[:, k] = (y_true == k)
+            one_hot_true[k, :] = (y_true == k)
 
-        loss = (logsumexp(raw_predictions, axis=1) -
-                (one_hot_true * raw_predictions).sum(axis=1))
+        loss = (logsumexp(raw_predictions, axis=0) -
+                (one_hot_true * raw_predictions).sum(axis=0))
         return loss.mean() if average else loss
 
     def get_baseline_prediction(self, y_train, prediction_dim):
-        init_value = np.zeros(shape=(1, prediction_dim), dtype=Y_DTYPE)
+        init_value = np.zeros(shape=(prediction_dim, 1), dtype=Y_DTYPE)
         eps = np.finfo(y_train.dtype).eps
         for k in range(prediction_dim):
             proba_kth_class = np.mean(y_train == k)
             proba_kth_class = np.clip(proba_kth_class, eps, 1 - eps)
-            init_value[:, k] += np.log(proba_kth_class)
+            init_value[k, :] += np.log(proba_kth_class)
 
         return init_value
 
@@ -260,34 +260,35 @@ class CategoricalCrossEntropy(BaseLoss):
     def predict_proba(self, raw_predictions):
         # TODO: This could be done in parallel
         # compute softmax (using exp(log(softmax)))
-        return np.exp(raw_predictions -
-                      logsumexp(raw_predictions, axis=1)[:, np.newaxis])
+        proba = np.exp(raw_predictions -
+                       logsumexp(raw_predictions, axis=0)[np.newaxis, :])
+        return proba.T
 
 
 cdef void _update_gradients_hessians_categorical_crossentropy(
-        G_H_DTYPE_C [:] gradients,  # shape (n_samples * prediction_dim,), OUT
-        G_H_DTYPE_C [:] hessians,  # shape (n_samples * prediction_dim,), OUT
-        const Y_DTYPE_C [:] y_true,  # shape (n_samples,), IN
+        G_H_DTYPE_C [::1] gradients,  # shape (n_samples * prediction_dim,), OUT
+        G_H_DTYPE_C [::1] hessians,  # shape (n_samples * prediction_dim,), OUT
+        const Y_DTYPE_C [::1] y_true,  # shape (n_samples,), IN
         # shape (n_samples, n_tree_per_iter), IN
-        const Y_DTYPE_C [:, :] raw_predictions) nogil:
+        const Y_DTYPE_C [:, ::1] raw_predictions) nogil:
     cdef:
         int n_samples
         unsigned int prediction_dim
         unsigned int k
         int i
         Y_DTYPE_C p_k
-        G_H_DTYPE_C [:] gradients_at_k,
-        G_H_DTYPE_C [:] hessians_at_k,
+        G_H_DTYPE_C [::1] gradients_at_k,
+        G_H_DTYPE_C [::1] hessians_at_k,
 
-    n_samples = raw_predictions.shape[0]
-    prediction_dim = raw_predictions.shape[1]
+    prediction_dim = raw_predictions.shape[0]
+    n_samples = raw_predictions.shape[1]
     for k in range(prediction_dim):
         gradients_at_k = gradients[n_samples * k:n_samples * (k + 1)]
         hessians_at_k = hessians[n_samples * k:n_samples * (k + 1)]
         for i in prange(n_samples, schedule='static'):
             # p_k is the probability that class(ith sample) == k.
             # This is a regular softmax.
-            p_k = exp(raw_predictions[i, k] - clogsumexp(raw_predictions, i))
+            p_k = exp(raw_predictions[k, i] - clogsumexp(raw_predictions, i))
             gradients_at_k[i] = p_k - (y_true[i] == k)
             hessians_at_k[i] = p_k * (1. - p_k)
 
@@ -298,7 +299,7 @@ cdef inline Y_DTYPE_C cexpit(const Y_DTYPE_C x) nogil:
 
 
 cdef inline Y_DTYPE_C clogsumexp(
-        const Y_DTYPE_C [:, :] a,
+        const Y_DTYPE_C [:, ::1] a,
         const int row) nogil:
     """Custom logsumexp, with numerical stability"""
     # Need to pass the whole array and the row index, else prange won't work.
@@ -306,14 +307,14 @@ cdef inline Y_DTYPE_C clogsumexp(
     cdef:
         int k
         Y_DTYPE_C out = 0.
-        Y_DTYPE_C amax = a[row, 0]
+        Y_DTYPE_C amax = a[0, row]
 
-    for k in range(1, a.shape[1]):
-        if amax < a[row, k]:
-            amax = a[row, k]
+    for k in range(1, a.shape[0]):
+        if amax < a[k, row]:
+            amax = a[k, row]
 
-    for k in range(a.shape[1]):
-        out += exp(a[row, k] - amax)
+    for k in range(a.shape[0]):
+        out += exp(a[k, row] - amax)
     return log(out) + amax
 
 

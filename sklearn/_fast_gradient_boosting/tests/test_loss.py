@@ -102,7 +102,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     else:
         y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
     raw_predictions = rng.normal(
-        size=(n_samples, prediction_dim)
+        size=(prediction_dim, n_samples)
     ).astype(Y_DTYPE)
     loss = _LOSSES[loss]()
     get_gradients, get_hessians = get_derivatives_helper(loss)
@@ -118,14 +118,14 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     # have no effect on the probabilities, and thus on the loss
     eps = 1e-9
     offset = np.zeros_like(raw_predictions)
-    offset[:, 0] = eps
+    offset[0, :] = eps
     f_plus_eps = loss(y_true, raw_predictions + offset / 2, average=False)
     f_minus_eps = loss(y_true, raw_predictions - offset / 2, average=False)
     numerical_gradient = (f_plus_eps - f_minus_eps) / eps
 
     # Approximate hessians
     eps = 1e-4  # need big enough eps as we divide by its square
-    offset[:, 0] = eps
+    offset[0, :] = eps
     f_plus_eps = loss(y_true, raw_predictions + offset, average=False)
     f_minus_eps = loss(y_true, raw_predictions - offset, average=False)
     f = loss(y_true, raw_predictions, average=False)
@@ -187,7 +187,7 @@ def test_baseline_categorical_crossentropy():
     # link_function = log
     y_train = rng.randint(0, prediction_dim + 1, size=100).astype(np.float32)
     baseline_prediction = loss.get_baseline_prediction(y_train, prediction_dim)
-    assert baseline_prediction.shape == (1, prediction_dim)
+    assert baseline_prediction.shape == (prediction_dim, 1)
     for k in range(prediction_dim):
         p = (y_train == k).mean()
-        assert_almost_equal(baseline_prediction[:, k], np.log(p))
+        assert_almost_equal(baseline_prediction[k, :], np.log(p))

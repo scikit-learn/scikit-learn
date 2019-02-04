@@ -169,7 +169,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         self.baseline_prediction_ = self.loss_.get_baseline_prediction(
             y_train, self.n_trees_per_iteration_)
         raw_predictions = np.zeros(
-            shape=(n_samples, self.n_trees_per_iteration_),
+            shape=(self.n_trees_per_iteration_, n_samples),
             dtype=self.baseline_prediction_.dtype
         )
         raw_predictions += self.baseline_prediction_
@@ -245,7 +245,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
                 # Update raw_predictions with the predictions of the newly
                 # created tree.
                 tic_pred = time()
-                _update_raw_predictions(raw_predictions[:, k], grower)
+                _update_raw_predictions(raw_predictions[k, :], grower)
                 toc_pred = time()
                 acc_prediction_time += toc_pred - tic_pred
 
@@ -394,7 +394,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         is_binned = self._in_fit and X.dtype == X_BINNED_DTYPE
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
-            shape=(n_samples, self.n_trees_per_iteration_),
+            shape=(self.n_trees_per_iteration_, n_samples),
             dtype=self.baseline_prediction_.dtype
         )
         raw_predictions += self.baseline_prediction_
@@ -402,7 +402,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             for k, estimator in enumerate(predictors_of_ith_iteration):
                 predict = (estimator.predict_binned if is_binned
                            else estimator.predict)
-                raw_predictions[:, k] += predict(X)
+                raw_predictions[k, :] += predict(X)
 
         return raw_predictions
 
@@ -725,9 +725,9 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
             classes in multiclass classification.
         """
         decision = self._raw_predict(X)
-        if decision.shape[1] == 1:
+        if decision.shape[0] == 1:
             decision = decision.ravel()
-        return decision
+        return decision.T
 
     def _encode_y(self, y):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_

@@ -13,7 +13,7 @@ from .types cimport Y_DTYPE_C
 
 
 def _update_raw_predictions(
-        Y_DTYPE_C [:] raw_predictions,  # OUT
+        Y_DTYPE_C [::1] raw_predictions,  # OUT
         grower):
     """Update raw_predictions with the predictions of the newest tree
 
@@ -39,7 +39,7 @@ def _update_raw_predictions(
 
 
 cdef void _update_raw_predictions_helper(
-        Y_DTYPE_C [:] raw_predictions,  # OUT
+        Y_DTYPE_C [::1] raw_predictions,  # OUT
         const unsigned int [:] starts,
         const unsigned int [:] stops,
         const unsigned int [:] partition,
