@@ -519,7 +519,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
+def calibration_curve(y_true, y_prob, normalize=False, n_bins=5, quantile_split=False):
     """Compute true and predicted probabilities for a calibration curve.
 
      The method assumes the inputs come from a binary classifier.
@@ -545,6 +545,12 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
         Number of bins. A bigger number requires more data. Bins with no data
         points (i.e. without corresponding values in y_prob) will not be
         returned, thus there may be fewer than n_bins in the return value.
+
+    quantile_split : bool, optional, default=False
+        Whether the probability space should be split into equally-spaced
+        bin edges, (i.e., 0, 0.2, 0.4, 0.6, 0.8, 1.0). If True, the bin
+        edges be chosen in order to split the data into roughly equally
+        sized bins.
 
     Returns
     -------
@@ -572,7 +578,12 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
 
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
 
-    bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+    if quantile_split:  # Determine bin edges by distribution of data
+        quantiles = np.linspace(0, 1, n_bins + 1)
+        bins = np.quantile(y_prob, quantiles)
+    else:
+        bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+
     binids = np.digitize(y_prob, bins) - 1
 
     bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
