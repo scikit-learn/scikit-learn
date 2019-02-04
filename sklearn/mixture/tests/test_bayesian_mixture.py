@@ -118,7 +118,7 @@ def test_bayesian_mixture_weights_prior_initialisation():
     assert_almost_equal(1. / n_components, bgmm.weight_concentration_prior_)
 
 
-def test_bayesian_mixture_means_prior_initialisation():
+def test_bayesian_mixture_mean_prior_initialisation():
     rng = np.random.RandomState(0)
     n_samples, n_components, n_features = 10, 3, 2
     X = rng.rand(n_samples, n_features)
