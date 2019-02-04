@@ -130,7 +130,7 @@ cdef inline bint goes_left(DTYPE_t feature_value, SplitValue split,
     """Determine whether a sample goes to the left or right child node."""
     cdef SIZE_t idx, shift
 
-    if n_categories < 1:
+    if n_categories < 0:
         # Non-categorical feature
         return feature_value <= split.threshold
     else:
