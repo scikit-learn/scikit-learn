@@ -183,6 +183,10 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
   Mitrovic <SandraMNE>`.
 
+- |Efficiency| The pairwise manhattan distances with sparse input now uses the
+  BLAS shipped with scipy instead of the bundled BLAS. :issue:`12732` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
