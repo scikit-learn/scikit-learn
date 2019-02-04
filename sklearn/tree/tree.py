@@ -41,7 +41,7 @@ from ._splitter import Splitter
 from ._tree import DepthFirstTreeBuilder
 from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
-from ._tree import build_pruned_tree
+from ._tree import build_pruned_tree_ccp
 from . import _tree, _splitter, _criterion
 
 __all__ = ["DecisionTreeClassifier",
@@ -524,105 +524,12 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
         if self.ccp_alpha == 0.0:
             return
 
-        n_nodes = self.tree_.node_count
-
-        # prior probability using weighted samples
-        samples = self.tree_.weighted_n_node_samples
-        prior = samples / samples[0]
-
-        # impurity weighted by prior
-        r_node = prior * self.tree_.impurity
-
-        # find parent node ids and leaves
-        child_l = self.tree_.children_left
-        child_r = self.tree_.children_right
-        parent = np.zeros(shape=n_nodes, dtype=np.intp)
-
-        # Uses uint8 to avoid casting when passing to generate_pruned_tree
-        leaves_in_subtree = np.zeros(shape=n_nodes, dtype=np.uint8)
-
-        stack = [(0, -1)]
-        while stack:
-            node_idx, parent_idx = stack.pop()
-            parent[node_idx] = parent_idx
-            if child_l[node_idx] == child_r[node_idx]:
-                leaves_in_subtree[node_idx] = 1
-            else:
-                stack.append((child_l[node_idx], node_idx))
-                stack.append((child_r[node_idx], node_idx))
-
-        # computes number of leaves in all branches and the overall impurity of
-        # the branch. The overall impurity is the sum of r_node in its leaves.
-        n_leaves = np.zeros(shape=n_nodes, dtype=np.int32)
-        leaf_indicies, = np.where(leaves_in_subtree)
-        r_branch = np.zeros(shape=n_nodes, dtype=DTYPE)
-        r_branch[leaf_indicies] = r_node[leaf_indicies]
-
-        # bubble up values to ancestor nodes
-        for leaf_idx in leaf_indicies:
-            cur_r = r_node[leaf_idx]
-            while leaf_idx != 0:
-                par_idx = parent[leaf_idx]
-                r_branch[par_idx] += cur_r
-                n_leaves[par_idx] += 1
-                leaf_idx = par_idx
-
-        # non-leaves that can be pruned
-        inner_nodes = np.logical_not(leaves_in_subtree)
-        in_subtree = np.ones(shape=n_nodes, dtype=np.bool)
-
-        cur_ccp_alpha = 0
-        while True:
-            # If root node is a leaf
-            if not inner_nodes[0]:
-                break
-
-            # computes ccp_alpha for subtrees
-            g_node = (r_node - r_branch) / (n_leaves - 1)
-            g_node[~inner_nodes] = np.inf
-
-            # smallest value is the weakest link which is pruned
-            cur_idx = np.argmin(g_node)
-            cur_ccp_alpha = g_node[cur_idx]
-
-            # The subtree on the previous iteration has the greatest ccp_alpha
-            # less than or equal to self.ccp_alpha
-            if cur_ccp_alpha > self.ccp_alpha:
-                break
-
-            # descendants of branch are not in subtree
-            stack = [cur_idx]
-            while stack:
-                leaf_idx = stack.pop()
-                inner_nodes[leaf_idx] = False
-                leaves_in_subtree[leaf_idx] = 0
-                in_subtree[leaf_idx] = False
-                child_l_idx, child_r_idx = child_l[leaf_idx], child_r[leaf_idx]
-                if child_l_idx != child_r_idx:
-                    stack.append(child_l_idx)
-                    stack.append(child_r_idx)
-            leaves_in_subtree[cur_idx] = 1
-
-            # updates number of leaves
-            n_pruned_leaves = n_leaves[cur_idx] - 1
-            n_leaves[cur_idx] = 0
-
-            # computes the increase in r_branch to bubble up
-            r_diff = r_node[cur_idx] - r_branch[cur_idx]
-            r_branch[cur_idx] = r_node[cur_idx]
-
-            # bubble up values to ancestors
-            cur_idx = parent[cur_idx]
-            while cur_idx != -1:
-                n_leaves[cur_idx] -= n_pruned_leaves
-                r_branch[cur_idx] += r_diff
-                cur_idx = parent[cur_idx]
-
         # build pruned treee
         n_classes = np.atleast_1d(self.n_classes_)
         pruned_tree = Tree(self.n_features_, n_classes, self.n_outputs_)
-        build_pruned_tree(pruned_tree, self.tree_, leaves_in_subtree)
+        build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
 
+        del self.tree_
         self.tree_ = pruned_tree
 
     @property

@@ -109,7 +109,12 @@ cdef class TreeBuilder:
 # Build Pruned Tree
 # =============================================================================
 
-cpdef build_pruned_tree(
-    Tree tree,
+cpdef build_pruned_tree_ccp(
+    Tree tree, # OUT
     Tree orig_tree,
-    const np.npy_uint8[:] leaves_in_subtree)
+    double ccp_alpha)
+
+cdef _build_pruned_tree(
+    Tree tree, # OUT
+    Tree orig_tree,
+    const bint[:] leaves_in_subtree)
