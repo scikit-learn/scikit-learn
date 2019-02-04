@@ -101,6 +101,8 @@ elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
     export SKLEARN_SITE_JOBLIB=1
+    echo "Installing pillow master"
+    pip install https://github.com/python-pillow/Pillow/archive/master.zip
     pip install pytest pytest-cov
 fi
 
