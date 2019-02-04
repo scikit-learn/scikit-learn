@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 
 cimport cython
 from cython.parallel import prange
+from libc.stdlib cimport malloc, free
 import numpy as np
 cimport numpy as np
 from scipy.special import expit
@@ -266,56 +267,62 @@ class CategoricalCrossEntropy(BaseLoss):
 
 
 cdef void _update_gradients_hessians_categorical_crossentropy(
-        G_H_DTYPE_C [::1] gradients,  # shape (n_samples * prediction_dim,), OUT
-        G_H_DTYPE_C [::1] hessians,  # shape (n_samples * prediction_dim,), OUT
+        G_H_DTYPE_C [::1] gradients,  # shape (n_samples * pred_dim,), OUT
+        G_H_DTYPE_C [::1] hessians,  # shape (n_samples * pred_dim,), OUT
         const Y_DTYPE_C [::1] y_true,  # shape (n_samples,), IN
         # shape (n_samples, n_tree_per_iter), IN
         const Y_DTYPE_C [:, ::1] raw_predictions) nogil:
     cdef:
-        int n_samples
-        unsigned int prediction_dim
+        unsigned int prediction_dim = raw_predictions.shape[0]
+        int n_samples = raw_predictions.shape[1]
         unsigned int k
         int i
+        Y_DTYPE_C * p = <Y_DTYPE_C *> malloc(sizeof(Y_DTYPE_C) *
+                                             (prediction_dim * n_samples))
         Y_DTYPE_C p_k
         G_H_DTYPE_C [::1] gradients_at_k,
         G_H_DTYPE_C [::1] hessians_at_k,
 
-    prediction_dim = raw_predictions.shape[0]
-    n_samples = raw_predictions.shape[1]
-    for k in range(prediction_dim):
-        gradients_at_k = gradients[n_samples * k:n_samples * (k + 1)]
-        hessians_at_k = hessians[n_samples * k:n_samples * (k + 1)]
-        for i in prange(n_samples, schedule='static'):
+    for i in prange(n_samples, schedule='static'):
+        # first compute softmaxes of sample i for each class
+        for k in range(prediction_dim):
+            p[i * prediction_dim + k] = raw_predictions[k, i]
+        compute_softmax(p + (i * prediction_dim), prediction_dim)
+        # then update gradients and hessians
+        for k in range(prediction_dim):
             # p_k is the probability that class(ith sample) == k.
-            # This is a regular softmax.
-            p_k = exp(raw_predictions[k, i] - clogsumexp(raw_predictions, i))
-            gradients_at_k[i] = p_k - (y_true[i] == k)
-            hessians_at_k[i] = p_k * (1. - p_k)
+            p_k = p[i * prediction_dim + k]
+            gradients[n_samples * k + i] = p_k - (y_true[i] == k)
+            hessians[n_samples * k + i] = p_k * (1. - p_k)
+    free(p)
+
+
+cdef inline void compute_softmax(
+        Y_DTYPE_C * p,  # IN OUT, treated as array with <pred_dim> entries
+        const unsigned int prediction_dim) nogil:
+    """Compute softmaxes of values in p."""
+
+    cdef:
+        Y_DTYPE_C max_value = p[0]
+        Y_DTYPE_C sum_exps = 0.
+        unsigned int k
+
+    # Compute max value of array for numerical stability
+    for k in range(1, prediction_dim):
+        if max_value < p[k]:
+            max_value = p[k]
+
+    for k in range(prediction_dim):
+        p[k] = exp(p[k] - max_value)
+        sum_exps += p[k]
+
+    for k in range(prediction_dim):
+        p[k] /= sum_exps
 
 
 cdef inline Y_DTYPE_C cexpit(const Y_DTYPE_C x) nogil:
     """Custom expit (logistic sigmoid function)"""
     return 1. / (1. + exp(-x))
-
-
-cdef inline Y_DTYPE_C clogsumexp(
-        const Y_DTYPE_C [:, ::1] a,
-        const int row) nogil:
-    """Custom logsumexp, with numerical stability"""
-    # Need to pass the whole array and the row index, else prange won't work.
-    # See issue Cython #2798
-    cdef:
-        int k
-        Y_DTYPE_C out = 0.
-        Y_DTYPE_C amax = a[0, row]
-
-    for k in range(1, a.shape[0]):
-        if amax < a[k, row]:
-            amax = a[k, row]
-
-    for k in range(a.shape[0]):
-        out += exp(a[k, row] - amax)
-    return log(out) + amax
 
 
 _LOSSES = {
