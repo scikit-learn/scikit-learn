@@ -246,11 +246,11 @@ class DummyCheckerListRegressor(DummyRegressor):
 
     def fit(self, X, y, sample_weight=None):
         assert isinstance(X, list)
-        return super(DummyCheckerListRegressor, self).fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight)
 
     def predict(self, X):
         assert isinstance(X, list)
-        return super(DummyCheckerListRegressor, self).predict(X)
+        return super().predict(X)
 
 
 def test_transform_target_regressor_ensure_y_array():

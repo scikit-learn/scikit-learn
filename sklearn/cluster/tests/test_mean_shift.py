@@ -9,7 +9,6 @@ import warnings
 from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
@@ -96,8 +95,8 @@ def test_meanshift_all_orphans():
 def test_unfitted():
     # Non-regression: before fit, there should be not fitted attributes.
     ms = MeanShift()
-    assert_false(hasattr(ms, "cluster_centers_"))
-    assert_false(hasattr(ms, "labels_"))
+    assert not hasattr(ms, "cluster_centers_")
+    assert not hasattr(ms, "labels_")
 
 
 def test_cluster_intensity_tie():
@@ -121,16 +120,16 @@ def test_bin_seeds():
 
     # With a bin coarseness of 1.0 and min_bin_freq of 1, 3 bins should be
     # found
-    ground_truth = set([(1., 1.), (2., 1.), (0., 0.)])
+    ground_truth = {(1., 1.), (2., 1.), (0., 0.)}
     test_bins = get_bin_seeds(X, 1, 1)
-    test_result = set([tuple(p) for p in test_bins])
+    test_result = set(tuple(p) for p in test_bins)
     assert len(ground_truth.symmetric_difference(test_result)) == 0
 
     # With a bin coarseness of 1.0 and min_bin_freq of 2, 2 bins should be
     # found
-    ground_truth = set([(1., 1.), (2., 1.)])
+    ground_truth = {(1., 1.), (2., 1.)}
     test_bins = get_bin_seeds(X, 1, 2)
-    test_result = set([tuple(p) for p in test_bins])
+    test_result = set(tuple(p) for p in test_bins)
     assert len(ground_truth.symmetric_difference(test_result)) == 0
 
     # With a bin size of 0.01 and min_bin_freq of 1, 6 bins should be found

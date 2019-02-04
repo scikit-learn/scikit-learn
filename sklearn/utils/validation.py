@@ -13,13 +13,11 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
-from scipy import __version__ as scipy_version
 from distutils.version import LooseVersion
+from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
 
-from ..externals import six
-from .fixes import signature
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
@@ -33,20 +31,21 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
-# checking whether large sparse are supported by scipy or not
-LARGE_SPARSE_SUPPORTED = LooseVersion(scipy_version) >= '0.14.0'
-
 
 def _assert_all_finite(X, allow_nan=False):
     """Like assert_all_finite, but only for ndarray."""
+    # validation is also imported in extmath
+    from .extmath import _safe_accumulator_op
+
     if _get_config()['assume_finite']:
         return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
-    # false positives from overflow in sum method.
+    # false positives from overflow in sum method. The sum is also calculated
+    # safely to reduce dtype induced overflows.
     is_float = X.dtype.kind in 'fc'
-    if is_float and np.isfinite(X.sum()):
+    if is_float and (np.isfinite(_safe_accumulator_op(np.sum, X))):
         pass
     elif is_float:
         msg_err = "Input contains {} or a value too large for {!r}."
@@ -205,7 +204,7 @@ def check_memory(memory):
         If ``memory`` is not joblib.Memory-like.
     """
 
-    if memory is None or isinstance(memory, six.string_types):
+    if memory is None or isinstance(memory, str):
         if LooseVersion(joblib_version) < '0.12':
             memory = Memory(cachedir=memory, verbose=0)
         else:
@@ -308,7 +307,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     changed_format = False
 
-    if isinstance(accept_sparse, six.string_types):
+    if isinstance(accept_sparse, str):
         accept_sparse = [accept_sparse]
 
     # Indices dtype validation
@@ -467,7 +466,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     array_orig = array
 
     # store whether originally we wanted numeric dtype
-    dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
+    dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
     if not hasattr(dtype_orig, 'kind'):
@@ -477,7 +476,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
-    if hasattr(array, "dtypes") and len(array.dtypes):
+    if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         dtypes_orig = np.array(array.dtypes)
 
     if dtype_numeric:
@@ -501,7 +500,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                          '. Got {!r} instead'.format(force_all_finite))
 
     if estimator is not None:
-        if isinstance(estimator, six.string_types):
+        if isinstance(estimator, str):
             estimator_name = estimator
         else:
             estimator_name = estimator.__class__.__name__
@@ -613,7 +612,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 def _check_large_sparse(X, accept_large_sparse=False):
     """Raise a ValueError if X has 64bit indices and accept_large_sparse=False
     """
-    if not (accept_large_sparse and LARGE_SPARSE_SUPPORTED):
+    if not accept_large_sparse:
         supported_indices = ["int32"]
         if X.getformat() == "coo":
             index_keys = ['col', 'row']
@@ -624,10 +623,6 @@ def _check_large_sparse(X, accept_large_sparse=False):
         for key in index_keys:
             indices_datatype = getattr(X, key).dtype
             if (indices_datatype not in supported_indices):
-                if not LARGE_SPARSE_SUPPORTED:
-                    raise ValueError("Scipy version %s does not support large"
-                                     " indices, please upgrade your scipy"
-                                     " to 0.14.0 or above" % scipy_version)
                 raise ValueError("Only sparse matrices with 32-bit integer"
                                  " indices are accepted. Got %s indices."
                                  % indices_datatype)

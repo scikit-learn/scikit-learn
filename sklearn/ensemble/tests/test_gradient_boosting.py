@@ -7,6 +7,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
+from scipy.special import expit
 
 import pytest
 
@@ -738,7 +739,8 @@ def test_oob_multilcass_iris():
 
 def test_verbose_output():
     # Check verbose=1 does not cause error.
-    from sklearn.externals.six.moves import cStringIO as StringIO
+    from io import StringIO
+
     import sys
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -763,7 +765,7 @@ def test_verbose_output():
 
 def test_more_verbose_output():
     # Check verbose=2 does not cause error.
-    from sklearn.externals.six.moves import cStringIO as StringIO
+    from io import StringIO
     import sys
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -1160,8 +1162,7 @@ def test_probability_exponential():
     assert np.all(y_proba >= 0.0)
     assert np.all(y_proba <= 1.0)
     score = clf.decision_function(T).ravel()
-    assert_array_almost_equal(y_proba[:, 1],
-                              1.0 / (1.0 + np.exp(-2 * score)))
+    assert_array_almost_equal(y_proba[:, 1], expit(2 * score))
 
     # derive predictions from probabilities
     y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)

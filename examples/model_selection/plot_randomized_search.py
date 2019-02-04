@@ -61,7 +61,7 @@ param_dist = {"max_depth": [3, None],
 # run randomized search
 n_iter_search = 20
 random_search = RandomizedSearchCV(clf, param_distributions=param_dist,
-                                   n_iter=n_iter_search, cv=5)
+                                   n_iter=n_iter_search, cv=5, iid=False)
 
 start = time()
 random_search.fit(X, y)
@@ -77,7 +77,7 @@ param_grid = {"max_depth": [3, None],
               "criterion": ["gini", "entropy"]}
 
 # run grid search
-grid_search = GridSearchCV(clf, param_grid=param_grid, cv=5)
+grid_search = GridSearchCV(clf, param_grid=param_grid, cv=5, iid=False)
 start = time()
 grid_search.fit(X, y)
 
