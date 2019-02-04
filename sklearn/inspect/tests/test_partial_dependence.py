@@ -10,11 +10,11 @@ import sklearn
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_matplotlib
-from sklearn.partial_dependence import partial_dependence
-from sklearn.partial_dependence import plot_partial_dependence
-from sklearn.partial_dependence import _grid_from_X
-from sklearn.partial_dependence import _partial_dependence_brute
-from sklearn.partial_dependence import _partial_dependence_recursion
+from sklearn.inspect import partial_dependence
+from sklearn.inspect import plot_partial_dependence
+from sklearn.inspect.partial_dependence import _grid_from_X
+from sklearn.inspect.partial_dependence import _partial_dependence_brute
+from sklearn.inspect.partial_dependence import _partial_dependence_recursion
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression

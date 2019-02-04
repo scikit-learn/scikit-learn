@@ -12,16 +12,16 @@ import warnings
 import numpy as np
 from scipy.stats.mstats import mquantiles
 
-from .base import is_classifier, is_regressor
-from .utils.extmath import cartesian
-from .externals.joblib import Parallel, delayed
-from .externals import six
-from .utils import check_array
-from .utils.validation import check_is_fitted
-from .tree._tree import DTYPE
-from .exceptions import NotFittedError
-from .ensemble.gradient_boosting import BaseGradientBoosting
-from .ensemble._gradient_boosting import _partial_dependence_tree
+from ..base import is_classifier, is_regressor
+from ..utils.extmath import cartesian
+from ..externals.joblib import Parallel, delayed
+from ..externals import six
+from ..utils import check_array
+from ..utils.validation import check_is_fitted
+from ..tree._tree import DTYPE
+from ..exceptions import NotFittedError
+from ..ensemble.gradient_boosting import BaseGradientBoosting
+from ..ensemble._gradient_boosting import _partial_dependence_tree
 
 
 __all__ = ['partial_dependence', 'plot_partial_dependence']

@@ -1208,10 +1208,10 @@ Model validation
 
 .. _partial_dependence_ref:
 
-:mod:`sklearn.partial_dependence`: Partial dependence plots
-===========================================================
+:mod:`sklearn.inspect`: Model inspection
+========================================
 
-.. automodule:: sklearn.partial_dependence
+.. automodule:: sklearn.inspect
    :no-members:
    :no-inherited-members:
 
@@ -1221,8 +1221,8 @@ Model validation
    :toctree: generated/
    :template: function.rst
 
-   partial_dependence.partial_dependence
-   partial_dependence.plot_partial_dependence
+   inspect.partial_dependence
+   inspect.plot_partial_dependence
 
 
 .. _preprocessing_ref:

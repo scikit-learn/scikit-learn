@@ -5,7 +5,7 @@
 Partial dependence plots
 ========================
 
-.. currentmodule:: sklearn.partial_dependence
+.. currentmodule:: sklearn.inspect
 
 Partial dependence plots (PDP) show the dependence between the target response
 and a set of 'target' features, marginalizing over the values of all other
@@ -39,7 +39,7 @@ an average occupancy greater than two, the house price is nearly independent of
 the house age, whereas for values less than 2 there is a strong dependence
 on age.
 
-The :mod:`sklearn.partial_dependence` module provides a convenience function
+The :mod:`sklearn.inspect` module provides a convenience function
 :func:`plot_partial_dependence` to create one-way and two-way partial
 dependence plots. In the below example we show how to create a grid of
 partial dependence plots: two one-way PDPs for the features ``0`` and ``1``
@@ -47,7 +47,7 @@ and a two-way PDP between the two features::
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.partial_dependence import plot_partial_dependence
+    >>> from sklearn.inspect import plot_partial_dependence
 
     >>> X, y = make_hastie_10_2(random_state=0)
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
@@ -71,7 +71,7 @@ regression settings.
 If you need the raw values of the partial dependence function rather than
 the plots, you can use the :func:`partial_dependence` function::
 
-    >>> from sklearn.partial_dependence import partial_dependence
+    >>> from sklearn.inspect import partial_dependence
 
     >>> pdp, axes = partial_dependence(clf, [0], X=X)
     >>> pdp  # doctest: +ELLIPSIS
@@ -110,7 +110,7 @@ which the trees were trained.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_plot_partial_dependence.py`
+ * :ref:`sphx_glr_auto_examples_inspect_plot_partial_dependence.py`
 
 .. topic:: References
 

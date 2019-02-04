@@ -89,11 +89,11 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |API| :func:`ensemble.partial_dependence` and
   :func:`ensemble.plot_partial_dependence` are now deprecated in favor of
-  :func:`partial_dependence.partial_dependence<sklearn.partial_dependence.partial_dependence>`
+  :func:`inspect.partial_dependence<sklearn.inspect.partial_dependence>`
   and
-  :func:`partial_dependence.plot_partial_dependence<sklearn.partial_dependence.plot_partial_dependence>`.
-  :issue:`12599` by :user:`Trevor Stephens<trevorstephens>` and :user:`Nicolas
-  Hug<NicolasHug>`.
+  :func:`inspect.plot_partial_dependence<sklearn.inspect.plot_partial_dependence>`.
+  :issue:`12599` by :user:`Trevor Stephens<trevorstephens>` and
+  :user:`Nicolas Hug<NicolasHug>`.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
@@ -277,10 +277,11 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
-:mod:`sklearn.partial_dependence`
-.................................
+:mod:`sklearn.inspect.partial_dependence`
+.........................................
+
 - |Feature| Partial dependence plots
-  (:func:`partial_dependence.plot_partial_dependence`) are now supported for
+  (:func:`inspect.plot_partial_dependence`) are now supported for
   any regressor or classifier (provided that they have a `predict_proba`
   method). :issue:`12599` by :user:`Trevor Stephens <trevorstephens>` and
   :user:`Nicolas Hug <NicolasHug>`.
