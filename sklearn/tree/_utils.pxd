@@ -21,6 +21,7 @@ ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
+ctypedef UINT64_t BITSET_t
 
 ctypedef union SplitValue:
     # Union type to generalize the concept of a threshold to
@@ -97,6 +98,7 @@ ctypedef fused realloc_ptr:
     (void**)
     (INT32_t*)
     (UINT32_t*)
+    (BITSET_t*)
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems, size_t elem_bytes) nogil except *
 
@@ -116,12 +118,12 @@ cdef double rand_uniform(double low, double high,
 cdef double log(double x) nogil
 
 
-cdef void setup_cat_cache(UINT32_t* cachebits, UINT64_t cat_split,
+cdef void setup_cat_cache(BITSET_t* cachebits, UINT64_t cat_split,
                           INT32_t n_categories) nogil
 
 
 cdef bint goes_left(DTYPE_t feature_value, SplitValue split,
-                    INT32_t n_categories, UINT32_t* cachebits) nogil
+                    INT32_t n_categories, BITSET_t* cachebits) nogil
 
 
 # =============================================================================
@@ -232,15 +234,12 @@ cdef class WeightedMedianCalculator:
     cdef DOUBLE_t get_median(self) nogil
 
 
-cdef class BitSet:
-    cdef UINT64_t value
-
-    cdef inline void reset_all(self) nogil
-    cdef inline void set(self, SIZE_t i) nogil
-    cdef inline void reset(self, SIZE_t i) nogil
-    cdef inline void flip(self, SIZE_t i) nogil
-    cdef inline void flip_all(self, SIZE_t n_low_bits) nogil
-    cdef inline int get(self, SIZE_t i) nogil
-    cdef inline void from_template(self, UINT64_t template,
-                                   INT32_t *cat_offs,
-                                   SIZE_t ncats_present) nogil
+cdef void bs_reset_all(BITSET_t *value) nogil
+cdef void bs_set(BITSET_t *value, SIZE_t i) nogil
+cdef void bs_reset(BITSET_t *value, SIZE_t i) nogil
+cdef void bs_flip(BITSET_t *value, SIZE_t i) nogil
+cdef void bs_flip_all(BITSET_t *value, SIZE_t n_low_bits) nogil
+cdef bint bs_get(BITSET_t value, SIZE_t i) nogil
+cdef void bs_from_template(BITSET_t *value, UINT64_t template,
+                           INT32_t *cat_offs,
+                           SIZE_t ncats_present) nogil

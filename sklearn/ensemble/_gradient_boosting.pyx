@@ -25,6 +25,7 @@ from sklearn.tree._tree cimport DTYPE_t
 from sklearn.tree._tree cimport SIZE_t
 from sklearn.tree._tree cimport INT32_t
 from sklearn.tree._tree cimport UINT32_t
+from sklearn.tree._tree cimport BITSET_t
 from sklearn.tree._utils cimport safe_realloc
 from sklearn.tree._utils cimport goes_left
 
@@ -52,7 +53,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
                                                       Py_ssize_t n_samples,
                                                       Py_ssize_t n_features,
                                                       INT32_t* n_categories,
-                                                      UINT32_t** cachebits,
+                                                      BITSET_t** cachebits,
                                                       float64 *out):
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
@@ -90,7 +91,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
     n_categories : INT32_t pointer
         Array of length n_features containing the number of categories
         (for categorical features) or -1 (for non-categorical features)
-    cachebits : UINT32_t pointer pointer
+    cachebits : BITSET_t pointer pointer
         Array of length node_count containing category cache buffers
         for categorical features
     out : np.float64_t pointer
@@ -100,7 +101,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(DTYPE_t *X,
     """
     cdef Py_ssize_t i
     cdef Node *node
-    cdef UINT32_t* node_cache
+    cdef BITSET_t* node_cache
 
     for i in range(n_samples):
         node = root_node
@@ -322,8 +323,8 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
     cdef double total_weight = 0.0
     cdef Node *current_node
     cdef SIZE_t[::1] node_stack = np_zeros((stack_capacity,), dtype=np.intp)
-    cdef UINT32_t** cachebits
-    cdef UINT32_t* node_cache
+    cdef BITSET_t** cachebits
+    cdef BITSET_t* node_cache
 
     # Make category cache buffers for this tree's nodes
     cache_mgr = CategoryCacheMgr()

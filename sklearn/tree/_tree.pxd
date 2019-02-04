@@ -12,6 +12,8 @@
 
 # See _tree.pyx for details.
 
+from cpython cimport Py_INCREF, PyObject
+
 import numpy as np
 cimport numpy as np
 
@@ -24,6 +26,7 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 from ._utils cimport SplitValue
 from ._utils cimport SplitRecord
 from ._utils cimport Node
+from ._utils cimport BITSET_t
 from ._splitter cimport Splitter
 
 
@@ -31,7 +34,7 @@ cdef class CategoryCacheMgr:
     # Class to manage the category cache memory during Tree.apply()
 
     cdef SIZE_t n_nodes
-    cdef UINT32_t **bits
+    cdef BITSET_t **bits
 
     cdef void populate(self, Node *nodes, SIZE_t n_nodes, INT32_t *n_categories)
 

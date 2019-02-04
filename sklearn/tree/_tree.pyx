@@ -565,9 +565,10 @@ cdef class CategoryCacheMgr:
             if nodes[i].left_child != _TREE_LEAF:
                 ncat = n_categories[nodes[i].feature]
                 if ncat > 0:
+                    cache_size = (ncat + 63) // 64
                     safe_realloc(&self.bits[i],
-                                 (ncat + 31) // 32,
-                                 sizeof(UINT32_t))
+                                 cache_size,
+                                 sizeof(BITSET_t))
                     setup_cat_cache(self.bits[i],
                                     nodes[i].split_value.cat_split,
                                     ncat)
@@ -905,8 +906,8 @@ cdef class Tree:
         cdef SIZE_t i = 0
         cache_mgr = CategoryCacheMgr()
         cache_mgr.populate(self.nodes, self.node_count, self.n_categories)
-        cdef UINT32_t** cat_caches = cache_mgr.bits
-        cdef UINT32_t* cache = NULL
+        cdef BITSET_t** cat_caches = cache_mgr.bits
+        cdef BITSET_t* cache = NULL
 
         with nogil:
             for i in range(n_samples):
@@ -963,8 +964,8 @@ cdef class Tree:
         cdef INT32_t k = 0
         cache_mgr = CategoryCacheMgr()
         cache_mgr.populate(self.nodes, self.node_count, self.n_categories)
-        cdef UINT32_t** cat_caches = cache_mgr.bits
-        cdef UINT32_t* cache = NULL
+        cdef BITSET_t** cat_caches = cache_mgr.bits
+        cdef BITSET_t* cache = NULL
 
         # feature_to_sample as a data structure records the last seen sample
         # for each feature; functionally, it is an efficient way to identify
@@ -1049,8 +1050,8 @@ cdef class Tree:
         cdef SIZE_t i = 0
         cache_mgr = CategoryCacheMgr()
         cache_mgr.populate(self.nodes, self.node_count, self.n_categories)
-        cdef UINT32_t** cat_caches = cache_mgr.bits
-        cdef UINT32_t* cache = NULL
+        cdef BITSET_t** cat_caches = cache_mgr.bits
+        cdef BITSET_t* cache = NULL
 
         with nogil:
             for i in range(n_samples):
@@ -1124,8 +1125,8 @@ cdef class Tree:
         cdef INT32_t k = 0
         cache_mgr = CategoryCacheMgr()
         cache_mgr.populate(self.nodes, self.node_count, self.n_categories)
-        cdef UINT32_t** cat_caches = cache_mgr.bits
-        cdef UINT32_t* cache = NULL
+        cdef BITSET_t** cat_caches = cache_mgr.bits
+        cdef BITSET_t* cache = NULL
 
         # feature_to_sample as a data structure records the last seen sample
         # for each feature; functionally, it is an efficient way to identify

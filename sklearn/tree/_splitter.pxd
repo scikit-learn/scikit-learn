@@ -14,7 +14,7 @@
 import numpy as np
 cimport numpy as np
 
-from ._utils cimport SplitValue, SplitRecord, BitSet
+from ._utils cimport SplitValue, SplitRecord, BITSET_t
 
 from ._criterion cimport Criterion
 
@@ -61,8 +61,8 @@ cdef class Splitter:
     cdef DOUBLE_t* sample_weight
     cdef INT32_t[:] n_categories         # (n_features,) array giving number of
                                          # categories (<0 for non-categorical)
-    cdef UINT32_t* cat_cache             # Cache buffer for fast categorical split evaluation
-    cdef BitSet cat_split
+    cdef BITSET_t* cat_cache             # Cache buffer for fast categorical split evaluation
+    cdef BITSET_t cat_split              # cat_split as a bitset
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

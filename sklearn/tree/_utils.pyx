@@ -94,40 +94,66 @@ cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
 
-cdef inline void setup_cat_cache(UINT32_t *cachebits, UINT64_t cat_split,
+cdef inline void setup_cat_cache(BITSET_t* cachebits, UINT64_t cat_split,
                                  INT32_t n_categories) nogil:
     """Populate the bits of the category cache from a split.
+
+    This function populates cat_split into cachebits. In the case of a
+    BestSplitter, cachebits is an array of length 1, i.e. maximum 64 categories
+    supported, and cachebits[0] = cat_split. However, in the case of a random
+    splitter, there is no limit for the number of categories on a feature, and
+    cat_split stores the 32 bit random_seed on the highest 32 bit of the
+    cat_split to generate the random split. The lowest bit of cat_split defines
+    if it should be interpreted as a random split or a deterministic one, i.e.
+    1 indicates a random split.
     """
     cdef INT32_t j
     cdef UINT32_t rng_seed, val
-
+    cdef SIZE_t cache_size = (n_categories + 63) // 64
     if n_categories > 0:
         if cat_split & 1:
             # RandomSplitter
-            for j in range((n_categories + 31) // 32):
-                cachebits[j] = 0
+            for j in range(cache_size):
+                bs_reset_all(&cachebits[j])
             rng_seed = cat_split >> 32
             for j in range(n_categories):
                 val = rand_int(0, 2, &rng_seed)
-                cachebits[j // 32] |= val << (j % 32)
-            """
-            rng_seed = cat_split >> 32
-            10
-            1111111111 bits
-            2 bytes
-            for j in range((n_categories + 31) // 32):
-                cachebits[j] = rand_int(0, 1 << 32, &rng_seed)
-            cachebits[j] &= (1 << (n_categories - (32 * j))) - 1
-            """
+                if not val:
+                    continue
+                bs_set(&cachebits[j // 64], j % 64)
         else:
             # BestSplitter
-            for j in range((n_categories + 31) // 32):
-                cachebits[j] = (cat_split >> (j * 32)) & <UINT64_t> 0xFFFFFFFF
+            # In practice, cache_size here should ALWAYS be 1
+            # XXX TODO: check cache_size == 1?
+            cachebits[0] = cat_split
 
 
 cdef inline bint goes_left(DTYPE_t feature_value, SplitValue split,
-                           INT32_t n_categories, UINT32_t* cachebits) nogil:
-    """Determine whether a sample goes to the left or right child node."""
+                           INT32_t n_categories, BITSET_t *cachebits) nogil:
+    """Determine whether a sample goes to the left or right child node.
+
+    Attributes
+    ----------
+    feature_value : DTYPE_t
+        The value of the feature for which the decision needs to be made.
+
+    split : SplitValue
+        The union (of DOUBLE_t and BITSET_t) indicating the split. However, it
+        is used (as a DOUBLE_t) only for numerical features.
+
+    n_categories : INT32_t
+        The number of categories present in the feature in question. The
+        feature is considered a numerical one and not a categorical one if
+        n_categories is negative.
+
+    cachebits : BITSET_t*
+        The array containing the expantion of split.cat_split. The function
+        setup_cat_cache is the one filling it.
+
+    Returns
+    -------
+    bint : Indicating whether the left branch should be used.
+    """
     cdef SIZE_t idx, shift
 
     if n_categories < 0:
@@ -136,9 +162,9 @@ cdef inline bint goes_left(DTYPE_t feature_value, SplitValue split,
     else:
         # Categorical feature, using bit cache
         if (<SIZE_t> feature_value) < n_categories:
-            idx = (<SIZE_t> feature_value) // 32
-            shift = (<SIZE_t> feature_value) % 32
-            return (cachebits[idx] >> shift) & 1
+            idx = (<SIZE_t> feature_value) // 64
+            offset = (<SIZE_t> feature_value) % 64
+            return bs_get(cachebits[idx], offset)
         else:
             return 0
 
@@ -725,34 +751,29 @@ cdef class WeightedMedianCalculator:
             return self.samples.get_value_from_index(self.k-1)
 
 
-cdef class BitSet:
-    """Easy bit operations on a UINT64_t value"""
-    def __cinit__(self):
-        self.value = 0
+cdef inline void bs_reset_all(BITSET_t *value) nogil:
+    value[0] = 0
 
-    cdef inline void reset_all(self) nogil:
-        self.value = 0
+cdef inline void bs_set(BITSET_t *value, SIZE_t i) nogil:
+    value[0] |= (<UINT64_t> 1) << i
 
-    cdef inline void set(self, SIZE_t i) nogil:
-        self.value |= (<UINT64_t> 1) << i
+cdef inline void bs_reset(BITSET_t *value, SIZE_t i) nogil:
+    value[0] &= ~((<UINT64_t> 1) << i)
 
-    cdef inline void reset(self, SIZE_t i) nogil:
-        self.value &= ~((<UINT64_t> 1) << i)
+cdef inline void bs_flip(BITSET_t *value, SIZE_t i) nogil:
+        value[0] ^= (<UINT64_t> 1) << i
 
-    cdef inline void flip(self, SIZE_t i) nogil:
-        self.value ^= (<UINT64_t> 1) << i
+cdef inline void bs_flip_all(BITSET_t *value, SIZE_t n_low_bits) nogil:
+    value[0] = (~value[0]) & ((~(<UINT64_t> 0)) >> (64 - n_low_bits))
 
-    cdef inline void flip_all(self, SIZE_t n_low_bits) nogil:
-        self.value = (~self.value) & ((~(<UINT64_t> 0)) >> (64 - n_low_bits))
+cdef inline bint bs_get(BITSET_t value, SIZE_t i) nogil:
+    return (value >> i) & (<UINT64_t> 1)
 
-    cdef inline int get(self, SIZE_t i) nogil:
-        return (self.value >> i) & (<UINT64_t> 1)
-
-    cdef inline void from_template(self, UINT64_t template,
-                                   INT32_t *cat_offs,
-                                   SIZE_t ncats_present) nogil:
-        cdef SIZE_t i
-        self.value = 0
-        for i in range(ncats_present):
-            self.value |= (template &
-                          ((<UINT64_t> 1) << i)) << cat_offs[i]
+cdef inline void bs_from_template(BITSET_t *value, UINT64_t template,
+                               INT32_t *cat_offs,
+                               SIZE_t ncats_present) nogil:
+    cdef SIZE_t i
+    value[0] = 0
+    for i in range(ncats_present):
+        value[0] |= (template &
+                     ((<UINT64_t> 1) << i)) << cat_offs[i]
