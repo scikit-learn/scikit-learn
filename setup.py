@@ -125,8 +125,7 @@ def get_openmp_flag(compiler):
     return ['-fopenmp']
 
 
-OPENMP_EXTENSIONS = ["sklearn.cluster._k_means_lloyd",
-                     "sklearn.cluster._k_means_elkan"]
+OPENMP_EXTENSIONS = []
 
 
 # custom build_ext command to set OpenMP compile flags depending on os and
