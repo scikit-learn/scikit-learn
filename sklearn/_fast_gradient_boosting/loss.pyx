@@ -12,7 +12,6 @@ from abc import ABC, abstractmethod
 
 cimport cython
 from cython.parallel import prange
-from libc.stdlib cimport malloc, free
 import numpy as np
 cimport numpy as np
 from scipy.special import expit
@@ -276,51 +275,51 @@ cdef void _update_gradients_hessians_categorical_crossentropy(
         G_H_DTYPE_C [:, ::1] hessians,  # shape (pred_dim, n_samples), OUT
         const Y_DTYPE_C [::1] y_true,  # shape (n_samples,), IN
         # shape (pred_dim, n_samples), IN
-        const Y_DTYPE_C [:, ::1] raw_predictions) nogil:
+        const Y_DTYPE_C [:, ::1] raw_predictions):
     cdef:
         int prediction_dim = raw_predictions.shape[0]
         int n_samples = raw_predictions.shape[1]
         int k
         int i
-        Y_DTYPE_C * p = <Y_DTYPE_C *> malloc(sizeof(Y_DTYPE_C) *
-                                             (prediction_dim * n_samples))
-        Y_DTYPE_C p_k
+        # p[i, k] is the probability that class(ith sample) == k.
+        # It's the softmax of the raw predictions
+        Y_DTYPE_C [:, ::1] p = np.empty(shape=(n_samples, prediction_dim))
+        Y_DTYPE_C p_i_k
 
-    for i in prange(n_samples, schedule='static'):
+    for i in prange(n_samples, schedule='static', nogil=True):
         # first compute softmaxes of sample i for each class
         for k in range(prediction_dim):
-            p[i * prediction_dim + k] = raw_predictions[k, i]
-        compute_softmax(p + (i * prediction_dim), prediction_dim)
+            p[i, k] = raw_predictions[k, i]  # prepare softmax
+        compute_softmax(p, i)
         # then update gradients and hessians
         for k in range(prediction_dim):
-            # p_k is the probability that class(ith sample) == k.
-            p_k = p[i * prediction_dim + k]
-            gradients[k, i] = p_k - (y_true[i] == k)
-            hessians[k, i] = p_k * (1. - p_k)
-    free(p)
+            p_i_k = p[i, k]
+            gradients[k, i] = p_i_k - (y_true[i] == k)
+            hessians[k, i] = p_i_k * (1. - p_i_k)
 
 
-cdef inline void compute_softmax(
-        Y_DTYPE_C * p,  # IN OUT, treated as array with <pred_dim> entries
-        const unsigned int prediction_dim) nogil:
-    """Compute softmaxes of values in p."""
+cdef inline void compute_softmax(Y_DTYPE_C [:, ::1] p, const int i) nogil:
+    """Compute softmaxes of values in p[i, :]."""
+    # i needs to be passed (and stays constant) because otherwise Cython does
+    # not generate optimal code
 
     cdef:
-        Y_DTYPE_C max_value = p[0]
+        Y_DTYPE_C max_value = p[i, 0]
         Y_DTYPE_C sum_exps = 0.
         unsigned int k
+        unsigned prediction_dim = p.shape[1]
 
     # Compute max value of array for numerical stability
     for k in range(1, prediction_dim):
-        if max_value < p[k]:
-            max_value = p[k]
+        if max_value < p[i, k]:
+            max_value = p[i, k]
 
     for k in range(prediction_dim):
-        p[k] = exp(p[k] - max_value)
-        sum_exps += p[k]
+        p[i, k] = exp(p[i, k] - max_value)
+        sum_exps += p[i, k]
 
     for k in range(prediction_dim):
-        p[k] /= sum_exps
+        p[i, k] /= sum_exps
 
 
 cdef inline Y_DTYPE_C cexpit(const Y_DTYPE_C x) nogil:
