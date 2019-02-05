@@ -75,8 +75,8 @@ print("One-vs-Rest ROC AUC scores: {0} (unweighted), {1} (weighted)".format(
 # Plotting the ROC curve for virginica
 # ....................................
 # One can draw a ROC curve by considering each element of the label indicator
-# matrix as a binary prediction (micro-averaging). In the following, we 
-# draw the ROC curve for virginica.
+# matrix as a binary prediction (micro-averaging). In the following, the ROC 
+# curve for virginica is drawn.
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import roc_curve, auc
@@ -181,6 +181,7 @@ print("One-vs-One ROC AUC scores: {0} (unweighted), {1} (weighted)".format(
 ###############################################################################
 # Plot ROC curves for the multiclass problem using One-vs-One
 # ...........................................................
+# The ROC curve for every pair of classes are drawn.
 from itertools import combinations
 
 for a, b in combinations(range(n_classes), 2):
@@ -196,21 +197,21 @@ for a, b in combinations(range(n_classes), 2):
           y_test[ab_mask] == b, y_score[ab_mask, b])
     roc_auc[(b, a)] = auc(fpr[(b, a)], tpr[(b, a)])
 
-plt.figure()
+fig, ax = plt.subplots()
 for a, b in combinations(range(n_classes), 2):
-    plt.plot(
+    ax.plot(
           fpr[(a, b)], tpr[(a, b)],
           lw=lw, label='ROC curve: class {0} vs. {1} '
           '(area = {2:0.2f})'.format(a, b, roc_auc[(a, b)]))
-    plt.plot(
+    ax.plot(
            fpr[(b, a)], tpr[(b, a)],
            lw=lw, label='ROC curve: class {0} vs. {1} '
            '(area = {2:0.2f})'.format(b, a, roc_auc[(b, a)]))
-plt.plot([0, 1], [0, 1], 'k--', lw=lw)
-plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('An extension of ROC to multi-class using One-vs-One')
-plt.legend(loc="lower right")
-plt.show()
+ax.plot([0, 1], [0, 1], 'k--', lw=lw)
+ax.set_xlim([0.0, 1.0])
+ax.set_ylim([0.0, 1.05])
+ax.set_xlabel('False Positive Rate')
+ax.set_ylabel('True Positive Rate')
+ax.set_title('An extension of ROC to multi-class using One-vs-One')
+ax.legend(loc="lower right")
+fig.show()
