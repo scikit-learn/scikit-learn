@@ -589,18 +589,18 @@ def test_roc_auc_score_multiclass_labels_error(
 
 
 @pytest.mark.parametrize("msg, kwargs", [
-    (("Parameter 'average' must be one of ('macro', 'weighted') for "
-      "multiclass problems."), {"average": "samples"}),
-    (("Parameter 'average' must be one of ('macro', 'weighted') for "
-      "multiclass problems."), {"average": "micro"}),
-    (("Parameter 'sample_weight' is not supported for multiclass one-vs-one "
-      "ROC AUC. 'sample_weight' must be None in this case."),
+    ((r"Parameter 'average' must be one of \('macro', 'weighted'\) for "
+      r"multiclass problems\."), {"average": "samples"}),
+    ((r"Parameter 'average' must be one of \('macro', 'weighted'\) for "
+      r"multiclass problems\."), {"average": "micro"}),
+    ((r"Parameter 'sample_weight' is not supported for multiclass one-vs-one "
+      r"ROC AUC. 'sample_weight' must be None in this case\."),
      {"multiclass": "ovo", "sample_weight": []}),
-    (("Partial AUC computation not available in multiclass setting. "
-      "Parameter 'max_fpr' must be set to `None`. Received `max_fpr=0.5` "
-      "instead."), {"multiclass": "ovo", "max_fpr": 0.5}),
-    (("Parameter multiclass='ovp' is not supported for multiclass ROC AUC. "
-      "'multiclass' must be one of ('ovo', 'ovr')."), {"multiclass": "ovp"})
+    ((r"Partial AUC computation not available in multiclass setting\. "
+      r"Parameter 'max_fpr' must be set to `None`. Received `max_fpr=0.5` "
+      r"instead\."), {"multiclass": "ovo", "max_fpr": 0.5}),
+    ((r"Parameter multiclass='ovp' is not supported for multiclass ROC AUC\. "
+      r"'multiclass' must be one of \('ovo', 'ovr'\)\."), {"multiclass": "ovp"})
 ])
 def test_roc_auc_score_multiclass_error(msg, kwargs):
     # Test that roc_auc_score function returns an error when trying
@@ -610,9 +610,8 @@ def test_roc_auc_score_multiclass_error(msg, kwargs):
     y_pred = rng.rand(10, 3)
     y_pred = y_pred / y_pred.sum(axis=1, keepdims=True)
     y_true = rng.randint(0, 3, size=10)
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match=msg):
         roc_auc_score(y_true, y_pred, **kwargs)
-    assert str(exc_info.value) == msg
 
 
 def test_auc_score_non_binary_class():
