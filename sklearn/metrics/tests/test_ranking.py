@@ -472,9 +472,9 @@ def test_deprecated_auc_reorder():
 
 @pytest.mark.parametrize(
     "y_true, labels",
-    # [(np.array([0, 1, 0, 2]), None),
-    #  (["a", "b", "a", "c"], None),
-    [(["c", "b", "c", "a"], ["c", "b", "a"])]
+    [(np.array([0, 1, 0, 2]), None),
+     (["a", "b", "a", "c"], None),
+     (["c", "b", "c", "a"], ["c", "b", "a"])]
 )
 def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
     # Tests the one-vs-one multiclass ROC AUC algorithm
