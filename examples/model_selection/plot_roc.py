@@ -208,7 +208,8 @@ all_multiclass_fpr = np.unique(
 
 multiclass_interp_tpr = dict()
 for a, b in class_permutations:
-    multiclass_interp_tpr[(a, b)] = interp(all_multiclass_fpr, fpr[(a, b)], tpr[(a, b)])
+    multiclass_interp_tpr[(a, b)] = interp(
+          all_multiclass_fpr, fpr[(a, b)], tpr[(a, b)])
 
 all_multiclass_tpr = np.array(
       [multiclass_interp_tpr[(a, b)] for a, b in class_permutations])
