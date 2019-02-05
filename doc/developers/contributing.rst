@@ -1225,6 +1225,14 @@ Optional Arguments
 In iterative algorithms, the number of iterations should be specified by
 an integer called ``n_iter``.
 
+Pairwise Attributes
+^^^^^^^^^^^^^^^^^^^
+
+Estimators that accept ``X`` of shape ``(n_samples, n_samples)`` and defines a
+``_pairwise`` property equal to ``True`` allows for cross-validation of the
+dataset. (e.g., when ``X`` is a precomputed kernel matrix). Specifically, the
+``_pairwise`` property is used by
+``utils.metaestimators._safe_split`` to slice rows and columns.
 
 Rolling your own estimator
 ==========================
