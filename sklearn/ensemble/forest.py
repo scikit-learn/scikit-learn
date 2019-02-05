@@ -912,6 +912,11 @@ class RandomForestClassifier(ForestClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    ccp_alpha : float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be choosen.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -954,7 +959,8 @@ class RandomForestClassifier(ForestClassifier):
     >>> clf = RandomForestClassifier(n_estimators=100, max_depth=2,
     ...                              random_state=0)
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
+    RandomForestClassifier(bootstrap=True, ccp_alpha=0.0,
+                class_weight=None, criterion='gini',
                 max_depth=2, max_features='auto', max_leaf_nodes=None,
                 min_impurity_decrease=0.0, min_impurity_split=None,
                 min_samples_leaf=1, min_samples_split=2,
@@ -1006,7 +1012,8 @@ class RandomForestClassifier(ForestClassifier):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None):
+                 class_weight=None,
+                 ccp_alpha=0.0):
         super().__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -1032,6 +1039,7 @@ class RandomForestClassifier(ForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
+        self.ccp_alpha = ccp_alpha
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -1177,6 +1185,11 @@ class RandomForestRegressor(ForestRegressor):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
+    ccp_alpha : float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be choosen.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeRegressor
@@ -1207,7 +1220,8 @@ class RandomForestRegressor(ForestRegressor):
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
     ...                              n_estimators=100)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=2,
+    RandomForestRegressor(bootstrap=True, ccp_alpha=0.0,
+               criterion='mse', max_depth=2,
                max_features='auto', max_leaf_nodes=None,
                min_impurity_decrease=0.0, min_impurity_split=None,
                min_samples_leaf=1, min_samples_split=2,
@@ -1265,7 +1279,8 @@ class RandomForestRegressor(ForestRegressor):
                  n_jobs=None,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 ccp_alpha=0.0):
         super().__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
@@ -1290,6 +1305,7 @@ class RandomForestRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
+        self.ccp_alpha = ccp_alpha
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1453,6 +1469,11 @@ class ExtraTreesClassifier(ForestClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    ccp_alpha : float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be choosen.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -1521,7 +1542,8 @@ class ExtraTreesClassifier(ForestClassifier):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None):
+                 class_weight=None,
+                 ccp_alpha=0.0):
         super().__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
@@ -1547,6 +1569,7 @@ class ExtraTreesClassifier(ForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
+        self.ccp_alpha = ccp_alpha
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -1689,6 +1712,11 @@ class ExtraTreesRegressor(ForestRegressor):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
+    ccp_alpha : float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be choosen.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeRegressor
@@ -1744,7 +1772,8 @@ class ExtraTreesRegressor(ForestRegressor):
                  n_jobs=None,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 ccp_alpha=0.0):
         super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -1769,6 +1798,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
+        self.ccp_alpha = ccp_alpha
 
 
 class RandomTreesEmbedding(BaseForest):
@@ -1888,6 +1918,11 @@ class RandomTreesEmbedding(BaseForest):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
+    ccp_alpha : float, optional (default=0.0)
+        Complexity parameter used for Minimal Cost-Complexity Pruning. The
+        subtree with the largest cost complexity that is smaller than
+        ``ccp_alpha`` will be choosen.
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -1919,7 +1954,8 @@ class RandomTreesEmbedding(BaseForest):
                  n_jobs=None,
                  random_state=None,
                  verbose=0,
-                 warm_start=False):
+                 warm_start=False,
+                 ccp_alpha=0.0):
         super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
@@ -1943,6 +1979,7 @@ class RandomTreesEmbedding(BaseForest):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.sparse_output = sparse_output
+        self.ccp_alpha = ccp_alpha
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
