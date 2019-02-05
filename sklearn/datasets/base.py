@@ -6,8 +6,6 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-from __future__ import print_function
-
 import os
 import csv
 import sys

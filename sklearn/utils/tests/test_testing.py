@@ -449,8 +449,7 @@ class MockMetaEstimator(object):
 def test_check_docstring_parameters():
     try:
         import numpydoc  # noqa
-        assert sys.version_info >= (3, 5)
-    except (ImportError, AssertionError):
+    except ImportError:
         raise SkipTest(
             "numpydoc is required to test the docstrings")
 
