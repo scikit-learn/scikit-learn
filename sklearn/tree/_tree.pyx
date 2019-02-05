@@ -1158,18 +1158,17 @@ cpdef build_pruned_tree_ccp(
     """
 
     cdef:
+        SIZE_t i
         SIZE_t n_nodes = orig_tree.node_count
         # prior probability using weighted samples
         DOUBLE_t[:] prior = np.array(
             orig_tree.weighted_n_node_samples, dtype=np.float64)
         DOUBLE_t prior_0 = prior[0]
-        cdef SIZE_t i
+        # impurity weighted by prior
+        DOUBLE_t[:] r_node = np.empty(shape=n_nodes, dtype=np.float64)
 
     for i in range(prior.shape[0]):
         prior[i] /= prior_0
-
-    # impurity weighted by prior
-    cdef DOUBLE_t[:] r_node = np.empty(shape=n_nodes, dtype=np.float64)
 
     for i in range(r_node.shape[0]):
         r_node[i] = prior[i] * orig_tree.impurity[i]
@@ -1234,6 +1233,9 @@ cpdef build_pruned_tree_ccp(
         # candidate nodes that can be pruned
         bint[:] candidate_nodes = view.array(
             shape=(n_nodes, ), itemsize=sizeof(bint), format="i")
+        # nodes in subtree
+        bint[:] in_subtree = view.array(
+            shape=(n_nodes, ), itemsize=sizeof(bint), format="i")
         DOUBLE_t[:] g_node = np.zeros(shape=n_nodes, dtype=np.float64)
         SIZE_t cur_idx
         DOUBLE_t subtree_alpha
@@ -1243,72 +1245,83 @@ cpdef build_pruned_tree_ccp(
         SIZE_t n_pruned_leaves
         DOUBLE_t r_diff
         DOUBLE_t max_float64 = np.finfo(np.float64).max
+        SIZE_t init_capacity = 0
 
-    for i in range(leaves_in_subtree.shape[0]):
-        candidate_nodes[i] = not leaves_in_subtree[i]
+    with nogil:
+        for i in range(leaves_in_subtree.shape[0]):
+            candidate_nodes[i] = not leaves_in_subtree[i]
 
-    # with nogil:
-    while True:
-        # If root node is a leaf
-        if not candidate_nodes[0]:
-            break
-
-        # computes ccp_alpha for subtrees
-        cur_ccp_alpha = max_float64
         for i in range(n_nodes):
-            if not candidate_nodes[i]:
-                continue
-            subtree_alpha = (r_node[i] - r_branch[i]) / (n_leaves[i] - 1)
-            if subtree_alpha < cur_ccp_alpha:
-                cur_ccp_alpha = subtree_alpha
-                cur_idx = i
+            in_subtree[i] = 1
 
-        # The subtree on the previous iteration has the greatest ccp_alpha
-        # less than or equal to self.ccp_alpha
-        if cur_ccp_alpha > ccp_alpha:
-            break
+        while True:
+            # If root node is a leaf
+            if not candidate_nodes[0]:
+                break
 
-        # stack uses only the start variable
-        rc = stack.push(cur_idx, 0, 0, 0, 0, 0, 0)
-        if rc == -1:
-            raise MemoryError()
+            # computes ccp_alpha for subtrees and finds the minimal alpha
+            cur_ccp_alpha = max_float64
+            for i in range(n_nodes):
+                if not candidate_nodes[i]:
+                    continue
+                subtree_alpha = (r_node[i] - r_branch[i]) / (n_leaves[i] - 1)
+                if subtree_alpha < cur_ccp_alpha:
+                    cur_ccp_alpha = subtree_alpha
+                    cur_idx = i
 
-        # descendants of branch are not in subtree
-        while not stack.is_empty():
-            stack.pop(&stack_record)
-            node_idx = stack_record.start
-            candidate_nodes[node_idx] = 0
-            leaves_in_subtree[node_idx] = 0
+            # The subtree on the previous iteration has the greatest ccp_alpha
+            # less than or equal to self.ccp_alpha
+            if cur_ccp_alpha > ccp_alpha:
+                break
 
-            child_l_idx = child_l[node_idx]
-            child_r_idx = child_r[node_idx]
-            if child_l_idx != child_r_idx:
-                stack.push(child_l_idx, 0, 0, 0, 0, 0, 0)
-                stack.push(child_r_idx, 0, 0, 0, 0, 0, 0)
-        leaves_in_subtree[cur_idx] = 1
+            # stack uses only the start variable
+            rc = stack.push(cur_idx, 0, 0, 0, 0, 0, 0)
+            if rc == -1:
+                raise MemoryError()
 
-        # updates number of leaves
-        n_pruned_leaves = n_leaves[cur_idx] - 1
-        n_leaves[cur_idx] = 0
+            # descendants of branch are not in subtree
+            while not stack.is_empty():
+                stack.pop(&stack_record)
+                node_idx = stack_record.start
+                candidate_nodes[node_idx] = 0
+                leaves_in_subtree[node_idx] = 0
+                in_subtree[node_idx] = 0
 
-        # # computes the increase in r_branch to bubble up
-        r_diff = r_node[cur_idx] - r_branch[cur_idx]
-        r_branch[cur_idx] = r_node[cur_idx]
+                child_l_idx = child_l[node_idx]
+                child_r_idx = child_r[node_idx]
+                if child_l_idx != child_r_idx:
+                    stack.push(child_l_idx, 0, 0, 0, 0, 0, 0)
+                    stack.push(child_r_idx, 0, 0, 0, 0, 0, 0)
+            leaves_in_subtree[cur_idx] = 1
+            in_subtree[cur_idx] = 1
 
-        # bubble up values to ancestors
-        cur_idx = parent[cur_idx]
-        while cur_idx != -1:
-            n_leaves[cur_idx] -= n_pruned_leaves
-            r_branch[cur_idx] += r_diff
+            # updates number of leaves
+            n_pruned_leaves = n_leaves[cur_idx] - 1
+            n_leaves[cur_idx] = 0
+
+            # # computes the increase in r_branch to bubble up
+            r_diff = r_node[cur_idx] - r_branch[cur_idx]
+            r_branch[cur_idx] = r_node[cur_idx]
+
+            # bubble up values to ancestors
             cur_idx = parent[cur_idx]
+            while cur_idx != -1:
+                n_leaves[cur_idx] -= n_pruned_leaves
+                r_branch[cur_idx] += r_diff
+                cur_idx = parent[cur_idx]
 
-    _build_pruned_tree(tree, orig_tree, leaves_in_subtree)
+        for i in range(in_subtree.shape[0]):
+            if in_subtree[i]:
+                init_capacity += 1
+
+    _build_pruned_tree(tree, orig_tree, leaves_in_subtree, init_capacity)
 
 
 cdef _build_pruned_tree(
     Tree tree, # OUT
     Tree orig_tree,
-    const bint[:] leaves_in_subtree):
+    const bint[:] leaves_in_subtree,
+    SIZE_t initial_capacity):
     """Builds a pruned tree.
 
     Builds a pruned tree from the original tree. The values and nodes from the
@@ -1322,10 +1335,10 @@ cdef _build_pruned_tree(
         Original tree
     leaves_in_subtree : bint memoryview
         Boolean mask for leaves to include in subtree
+    init_capacity : SIZE_t
+        Number of nodes to initially allocate in pruned tree
     """
-
-    cdef SIZE_t capacity = np.sum(leaves_in_subtree)
-    tree._resize(capacity)
+    tree._resize(initial_capacity)
 
     cdef:
         SIZE_t orig_node_id
