@@ -1266,9 +1266,9 @@ def test_multiclass_score_permutation_invariance(name):
     metric = ALL_METRICS[name]
     score = metric(y_true, y_score)
     for perm in permutations(range(n_classes), n_classes):
-        inv_perm = np.zeros(n_classes, dtype=int)
-        inv_perm[list(perm)] = np.arange(n_classes)
-        y_score_perm = y_score[:, inv_perm]
+        inverse_perm = np.zeros(n_classes, dtype=int)
+        inverse_perm[list(perm)] = np.arange(n_classes)
+        y_score_perm = y_score[:, inverse_perm]
         y_true_perm = np.take(perm, y_true)
 
         current_score = metric(y_true_perm, y_score_perm)

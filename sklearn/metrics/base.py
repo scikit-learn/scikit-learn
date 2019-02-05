@@ -135,6 +135,15 @@ def _average_multiclass_ovo_score(
 
     Parameters
     ----------
+    binary_metric : callable
+        The binary metric function to use that accepts the following as input
+            y_true_target : array, shape = [n_samples_target]
+                Some sub-array of y_true for a pair of classes designated
+                positive and negative in the one-vs-one scheme.
+            y_score_target : array, shape = [n_samples_target]
+                Scores corresponding to the probability estimates
+                of a sample belonging to the designated positive class label
+
     y_true : array-like, shape = (n_samples, )
         True multiclass labels.
 
@@ -153,15 +162,6 @@ def _average_multiclass_ovo_score(
             Calculate metrics for each label, taking into account the
             prevalence of the classes.
 
-    binary_metric : callable
-        The binary metric function to use that accepts the following as input
-            y_true_target : array, shape = [n_samples_target]
-                Some sub-array of y_true for a pair of classes designated
-                positive and negative in the one-vs-one scheme.
-            y_score_target : array, shape = [n_samples_target]
-                Scores corresponding to the probability estimates
-                of a sample belonging to the designated positive class label
-
     Returns
     -------
     score : float
@@ -174,9 +174,10 @@ def _average_multiclass_ovo_score(
     pair_scores = np.empty(n_pairs)
 
     is_weighted = average == "weighted"
-    if is_weighted:
-        prevalence = np.empty(n_pairs)
+    prevalence = np.empty(n_pairs) if is_weighted else None
 
+    # Compute scores treating a as positive class and b as negative class,
+    # then b as positive class and a as negative class
     for ix, (a, b) in enumerate(combinations(range(n_classes), 2)):
         a_mask = y_true == a
         b_mask = y_true == b
@@ -192,5 +193,4 @@ def _average_multiclass_ovo_score(
         b_true_score = binary_metric(b_true, y_score[ab_mask, b])
         pair_scores[ix] = (a_true_score + b_true_score) / 2
 
-    return (np.average(pair_scores, weights=prevalence)
-            if is_weighted else np.average(pair_scores))
+    return np.average(pair_scores, weights=prevalence)

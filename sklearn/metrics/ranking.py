@@ -271,9 +271,7 @@ def roc_auc_score(y_true, y_score, labels=None,
         the lexicon order of ``y_true`` is used to index ``y_score``.
 
     multiclass : string, 'ovr' or 'ovo', optional(default='ovr')
-        Note: multiclass ROC AUC currently only handles the 'macro' and
-        'weighted' averages.
-
+        Determines the type of multiclass configuration to use.
         ``'ovr'``:
             Calculate metrics for the multiclass case using the one-vs-rest
             approach.
@@ -284,6 +282,8 @@ def roc_auc_score(y_true, y_score, labels=None,
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
+        Note: multiclass ROC AUC currently only handles the 'macro' and
+        'weighted' averages.
 
         ``'micro'``:
             Calculate metrics globally by considering each element of the label
@@ -304,9 +304,9 @@ def roc_auc_score(y_true, y_score, labels=None,
 
     max_fpr : float > 0 and <= 1, optional
         If not ``None``, the standardized partial AUC [3]_ over the range
-        [0, max_fpr] is returned. If multiclass task, should be either
-        equal to ``None`` or ``1.0`` as AUC ROC partial computation currently
-        not supported in this case.
+        [0, max_fpr] is returned. For the multiclass case, ``max_fpr``,
+        should be either equal to ``None`` or ``1.0`` as AUC ROC partial
+        computation currently is not supported for multiclass.
 
     Returns
     -------
@@ -403,8 +403,9 @@ def roc_auc_score(y_true, y_score, labels=None,
                 raise ValueError("Parameter 'labels' must be unique")
             if len(unique_labels) != y_score.shape[1]:
                 raise ValueError(
-                    "Number of given labels not equal to the number of "
-                    "columns in 'y_score'")
+                    "Number of given labels, {0}, not equal to the number "
+                    "of columns in 'y_score', {1}".format(
+                        len(unique_labels), y_score.shape[1]))
             if set(np.unique(y_true)) > set(unique_labels):
                 raise ValueError(
                     "'y_true' contains labels not in parameter 'labels'")
