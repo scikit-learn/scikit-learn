@@ -262,7 +262,8 @@ def test_calibration_curve():
     # test that quantiles work as expected
     y_true2 = np.array([0, 0, 0, 0, 1, 1])
     y_pred2 = np.array([0., 0.1, 0.2, 0.5, 0.9, 1.])
-    prob_true_quantile, prob_pred_quantile = \
+    prob_true_quantile, prob_pred_quantile = calibration_curve(
+        y_true2, y_pred2, n_bins=2, strategy='quantile')
         calibration_curve(y_true2, y_pred2, n_bins=2, strategy='quantile')
 
     assert_equal(len(prob_true_quantile), len(prob_pred_quantile))
