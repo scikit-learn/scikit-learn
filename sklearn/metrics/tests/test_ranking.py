@@ -584,10 +584,8 @@ def test_roc_auc_score_multiclass_labels_error(
     y_scores = np.array(
         [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match=msg):
         roc_auc_score(y_true, y_scores, labels=labels, multiclass=multiclass)
-
-    assert str(exc_info.value) == msg
 
 
 @pytest.mark.parametrize("msg, kwargs", [

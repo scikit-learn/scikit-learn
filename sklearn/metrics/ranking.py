@@ -256,7 +256,7 @@ def roc_auc_score(y_true, y_score, labels=None,
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
         True binary labels or binary label indicators.
         The multiclass case expects shape = [n_samples] and labels
-        with values from 0 to (n_classes-1), inclusive.
+        with values in ``range(n_classes)``.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -270,7 +270,7 @@ def roc_auc_score(y_true, y_score, labels=None,
         List of labels to index ``y_score`` used for multiclass. If ``None``,
         the lexicon order of ``y_true`` is used to index ``y_score``.
 
-    multiclass : string, 'ovr' or 'ovo', (default='ovr')
+    multiclass : string, 'ovr' or 'ovo', optional(default='ovr')
         Note: multiclass ROC AUC currently only handles the 'macro' and
         'weighted' averages.
 

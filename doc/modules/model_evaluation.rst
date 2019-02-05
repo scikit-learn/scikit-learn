@@ -1309,7 +1309,7 @@ extended by averaging over the labels as :ref:`above <average>`.
 Compared to metrics such as the subset accuracy, the Hamming loss, or the
 F1 score, ROC doesn't require optimizing a threshold for each label.
 
-The :func:`roc_auc_score` function can also be used in mult-class
+The :func:`roc_auc_score` function can also be used in multi-class
 classification. Two averaging strategies are currently supported: the
 one-vs-one algorithm computes the average of the pairwise ROC AUC scores, and
 the one-vs-rest algorithm computes the average of the ROC AUC scores for each
@@ -1318,13 +1318,13 @@ provided in an array with values from 0 to ``n_classes``, and the scores
 correspond to the probability estimates that a sample belongs to a particular
 class.
 
-**One-vs-one Algorithm**: Computes the AUC of all possible pairwise
+**One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
 combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
 uniformly:
 
 .. math::
 
-   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k \neq j}^c (\text{AUC}(j | k) +
+   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c (\text{AUC}(j | k) +
    \text{AUC}(k | j))
 
 where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
@@ -1339,7 +1339,7 @@ prevalence:
 
 .. math::
 
-   \frac{1}{c(c-1)}\sum_{j=1}^{c}\sum_{k \neq j}^c p(j \cup k)(
+   \frac{2}{c(c-1)}\sum_{j=1}^{c}\sum_{k > j}^c p(j \cup k)(
    \text{AUC}(j | k) + \text{AUC}(k | j))
 
 where :math:`c` is the number of classes. This algorithm is used by setting

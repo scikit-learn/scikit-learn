@@ -127,24 +127,24 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
 
 
 def _average_multiclass_ovo_score(
-        binary_metric, y_true, y_score, labels=None, average='macro'):
-    """Uses the binary metric for one-vs-one multiclass classification,
+        binary_metric, y_true, y_score, average='macro'):
+    """Average one-versus-one scores for multiclass classification.
+
+    Uses the binary metric for one-vs-one multiclass classification,
     where the score is computed according to the Hand & Till (2001) algorithm.
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like, shape = (n_samples, )
         True multiclass labels.
 
-    y_score : array, shape = [n_samples, n_classes]
+    y_score : array-like, shape = (n_samples, n_classes)
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
-    labels : array, shape = [n_classes] or None, optional (default=None)
-        List of labels to index ``y_score``. If ``None``,
-        the lexicon order of ``y_true`` is used to index ``y_score``.
-
-    average : 'macro' or 'weighted', default='macro'
+    average : 'macro' or 'weighted', optional (default='macro')
+        Determines the type of averaging performed on the pairwise binary
+        metric scores
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean. This does not take label imbalance into account. Classes
@@ -153,8 +153,8 @@ def _average_multiclass_ovo_score(
             Calculate metrics for each label, taking into account the
             prevalence of the classes.
 
-    binary_metric : callable, the binary metric function to use.
-        Accepts the following as input
+    binary_metric : callable
+        The binary metric function to use that accepts the following as input
             y_true_target : array, shape = [n_samples_target]
                 Some sub-array of y_true for a pair of classes designated
                 positive and negative in the one-vs-one scheme.
@@ -165,11 +165,11 @@ def _average_multiclass_ovo_score(
     Returns
     -------
     score : float
-        Average the sum of pairwise binary metric scores
+        Average of the pairwise binary metric scores
     """
     check_consistent_length(y_true, y_score)
 
-    n_classes = len(np.unique(y_true))
+    n_classes = np.unique(y_true).shape[0]
     n_pairs = n_classes * (n_classes - 1) // 2
     pair_scores = np.empty(n_pairs)
 
@@ -179,13 +179,14 @@ def _average_multiclass_ovo_score(
 
     for ix, (a, b) in enumerate(combinations(range(n_classes), 2)):
         a_mask = y_true == a
-        ab_mask = np.logical_or(a_mask, y_true == b)
+        b_mask = y_true == b
+        ab_mask = np.logical_or(a_mask, b_mask)
 
         if is_weighted:
             prevalence[ix] = np.sum(ab_mask) / len(y_true)
 
         a_true = a_mask[ab_mask]
-        b_true = np.logical_not(a_true)
+        b_true = b_mask[ab_mask]
 
         a_true_score = binary_metric(a_true, y_score[ab_mask, a])
         b_true_score = binary_metric(b_true, y_score[ab_mask, b])
