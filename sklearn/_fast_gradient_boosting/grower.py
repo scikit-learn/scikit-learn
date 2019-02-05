@@ -281,7 +281,7 @@ class TreeGrower:
     def _compute_spittability(self, node, only_hist=False):
         """Compute histograms and best possible split of a node.
 
-        If the best possible gain is 0 of if the constraints aren't met
+        If the best possible gain is 0 or if the constraints aren't met
         (min_samples_leaf, min_hessian_to_split, min_gain_to_split) then the
         node is finalized (transformed into a leaf), else it is pushed on
         the splittable node heap.
