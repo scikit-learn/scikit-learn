@@ -184,7 +184,7 @@ def _average_multiclass_ovo_score(
         ab_mask = np.logical_or(a_mask, b_mask)
 
         if is_weighted:
-            prevalence[ix] = np.sum(ab_mask) / len(y_true)
+            prevalence[ix] = np.average(ab_mask)
 
         a_true = a_mask[ab_mask]
         b_true = b_mask[ab_mask]
