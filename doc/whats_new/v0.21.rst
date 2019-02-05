@@ -269,6 +269,13 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.utils`
+...................
+- A new random variable, :class:`utils.random.loguniform` implements a
+  log-uniform random variable for use in RandomizedSearchCV. For example, the
+  outcomes ``1``, ``10`` and ``100`` are all equally likely for ``loguniform(0,
+  2)``. See :issue:`11232` by :user:`Scott Sievert <stsievert>` and
+  :user:`Nathaniel Saul <sauln>`.
 
 Multiple modules
 ................
