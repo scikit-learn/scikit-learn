@@ -600,7 +600,8 @@ def test_roc_auc_score_multiclass_labels_error(
       r"Parameter 'max_fpr' must be set to `None`. Received `max_fpr=0.5` "
       r"instead\."), {"multiclass": "ovo", "max_fpr": 0.5}),
     ((r"Parameter multiclass='ovp' is not supported for multiclass ROC AUC\. "
-      r"'multiclass' must be one of \('ovo', 'ovr'\)\."), {"multiclass": "ovp"})
+      r"'multiclass' must be one of \('ovo', 'ovr'\)\."),
+     {"multiclass": "ovp"})
 ])
 def test_roc_auc_score_multiclass_error(msg, kwargs):
     # Test that roc_auc_score function returns an error when trying
