@@ -422,7 +422,11 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
     for big datasets (n_samples >= 10 000). The input data `X` is pre-binned
     into integer-valued bins, which considerably reduces the number of
-    splitting points to consider.
+    splitting points to consider, and allows the algorithm to leverage
+    integer-based data structures. For small sample sizes,
+    :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
+    might be prefered since binning may lead to split points that are too
+    approximate in this setting.
 
     Parameters
     ----------
@@ -560,7 +564,11 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
     for big datasets (n_samples >= 10 000). The input data `X` is pre-binned
     into integer-valued bins, which considerably reduces the number of
-    splitting points to consider.
+    splitting points to consider, and allows the algorithm to leverage
+    integer-based data structures. For small sample sizes,
+    :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
+    might be prefered since binning may lead to split points that are too
+    approximate in this setting.
 
     Parameters
     ----------
