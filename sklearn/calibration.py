@@ -549,10 +549,11 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
 
     strategy : {'uniform', 'quantile'}, (default='uniform')
         Strategy used to define the widths of the bins.
+
         uniform
-            All bins in each feature have identical widths.
+            All bins have identical widths.
         quantile
-            All bins in each feature have the same number of points.
+            All bins have the same number of points.
 
     Returns
     -------
