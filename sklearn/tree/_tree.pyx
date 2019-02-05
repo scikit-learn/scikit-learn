@@ -1193,8 +1193,8 @@ cpdef build_pruned_tree_ccp(
 
         rc = stack.push(0, 0, 0, -1, 0, 0, 0)
         if rc == -1:
-            # with gil:
-            raise MemoryError()
+            with gil:
+                raise MemoryError()
 
         while not stack.is_empty():
             stack.pop(&stack_record)
@@ -1277,7 +1277,8 @@ cpdef build_pruned_tree_ccp(
             # stack uses only the start variable
             rc = stack.push(cur_idx, 0, 0, 0, 0, 0, 0)
             if rc == -1:
-                raise MemoryError()
+                with gil:
+                    raise MemoryError()
 
             # descendants of branch are not in subtree
             while not stack.is_empty():
