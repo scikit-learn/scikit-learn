@@ -1,5 +1,4 @@
 """Test the validation module"""
-from __future__ import division
 
 import sys
 import warnings

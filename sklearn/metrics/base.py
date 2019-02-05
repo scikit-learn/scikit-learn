@@ -12,7 +12,6 @@ Common code for all metrics
 #          Noel Dawe <noel@dawe.me>
 # License: BSD 3 clause
 
-from __future__ import division
 from itertools import combinations
 
 import numpy as np

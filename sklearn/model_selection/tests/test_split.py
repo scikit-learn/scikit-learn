@@ -1,5 +1,4 @@
 """Test the split module"""
-from __future__ import division
 import warnings
 import pytest
 import numpy as np
