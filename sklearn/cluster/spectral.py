@@ -250,12 +250,16 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     assign_labels : {'kmeans', 'discretize', 'clusterQR'}, default: 'kmeans'
         The strategy to use to assign labels in the embedding
-        space. There are two ways to assign labels after the laplacian
+        space. There are three ways to assign labels after the laplacian
         embedding. k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another
         approach which is less sensitive to random initialization. See
         the 'Multiclass spectral clustering' paper referenced below for
-        more details on the discretization approach.
+        more details on the discretization approach. The newest clusterQR
+        directly extract clusters from eigenvectors in spectral clustering.
+        In contrast to k-means and discretization, clusterQR has no tuning
+        parameters, e.g., runs no iterations, yet may outperform k-means and
+        discretization in terms of both quality and speed.
 
     Returns
     -------
@@ -276,6 +280,15 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     - Multiclass spectral clustering, 2003
       Stella X. Yu, Jianbo Shi
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+
+    - Robust and efficient multi-way spectral clustering
+      Anil Damle, Victor Minden, Lexing Ying
+      https://github.com/asdamle/QR-spectral-clustering
+
+    - Preconditioned Spectral Clustering for Stochastic Block Partition
+      Streaming Graph Challenge
+      David Zhuzhunashvili, Andrew Knyazev
+      https://arxiv.org/abs/1708.07481
 
     Notes
     ------
