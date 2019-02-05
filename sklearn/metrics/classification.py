@@ -696,6 +696,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
     if labels is _ALL_ZERO:
+        warnings.warn('Jaccard is ill-defined and being set to 0.0 with no '
+                      'true or predicted samples', UndefinedMetricWarning)
         return 0.
     samplewise = average == 'samples'
     MCM = multilabel_confusion_matrix(y_true, y_pred,
@@ -1119,8 +1121,10 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     The metric, modifier and average arguments are used only for determining
     an appropriate warning.
     """
-    result = numerator / denominator
     mask = denominator == 0.0
+    denominator = denominator.copy()
+    denominator[mask] = 1
+    result = numerator / denominator
     if not np.any(mask):
         return result
 

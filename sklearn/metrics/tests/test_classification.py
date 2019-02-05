@@ -1246,8 +1246,8 @@ def test_multilabel_jaccard_similarity_score(recwarn):
            'with no true or predicted labels.')
     assert assert_warns_message(UndefinedMetricWarning, msg,
                                 jaccard_similarity_score,
-                                np.transpose([[0, 1]]),
-                                np.transpose([[0, 1]]),
+                                np.array([[0, 0], [1, 1]]),
+                                np.array([[0, 0], [1, 1]]),
                                 average='samples') == 0.5
 
     assert not list(recwarn)
@@ -1279,7 +1279,9 @@ def test_multiclass_jaccard_similarity_score(recwarn):
 
     y_true = np.array([[0, 0], [0, 0], [0, 0]])
     y_pred = np.array([[0, 0], [0, 0], [0, 0]])
-    assert jaccard_similarity_score(y_true, y_pred, average='weighted') == 0
+    with ignore_warnings():
+        assert (jaccard_similarity_score(y_true, y_pred, average='weighted')
+                == 0)
 
     assert not list(recwarn)
 
@@ -1288,12 +1290,12 @@ def test_average_binary_jaccard_similarity_score(recwarn):
     # tp=0, fp=0, fn=1, tn=0
     assert jaccard_similarity_score([1], [0], average='binary') == 0.
     # tp=0, fp=0, fn=0, tn=1
-    msg = ('Jaccard is ill-defined and '
-           'being set to 0.0 in labels with no predicted samples.')
+    msg = ('Jaccard is ill-defined and being set to 0.0 with '
+           'no true or predicted samples')
     assert assert_warns_message(UndefinedMetricWarning,
                                 msg,
                                 jaccard_similarity_score,
-                                [0], [0],
+                                [0, 0], [0, 0],
                                 average='binary') == 0.
     # tp=1, fp=0, fn=0, tn=0 (pos_label=0)
     assert jaccard_similarity_score([0], [0], pos_label=0,
