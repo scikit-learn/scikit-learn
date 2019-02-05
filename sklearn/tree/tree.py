@@ -378,7 +378,6 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
-
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]

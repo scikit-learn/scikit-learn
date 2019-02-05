@@ -464,43 +464,44 @@ class TreeGrower:
         A TreePredictor object.
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
-        self._fill_predictor_node_array(predictor_nodes, self.root,
-                                        bin_thresholds=bin_thresholds)
+        _fill_predictor_node_array(predictor_nodes, self.root,
+                                   bin_thresholds=bin_thresholds)
         return TreePredictor(predictor_nodes)
 
-    def _fill_predictor_node_array(self, predictor_nodes, grower_node,
-                                   bin_thresholds=None, next_free_idx=0):
-        """Helper used in make_predictor to set the TreePredictor fields."""
-        node = predictor_nodes[next_free_idx]
-        node['count'] = grower_node.n_samples
-        node['depth'] = grower_node.depth
-        if grower_node.split_info is not None:
-            node['gain'] = grower_node.split_info.gain
-        else:
-            node['gain'] = -1
 
-        if grower_node.value is not None:
-            # Leaf node
-            node['is_leaf'] = True
-            node['value'] = grower_node.value
-            return next_free_idx + 1
-        else:
-            # Decision node
-            split_info = grower_node.split_info
-            feature_idx, bin_idx = split_info.feature_idx, split_info.bin_idx
-            node['feature_idx'] = feature_idx
-            node['bin_threshold'] = bin_idx
-            if bin_thresholds is not None:
-                threshold = bin_thresholds[feature_idx][bin_idx]
-                node['threshold'] = threshold
-            next_free_idx += 1
+def _fill_predictor_node_array(predictor_nodes, grower_node,
+                               bin_thresholds=None, next_free_idx=0):
+    """Helper used in make_predictor to set the TreePredictor fields."""
+    node = predictor_nodes[next_free_idx]
+    node['count'] = grower_node.n_samples
+    node['depth'] = grower_node.depth
+    if grower_node.split_info is not None:
+        node['gain'] = grower_node.split_info.gain
+    else:
+        node['gain'] = -1
 
-            node['left'] = next_free_idx
-            next_free_idx = self._fill_predictor_node_array(
-                predictor_nodes, grower_node.left_child,
-                bin_thresholds=bin_thresholds, next_free_idx=next_free_idx)
+    if grower_node.value is not None:
+        # Leaf node
+        node['is_leaf'] = True
+        node['value'] = grower_node.value
+        return next_free_idx + 1
+    else:
+        # Decision node
+        split_info = grower_node.split_info
+        feature_idx, bin_idx = split_info.feature_idx, split_info.bin_idx
+        node['feature_idx'] = feature_idx
+        node['bin_threshold'] = bin_idx
+        if bin_thresholds is not None:
+            threshold = bin_thresholds[feature_idx][bin_idx]
+            node['threshold'] = threshold
+        next_free_idx += 1
 
-            node['right'] = next_free_idx
-            return self._fill_predictor_node_array(
-                predictor_nodes, grower_node.right_child,
-                bin_thresholds=bin_thresholds, next_free_idx=next_free_idx)
+        node['left'] = next_free_idx
+        next_free_idx = _fill_predictor_node_array(
+            predictor_nodes, grower_node.left_child,
+            bin_thresholds=bin_thresholds, next_free_idx=next_free_idx)
+
+        node['right'] = next_free_idx
+        return _fill_predictor_node_array(
+            predictor_nodes, grower_node.right_child,
+            bin_thresholds=bin_thresholds, next_free_idx=next_free_idx)
