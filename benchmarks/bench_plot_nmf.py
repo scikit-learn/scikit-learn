@@ -6,7 +6,6 @@ Benchmarks of Non-Negative Matrix Factorization
 #          Anthony Di Franco (projected gradient, Python and NumPy port)
 # License: BSD 3 clause
 
-from __future__ import print_function
 from time import time
 import sys
 import warnings
