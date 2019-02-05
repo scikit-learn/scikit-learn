@@ -607,11 +607,11 @@ def test_roc_auc_score_multiclass_error(msg, kwargs):
     # to compute multiclass AUC for parameters where an output
     # is not defined.
     rng = check_random_state(404)
-    y_pred = rng.rand(10, 3)
-    y_pred = y_pred / y_pred.sum(axis=1, keepdims=True)
-    y_true = rng.randint(0, 3, size=10)
+    y_score = rng.rand(20, 3)
+    y_score = y_score / y_score.sum(axis=1, keepdims=True)
+    y_true = rng.randint(0, 3, size=20)
     with pytest.raises(ValueError, match=msg):
-        roc_auc_score(y_true, y_pred, **kwargs)
+        roc_auc_score(y_true, y_score, **kwargs)
 
 
 def test_auc_score_non_binary_class():
