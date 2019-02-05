@@ -269,7 +269,7 @@ def test_calibration_curve():
     assert len(prob_true_quantile) == 2
     assert_almost_equal(prob_true_quantile, [0, 2 / 3])
     assert_almost_equal(prob_pred_quantile, [0.1, 0.8])
-    
+
     # Check that error is raised when invalid strategy is selected
     assert_raises(ValueError, calibration_curve, y_true2, y_pred2,
                   strategy='percentile')
