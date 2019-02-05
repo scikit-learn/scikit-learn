@@ -75,7 +75,7 @@ print("One-vs-Rest ROC AUC scores: {0} (unweighted), {1} (weighted)".format(
 # Plotting the ROC curve for virginica
 # ....................................
 # One can draw a ROC curve by considering each element of the label indicator
-# matrix as a binary prediction (micro-averaging). In the following, the ROC 
+# matrix as a binary prediction (micro-averaging). In the following, the ROC
 # curve for virginica is drawn.
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import label_binarize
@@ -171,19 +171,22 @@ fig.show()
 # Compute the AUC score
 # .....................
 # The ROC area can be approximated by taking the average either weighted
-# uniformly or by the priori class distribution.
-unweighted_roc_auc_ovo = roc_auc_score(y_test, y_score_norm, multiclass="ovo")
+# uniformly (macro) or by prevalence.
+macro_roc_auc_ovo = roc_auc_score(
+      y_test, y_score_norm, multiclass="ovo", average="macro")
 weighted_roc_auc_ovo = roc_auc_score(
       y_test, y_score_norm, multiclass="ovo", average="weighted")
-print("One-vs-One ROC AUC scores: {0} (unweighted), {1} (weighted)".format(
-       unweighted_roc_auc_ovo, weighted_roc_auc_ovo))
+print("One-vs-One ROC AUC scores: {0} (uniform), {1} (weighted by prevalence)"
+      .format(macro_roc_auc_ovo, weighted_roc_auc_ovo))
 
 ###############################################################################
 # Plot ROC curves for the multiclass problem using One-vs-One
 # ...........................................................
-# The ROC curve for every pair of classes are drawn.
-from itertools import combinations
+# The ROC curve for every pair of classes are drawn together with the
+# average weighted uniformly and weighted by prevalence.
+from itertools import combinations, permutations
 
+prevalence = dict()
 for a, b in combinations(range(n_classes), 2):
     ab_mask = np.logical_or(y_test == a, y_test == b)
 
@@ -191,22 +194,59 @@ for a, b in combinations(range(n_classes), 2):
     fpr[(a, b)], tpr[(a, b)], _ = roc_curve(
           y_test[ab_mask] == a, y_score[ab_mask, a])
     roc_auc[(a, b)] = auc(fpr[(a, b)], tpr[(a, b)])
+    prevalence[(a, b)] = np.average(ab_mask)
 
     # Compute ROC curve and ROC area with `b` as the positive class
     fpr[(b, a)], tpr[(b, a)], _ = roc_curve(
           y_test[ab_mask] == b, y_score[ab_mask, b])
     roc_auc[(b, a)] = auc(fpr[(b, a)], tpr[(b, a)])
+    prevalence[(b, a)] = np.average(ab_mask)
+
+class_permutations = list(permutations(range(n_classes), 2))
+all_multiclass_fpr = np.unique(
+      np.concatenate([fpr[(a, b)] for a, b in class_permutations]))
+
+multiclass_interp_tpr = dict()
+for a, b in class_permutations:
+    multiclass_interp_tpr[(a, b)] = interp(all_multiclass_fpr, fpr[(a, b)], tpr[(a, b)])
+
+all_multiclass_tpr = np.array(
+      [multiclass_interp_tpr[(a, b)] for a, b in class_permutations])
+all_prevalence = np.array([prevalence[(a, b)] for a, b in class_permutations])
+
+roc_auc_uniform_average_tpr = np.average(all_multiclass_tpr, axis=0)
+roc_auc_prevalence_average_tpr = np.average(
+      all_multiclass_tpr, axis=0, weights=all_prevalence)
+
 
 fig, ax = plt.subplots()
-for a, b in combinations(range(n_classes), 2):
+# plot roc curve as a macro average
+ax.plot(
+    all_multiclass_fpr,
+    roc_auc_uniform_average_tpr,
+    color='navy',
+    linestyle=':',
+    lw=4,
+    label='macro average (area = {0:0.2f})'.format(
+        macro_roc_auc_ovo),
+)
+# plot roc curve as a weighted average
+ax.plot(
+    all_multiclass_fpr,
+    roc_auc_prevalence_average_tpr,
+    color='deeppink',
+    linestyle=':',
+    lw=4,
+    label='weighted average (area = {0:0.2f})'.format(
+        weighted_roc_auc_ovo),
+)
+
+# plot roc curve for every of classes
+for a, b in permutations(range(n_classes), 2):
     ax.plot(
           fpr[(a, b)], tpr[(a, b)],
-          lw=lw, label='ROC curve: class {0} vs. {1} '
+          lw=lw, label='class {0} vs. {1} '
           '(area = {2:0.2f})'.format(a, b, roc_auc[(a, b)]))
-    ax.plot(
-           fpr[(b, a)], tpr[(b, a)],
-           lw=lw, label='ROC curve: class {0} vs. {1} '
-           '(area = {2:0.2f})'.format(b, a, roc_auc[(b, a)]))
 ax.plot([0, 1], [0, 1], 'k--', lw=lw)
 ax.set_xlim([0.0, 1.0])
 ax.set_ylim([0.0, 1.05])
