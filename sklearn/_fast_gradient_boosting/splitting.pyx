@@ -15,6 +15,7 @@ import numpy as np
 cimport numpy as np
 from openmp cimport omp_get_max_threads
 from libc.stdlib cimport malloc, free
+from libc.string cimport memcpy
 
 from .histogram cimport _build_histogram
 from .histogram cimport _build_histogram_no_hessian
@@ -341,13 +342,16 @@ cdef class Splitter:
             # sample_indices. This also updates self.partition since
             # sample_indices is a view.
             for thread_idx in prange(n_threads):
-
-                for i in range(left_counts[thread_idx]):
-                    sample_indices[left_offset[thread_idx] + i] = \
-                        left_indices_buffer[offset_in_buffers[thread_idx] + i]
-                for i in range(right_counts[thread_idx]):
-                    sample_indices[right_offset[thread_idx] + i] = \
-                        right_indices_buffer[offset_in_buffers[thread_idx] + i]
+                memcpy(
+                    &sample_indices[left_offset[thread_idx]],
+                    &left_indices_buffer[offset_in_buffers[thread_idx]],
+                    sizeof(unsigned int) * left_counts[thread_idx]
+                )
+                memcpy(
+                    &sample_indices[right_offset[thread_idx]],
+                    &right_indices_buffer[offset_in_buffers[thread_idx]],
+                    sizeof(unsigned int) * right_counts[thread_idx]
+                )
 
         return (sample_indices[:right_child_position],
                 sample_indices[right_child_position:],
