@@ -53,7 +53,7 @@ def clusterQR(vectors):
     Ut, Vt = svd(vectors[piv, :].T.conj())[0],\
         svd(vectors[piv, :].T.conj())[2].T.conj()
     vectors = abs(np.dot(vectors, np.dot(Ut, Vt.T.conj())))
-    return (vectors.argmax(axis=1)).T
+    return vectors.argmax(axis=1).T
 
 
 def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
