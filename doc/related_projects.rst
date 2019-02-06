@@ -90,8 +90,9 @@ enhance the functionality of scikit-learn's estimators.
 
 **Model export for production**
 
-- `sklearn-pmml <https://github.com/alex-pirozhenko/sklearn-pmml>`_
-  Serialization of (some) scikit-learn estimators into PMML.
+- `onnxmltools <https://github.com/onnx/onnxmltools>`_ Serializes many
+  Scikit-learn pipelines to `ONNX <https://onnx.ai/>`_ for interchange and
+  prediction.
 
 - `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
   Serialization of a wide variety of scikit-learn estimators and transformers

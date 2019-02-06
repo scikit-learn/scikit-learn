@@ -9,6 +9,11 @@ the model for future use without having to retrain. The following section gives
 you an example of how to persist a model with pickle. We'll also review a few
 security and maintainability issues when working with pickle serialization.
 
+An alternative to pickling is to export the model to another format using one
+of the model export tools listed under :ref:`related_projects`. Unlike
+pickling, once exported you cannot recover the full Scikit-learn estimator
+object, but you can deploy the model for prediction, usually by using tools
+supporting open model interchange formats such as `ONNX`_ or `PMML`_.
 
 Persistence example
 -------------------
