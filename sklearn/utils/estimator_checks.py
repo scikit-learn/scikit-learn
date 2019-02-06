@@ -2053,10 +2053,10 @@ def check_estimators_two_data_types(name, estimator_orig, X, y, obj_type):
     estimator_2 = clone(estimator_orig)
     set_random_state(estimator_1)
     set_random_state(estimator_2)
-    
+
     if obj_type not in ["NotAnArray", 'PandasDataframe']:
         raise ValueError("Data type {0} not supported".format(obj_type))
-        
+
     if obj_type == "NotAnArray":
         y_ = NotAnArray(np.asarray(y))
         X_ = NotAnArray(np.asarray(X))
@@ -2069,10 +2069,10 @@ def check_estimators_two_data_types(name, estimator_orig, X, y, obj_type):
             else:
                 y_ = pd.DataFrame(y_)
             X_ = pd.DataFrame(np.asarray(X))
-    
+
         except ImportError:
-            raise SkipTest("pandas is not installed: not checking estimators for "
-                           "pandas objects.")
+            raise SkipTest("pandas is not installed: not checking estimators "
+                           "for pandas objects.")
 
     # fit
     estimator_1.fit(X_, y_)
