@@ -780,11 +780,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
         the data first.  If copy_x is True (default), then the original data is
-        not modified, ensuring X is C-contiguous.  If False, the original data
-        is modified, and put back before the function returns, but small
-        numerical differences may be introduced by subtracting and then adding
-        the data mean, in this case it will also not ensure that data is
-        C-contiguous which may cause a significant slowdown.
+        not modified. If False, the original data is modified, and put back
+        before the function returns, but small numerical differences may be
+        introduced by subtracting and then adding the data mean. Note that if
+        the original data is not C-contiguous, a copy will be made even if
+        copy_x is False.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation. This works by computing
