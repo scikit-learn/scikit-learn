@@ -2400,9 +2400,7 @@ def test_scale_with_std():
     X_scaled = scale(X, copy=True, with_mean=True, with_std=True)
     assert np.isclose(X_scaled.mean(), 0.0)
     assert np.isclose(X_scaled.std(), 1.0)
-
-     # Test for invalid cases
+    # Test for invalid cases
     cases = [-10, -1, 3, 10]
     for std_ in cases:
-        assert_raises_regex(ValueError, r'Invalid value for `with_std`:'
-
+        assert_raises_regex(ValueError, r'Invalid value for `with_std`:')
