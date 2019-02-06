@@ -24,24 +24,23 @@ ctypedef np.npy_uint64 UINT64_t          # Unsigned 64 bit integer
 ctypedef UINT64_t BITSET_t
 
 ctypedef union SplitValue:
-    # Union type to generalize the concept of a threshold to
-    # categorical features. For non-categorical features, use the
-    # threshold member. It acts just as before, where feature values
-    # less than or equal to the threshold go left, and values greater
-    # than the threshold go right.
+    # Union type to generalize the concept of a threshold to categorical
+    # features. The floating point view, i.e. ``SplitValue.threshold`` is used
+    # for numerical features, where feature values less than or equal to the
+    # threshold go left, and values greater than the threshold go right.
     #
-    # For categorical features, use the cat_split member. It works in
-    # one of two ways, indicated by the value of its least significant
-    # bit (LSB). If the LSB is 0, then cat_split acts as a bitfield
-    # for up to 64 categories, sending samples left if the bit
-    # corresponding to their category is 1 or right if it is 0. If the
-    # LSB is 1, then the more significant 32 bits of cat_split is a
-    # random seed. To evaluate a sample, use the random seed to flip a
-    # coin (category_value + 1) times and send it left if the last
-    # flip gives 1; otherwise right. This second method allows up to
-    # 2**31 category values, but can only be used for RandomSplitter.
+    # For categorical features, the BITSET_t view (`SplitValue.cat_split``) is
+    # used. It works in one of two ways, indicated by the value of its least
+    # significant bit (LSB). If the LSB is 0, then cat_split acts as a bitfield
+    # for up to 64 categories, sending samples left if the bit corresponding to
+    # their category is 1 or right if it is 0. If the LSB is 1, then the most
+    # significant 32 bits of cat_split make a random seed. To evaluate a
+    # sample, use the random seed to flip a coin (category_value + 1) times and
+    # send it left if the last flip gives 1; otherwise right. This second
+    # method allows up to 2**31 category values, but can only be used for
+    # RandomSplitter.
     DOUBLE_t threshold
-    UINT64_t cat_split
+    BITSET_t cat_split
 
 
 ctypedef struct SplitRecord:
