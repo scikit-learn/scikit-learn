@@ -22,7 +22,7 @@ Here is a sample output of a run on a quad-core machine::
   pipeline: ['vect', 'tfidf', 'clf']
   parameters:
   {'clf__alpha': (1.0000000000000001e-05, 9.9999999999999995e-07),
-   'clf__n_iter': (10, 50, 80),
+   'clf__max_iter': (10, 50, 80),
    'clf__penalty': ('l2', 'elasticnet'),
    'tfidf__use_idf': (True, False),
    'vect__max_n': (1, 2),
@@ -33,7 +33,7 @@ Here is a sample output of a run on a quad-core machine::
   Best score: 0.940
   Best parameters set:
       clf__alpha: 9.9999999999999995e-07
-      clf__n_iter: 50
+      clf__max_iter: 50
       clf__penalty: 'elasticnet'
       tfidf__use_idf: True
       vect__max_n: 2
@@ -46,9 +46,6 @@ Here is a sample output of a run on a quad-core machine::
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD 3 clause
-
-from __future__ import print_function
-
 from pprint import pprint
 from time import time
 import logging
@@ -90,21 +87,21 @@ print()
 pipeline = Pipeline([
     ('vect', CountVectorizer()),
     ('tfidf', TfidfTransformer()),
-    ('clf', SGDClassifier()),
+    ('clf', SGDClassifier(tol=1e-3)),
 ])
 
 # uncommenting more parameters will give better exploring power but will
 # increase processing time in a combinatorial way
 parameters = {
     'vect__max_df': (0.5, 0.75, 1.0),
-    #'vect__max_features': (None, 5000, 10000, 50000),
+    # 'vect__max_features': (None, 5000, 10000, 50000),
     'vect__ngram_range': ((1, 1), (1, 2)),  # unigrams or bigrams
-    #'tfidf__use_idf': (True, False),
-    #'tfidf__norm': ('l1', 'l2'),
-    'clf__max_iter': (5,),
+    # 'tfidf__use_idf': (True, False),
+    # 'tfidf__norm': ('l1', 'l2'),
+    'clf__max_iter': (20,),
     'clf__alpha': (0.00001, 0.000001),
     'clf__penalty': ('l2', 'elasticnet'),
-    #'clf__n_iter': (10, 50, 80),
+    # 'clf__max_iter': (10, 50, 80),
 }
 
 if __name__ == "__main__":
@@ -113,7 +110,8 @@ if __name__ == "__main__":
 
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1)
+    grid_search = GridSearchCV(pipeline, parameters, cv=5,
+                               n_jobs=-1, verbose=1)
 
     print("Performing grid search...")
     print("pipeline:", [name for name, _ in pipeline.steps])

@@ -9,15 +9,14 @@ from scipy import stats
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition.fastica_ import _gs_decorrelation
-from sklearn.externals.six import moves
 from sklearn.exceptions import ConvergenceWarning
 
 
@@ -130,7 +129,7 @@ def test_fastica_simple(add_noise=False):
         ica = FastICA(fun=fn, algorithm=algo, random_state=0)
         assert_raises(ValueError, ica.fit, m.T)
 
-    assert_raises(TypeError, FastICA(fun=moves.xrange(10)).fit, m.T)
+    assert_raises(TypeError, FastICA(fun=range(10)).fit, m.T)
 
 
 def test_fastica_nowhiten():
@@ -139,7 +138,7 @@ def test_fastica_nowhiten():
     # test for issue #697
     ica = FastICA(n_components=1, whiten=False, random_state=0)
     assert_warns(UserWarning, ica.fit, m)
-    assert_true(hasattr(ica, 'mixing_'))
+    assert hasattr(ica, 'mixing_')
 
 
 def test_fastica_convergence_fail():
@@ -259,3 +258,21 @@ def test_inverse_transform():
             # reversibility test in non-reduction case
             if n_components == X.shape[1]:
                 assert_array_almost_equal(X, X2)
+
+
+def test_fastica_errors():
+    n_features = 3
+    n_samples = 10
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((n_samples, n_features))
+    w_init = rng.randn(n_features + 1, n_features + 1)
+    assert_raises_regex(ValueError, 'max_iter should be greater than 1',
+                        FastICA, max_iter=0)
+    assert_raises_regex(ValueError, r'alpha must be in \[1,2\]',
+                        fastica, X, fun_args={'alpha': 0})
+    assert_raises_regex(ValueError, 'w_init has invalid shape.+'
+                        r'should be \(3L?, 3L?\)',
+                        fastica, X, w_init=w_init)
+    assert_raises_regex(ValueError,
+                        'Invalid algorithm.+must be.+parallel.+or.+deflation',
+                        fastica, X, algorithm='pizza')

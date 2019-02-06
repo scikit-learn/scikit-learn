@@ -75,12 +75,13 @@ for i in range(NUM_TRIALS):
 
     # Choose cross-validation techniques for the inner and outer loops,
     # independently of the dataset.
-    # E.g "LabelKFold", "LeaveOneOut", "LeaveOneLabelOut", etc.
+    # E.g "GroupKFold", "LeaveOneOut", "LeaveOneGroupOut", etc.
     inner_cv = KFold(n_splits=4, shuffle=True, random_state=i)
     outer_cv = KFold(n_splits=4, shuffle=True, random_state=i)
 
     # Non_nested parameter search and scoring
-    clf = GridSearchCV(estimator=svm, param_grid=p_grid, cv=inner_cv)
+    clf = GridSearchCV(estimator=svm, param_grid=p_grid, cv=inner_cv,
+                       iid=False)
     clf.fit(X_iris, y_iris)
     non_nested_scores[i] = clf.best_score_
 

@@ -4,8 +4,8 @@ Exceptions
 # Author: Gael Varoquaux < gael dot varoquaux at normalesup dot org >
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
-
 from ._compat import PY3_OR_LATER
+
 
 class JoblibException(Exception):
     """A simple exception with an error message that you can get to."""
@@ -47,6 +47,17 @@ class TransportableException(JoblibException):
         self.message = message
         self.etype = etype
 
+    def unwrap(self, context_message=""):
+        report = """\
+%s
+---------------------------------------------------------------------------
+Joblib worker traceback:
+---------------------------------------------------------------------------
+%s""" % (context_message, self.message)
+        # Unwrap the exception to a JoblibException
+        exception_type = _mk_exception(self.etype)[0]
+        return exception_type(report)
+
 
 class WorkerInterrupt(Exception):
     """ An exception that is not KeyboardInterrupt to allow subprocesses
@@ -59,6 +70,10 @@ _exception_mapping = dict()
 
 
 def _mk_exception(exception, name=None):
+    if issubclass(exception, JoblibException):
+        # No need to wrap recursively JoblibException
+        return exception, exception.__name__
+
     # Create an exception inheriting from both JoblibException
     # and that exception
     if name is None:

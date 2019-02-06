@@ -66,19 +66,6 @@ def test_predict_proba():
                                   np.array([[0.5, 0.5]]))
 
 
-def test_alpha_deprecation():
-    X, y = make_classification(n_samples=100)
-    y[::3] = -1
-
-    lp_default = label_propagation.LabelPropagation(kernel='rbf', gamma=0.1)
-    lp_default_y = lp_default.fit(X, y).transduction_
-
-    lp_0 = label_propagation.LabelPropagation(alpha=0, kernel='rbf', gamma=0.1)
-    lp_0_y = assert_warns(DeprecationWarning, lp_0.fit, X, y).transduction_
-
-    assert_array_equal(lp_default_y, lp_0_y)
-
-
 def test_label_spreading_closed_form():
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200,
@@ -113,8 +100,10 @@ def test_label_propagation_closed_form():
     clf.fit(X, y)
     # adopting notation from Zhu et al 2002
     T_bar = clf._build_graph()
-    Tuu = T_bar[np.meshgrid(unlabelled_idx, unlabelled_idx, indexing='ij')]
-    Tul = T_bar[np.meshgrid(unlabelled_idx, labelled_idx, indexing='ij')]
+    Tuu = T_bar[tuple(np.meshgrid(unlabelled_idx, unlabelled_idx,
+                      indexing='ij'))]
+    Tul = T_bar[tuple(np.meshgrid(unlabelled_idx, labelled_idx,
+                                  indexing='ij'))]
     Y = Y[:, :-1]
     Y_l = Y[labelled_idx, :]
     Y_u = np.dot(np.dot(np.linalg.inv(np.eye(Tuu.shape[0]) - Tuu), Tul), Y_l)

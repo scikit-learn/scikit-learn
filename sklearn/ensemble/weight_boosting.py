@@ -26,13 +26,12 @@ The module structure is the following:
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from numpy.core.umath_tests import inner1d
+
+from scipy.special import xlogy
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_regressor, is_classifier
-from ..externals import six
-from ..externals.six.moves import zip
-from ..externals.six.moves import xrange as range
+
 from .forest import BaseForest
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
@@ -48,7 +47,7 @@ __all__ = [
 ]
 
 
-class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Base class for AdaBoost estimators.
 
     Warning: This class should not be used directly. Use derived classes
@@ -63,7 +62,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  learning_rate=1.,
                  random_state=None):
 
-        super(BaseWeightBoosting, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params)
@@ -286,7 +285,7 @@ def _samme_proba(estimator, n_classes, X):
     # Displace zero probabilities so the log is defined.
     # Also fix negative elements which may occur with
     # negative sample weights.
-    proba[proba < np.finfo(proba.dtype).eps] = np.finfo(proba.dtype).eps
+    np.clip(proba, np.finfo(proba.dtype).eps, None, out=proba)
     log_proba = np.log(proba)
 
     return (n_classes - 1) * (log_proba - (1. / n_classes)
@@ -377,7 +376,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  algorithm='SAMME.R',
                  random_state=None):
 
-        super(AdaBoostClassifier, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
@@ -410,11 +409,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             raise ValueError("algorithm %s is not supported" % self.algorithm)
 
         # Fit
-        return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(AdaBoostClassifier, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeClassifier(max_depth=1))
 
         #  SAMME-R requires predict_proba-enabled base estimators
@@ -518,12 +517,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Also fix negative elements which may occur with
         # negative sample weights.
         proba = y_predict_proba  # alias for readability
-        proba[proba < np.finfo(proba.dtype).eps] = np.finfo(proba.dtype).eps
+        np.clip(proba, np.finfo(proba.dtype).eps, None, out=proba)
 
         # Boost weight using multi-class AdaBoost SAMME.R alg
         estimator_weight = (-1. * self.learning_rate
-                                * (((n_classes - 1.) / n_classes) *
-                                   inner1d(y_coding, np.log(y_predict_proba))))
+                            * ((n_classes - 1.) / n_classes)
+                            * xlogy(y_coding, y_predict_proba).sum(axis=1))
 
         # Only boost the weights if it will fit again
         if not iboost == self.n_estimators - 1:
@@ -662,7 +661,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
-        pred = None
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
@@ -923,7 +921,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                  loss='linear',
                  random_state=None):
 
-        super(AdaBoostRegressor, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
@@ -958,11 +956,11 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                 "loss must be 'linear', 'square', or 'exponential'")
 
         # Fit
-        return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(AdaBoostRegressor, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeRegressor(max_depth=3))
 
     def _boost(self, iboost, X, y, sample_weight, random_state):

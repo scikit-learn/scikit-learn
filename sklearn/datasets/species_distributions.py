@@ -41,7 +41,6 @@ from io import BytesIO
 from os import makedirs, remove
 from os.path import exists
 
-import sys
 
 import logging
 import numpy as np
@@ -51,12 +50,10 @@ from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
-from sklearn.externals import joblib
-
-PY3_OR_LATER = sys.version_info[0] >= 3
+from sklearn.utils import _joblib
 
 # The original data can be found at:
-# http://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
+# https://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
 SAMPLES = RemoteFileMetadata(
     filename='samples.zip',
     url='https://ndownloader.figshare.com/files/5976075',
@@ -64,7 +61,7 @@ SAMPLES = RemoteFileMetadata(
               '3c098f7f85955e89d321ee8efe37ac28'))
 
 # The original data can be found at:
-# http://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
+# https://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
 COVERAGES = RemoteFileMetadata(
     filename='coverages.zip',
     url='https://ndownloader.figshare.com/files/5976078',
@@ -82,7 +79,7 @@ def _load_coverage(F, header_length=6, dtype=np.int16):
 
     This will return a numpy array of the given dtype
     """
-    header = [F.readline() for i in range(header_length)]
+    header = [F.readline() for _ in range(header_length)]
     make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
     header = dict([make_tuple(line) for line in header])
 
@@ -106,12 +103,7 @@ def _load_csv(F):
     rec : np.ndarray
         record array representing the data
     """
-    if PY3_OR_LATER:
-        # Numpy recarray wants Python 3 str but not bytes...
-        names = F.readline().decode('ascii').strip().split(',')
-    else:
-        # Numpy recarray wants Python 2 str but not unicode
-        names = F.readline().strip().split(',')
+    names = F.readline().decode('ascii').strip().split(',')
 
     rec = np.loadtxt(F, skiprows=0, delimiter=',', dtype='a22,f4,f4')
     rec.dtype.names = names
@@ -170,14 +162,14 @@ def fetch_species_distributions(data_home=None,
         The latitude/longitude values for the grid are discussed below.
         Missing data is represented by the value -9999.
 
-    train : record array, shape = (1623,)
+    train : record array, shape = (1624,)
         The training points for the data.  Each point has three fields:
 
         - train['species'] is the species name
         - train['dd long'] is the longitude, in degrees
         - train['dd lat'] is the latitude, in degrees
 
-    test : record array, shape = (619,)
+    test : record array, shape = (620,)
         The test points for the data.  Same format as the training data.
 
     Nx, Ny : integers
@@ -265,8 +257,8 @@ def fetch_species_distributions(data_home=None,
                       test=test,
                       train=train,
                       **extra_params)
-        joblib.dump(bunch, archive_path, compress=9)
+        _joblib.dump(bunch, archive_path, compress=9)
     else:
-        bunch = joblib.load(archive_path)
+        bunch = _joblib.load(archive_path)
 
     return bunch

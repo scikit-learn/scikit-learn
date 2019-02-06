@@ -25,7 +25,6 @@ Example of output :
     CART                         20.69s       0.02s       0.1219
     dummy                         0.00s       0.01s       0.8973
 """
-from __future__ import division, print_function
 
 # Author: Issam H. Laradji
 #         Arnaud Joly <arnaud.v.joly@gmail.com>
@@ -35,13 +34,13 @@ import os
 from time import time
 import argparse
 import numpy as np
+from joblib import Memory
 
 from sklearn.datasets import fetch_mldata
 from sklearn.datasets import get_data_home
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.dummy import DummyClassifier
-from sklearn.externals.joblib import Memory
 from sklearn.kernel_approximation import Nystroem
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.metrics import zero_one_loss

@@ -15,11 +15,9 @@ from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
-from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import gen_even_slices
-from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
@@ -82,7 +80,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> from sklearn.neural_network import BernoulliRBM
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
-    >>> model.fit(X)
+    >>> model.fit(X)  # doctest: +NORMALIZE_WHITESPACE
     BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
            random_state=None, verbose=0)
 
@@ -91,7 +89,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
     [1] Hinton, G. E., Osindero, S. and Teh, Y. A fast learning algorithm for
         deep belief nets. Neural Computation 18, pp 1527-1554.
-        http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
+        https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
 
     [2] Tieleman, T. Training Restricted Boltzmann Machines using
         Approximations to the Likelihood Gradient. International Conference
@@ -310,7 +308,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         # Randomly corrupt one feature in each sample in v.
         ind = (np.arange(v.shape[0]),
                rng.randint(0, v.shape[1], v.shape[0]))
-        if issparse(v):
+        if sp.issparse(v):
             data = -2 * v[ind] + 1
             v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
         else:
@@ -350,7 +348,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                                             n_batches, n_samples))
         verbose = self.verbose
         begin = time.time()
-        for iteration in xrange(1, self.n_iter + 1):
+        for iteration in range(1, self.n_iter + 1):
             for batch_slice in batch_slices:
                 self._fit(X[batch_slice], rng)
 
