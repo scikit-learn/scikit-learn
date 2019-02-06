@@ -452,8 +452,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         Maximum number of imputation rounds to perform before returning the
         imputations computed during the final round. A round is a single
         imputation of each feature with missing values. The stopping criterion
-        is met once `abs(max(X_i - X_{i-1}))/abs(max(X[known_vals]))` < tol.
-        Note that early stopping is only applied if ``sample_posterior=False``.
+        is met once `abs(max(X_t - X_{t-1}))/abs(max(X[known_vals]))` < tol,
+        where `X_t` is `X` at iteration `t. Note that early stopping is only
+        applied if ``sample_posterior=False``.
 
     tol : float, optional (default=1e-3)
         Tolerance of the stopping condition.
@@ -924,11 +925,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             print("[IterativeImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
-        self.n_iter_ = self.max_iter
         if not self.sample_posterior:
             Xt_previous = Xt.copy()
             normalized_tol = self.tol * np.max(np.abs(X[~mask_missing_values]))
-        for i_rnd in range(self.max_iter):
+        for self.n_iter_ in range(1, self.max_iter + 1):
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
 
@@ -947,24 +947,21 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             if self.verbose > 0:
                 print('[IterativeImputer] Ending imputation round '
                       '%d/%d, elapsed time %0.2f'
-                      % (i_rnd + 1, self.max_iter, time() - start_t))
+                      % (self.n_iter_, self.max_iter, time() - start_t))
 
-            # stop early if difference between consecutive imputations goes up.
-            # if so, back off to previous imputation
             if not self.sample_posterior:
                 inf_norm = np.linalg.norm(Xt - Xt_previous, ord=np.inf,
                                           axis=None)
                 if inf_norm < normalized_tol:
-                    self.n_iter_ = i_rnd + 1
                     if self.verbose > 0:
                         print('[IterativeImputer] Early stopping criterion '
                               'reached.')
                     break
                 Xt_previous = Xt.copy()
-
-        if not self.sample_posterior:
-            warnings.warn("[IterativeImputer] Early stopping criterion not "
-                          "reached.", ConvergenceWarning)
+        else:
+            if not self.sample_posterior:
+                warnings.warn("[IterativeImputer] Early stopping criterion not"
+                              " reached.", ConvergenceWarning)
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return Xt
 
