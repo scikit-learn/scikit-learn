@@ -62,7 +62,6 @@ cdef class Splitter:
     cdef INT32_t[:] n_categories         # (n_features,) array giving number of
                                          # categories (<0 for non-categorical)
     cdef BITSET_t* cat_cache             # Cache buffer for fast categorical split evaluation
-    cdef BITSET_t cat_split              # cat_split as a bitset
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

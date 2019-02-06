@@ -127,13 +127,13 @@ cdef inline void setup_cat_cache(BITSET_t* cachebits, BITSET_t cat_split,
         if cat_split & 1:
             # RandomSplitter
             for j in range(cache_size):
-                bs_reset_all(&cachebits[j])
+                cachebits[j] = 0
             rng_seed = cat_split >> 32
             for j in range(n_categories):
                 val = rand_int(0, 2, &rng_seed)
                 if not val:
                     continue
-                bs_set(&cachebits[j // 64], j % 64)
+                cachebits[j // 64] == bs_set(cachebits[j // 64], j % 64)
         else:
             # BestSplitter
             # In practice, cache_size here should ALWAYS be 1
@@ -773,29 +773,27 @@ cdef class WeightedMedianCalculator:
             return self.samples.get_value_from_index(self.k-1)
 
 
-cdef inline void bs_reset_all(BITSET_t *value) nogil:
-    value[0] = 0
+cdef inline BITSET_t bs_set(BITSET_t value, SIZE_t i) nogil:
+    return value | (<UINT64_t> 1) << i
 
-cdef inline void bs_set(BITSET_t *value, SIZE_t i) nogil:
-    value[0] |= (<UINT64_t> 1) << i
+cdef inline BITSET_t bs_reset(BITSET_t value, SIZE_t i) nogil:
+    return value & ~((<UINT64_t> 1) << i)
 
-cdef inline void bs_reset(BITSET_t *value, SIZE_t i) nogil:
-    value[0] &= ~((<UINT64_t> 1) << i)
+cdef inline BITSET_t bs_flip(BITSET_t value, SIZE_t i) nogil:
+    return value ^ (<UINT64_t> 1) << i
 
-cdef inline void bs_flip(BITSET_t *value, SIZE_t i) nogil:
-        value[0] ^= (<UINT64_t> 1) << i
-
-cdef inline void bs_flip_all(BITSET_t *value, SIZE_t n_low_bits) nogil:
-    value[0] = (~value[0]) & ((~(<UINT64_t> 0)) >> (64 - n_low_bits))
+cdef inline BITSET_t bs_flip_all(BITSET_t value, SIZE_t n_low_bits) nogil:
+    return (~value) & ((~(<UINT64_t> 0)) >> (64 - n_low_bits))
 
 cdef inline bint bs_get(BITSET_t value, SIZE_t i) nogil:
     return (value >> i) & (<UINT64_t> 1)
 
-cdef inline void bs_from_template(BITSET_t *value, UINT64_t template,
-                               INT32_t *cat_offs,
-                               SIZE_t ncats_present) nogil:
+cdef inline BITSET_t bs_from_template(UINT64_t template,
+                                      INT32_t *cat_offs,
+                                      SIZE_t ncats_present) nogil:
     cdef SIZE_t i
-    value[0] = 0
+    cdef BITSET_t value = 0
     for i in range(ncats_present):
-        value[0] |= (template &
-                     ((<UINT64_t> 1) << i)) << cat_offs[i]
+        value |= (template &
+                  ((<UINT64_t> 1) << i)) << cat_offs[i]
+    return value

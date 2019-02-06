@@ -12,8 +12,6 @@
 
 # See _tree.pyx for details.
 
-from cpython cimport Py_INCREF, PyObject
-
 import numpy as np
 cimport numpy as np
 

@@ -234,12 +234,11 @@ cdef class WeightedMedianCalculator:
     cdef DOUBLE_t get_median(self) nogil
 
 
-cdef void bs_reset_all(BITSET_t *value) nogil
-cdef void bs_set(BITSET_t *value, SIZE_t i) nogil
-cdef void bs_reset(BITSET_t *value, SIZE_t i) nogil
-cdef void bs_flip(BITSET_t *value, SIZE_t i) nogil
-cdef void bs_flip_all(BITSET_t *value, SIZE_t n_low_bits) nogil
+cdef BITSET_t bs_set(BITSET_t value, SIZE_t i) nogil
+cdef BITSET_t bs_reset(BITSET_t value, SIZE_t i) nogil
+cdef BITSET_t bs_flip(BITSET_t value, SIZE_t i) nogil
+cdef BITSET_t bs_flip_all(BITSET_t value, SIZE_t n_low_bits) nogil
 cdef bint bs_get(BITSET_t value, SIZE_t i) nogil
-cdef void bs_from_template(BITSET_t *value, UINT64_t template,
-                           INT32_t *cat_offs,
-                           SIZE_t ncats_present) nogil
+cdef BITSET_t bs_from_template(UINT64_t template,
+                               INT32_t *cat_offs,
+                               SIZE_t ncats_present) nogil

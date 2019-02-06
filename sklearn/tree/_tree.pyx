@@ -180,7 +180,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         if sample_weight is not None:
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
 
-        cdef INT32_t *n_categories_ptr = NULL
         if n_categories is not None:
             n_categories = np.asarray(n_categories, dtype=np.int32, order='C')
 
@@ -355,7 +354,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if sample_weight is not None:
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
 
-        cdef INT32_t *n_categories_ptr = NULL
         if n_categories is not None:
             n_categories = np.asarray(n_categories, dtype=np.int32, order='C')
 
