@@ -94,18 +94,31 @@ cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
 
-cdef inline void setup_cat_cache(BITSET_t* cachebits, UINT64_t cat_split,
+cdef inline void setup_cat_cache(BITSET_t* cachebits, BITSET_t cat_split,
                                  INT32_t n_categories) nogil:
     """Populate the bits of the category cache from a split.
 
-    This function populates cat_split into cachebits. In the case of a
-    BestSplitter, cachebits is an array of length 1, i.e. maximum 64 categories
-    supported, and cachebits[0] = cat_split. However, in the case of a random
-    splitter, there is no limit for the number of categories on a feature, and
-    cat_split stores the 32 bit random_seed on the highest 32 bit of the
-    cat_split to generate the random split. The lowest bit of cat_split defines
-    if it should be interpreted as a random split or a deterministic one, i.e.
-    1 indicates a random split.
+    Attributes
+    ----------
+    cachebits : BITSET_t*
+        This is a pointer to the output array. The size of the array should be
+        ``ceil(n_categories / 64)``. This function assumes the required
+        memory is allocated for the array by the caller.
+
+    cat_split : BITSET_t
+        If ``least significant bit == 0``:
+            It stores the split of the maximum 64 categories in its bits.
+            This is used in `BestSplitter`, and without loss of generality it
+            is assumed to be even, i.e. for any odd value there is an
+            equivalent even ``cat_split``.
+        If ``least significant bit == 1``:
+            It is a random split, and the 32 most significant bits of
+            ``cat_split`` contain the random seed of the split. The
+            ``n_categories`` lowest bits of ``cachebits`` are then filled with
+            random zeros and ones given the random seed.
+
+    n_categories : INT32_t
+        The number of categories.
     """
     cdef INT32_t j
     cdef UINT32_t rng_seed, val
@@ -132,6 +145,14 @@ cdef inline bint goes_left(DTYPE_t feature_value, SplitValue split,
                            INT32_t n_categories, BITSET_t *cachebits) nogil:
     """Determine whether a sample goes to the left or right child node.
 
+    For numerical features, ``(-inf, split.threshold]`` is the left child, and
+    ``(split.threshold, inf)`` the right child.
+
+    For categorical features, if the corresponding bit for the category is set
+    in cachebits, the left child isused, and if not set, the right child. If
+    the given input category is larger than the ``n_categories``, the right
+    child is assumed.
+
     Attributes
     ----------
     feature_value : DTYPE_t
@@ -152,7 +173,8 @@ cdef inline bint goes_left(DTYPE_t feature_value, SplitValue split,
 
     Returns
     -------
-    bint : Indicating whether the left branch should be used.
+    result : bint
+        Indicating whether the left branch should be used.
     """
     cdef SIZE_t idx, shift
 
