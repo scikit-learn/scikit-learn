@@ -2376,3 +2376,33 @@ def test_power_transformer_lambda_zero():
     pt.lambdas_ = np.array([0])
     X_trans = pt.transform(X)
     assert_array_almost_equal(pt.inverse_transform(X_trans), X)
+
+
+def test_standard_scaler_with_std():
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    scaler = StandardScaler(copy=True, with_mean=True, with_std=2)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 0.5)
+    scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
+    X_scaled = scaler.fit(X).transform(X, copy=True)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 1.0)
+
+
+def test_scale_with_std():
+    rng = np.random.RandomState(0)
+    X = rng.randint(0, 2, (100, 2))
+    X_scaled = scale(X, copy=True, with_mean=True, with_std=2)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 0.5)
+    X_scaled = scale(X, copy=True, with_mean=True, with_std=True)
+    assert np.isclose(X_scaled.mean(), 0.0)
+    assert np.isclose(X_scaled.std(), 1.0)
+
+     # Test for invalid cases
+    cases = [-10, -1, 3, 10]
+    for std_ in cases:
+        assert_raises_regex(ValueError, r'Invalid value for `with_std`:'
+
