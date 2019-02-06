@@ -58,6 +58,16 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`datasets.svmlight_format` :issue:`10727` by
   :user:`Bryan K Woods <bryan-woods>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |API| The default value of the :code:`init` argument in
+  :func:`decomposition.non_negative_factorization` will change from
+  :code:`random` to :code:`None` in version 0.23 to make it consistent with
+  :class:`decomposition.NMF`. A FutureWarning is raised when
+  the default value is used.
+  :issue:`12988` by :user:`Zijie (ZJ) Poh <zjpoh>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -90,6 +100,12 @@ Support for Python 3.4 and below has been officially dropped.
   value of ``learning_rate`` in ``update_terminal_regions`` is not consistent
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
+
+:mod:`sklearn.externals`
+........................
+
+- |API| Deprecated :mod:`externals.six` since we have dropped support for
+  Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -160,6 +176,10 @@ Support for Python 3.4 and below has been officially dropped.
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
   :issue:`12855` by :user:`Pawel Sendyk <psendyk>.`
 
+- |Efficiency| The pairwise manhattan distances with sparse input now uses the
+  BLAS shipped with scipy instead of the bundled BLAS. :issue:`12732` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -221,6 +241,10 @@ Support for Python 3.4 and below has been officially dropped.
 - |Efficiency| |API| Speed improvement in :class:`preprocessing.PolynomialFeatures`,
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :issue:`12251` by `Tom Dupre la Tour`_.
+
+- |Fix| Fixed the calculation overflow when using a float16 dtype with
+  :class:`preprocessing.StandardScaler`. :issue:`13007` by
+  :user:`Raffaello Baluyot <baluyotraf>`
 
 :mod:`sklearn.tree`
 ...................

@@ -1,6 +1,5 @@
 # We need the absolute_import to avoid the local joblib to override the
 # site one
-from __future__ import absolute_import
 import os as _os
 import warnings as _warnings
 

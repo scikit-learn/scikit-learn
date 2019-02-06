@@ -5,7 +5,6 @@ General tests for all estimators in sklearn.
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
-from __future__ import print_function
 
 import os
 import warnings
