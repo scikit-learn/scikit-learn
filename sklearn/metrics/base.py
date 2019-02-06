@@ -169,7 +169,8 @@ def _average_multiclass_ovo_score(
     """
     check_consistent_length(y_true, y_score)
 
-    n_classes = np.unique(y_true).shape[0]
+    y_true_unique = np.unique(y_true)
+    n_classes = y_true_unique.shape[0]
     n_pairs = n_classes * (n_classes - 1) // 2
     pair_scores = np.empty(n_pairs)
 
@@ -178,7 +179,7 @@ def _average_multiclass_ovo_score(
 
     # Compute scores treating a as positive class and b as negative class,
     # then b as positive class and a as negative class
-    for ix, (a, b) in enumerate(combinations(range(n_classes), 2)):
+    for ix, (a, b) in enumerate(combinations(y_true_unique, 2)):
         a_mask = y_true == a
         b_mask = y_true == b
         ab_mask = np.logical_or(a_mask, b_mask)

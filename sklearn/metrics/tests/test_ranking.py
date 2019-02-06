@@ -29,6 +29,7 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
+from sklearn.metrics.ranking import _encode_y_true_multiclass_ovo
 
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -519,6 +520,59 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
             labels=labels,
             multiclass="ovo",
             average="weighted"), ovo_weighted_score)
+
+
+@pytest.mark.parametrize(
+    "labels", [None, [0, 1, 2]])
+@pytest.mark.parametrize("multiclass", ["ovo"])
+def test_multiclass_ovo_roc_auc_toydata_binary(labels, multiclass):
+    y_true = np.array([0, 2, 0, 2])
+    # Tests the one-vs-one multiclass ROC AUC algorithm for binary y_true
+    #
+    # on a small example, representative of an expected use case.
+    y_scores = np.array(
+        [[0.2, 0.0, 0.8], [0.6, 0.0, 0.4], [0.55, 0.0, 0.45], [0.4, 0.0, 0.6]])
+
+    # Used to compute the expected output.
+    # Consider labels 0 and 1:
+    # positive label is 0, negative label is 1
+    score_01 = roc_auc_score([1, 0, 1, 0], [0.2, 0.6, 0.55, 0.4])
+    # positive label is 1, negative label is 0
+    score_10 = roc_auc_score([0, 1, 0, 1], [0.8, 0.4, 0.45, 0.6])
+    ovo_score = (score_01 + score_10) / 2
+
+    assert_almost_equal(
+        roc_auc_score(y_true, y_scores, labels, multiclass=multiclass),
+        ovo_score)
+
+    # Weighted, one-vs-one multiclass ROC AUC algorithm
+    assert_almost_equal(
+        roc_auc_score(
+            y_true,
+            y_scores,
+            labels=labels,
+            multiclass=multiclass,
+            average="weighted"), ovo_score)
+
+
+@pytest.mark.parametrize("y_true, y_true_encoded, labels", [
+    (np.array([0, 1, 0, 2, 1]), np.array([0, 1, 0, 2, 1]), None),
+    (np.array([0, 2, 0, 2, 2]), np.array([0, 2, 0, 2, 2]), None),
+    (np.array(["a", "b", "a", "b", "b"]), np.array([0, 1, 0, 1, 1]), None),
+    (np.array(["a", "b", "a", "b", "c"]), np.array([0, 1, 0, 1, 2]), None),
+    (np.array([0, 1, 0, 2, 1]), np.array([2, 0, 2, 1, 0]), [1, 2, 0]),
+    (np.array([0, 2, 0, 2, 2]), np.array([2, 0, 2, 0, 0]), [2, 1, 0]),
+    (np.array(["a", "b", "a", "b", "b"]),
+     np.array([0, 2, 0, 2, 2]), ["a", "c", "b"]),
+    (np.array(["a", "b", "a", "b", "c"]),
+     np.array([1, 2, 1, 2, 0]), ["c", "a", "b"]),
+])
+def test_encode_y_true_multiclass_ovo(y_true, y_true_encoded, labels):
+    y_score = check_random_state(404).rand(5, 3)
+    y_score = y_score / y_score.sum(axis=1, keepdims=True)
+    assert_almost_equal(
+        _encode_y_true_multiclass_ovo(y_true, y_score, labels),
+        y_true_encoded)
 
 
 @pytest.mark.parametrize(

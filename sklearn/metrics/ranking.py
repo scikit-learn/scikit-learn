@@ -32,7 +32,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
-from ..preprocessing import LabelBinarizer, label_binarize
+from ..preprocessing import label_binarize
 
 from .base import _average_binary_score, _average_multiclass_ovo_score
 
@@ -414,29 +414,19 @@ def roc_auc_score(y_true, y_score, labels=None,
                 raise ValueError("Parameter 'sample_weight' is not supported"
                                  " for multiclass one-vs-one ROC AUC."
                                  " 'sample_weight' must be None in this case.")
-            if labels is not None:
-                y_true_multiclass = np.empty_like(y_true, dtype=np.int32)
-                for i, label in enumerate(labels):
-                    y_true_multiclass[y_true == label] = i
-            else:
-                _, y_true_multiclass = np.unique(y_true, return_inverse=True)
-
-            # Hand & Till (2001) implementation
+            y_true_encoded = _encode_y_true_multiclass_ovo(
+                y_true, y_score, labels)
+            # Hand & Till (2001) implementation (ovo)
             return _average_multiclass_ovo_score(
                 _binary_roc_auc_score,
-                y_true_multiclass,
+                y_true_encoded,
                 y_score,
                 average=average)
         else:
             # ovr is same as multi-label
-            # Order y_true by labels
-            lb = LabelBinarizer()
-            if labels is not None:
-                lb.fit(labels)
-                lb.classes_ = labels
-            else:
-                lb.fit(y_true)
-            y_true_multilabel = lb.transform(y_true)
+            if labels is None:
+                labels = np.unique(y_true)
+            y_true_multilabel = label_binarize(y_true, labels)
             return _average_binary_score(
                  _binary_roc_auc_score, y_true_multilabel, y_score, average,
                  sample_weight=sample_weight)
@@ -450,6 +440,40 @@ def roc_auc_score(y_true, y_score, labels=None,
         return _average_binary_score(
             _binary_roc_auc_score, y_true, y_score, average,
             sample_weight=sample_weight)
+
+
+def _encode_y_true_multiclass_ovo(y_true, y_score, labels):
+    """Encodes y_true for multiclass scoring where y_score is a probability
+    matrix
+
+    Parameters
+    ----------
+    y_true : numpy array, shape = (n_samples, )
+        True multiclass labels
+
+    y_score : numpy array, shape = (n_samples, n_classes)
+        Target scores corresponding to probability estimates of a sample
+        belonging to a particular class
+
+    labels : array-like, shape = (n_classes, ) or None
+        List of labels to index ``y_score`` used. If ``None``,
+        the lexicon order of ``y_true`` is used to index ``y_score``.
+
+    Returns
+    -------
+    y_true_encoded : numpy array, shape = (n_samples, )
+        Encoded y_true
+    """
+    if labels is not None:
+        y_true_encoded = np.empty_like(y_true, dtype=np.int32)
+        for i, label in enumerate(labels):
+            y_true_encoded[y_true == label] = i
+        return y_true_encoded
+
+    if np.issubdtype(y_true.dtype, np.integer):
+        return y_true
+
+    return np.unique(y_true, return_inverse=True)[1]
 
 
 def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
