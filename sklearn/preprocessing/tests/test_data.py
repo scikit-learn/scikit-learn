@@ -2330,7 +2330,7 @@ def test_scale_with_std():
     for std_ in cases:
         assert_raises_regex(ValueError, r'Invalid value for `with_std`:')
 
-        
+
 def test_power_transformer_lambda_one():
     # Make sure lambda = 1 corresponds to the identity for yeo-johnson
     pt = PowerTransformer(method='yeo-johnson', standardize=False)
@@ -2490,4 +2490,3 @@ def test_power_transform_default_method():
 
     X_trans_boxcox = power_transform(X, method='box-cox')
     assert_array_equal(X_trans_boxcox, X_trans_default)
-
