@@ -605,7 +605,7 @@ cdef class _QuadTree:
             else:
                 capacity = 2 * self.capacity
 
-        safe_realloc(&self.cells, capacity, sizeof(self.cells[0]))
+        safe_realloc(&self.cells, capacity, sizeof(Cell))
 
         # if capacity smaller than cell_count, adjust the counter
         if capacity < self.cell_count:
