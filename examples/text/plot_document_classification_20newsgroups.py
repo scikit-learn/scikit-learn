@@ -21,9 +21,6 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck
 # License: BSD 3 clause
-
-from __future__ import print_function
-
 import logging
 import numpy as np
 from optparse import OptionParser
@@ -145,7 +142,7 @@ print("%d documents - %0.3fMB (training set)" % (
     len(data_train.data), data_train_size_mb))
 print("%d documents - %0.3fMB (test set)" % (
     len(data_test.data), data_test_size_mb))
-print("%d categories" % len(categories))
+print("%d categories" % len(target_names))
 print()
 
 # split a training set and a test set

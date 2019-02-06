@@ -3,15 +3,13 @@
 # License: BSD 3 clause
 
 import inspect
-import sys
 import warnings
 import importlib
 
 from pkgutil import walk_packages
-from inspect import getsource, isabstract
+from inspect import getsource, isabstract, signature
 
 import sklearn
-from sklearn.base import signature
 from sklearn.utils import IS_PYPY
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_docstring_parameters
@@ -32,6 +30,7 @@ _DOCSTRING_IGNORES = [
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
+    'sklearn.utils._joblib'
 ]
 
 # Methods where y param should be ignored if y=None by default
@@ -52,18 +51,19 @@ _METHODS_IGNORE_NONE_Y = [
 def test_docstring_parameters():
     # Test module docstring formatting
 
-    # Skip test if numpydoc is not found or if python version is < 3.5
+    # Skip test if numpydoc is not found
     try:
         import numpydoc  # noqa
-        assert sys.version_info >= (3, 5)
-    except (ImportError, AssertionError):
-        raise SkipTest("numpydoc is required to test the docstrings, "
-                       "as well as python version >= 3.5")
+    except ImportError:
+        raise SkipTest("numpydoc is required to test the docstrings")
 
     from numpydoc import docscrape
 
     incorrect = []
     for name in PUBLIC_MODULES:
+        if name == 'sklearn.utils.fixes':
+            # We cannot always control these docstrings
+            continue
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)

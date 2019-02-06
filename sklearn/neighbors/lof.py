@@ -82,7 +82,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         See the documentation for scipy.spatial.distance for details on these
         metrics:
-        http://docs.scipy.org/doc/scipy/reference/spatial.distance.html
+        https://docs.scipy.org/doc/scipy/reference/spatial.distance.html
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
@@ -150,7 +150,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
                  contamination="legacy", novelty=False, n_jobs=None):
-        super(LocalOutlierFactor, self).__init__(
+        super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
@@ -243,7 +243,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
                 raise ValueError("contamination must be in (0, 0.5], "
                                  "got: %f" % self._contamination)
 
-        super(LocalOutlierFactor, self).fit(X)
+        super().fit(X)
 
         n_samples = self._fit_X.shape[0]
         if self.n_neighbors > n_samples:

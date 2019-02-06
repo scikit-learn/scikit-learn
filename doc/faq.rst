@@ -21,7 +21,7 @@ Why scikit?
 ------------
 There are multiple scikits, which are scientific toolboxes built around SciPy.
 You can find a list at `<https://scikits.appspot.com/scikits>`_.
-Apart from scikit-learn, another popular one is `scikit-image <http://scikit-image.org/>`_.
+Apart from scikit-learn, another popular one is `scikit-image <https://scikit-image.org/>`_.
 
 How can I contribute to scikit-learn?
 -----------------------------------------
@@ -33,9 +33,9 @@ of scikit-learn directly regarding contributing to scikit-learn.
 What's the best way to get help on scikit-learn usage?
 --------------------------------------------------------------
 **For general machine learning questions**, please use
-`Cross Validated <http://stats.stackexchange.com>`_ with the ``[machine-learning]`` tag.
+`Cross Validated <https://stats.stackexchange.com/>`_ with the ``[machine-learning]`` tag.
 
-**For scikit-learn usage questions**, please use `Stack Overflow <http://stackoverflow.com/questions/tagged/scikit-learn>`_
+**For scikit-learn usage questions**, please use `Stack Overflow <https://stackoverflow.com/questions/tagged/scikit-learn>`_
 with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
 <https://mail.python.org/mailman/listinfo/scikit-learn>`_.
 
@@ -50,7 +50,7 @@ shell with scikit-learn installed. Do not forget to include the import statement
 
 More guidance to write good reproduction code snippets can be found at:
 
-http://stackoverflow.com/help/mcve
+https://stackoverflow.com/help/mcve
 
 If your problem raises an exception that you do not understand (even after googling it),
 please make sure to include the full traceback that you obtain when running the
@@ -117,7 +117,7 @@ in a scikit-learn compatible way, upload it to GitHub and let us know. We
 will be happy to list it under :ref:`related_projects`. If you already have
 a package on GitHub following the scikit-learn API, you may also be
 interested to look at `scikit-learn-contrib
-<http://scikit-learn-contrib.github.io>`_.
+<https://scikit-learn-contrib.github.io>`_.
 
 .. _selectiveness:
 
@@ -156,12 +156,12 @@ would likely collapse under its own weight.
 There are two project with API similar to scikit-learn that
 do structured prediction:
 
-* `pystruct <http://pystruct.github.io/>`_ handles general structured
+* `pystruct <https://pystruct.github.io/>`_ handles general structured
   learning (focuses on SSVMs on arbitrary graph structures with
   approximate inference; defines the notion of sample as an instance of
   the graph structure)
 
-* `seqlearn <http://larsmans.github.io/seqlearn/>`_ handles sequences only
+* `seqlearn <https://larsmans.github.io/seqlearn/>`_ handles sequences only
   (focuses on exact inference; has HMMs, but mostly for the sake of
   completeness; treats a feature vector as a sample and uses an offset encoding
   for the dependencies between feature vectors)
@@ -179,7 +179,7 @@ careful choice of algorithms.
 Do you support PyPy?
 --------------------
 
-In case you didn't know, `PyPy <http://pypy.org/>`_ is an alternative
+In case you didn't know, `PyPy <https://pypy.org/>`_ is an alternative
 Python implementation with a built-in just-in-time compiler. Experimental
 support for PyPy3-v5.10+ has been added, which requires Numpy 1.14.0+,
 and scipy 1.1.0+.

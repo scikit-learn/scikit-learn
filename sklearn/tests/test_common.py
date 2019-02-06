@@ -5,7 +5,6 @@ General tests for all estimators in sklearn.
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
-from __future__ import print_function
 
 import os
 import warnings
@@ -16,7 +15,7 @@ import functools
 
 import pytest
 
-from sklearn.utils.testing import assert_false, clean_warning_registry
+from sklearn.utils.testing import clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
@@ -42,7 +41,7 @@ def test_all_estimator_no_base_class():
     for name, Estimator in all_estimators():
         msg = ("Base estimators such as {0} should not be included"
                " in all_estimators").format(name)
-        assert_false(name.lower().startswith('base'), msg=msg)
+        assert not name.lower().startswith('base'), msg
 
 
 def test_all_estimators():

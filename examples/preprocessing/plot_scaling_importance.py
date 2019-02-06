@@ -41,7 +41,6 @@ clear difference in prediction accuracies is observed wherein the dataset
 which is scaled before PCA vastly outperforms the unscaled version.
 
 """
-from __future__ import print_function
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -93,16 +92,18 @@ pca_std = std_clf.named_steps['pca']
 print('\nPC 1 without scaling:\n', pca.components_[0])
 print('\nPC 1 with scaling:\n', pca_std.components_[0])
 
-# Scale and use PCA on X_train data for visualization.
+# Use PCA without and with scale on X_train data for visualization.
+X_train_transformed = pca.transform(X_train)
 scaler = std_clf.named_steps['standardscaler']
-X_train_std = pca_std.transform(scaler.transform(X_train))
+X_train_std_transformed = pca_std.transform(scaler.transform(X_train))
 
 # visualize standardized vs. untouched dataset with PCA performed
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=FIG_SIZE)
 
 
 for l, c, m in zip(range(0, 3), ('blue', 'red', 'green'), ('^', 's', 'o')):
-    ax1.scatter(X_train[y_train == l, 0], X_train[y_train == l, 1],
+    ax1.scatter(X_train_transformed[y_train == l, 0],
+                X_train_transformed[y_train == l, 1],
                 color=c,
                 label='class %s' % l,
                 alpha=0.5,
@@ -110,7 +111,8 @@ for l, c, m in zip(range(0, 3), ('blue', 'red', 'green'), ('^', 's', 'o')):
                 )
 
 for l, c, m in zip(range(0, 3), ('blue', 'red', 'green'), ('^', 's', 'o')):
-    ax2.scatter(X_train_std[y_train == l, 0], X_train_std[y_train == l, 1],
+    ax2.scatter(X_train_std_transformed[y_train == l, 0],
+                X_train_std_transformed[y_train == l, 1],
                 color=c,
                 label='class %s' % l,
                 alpha=0.5,

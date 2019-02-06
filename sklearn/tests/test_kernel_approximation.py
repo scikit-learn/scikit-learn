@@ -1,11 +1,11 @@
 import numpy as np
 from scipy.sparse import csr_matrix
+import pytest
 
-from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
+from sklearn.utils.testing import assert_array_equal, assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
@@ -109,10 +109,10 @@ def test_skewed_chi2_sampler():
 
     kernel_approx = np.dot(X_trans, Y_trans.T)
     assert_array_almost_equal(kernel, kernel_approx, 1)
-    assert_true(np.isfinite(kernel).all(),
-                'NaNs found in the Gram matrix')
-    assert_true(np.isfinite(kernel_approx).all(),
-                'NaNs found in the approximate Gram matrix')
+    assert np.isfinite(kernel).all(), \
+        'NaNs found in the Gram matrix'
+    assert np.isfinite(kernel_approx).all(), \
+        'NaNs found in the approximate Gram matrix'
 
     # test error is raised on when inputs contains values smaller than -c
     Y_neg = Y.copy()
@@ -213,7 +213,7 @@ def test_nystroem_singular_kernel():
     K = rbf_kernel(X, gamma=gamma)
 
     assert_array_almost_equal(K, np.dot(X_transformed, X_transformed.T))
-    assert_true(np.all(np.isfinite(Y)))
+    assert np.all(np.isfinite(Y))
 
 
 def test_nystroem_poly_kernel_params():
@@ -250,8 +250,9 @@ def test_nystroem_callable():
         return np.dot(X, Y.T)
 
     # if degree, gamma or coef0 is passed, we raise a warning
-    msg = "Passing gamma, coef0 or degree to Nystroem"
+    msg = "Don't pass gamma, coef0 or degree to Nystroem"
     params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
     for param in params:
         ny = Nystroem(kernel=linear_kernel, **param)
-        assert_warns_message(DeprecationWarning, msg, ny.fit, X)
+        with pytest.raises(ValueError, match=msg):
+            ny.fit(X)

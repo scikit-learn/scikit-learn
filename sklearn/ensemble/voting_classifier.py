@@ -12,13 +12,12 @@ classification estimators.
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
@@ -65,7 +64,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    flatten_transform : bool, optional (default=None)
+    flatten_transform : bool, optional (default=True)
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
         matrix with shape (n_samples, n_classifiers * n_classes). If
@@ -121,11 +120,10 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     [1 1 1 2 2 2]
     >>> print(eclf3.transform(X).shape)
     (6, 6)
-    >>>
     """
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
-                 flatten_transform=None):
+                 flatten_transform=True):
         self.estimators = estimators
         self.voting = voting
         self.weights = weights
@@ -196,9 +194,9 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         transformed_y = self.le_.transform(y)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
-                                                 sample_weight=sample_weight)
-                for clf in clfs if clf is not None)
+            delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
+                                             sample_weight=sample_weight)
+            for clf in clfs if clf is not None)
 
         self.named_estimators_ = Bunch(**dict())
         for k, e in zip(self.estimators, self.estimators_):
@@ -219,8 +217,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            The input samples.
 
         Returns
         ----------
@@ -264,8 +261,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            The input samples.
 
         Returns
         ----------
@@ -300,17 +296,9 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         if self.voting == 'soft':
             probas = self._collect_probas(X)
-            if self.flatten_transform is None:
-                warnings.warn("'flatten_transform' default value will be "
-                              "changed to True in 0.21. "
-                              "To silence this warning you may"
-                              " explicitly set flatten_transform=False.",
-                              DeprecationWarning)
+            if not self.flatten_transform:
                 return probas
-            elif not self.flatten_transform:
-                return probas
-            else:
-                return np.hstack(probas)
+            return np.hstack(probas)
 
         else:
             return self._predict(X)
@@ -337,7 +325,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         eclf.set_params(rf=None)
 
         """
-        super(VotingClassifier, self)._set_params('estimators', **params)
+        super()._set_params('estimators', **params)
         return self
 
     def get_params(self, deep=True):

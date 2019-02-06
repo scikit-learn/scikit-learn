@@ -5,7 +5,6 @@
 
 # License: BSD
 
-from __future__ import division, absolute_import
 
 import numbers
 import numpy as np
@@ -17,7 +16,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.fixes import np_version
 
 
 class KBinsDiscretizer(BaseEstimator, TransformerMixin):
@@ -28,12 +26,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_bins : int or array-like, shape (n_features,) (default=5)
-        The number of bins to produce. The intervals for the bins are
-        determined by the minimum and maximum of the input data.
-        Raises ValueError if ``n_bins < 2``.
-
-        If ``n_bins`` is an array, and there is an ignored feature at
-        index ``i``, ``n_bins[i]`` will be ignored.
+        The number of bins to produce. Raises ValueError if ``n_bins < 2``.
 
     encode : {'onehot', 'onehot-dense', 'ordinal'}, (default='onehot')
         Method used to encode the transformed result.
@@ -63,8 +56,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     n_bins_ : int array, shape (n_features,)
-        Number of bins per feature. An ignored feature at index ``i``
-        will have ``n_bins_[i] == 0``.
+        Number of bins per feature.
 
     bin_edges_ : array of arrays, shape (n_features, )
         The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
@@ -168,8 +160,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
             elif self.strategy == 'quantile':
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
-                if np_version < (1, 9):
-                    quantiles = list(quantiles)
                 bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
 
             elif self.strategy == 'kmeans':
@@ -192,13 +182,14 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             self._encoder = OneHotEncoder(
                 categories=[np.arange(i) for i in self.n_bins_],
                 sparse=self.encode == 'onehot')
+            # Fit the OneHotEncoder with toy datasets
+            # so that it's ready for use after the KBinsDiscretizer is fitted
+            self._encoder.fit(np.zeros((1, len(self.n_bins_)), dtype=int))
 
         return self
 
     def _validate_n_bins(self, n_features):
         """Returns n_bins_, the number of bins per feature.
-
-        Also ensures that ignored bins are zero.
         """
         orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):
@@ -267,7 +258,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if self.encode == 'ordinal':
             return Xt
 
-        return self._encoder.fit_transform(Xt)
+        return self._encoder.transform(Xt)
 
     def inverse_transform(self, Xt):
         """Transforms discretized data back to original feature space.
