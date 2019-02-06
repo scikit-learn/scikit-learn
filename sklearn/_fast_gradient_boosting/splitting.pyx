@@ -476,21 +476,20 @@ cdef class Splitter:
 
         if root_node:
             if self.hessians_are_constant:
-                _build_histogram_root_no_hessian(feature_idx, self.max_bins,
-                                                 X_binned,
+                _build_histogram_root_no_hessian(feature_idx, X_binned,
                                                  ordered_gradients,
                                                  histograms)
             else:
-                _build_histogram_root(feature_idx, self.max_bins, X_binned,
+                _build_histogram_root(feature_idx, X_binned,
                                       ordered_gradients, ordered_hessians,
                                       histograms)
         else:
             if self.hessians_are_constant:
-                _build_histogram_no_hessian(feature_idx, self.max_bins,
+                _build_histogram_no_hessian(feature_idx,
                                             sample_indices, X_binned,
                                             ordered_gradients, histograms)
             else:
-                _build_histogram(feature_idx, self.max_bins, sample_indices,
+                _build_histogram(feature_idx, sample_indices,
                                  X_binned, ordered_gradients,
                                  ordered_hessians, histograms)
 

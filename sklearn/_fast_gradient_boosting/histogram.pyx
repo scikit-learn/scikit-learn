@@ -19,7 +19,6 @@ cimport numpy as np
 
 cpdef void _build_histogram_naive(
         const int feature_idx,
-        unsigned int n_bins,
         unsigned int [:] sample_indices,  # IN
         X_BINNED_DTYPE_C [:] binned_feature,  # IN
         G_H_DTYPE_C [:] ordered_gradients,  # IN
@@ -67,7 +66,6 @@ cpdef void _subtract_histograms(
 
 cpdef void _build_histogram(
         const int feature_idx,
-        unsigned int n_bins,
         const unsigned int [::1] sample_indices,  # IN
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] ordered_gradients,  # IN
@@ -114,7 +112,6 @@ cpdef void _build_histogram(
 
 cpdef void _build_histogram_no_hessian(
         const int feature_idx,
-        unsigned int n_bins,
         const unsigned int [::1] sample_indices,  # IN
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] ordered_gradients,  # IN
@@ -154,7 +151,6 @@ cpdef void _build_histogram_no_hessian(
 
 cpdef void _build_histogram_root(
         const int feature_idx,
-        unsigned int n_bins,
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] all_gradients,  # IN
         const G_H_DTYPE_C [::1] all_hessians,  # IN
@@ -201,7 +197,6 @@ cpdef void _build_histogram_root(
 
 cpdef void _build_histogram_root_no_hessian(
         const int feature_idx,
-        unsigned int n_bins,
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] all_gradients,  # IN
         hist_struct [:, ::1] out) nogil:  # OUT
