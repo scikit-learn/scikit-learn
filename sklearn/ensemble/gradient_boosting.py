@@ -1441,9 +1441,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
         n_samples, self.n_features_ = X.shape
 
-        if sample_weight is None:
+        sample_weight_is_none = sample_weight is None
+        if sample_weight_is_none:
             sample_weight = np.ones(n_samples, dtype=np.float32)
-            sample_weight_is_none = True
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
             sample_weight_is_none = False
@@ -1467,20 +1467,19 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self._init_state()
 
             # fit initial model and initialize raw predictions
-            if self.init == 'zero':
+            if self.init_ == 'zero':
                 raw_predictions = np.zeros(shape=(X.shape[0], self.loss_.K),
                                            dtype=np.float64)
             else:
-                supports_sample_weight = has_fit_parameter(self.init_,
-                                                           "sample_weight")
-                if sample_weight_is_none:
-                    self.init_.fit(X, y)
-                else:
-                    if not supports_sample_weight:
+                try:
+                    self.init_.fit(X, y, sample_weight=sample_weight)
+                except TypeError:
+                    if sample_weight_is_none:
+                        self.init_.fit(X, y)
+                    else:
                         raise ValueError(
                             "The initial estimator {} does not support sample "
                             "weights.".format(self.init_.__class__.__name__))
-                    self.init_.fit(X, y, sample_weight=sample_weight)
 
                 raw_predictions = \
                     self.loss_.get_init_raw_predictions(X, self.init_)
@@ -1641,7 +1640,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if X.shape[1] != self.n_features_:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features_, X.shape[1]))
-        if self.init == 'zero':
+        if self.init_ == 'zero':
             raw_predictions = np.zeros(shape=(X.shape[0], self.loss_.K),
                                        dtype=np.float64)
         else:

@@ -15,7 +15,7 @@ from ..dummy import DummyClassifier
 from ..dummy import DummyRegressor
 
 
-class LossFunction(object, metaclass=ABCMeta):
+class LossFunction(metaclass=ABCMeta):
     """Abstract base class for various loss functions.
 
     Parameters
