@@ -2325,18 +2325,11 @@ def test_scale_with_std():
     X_scaled = scale(X, copy=True, with_mean=True, with_std=True)
     assert np.isclose(X_scaled.mean(), 0.0)
     assert np.isclose(X_scaled.std(), 1.0)
-<<<<<<< HEAD
-
     # Test for invalid cases
     cases = [-10, -1, 3, 10]
     for std_ in cases:
         assert_raises_regex(ValueError, r'Invalid value for `with_std`:'
                                         r' \S+', scale, X, with_std=std_)
-=======
-    # Test for invalid cases
-    cases = [-10, -1, 3, 10]
-    for std_ in cases:
-        assert_raises_regex(ValueError, r'Invalid value for `with_std`:')
 
 
 def test_power_transformer_lambda_one():
@@ -2498,4 +2491,3 @@ def test_power_transform_default_method():
 
     X_trans_boxcox = power_transform(X, method='box-cox')
     assert_array_equal(X_trans_boxcox, X_trans_default)
->>>>>>> feature

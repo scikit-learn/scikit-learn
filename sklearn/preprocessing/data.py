@@ -136,11 +136,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     --------
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> feature
     References
     ----------
     .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
@@ -160,11 +156,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if with_std:
             if with_std not in (1, 2, True):
                 raise ValueError("Invalid value for `with_std`: {}".format(
-<<<<<<< HEAD
                                  str(with_std)))
-=======
-                                str(with_std)))
->>>>>>> feature
+
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
             inplace_column_scale(X, 1 / (with_std * np.sqrt(var)))
@@ -175,13 +168,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if with_std:
             if with_std not in (1, 2, True):
                 raise ValueError("Invalid value for `with_std`: {}".format(
-<<<<<<< HEAD
-                                 str(with_std)))
-            scale_ = with_std * np.std(X, axis)
-=======
                                 str(with_std)))
             scale_ = with_std * np.nanstd(X, axis)
->>>>>>> feature
         # Xr is a view on the original array that enables easy use of
         # broadcasting on the axis in which we are interested in
         Xr = np.rollaxis(X, axis)
@@ -562,13 +550,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         If 1 or True, scale the data to unit variance (or equivalently,
         unit standard deviation). 
         Otherwise 2, scale the data to using scaling factor 2
-<<<<<<< HEAD
-        standard deviation. See [1] for `with_std=2`.
-        
-=======
         standard deviation. See [1] for `with_std=2`
 
->>>>>>> feature
     Attributes
     ----------
     scale_ : ndarray or None, shape (n_features,)
@@ -629,11 +612,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> feature
     References
     ----------
     .. [1] Gelman, A. (2008). Scaling regression inputs by dividing by two standard deviations.
