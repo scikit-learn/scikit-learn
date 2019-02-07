@@ -153,10 +153,10 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
         if axis != 0:
             raise ValueError("Can only scale sparse matrix on axis=0, "
                              " got axis=%d" % axis)
-        if with_std:
-            if with_std not in (1, 2, True):
-                raise ValueError("Invalid value for `with_std`: {}".format(
-                                str(with_std)))
+        if with_std not in (1, 2, True):
+            raise ValueError("Invalid value for `with_std`: {}".format(
+                             str(with_std)))
+
             _, var = mean_variance_axis(X, axis=0)
             var = _handle_zeros_in_scale(var, copy=False)
             inplace_column_scale(X, 1 / (with_std * np.sqrt(var)))
