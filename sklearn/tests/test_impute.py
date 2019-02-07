@@ -638,7 +638,7 @@ def test_knn_imputer_shape():
             assert X_imputed.shape == (n_rows, n_cols)
 
 
-def test_knn_imputer_zero_zero_missing_value():
+def test_knn_imputer_zero_missing_value():
     # Test imputation when missing_values == 0
     missing_values = 0
     n_neighbors = 2
@@ -653,8 +653,10 @@ def test_knn_imputer_zero_zero_missing_value():
         [np.nan, 2, 0, 0, 0],
         [np.nan, 6, 0, 5, 13],
     ])
-    msg = "Input contains NaN, infinity or a value too large for %r." % X.dtype
-    assert_raise_message(ValueError, msg, imputer.fit, X)
+    msg = (r"Input contains NaN, infinity or a value too large for "
+           r"dtype\('float64'\)")
+    with pytest.raises(ValueError, match=msg):
+        imputer.fit(X)
 
     # Test with % zeros in column > col_max_missing
     X = np.array([
@@ -663,12 +665,13 @@ def test_knn_imputer_zero_zero_missing_value():
         [3, 2, 0, 0, 0],
         [4, 6, 0, 5, 13],
     ])
-    msg = "Some column(s) have more than {}% missing values".format(
+    msg = r"Some column\(s\) have more than {}% missing values".format(
         imputer.col_max_missing * 100)
-    assert_raise_message(ValueError, msg, imputer.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        imputer.fit(X)
 
 
-def testknn_imputer_zero_nan_missing_values():
+def test_knn_imputer_zero_nan_missing_values():
     # Test with an imputable matrix and also compare with missing_values=np.NaN
     X_zero = np.array([
         [1, 0, 1, 1, 1.],
@@ -699,10 +702,10 @@ def testknn_imputer_zero_nan_missing_values():
                              n_neighbors=2,
                              weights="uniform")
 
-    assert_array_equal(imputer_zero.fit_transform(X_zero), X_imputed)
-    assert_array_equal(imputer_zero.statistics_, statistics_mean)
-    assert_array_equal(imputer_zero.fit_transform(X_zero),
-                       imputer_nan.fit_transform(X_nan))
+    assert_array_almost_equal(imputer_zero.fit_transform(X_zero), X_imputed)
+    assert_array_almost_equal(imputer_zero.statistics_, statistics_mean)
+    assert_array_almost_equal(imputer_zero.fit_transform(X_zero),
+                              imputer_nan.fit_transform(X_nan))
 
 
 def test_knn_imputer_default():
@@ -731,8 +734,8 @@ def test_knn_imputer_default():
     ])
 
     imputer = KNNImputer()
-    assert_array_equal(imputer.fit_transform(X), X_imputed)
-    assert_array_equal(imputer.statistics_, statistics_mean)
+    assert_array_almost_equal(imputer.fit_transform(X), X_imputed)
+    assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
     # Test with % missing in row > row_max_missing
     X = np.array([
@@ -788,8 +791,8 @@ def test_knn_imputer_default():
     ])
 
     imputer = KNNImputer()
-    assert_array_equal(imputer.fit_transform(X), X_imputed)
-    assert_array_equal(imputer.statistics_, statistics_mean)
+    assert_array_almost_equal(imputer.fit_transform(X), X_imputed)
+    assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
     # Test when data in fit() and transform() are different
     X = np.array([
@@ -816,8 +819,8 @@ def test_knn_imputer_default():
         ])
 
     imputer = KNNImputer()
-    assert_array_equal(imputer.fit(X).transform(Y), Y_imputed)
-    assert_array_equal(imputer.statistics_, statistics_mean)
+    assert_array_almost_equal(imputer.fit(X).transform(Y), Y_imputed)
+    assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
 
 def test_knn_imputer_default_with_invalid_input():
@@ -833,9 +836,10 @@ def test_knn_imputer_default_with_invalid_input():
         [np.nan, 8, 0, 8, 9],
     ])
     imputer = KNNImputer()
-    msg = "Some column(s) have more than {}% missing values".format(
+    msg = r"Some column\(s\) have more than {}% missing values".format(
         imputer.col_max_missing * 100)
-    assert_raise_message(ValueError, msg, imputer.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        imputer.fit(X)
 
     # Test with insufficient number of neighbors
     X = np.array([
@@ -844,9 +848,10 @@ def test_knn_imputer_default_with_invalid_input():
         [3, 2, 3, 3, 8],
         [6, 6, 2, 5, 13],
     ])
-    msg = "There are only %d samples, but n_neighbors=%d." % \
+    msg = "There are only %d samples, but n_neighbors=%d" % \
           (X.shape[0], imputer.n_neighbors)
-    assert_raise_message(ValueError, msg, imputer.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        imputer.fit(X)
 
     # Test with inf present
     X = np.array([
@@ -857,8 +862,8 @@ def test_knn_imputer_default_with_invalid_input():
         [np.nan, 7, 0, 7, 8],
         [6, 6, 2, 5, 7],
     ])
-    msg = "Input contains infinity"
-    assert_raise_message(ValueError, msg, KNNImputer().fit, X)
+    with pytest.raises(ValueError, match="Input contains infinity"):
+        KNNImputer().fit(X)
 
     # Test with inf present in matrix passed in transform()
     X = np.array([
@@ -878,8 +883,8 @@ def test_knn_imputer_default_with_invalid_input():
         [np.nan, 7, 0, 7, 8],
         [6, 6, 2, 5, 7],
     ])
-    msg = "Input contains infinity"
-    assert_raise_message(ValueError, msg, KNNImputer().fit(X_fit).transform, X)
+    with pytest.raises(ValueError, match="Input contains infinity"):
+        KNNImputer().fit(X_fit).transform(X)
 
 
 def test_knn_imputer_n_neighbors():
@@ -909,8 +914,8 @@ def test_knn_imputer_n_neighbors():
     n_neighbors = 1
     imputer = KNNImputer(n_neighbors=n_neighbors)
 
-    assert_array_equal(imputer.fit_transform(X), X_imputed_1NN)
-    assert_array_equal(imputer.statistics_, statistics_mean)
+    assert_array_almost_equal(imputer.fit_transform(X), X_imputed_1NN)
+    assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
     # Test with 6 neighbors
     X = np.array([
@@ -937,9 +942,9 @@ def test_knn_imputer_n_neighbors():
     imputer = KNNImputer(n_neighbors=6)
     imputer_plus1 = KNNImputer(n_neighbors=n_neighbors + 1)
 
-    assert_array_equal(imputer.fit_transform(X), X_imputed_6NN)
-    assert_array_equal(imputer.statistics_, statistics_mean)
-    assert_array_equal(imputer.fit_transform(X), imputer_plus1.fit(
+    assert_array_almost_equal(imputer.fit_transform(X), X_imputed_6NN)
+    assert_array_almost_equal(imputer.statistics_, statistics_mean)
+    assert_array_almost_equal(imputer.fit_transform(X), imputer_plus1.fit(
         X).transform(X))
 
 
@@ -966,14 +971,14 @@ def test_knn_imputer_weight_uniform():
     ])
 
     imputer = KNNImputer(weights="uniform")
-    assert_array_equal(imputer.fit_transform(X), X_imputed_uniform)
+    assert_array_almost_equal(imputer.fit_transform(X), X_imputed_uniform)
 
     # Test with "callable" weight
     def no_weight(dist=None):
         return None
 
     imputer = KNNImputer(weights=no_weight)
-    assert_array_equal(imputer.fit_transform(X), X_imputed_uniform)
+    assert_array_almost_equal(imputer.fit_transform(X), X_imputed_uniform)
 
 
 def test_knn_imputer_weight_distance():
@@ -1039,7 +1044,7 @@ def test_knn_imputer_weight_distance():
     imputer = KNNImputer(n_neighbors=2, weights="distance")
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed,
                               decimal=4)
-    assert_array_equal(imputer.statistics_, statistics_mean)
+    assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
     # Test with varying missingness patterns
     X = np.array([
@@ -1084,7 +1089,7 @@ def test_knn_imputer_weight_distance():
 
     imputer = KNNImputer(weights="distance")
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed, decimal=6)
-    assert_array_equal(imputer.statistics_, statistics_mean)
+    assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
 
 def test_knn_imputer_metric_type():
@@ -1096,7 +1101,7 @@ def test_knn_imputer_metric_type():
     # Test with a metric type without NaN support
     imputer = KNNImputer(metric="euclidean")
     bad_metric_msg = "The selected metric does not support NaN values."
-    with pytest.raises(ValueError, message=bad_metric_msg):
+    with pytest.raises(ValueError, match=bad_metric_msg):
         imputer.fit(X)
 
 
@@ -1124,7 +1129,7 @@ def test_knn_imputer_callable_metric():
     ])
 
     imputer = KNNImputer(n_neighbors=2, metric=custom_callable)
-    assert_array_equal(imputer.fit_transform(X), X_imputed)
+    assert_array_almost_equal(imputer.fit_transform(X), X_imputed)
 
 
 def test_knn_imputer_complete_features():
