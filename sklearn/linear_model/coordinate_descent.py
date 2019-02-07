@@ -740,9 +740,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         if isinstance(self.precompute, str):
             raise ValueError('precompute should be one of True, False or'
                              ' array-like. Got %r' % self.precompute)
-        elif self.precompute is not False and self.solver == 'saga':
-            warnings.warn("The solver 'saga' does not use the precomputed "
-                          " Gram matrix", category=UserWarning)
 
         if self.positive and self.solver == 'saga':
             raise ValueError("ElasticNet supports positive contraints for "
@@ -780,6 +777,9 @@ class ElasticNet(LinearModel, RegressorMixin):
             precompute_ = self.precompute
         else:
             precompute_ = False
+            if self.precompute is not precompute_:
+                warnings.warn("The solver 'saga' does not use the precomputed "
+                              " Gram matrix", category=UserWarning)
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, None, precompute_, self.normalize,
                      self.fit_intercept, copy=should_copy,
