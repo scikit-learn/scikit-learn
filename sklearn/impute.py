@@ -745,7 +745,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         self.col_max_missing = col_max_missing
         self.copy = copy
 
-    def _impute(self, dist, X, fitted_X, mask, mask_fx):
+    def _impute(self, dist, X, fit_X, mask, mask_fx):
         """Helper function to find and impute missing values"""
 
         # For each column, find and impute
@@ -785,8 +785,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             donor_row_idx_ravel = donors_idx.ravel()
 
             # Retrieve donor values and calculate kNN score
-            fitted_X_temp = fitted_X[pdonors_row_idx]
-            donors = fitted_X_temp[donor_row_idx_ravel, c].reshape(
+            fit_X_temp = fit_X[pdonors_row_idx]
+            donors = fit_X_temp[donor_row_idx_ravel, c].reshape(
                 (-1, self.n_neighbors))
             donors_mask = _get_mask(donors, self.missing_values)
             donors = np.ma.array(donors, mask=donors_mask)
@@ -861,7 +861,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             The imputed dataset.
         """
 
-        check_is_fitted(self, ["fitted_X_", "statistics_"])
+        check_is_fitted(self, ["fit_X_", "statistics_"])
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
@@ -869,53 +869,45 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
 
-        # Get fitted data and ensure correct dimension
-        n_rows_fit_X, n_cols_fit_X = self.fitted_X_.shape
-        n_rows_X, n_cols_X = X.shape
-
-        if n_cols_X != n_cols_fit_X:
+        if X.shape[1] != self.fit_X_.shape[1]:
             raise ValueError("Incompatible dimension between the fitted "
                              "dataset and the one to be transformed.")
         mask = _get_mask(X, self.missing_values)
 
-        row_total_missing = mask.sum(axis=1)
-        if not np.any(row_total_missing):
+        orig_X_shape = X.shape
+        if not np.any(mask):
             return X
 
         # Check for excessive missingness in rows
-        bad_rows = row_total_missing > (mask.shape[1] * self.row_max_missing)
-        if np.any(bad_rows):
-            warnings.warn(
-                "There are rows with more than {0}% missing values. The "
-                "missing features in these rows are imputed with column means."
-                    .format(self.row_max_missing * 100))
-            X_bad = X[bad_rows, :]
-            X = X[~bad_rows, :]
-            mask = mask[~bad_rows]
+        row_total_missing = mask.sum(axis=1)
+        deficient_rows = (
+            row_total_missing > (mask.shape[1] * self.row_max_missing))
+        if np.any(deficient_rows):
+            X_deficient = X[deficient_rows, :]
+            X = X[~deficient_rows, :]
+            mask = mask[~deficient_rows]
             row_total_missing = mask.sum(axis=1)
+
         row_has_missing = row_total_missing.astype(np.bool)
-
         if np.any(row_has_missing):
-
-            # Mask for fitted_X
-            mask_fx = _get_mask(self.fitted_X_, self.missing_values)
-
             # Pairwise distances between receivers and fitted samples
-            dist = np.empty((len(X), len(self.fitted_X_)))
+            dist = np.empty((X.shape[0], self.fit_X_.shape[0]))
             dist[row_has_missing] = pairwise_distances(
-                X[row_has_missing], self.fitted_X_, metric=self.metric,
+                X[row_has_missing], self.fit_X_, metric=self.metric,
                 squared=False, missing_values=self.missing_values)
 
             # Find and impute missing
-            X = self._impute(dist, X, self.fitted_X_, mask, mask_fx)
+            X = self._impute(dist, X, self.fit_X_, mask,
+                             _get_mask(self.fit_X_, self.missing_values))
 
-        # Merge bad rows to X and mean impute their missing values
-        if np.any(bad_rows):
-            bad_missing_index = np.where(_get_mask(X_bad, self.missing_values))
-            X_bad[bad_missing_index] = np.take(self.statistics_,
-                                               bad_missing_index[1])
-            X_merged = np.empty((n_rows_X, n_cols_X))
-            X_merged[bad_rows, :] = X_bad
-            X_merged[~bad_rows, :] = X
+        # Merge deficient rows and mean impute their missing values
+        if np.any(deficient_rows):
+            bad_missing_index = np.where(
+                _get_mask(X_deficient, self.missing_values))
+            X_deficient[bad_missing_index] = np.take(self.statistics_,
+                                                     bad_missing_index[1])
+            X_merged = np.empty(orig_X_shape)
+            X_merged[deficient_rows, :] = X_deficient
+            X_merged[~deficient_rows, :] = X
             X = X_merged
         return X
