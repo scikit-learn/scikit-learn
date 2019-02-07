@@ -2326,10 +2326,10 @@ def test_scale_with_std():
     assert np.isclose(X_scaled.mean(), 0.0)
     assert np.isclose(X_scaled.std(), 1.0)
     # Test for invalid cases
-    cases = [-10, -1, 3, 10]
-    for std_ in cases:
-        assert_raises_regex(ValueError, r'Invalid value for `with_std`:'
-                                        r' \S+', scale, X, with_std=std_)
+    with pytest.raises(ValueError):
+        cases = [-10, -1, 3, 10]
+        for std_ in cases:
+            scale(X, with_std=std_)
 
 
 def test_power_transformer_lambda_one():

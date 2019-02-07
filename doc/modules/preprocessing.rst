@@ -29,6 +29,12 @@ normally distributed data: Gaussian with **zero mean and unit/factor two standar
 **deviation** in reference to **Gelman, A. (2008). Scaling regression inputs by** 
 **dividing by two standard deviations. Statistics in medicine, 27(15), 2865-2873**.
 
+Reference
+---------
+
+Gelman, A. (2008). Scaling regression inputs by 
+dividing by two standard deviations. Statistics in medicine, 27(15), 2865-2873
+
 In practice we often ignore the shape of the distribution and just
 transform the data to center it by removing the mean value of each
 feature, then scale it by dividing non-constant features by their
