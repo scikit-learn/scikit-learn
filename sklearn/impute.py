@@ -675,9 +675,9 @@ class KNNImputer(BaseEstimator, TransformerMixin):
           array of distances, and returns an array of the same shape
           containing the weights.
 
-    metric : str or callable, optional (default="nan_masked_euclidean")
+    metric : str or callable, optional (default="nan_euclidean")
         Distance metric for searching neighbors. Possible values:
-        - 'nan_masked_euclidean'
+        - 'nan_euclidean'
         - callable : a user-defined function which conforms to the
           definition of _pairwise_callable(X, Y, metric, **kwds). The function
           accepts two arrays, X and Y, and a ``missing_values`` keyword in
@@ -697,7 +697,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     copy : boolean, optional(default=True)
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, if metric is
-        "nan_masked_euclidean" and copy=False then missing_values in the
+        "nan_euclidean" and copy=False then missing_values in the
         input matrix X will be overwritten with zeros.
 
     Attributes
@@ -732,7 +732,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, missing_values=np.nan, n_neighbors=5,
-                 weights="uniform", metric="nan_masked_euclidean",
+                 weights="uniform", metric="nan_euclidean",
                  row_max_missing=0.5, col_max_missing=0.8, copy=True):
 
         self.missing_values = missing_values

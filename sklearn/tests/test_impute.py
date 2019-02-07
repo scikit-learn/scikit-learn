@@ -19,7 +19,7 @@ from sklearn.pipeline import make_union
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
-from sklearn.metrics.pairwise import masked_euclidean_distances
+from sklearn.metrics.pairwise import nan_euclidean_distances
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.neighbors import KNeighborsRegressor
 
@@ -1054,7 +1054,7 @@ def test_weight_distance():
     statistics_mean = np.nanmean(X, axis=0)
 
     # Get weights of donor neighbors
-    dist = masked_euclidean_distances(X)
+    dist = nan_euclidean_distances(X)
     r1c1_nbor_dists = dist[1, [0, 2, 3, 4, 5]]
     r1c3_nbor_dists = dist[1, [0, 3, 4, 5, 6]]
     r1c1_nbor_wt = (1/r1c1_nbor_dists)
@@ -1181,7 +1181,7 @@ def test_complete_features_weighted():
     ])
 
     dist = pairwise_distances(X,
-                              metric="masked_euclidean",
+                              metric="nan_euclidean",
                               squared=False)
 
     # Calculate weights
