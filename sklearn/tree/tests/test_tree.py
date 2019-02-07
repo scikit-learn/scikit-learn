@@ -1912,7 +1912,7 @@ def assert_is_subtree(tree, subtree):
             assert_almost_equal(
                 tree.threshold[tree_node_idx],
                 subtree.threshold[subtree_node_idx])
-            stack.append(
-                (tree_c_left[tree_node_idx], subtree_c_left[subtree_node_idx]))
-            stack.append(
-                (tree_c_right[tree_node_idx], subtree_c_right[subtree_node_idx]))
+            stack.append((tree_c_left[tree_node_idx],
+                          subtree_c_left[subtree_node_idx]))
+            stack.append((tree_c_right[tree_node_idx],
+                          subtree_c_right[subtree_node_idx]))
