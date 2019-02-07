@@ -745,57 +745,67 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         self.col_max_missing = col_max_missing
         self.copy = copy
 
-    def _impute(self, dist, X, fit_X, mask, mask_fx):
-        """Helper function to find and impute missing values"""
+    def _impute(self, dist, X_col, fit_X_col, mask_col,
+                mask_fit_X_col, statistic_col):
+        """Helper function to find and impute missing values of a single
+        column, ``X_col``.
 
+        Parameters
+        ----------
+        dist : array-like, shape = (n_samples, n_samples, )
+            distance matrix
+
+        X_col : array-like, shape = (n_samples, )
+            column to be imputed
+
+        fit_X_col : array-like, shape = (n_train_samples, )
+            column from training
+
+        mask_col : array-like, shape = (n_samples, )
+            mask for missing values corresponding to ``X_col``
+
+        mask_fit_X_col : array-like, shape = (n_train_samples, )
+            mask for missing values corresponding to ``fit_X_col``
+
+        statistic_col : float
+            statistic for column generated from fitting ``fit_X_col``
+        """
         # For each column, find and impute
-        n_rows_X, n_cols_X = X.shape
-        for c in range(n_cols_X):
-            if not np.any(mask[:, c], axis=0):
-                continue
+        if not np.any(mask_col, axis=0):
+            return
 
-            # Row index for receivers and potential donors (pdonors)
-            receivers_row_idx = np.where(mask[:, c])[0]
-            pdonors_row_idx = np.where(~mask_fx[:, c])[0]
+        # Row index for receivers and potential donors (pdonors)
+        receivers_idx = np.where(mask_col)[0]
+        potential_donors_idx = np.where(~mask_fit_X_col)[0]
 
-            # Impute using column mean if n_neighbors are not available
-            if len(pdonors_row_idx) < self.n_neighbors:
-                warnings.warn("Insufficient number of neighbors! "
-                              "Filling in column mean.")
-                X[receivers_row_idx, c] = self.statistics_[c]
-                continue
+        # Impute using column mean if n_neighbors are not available
+        if len(potential_donors_idx) < self.n_neighbors:
+            X_col[receivers_idx] = statistic_col
+            return
 
-            # Get distance from potential donors
-            dist_pdonors = dist[receivers_row_idx][:, pdonors_row_idx]
-            dist_pdonors = dist_pdonors.reshape(-1,
-                                                len(pdonors_row_idx))
+        # Get distance from potential donors
+        dist_potential_donors = dist[receivers_idx][:, potential_donors_idx]
 
-            # Argpartition to separate actual donors from the rest
-            pdonors_idx = np.argpartition(
-                dist_pdonors, self.n_neighbors - 1, axis=1)
+        # Get donors
+        donors_idx = np.argpartition(dist_potential_donors,
+                                     self.n_neighbors - 1,
+                                     axis=1)[:, :self.n_neighbors]
 
-            # Get final donors row index from pdonors
-            donors_idx = pdonors_idx[:, :self.n_neighbors]
+        # Get weights or None
+        receivers_rows = np.arange(donors_idx.shape[0])[:, None]
+        weight_matrix = _get_weights(dist_potential_donors[receivers_rows,
+                                                           donors_idx],
+                                     self.weights)
 
-            # Get weights or None
-            dist_pdonors_rows = np.arange(len(donors_idx))[:, None]
-            weight_matrix = _get_weights(
-                dist_pdonors[
-                    dist_pdonors_rows, donors_idx], self.weights)
-            donor_row_idx_ravel = donors_idx.ravel()
+        # Retrieve donor values and calculate kNN score
+        donors = fit_X_col[potential_donors_idx][donors_idx.ravel()].reshape(
+            (-1, self.n_neighbors))
+        donors = np.ma.array(donors,
+                             mask=_get_mask(donors, self.missing_values))
 
-            # Retrieve donor values and calculate kNN score
-            fit_X_temp = fit_X[pdonors_row_idx]
-            donors = fit_X_temp[donor_row_idx_ravel, c].reshape(
-                (-1, self.n_neighbors))
-            donors_mask = _get_mask(donors, self.missing_values)
-            donors = np.ma.array(donors, mask=donors_mask)
-
-            # Final imputation
-            imputed = np.ma.average(donors, axis=1,
-                                    weights=weight_matrix)
-            X[receivers_row_idx, c] = imputed.data
-        return X
+        # Final imputation
+        imputed = np.ma.average(donors, axis=1, weights=weight_matrix)
+        X_col[receivers_idx] = imputed.data
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -897,8 +907,11 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                 squared=False, missing_values=self.missing_values)
 
             # Find and impute missing
-            X = self._impute(dist, X, self.fit_X_, mask,
-                             _get_mask(self.fit_X_, self.missing_values))
+            mask_fit_X = _get_mask(self.fit_X_, self.missing_values)
+            for col in range(X.shape[1]):
+                self._impute(dist, X[:, col], self.fit_X_[:, col],
+                             mask[:, col], mask_fit_X[:, col],
+                             self.statistics_[col])
 
         # Merge deficient rows and mean impute their missing values
         if np.any(deficient_rows):
