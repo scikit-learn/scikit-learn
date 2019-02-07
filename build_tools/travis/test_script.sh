@@ -21,7 +21,8 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
-    TEST_CMD="pytest -n2 --showlocals --durations=20 --pyargs"
+    PYTHON=$(which python)
+    TEST_CMD="pytest -n2 -d --tx popen//python=${PYTHON} --showlocals --durations=20 --pyargs"
 
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
@@ -45,6 +46,7 @@ run_tests() {
 
     set -x  # print executed commands to the terminal
 
+    export LOKY_MAX_CPU_COUNT="2"
     $TEST_CMD sklearn
 }
 
