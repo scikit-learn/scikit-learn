@@ -2,6 +2,8 @@ import numpy as np
 
 import pytest
 
+from numpy.testing import assert_allclose
+
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_equal, assert_no_warnings,
@@ -99,7 +101,7 @@ def test_lda_predict_proba():
     # Binary case
     clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y6)
     probas = clf.predict_proba(X6)
-    assert_array_almost_equal(
+    assert_allclose(
         probas[0],
         np.array([0.91942108, 0.08057892])
     )
@@ -110,10 +112,10 @@ def test_lda_predict_proba():
     # Check that argmax of predict_proba gives same results as predict
     assert_array_equal(pred, clf.classes_[np.argmax(probas, axis=1)])
     # Check that probabilities sum up to 1
-    assert_array_almost_equal(np.sum(probas, axis=1),
+    assert_allclose(np.sum(probas, axis=1),
                               np.ones((probas.shape[0],)))
     # Numerical check
-    assert_array_almost_equal(
+    assert_allclose(
         probas[0],
         np.array([0.25128617, 0.36876296, 0.37995087])
     )
