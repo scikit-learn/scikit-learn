@@ -105,7 +105,14 @@ def test_lda_predict_proba():
     )
     # Multiclass case
     clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y7)
+    pred = clf.predict(X6)
     probas = clf.predict_proba(X6)
+    # Check that argmax of predict_proba gives same results as predict
+    assert_array_equal(pred, clf.classes_[np.argmax(probas, axis=1)])
+    # Check that probabilities sum up to 1
+    assert_array_almost_equal(np.sum(probas, axis=1),
+                              np.ones((probas.shape[0],)))
+    # Numerical check
     assert_array_almost_equal(
         probas[0],
         np.array([0.25128617, 0.36876296, 0.37995087])
