@@ -561,7 +561,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         on an estimator with ``normalize=False``.
 
     precompute : True | False | array-like
-        relevant only if ``solver='cd'``
+        Relevant only if ``solver='cd'``.
         Whether to use a precomputed Gram matrix to speed up
         calculations. The Gram matrix can also be passed as argument.
         For sparse input this option is always ``True`` to preserve sparsity.
@@ -584,9 +584,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         See :term:`the Glossary <warm_start>`.
 
     positive : bool, optional
-        If ``solver='cd'`` and set to ``True``, forces the coefficients to be
-        positive. ``solver='saga'`` can only be used if set to ``False`` as
-        it can't enforce positive coefficients.
+        Only valid for ``solver='cd'``. If set to ``True``, forces the
+        coefficients to be positive.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -597,7 +596,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         'random'.
 
     selection : str, default 'cyclic'
-        relevant only if ``solver='cd'``
+        Relevant only if ``solver='cd'``.
         If set to 'random', a random coefficient is updated every iteration
         rather than looping over features sequentially by default. This
         (setting to 'random') often leads to significantly faster convergence
@@ -630,7 +629,8 @@ class ElasticNet(LinearModel, RegressorMixin):
     n_iter_ : array-like, shape (n_targets,)
         For ``solver='cd'``, the number of iterations run by the solver to
         reach the specified tolerance.
-        For ``solver='saga'``, the number of full passes on all samples.
+        For ``solver='saga'``, the number of full passes on all samples until
+        convergence.
 
     Examples
     --------
