@@ -3,12 +3,7 @@
 # same topic namely the Wikipedia encyclopedia itself
 
 import os
-try:
-    # Python 2 compat
-    from urllib2 import Request, build_opener
-except ImportError:
-    # Python 3
-    from urllib.request import Request, build_opener
+from urllib.request import Request, build_opener
 
 import lxml.html
 from lxml.etree import ElementTree

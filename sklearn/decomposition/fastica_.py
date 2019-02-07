@@ -259,9 +259,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     faster for Fortran-ordered input.
 
     Implemented using FastICA:
-    `A. Hyvarinen and E. Oja, Independent Component Analysis:
+    *A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430`
+    pp. 411-430*
 
     """
     random_state = check_random_state(random_state)
@@ -455,9 +455,9 @@ class FastICA(BaseEstimator, TransformerMixin):
     Notes
     -----
     Implementation based on
-    `A. Hyvarinen and E. Oja, Independent Component Analysis:
+    *A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430`
+    pp. 411-430*
 
     """
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,

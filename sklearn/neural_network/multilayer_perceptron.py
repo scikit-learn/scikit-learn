@@ -502,7 +502,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         try:
             for it in range(self.max_iter):
-                X, y = shuffle(X, y, random_state=self._random_state)
+                if self.shuffle:
+                    X, y = shuffle(X, y, random_state=self._random_state)
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
                     activations[0] = X[batch_slice]

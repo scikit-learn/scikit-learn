@@ -92,7 +92,8 @@ colors = cm.rainbow(np.linspace(0.0, 1.0, y_unique.size))
 for this_y, color in zip(y_unique, colors):
     this_X = X_train[y_train == this_y]
     this_sw = sw_train[y_train == this_y]
-    plt.scatter(this_X[:, 0], this_X[:, 1], s=this_sw * 50, c=color,
+    plt.scatter(this_X[:, 0], this_X[:, 1], s=this_sw * 50,
+                c=color[np.newaxis, :],
                 alpha=0.5, edgecolor='k',
                 label="Class %s" % this_y)
 plt.legend(loc="best")
