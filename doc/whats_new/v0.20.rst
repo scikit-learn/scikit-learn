@@ -594,12 +594,8 @@ Support for Python 3.3 has been officially dropped.
 
 - :class:`preprocessing.PolynomialFeatures` now supports sparse input.
   :issue:`10452` by :user:`Aman Dalmia <dalmia>` and `Joel Nothman`_.
-<<<<<<< HEAD
-- :class:`preprocessing.StandardScaler` can now scale using factor of 2
-=======
   
   :class:`preprocessing.StandardScaler` can now scale using factor of 2
->>>>>>> feature
   standard deviation as described in Gelman (2008).
   :issue:`10864` by :user:`Parth Sharma <parth1993>` and
   :user:`Tymoteusz Wołodźko <twolodzko>`
