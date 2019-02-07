@@ -882,10 +882,10 @@ When the change is in a class, we validate and raise warning in ``fit``::
           self.k = k
 
       def fit(self, X, y):
-          if k != 'not_used':
+          if self.k != 'not_used':
               warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                             "will be removed in 0.15.", DeprecationWarning)
-              self._n_clusters = k
+              self._n_clusters = self.k
           else:
               self._n_clusters = self.n_clusters
 
