@@ -534,8 +534,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         if len(self.classes_) == 2:
             return self._predict_proba_lr(X)
         else:
-            prob = self.decision_function(X)
-            return softmax(prob)
+            decision = self.decision_function(X)
+            return softmax(decision)
 
     def predict_log_proba(self, X):
         """Estimate log probability.
