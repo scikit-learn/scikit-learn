@@ -113,7 +113,7 @@ def test_lda_predict_proba():
     assert_array_equal(pred, clf.classes_[np.argmax(probas, axis=1)])
     # Check that probabilities sum up to 1
     assert_allclose(np.sum(probas, axis=1),
-                              np.ones((probas.shape[0],)))
+                    np.ones((probas.shape[0],)))
     # Numerical check
     assert_allclose(
         probas[0],
