@@ -1230,7 +1230,7 @@ Pairwise Attributes
 
 An estimator that accept ``X`` of shape ``(n_samples, n_samples)`` and defines
 a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
-the dataset. (e.g., when ``X`` is a precomputed kernel matrix). Specifically,
+the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
