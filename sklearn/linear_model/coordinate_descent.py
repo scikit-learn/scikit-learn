@@ -798,8 +798,6 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if self.solver == 'saga':
             max_squared_sum = row_norms(X, squared=True).max()
-        else:
-            max_squared_sum = None
 
         if not self.warm_start or not hasattr(self, "coef_"):
             coef_ = np.zeros((n_targets, n_features), dtype=X.dtype,
@@ -811,8 +809,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if self.solver == 'cd':
             dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
-        else:
-            dual_gaps_ = None
+
         self.n_iter_ = []
 
         for k in range(n_targets):
