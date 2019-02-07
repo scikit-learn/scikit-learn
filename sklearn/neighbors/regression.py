@@ -82,9 +82,11 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
         Doesn't affect :meth:`fit` method.
 
     Examples
@@ -96,7 +98,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     >>> neigh.fit(X, y) # doctest: +ELLIPSIS
     KNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
-    [ 0.5]
+    [0.5]
 
     See also
     --------
@@ -122,9 +124,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=1,
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
-        super(KNeighborsRegressor, self).__init__(
+        super().__init__(
               n_neighbors=n_neighbors,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
@@ -238,6 +240,12 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
+    n_jobs : int or None, optional (default=None)
+        The number of parallel jobs to run for neighbors search.
+         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -247,7 +255,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     >>> neigh.fit(X, y) # doctest: +ELLIPSIS
     RadiusNeighborsRegressor(...)
     >>> print(neigh.predict([[1.5]]))
-    [ 0.5]
+    [0.5]
 
     See also
     --------
@@ -266,12 +274,14 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, **kwargs):
-        super(RadiusNeighborsRegressor, self).__init__(
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
+                 **kwargs):
+        super().__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,
-              p=p, metric=metric, metric_params=metric_params, **kwargs)
+              p=p, metric=metric, metric_params=metric_params,
+              n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):

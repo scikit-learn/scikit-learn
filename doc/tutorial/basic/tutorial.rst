@@ -76,7 +76,7 @@ Loading an example dataset
 
 `scikit-learn` comes with a few standard datasets, for instance the
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
-<http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
+<https://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
 datasets for classification and the `boston house prices dataset
 <https://archive.ics.uci.edu/ml/machine-learning-databases/housing/>`_ for regression.
 
@@ -101,13 +101,13 @@ For instance, in the case of the digits dataset, ``digits.data`` gives
 access to the features that can be used to classify the digits samples::
 
   >>> print(digits.data)  # doctest: +NORMALIZE_WHITESPACE
-  [[  0.   0.   5. ...,   0.   0.   0.]
-   [  0.   0.   0. ...,  10.   0.   0.]
-   [  0.   0.   0. ...,  16.   9.   0.]
-   ...,
-   [  0.   0.   1. ...,   6.   0.   0.]
-   [  0.   0.   2. ...,  12.   0.   0.]
-   [  0.   0.  10. ...,  12.   1.   0.]]
+  [[ 0.   0.   5. ...   0.   0.   0.]
+   [ 0.   0.   0. ...  10.   0.   0.]
+   [ 0.   0.   0. ...  16.   9.   0.]
+   ...
+   [ 0.   0.   1. ...   6.   0.   0.]
+   [ 0.   0.   2. ...  12.   0.   0.]
+   [ 0.   0.  10. ...  12.   1.   0.]]
 
 and ``digits.target`` gives the ground truth for the digit dataset, that
 is the number corresponding to each digit image that we are trying to
@@ -123,7 +123,7 @@ learn::
     digits, each original sample is an image of shape ``(8, 8)`` and can be
     accessed using::
 
-      >>> digits.images[0]
+      >>> digits.images[0]  # doctest: +NORMALIZE_WHITESPACE
       array([[  0.,   0.,   5.,  13.,   9.,   1.,   0.,   0.],
              [  0.,   0.,  13.,  15.,  10.,  15.,   5.,   0.],
              [  0.,   3.,  15.,   2.,   0.,  11.,   8.,   0.],
@@ -238,19 +238,19 @@ joblib's replacement for pickle (``joblib.dump`` & ``joblib.load``),
 which is more efficient on big data but it can only pickle to the disk
 and not to a string::
 
-  >>> from sklearn.externals import joblib
-  >>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
+  >>> from joblib import dump, load
+  >>> dump(clf, 'filename.joblib') # doctest: +SKIP
 
 Later, you can reload the pickled model (possibly in another Python process)
 with::
 
-  >>> clf = joblib.load('filename.pkl') # doctest:+SKIP
+  >>> clf = load('filename.joblib') # doctest:+SKIP
 
 .. note::
 
     ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
     instead of filenames. More information on data persistence with Joblib is
-    available `here <https://pythonhosted.org/joblib/persistence.html>`_.
+    available `here <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 
 Note that pickle has some security and maintainability issues. Please refer to
 section :ref:`model_persistence` for more detailed information about model
@@ -318,8 +318,8 @@ Refitting and updating parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Hyper-parameters of an estimator can be updated after it has been constructed
-via the :func:`sklearn.pipeline.Pipeline.set_params` method. Calling ``fit()``
-more than once will overwrite what was learned by any previous ``fit()``::
+via the :term:`set_params()<set_params>` method. Calling ``fit()`` more than
+once will overwrite what was learned by any previous ``fit()``::
 
   >>> import numpy as np
   >>> from sklearn.svm import SVC
@@ -346,9 +346,10 @@ more than once will overwrite what was learned by any previous ``fit()``::
   >>> clf.predict(X_test)
   array([1, 0, 1, 1, 0])
 
-Here, the default kernel ``rbf`` is first changed to ``linear`` after the
-estimator has been constructed via ``SVC()``, and changed back to ``rbf`` to
-refit the estimator and to make a second prediction.
+Here, the default kernel ``rbf`` is first changed to ``linear`` via
+:func:`SVC.set_params()<sklearn.svm.SVC.set_params>` after the estimator has
+been constructed, and changed back to ``rbf`` to refit the estimator and to
+make a second prediction.
 
 Multiclass vs. multilabel fitting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -390,15 +391,15 @@ Note that the fourth and fifth instances returned all zeroes, indicating that
 they matched none of the three labels ``fit`` upon. With multilabel outputs, it
 is similarly possible for an instance to be assigned multiple labels::
 
-  >> from sklearn.preprocessing import MultiLabelBinarizer
-  >> y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
-  >> y = MultiLabelBinarizer().fit_transform(y)
-  >> classif.fit(X, y).predict(X)
+  >>> from sklearn.preprocessing import MultiLabelBinarizer
+  >>> y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
+  >>> y = MultiLabelBinarizer().fit_transform(y)
+  >>> classif.fit(X, y).predict(X)
   array([[1, 1, 0, 0, 0],
          [1, 0, 1, 0, 0],
          [0, 1, 0, 1, 0],
-         [1, 0, 1, 1, 0],
-         [0, 0, 1, 0, 1]])
+         [1, 0, 1, 0, 0],
+         [1, 0, 1, 0, 0]])
 
 In this case, the classifier is fit upon instances each assigned multiple labels.
 The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>` is

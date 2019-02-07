@@ -21,9 +21,6 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck
 # License: BSD 3 clause
-
-from __future__ import print_function
-
 import logging
 import numpy as np
 from optparse import OptionParser
@@ -145,7 +142,7 @@ print("%d documents - %0.3fMB (training set)" % (
     len(data_train.data), data_train_size_mb))
 print("%d documents - %0.3fMB (test set)" % (
     len(data_test.data), data_test_size_mb))
-print("%d categories" % len(categories))
+print("%d categories" % len(target_names))
 print()
 
 # split a training set and a test set
@@ -249,9 +246,9 @@ def benchmark(clf):
 
 results = []
 for clf, name in (
-        (RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
-        (Perceptron(n_iter=50, tol=1e-3), "Perceptron"),
-        (PassiveAggressiveClassifier(n_iter=50, tol=1e-3),
+        (RidgeClassifier(tol=1e-2, solver="sag"), "Ridge Classifier"),
+        (Perceptron(max_iter=50, tol=1e-3), "Perceptron"),
+        (PassiveAggressiveClassifier(max_iter=50, tol=1e-3),
          "Passive-Aggressive"),
         (KNeighborsClassifier(n_neighbors=10), "kNN"),
         (RandomForestClassifier(n_estimators=100), "Random forest")):
@@ -267,16 +264,14 @@ for penalty in ["l2", "l1"]:
                                        tol=1e-3)))
 
     # Train SGD model
-    results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                           penalty=penalty,
-                                           max_iter=5)))
+    results.append(benchmark(SGDClassifier(alpha=.0001, max_iter=50,
+                                           penalty=penalty)))
 
 # Train SGD with Elastic Net penalty
 print('=' * 80)
 print("Elastic-Net penalty")
-results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                       penalty="elasticnet",
-                                       max_iter=5)))
+results.append(benchmark(SGDClassifier(alpha=.0001, max_iter=50,
+                                       penalty="elasticnet")))
 
 # Train NearestCentroid without threshold
 print('=' * 80)

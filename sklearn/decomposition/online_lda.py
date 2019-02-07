@@ -14,15 +14,13 @@ Link: https://github.com/blei-lab/onlineldavb
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import gammaln
-import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
-                     gen_batches, gen_even_slices, _get_n_jobs)
+                     gen_batches, gen_even_slices)
 from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
-from ..externals.joblib import Parallel, delayed
-from ..externals.six.moves import xrange
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..exceptions import NotFittedError
 
 from ._online_lda import (mean_change, _dirichlet_expectation_1d,
@@ -42,7 +40,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         Document word matrix.
 
     exp_topic_word_distr : dense matrix, shape=(n_topics, n_features)
-        Exponential value of expection of log topic word distribution.
+        Exponential value of expectation of log topic word distribution.
         In the literature, this is `exp(E[log(beta)])`.
 
     doc_topic_prior : float
@@ -94,7 +92,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         X_indices = X.indices
         X_indptr = X.indptr
 
-    for idx_d in xrange(n_samples):
+    for idx_d in range(n_samples):
         if is_sparse_x:
             ids = X_indices[X_indptr[idx_d]:X_indptr[idx_d + 1]]
             cnts = X_data[X_indptr[idx_d]:X_indptr[idx_d + 1]]
@@ -108,7 +106,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         exp_topic_word_d = exp_topic_word_distr[:, ids]
 
         # Iterate between `doc_topic_d` and `norm_phi` until convergence
-        for _ in xrange(0, max_iters):
+        for _ in range(0, max_iters):
             last_d = doc_topic_d
 
             # The optimal phi_{dwk} is proportional to
@@ -149,19 +147,18 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     doc_topic_prior : float, optional (default=None)
         Prior of document topic distribution `theta`. If the value is None,
         defaults to `1 / n_components`.
-        In the literature, this is called `alpha`.
+        In [1]_, this is called `alpha`.
 
     topic_word_prior : float, optional (default=None)
         Prior of topic word distribution `beta`. If the value is None, defaults
         to `1 / n_components`.
-        In the literature, this is called `beta`.
+        In [1]_, this is called `eta`.
 
-    learning_method : 'batch' | 'online', default='online'
+    learning_method : 'batch' | 'online', default='batch'
         Method used to update `_component`. Only used in `fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
-        The default learning method is going to be changed to 'batch' in the
-        0.20 release.
+
         Valid options::
 
             'batch': Batch variational Bayes method. Use all training data in
@@ -171,6 +168,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 mini-batch of training data to update the ``components_``
                 variable incrementally. The learning rate is controlled by the
                 ``learning_decay`` and the ``learning_offset`` parameters.
+
+        .. versionchanged:: 0.20
+            The default learning method is now ``"batch"``.
 
     learning_decay : float, optional (default=0.7)
         It is a parameter that control learning rate in the online learning
@@ -213,9 +213,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Max number of iterations for updating document topic distribution in
         the E-step.
 
-    n_jobs : int, optional (default=1)
-        The number of jobs to use in the E-step. If -1, all CPUs are used. For
-        ``n_jobs`` below -1, (n_cpus + 1 + n_jobs) are used.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use in the E-step.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : int, optional (default=0)
         Verbosity level.
@@ -225,11 +227,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    n_topics : int, optional (default=None)
-        This parameter has been renamed to n_components and will
-        be removed in version 0.21.
-        .. deprecated:: 0.19
 
     Attributes
     ----------
@@ -248,6 +245,22 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Number of passes over the dataset.
 
+    Examples
+    --------
+    >>> from sklearn.decomposition import LatentDirichletAllocation
+    >>> from sklearn.datasets import make_multilabel_classification
+    >>> # This produces a feature matrix of token counts, similar to what
+    >>> # CountVectorizer would produce on text.
+    >>> X, _ = make_multilabel_classification(random_state=0)
+    >>> lda = LatentDirichletAllocation(n_components=5,
+    ...     random_state=0)
+    >>> lda.fit(X) # doctest: +ELLIPSIS
+    LatentDirichletAllocation(...)
+    >>> # get topics for some given samples:
+    >>> lda.transform(X[-2:])
+    array([[0.00360392, 0.25499205, 0.0036211 , 0.64236448, 0.09541846],
+           [0.15297572, 0.00362644, 0.44412786, 0.39568399, 0.003586  ]])
+
     References
     ----------
     [1] "Online Learning for Latent Dirichlet Allocation", Matthew D. Hoffman,
@@ -262,11 +275,11 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=10, doc_topic_prior=None,
-                 topic_word_prior=None, learning_method=None,
+                 topic_word_prior=None, learning_method='batch',
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
                  perp_tol=1e-1, mean_change_tol=1e-3, max_doc_update_iter=100,
-                 n_jobs=1, verbose=0, random_state=None, n_topics=None):
+                 n_jobs=None, verbose=0, random_state=None):
         self.n_components = n_components
         self.doc_topic_prior = doc_topic_prior
         self.topic_word_prior = topic_word_prior
@@ -283,21 +296,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.random_state = random_state
-        self.n_topics = n_topics
 
     def _check_params(self):
         """Check model parameters."""
-        if self.n_topics is not None:
-            self._n_components = self.n_topics
-            warnings.warn("n_topics has been renamed to n_components in "
-                          "version 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-        else:
-            self._n_components = self.n_components
-
-        if self._n_components <= 0:
+        if self.n_components <= 0:
             raise ValueError("Invalid 'n_components' parameter: %r"
-                             % self._n_components)
+                             % self.n_components)
 
         if self.total_samples <= 0:
             raise ValueError("Invalid 'total_samples' parameter: %r"
@@ -307,7 +311,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             raise ValueError("Invalid 'learning_offset' parameter: %r"
                              % self.learning_offset)
 
-        if self.learning_method not in ("batch", "online", None):
+        if self.learning_method not in ("batch", "online"):
             raise ValueError("Invalid 'learning_method' parameter: %r"
                              % self.learning_method)
 
@@ -319,12 +323,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self.n_iter_ = 0
 
         if self.doc_topic_prior is None:
-            self.doc_topic_prior_ = 1. / self._n_components
+            self.doc_topic_prior_ = 1. / self.n_components
         else:
             self.doc_topic_prior_ = self.doc_topic_prior
 
         if self.topic_word_prior is None:
-            self.topic_word_prior_ = 1. / self._n_components
+            self.topic_word_prior_ = 1. / self.n_components
         else:
             self.topic_word_prior_ = self.topic_word_prior
 
@@ -332,7 +336,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         init_var = 1. / init_gamma
         # In the literature, this is called `lambda`
         self.components_ = self.random_state_.gamma(
-            init_gamma, init_var, (self._n_components, n_features))
+            init_gamma, init_var, (self.n_components, n_features))
 
         # In the literature, this is `exp(E[log(beta)])`
         self.exp_dirichlet_component_ = np.exp(
@@ -372,7 +376,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         random_state = self.random_state_ if random_init else None
 
         # TODO: make Parallel._effective_n_jobs public instead?
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         if parallel is None:
             parallel = Parallel(n_jobs=n_jobs, verbose=max(0,
                                 self.verbose - 1))
@@ -495,7 +499,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 "the model was trained with feature size %d." %
                 (n_features, self.components_.shape[1]))
 
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,
                       self.verbose - 1)) as parallel:
             for idx_slice in gen_batches(n_samples, batch_size):
@@ -529,12 +533,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
         learning_method = self.learning_method
-        if learning_method is None:
-            warnings.warn("The default value for 'learning_method' will be "
-                          "changed from 'online' to 'batch' in the release "
-                          "0.20. This warning was introduced in 0.18.",
-                          DeprecationWarning)
-            learning_method = 'online'
 
         batch_size = self.batch_size
 
@@ -542,10 +540,10 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         self._init_latent_vars(n_features)
         # change to perplexity later
         last_bound = None
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,
                       self.verbose - 1)) as parallel:
-            for i in xrange(max_iter):
+            for i in range(max_iter):
                 if learning_method == 'online':
                     for idx_slice in gen_batches(n_samples, batch_size):
                         self._em_step(X[idx_slice, :], total_samples=n_samples,
@@ -683,7 +681,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             X_indptr = X.indptr
 
         # E[log p(docs | theta, beta)]
-        for idx_d in xrange(0, n_samples):
+        for idx_d in range(0, n_samples):
             if is_sparse_x:
                 ids = X_indices[X_indptr[idx_d]:X_indptr[idx_d + 1]]
                 cnts = X_data[X_indptr[idx_d]:X_indptr[idx_d + 1]]
@@ -697,7 +695,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         # compute E[log p(theta | alpha) - log q(theta | gamma)]
         score += _loglikelihood(doc_topic_prior, doc_topic_distr,
-                                dirichlet_doc_topic, self._n_components)
+                                dirichlet_doc_topic, self.n_components)
 
         # Compensate for the subsampling of the population of documents
         if sub_sampling:
@@ -767,7 +765,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                 raise ValueError("Number of samples in X and doc_topic_distr"
                                  " do not match.")
 
-            if n_components != self._n_components:
+            if n_components != self.n_components:
                 raise ValueError("Number of topics does not match.")
 
         current_samples = X.shape[0]
@@ -781,7 +779,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
 
         return np.exp(-1.0 * perword_bound)
 
-    def perplexity(self, X, doc_topic_distr='deprecated', sub_sampling=False):
+    def perplexity(self, X, sub_sampling=False):
         """Calculate approximate perplexity for data X.
 
         Perplexity is defined as exp(-1. * log-likelihood per word)
@@ -795,12 +793,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, [n_samples, n_features]
             Document word matrix.
 
-        doc_topic_distr : None or array, shape=(n_samples, n_components)
-            Document topic distribution.
-            This argument is deprecated and is currently being ignored.
-
-            .. deprecated:: 0.19
-
         sub_sampling : bool
             Do sub-sampling or not.
 
@@ -809,10 +801,4 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         score : float
             Perplexity score.
         """
-        if doc_topic_distr != 'deprecated':
-            warnings.warn("Argument 'doc_topic_distr' is deprecated and is "
-                          "being ignored as of 0.19. Support for this "
-                          "argument will be removed in 0.21.",
-                          DeprecationWarning)
-
         return self._perplexity_precomp_distr(X, sub_sampling=sub_sampling)

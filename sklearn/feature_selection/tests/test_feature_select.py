@@ -1,17 +1,14 @@
 """
 Todo: cross-check the F-value with stats model
 """
-from __future__ import division
 import itertools
 import warnings
 import numpy as np
 from scipy import stats, sparse
 
-from numpy.testing import run_module_suite
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_not_in
@@ -41,8 +38,8 @@ def test_f_oneway_vs_scipy_stats():
     X2 = 1 + rng.randn(10, 3)
     f, pv = stats.f_oneway(X1, X2)
     f2, pv2 = f_oneway(X1, X2)
-    assert_true(np.allclose(f, f2))
-    assert_true(np.allclose(pv, pv2))
+    assert np.allclose(f, f2)
+    assert np.allclose(pv, pv2)
 
 
 def test_f_oneway_ints():
@@ -70,11 +67,11 @@ def test_f_classif():
 
     F, pv = f_classif(X, y)
     F_sparse, pv_sparse = f_classif(sparse.csr_matrix(X), y)
-    assert_true((F > 0).all())
-    assert_true((pv > 0).all())
-    assert_true((pv < 1).all())
-    assert_true((pv[:5] < 0.05).all())
-    assert_true((pv[5:] > 1.e-4).all())
+    assert (F > 0).all()
+    assert (pv > 0).all()
+    assert (pv < 1).all()
+    assert (pv[:5] < 0.05).all()
+    assert (pv[5:] > 1.e-4).all()
     assert_array_almost_equal(F_sparse, F)
     assert_array_almost_equal(pv_sparse, pv)
 
@@ -86,11 +83,11 @@ def test_f_regression():
                            shuffle=False, random_state=0)
 
     F, pv = f_regression(X, y)
-    assert_true((F > 0).all())
-    assert_true((pv > 0).all())
-    assert_true((pv < 1).all())
-    assert_true((pv[:5] < 0.05).all())
-    assert_true((pv[5:] > 1.e-4).all())
+    assert (F > 0).all()
+    assert (pv > 0).all()
+    assert (pv < 1).all()
+    assert (pv[:5] < 0.05).all()
+    assert (pv[5:] > 1.e-4).all()
 
     # with centering, compare with sparse
     F, pv = f_regression(X, y, center=True)
@@ -145,11 +142,11 @@ def test_f_classif_multi_class():
                                class_sep=10, shuffle=False, random_state=0)
 
     F, pv = f_classif(X, y)
-    assert_true((F > 0).all())
-    assert_true((pv > 0).all())
-    assert_true((pv < 1).all())
-    assert_true((pv[:5] < 0.05).all())
-    assert_true((pv[5:] > 1.e-4).all())
+    assert (F > 0).all()
+    assert (pv > 0).all()
+    assert (pv < 1).all()
+    assert (pv[:5] < 0.05).all()
+    assert (pv[5:] > 1.e-4).all()
 
 
 def test_select_percentile_classif():
@@ -194,7 +191,7 @@ def test_select_percentile_classif_sparse():
     assert_array_equal(support, gtruth)
 
     X_r2inv = univariate_filter.inverse_transform(X_r2)
-    assert_true(sparse.issparse(X_r2inv))
+    assert sparse.issparse(X_r2inv)
     support_mask = safe_mask(X_r2inv, support)
     assert_equal(X_r2inv.shape, X.shape)
     assert_array_equal(X_r2inv[:, support_mask].toarray(), X_r.toarray())
@@ -670,7 +667,3 @@ def test_mutual_info_regression():
     gtruth = np.zeros(10)
     gtruth[:2] = 1
     assert_array_equal(support, gtruth)
-
-
-if __name__ == '__main__':
-    run_module_suite()

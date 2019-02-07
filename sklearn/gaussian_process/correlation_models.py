@@ -238,7 +238,7 @@ def cubic(theta, d):
     else:
         td = np.abs(d) * theta.reshape(1, n_features)
 
-    td[td > 1.] = 1.
+    np.clip(td, None, 1., out=td)
     ss = 1. - td ** 2. * (3. - 2. * td)
     r = np.prod(ss, 1)
 
@@ -290,7 +290,7 @@ def linear(theta, d):
     else:
         td = np.abs(d) * theta.reshape(1, n_features)
 
-    td[td > 1.] = 1.
+    np.clip(td, None, 1., out=td)
     ss = 1. - td
     r = np.prod(ss, 1)
 

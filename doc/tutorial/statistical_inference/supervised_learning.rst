@@ -88,14 +88,14 @@ Scikit-learn documentation for more information about this type of classifier.)
     >>> indices = np.random.permutation(len(iris_X))
     >>> iris_X_train = iris_X[indices[:-10]]
     >>> iris_y_train = iris_y[indices[:-10]]
-    >>> iris_X_test  = iris_X[indices[-10:]]
-    >>> iris_y_test  = iris_y[indices[-10:]]
+    >>> iris_X_test = iris_X[indices[-10:]]
+    >>> iris_y_test = iris_y[indices[-10:]]
     >>> # Create and fit a nearest-neighbor classifier
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> knn = KNeighborsClassifier()
     >>> knn.fit(iris_X_train, iris_y_train) # doctest: +NORMALIZE_WHITESPACE
     KNeighborsClassifier(algorithm='auto', leaf_size=30, metric='minkowski',
-               metric_params=None, n_jobs=1, n_neighbors=5, p=2,
+               metric_params=None, n_jobs=None, n_neighbors=5, p=2,
                weights='uniform')
     >>> knn.predict(iris_X_test)
     array([1, 2, 1, 0, 0, 0, 2, 1, 2, 0])
@@ -176,13 +176,17 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> from sklearn import linear_model
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
-    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
+    ...                                       # doctest: +NORMALIZE_WHITESPACE
+    LinearRegression(copy_X=True, fit_intercept=True, n_jobs=None,
+                     normalize=False)
     >>> print(regr.coef_)
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
 
+
     >>> # The mean square error
-    >>> np.mean((regr.predict(diabetes_X_test)-diabetes_y_test)**2)# doctest: +ELLIPSIS
+    >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
+    ...                                                   # doctest: +ELLIPSIS
     2004.56760268...
 
     >>> # Explained variance score: 1 is perfect prediction
@@ -217,10 +221,10 @@ induces high variance:
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
-    ...    this_X = .1*np.random.normal(size=(2, 1)) + X
-    ...    regr.fit(this_X, y)
-    ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...    plt.scatter(this_X, y, s=3)  # doctest: +SKIP
+    ...     this_X = .1 * np.random.normal(size=(2, 1)) + X
+    ...     regr.fit(this_X, y)
+    ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...     plt.scatter(this_X, y, s=3)  # doctest: +SKIP
 
 
 
@@ -242,10 +246,10 @@ regression:
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
-    ...    this_X = .1*np.random.normal(size=(2, 1)) + X
-    ...    regr.fit(this_X, y)
-    ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...    plt.scatter(this_X, y, s=3) # doctest: +SKIP
+    ...     this_X = .1 * np.random.normal(size=(2, 1)) + X
+    ...     regr.fit(this_X, y)
+    ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...     plt.scatter(this_X, y, s=3) # doctest: +SKIP
 
 This is an example of **bias/variance tradeoff**: the larger the ridge
 ``alpha`` parameter, the higher the bias and the lower the variance.
@@ -254,11 +258,13 @@ We can choose ``alpha`` to minimize left out error, this time using the
 diabetes dataset rather than our synthetic data::
 
     >>> alphas = np.logspace(-4, -1, 6)
-    >>> from __future__ import print_function
-    >>> print([regr.set_params(alpha=alpha
-    ...             ).fit(diabetes_X_train, diabetes_y_train,
-    ...             ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas]) # doctest: +ELLIPSIS
-    [0.5851110683883..., 0.5852073015444..., 0.5854677540698..., 0.5855512036503..., 0.5830717085554..., 0.57058999437...]
+    >>> print([regr.set_params(alpha=alpha)
+    ...            .fit(diabetes_X_train, diabetes_y_train)
+    ...            .score(diabetes_X_test, diabetes_y_test)
+    ...        for alpha in alphas])
+    ...                            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    [0.5851110683883..., 0.5852073015444..., 0.5854677540698...,
+     0.5855512036503..., 0.5830717085554..., 0.57058999437...]
 
 
 .. note::
@@ -320,13 +326,14 @@ application of Occam's razor: *prefer simpler models*.
 ::
 
     >>> regr = linear_model.Lasso()
-    >>> scores = [regr.set_params(alpha=alpha
-    ...             ).fit(diabetes_X_train, diabetes_y_train
-    ...             ).score(diabetes_X_test, diabetes_y_test)
-    ...        for alpha in alphas]
+    >>> scores = [regr.set_params(alpha=alpha)
+    ...               .fit(diabetes_X_train, diabetes_y_train)
+    ...               .score(diabetes_X_test, diabetes_y_test)
+    ...           for alpha in alphas]
     >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
+    ... # doctest: +NORMALIZE_WHITESPACE
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
        max_iter=1000, normalize=False, positive=False, precompute=False,
        random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
@@ -368,12 +375,13 @@ function or **logistic** function:
 
 ::
 
-    >>> logistic = linear_model.LogisticRegression(C=1e5)
-    >>> logistic.fit(iris_X_train, iris_y_train)
+    >>> log = linear_model.LogisticRegression(solver='lbfgs', C=1e5,
+    ...                                       multi_class='multinomial')
+    >>> log.fit(iris_X_train, iris_y_train)  # doctest: +NORMALIZE_WHITESPACE
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
-              fit_intercept=True, intercept_scaling=1, max_iter=100,
-              multi_class='ovr', n_jobs=1, penalty='l2', random_state=None,
-              solver='liblinear', tol=0.0001, verbose=0, warm_start=False)
+        fit_intercept=True, intercept_scaling=1, l1_ratio=None, max_iter=100,
+        multi_class='multinomial', n_jobs=None, penalty='l2', random_state=None,
+        solver='lbfgs', tol=0.0001, verbose=0, warm_start=False)
 
 This is known as :class:`LogisticRegression`.
 
@@ -443,7 +451,7 @@ the separating line (less regularization).
 
 .. topic:: Example:
 
- - :ref:`sphx_glr_auto_examples_svm_plot_iris.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in

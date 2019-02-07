@@ -26,14 +26,13 @@ scores = list()
 scores_std = list()
 for C in C_s:
     svc.C = C
-    this_scores = cross_val_score(svc, X, y, n_jobs=1)
+    this_scores = cross_val_score(svc, X, y, cv=5, n_jobs=1)
     scores.append(np.mean(this_scores))
     scores_std.append(np.std(this_scores))
 
 # Do the plotting
 import matplotlib.pyplot as plt
-plt.figure(1, figsize=(4, 3))
-plt.clf()
+plt.figure()
 plt.semilogx(C_s, scores)
 plt.semilogx(C_s, np.array(scores) + np.array(scores_std), 'b--')
 plt.semilogx(C_s, np.array(scores) - np.array(scores_std), 'b--')

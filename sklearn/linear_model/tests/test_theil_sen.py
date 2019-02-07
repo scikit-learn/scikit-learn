@@ -4,9 +4,6 @@ Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 
 # Author: Florian Wilhelm <florian.wilhelm@gmail.com>
 # License: BSD 3 clause
-
-from __future__ import division, print_function, absolute_import
-
 import os
 import sys
 from contextlib import contextmanager

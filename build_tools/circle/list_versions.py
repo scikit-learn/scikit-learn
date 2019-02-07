@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
 
 # List all available versions of the documentation
-from __future__ import print_function
-
 import json
 import re
 import sys
 
-try:
-    from urllib.request import urlopen
-except ImportError:
-    # Python 2
-    from urllib import urlopen
-
 from distutils.version import LooseVersion
-
+from urllib.request import urlopen
 
 def json_urlread(url):
     try:
@@ -47,6 +39,8 @@ def get_pdf_size(version):
             return human_readable_data_quantity(path_details['size'], 1000)
 
 
+print(':orphan:')
+print()
 heading = 'Available documentation for Scikit-learn'
 print(heading)
 print('=' * len(heading))

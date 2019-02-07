@@ -4,6 +4,23 @@
 
 .. _changes_0_19:
 
+Version 0.19.2
+==============
+
+**July, 2018**
+
+This release is exclusively in order to support Python 3.7.
+
+Related changes
+---------------
+
+- ``n_iter_`` may vary from previous releases in
+  :class:`linear_model.LogisticRegression` with ``solver='lbfgs'`` and
+  :class:`linear_model.HuberRegressor`.  For Scipy <= 1.0.0, the optimizer could
+  perform more than the requested maximum number of iterations. Now both
+  estimators will report at most ``max_iter`` iterations even if more were
+  performed. :issue:`10723` by `Joel Nothman`_.
+
 Version 0.19.1
 ==============
 
@@ -739,7 +756,7 @@ Metrics
 - :func:`metrics.average_precision_score` no longer linearly
   interpolates between operating points, and instead weighs precisions
   by the change in recall since the last operating point, as per the
-  `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
+  `Wikipedia entry <https://en.wikipedia.org/wiki/Average_precision>`_.
   (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
   :user:`Nick Dingwall <ndingwall>` and `Gael Varoquaux`_.
 
@@ -794,7 +811,7 @@ Miscellaneous
   Python 2. :issue:`9284` by :user:`Sebastin Santy <SebastinSanty>`.
 
 - Several minor issues were fixed with thanks to the alerts of
-  [lgtm.com](http://lgtm.com). :issue:`9278` by :user:`Jean Helie <jhelie>`,
+  [lgtm.com](https://lgtm.com/). :issue:`9278` by :user:`Jean Helie <jhelie>`,
   among others.
 
 API changes summary
@@ -807,8 +824,8 @@ Trees and ensembles
 - All tree based estimators now accept a ``min_impurity_decrease``
   parameter in lieu of the ``min_impurity_split``, which is now deprecated.
   The ``min_impurity_decrease`` helps stop splitting the nodes in which
-  the weighted impurity decrease from splitting is no longer alteast
-  ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV`_.
+  the weighted impurity decrease from splitting is no longer at least
+  ``min_impurity_decrease``. :issue:`8449` by `Raghav RV`_.
 
 Linear, kernelized and related models
 

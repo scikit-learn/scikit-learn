@@ -1,27 +1,25 @@
 """Joblib is a set of tools to provide **lightweight pipelining in
-Python**. In particular, joblib offers:
+Python**. In particular:
 
-1. transparent disk-caching of the output values and lazy re-evaluation
+1. transparent disk-caching of functions and lazy re-evaluation
    (memoize pattern)
 
 2. easy simple parallel computing
-
-3. logging and tracing of the execution
 
 Joblib is optimized to be **fast** and **robust** in particular on large
 data and has specific optimizations for `numpy` arrays. It is
 **BSD-licensed**.
 
 
-    ========================= ================================================
-    **User documentation:**        http://pythonhosted.org/joblib
+    ==================== ===============================================
+    **Documentation:**       https://joblib.readthedocs.io
 
-    **Download packages:**         http://pypi.python.org/pypi/joblib#downloads
+    **Download:**            http://pypi.python.org/pypi/joblib#downloads
 
-    **Source code:**               http://github.com/joblib/joblib
+    **Source code:**         http://github.com/joblib/joblib
 
-    **Report issues:**             http://github.com/joblib/joblib/issues
-    ========================= ================================================
+    **Report issues:**       http://github.com/joblib/joblib/issues
+    ==================== ===============================================
 
 
 Vision
@@ -43,9 +41,8 @@ reproducibility when working with long running jobs.
     good for resuming an application status or computational job, eg
     after a crash.
 
-Joblib strives to address these problems while **leaving your code and
-your flow control as unmodified as possible** (no framework, no new
-paradigms).
+Joblib addresses these problems while **leaving your code and your flow
+control as unmodified as possible** (no framework, no new paradigms).
 
 Main features
 ------------------
@@ -59,16 +56,17 @@ Main features
    computation to disk and rerun it only if necessary::
 
       >>> from sklearn.externals.joblib import Memory
-      >>> mem = Memory(cachedir='/tmp/joblib')
+      >>> cachedir = 'your_cache_dir_goes_here'
+      >>> mem = Memory(cachedir)
       >>> import numpy as np
       >>> a = np.vander(np.arange(3)).astype(np.float)
       >>> square = mem.cache(np.square)
       >>> b = square(a)                                   # doctest: +ELLIPSIS
       ________________________________________________________________________________
       [Memory] Calling square...
-      square(array([[ 0.,  0.,  1.],
-             [ 1.,  1.,  1.],
-             [ 4.,  2.,  1.]]))
+      square(array([[0., 0., 1.],
+             [1., 1., 1.],
+             [4., 2., 1.]]))
       ___________________________________________________________square - 0...s, 0.0min
 
       >>> c = square(a)
@@ -83,19 +81,12 @@ Main features
       [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
 
 
-3) **Logging/tracing:** The different functionalities will
-   progressively acquire better logging mechanism to help track what
-   has been ran, and capture I/O easily. In addition, Joblib will
-   provide a few I/O primitives, to easily define logging and
-   display streams, and provide a way of compiling a report.
-   We want to be able to quickly inspect what has been run.
-
-4) **Fast compressed Persistence**: a replacement for pickle to work
+3) **Fast compressed Persistence**: a replacement for pickle to work
    efficiently on Python objects containing large data (
    *joblib.dump* & *joblib.load* ).
 
 ..
-    >>> import shutil ; shutil.rmtree('/tmp/joblib/')
+    >>> import shutil ; shutil.rmtree(cachedir)
 
 """
 
@@ -115,15 +106,16 @@ Main features
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.11'
+__version__ = '0.13.0'
 
 
-from .memory import Memory, MemorizedResult
+from .memory import Memory, MemorizedResult, register_store_backend
 from .logger import PrintTime
 from .logger import Logger
 from .hashing import hash
 from .numpy_pickle import dump
 from .numpy_pickle import load
+from .compressor import register_compressor
 from .parallel import Parallel
 from .parallel import delayed
 from .parallel import cpu_count
@@ -131,7 +123,11 @@ from .parallel import register_parallel_backend
 from .parallel import parallel_backend
 from .parallel import effective_n_jobs
 
+from .externals.loky import wrap_non_picklable_objects
+
 
 __all__ = ['Memory', 'MemorizedResult', 'PrintTime', 'Logger', 'hash', 'dump',
            'load', 'Parallel', 'delayed', 'cpu_count', 'effective_n_jobs',
-           'register_parallel_backend', 'parallel_backend']
+           'register_parallel_backend', 'parallel_backend',
+           'register_store_backend', 'register_compressor',
+           'wrap_non_picklable_objects']
