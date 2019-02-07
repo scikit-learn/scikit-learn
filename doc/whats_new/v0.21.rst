@@ -114,6 +114,9 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
   with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
 
+- |Feature| :class:`linear_model.ElasticNet` now supports the 'saga' solver.
+  :issue:`12966` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Enhancement| :class:`linear_model.LogisticRegression` now supports an
   unregularized objective by setting ``penalty`` to ``'none'``. This is
   equivalent to setting ``C=np.inf`` with l2 regularization. Not supported
