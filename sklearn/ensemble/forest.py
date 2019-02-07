@@ -912,10 +912,10 @@ class RandomForestClassifier(ForestClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    ccp_alpha : float, optional (default=0.0)
+    ccp_alpha : positive float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be choosen.
+        ``ccp_alpha`` will be choosen. By default, no pruning is performed.
 
     Attributes
     ----------
@@ -1185,10 +1185,10 @@ class RandomForestRegressor(ForestRegressor):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    ccp_alpha : float, optional (default=0.0)
+    ccp_alpha : positive float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be choosen.
+        ``ccp_alpha`` will be choosen. By default, no pruning is performed.
 
     Attributes
     ----------
@@ -1469,10 +1469,10 @@ class ExtraTreesClassifier(ForestClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    ccp_alpha : float, optional (default=0.0)
+    ccp_alpha : positive float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be choosen.
+        ``ccp_alpha`` will be choosen. By default, no pruning is performed.
 
     Attributes
     ----------
@@ -1712,10 +1712,10 @@ class ExtraTreesRegressor(ForestRegressor):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    ccp_alpha : float, optional (default=0.0)
+    ccp_alpha : positive float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be choosen.
+        ``ccp_alpha`` will be choosen. By default, no pruning is performed.
 
     Attributes
     ----------
@@ -1918,10 +1918,10 @@ class RandomTreesEmbedding(BaseForest):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    ccp_alpha : float, optional (default=0.0)
+    ccp_alpha : positive float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be choosen.
+        ``ccp_alpha`` will be choosen. By default, no pruning is performed.
 
     Attributes
     ----------

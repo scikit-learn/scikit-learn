@@ -113,9 +113,3 @@ cpdef build_pruned_tree_ccp(
     Tree tree, # OUT
     Tree orig_tree,
     double ccp_alpha)
-
-cdef _build_pruned_tree(
-    Tree tree, # OUT
-    Tree orig_tree,
-    const bint[:] leaves_in_subtree,
-    SIZE_t initial_capacity)

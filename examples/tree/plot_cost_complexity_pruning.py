@@ -1,4 +1,4 @@
-r"""
+"""
 ========================================================
 Post pruning decision trees with cost complexity pruning
 ========================================================
@@ -6,8 +6,9 @@ Post pruning decision trees with cost complexity pruning
 In this example, decision tree classifiers are trained with a post pruning
 technique called minimal cost complexity pruning. This technique is
 parameterized by the complexity parameter, :math:`\alpha`. Greater values of
-:math:`\alpha` will prune more of the tree, thus creating a smaller trees.
+:math:`\alpha` will prune more of the tree, thus creating smaller trees.
 """
+print(__doc__)
 
 ###############################################################################
 # Train decision tree classifiers
@@ -15,6 +16,7 @@ parameterized by the complexity parameter, :math:`\alpha`. Greater values of
 # Train 40 decision tree classifiers with :math:`\alpha` from 0.00 to
 # 0.40.
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
@@ -32,12 +34,10 @@ for ccp_alpha in ccp_alphas:
 ###############################################################################
 # Plot training and test scores vs alpha
 # --------------------------------------
-# Calcuate and plot the the training scores and test accuracy scores
+# Calculate and plot the training scores and test accuracy scores
 # for our classifiers. With :math:`\alpha` equal to 0.0, the decision tree is
 # overfitting with a 1.0 training accuracy score. As the decision tree is
 # pruned the testing accuracy score increases up to a point and then decreases.
-import matplotlib.pyplot as plt
-
 train_scores = []
 test_scores = []
 for clf in clfs:
@@ -51,7 +51,6 @@ ax.set_title("Accuracy vs alpha for training and testing sets")
 ax.plot(ccp_alphas, train_scores, label="train")
 ax.plot(ccp_alphas, test_scores, label="test")
 ax.legend()
-fig.show()
 
 ###############################################################################
 # Plot total number of nodes vs alpha

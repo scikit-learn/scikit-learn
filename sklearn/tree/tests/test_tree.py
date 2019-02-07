@@ -44,7 +44,7 @@ from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
-from sklearn.tree._tree import TREE_LEAF
+from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
 from sklearn.tree.tree import CRITERIA_CLF
 from sklearn.tree.tree import CRITERIA_REG
 from sklearn import datasets
@@ -1851,6 +1851,22 @@ def test_prune_tree_reg_are_subtrees(criterion, dataset, tree_cls):
     assert_pruning_creates_subtree(tree_cls, X, y)
 
 
+def test_prune_tree_raises_negative_ccp_alpha():
+    clf = DecisionTreeClassifier()
+    msg = "ccp_alpha must be greater than or equal to 0"
+
+    with pytest.raises(ValueError, match=msg):
+        clf.set_params(ccp_alpha=-1.0)
+        clf.fit(X, y)
+
+    clf.set_params(ccp_alpha=0.0)
+    clf.fit(X, y)
+
+    with pytest.raises(ValueError, match=msg):
+        clf.set_params(ccp_alpha=-1.0)
+        clf.prune_tree()
+
+
 def assert_pruning_creates_subtree(estimator_cls, X, y):
     estimators = []
     for ccp_alpha in np.linspace(0.0, 0.2, 11):
@@ -1858,7 +1874,7 @@ def assert_pruning_creates_subtree(estimator_cls, X, y):
             max_leaf_nodes=20, ccp_alpha=ccp_alpha, random_state=0).fit(X, y)
         estimators.append(est)
 
-    for prev_est, next_est in zip(estimators[:-1], estimators[1:]):
+    for prev_est, next_est in zip(estimators, estimators[1:]):
         assert_is_subtree(prev_est.tree_, next_est.tree_)
 
 
@@ -1872,27 +1888,31 @@ def assert_is_subtree(tree, subtree):
     subtree_c_right = subtree.children_right
 
     stack = [(0, 0)]
-    while len(stack) > 0:
-        tree_n_idx, subtree_n_idx = stack.pop()
+    while stack:
+        tree_node_idx, subtree_node_idx = stack.pop()
         assert_array_almost_equal(
-            tree.value[tree_n_idx], subtree.value[subtree_n_idx])
+            tree.value[tree_node_idx], subtree.value[subtree_node_idx])
         assert_almost_equal(
-            tree.impurity[tree_n_idx], subtree.impurity[subtree_n_idx])
+            tree.impurity[tree_node_idx], subtree.impurity[subtree_node_idx])
         assert_almost_equal(
-            tree.n_node_samples[tree_n_idx],
-            subtree.n_node_samples[subtree_n_idx])
+            tree.n_node_samples[tree_node_idx],
+            subtree.n_node_samples[subtree_node_idx])
         assert_almost_equal(
-            tree.weighted_n_node_samples[tree_n_idx],
-            subtree.weighted_n_node_samples[subtree_n_idx])
+            tree.weighted_n_node_samples[tree_node_idx],
+            subtree.weighted_n_node_samples[subtree_node_idx])
 
-        if (subtree_c_left[subtree_n_idx] == subtree_c_right[subtree_n_idx]):
+        if (subtree_c_left[subtree_node_idx] ==
+           subtree_c_right[subtree_node_idx]):
             # is a leaf
-            assert_almost_equal(-2, subtree.threshold[subtree_n_idx])
+            assert_almost_equal(
+                TREE_UNDEFINED,
+                subtree.threshold[subtree_node_idx])
         else:
             # not a leaf
             assert_almost_equal(
-                tree.threshold[tree_n_idx], subtree.threshold[subtree_n_idx])
+                tree.threshold[tree_node_idx],
+                subtree.threshold[subtree_node_idx])
             stack.append(
-                (tree_c_left[tree_n_idx], subtree_c_left[subtree_n_idx]))
+                (tree_c_left[tree_node_idx], subtree_c_left[subtree_node_idx]))
             stack.append(
-                (tree_c_right[tree_n_idx], subtree_c_right[subtree_n_idx]))
+                (tree_c_right[tree_node_idx], subtree_c_right[subtree_node_idx]))
