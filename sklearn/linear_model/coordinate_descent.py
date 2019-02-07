@@ -729,8 +729,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if (not isinstance(self.l1_ratio, numbers.Number) or
                 self.l1_ratio < 0 or self.l1_ratio > 1):
-                    raise ValueError("l1_ratio must be between 0 and 1;"
-                                     " got (l1_ratio=%r)" % self.l1_ratio)
+            raise ValueError("l1_ratio must be between 0 and 1;"
+                             " got (l1_ratio=%r)" % self.l1_ratio)
 
         all_solvers = ['cd', 'saga']
         if self.solver not in all_solvers:
