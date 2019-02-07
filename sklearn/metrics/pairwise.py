@@ -37,17 +37,17 @@ from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
 
 # Get mask for missing values
-def _get_mask(X, value_to_mask):
+def _get_missing_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
     if np.isnan(value_to_mask) or value_to_mask == "NaN":
         if isspmatrix_csr(X):
             return csr_matrix(
                 (np.isnan(X.data), X.indices, X.indptr),
-                shape=X.shape, dtype=np.bool)
+                shape=X.shape, dtype=np.bool).toarray()
         if isspmatrix_csc(X):
             return csc_matrix(
                 (np.isnan(X.data), X.indices, X.indptr),
-                shape=X.shape, dtype=np.bool)
+                shape=X.shape, dtype=np.bool).toarray()
         return np.isnan(X)
     return X == value_to_mask
 
@@ -343,7 +343,7 @@ def nan_euclidean_distances(X, Y=None, squared=False,
 
     Returns
     -------
-    distances : {array}, shape (n_samples_1, n_samples_2)
+    distances : array, shape (n_samples_1, n_samples_2)
 
     Examples
     --------
@@ -377,45 +377,43 @@ def nan_euclidean_distances(X, Y=None, squared=False,
                                  force_all_finite=force_all_finite, copy=copy)
 
     # Get missing mask for X and Y.T
-    mask_X = _get_mask(X, missing_values)
+    missing_X = _get_missing_mask(X, missing_values)
     YT = Y.T
-    mask_YT = mask_X.T if Y is X else _get_mask(YT, missing_values)
+    if Y is X:
+        missing_YT = missing_X.T
+    else:
+        missing_YT = _get_missing_mask(YT, missing_values)
 
-    if issparse(mask_X):
-        mask_X = mask_X.toarray()
-    if issparse(mask_YT):
-        mask_YT = mask_YT.toarray()
-
-    # Get mask of non-missing values set Y.T's missing to zero.
-    # Get X's mask of non-missing values and set X's missing to kzero
-    not_YT = (~mask_YT).astype(np.uint8)
-    not_X = (~mask_X).astype(np.uint8)
+    # Convert to uint8 be used to calculate distances
+    not_missing_X = (~missing_X).astype(np.uint8)
+    not_missing_YT = (~missing_YT).astype(np.uint8)
 
     # set missing values to zero
-    YT[mask_YT] = 0
-    X[mask_X] = 0
+    X[missing_X] = 0
+    YT[missing_YT] = 0
 
-    YTYT = YT.multiply(YT) if issparse(YT) else YT * YT
     XX = X.multiply(X) if issparse(X) else X * X
+    YTYT = YT.multiply(YT) if issparse(YT) else YT * YT
 
     # Calculate distances
     distances = safe_sparse_dot(X, YT, dense_output=True)
     distances *= -2
-    distances += safe_sparse_dot(XX, not_YT, dense_output=False)
-    distances += safe_sparse_dot(not_X, YTYT, dense_output=False)
+    distances += safe_sparse_dot(XX, not_missing_YT, dense_output=False)
+    distances += safe_sparse_dot(not_missing_X, YTYT, dense_output=False)
 
-    present_coords = safe_sparse_dot(not_X, not_YT, dense_output=True)
-    present_coords_mask = (present_coords != 0)
+    non_missing_cnt = np.dot(not_missing_X, not_missing_YT)
+    non_missing_mask = (non_missing_cnt != 0)
 
-    distances[present_coords_mask] *= (
-        X.shape[1] / present_coords[present_coords_mask])
+    distances[non_missing_mask] *= (
+        X.shape[1] / non_missing_cnt[non_missing_mask])
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
         np.fill_diagonal(distances, 0.0)
 
-    distances[~present_coords_mask] = np.nan
+    # coordinates with no common coordinates have a nan distance
+    distances[~non_missing_mask] = np.nan
 
     return distances if squared else np.sqrt(distances, out=distances)
 
@@ -1571,7 +1569,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
         missing_values = kwds.get("missing_values") if kwds.get(
             "missing_values") is not None else np.nan
 
-        if np.all(_get_mask(X.data if issparse(X) else X, missing_values)):
+        if np.all(
+                _get_missing_mask(
+                    X.data if issparse(X) else X, missing_values)):
             raise ValueError(
                 "One or more samples(s) only have missing values.")
 
