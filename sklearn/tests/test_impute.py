@@ -623,7 +623,7 @@ def test_missing_indicator_sparse_param(arr_type, missing_values,
             assert isinstance(X_trans_mask, np.ndarray)
 
 
-def test_knn_imputation_shape():
+def test_knn_imputer_shape():
     # Verify the shapes of the imputed matrix for different weights and
     # number of neighbors.
     n_rows = 10
@@ -638,7 +638,7 @@ def test_knn_imputation_shape():
             assert X_imputed.shape == (n_rows, n_cols)
 
 
-def test_knn_imputation_zero():
+def test_knn_imputer_zero_zero_missing_value():
     # Test imputation when missing_values == 0
     missing_values = 0
     n_neighbors = 2
@@ -668,7 +668,7 @@ def test_knn_imputation_zero():
     assert_raise_message(ValueError, msg, imputer.fit, X)
 
 
-def test_knn_imputation_zero_p2():
+def testknn_imputer_zero_nan_missing_values():
     # Test with an imputable matrix and also compare with missing_values=np.NaN
     X_zero = np.array([
         [1, 0, 1, 1, 1.],
@@ -705,7 +705,7 @@ def test_knn_imputation_zero_p2():
                        imputer_nan.fit_transform(X_nan))
 
 
-def test_knn_imputation_default():
+def test_knn_imputer_default():
     # Test imputation with default parameter values
 
     # Test with an imputable matrix
@@ -820,7 +820,7 @@ def test_knn_imputation_default():
     assert_array_equal(imputer.statistics_, statistics_mean)
 
 
-def test_default_with_invalid_input():
+def test_knn_imputer_default_with_invalid_input():
     # Test imputation with default values and invalid input
 
     # Test with % missing in a column > col_max_missing
@@ -882,7 +882,7 @@ def test_default_with_invalid_input():
     assert_raise_message(ValueError, msg, KNNImputer().fit(X_fit).transform, X)
 
 
-def test_knn_n_neighbors():
+def test_knn_imputer_n_neighbors():
 
     X = np.array([
         [0,       0],
@@ -943,7 +943,7 @@ def test_knn_n_neighbors():
         X).transform(X))
 
 
-def test_weight_uniform():
+def test_knn_imputer_weight_uniform():
     X = np.array([
         [0,      0],
         [np.nan, 2],
@@ -976,7 +976,7 @@ def test_weight_uniform():
     assert_array_equal(imputer.fit_transform(X), X_imputed_uniform)
 
 
-def test_weight_distance():
+def test_knn_imputer_weight_distance():
     X = np.array([
         [0,      0],
         [np.nan, 2],
@@ -1087,24 +1087,20 @@ def test_weight_distance():
     assert_array_equal(imputer.statistics_, statistics_mean)
 
 
-def test_metric_type():
+def test_knn_imputer_metric_type():
     X = np.array([
         [0,      0],
         [np.nan, 2],
-        [4,      3],
-        [5,      6],
-        [7,      7],
-        [9,      8],
-        [11,     10]
     ])
 
     # Test with a metric type without NaN support
     imputer = KNNImputer(metric="euclidean")
     bad_metric_msg = "The selected metric does not support NaN values."
-    assert_raise_message(ValueError, bad_metric_msg, imputer.fit, X)
+    with pytest.raises(ValueError, message=bad_metric_msg):
+        imputer.fit(X)
 
 
-def test_callable_metric():
+def test_knn_imputer_callable_metric():
 
     # Define callable metric that returns the l1 norm:
     def custom_callable(x, y, missing_values=np.nan, squared=False):
@@ -1131,7 +1127,7 @@ def test_callable_metric():
     assert_array_equal(imputer.fit_transform(X), X_imputed)
 
 
-def test_complete_features():
+def test_knn_imputer_complete_features():
 
     # Test with use_complete=True
     X = np.array([
@@ -1166,7 +1162,7 @@ def test_complete_features():
     assert_array_almost_equal(imputer_comp.fit_transform(X), X_imputed)
 
 
-def test_complete_features_weighted():
+def test_knn_imputer_complete_features_weighted():
 
     # Test with use_complete=True
     X = np.array([
@@ -1180,9 +1176,7 @@ def test_complete_features_weighted():
         [np.nan, 7,     7,       7]
     ])
 
-    dist = pairwise_distances(X,
-                              metric="nan_euclidean",
-                              squared=False)
+    dist = pairwise_distances(X, metric="nan_euclidean", squared=False)
 
     # Calculate weights
     r0c3_w = 1.0 / dist[0, 2:-1]
