@@ -43,11 +43,11 @@ def _get_missing_mask(X, value_to_mask):
         if isspmatrix_csr(X):
             return csr_matrix(
                 (np.isnan(X.data), X.indices, X.indptr),
-                shape=X.shape, dtype=np.bool).toarray()
+                shape=X.shape, dtype=np.bool)
         if isspmatrix_csc(X):
             return csc_matrix(
                 (np.isnan(X.data), X.indices, X.indptr),
-                shape=X.shape, dtype=np.bool).toarray()
+                shape=X.shape, dtype=np.bool)
         return np.isnan(X)
     return X == value_to_mask
 
@@ -125,7 +125,7 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
         - 'allow-nan': accept only np.nan values in array. Values cannot
           be infinite.
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.21
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
     copy : bool
@@ -383,6 +383,11 @@ def nan_euclidean_distances(X, Y=None, squared=False,
         missing_YT = missing_X.T
     else:
         missing_YT = _get_missing_mask(YT, missing_values)
+
+    if issparse(missing_X):
+        missing_X = missing_X.toarray()
+    if issparse(missing_YT):
+        missing_YT = missing_YT.toarray()
 
     # Convert to uint8 be used to calculate distances
     not_missing_X = (~missing_X).astype(np.uint8)
