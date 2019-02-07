@@ -623,10 +623,6 @@ def test_missing_indicator_sparse_param(arr_type, missing_values,
             assert isinstance(X_trans_mask, np.ndarray)
 
 
-#############################################################################
-# BEGIN KNNIMPUTER TEST
-
-
 def test_knn_imputation_shape():
     # Verify the shapes of the imputed matrix for different weights and
     # number of neighbors.

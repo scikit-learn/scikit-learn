@@ -3,7 +3,7 @@ from types import GeneratorType
 import numpy as np
 from numpy import linalg
 
-from scipy.sparse import dok_matrix, csr_matrix, issparse
+from scipy.sparse import dok_matrix, csr_matrix, issparse, csc_matrix
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
 from scipy.spatial.distance import cdist, pdist, squareform
 
@@ -590,10 +590,13 @@ def test_euclidean_distances():
     "X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
 @pytest.mark.parametrize(
     "Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
-@pytest.mark.parametrize("sparse", [True, False])
+@pytest.mark.parametrize("sparse", ['csr', 'csc', None])
 def test_nan_euclidean_distances_infinite_values(X, Y, sparse):
-    if sparse:
-        X = csr_matrix(X)
+    if sparse is not None:
+        if sparse == 'csr':
+            X = csr_matrix(X)
+        elif sparse == 'csc':
+            X = csc_matrix(X)
 
     with pytest.raises(ValueError) as excinfo:
         nan_euclidean_distances(X, Y=Y)
@@ -615,10 +618,13 @@ def test_nan_euclidean_distances_infinite_values(X, Y, sparse):
     (np.array([[-1, 1], [-1, 0]]), np.sqrt(2), -1),
     (np.array([[0, -1], [1, -1]]), np.sqrt(2), -1)
 ])
-@pytest.mark.parametrize("sparse", [True, False])
+@pytest.mark.parametrize("sparse", ['csr', 'csc', None])
 def test_nan_euclidean_distances_2x2(X, X_diag, missing_value, sparse):
-    if sparse:
-        X = csr_matrix(X)
+    if sparse is not None:
+        if sparse == 'csr':
+            X = csr_matrix(X)
+        elif sparse == 'csc':
+            X = csc_matrix(X)
 
     exp_dist = np.array([[0., X_diag], [X_diag, 0]])
 
@@ -638,11 +644,14 @@ def test_nan_euclidean_distances_2x2(X, X_diag, missing_value, sparse):
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
-@pytest.mark.parametrize("sparse", [True, False])
+@pytest.mark.parametrize("sparse", ['csr', 'csc', None])
 def test_nan_euclidean_distances_complete_nan(missing_value, sparse):
     X = np.array([[missing_value, missing_value], [0, 1]])
-    if sparse:
-        X = csr_matrix(X)
+    if sparse is not None:
+        if sparse == 'csr':
+            X = csr_matrix(X)
+        elif sparse == 'csc':
+            X = csc_matrix(X)
 
     exp_dist = np.array([[np.nan, np.nan], [np.nan, 0]])
 
@@ -655,7 +664,7 @@ def test_nan_euclidean_distances_complete_nan(missing_value, sparse):
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
-@pytest.mark.parametrize("sparse", [True, False])
+@pytest.mark.parametrize("sparse", ['csr', 'csc', None])
 def test_nan_euclidean_distances(missing_value, sparse):
     X = np.array([[1., missing_value, 3., 4., 2.],
                   [missing_value, 4., 6., 1., missing_value],
@@ -665,9 +674,13 @@ def test_nan_euclidean_distances(missing_value, sparse):
                   [missing_value, missing_value, 5., 4., 7.],
                   [missing_value, missing_value, missing_value, 4., 5.]])
 
-    if sparse:
-        X = csr_matrix(X)
-        Y = csr_matrix(Y)
+    if sparse is not None:
+        if sparse == 'csr':
+            X = csr_matrix(X)
+            Y = csc_matrix(Y)
+        elif sparse == 'csc':
+            X = csc_matrix(X)
+            Y = csr_matrix(Y)
 
     # Check for symmetry
     D1 = nan_euclidean_distances(X, Y,  missing_values=missing_value)

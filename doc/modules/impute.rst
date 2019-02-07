@@ -86,24 +86,23 @@ estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missin
 .. _knnimpute:
 
 Nearest neighbors imputation
-===============================
+============================
 
 The :class:`KNNImputer` class provides imputation for completing missing
 values using the k-Nearest Neighbors approach. Each sample's missing values
 are imputed using values from ``n_neighbors`` nearest neighbors found in the
-training set. Note that if a sample has more than one feature missing, then
-the sample can potentially have multiple sets of ``n_neighbors``
-donors depending on the particular feature being imputed.
+training set. In this context, a donor defined to be a neighbor that
+contributes to the imputation of a given sample. If a sample has more than one
+feature missing, then the sample can potentially have multiple sets of
+``n_neighbors`` donors depending on the particular feature being imputed.
+
 
 Each missing feature is then imputed as the average, either weighted or
-unweighted, of these neighbors. Where the number of donor neighbors is less
-than ``n_neighbors``, the training set average for that feature is used
-for imputation. The total number of samples in the training set is, of course,
-always greater than or equal to the number of nearest neighbors available for
-imputation, depending on both the overall sample size as well as the number of
-samples excluded from nearest neighbor calculation because of too many missing
-features (as controlled by ``row_max_missing``).
-For more information on the methodology, see ref. [#]_.
+unweighted, of these neighbors. When the number of donor neighbors is less
+than ``n_neighbors``, the training set average for that feature is
+used for imputation. When a row has more than a ``row_max_missing`` fraction
+of columns missing, then it is excluded from being a donor for imputation. For
+more information on the methodology, see ref. [OLGA]_.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean feature value of the two nearest
@@ -120,7 +119,7 @@ neighbors of the rows that contain the missing values::
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
 
-.. [#] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
+.. [OLGA] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
     Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, Missing value
     estimation methods for DNA microarrays, BIOINFORMATICS Vol. 17 no. 6, 2001
     Pages 520-525.

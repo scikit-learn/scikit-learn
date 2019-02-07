@@ -373,7 +373,7 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     """
 
     force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
-    X, Y = check_pairwise_arrays(X, Y, accept_sparse='csr',
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse=['csr', 'csc'],
                                  force_all_finite=force_all_finite, copy=copy)
 
     # Get missing mask for X and Y.T
