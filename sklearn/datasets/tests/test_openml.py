@@ -152,7 +152,7 @@ def _monkey_patch_webbased_functions(context,
     path_suffix = '.gz'
     read_fn = gzip.open
 
-    class MockHTTPResponse(object):
+    class MockHTTPResponse:
         def __init__(self, data, is_gzip):
             self.data = data
             self.is_gzip = is_gzip

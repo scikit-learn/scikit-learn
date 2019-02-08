@@ -44,7 +44,7 @@ DEFAULT_EPSILON = 0.1
 # Default value of ``epsilon`` parameter.
 
 
-class _ValidationScoreCallback(object):
+class _ValidationScoreCallback:
     """Callback for early stopping based on validation score"""
 
     def __init__(self, estimator, X_val, y_val, sample_weight_val,

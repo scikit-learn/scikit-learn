@@ -126,7 +126,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 ###############################################################################
-class BaseEstimator(object):
+class BaseEstimator:
     """Base class for all estimators in scikit-learn
 
     Notes
@@ -270,7 +270,7 @@ class BaseEstimator(object):
 
 
 ###############################################################################
-class ClassifierMixin(object):
+class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
     _estimator_type = "classifier"
 
@@ -303,7 +303,7 @@ class ClassifierMixin(object):
 
 
 ###############################################################################
-class RegressorMixin(object):
+class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
     _estimator_type = "regressor"
 
@@ -344,7 +344,7 @@ class RegressorMixin(object):
 
 
 ###############################################################################
-class ClusterMixin(object):
+class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
     _estimator_type = "clusterer"
 
@@ -370,7 +370,7 @@ class ClusterMixin(object):
         return self.labels_
 
 
-class BiclusterMixin(object):
+class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""
 
     @property
@@ -446,7 +446,7 @@ class BiclusterMixin(object):
 
 
 ###############################################################################
-class TransformerMixin(object):
+class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -479,7 +479,7 @@ class TransformerMixin(object):
             return self.fit(X, y, **fit_params).transform(X)
 
 
-class DensityMixin(object):
+class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
     _estimator_type = "DensityEstimator"
 
@@ -497,7 +497,7 @@ class DensityMixin(object):
         pass
 
 
-class OutlierMixin(object):
+class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
     _estimator_type = "outlier_detector"
 
@@ -524,7 +524,7 @@ class OutlierMixin(object):
 
 
 ###############################################################################
-class MetaEstimatorMixin(object):
+class MetaEstimatorMixin:
     """Mixin class for all meta estimators in scikit-learn."""
     # this is just a tag for the moment
 

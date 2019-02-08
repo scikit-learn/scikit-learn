@@ -247,7 +247,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
 
-class _CalibratedClassifier(object):
+class _CalibratedClassifier:
     """Probability calibration with isotonic regression or sigmoid.
 
     It assumes that base_estimator has already been fit, and trains the
