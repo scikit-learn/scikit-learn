@@ -28,6 +28,9 @@ from .classification import matthews_corrcoef
 from .classification import precision_recall_fscore_support
 from .classification import precision_score
 from .classification import recall_score
+from .classification import min_precision
+from .classification import aucpr_min
+from .classification import min_average_precision
 from .classification import zero_one_loss
 from .classification import brier_score_loss
 from .classification import multilabel_confusion_matrix
@@ -75,6 +78,7 @@ __all__ = [
     'adjusted_mutual_info_score',
     'adjusted_rand_score',
     'auc',
+    'aucpr_min'
     'average_precision_score',
     'balanced_accuracy_score',
     'calinski_harabaz_score',
@@ -109,6 +113,8 @@ __all__ = [
     'mean_squared_error',
     'mean_squared_log_error',
     'median_absolute_error',
+    'min_precision',
+    'min_average_precision',
     'multilabel_confusion_matrix',
     'mutual_info_score',
     'normalized_mutual_info_score',
