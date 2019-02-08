@@ -746,8 +746,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def _compute_impute(self, dist, fit_X_col, mask_fit_X_col, statistic):
-        """Helper function to find and impute missing values of a single
-        column, ``X_col``.
+        """Helper function to calculate the values to impute a single
+        column. Assume ``dist`` contains at least one row.
 
         Parameters
         ----------
