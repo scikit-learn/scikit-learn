@@ -68,7 +68,7 @@ def generate_data(n_samples, n_features, weights, means, precisions,
     return X
 
 
-class RandomData(object):
+class RandomData:
     def __init__(self, rng, n_samples=500, n_components=2, n_features=2,
                  scale=50):
         self.n_samples = n_samples

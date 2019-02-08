@@ -56,7 +56,6 @@ from ..utils import deprecated
 from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
-from ..utils.validation import has_fit_parameter
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
@@ -69,7 +68,7 @@ from ..exceptions import NotFittedError
 
 @deprecated("QuantileEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
-class QuantileEstimator(BaseEstimator):
+class QuantileEstimator:
     """An estimator predicting the alpha-quantile of the training targets.
 
     Parameters
@@ -124,7 +123,7 @@ class QuantileEstimator(BaseEstimator):
 
 @deprecated("MeanEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
-class MeanEstimator(BaseEstimator):
+class MeanEstimator:
     """An estimator predicting the mean of the training targets."""
     def fit(self, X, y, sample_weight=None):
         """Fit the estimator.
@@ -167,7 +166,7 @@ class MeanEstimator(BaseEstimator):
 
 @deprecated("LogOddsEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
-class LogOddsEstimator(BaseEstimator):
+class LogOddsEstimator:
     """An estimator predicting the log odds ratio."""
     scale = 1.0
 
@@ -226,7 +225,7 @@ class ScaledLogOddsEstimator(LogOddsEstimator):
 
 @deprecated("PriorProbablityEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
-class PriorProbabilityEstimator(BaseEstimator):
+class PriorProbabilityEstimator:
     """An estimator predicting the probability of each
     class in the training data.
     """
@@ -271,7 +270,7 @@ class PriorProbabilityEstimator(BaseEstimator):
 
 @deprecated("Using ZeroEstimator is deprecated in version "
             "0.21 and will be removed in version 0.23.")
-class ZeroEstimator(BaseEstimator):
+class ZeroEstimator:
     """An estimator that simply predicts zero.
 
     .. deprecated:: 0.21
@@ -329,7 +328,7 @@ class ZeroEstimator(BaseEstimator):
 @deprecated("All Losses in sklearn.ensemble.gradient_boosting are "
             "deprecated in version "
             "0.21 and will be removed in version 0.23.")
-class LossFunction(object, metaclass=ABCMeta):
+class LossFunction(metaclass=ABCMeta):
     """Abstract base class for various loss functions.
 
     Parameters
