@@ -746,7 +746,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def _impute(self, dist, X_col, fit_X_col, mask_col,
-                mask_fit_X_col, statistic_col):
+                mask_fit_X_col, statistic):
         """Helper function to find and impute missing values of a single
         column, ``X_col``.
 
@@ -767,7 +767,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         mask_fit_X_col : array-like, shape = (n_train_samples, )
             mask for missing values corresponding to ``fit_X_col``
 
-        statistic_col : float
+        statistic : float
             statistic for column generated from fitting ``fit_X_col``
         """
         if not np.any(mask_col, axis=0):
@@ -779,7 +779,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         # Impute using column mean if n_neighbors are not available
         if len(potential_donors_idx) < self.n_neighbors:
-            X_col[receivers_idx] = statistic_col
+            X_col[receivers_idx] = statistic
             return
 
         # Get distance from potential donors
