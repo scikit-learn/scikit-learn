@@ -944,7 +944,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                                                    predictor)
                 self.imputation_sequence_.append(predictor_triplet)
 
-            if self.verbose > 0:
+            if self.verbose > 1:
                 print('[IterativeImputer] Ending imputation round '
                       '%d/%d, elapsed time %0.2f'
                       % (self.n_iter_, self.max_iter, time() - start_t))

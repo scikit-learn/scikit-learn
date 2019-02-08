@@ -508,6 +508,42 @@ def test_imputation_copy():
     # made, even if copy=False.
 
 
+def test_iterative_imputer_zero_iters():
+    rng = np.random.RandomState(0)
+
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
+    missing_flag = X == 0
+    X[missing_flag] = np.nan
+
+    imputer = IterativeImputer(max_iter=0)
+    X_imputed = imputer.fit_transform(X)
+    # with max_iter=0, only initial imputation is performed
+    assert_allclose(X_imputed, imputer.initial_imputer_.transform(X))
+
+    # repeat but force n_iter_ to 0
+    imputer = IterativeImputer(max_iter=5).fit(X)
+    # transformed should not be equal to initial imputation
+    assert not np.all(imputer.transform(X) ==
+                      imputer.initial_imputer_.transform(X))
+
+    imputer.n_iter_ = 0
+    # now they should be equal as only initial imputation is done
+    assert_allclose(imputer.transform(X),
+                    imputer.initial_imputer_.transform(X))
+
+
+def test_iterative_imputer_verbose():
+    n = 10
+    d = 3
+    X = sparse_random_matrix(n, d, density=0.10).toarray()
+    imputer = IterativeImputer(missing_values=0, max_iter=1, verbose=1)
+    imputer.fit(X)
+    imputer.verbose = 2
+    imputer.transform(X)
+
+
 @pytest.mark.parametrize(
     "imputation_order",
     ['random', 'roman', 'ascending', 'descending', 'arabic']
