@@ -6,8 +6,6 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-import os
-import csv
 import sys
 import shutil
 from collections import namedtuple
@@ -19,11 +17,17 @@ from ..utils import Bunch
 from ..utils import check_random_state
 
 import numpy as np
+from numpy import ndarray
 
 from urllib.request import urlretrieve
 
+from typing import Dict, Tuple, Union, Any
+from abc import ABCMeta, abstractmethod
+from ..utils import deprecated
+
 RemoteFileMetadata = namedtuple('RemoteFileMetadata',
                                 ['filename', 'url', 'checksum'])
+Dataset = Union[Bunch, Tuple[Any, Any]]
 
 
 def get_data_home(data_home=None):
@@ -204,17 +208,16 @@ def load_files(container_path, description=None, categories=None,
                  DESCR=description)
 
 
-def load_data(module_path, data_file_name):
+@deprecated("'load_data' was renamed to"
+            "'SimpleCSVLocalDatasetLoader.read_X_y_csv'"
+            "in version 0.21 and will be removed in 0.23.")
+def load_data(path: str) -> Tuple[ndarray, ndarray, ndarray]:
     """Loads data from module_path/data/data_file_name.
 
     Parameters
     ----------
-    module_path : string
-        The module path.
-
-    data_file_name : string
-        Name of csv file to be loaded from
-        module_path/data/data_file_name. For example 'wine_data.csv'.
+    path : string
+        The data file path.
 
     Returns
     -------
@@ -230,22 +233,18 @@ def load_data(module_path, data_file_name):
         A 1D array containing the names of the classifications. For example
         target_names[0] is the name of the target[0] class.
     """
-    with open(join(module_path, 'data', data_file_name)) as csv_file:
-        data_file = csv.reader(csv_file)
-        temp = next(data_file)
-        n_samples = int(temp[0])
-        n_features = int(temp[1])
-        target_names = np.array(temp[2:])
-        data = np.empty((n_samples, n_features))
-        target = np.empty((n_samples,), dtype=np.int)
-
-        for i, ir in enumerate(data_file):
-            data[i] = np.asarray(ir[:-1], dtype=np.float64)
-            target[i] = np.asarray(ir[-1], dtype=np.int)
-
-    return data, target, target_names
+    return SimpleCSVLocalDatasetLoader.read_X_y_csv(path=path)
 
 
+def _attempt_cast_to_int(arr: ndarray) -> ndarray:
+    arri = arr.astype('int', casting='unsafe')
+    if (arr == arri).all():
+        return arri
+    return arr
+
+
+@deprecated("'load_wine' was renamed to 'Wine().load'"
+            "in version 0.21 and will be removed in 0.23.")
 def load_wine(return_X_y=False):
     """Load and return the wine dataset (classification).
 
@@ -289,40 +288,18 @@ def load_wine(return_X_y=False):
     Let's say you are interested in the samples 10, 80, and 140, and want to
     know their class name.
 
-    >>> from sklearn.datasets import load_wine
-    >>> data = load_wine()
+    >>> from sklearn.datasets import Wine
+    >>> data = Wine().load()
     >>> data.target[[10, 80, 140]]
     array([0, 1, 2])
     >>> list(data.target_names)
     ['class_0', 'class_1', 'class_2']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, 'wine_data.csv')
-
-    with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
-        fdescr = rst_file.read()
-
-    if return_X_y:
-        return data, target
-
-    return Bunch(data=data, target=target,
-                 target_names=target_names,
-                 DESCR=fdescr,
-                 feature_names=['alcohol',
-                                'malic_acid',
-                                'ash',
-                                'alcalinity_of_ash',
-                                'magnesium',
-                                'total_phenols',
-                                'flavanoids',
-                                'nonflavanoid_phenols',
-                                'proanthocyanins',
-                                'color_intensity',
-                                'hue',
-                                'od280/od315_of_diluted_wines',
-                                'proline'])
+    return Wine().load(return_X_y=return_X_y)
 
 
+@deprecated("'load_iris' was renamed to 'Iris().load'"
+            "in version 0.21 and will be removed in 0.23.")
 def load_iris(return_X_y=False):
     """Load and return the iris dataset (classification).
 
@@ -373,31 +350,18 @@ def load_iris(return_X_y=False):
     Let's say you are interested in the samples 10, 25, and 50, and want to
     know their class name.
 
-    >>> from sklearn.datasets import load_iris
-    >>> data = load_iris()
+    >>> from sklearn.datasets import Iris
+    >>> data = Iris().load()
     >>> data.target[[10, 25, 50]]
     array([0, 0, 1])
     >>> list(data.target_names)
     ['setosa', 'versicolor', 'virginica']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, 'iris.csv')
-    iris_csv_filename = join(module_path, 'data', 'iris.csv')
-
-    with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
-        fdescr = rst_file.read()
-
-    if return_X_y:
-        return data, target
-
-    return Bunch(data=data, target=target,
-                 target_names=target_names,
-                 DESCR=fdescr,
-                 feature_names=['sepal length (cm)', 'sepal width (cm)',
-                                'petal length (cm)', 'petal width (cm)'],
-                 filename=iris_csv_filename)
+    return Iris().load(return_X_y=return_X_y)
 
 
+@deprecated("'load_breast_cancer' was renamed to 'BreastCancer().load'"
+            "in version 0.21 and will be removed in 0.23.")
 def load_breast_cancer(return_X_y=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
@@ -445,46 +409,18 @@ def load_breast_cancer(return_X_y=False):
     Let's say you are interested in the samples 10, 50, and 85, and want to
     know their class name.
 
-    >>> from sklearn.datasets import load_breast_cancer
-    >>> data = load_breast_cancer()
+    >>> from sklearn.datasets import BreastCancer
+    >>> data = BreastCancer().load()
     >>> data.target[[10, 50, 85]]
     array([0, 1, 0])
     >>> list(data.target_names)
     ['malignant', 'benign']
     """
-    module_path = dirname(__file__)
-    data, target, target_names = load_data(module_path, 'breast_cancer.csv')
-    csv_filename = join(module_path, 'data', 'breast_cancer.csv')
-
-    with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
-        fdescr = rst_file.read()
-
-    feature_names = np.array(['mean radius', 'mean texture',
-                              'mean perimeter', 'mean area',
-                              'mean smoothness', 'mean compactness',
-                              'mean concavity', 'mean concave points',
-                              'mean symmetry', 'mean fractal dimension',
-                              'radius error', 'texture error',
-                              'perimeter error', 'area error',
-                              'smoothness error', 'compactness error',
-                              'concavity error', 'concave points error',
-                              'symmetry error', 'fractal dimension error',
-                              'worst radius', 'worst texture',
-                              'worst perimeter', 'worst area',
-                              'worst smoothness', 'worst compactness',
-                              'worst concavity', 'worst concave points',
-                              'worst symmetry', 'worst fractal dimension'])
-
-    if return_X_y:
-        return data, target
-
-    return Bunch(data=data, target=target,
-                 target_names=target_names,
-                 DESCR=fdescr,
-                 feature_names=feature_names,
-                 filename=csv_filename)
+    return BreastCancer().load(return_X_y=return_X_y)
 
 
+@deprecated("'load_digits' was renamed to 'Digits().load'"
+            "in version 0.21 and will be removed in 0.23.")
 def load_digits(n_class=10, return_X_y=False):
     """Load and return the digits dataset (classification).
 
@@ -531,8 +467,8 @@ def load_digits(n_class=10, return_X_y=False):
     --------
     To load the data and visualize the images::
 
-        >>> from sklearn.datasets import load_digits
-        >>> digits = load_digits()
+        >>> from sklearn.datasets import Digits
+        >>> digits = Digits().load()
         >>> print(digits.data.shape)
         (1797, 64)
         >>> import matplotlib.pyplot as plt #doctest: +SKIP
@@ -540,31 +476,11 @@ def load_digits(n_class=10, return_X_y=False):
         >>> plt.matshow(digits.images[0]) #doctest: +SKIP
         >>> plt.show() #doctest: +SKIP
     """
-    module_path = dirname(__file__)
-    data = np.loadtxt(join(module_path, 'data', 'digits.csv.gz'),
-                      delimiter=',')
-    with open(join(module_path, 'descr', 'digits.rst')) as f:
-        descr = f.read()
-    target = data[:, -1].astype(np.int)
-    flat_data = data[:, :-1]
-    images = flat_data.view()
-    images.shape = (-1, 8, 8)
-
-    if n_class < 10:
-        idx = target < n_class
-        flat_data, target = flat_data[idx], target[idx]
-        images = images[idx]
-
-    if return_X_y:
-        return flat_data, target
-
-    return Bunch(data=flat_data,
-                 target=target,
-                 target_names=np.arange(10),
-                 images=images,
-                 DESCR=descr)
+    return Digits(n_class=n_class).load(return_X_y=return_X_y)
 
 
+@deprecated("'load_diabetes' was renamed to 'Diabetes().load'"
+            "in version 0.21 and will be removed in 0.23.")
 def load_diabetes(return_X_y=False):
     """Load and return the diabetes dataset (regression).
 
@@ -598,26 +514,11 @@ def load_diabetes(return_X_y=False):
 
         .. versionadded:: 0.18
     """
-    module_path = dirname(__file__)
-    base_dir = join(module_path, 'data')
-    data_filename = join(base_dir, 'diabetes_data.csv.gz')
-    data = np.loadtxt(data_filename)
-    target_filename = join(base_dir, 'diabetes_target.csv.gz')
-    target = np.loadtxt(target_filename)
-
-    with open(join(module_path, 'descr', 'diabetes.rst')) as rst_file:
-        fdescr = rst_file.read()
-
-    if return_X_y:
-        return data, target
-
-    return Bunch(data=data, target=target, DESCR=fdescr,
-                 feature_names=['age', 'sex', 'bmi', 'bp',
-                                's1', 's2', 's3', 's4', 's5', 's6'],
-                 data_filename=data_filename,
-                 target_filename=target_filename)
+    return Diabetes().load(return_X_y=return_X_y)
 
 
+@deprecated("'load_linnerud' was renamed to 'Linnerud().load'"
+            "in version 0.21 and will be removed in 0.23.")
 def load_linnerud(return_X_y=False):
     """Load and return the linnerud dataset (multivariate regression).
 
@@ -654,34 +555,11 @@ def load_linnerud(return_X_y=False):
 
         .. versionadded:: 0.18
     """
-    base_dir = join(dirname(__file__), 'data/')
-    data_filename = join(base_dir, 'linnerud_exercise.csv')
-    target_filename = join(base_dir, 'linnerud_physiological.csv')
-
-    # Read data
-    data_exercise = np.loadtxt(data_filename, skiprows=1)
-    data_physiological = np.loadtxt(target_filename, skiprows=1)
-
-    # Read header
-    with open(data_filename) as f:
-        header_exercise = f.readline().split()
-    with open(target_filename) as f:
-        header_physiological = f.readline().split()
-
-    with open(dirname(__file__) + '/descr/linnerud.rst') as f:
-        descr = f.read()
-
-    if return_X_y:
-        return data_exercise, data_physiological
-
-    return Bunch(data=data_exercise, feature_names=header_exercise,
-                 target=data_physiological,
-                 target_names=header_physiological,
-                 DESCR=descr,
-                 data_filename=data_filename,
-                 target_filename=target_filename)
+    return Linnerud().load(return_X_y=return_X_y)
 
 
+@deprecated("'load_boston' was renamed to 'Boston().load'"
+            "in version 0.21 and will be removed in 0.23.")
 def load_boston(return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
@@ -722,43 +600,16 @@ def load_boston(return_X_y=False):
 
     Examples
     --------
-    >>> from sklearn.datasets import load_boston
-    >>> boston = load_boston()
+    >>> from sklearn.datasets import Boston
+    >>> boston = Boston().load()
     >>> print(boston.data.shape)
     (506, 13)
     """
-    module_path = dirname(__file__)
-
-    fdescr_name = join(module_path, 'descr', 'boston_house_prices.rst')
-    with open(fdescr_name) as f:
-        descr_text = f.read()
-
-    data_file_name = join(module_path, 'data', 'boston_house_prices.csv')
-    with open(data_file_name) as f:
-        data_file = csv.reader(f)
-        temp = next(data_file)
-        n_samples = int(temp[0])
-        n_features = int(temp[1])
-        data = np.empty((n_samples, n_features))
-        target = np.empty((n_samples,))
-        temp = next(data_file)  # names of features
-        feature_names = np.array(temp)
-
-        for i, d in enumerate(data_file):
-            data[i] = np.asarray(d[:-1], dtype=np.float64)
-            target[i] = np.asarray(d[-1], dtype=np.float64)
-
-    if return_X_y:
-        return data, target
-
-    return Bunch(data=data,
-                 target=target,
-                 # last column is target value
-                 feature_names=feature_names[:-1],
-                 DESCR=descr_text,
-                 filename=data_file_name)
+    return Boston().load(return_X_y=return_X_y)
 
 
+@deprecated("'load_sample_images' was renamed to 'SampleImages().load'"
+            "in version 0.21 and will be removed in 0.23.")
 def load_sample_images():
     """Load sample images for image manipulation.
 
@@ -777,8 +628,8 @@ def load_sample_images():
     --------
     To load the data and visualize the images:
 
-    >>> from sklearn.datasets import load_sample_images
-    >>> dataset = load_sample_images()     #doctest: +SKIP
+    >>> from sklearn.datasets import SampleImages
+    >>> dataset = SampleImages().load()     #doctest: +SKIP
     >>> len(dataset.images)                #doctest: +SKIP
     2
     >>> first_img_data = dataset.images[0] #doctest: +SKIP
@@ -787,23 +638,12 @@ def load_sample_images():
     >>> first_img_data.dtype               #doctest: +SKIP
     dtype('uint8')
     """
-    # import PIL only when needed
-    from ..externals._pilutil import imread
-
-    module_path = join(dirname(__file__), "images")
-    with open(join(module_path, 'README.txt')) as f:
-        descr = f.read()
-    filenames = [join(module_path, filename)
-                 for filename in os.listdir(module_path)
-                 if filename.endswith(".jpg")]
-    # Load image data for each image in the source folder.
-    images = [imread(filename) for filename in filenames]
-
-    return Bunch(images=images,
-                 filenames=filenames,
-                 DESCR=descr)
+    return SampleImages().load()
 
 
+@deprecated("'load_sample_image' was refactored"
+            "in version 0.21 and will be removed in 0.23."
+            "Use 'SampleImages().load' instead")
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image
 
@@ -821,28 +661,288 @@ def load_sample_image(image_name):
 
     Examples
     ---------
-
-    >>> from sklearn.datasets import load_sample_image
-    >>> china = load_sample_image('china.jpg')   # doctest: +SKIP
+    >>> from sklearn.datasets import SampleImages
+    >>> china = SampleImages('china.jpg').load().images[0]   # doctest: +SKIP
     >>> china.dtype                              # doctest: +SKIP
     dtype('uint8')
     >>> china.shape                              # doctest: +SKIP
     (427, 640, 3)
-    >>> flower = load_sample_image('flower.jpg') # doctest: +SKIP
+    >>> flower = SampleImages('flower.jpg').load().images[0] # doctest: +SKIP
     >>> flower.dtype                             # doctest: +SKIP
     dtype('uint8')
     >>> flower.shape                             # doctest: +SKIP
     (427, 640, 3)
     """
-    images = load_sample_images()
-    index = None
-    for i, filename in enumerate(images.filenames):
-        if filename.endswith(image_name):
-            index = i
-            break
-    if index is None:
-        raise AttributeError("Cannot find sample image: %s" % image_name)
-    return images.images[index]
+    return SampleImages(image_name).load().images[0]
+
+
+class DatasetLoader(object, metaclass=ABCMeta):
+    """Abstract class for all dataset loaders in scikit-learn."""
+
+    def load(self, return_X_y=False) -> Dataset:
+        bunch = self._raw_data_to_bunch()
+        if return_X_y:
+            return bunch.data, bunch.target
+        return bunch
+
+    @abstractmethod
+    def _raw_data_to_bunch(self) -> Bunch:
+        raise NotImplementedError
+
+
+class LocalDatasetLoader(DatasetLoader):
+    _module_path = dirname(__file__)
+    _data_dir = join(_module_path, 'data')
+    _descr_dir = join(_module_path, 'descr')
+    _images_dir = join(_module_path, 'images')
+
+    @property
+    def X_file(self) -> Union[str, ndarray]:
+        raise NotImplementedError
+
+    @property
+    def y_file(self) -> str:
+        return self.X_file
+
+    @property
+    def descr_file(self):
+        return self.X_file.split('.', maxsplit=1)[0] + '.rst'
+
+    @property
+    def local_data_paths(self) -> Dict[str, str]:
+        try:
+            return {
+                'X': join(self._data_dir, self.X_file),
+                'y': join(self._data_dir, self.y_file),
+                'descr': join(self._descr_dir, self.descr_file),
+            }
+        except TypeError:
+            return {
+                'X': np.array([join(self._data_dir, f) for f in self.X_file]),
+                'y': np.array([join(self._data_dir, f) for f in self.y_file]),
+                'descr': join(self._descr_dir, self.descr_file),
+            }
+
+    @property
+    def feature_names(self) -> ndarray:
+        raise NotImplementedError
+
+    @property
+    def target_names(self) -> ndarray:
+        raise NotImplementedError
+
+    _attempt_cast_to_int = staticmethod(_attempt_cast_to_int)
+
+    def _raw_data_to_bunch(self) -> Bunch:
+        bunch = self.read_data()
+        bunch.DESCR = self._read_description()
+        return self.process(bunch)
+
+    @abstractmethod
+    def read_data(self) -> Bunch:
+        raise NotImplementedError
+
+    @abstractmethod
+    def process(self, bunch: Bunch) -> Bunch:
+        bunch.target = self._attempt_cast_to_int(bunch.target)
+        return bunch
+
+    def _read_description(self, path: str = None) -> str:
+        descr_path = path or self.local_data_paths['descr']
+        with open(descr_path) as descr:
+            return descr.read()
+
+    def _make_bunch(self, X, y, target_names,
+                    description, images=None) -> Bunch:
+        return Bunch(
+            data=X, target=y,
+            feature_names=self.feature_names,
+            target_names=target_names,
+            DESCR=description,
+            images=images,
+            data_filename=self.local_data_paths['X'],
+            target_filename=self.local_data_paths['y'],
+            filename=self.local_data_paths['X'])  # Backwards compatible (0.21)
+
+
+class SimpleCSVLocalDatasetLoader(LocalDatasetLoader):
+    """Reads a .csv file with:
+        The first row containing:
+            - the sample size (int)
+            - the number of features (int)
+            - [Optional] the target names corresponding
+              to their 'int' representation in the y column
+        The second [Optional] row containing:
+            - feature variable names with type 'str'
+        X features in columns [:-1] with type 'int' or 'float'
+        y target in column [-1] with type 'int' or 'float'
+
+    If you try to read a .csv file containing 'object' or
+    'str' type variable values, it will fail!
+     """
+    def read_data(self) -> Bunch:
+        X, y, target_names = self.read_X_y_csv(self.local_data_paths['X'])
+        if self.target_names.size > 0:  # class property takes precedence
+            target_names = self.target_names
+        return self._make_bunch(X, y, target_names, None, None)
+
+    def process(self, bunch: Bunch) -> Bunch:
+        return super().process(bunch)
+
+    @staticmethod
+    def read_X_y_csv(path: str) -> Tuple[ndarray, ndarray, ndarray]:
+        with open(path) as f:
+            firstline = f.readline().rstrip().split(',')
+            n_features = int(firstline[1])
+            col_ixs = tuple(range(n_features + 1))
+            target_names = np.array(firstline[2:])
+
+        csv_arr = np.genfromtxt(path, delimiter=',', usecols=col_ixs,
+                                skip_header=1, dtype=np.float)
+        data, target = csv_arr[:, :n_features], csv_arr[:, n_features]
+
+        mask_row_all_nan = ~np.isnan(data).all(axis=1)
+        data, target = data[mask_row_all_nan], target[mask_row_all_nan]
+        return data, target, target_names
+
+
+class Wine(SimpleCSVLocalDatasetLoader):
+    X_file = 'wine_data.csv'
+    feature_names = np.array([
+        'alcohol', 'malic_acid',
+        'ash', 'alcalinity_of_ash',
+        'magnesium', 'total_phenols',
+        'flavanods', 'nonflavanoid_phenols',
+        'proanthocyanins', 'color_intensity',
+        'hue', 'od280/od315_of_diluted_wines',
+        'proline'])
+    target_names = np.array([])
+
+
+class Iris(SimpleCSVLocalDatasetLoader):
+    X_file = 'iris.csv'
+    feature_names = np.array([
+        'sepal length (cm)', 'sepal width (cm)',
+        'petal length (cm)', 'petal width (cm)'])
+    target_names = np.array([])
+
+
+class BreastCancer(SimpleCSVLocalDatasetLoader):
+    X_file = 'breast_cancer.csv'
+    feature_names = np.array([
+        'mean radius', 'mean texture',
+        'mean perimeter', 'mean area',
+        'mean smoothness', 'mean compactness',
+        'mean concavity', 'mean concave points',
+        'mean symmetry', 'mean fractal dimension',
+        'radius error', 'texture error',
+        'perimeter error', 'area error',
+        'smoothness error', 'compactness error',
+        'concavity error', 'concave points error',
+        'symmetry error', 'fractal dimension error',
+        'worst radius', 'worst texture',
+        'worst perimeter', 'worst area',
+        'worst smoothness', 'worst compactness',
+        'worst concavity', 'worst concave points',
+        'worst symmetry', 'worst frctal dimension'])
+    target_names = np.array([])
+
+
+class Digits(LocalDatasetLoader):
+    X_file = 'digits.csv.gz'
+    feature_names = np.array([list(map(lambda d: (d, x).__repr__(),
+                                       np.arange(1, 9, dtype='int')))
+                              for x in np.arange(1, 9, dtype='int')])
+    target_names = np.arange(10)
+
+    def __init__(self, n_class=10):
+        self.n_class = n_class
+
+    def read_data(self):
+        X = np.loadtxt(self.local_data_paths['X'], delimiter=',')
+        y = X[:, -1].astype('int')
+        return self._make_bunch(X, y, self.target_names, None, None)
+
+    def process(self, bunch: Bunch) -> Bunch:
+        X, y = bunch.data, bunch.target
+        flat_X = X[:, :-1]
+        images = flat_X.view()
+        images.shape = (-1, 8, 8)
+        if self.n_class < 10:
+            idx = y < self.n_class
+            flat_X, y = flat_X[idx], y[idx]
+            images = images[idx]
+        bunch.data, bunch.target, bunch.images = flat_X,  y, images
+        return bunch
+
+
+class Diabetes(LocalDatasetLoader):
+    X_file = 'diabetes_data.csv.gz'
+    y_file = 'diabetes_target.csv.gz'
+    descr_file = 'diabetes.rst'
+    feature_names = np.array([
+        'age', 'sex', 'bmi', 'bp',
+        's1', 's2', 's3', 's4', 's5', 's6'])
+    target_names = np.array(['progression'])
+
+    def read_data(self):
+        X = np.loadtxt(self.local_data_paths['X'], dtype='float')
+        y = np.loadtxt(self.local_data_paths['y'], dtype='float')
+        return self._make_bunch(X, y, self.target_names, None, None)
+
+    def process(self, bunch: Bunch):
+        return super().process(bunch)
+
+
+class Linnerud(LocalDatasetLoader):
+    X_file = 'linnerud_exercise.csv'
+    y_file = 'linnerud_physiological.csv'
+    descr_file = 'linnerud.rst'
+    feature_names = np.array(['Chins', 'Situps', 'Jumps'])
+    target_names = np.array(['Weight', 'Waist', 'Pulse'])
+
+    def read_data(self) -> Bunch:
+        X = np.loadtxt(self.local_data_paths['X'], skiprows=1, dtype='float')
+        y = np.loadtxt(self.local_data_paths['y'], skiprows=1, dtype='float')
+        return self._make_bunch(X, y, self.target_names, None, None)
+
+    def process(self, bunch: Bunch) -> Bunch:
+        return bunch
+
+
+class Boston(SimpleCSVLocalDatasetLoader):
+    X_file = 'boston_house_prices.csv'
+    feature_names = np.array([
+        'CRIM', 'ZN', 'INDUS', 'CHAS', 'NOX', 'RM', 'AGE',
+        'DIS', 'RAD', 'TAX', 'PTRATIO', 'B', 'LSTAT'])
+    target_names = np.array(['MEDV'])
+
+
+class SampleImages(LocalDatasetLoader):
+    X_file = np.array(['china.jpg', 'flower.jpg'])
+    feature_names = np.array([])
+    target_names = np.array(['china', 'flower'])
+    _descr_dir = LocalDatasetLoader._images_dir
+    descr_file = 'README.txt'
+
+    def __init__(self, image_name: str = None):
+        self.image_name = image_name
+        self._check_image_name()
+
+    def _check_image_name(self):
+        if self.image_name and self.image_name not in self.X_file:
+            msg = 'Cannot find sample image: %s' % self.image_name
+            raise AttributeError(msg)
+
+    def read_data(self) -> Bunch:
+        from ..externals._pilutil import imread  # import PIL only when needed
+        image_files = [join(self._images_dir, file) for file in self.X_file]
+        images = [imread(img) for img in image_files]
+        return self._make_bunch(None, None, self.target_names, None, images)
+
+    def process(self, bunch: Bunch):
+        bunch.filenames = bunch.filename  # Backwards compatible (0.21)
+        return bunch
 
 
 def _pkl_filepath(*args, **kwargs):

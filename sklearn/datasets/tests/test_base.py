@@ -21,6 +21,14 @@ from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
+from sklearn.datasets import SampleImages   # noqa: F401
+from sklearn.datasets import Digits         # noqa: F401
+from sklearn.datasets import Diabetes       # noqa: F401
+from sklearn.datasets import Linnerud       # noqa: F401
+from sklearn.datasets import Iris           # noqa: F401
+from sklearn.datasets import BreastCancer   # noqa: F401
+from sklearn.datasets import Boston         # noqa: F401
+from sklearn.datasets import Wine           # noqa: F401
 from sklearn.datasets.base import Bunch
 from sklearn.datasets.tests.test_common import check_return_X_y
 
@@ -28,6 +36,8 @@ from sklearn.externals._pilutil import pillow_installed
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+
+import numpy.testing.utils as np_test_util
 
 
 def _remove_dir(path):
@@ -109,6 +119,7 @@ def test_load_files_w_categories_desc_and_encoding(
     assert_equal(res.data, ["Hello World!\n"])
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_files_wo_load_content(
         test_category_dir_1, test_category_dir_2, load_files_root):
     res = load_files(load_files_root, load_content=False)
@@ -118,6 +129,7 @@ def test_load_files_wo_load_content(
     assert_equal(res.get('data'), None)
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_sample_images():
     try:
         res = load_sample_images()
@@ -128,6 +140,7 @@ def test_load_sample_images():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_digits():
     digits = load_digits()
     assert_equal(digits.data.shape, (1797, 64))
@@ -137,12 +150,14 @@ def test_load_digits():
     check_return_X_y(digits, partial(load_digits))
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_digits_n_class_lt_10():
     digits = load_digits(9)
     assert_equal(digits.data.shape, (1617, 64))
     assert_equal(numpy.unique(digits.target).size, 9)
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_sample_image():
     try:
         china = load_sample_image('china.jpg')
@@ -152,6 +167,7 @@ def test_load_sample_image():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_missing_sample_image_error():
     if pillow_installed:
         assert_raises(AttributeError, load_sample_image,
@@ -160,6 +176,7 @@ def test_load_missing_sample_image_error():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_diabetes():
     res = load_diabetes()
     assert_equal(res.data.shape, (442, 10))
@@ -171,6 +188,7 @@ def test_load_diabetes():
     check_return_X_y(res, partial(load_diabetes))
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_linnerud():
     res = load_linnerud()
     assert_equal(res.data.shape, (20, 3))
@@ -184,6 +202,7 @@ def test_load_linnerud():
     check_return_X_y(res, partial(load_linnerud))
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_iris():
     res = load_iris()
     assert_equal(res.data.shape, (150, 4))
@@ -196,6 +215,7 @@ def test_load_iris():
     check_return_X_y(res, partial(load_iris))
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_wine():
     res = load_wine()
     assert_equal(res.data.shape, (178, 13))
@@ -207,6 +227,7 @@ def test_load_wine():
     check_return_X_y(res, partial(load_wine))
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_breast_cancer():
     res = load_breast_cancer()
     assert_equal(res.data.shape, (569, 30))
@@ -219,6 +240,7 @@ def test_load_breast_cancer():
     check_return_X_y(res, partial(load_breast_cancer))
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_load_boston():
     res = load_boston()
     assert_equal(res.data.shape, (506, 13))
@@ -259,7 +281,90 @@ def test_bunch_pickle_generated_with_0_16_and_read_with_0_17():
     assert_equal(bunch_from_pkl['key'], 'changed')
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_bunch_dir():
     # check that dir (important for autocomplete) shows attributes
     data = load_iris()
     assert "data" in dir(data)
+
+
+@pytest.mark.parametrize('test_loader,expected_target_dtype', [
+    ('Iris', 'int'),
+    ('Boston', 'float'),
+    ('BreastCancer', 'int'),
+    ('Digits', 'int'),
+    ('Diabetes', 'int'),
+    ('Linnerud', 'float'),
+    ('Wine', 'int')
+])
+def test_dataset_loader_dtype(test_loader, expected_target_dtype):
+    assert eval(test_loader)().load().target.dtype == expected_target_dtype
+
+
+@pytest.mark.parametrize('test_loader', [
+    'Iris',
+    'Boston',
+    'BreastCancer',
+    'Digits',
+    'Diabetes',
+    'Linnerud',
+    'Wine'
+])
+def test_dataset_loader_bunch_paths(test_loader):
+    bunch = eval(test_loader)().load()
+    paths = bunch.filename, bunch.data_filename, bunch.target_filename
+    assert all(list(map(os.path.exists, paths))) is True
+
+
+@pytest.mark.parametrize('test_loader,exp_features,exp_targets,exp_n', [
+    ('Iris', 4, 3, 150),
+    ('Boston', 13, 1, 506),
+    ('BreastCancer', 30, 2, 569),
+    ('Digits', 64, 10, 1797),
+    ('Diabetes', 10, 1, 442),
+    ('Linnerud', 3, 3, 20),
+    ('Wine', 13, 3, 178)])
+def test_dataset_loader_shape(test_loader, exp_features,
+                              exp_targets, exp_n):
+    bunch = eval(test_loader)().load()
+    n_features, m_features = bunch.data.shape[:2]
+    n_targets, m_targets = bunch.target.shape[0], bunch.target_names.size
+    assert (m_features == exp_features) and \
+           (m_targets == exp_targets) and \
+           (n_features == n_targets == exp_n)
+
+
+@pytest.mark.parametrize('test_loader', [
+    'Iris',
+    'Boston',
+    'BreastCancer',
+    'Digits',
+    'Diabetes',
+    'Linnerud',
+    'Wine'
+])
+def test_dataset_loader_check_nan(test_loader):
+    bunch = eval(test_loader)().load()
+    data, target = bunch.data, bunch.target
+    np_test_util.assert_equal(numpy.isnan(data).any(), False)
+    np_test_util.assert_equal(numpy.isnan(target).any(), False)
+
+
+def test_load_data_deprecated():
+    from ..base import load_data
+    iris_path = Iris().local_data_paths['X']
+    pytest.deprecated_call(load_data, iris_path)
+
+
+@pytest.mark.parametrize('test_deprecated_fun', [
+    'load_wine',
+    'load_iris',
+    'load_digits',
+    'load_diabetes',
+    'load_boston',
+    'load_breast_cancer',
+    'load_linnerud',
+    'load_sample_images'
+])
+def test_functional_load_deprecated(test_deprecated_fun):
+    pytest.deprecated_call(eval(test_deprecated_fun))
