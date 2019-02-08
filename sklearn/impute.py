@@ -745,8 +745,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         self.col_max_missing = col_max_missing
         self.copy = copy
 
-    def _impute(self, dist, X_col, fit_X_col, mask_col,
-                mask_fit_X_col, statistic):
+    def _compute_impute(self, dist, fit_X_col, mask_fit_X_col, statistic):
         """Helper function to find and impute missing values of a single
         column, ``X_col``.
 
@@ -755,14 +754,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         dist : array-like, shape = (n_samples, n_samples, )
             distance matrix
 
-        X_col : array-like, shape = (n_samples, )
-            column to be imputed
-
         fit_X_col : array-like, shape = (n_train_samples, )
             column from training
-
-        mask_col : array-like, shape = (n_samples, )
-            mask for missing values corresponding to ``X_col``
 
         mask_fit_X_col : array-like, shape = (n_train_samples, )
             mask for missing values corresponding to ``fit_X_col``
@@ -770,20 +763,15 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         statistic : float
             statistic for column generated from fitting ``fit_X_col``
         """
-        if not np.any(mask_col, axis=0):
-            return
-
         # Row index for receivers and potential donors (pdonors)
-        receivers_idx = np.where(mask_col)[0]
         potential_donors_idx = np.where(~mask_fit_X_col)[0]
 
         # Impute using column mean if n_neighbors are not available
         if len(potential_donors_idx) < self.n_neighbors:
-            X_col[receivers_idx] = statistic
-            return
+            return statistic
 
         # Get distance from potential donors
-        dist_potential_donors = dist[receivers_idx][:, potential_donors_idx]
+        dist_potential_donors = dist[:, potential_donors_idx]
 
         # Get donors
         donors_idx = np.argpartition(dist_potential_donors,
@@ -791,20 +779,18 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                                      axis=1)[:, :self.n_neighbors]
 
         # Get weights or None
-        receivers_rows = np.arange(donors_idx.shape[0])[:, None]
-        weight_matrix = _get_weights(dist_potential_donors[receivers_rows,
-                                                           donors_idx],
-                                     self.weights)
+        donors_dist = np.take_along_axis(dist_potential_donors, donors_idx,
+                                         axis=1)
+        weight_matrix = _get_weights(donors_dist, self.weights)
 
         # Retrieve donor values and calculate kNN score
-        donors = fit_X_col[potential_donors_idx][donors_idx.ravel()].reshape(
-            (-1, self.n_neighbors))
+        donors = fit_X_col[potential_donors_idx].take(donors_idx)
         donors = np.ma.array(donors,
                              mask=_get_mask(donors, self.missing_values))
 
         # Final imputation
         imputed = np.ma.average(donors, axis=1, weights=weight_matrix)
-        X_col[receivers_idx] = imputed.data
+        return imputed.data
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -889,20 +875,30 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             mask = mask[~bad_rows]
             row_total_missing = mask.sum(axis=1)
 
-        row_has_missing = row_total_missing.astype(np.bool)
-        if np.any(row_has_missing):
+        row_misses = row_total_missing.astype(np.bool)
+        if np.any(row_misses):
             # Pairwise distances between receivers and fitted samples
-            dist = np.empty((X.shape[0], self.fit_X_.shape[0]))
-            dist[row_has_missing] = pairwise_distances(
-                X[row_has_missing], self.fit_X_, metric=self.metric,
-                squared=False, missing_values=self.missing_values)
+            dist = pairwise_distances(X[row_misses], self.fit_X_,
+                                      metric=self.metric,
+                                      squared=False,
+                                      missing_values=self.missing_values)
+
+            # Maps from indicies from X to indices in dist matrix
+            dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
+            dist_idx_map[row_misses] = np.arange(0, row_misses.sum(0))
 
             # Find and impute missing
             mask_fit_X = _get_mask(self.fit_X_, self.missing_values)
             for col in range(X.shape[1]):
-                self._impute(dist, X[:, col], self.fit_X_[:, col],
-                             mask[:, col], mask_fit_X[:, col],
-                             self.statistics_[col])
+
+                if not np.any(mask[:, col]):
+                    continue
+
+                receivers_idx = np.where(mask[:, col])[0]
+                dist_subset = dist[dist_idx_map[receivers_idx]]
+                X[receivers_idx, col] = self._compute_impute(
+                    dist_subset, self.fit_X_[:, col],
+                    mask_fit_X[:, col], self.statistics_[col])
 
         # Merge deficient rows and mean impute their missing values
         if np.any(bad_rows):
