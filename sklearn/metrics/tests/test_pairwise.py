@@ -586,6 +586,18 @@ def test_euclidean_distances():
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
 
 
+@pytest.mark.parametrize("squared", [True, False])
+def test_nan_euclidean_distances_equal_to_euclidean_distance(squared):
+    # with no nan values
+    rng = np.random.RandomState(1337)
+    X = rng.randn(3, 4)
+    Y = rng.randn(4, 4)
+
+    normal_distance = euclidean_distances(X, Y=Y, squared=squared)
+    nan_distance = nan_euclidean_distances(X, Y=Y, squared=squared)
+    assert_array_almost_equal(normal_distance, nan_distance)
+
+
 @pytest.mark.parametrize(
     "X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
 @pytest.mark.parametrize(
