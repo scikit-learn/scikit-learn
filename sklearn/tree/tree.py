@@ -698,6 +698,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     classes_ : array of shape = [n_classes] or a list of such arrays
@@ -1057,6 +1059,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     feature_importances_ : array of shape = [n_features]
@@ -1341,6 +1345,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
+        .. versionadded:: 0.21
+
     See also
     --------
     ExtraTreeRegressor, sklearn.ensemble.ExtraTreesClassifier,
@@ -1515,6 +1521,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
+
+        .. versionadded:: 0.21
 
     See also
     --------

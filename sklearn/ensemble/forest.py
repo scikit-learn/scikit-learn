@@ -917,6 +917,8 @@ class RandomForestClassifier(ForestClassifier):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -1189,6 +1191,8 @@ class RandomForestRegressor(ForestRegressor):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
+
+        .. versionadded:: 0.21
 
     Attributes
     ----------
@@ -1474,6 +1478,8 @@ class ExtraTreesClassifier(ForestClassifier):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -1717,6 +1723,8 @@ class ExtraTreesRegressor(ForestRegressor):
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeRegressor
@@ -1922,6 +1930,8 @@ class RandomTreesEmbedding(BaseForest):
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
         ``ccp_alpha`` will be chosen. By default, no pruning is performed.
+
+        .. versionadded:: 0.21
 
     Attributes
     ----------
