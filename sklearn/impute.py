@@ -898,6 +898,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         else:
             self._predictor = clone(self.predictor)
 
+        self.imputation_sequence_ = []
+
         if hasattr(self._predictor, 'random_state'):
             self._predictor.random_state = self.random_state_
 
@@ -907,7 +909,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.initial_imputer_ = None
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
-        if self.max_iter == 0:
+        if self.max_iter == 0 or np.sum(~mask_missing_values) == 0:
+            self.n_iter_ = 0
             return Xt
 
         # order in which to impute
@@ -920,7 +923,6 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         abs_corr_mat = self._get_abs_corr_mat(Xt)
 
         n_samples, n_features = Xt.shape
-        self.imputation_sequence_ = []
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s"
                   % (X.shape,))
@@ -985,7 +987,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
-        if self.n_iter_ == 0:
+        if self.n_iter_ == 0 or np.sum(~mask_missing_values) == 0:
             return Xt
 
         imputations_per_round = len(self.imputation_sequence_) // self.n_iter_

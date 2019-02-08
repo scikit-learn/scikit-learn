@@ -535,13 +535,24 @@ def test_iterative_imputer_zero_iters():
 
 
 def test_iterative_imputer_verbose():
-    n = 10
+    rng = np.random.RandomState(0)
+
+    n = 100
     d = 3
-    X = sparse_random_matrix(n, d, density=0.10).toarray()
+    X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
     imputer = IterativeImputer(missing_values=0, max_iter=1, verbose=1)
     imputer.fit(X)
     imputer.verbose = 2
     imputer.transform(X)
+
+
+def test_iterative_imputer_all_missing():
+    n = 100
+    d = 3
+    X = np.zeros((n, d))
+    imputer = IterativeImputer(missing_values=0, max_iter=1)
+    X_imputed = imputer.fit_transform(X)
+    assert_allclose(X_imputed, imputer.initial_imputer_.transform(X))
 
 
 @pytest.mark.parametrize(
