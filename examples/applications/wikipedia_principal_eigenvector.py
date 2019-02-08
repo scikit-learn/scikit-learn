@@ -110,7 +110,7 @@ def get_redirects(redirects_filename):
     for l, source in enumerate(redirects.keys()):
         transitive_target = None
         target = redirects[source]
-        seen = set([source])
+        seen = {source}
         while True:
             transitive_target = target
             target = redirects.get(target)
@@ -170,7 +170,7 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
 # stop after 5M links to make it possible to work in RAM
 X, redirects, index_map = get_adjacency_matrix(
     redirects_filename, page_links_filename, limit=5000000)
-names = dict((i, name) for name, i in index_map.items())
+names = {i: name for name, i in index_map.items()}
 
 print("Computing the principal singular vectors using randomized_svd")
 t0 = time()

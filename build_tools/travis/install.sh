@@ -25,6 +25,22 @@ then
 	# export CCACHE_LOGFILE=/tmp/ccache.log
 	# ~60M is used by .ccache when compiling from scratch at the time of writing
 	ccache --max-size 100M --show-stats
+elif [ $TRAVIS_OS_NAME = "osx" ]
+then
+    # install OpenMP not present by default on osx
+    brew install libomp
+
+    # enable OpenMP support for Apple-clang
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+
+    # avoid error due to multiple OpenMP libraries loaded simultaneously
+    export KMP_DUPLICATE_LIB_OK=TRUE
 fi
 
 make_conda() {
@@ -101,6 +117,8 @@ elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
     export SKLEARN_SITE_JOBLIB=1
+    echo "Installing pillow master"
+    pip install https://github.com/python-pillow/Pillow/archive/master.zip
     pip install pytest pytest-cov
 fi
 

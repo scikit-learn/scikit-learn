@@ -259,6 +259,21 @@ def test_calibration_curve():
     assert_raises(ValueError, calibration_curve, [1.1], [-0.1],
                   normalize=False)
 
+    # test that quantiles work as expected
+    y_true2 = np.array([0, 0, 0, 0, 1, 1])
+    y_pred2 = np.array([0., 0.1, 0.2, 0.5, 0.9, 1.])
+    prob_true_quantile, prob_pred_quantile = calibration_curve(
+        y_true2, y_pred2, n_bins=2, strategy='quantile')
+
+    assert len(prob_true_quantile) == len(prob_pred_quantile)
+    assert len(prob_true_quantile) == 2
+    assert_almost_equal(prob_true_quantile, [0, 2 / 3])
+    assert_almost_equal(prob_pred_quantile, [0.1, 0.8])
+
+    # Check that error is raised when invalid strategy is selected
+    assert_raises(ValueError, calibration_curve, y_true2, y_pred2,
+                  strategy='percentile')
+
 
 def test_calibration_nan_imputer():
     """Test that calibration can accept nan"""
