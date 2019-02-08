@@ -664,7 +664,7 @@ def test_knn_imputer_zero_missing_value():
         [3, 2, 0, 0, 0],
         [4, 6, 0, 5, 13],
     ])
-    msg = r"Some column\(s\) have more than {}% missing values".format(
+    msg = "Some columns have more than {}% missing values".format(
         imputer.col_max_missing * 100)
     with pytest.raises(ValueError, match=msg):
         imputer.fit(X)
@@ -835,7 +835,7 @@ def test_knn_imputer_default_with_invalid_input():
         [np.nan, 8, 0, 8, 9],
     ])
     imputer = KNNImputer()
-    msg = r"Some column\(s\) have more than {}% missing values".format(
+    msg = "Some columns have more than {}% missing values".format(
         imputer.col_max_missing * 100)
     with pytest.raises(ValueError, match=msg):
         imputer.fit(X)
@@ -1099,7 +1099,7 @@ def test_knn_imputer_metric_type():
 
     # Test with a metric type without NaN support
     imputer = KNNImputer(metric="euclidean")
-    bad_metric_msg = "The selected metric does not support NaN values."
+    bad_metric_msg = "The selected metric does not support NaN values"
     with pytest.raises(ValueError, match=bad_metric_msg):
         imputer.fit(X)
 

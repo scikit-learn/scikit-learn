@@ -770,7 +770,6 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         statistic_col : float
             statistic for column generated from fitting ``fit_X_col``
         """
-        # For each column, find and impute
         if not np.any(mask_col, axis=0):
             return
 
@@ -828,32 +827,25 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             force_all_finite = "allow-nan"
             if self.metric not in _NAN_METRICS and not callable(self.metric):
                 raise ValueError(
-                    "The selected metric does not support NaN values.")
+                    "The selected metric does not support NaN values")
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
-        self.weights = _check_weights(self.weights)
+
+        # Check if sufficient neighboring samples available
+        if X.shape[0] < self.n_neighbors:
+            raise ValueError("There are only {} samples, but n_neighbors={}"
+                             .format(X.shape[0], self.n_neighbors))
 
         # Check if % missing in any column > col_max_missing
         mask = _get_mask(X, self.missing_values)
         if np.any(mask.sum(axis=0) > (X.shape[0] * self.col_max_missing)):
-            raise ValueError("Some column(s) have more than {}% missing values"
+            raise ValueError("Some columns have more than {}% missing values"
                              .format(self.col_max_missing * 100))
-        # Check if sufficient neighboring samples available
-        if X.shape[0] < self.n_neighbors:
-            raise ValueError("There are only %d samples, but n_neighbors=%d."
-                             % (X.shape[0], self.n_neighbors))
 
-        X_col_means = np.ma.array(X, mask=mask).mean(axis=0).data
-
-        # Check if % missing in any row > row_max_missing
-        bad_rows = mask.sum(axis=1) > (mask.shape[1] * self.row_max_missing)
-
-        # Remove rows that have more than row_max_missing % missing
-        if np.any(bad_rows):
-            X = X[~bad_rows, :]
-
-        self.fit_X_ = X
-        self.statistics_ = X_col_means
+        self.weights = _check_weights(self.weights)
+        self.fit_X_ = X[
+            mask.sum(axis=1) <= (mask.shape[1] * self.row_max_missing)]
+        self.statistics_ = np.ma.array(X, mask=mask).mean(axis=0).data
 
         return self
 
@@ -881,21 +873,20 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         if X.shape[1] != self.fit_X_.shape[1]:
             raise ValueError("Incompatible dimension between the fitted "
-                             "dataset and the one to be transformed.")
-        mask = _get_mask(X, self.missing_values)
+                             "dataset and the one to be transformed")
 
+        mask = _get_mask(X, self.missing_values)
         orig_X_shape = X.shape
         if not np.any(mask):
             return X
 
         # Check for excessive missingness in rows
         row_total_missing = mask.sum(axis=1)
-        deficient_rows = (
-            row_total_missing > (mask.shape[1] * self.row_max_missing))
-        if np.any(deficient_rows):
-            X_deficient = X[deficient_rows, :]
-            X = X[~deficient_rows, :]
-            mask = mask[~deficient_rows]
+        bad_rows = row_total_missing > (mask.shape[1] * self.row_max_missing)
+        if np.any(bad_rows):
+            X_bad = X[bad_rows]
+            X = X[~bad_rows]
+            mask = mask[~bad_rows]
             row_total_missing = mask.sum(axis=1)
 
         row_has_missing = row_total_missing.astype(np.bool)
@@ -914,13 +905,11 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                              self.statistics_[col])
 
         # Merge deficient rows and mean impute their missing values
-        if np.any(deficient_rows):
-            bad_missing_index = np.where(
-                _get_mask(X_deficient, self.missing_values))
-            X_deficient[bad_missing_index] = np.take(self.statistics_,
-                                                     bad_missing_index[1])
+        if np.any(bad_rows):
+            bad_missing_index = np.where(_get_mask(X_bad, self.missing_values))
+            X_bad[bad_missing_index] = self.statistics_[bad_missing_index[1]]
             X_merged = np.empty(orig_X_shape)
-            X_merged[deficient_rows, :] = X_deficient
-            X_merged[~deficient_rows, :] = X
+            X_merged[bad_rows] = X_bad
+            X_merged[~bad_rows] = X
             X = X_merged
         return X
