@@ -107,6 +107,13 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| Deprecated :mod:`externals.six` since we have dropped support for
   Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Feature| Added the class, :class:`impute.KNNImputer`, to impute missing 
+  values using k-Nearest Neighbors. :issue:`2989` by 
+  :user:`Thomas Fan <thomasjpfan>` and :user:`Ashim Bhattarai <ashimb9>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -180,10 +187,9 @@ Support for Python 3.4 and below has been officially dropped.
   BLAS shipped with scipy instead of the bundled BLAS. :issue:`12732` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`
 
-- |Feature| Added the :func:`metrics.masked_euclidean_distances` metirc, which
-  calculates euclidean distances in the presence of missing values. This
-  metric can be used with :class:`neighbors.NearestNeighbors`.
-  by :user:`Ashim Bhattarai <ashimb9>` and :user:`Thomas Fan <thomasjpfan>`.
+- |Feature| Added the :func:`metrics.nan_euclidean_distances` metirc, which
+  calculates euclidean distances in the presence of missing values.
+  by :user:`Thomas Fan <thomasjpfan>` and :user:`Ashim Bhattarai <ashimb9>`.
 
 :mod:`sklearn.model_selection`
 ..............................
