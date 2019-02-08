@@ -16,7 +16,6 @@
 #
 # License: BSD 3 clause
 from cpython cimport Py_INCREF, PyObject
-from cython cimport view
 
 from libc.stdlib cimport free
 from libc.math cimport fabs
@@ -1154,7 +1153,7 @@ cpdef build_pruned_tree_ccp(
         Original tree
     ccp_alpha : positive double
         Complexity parameter. The subtree with the largest cost complexity
-        that is smaller than ``ccp_alpha`` will be choosen. By default,
+        that is smaller than ``ccp_alpha`` will be chosen. By default,
         no pruning is performed.no pruning is performed.
     """
 
@@ -1187,11 +1186,10 @@ cpdef build_pruned_tree_ccp(
         SIZE_t parent_idx
 
         # candidate nodes that can be pruned
-        bint[:] candidate_nodes = view.array(
-            shape=(n_nodes, ), itemsize=sizeof(bint), format="i")
+        unsigned char[:] candidate_nodes = np.zeros(
+            shape=n_nodes, dtype=np.uint8)
         # nodes in subtree
-        bint[:] in_subtree = view.array(
-            shape=(n_nodes, ), itemsize=sizeof(bint), format="i")
+        unsigned char[:] in_subtree = np.ones(shape=n_nodes, dtype=np.uint8)
         DOUBLE_t[:] g_node = np.zeros(shape=n_nodes, dtype=np.float64)
         SIZE_t pruned_branch_node_idx
         DOUBLE_t subtree_alpha
@@ -1210,9 +1208,6 @@ cpdef build_pruned_tree_ccp(
             r_node[i] = (
                 weighted_n_node_samples[i] * impurity[i] / total_sum_weights)
 
-        for i in range(n_nodes):
-            leaves_in_subtree[i] = 0
-
         # Push root node, using StackRecord.start as node id
         rc = stack.push(0, 0, 0, -1, 0, 0, 0)
         if rc == -1:
@@ -1223,7 +1218,8 @@ cpdef build_pruned_tree_ccp(
             stack.pop(&stack_record)
             node_idx = stack_record.start
             parent[node_idx] = stack_record.parent
-            if child_l[node_idx] == child_r[node_idx]:
+            if child_l[node_idx] == _TREE_LEAF:
+                # ... and child_r[node_idx] == _TREE_LEAF:
                 leaves_in_subtree[node_idx] = 1
             else:
                 rc = stack.push(child_l[node_idx], 0, 0, node_idx, 0, 0, 0)
@@ -1294,14 +1290,13 @@ cpdef build_pruned_tree_ccp(
                 leaves_in_subtree[node_idx] = 0
                 in_subtree[node_idx] = 0
 
-                child_l_idx = child_l[node_idx]
-                child_r_idx = child_r[node_idx]
-                if child_l_idx != child_r_idx:
-                    rc = stack.push(child_l_idx, 0, 0, 0, 0, 0, 0)
+                if child_l[node_idx] != _TREE_LEAF:
+                    # ... and child_r[node_idx] != _TREE_LEAF:
+                    rc = stack.push(child_l[node_idx], 0, 0, 0, 0, 0, 0)
                     if rc == -1:
                         with gil:
                             raise MemoryError()
-                    rc = stack.push(child_r_idx, 0, 0, 0, 0, 0, 0)
+                    rc = stack.push(child_r[node_idx], 0, 0, 0, 0, 0, 0)
                     if rc == -1:
                         with gil:
                             raise MemoryError()

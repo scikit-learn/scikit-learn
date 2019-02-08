@@ -915,7 +915,7 @@ class RandomForestClassifier(ForestClassifier):
     ccp_alpha : positive float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be choosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
     Attributes
     ----------
@@ -1188,7 +1188,7 @@ class RandomForestRegressor(ForestRegressor):
     ccp_alpha : positive float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be choosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
     Attributes
     ----------
@@ -1472,7 +1472,7 @@ class ExtraTreesClassifier(ForestClassifier):
     ccp_alpha : positive float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be choosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
     Attributes
     ----------
@@ -1715,7 +1715,7 @@ class ExtraTreesRegressor(ForestRegressor):
     ccp_alpha : positive float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be choosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
     Attributes
     ----------
@@ -1921,7 +1921,7 @@ class RandomTreesEmbedding(BaseForest):
     ccp_alpha : positive float, optional (default=0.0)
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
-        ``ccp_alpha`` will be choosen. By default, no pruning is performed.
+        ``ccp_alpha`` will be chosen. By default, no pruning is performed.
 
     Attributes
     ----------
