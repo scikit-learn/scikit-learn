@@ -779,8 +779,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                                      axis=1)[:, :self.n_neighbors]
 
         # Get weights or None
-        donors_dist = np.take_along_axis(dist_potential_donors, donors_idx,
-                                         axis=1)
+        donors_dist = dist_potential_donors[
+            np.arange(donors_idx.shape[0])[:, None], donors_idx]
         weight_matrix = _get_weights(donors_dist, self.weights)
 
         # Retrieve donor values and calculate kNN score
