@@ -883,7 +883,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                                       squared=False,
                                       missing_values=self.missing_values)
 
-            # Maps from indicies from X to indices in dist matrix
+            # Maps from indices from X to indices in dist matrix
             dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
             dist_idx_map[row_misses] = np.arange(0, row_misses.sum(0))
 
