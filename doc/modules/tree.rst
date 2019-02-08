@@ -507,6 +507,28 @@ Mean Absolute Error:
 
 where :math:`X_m` is the training data in node :math:`m`
 
+.. _minimal_cost_complexity_pruning
+
+Minimal Cost-Complexity Pruning
+===============================
+
+Minimal cost-complexity pruning is a algorithm used to prune a tree after it
+is grown. This algorithm is parameterized by :math:`\alpha\ge0` known as the 
+complexity parameter. The completely parameter is used to define the 
+cost-complexity measure, :math:`R_\alpha(T)`:
+
+.. math::
+
+  R_\alpha(T) = R(T) + \alpha|\tilde{T}|
+
+where :math:`|\tilde{T}|` is the number of terminal nodes in :math:`T` and 
+:math:`R(T)` is traditionally defined as that total misclassification rate of 
+the terminal nodes. Alternatively, scikit-learn uses the total sample weighted 
+impurity of the terminal nodes for :math:`R(T)`. As shown in the previous 
+section, the impurity of a node depends on the criteria. Minimal 
+cost-complexity pruning finds the subtree of :math:`T` that minimizes 
+:math:`R\alpha(T)`.
+
 .. topic:: References:
 
     * https://en.wikipedia.org/wiki/Decision_tree_learning
