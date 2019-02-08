@@ -261,7 +261,11 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Feature| Adds minimal cost complexity pruning to
   :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
-  :class:`tree.ExtraTreeClassifier`, and :class:`tree.ExtraTreeRegressor`.
+  :class:`tree.ExtraTreeClassifier`, :class:`tree.ExtraTreeRegressor`,
+  :class:`forest.RandomForestClassifier`, 
+  :class:`forest.RandomForestRegressor`,
+  :class:`forest.ExtraTreesClassifier`, :class:`forest.ExtraTreesRegressor`,
+  and :class:`forest.RandomTreesEmbedding`.
   :issue:`12887` by :user:`Thomas Fan <thomasjpfan>`.
 
 - |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
