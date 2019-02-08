@@ -1165,7 +1165,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         return self
 
     def partial_fit(self, X, y, sample_weight=None):
-        """Carry out stochastic gradient descent on one pass of X, y.
+        """Perform one epoch of stochastic gradient descent on given samples.
 
         Internally, this method uses ``max_iter = 1``. Therefore, it is not
         guaranteed that a minimum of the cost function is reached after calling
@@ -1231,7 +1231,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def fit(self, X, y, coef_init=None, intercept_init=None,
             sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
+        """Perform one epoch of stochastic gradient descent on given samples.
 
         Parameters
         ----------
