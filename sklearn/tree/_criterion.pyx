@@ -443,8 +443,7 @@ cdef class ClassificationCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    label_index = (k * self.sum_stride +
-                                   <SIZE_t> self.y[i, k])
+                    label_index = k * self.sum_stride + <SIZE_t> self.y[i, k]
                     sum_left[label_index] += w
 
                 self.weighted_n_left += w
@@ -459,8 +458,7 @@ cdef class ClassificationCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    label_index = (k * self.sum_stride +
-                                   <SIZE_t> self.y[i, k])
+                    label_index = k * self.sum_stride + <SIZE_t> self.y[i, k]
                     sum_left[label_index] -= w
 
                 self.weighted_n_left -= w
@@ -820,7 +818,6 @@ cdef class RegressionCriterion(Criterion):
         cdef SIZE_t p
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t y_ik
 
         # Update statistics up to new_pos
         #
@@ -838,8 +835,7 @@ cdef class RegressionCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = self.y[i, k]
-                    sum_left[k] += w * y_ik
+                    sum_left[k] += w * self.y[i, k]
 
                 self.weighted_n_left += w
         else:
@@ -852,8 +848,7 @@ cdef class RegressionCriterion(Criterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = self.y[i, k]
-                    sum_left[k] -= w * y_ik
+                    sum_left[k] -= w * self.y[i, k]
 
                 self.weighted_n_left -= w
 
@@ -940,6 +935,7 @@ cdef class MSE(RegressionCriterion):
 
         cdef double* sum_left = self.sum_left
         cdef double* sum_right = self.sum_right
+        cdef DOUBLE_t y_ik
 
         cdef double sq_sum_left = 0.0
         cdef double sq_sum_right
@@ -948,7 +944,6 @@ cdef class MSE(RegressionCriterion):
         cdef SIZE_t p
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t y_ik
 
         for p in range(start, pos):
             i = samples[p]
@@ -1033,7 +1028,6 @@ cdef class MAE(RegressionCriterion):
            children samples[start:start] and samples[start:end]."""
 
         cdef SIZE_t i, p, k
-        cdef DOUBLE_t y_ik
         cdef DOUBLE_t w = 1.0
 
         # Initialize fields
@@ -1063,12 +1057,10 @@ cdef class MAE(RegressionCriterion):
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
-                y_ik = self.y[i, k]
-
                 # push method ends up calling safe_realloc, hence `except -1`
                 # push all values to the right side,
                 # since pos = start initially anyway
-                (<WeightedMedianCalculator> right_child[k]).push(y_ik, w)
+                (<WeightedMedianCalculator> right_child[k]).push(self.y[i, k], w)
 
             self.weighted_n_node_samples += w
         # calculate the node medians
@@ -1157,7 +1149,6 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t end = self.end
         cdef SIZE_t i, p, k
         cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t y_ik
 
         # Update statistics up to new_pos
         #
@@ -1173,11 +1164,10 @@ cdef class MAE(RegressionCriterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = self.y[i, k]
                     # remove y_ik and its weight w from right and add to left
-                    (<WeightedMedianCalculator> right_child[k]).remove(y_ik, w)
+                    (<WeightedMedianCalculator> right_child[k]).remove(self.y[i, k], w)
                     # push method ends up calling safe_realloc, hence except -1
-                    (<WeightedMedianCalculator> left_child[k]).push(y_ik, w)
+                    (<WeightedMedianCalculator> left_child[k]).push(self.y[i, k], w)
 
                 self.weighted_n_left += w
         else:
@@ -1190,10 +1180,9 @@ cdef class MAE(RegressionCriterion):
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
-                    y_ik = self.y[i, k]
                     # remove y_ik and its weight w from left and add to right
-                    (<WeightedMedianCalculator> left_child[k]).remove(y_ik, w)
-                    (<WeightedMedianCalculator> right_child[k]).push(y_ik, w)
+                    (<WeightedMedianCalculator> left_child[k]).remove(self.y[i, k], w)
+                    (<WeightedMedianCalculator> right_child[k]).push(self.y[i, k], w)
 
                 self.weighted_n_left -= w
 
@@ -1216,7 +1205,6 @@ cdef class MAE(RegressionCriterion):
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t i, p, k
-        cdef DOUBLE_t y_ik
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t impurity = 0.0
 
@@ -1224,12 +1212,10 @@ cdef class MAE(RegressionCriterion):
             for p in range(self.start, self.end):
                 i = samples[p]
 
-                y_ik = self.y[i, k]
-
                 if sample_weight != NULL:
                     w = sample_weight[i]
 
-                impurity += fabs(y_ik - self.node_medians[k]) * w
+                impurity += fabs(self.y[i, k] - self.node_medians[k]) * w
 
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
@@ -1248,7 +1234,6 @@ cdef class MAE(RegressionCriterion):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t i, p, k
-        cdef DOUBLE_t y_ik
         cdef DOUBLE_t median
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t impurity_left = 0.0
@@ -1262,12 +1247,10 @@ cdef class MAE(RegressionCriterion):
             for p in range(start, pos):
                 i = samples[p]
 
-                y_ik = self.y[i, k]
-
                 if sample_weight != NULL:
                     w = sample_weight[i]
 
-                impurity_left += fabs(y_ik - median) * w
+                impurity_left += fabs(self.y[i, k] - median) * w
         p_impurity_left[0] = impurity_left / (self.weighted_n_left * 
                                               self.n_outputs)
 
@@ -1276,12 +1259,10 @@ cdef class MAE(RegressionCriterion):
             for p in range(pos, end):
                 i = samples[p]
 
-                y_ik = self.y[i, k]
-
                 if sample_weight != NULL:
                     w = sample_weight[i]
 
-                impurity_right += fabs(y_ik - median) * w
+                impurity_right += fabs(self.y[i, k] - median) * w
         p_impurity_right[0] = impurity_right / (self.weighted_n_right * 
                                                 self.n_outputs)
 
