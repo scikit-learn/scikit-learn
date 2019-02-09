@@ -61,8 +61,8 @@ def plot_confusion_matrix(y_true, y_pred, classes,
         if normalize:
             title = 'Normalized confusion matrix'
         else:
-            title ='Confusion matrix, without normalization'
-    
+            title = 'Confusion matrix, without normalization'
+
     cm = confusion_matrix(y_true, y_pred)
     # Only use the labels that appear in the data
     classes = classes[unique_labels(y_true, y_pred)]
@@ -85,7 +85,7 @@ def plot_confusion_matrix(y_true, y_pred, classes,
            title=title,
            ylabel='True label',
            xlabel='Predicted label')
-    
+
     # Rotate the tick labels and set their alignment.
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
              rotation_mode="anchor")
@@ -106,11 +106,11 @@ cnf_matrix = confusion_matrix(y_test, y_pred)
 np.set_printoptions(precision=2)
 
 # Plot non-normalized confusion matrix
-plot_confusion_matrix(cnf_matrix, classes=class_names,
+plot_confusion_matrix(y_test, y_pred, classes=class_names,
                       title='Confusion matrix, without normalization')
 
 # Plot normalized confusion matrix
-plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
+plot_confusion_matrix(y_test, y_pred, classes=class_names, normalize=True,
                       title='Normalized confusion matrix')
 
 plt.show()
