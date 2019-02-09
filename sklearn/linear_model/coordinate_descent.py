@@ -749,71 +749,49 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         # Remember if X is copied
         X_copied = False
-        # For 'cd', we expect X and y to be float64 or float32 Fortran ordered
-        # arrays when bypassing checks
-        # For 'saga' we expect float64 C ordered arrays
-        if check_input:
-            X_copied = self.copy_X and self.fit_intercept
-            if self.solver == 'cd':
+
+        if self.solver == 'cd':
+            # For 'cd', we expect X and y to be float64 or float32 Fortran
+            # ordered arrays when bypassing checks
+            if check_input:
+                X_copied = self.copy_X and self.fit_intercept
                 X, y = check_X_y(X, y, accept_sparse='csc',
                                  order='F', dtype=[np.float64, np.float32],
                                  copy=X_copied, multi_output=True,
                                  y_numeric=True)
                 y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
                                 ensure_2d=False)
+
+            # Ensure copying happens only once, don't do it again if done above
+            should_copy = self.copy_X and not X_copied
+            X, y, X_offset, y_offset, X_scale, precompute, Xy = \
+                _pre_fit(X, y, None, self.precompute, self.normalize,
+                         self.fit_intercept, copy=should_copy,
+                         check_input=check_input)
+            if y.ndim == 1:
+                y = y[:, np.newaxis]
+            if Xy is not None and Xy.ndim == 1:
+                Xy = Xy[:, np.newaxis]
+
+            n_samples, n_features = X.shape
+            n_targets = y.shape[1]
+
+            if self.selection not in ['cyclic', 'random']:
+                raise ValueError("selection should be either random or "
+                                 "cyclic.")
+
+            if not self.warm_start or not hasattr(self, "coef_"):
+                coef_ = np.zeros((n_targets, n_features), dtype=X.dtype,
+                                 order='C')
             else:
-                X, y = check_X_y(X, y, accept_sparse='csr',
-                                 order='C', dtype=np.float64,
-                                 copy=X_copied, multi_output=True,
-                                 y_numeric=True)
-                # For 2D target, we need contiguous columns as they are
-                # to be regressed independently on X
-                y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
-                                ensure_2d=False)
+                coef_ = self.coef_
+                if coef_.ndim == 1:
+                    coef_ = coef_[np.newaxis, :]
 
-        # Ensure copying happens only once, don't do it again if done above
-        should_copy = self.copy_X and not X_copied
-        if self.solver == 'cd':
-            precompute_ = self.precompute
-        else:
-            precompute_ = False
-            if self.precompute is not precompute_:
-                warnings.warn("The solver 'saga' does not use the precomputed "
-                              " Gram matrix", category=UserWarning)
-        X, y, X_offset, y_offset, X_scale, precompute, Xy = \
-            _pre_fit(X, y, None, precompute_, self.normalize,
-                     self.fit_intercept, copy=should_copy,
-                     check_input=check_input)
-
-        if y.ndim == 1:
-            y = y[:, np.newaxis]
-        if Xy is not None and Xy.ndim == 1:
-            Xy = Xy[:, np.newaxis]
-
-        n_samples, n_features = X.shape
-        n_targets = y.shape[1]
-
-        if self.selection not in ['cyclic', 'random']:
-            raise ValueError("selection should be either random or cyclic.")
-
-        if self.solver == 'saga':
-            max_squared_sum = row_norms(X, squared=True).max()
-
-        if not self.warm_start or not hasattr(self, "coef_"):
-            coef_ = np.zeros((n_targets, n_features), dtype=X.dtype,
-                             order='C')
-        else:
-            coef_ = self.coef_
-            if coef_.ndim == 1:
-                coef_ = coef_[np.newaxis, :]
-
-        if self.solver == 'cd':
             dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
+            self.n_iter_ = []
 
-        self.n_iter_ = []
-
-        for k in range(n_targets):
-            if self.solver == 'cd':
+            for k in range(n_targets):
                 if Xy is not None:
                     this_Xy = Xy[:, k]
                 else:
@@ -835,7 +813,51 @@ class ElasticNet(LinearModel, RegressorMixin):
                 dual_gaps_[k] = this_dual_gap[0]
                 coef_[k] = this_coef[:, 0]
                 self.n_iter_.append(this_iter[0])
+            if n_targets == 1:
+                self.dual_gap_ = dual_gaps_[0]
             else:
+                self.dual_gap_ = dual_gaps_
+        else:  # solver == 'saga'
+            # For 'saga' we expect float64 C ordered arrays
+            if check_input:
+                X_copied = self.copy_X and self.fit_intercept
+                X, y = check_X_y(X, y, accept_sparse='csr',
+                                 order='C', dtype=np.float64,
+                                 copy=X_copied, multi_output=True,
+                                 y_numeric=True)
+                # For 2D target, we need contiguous columns as they are
+                # to be regressed independently on X
+                y = check_array(y, order='F', copy=False, dtype=X.dtype.type,
+                                ensure_2d=False)
+            # Ensure copying happens only once, don't do it again if done above
+            should_copy = self.copy_X and not X_copied
+            if self.precompute is not False:
+                warnings.warn("The solver 'saga' does not use the precomputed "
+                              " Gram matrix", category=UserWarning)
+            X, y, X_offset, y_offset, X_scale, precompute, Xy = \
+                _pre_fit(X, y, None, False, self.normalize,
+                         self.fit_intercept, copy=should_copy,
+                         check_input=check_input)
+            if y.ndim == 1:
+                y = y[:, np.newaxis]
+            if Xy is not None and Xy.ndim == 1:
+                Xy = Xy[:, np.newaxis]
+
+            n_samples, n_features = X.shape
+            n_targets = y.shape[1]
+
+            if not self.warm_start or not hasattr(self, "coef_"):
+                coef_ = np.zeros((n_targets, n_features), dtype=X.dtype,
+                                 order='C')
+            else:
+                coef_ = self.coef_
+                if coef_.ndim == 1:
+                    coef_ = coef_[np.newaxis, :]
+
+            max_squared_sum = row_norms(X, squared=True).max()
+            self.n_iter_ = []
+
+            for k in range(n_targets):
                 this_coef, this_iter, warm_start_sag = sag_solver(
                     X, y[:, k], sample_weight=None, loss='squared',
                     alpha=n_samples*self.alpha*(1 - self.l1_ratio),
@@ -847,20 +869,13 @@ class ElasticNet(LinearModel, RegressorMixin):
                     is_saga=True)
                 coef_[k] = this_coef
                 self.n_iter_.append(this_iter)
+                self.dual_gap_ = None
 
         if n_targets == 1:
             self.n_iter_ = self.n_iter_[0]
             self.coef_ = coef_[0]
-            if self.solver == 'cd':
-                self.dual_gap_ = dual_gaps_[0]
-            else:
-                self.dual_gap_ = None
         else:
             self.coef_ = coef_
-            if self.solver == 'cd':
-                self.dual_gap_ = dual_gaps_
-            else:
-                self.dual_gap_ = None
 
         self._set_intercept(X_offset, y_offset, X_scale)
 
