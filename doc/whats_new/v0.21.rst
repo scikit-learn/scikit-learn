@@ -43,6 +43,14 @@ Support for Python 3.4 and below has been officially dropped.
     section should be ordered according to the label ordering above. Entries
     should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Enhancement| Added support to bin the data passed into
+  :class:`calibration.calibration_curve` by quantiles instead of uniformly
+  between 0 and 1.
+  :issue:`13086` by :user:`Scott Cole <srcole>`.
+
 :mod:`sklearn.cluster`
 ......................
 

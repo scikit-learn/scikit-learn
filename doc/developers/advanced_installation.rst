@@ -118,8 +118,8 @@ You first need to install the OpenMP library::
 
 Then you need to set the following environment variables::
 
-    export CC=clang
-    export CXX=clang++
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
     export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
     export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
