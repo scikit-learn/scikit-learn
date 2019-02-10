@@ -63,6 +63,7 @@ def plot_confusion_matrix(y_true, y_pred, classes,
         else:
             title = 'Confusion matrix, without normalization'
 
+    # Compute confusion matrix
     cm = confusion_matrix(y_true, y_pred)
     # Only use the labels that appear in the data
     classes = classes[unique_labels(y_true, y_pred)]
@@ -101,8 +102,7 @@ def plot_confusion_matrix(y_true, y_pred, classes,
     fig.tight_layout()
     return ax
 
-# Compute confusion matrix
-cnf_matrix = confusion_matrix(y_test, y_pred)
+
 np.set_printoptions(precision=2)
 
 # Plot non-normalized confusion matrix
