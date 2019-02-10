@@ -909,7 +909,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.initial_imputer_ = None
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
-        if self.max_iter == 0 or np.sum(~mask_missing_values) == 0:
+        if self.max_iter == 0 or np.all(mask_missing_values):
             self.n_iter_ = 0
             return Xt
 
