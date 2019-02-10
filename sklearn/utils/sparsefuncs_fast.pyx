@@ -68,6 +68,8 @@ def csr_mean_variance_axis0(X, ddof=0):
         ``N - ddof``, where ``N`` represents the number of elements. By default
         ddof is zero.
 
+        .. versionadded:: 0.21
+
     Returns
     -------
     means : float array with shape (n_features,)
@@ -158,6 +160,8 @@ def csc_mean_variance_axis0(X, ddof=0):
         “Delta Degrees of Freedom”: the divisor used in the calculation is
         ``N - ddof``, where ``N`` represents the number of elements. By default
         ddof is zero.
+
+        .. versionadded:: 0.21
 
     Returns
     -------

@@ -376,6 +376,8 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
                    random_state=0):
     """Computes a truncated randomized PCA decomposition.
 
+    .. versionadded:: 0.21
+
     Parameters
     ----------
     A : ndarray or sparse matrix
@@ -397,8 +399,6 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
         (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
         This improves precision with few components.
 
-        .. versionchanged:: 0.18
-
     power_iteration_normalizer : 'auto' (default), 'QR', 'LU', 'none'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
@@ -406,8 +406,6 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
-
-        .. versionadded:: 0.18
 
     flip_sign : boolean, (True by default)
         The output of a singular value decomposition is only unique up to a
@@ -454,9 +452,6 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
 
     n_samples, n_features = A.shape
 
-    # Use `mean_variance_axis` instead of `A.sum` as it is much more memory
-    # efficient than scipy's implementation. See GH
-    # https://github.com/scikit-learn/scikit-learn/pull/12841#issuecomment-460238233
     if sparse.issparse(A):
         means, _ = mean_variance_axis(A, axis=0)
     else:
@@ -468,7 +463,6 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
             size=(n_features, n_components + n_oversamples)
         )
         if A.dtype.kind == "f":
-            # Ensure f32 is preserved as f32
             Q = Q.astype(A.dtype, copy=False)
 
         Q = safe_sparse_dot(A, Q) - safe_sparse_dot(c, Q)
@@ -493,7 +487,6 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
             size=(n_samples, n_components + n_oversamples)
         )
         if A.dtype.kind == "f":
-            # Ensure f32 is preserved as f32
             Q = Q.astype(A.dtype, copy=False)
 
         Q = safe_sparse_dot(A.T, Q) - \

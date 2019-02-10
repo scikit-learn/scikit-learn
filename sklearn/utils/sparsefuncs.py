@@ -77,6 +77,8 @@ def mean_variance_axis(X, axis, ddof=0):
         ``N - ddof``, where ``N`` represents the number of elements. By default
         ddof is zero.
 
+        .. versionadded:: 0.21
+
     Returns
     -------
 
@@ -93,7 +95,7 @@ def mean_variance_axis(X, axis, ddof=0):
         raise ValueError('ddof cannot be <0')
 
     if ddof >= X.shape[axis]:
-        raise ValueError('ddof cannot be <N')
+        raise ValueError('ddof must be <N')
 
     if isinstance(X, sp.csr_matrix):
         if axis == 0:

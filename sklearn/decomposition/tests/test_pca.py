@@ -261,11 +261,12 @@ def test_singular_values():
               random_state=rng).fit(X)
     apca = PCA(n_components=2, svd_solver='arpack',
                random_state=rng).fit(X)
+    # Increase the number of power iterations to get greater accuracy in tests
     rpca = PCA(n_components=2, svd_solver='randomized', iterated_power=40,
                random_state=rng).fit(X)
-    assert_array_almost_equal(pca.singular_values_, apca.singular_values_, 12)
-    assert_array_almost_equal(pca.singular_values_, rpca.singular_values_, 12)
-    assert_array_almost_equal(apca.singular_values_, rpca.singular_values_, 12)
+    assert_allclose(pca.singular_values_, apca.singular_values_, 12)
+    assert_allclose(pca.singular_values_, rpca.singular_values_, 12)
+    assert_allclose(apca.singular_values_, rpca.singular_values_, 12)
 
     # Compare to the Frobenius norm
     X_pca = pca.transform(X)
@@ -693,11 +694,10 @@ def test_pca_sparse_input_randomized_solver():
     X = rng.binomial(1, 0.1, (n_samples, n_features))
     X_sp = sp.sparse.csr_matrix(X)
 
-    # Compute the complete decomposition on the dense matrix
+    # Compute the randomized decomposition on the dense matrix
     pca = PCA(n_components=3, svd_solver='randomized',
               random_state=0).fit(X)
-    # And compute a randomized decomposition on the sparse matrix. Increase the
-    # number of power iterations to account for the non-zero means
+    # And compute the randomized decomposition on the sparse matrix.
     pca_sp = PCA(n_components=3, svd_solver='randomized',
                  random_state=0).fit(X_sp)
 
@@ -717,7 +717,9 @@ def test_pca_sparse_input_bad_solvers(svd_solver):
 
     pca = PCA(n_components=3, svd_solver=svd_solver)
 
-    assert_raises(ValueError, pca.fit, X)
+    with pytest.raises(ValueError, match='only the randomized solver supports '
+                                         'sparse matrices'):
+        pca.fit(X)
 
 
 def test_pca_auto_solver_selects_randomized_solver_for_sparse_matrices():

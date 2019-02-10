@@ -108,14 +108,16 @@ def test_mean_variance_negative_ddof():
     X, _ = make_classification(5, 4, random_state=0)
     X = sp.csr_matrix(X)
 
-    assert_raises(ValueError, mean_variance_axis, X, axis=0, ddof=-5)
+    with pytest.raises(ValueError, match='ddof cannot be <0'):
+        mean_variance_axis(X, axis=0, ddof=-5)
 
 
 def test_mean_variance_too_large_ddof():
     X, _ = make_classification(5, 4, random_state=0)
     X = sp.csr_matrix(X)
 
-    assert_raises(ValueError, mean_variance_axis, X, axis=0, ddof=10)
+    with pytest.raises(ValueError, match='ddof must be <N'):
+        mean_variance_axis(X, axis=0, ddof=10)
 
 
 @pytest.mark.parametrize("axis", (0, 1))
@@ -132,12 +134,12 @@ def test_mean_variance_with_ddof_and_nan_values(axis, sparse_constructor):
     x[:-1, 0] = np.nan
     x[0, :-1] = np.nan
 
-    assert_equal(mean_variance_axis(x, axis=axis, ddof=0)[1],
-                 [0] * 5)
-    assert_equal(mean_variance_axis(x, axis=axis, ddof=2)[1],
-                 [np.nan] + [0] * 4)
-    assert_equal(mean_variance_axis(x, axis=axis, ddof=4)[1],
-                 [np.nan] * 4 + [0])
+    assert_array_equal(mean_variance_axis(x, axis=axis, ddof=0)[1],
+                       [0] * 5)
+    assert_array_equal(mean_variance_axis(x, axis=axis, ddof=2)[1],
+                       [np.nan] + [0] * 4)
+    assert_array_equal(mean_variance_axis(x, axis=axis, ddof=4)[1],
+                       [np.nan] * 4 + [0])
 
 
 def test_incr_mean_variance_axis():
