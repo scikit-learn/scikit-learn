@@ -78,7 +78,7 @@ __all__ = [
     'adjusted_mutual_info_score',
     'adjusted_rand_score',
     'auc',
-    'aucpr_min'
+    'aucpr_min',
     'average_precision_score',
     'balanced_accuracy_score',
     'calinski_harabaz_score',
