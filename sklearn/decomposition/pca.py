@@ -117,9 +117,6 @@ class PCA(_BasePCA):
     It can also use the scipy.sparse.linalg ARPACK implementation of the
     truncated SVD.
 
-    Notice that this class does not support sparse input. See
-    :class:`TruncatedSVD` for an alternative with sparse data.
-
     Read more in the :ref:`User Guide <PCA>`.
 
     Parameters
@@ -168,6 +165,9 @@ class PCA(_BasePCA):
             dimension of the data, then the more efficient 'randomized'
             method is enabled. Otherwise the exact full SVD is computed and
             optionally truncated afterwards.
+
+            in case sparse data is used, 'randomized' is used as this is the
+            only method that supports sparse data.
         full :
             run exact full SVD calling the standard LAPACK solver via
             `scipy.linalg.svd` and select the components by postprocessing
@@ -176,7 +176,8 @@ class PCA(_BasePCA):
             `scipy.sparse.linalg.svds`. It requires strictly
             0 < n_components < min(X.shape)
         randomized :
-            run randomized SVD by the method of Halko et al.
+            run randomized SVD by the method of Halko et al. This is the only
+            method that supports sparse data.
 
         .. versionadded:: 0.18.0
 
