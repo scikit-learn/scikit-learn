@@ -500,8 +500,8 @@ def test_shuffle_stratifiedkfold():
     y = [0] * 5 + [1] * 5
     kf1 = StratifiedKFold(5, shuffle=True, random_state=0)
     kf2 = StratifiedKFold(5, shuffle=True, random_state=1)
-    test_set1 = sorted(list(map(lambda x: tuple(x[1]), kf1.split(X, y))))
-    test_set2 = sorted(list(map(lambda x: tuple(x[1]), kf2.split(X, y))))
+    test_set1 = sorted([tuple(s[1]) for s in kf1.split(X, y)])
+    test_set2 = sorted([tuple(s[1]) for s in kf2.split(X, y)])
     assert test_set1 != test_set2
 
 
