@@ -866,7 +866,8 @@ class ExponentialLoss(ClassificationLossFunction):
         eps = np.finfo(np.float32).eps
         proba_pos_class = np.clip(proba_pos_class, eps, 1 - eps)
         # according to The Elements of Statistical Learning sec. 10.5, the
-        # minimizer of the exponential loss is .5 * log odds ratio.
+        # minimizer of the exponential loss is .5 * log odds ratio. So this is
+        # the equivalent to .5 * binomial_deviance.get_init_raw_predictions()
         raw_predictions = .5 * np.log(proba_pos_class / (1 - proba_pos_class))
         return raw_predictions.reshape(-1, 1).astype(np.float64)
 

@@ -9,10 +9,14 @@ from numpy.testing import assert_equal
 
 from sklearn.utils import check_random_state
 from sklearn.utils.stats import _weighted_percentile
-from sklearn.ensemble._gb_losses import BinomialDeviance
 from sklearn.ensemble._gb_losses import RegressionLossFunction
 from sklearn.ensemble._gb_losses import LeastSquaresError
+from sklearn.ensemble._gb_losses import LeastAbsoluteError
+from sklearn.ensemble._gb_losses import HuberLossFunction
 from sklearn.ensemble._gb_losses import QuantileLossFunction
+from sklearn.ensemble._gb_losses import BinomialDeviance
+from sklearn.ensemble._gb_losses import MultinomialDeviance
+from sklearn.ensemble._gb_losses import ExponentialLoss
 from sklearn.ensemble._gb_losses import LOSS_FUNCTIONS
 
 
@@ -170,3 +174,123 @@ def test_sample_weight_deviance():
         deviance_w_w = loss(y, p, sample_weight)
         deviance_wo_w = loss(y, p)
         assert deviance_wo_w == deviance_w_w
+
+
+def test_init_raw_predictions_shapes():
+    # Make sure get_init_raw_predictions returns float64 arrays with shape
+    # (n_samples, K) where K is 1 for binary classification and regression, and
+    # K = n_classes for multiclass classification
+    rng = np.random.RandomState(0)
+
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 5))
+    y = rng.normal(size=n_samples)
+    for loss in (LeastSquaresError(n_classes=1),
+                 LeastAbsoluteError(n_classes=1),
+                 QuantileLossFunction(n_classes=1),
+                 HuberLossFunction(n_classes=1)):
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        assert raw_predictions.shape == (n_samples, 1)
+        assert raw_predictions.dtype == np.float64
+
+    y = rng.randint(0, 2, size=n_samples)
+    for loss in (BinomialDeviance(n_classes=2),
+                 ExponentialLoss(n_classes=2)):
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        assert raw_predictions.shape == (n_samples, 1)
+        assert raw_predictions.dtype == np.float64
+
+    for n_classes in range(3, 5):
+        y = rng.randint(0, n_classes, size=n_samples)
+        loss = MultinomialDeviance(n_classes=n_classes)
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        assert raw_predictions.shape == (n_samples, n_classes)
+        assert raw_predictions.dtype == np.float64
+
+
+def test_init_raw_predictions_values():
+    # Make sure the get_init_raw_predictions() returns the expected values for
+    # each loss.
+    rng = np.random.RandomState(0)
+
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 5))
+    y = rng.normal(size=n_samples)
+
+    # Least squares loss
+    loss = LeastSquaresError(n_classes=1)
+    init_estimator = loss.init_estimator().fit(X, y)
+    raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+    # Make sure baseline prediction is the mean of all targets
+    assert_almost_equal(raw_predictions, y.mean())
+
+    # Least absolute and huber loss
+    for Loss in (LeastAbsoluteError, HuberLossFunction):
+        loss = Loss(n_classes=1)
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        # Make sure baseline prediction is the median of all targets
+        assert_almost_equal(raw_predictions, np.median(y))
+
+    # Quantile loss
+    for alpha in (.1, .5, .9):
+        loss = QuantileLossFunction(n_classes=1, alpha=alpha)
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        # Make sure baseline prediction is the alpha-quantile of all targets
+        assert_almost_equal(raw_predictions, np.percentile(y, alpha * 100))
+
+    y = rng.randint(0, 2, size=n_samples)
+
+    # Binomial deviance
+    loss = BinomialDeviance(n_classes=2)
+    init_estimator = loss.init_estimator().fit(X, y)
+    # Make sure baseline prediction is equal to link_function(p), where p
+    # is the proba of the positive class. We want predict_proba() to return p,
+    # and by definition
+    # p = inverse_link_function(raw_prediction) = sigmoid(raw_prediction)
+    # So we want raw_prediction = link_function(p) = log(p / (1 - p))
+    raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+    p = y.mean()
+    assert_almost_equal(raw_predictions, np.log(p / (1 - p)))
+
+    # FIXME: uncomment this and fix
+    # for y_unstable in (np.zeros(shape=n_samples), np.ones(shape=n_samples)):
+    #     init_estimator = loss.init_estimator().fit(X, y_unstable)
+    #     raw_predictions = loss.get_init_raw_predictions(y_unstable,
+    #                                                     init_estimator)
+    #     assert_all_finite(raw_predictions)
+
+    # Exponential loss
+    loss = ExponentialLoss(n_classes=2)
+    init_estimator = loss.init_estimator().fit(X, y)
+    raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+    p = y.mean()
+    assert_almost_equal(raw_predictions, .5 * np.log(p / (1 - p)))
+
+    # FIXME: uncomment this and fix
+    # for y_unstable in (np.zeros(shape=n_samples), np.ones(shape=n_samples)):
+    #     init_estimator = loss.init_estimator().fit(X, y_unstable)
+    #     raw_predictions = loss.get_init_raw_predictions(y_unstable,
+    #                                                     init_estimator)
+    #     assert_all_finite(raw_predictions)
+
+    # Multinomial deviance loss
+    for n_classes in range(3, 5):
+        y = rng.randint(0, n_classes, size=n_samples)
+        loss = MultinomialDeviance(n_classes=n_classes)
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        for k in range(n_classes):
+            p = (y == k).mean()
+        assert_almost_equal(raw_predictions[:, k], np.log(p))
+
+        # FIXME: uncomment this and fix
+        # for y_unstable in (np.zeros(shape=n_samples), np.ones(shape=n_samples)):
+        #     init_estimator = loss.init_estimator().fit(X, y_unstable)
+        #     raw_predictions = loss.get_init_raw_predictions(y_unstable,
+        #                                                     init_estimator)
+        #     assert_all_finite(raw_predictions)
