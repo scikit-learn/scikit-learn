@@ -1084,7 +1084,7 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
             to avoid unnecessary memory duplication. If y is mono-output,
             X can be sparse.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,)
             Target values
         """
         y = check_array(y, copy=False, dtype=[np.float64, np.float32],
