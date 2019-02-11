@@ -833,7 +833,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             should_copy = self.copy_X and not X_copied
             if self.precompute is not False:
                 warnings.warn("The solver 'saga' does not use the precomputed "
-                              " Gram matrix", category=UserWarning)
+                              "Gram matrix", category=UserWarning)
             X, y, X_offset, y_offset, X_scale, precompute, Xy = \
                 _pre_fit(X, y, None, False, self.normalize,
                          self.fit_intercept, copy=should_copy,
@@ -860,8 +860,8 @@ class ElasticNet(LinearModel, RegressorMixin):
             for k in range(n_targets):
                 this_coef, this_iter, warm_start_sag = sag_solver(
                     X, y[:, k], sample_weight=None, loss='squared',
-                    alpha=n_samples*self.alpha*(1 - self.l1_ratio),
-                    beta=n_samples*self.alpha*self.l1_ratio,
+                    alpha=n_samples * self.alpha * (1 - self.l1_ratio),
+                    beta=n_samples * self.alpha * self.l1_ratio,
                     max_iter=self.max_iter, tol=self.tol, verbose=0,
                     random_state=self.random_state, check_input=False,
                     max_squared_sum=max_squared_sum,
