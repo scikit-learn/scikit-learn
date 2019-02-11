@@ -55,8 +55,8 @@ Changelog
 :mod:`sklearn.model_selection`
 ..............................
 
-- |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold` always
-  produce the same splits with different ``random_state``.
+- |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
+  shuffle each stratification with the same ``random_state``. 
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.preprocessing`
