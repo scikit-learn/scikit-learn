@@ -830,9 +830,8 @@ def export_text(decision_tree, feature_names=None, max_depth=10,
         Number of decimal digits to display.
 
     show_weights : bool, optional (default=False)
-        If true the classification weights will not be exported
-        on each leaf. The classification weights are the number
-        of samples each class.
+        If true the classification weights will be exported on each leaf.
+        The classification weights are the number of samples each class.
 
     Returns
     -------
