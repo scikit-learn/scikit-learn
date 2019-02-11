@@ -745,15 +745,20 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         self.col_max_missing = col_max_missing
         self.copy = copy
 
-    def _compute_impute(self, dist, fit_X_col, mask_fit_X_col, statistic):
-        """Helper function to calculate the values to impute the missing
-        vaules of a single column. Assumes ``dist`` contains at least one
-        row.
+    def _impute(self, dist, receivers_idx,
+                X_col, fit_X_col, mask_fit_X_col, statistic):
+        """Helper function to impute the missing values of a single column.
 
         Parameters
         ----------
         dist : array-like, shape = (n_receivers, n_train_samples, )
             distance matrix between the receivers and the train samples
+
+        receivers_idx : array-like, shape = (n_receivers, )
+            indices of X_col to be imputed
+
+        X_col : array-like, shape = (n_samples, )
+            column to be imputed
 
         fit_X_col : array-like, shape = (n_train_samples, )
             column from training
@@ -764,12 +769,16 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         statistic : float
             statistic for column generated from fitting ``fit_X_col``
         """
+        if receivers_idx.shape[0] == 0:
+            return
+
         # Row index for receivers and potential donors (pdonors)
         potential_donors_idx = np.where(~mask_fit_X_col)[0]
 
         # Impute using column mean if n_neighbors are not available
         if len(potential_donors_idx) < self.n_neighbors:
-            return statistic
+            X_col[receivers_idx] = statistic
+            return
 
         # Get distance from potential donors
         dist_potential_donors = dist[:, potential_donors_idx]
@@ -791,7 +800,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         # Final imputation
         imputed = np.ma.average(donors, axis=1, weights=weight_matrix)
-        return imputed.data
+        X_col[receivers_idx] = imputed.data
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -897,9 +906,9 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
                 receivers_idx = np.where(mask[:, col])[0]
                 dist_subset = dist[dist_idx_map[receivers_idx]]
-                X[receivers_idx, col] = self._compute_impute(
-                    dist_subset, self.fit_X_[:, col],
-                    mask_fit_X[:, col], self.statistics_[col])
+                self._impute(dist_subset, receivers_idx, X[:, col],
+                             self.fit_X_[:, col], mask_fit_X[:, col],
+                             self.statistics_[col])
 
         # Merge deficient rows and mean impute their missing values
         if np.any(bad_rows):
