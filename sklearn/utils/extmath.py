@@ -437,6 +437,8 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
       Li, Huamin, et al. 2017
 
     """
+    random_state = check_random_state(random_state)
+
     if n_iter == "auto":
         # Checks if the number of iterations is explicitly specified
         # Adjust n_iter. 7 was found a good compromise for PCA.

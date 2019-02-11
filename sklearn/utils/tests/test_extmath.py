@@ -25,6 +25,7 @@ from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import randomized_pca
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
@@ -643,3 +644,154 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
     assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
+
+
+@pytest.mark.parametrize('dtype',
+                         (np.int32, np.int64, np.float32, np.float64))
+def test_randomized_pca_low_rank(dtype):
+    # Check that extmath.randomized_pca is consistent with true pca
+    n_samples = 100
+    n_features = 500
+    rank = 5
+    k = 10
+    decimal = 4 if dtype == np.float32 else 7
+    dtype = np.dtype(dtype)
+
+    # generate a matrix X of approximate effective rank `rank` and no noise
+    # component (very structured signal):
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
+                             effective_rank=rank, tail_strength=0.0,
+                             random_state=0)
+    # Multiply the matrix by some large number so that when it's converted to
+    # ints, everything won't become zeros
+    X *= 100
+    X = X.astype(dtype, copy=False)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    # compute the singular values of X using the slow exact method
+    X = X - np.mean(X, axis=0)
+
+    U, s, V = linalg.svd(X, full_matrices=False)
+
+    for normalizer in ['auto', 'LU', 'QR']:  # 'none' would not be stable
+        # compute the singular values of X using the fast approximate method
+        Ua, sa, Va = randomized_pca(
+            X, k, power_iteration_normalizer=normalizer, random_state=0,
+            n_iter=30,
+        )
+
+        # If the input dtype is float, then the output dtype is float of the
+        # same bit size (f32 is not upcast to f64)
+        # But if the input dtype is int, the output dtype is float64
+        if dtype.kind == 'f':
+            assert Ua.dtype == dtype
+            assert sa.dtype == dtype
+            assert Va.dtype == dtype
+        else:
+            assert Ua.dtype == np.float64
+            assert sa.dtype == np.float64
+            assert Va.dtype == np.float64
+
+        assert_equal(Ua.shape, (n_samples, k))
+        assert_equal(sa.shape, (k,))
+        assert_equal(Va.shape, (k, n_features))
+
+        # ensure that the singular values of both methods are equal up to the
+        # real rank of the matrix
+        assert_almost_equal(s[:k], sa, decimal=decimal)
+
+        # check the singular vectors too (while not checking the sign)
+        assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va),
+                            decimal=decimal)
+
+        # check the sparse matrix representation
+        X = sparse.csr_matrix(X)
+
+        # compute the singular values of X using the fast approximate method
+        Ua, sa, Va = \
+            randomized_pca(X, k, power_iteration_normalizer=normalizer,
+                           random_state=0)
+        if dtype.kind == 'f':
+            assert Ua.dtype == dtype
+            assert sa.dtype == dtype
+            assert Va.dtype == dtype
+        else:
+            assert Ua.dtype.kind == 'f'
+            assert sa.dtype.kind == 'f'
+            assert Va.dtype.kind == 'f'
+
+        assert_almost_equal(s[:rank], sa[:rank], decimal=decimal)
+
+
+def test_randomized_pca_low_rank_with_noise():
+    # Check that extmath.randomized_pca can handle noisy matrices
+    n_samples = 100
+    n_features = 500
+    rank = 5
+    k = 10
+
+    # generate a matrix X wity structure approximate rank `rank` and an
+    # important noisy component
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
+                             effective_rank=rank, tail_strength=0.1,
+                             random_state=0)
+    X = X - np.mean(X, axis=0)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    # compute the singular values of X using the slow exact method
+    _, s, _ = linalg.svd(X, full_matrices=False)
+
+    for normalizer in ['auto', 'none', 'LU', 'QR']:
+        # compute the singular values of X using the fast approximate
+        # method without the iterated power method
+        _, sa, _ = randomized_pca(X, k, n_iter=0,
+                                  power_iteration_normalizer=normalizer,
+                                  random_state=0)
+
+        # the approximation does not tolerate the noise:
+        assert_greater(np.abs(s[:k] - sa).max(), 0.01)
+
+        # compute the singular values of X using the fast approximate
+        # method with iterated power method
+        _, sap, _ = randomized_pca(X, k,
+                                   power_iteration_normalizer=normalizer,
+                                   random_state=0)
+
+        # the iterated power method is helping getting rid of the noise:
+        assert_almost_equal(s[:k], sap, decimal=3)
+
+
+def test_randomized_pca_infinite_rank():
+    # Check that extmath.randomized_pca can handle noisy matrices
+    n_samples = 100
+    n_features = 500
+    rank = 5
+    k = 10
+
+    # let us try again without 'low_rank component': just regularly but slowly
+    # decreasing singular values: the rank of the data matrix is infinite
+    X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
+                             effective_rank=rank, tail_strength=1.0,
+                             random_state=0)
+    assert_equal(X.shape, (n_samples, n_features))
+
+    # compute the singular values of X using the slow exact method
+    X = X - np.mean(X, axis=0)
+    _, s, _ = linalg.svd(X, full_matrices=False)
+    for normalizer in ['auto', 'none', 'LU', 'QR']:
+        # compute the singular values of X using the fast approximate method
+        # without the iterated power method
+        _, sa, _ = randomized_pca(X, k, n_iter=0,
+                                  power_iteration_normalizer=normalizer)
+
+        # the approximation does not tolerate the noise:
+        assert_greater(np.abs(s[:k] - sa).max(), 0.1)
+
+        # compute the singular values of X using the fast approximate method
+        # with iterated power method
+        _, sap, _ = randomized_pca(X, k, n_iter=5,
+                                   power_iteration_normalizer=normalizer)
+
+        # the iterated power method is still managing to get most of the
+        # structure at the requested rank
+        assert_almost_equal(s[:k], sap, decimal=3)
