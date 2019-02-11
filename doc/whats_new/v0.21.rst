@@ -260,6 +260,10 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`tree.plot_tree` without relying on the ``dot`` library,
   removing a hard-to-install dependency. :issue:`8508` by `Andreas Müller`_.
 
+- |Feature| Decision Trees can now be exported in a human readable
+  textual format using :func:`tree.export.export_text`.
+  :issue:`6261` by `Giuseppe Vettigli <JustGlowing>`.
+
 - |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
   :class:`tree.BaseDecisionTree` and consequently all estimators based
   on it, including :class:`tree.DecisionTreeClassifier`,
