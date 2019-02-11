@@ -531,7 +531,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """
         check_is_fitted(self, 'classes_')
 
-        if len(self.classes_) == 2:
+        if self.classes_.size == 2:
             return self._predict_proba_lr(X)
         else:
             decision = self.decision_function(X)
