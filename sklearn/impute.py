@@ -746,13 +746,14 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def _compute_impute(self, dist, fit_X_col, mask_fit_X_col, statistic):
-        """Helper function to calculate the values to impute a single
-        column. Assume ``dist`` contains at least one row.
+        """Helper function to calculate the values to impute the missing
+        vaules of a single column. Assumes ``dist`` contains at least one
+        row.
 
         Parameters
         ----------
-        dist : array-like, shape = (n_samples, n_samples, )
-            distance matrix
+        dist : array-like, shape = (n_receivers, n_train_samples, )
+            distance matrix between the receivers and the train samples
 
         fit_X_col : array-like, shape = (n_train_samples, )
             column from training
