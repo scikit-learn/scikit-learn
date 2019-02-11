@@ -13,6 +13,7 @@ import warnings
 import numpy as np
 from .exceptions import ChangedBehaviorWarning
 from scipy import linalg
+from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model.base import LinearClassifierMixin
@@ -531,10 +532,11 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         """
         check_is_fitted(self, 'classes_')
 
+        decision = self.decision_function(X)
         if self.classes_.size == 2:
-            return self._predict_proba_lr(X)
+            proba = expit(decision)
+            return np.vstack([1-proba, proba]).T
         else:
-            decision = self.decision_function(X)
             return softmax(decision)
 
     def predict_log_proba(self, X):
