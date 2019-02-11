@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import types
 import warnings
 import sys
@@ -74,10 +72,10 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
-
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
              'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
              'PowerTransformer', 'QuantileTransformer']
+SUPPORT_STRING = ['SimpleImputer', 'MissingIndicator']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -386,7 +384,7 @@ def set_checking_parameters(estimator):
         estimator.set_params(k=1)
 
 
-class NotAnArray(object):
+class NotAnArray:
     """An object that is convertible to an array
 
     Parameters
@@ -625,9 +623,16 @@ def check_dtype_object(name, estimator_orig):
         if "Unknown label type" not in str(e):
             raise
 
-    X[0, 0] = {'foo': 'bar'}
-    msg = "argument must be a string or a number"
-    assert_raises_regex(TypeError, msg, estimator.fit, X, y)
+    if name not in SUPPORT_STRING:
+        X[0, 0] = {'foo': 'bar'}
+        msg = "argument must be a string or a number"
+        assert_raises_regex(TypeError, msg, estimator.fit, X, y)
+    else:
+        # Estimators supporting string will not call np.asarray to convert the
+        # data to numeric and therefore, the error will not be raised.
+        # Checking for each element dtype in the input array will be costly.
+        # Refer to #11401 for full discussion.
+        estimator.fit(X, y)
 
 
 def check_complex_data(name, estimator_orig):
@@ -1986,8 +1991,7 @@ def check_no_attributes_set_in_init(name, estimator):
             " from parameters during init. Found attributes %s."
             % (name, sorted(invalid_attr)))
     # Ensure that each parameter is set in init
-    invalid_attr = (set(init_params) - set(vars(estimator))
-                    - set(["self"]))
+    invalid_attr = set(init_params) - set(vars(estimator)) - {"self"}
     assert not invalid_attr, (
             "Estimator %s should store all parameters"
             " as an attribute during init. Did not find "
@@ -2242,9 +2246,11 @@ def check_set_params(name, estimator_orig):
             except (TypeError, ValueError) as e:
                 e_type = e.__class__.__name__
                 # Exception occurred, possibly parameter validation
-                warnings.warn("{} occurred during set_params. "
-                              "It is recommended to delay parameter "
-                              "validation until fit.".format(e_type))
+                warnings.warn("{0} occurred during set_params of param {1} on "
+                              "{2}. It is recommended to delay parameter "
+                              "validation until fit.".format(e_type,
+                                                             param_name,
+                                                             name))
 
                 change_warning_msg = "Estimator's parameters changed after " \
                                      "set_params raised {}".format(e_type)

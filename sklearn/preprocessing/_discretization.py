@@ -5,7 +5,6 @@
 
 # License: BSD
 
-from __future__ import division, absolute_import
 
 import numbers
 import numpy as np
@@ -27,12 +26,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_bins : int or array-like, shape (n_features,) (default=5)
-        The number of bins to produce. The intervals for the bins are
-        determined by the minimum and maximum of the input data.
-        Raises ValueError if ``n_bins < 2``.
-
-        If ``n_bins`` is an array, and there is an ignored feature at
-        index ``i``, ``n_bins[i]`` will be ignored.
+        The number of bins to produce. Raises ValueError if ``n_bins < 2``.
 
     encode : {'onehot', 'onehot-dense', 'ordinal'}, (default='onehot')
         Method used to encode the transformed result.
@@ -62,8 +56,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     n_bins_ : int array, shape (n_features,)
-        Number of bins per feature. An ignored feature at index ``i``
-        will have ``n_bins_[i] == 0``.
+        Number of bins per feature.
 
     bin_edges_ : array of arrays, shape (n_features, )
         The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
@@ -197,8 +190,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     def _validate_n_bins(self, n_features):
         """Returns n_bins_, the number of bins per feature.
-
-        Also ensures that ignored bins are zero.
         """
         orig_bins = self.n_bins
         if isinstance(orig_bins, numbers.Number):

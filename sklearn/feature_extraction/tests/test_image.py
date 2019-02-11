@@ -2,7 +2,6 @@
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
-from __future__ import division
 import numpy as np
 import scipy as sp
 from scipy import ndimage

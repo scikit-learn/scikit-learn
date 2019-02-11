@@ -80,7 +80,8 @@ for i in range(NUM_TRIALS):
     outer_cv = KFold(n_splits=4, shuffle=True, random_state=i)
 
     # Non_nested parameter search and scoring
-    clf = GridSearchCV(estimator=svm, param_grid=p_grid, cv=inner_cv)
+    clf = GridSearchCV(estimator=svm, param_grid=p_grid, cv=inner_cv,
+                       iid=False)
     clf.fit(X_iris, y_iris)
     non_nested_scores[i] = clf.best_score_
 
@@ -90,7 +91,7 @@ for i in range(NUM_TRIALS):
 
 score_difference = non_nested_scores - nested_scores
 
-print("Average difference of {0:6f} with std. dev. of {1:6f}."
+print("Average difference of {:6f} with std. dev. of {:6f}."
       .format(score_difference.mean(), score_difference.std()))
 
 # Plot scores on each trial for nested and non-nested CV
