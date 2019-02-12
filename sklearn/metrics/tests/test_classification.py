@@ -1450,11 +1450,11 @@ def test_prf_warnings():
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
         precision_recall_fscore_support([0, 0], [0, 0], average="binary")
-        msg = ('Precision and F-score are ill-defined and '
-               'being set to 0.0 due to no predicted samples.')
-        assert_equal(str(record.pop().message), msg)
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 due to no true samples.')
+        assert_equal(str(record.pop().message), msg)
+        msg = ('Precision and F-score are ill-defined and '
+               'being set to 0.0 due to no predicted samples.')
         assert_equal(str(record.pop().message), msg)
 
 
