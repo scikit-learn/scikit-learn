@@ -300,9 +300,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         n_components = min(n, p)
     if (n_components > min(n, p)):
         n_components = min(n, p)
-        warnings.warn(
-            'n_components is too large: it will be set to %s' %
-            n_components)
+        warnings.warn('n_components is too large: it will be set to %s' % n_components)
 
     if whiten:
         # Centering the columns (ie the variables)
@@ -354,10 +352,19 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     del X1
 
     if whiten:
-        if compute_sources:
-            S = np.dot(np.dot(W, K), X).T
-            S /= np.sqrt(np.var(S))
-        else:
+        # if compute_sources:
+        #     S = np.dot(np.dot(W, K), X).T
+        #     S_std = np.std(S, axis=0, keepdims=True)
+        #     S /= S_std
+        #     W /= S_std.T
+        # else:
+        #     S = None
+
+        S = np.dot(np.dot(W, K), X).T
+        S_std = np.std(S, axis=0, keepdims=True)
+        S /= S_std
+        W /= S_std.T
+        if not compute_sources:
             S = None
         if return_X_mean:
             if return_n_iter:
@@ -400,12 +407,12 @@ class FastICA(BaseEstimator, TransformerMixin):
     algorithm : {'parallel', 'deflation'}
         Apply parallel or deflational algorithm for FastICA.
 
-    whiten : string or boolean, optional. Default: 'unit-variance'
+    whiten : string or boolean, optional (default='unit-variance')
         If whiten is True or 'unit-variance', whitening is performed.
         If not, the data is already considered to be whitened, and no
         whitening is performed.
 
-    fun : string or function, optional. Default: 'logcosh'
+    fun : string or function, optional (default='logcosh')
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
         or 'cube'.
@@ -513,21 +520,22 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
         fun_args = {} if self.fun_args is None else self.fun_args
 
-        if self.whiten is True:
+        whiten = self.whiten
+        if whiten is True:
             warnings.warn(
                 "From version 0.23, whiten='unit-variance' by default, "
                 "and whiten=True will behave like whiten='unit-variance'.",
                 category=DeprecationWarning)
-        elif self.whiten == 'unit-variance':
-            self.whiten = True
+        elif whiten == 'unit-variance':
+            whiten = True
 
         whitening, unmixing, sources, X_mean, self.n_iter_ = fastica(
             X=X, n_components=self.n_components, algorithm=self.algorithm,
-            whiten=self.whiten, fun=self.fun, fun_args=fun_args,
+            whiten=whiten, fun=self.fun, fun_args=fun_args,
             max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
             random_state=self.random_state, return_X_mean=True,
             compute_sources=compute_sources, return_n_iter=True)
-        if self.whiten:
+        if whiten:
             self.components_ = np.dot(unmixing, whitening)
             self.mean_ = X_mean
             self.whitening_ = whitening
@@ -595,7 +603,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'mixing_')
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
-        if self.whiten:
+        if self.whiten or self.whiten == 'unit-variance':
             X -= self.mean_
 
         return np.dot(X, self.components_.T)
