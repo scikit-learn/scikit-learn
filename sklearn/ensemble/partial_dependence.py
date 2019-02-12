@@ -24,6 +24,12 @@ from ._gradient_boosting import _partial_dependence_tree
 from .gradient_boosting import BaseGradientBoosting
 
 
+__all__ = [
+    'partial_dependence',
+    'plot_partial_dependence',
+]
+
+
 def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     """Generate a grid of points based on the ``percentiles of ``X``.
 
