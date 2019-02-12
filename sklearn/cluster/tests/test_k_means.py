@@ -46,10 +46,8 @@ X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
 X_csr = sp.csr_matrix(X)
 
 
-@pytest.mark.parametrize("representation, algo",
-                         [('dense', 'full'),
-                          ('dense', 'elkan'),
-                          ('sparse', 'full')])
+@pytest.mark.parametrize("representation", ['dense', 'sparse'])
+@pytest.mark.parametrize("algo", ['full', 'elkan'])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_kmeans_results(representation, algo, dtype):
     # cheks that kmeans works as intended
@@ -80,6 +78,29 @@ def test_elkan_results(distribution):
         X = rnd.normal(size=(50, 10))
     else:
         X, _ = make_blobs(random_state=rnd)
+
+    km_full = KMeans(algorithm='full', n_clusters=5, random_state=0, n_init=1)
+    km_elkan = KMeans(algorithm='elkan', n_clusters=5,
+                      random_state=0, n_init=1)
+
+    km_full.fit(X)
+    km_elkan.fit(X)
+    assert_array_almost_equal(km_elkan.cluster_centers_,
+                              km_full.cluster_centers_)
+    assert_array_equal(km_elkan.labels_, km_full.labels_)
+
+
+@pytest.mark.parametrize('distribution', ['normal', 'blobs'])
+def test_elkan_results_sparse(distribution):
+    # check that results are identical between lloyd and elkan algorithms
+    # with sparse input
+    rnd = np.random.RandomState(0)
+    if distribution is 'normal':
+        X = sp.random(100, 100, density=0.1, format='csr', random_state=rnd)
+        X.data = rnd.randn(len(X.data))
+    else:
+        X, _ = make_blobs(n_samples=100, n_features=100, random_state=rnd)
+        X = sp.csr_matrix(X)
 
     km_full = KMeans(algorithm='full', n_clusters=5, random_state=0, n_init=1)
     km_elkan = KMeans(algorithm='elkan', n_clusters=5,
@@ -311,20 +332,17 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     # There's a very small chance of failure with elkan on unstructured dataset
     # because predict method uses fast euclidean distances computation which
     # may cause small numerical instabilities.
-    if not (algo == 'elkan' and constructor is sp.csr_matrix):
-        rng = np.random.RandomState(seed)
+    X = make_blobs(n_samples=1000, n_features=10, centers=10,
+                   random_state=seed)[0].astype(dtype, copy=False)
+    X = constructor(X)
 
-        X = make_blobs(n_samples=1000, n_features=10, centers=10,
-                       random_state=rng)[0].astype(dtype, copy=False)
-        X = constructor(X)
+    kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
+                    tol=tol, max_iter=max_iter, n_jobs=1)
 
-        kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
-                        tol=tol, max_iter=max_iter, n_jobs=1)
+    labels_1 = kmeans.fit(X).predict(X)
+    labels_2 = kmeans.fit_predict(X)
 
-        labels_1 = kmeans.fit(X).predict(X)
-        labels_2 = kmeans.fit_predict(X)
-
-        assert_array_equal(labels_1, labels_2)
+    assert_array_equal(labels_1, labels_2)
 
 
 def test_mb_kmeans_verbose():
@@ -694,11 +712,6 @@ def test_k_means_function():
     # to many clusters desired
     assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1,
                   sample_weight=None)
-
-    # kmeans for algorithm='elkan' raises TypeError on sparse matrix
-    assert_raise_message(TypeError, "algorithm='elkan' not supported for "
-                         "sparse input X", k_means, X=X_csr, n_clusters=2,
-                         sample_weight=None, algorithm="elkan")
 
 
 def test_x_squared_norms_init_centroids():
