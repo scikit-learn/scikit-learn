@@ -73,7 +73,8 @@ def _fit_and_calcuate_permutation_importance(estimator, X, y, train_indices,
     for column in columns:
         with _permute_column(X_test, column, random_state) as X_perm:
             feature_score = scoring(estimator, X_perm, y_test)
-            permutation_importance_scores.append(baseline_score - feature_score)
+            permutation_importance_scores.append(baseline_score -
+                                                 feature_score)
 
     return permutation_importance_scores
 
