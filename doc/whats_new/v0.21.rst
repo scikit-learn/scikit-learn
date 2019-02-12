@@ -84,7 +84,7 @@ Support for Python 3.4 and below has been officially dropped.
   `n_components < n_features` instead of
   `n_components <= min(n_samples, n_features)`. 
   :issue:`11650` by :user:`Hossein Pourbozorg <hossein-pourbozorg>` and
-  `Zijie (ZJ) Poh <zjpoh>`.
+  :user:`Zijie (ZJ) Poh <zjpoh>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
