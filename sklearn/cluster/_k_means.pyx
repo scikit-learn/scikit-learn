@@ -1,4 +1,4 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
+# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True, initializedcheck=False
 # Profiling is enabled by default as the overhead does not seem to be
 # measurable on this specific use case.
 
@@ -14,6 +14,8 @@ cimport cython
 from cython cimport floating
 from libc.math cimport sqrt
 
+from ..utils.extmath import row_norms
+
 
 np.import_array()
 
@@ -22,29 +24,76 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
 
+cdef floating _euclidean_dense_dense(floating* a,
+                                     floating* b,
+                                     int n_features,
+                                     bint squared) nogil:
+    """Euclidean distance between a dense and b dense"""
+    cdef:
+        int i
+        int n = n_features // 4
+        int rem = n_features % 4
+        floating result = 0
+
+    for i in range(n):
+        result += ((a[0] - b[0]) * (a[0] - b[0])
+                  +(a[1] - b[1]) * (a[1] - b[1])
+                  +(a[2] - b[2]) * (a[2] - b[2])
+                  +(a[3] - b[3]) * (a[3] - b[3]))
+        a += 4; b += 4
+
+    for i in range(rem):
+        result += (a[i] - b[i]) * (a[i] - b[i])
+
+    if not squared: result = sqrt(result)
+
+    return result
+
+
+cdef floating _euclidean_sparse_dense(floating[::1] a_data,
+                                      int[::1] a_indices,
+                                      floating[::1] b,
+                                      floating b_squared_norm,
+                                      bint squared) nogil:
+    """Euclidean distance between a sparse and b dense"""
+    cdef:
+        int nnz = len(a_indices)
+        int i
+        floating tmp = 0.0
+        floating result = 0.0
+
+    for i in range(nnz):
+        tmp = a_data[i] - b[a_indices[i]]
+        result += tmp * tmp - b[a_indices[i]] * b[a_indices[i]]
+    
+    result += b_squared_norm
+
+    if not squared: result = sqrt(result)
+    
+    return result
+
+
 cpdef floating _inertia_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                               floating[::1] sample_weight, 
                               floating[:, ::1] centers,
                               int[::1] labels):
     """Compute inertia for dense input data
     
-    Sum of squared distance between each sample and it's assigned center.
+    Sum of squared distance between each sample and its assigned center.
     """
     cdef:
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
-        int i, j, k
-        floating tmp, sample_inertia
+        int i, j
 
+        floating sq_dist = 0.0
         floating inertia = 0.0
 
     for i in range(n_samples):
         j = labels[i]
-        sample_inertia = 0.0
-        for k in range(n_features):
-            tmp = X[i, k] - centers[j, k]
-            sample_inertia += tmp * tmp
-        inertia += sample_inertia * sample_weight[i]
+        sq_dist = _euclidean_dense_dense(&X[i, 0], &centers[j, 0],
+                                         n_features, True)
+        inertia += sq_dist * sample_weight[i]
 
     return inertia
 
@@ -55,35 +104,29 @@ cpdef floating _inertia_sparse(X,
                                int[::1] labels):
     """Compute inertia for sparse input data
     
-    Sum of squared distance between each sample and it's assigned center.
+    Sum of squared distance between each sample and its assigned center.
     """
     cdef:
         floating[::1] X_data = X.data
         int[::1] X_indices = X.indices
         int[::1] X_indptr = X.indptr
 
-        int n_samples = X_indptr.shape[0] - 1
-        int n_features = centers.shape[1]
-        int i, j, k
-        int row_ptr, nz_len, nz_ptr
-        floating tmp, sample_inertia
+        int n_samples = X.shape[0]
+        int n_features = X.shape[1]
+        int i, j
 
+        floating sq_dist = 0.0
         floating inertia = 0.0
+    
+        floating[::1] center_squared_norms = row_norms(centers, squared=True)
 
     for i in range(n_samples):
         j = labels[i]
-        sample_inertia = 0.0
-        row_ptr = X_indptr[i]
-        nz_len = X_indptr[i + 1] - X_indptr[i]
-        nz_ptr = 0
-        for k in range(n_features):
-            if nz_ptr < nz_len and k == X_indices[row_ptr + nz_ptr]:
-                tmp = X_data[row_ptr + nz_ptr] - centers[j, k]
-                nz_ptr += 1
-            else:
-                tmp = - centers[j, k]
-            sample_inertia += tmp * tmp
-        inertia += sample_inertia * sample_weight[i]
+        sq_dist = _euclidean_sparse_dense(
+            X_data[X_indptr[i]: X_indptr[i + 1]],
+            X_indices[X_indptr[i]: X_indptr[i + 1]],
+            centers[j], center_squared_norms[j], True)
+        inertia += sq_dist * sample_weight[i]
 
     return inertia
 
@@ -93,9 +136,9 @@ cdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c'] 
                                          floating[:, ::1] centers,
                                          floating[::1] weight_in_clusters,
                                          int[::1] labels):
-    """Relocate centers which have no sample assigned to them"""
+    """Relocate centers which have no sample assigned to them."""
     cdef:
-        int[::1] empty_clusters = np.where(np.equal(weight_in_clusters,0))[0].astype(np.int32)
+        int[::1] empty_clusters = np.where(np.equal(weight_in_clusters, 0))[0].astype(np.int32)
         int n_empty = empty_clusters.shape[0]
 
     if n_empty == 0:
@@ -135,14 +178,14 @@ cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
                                           floating[:, ::1] centers,
                                           floating[::1] weight_in_clusters,
                                           int[::1] labels):
-    """Relocate centers which have no sample assigned to them"""
+    """Relocate centers which have no sample assigned to them."""
     cdef:
-        int[::1] empty_clusters = np.where(np.equal(weight_in_clusters,0))[0].astype(np.int32)
+        int[::1] empty_clusters = np.where(np.equal(weight_in_clusters, 0))[0].astype(np.int32)
         int n_empty = empty_clusters.shape[0]
 
     if n_empty == 0:
         return
-    
+
     cdef:
         int n_samples = X_indptr.shape[0] - 1
         floating x
@@ -183,7 +226,7 @@ cdef void _mean_and_center_shift(floating[:, ::1] centers_old,
                                  floating[:, ::1] centers_new,
                                  floating[::1] weight_in_clusters,
                                  floating[::1] center_shift):
-    """Average new centers wrt weights and compute center shift"""
+    """Average new centers wrt weights and compute center shift."""
     cdef:
         int n_clusters = centers_old.shape[0]
         int n_features = centers_old.shape[1]

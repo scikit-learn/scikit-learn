@@ -30,13 +30,15 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils._clibs import thread_limits_context
 from ..utils._joblib import effective_n_jobs
 from ..exceptions import ConvergenceWarning
-from ._k_means import (_inertia_dense,
-                       _inertia_sparse,
-                       _mini_batch_update_csr)
-from ._k_means_lloyd import (_lloyd_iter_chunked_dense,
-                             _lloyd_iter_chunked_sparse)
-from ._k_means_elkan import (_init_bounds,
-                             _elkan_iter_chunked_dense)
+from ._k_means import _inertia_dense
+from ._k_means import _inertia_sparse
+from ._k_means import _mini_batch_update_csr
+from ._k_means_lloyd import _lloyd_iter_chunked_dense
+from ._k_means_lloyd import _lloyd_iter_chunked_sparse
+from ._k_means_elkan import _init_bounds_dense
+from ._k_means_elkan import _init_bounds_sparse
+from ._k_means_elkan import _elkan_iter_chunked_dense
+from ._k_means_elkan import _elkan_iter_chunked_sparse
 
 
 ###############################################################################
@@ -348,12 +350,13 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
     best_labels, best_inertia, best_centers = None, None, None
 
-    if algorithm == "auto":
-        algorithm = "full" if sp.issparse(X) else "elkan"
     if algorithm == "elkan" and n_clusters == 1:
         warnings.warn("algorithm='elkan' doesn't make sense for a single "
                       "cluster. Using 'full' instead.", RuntimeWarning)
         algorithm = "full"
+
+    if algorithm == "auto":
+        algorithm = "elkan"
 
     if algorithm == "full":
         kmeans_single = _kmeans_single_lloyd
@@ -403,8 +406,8 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
                          init='k-means++', verbose=False, x_squared_norms=None,
                          random_state=None, tol=1e-4, n_jobs=None):
-    if sp.issparse(X):
-        raise TypeError("algorithm='elkan' not supported for sparse input X")
+    # if sp.issparse(X):
+    #     raise TypeError("algorithm='elkan' not supported for sparse input X")
 
     random_state = check_random_state(random_state)
     sample_weight = _check_sample_weight(X, sample_weight)
@@ -422,29 +425,37 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     labels = np.full(n_samples, -1, dtype=np.int32)
     center_half_distances = euclidean_distances(centers) / 2
-    distance_next_center = np.zeros(n_clusters, dtype=X.dtype)
+    distance_next_center = np.partition(np.asarray(center_half_distances),
+                                        kth=1, axis=0)[1]
     upper_bounds = np.zeros(n_samples, dtype=X.dtype)
     lower_bounds = np.zeros((n_samples, n_clusters), dtype=X.dtype)
     center_shift = np.zeros(n_clusters, dtype=X.dtype)
 
-    _init_bounds(X, centers, center_half_distances,
-                 labels, upper_bounds, lower_bounds)
+    if sp.issparse(X):
+        init_bounds = _init_bounds_sparse
+        elkan_iter = _elkan_iter_chunked_sparse
+        _inertia = _inertia_sparse
+    else:
+        init_bounds = _init_bounds_dense
+        elkan_iter = _elkan_iter_chunked_dense
+        _inertia = _inertia_dense
+
+    init_bounds(X, centers, center_half_distances,
+                labels, upper_bounds, lower_bounds)
 
     for i in range(max_iter):
-        # compute the closest other center of each center
+        elkan_iter(X, sample_weight, centers_old, centers, weight_in_clusters,
+                   center_half_distances, distance_next_center, upper_bounds,
+                   lower_bounds, labels, center_shift, n_jobs)
+
+        # compute new pairwise distances between centers and closest other
+        # center of each center for next iterations
+        center_half_distances = euclidean_distances(centers) / 2
         distance_next_center = np.partition(np.asarray(center_half_distances),
                                             kth=1, axis=0)[1]
 
-        _elkan_iter_chunked_dense(X, sample_weight, centers_old, centers,
-                                  weight_in_clusters, center_half_distances,
-                                  distance_next_center, upper_bounds,
-                                  lower_bounds, labels, center_shift, n_jobs)
-
-        # compute new pairwise distances between centers for next iterations
-        center_half_distances = euclidean_distances(centers) / 2
-
         if verbose:
-            inertia = _inertia_dense(X, sample_weight, centers_old, labels)
+            inertia = _inertia(X, sample_weight, centers_old, labels)
             print("Iteration {0}, inertia {1}" .format(i, inertia))
 
         center_shift_tot = (center_shift**2).sum()
@@ -456,13 +467,12 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
             break
 
     # rerun E-step so that predicted labels match cluster centers
-    _elkan_iter_chunked_dense(X, sample_weight, centers, centers,
-                              weight_in_clusters, center_half_distances,
-                              distance_next_center, upper_bounds,
-                              lower_bounds, labels, center_shift, n_jobs,
-                              update_centers=False)
+    elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
+               center_half_distances, distance_next_center, upper_bounds,
+               lower_bounds, labels, center_shift, n_jobs,
+               update_centers=False)
 
-    inertia = _inertia_dense(X, sample_weight, centers, labels)
+    inertia = _inertia(X, sample_weight, centers, labels)
 
     return labels, inertia, centers, i + 1
 
