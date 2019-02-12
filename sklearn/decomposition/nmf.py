@@ -261,7 +261,8 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise 'random'.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
@@ -304,8 +305,14 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     check_non_negative(X, "NMF initialization")
     n_samples, n_features = X.shape
 
+    if (init is not None and init != 'random'
+            and n_components > min(n_samples, n_features)):
+        raise ValueError("init = '{}' can only be used when "
+                         "n_components <= min(n_samples, n_features)"
+                         .format(init))
+
     if init is None:
-        if n_components < n_features:
+        if n_components <= min(n_samples, n_features):
             init = 'nndsvd'
         else:
             init = 'random'
@@ -1104,7 +1111,8 @@ class NMF(BaseEstimator, TransformerMixin):
         Default: None.
         Valid options:
 
-        - None: 'nndsvd' if n_components < n_features, otherwise random.
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise random.
 
         - 'random': non-negative random matrices, scaled with:
             sqrt(X.mean() / n_components)
