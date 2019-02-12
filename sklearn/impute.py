@@ -408,7 +408,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 class MissingIndicator(BaseEstimator, TransformerMixin):
     """Binary indicators for missing values.
 
-    Note that this component typically should not not be used in a vanilla
+    Note that this component typically should not be used in a vanilla
     :class:`Pipeline` consisting of transformers and a classifier, but rather
     could be added using a :class:`FeatureUnion` or :class:`ColumnTransformer`.
 
