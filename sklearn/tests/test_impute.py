@@ -542,7 +542,9 @@ def test_iterative_imputer_verbose():
     X = sparse_random_matrix(n, d, density=0.10, random_state=rng).toarray()
     imputer = IterativeImputer(missing_values=0, max_iter=1, verbose=1)
     imputer.fit(X)
-    imputer.verbose = 2
+    imputer.transform(X)
+    imputer = IterativeImputer(missing_values=0, max_iter=1, verbose=2)
+    imputer.fit(X)
     imputer.transform(X)
 
 
