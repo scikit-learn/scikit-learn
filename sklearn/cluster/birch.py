@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
-from __future__ import division
 
 import warnings
 import numpy as np
@@ -86,7 +85,7 @@ def _split_node(node, threshold, branching_factor):
     return new_subcluster1, new_subcluster2
 
 
-class _CFNode(object):
+class _CFNode:
     """Each node in a CFTree is called a CFNode.
 
     The CFNode can have a maximum of branching_factor
@@ -239,7 +238,7 @@ class _CFNode(object):
                 return True
 
 
-class _CFSubcluster(object):
+class _CFSubcluster:
     """Each subcluster in a CFNode is called a CFSubcluster.
 
     A CFSubcluster can have a CFNode has its child.
