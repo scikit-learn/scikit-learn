@@ -1247,13 +1247,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     if average == 'binary':
         if y_type == 'binary':
-            if pos_label not in present_labels:
-                if len(present_labels) < 2:
-                    # Only negative labels
-                    return (0., 0., 0., 0)
-                else:
-                    raise ValueError("pos_label=%r is not a valid label: %r" %
-                                     (pos_label, present_labels))
+            if pos_label not in present_labels and len(present_labels) >= 2:
+                raise ValueError("pos_label=%r is not a valid label: %r" %
+                                 (pos_label, present_labels))
             labels = [pos_label]
         else:
             raise ValueError("Target is %s but average='binary'. Please "
