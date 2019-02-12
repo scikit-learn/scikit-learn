@@ -155,10 +155,10 @@ def permutation_importance(estimator, X, y, columns=None, scoring=None, cv=5,
         columns = range(0, X.shape[1])
 
     with parallel:
-        scores = parallel(
+        permutation_importance_scores = parallel(
             delayed(_fit_and_calcuate_permutation_importance)(
                 clone(estimator), X, y, train_indices,
                 test_indices, columns, scoring, random_state
             ) for train_indices, test_indices in cv.split(X, y))
 
-    return np.array(scores).T
+    return np.array(permutation_importance_scores).T
