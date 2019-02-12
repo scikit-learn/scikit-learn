@@ -493,7 +493,7 @@ def test_shuffle_stratifiedkfold():
         assert_not_equal(set(test0), set(test1))
     check_cv_coverage(kf0, X_40, y, groups=None, expected_n_splits=5)
 
-    # Ensure that we shuffle each stratification with different
+    # Ensure that we shuffle each class's samples with different
     # random_state in StratifiedKFold
     # See https://github.com/scikit-learn/scikit-learn/pull/13124
     X = np.arange(10)
