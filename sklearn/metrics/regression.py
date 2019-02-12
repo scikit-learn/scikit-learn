@@ -21,7 +21,6 @@ the lower the better
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import numpy as np
 import warnings

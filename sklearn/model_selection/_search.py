@@ -2,8 +2,6 @@
 The :mod:`sklearn.model_selection._search` includes utilities to fine-tune the
 parameters of an estimator.
 """
-from __future__ import print_function
-from __future__ import division
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
@@ -44,7 +42,7 @@ __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
 
 
-class ParameterGrid(object):
+class ParameterGrid:
     """Grid of parameters with a discrete number of values for each.
 
     Can be used to iterate over parameter value combinations with the
@@ -180,7 +178,7 @@ class ParameterGrid(object):
         raise IndexError('ParameterGrid index out of range')
 
 
-class ParameterSampler(object):
+class ParameterSampler:
     """Generator on parameters sampled from given distributions.
 
     Non-deterministic iterable over random candidate combinations for hyper-
@@ -667,6 +665,17 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                                for parameters, (train, test)
                                in product(candidate_params,
                                           cv.split(X, y, groups)))
+
+                if len(out) < 1:
+                    raise ValueError('No fits were performed. '
+                                     'Was the CV iterator empty? '
+                                     'Were there no candidates?')
+                elif len(out) != n_candidates * n_splits:
+                    raise ValueError('cv.split and cv.get_n_splits returned '
+                                     'inconsistent results. Expected {} '
+                                     'splits, got {}'
+                                     .format(n_splits,
+                                             len(out) // n_candidates))
 
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)

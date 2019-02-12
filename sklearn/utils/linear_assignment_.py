@@ -60,7 +60,7 @@ def linear_assignment(X):
     return indices
 
 
-class _HungarianState(object):
+class _HungarianState:
     """State of one execution of the Hungarian algorithm.
 
     Parameters

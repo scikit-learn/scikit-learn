@@ -11,7 +11,6 @@
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
-from __future__ import unicode_literals, division
 
 import array
 from collections import defaultdict
@@ -114,7 +113,7 @@ def _check_stop_list(stop):
         return frozenset(stop)
 
 
-class VectorizerMixin(object):
+class VectorizerMixin:
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
