@@ -198,6 +198,7 @@ def test_precision_recall_f1_score_binary():
                             (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
 
+@ignore_warnings
 def test_precision_recall_f_binary_single_class():
     # Test precision, recall and F1 score behave with a single positive or
     # negative class
@@ -1065,6 +1066,7 @@ def test_classification_report_no_labels_target_names_unequal_length():
                          y_true, y_pred, target_names=target_names)
 
 
+@ignore_warnings
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50
