@@ -87,9 +87,9 @@ def permutation_importance(estimator, X, y, columns=None, scoring=None, cv=5,
     The permutation importance of a feature is calculated as follows. First,
     the estimator is trained on a training set. Then a baseline metric, defined
     by ``scoring``, is evaluated on a validation set. Next, a feature column
-    from the validation set is permuted and evaluated again. The permutation
-    importance is defined to be the difference between the baseline metric
-    and metric from permutating the feature column.
+    from the validation set is permuted and the metric is evaluated again.
+    The permutation importance is defined to be the difference between the
+    baseline metric and metric from permutating the feature column.
 
     Parameters
     ----------
