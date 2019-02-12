@@ -2,6 +2,7 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+from __future__ import division
 
 import numbers
 import warnings
@@ -671,22 +672,15 @@ class OneHotEncoder(_BaseEncoder):
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
         if self.drop is not None:
-            for i in range(n_features):
-                Xii = X_int[:, i]
-                Xmi = X_mask[:, i]
-                drop_value = self.drop_idx_[i]
-                """
-                Add the cells where the drop value is present to the list
-                of those to be masked-out. Decrement the indices of the values
-                above so as not to leave a blank column.
-                """
-                if drop_value is not None:
-                    keep_cells = ~np.in1d(Xii, [drop_value])
-                    np.logical_and(Xmi, keep_cells, out=Xmi)
-                    Xii[Xii > drop_value] -= 1
-            n_values = [len(cats) - 1 if to_drop is not None
+            max_val = max(len(cats) for cats in self.categories_)
+            to_drop = np.array([pos if pos is not None else max_val
+                                for pos in self.drop_idx_]).reshape(1, -1)
+            keep_cells = X_int != to_drop
+            X_mask &= keep_cells
+            X_int[X_int > to_drop] -= 1
+            n_values = [len(cats) - 1 if drop_val is not None
                         else len(cats)
-                        for cats, to_drop in
+                        for cats, drop_val in
                         zip(self.categories_, self.drop_idx_)]
         else:
             n_values = [cats.shape[0] for cats in self.categories_]
