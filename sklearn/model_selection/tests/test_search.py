@@ -1659,13 +1659,11 @@ def test_custom_run_search():
         def __init__(self, estimator, **kwargs):
             super().__init__(estimator, **kwargs)
 
-        def _run_search(self, evaluate):
-            results = evaluate([{'max_depth': 1}, {'max_depth': 2}])
+        def _run_search(self, evaluate, X, y):
+            results = evaluate([{'max_depth': 1}, {'max_depth': 2}], X, y)
             check_results(results, fit_grid({'max_depth': [1, 2]}))
-            results = evaluate([{'min_samples_split': 5},
-                                {'min_samples_split': 10}])
-            check_results(results, fit_grid([{'max_depth': [1, 2]},
-                                             {'min_samples_split': [5, 10]}]))
+            evaluate([{'min_samples_split': 5},
+                      {'min_samples_split': 10}], X, y)
 
     # Using regressor to make sure each score differs
     clf = DecisionTreeRegressor(random_state=0)

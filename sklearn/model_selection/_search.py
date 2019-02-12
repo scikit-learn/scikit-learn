@@ -547,7 +547,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         self._check_is_fitted("classes_")
         return self.best_estimator_.classes_
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, X, y):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         This method, implemented in sub-classes, makes it possible to
@@ -572,12 +572,12 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
         ::
 
-            def _run_search(self, evaluate_candidates):
+            def _run_search(self, evaluate_candidates, X, y):
                 'Try C=0.1 only if C=1 is better than C=10'
-                all_results = evaluate_candidates([{'C': 1}, {'C': 10}])
+                all_results = evaluate_candidates([{'C': 1}, {'C': 10}], X, y)
                 score = all_results['mean_test_score']
                 if score[0] < score[1]:
-                    evaluate_candidates([{'C': 0.1}])
+                    evaluate_candidates([{'C': 0.1}], X, y)
         """
         raise NotImplementedError("_run_search not implemented.")
 
@@ -643,12 +643,12 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                                     return_parameters=False,
                                     error_score=self.error_score,
                                     verbose=self.verbose)
-        results_container = [{}]
+        results = {}
         with parallel:
             all_candidate_params = []
             all_out = []
 
-            def evaluate_candidates(candidate_params):
+            def evaluate_candidates(candidate_params, X, y):
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
 
@@ -680,15 +680,14 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
 
-                # XXX: When we drop Python 2 support, we can use nonlocal
-                # instead of results_container
-                results_container[0] = self._format_results(
+                nonlocal results
+                results = self._format_results(
                     all_candidate_params, scorers, n_splits, all_out)
-                return results_container[0]
 
-            self._run_search(evaluate_candidates)
+                return self._format_results(
+                    candidate_params, scorers, n_splits, out)
 
-        results = results_container[0]
+            self._run_search(evaluate_candidates, X, y)
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
@@ -1145,9 +1144,9 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, X, y):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid))
+        evaluate_candidates(ParameterGrid(self.param_grid), X, y)
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -1462,8 +1461,8 @@ class RandomizedSearchCV(BaseSearchCV):
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
 
-    def _run_search(self, evaluate_candidates):
+    def _run_search(self, evaluate_candidates, X, y):
         """Search n_iter candidates from param_distributions"""
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
-            random_state=self.random_state))
+            random_state=self.random_state), X, y)
