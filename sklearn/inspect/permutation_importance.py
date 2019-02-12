@@ -107,7 +107,7 @@ def permutation_importance(estimator, X, y, columns=None, scoring=None, cv=5,
         A list of columns to calculate the permutation importance. If `None`,
         all columns will be used
 
-    scorer : string, callable or None, optional (default=None)
+    scoring : string, callable or None, optional (default=None)
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
@@ -130,6 +130,23 @@ def permutation_importance(estimator, X, y, columns=None, scoring=None, cv=5,
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
