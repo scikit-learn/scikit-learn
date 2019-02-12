@@ -922,6 +922,11 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
 
+    Notes
+    -----
+    When ``true_positive + false positive == 0`` or
+    ``true_positive + false negative == 0``, f-score will be set to 0
+    and ``UndefinedMetricWarning`` will be raised.
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
                        pos_label=pos_label, average=average,
@@ -1036,6 +1041,11 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     ... # doctest: +ELLIPSIS
     array([0.71..., 0.        , 0.        ])
 
+    Notes
+    -----
+    When ``true_positive + false positive == 0`` or
+    ``true_positive + false negative == 0``, f-score will be set to 0
+    and ``UndefinedMetricWarning`` will be raised.
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  beta=beta,
@@ -1233,6 +1243,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
 
+    Notes
+    -----
+    When ``true_positive + false positive == 0``, precision will be set to 0
+    and ``UndefinedMetricWarning`` will be raised.
+    When ``true_positive + false negative == 0``, recall will be set to 0
+    and ``UndefinedMetricWarning`` will be raised.
+    When ``true_positive + false positive == 0`` or
+    ``true_positive + false negative == 0``, f-score will be set to 0
+    and ``UndefinedMetricWarning`` will be raised.
     """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
     if average not in average_options and average != 'binary':
@@ -1275,7 +1294,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         true_sum = np.array([true_sum.sum()])
 
     # Finally, we have all our sufficient statistics. Divide! #
-
     beta2 = beta ** 2
     with np.errstate(divide='ignore', invalid='ignore'):
         # Divide, and on zero-division, set scores to 0 and warn:
@@ -1293,7 +1311,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         f_score[tp_sum == 0] = 0.0
 
     # Average the results
-
     if average == 'weighted':
         weights = true_sum
         if weights.sum() == 0:
@@ -1406,6 +1423,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     >>> precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
     array([0.66..., 0.        , 0.        ])
 
+    Notes
+    -----
+    When ``true_positive + false positive == 0``, precision will be set to 0
+    and ``UndefinedMetricWarning`` will be raised.
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
@@ -1508,6 +1529,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> recall_score(y_true, y_pred, average=None)
     array([1., 0., 0.])
 
+    Notes
+    -----
+    When ``true_positive + false negative == 0``, recall will be set to 0
+    and ``UndefinedMetricWarning`` will be raised.
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
