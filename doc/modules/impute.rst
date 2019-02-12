@@ -100,17 +100,17 @@ fashion: at each step, a feature column is designated as output ``y`` and the
 other feature columns are treated as inputs ``X``. A regressor is fit on ``(X,
 y)`` for known ``y``. Then, the regressor is used to predict the missing values
 of ``y``.  This is done for each feature in an iterative fashion, and then is
-repeated for ``n_iter`` imputation rounds. The results of the final imputation
-round are returned.
+repeated for ``max_iter`` imputation rounds. The results of the final
+imputation round are returned.
 
     >>> import numpy as np
     >>> from sklearn.impute import IterativeImputer
-    >>> imp = IterativeImputer(n_iter=10, random_state=0)
+    >>> imp = IterativeImputer(max_iter=10, random_state=0)
     >>> imp.fit([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])  # doctest: +NORMALIZE_WHITESPACE
-    IterativeImputer(imputation_order='ascending', initial_strategy='mean',
-        max_value=None, min_value=None, missing_values=nan, n_iter=10,
-        n_nearest_features=None, predictor=None, random_state=0,
-        sample_posterior=False, verbose=0)
+    IterativeImputer(estimator=None, imputation_order='ascending',
+                     initial_strategy='mean', max_iter=10, max_value=None,
+                     min_value=None, missing_values=nan, n_nearest_features=None,
+                     random_state=0, sample_posterior=False, tol=0.001, verbose=0)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     >>> # the model learns that the second feature is double the first
     >>> print(np.round(imp.transform(X_test)))

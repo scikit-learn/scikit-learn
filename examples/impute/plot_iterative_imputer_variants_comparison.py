@@ -4,10 +4,10 @@ Imputing missing values with variants of IterativeImputer
 =========================================================
 
 The :class:`sklearn.impute.IterativeImputer` class is very flexible - it can be
-used with a variety of predictors to do round-robin regression, treating every
+used with a variety of estimators to do round-robin regression, treating every
 variable as an output in turn.
 
-In this example we compare some predictors for the purpose of missing feature
+In this example we compare some estimators for the purpose of missing feature
 imputation with :class:`sklearn.imputeIterativeImputer`::
 
     :class:`~sklearn.linear_model.BayesianRidge`: regularized linear regression
@@ -27,7 +27,7 @@ Note that :class:`sklearn.neighbors.KNeighborsRegressor` is different from KNN
 imputation, which learns from samples with missing values by using a distance
 metric that accounts for missing values, rather than imputing them.
 
-The goal is to compare different predictors to see which one is best for the
+The goal is to compare different estimators to see which one is best for the
 :class:`sklearn.impute.IterativeImputer` when using a
 :class:`sklearn.linear_model.BayesianRidge` estimator on the California housing
 dataset with a single value randomly removed from each row.
@@ -89,20 +89,20 @@ for strategy in ('mean', 'median'):
     )
 
 # Estimate the score after iterative imputation of the missing values
-# with different predictors
-predictors = [
+# with different estimators
+estimators = [
     BayesianRidge(),
     DecisionTreeRegressor(max_features='sqrt', random_state=0),
     ExtraTreesRegressor(n_estimators=10, n_jobs=-1, random_state=0),
     KNeighborsRegressor(n_neighbors=15)
 ]
 score_iterative_imputer = pd.DataFrame()
-for predictor in predictors:
+for estimator in estimators:
     estimator = make_pipeline(
-        IterativeImputer(random_state=0, predictor=predictor),
+        IterativeImputer(random_state=0, estimator=estimator),
         br_estimator
     )
-    score_iterative_imputer[predictor.__class__.__name__] = \
+    score_iterative_imputer[estimator.__class__.__name__] = \
         cross_val_score(
             estimator, X_missing, y_missing, scoring='neg_mean_squared_error',
             cv=N_SPLITS
