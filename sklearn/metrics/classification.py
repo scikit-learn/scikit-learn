@@ -638,7 +638,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         If ``False``, return the sum of the Jaccard similarity coefficient
         over the sample set. Otherwise, return the average of Jaccard
         similarity coefficient. ``normalize`` is only applicable when
-        ``average='samples'``.
+        ``average='samples'``. The default value 'true-if-samples' behaves like
+        True, but does not raise an error with other values of `average`.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.

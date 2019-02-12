@@ -1160,8 +1160,6 @@ def test_jaccard_similarity_score_validation():
             "classification.")
     assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
                          y_pred, average='samples')
-    assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
-                         y_pred, average='samples', normalize=False)
 
     assert_warns_message(UserWarning,
                          "Note that pos_label (set to 3) is ignored when "
