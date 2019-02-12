@@ -304,7 +304,8 @@ def test_bad_init_estimator():
     # Binomial deviance and exponential loss
     # train init estimator on 3 classes instead of 2
     y_init_est = rng.randint(0, 3, size=(n_samples))
-    lr = LogisticRegression().fit(X, y_init_est)
+    lr = LogisticRegression(solver='lbfgs', multi_class='auto')
+    lr.fit(X, y_init_est)
     for loss in (BinomialDeviance(n_classes=2),
                  ExponentialLoss(n_classes=2)):
         with pytest.raises(
@@ -316,7 +317,8 @@ def test_bad_init_estimator():
     # Multinomial deviance
     # train init estimator on 4 classes instead of 3
     y_init_est = rng.randint(0, 4, size=(n_samples))
-    lr = LogisticRegression().fit(X, y_init_est)
+    lr = LogisticRegression(solver='lbfgs', multi_class='auto')
+    lr.fit(X, y_init_est)
     loss = MultinomialDeviance(n_classes=3)
     with pytest.raises(
             ValueError,
