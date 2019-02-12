@@ -222,7 +222,8 @@ class OneHotEncoder(_BaseEncoder):
     categories_ : list of arrays
         The categories of each feature determined during fitting
         (in order of the features in X and corresponding with the output
-        of ``transform``).
+        of ``transform``). This includes the category specified in ``drop``
+        (if any).
 
     drop_idx_ : array of shape (n_features,)
         The index in ``categories_`` of the category to be dropped for
@@ -487,45 +488,48 @@ class OneHotEncoder(_BaseEncoder):
             return self
         else:
             self._fit(X, handle_unknown=self.handle_unknown)
-            if self.drop is None:
-                self.drop_idx_ = None
-            elif (isinstance(self.drop, six.string_types) and
-                    self.drop == 'first'):
-                self.drop_idx_ = np.zeros(len(self.categories_),
-                                          dtype=np.int8)
-            elif not isinstance(self.drop, six.string_types):
-                try:
-                    self.drop = np.asarray(self.drop, dtype=object)
-                    droplen = len(self.drop)
-                except (ValueError, TypeError):
-                    msg = ("Wrong input for parameter `drop`. Expected "
-                           "'first', None or array of objects, got {}")
-                    raise ValueError(msg.format(type(self.drop)))
-                if droplen != len(self.categories_):
-                    msg = ("`drop` should have length equal to the number "
-                           "of features ({}), got {}")
-                    raise ValueError(msg.format(len(self.categories_),
-                                                len(self.drop)))
-                missing_drops = [(i, val) for i, val in enumerate(self.drop)
-                                 if val not in self.categories_[i] and
-                                 val is not None]
-                if any(missing_drops):
-                    msg = ("The following categories were supposed to be "
-                           "dropped, but were not found in the training "
-                           "data.\n{}".format(
-                               "\n".join(
-                                    ["Category: {}, Feature: {}".format(c, v)
-                                        for c, v in missing_drops])))
-                    raise ValueError(msg)
-                self.drop_idx_ = np.array([np.where(cat_list == val)[0][0]
-                                           if val in cat_list else None
-                                           for (val, cat_list) in
-                                           zip(self.drop, self.categories_)])
-            else:
+            self.drop_idx_ = self._compute_drop_idx()
+            return self
+
+    def _compute_drop_idx(self):
+        if self.drop is None:
+            return None
+        elif (isinstance(self.drop, six.string_types) and
+              self.drop == 'first'):
+            return np.zeros(len(self.categories_),
+                            dtype=np.int8)
+        elif not isinstance(self.drop, six.string_types):
+            try:
+                self.drop = np.asarray(self.drop, dtype=object)
+                droplen = len(self.drop)
+            except (ValueError, TypeError):
                 msg = ("Wrong input for parameter `drop`. Expected "
                        "'first', None or array of objects, got {}")
                 raise ValueError(msg.format(type(self.drop)))
-            return self
+            if droplen != len(self.categories_):
+                msg = ("`drop` should have length equal to the number "
+                       "of features ({}), got {}")
+                raise ValueError(msg.format(len(self.categories_),
+                                            len(self.drop)))
+            missing_drops = [(i, val) for i, val in enumerate(self.drop)
+                             if val not in self.categories_[i] and
+                             val is not None]
+            if any(missing_drops):
+                msg = ("The following categories were supposed to be "
+                       "dropped, but were not found in the training "
+                       "data.\n{}".format(
+                           "\n".join(
+                                ["Category: {}, Feature: {}".format(c, v)
+                                    for c, v in missing_drops])))
+                raise ValueError(msg)
+            return np.array([np.where(cat_list == val)[0][0]
+                             if val in cat_list else None
+                             for (val, cat_list) in
+                             zip(self.drop, self.categories_)])
+        else:
+            msg = ("Wrong input for parameter `drop`. Expected "
+                   "'first', None or array of objects, got {}")
+            raise ValueError(msg.format(type(self.drop)))
 
     def _legacy_fit_transform(self, X):
         """Assumes X contains only categorical features."""
@@ -673,17 +677,20 @@ class OneHotEncoder(_BaseEncoder):
 
         if self.drop is not None:
             max_val = max(len(cats) for cats in self.categories_)
-            to_drop = np.array([pos if pos is not None else max_val
+            to_drop = np.array([max_val if pos is None else pos
                                 for pos in self.drop_idx_]).reshape(1, -1)
+
+            # We remove all the dropped categories from mask, and decrement all
+            # categories that occur after them to avoid an empty column.
+
             keep_cells = X_int != to_drop
             X_mask &= keep_cells
             X_int[X_int > to_drop] -= 1
-            n_values = [len(cats) - 1 if drop_val is not None
-                        else len(cats)
-                        for cats, drop_val in
+            n_values = [len(cats) - (drop_idx is not None)
+                        for cats, drop_idx in
                         zip(self.categories_, self.drop_idx_)]
         else:
-            n_values = [cats.shape[0] for cats in self.categories_]
+            n_values = [len(cats) for cats in self.categories_]
 
         mask = X_mask.ravel()
         n_values = np.array([0] + n_values)
@@ -769,7 +776,7 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
-            if (self.drop is None) or self.drop_idx_[i] is None:
+            if self.drop is None or self.drop_idx_[i] is None:
                 cats = self.categories_[i]
             else:
                 cats = np.delete(self.categories_[i], self.drop_idx_[i])

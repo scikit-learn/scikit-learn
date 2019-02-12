@@ -405,7 +405,7 @@ def test_one_hot_encoder_inverse(sparse_, drop):
 
     if drop is None:
         # with unknown categories
-        # drop_first is incompatible with handle_unknown=ignore
+        # drop is incompatible with handle_unknown=ignore
         X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
         enc = OneHotEncoder(sparse=sparse_, handle_unknown='ignore',
                             categories=[['abc', 'def'], [1, 2],
@@ -706,6 +706,8 @@ def test_one_hot_encoder_warning():
     X = [['Male', 1], ['Female', 3]]
     np.testing.assert_no_warnings(enc.fit_transform, X)
 
+
+def test_one_hot_encoder_drop_manual():
     enc = OneHotEncoder(drop=['def', 3, 56])
     X = [['abc', 2, 55], ['def', 1, 55], ['def', 3, 56]]
     exp = np.array([[1., 0., 1., 1.],
@@ -765,3 +767,31 @@ def test_invalid_drop_length(drop):
         ValueError,
         "`drop` should have length equal to the number",
         enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
+
+
+@pytest.mark.parametrize("density", [True, False],
+                         ids=['sparse', 'dense'])
+@pytest.mark.parametrize("drop", ['first',
+                                  ['a', 2, 'b'],
+                                  ['a', None, 'b'],
+                                  [None, None, None]],
+                         ids=['first', 'manual', 'manual_None', 'None'])
+def test_categories(density, drop):
+    ohe_base = OneHotEncoder(sparse=density)
+    ohe_test = OneHotEncoder(sparse=density, drop=drop)
+    X = [['c', 1, 'a'],
+         ['a', 2, 'b']]
+    ohe_base.fit(X)
+    ohe_test.fit(X)
+    assert_array_equal(ohe_base.categories_, ohe_test.categories_)
+    if drop == 'first':
+        assert_array_equal(ohe_test.drop_idx_,
+                           np.zeros(ohe_test.drop_idx_.shape))
+    else:
+        for drop_cat, drop_idx, cat_list in zip(drop,
+                                                ohe_test.drop_idx_,
+                                                ohe_test.categories_):
+            if drop_cat is None:
+                assert drop_idx is None
+            else:
+                assert cat_list[drop_idx] == drop_cat
