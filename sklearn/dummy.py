@@ -72,13 +72,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     n_outputs_ : int,
         Number of outputs.
 
-    outputs_2d_ : bool,
-        True if the output at fit is 2d, else false.
-
     sparse_output_ : bool,
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
-
     """
 
     def __init__(self, strategy="stratified", random_state=None,
@@ -391,9 +387,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
     n_outputs_ : int,
         Number of outputs.
-
-    outputs_2d_ : bool,
-        True if the output at fit is 2d, else false.
     """
 
     def __init__(self, strategy="mean", constant=None, quantile=None):
