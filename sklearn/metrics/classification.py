@@ -148,12 +148,12 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     See also
     --------
-    jaccard_similarity_score, hamming_loss, zero_one_loss
+    jaccard_score, hamming_loss, zero_one_loss
 
     Notes
     -----
     In binary and multiclass classification, this function is equal
-    to the ``jaccard_similarity_score`` function.
+    to the ``jaccard_score`` function.
 
     Examples
     --------
@@ -577,9 +577,99 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     return 1 - k
 
 
-def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
-                             average='samples', normalize='true-if-samples',
+def jaccard_similarity_score(y_true, y_pred, normalize=True,
                              sample_weight=None):
+    """Jaccard similarity coefficient score
+
+    .. deprecated:: 0.21
+        This is deprecated to be removed in 0.23, since its handling of
+        binary and multiclass inputs was broken. `jaccard_score` has an API
+        that is consistent with precision_score, f_score, etc.
+
+    Read more in the :ref:`User Guide <jaccard_score>`.
+
+    Parameters
+    ----------
+    y_true : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) labels.
+
+    y_pred : 1d array-like, or label indicator array / sparse matrix
+        Predicted labels, as returned by a classifier.
+
+    normalize : bool, optional (default=True)
+        If ``False``, return the sum of the Jaccard similarity coefficient
+        over the sample set. Otherwise, return the average of Jaccard
+        similarity coefficient.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    score : float
+        If ``normalize == True``, return the average Jaccard similarity
+        coefficient, else it returns the sum of the Jaccard similarity
+        coefficient over the sample set.
+
+        The best performance is 1 with ``normalize == True`` and the number
+        of samples with ``normalize == False``.
+
+    See also
+    --------
+    accuracy_score, hamming_loss, zero_one_loss
+
+    Notes
+    -----
+    In binary and multiclass classification, this function is equivalent
+    to the ``accuracy_score``. It differs in the multilabel classification
+    problem.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Jaccard index
+           <https://en.wikipedia.org/wiki/Jaccard_index>`_
+
+
+    Examples
+    --------
+    >>> from sklearn.metrics import jaccard_similarity_score
+    >>> y_pred = [0, 2, 1, 3]
+    >>> y_true = [0, 1, 2, 3]
+    >>> jaccard_similarity_score(y_true, y_pred)
+    0.5
+    >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
+    2
+
+    In the multilabel case with binary label indicators:
+
+    >>> import numpy as np
+    >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),\
+        np.ones((2, 2)))
+    0.75
+    """
+    warnings.warn('jaccard_similarity_score has been deprecated and replaced '
+                  'with jaccard_score. It will be removed in version 0.23. '
+                  'This implementation has surprising behavior for binary '
+                  'classification tasks.', DeprecationWarning)
+
+    # Compute accuracy for each possible representation
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
+    if y_type.startswith('multilabel'):
+        with np.errstate(divide='ignore', invalid='ignore'):
+            # oddly, we may get an "invalid" rather than a "divide" error here
+            pred_or_true = count_nonzero(y_true + y_pred, axis=1)
+            pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
+            score = pred_and_true / pred_or_true
+            score[pred_or_true == 0.0] = 1.0
+    else:
+        score = y_true == y_pred
+
+    return _weighted_sum(score, sample_weight, normalize)
+
+
+def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
+                  average='binary', sample_weight=None):
     """Jaccard similarity coefficient score
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -587,7 +677,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     sets, is used to compare set of predicted labels for a sample to the
     corresponding set of labels in ``y_true``.
 
-    Read more in the :ref:`User Guide <jaccard_similarity_score>`.
+    Read more in the :ref:`User Guide <jaccard_score>`.
 
     Parameters
     ----------
@@ -612,7 +702,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : string, ['samples' (default), 'binary', 'micro', 'macro', None, \
+    average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
                        'weighted']
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
@@ -634,13 +724,6 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification).
 
-    normalize : bool, optional (default=True)
-        If ``False``, return the sum of the Jaccard similarity coefficient
-        over the sample set. Otherwise, return the average of Jaccard
-        similarity coefficient. ``normalize`` is only applicable when
-        ``average='samples'``. The default value 'true-if-samples' behaves like
-        True, but does not raise an error with other values of `average`.
-
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
@@ -651,11 +734,11 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
     See also
     --------
-    accuracy_score, hamming_loss, zero_one_loss
+    accuracy_score, f_score, multilabel_confusion_matrix
 
     Notes
     -----
-    :func:`jaccard_similarity_score` may be a poor metric if there are no
+    :func:`jaccard_score` may be a poor metric if there are no
     positives for some samples or classes.
 
     References
@@ -666,33 +749,29 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import jaccard_similarity_score
+    >>> from sklearn.metrics import jaccard_score
 
     In the multilabel case:
 
     >>> y_true = np.array([[1, 0, 1], [0, 0, 1], [1, 1, 1]])
     >>> y_pred = np.array([[0, 1, 1], [1, 1, 1], [0, 0, 1]])
-    >>> jaccard_similarity_score(y_true, y_pred, average='samples')
+    >>> jaccard_score(y_true, y_pred, average='samples')
     ... # doctest: +ELLIPSIS
     0.33...
-    >>> jaccard_similarity_score(y_true, y_pred, average='micro')
+    >>> jaccard_score(y_true, y_pred, average='micro')
     ... # doctest: +ELLIPSIS
     0.33...
-    >>> jaccard_similarity_score(y_true, y_pred, average='weighted')
+    >>> jaccard_score(y_true, y_pred, average='weighted')
     0.5
-    >>> jaccard_similarity_score(y_true, y_pred, average=None)
+    >>> jaccard_score(y_true, y_pred, average=None)
     array([0., 0., 1.])
 
     In the multiclass case:
 
-    >>> jaccard_similarity_score(np.array([0, 1, 2, 3]),
+    >>> jaccard_score(np.array([0, 1, 2, 3]),
     ...                          np.array([0, 2, 2, 3]), average='macro')
     0.625
     """
-    if average != 'samples' and normalize != 'true-if-samples':
-        raise ValueError("'normalize' is only meaningful with "
-                         "`average='samples'`, got `average='%s'`."
-                         % average)
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
     if labels is _ALL_ZERO:
@@ -714,9 +793,6 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                           'true or predicted', average, ('jaccard',))
     if average is None:
         return jaccard
-    if not normalize:
-        return np.sum(jaccard * (1 if sample_weight is None
-                                 else sample_weight))
     if average == 'weighted':
         weights = MCM[:, 1, 0] + MCM[:, 1, 1]
         if not np.any(weights):
@@ -854,7 +930,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
     See also
     --------
-    accuracy_score, hamming_loss, jaccard_similarity_score
+    accuracy_score, hamming_loss, jaccard_score
 
     Examples
     --------
@@ -965,7 +1041,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     See also
     --------
-    fbeta_score, precision_recall_fscore_support, jaccard_similarity_score,
+    fbeta_score, precision_recall_fscore_support, jaccard_score,
     multilabel_confusion_matrix
 
     References
@@ -1908,7 +1984,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     See Also
     --------
-    accuracy_score, jaccard_similarity_score, zero_one_loss
+    accuracy_score, jaccard_score, zero_one_loss
 
     Notes
     -----

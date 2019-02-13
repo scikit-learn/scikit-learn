@@ -19,7 +19,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score,
-                             jaccard_similarity_score)
+                             jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
                                     _passthrough_scorer)
@@ -290,7 +290,7 @@ def test_classification_scores():
 
     for prefix, metric in [('f1', f1_score), ('precision', precision_score),
                            ('recall', recall_score),
-                           ('jaccard', partial(jaccard_similarity_score,
+                           ('jaccard', partial(jaccard_score,
                                                average='binary'))]:
 
         score1 = get_scorer('%s_weighted' % prefix)(clf, X_test, y_test)

@@ -37,6 +37,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
+from sklearn.metrics import jaccard_score
 from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import log_loss
 from sklearn.metrics import matthews_corrcoef
@@ -1136,40 +1137,40 @@ def test_multilabel_hamming_loss():
                          hamming_loss, y1, y2, labels=[0, 1])
 
 
-def test_jaccard_similarity_score_validation():
+def test_jaccard_score_validation():
     y_true = np.array([0, 1, 0, 1, 1])
     y_pred = np.array([0, 1, 0, 1, 1])
     assert_raise_message(ValueError, "pos_label=2 is not a valid label: "
-                         "array([0, 1])", jaccard_similarity_score, y_true,
+                         "array([0, 1])", jaccard_score, y_true,
                          y_pred, average='binary', pos_label=2)
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
     msg1 = ("Target is multilabel-indicator but average='binary'. "
             "Please choose another average setting.")
-    assert_raise_message(ValueError, msg1, jaccard_similarity_score, y_true,
+    assert_raise_message(ValueError, msg1, jaccard_score, y_true,
                          y_pred, average='binary', pos_label=-1)
 
     y_true = np.array([0, 1, 1, 0, 2])
     y_pred = np.array([1, 1, 1, 1, 0])
     msg2 = ("Target is multiclass but average='binary'. Please choose "
             "another average setting.")
-    assert_raise_message(ValueError, msg2, jaccard_similarity_score, y_true,
+    assert_raise_message(ValueError, msg2, jaccard_score, y_true,
                          y_pred, average='binary')
     msg3 = ("Samplewise metrics are not available outside of multilabel "
             "classification.")
-    assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
+    assert_raise_message(ValueError, msg3, jaccard_score, y_true,
                          y_pred, average='samples')
 
     assert_warns_message(UserWarning,
                          "Note that pos_label (set to 3) is ignored when "
                          "average != 'binary' (got 'micro'). You may use "
                          "labels=[pos_label] to specify a single positive "
-                         "class.", jaccard_similarity_score, y_true, y_pred,
+                         "class.", jaccard_score, y_true, y_pred,
                          average='micro', pos_label=3)
 
 
-def test_multilabel_jaccard_similarity_score(recwarn):
+def test_multilabel_jaccard_score(recwarn):
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
     y2 = np.array([[0, 0, 1], [1, 0, 1]])
@@ -1177,64 +1178,54 @@ def test_multilabel_jaccard_similarity_score(recwarn):
     # size(y1 \inter y2) = [1, 2]
     # size(y1 \union y2) = [2, 2]
 
-    assert jaccard_similarity_score(y1, y2) == 0.75
-    assert jaccard_similarity_score(y1, y1) == 1
-    assert jaccard_similarity_score(y2, y2) == 1
-    assert jaccard_similarity_score(y2, np.logical_not(y2)) == 0
-    assert jaccard_similarity_score(y1, np.logical_not(y1)) == 0
-    assert jaccard_similarity_score(y1, np.zeros(y1.shape)) == 0
-    assert jaccard_similarity_score(y2, np.zeros(y1.shape)) == 0
+    assert jaccard_score(y1, y2, average='samples') == 0.75
+    assert jaccard_score(y1, y1, average='samples') == 1
+    assert jaccard_score(y2, y2, average='samples') == 1
+    assert jaccard_score(y2, np.logical_not(y2), average='samples') == 0
+    assert jaccard_score(y1, np.logical_not(y1), average='samples') == 0
+    assert jaccard_score(y1, np.zeros(y1.shape), average='samples') == 0
+    assert jaccard_score(y2, np.zeros(y1.shape), average='samples') == 0
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
     # average='macro'
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='macro'), 2. / 3)
+    assert_almost_equal(jaccard_score(y_true, y_pred,
+                                      average='macro'), 2. / 3)
     # average='micro'
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='micro'), 3. / 5)
-    # average='samples' (default)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred), 7. / 12)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='samples',
-                                                 labels=[0, 2]), 1. / 2)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='samples',
-                                                 labels=[1, 2]), 1. / 2)
-    # average='samples', normalize=False
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='samples',
-                                                 normalize=False),
-                        7. / 6)
+    assert_almost_equal(jaccard_score(y_true, y_pred,
+                                      average='micro'), 3. / 5)
+    # average='samples'
+    assert_almost_equal(jaccard_score(y_true, y_pred, average='samples'),
+                        7. / 12)
+    assert_almost_equal(jaccard_score(y_true, y_pred,
+                                      average='samples',
+                                      labels=[0, 2]), 1. / 2)
+    assert_almost_equal(jaccard_score(y_true, y_pred,
+                                      average='samples',
+                                      labels=[1, 2]), 1. / 2)
     # average=None
-    assert_array_equal(jaccard_similarity_score(y_true, y_pred, average=None),
+    assert_array_equal(jaccard_score(y_true, y_pred, average=None),
                        np.array([1. / 2, 1., 1. / 2]))
 
     y_true = np.array([[0, 1, 1], [1, 0, 1]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='macro'), 5. / 6)
+    assert_almost_equal(jaccard_score(y_true, y_pred,
+                                      average='macro'), 5. / 6)
     # average='weighted'
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='weighted'), 7. / 8)
-    # normalize error
-    msg1 = ("'normalize' is only meaningful with `average='samples'`, got "
-            "`average='macro'`.")
-    assert_raise_message(ValueError, msg1, jaccard_similarity_score, y_true,
-                         y_pred, average='macro', normalize=False)
-    assert_raise_message(ValueError, msg1, jaccard_similarity_score, y_true,
-                         y_pred, average='macro', normalize=True)
+    assert_almost_equal(jaccard_score(y_true, y_pred,
+                                      average='weighted'), 7. / 8)
+
     msg2 = 'Got 4 > 2'
-    assert_raise_message(ValueError, msg2, jaccard_similarity_score, y_true,
-                         y_pred, labels=[4])
+    assert_raise_message(ValueError, msg2, jaccard_score, y_true,
+                         y_pred, labels=[4], average='macro')
     msg3 = 'Got -1 < 0'
-    assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
-                         y_pred, labels=[-1])
+    assert_raise_message(ValueError, msg3, jaccard_score, y_true,
+                         y_pred, labels=[-1], average='macro')
 
     msg = ('Jaccard is ill-defined and being set to 0.0 in labels '
            'with no true or predicted samples.')
     assert assert_warns_message(UndefinedMetricWarning, msg,
-                                jaccard_similarity_score,
+                                jaccard_score,
                                 np.array([[0, 1]]),
                                 np.array([[0, 1]]),
                                 average='macro') == 0.5
@@ -1242,7 +1233,7 @@ def test_multilabel_jaccard_similarity_score(recwarn):
     msg = ('Jaccard is ill-defined and being set to 0.0 in samples '
            'with no true or predicted labels.')
     assert assert_warns_message(UndefinedMetricWarning, msg,
-                                jaccard_similarity_score,
+                                jaccard_score,
                                 np.array([[0, 0], [1, 1]]),
                                 np.array([[0, 0], [1, 1]]),
                                 average='samples') == 0.5
@@ -1250,7 +1241,7 @@ def test_multilabel_jaccard_similarity_score(recwarn):
     assert not list(recwarn)
 
 
-def test_multiclass_jaccard_similarity_score(recwarn):
+def test_multiclass_jaccard_score(recwarn):
     y_true = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat', 'bird', 'bird']
     y_pred = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird', 'bird', 'cat']
     labels = ['ant', 'bird', 'cat']
@@ -1258,10 +1249,10 @@ def test_multiclass_jaccard_similarity_score(recwarn):
     lb.fit(labels)
     y_true_bin = lb.transform(y_true)
     y_pred_bin = lb.transform(y_pred)
-    multi_jaccard_similarity_score = partial(jaccard_similarity_score, y_true,
-                                             y_pred)
-    bin_jaccard_similarity_score = partial(jaccard_similarity_score,
-                                           y_true_bin, y_pred_bin)
+    multi_jaccard_score = partial(jaccard_score, y_true,
+                                  y_pred)
+    bin_jaccard_score = partial(jaccard_score,
+                                y_true_bin, y_pred_bin)
     multi_labels_list = [['ant', 'bird'], ['ant', 'cat'], ['cat', 'bird'],
                          ['ant'], ['bird'], ['cat'], None]
     bin_labels_list = [[0, 1], [0, 2], [2, 1], [0], [1], [2], None]
@@ -1269,41 +1260,41 @@ def test_multiclass_jaccard_similarity_score(recwarn):
     # other than average='samples'/'none-samples', test everything else here
     for average in ('macro', 'weighted', 'micro', None):
         for m_label, b_label in zip(multi_labels_list, bin_labels_list):
-            assert_almost_equal(multi_jaccard_similarity_score(average=average,
-                                                               labels=m_label),
-                                bin_jaccard_similarity_score(average=average,
-                                                             labels=b_label))
+            assert_almost_equal(multi_jaccard_score(average=average,
+                                                    labels=m_label),
+                                bin_jaccard_score(average=average,
+                                                  labels=b_label))
 
     y_true = np.array([[0, 0], [0, 0], [0, 0]])
     y_pred = np.array([[0, 0], [0, 0], [0, 0]])
     with ignore_warnings():
-        assert (jaccard_similarity_score(y_true, y_pred, average='weighted')
+        assert (jaccard_score(y_true, y_pred, average='weighted')
                 == 0)
 
     assert not list(recwarn)
 
 
-def test_average_binary_jaccard_similarity_score(recwarn):
+def test_average_binary_jaccard_score(recwarn):
     # tp=0, fp=0, fn=1, tn=0
-    assert jaccard_similarity_score([1], [0], average='binary') == 0.
+    assert jaccard_score([1], [0], average='binary') == 0.
     # tp=0, fp=0, fn=0, tn=1
     msg = ('Jaccard is ill-defined and being set to 0.0 with '
            'no true or predicted samples')
     assert assert_warns_message(UndefinedMetricWarning,
                                 msg,
-                                jaccard_similarity_score,
+                                jaccard_score,
                                 [0, 0], [0, 0],
                                 average='binary') == 0.
     # tp=1, fp=0, fn=0, tn=0 (pos_label=0)
-    assert jaccard_similarity_score([0], [0], pos_label=0,
-                                    average='binary') == 1.
+    assert jaccard_score([0], [0], pos_label=0,
+                         average='binary') == 1.
     y_true = np.array([1, 0, 1, 1, 0])
     y_pred = np.array([1, 0, 1, 1, 1])
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='binary'), 3. / 4)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='binary',
-                                                 pos_label=0), 1. / 2)
+    assert_almost_equal(jaccard_score(y_true, y_pred,
+                                      average='binary'), 3. / 4)
+    assert_almost_equal(jaccard_score(y_true, y_pred,
+                                      average='binary',
+                                      pos_label=0), 1. / 2)
 
     assert not list(recwarn)
 
@@ -1996,3 +1987,21 @@ def test_balanced_accuracy_score(y_true, y_pred):
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
+
+
+def test_multilabel_jaccard_similarity_score():
+    # Dense label indicator matrix format
+    y1 = np.array([[0, 1, 1], [1, 0, 1]])
+    y2 = np.array([[0, 0, 1], [1, 0, 1]])
+
+    # size(y1 \inter y2) = [1, 2]
+    # size(y1 \union y2) = [2, 2]
+
+    jss = partial(assert_warns, DeprecationWarning, jaccard_similarity_score)
+    assert_equal(jss(y1, y2), 0.75)
+    assert_equal(jss(y1, y1), 1)
+    assert_equal(jss(y2, y2), 1)
+    assert_equal(jss(y2, np.logical_not(y2)), 0)
+    assert_equal(jss(y1, np.logical_not(y1)), 0)
+    assert_equal(jss(y1, np.zeros(y1.shape)), 0)
+    assert_equal(jss(y2, np.zeros(y1.shape)), 0)

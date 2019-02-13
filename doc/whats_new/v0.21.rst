@@ -160,12 +160,10 @@ Support for Python 3.4 and below has been officially dropped.
   metrics such as recall, specificity, fall out and miss rate.
   :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
 
-- |Feature| |Fix| :func:`metrics.jaccard_similarity_score` now accepts
-  ``average`` argument like :func:`metrics.precision_recall_fscore_support` as
-  a naively set-wise measure applying only to binary, multilabel targets. It
-  now binarizes multiclass input and treats them like the corresponding
-  multilabel problem.
-  :issue:`10083` by :user:`Gaurav Dhingra <gxyd>` and `Joel Nothman`_.
+- |Feature| :func:`metrics.jaccard_score` has been added to calculate the
+  Jaccard coefficient as an evaluation metric for binary, multilabel and
+  multiclass tasks, with an interface analogous to :func:`metrics.f_score`.
+  :issue:`???` by :user:`Gaurav Dhingra <gxyd>` and `Joel Nothman`_.
 
 - |Enhancement| Use label `accuracy` instead of `micro-average` on
   :func:`metrics.classification_report` to avoid confusion. `micro-average` is
@@ -182,6 +180,10 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23.
   :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
   Mitrovic <SandraMNE>`.
+
+- |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
+  the more consistent :func:`metrics.jaccard_score`.
+  :issue:`???` by `Joel Nothman`_.
 
 - |Efficiency| The pairwise manhattan distances with sparse input now uses the
   BLAS shipped with scipy instead of the bundled BLAS. :issue:`12732` by

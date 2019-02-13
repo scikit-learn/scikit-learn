@@ -70,7 +70,7 @@ Scoring                           Function                                      
 'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
 'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
 'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
-'jaccard' etc.                    :func:`metrics.jaccard_similarity_score`          suffixes apply as with 'f1'
+'jaccard' etc.                    :func:`metrics.jaccard_score`          suffixes apply as with 'f1'
 'roc_auc'                         :func:`metrics.roc_auc_score`
 
 **Clustering**
@@ -327,7 +327,7 @@ Some also work in the multilabel case:
    f1_score
    fbeta_score
    hamming_loss
-   jaccard_similarity_score
+   jaccard_score
    log_loss
    multilabel_confusion_matrix
    precision_recall_fscore_support
@@ -681,50 +681,6 @@ In the multilabel case with binary label indicators: ::
     or superset of the true labels will give a Hamming loss between
     zero and one, exclusive.
 
-.. _jaccard_similarity_score:
-
-Jaccard similarity coefficient score
--------------------------------------
-
-The :func:`jaccard_similarity_score` function computes the average (default)
-or sum of `Jaccard similarity coefficients
-<https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the Jaccard index,
-between pairs of label sets.
-
-The Jaccard similarity coefficient of the :math:`i`-th samples,
-with a ground truth label set :math:`y_i` and predicted label set
-:math:`\hat{y}_i`, is defined as
-
-.. math::
-
-    J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
-
-:func:`jaccard_similarity_score` works like :func:`precision_recall_fscore_support`
-as a naively set-wise measure applying only to binary and multilabel targets.
-
-In the multilabel case with binary label indicators: ::
-
-  >>> import numpy as np
-  >>> from sklearn.metrics import jaccard_similarity_score
-  >>> y_true = np.array([[0, 1], [1, 1]])
-  >>> y_pred = np.ones((2, 2))
-  >>> jaccard_similarity_score(y_true, y_pred)
-  0.75
-  >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
-  1.5
-
-Multiclass problems are binarized and treated like the corresponding
-multilabel problem: ::
-
-  >>> y_pred = [0, 2, 1, 3]
-  >>> y_true = [0, 1, 2, 3]
-  >>> jaccard_similarity_score(y_true, y_pred, average='macro')
-  0.5
-  >>> jaccard_similarity_score(y_true, y_pred, average='micro')
-  0.33...
-  >>> jaccard_similarity_score(y_true, y_pred, average=None)
-  array([1., 0., 0., 1.])
-
 .. _precision_recall_f_measure_metrics:
 
 Precision, recall and F-measures
@@ -964,6 +920,51 @@ Similarly, labels not present in the data sample may be accounted for in macro-a
   >>> metrics.precision_score(y_true, y_pred, labels=[0, 1, 2, 3], average='macro')
   ... # doctest: +ELLIPSIS
   0.166...
+
+.. _jaccard_score:
+
+Jaccard similarity coefficient score
+-------------------------------------
+
+The :func:`jaccard_score` function computes the average (default)
+or sum of `Jaccard similarity coefficients
+<https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the Jaccard index,
+between pairs of label sets.
+
+The Jaccard similarity coefficient of the :math:`i`-th samples,
+with a ground truth label set :math:`y_i` and predicted label set
+:math:`\hat{y}_i`, is defined as
+
+.. math::
+
+    J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
+
+:func:`jaccard_score` works like :func:`precision_recall_fscore_support` as a
+naively set-wise measure applying natively to binary targets, and extended to
+apply to multilabel and multiclass through the use of `average`.
+
+In the multilabel case with binary label indicators: ::
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import jaccard_score
+  >>> y_true = np.array([[0, 1], [1, 1]])
+  >>> y_pred = np.ones((2, 2))
+  >>> jaccard_score(y_true, y_pred, average='samples')
+  0.75
+  >>> jaccard_score(y_true, y_pred, average='macro')
+  0.75
+
+Multiclass problems are binarized and treated like the corresponding
+multilabel problem: ::
+
+  >>> y_pred = [0, 2, 1, 3]
+  >>> y_true = [0, 1, 2, 3]
+  >>> jaccard_score(y_true, y_pred, average='macro')
+  0.5
+  >>> jaccard_score(y_true, y_pred, average='micro')
+  0.33...
+  >>> jaccard_score(y_true, y_pred, average=None)
+  array([1., 0., 0., 1.])
 
 .. _hinge_loss:
 
