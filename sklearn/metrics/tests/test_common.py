@@ -38,7 +38,6 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
 from sklearn.metrics import jaccard_score
-from sklearn.metrics import jaccard_similarity_score
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import log_loss
@@ -164,11 +163,6 @@ CLASSIFICATION_METRICS = {
     "samples_jaccard_score": partial(jaccard_score, average="samples"),
 
     "cohen_kappa_score": cohen_kappa_score,
-
-    # deprecated:
-    "jaccard_similarity_score": jaccard_similarity_score,
-    "unnormalized_jaccard_similarity_score":
-    partial(jaccard_similarity_score, normalize=False),
 }
 
 
@@ -366,7 +360,6 @@ METRICS_WITH_LABELS = {
 METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score",
     "zero_one_loss",
-    "jaccard_similarity_score",
 }
 
 # Threshold-based metrics with "multilabel-indicator" format support
@@ -407,8 +400,6 @@ MULTILABELS_METRICS = {
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
     "samples_jaccard_score",
-
-    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
 }
 
 # Regression metrics with "multioutput-continuous" format support
@@ -438,8 +429,6 @@ SYMMETRIC_METRICS = {
     "median_absolute_error", "max_error",
 
     "cohen_kappa_score",
-
-    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
 }
 
 # Asymmetric with respect to their input arguments y_true and y_pred
