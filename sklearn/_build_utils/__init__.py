@@ -9,7 +9,7 @@ import os
 
 from distutils.version import LooseVersion
 
-import numpy.distutils.system_info.get_info
+import numpy.distutils.system_info
 
 
 DEFAULT_ROOT = 'sklearn'
