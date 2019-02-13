@@ -433,14 +433,14 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : int, np.nan, optional (default=np.nan)
-        The placeholder for the missing values. All occurrences of
-        ``missing_values`` will be imputed.
-
     estimator : estimator object, default=BayesianRidge()
         The estimator to use at each step of the round-robin imputation.
         If ``sample_posterior`` is True, the estimator must support
         ``return_std`` in its ``predict`` method.
+
+    missing_values : int, np.nan, optional (default=np.nan)
+        The placeholder for the missing values. All occurrences of
+        ``missing_values`` will be imputed.
 
     sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
@@ -559,8 +559,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self,
-                 missing_values=np.nan,
                  estimator=None,
+                 missing_values=np.nan,
                  sample_posterior=False,
                  max_iter=10,
                  tol=1e-3,
@@ -572,8 +572,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                  verbose=0,
                  random_state=None):
 
-        self.missing_values = missing_values
         self.estimator = estimator
+        self.missing_values = missing_values
         self.sample_posterior = sample_posterior
         self.max_iter = max_iter
         self.tol = tol
