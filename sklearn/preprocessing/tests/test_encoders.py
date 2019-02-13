@@ -795,3 +795,5 @@ def test_categories(density, drop):
                 assert drop_idx is None
             else:
                 assert cat_list[drop_idx] == drop_cat
+    assert isinstance(ohe_test.drop_idx_, np.ndarray)
+    assert ohe_test.drop_idx_.dtype == object

@@ -497,7 +497,7 @@ class OneHotEncoder(_BaseEncoder):
         elif (isinstance(self.drop, six.string_types) and
               self.drop == 'first'):
             return np.zeros(len(self.categories_),
-                            dtype=np.int8)
+                            dtype=object)
         elif not isinstance(self.drop, six.string_types):
             try:
                 self.drop = np.asarray(self.drop, dtype=object)
@@ -525,7 +525,7 @@ class OneHotEncoder(_BaseEncoder):
             return np.array([np.where(cat_list == val)[0][0]
                              if val in cat_list else None
                              for (val, cat_list) in
-                             zip(self.drop, self.categories_)])
+                             zip(self.drop, self.categories_)], dtype=object)
         else:
             msg = ("Wrong input for parameter `drop`. Expected "
                    "'first', None or array of objects, got {}")
