@@ -11,6 +11,7 @@ from sklearn.utils import check_random_state
 from sklearn.exceptions import ConvergenceWarning
 
 
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_pls():
     d = load_linnerud()
     X = d.data
