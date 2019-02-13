@@ -163,7 +163,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| :func:`metrics.jaccard_score` has been added to calculate the
   Jaccard coefficient as an evaluation metric for binary, multilabel and
   multiclass tasks, with an interface analogous to :func:`metrics.f_score`.
-  :issue:`???` by :user:`Gaurav Dhingra <gxyd>` and `Joel Nothman`_.
+  :issue:`13151` by :user:`Gaurav Dhingra <gxyd>` and `Joel Nothman`_.
 
 - |Enhancement| Use label `accuracy` instead of `micro-average` on
   :func:`metrics.classification_report` to avoid confusion. `micro-average` is
@@ -183,7 +183,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
   the more consistent :func:`metrics.jaccard_score`.
-  :issue:`???` by `Joel Nothman`_.
+  :issue:`13151` by `Joel Nothman`_.
 
 - |Efficiency| The pairwise manhattan distances with sparse input now uses the
   BLAS shipped with scipy instead of the bundled BLAS. :issue:`12732` by
