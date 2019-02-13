@@ -737,11 +737,9 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
 
     >>> y_true = np.array([[1, 0, 1], [0, 0, 1], [1, 1, 1]])
     >>> y_pred = np.array([[0, 1, 1], [1, 1, 1], [0, 0, 1]])
-    >>> jaccard_score(y_true, y_pred, average='samples')
-    ... # doctest: +ELLIPSIS
+    >>> jaccard_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
     0.33...
-    >>> jaccard_score(y_true, y_pred, average='micro')
-    ... # doctest: +ELLIPSIS
+    >>> jaccard_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
     0.33...
     >>> jaccard_score(y_true, y_pred, average='weighted')
     0.5
