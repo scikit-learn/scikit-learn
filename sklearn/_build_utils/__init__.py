@@ -9,7 +9,7 @@ import os
 
 from distutils.version import LooseVersion
 
-import numpy as np
+import numpy.distutils.system_info.get_info
 
 
 DEFAULT_ROOT = 'sklearn'
@@ -31,7 +31,7 @@ def get_blas_info():
                     return True
         return False
 
-    blas_info = np.distutils.system_info.get_info('blas_opt', 0)
+    blas_info = numpy.distutils.system_info.get_info('blas_opt', 0)
     if (not blas_info) or atlas_not_found(blas_info):
         cblas_libs = ['cblas']
         blas_info.pop('libraries', None)
