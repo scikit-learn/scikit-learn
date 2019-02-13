@@ -924,8 +924,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     Notes
     -----
-    When ``true_positive + false positive == 0`` or
-    ``true_positive + false negative == 0``, f-score will be set to 0
+    When ``true positive + false positive == 0`` or
+    ``true positive + false negative == 0``, f-score will be set to 0
     and ``UndefinedMetricWarning`` will be raised.
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
@@ -1043,8 +1043,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     Notes
     -----
-    When ``true_positive + false positive == 0`` or
-    ``true_positive + false negative == 0``, f-score will be set to 0
+    When ``true positive + false positive == 0`` or
+    ``true positive + false negative == 0``, f-score will be set to 0
     and ``UndefinedMetricWarning`` will be raised.
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1245,13 +1245,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Notes
     -----
-    When ``true_positive + false positive == 0``, precision will be set to 0
-    and ``UndefinedMetricWarning`` will be raised.
-    When ``true_positive + false negative == 0``, recall will be set to 0
-    and ``UndefinedMetricWarning`` will be raised.
-    When ``true_positive + false positive == 0`` or
-    ``true_positive + false negative == 0``, f-score will be set to 0
-    and ``UndefinedMetricWarning`` will be raised.
+    When ``true positive + false positive == 0``, precision is undefined;
+    When ``true positive + false negative == 0``, recall is undefined.
+    In such cases, the metric will be set to 0, as will f-score, and
+    ``UndefinedMetricWarning`` will be raised.
     """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
     if average not in average_options and average != 'binary':
@@ -1425,7 +1422,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Notes
     -----
-    When ``true_positive + false positive == 0``, precision will be set to 0
+    When ``true positive + false positive == 0``, precision will be set to 0
     and ``UndefinedMetricWarning`` will be raised.
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1531,7 +1528,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     Notes
     -----
-    When ``true_positive + false negative == 0``, recall will be set to 0
+    When ``true positive + false negative == 0``, recall will be set to 0
     and ``UndefinedMetricWarning`` will be raised.
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
