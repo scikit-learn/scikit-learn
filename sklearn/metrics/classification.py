@@ -774,10 +774,6 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     """
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
-    if labels is _ALL_ZERO:
-        warnings.warn('Jaccard is ill-defined and being set to 0.0 with no '
-                      'true or predicted samples', UndefinedMetricWarning)
-        return 0.
     samplewise = average == 'samples'
     MCM = multilabel_confusion_matrix(y_true, y_pred,
                                       sample_weight=sample_weight,
@@ -1252,9 +1248,7 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     if average == 'binary':
         if y_type == 'binary':
             if pos_label not in present_labels:
-                if len(present_labels) < 2:
-                    return _ALL_ZERO
-                else:
+                if len(present_labels) >= 2:
                     raise ValueError("pos_label=%r is not a valid label: "
                                      "%r" % (pos_label, present_labels))
             labels = [pos_label]
@@ -1416,8 +1410,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         raise ValueError("beta should be >0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
-    if labels is _ALL_ZERO:
-        return (0., 0., 0., 0)
 
     # Calculate tp_sum, pred_sum, true_sum ###
     samplewise = average == 'samples'

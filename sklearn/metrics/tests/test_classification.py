@@ -1278,7 +1278,7 @@ def test_average_binary_jaccard_score(recwarn):
     # tp=0, fp=0, fn=1, tn=0
     assert jaccard_score([1], [0], average='binary') == 0.
     # tp=0, fp=0, fn=0, tn=1
-    msg = ('Jaccard is ill-defined and being set to 0.0 with '
+    msg = ('Jaccard is ill-defined and being set to 0.0 due to '
            'no true or predicted samples')
     assert assert_warns_message(UndefinedMetricWarning,
                                 msg,
