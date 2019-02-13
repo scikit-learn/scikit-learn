@@ -1497,41 +1497,37 @@ def test_build_repr():
 def test_shuffle_split_empty_trainset(CVSplitter):
     cv = CVSplitter(test_size=.99)
     X, y = [[1]], [0]  # 1 sample
-    assert_raises_regexp(
-        ValueError,
-        'With n_samples=1, test_size=0.99 and train_size=None, the resulting '
-        'train set will be empty',
-        next, cv.split(X, y, groups=[1])
-    )
+    with pytest.raises(
+            ValueError,
+            match='With n_samples=1, test_size=0.99 and train_size=None, '
+            'the resulting train set will be empty'):
+        next(cv.split(X, y, groups=[1]))
 
 
 def test_train_test_split_empty_trainset():
     X, = [[1]]  # 1 sample
-    assert_raises_regexp(
-        ValueError,
-        'With n_samples=1, test_size=0.99 and train_size=None, the resulting '
-        'train set will be empty',
-        train_test_split, X, test_size=.99
-    )
+    with pytest.raises(
+            ValueError,
+            match='With n_samples=1, test_size=0.99 and train_size=None, '
+            'the resulting train set will be empty'):
+        train_test_split(X, test_size=.99)
 
 
 def test_leave_one_out_empty_trainset():
     # LeaveOneGroup out expect at least 2 groups so no need to check
     cv = LeaveOneOut()
     X, y = [[1]], [0]  # 1 sample
-    assert_raises_regexp(
-        ValueError,
-        'Cannot perform LeaveOneOut with n_samples=1',
-        next, cv.split(X, y)
-    )
+    with pytest.raises(
+            ValueError,
+            match='Cannot perform LeaveOneOut with n_samples=1'):
+        next(cv.split(X, y))
 
 
 def test_leave_p_out_empty_trainset():
     # No need to check LeavePGroupsOut
     cv = LeavePOut(p=2)
     X, y = [[1], [2]], [0, 3]  # 2 samples
-    assert_raises_regexp(
-        ValueError,
-        'p=2 must be strictly less than the number of samples=2',
-        next, cv.split(X, y, groups=[1, 2])
-    )
+    with pytest.raises(
+            ValueError,
+            match='p=2 must be strictly less than the number of samples=2'):
+        next(cv.split(X, y, groups=[1, 2]))
