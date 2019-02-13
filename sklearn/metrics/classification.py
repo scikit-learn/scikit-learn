@@ -2294,16 +2294,18 @@ def min_precision(y_true, y_pred):
     return(min_precision)
 
 
-def aucpr_min(y_true):
+def aucpr_min(y_true, recall_bounds=[0,1]):
     """
     Minimum AUC for Precision Recall Curve, for given a skew between positive
     and negative labels.
 
     .. math::
-        \\text{AUCPRmin} = \\ 1 + \\frac{(1 - {s}) \\ ln(1 - {s})}{s}
-    where :math:`s` is the skew of the data
+        \\text{AUCPRmin} = \\ {b} - {a} + \\frac{1 -{s}}{{s}} \\ ln(\\frac{
+                {s}({a}-1)+1}{{s}({b}-1)+1})
+    where :math:`s` is the skew of the data, :math:`a` is the lower recall
+    bound, and :math:`b` is upper recall bound
 
-    Theorem 2 from Paper:
+    Corollary 4 and Theorem 2 from Paper:
         Unachievable Region in Precision-Recall Space
         by Boyd, Costa, Davis, and Page 2012
 
@@ -2313,13 +2315,17 @@ def aucpr_min(y_true):
         True binary labels or binary label indicators.
         1=Positive Labels, 0=Negative Labels
 
+    recall_bounds : list of int or float, len=2
+        Lower and Upper bound of Recalls to calculate AUCPRmin over.
+        Default defines whole recall space
+
     Returns
     -------
     aucpr_min : float
 
     References
     ----------
-    .. [1] `Unachievable Region in Precision-Recall Space 
+    .. [1] `Unachievable Region in Precision-Recall Space
             by Boyd, Costa, Davis, and Page 2012
             <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3858955/>
 
@@ -2346,8 +2352,11 @@ def aucpr_min(y_true):
     """
     # Calculate skew
     s = np.count_nonzero(y_true)/y_true.size
+    # Get a and b values
+    a = recall_bounds[0]
+    b = recall_bounds[1]
     # Calculate AUCPRmin
-    aucpr_min = 1 + ((1-s)*log(1-s))/s
+    aucpr_min = b - a + ((1-s)/(s))*log((s*(a-1)+1)/(s*(b-1)+1))
     return(aucpr_min)
 
 
@@ -2376,7 +2385,7 @@ def min_average_precision(y_true):
 
     References
     ----------
-    .. [1] `Unachievable Region in Precision-Recall Space 
+    .. [1] `Unachievable Region in Precision-Recall Space
             by Boyd, Costa, Davis, and Page 2012
             <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3858955/>
 
