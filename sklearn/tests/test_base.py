@@ -449,3 +449,22 @@ def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator_restored = pickle.loads(serialized)
     assert_equal(estimator_restored.attribute_pickled, 5)
     assert_equal(estimator_restored._attribute_not_pickled, None)
+
+# XXX: Remove in 0.23
+def test_regressormixin_score_multioutput():
+    from sklearn.linear_model import LinearRegression
+    # no warnings when y_type is continuous
+    X = [[1], [2], [3]]
+    y = [1, 2, 3]
+    reg = LinearRegression().fit(X, y)
+    assert_no_warnings(reg.score, X, y)
+    # warn when y_type is continuous-multioutput
+    y = [[1, 2], [2, 3], [3, 4]]
+    reg = LinearRegression().fit(X, y)
+    msg = ("The default value of multioutput (not exposed in "
+           "score method) will change from 'variance_weighted' "
+           "to 'uniform_average' in 0.23 to keep consistent "
+           "with 'metrics.r2_score'. To use the new default, "
+           "please either call 'metrics.r2_score' directly or "
+           "make a custom scorer with 'metric.make_scorer'.")
+    assert_warns_message(FutureWarning, msg, reg.score, X, y)
