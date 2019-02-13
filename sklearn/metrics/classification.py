@@ -628,24 +628,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     ----------
     .. [1] `Wikipedia entry for the Jaccard index
            <https://en.wikipedia.org/wiki/Jaccard_index>`_
-
-
-    Examples
-    --------
-    >>> from sklearn.metrics import jaccard_similarity_score
-    >>> y_pred = [0, 2, 1, 3]
-    >>> y_true = [0, 1, 2, 3]
-    >>> jaccard_similarity_score(y_true, y_pred)
-    0.5
-    >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
-    2
-
-    In the multilabel case with binary label indicators:
-
-    >>> import numpy as np
-    >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),\
-        np.ones((2, 2)))
-    0.75
     """
     warnings.warn('jaccard_similarity_score has been deprecated and replaced '
                   'with jaccard_score. It will be removed in version 0.23. '
