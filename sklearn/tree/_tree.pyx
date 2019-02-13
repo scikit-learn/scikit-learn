@@ -1250,9 +1250,6 @@ cpdef build_pruned_tree_ccp(
         for i in range(leaves_in_subtree.shape[0]):
             candidate_nodes[i] = not leaves_in_subtree[i]
 
-        for i in range(n_nodes):
-            in_subtree[i] = 1
-
         while True:
             # If root node is a leaf
             if not candidate_nodes[0]:
