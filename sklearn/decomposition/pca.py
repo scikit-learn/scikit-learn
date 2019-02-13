@@ -159,24 +159,24 @@ class PCA(_BasePCA):
 
     svd_solver : string {'auto', 'full', 'arpack', 'randomized'}
         auto :
-            the solver is selected by a default policy based on `X.shape` and
+            The solver is selected by a default policy based on `X.shape` and
             `n_components`: if the input data is larger than 500x500 and the
             number of components to extract is lower than 80% of the smallest
             dimension of the data, then the more efficient 'randomized'
             method is enabled. Otherwise the exact full SVD is computed and
             optionally truncated afterwards.
 
-            in case sparse data is used, 'randomized' is used as this is the
+            In case sparse data is used, 'randomized' is used as this is the
             only method that supports sparse data.
         full :
-            run exact full SVD calling the standard LAPACK solver via
+            Run exact full SVD calling the standard LAPACK solver via
             `scipy.linalg.svd` and select the components by postprocessing
         arpack :
-            run SVD truncated to n_components calling ARPACK solver via
+            Run SVD truncated to n_components calling ARPACK solver via
             `scipy.sparse.linalg.svds`. It requires strictly
             0 < n_components < min(X.shape)
         randomized :
-            run randomized SVD by the method of Halko et al. This is the only
+            Run randomized SVD by the method of Halko et al. This is the only
             method that supports sparse data.
 
         .. versionadded:: 0.18.0
@@ -403,7 +403,7 @@ class PCA(_BasePCA):
         # Ensure we don't try call arpack or full on a sparse matrix
         if issparse(X) and self._fit_svd_solver != 'randomized':
             raise ValueError(
-                'only the randomized solver supports sparse matrices'
+                'Only the randomized solver supports sparse matrices'
             )
 
         # Call different fits for either full or truncated SVD

@@ -116,7 +116,8 @@ def test_mean_variance_too_large_ddof():
     X, _ = make_classification(5, 4, random_state=0)
     X = sp.csr_matrix(X)
 
-    with pytest.raises(ValueError, match='ddof must be <N'):
+    with pytest.raises(ValueError, match='ddof=10 must be smaller than the '
+                                         'number of samples=5'):
         mean_variance_axis(X, axis=0, ddof=10)
 
 

@@ -386,14 +386,14 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
     n_components : int
         Number of singular values and vectors to extract.
 
-    n_oversamples : int (default is 10)
+    n_oversamples : int (default=10)
         Additional number of random vectors to sample the range of M so as
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples. Smaller
         number can improve speed but can negatively impact the quality of
         approximation of singular vectors and singular values.
 
-    n_iter : int or 'auto' (default is 'auto')
+    n_iter : int or 'auto' (default='auto')
         Number of power iterations. It can be used to deal with very noisy
         problems. When 'auto', it is set to 4, unless `n_components` is small
         (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
@@ -407,7 +407,7 @@ def randomized_pca(A, n_components, n_oversamples=10, n_iter="auto",
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-    flip_sign : boolean, (True by default)
+    flip_sign : boolean, (default=True)
         The output of a singular value decomposition is only unique up to a
         permutation of the signs of the singular vectors. If `flip_sign` is
         set to `True`, the sign ambiguity is resolved by making the largest

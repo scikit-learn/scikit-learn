@@ -63,10 +63,9 @@ def csr_mean_variance_axis0(X, ddof=0):
     X : CSR sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    ddof : int, optional
+    ddof : int, optional (default=0)
         “Delta Degrees of Freedom”: the divisor used in the calculation is
-        ``N - ddof``, where ``N`` represents the number of elements. By default
-        ddof is zero.
+        ``N - ddof``, where ``N`` represents the number of elements.
 
         .. versionadded:: 0.21
 
@@ -156,10 +155,9 @@ def csc_mean_variance_axis0(X, ddof=0):
     X : CSC sparse matrix, shape (n_samples, n_features)
         Input data.
 
-    ddof : int, optional
+    ddof : int, optional (default=0)
         “Delta Degrees of Freedom”: the divisor used in the calculation is
-        ``N - ddof``, where ``N`` represents the number of elements. By default
-        ddof is zero.
+        ``N - ddof``, where ``N`` represents the number of elements.
 
         .. versionadded:: 0.21
 

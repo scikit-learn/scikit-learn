@@ -264,9 +264,9 @@ def test_singular_values():
     # Increase the number of power iterations to get greater accuracy in tests
     rpca = PCA(n_components=2, svd_solver='randomized', iterated_power=40,
                random_state=rng).fit(X)
-    assert_allclose(pca.singular_values_, apca.singular_values_, 12)
-    assert_allclose(pca.singular_values_, rpca.singular_values_, 12)
-    assert_allclose(apca.singular_values_, rpca.singular_values_, 12)
+    assert_allclose(pca.singular_values_, apca.singular_values_, atol=12)
+    assert_allclose(pca.singular_values_, rpca.singular_values_, atol=12)
+    assert_allclose(apca.singular_values_, rpca.singular_values_, atol=12)
 
     # Compare to the Frobenius norm
     X_pca = pca.transform(X)
@@ -717,7 +717,7 @@ def test_pca_sparse_input_bad_solvers(svd_solver):
 
     pca = PCA(n_components=3, svd_solver=svd_solver)
 
-    with pytest.raises(ValueError, match='only the randomized solver supports '
+    with pytest.raises(ValueError, match='Only the randomized solver supports '
                                          'sparse matrices'):
         pca.fit(X)
 

@@ -72,10 +72,9 @@ def mean_variance_axis(X, axis, ddof=0):
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
 
-    ddof : int, optional
+    ddof : int, optional (default=0)
         “Delta Degrees of Freedom”: the divisor used in the calculation is
-        ``N - ddof``, where ``N`` represents the number of elements. By default
-        ddof is zero.
+        ``N - ddof``, where ``N`` represents the number of elements.
 
         .. versionadded:: 0.21
 
@@ -95,7 +94,10 @@ def mean_variance_axis(X, axis, ddof=0):
         raise ValueError('ddof cannot be <0')
 
     if ddof >= X.shape[axis]:
-        raise ValueError('ddof must be <N')
+        raise ValueError(
+            'ddof=%r must be smaller than the number of samples=%r' % (
+                ddof, X.shape[axis])
+        )
 
     if isinstance(X, sp.csr_matrix):
         if axis == 0:
