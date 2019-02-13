@@ -2251,10 +2251,12 @@ def min_precision(y_true, y_pred):
         {p} \\geq \\frac{{s}{r}}{1 - {s} + {s r}}
     where :math:`s` is the skew and :math:`r` is the recall
 
-    We can derive the minimum precision possible with skew of the data, given the recall values.
+    We can derive the minimum precision possible with skew of the data
+    , given the recall values.
 
     Theorem 1 from Paper:
-        Unachievable Region in Precision-Recall Space by Boyd, Costa, Davis, and Page 2012
+        Unachievable Region in Precision-Recall Space
+        by Boyd, Costa, Davis, and Page 2012
 
     Parameters
     ----------
@@ -2266,11 +2268,13 @@ def min_precision(y_true, y_pred):
 
     Returns
     -------
-    min_precision : 
+    min_precision : float (if average is not None) or array of float, , shape =
+        [n_unique_labels]
 
         References
     ----------
-    .. [1] `Unachievable Region in Precision-Recall Space by Boyd, Costa, Davis, and Page 2012
+    .. [1] `Unachievable Region in Precision-Recall Space
+            by Boyd, Costa, Davis, and Page 2012
             <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3858955/>
 
     Examples
@@ -2292,19 +2296,22 @@ def min_precision(y_true, y_pred):
 
 def aucpr_min(y_true):
     """
-    Minimum AUC for Precision Recall Curve, for given a skew between positive and negative labels.
+    Minimum AUC for Precision Recall Curve, for given a skew between positive
+    and negative labels.
 
     .. math::
         \\text{AUCPRmin} = \\ 1 + \\frac{(1 - {s}) \\ ln(1 - {s})}{s}
     where :math:`s` is the skew of the data
 
     Theorem 2 from Paper:
-        Unachievable Region in Precision-Recall Space by Boyd, Costa, Davis, and Page 2012
+        Unachievable Region in Precision-Recall Space
+        by Boyd, Costa, Davis, and Page 2012
 
     Parameters
     ----------
     y_true : array, shape = [n_samples,]
-        True binary labels or binary label indicators. 1=Positive Labels, 0=Negative Labels
+        True binary labels or binary label indicators.
+        1=Positive Labels, 0=Negative Labels
 
     Returns
     -------
@@ -2312,21 +2319,23 @@ def aucpr_min(y_true):
 
     References
     ----------
-    .. [1] `Unachievable Region in Precision-Recall Space by Boyd, Costa, Davis, and Page 2012
+    .. [1] `Unachievable Region in Precision-Recall Space 
+            by Boyd, Costa, Davis, and Page 2012
             <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3858955/>
 
     Relevance
     ---------
-    "The existence of the minimum AUCPR and minimum AP can affect the qualitative interpretation of a model's
-    performance. For example, changing the skew of a data set from 0.01 to 0.5 (e.g., by subsampling the negative
+    "The existence of the minimum AUCPR and minimum AP can affect the
+    qualitative interpretation of a model's performance. For example, changing
+    the skew of a data set from 0.01 to 0.5 (e.g., by subsampling the negative
     examples) increases the minimum AUCPR by approximately 0.3. (See Examples)
 
-    "This leads to an automatic jump of 0.3 in AUCPR simply by changing the data set and with absolutely
-    no change to the learning algorithm"
+    "This leads to an automatic jump of 0.3 in AUCPR simply by changing the
+    data set and with absolutely no change to the learning algorithm"
 
     Examples
     --------
-    >>> y_true = np.append(np.zeros(99),1) 
+    >>> y_true = np.append(np.zeros(99),1)
     >>> aucpr_min(y_true)
     ... # doctest: +ELLIPSIS
     0.005016750503356371
@@ -2344,19 +2353,22 @@ def aucpr_min(y_true):
 
 def min_average_precision(y_true):
     """
-    The minimum Average Precision Score (like sklearn.metrics.average_precision_score), for positive
-    (pos) and negative (neg) examples, respectively, is
+    The minimum Average Precision Score
+    (like sklearn.metrics.average_precision_score)
+    , for positive (pos) and negative (neg) examples, respectively, is
 
     .. math::
         \\text{APmin} = \\frac{1}{pos} \\sum_{i=1}^{pos}\\frac{i}{i + {neg}}
 
     Theorem 3 from Paper:
-        Unachievable Region in Precision-Recall Space by Boyd, Costa, Davis, and Page 2012
+        Unachievable Region in Precision-Recall Space
+        by Boyd, Costa, Davis, and Page 2012
 
     Parameters
     ----------
     y_true : array, shape = [n_samples,]
-        True binary labels or binary label indicators. 1=Positive Labels, 0=Negative Labels
+        True binary labels or binary label indicators.
+        1=Positive Labels, 0=Negative Labels
 
     Returns
     -------
@@ -2364,21 +2376,23 @@ def min_average_precision(y_true):
 
     References
     ----------
-    .. [1] `Unachievable Region in Precision-Recall Space by Boyd, Costa, Davis, and Page 2012
+    .. [1] `Unachievable Region in Precision-Recall Space 
+            by Boyd, Costa, Davis, and Page 2012
             <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3858955/>
 
     Relevance
     ---------
-    "The existence of the minimum AUCPR and minimum AP can affect the qualitative interpretation of a model's
-    performance. For example, changing the skew of a data set from 0.01 to 0.5 (e.g., by subsampling the negative
+    "The existence of the minimum AUCPR and minimum AP can affect the
+    qualitative interpretation of a model's performance. For example, changing
+    the skew of a data set from 0.01 to 0.5 (e.g., by subsampling the negative
     examples) increases the minimum AUCPR by approximately 0.3. (See Examples)
 
-    "This leads to an automatic jump of 0.3 in AUCPR simply by changing the data set and with absolutely
-    no change to the learning algorithm"
+    "This leads to an automatic jump of 0.3 in AUCPR simply by changing the
+    data set and with absolutely no change to the learning algorithm"
 
     Examples
     --------
-    >>> y_true = np.append(np.zeros(99),1) 
+    >>> y_true = np.append(np.zeros(99), 1)
     >>> min_average_precision(y_true)
     ... # doctest: +ELLIPSIS
     0.01
@@ -2392,7 +2406,6 @@ def min_average_precision(y_true):
     # Number of Negative Labels
     neg = y_true.size - pos
     # Create i to sum over
-    i = np.arange(1,pos+1)
+    i = np.arange(1, pos+1)
     min_average_precision = (1/pos) * np.sum(i/(i+neg))
-    
     return(min_average_precision)
