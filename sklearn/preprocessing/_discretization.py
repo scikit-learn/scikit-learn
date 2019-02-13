@@ -142,6 +142,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
+        actual_n_bins = n_bins.copy()
 
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
@@ -176,9 +177,11 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 centers.sort()
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
                 bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
+            bin_edges[jj] = np.unique(bin_edges[jj])
+            actual_n_bins[jj] = len(bin_edges[jj])
 
         self.bin_edges_ = bin_edges
-        self.n_bins_ = n_bins
+        self.n_bins_ = actual_n_bins
 
         if 'onehot' in self.encode:
             self._encoder = OneHotEncoder(
