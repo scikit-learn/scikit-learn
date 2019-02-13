@@ -298,7 +298,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if n_components is None:
         n_components = min(n, p)
-    if (n_components > min(n, p)):
+    if n_components > min(n, p):
         n_components = min(n, p)
         warnings.warn('n_components is too large: it will be set to %s' % n_components)
 
@@ -476,17 +476,9 @@ class FastICA(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(
-            self,
-            n_components=None,
-            algorithm='parallel',
-            whiten='unit-variance',
-            fun='logcosh',
-            fun_args=None,
-            max_iter=200,
-            tol=1e-4,
-            w_init=None,
-            random_state=None):
+    def __init__(self, n_components=None, algorithm='parallel', whiten=True,
+                 fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
+                 w_init=None, random_state=None):
         super().__init__()
         if max_iter < 1:
             raise ValueError("max_iter should be greater than 1, got "

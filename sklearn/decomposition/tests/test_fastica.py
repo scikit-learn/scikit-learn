@@ -220,21 +220,27 @@ def test_fit_transform():
     """
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    for whiten, n_components in [[True, 5], ['unit-variance', 5], [False, None]]:
-        n_components_ = (n_components if n_components is not None else
-                         X.shape[1])
+    vals = [[True, 5], ['unit-variance', 5], [False, None]]
+    for whiten, n_components in vals:
+        with pytest.warns(DeprecationWarning,
+                          match="whiten=True will behave like "
+                                "whiten='unit-variance'"):
+            n_components_ = (n_components if n_components is not None else
+                             X.shape[1])
 
-        ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
-        Xt = ica.fit_transform(X)
-        assert_equal(ica.components_.shape, (n_components_, 10))
-        assert_equal(Xt.shape, (100, n_components_))
+            ica = FastICA(n_components=n_components, whiten=whiten,
+                          random_state=0)
+            Xt = ica.fit_transform(X)
+            assert_equal(ica.components_.shape, (n_components_, 10))
+            assert_equal(Xt.shape, (100, n_components_))
 
-        ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
-        ica.fit(X)
-        assert_equal(ica.components_.shape, (n_components_, 10))
-        Xt2 = ica.transform(X)
+            ica = FastICA(n_components=n_components, whiten=whiten,
+                          random_state=0)
+            ica.fit(X)
+            assert_equal(ica.components_.shape, (n_components_, 10))
+            Xt2 = ica.transform(X)
 
-        assert_array_almost_equal(Xt, Xt2)
+            assert_array_almost_equal(Xt, Xt2)
 
 
 def test_inverse_transform():
@@ -250,22 +256,25 @@ def test_inverse_transform():
                 (False, n2): (n_features, n2)}
     for whiten in [True, 'unit-variance', False]:
         for n_components in [n1, n2]:
-            n_components_ = (n_components if n_components is not None else
-                             X.shape[1])
-            ica = FastICA(n_components=n_components, random_state=rng,
-                          whiten=whiten)
-            with warnings.catch_warnings(record=True):
-                # catch "n_components ignored" warning
-                Xt = ica.fit_transform(X)
-            whiten = True if whiten == 'unit-variance' else whiten
-            expected_shape = expected[(whiten, n_components_)]
-            assert_equal(ica.mixing_.shape, expected_shape)
-            X2 = ica.inverse_transform(Xt)
-            assert_equal(X.shape, X2.shape)
+            with pytest.warns(DeprecationWarning,
+                              match="whiten=True will behave like "
+                                    "whiten='unit-variance'"):
+                n_components_ = (n_components if n_components is not None else
+                                 X.shape[1])
+                ica = FastICA(n_components=n_components, random_state=rng,
+                              whiten=whiten)
+                with warnings.catch_warnings(record=True):
+                    # catch "n_components ignored" warning
+                    Xt = ica.fit_transform(X)
+                whiten = True if whiten == 'unit-variance' else whiten
+                expected_shape = expected[(whiten, n_components_)]
+                assert_equal(ica.mixing_.shape, expected_shape)
+                X2 = ica.inverse_transform(Xt)
+                assert_equal(X.shape, X2.shape)
 
-            # reversibility test in non-reduction case
-            if n_components == X.shape[1]:
-                assert_array_almost_equal(X, X2)
+                # reversibility test in non-reduction case
+                if n_components == X.shape[1]:
+                    assert_array_almost_equal(X, X2)
 
 
 def test_fastica_errors():
@@ -296,8 +305,9 @@ def test_fastica_whiten_true_raises_warning():
     n_components = X.shape[1]
     ica = FastICA(n_components=n_components, whiten=True, random_state=0)
     with pytest.warns(DeprecationWarning,
-                      match="whiten=True will behave like whiten='unit-variance'"):
-        Xt = ica.fit_transform(X)
+                      match="whiten=True will behave "
+                            "like whiten='unit-variance'"):
+        _ = ica.fit_transform(X)
 
 
 def test_fastica_whiten_unit_variance():
@@ -308,7 +318,8 @@ def test_fastica_whiten_unit_variance():
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
     n_components = X.shape[1]
-    ica = FastICA(n_components=n_components, whiten='unit-variance', random_state=0)
+    ica = FastICA(n_components=n_components, whiten='unit-variance',
+                  random_state=0)
     Xt = ica.fit_transform(X)
 
     assert_almost_equal(np.var(Xt), 1.0)
