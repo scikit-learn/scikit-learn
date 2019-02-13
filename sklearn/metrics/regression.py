@@ -347,8 +347,7 @@ def median_absolute_error(y_true, y_pred):
     0.5
 
     """
-    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred,
-                                                   'uniform_average')
+    y_type, y_true, y_pred, _ = _check_reg_targets(y_true, y_pred, None)
     if y_type == 'continuous-multioutput':
         raise ValueError("Multioutput not supported in median_absolute_error")
     return np.median(np.abs(y_pred - y_true))
