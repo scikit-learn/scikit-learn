@@ -1407,20 +1407,18 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     # Finally, we have all our sufficient statistics. Divide! #
 
     beta2 = beta ** 2
-    with np.errstate(divide='ignore', invalid='ignore'):
-        # Divide, and on zero-division, set scores to 0 and warn:
 
-        # Oddly, we may get an "invalid" rather than a "divide" error
-        # here.
-        precision = _prf_divide(tp_sum, pred_sum,
-                                'precision', 'predicted', average, warn_for)
-        recall = _prf_divide(tp_sum, true_sum,
-                             'recall', 'true', average, warn_for)
-        # Don't need to warn for F: either P or R warned, or tp == 0 where pos
-        # and true are nonzero, in which case, F is well-defined and zero
-        f_score = ((1 + beta2) * precision * recall /
-                   (beta2 * precision + recall))
-        f_score[tp_sum == 0] = 0.0
+    # Divide, and on zero-division, set scores to 0 and warn:
+
+    precision = _prf_divide(tp_sum, pred_sum,
+                            'precision', 'predicted', average, warn_for)
+    recall = _prf_divide(tp_sum, true_sum,
+                         'recall', 'true', average, warn_for)
+    # Don't need to warn for F: either P or R warned, or tp == 0 where pos
+    # and true are nonzero, in which case, F is well-defined and zero
+    denom = beta2 * precision + recall
+    denom[denom == 0.] = 1  # avoid division by 0
+    f_score = (1 + beta2) * precision * recall / denom
 
     # Average the results
 
