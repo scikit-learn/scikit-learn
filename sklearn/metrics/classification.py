@@ -769,7 +769,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     In the multiclass case:
 
     >>> jaccard_score(np.array([0, 1, 2, 3]),
-    ...                          np.array([0, 2, 2, 3]), average='macro')
+    ...               np.array([0, 2, 2, 3]), average='macro')
     0.625
     """
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
@@ -1195,13 +1195,10 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     """
     mask = denominator == 0.0
     denominator = denominator.copy()
-    denominator[mask] = 1
+    denominator[mask] = 1  # avoid infs/nans
     result = numerator / denominator
     if not np.any(mask):
         return result
-
-    # remove infs
-    result[mask] = 0.0
 
     # build appropriate warning
     # E.g. "Precision and F-score are ill-defined and being set to 0.0 in
