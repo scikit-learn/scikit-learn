@@ -450,6 +450,7 @@ def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     assert_equal(estimator_restored.attribute_pickled, 5)
     assert_equal(estimator_restored._attribute_not_pickled, None)
 
+
 # XXX: Remove in 0.23
 def test_regressormixin_score_multioutput():
     from sklearn.linear_model import LinearRegression

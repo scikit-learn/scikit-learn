@@ -13,7 +13,6 @@ import numpy as np
 from . import __version__
 
 
-
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
 
