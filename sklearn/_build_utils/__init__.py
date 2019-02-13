@@ -9,7 +9,8 @@ import os
 
 from distutils.version import LooseVersion
 
-from numpy.distutils.system_info import get_info
+import numpy as np
+
 
 DEFAULT_ROOT = 'sklearn'
 # on conda, this is the latest for python 3.5
@@ -30,7 +31,7 @@ def get_blas_info():
                     return True
         return False
 
-    blas_info = get_info('blas_opt', 0)
+    blas_info = np.distutils.system_info.get_info('blas_opt', 0)
     if (not blas_info) or atlas_not_found(blas_info):
         cblas_libs = ['cblas']
         blas_info.pop('libraries', None)
