@@ -647,8 +647,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         with parallel:
             all_candidate_params = []
             all_out = []
+            all_info = defaultdict(list)
 
-            def evaluate_candidates(candidate_params, X, y):
+            def evaluate_candidates(candidate_params, X, y, info=None):
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
 
@@ -679,13 +680,15 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
+                if info is not None:
+                    for key, value in info.items():
+                        all_info[key].extend(value)
 
                 nonlocal results
                 results = self._format_results(
-                    all_candidate_params, scorers, n_splits, all_out)
+                    all_candidate_params, scorers, n_splits, all_out, all_info)
 
-                return self._format_results(
-                    candidate_params, scorers, n_splits, out)
+                return results
 
             self._run_search(evaluate_candidates, X, y)
 
@@ -727,7 +730,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
         return self
 
-    def _format_results(self, candidate_params, scorers, n_splits, out):
+    def _format_results(self, candidate_params, scorers, n_splits, out, info):
         n_candidates = len(candidate_params)
 
         # if one choose to see train score, "out" will contain train score info
@@ -744,7 +747,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         if self.return_train_score:
             train_scores = _aggregate_score_dicts(train_score_dicts)
 
-        results = {}
+        results = dict(info)
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
