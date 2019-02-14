@@ -260,7 +260,7 @@ if np_version < (1, 11):
             size_q = 1 if np.isscalar(q) else len(q)
             return np.array([np.nan] * size_q)
 else:
-    from numpy import nanpercentile
+    from numpy import nanpercentile # noqa
 
 
 # Fix for behavior inconsistency on numpy.equal for object dtypes.
