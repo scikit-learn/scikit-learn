@@ -409,7 +409,6 @@ Samples generator
 
    ensemble.AdaBoostClassifier
    ensemble.AdaBoostRegressor
-   ensemble.AveragingRegressor
    ensemble.BaggingClassifier
    ensemble.BaggingRegressor
    ensemble.ExtraTreesClassifier
@@ -421,6 +420,7 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
    ensemble.VotingClassifier
+   ensemble.VotingRegressor
 
 .. autosummary::
    :toctree: generated/

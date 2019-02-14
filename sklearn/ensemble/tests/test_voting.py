@@ -1,4 +1,4 @@
-"""Testing for the VotingClassifier and AveragingRegressor"""
+"""Testing for the VotingClassifier and VotingRegressor"""
 
 import pytest
 import numpy as np
@@ -11,7 +11,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import VotingClassifier, AveragingRegressor
+from sklearn.ensemble import VotingClassifier, VotingRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
 from sklearn.model_selection import cross_val_score, train_test_split
@@ -80,7 +80,7 @@ def test_notfitted():
     eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
                                         ('lr2', LogisticRegression())],
                             voting='soft')
-    ereg = AveragingRegressor([('dr', DummyRegressor())])
+    ereg = VotingRegressor([('dr', DummyRegressor())])
     msg = ("This %s instance is not fitted yet. Call \'fit\'"
            " with appropriate arguments before using this method.")
     assert_raise_message(NotFittedError, msg % 'VotingClassifier',
@@ -89,9 +89,9 @@ def test_notfitted():
                          eclf.predict_proba, X)
     assert_raise_message(NotFittedError, msg % 'VotingClassifier',
                          eclf.transform, X)
-    assert_raise_message(NotFittedError, msg % 'AveragingRegressor',
+    assert_raise_message(NotFittedError, msg % 'VotingRegressor',
                          ereg.predict, X_r)
-    assert_raise_message(NotFittedError, msg % 'AveragingRegressor',
+    assert_raise_message(NotFittedError, msg % 'VotingRegressor',
                          ereg.transform, X_r)
 
 
@@ -144,8 +144,8 @@ def test_weights_regressor():
     reg1 = DummyRegressor(strategy='mean')
     reg2 = DummyRegressor(strategy='median')
     reg3 = DummyRegressor(strategy='quantile', quantile=.2)
-    ereg = AveragingRegressor([('mean', reg1), ('median', reg2),
-                               ('quantile', reg3)], weights=[1, 2, 10])
+    ereg = VotingRegressor([('mean', reg1), ('median', reg2),
+                            ('quantile', reg3)], weights=[1, 2, 10])
 
     X_r_train, X_r_test, y_r_train, y_r_test = \
         train_test_split(X_r, y_r, test_size=.25)
@@ -159,10 +159,10 @@ def test_weights_regressor():
                      weights=[1, 2, 10])
     assert_almost_equal(ereg_y, avg, decimal=2)
 
-    ereg_n = AveragingRegressor([('mean', reg1), ('median', reg2),
-                                ('quantile', reg3)], weights=None)
-    ereg_o = AveragingRegressor([('mean', reg1), ('median', reg2),
-                                 ('quantile', reg3)], weights=[1, 1, 1])
+    ereg_n = VotingRegressor([('mean', reg1), ('median', reg2),
+                              ('quantile', reg3)], weights=None)
+    ereg_o = VotingRegressor([('mean', reg1), ('median', reg2),
+                              ('quantile', reg3)], weights=[1, 1, 1])
     ereg_n_y = ereg_n.fit(X_r_train, y_r_train).predict(X_r_test)
     ereg_o_y = ereg_o.fit(X_r_train, y_r_train).predict(X_r_test)
     assert_almost_equal(ereg_n_y, ereg_o_y, decimal=2)

@@ -1,15 +1,15 @@
 """
-Soft Voting/Majority Rule classifier and Averaging regressor.
+Soft Voting/Majority Rule classifier and Voting regressor.
 
 This module contains:
  - A Soft Voting/Majority Rule classifier for classification estimators.
- - An averaging regressor for regression estimators.
+ - A Voting regressor for regression estimators.
 """
 
 # Authors: Sebastian Raschka <se.raschka@gmail.com>,
 #          Gilles Louppe <g.louppe@gmail.com>,
-#          Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
 #          Ramil Nugmanov <stsouko@live.ru>
+#          Mohamed Ali Jamaoui <m.ali.jamaoui@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -28,8 +28,8 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
 
 
-__all__ = ["AveragingRegressor",
-           "VotingClassifier"]
+__all__ = ["VotingClassifier",
+           "VotingRegressor"]
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
@@ -42,7 +42,7 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
 
 
 class BaseVoting(with_metaclass(ABCMeta, _BaseComposition, TransformerMixin)):
-    """Base class for voting and averaging.
+    """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
@@ -230,7 +230,7 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
 
     See also
     --------
-    AveragingRegressor: Prediction averaging regressor.
+    VotingRegressor: Prediction voting regressor.
     """
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
@@ -369,21 +369,21 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
             return self._predict(X)
 
 
-class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
-    """Prediction averaging regressor for unfitted estimators.
+class VotingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
+    """Prediction voting regressor for unfitted estimators.
 
     .. versionadded:: 0.21
 
-    An averaging regressor is an ensemble meta-estimator that fits base
+    An voting regressor is an ensemble meta-estimator that fits base
     regressors each on the whole dataset. It, then, averages the individual
     predictions to form a final prediction.
 
-    Read more in the :ref:`User Guide <averaging_regressor>`.
+    Read more in the :ref:`User Guide <voting_regressor>`.
 
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Invoking the ``fit`` method on the ``AveragingRegressor`` will fit
+        Invoking the ``fit`` method on the ``VotingRegressor`` will fit
         clones of those original estimators that will be stored in the class
         attribute ``self.estimators_``. An estimator can be set to `None`
         using ``set_params``.
@@ -412,12 +412,12 @@ class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.ensemble import RandomForestRegressor
-    >>> from sklearn.ensemble import AveragingRegressor
+    >>> from sklearn.ensemble import VotingRegressor
     >>> r1 = LinearRegression()
     >>> r2 = RandomForestRegressor(n_estimators=10, random_state=1)
     >>> X = np.array([[1, 1], [2, 4], [3, 9], [4, 16], [5, 25], [6, 36]])
     >>> y = np.array([2, 6, 12, 20, 30, 42])
-    >>> er = AveragingRegressor([('lr', r1), ('rf', r2)])
+    >>> er = VotingRegressor([('lr', r1), ('rf', r2)])
     >>> print(er.fit(X, y).predict(X))
     [ 3.3  5.7 11.8 19.7 28.  40.3]
 
