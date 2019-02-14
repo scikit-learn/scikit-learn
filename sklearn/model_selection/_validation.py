@@ -488,7 +488,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
 
-    # vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
     # Appears before fit_params indexing because the update to fit_params
     # is reassigned to fit_params and throws away test-based sample weights.
     if 'sample_weight' in fit_params and \
@@ -499,7 +498,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             test)
     else:
         test_sample_weight = None
-    # ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
 
     fit_params = {k: _index_param_value(X, v, train)
                   for k, v in fit_params.items()}
@@ -559,19 +557,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     else:
         fit_time = time.time() - start_time
         # _score will return dict if is_multimetric is True
-        # vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
         test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric, test_sample_weight)
-        # ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-        # test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
 
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            # vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
             train_scores = _score(estimator, X_train, y_train, scorer,
                                   is_multimetric, fit_params.get('sample_weight', None))
-            # ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-            # train_scores = _score(estimator, X_train, y_train, scorer,
-            #                       is_multimetric)
     if verbose > 2:
         if is_multimetric:
             for scorer_name in sorted(test_scores):
@@ -604,35 +595,16 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-# vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
 def _score(estimator, X_test, y_test, scorer, is_multimetric=False, sample_weight=None):
-# ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-# def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a single float if is_multimetric is False and a dict of floats,
     if is_multimetric is True
     """
     if is_multimetric:
-        # vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
         return _multimetric_score(estimator, X_test, y_test, scorer, sample_weight)
-        # ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-        # return _multimetric_score(estimator, X_test, y_test, scorer)
     else:
-        # vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
         score = _apply_scorer(estimator, X_test, y_test, scorer, sample_weight)
-        # ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-
-        # if y_test is None:
-        #     # vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
-        #     score = scorer(estimator, X_test, sample_weight=sample_weight)
-        #     # ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-        #     # score = scorer(estimator, X_test)
-        # else:
-        #     # vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
-        #     score = scorer(estimator, X_test, y_test, sample_weight=sample_weight)
-        #     # ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-        #     # score = scorer(estimator, X_test, y_test)
 
         if hasattr(score, 'item'):
             try:
@@ -649,28 +621,12 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False, sample_weigh
     return score
 
 
-# vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
 def _multimetric_score(estimator, X_test, y_test, scorers, sample_weight):
-# ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-# def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""
     scores = {}
 
     for name, scorer in scorers.items():
-        # vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
         score = _apply_scorer(estimator, X_test, y_test, scorer, sample_weight)
-        # ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-
-        # if y_test is None:
-        #     # vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
-        #     score = scorer(estimator, X_test, sample_weight=sample_weight)
-        #     # ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-        #     # score = scorer(estimator, X_test)
-        # else:
-        #     # vvvvvvvvvvvvvvvvvvvv   RMD   vvvvvvvvvvvvvvvvvvvv
-        #     score = scorer(estimator, X_test, y_test, sample_weight=sample_weight)
-        #     # ^^^^^^^^^^^^^^^^^^^^   RMD   ^^^^^^^^^^^^^^^^^^^^
-        #     # score = scorer(estimator, X_test, y_test)
 
         if hasattr(score, 'item'):
             try:
