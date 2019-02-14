@@ -2317,7 +2317,7 @@ def test_standard_scaler_with_std():
 
 
 @pytest.mark.parametrize('with_std', [-10, -1, 3, 10])
-def test_scale_with_std():
+def test_scale_with_std(with_std):
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
     X_scaled = scale(X, copy=True, with_mean=True, with_std=2)
