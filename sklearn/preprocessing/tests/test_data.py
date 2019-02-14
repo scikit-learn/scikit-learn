@@ -2655,6 +2655,7 @@ def test_standard_scaler_with_std():
     assert np.isclose(X_scaled.std(), 1.0)
 
 
+@pytest.mark.parametrize('with_std', [-10, -1, 3, 10])
 def test_scale_with_std():
     rng = np.random.RandomState(0)
     X = rng.randint(0, 2, (100, 2))
