@@ -732,7 +732,7 @@ class OneHotEncoder(_BaseEncoder):
     def inverse_transform(self, X):
         """Convert the back data to the original representation.
 
-        In case unknown categories are encountered (all zero's in the
+        In case unknown categories are encountered (all zeros in the
         one-hot encoding), ``None`` is used to represent this category.
 
         Parameters
