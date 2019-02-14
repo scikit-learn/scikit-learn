@@ -9,6 +9,7 @@ import sys
 import warnings
 
 import numpy as np
+import pytest
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 
@@ -661,3 +662,15 @@ def test_n_iter_no_change_inf():
 
     # validate _update_no_improvement_count() was always triggered
     assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)
+
+
+def test_early_stopping_stratified():
+    # Make sure data splitting for early stopping is stratified
+    X = [[1, 2], [2, 3], [3, 4], [4, 5]]
+    y = [0, 0, 0, 1]
+
+    gbc = MLPClassifier(early_stopping=True)
+    with pytest.raises(
+            ValueError,
+            match='The least populated class in y has only 1 member'):
+        gbc.fit(X, y)

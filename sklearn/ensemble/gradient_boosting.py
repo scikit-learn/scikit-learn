@@ -26,6 +26,7 @@ from abc import abstractmethod
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
+from ..base import is_classifier
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -1406,10 +1407,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         y = self._validate_y(y, sample_weight)
 
         if self.n_iter_no_change is not None:
+            stratify = y if is_classifier(self) else None
             X, X_val, y, y_val, sample_weight, sample_weight_val = (
                 train_test_split(X, y, sample_weight,
                                  random_state=self.random_state,
-                                 test_size=self.validation_fraction))
+                                 test_size=self.validation_fraction,
+                                 stratify=stratify))
         else:
             X_val = y_val = sample_weight_val = None
 

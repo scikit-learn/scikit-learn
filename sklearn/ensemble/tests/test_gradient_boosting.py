@@ -1270,8 +1270,8 @@ def test_gradient_boosting_early_stopping():
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         random_state=42)
     # Check if early_stopping works as expected
-    for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 24), (gbr, 1e-1, 13),
-                                              (gbc, 1e-3, 36),
+    for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 28), (gbr, 1e-1, 13),
+                                              (gbc, 1e-3, 70),
                                               (gbr, 1e-3, 28)):
         est.set_params(tol=tol)
         est.fit(X_train, y_train)
@@ -1324,3 +1324,15 @@ def test_gradient_boosting_validation_fraction():
     gbr3.fit(X_train, y_train)
     assert gbr.n_estimators_ < gbr3.n_estimators_
     assert gbc.n_estimators_ < gbc3.n_estimators_
+
+
+def test_early_stopping_stratified():
+    # Make sure data splitting for early stopping is stratified
+    X = [[1, 2], [2, 3], [3, 4], [4, 5]]
+    y = [0, 0, 0, 1]
+
+    gbc = GradientBoostingClassifier(n_iter_no_change=5)
+    with pytest.raises(
+            ValueError,
+            match='The least populated class in y has only 1 member'):
+    gbc.fit(X, y)
