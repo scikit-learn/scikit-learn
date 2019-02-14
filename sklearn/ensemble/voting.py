@@ -282,8 +282,7 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            The input samples.
 
         Returns
         ----------
@@ -327,8 +326,7 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            The input samples.
 
         Returns
         ----------

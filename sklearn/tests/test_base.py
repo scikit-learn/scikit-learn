@@ -65,7 +65,7 @@ class Buggy(BaseEstimator):
         self.a = 1
 
 
-class NoEstimator(object):
+class NoEstimator:
     def __init__(self):
         pass
 
@@ -381,7 +381,7 @@ def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
         TreeNoVersion.__module__ = module_backup
 
 
-class DontPickleAttributeMixin(object):
+class DontPickleAttributeMixin:
     def __getstate__(self):
         data = self.__dict__.copy()
         data["_attribute_not_pickled"] = None

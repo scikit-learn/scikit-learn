@@ -38,7 +38,6 @@ is held out with the validation stopping criterion.
 # Authors: Tom Dupre la Tour
 #
 # License: BSD 3 clause
-from __future__ import print_function
 import time
 import sys
 
@@ -90,7 +89,7 @@ def fit_and_score(estimator, max_iter, X_train, X_test, y_train, y_test):
 # Define the estimators to compare
 estimator_dict = {
     'No stopping criterion':
-    linear_model.SGDClassifier(tol=None, n_iter_no_change=3),
+    linear_model.SGDClassifier(tol=1e-3, n_iter_no_change=3),
     'Training loss':
     linear_model.SGDClassifier(early_stopping=False, n_iter_no_change=3,
                                tol=0.1),

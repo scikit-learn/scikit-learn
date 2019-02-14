@@ -9,10 +9,6 @@ functions to split the data based on a preset strategy.
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-
-from __future__ import print_function
-from __future__ import division
-
 from collections.abc import Iterable
 import warnings
 from itertools import chain, combinations
@@ -1500,8 +1496,7 @@ class GroupShuffleSplit(ShuffleSplit):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
-        for group_train, group_test in super(
-                GroupShuffleSplit, self)._iter_indices(X=classes):
+        for group_train, group_test in super()._iter_indices(X=classes):
             # these are the indices of classes in the partition
             # invert them into data indices
 
@@ -2223,10 +2218,6 @@ def train_test_split(*arrays, **options):
 
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
-
-
-# Tell nose that train_test_split is not a test
-train_test_split.__test__ = False
 
 
 def _build_repr(self):

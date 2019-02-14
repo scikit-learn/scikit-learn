@@ -7,7 +7,7 @@
 import numpy as np
 
 
-class BaseOptimizer(object):
+class BaseOptimizer:
     """Base (Stochastic) gradient descent optimizer
 
     Parameters

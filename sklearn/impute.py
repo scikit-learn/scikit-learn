@@ -408,7 +408,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 class MissingIndicator(BaseEstimator, TransformerMixin):
     """Binary indicators for missing values.
 
-    Note that this component typically should not not be used in a vanilla
+    Note that this component typically should not be used in a vanilla
     :class:`Pipeline` consisting of transformers and a classifier, but rather
     could be added using a :class:`FeatureUnion` or :class:`ColumnTransformer`.
 
@@ -533,6 +533,23 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         return imputer_mask, features_with_missing
 
+    def _validate_input(self, X):
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
+        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=None,
+                        force_all_finite=force_all_finite)
+        _check_inputs_dtype(X, self.missing_values)
+        if X.dtype.kind not in ("i", "u", "f", "O"):
+            raise ValueError("MissingIndicator does not support data with "
+                             "dtype {0}. Please provide either a numeric array"
+                             " (with a floating point or integer dtype) or "
+                             "categorical data represented either as an array "
+                             "with integer dtype or an array of string values "
+                             "with an object dtype.".format(X.dtype))
+        return X
+
     def fit(self, X, y=None):
         """Fit the transformer on X.
 
@@ -547,14 +564,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
-        else:
-            force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite=force_all_finite)
-        _check_inputs_dtype(X, self.missing_values)
-
+        X = self._validate_input(X)
         self._n_features = X.shape[1]
 
         if self.features not in ('missing-only', 'all'):
@@ -588,14 +598,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         """
         check_is_fitted(self, "features_")
-
-        if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
-        else:
-            force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite=force_all_finite)
-        _check_inputs_dtype(X, self.missing_values)
+        X = self._validate_input(X)
 
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "
