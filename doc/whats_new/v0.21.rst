@@ -76,6 +76,16 @@ Support for Python 3.4 and below has been officially dropped.
   the default value is used.
   :issue:`12988` by :user:`Zijie (ZJ) Poh <zjpoh>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
+  `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
+  `n_components < n_features` instead of
+  `n_components <= min(n_samples, n_features)`. 
+  :issue:`11650` by :user:`Hossein Pourbozorg <hossein-pourbozorg>` and
+  :user:`Zijie (ZJ) Poh <zjpoh>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -192,7 +202,7 @@ Support for Python 3.4 and below has been officially dropped.
 ..............................
 
 - |Feature| Classes :class:`~model_selection.GridSearchCV` and
-  :class:`~model_selection.RandomSearchCV` now allow for refit=callable
+  :class:`~model_selection.RandomizedSearchCV` now allow for refit=callable
   to add flexibility in identifying the best
   estimator. An example for this interface has been added.
   :issue:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
