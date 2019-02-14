@@ -81,9 +81,9 @@ def test_fastica_simple(add_noise=False):
 
     algos = ['parallel', 'deflation']
     nls = ['logcosh', 'exp', 'cube', g_test]
-    whitening = [True, 'unit-variance', False]
+    whitening = ['unit-variance', False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
-        if whiten or whiten == 'unit-variance':
+        if whiten == 'unit-variance':
             k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo)
             assert_raises(ValueError, fastica, m.T, fun=np.tanh,
                           algorithm=algo)
@@ -94,7 +94,7 @@ def test_fastica_simple(add_noise=False):
                           algorithm=algo)
         s_ = s_.T
         # Check that the mixing model described in the docstring holds:
-        if whiten or whiten == 'unit-variance':
+        if whiten == 'unit-variance':
             assert_almost_equal(s_, np.dot(np.dot(mixing_, k_), m))
 
         center_and_norm(s_)
@@ -220,7 +220,7 @@ def test_fit_transform():
     """
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    for whiten, n_components in [[True, 5], [False, None]]:
+    for whiten, n_components in [['unit-variance', 5], [False, None]]:
         n_components_ = (n_components if n_components is not None else
                          X.shape[1])
 
@@ -246,11 +246,11 @@ def test_inverse_transform():
     n1, n2 = 5, 10
     rng = np.random.RandomState(0)
     X = rng.random_sample((n_samples, n_features))
-    expected = {(True, n1): (n_features, n1),
-                (True, n2): (n_features, n2),
+    expected = {('unit-variance', n1): (n_features, n1),
+                ('unit-variance', n2): (n_features, n2),
                 (False, n1): (n_features, n2),
                 (False, n2): (n_features, n2)}
-    for whiten in [True, False]:
+    for whiten in ['unit-variance', False]:
         for n_components in [n1, n2]:
             n_components_ = (n_components if n_components is not None else
                              X.shape[1])
@@ -296,7 +296,7 @@ def test_fastica_whiten_true_raises_warning():
     X = rng.random_sample((100, 10))
     n_components = X.shape[1]
     ica = FastICA(n_components=n_components, whiten=True, random_state=0)
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="whiten=True will behave "
                             "like whiten='unit-variance'"):
         _ = ica.fit_transform(X)

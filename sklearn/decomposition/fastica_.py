@@ -476,9 +476,9 @@ class FastICA(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_components=None, algorithm='parallel', whiten=True,
-                 fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
-                 w_init=None, random_state=None):
+    def __init__(self, n_components=None, algorithm='parallel',
+                 whiten='unit-variance', fun='logcosh', fun_args=None,
+                 max_iter=200, tol=1e-4, w_init=None, random_state=None):
         super().__init__()
         if max_iter < 1:
             raise ValueError("max_iter should be greater than 1, got "
@@ -517,7 +517,7 @@ class FastICA(BaseEstimator, TransformerMixin):
             warnings.warn(
                 "From version 0.23, whiten='unit-variance' by default, "
                 "and whiten=True will behave like whiten='unit-variance'.",
-                category=DeprecationWarning)
+                category=FutureWarning)
         elif whiten == 'unit-variance':
             whiten = True
 
