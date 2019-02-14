@@ -50,6 +50,6 @@ cdef void _update_raw_predictions_helper(
         int leaf_idx
         int n_leaves = starts.shape[0]
 
-    for leaf_idx in prange(n_leaves):
+    for leaf_idx in prange(n_leaves, nogil=True):
         for position in range(starts[leaf_idx], stops[leaf_idx]):
             raw_predictions[partition[position]] += values[leaf_idx]

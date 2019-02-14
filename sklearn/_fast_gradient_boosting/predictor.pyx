@@ -123,7 +123,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 cdef void _predict_from_numeric_data(
         node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
-        Y_DTYPE_C [:] out) nogil:
+        Y_DTYPE_C [:] out):
 
     cdef:
         int i
@@ -154,10 +154,10 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 cdef void _predict_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
-        Y_DTYPE_C [:] out) nogil:
+        Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
-    for i in prange(binned_data.shape[0], schedule='static'):
+    for i in prange(binned_data.shape[0], schedule='static', nogil=True):
         out[i] = _predict_one_from_binned_data(nodes, binned_data, i)

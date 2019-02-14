@@ -153,7 +153,7 @@ cdef void _update_gradients_least_squares(
         int i
 
     n_samples = raw_predictions.shape[0]
-    for i in prange(n_samples, schedule='static'):
+    for i in prange(n_samples, schedule='static', nogil=True):
         # Note: a more correct exp is 2 * (raw_predictions - y_true) but
         # since we use 1 for the constant hessian value (and not 2) this
         # is strictly equivalent for the leaves values.
@@ -214,14 +214,14 @@ cdef void _update_gradients_hessians_binary_crossentropy(
         G_H_DTYPE_C [::1] gradients,
         G_H_DTYPE_C [::1] hessians,
         const Y_DTYPE_C [::1] y_true,
-        const Y_DTYPE_C [::1] raw_predictions) nogil:
+        const Y_DTYPE_C [::1] raw_predictions):
     cdef:
         int n_samples
         G_H_DTYPE_C gradient_abs
         int i
 
     n_samples = raw_predictions.shape[0]
-    for i in prange(n_samples, schedule='static'):
+    for i in prange(n_samples, schedule='static', nogil=True):
         gradients[i] = cexpit(raw_predictions[i]) - y_true[i]
         gradient_abs = fabs(gradients[i])
         hessians[i] = gradient_abs * (1. - gradient_abs)

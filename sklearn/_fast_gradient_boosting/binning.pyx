@@ -102,7 +102,7 @@ cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
         int right
         int middle
 
-    for i in prange(data.shape[0], schedule='static'):
+    for i in prange(data.shape[0], schedule='static', nogil=True):
         left, right = 0, binning_thresholds.shape[0]
         while left < right:
             middle = (right + left - 1) // 2
