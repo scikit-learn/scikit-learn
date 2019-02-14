@@ -647,9 +647,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         with parallel:
             all_candidate_params = []
             all_out = []
-            all_info = defaultdict(list)
+            all_more_results = defaultdict(list)
 
-            def evaluate_candidates(candidate_params, X, y, info=None):
+            def evaluate_candidates(candidate_params, X, y, more_results=None):
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
 
@@ -680,13 +680,14 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
-                if info is not None:
-                    for key, value in info.items():
-                        all_info[key].extend(value)
+                if more_results is not None:
+                    for key, value in more_results.items():
+                        all_more_results[key].extend(value)
 
                 nonlocal results
                 results = self._format_results(
-                    all_candidate_params, scorers, n_splits, all_out, all_info)
+                    all_candidate_params, scorers, n_splits, all_out,
+                    all_more_results)
 
                 return results
 
@@ -730,7 +731,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
         return self
 
-    def _format_results(self, candidate_params, scorers, n_splits, out, info):
+    def _format_results(self, candidate_params, scorers, n_splits, out,
+                        more_results={}):
         n_candidates = len(candidate_params)
 
         # if one choose to see train score, "out" will contain train score info
@@ -747,7 +749,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         if self.return_train_score:
             train_scores = _aggregate_score_dicts(train_score_dicts)
 
-        results = dict(info)
+        results = dict(more_results)
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
