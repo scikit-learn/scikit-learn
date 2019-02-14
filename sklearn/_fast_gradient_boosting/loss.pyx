@@ -147,7 +147,7 @@ class LeastSquares(BaseLoss):
 cdef void _update_gradients_least_squares(
         G_H_DTYPE_C [::1] gradients,
         const Y_DTYPE_C [::1] y_true,
-        const Y_DTYPE_C [::1] raw_predictions) nogil:
+        const Y_DTYPE_C [::1] raw_predictions):
     cdef:
         int n_samples
         int i

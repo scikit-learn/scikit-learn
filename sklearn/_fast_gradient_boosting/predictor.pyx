@@ -128,7 +128,7 @@ cdef void _predict_from_numeric_data(
     cdef:
         int i
 
-    for i in prange(numeric_data.shape[0], schedule='static'):
+    for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
         out[i] = _predict_one_from_numeric_data(nodes, numeric_data, i)
 
 

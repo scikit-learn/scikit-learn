@@ -43,7 +43,7 @@ cdef void _update_raw_predictions_helper(
         const unsigned int [::1] starts,
         const unsigned int [::1] stops,
         const unsigned int [::1] partition,
-        const Y_DTYPE_C [::1] values) nogil:
+        const Y_DTYPE_C [::1] values):
 
     cdef:
         unsigned int position

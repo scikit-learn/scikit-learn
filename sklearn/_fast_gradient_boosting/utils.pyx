@@ -78,8 +78,7 @@ def sum_parallel(G_H_DTYPE_C [:] array):
         Y_DTYPE_C out = 0.
         int i = 0
 
-    with nogil:
-        for i in prange(array.shape[0], schedule='static', nogil=True):
-            out += array[i]
+    for i in prange(array.shape[0], schedule='static', nogil=True):
+        out += array[i]
 
     return out
