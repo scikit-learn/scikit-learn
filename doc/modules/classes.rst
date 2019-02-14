@@ -1399,6 +1399,7 @@ Low-level methods
 
    tree.export_graphviz
    tree.plot_tree
+   tree.export_text
 
 
 .. _utils_ref:

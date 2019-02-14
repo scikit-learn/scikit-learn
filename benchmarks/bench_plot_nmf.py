@@ -202,7 +202,7 @@ class _PGNMF(NMF):
     def __init__(self, n_components=None, solver='pg', init=None,
                  tol=1e-4, max_iter=200, random_state=None,
                  alpha=0., l1_ratio=0., nls_max_iter=10):
-        super(_PGNMF, self).__init__(
+        super().__init__(
             n_components=n_components, init=init, solver=solver, tol=tol,
             max_iter=max_iter, random_state=random_state, alpha=alpha,
             l1_ratio=l1_ratio)

@@ -384,7 +384,7 @@ def set_checking_parameters(estimator):
         estimator.set_params(k=1)
 
 
-class NotAnArray(object):
+class NotAnArray:
     """An object that is convertible to an array
 
     Parameters
@@ -1991,8 +1991,7 @@ def check_no_attributes_set_in_init(name, estimator):
             " from parameters during init. Found attributes %s."
             % (name, sorted(invalid_attr)))
     # Ensure that each parameter is set in init
-    invalid_attr = (set(init_params) - set(vars(estimator))
-                    - set(["self"]))
+    invalid_attr = set(init_params) - set(vars(estimator)) - {"self"}
     assert not invalid_attr, (
             "Estimator %s should store all parameters"
             " as an attribute during init. Did not find "
