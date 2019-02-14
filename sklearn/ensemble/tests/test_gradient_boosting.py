@@ -1335,4 +1335,4 @@ def test_early_stopping_stratified():
     with pytest.raises(
             ValueError,
             match='The least populated class in y has only 1 member'):
-    gbc.fit(X, y)
+        gbc.fit(X, y)
