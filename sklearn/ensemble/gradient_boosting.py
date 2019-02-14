@@ -39,7 +39,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 from scipy.special import expit
 
-from time import time
+from timeit import default_timer as time
 from ..model_selection import train_test_split
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE

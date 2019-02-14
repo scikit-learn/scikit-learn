@@ -6,7 +6,7 @@ the gradients and hessians of the training data.
 """
 from heapq import heappush, heappop
 import numpy as np
-from time import time
+from timeit import default_timer as time
 
 from .splitting import Splitter
 from .predictor import TreePredictor, PREDICTOR_RECORD_DTYPE
