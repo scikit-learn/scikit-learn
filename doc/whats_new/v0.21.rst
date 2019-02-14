@@ -262,7 +262,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Redundant bins (i.e., bins whose width = 0) are removed with a warning
   in :class:`preprocessing.KBinsDiscretizer`.
-  :issue:`13164` by :user:`Hanmin Qin <qinhanmin2014>`.
+  :issue:`13165` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 - |Fix| Fixed the calculation overflow when using a float16 dtype with
   :class:`preprocessing.StandardScaler`. :issue:`13007` by
