@@ -2327,8 +2327,9 @@ def test_scale_with_std(with_std):
     assert np.isclose(X_scaled.mean(), 0.0)
     assert np.isclose(X_scaled.std(), 1.0)
     # Test for invalid cases
-    with pytest.raises(ValueError):
-        scale(X, copy=True, with_mean=True, with_std=with_std)
+    with pytest.raises(ValueError) as excinfo:
+        scale(X, with_std=with_std)
+    assert excinfo.type is ValueError
 
 
 def test_power_transformer_lambda_one():
