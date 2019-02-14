@@ -1,7 +1,7 @@
 """
-===================================================
-Plot individual and averaged regression predictions
-===================================================
+=================================================
+Plot individual and voting regression predictions
+=================================================
 
 Plot individual and averaged regression predictions for Boston dataset.
 
