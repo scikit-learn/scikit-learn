@@ -111,7 +111,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Early stopping is now checked on a stratified split for
   :class:`ensemble.GradientBoostingClassifier`.
-  :issue:`TODO` by :user:`Nicolas Hug<NicolasHug>`.
+  :issue:`13164` by :user:`Nicolas Hug<NicolasHug>`.
 
 - |Fix| Fixed a bug in :mod:`ensemble` where the ``predict`` method would
   error for multiclass multioutput forests models if any targets were strings.
@@ -243,7 +243,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Early stopping is now checked on a stratified split for
   :class:`neural_network.MLPClassifier`.
-  :issue:`TODO` by :user:`Nicolas Hug<NicolasHug>`.
+  :issue:`13164` by :user:`Nicolas Hug<NicolasHug>`.
 
 :mod:`sklearn.pipeline`
 .......................
