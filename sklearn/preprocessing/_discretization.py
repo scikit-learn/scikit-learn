@@ -182,7 +182,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 centers.sort()
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
                 bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
-            
+
             # Remove redundant bins (i.e., bins whose width = 0)
             if self.strategy in ('quantile', 'kmeans'):
                 bin_edges[jj] = np.unique(bin_edges[jj])

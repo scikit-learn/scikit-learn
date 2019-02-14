@@ -217,9 +217,9 @@ def test_nonuniform_strategies(
      ('kmeans', [[-1.375, 2.125, -3.375, -0.5625],
                  [-1.375, 2.125, -3.375, -0.5625],
                  [-0.125, 3.375, -2.125, 0.5625],
-                 [0.75, 4.25, -1.25, 1.625 ]]),
+                 [0.75, 4.25, -1.25, 1.625]]),
      ('quantile', [[-1.5, 2., -3.5, -0.75], [-0.5, 3., -2.5, 0.],
-                  [0.5, 4., -1.5, 1.25], [0.5, 4., -1.5, 1.25]])])
+                   [0.5, 4., -1.5, 1.25], [0.5, 4., -1.5, 1.25]])])
 @pytest.mark.parametrize('encode', ['ordinal', 'onehot', 'onehot-dense'])
 def test_inverse_transform(strategy, encode, expected_inv):
     kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode=encode)
