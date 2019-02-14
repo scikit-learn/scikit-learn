@@ -1603,6 +1603,7 @@ def test_sample_weight():
     # Step 1: Check that the classifier learned the sample weighted class
     #         prior probability.  Check predict_proba versus the known
     #         class prior: exp_train_pr.
+    #
     est_clone = clone(estimator)
     est_clone.set_params(random_state=random_state)
     est_clone.fit(X[tuple(train), :], y[train], sample_weight[train])
@@ -1611,7 +1612,7 @@ def test_sample_weight():
 
     # Step 2: Check that the accuracy computation in _fit_and_score
     #         respects sample_weight.
-
+    #
     metric_name = 'accuracy'
     scorer = {metric_name: make_scorer(accuracy_score)}
 
