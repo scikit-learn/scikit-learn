@@ -463,8 +463,7 @@ class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
-            The training input samples. Sparse matrices are accepted only if
-            they are supported by the base estimator.
+            The input samples.
 
         Returns
         -------
@@ -481,8 +480,7 @@ class AveragingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            The input samples.
 
         Returns
         -------
