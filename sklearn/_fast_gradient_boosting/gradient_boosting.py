@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from time import time
+from timeit import default_timer as time
 from sklearn.base import BaseEstimator, RegressorMixin, ClassifierMixin
 from sklearn.utils import check_X_y, check_random_state, check_array
 from sklearn.utils.validation import check_is_fitted
