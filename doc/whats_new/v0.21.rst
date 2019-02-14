@@ -202,7 +202,7 @@ Support for Python 3.4 and below has been officially dropped.
 ..............................
 
 - |Feature| Classes :class:`~model_selection.GridSearchCV` and
-  :class:`~model_selection.RandomSearchCV` now allow for refit=callable
+  :class:`~model_selection.RandomizedSearchCV` now allow for refit=callable
   to add flexibility in identifying the best
   estimator. An example for this interface has been added.
   :issue:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
