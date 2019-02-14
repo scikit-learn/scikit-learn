@@ -167,19 +167,19 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         # n_trees_per_iterations is n_classes in multiclass classification,
         # else 1.
         n_samples = X_binned_train.shape[0]
-        self.baseline_prediction_ = self.loss_.get_baseline_prediction(
-            y_train, self.n_trees_per_iteration_)
+        self._baseline_prediction = self.loss_.get_baseline_prediction(
+            y_train, self._n_trees_per_iteration)
         raw_predictions = np.zeros(
-            shape=(self.n_trees_per_iteration_, n_samples),
-            dtype=self.baseline_prediction_.dtype
+            shape=(self._n_trees_per_iteration, n_samples),
+            dtype=self._baseline_prediction.dtype
         )
-        raw_predictions += self.baseline_prediction_
+        raw_predictions += self._baseline_prediction
 
         # initialize gradients and hessians (empty arrays).
         # shape = (n_trees_per_iteration, n_samples).
         gradients, hessians = self.loss_.init_gradients_and_hessians(
             n_samples=n_samples,
-            prediction_dim=self.n_trees_per_iteration_
+            prediction_dim=self._n_trees_per_iteration
         )
 
         # estimators_ is a matrix (list of lists) of TreePredictor objects
@@ -217,7 +217,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             estimators.append([])
 
             # Build `n_trees_per_iteration` trees.
-            for k in range(self.n_trees_per_iteration_):
+            for k in range(self._n_trees_per_iteration):
 
                 grower = TreeGrower(
                     X_binned_train, gradients[k, :], hessians[k, :],
@@ -389,10 +389,10 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         is_binned = self._in_fit and X.dtype == X_BINNED_DTYPE
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
-            shape=(self.n_trees_per_iteration_, n_samples),
-            dtype=self.baseline_prediction_.dtype
+            shape=(self._n_trees_per_iteration, n_samples),
+            dtype=self._baseline_prediction.dtype
         )
-        raw_predictions += self.baseline_prediction_
+        raw_predictions += self._baseline_prediction
         for predictors_of_ith_iteration in self.estimators_:
             for k, estimator in enumerate(predictors_of_ith_iteration):
                 predict = (estimator.predict_binned if is_binned
@@ -548,7 +548,7 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
 
     def _encode_y(self, y):
         # Just convert y to the expected dtype
-        self.n_trees_per_iteration_ = 1
+        self._n_trees_per_iteration = 1
         y = y.astype(Y_DTYPE, copy=False)
         return y
 
@@ -734,7 +734,7 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
 
     def _encode_y(self, y):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
-        # and n_trees_per_iteration_
+        # and _n_trees_per_iteration
         check_classification_targets(y)
 
         label_encoder = LabelEncoder()
@@ -743,13 +743,13 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
         n_classes = self.classes_.shape[0]
         # only 1 tree for binary classification. For multiclass classification,
         # we build 1 tree per class.
-        self.n_trees_per_iteration_ = 1 if n_classes <= 2 else n_classes
+        self._n_trees_per_iteration = 1 if n_classes <= 2 else n_classes
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
     def _get_loss(self):
         if self.loss == 'auto':
-            if self.n_trees_per_iteration_ == 1:
+            if self._n_trees_per_iteration == 1:
                 return _LOSSES['binary_crossentropy']()
             else:
                 return _LOSSES['categorical_crossentropy']()
