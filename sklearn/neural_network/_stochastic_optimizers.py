@@ -7,7 +7,7 @@
 import numpy as np
 
 
-class BaseOptimizer(object):
+class BaseOptimizer:
     """Base (Stochastic) gradient descent optimizer
 
     Parameters
@@ -117,7 +117,7 @@ class SGDOptimizer(BaseOptimizer):
 
     def __init__(self, params, learning_rate_init=0.1, lr_schedule='constant',
                  momentum=0.9, nesterov=True, power_t=0.5):
-        super(SGDOptimizer, self).__init__(params, learning_rate_init)
+        super().__init__(params, learning_rate_init)
 
         self.lr_schedule = lr_schedule
         self.momentum = momentum
@@ -140,21 +140,21 @@ class SGDOptimizer(BaseOptimizer):
                                   (time_step + 1) ** self.power_t)
 
     def trigger_stopping(self, msg, verbose):
-        if self.lr_schedule == 'adaptive':
-            if self.learning_rate > 1e-6:
-                self.learning_rate /= 5.
-                if verbose:
-                    print(msg + " Setting learning rate to %f" %
-                          self.learning_rate)
-                return False
-            else:
-                if verbose:
-                    print(msg + " Learning rate too small. Stopping.")
-                return True
-        else:
+        if self.lr_schedule != 'adaptive':
             if verbose:
                 print(msg + " Stopping.")
             return True
+
+        if self.learning_rate <= 1e-6:
+            if verbose:
+                print(msg + " Learning rate too small. Stopping.")
+            return True
+
+        self.learning_rate /= 5.
+        if verbose:
+            print(msg + " Setting learning rate to %f" %
+                  self.learning_rate)
+        return False
 
     def _get_updates(self, grads):
         """Get the values used to update params with given gradients
@@ -230,7 +230,7 @@ class AdamOptimizer(BaseOptimizer):
 
     def __init__(self, params, learning_rate_init=0.001, beta_1=0.9,
                  beta_2=0.999, epsilon=1e-8):
-        super(AdamOptimizer, self).__init__(params, learning_rate_init)
+        super().__init__(params, learning_rate_init)
 
         self.beta_1 = beta_1
         self.beta_2 = beta_2

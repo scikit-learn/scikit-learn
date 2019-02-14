@@ -6,9 +6,6 @@ Random projection benchmark
 Benchmarks for random projections.
 
 """
-from __future__ import division
-from __future__ import print_function
-
 import gc
 import sys
 import optparse
@@ -19,7 +16,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn import clone
-from sklearn.externals.six.moves import xrange
 from sklearn.random_projection import (SparseRandomProjection,
                                        GaussianRandomProjection,
                                        johnson_lindenstrauss_min_dim)
@@ -212,7 +208,7 @@ if __name__ == "__main__":
     for name in selected_transformers:
         print("Perform benchmarks for %s..." % name)
 
-        for iteration in xrange(opts.n_times):
+        for iteration in range(opts.n_times):
             print("\titer %s..." % iteration, end="")
             time_to_fit, time_to_transform = bench_scikit_transformer(X_dense,
               transformers[name])

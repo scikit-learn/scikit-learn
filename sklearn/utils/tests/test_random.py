@@ -1,4 +1,3 @@
-from __future__ import division
 
 import numpy as np
 import scipy.sparse as sp
@@ -9,8 +8,7 @@ from sklearn.utils.fixes import comb
 
 from sklearn.utils.testing import (
     assert_raises,
-    assert_equal,
-    assert_true)
+    assert_equal)
 
 
 ###############################################################################
@@ -67,7 +65,7 @@ def check_sample_int(sample_without_replacement):
         assert_equal(len(s), n_samples)
         unique = np.unique(s)
         assert_equal(np.size(unique), n_samples)
-        assert_true(np.all(unique < n_population))
+        assert np.all(unique < n_population)
 
     # test edge case n_population == n_samples == 0
     assert_equal(np.size(sample_without_replacement(0, 0)), 0)
@@ -110,7 +108,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
 
     got = random_choice_csc(n_samples, classes, class_probabilities,
                             random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
@@ -123,7 +121,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     got = random_choice_csc(n_samples=n_samples,
                             classes=classes,
                             random_state=random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
@@ -135,7 +133,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
 
     got = random_choice_csc(n_samples, classes, class_probabilities,
                             random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel(),
@@ -149,7 +147,7 @@ def test_random_choice_csc(n_samples=10000, random_state=24):
     got = random_choice_csc(n_samples=n_samples,
                             classes=classes,
                             random_state=random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel()) / n_samples

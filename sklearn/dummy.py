@@ -2,7 +2,6 @@
 #         Arnaud Joly <a.joly@ulg.ac.be>
 #         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
 # License: BSD 3 clause
-from __future__ import division
 
 import warnings
 import numpy as np
@@ -72,13 +71,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     n_outputs_ : int,
         Number of outputs.
 
-    outputs_2d_ : bool,
-        True if the output at fit is 2d, else false.
-
     sparse_output_ : bool,
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
-
     """
 
     def __init__(self, strategy="stratified", random_state=None,
@@ -105,9 +100,11 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         -------
         self : object
         """
-        if self.strategy not in ("most_frequent", "stratified", "uniform",
-                                 "constant", "prior"):
-            raise ValueError("Unknown strategy type.")
+        allowed_strategies = ("most_frequent", "stratified", "uniform",
+                              "constant", "prior")
+        if self.strategy not in allowed_strategies:
+            raise ValueError("Unknown strategy type: %s, expected one of %s."
+                             % (self.strategy, allowed_strategies))
 
         if self.strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
@@ -218,8 +215,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                              k in range(self.n_outputs_)], [n_samples, 1])
 
             elif self.strategy == "stratified":
-                y = np.vstack(classes_[k][proba[k].argmax(axis=1)] for
-                              k in range(self.n_outputs_)).T
+                y = np.vstack([classes_[k][proba[k].argmax(axis=1)] for
+                               k in range(self.n_outputs_)]).T
 
             elif self.strategy == "uniform":
                 ret = [classes_[k][rs.randint(n_classes_[k], size=n_samples)]
@@ -318,6 +315,37 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         else:
             return [np.log(p) for p in proba]
 
+    def score(self, X, y, sample_weight=None):
+        """Returns the mean accuracy on the given test data and labels.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
+
+        Parameters
+        ----------
+        X : {array-like, None}
+            Test samples with shape = (n_samples, n_features) or
+            None. Passing None as test samples gives the same result
+            as passing real test samples, since DummyClassifier
+            operates independently of the sampled observations.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
+
+        """
+        if X is None:
+            X = np.zeros(shape=(len(y), 1))
+        return super().score(X, y, sample_weight)
+
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
     """
@@ -358,9 +386,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
     n_outputs_ : int,
         Number of outputs.
-
-    outputs_2d_ : bool,
-        True if the output at fit is 2d, else false.
     """
 
     def __init__(self, strategy="mean", constant=None, quantile=None):
@@ -386,10 +411,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         -------
         self : object
         """
-        if self.strategy not in ("mean", "median", "quantile", "constant"):
-            raise ValueError("Unknown strategy type: %s, expected "
-                             "'mean', 'median', 'quantile' or 'constant'"
-                             % self.strategy)
+        allowed_strategies = ("mean", "median", "quantile", "constant")
+        if self.strategy not in allowed_strategies:
+            raise ValueError("Unknown strategy type: %s, expected one of %s."
+                             % (self.strategy, allowed_strategies))
 
         y = check_array(y, ensure_2d=False)
         if len(y) == 0:
@@ -469,7 +494,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "constant_")
         n_samples = _num_samples(X)
 
-        y = np.ones((n_samples, self.n_outputs_)) * self.constant_
+        y = np.full((n_samples, self.n_outputs_), self.constant_,
+                    dtype=np.array(self.constant_).dtype)
         y_std = np.zeros((n_samples, self.n_outputs_))
 
         if self.n_outputs_ == 1 and not self.output_2d_:
@@ -477,3 +503,41 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             y_std = np.ravel(y_std)
 
         return (y, y_std) if return_std else y
+
+    def score(self, X, y, sample_weight=None):
+        """Returns the coefficient of determination R^2 of the prediction.
+
+        The coefficient R^2 is defined as (1 - u/v), where u is the residual
+        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
+        sum of squares ((y_true - y_true.mean()) ** 2).sum().
+        The best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always
+        predicts the expected value of y, disregarding the input features,
+        would get a R^2 score of 0.0.
+
+        Parameters
+        ----------
+        X : {array-like, None}
+            Test samples with shape = (n_samples, n_features) or None.
+            For some estimators this may be a
+            precomputed kernel matrix instead, shape = (n_samples,
+            n_samples_fitted], where n_samples_fitted is the number of
+            samples used in the fitting for the estimator.
+            Passing None as test samples gives the same result
+            as passing real test samples, since DummyRegressor
+            operates independently of the sampled observations.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True values for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        score : float
+            R^2 of self.predict(X) wrt. y.
+        """
+        if X is None:
+            X = np.zeros(shape=(len(y), 1))
+        return super().score(X, y, sample_weight)

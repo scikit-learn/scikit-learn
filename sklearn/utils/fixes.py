@@ -10,17 +10,12 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
-import os
-import errno
+from distutils.version import LooseVersion
 
 import numpy as np
 import scipy.sparse as sp
 import scipy
-
-try:
-    from inspect import signature
-except ImportError:
-    from ..externals.funcsigs import signature
+from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 
 
 def _parse_version(version_string):
@@ -34,47 +29,8 @@ def _parse_version(version_string):
     return tuple(version)
 
 
-euler_gamma = getattr(np, 'euler_gamma',
-                      0.577215664901532860606512090082402431)
-
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
-
-
-# Remove when minimum required NumPy >= 1.10
-try:
-    if (not np.allclose(np.divide(.4, 1, casting="unsafe"),
-                        np.divide(.4, 1, casting="unsafe", dtype=np.float64))
-            or not np.allclose(np.divide(.4, 1), .4)):
-        raise TypeError('Divide not working with dtype: '
-                        'https://github.com/numpy/numpy/issues/3484')
-    divide = np.divide
-
-except TypeError:
-    # Compat for old versions of np.divide that do not provide support for
-    # the dtype args
-    def divide(x1, x2, out=None, dtype=None):
-        out_orig = out
-        if out is None:
-            out = np.asarray(x1, dtype=dtype)
-            if out is x1:
-                out = x1.copy()
-        else:
-            if out is not x1:
-                out[:] = x1
-        if dtype is not None and out.dtype != dtype:
-            out = out.astype(dtype)
-        out /= x2
-        if out_orig is None and np.isscalar(x1):
-            out = np.asscalar(out)
-        return out
-
-
-if sp_version < (0, 15):
-    # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
-    from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
-else:
-    from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 
 
 try:  # SciPy >= 0.19
@@ -186,30 +142,17 @@ else:
 
 
 def parallel_helper(obj, methodname, *args, **kwargs):
-    """Workaround for Python 2 limitations of pickling instance methods"""
+    """Workaround for Python 2 limitations of pickling instance methods
+
+    Parameters
+    ----------
+    obj
+    methodname
+    *args
+    **kwargs
+
+    """
     return getattr(obj, methodname)(*args, **kwargs)
-
-
-if 'exist_ok' in signature(os.makedirs).parameters:
-    makedirs = os.makedirs
-else:
-    def makedirs(name, mode=0o777, exist_ok=False):
-        """makedirs(name [, mode=0o777][, exist_ok=False])
-
-        Super-mkdir; create a leaf directory and all intermediate ones.  Works
-        like mkdir, except that any intermediate path segment (not just the
-        rightmost) will be created if it does not exist. If the target
-        directory already exists, raise an OSError if exist_ok is False.
-        Otherwise no exception is raised.  This is recursive.
-
-        """
-
-        try:
-            os.makedirs(name, mode=mode)
-        except OSError as e:
-            if (not exist_ok or e.errno != errno.EEXIST
-                    or not os.path.isdir(name)):
-                raise
 
 
 if np_version < (1, 12):
@@ -317,4 +260,64 @@ if np_version < (1, 11):
             size_q = 1 if np.isscalar(q) else len(q)
             return np.array([np.nan] * size_q)
 else:
-    from numpy import nanpercentile  # noqa
+    from numpy import nanpercentile
+
+
+# Fix for behavior inconsistency on numpy.equal for object dtypes.
+# For numpy versions < 1.13, numpy.equal tests element-wise identity of objects
+# instead of equality. This fix returns the mask of NaNs in an array of
+# numerical or object values for all numpy versions.
+if np_version < (1, 13):
+    def _object_dtype_isnan(X):
+        return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)
+else:
+    def _object_dtype_isnan(X):
+        return X != X
+
+
+def _joblib_parallel_args(**kwargs):
+    """Set joblib.Parallel arguments in a compatible way for 0.11 and 0.12+
+
+    For joblib 0.11 this maps both ``prefer`` and ``require`` parameters to
+    a specific ``backend``.
+
+    Parameters
+    ----------
+
+    prefer : str in {'processes', 'threads'} or None
+        Soft hint to choose the default backend if no specific backend
+        was selected with the parallel_backend context manager.
+
+    require : 'sharedmem' or None
+        Hard condstraint to select the backend. If set to 'sharedmem',
+        the selected backend will be single-host and thread-based even
+        if the user asked for a non-thread based backend with
+        parallel_backend.
+
+    See joblib.Parallel documentation for more details
+    """
+    from . import _joblib
+
+    if _joblib.__version__ >= LooseVersion('0.12'):
+        return kwargs
+
+    extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
+    if extra_args:
+        raise NotImplementedError('unhandled arguments %s with joblib %s'
+                                  % (list(extra_args), _joblib.__version__))
+    args = {}
+    if 'prefer' in kwargs:
+        prefer = kwargs['prefer']
+        if prefer not in ['threads', 'processes', None]:
+            raise ValueError('prefer=%s is not supported' % prefer)
+        args['backend'] = {'threads': 'threading',
+                           'processes': 'multiprocessing',
+                           None: None}[prefer]
+
+    if 'require' in kwargs:
+        require = kwargs['require']
+        if require not in [None, 'sharedmem']:
+            raise ValueError('require=%s is not supported' % require)
+        if require == 'sharedmem':
+            args['backend'] = 'threading'
+    return args

@@ -1,38 +1,26 @@
-"""Loader for the Labeled Faces in the Wild (LFW) dataset
+"""Labeled Faces in the Wild (LFW) dataset
 
 This dataset is a collection of JPEG pictures of famous people collected
 over the internet, all details are available on the official website:
 
     http://vis-www.cs.umass.edu/lfw/
-
-Each picture is centered on a single face. The typical task is called
-Face Verification: given a pair of two pictures, a binary classifier
-must predict whether the two images are from the same person.
-
-An alternative task, Face Recognition or Face Identification is:
-given the picture of the face of an unknown person, identify the name
-of the person by referring to a gallery of previously seen pictures of
-identified persons.
-
-Both Face Verification and Face Recognition are tasks that are typically
-performed on the output of a model trained to perform Face Detection. The
-most popular model for Face Detection is called Viola-Johns and is
-implemented in the OpenCV library. The LFW faces were extracted by this face
-detector from various online websites.
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
 from os import listdir, makedirs, remove
-from os.path import join, exists, isdir
+from os.path import dirname, join, exists, isdir
 
 import logging
+from distutils.version import LooseVersion
+
 import numpy as np
 
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
+from ..utils import deprecated
 from ..utils import Bunch
-from ..externals.joblib import Memory
-from ..externals.six import b
+from ..utils._joblib import Memory
+from ..utils import _joblib
 
 logger = logging.getLogger(__name__)
 
@@ -77,12 +65,28 @@ TARGETS = (
 )
 
 
+@deprecated('This function was deprecated in version 0.20 and will be removed '
+            'in 0.22.')
 def scale_face(face):
-    """Scale back to 0-1 range in case of normalization for plotting"""
+    """Scale back to 0-1 range in case of normalization for plotting.
+
+    .. deprecated:: 0.20
+    This function was deprecated in version 0.20 and will be removed in 0.22.
+
+
+    Parameters
+    ----------
+    face : array_like
+        The array to scale
+
+    Returns
+    -------
+    array_like
+        The scaled array
+    """
     scaled = face - face.min()
     scaled /= scaled.max()
     return scaled
-
 
 #
 # Common private utilities for data fetching from the original LFW website
@@ -90,7 +94,7 @@ def scale_face(face):
 #
 
 
-def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
+def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     """Helper function to download any missing LFW data"""
 
     data_home = get_data_home(data_home=data_home)
@@ -239,23 +243,19 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
                      min_faces_per_person=0, color=False,
                      slice_=(slice(70, 195), slice(78, 172)),
                      download_if_missing=True, return_X_y=False):
-    """Loader for the Labeled Faces in the Wild (LFW) people dataset
+    """Load the Labeled Faces in the Wild (LFW) people dataset \
+(classification).
 
-    This dataset is a collection of JPEG pictures of famous people
-    collected on the internet, all details are available on the
-    official website:
+    Download it if necessary.
 
-        http://vis-www.cs.umass.edu/lfw/
+    =================   =======================
+    Classes                                5749
+    Samples total                         13233
+    Dimensionality                         5828
+    Features            real, between 0 and 255
+    =================   =======================
 
-    Each picture is centered on a single face. Each pixel of each channel
-    (color in RGB) is encoded by a float in range 0.0 - 1.0.
-
-    The task is called Face Recognition (or Identification): given the
-    picture of a face, find the name of the person given a training set
-    (gallery).
-
-    The original images are 250 x 250 pixels, but the default slice and resize
-    arguments reduce them to 62 x 47.
+    Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 
     Parameters
     ----------
@@ -287,9 +287,10 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False. If True, returns ``(dataset.data,
-    dataset.target)`` instead of a Bunch object. See below for more
-    information about the `dataset.data` and `dataset.target` object.
+    return_X_y : boolean, default=False.
+        If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
+        object. See below for more information about the `dataset.data` and
+        `dataset.target` object.
 
         .. versionadded:: 0.20
 
@@ -319,14 +320,18 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         .. versionadded:: 0.20
 
     """
-    lfw_home, data_folder_path = check_fetch_lfw(
+    lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
     logger.debug('Loading LFW people faces from %s', lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    m = Memory(cachedir=lfw_home, compress=6, verbose=0)
+    if LooseVersion(_joblib.__version__) < LooseVersion('0.12'):
+        # Deal with change of API in joblib
+        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
+    else:
+        m = Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_people)
 
     # load and memoize the pairs as np arrays
@@ -336,13 +341,17 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     X = faces.reshape(len(faces), -1)
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'lfw.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     if return_X_y:
         return X, target
 
     # pack the results as a Bunch instance
     return Bunch(data=X, images=faces,
                  target=target, target_names=target_names,
-                 DESCR="LFW faces dataset")
+                 DESCR=fdescr)
 
 
 #
@@ -359,7 +368,7 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     # parse the index file to find the number of pairs to be able to allocate
     # the right amount of memory before starting to decode the jpeg files
     with open(index_file_path, 'rb') as index_file:
-        split_lines = [ln.strip().split(b('\t')) for ln in index_file]
+        split_lines = [ln.decode().strip().split('\t') for ln in index_file]
     pair_specs = [sl for sl in split_lines if len(sl) > 2]
     n_pairs = len(pair_specs)
 
@@ -404,20 +413,16 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
 def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                     color=False, slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
-    """Loader for the Labeled Faces in the Wild (LFW) pairs dataset
+    """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
 
-    This dataset is a collection of JPEG pictures of famous people
-    collected on the internet, all details are available on the
-    official website:
+    Download it if necessary.
 
-        http://vis-www.cs.umass.edu/lfw/
-
-    Each picture is centered on a single face. Each pixel of each channel
-    (color in RGB) is encoded by a float in range 0.0 - 1.0.
-
-    The task is called Face Verification: given a pair of two pictures,
-    a binary classifier must predict whether the two images are from
-    the same person.
+    =================   =======================
+    Classes                                5749
+    Samples total                         13233
+    Dimensionality                         5828
+    Features            real, between 0 and 255
+    =================   =======================
 
     In the official `README.txt`_ this task is described as the
     "Restricted" task.  As I am not sure as to implement the
@@ -428,7 +433,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     The original images are 250 x 250 pixels, but the default slice and resize
     arguments reduce them to 62 x 47.
 
-    Read more in the :ref:`User Guide <labeled_faces_in_the_wild>`.
+    Read more in the :ref:`User Guide <labeled_faces_in_the_wild_dataset>`.
 
     Parameters
     ----------
@@ -472,8 +477,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         pixels. Changing the ``slice_``, ``resize`` or ``subset`` parameters
         will change the shape of the output.
 
-    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on
-            ``subset``.
+    pairs : numpy array of shape (2200, 2, 62, 47). Shape depends on ``subset``
         Each row has 2 face images corresponding to same or different person
         from the dataset containing 5749 people. Changing the ``slice_``,
         ``resize`` or ``subset`` parameters will change the shape of the
@@ -487,14 +491,18 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         Description of the Labeled Faces in the Wild (LFW) dataset.
 
     """
-    lfw_home, data_folder_path = check_fetch_lfw(
+    lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
     logger.debug('Loading %s LFW pairs from %s', subset, lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    m = Memory(cachedir=lfw_home, compress=6, verbose=0)
+    if LooseVersion(_joblib.__version__) < LooseVersion('0.12'):
+        # Deal with change of API in joblib
+        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
+    else:
+        m = Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_pairs)
 
     # select the right metadata file according to the requested subset
@@ -513,7 +521,11 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         index_file_path, data_folder_path, resize=resize, color=color,
         slice_=slice_)
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'lfw.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     # pack the results as a Bunch instance
     return Bunch(data=pairs.reshape(len(pairs), -1), pairs=pairs,
                  target=target, target_names=target_names,
-                 DESCR="'%s' segment of the LFW pairs dataset" % subset)
+                 DESCR=fdescr)

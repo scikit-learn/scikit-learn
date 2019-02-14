@@ -75,9 +75,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
         Doesn't affect :meth:`fit` method.
 
     Examples
@@ -117,10 +119,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5,
                  weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=1,
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
 
-        super(KNeighborsClassifier, self).__init__(
+        super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
@@ -288,9 +290,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Examples
     --------
@@ -320,8 +324,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
-                 outlier_label=None, metric_params=None, n_jobs=1, **kwargs):
-        super(RadiusNeighborsClassifier, self).__init__(
+                 outlier_label=None, metric_params=None, n_jobs=None,
+                 **kwargs):
+        super().__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,
@@ -378,10 +383,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 mode = np.array([stats.mode(pl)[0]
                                  for pl in pred_labels[inliers]], dtype=np.int)
             else:
-                mode = np.array([weighted_mode(pl, w)[0]
-                                 for (pl, w)
-                                 in zip(pred_labels[inliers], weights[inliers])],
-                                dtype=np.int)
+                mode = np.array(
+                    [weighted_mode(pl, w)[0]
+                     for (pl, w) in zip(pred_labels[inliers], weights[inliers])
+                     ], dtype=np.int)
 
             mode = mode.ravel()
 

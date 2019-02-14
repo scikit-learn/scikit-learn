@@ -266,7 +266,7 @@ class BayesianGaussianMixture(BaseMixture):
     mean_precision_ : array-like, shape (n_components,)
         The precision of each components on the mean distribution (Gaussian).
 
-    means_prior_ : array-like, shape (n_features,)
+    mean_prior_ : array-like, shape (n_features,)
         The prior on the mean distribution (Gaussian).
 
     degrees_of_freedom_prior_ : float
@@ -294,7 +294,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     .. [1] `Bishop, Christopher M. (2006). "Pattern recognition and machine
        learning". Vol. 4 No. 4. New York: Springer.
-       <http://www.springer.com/kr/book/9780387310732>`_
+       <https://www.springer.com/kr/book/9780387310732>`_
 
     .. [2] `Hagai Attias. (2000). "A Variational Bayesian Framework for
        Graphical Models". In Advances in Neural Information Processing
@@ -303,7 +303,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     .. [3] `Blei, David M. and Michael I. Jordan. (2006). "Variational
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
-       <http://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
+       <https://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
     """
 
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
@@ -314,7 +314,7 @@ class BayesianGaussianMixture(BaseMixture):
                  degrees_of_freedom_prior=None, covariance_prior=None,
                  random_state=None, warm_start=False, verbose=0,
                  verbose_interval=10):
-        super(BayesianGaussianMixture, self).__init__(
+        super().__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,
             random_state=random_state, warm_start=warm_start,

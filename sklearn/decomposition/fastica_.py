@@ -16,9 +16,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
-from ..externals import six
-from ..externals.six import moves
-from ..externals.six import string_types
+
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -76,7 +74,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
         w = w_init[j, :].copy()
         w /= np.sqrt((w ** 2).sum())
 
-        for i in moves.xrange(max_iter):
+        for i in range(max_iter):
             gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
 
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
@@ -105,7 +103,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     W = _sym_decorrelation(w_init)
     del w_init
     p_ = float(X.shape[1])
-    for ii in moves.xrange(max_iter):
+    for ii in range(max_iter):
         gwtx, g_wtx = g(np.dot(W, X), fun_args)
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
                                 - g_wtx[:, np.newaxis] * W)
@@ -261,9 +259,9 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     faster for Fortran-ordered input.
 
     Implemented using FastICA:
-    `A. Hyvarinen and E. Oja, Independent Component Analysis:
+    *A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430`
+    pp. 411-430*
 
     """
     random_state = check_random_state(random_state)
@@ -287,7 +285,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         def g(x, fun_args):
             return fun(x, **fun_args)
     else:
-        exc = ValueError if isinstance(fun, six.string_types) else TypeError
+        exc = ValueError if isinstance(fun, str) else TypeError
         raise exc("Unknown function %r;"
                   " should be one of 'logcosh', 'exp', 'cube' or callable"
                   % fun)
@@ -408,7 +406,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         point. Example:
 
         def my_g(x):
-            return x ** 3, 3 * x ** 2
+            return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.
@@ -443,18 +441,29 @@ class FastICA(BaseEstimator, TransformerMixin):
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FastICA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FastICA(n_components=7,
+    ...         random_state=0)
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
+
     Notes
     -----
     Implementation based on
-    `A. Hyvarinen and E. Oja, Independent Component Analysis:
+    *A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
-    pp. 411-430`
+    pp. 411-430*
 
     """
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
-        super(FastICA, self).__init__()
+        super().__init__()
         if max_iter < 1:
             raise ValueError("max_iter should be greater than 1, got "
                              "(max_iter={})".format(max_iter))
@@ -542,7 +551,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self._fit(X, compute_sources=False)
         return self
 
-    def transform(self, X, y='deprecated', copy=True):
+    def transform(self, X, copy=True):
         """Recover the sources from X (apply the unmixing matrix).
 
         Parameters
@@ -550,9 +559,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Data to transform, where n_samples is the number of samples
             and n_features is the number of features.
-        y : (ignored)
-            .. deprecated:: 0.19
-               This parameter will be removed in 0.21.
+
         copy : bool (optional)
             If False, data passed to fit are overwritten. Defaults to True.
 
@@ -560,11 +567,6 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         check_is_fitted(self, 'mixing_')
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)

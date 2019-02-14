@@ -8,6 +8,8 @@ import numpy as np
 
 from scipy import sparse
 
+import pytest
+
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.testing import (
@@ -210,27 +212,34 @@ def test_ignore_warning():
     assert_warns(UserWarning, context_manager_no_deprecation_multiple_warning)
     assert_warns(DeprecationWarning, context_manager_no_user_multiple_warning)
 
+    # Check that passing warning class as first positional argument
+    warning_class = UserWarning
+    match = "'obj' should be a callable.+you should use 'category=UserWarning'"
 
-# This class is inspired from numpy 1.7 with an alteration to check
-# the reset warning filters after calls to assert_warns.
-# This assert_warns behavior is specific to scikit-learn because
-# `clean_warning_registry()` is called internally by assert_warns
-# and clears all previous filters.
+    with pytest.raises(ValueError, match=match):
+        silence_warnings_func = ignore_warnings(warning_class)(
+            _warning_function)
+        silence_warnings_func()
+
+    with pytest.raises(ValueError, match=match):
+        @ignore_warnings(warning_class)
+        def test():
+            pass
+
+
 class TestWarns(unittest.TestCase):
     def test_warn(self):
         def f():
             warnings.warn("yo")
             return 3
 
-        # Test that assert_warns is not impacted by externally set
-        # filters and is reset internally.
-        # This is because `clean_warning_registry()` is called internally by
-        # assert_warns and clears all previous filters.
-        warnings.simplefilter("ignore", UserWarning)
-        assert_equal(assert_warns(UserWarning, f), 3)
-
-        # Test that the warning registry is empty after assert_warns
-        assert_equal(sys.modules['warnings'].filters, [])
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            filters_orig = warnings.filters[:]
+            assert_equal(assert_warns(UserWarning, f), 3)
+            # test that assert_warns doesn't have side effects on warnings
+            # filters
+            assert_equal(warnings.filters, filters_orig)
 
         assert_raises(AssertionError, assert_no_warnings, f)
         assert_equal(assert_no_warnings(lambda x: x, 1), 1)
@@ -350,7 +359,7 @@ def f_check_param_definition(a, b, c, d, e):
     return a + b + c + d
 
 
-class Klass(object):
+class Klass:
     def f_missing(self, X, y):
         pass
 
@@ -372,7 +381,7 @@ class Klass(object):
         pass
 
 
-class MockEst(object):
+class MockEst:
     def __init__(self):
         """MockEstimator"""
     def fit(self, X, y):
@@ -388,7 +397,7 @@ class MockEst(object):
         return 1.
 
 
-class MockMetaEstimator(object):
+class MockMetaEstimator:
     def __init__(self, delegate):
         """MetaEstimator to check if doctest on delegated methods work.
 
@@ -440,8 +449,7 @@ class MockMetaEstimator(object):
 def test_check_docstring_parameters():
     try:
         import numpydoc  # noqa
-        assert sys.version_info >= (3, 5)
-    except (ImportError, AssertionError):
+    except ImportError:
         raise SkipTest(
             "numpydoc is required to test the docstrings")
 
@@ -486,7 +494,7 @@ def test_check_docstring_parameters():
         assert mess in incorrect[0], '"%s" not in "%s"' % (mess, incorrect[0])
 
 
-class RegistrationCounter(object):
+class RegistrationCounter:
     def __init__(self):
         self.nb_calls = 0
 

@@ -207,7 +207,7 @@ otherwise the features will not be mapped evenly to the columns.
 
  * Kilian Weinberger, Anirban Dasgupta, John Langford, Alex Smola and
    Josh Attenberg (2009). `Feature hashing for large scale multitask learning
-   <http://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
+   <https://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
 
  * `MurmurHash3 <https://github.com/aappleby/smhasher>`_.
 
@@ -380,6 +380,37 @@ last document::
   >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
   array([0, 0, 0, 1]...)
 
+.. _stop_words:
+
+Using stop words
+................
+
+Stop words are words like "and", "the", "him", which are presumed to be
+uninformative in representing the content of a text, and which may be
+removed to avoid them being construed as signal for prediction.  Sometimes,
+however, similar words are useful for prediction, such as in classifying
+writing style or personality.
+
+There are several known issues in our provided 'english' stop word list. See
+[NQY18]_.
+
+Please take care in choosing a stop word list.
+Popular stop word lists may include words that are highly informative to
+some tasks, such as *computer*.
+
+You should also make sure that the stop word list has had the same
+preprocessing and tokenization applied as the one used in the vectorizer.
+The word *we've* is split into *we* and *ve* by CountVectorizer's default
+tokenizer, so if *we've* is in ``stop_words``, but *ve* is not, *ve* will
+be retained from *we've* in transformed text.  Our vectorizers will try to
+identify and warn about some kinds of inconsistencies.
+
+.. topic:: References
+
+    .. [NQY18] J. Nothman, H. Qin and R. Yurchak (2018).
+               `"Stop Word Lists in Free Open-source Software Packages"
+               <https://aclweb.org/anthology/W18-2502>`__.
+               In *Proc. Workshop for NLP Open Source Software*.
 
 .. _tfidf:
 
@@ -405,11 +436,12 @@ Using the ``TfidfTransformer``'s default settings,
 the term frequency, the number of times a term occurs in a given document,
 is multiplied with idf component, which is computed as
 
-:math:`\text{idf}(t) = log{\frac{1 + n_d}{1+\text{df}(d,t)}} + 1`,
+:math:`\text{idf}(t) = \log{\frac{1 + n}{1+\text{df}(t)}} + 1`,
 
-where :math:`n_d` is the total number of documents, and :math:`\text{df}(d,t)`
-is the number of documents that contain term :math:`t`. The resulting tf-idf
-vectors are then normalized by the Euclidean norm:
+where :math:`n` is the total number of documents in the document set, and
+:math:`\text{df}(t)` is the number of documents in the document set that
+contain term :math:`t`. The resulting tf-idf vectors are then normalized by the
+Euclidean norm:
 
 :math:`v_{norm} = \frac{v}{||v||_2} = \frac{v}{\sqrt{v{_1}^2 +
 v{_2}^2 + \dots + v{_n}^2}}`.
@@ -424,14 +456,14 @@ computed in scikit-learn's :class:`TfidfTransformer`
 and :class:`TfidfVectorizer` differ slightly from the standard textbook
 notation that defines the idf as
 
-:math:`\text{idf}(t) = log{\frac{n_d}{1+\text{df}(d,t)}}.`
+:math:`\text{idf}(t) = \log{\frac{n}{1+\text{df}(t)}}.`
 
 
 In the :class:`TfidfTransformer` and :class:`TfidfVectorizer`
 with ``smooth_idf=False``, the
 "1" count is added to the idf instead of the idf's denominator:
 
-:math:`\text{idf}(t) = log{\frac{n_d}{\text{df}(d,t)}} + 1`
+:math:`\text{idf}(t) = \log{\frac{n}{\text{df}(t)}} + 1`
 
 This normalization is implemented by the :class:`TfidfTransformer`
 class::
@@ -478,21 +510,21 @@ v{_2}^2 + \dots + v{_n}^2}}`
 For example, we can compute the tf-idf of the first term in the first
 document in the `counts` array as follows:
 
-:math:`n_{d, {\text{term1}}} = 6`
+:math:`n = 6`
 
-:math:`\text{df}(d, t)_{\text{term1}} = 6`
+:math:`\text{df}(t)_{\text{term1}} = 6`
 
-:math:`\text{idf}(d, t)_{\text{term1}} =
-log \frac{n_d}{\text{df}(d, t)} + 1 = log(1)+1 = 1`
+:math:`\text{idf}(t)_{\text{term1}} =
+\log \frac{n}{\text{df}(t)} + 1 = \log(1)+1 = 1`
 
 :math:`\text{tf-idf}_{\text{term1}} = \text{tf} \times \text{idf} = 3 \times 1 = 3`
 
 Now, if we repeat this computation for the remaining 2 terms in the document,
 we get
 
-:math:`\text{tf-idf}_{\text{term2}} = 0 \times (log(6/1)+1) = 0`
+:math:`\text{tf-idf}_{\text{term2}} = 0 \times (\log(6/1)+1) = 0`
 
-:math:`\text{tf-idf}_{\text{term3}} = 1 \times (log(6/2)+1) \approx 2.0986`
+:math:`\text{tf-idf}_{\text{term3}} = 1 \times (\log(6/2)+1) \approx 2.0986`
 
 and the vector of raw tf-idfs:
 
@@ -509,12 +541,12 @@ Furthermore, the default parameter ``smooth_idf=True`` adds "1" to the numerator
 and  denominator as if an extra document was seen containing every term in the
 collection exactly once, which prevents zero divisions:
 
-:math:`\text{idf}(t) = log{\frac{1 + n_d}{1+\text{df}(d,t)}} + 1`
+:math:`\text{idf}(t) = \log{\frac{1 + n}{1+\text{df}(t)}} + 1`
 
 Using this modification, the tf-idf of the third term in document 1 changes to
 1.8473:
 
-:math:`\text{tf-idf}_{\text{term3}} = 1 \times log(7/3)+1 \approx 1.8473`
+:math:`\text{tf-idf}_{\text{term3}} = 1 \times \log(7/3)+1 \approx 1.8473`
 
 And the L2-normalized tf-idf changes to
 
@@ -642,7 +674,7 @@ The output is not shown here.
 
 For an introduction to Unicode and character encodings in general,
 see Joel Spolsky's `Absolute Minimum Every Software Developer Must Know
-About Unicode <http://www.joelonsoftware.com/articles/Unicode.html>`_.
+About Unicode <https://www.joelonsoftware.com/articles/Unicode.html>`_.
 
 .. _`ftfy`: https://github.com/LuminosoInsight/python-ftfy
 
@@ -704,9 +736,9 @@ decide better::
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
 
-In the above example, ``'char_wb`` analyzer is used, which creates n-grams
+In the above example, ``char_wb`` analyzer is used, which creates n-grams
 only from characters inside word boundaries (padded with space on each
-side). The ``'char'`` analyzer, alternatively, creates n-grams that
+side). The ``char`` analyzer, alternatively, creates n-grams that
 span across words::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5))
@@ -888,7 +920,7 @@ concepts may not map one-to-one onto Lucene concepts.)
 
 To make the preprocessor, tokenizer and analyzers aware of the model
 parameters it is possible to derive from the class and override the
-``build_preprocessor``, ``build_tokenizer``` and ``build_analyzer``
+``build_preprocessor``, ``build_tokenizer`` and ``build_analyzer``
 factory methods instead of passing custom functions.
 
 Some tips and tricks:
@@ -901,7 +933,7 @@ Some tips and tricks:
     scikit-learn codebase, but can be added by customizing either the
     tokenizer or the analyzer.
     Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using
-    `NLTK <http://www.nltk.org>`_::
+    `NLTK <https://www.nltk.org/>`_::
 
         >>> from nltk import word_tokenize          # doctest: +SKIP
         >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
@@ -930,7 +962,7 @@ Some tips and tricks:
         ...
         >>> class CustomVectorizer(CountVectorizer):
         ...     def build_tokenizer(self):
-        ...         tokenize = super(CustomVectorizer, self).build_tokenizer()
+        ...         tokenize = super().build_tokenizer()
         ...         return lambda doc: list(to_british(tokenize(doc)))
         ...
         >>> print(CustomVectorizer().build_analyzer()(u"color colour")) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
