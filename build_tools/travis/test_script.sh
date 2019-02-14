@@ -20,9 +20,28 @@ except ImportError:
 "
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
+collect_diff_tests() {
+    # Checks if the test collections are the same for different runs
+    set -e
+
+    pytest --collect-only -q | grep "^sklearn" > collect_1.txt
+    pytest --collect-only -q | grep "^sklearn" > collect_2.txt
+    diff collect_2.txt collect_1.txt
+
+    pytest --collect-only -q | grep "^sklearn" > collect_3.txt
+    diff collect_3.txt collect_1.txt
+    diff collect_3.txt collect_2.txt
+
+    pytest --collect-only -q | grep "^sklearn" > collect_4.txt
+    3iff collect_4.txt collect_1.txt
+    diff collect_4.txt collect_2.txt
+    diff collect_4.txt collect_3.txt
+
+    set +e
+}
+
 run_tests() {
-    PYTHON=$(which python)
-    TEST_CMD="pytest -n2 -d --tx popen//python=${PYTHON} --showlocals --durations=20 --pyargs"
+    TEST_CMD="pytest --showlocals --durations=20 --pyargs"
 
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
@@ -46,7 +65,7 @@ run_tests() {
 
     set -x  # print executed commands to the terminal
 
-    export LOKY_MAX_CPU_COUNT="2"
+    collect_diff_tests
     $TEST_CMD sklearn
 }
 
