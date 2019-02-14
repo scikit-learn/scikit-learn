@@ -22,15 +22,17 @@ python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 collect_diff_tests() {
     # Checks if the test collections are the same for different runs
-    pytest --collect-only -q | grep '^sklearn' > collect_1.txt
-    pytest --collect-only -q | grep '^sklearn' > collect_2.txt
+    COLLECT_CMD="pytest --collect-only -q | grep '^sklearn' >"
+
+    eval "${COLLECT_CMD} collect_1.txt"
+    eval "${COLLECT_CMD} collect_2.txt"
     diff collect_2.txt collect_1.txt
 
-    pytest --collect-only -q | grep '^sklearn' > collect_3.txt
+    eval "${COLLECT_CMD} collect_3.txt"
     diff collect_3.txt collect_1.txt
     diff collect_3.txt collect_2.txt
 
-    pytest --collect-only -q | grep '^sklearn' > collect_4.txt
+    eval "${COLLECT_CMD} collect_4.txt"
     diff collect_4.txt collect_1.txt
     diff collect_4.txt collect_2.txt
     diff collect_4.txt collect_3.txt
