@@ -1632,9 +1632,6 @@ def test_sample_weight():
         error_score='raise-deprecating'
     )
 
-    # It is appropriate to use exact tests and not np.isclose because
-    # accuracy should be computed exactly since it's based on
-    # counts.
     train_metric = res[0][metric_name]
     test_metric = res[1][metric_name]
 
@@ -1644,5 +1641,9 @@ def test_sample_weight():
     assert test_metric != np.sum(y[test]) / y[test].shape[0]
 
     # The proper sampled weighted metric value.
+    #
+    # It is appropriate to use exact tests and not np.isclose because
+    # accuracy should be computed exactly since it's based on
+    # counts.
     assert train_metric == exp_train_pr
     assert test_metric == exp_test_acc
