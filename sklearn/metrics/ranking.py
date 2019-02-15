@@ -986,6 +986,9 @@ def dcg_score(y_true, y_score, k=None,
     This ranking metric yields a high value if true labels are ranked high by
     ``y_score``.
 
+    Usually the Normalized Discounted Cumulative Gain (NDCG, computed by
+    ndcg_score) is preferred.
+
     Parameters
     ----------
     y_true : ndarray, shape (n_samples, n_labels)
@@ -1047,23 +1050,13 @@ def dcg_score(y_true, y_score, k=None,
     >>> from sklearn.metrics import dcg_score
     >>> # we have groud-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
-    >>> # score for a perfect prediction:
-    >>> dcg_score(true_relevance, true_relevance) # doctest: +ELLIPSIS
-    13.65...
-    >>> # the actual values we predict don't matter, only the induced order:
-    >>> scores = np.asarray([[5., .05, .07, .1, 3.]])
-    >>> dcg_score(true_relevance, scores) # doctest: +ELLIPSIS
-    13.65...
-    >>> # we can set k to truncate the sum (only top k answers contribute):
-    >>> dcg_score(true_relevance, true_relevance, k=2) # doctest: +ELLIPSIS
-    13.15...
-    >>> # here we make worse predictions, ranking isn't perfect:
+    >>> # we predict scores for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
     >>> dcg_score(true_relevance, scores) # doctest: +ELLIPSIS
     9.49...
-    >>> scores = np.asarray([[.05, 1., 1., .5, .0]])
-    >>> dcg_score(true_relevance, scores) # doctest: +ELLIPSIS
-    6.74...
+    >>> # we can set k to truncate the sum; only top k answers contribute
+    >>> dcg_score(true_relevance, scores, k=2) # doctest: +ELLIPSIS
+    5.63...
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average true
@@ -1202,23 +1195,20 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
     >>> from sklearn.metrics import ndcg_score
     >>> # we have groud-truth relevance of some answers to a query:
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
-    >>> # score for a perfect prediction:
-    >>> ndcg_score(true_relevance, true_relevance) # doctest: +ELLIPSIS
-    1.0
-    >>> # the actual values we predict don't matter, only the induced order:
-    >>> scores = np.asarray([[5., .05, .07, .1, 3.]])
-    >>> ndcg_score(true_relevance, scores) # doctest: +ELLIPSIS
-    1.0
-    >>> # we can set k to truncate the sum (only top k answers contribute):
-    >>> ndcg_score(true_relevance, true_relevance, k=2) # doctest: +ELLIPSIS
-    1.0
-    >>> # here we make worse predictions, ranking isn't perfect:
+    >>> # we predict some scores (relevance) for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
     >>> ndcg_score(true_relevance, scores) # doctest: +ELLIPSIS
     0.69...
-    >>> scores = np.asarray([[.05, 1., 1., .5, .0]])
+    >>> scores = np.asarray([[.05, 1.1, 1., .5, .0]])
     >>> ndcg_score(true_relevance, scores) # doctest: +ELLIPSIS
     0.49...
+    >>> # we can set k to truncate the sum; only top k answers contribute.
+    >>> ndcg_score(true_relevance, scores, k=4) # doctest: +ELLIPSIS
+    0.35...
+    >>> # the normalization takes k into account so a perfect answer
+    >>> # would still get 1.0
+    >>> ndcg_score(true_relevance, true_relevance, k=4) # doctest: +ELLIPSIS
+    1.0
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average (normalized)
