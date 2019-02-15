@@ -371,4 +371,3 @@ def test_multidimensional_X():
 
     boost = AdaBoostRegressor(DummyRegressor())
     boost.fit(X, yr)
-
