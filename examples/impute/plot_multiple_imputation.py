@@ -150,7 +150,7 @@ def rubins_pooling_rules(m_coefs, m_vars_coefs):
 # EXAMPLE 1. COMPARE STATISTICAL ESTIMATES AND THEIR VARIANCE USING MULTIPLE
 # IMPUTATION IN A LINEAR REGRESSION MODEL.
 
-N_ITER = 20  # number of iterations in IterativeImputer
+MAX_ITER = 20  # number of iterations in IterativeImputer
 ESTIMATOR = Pipeline(steps=[('scaler', StandardScaler()),
                             ('regressor', BayesianRidge())])
 
@@ -165,8 +165,8 @@ def get_results_full_dataset(X, y):
 def get_results_chained_imputation(X_ampute, y, random_state=0,
                                    impute_with_y=False):
     # Impute incomplete data with IterativeImputer using single imputation
-    # We perform N_ITER imputations and only use the last imputation.
-    imputer = IterativeImputer(n_iter=N_ITER,
+    # We perform MAX_ITER imputations and only use the last imputation.
+    imputer = IterativeImputer(max_iter=MAX_ITER,
                                sample_posterior=True,
                                random_state=random_state)
     if impute_with_y:
@@ -283,7 +283,7 @@ ESTIMATOR_IMPUTER = Pipeline(steps=[('imputer', IterativeImputer()),
 # Use the IterativeImputer as a single imputation procedure.
 def get_mse_single_imputation(X_train, X_test, y_train, y_test,
                               random_state=0):
-    ESTIMATOR_IMPUTER.set_params(imputer__n_iter=N_ITER,
+    ESTIMATOR_IMPUTER.set_params(imputer__max_iter=MAX_ITER,
                                  imputer__sample_posterior=True,
                                  imputer__random_state=random_state)
     y_predict = ESTIMATOR_IMPUTER.fit(X_train, y_train).predict(X_test)
