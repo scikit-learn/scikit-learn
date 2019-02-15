@@ -589,18 +589,29 @@ class OneHotEncoder(_BaseEncoder):
             n_features = np.sum(cats_ns)
             m_shape = (n_data, n_features)
 
-            out_na = sparse.csr_matrix(m_shape)
+            out_na = []
+
+            c_start = 0
             for i, c in enumerate(cats_ns):
+                c_end = c_start + c
+
                 Xi_missing = X_missing[:, i]
-                data = np.full(np.sum(Xi_missing), np.nan)
+                n_missing = np.sum(Xi_missing)
+
                 indptr = np.cumsum(Xi_missing) * c
                 indptr = np.insert(indptr, 0, 0)
-                indices = np.full((n_data, c), np.arange(c, dtype=np.int))
-                out_na += sparse.csr_matrix((data, indices, indptr), m_shape)
+                indices = np.full((n_missing, c),
+                                  np.arange(c_start, c_end, dtype=np.int))
+                indices = indices.ravel()
+                data = np.full(len(indices), np.nan)
+                out_na.append(sparse.csr_matrix((data, indices, indptr),
+                                                m_shape))
+                c_start = c_end
 
             X_valid = ~(X_missing | X_unknown)
             out = self._make_onehot_sparse_matrix(X_int, X_valid, cats_ns)
-            out += out_na
+            for na in out_na:
+                out += na
         else:
             raise ValueError()
 
