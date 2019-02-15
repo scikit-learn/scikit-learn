@@ -1140,9 +1140,9 @@ cpdef build_pruned_tree_ccp(
     Tree tree, # OUT
     Tree orig_tree,
     DOUBLE_t ccp_alpha):
-    """Builds a pruned tree with Minimal Cost-Complexity Pruning.
+    """Build a pruned tree with Minimal Cost-Complexity Pruning.
 
-    Builds a pruned tree from the original tree. The values and nodes from the
+    Build a pruned tree from the original tree. The values and nodes from the
     original tree are copied into the pruned tree.
 
     Parameters
@@ -1329,7 +1329,7 @@ cdef _build_pruned_tree(
     SIZE_t capacity):
     """Build a pruned tree
 
-    Builds a pruned tree from the original tree by transforming the nodes in
+    Build a pruned tree from the original tree by transforming the nodes in
     ``leaves_in_subtree`` into leaves.
 
     Parameters
