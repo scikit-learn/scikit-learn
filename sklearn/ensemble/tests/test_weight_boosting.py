@@ -471,7 +471,7 @@ def test_sparse_classification():
         # Verify sparsity of data is maintained during training
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-        assert all([(t == csc_matrix or t == csr_matrix)  for t in types])
+        assert all([(t == csc_matrix or t == csr_matrix) for t in types])
 
 
 def test_sparse_regression():
