@@ -105,7 +105,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
 
-        accept_sparse = ['csr', 'csc', 'lil']
+        accept_sparse = ['csr', 'csc']
         X, y = check_X_y(X, y,
                          accept_sparse=accept_sparse,
                          ensure_2d=False,
