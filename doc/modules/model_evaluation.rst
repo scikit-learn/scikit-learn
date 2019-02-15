@@ -1594,7 +1594,8 @@ Normalized Discounted Cumulative Gain
 -------------------------------------
 
 Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
-(NDCG) are ranking metrics; they compare a predicted order to a ground-truth order.
+(NDCG) are ranking metrics; they compare a predicted order to ground-truth
+scores, such as the relevance of answers to a query.
 
 from the Wikipedia page for Discounted Cumulative Gain:
 
@@ -1611,7 +1612,13 @@ order, then multiplies them by a logarithmic decay and sums the result. The sum
 can be truncated after the first :math:`K` results, in which case we call it
 DCG@K.
 NDCG, or NDCG@K is DCG divided by the DCG obtained by a perfect prediction, so
-that it is always between 0 and 1.
+that it is always between 0 and 1. Usually, NDCG is preferred to DCG.
+
+Compared with the ranking loss, NDCG can take into account relevance scores,
+rather than a ground-truth ranking. So if the ground-truth consists only of an
+ordering, the ranking loss should be preferred; if the ground-truth consists of
+actual usefulness scores (e.g. 0 for irrelevant, 1 for relevant, 2 for very
+relevant), NDCG can be used.
 
 For one sample, given the vector of continuous ground-truth values for each
 target :math:`y \in \mathbb{R}^{M}`, where :math:`M` the number of outputs, and
