@@ -715,6 +715,8 @@ def _apply_scorer(estimator, X, y, scorer, sample_weight):
                         "but supplied a scorer that doesn't accept a " 
                         "'sample_weight' parameter."
                     ), e)
+            else:
+                raise e
     return score
 
 
