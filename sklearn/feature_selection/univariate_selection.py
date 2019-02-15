@@ -321,6 +321,8 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
 
     def __init__(self, score_func):
         self.score_func = score_func
+        self.scores_ = None
+        self.pvalues_ = None
 
     def fit(self, X, y):
         """Run score function on (X, y) and get the appropriate features.
