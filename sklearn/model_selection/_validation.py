@@ -698,6 +698,11 @@ def _apply_scorer(estimator, X, y, scorer, sample_weight):
             score = scorer(estimator, X, y)
     else:
         try:
+            # Explicitly force the sample_weight parameter so that an error
+            # will be raised in the event that the scorer doesn't take a
+            # sample_weight argument.  This is preferable to passing it as
+            # a keyword args dict in the case that it just ignores parameters
+            # that are not accepted by the scorer.
             if y is None:
                 score = scorer(estimator, X, sample_weight=sample_weight)
             else:
