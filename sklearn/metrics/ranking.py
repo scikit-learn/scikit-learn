@@ -1162,9 +1162,11 @@ def normalized_aucpr(y_true, y_score, recall_bounds=[0, 1],
         # Get arrays of preicisions and recalls
         precision, recall, _ = precision_recall_curve(y_true, y_score)
         # Get indices of when recall is above and between recall_bounds
-        indices = [[i for i, e in enumerate(recall.tolist()) if e == x]
-                for x in recall.tolist() if
-                recall_bounds[0] <= x <= recall_bounds[1]]
+        indices = [
+            [i for i, e in enumerate(recall.tolist()) if e == x]
+            for x in recall.tolist() if
+            recall_bounds[0] <= x <= recall_bounds[1]
+        ]
         # Turn list of lists into a list, and remove duplicates
         indices = list(set([item for sublist in indices for item in sublist]))
         # Get AUCPR of recall bounds
