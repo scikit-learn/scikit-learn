@@ -1144,8 +1144,8 @@ def normalized_aucpr(y_true, y_score, recall_bounds=[0, 1],
     0.6994385331481325...
     >>> normalized_aucpr(y_true, y_scores, normalize_strategy='random')
     0.5833333333333333...
-    >>> normalized_aucpr(y_true, y_scores, recall_bounds=[0.4,1]
-                            , normalize_strategy='auc')
+    >>> normalized_aucpr(y_true, y_scores, recall_bounds=[0.4,1],
+                         normalize_strategy='auc')
     0.13553408061571867...
     """
     # Get AUC_PR and AUCPR_Min of classifier
@@ -1179,5 +1179,5 @@ def normalized_aucpr(y_true, y_score, recall_bounds=[0, 1],
             min_aucpr = np.count_nonzero(y_true)/y_true.size
     # Calculate Noramlized Area Under Curve for Precision Recall Curve
     aucnpr = (aucpr - min_aucpr) \
-            / (recall_bounds[1] - recall_bounds[0] - min_aucpr)
+        / (recall_bounds[1] - recall_bounds[0] - min_aucpr)
     return(aucnpr)
