@@ -944,7 +944,7 @@ def _dcg_sample_scores(y_true, y_score, k=None,
     if ignore_ties:
         ranking = np.argsort(y_score)[:, ::-1]
         ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
-        cumulative_gains = (ranked * discount).sum(axis=1)
+        cumulative_gains = discount.dot(ranked.T)
     else:
         discount_cumsum = np.cumsum(discount)
         cumulative_gains = [_tie_averaged_dcg(y_t, y_s, discount_cumsum)
