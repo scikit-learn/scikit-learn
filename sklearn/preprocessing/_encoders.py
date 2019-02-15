@@ -805,6 +805,7 @@ class OrdinalEncoder(_BaseEncoder):
     def __init__(self, categories='auto', dtype=np.float64):
         self.categories = categories
         self.dtype = dtype
+        self.missing_values = np.nan
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
@@ -822,7 +823,7 @@ class OrdinalEncoder(_BaseEncoder):
         # base classes uses _categories to deal with deprecations in
         # OneHoteEncoder: can be removed once deprecations are removed
         self._categories = self.categories
-        self._fit(X)
+        self._fit(X, missing_values=self.missing_values)
 
         return self
 
@@ -840,7 +841,7 @@ class OrdinalEncoder(_BaseEncoder):
             Transformed input.
 
         """
-        X_int, _ = self._transform(X)
+        X_int, _, _ = self._transform(X, missing_values=self.missing_values)
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
