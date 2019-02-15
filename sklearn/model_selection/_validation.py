@@ -557,12 +557,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     else:
         fit_time = time.time() - start_time
         # _score will return dict if is_multimetric is True
-        test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric, test_sample_weight)
+        test_scores = _score(estimator, X_test, y_test, scorer,
+                             is_multimetric, test_sample_weight)
 
         score_time = time.time() - start_time - fit_time
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer,
-                                  is_multimetric, fit_params.get('sample_weight', None))
+                                  is_multimetric,
+                                  fit_params.get('sample_weight', None))
     if verbose > 2:
         if is_multimetric:
             for scorer_name in sorted(test_scores):
@@ -601,6 +603,10 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False, sample_weigh
     Will return a single float if is_multimetric is False and a dict of floats,
     if is_multimetric is True
     """
+
+    # sample_weight is optional because we want to put it at the end to allow
+    # backward compatibility.
+
     if is_multimetric:
         return _multimetric_score(estimator, X_test, y_test, scorer, sample_weight)
     else:
