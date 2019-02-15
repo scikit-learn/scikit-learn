@@ -19,6 +19,7 @@ from collections import namedtuple
 
 from .base import BaseEstimator, TransformerMixin
 from .base import clone
+from .exceptions import ConvergenceWarning
 from .preprocessing import normalize
 from .utils import check_array, check_random_state, safe_indexing
 from .utils.sparsefuncs import _get_median
@@ -30,7 +31,7 @@ from .utils import is_scalar_nan
 
 ImputerTriplet = namedtuple('ImputerTriplet', ['feat_idx',
                                                'neighbor_feat_idx',
-                                               'predictor'])
+                                               'estimator'])
 
 __all__ = [
     'MissingIndicator',
@@ -432,39 +433,31 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
+    estimator : estimator object, default=BayesianRidge()
+        The estimator to use at each step of the round-robin imputation.
+        If ``sample_posterior`` is True, the estimator must support
+        ``return_std`` in its ``predict`` method.
+
     missing_values : int, np.nan, optional (default=np.nan)
         The placeholder for the missing values. All occurrences of
         ``missing_values`` will be imputed.
 
-    imputation_order : str, optional (default="ascending")
-        The order in which the features will be imputed. Possible values:
-
-        "ascending"
-            From features with fewest missing values to most.
-        "descending"
-            From features with most missing values to fewest.
-        "roman"
-            Left to right.
-        "arabic"
-            Right to left.
-        "random"
-            A random order for each round.
-
-    n_iter : int, optional (default=10)
-        Number of imputation rounds to perform before returning the imputations
-        computed during the final round. A round is a single imputation of each
-        feature with missing values.
-
-    predictor : estimator object, default=BayesianRidge()
-        The predictor to use at each step of the round-robin imputation.
-        If ``sample_posterior`` is True, the predictor must support
-        ``return_std`` in its ``predict`` method.
-
     sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
-        fitted predictor for each imputation. Predictor must support
+        fitted estimator for each imputation. Estimator must support
         ``return_std`` in its ``predict`` method if set to ``True``. Set to
         ``True`` if using ``IterativeImputer`` for multiple imputations.
+
+    max_iter : int, optional (default=10)
+        Maximum number of imputation rounds to perform before returning the
+        imputations computed during the final round. A round is a single
+        imputation of each feature with missing values. The stopping criterion
+        is met once `abs(max(X_t - X_{t-1}))/abs(max(X[known_vals]))` < tol,
+        where `X_t` is `X` at iteration `t. Note that early stopping is only
+        applied if ``sample_posterior=False``.
+
+    tol : float, optional (default=1e-3)
+        Tolerance of the stopping condition.
 
     n_nearest_features : int, optional (default=None)
         Number of other features to use to estimate the missing values of
@@ -481,6 +474,20 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         ``strategy`` parameter in :class:`sklearn.impute.SimpleImputer`
         Valid values: {"mean", "median", "most_frequent", or "constant"}.
 
+    imputation_order : str, optional (default="ascending")
+        The order in which the features will be imputed. Possible values:
+
+        "ascending"
+            From features with fewest missing values to most.
+        "descending"
+            From features with most missing values to fewest.
+        "roman"
+            Left to right.
+        "arabic"
+            Right to left.
+        "random"
+            A random order for each round.
+
     min_value : float, optional (default=None)
         Minimum possible imputed value. Default of ``None`` will set minimum
         to negative infinity.
@@ -496,7 +503,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use. Randomizes
-        selection of predictor features if n_nearest_features is not None, the
+        selection of estimator features if n_nearest_features is not None, the
         ``imputation_order`` if ``random``, and the sampling from posterior if
         ``sample_posterior`` is True. Use an integer for determinism.
         See :term:`the Glossary <random_state>`.
@@ -507,11 +514,16 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         Imputer used to initialize the missing values.
 
     imputation_sequence_ : list of tuples
-        Each tuple has ``(feat_idx, neighbor_feat_idx, predictor)``, where
+        Each tuple has ``(feat_idx, neighbor_feat_idx, estimator)``, where
         ``feat_idx`` is the current feature to be imputed,
         ``neighbor_feat_idx`` is the array of other features used to impute the
-        current feature, and ``predictor`` is the trained predictor used for
-        the imputation. Length is ``self.n_features_with_missing_ * n_iter``.
+        current feature, and ``estimator`` is the trained estimator used for
+        the imputation. Length is ``self.n_features_with_missing_ *
+        self.n_iter_``.
+
+    n_iter_ : int
+        Number of iteration rounds that occurred. Will be less than
+        ``self.max_iter`` if early stopping criterion was reached.
 
     n_features_with_missing_ : int
         Number of features with missing values.
@@ -522,7 +534,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    To support imputation in inductive mode we store each feature's predictor
+    To support imputation in inductive mode we store each feature's estimator
     during the ``fit`` phase, and predict without refitting (in order) during
     the ``transform`` phase.
 
@@ -547,25 +559,27 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self,
+                 estimator=None,
                  missing_values=np.nan,
-                 imputation_order='ascending',
-                 n_iter=10,
-                 predictor=None,
                  sample_posterior=False,
+                 max_iter=10,
+                 tol=1e-3,
                  n_nearest_features=None,
                  initial_strategy="mean",
+                 imputation_order='ascending',
                  min_value=None,
                  max_value=None,
                  verbose=0,
                  random_state=None):
 
+        self.estimator = estimator
         self.missing_values = missing_values
-        self.imputation_order = imputation_order
-        self.n_iter = n_iter
-        self.predictor = predictor
         self.sample_posterior = sample_posterior
+        self.max_iter = max_iter
+        self.tol = tol
         self.n_nearest_features = n_nearest_features
         self.initial_strategy = initial_strategy
+        self.imputation_order = imputation_order
         self.min_value = min_value
         self.max_value = max_value
         self.verbose = verbose
@@ -576,12 +590,12 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                             mask_missing_values,
                             feat_idx,
                             neighbor_feat_idx,
-                            predictor=None,
+                            estimator=None,
                             fit_mode=True):
         """Impute a single feature from the others provided.
 
         This function predicts the missing values of one of the features using
-        the current estimates of all the other features. The ``predictor`` must
+        the current estimates of all the other features. The ``estimator`` must
         support ``return_std=True`` in its ``predict`` method for this function
         to work.
 
@@ -599,22 +613,22 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         neighbor_feat_idx : ndarray
             Indices of the features to be used in imputing ``feat_idx``.
 
-        predictor : object
-            The predictor to use at this step of the round-robin imputation.
-            If ``sample_posterior`` is True, the predictor must support
+        estimator : object
+            The estimator to use at this step of the round-robin imputation.
+            If ``sample_posterior`` is True, the estimator must support
             ``return_std`` in its ``predict`` method.
-            If None, it will be cloned from self._predictor.
+            If None, it will be cloned from self._estimator.
 
         fit_mode : boolean, default=True
-            Whether to fit and predict with the predictor or just predict.
+            Whether to fit and predict with the estimator or just predict.
 
         Returns
         -------
         X_filled : ndarray
             Input data with ``X_filled[missing_row_mask, feat_idx]`` updated.
 
-        predictor : predictor with sklearn API
-            The fitted predictor used to impute
+        estimator : estimator with sklearn API
+            The fitted estimator used to impute
             ``X_filled[missing_row_mask, feat_idx]``.
         """
 
@@ -622,38 +636,46 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         # (should not happen at fit time because feat_ids would be excluded)
         missing_row_mask = mask_missing_values[:, feat_idx]
         if not np.any(missing_row_mask):
-            return X_filled, predictor
+            return X_filled, estimator
 
-        if predictor is None and fit_mode is False:
+        if estimator is None and fit_mode is False:
             raise ValueError("If fit_mode is False, then an already-fitted "
-                             "predictor should be passed in.")
+                             "estimator should be passed in.")
 
-        if predictor is None:
-            predictor = clone(self._predictor)
+        if estimator is None:
+            estimator = clone(self._estimator)
 
         if fit_mode:
             X_train = safe_indexing(X_filled[:, neighbor_feat_idx],
                                     ~missing_row_mask)
             y_train = safe_indexing(X_filled[:, feat_idx],
                                     ~missing_row_mask)
-            predictor.fit(X_train, y_train)
+            estimator.fit(X_train, y_train)
 
         # get posterior samples
         X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
                                missing_row_mask)
         if self.sample_posterior:
-            mus, sigmas = predictor.predict(X_test, return_std=True)
-            good_sigmas = sigmas > 0
+            mus, sigmas = estimator.predict(X_test, return_std=True)
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
-            imputed_values[~good_sigmas] = mus[~good_sigmas]
-            mus = mus[good_sigmas]
-            sigmas = sigmas[good_sigmas]
+            # two types of problems: (1) non-positive sigmas, (2) mus outside
+            # legal range of min_value and max_value (results in inf sample)
+            positive_sigmas = sigmas > 0
+            imputed_values[~positive_sigmas] = mus[~positive_sigmas]
+            mus_too_low = mus < self._min_value
+            imputed_values[mus_too_low] = self._min_value
+            mus_too_high = mus > self._max_value
+            imputed_values[mus_too_high] = self._max_value
+            # the rest can be sampled without statistical issues
+            inrange_mask = positive_sigmas & ~mus_too_low & ~mus_too_high
+            mus = mus[inrange_mask]
+            sigmas = sigmas[inrange_mask]
             a = (self._min_value - mus) / sigmas
             b = (self._max_value - mus) / sigmas
 
             if scipy.__version__ < LooseVersion('0.18'):
                 # bug with vector-valued `a` in old scipy
-                imputed_values[good_sigmas] = [
+                imputed_values[inrange_mask] = [
                     stats.truncnorm(a=a_, b=b_,
                                     loc=loc_, scale=scale_).rvs(
                                         random_state=self.random_state_)
@@ -662,17 +684,17 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
             else:
                 truncated_normal = stats.truncnorm(a=a, b=b,
                                                    loc=mus, scale=sigmas)
-                imputed_values[good_sigmas] = truncated_normal.rvs(
+                imputed_values[inrange_mask] = truncated_normal.rvs(
                     random_state=self.random_state_)
         else:
-            imputed_values = predictor.predict(X_test)
+            imputed_values = estimator.predict(X_test)
             imputed_values = np.clip(imputed_values,
                                      self._min_value,
                                      self._max_value)
 
         # update the feature
         X_filled[missing_row_mask, feat_idx] = imputed_values
-        return X_filled, predictor
+        return X_filled, estimator
 
     def _get_neighbor_feat_idx(self,
                                n_features,
@@ -859,19 +881,27 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.random_state_ = getattr(self, "random_state_",
                                      check_random_state(self.random_state))
 
-        if self.n_iter < 0:
+        if self.max_iter < 0:
             raise ValueError(
-                "'n_iter' should be a positive integer. Got {} instead."
-                .format(self.n_iter))
+                "'max_iter' should be a positive integer. Got {} instead."
+                .format(self.max_iter))
 
-        if self.predictor is None:
+        if self.tol < 0:
+            raise ValueError(
+                "'tol' should be a non-negative float. Got {} instead."
+                .format(self.tol)
+            )
+
+        if self.estimator is None:
             from .linear_model import BayesianRidge
-            self._predictor = BayesianRidge()
+            self._estimator = BayesianRidge()
         else:
-            self._predictor = clone(self.predictor)
+            self._estimator = clone(self.estimator)
 
-        if hasattr(self._predictor, 'random_state'):
-            self._predictor.random_state = self.random_state_
+        self.imputation_sequence_ = []
+
+        if hasattr(self._estimator, 'random_state'):
+            self._estimator.random_state = self.random_state_
 
         self._min_value = -np.inf if self.min_value is None else self.min_value
         self._max_value = np.inf if self.max_value is None else self.max_value
@@ -879,7 +909,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.initial_imputer_ = None
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
-        if self.n_iter == 0:
+        if self.max_iter == 0 or np.all(mask_missing_values):
+            self.n_iter_ = 0
             return Xt
 
         # order in which to impute
@@ -891,14 +922,15 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         abs_corr_mat = self._get_abs_corr_mat(Xt)
 
-        # impute data
         n_samples, n_features = Xt.shape
-        self.imputation_sequence_ = []
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
-        for i_rnd in range(self.n_iter):
+        if not self.sample_posterior:
+            Xt_previous = Xt.copy()
+            normalized_tol = self.tol * np.max(np.abs(X[~mask_missing_values]))
+        for self.n_iter_ in range(1, self.max_iter + 1):
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
 
@@ -906,19 +938,32 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 neighbor_feat_idx = self._get_neighbor_feat_idx(n_features,
                                                                 feat_idx,
                                                                 abs_corr_mat)
-                Xt, predictor = self._impute_one_feature(
+                Xt, estimator = self._impute_one_feature(
                     Xt, mask_missing_values, feat_idx, neighbor_feat_idx,
-                    predictor=None, fit_mode=True)
-                predictor_triplet = ImputerTriplet(feat_idx,
+                    estimator=None, fit_mode=True)
+                estimator_triplet = ImputerTriplet(feat_idx,
                                                    neighbor_feat_idx,
-                                                   predictor)
-                self.imputation_sequence_.append(predictor_triplet)
+                                                   estimator)
+                self.imputation_sequence_.append(estimator_triplet)
 
-            if self.verbose > 0:
+            if self.verbose > 1:
                 print('[IterativeImputer] Ending imputation round '
                       '%d/%d, elapsed time %0.2f'
-                      % (i_rnd + 1, self.n_iter, time() - start_t))
+                      % (self.n_iter_, self.max_iter, time() - start_t))
 
+            if not self.sample_posterior:
+                inf_norm = np.linalg.norm(Xt - Xt_previous, ord=np.inf,
+                                          axis=None)
+                if inf_norm < normalized_tol:
+                    if self.verbose > 0:
+                        print('[IterativeImputer] Early stopping criterion '
+                              'reached.')
+                    break
+                Xt_previous = Xt.copy()
+        else:
+            if not self.sample_posterior:
+                warnings.warn("[IterativeImputer] Early stopping criterion not"
+                              " reached.", ConvergenceWarning)
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return Xt
 
@@ -942,29 +987,29 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
-        if self.n_iter == 0:
+        if self.n_iter_ == 0 or np.all(mask_missing_values):
             return Xt
 
-        imputations_per_round = len(self.imputation_sequence_) // self.n_iter
+        imputations_per_round = len(self.imputation_sequence_) // self.n_iter_
         i_rnd = 0
         if self.verbose > 0:
             print("[IterativeImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
-        for it, predictor_triplet in enumerate(self.imputation_sequence_):
+        for it, estimator_triplet in enumerate(self.imputation_sequence_):
             Xt, _ = self._impute_one_feature(
                 Xt,
                 mask_missing_values,
-                predictor_triplet.feat_idx,
-                predictor_triplet.neighbor_feat_idx,
-                predictor=predictor_triplet.predictor,
+                estimator_triplet.feat_idx,
+                estimator_triplet.neighbor_feat_idx,
+                estimator=estimator_triplet.estimator,
                 fit_mode=False
             )
             if not (it + 1) % imputations_per_round:
                 if self.verbose > 1:
                     print('[IterativeImputer] Ending imputation round '
                           '%d/%d, elapsed time %0.2f'
-                          % (i_rnd + 1, self.n_iter, time() - start_t))
+                          % (i_rnd + 1, self.n_iter_, time() - start_t))
                 i_rnd += 1
 
         Xt[~mask_missing_values] = X[~mask_missing_values]
@@ -993,7 +1038,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 class MissingIndicator(BaseEstimator, TransformerMixin):
     """Binary indicators for missing values.
 
-    Note that this component typically should not not be used in a vanilla
+    Note that this component typically should not be used in a vanilla
     :class:`Pipeline` consisting of transformers and a classifier, but rather
     could be added using a :class:`FeatureUnion` or :class:`ColumnTransformer`.
 
@@ -1118,6 +1163,23 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         return imputer_mask, features_with_missing
 
+    def _validate_input(self, X):
+        if not is_scalar_nan(self.missing_values):
+            force_all_finite = True
+        else:
+            force_all_finite = "allow-nan"
+        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=None,
+                        force_all_finite=force_all_finite)
+        _check_inputs_dtype(X, self.missing_values)
+        if X.dtype.kind not in ("i", "u", "f", "O"):
+            raise ValueError("MissingIndicator does not support data with "
+                             "dtype {0}. Please provide either a numeric array"
+                             " (with a floating point or integer dtype) or "
+                             "categorical data represented either as an array "
+                             "with integer dtype or an array of string values "
+                             "with an object dtype.".format(X.dtype))
+        return X
+
     def fit(self, X, y=None):
         """Fit the transformer on X.
 
@@ -1132,14 +1194,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
-        else:
-            force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite=force_all_finite)
-        _check_inputs_dtype(X, self.missing_values)
-
+        X = self._validate_input(X)
         self._n_features = X.shape[1]
 
         if self.features not in ('missing-only', 'all'):
@@ -1173,14 +1228,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         """
         check_is_fitted(self, "features_")
-
-        if not is_scalar_nan(self.missing_values):
-            force_all_finite = True
-        else:
-            force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=('csc', 'csr'),
-                        force_all_finite=force_all_finite)
-        _check_inputs_dtype(X, self.missing_values)
+        X = self._validate_input(X)
 
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "

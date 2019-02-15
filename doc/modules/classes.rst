@@ -274,7 +274,6 @@ Loaders
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.load_wine
-   datasets.mldata_filename
 
 Samples generator
 -----------------
@@ -658,7 +657,7 @@ Kernels:
    impute.SimpleImputer
    impute.IterativeImputer
    impute.MissingIndicator
-   
+
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -1401,6 +1400,7 @@ Low-level methods
 
    tree.export_graphviz
    tree.plot_tree
+   tree.export_text
 
 
 .. _utils_ref:
@@ -1448,6 +1448,7 @@ Low-level methods
    utils.graph.single_source_shortest_path_length
    utils.graph_shortest_path.graph_shortest_path
    utils.indexable
+   utils.metaestimators.if_delegate_has_method
    utils.multiclass.type_of_target
    utils.multiclass.is_multilabel
    utils.multiclass.unique_labels
@@ -1526,3 +1527,4 @@ To be removed in 0.22
 
    covariance.graph_lasso
    datasets.fetch_mldata
+   datasets.mldata_filename
