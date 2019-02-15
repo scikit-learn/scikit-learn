@@ -5,10 +5,13 @@ and pairwise metrics and distance computations.
 
 
 from .ranking import auc
+from .ranking import aucpr_min
 from .ranking import average_precision_score
 from .ranking import coverage_error
 from .ranking import label_ranking_average_precision_score
 from .ranking import label_ranking_loss
+from .ranking import min_average_precision
+from .ranking import min_precision
 from .ranking import precision_recall_curve
 from .ranking import roc_auc_score
 from .ranking import roc_curve
@@ -28,9 +31,6 @@ from .classification import matthews_corrcoef
 from .classification import precision_recall_fscore_support
 from .classification import precision_score
 from .classification import recall_score
-from .classification import min_precision
-from .classification import aucpr_min
-from .classification import min_average_precision
 from .classification import zero_one_loss
 from .classification import brier_score_loss
 from .classification import multilabel_confusion_matrix
