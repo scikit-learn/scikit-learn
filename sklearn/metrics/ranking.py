@@ -1066,7 +1066,7 @@ def min_average_precision(y_true):
     return(min_average_precision)
 
 
-def normalized_aucpr(y_true, y_score, recall_bounds=[0, 1], 
+def normalized_aucpr(y_true, y_score, recall_bounds=[0, 1],
                      normalize_strategy='average_precision'):
     """Normalized Area under the Precision-Recall curve. From AUCPR, we
     subtract the minimum AUCPR, so the worst ranking has a score of 0, then
