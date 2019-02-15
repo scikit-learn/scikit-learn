@@ -19,6 +19,7 @@ from ..utils.validation import check_is_fitted
 
 from .base import _transform_selected
 from .label import _encode, _encode_check_unknown
+from .label import _nanencode
 
 
 __all__ = [
@@ -35,14 +36,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
     """
 
     def _check_X(self, X):
-        """
-        Perform custom check_array:
-        - convert list of strings to object dtype
-        - check for missing values for object dtype data (check_array does
-          not do that)
-
-        """
-        X_temp = check_array(X, dtype=None)
+        X_temp = check_array(X, dtype=None, force_all_finite='allow-nan')
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
         else:
@@ -55,7 +49,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         return X
 
-    def _fit(self, X, handle_unknown='error'):
+    def _fit(self, X, missing_values, handle_unknown='error'):
         X = self._check_X(X)
 
         n_samples, n_features = X.shape
@@ -75,52 +69,40 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         for i in range(n_features):
             Xi = X[:, i]
             if self._categories == 'auto':
-                cats = _encode(Xi)
+                cats = _nanencode(Xi, missing_values=missing_values)
             else:
                 cats = np.array(self._categories[i], dtype=X.dtype)
                 if handle_unknown == 'error':
-                    diff = _encode_check_unknown(Xi, cats)
-                    if diff:
-                        msg = ("Found unknown categories {0} in column {1}"
-                               " during fit".format(diff, i))
-                        raise ValueError(msg)
+                    _nanencode(Xi, cats, missing_values=missing_values)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error'):
+    def _transform(self, X, missing_values, handle_unknown='error'):
         X = self._check_X(X)
 
         _, n_features = X.shape
         X_int = np.zeros_like(X, dtype=np.int)
-        X_mask = np.ones_like(X, dtype=np.bool)
+        X_missing_mask = np.zeros_like(X, dtype=np.bool)
+        X_unknown_mask = np.zeros_like(X, dtype=np.bool)
+        encode_unknown = handle_unknown != 'error'
 
         for i in range(n_features):
             Xi = X[:, i]
-            diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
-                                                     return_mask=True)
 
-            if not np.all(valid_mask):
-                if handle_unknown == 'error':
-                    msg = ("Found unknown categories {0} in column {1}"
-                           " during transform".format(diff, i))
-                    raise ValueError(msg)
-                else:
-                    # Set the problematic rows to an acceptable value and
-                    # continue `The rows are marked `X_mask` and will be
-                    # removed later.
-                    X_mask[:, i] = valid_mask
-                    # cast Xi into the largest string type necessary
-                    # to handle different lengths of numpy strings
-                    if (self.categories_[i].dtype.kind in ('U', 'S')
-                            and self.categories_[i].itemsize > Xi.itemsize):
-                        Xi = Xi.astype(self.categories_[i].dtype)
-                    else:
-                        Xi = Xi.copy()
+            encode_results = _nanencode(Xi, self.categories_[i],
+                                        missing_values=missing_values,
+                                        encode=True,
+                                        encode_unknown=encode_unknown)
 
-                    Xi[~valid_mask] = self.categories_[i][0]
-            _, encoded = _encode(Xi, self.categories_[i], encode=True)
+            if len(encode_results) == 4:
+                _, encoded, missing_mask, unknown_mask = encode_results
+                X_unknown_mask[:, i] = unknown_mask
+            else:
+                _, encoded, missing_mask = encode_results
+
             X_int[:, i] = encoded
+            X_missing_mask[:, i] = missing_mask
 
-        return X_int, X_mask
+        return X_int, X_missing_mask, X_unknown_mask
 
 
 class OneHotEncoder(_BaseEncoder):
@@ -276,12 +258,15 @@ class OneHotEncoder(_BaseEncoder):
 
     def __init__(self, n_values=None, categorical_features=None,
                  categories=None, sparse=True, dtype=np.float64,
+                 missing_values=np.nan, handle_missing='all-zero',
                  handle_unknown='error'):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.n_values = n_values
+        self.missing_values = missing_values
+        self.handle_missing = handle_missing
         self.categorical_features = categorical_features
 
     # Deprecated attributes
@@ -425,7 +410,8 @@ class OneHotEncoder(_BaseEncoder):
                                 copy=True)
             return self
         else:
-            self._fit(X, handle_unknown=self.handle_unknown)
+            self._fit(X, missing_values=self.missing_values,
+                      handle_unknown=self.handle_unknown)
             return self
 
     def _legacy_fit_transform(self, X):
@@ -560,31 +546,64 @@ class OneHotEncoder(_BaseEncoder):
 
         return out if self.sparse else out.toarray()
 
-    def _transform_new(self, X):
-        """New implementation assuming categorical input"""
-        X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
-            X = check_array(X, dtype=np.object)
-        else:
-            X = X_temp
-
-        n_samples, n_features = X.shape
-
-        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
-
-        mask = X_mask.ravel()
-        n_values = [cats.shape[0] for cats in self.categories_]
-        n_values = np.array([0] + n_values)
+    def _make_onehot_sparse_matrix(self, labels, mask, cat_ns):
+        flat_mask = mask.ravel()
+        n_values = np.array([0] + cat_ns)
         feature_indices = np.cumsum(n_values)
 
-        indices = (X_int + feature_indices[:-1]).ravel()[mask]
-        indptr = X_mask.sum(axis=1).cumsum()
+        indices = (labels + feature_indices[:-1]).ravel()[flat_mask]
+        indptr = mask.sum(axis=1).cumsum()
         indptr = np.insert(indptr, 0, 0)
-        data = np.ones(n_samples * n_features)[mask]
+        data = np.ones(len(indices))
 
         out = sparse.csr_matrix((data, indices, indptr),
-                                shape=(n_samples, feature_indices[-1]),
+                                shape=(len(labels), feature_indices[-1]),
                                 dtype=self.dtype)
+        return out
+
+    def _transform_new(self, X):
+        """New implementation assuming categorical input"""
+        X = self._check_X(X)
+
+        X_int, X_missing, X_unknown = (
+            self._transform(X, missing_values=self.missing_values,
+                            handle_unknown=self.handle_unknown))
+
+        cats_ns = [cats.shape[0] for cats in self.categories_]
+
+        if self.handle_missing == 'all-zero':
+            X_valid = ~(X_missing | X_unknown)
+            out = self._make_onehot_sparse_matrix(X_int, X_valid, cats_ns)
+
+        elif self.handle_missing == 'category':
+            for i, c in enumerate(cats_ns):
+                Xi_missing = X_missing[:, i]
+                Xi_int = X_int[:, i]
+                Xi_int[Xi_missing] = c
+            cats_ns = [c+1 for c in cats_ns]
+            X_valid = ~X_unknown
+            out = self._make_onehot_sparse_matrix(X_int, X_valid, cats_ns)
+
+        elif self.handle_missing == 'all-missing':
+            n_data = len(X_int)
+            n_features = np.sum(cats_ns)
+            m_shape = (n_data, n_features)
+
+            out_na = sparse.csr_matrix(m_shape)
+            for i, c in enumerate(cats_ns):
+                Xi_missing = X_missing[:, i]
+                data = np.full(np.sum(Xi_missing), np.nan)
+                indptr = np.cumsum(Xi_missing) * c
+                indptr = np.insert(indptr, 0, 0)
+                indices = np.full((n_data, c), np.arange(c, dtype=np.int))
+                out_na += sparse.csr_matrix((data, indices, indptr), m_shape)
+
+            X_valid = ~(X_missing | X_unknown)
+            out = self._make_onehot_sparse_matrix(X_int, X_valid, cats_ns)
+            out += out_na
+        else:
+            raise ValueError()
+
         if not self.sparse:
             return out.toarray()
         else:
