@@ -97,16 +97,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
 
-        if (self.base_estimator is None or
-                isinstance(self.base_estimator, (BaseDecisionTree,
-                                                 BaseForest))):
-            dtype = DTYPE
-            accept_sparse = 'csc'
-        else:
-            dtype = None
-            accept_sparse = ['csr', 'csc']
 
-        X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=dtype,
+        X, y = check_X_y(X, y, 
+                         accept_sparse=True, 
+                         ensure_2d=False, 
+                         allow_nd=True,
                          y_numeric=is_regressor(self))
 
         if sample_weight is None:
@@ -261,13 +256,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _validate_X_predict(self, X):
         """Ensure that X is in the proper format"""
-        if (self.base_estimator is None or
-                isinstance(self.base_estimator,
-                           (BaseDecisionTree, BaseForest))):
-            X = check_array(X, accept_sparse='csr', dtype=DTYPE)
-
-        else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=True, ensure_2d=False, allow_nd=True)
 
         return X
 
