@@ -30,13 +30,10 @@ import numpy as np
 from scipy.special import xlogy
 
 from .base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin, is_regressor, is_classifier
+from ..base import ClassifierMixin, RegressorMixin, is_classifier
 
-from .forest import BaseForest
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..tree.tree import BaseDecisionTree
-from ..tree._tree import DTYPE
-from ..utils import check_array, check_X_y, check_random_state
+from ..utils import check_array, check_random_state, safe_indexing
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
 from sklearn.utils.validation import has_fit_parameter, check_is_fitted
@@ -97,17 +94,10 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
 
-
-        X, y = check_X_y(X, y, 
-                         accept_sparse=True, 
-                         ensure_2d=False, 
-                         allow_nd=True,
-                         y_numeric=is_regressor(self))
-
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
-            sample_weight = np.empty(X.shape[0], dtype=np.float64)
-            sample_weight[:] = 1. / X.shape[0]
+            sample_weight = np.empty(len(X), dtype=np.float64)
+            sample_weight[:] = 1. / len(X)
         else:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             # Normalize existing weights
@@ -253,12 +243,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                 "Unable to compute feature importances "
                 "since base_estimator does not have a "
                 "feature_importances_ attribute")
-
-    def _validate_X_predict(self, X):
-        """Ensure that X is in the proper format"""
-        X = check_array(X, accept_sparse=True, ensure_2d=False, allow_nd=True)
-
-        return X
 
 
 def _samme_proba(estimator, n_classes, X):
@@ -646,7 +630,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         check_is_fitted(self, "n_classes_")
-        X = self._validate_X_predict(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -689,7 +672,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         check_is_fitted(self, "n_classes_")
-        X = self._validate_X_predict(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -741,10 +723,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         check_is_fitted(self, "n_classes_")
 
         n_classes = self.n_classes_
-        X = self._validate_X_predict(X)
 
         if n_classes == 1:
-            return np.ones((X.shape[0], 1))
+            return np.ones((len(X), 1))
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
@@ -787,7 +768,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
-        X = self._validate_X_predict(X)
 
         n_classes = self.n_classes_
         proba = None
@@ -997,14 +977,16 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         # For NumPy >= 1.7.0 use np.random.choice
         cdf = stable_cumsum(sample_weight)
         cdf /= cdf[-1]
-        uniform_samples = random_state.random_sample(X.shape[0])
+        uniform_samples = random_state.random_sample(len(X))
         bootstrap_idx = cdf.searchsorted(uniform_samples, side='right')
         # searchsorted returns a scalar
         bootstrap_idx = np.array(bootstrap_idx, copy=False)
 
         # Fit on the bootstrapped sample and obtain a prediction
         # for all samples in the training set
-        estimator.fit(X[bootstrap_idx], y[bootstrap_idx])
+        X_ = safe_indexing(X, bootstrap_idx)
+        y_ = safe_indexing(y, bootstrap_idx)
+        estimator.fit(X_, y_)
         y_predict = estimator.predict(X)
 
         error_vect = np.abs(y_predict - y)
@@ -1056,10 +1038,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
         median_idx = median_or_above.argmax(axis=1)
 
-        median_estimators = sorted_idx[np.arange(X.shape[0]), median_idx]
+        median_estimators = sorted_idx[np.arange(len(X)), median_idx]
 
         # Return median predictions
-        return predictions[np.arange(X.shape[0]), median_estimators]
+        return predictions[np.arange(len(X)), median_estimators]
 
     def predict(self, X):
         """Predict regression value for X.
@@ -1079,7 +1061,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         check_is_fitted(self, "estimator_weights_")
-        X = self._validate_X_predict(X)
 
         return self._get_median_predict(X, len(self.estimators_))
 
@@ -1105,7 +1086,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         check_is_fitted(self, "estimator_weights_")
-        X = self._validate_X_predict(X)
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)

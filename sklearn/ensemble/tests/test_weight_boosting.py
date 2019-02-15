@@ -9,16 +9,10 @@ from sklearn.utils.testing import assert_equal, assert_greater
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.ensemble import weight_boosting
-from scipy.sparse import csc_matrix
-from scipy.sparse import csr_matrix
-from scipy.sparse import coo_matrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
 from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
@@ -319,6 +313,7 @@ def test_sample_weight_missing():
     clf = AdaBoostRegressor(KMeans())
     assert_raises(ValueError, clf.fit, X, y_regr)
 
+
 def test_sample_weight_adaboost_regressor():
     """
     AdaBoostRegressor should work without sample_weights in the base estimator
@@ -332,7 +327,7 @@ def test_sample_weight_adaboost_regressor():
             pass
 
         def predict(self, X):
-            return np.zeros(X.shape[0])
+            return np.zeros(len(X))
 
     boost = AdaBoostRegressor(DummyEstimator(), n_estimators=3)
     boost.fit(X, y_regr)
@@ -347,32 +342,33 @@ def test_multidimensional_X():
             return self
 
         def predict(self, X):
-            n_samples = X.shape[0]
+            n_samples = len(X)
             predictions = np.random.choice(self.classes_, n_samples)
             return predictions
 
         def predict_proba(self, X):
-            n_samples = X.shape[0]
+            n_samples = len(X)
             n_classes = len(self.classes_)
             probas = np.random.randn(n_samples, n_classes)
             return probas
 
     class DummyRegressor(BaseEstimator):
 
-        def fit(self, X, y, sample_weight=None):
+        def fit(self, X, y):
             return self
 
         def predict(self, X):
-            n_samples = X.shape[0]
+            n_samples = len(X)
             predictions = np.random.randn(n_samples)
             return predictions
 
-
-    X = np.random.randn(50, 3,3)
-    yc = np.random.choice([0,1], 50)
+    X = np.random.randn(50, 3, 3).tolist()
+    yc = np.random.choice([0, 1], 50)
     yr = np.random.randn(50)
 
     boost = AdaBoostClassifier(DummyClassifier())
-    boost.fit(X,yc)
+    boost.fit(X, yc)
+
     boost = AdaBoostRegressor(DummyRegressor())
-    boost.fit(X,yc)
+    boost.fit(X, yr)
+
