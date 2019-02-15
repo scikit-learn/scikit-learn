@@ -446,9 +446,6 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
-# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
-# Python 3.7
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_check_docstring_parameters():
     try:
         import numpydoc  # noqa
