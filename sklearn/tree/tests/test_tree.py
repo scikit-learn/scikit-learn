@@ -1830,7 +1830,8 @@ def test_empty_leaf_infinite_threshold():
         assert len(empty_leaf) == 0
 
 
-def check_multi_target(name):
+@pytest.mark.parametrize('name', CLF_TREES)
+def test_multi_target(name):
     Tree = CLF_TREES[name]
 
     clf = Tree()
@@ -1845,8 +1846,3 @@ def check_multi_target(name):
     # Try to fix and predict.
     clf.fit(X, ys)
     clf.predict(X)
-
-
-@pytest.mark.parametrize('name', CLF_TREES)
-def test_multi_target(name):
-    check_multi_target(name)

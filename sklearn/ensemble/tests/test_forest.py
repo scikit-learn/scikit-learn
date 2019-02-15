@@ -1339,7 +1339,9 @@ def test_backend_respected():
     assert ba.count == 0
 
 
-def check_multi_target(name, oob_score):
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+@pytest.mark.parametrize('oob_score', (True, False))
+def test_multi_target(name, oob_score):
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
     clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
@@ -1354,9 +1356,3 @@ def check_multi_target(name, oob_score):
     # Try to fix and predict.
     clf.fit(X, ys)
     clf.predict(X)
-
-
-@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
-@pytest.mark.parametrize('oob_score', (True, False))
-def test_multi_target(name, oob_score):
-    check_multi_target(name, oob_score)
