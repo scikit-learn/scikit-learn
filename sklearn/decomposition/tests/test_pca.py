@@ -257,35 +257,33 @@ def test_singular_values():
 
     X = rng.randn(n_samples, n_features)
 
-    pca = PCA(n_components=2, svd_solver='full',
-              random_state=rng).fit(X)
-    apca = PCA(n_components=2, svd_solver='arpack',
-               random_state=rng).fit(X)
+    pca = PCA(n_components=2, svd_solver='full', random_state=rng).fit(X)
+    apca = PCA(n_components=2, svd_solver='arpack', random_state=rng).fit(X)
     # Increase the number of power iterations to get greater accuracy in tests
     rpca = PCA(n_components=2, svd_solver='randomized', iterated_power=40,
                random_state=rng).fit(X)
-    assert_allclose(pca.singular_values_, apca.singular_values_, atol=12)
-    assert_allclose(pca.singular_values_, rpca.singular_values_, atol=12)
-    assert_allclose(apca.singular_values_, rpca.singular_values_, atol=12)
+    assert_allclose(pca.singular_values_, apca.singular_values_)
+    assert_allclose(pca.singular_values_, rpca.singular_values_)
+    assert_allclose(apca.singular_values_, rpca.singular_values_)
 
     # Compare to the Frobenius norm
     X_pca = pca.transform(X)
     X_apca = apca.transform(X)
     X_rpca = rpca.transform(X)
-    assert_array_almost_equal(np.sum(pca.singular_values_**2.0),
-                              np.linalg.norm(X_pca, "fro")**2.0, 12)
-    assert_array_almost_equal(np.sum(apca.singular_values_**2.0),
-                              np.linalg.norm(X_apca, "fro")**2.0, 9)
-    assert_array_almost_equal(np.sum(rpca.singular_values_**2.0),
-                              np.linalg.norm(X_rpca, "fro")**2.0, 0)
+    assert_array_almost_equal(np.sum(pca.singular_values_ ** 2.0),
+                              np.linalg.norm(X_pca, "fro") ** 2.0, 12)
+    assert_array_almost_equal(np.sum(apca.singular_values_ ** 2.0),
+                              np.linalg.norm(X_apca, "fro") ** 2.0, 9)
+    assert_array_almost_equal(np.sum(rpca.singular_values_ ** 2.0),
+                              np.linalg.norm(X_rpca, "fro") ** 2.0, 0)
 
     # Compare to the 2-norms of the score vectors
-    assert_array_almost_equal(pca.singular_values_,
-                              np.sqrt(np.sum(X_pca**2.0, axis=0)), 12)
-    assert_array_almost_equal(apca.singular_values_,
-                              np.sqrt(np.sum(X_apca**2.0, axis=0)), 12)
-    assert_array_almost_equal(rpca.singular_values_,
-                              np.sqrt(np.sum(X_rpca**2.0, axis=0)), 12)
+    assert_allclose(pca.singular_values_,
+                    np.sqrt(np.sum(X_pca ** 2.0, axis=0)))
+    assert_allclose(apca.singular_values_,
+                    np.sqrt(np.sum(X_apca ** 2.0, axis=0)))
+    assert_allclose(rpca.singular_values_,
+                    np.sqrt(np.sum(X_rpca ** 2.0, axis=0)))
 
     # Set the singular values and see what we get back
     rng = np.random.RandomState(0)
@@ -299,7 +297,7 @@ def test_singular_values():
     rpca = PCA(n_components=3, svd_solver='randomized', random_state=rng)
     X_pca = pca.fit_transform(X)
 
-    X_pca /= np.sqrt(np.sum(X_pca**2.0, axis=0))
+    X_pca /= np.sqrt(np.sum(X_pca ** 2.0, axis=0))
     X_pca[:, 0] *= 3.142
     X_pca[:, 1] *= 2.718
 
@@ -308,9 +306,9 @@ def test_singular_values():
     apca.fit(X_hat)
     rpca.fit(X_hat)
 
-    assert_array_almost_equal(pca.singular_values_, [3.142, 2.718, 1.0], 14)
-    assert_array_almost_equal(apca.singular_values_, [3.142, 2.718, 1.0], 14)
-    assert_array_almost_equal(rpca.singular_values_, [3.142, 2.718, 1.0], 14)
+    assert_allclose(pca.singular_values_, [3.142, 2.718, 1.0])
+    assert_allclose(apca.singular_values_, [3.142, 2.718, 1.0])
+    assert_allclose(rpca.singular_values_, [3.142, 2.718, 1.0])
 
 
 def test_pca_check_projection():
