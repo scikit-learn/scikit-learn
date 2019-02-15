@@ -20,17 +20,18 @@ except ImportError:
 "
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
-collect_diff_tests() {
-    # Checks if the test collections are the same for different runs
-    pytest --collect-only -q | grep ^sklearn > collect_1.txt
-    pytest --collect-only -q | grep ^sklearn > collect_2.txt
+# Collects tests 4 times and confirms that they match
+# This is to make sure the tests will continue to work with pytest-xdist.
+collect_tests_no_diffs() {
+    pytest --collect-only -q --pyargs $1 | sed '$d' > collect_1.txt
+    pytest --collect-only -q --pyargs $1 | sed '$d' > collect_2.txt
     diff collect_2.txt collect_1.txt
 
-    pytest --collect-only -q | grep ^sklearn > collect_3.txt
+    pytest --collect-only -q --pyargs $1 | sed '$d' > collect_3.txt
     diff collect_3.txt collect_1.txt
     diff collect_3.txt collect_2.txt
 
-    pytest --collect-only -q | grep ^sklearn > collect_4.txt
+    pytest --collect-only -q --pyargs $1 | sed '$d' > collect_4.txt
     diff collect_4.txt collect_1.txt
     diff collect_4.txt collect_2.txt
     diff collect_4.txt collect_3.txt
@@ -61,7 +62,7 @@ run_tests() {
 
     set -x  # print executed commands to the terminal
 
-    collect_diff_tests
+    collect_tests_no_diffs
     $TEST_CMD sklearn
 }
 
