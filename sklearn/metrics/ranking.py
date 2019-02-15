@@ -936,7 +936,7 @@ def min_precision(y_true, y_pred):
     array([0.66666667, 0.6       , 0.        ])
     """
     # Get arrays of preicisions and recalls
-    _ , r, _ = precision_recall_curve(y_true, y_pred)
+    _, r, _ = precision_recall_curve(y_true, y_pred)
     # Calculate skew
     s = np.count_nonzero(y_true)/y_true.size
     # Calculate minimum precision for given recall score and skew of labels
@@ -1066,8 +1066,8 @@ def min_average_precision(y_true):
     return(min_average_precision)
 
 
-def normalized_aucpr(y_true, y_score, recall_bounds=[0, 1]
-                        , normalize_strategy='average_precision'):
+def normalized_aucpr(y_true, y_score, recall_bounds=[0, 1], 
+                     normalize_strategy='average_precision'):
     """Normalized Area under the Precision-Recall curve. From AUCPR, we
     subtract the minimum AUCPR, so the worst ranking has a score of 0, then
     normalize so the best ranking has a score of 1.
@@ -1149,7 +1149,7 @@ def normalized_aucpr(y_true, y_score, recall_bounds=[0, 1]
     0.13553408061571867...
     """
     # Get AUC_PR and AUCPR_Min of classifier
-    if normalize_strategy=='average_precision':
+    if normalize_strategy == 'average_precision':
         # Use average precision score values
         aucpr = average_precision_score(y_true, y_score)
         # Recall bounds not supported yet
@@ -1163,19 +1163,19 @@ def normalized_aucpr(y_true, y_score, recall_bounds=[0, 1]
         precision, recall, _ = precision_recall_curve(y_true, y_score)
         # Get indices of when recall is above and between recall_bounds
         indices = [[i for i, e in enumerate(recall.tolist()) if e == x]
-                    for x in recall.tolist() if 
-                    recall_bounds[0] <= x <= recall_bounds[1]]
+                for x in recall.tolist() if
+                recall_bounds[0] <= x <= recall_bounds[1]]
         # Turn list of lists into a list, and remove duplicates
         indices = list(set([item for sublist in indices for item in sublist]))
         # Get AUCPR of recall bounds
         aucpr = auc(recall[indices], precision[indices])
-        if normalize_strategy=='auc':
+        if normalize_strategy == 'auc':
             # AUCPR minimum
             min_aucpr = aucpr_min(y_true, recall_bounds)
-        if normalize_strategy=='random':
+        if normalize_strategy == 'random':
             # Use skew
             min_aucpr = np.count_nonzero(y_true)/y_true.size
     # Calculate Noramlized Area Under Curve for Precision Recall Curve
     aucnpr = (aucpr - min_aucpr) \
-            /(recall_bounds[1] - recall_bounds[0] - min_aucpr)
+            / (recall_bounds[1] - recall_bounds[0] - min_aucpr)
     return(aucnpr)
