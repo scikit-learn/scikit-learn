@@ -391,6 +391,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    error_score='raise-deprecating'):
     """Fit estimator and compute scores for a given dataset split.
 
+    NOTE: If sample_weight is supplied in ``fit_params``, it will be used for
+          both learning and will be passed to scorer for use in metric
+          calculations.
+
     Parameters
     ----------
     estimator : estimator object implementing 'fit'
