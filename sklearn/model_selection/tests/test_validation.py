@@ -1582,3 +1582,68 @@ def test_score():
     fit_and_score_args = [None, None, None, two_params_scorer]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
+
+
+def test_sample_weight():
+    X = np.ones([4, 1])         # Constant features to learn intercept.
+    y = np.array([1, 0, 1, 0])  # Some +/- for both test and train.
+    train = np.array([0, 1])    # First two indices are train.
+    test = np.array([2, 3])     # Last two indices are test.
+    sample_weight = np.array([2000000, 1000000, 1, 1000000])
+
+    exp_test_acc = np.dot(y[test], sample_weight[test]) / np.sum(
+        sample_weight[test])
+    exp_train_pr = np.dot(y[train], sample_weight[train]) / np.sum(
+        sample_weight[train])
+    exp_preds = np.array([exp_train_pr] * test.shape[0])
+
+    random_state = 15432
+    estimator = LogisticRegression()
+
+    # Step 1: Check that the classifier learned the sample weighted class
+    #         prior probability.  Check predict_proba versus the known
+    #         class prior: exp_train_pr.
+    #
+    est_clone = clone(estimator)
+    est_clone.set_params(random_state=random_state)
+    est_clone.fit(X[tuple(train), :], y[train], sample_weight[train])
+    preds = est_clone.predict_proba(X[tuple(test), :])[:, 1]
+    np.testing.assert_array_almost_equal(exp_preds, preds)
+
+    # Step 2: Check that the accuracy computation in _fit_and_score
+    #         respects sample_weight.
+    #
+    metric_name = 'accuracy'
+    scorer = {metric_name: make_scorer(accuracy_score)}
+
+    res = _fit_and_score(
+        estimator, X, y, scorer, train, test,
+        verbose=0,
+        parameters=dict(random_state=random_state),
+        fit_params=dict(sample_weight=sample_weight),
+
+        # Based on parameters from in _fit_and_score when called from
+        # RandomizedSearchCV.fit
+        return_train_score='warn',
+        return_parameters=False,
+        return_n_test_samples=True,
+        return_times=True,
+        return_estimator=False,
+        error_score='raise-deprecating'
+    )
+
+    train_metric = res[0][metric_name]
+    test_metric = res[1][metric_name]
+
+    # Unnecessary extra test to illustrate that this is not the desired
+    # metric value (but previously what has been historically returned).
+    assert train_metric != np.sum(y[train]) / y[train].shape[0]
+    assert test_metric != np.sum(y[test]) / y[test].shape[0]
+
+    # The proper sampled weighted metric value.
+    #
+    # It is appropriate to use exact tests and not np.isclose because
+    # accuracy should be computed exactly since it's based on
+    # counts.
+    assert train_metric == exp_train_pr
+    assert test_metric == exp_test_acc
