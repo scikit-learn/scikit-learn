@@ -484,7 +484,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # early_stopping in partial_fit doesn't make sense
         early_stopping = self.early_stopping and not incremental
         if early_stopping:
-            stratify = y if is_classifier(self) else None
+            # don't stratify in multilabel classification
+            should_stratify = is_classifier(self) and self.n_outputs_ == 1
+            stratify = y if should_stratify else None
             X, X_val, y, y_val = train_test_split(
                 X, y, random_state=self._random_state,
                 test_size=self.validation_fraction,

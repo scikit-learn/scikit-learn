@@ -308,6 +308,11 @@ def test_multilabel_classification():
         mlp.partial_fit(X, y, classes=[0, 1, 2, 3, 4])
     assert_greater(mlp.score(X, y), 0.9)
 
+    # Make sure early stopping still work now that spliting is stratified by
+    # default (it is disabled for multilabel classification)
+    mlp = MLPClassifier(early_stopping=True)
+    mlp.fit(X, y).predict(X)
+
 
 def test_multioutput_regression():
     # Test that multi-output regression works as expected
@@ -669,8 +674,8 @@ def test_early_stopping_stratified():
     X = [[1, 2], [2, 3], [3, 4], [4, 5]]
     y = [0, 0, 0, 1]
 
-    gbc = MLPClassifier(early_stopping=True)
+    mlp = MLPClassifier(early_stopping=True)
     with pytest.raises(
             ValueError,
             match='The least populated class in y has only 1 member'):
-        gbc.fit(X, y)
+        mlp.fit(X, y)
