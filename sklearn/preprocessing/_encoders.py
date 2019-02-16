@@ -301,7 +301,7 @@ class OneHotEncoder(_BaseEncoder):
     """
 
     def __init__(self, n_values=None, categorical_features=None,
-                 categories=None, drop=None,sparse=True, dtype=np.float64,
+                 categories=None, drop=None, sparse=True, dtype=np.float64,
                  handle_unknown='error'):
         self.categories = categories
         self.sparse = sparse
@@ -452,7 +452,6 @@ class OneHotEncoder(_BaseEncoder):
                 "The `categorical_features` and `n_values` keywords "
                 "are deprecated, and cannot be used together "
                 "with 'drop'.")
-
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
