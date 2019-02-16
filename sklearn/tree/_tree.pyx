@@ -1235,7 +1235,7 @@ cpdef build_pruned_tree_ccp(
         # computes number of leaves in all branches and the overall impurity of
         # the branch. The overall impurity is the sum of r_node in its leaves.
         for leaf_idx in range(leaves_in_subtree.shape[0]):
-            if leaves_in_subtree[leaf_idx] == 0:
+            if not leaves_in_subtree[leaf_idx]:
                 continue
             r_branch[leaf_idx] = r_node[leaf_idx]
 

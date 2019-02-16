@@ -389,7 +389,7 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
-        self.prune_tree()
+        self._prune_tree()
 
         return self
 
@@ -517,7 +517,7 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
         X = self._validate_X_predict(X, check_input)
         return self.tree_.decision_path(X)
 
-    def prune_tree(self):
+    def _prune_tree(self):
         """Prunes tree using Minimal Cost-Complexity Pruning.
 
         .. versionadded:: 0.21
