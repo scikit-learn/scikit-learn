@@ -22,7 +22,7 @@ python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 # Collects tests 3 times and confirms that they match
 # This is to make sure the tests will continue to work with pytest-xdist.
-collect_tests_no_diffs() {
+pytest_collects_same_tests_in_three_runs() {
     pytest --collect-only -q --pyargs $1 | sed '$d' > collect_1.txt
     pytest --collect-only -q --pyargs $1 | sed '$d' > collect_2.txt
     diff collect_2.txt collect_1.txt
@@ -57,7 +57,7 @@ run_tests() {
 
     set -x  # print executed commands to the terminal
 
-    collect_tests_no_diffs
+    pytest_collects_same_tests_in_three_runs sklearn
     $TEST_CMD sklearn
 }
 
