@@ -242,11 +242,10 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape=None):
             count = -1
         else:
             count = shape[0] * shape[1]
-        data = np.fromiter(itertools.chain.from_iterable(arff_data),
-                           dtype='float64', count=count)
+        data = np.array(list(itertools.chain.from_iterable(arff_data)))
         data = data.reshape(*shape)
-        X = data[:, col_slice_x]
-        y = data[:, col_slice_y]
+        X = np.array(data[:, col_slice_x], dtype=np.float64)
+        y = np.array(data[:, col_slice_y], dtype=np.float64)
         return X, y
     elif isinstance(arff_data, tuple):
         arff_data_X = _split_sparse_columns(arff_data, col_slice_x)
@@ -287,7 +286,7 @@ def _get_data_info_by_name(name, version, data_home):
     Returns
     -------
     first_dataset : json
-        json representation of the first dataset object that adhired to the
+        json representation of the first dataset object that adhered to the
         search criteria
 
     """
@@ -436,7 +435,8 @@ def _valid_data_column_names(features_list, target_columns):
 
 
 def fetch_openml(name=None, version='active', data_id=None, data_home=None,
-                 target_column='default-target', cache=True, return_X_y=False):
+                 ignore_strings=False, target_column='default-target',
+                 cache=True, return_X_y=False):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -450,7 +450,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     .. note:: EXPERIMENTAL
 
         The API is experimental in version 0.20 (particularly the return value
-        structure), and might have small backward-incompatible changes in
+        structure), and might have small backward-incompatble changes in
         future releases.
 
     Parameters
@@ -474,6 +474,9 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     data_home : string or None, default None
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
+    ignore_strings : boolean, default=False
+        Whether to ignore string attributes when loading a dataset.
 
     target_column : string, list or None, default 'default-target'
         Specify the column name in the data to use as target. If
@@ -573,11 +576,22 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # download data features, meta-info about column types
     features_list = _get_data_features(data_id, data_home)
 
+    if ignore_strings:
+        string_features = [f for f in features_list
+                           if f['data_type'] == 'string']
+        if string_features:
+            string_feature_names = [f['name'] for f in string_features]
+            features_list = [f for f in features_list if f['name'] not in
+                             string_feature_names]
+
     for feature in features_list:
         if 'true' in (feature['is_ignore'], feature['is_row_identifier']):
             continue
-        if feature['data_type'] == 'string':
-            raise ValueError('STRING attributes are not yet supported')
+        if feature['data_type'] == 'string' and not ignore_strings:
+            raise ValueError('STRING attributes are not yet supported.'
+                             'If you would like to return the data '
+                             'without STRING attributes, Use'
+                             'ignore_strings=True')
 
     if target_column == "default-target":
         # determines the default target based on the data feature results

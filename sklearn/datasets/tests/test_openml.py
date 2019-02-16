@@ -66,7 +66,7 @@ def _test_features_list(data_id):
 
 
 def _fetch_dataset_from_openml(data_id, data_name, data_version,
-                               target_column,
+                               ignore_strings, target_column,
                                expected_observations, expected_features,
                                expected_missing,
                                expected_data_dtype, expected_target_dtype,
@@ -76,17 +76,18 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     # result. Note that this function can be mocked (by invoking
     # _monkey_patch_webbased_functions before invoking this function)
     data_by_name_id = fetch_openml(name=data_name, version=data_version,
-                                   cache=False)
+                                   ignore_strings=ignore_strings, cache=False)
     assert int(data_by_name_id.details['id']) == data_id
 
     # Please note that cache=False is crucial, as the monkey patched files are
     # not consistent with reality
-    fetch_openml(name=data_name, cache=False)
+    fetch_openml(name=data_name, ignore_strings=ignore_strings, cache=False)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
 
     # fetch with dataset id
     data_by_id = fetch_openml(data_id=data_id, cache=False,
+                              ignore_strings=ignore_strings,
                               target_column=target_column)
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
@@ -112,7 +113,9 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
 
     if compare_default_target:
         # check whether the data by id and data by id target are equal
-        data_by_id_default = fetch_openml(data_id=data_id, cache=False)
+        data_by_id_default = fetch_openml(data_id=data_id,
+                                          ignore_strings=ignore_strings,
+                                          cache=False)
         if data_by_id.data.dtype == np.float64:
             np.testing.assert_allclose(data_by_id.data,
                                        data_by_id_default.data)
@@ -133,8 +136,9 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
                 expected_missing)
 
     # test return_X_y option
-    fetch_func = partial(fetch_openml, data_id=data_id, cache=False,
-                         target_column=target_column)
+    fetch_func = partial(fetch_openml, data_id=data_id,
+                         ignore_strings=ignore_strings,
+                         cache=False, target_column=target_column)
     check_return_X_y(data_by_id, fetch_func)
     return data_by_id
 
@@ -261,6 +265,7 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
     data_id = 61
     data_name = 'iris'
     data_version = 1
+    ignore_strings = False
     target_column = 'class'
     expected_observations = 150
     expected_features = 4
@@ -275,6 +280,7 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
         _fetch_dataset_from_openml,
         **{'data_id': data_id, 'data_name': data_name,
            'data_version': data_version,
+           'ignore_strings': ignore_strings,
            'target_column': target_column,
            'expected_observations': expected_observations,
            'expected_features': expected_features,
@@ -298,13 +304,15 @@ def test_fetch_openml_iris_multitarget(monkeypatch, gzip_response):
     data_id = 61
     data_name = 'iris'
     data_version = 1
+    ignore_strings = False
     target_column = ['sepallength', 'sepalwidth']
     expected_observations = 150
     expected_features = 3
     expected_missing = 0
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+    _fetch_dataset_from_openml(data_id, data_name, data_version,
+                               ignore_strings, target_column,
                                expected_observations, expected_features,
                                expected_missing,
                                object, np.float64, expect_sparse=False,
@@ -317,13 +325,15 @@ def test_fetch_openml_anneal(monkeypatch, gzip_response):
     data_id = 2
     data_name = 'anneal'
     data_version = 1
+    ignore_strings = False
     target_column = 'class'
     # Not all original instances included for space reasons
     expected_observations = 11
     expected_features = 38
     expected_missing = 267
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+    _fetch_dataset_from_openml(data_id, data_name, data_version,
+                               ignore_strings, target_column,
                                expected_observations, expected_features,
                                expected_missing,
                                object, object, expect_sparse=False,
@@ -342,13 +352,15 @@ def test_fetch_openml_anneal_multitarget(monkeypatch, gzip_response):
     data_id = 2
     data_name = 'anneal'
     data_version = 1
+    ignore_strings = False
     target_column = ['class', 'product-type', 'shape']
     # Not all original instances included for space reasons
     expected_observations = 11
     expected_features = 36
     expected_missing = 267
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+    _fetch_dataset_from_openml(data_id, data_name, data_version,
+                               ignore_strings, target_column,
                                expected_observations, expected_features,
                                expected_missing,
                                object, object, expect_sparse=False,
@@ -361,12 +373,14 @@ def test_fetch_openml_cpu(monkeypatch, gzip_response):
     data_id = 561
     data_name = 'cpu'
     data_version = 1
+    ignore_strings = False
     target_column = 'class'
     expected_observations = 209
     expected_features = 7
     expected_missing = 0
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+    _fetch_dataset_from_openml(data_id, data_name, data_version,
+                               ignore_strings, target_column,
                                expected_observations, expected_features,
                                expected_missing,
                                object, np.float64, expect_sparse=False,
@@ -388,6 +402,7 @@ def test_fetch_openml_australian(monkeypatch, gzip_response):
     data_id = 292
     data_name = 'Australian'
     data_version = 1
+    ignore_strings = False
     target_column = 'Y'
     # Not all original instances included for space reasons
     expected_observations = 85
@@ -400,6 +415,7 @@ def test_fetch_openml_australian(monkeypatch, gzip_response):
         _fetch_dataset_from_openml,
         **{'data_id': data_id, 'data_name': data_name,
            'data_version': data_version,
+           'ignore_strings': ignore_strings,
            'target_column': target_column,
            'expected_observations': expected_observations,
            'expected_features': expected_features,
@@ -417,13 +433,15 @@ def test_fetch_openml_adultcensus(monkeypatch, gzip_response):
     data_id = 1119
     data_name = 'adult-census'
     data_version = 1
+    ignore_strings = False
     target_column = 'class'
     # Not all original instances included for space reasons
     expected_observations = 10
     expected_features = 14
     expected_missing = 0
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+    _fetch_dataset_from_openml(data_id, data_name, data_version,
+                               ignore_strings, target_column,
                                expected_observations, expected_features,
                                expected_missing,
                                np.float64, object, expect_sparse=False,
@@ -439,13 +457,15 @@ def test_fetch_openml_miceprotein(monkeypatch, gzip_response):
     data_id = 40966
     data_name = 'MiceProtein'
     data_version = 4
+    ignore_strings = False
     target_column = 'class'
     # Not all original instances included for space reasons
     expected_observations = 7
     expected_features = 77
     expected_missing = 7
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+    _fetch_dataset_from_openml(data_id, data_name, data_version,
+                               ignore_strings, target_column,
                                expected_observations, expected_features,
                                expected_missing,
                                np.float64, object, expect_sparse=False,
@@ -458,6 +478,7 @@ def test_fetch_openml_emotions(monkeypatch, gzip_response):
     data_id = 40589
     data_name = 'emotions'
     data_version = 3
+    ignore_strings = False
     target_column = ['amazed.suprised', 'happy.pleased', 'relaxing.calm',
                      'quiet.still', 'sad.lonely', 'angry.aggresive']
     expected_observations = 13
@@ -465,7 +486,8 @@ def test_fetch_openml_emotions(monkeypatch, gzip_response):
     expected_missing = 0
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
-    _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
+    _fetch_dataset_from_openml(data_id, data_name, data_version,
+                               ignore_strings, target_column,
                                expected_observations, expected_features,
                                expected_missing,
                                np.float64, object, expect_sparse=False,
@@ -476,6 +498,27 @@ def test_decode_emotions(monkeypatch):
     data_id = 40589
     _monkey_patch_webbased_functions(monkeypatch, data_id, False)
     _test_features_list(data_id)
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_titanic(monkeypatch, gzip_response):
+    # check because of the string attributes
+    data_id = 40945
+    data_name = 'Titanic'
+    data_version = 1
+    ignore_strings = True
+    target_column = 'survived'
+    # Not all original features included because five are strings
+    expected_observations = 1309
+    expected_features = 8
+    expected_missing = 1454
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
+    _fetch_dataset_from_openml(data_id, data_name, data_version,
+                               ignore_strings, target_column,
+                               expected_observations, expected_features,
+                               expected_missing,
+                               np.float64, object, expect_sparse=False,
+                               compare_default_target=True)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -667,7 +710,8 @@ def test_string_attribute(monkeypatch, gzip_response):
     # single column test
     assert_raise_message(ValueError,
                          'STRING attributes are not yet supported',
-                         fetch_openml, data_id=data_id, cache=False)
+                         fetch_openml, data_id=data_id, ignore_strings=False,
+                         cache=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
