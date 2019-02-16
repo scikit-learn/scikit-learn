@@ -1339,6 +1339,7 @@ def test_backend_respected():
     assert ba.count == 0
 
 
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 @pytest.mark.parametrize('oob_score', (True, False))
 def test_multi_target(name, oob_score):
