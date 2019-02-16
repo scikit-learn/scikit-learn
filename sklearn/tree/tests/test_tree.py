@@ -1851,6 +1851,13 @@ def test_prune_tree_reg_are_subtrees(criterion, dataset, tree_cls):
     assert_pruning_creates_subtree(tree_cls, X, y)
 
 
+def test_prune_tree_prunes_all_leaves():
+    clf = DecisionTreeClassifier(ccp_alpha=100)
+    clf.fit(X, y)
+    assert clf.tree_.max_depth == 0
+    assert clf.tree_.node_count == 1
+
+
 def test_prune_tree_raises_negative_ccp_alpha():
     clf = DecisionTreeClassifier()
     msg = "ccp_alpha must be greater than or equal to 0"
@@ -1864,7 +1871,7 @@ def test_prune_tree_raises_negative_ccp_alpha():
 
     with pytest.raises(ValueError, match=msg):
         clf.set_params(ccp_alpha=-1.0)
-        clf.prune_tree()
+        clf._prune_tree()
 
 
 def assert_pruning_creates_subtree(estimator_cls, X, y):
