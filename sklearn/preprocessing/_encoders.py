@@ -164,16 +164,14 @@ class OneHotEncoder(_BaseEncoder):
         Specifies a methodology to use to drop one of the categories per
         feature. This is useful in situations where perfectly collinear
         features cause problems, such as when feeding the resulting data
-        into a neural network or an unregularized regression. If only one
-        feature appears in a column, that column will be dropped from the
-        transformed version (unless this is overriden by manually
-        specifying that no category ought to be dropped from that column).
+        into a neural network or an unregularized regression.
 
         - None : retain all features.
-        - 'first' : drop the first category in each feature.
-        - array : ``drop[i]`` is the value of the feature in ``X[:,i]``
-                  that should be dropped. None means all categories should
-                  be retained.
+        - 'first' : drop the first category in each feature. If only one
+                    category is present, the feature will be dropped
+                    entirely.
+        - array : ``drop[i]`` is the caetgory in ``X[:,i]`` that should be
+                  dropped. None means all categories should be retained.
 
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
@@ -226,8 +224,9 @@ class OneHotEncoder(_BaseEncoder):
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        The index in ``categories_`` of the category to be dropped for
-        each feature. None if all features will be retained.
+        drop_idx_[i] is the index in ``categories_`` of the category to be
+        dropped for each feature. None if all the transformed features will
+        be retained.
 
     active_features_ : array
         Indices for active features, meaning values that actually occur
@@ -301,8 +300,8 @@ class OneHotEncoder(_BaseEncoder):
       matrix indicating the presence of a class label.
     """
 
-    def __init__(self, n_values=None, drop=None, categorical_features=None,
-                 categories=None, sparse=True, dtype=np.float64,
+    def __init__(self, n_values=None, categorical_features=None,
+                 categories=None, drop=None,sparse=True, dtype=np.float64,
                  handle_unknown='error'):
         self.categories = categories
         self.sparse = sparse
@@ -454,13 +453,6 @@ class OneHotEncoder(_BaseEncoder):
                 "are deprecated, and cannot be used together "
                 "with 'drop'.")
 
-        # If we have both dropped columns and ignored unknown
-        # values, there will be ambiguous cells. This creates difficulties
-        # in interpreting the model.
-        if self.drop is not None and self.handle_unknown != 'error':
-            raise ValueError(
-                "`handle_unknown` cannot be 'ignore' when the drop parameter "
-                "is specified, as this will create ambiguous cells")
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
@@ -480,6 +472,14 @@ class OneHotEncoder(_BaseEncoder):
             raise ValueError(msg)
 
         self._handle_deprecations(X)
+
+        # If we have both dropped columns and ignored unknown
+        # values, there will be ambiguous cells. This creates difficulties
+        # in interpreting the model.
+        if self.drop is not None and self.handle_unknown != 'error':
+            raise ValueError(
+                "`handle_unknown` cannot be 'ignore' when the drop parameter "
+                "is specified, as this will create ambiguous cells")
 
         if self._legacy_mode:
             _transform_selected(X, self._legacy_fit_transform, self.dtype,
@@ -611,6 +611,14 @@ class OneHotEncoder(_BaseEncoder):
             raise ValueError(msg)
 
         self._handle_deprecations(X)
+
+        # If we have both dropped columns and ignored unknown
+        # values, there will be ambiguous cells. This creates difficulties
+        # in interpreting the model.
+        if self.drop is not None and self.handle_unknown != 'error':
+            raise ValueError(
+                "`handle_unknown` cannot be 'ignore' when the drop parameter "
+                "is specified, as this will create ambiguous cells")
 
         if self._legacy_mode:
             return _transform_selected(
@@ -789,17 +797,18 @@ class OneHotEncoder(_BaseEncoder):
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(_argmax(sub, axis=1)).flatten()
             X_tr[:, i] = cats[labels]
-            unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
-            if unknown.any():
-                '''
-                In this case, we can safely assume that all of the nulls in
-                each column are the dropped value
-                '''
-                if self.drop is not None:
-                    X_tr[unknown, i] = self.categories_[i][self.drop_idx_[i]]
-                elif self.handle_unknown == 'ignore':
-                    # ignored unknown categories: we have a row of all zero's
-                    found_unknown[i] = unknown
+            if self.handle_unknown == 'ignore' or self.drop is not None:
+                unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
+                if unknown.any():
+                    # In this case, we can safely assume that all of the nulls
+                    # in each column are the dropped value
+                    if self.drop is not None:
+                        X_tr[unknown, i] = (self.categories_[i][
+                                                self.drop_idx_[i]])
+                    elif self.handle_unknown == 'ignore':
+                        # ignored unknown categories: we have a row of all
+                        # zero
+                        found_unknown[i] = unknown
 
             j += n_categories
 

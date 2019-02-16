@@ -708,12 +708,18 @@ def test_one_hot_encoder_warning():
 
 
 def test_one_hot_encoder_drop_manual():
-    enc = OneHotEncoder(drop=['def', 3, 56])
+    cats_to_drop = ['def', 3, 56]
+    enc = OneHotEncoder(drop=cats_to_drop)
     X = [['abc', 2, 55], ['def', 1, 55], ['def', 3, 56]]
     exp = np.array([[1., 0., 1., 1.],
                     [0., 1., 0., 1.],
                     [0., 0., 0., 0.]], dtype='float64')
+
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
+    dropped_cats = np.array([None if feature is None else cat[feature]
+                             for cat, feature in zip(enc.categories_,
+                                                     enc.drop_idx_)])
+    assert_array_equal(dropped_cats, cats_to_drop)
 
 
 def test_one_hot_encoder_none_drop():
