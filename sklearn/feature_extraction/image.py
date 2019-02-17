@@ -341,7 +341,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     >>> from sklearn.datasets import load_sample_images
     >>> from sklearn.feature_extraction import image
     >>> # Use the array data from the first image in this dataset:
-    >>> one_image = load_sample_images().images[0]
+    >>> one_image = load_sample_images().images[1]
     >>> print('Image shape: {}'.format(one_image.shape))
     Image shape: (427, 640, 3)
     >>> patches = image.extract_patches_2d(one_image, (2, 2))
@@ -351,11 +351,13 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     >>> print(patches[1]) # doctest: +NORMALIZE_WHITESPACE
     [[[174 201 231]
       [174 201 231]]
+
      [[173 200 230]
       [173 200 230]]]
     >>> print(patches[800])# doctest: +NORMALIZE_WHITESPACE
     [[[187 214 243]
       [188 215 244]]
+
      [[187 214 243]
       [188 215 244]]]
     """
