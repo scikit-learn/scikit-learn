@@ -351,13 +351,11 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     >>> print(patches[1]) # doctest: +NORMALIZE_WHITESPACE
     [[[174 201 231]
       [174 201 231]]
-
      [[173 200 230]
       [173 200 230]]]
     >>> print(patches[800])# doctest: +NORMALIZE_WHITESPACE
     [[[187 214 243]
       [188 215 244]]
-
      [[187 214 243]
       [188 215 244]]]
     """
