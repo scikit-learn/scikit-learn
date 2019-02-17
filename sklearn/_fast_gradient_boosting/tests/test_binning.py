@@ -17,9 +17,11 @@ def test_find_binning_thresholds_regular_data():
     data = np.linspace(0, 10, 1001).reshape(-1, 1)
     bin_thresholds = _find_binning_thresholds(data, max_bins=10)
     assert_allclose(bin_thresholds[0], [1, 2, 3, 4, 5, 6, 7, 8, 9])
+    assert len(bin_thresholds) == 1
 
     bin_thresholds = _find_binning_thresholds(data, max_bins=5)
     assert_allclose(bin_thresholds[0], [2, 4, 6, 8])
+    assert len(bin_thresholds) == 1
 
 
 def test_find_binning_thresholds_small_regular_data():
@@ -100,9 +102,9 @@ def test_bin_mapper_random_data(n_bins):
     assert_array_equal(binned.min(axis=0), np.array([0, 0]))
     assert_array_equal(binned.max(axis=0), np.array([n_bins - 1, n_bins - 1]))
     assert len(mapper.bin_thresholds_) == n_features
-    for i in range(len(mapper.bin_thresholds_)):
-        assert mapper.bin_thresholds_[i].shape == (n_bins - 1,)
-        assert mapper.bin_thresholds_[i].dtype == DATA.dtype
+    for bin_thresholds_feature in mapper.bin_thresholds_:
+        assert bin_thresholds_feature.shape == (n_bins - 1,)
+        assert bin_thresholds_feature.dtype == DATA.dtype
     assert np.all(mapper.n_bins_per_feature_ == n_bins)
 
     # Check that the binned data is approximately balanced across bins.
@@ -216,9 +218,6 @@ def test_subsample():
     mapper_subsample = BinMapper(subsample=256, random_state=0).fit(DATA)
 
     for feature in range(DATA.shape[1]):
-        with pytest.raises(AssertionError):
-            np.testing.assert_array_almost_equal(
-                mapper_no_subsample.bin_thresholds_[feature],
-                mapper_subsample.bin_thresholds_[feature],
-                decimal=3
-            )
+        assert not np.allclose(mapper_no_subsample.bin_thresholds_[feature],
+                               mapper_subsample.bin_thresholds_[feature],
+                               rtol=1e-4)

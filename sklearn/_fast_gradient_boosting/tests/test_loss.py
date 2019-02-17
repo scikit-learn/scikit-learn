@@ -57,7 +57,7 @@ def get_derivatives_helper(loss):
                     reason='Newton internally uses float64 != Y_DTYPE')
 def test_derivatives(loss, x0, y_true):
     # Check that gradients are zero when the loss is minimized on 1D array
-    # using the Newton-Raphson and the first and second order derivatives
+    # using Halley's method with the first and second order derivatives
     # computed by the Loss instance.
 
     loss = _LOSSES[loss]()

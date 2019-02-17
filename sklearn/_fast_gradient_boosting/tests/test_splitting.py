@@ -61,8 +61,6 @@ def test_histogram_split(n_bins):
 def test_split_vs_split_subtraction(constant_hessian):
     # Make sure find_node_split and find_node_split_subtraction return the
     # same results.
-    # Should we add a test about computation time to make sure
-    # time(subtraction) < time(regular)?
     rng = np.random.RandomState(42)
 
     n_bins = 10

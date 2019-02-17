@@ -75,13 +75,8 @@ cpdef _map_to_bins(const X_DTYPE_C [:, :] data, list binning_thresholds,
     binning_thresholds : tuple of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
-    out : array-like
-        If not None, write result inplace in out.
-
-    Returns
-    -------
-    binned_data : array of int, shape=data.shape
-        The binned data.
+    binned : array-like, shape=(n_samples, n_features)
+        Output array, must be fortran aligned.
     """
     cdef:
         int feature_idx
