@@ -217,14 +217,14 @@ cdef void _update_gradients_hessians_binary_crossentropy(
         const Y_DTYPE_C [::1] raw_predictions):
     cdef:
         int n_samples
-        G_H_DTYPE_C gradient_abs
+        Y_DTYPE_C p_i  # proba that ith sample belongs to positive class
         int i
 
     n_samples = raw_predictions.shape[0]
     for i in prange(n_samples, schedule='static', nogil=True):
-        gradients[i] = cexpit(raw_predictions[i]) - y_true[i]
-        gradient_abs = fabs(gradients[i])
-        hessians[i] = gradient_abs * (1. - gradient_abs)
+        p_i = cexpit(raw_predictions[i])
+        gradients[i] = p_i - y_true[i]
+        hessians[i] = p_i * (1. - p_i)
 
 
 class CategoricalCrossEntropy(BaseLoss):
@@ -279,8 +279,8 @@ cdef void _update_gradients_hessians_categorical_crossentropy(
     cdef:
         int prediction_dim = raw_predictions.shape[0]
         int n_samples = raw_predictions.shape[1]
-        int k
-        int i
+        int k  # class index
+        int i  # sample index
         # p[i, k] is the probability that class(ith sample) == k.
         # It's the softmax of the raw predictions
         Y_DTYPE_C [:, ::1] p = np.empty(shape=(n_samples, prediction_dim))
