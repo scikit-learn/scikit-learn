@@ -59,14 +59,13 @@ from ..utils.validation import check_is_fitted, check_random_state
 
 
 def _check_weights(sample_weight, n_samples):
-    """Check that weights are non-negative and have the right shape
-    """
+    """Check that weights are non-negative and have the right shape."""
     if sample_weight is None:
         weights = np.ones(n_samples)
     elif np.isscalar(sample_weight):
         if sample_weight <= 0:
             raise ValueError("Sample weights must be non-negative.")
-        weights = sample_weight*np.ones(n_samples)
+        weights = sample_weight * np.ones(n_samples)
     else:
         _dtype = [np.float64, np.float32]
         weights = check_array(sample_weight, accept_sparse='csr',
@@ -75,8 +74,8 @@ def _check_weights(sample_weight, n_samples):
         if weights.ndim > 1:
             raise ValueError("Sample weight must be 1D array or scalar")
         elif weights.shape[0] != n_samples:
-            raise ValueError("Sample weights must have the same length as"
-                             " y")
+            raise ValueError("Sample weights must have the same length as "
+                             "y")
         if not np.all(weights >= 0):
             raise ValueError("Sample weights must be non-negative.")
         elif not np.sum(weights) > 0:
@@ -87,70 +86,72 @@ def _check_weights(sample_weight, n_samples):
 
 
 class Link(metaclass=ABCMeta):
-    """Abstract base class for Link funtions
-    """
+    """Abstract base class for Link funtions."""
 
     @abstractmethod
     def link(self, mu):
-        """The link function g(mu) with argument mu=E[Y] returns the
-        linear predictor.
+        """Compute the link function g(mu).
+
+        The link function links the mean mu=E[Y] to the so called linear
+        predictor (X*w), i.e. g(mu) = linear predictor.
 
         Parameters
         ----------
         mu : array, shape (n_samples,)
-            Usually the predicted mean.
+            Usually the (predicted) mean.
         """
         raise NotImplementedError
 
     @abstractmethod
     def derivative(self, mu):
-        """Derivative of the link g'(mu).
+        """Compute the derivative of the link g'(mu).
 
         Parameters
         ----------
         mu : array, shape (n_samples,)
-            Usually the predicted mean.
+            Usually the (predicted) mean.
         """
         raise NotImplementedError
 
     @abstractmethod
     def inverse(self, lin_pred):
-        """The inverse link function h(lin_pred) with the linear predictor as
-        argument returns mu=E[Y].
+        """Compute the inverse link function h(lin_pred).
+
+        Gives the inverse relationship between linkear predictor and the mean
+        mu=E[Y], i.e. h(linear predictor) = mu.
 
         Parameters
         ----------
         lin_pred : array, shape (n_samples,)
-            Usually the (predicted) linear predictor.
+            Usually the (fitted) linear predictor.
         """
         raise NotImplementedError
 
     @abstractmethod
     def inverse_derivative(self, lin_pred):
-        """Derivative of the inverse link function h'(lin_pred).
+        """Compute the derivative of the inverse link function h'(lin_pred).
 
         Parameters
         ----------
         lin_pred : array, shape (n_samples,)
-            Usually the (predicted) linear predictor.
+            Usually the (fitted) linear predictor.
         """
         raise NotImplementedError
 
     @abstractmethod
     def inverse_derivative2(self, lin_pred):
-        """Second derivative of the inverse link function h''(lin_pred).
+        """Compute 2nd derivative of the inverse link function h''(lin_pred).
 
         Parameters
         ----------
         lin_pred : array, shape (n_samples,)
-            Usually the (predicted) linear predictor.
+            Usually the (fitted) linear predictor.
         """
         raise NotImplementedError
 
 
 class IdentityLink(Link):
-    """The identity link function g(x)=x.
-    """
+    """The identity link function g(x)=x."""
 
     def link(self, mu):
         return mu
@@ -169,8 +170,7 @@ class IdentityLink(Link):
 
 
 class LogLink(Link):
-    """The log link function g(x)=log(x).
-    """
+    """The log link function g(x)=log(x)."""
 
     def link(self, mu):
         return np.log(mu)
@@ -238,26 +238,22 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     @abstractproperty
     def lower_bound(self):
-        """The lower bound of values of Y~EDM.
-        """
+        """The lower bound of values of Y~EDM."""
         raise NotImplementedError()
 
     @abstractproperty
     def upper_bound(self):
-        """The upper bound of values of Y~EDM.
-        """
+        """The upper bound of values of Y~EDM."""
         raise NotImplementedError()
 
     @abstractproperty
     def include_lower_bound(self):
-        """If True, values of y may equal lower bound: y >= lower_bound.
-        """
+        """If True, values of y may equal lower bound: y >= lower_bound."""
         raise NotImplementedError()
 
     @abstractproperty
     def include_upper_bound(self):
-        """If True, values of y may equal upper bound: y <= upper_bound.
-        """
+        """If True, values of y may equal upper bound: y <= upper_bound."""
         raise NotImplementedError()
 
     def in_y_range(self, x):
@@ -285,7 +281,9 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     @abstractmethod
     def unit_variance(self, mu):
-        r"""The unit variance :math:`v(\mu)` determines the variance as
+        r"""Compute the unit variance function.
+
+        The unit variance :math:`v(\mu)` determines the variance as
         a function of the mean :math:`\mu` by
         :math:`\mathrm{Var}[Y_i] = \phi/s_i*v(\mu_i)`.
         It can also be derived from the unit deviance :math:`d(y,\mu)` as
@@ -304,7 +302,9 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     @abstractmethod
     def unit_variance_derivative(self, mu):
-        r"""The derivative of the unit variance w.r.t. `mu`, :math:`v'(\mu)`.
+        r"""Compute the derivative of the unit variance w.r.t. mu.
+
+        Return :math:`v'(\mu)`.
 
         Parameters
         ----------
@@ -314,7 +314,9 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         raise NotImplementedError()
 
     def variance(self, mu, phi=1, weights=1):
-        r"""The variance of :math:`Y_i \sim \mathrm{EDM}(\mu_i,\phi/s_i)` is
+        r"""Compute the variance function.
+
+        The variance of :math:`Y_i \sim \mathrm{EDM}(\mu_i,\phi/s_i)` is
         :math:`\mathrm{Var}[Y_i]=\phi/s_i*v(\mu_i)`,
         with unit variance :math:`v(\mu)` and weights :math:`s_i`.
 
@@ -332,7 +334,9 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return phi/weights * self.unit_variance(mu)
 
     def variance_derivative(self, mu, phi=1, weights=1):
-        r"""The derivative of the variance w.r.t. `mu`,
+        r"""Compute the derivative of the variance w.r.t. mu.
+
+        Returns
         :math:`\frac{\partial}{\partial\mu}\mathrm{Var}[Y_i]
         =phi/s_i*v'(\mu_i)`, with unit variance :math:`v(\mu)`
         and weights :math:`s_i`.
@@ -352,10 +356,12 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     @abstractmethod
     def unit_deviance(self, y, mu):
-        r"""The unit_deviance :math:`d(y,\mu)`.
-        In terms of the log-likelihood it is given by
+        r"""Compute the unit deviance.
+
+        The unit_deviance :math:`d(y,\mu)` can be defined by the
+        log-likelihood as
         :math:`d(y,\mu) = -2\phi\cdot
-        \left(loglike(y,\mu,phi) - loglike(y,y,phi)\right).`
+        \left(loglike(y,\mu,\phi) - loglike(y,y,\phi)\right).`
 
         Parameters
         ----------
@@ -368,7 +374,9 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         raise NotImplementedError()
 
     def unit_deviance_derivative(self, y, mu):
-        r"""The derivative w.r.t. `mu` of the unit deviance
+        r"""Compute the derivative of the unit deviance w.r.t. mu.
+
+        The derivative of the unit deviance is given by
         :math:`\frac{\partial}{\partial\mu}d(y,\mu) = -2\frac{y-\mu}{v(\mu)}`
         with unit variance :math:`v(\mu)`.
 
@@ -383,9 +391,12 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return -2*(y-mu)/self.unit_variance(mu)
 
     def deviance(self, y, mu, weights=1):
-        r"""The deviance is given by :math:`D = \sum_i s_i \cdot d(y, \mu)
+        r"""Compute the deviance.
+
+        The deviance is a weighted sum of the per sample unit deviances,
+        :math:`D = \sum_i s_i \cdot d(y_i, \mu_i)`
         with weights :math:`s_i` and unit deviance :math:`d(y,\mu)`.
-        In terms of the likelihood it is :math:`D = -2\phi\cdot
+        In terms of the log-likelihood it is :math:`D = -2\phi\cdot
         \left(loglike(y,\mu,\frac{phi}{s})
         - loglike(y,y,\frac{phi}{s})\right)`.
 
@@ -403,15 +414,15 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return np.sum(weights*self.unit_deviance(y, mu))
 
     def _deviance(self, coef, X, y, weights, link):
-        """The deviance as a function of the coefficients `coef`
-        (:math:`w`).
-        """
+        """Compute the deviance as a function of the coefficients and data."""
         lin_pred = safe_sparse_dot(X, coef, dense_output=True)
         mu = link.inverse(lin_pred)
         return self.deviance(y, mu, weights)
 
     def deviance_derivative(self, y, mu, weights=1):
-        """The derivative w.r.t. `mu` of the deviance.
+        """Compute the derivative of the deviance w.r.t. mu.
+
+        It gives :math:`\\frac{\\partial}{\\partial\\mu} D(y, \\mu; weights)`.
 
         Parameters
         ----------
@@ -427,7 +438,9 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return weights*self.unit_deviance_derivative(y, mu)
 
     def _score(self, coef, phi, X, y, weights, link):
-        r"""The score function is the derivative of the
+        r"""Compute the score function.
+
+        The score function is the derivative of the
         log-likelihood w.r.t. `coef` (:math:`w`).
         It is given by
 
@@ -453,7 +466,8 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return score
 
     def _fisher_matrix(self, coef, phi, X, y, weights, link):
-        r"""The Fisher information matrix.
+        r"""Compute the Fisher information matrix.
+
         The Fisher information matrix, also known as expected information
         matrix is given by
 
@@ -482,9 +496,10 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return fisher_matrix
 
     def _observed_information(self, coef, phi, X, y, weights, link):
-        r"""The observed information matrix.
+        r"""Compute the observed information matrix.
+
         The observed information matrix, also known as the negative of
-        the Hessian matrix of the log-likelihood. It is given by
+        the Hessian matrix of the log-likelihood, is given by
 
         .. math:
 
@@ -518,8 +533,10 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return observed_information
 
     def _deviance_derivative(self, coef, X, y, weights, link):
-        r"""The derivative w.r.t. `coef` (:math:`w`) of the deviance as a
-        function of the coefficients `coef`.
+        r"""Compute the derivative of the deviance w.r.t. coef.
+
+        The derivative of the deviance w.r.t. `coef` (:math:`w`) as a
+        function of the coefficients `coef` and the data.
         This is equivalent to :math:`-2\phi` times the score function
         :func:`_score` (derivative of the log-likelihood).
         """
@@ -528,9 +545,11 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return -2*score
 
     def _deviance_hessian(self, coef, X, y, weights, link):
-        r"""The hessian matrix w.r.t. `coef` (:math:`w`) of the deviance
-        as a function of the coefficients `coef`.
-        This is equivalent to :math:`+2\phi` times the observed information
+        r"""Compute the hessian matrix of the deviance w.r.t. coef.
+
+        The hessian of the deviance w.r.t. `coef` (:math:`w`) is evaluated as
+        a function of the coefficients `coef` and the data.
+        It is equivalent to :math:`+2\phi` times the observed information
         matrix.
         """
         info_matrix = self._observed_information(coef=coef, phi=1, X=X, y=y,
@@ -538,8 +557,12 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return 2*info_matrix
 
     def _eta_mu_score_fisher(self, coef, phi, X, y, weights, link):
-        """Calculates eta (linear predictor), mu, score function (derivative
-        of log-likelihood) and Fisher matrix (all with phi=1) all in one go"""
+        """Compute linear predictor, mean, score function and fisher matrix.
+
+        It calculates the linear predictor, the mean, score function
+        (derivative of log-likelihood) and Fisher information matrix
+        all in one go as function of `coef` (:math:`w`) and the data.
+        """
         n_samples, n_features = X.shape
         # eta = linear predictor
         eta = safe_sparse_dot(X, coef, dense_output=True)
@@ -561,7 +584,9 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         return eta, mu, score, fisher
 
     def starting_mu(self, y, weights=1):
-        """Starting values for the mean mu_i in (unpenalized) IRLS.
+        """Set starting values for the mean mu.
+
+        These may be good starting points for the (unpenalized) IRLS solver.
 
         Parameters
         ----------
@@ -577,7 +602,9 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
 class TweedieDistribution(ExponentialDispersionModel):
     r"""A class for the Tweedie distribution.
-    They have :math:`\mu=\mathrm{E}[Y]` and
+
+    A Tweedie distribution with mean :math:`\mu=\mathrm{E}[Y]` is uniquely
+    defined by it's mean-variance relationship
     :math:`\mathrm{Var}[Y] \propto \mu^power`.
 
     Special cases are:
@@ -668,7 +695,7 @@ class TweedieDistribution(ExponentialDispersionModel):
         return self._include_upper_bound
 
     def unit_variance(self, mu):
-        """The unit variance of a Tweedie distribution is v(mu)=mu**power.
+        """Compute the unit variance of a Tweedie distribution v(mu)=mu**power.
 
         Parameters
         ----------
@@ -678,8 +705,8 @@ class TweedieDistribution(ExponentialDispersionModel):
         return np.power(mu, self.power)
 
     def unit_variance_derivative(self, mu):
-        """The derivative of the unit variance of a Tweedie distribution is
-        v(mu)=power*mu**(power-1).
+        """Compute the derivative of the unit variance of a Tweedie
+        distribution v(mu)=power*mu**(power-1).
 
         Parameters
         ----------
@@ -732,9 +759,9 @@ class InverseGaussianDistribution(TweedieDistribution):
 
 
 class GeneralizedHyperbolicSecand(ExponentialDispersionModel):
-    """A class for the von Generalized Hyperbolic Secand (GHS) distribution.
+    """A class for the Generalized Hyperbolic Secand (GHS) distribution.
 
-    The GHS distribution is for data y in (-inf, inf).
+    The GHS distribution is for tagets y in (-inf, inf).
     """
     def __init__(self):
         self._lower_bound = -np.Inf
@@ -770,7 +797,7 @@ class GeneralizedHyperbolicSecand(ExponentialDispersionModel):
 
 
 def _irls_step(X, W, P2, z):
-    """One step in iteratively reweighted least squares
+    """Compute one step in iteratively reweighted least squares.
 
     Solve A w = b for w with
     A = (X' W X + P2)
@@ -823,18 +850,18 @@ def _irls_step(X, W, P2, z):
 
 
 class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
-    """Regression via a Generalized Linear Model (GLM) based on reproductive
-    Exponential Dispersion Models (EDM) with combined L1 and L2 priors as
-    regularizer.
+    """Regression via a Generalized Linear Model (GLM) with penalties.
 
-    Minimizes the objective function::
+    GLMs based on a reproductive Exponential Dispersion Model (EDM) with
+    combined L1 and L2 priors as regularizer minimizes the following objective
+    function::
 
             1/(2*sum(s)) * deviance(y, h(X*w); s)
             + alpha * l1_ratio * ||P1*w||_1
             + 1/2 * alpha * (1 - l1_ratio) * w*P2*w
 
     with inverse link function `h` and s=`sample_weight` (for
-    `sample_weight=Nones` one has s=1 and sum(s) equals `n_samples`).
+    `sample_weight=None`, one has s=1 and sum(s)=`n_samples`).
     For `P1=P2=identity`, the penalty is the elastic net::
 
             alpha * l1_ratio * ||w||_1
@@ -893,16 +920,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     family : {'normal', 'poisson', 'gamma', 'inverse.gaussian'} or an instance\
             of class ExponentialDispersionModel, optional(default='normal')
-        the distributional assumption of the GLM, i.e. which loss function to
-        be minimized.
+        The distributional assumption of the GLM, i.e. which distribution from
+        the EDM, specifies the loss function to be minimized.
 
     link : {'identity', 'log'} or an instance of class Link,
         optional (default='identity')
-        the link function of the GLM, i.e. mapping from linear predictor
+        The link function of the GLM, i.e. mapping from linear predictor
         (X*coef) to expectation (mu).
 
     fit_dispersion : {None, 'chisqr', 'deviance'}, optional (defaul=None)
-        method for estimation of the dispersion parameter phi. Whether to use
+        Method for estimation of the dispersion parameter phi. Whether to use
         the chi squared statisic or the deviance statistic. If None, the
         dispersion is not estimated.
 
@@ -914,15 +941,15 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             Sets 'irls' if l1_ratio equals 0, else 'cd'.
 
         'irls'
-            iterated reweighted least squares (Fisher scoring).
-            It is the standard algorithm for GLMs. Cannot deal with
+            Iterated reweighted least squares (with Fisher scoring).
+            It is the standard algorithm for GLMs. It cannot deal with
             L1 penalties.
 
         'newton-cg', 'lbfgs'
             Cannot deal with L1 penalties.
 
         'cd'
-            coordinate descent algorithm. It can deal with L1 as well as L2
+            Coordinate descent algorithm. It can deal with L1 as well as L2
             penalties.
 
     max_iter : int, optional (default=100)
@@ -930,15 +957,15 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     tol : float, optional (default=1e-4)
         Stopping criterion. For the irls, newton-cg and lbfgs solvers,
-        the iteration will stop when ``max{|g_i | i = 1, ..., n} <= tol``
+        the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative of
-        the deviance).
+        the objective function).
 
     warm_start : boolean, optional (default=False)
-        If set to ``True``, reuse the solution of the previous call to fit as
-        initialization for ``coef_`` and ``intercept_`` (supersedes option
+        If set to ``True``, reuse the solution of the previous call to ``fit``
+        as initialization for ``coef_`` and ``intercept_`` (supersedes option
         ``start_params``). If set to ``True`` or if the attribute ``coef_``
-        does not exit (first call to fit), option ``start_params`` sets the
+        does not exit (first call to ``fit``), option ``start_params`` sets the
         starting values for ``coef_`` and ``intercept_``.
 
     start_params : {None, 'least_squares', 'zero', array of shape \
@@ -946,8 +973,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         If an array of size n_features* is supplied, use it as start values
         for ``coef_`` in the fit. If ``fit_intercept=True``, the first element
         is assumed to be the start value for the ``intercept_``.
-        Note that n_features* = X.shape[1] + fit_intercept includes the
-        intercept in counting.
+        Note that n_features* = X.shape[1] + fit_intercept, i.e. it includes
+        the intercept in counting.
         If 'least_squares' is set, the result of a least squares fit in the
         link space (linear predictor) is taken.
         If 'zero' is set, all coefficients start with zero.
@@ -960,7 +987,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         For the solver 'cd' (coordinate descent), the coordinates (features)
         can be updated in either cyclic or random order.
         If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default. This
+        rather than looping over features sequentially in the same order. This
         (setting to 'random') often leads to significantly faster convergence
         especially when tol is higher than 1e-4.
 
@@ -1057,7 +1084,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """Fit a generalized linear model.
+        """Fit a Generalized Linear Model.
 
         Parameters
         ----------
@@ -1087,12 +1114,14 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         _dtype = [np.float64, np.float32]
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
                          dtype=_dtype, y_numeric=True, multi_output=False)
+        # Without converting y to float, deviance might raise
+        # ValueError: Integers to negative integer powers are not allowed.
         y = y.astype(np.float64)
 
         weights = _check_weights(sample_weight, y.shape[0])
 
         # 1.2 validate arguments of __init__ ##################################
-        # Garantee that self._family_instance is an instance of class
+        # Guarantee that self._family_instance is an instance of class
         # ExponentialDispersionModel
         if isinstance(self.family, ExponentialDispersionModel):
             self._family_instance = self.family
@@ -1112,7 +1141,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     " ['normal', 'poisson', 'gamma', 'inverse.gaussian'];"
                     " got (family={0})".format(self.family))
 
-        # Garantee that self._link_instance is set to an instance of class Link
+        # Guarantee that self._link_instance is set to an instance of
+        # class Link
         if isinstance(self.link, Link):
             self._link_instance = self.link
         else:
@@ -1127,19 +1157,19 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     .format(self.link))
 
         if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
-            raise ValueError("Penalty term must be non-negative;"
+            raise ValueError("Penalty term must be a non-negative number;"
                              " got (alpha={0})".format(self.alpha))
         if (not isinstance(self.l1_ratio, numbers.Number) or
                 self.l1_ratio < 0 or self.l1_ratio > 1):
-            raise ValueError("l1_ratio must be in interval [0, 1]; got"
-                             " (l1_ratio={0})".format(self.l1_ratio))
+            raise ValueError("l1_ratio must be a number in interval [0, 1];"
+                             " got (l1_ratio={0})".format(self.l1_ratio))
         if not isinstance(self.fit_intercept, bool):
             raise ValueError("The argument fit_intercept must be bool;"
                              " got {0}".format(self.fit_intercept))
         if self.solver not in ['auto', 'irls', 'lbfgs', 'newton-cg', 'cd']:
-            raise ValueError("GeneralizedLinearRegressor supports only irls, "
-                             "auto, lbfgs, newton-cg and cd solvers, got {0}"
-                             "".format(self.solver))
+            raise ValueError("GeneralizedLinearRegressor supports only solvers"
+                             " 'auto', 'irls', 'lbfgs', 'newton-cg' and 'cd';"
+                             " got {0}".format(self.solver))
         solver = self.solver
         if self.solver == 'auto':
             if self.l1_ratio == 0:
@@ -1168,8 +1198,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         elif isinstance(start_params, str):
             if start_params not in ['least_squares', 'zero']:
                 raise ValueError("The argument start_params must be None, "
-                                 "'least-squares', 'zero' or an array of right"
-                                 " length,"
+                                 "'least-squares', 'zero' or an array of "
+                                 " correct length;"
                                  " got(start_params={0})".format(start_params))
         else:
             start_params = check_array(start_params, accept_sparse='csr',
@@ -1179,21 +1209,21 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     (start_params.ndim != 1)):
                 raise ValueError("Start values for parameters must have the"
                                  "right length and dimension; required (length"
-                                 "={0}, ndim=1), got (length={1}, ndim={2})."
+                                 "={0}, ndim=1); got (length={1}, ndim={2})."
                                  .format(X.shape[1] + self.fit_intercept,
                                          start_params.shape[0],
                                          start_params.ndim))
 
         if self.selection not in ['cyclic', 'random']:
             raise ValueError("The argument selection must be 'cyclic' or "
-                             "'random', got (selection={0})"
+                             "'random'; got (selection={0})"
                              .format(self.selection))
         random_state = check_random_state(self.random_state)
         if not isinstance(self.copy_X, bool):
             raise ValueError("The argument copy_X must be bool;"
                              " got {0}".format(self.copy_X))
         if not isinstance(self.check_input, bool):
-            raise ValueError("The attribute check_input must be bool; got "
+            raise ValueError("The argument check_input must be bool; got "
                              "(check_input={0})".format(self.check_input))
 
         if self.P1 is None:
@@ -1232,7 +1262,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         link = self._link_instance
 
         if self.fit_intercept:
-            # intercept is first column <=> coef[0] is for intecept
+            # Note: intercept is first column <=> coef[0] is for intecept
             if sparse.issparse(X):
                 Xnew = sparse.hstack([np.ones([X.shape[0], 1]), X])
             else:
@@ -1259,10 +1289,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         P2 *= l2
         # one only ever needs the symmetrized L2 penalty matrix 1/2 (P2 + P2')
         # reason: w' P2 w = (w' P2 w)', i.e. it is symmetric
-        if sparse.issparse(P2):
-            P2 = 0.5 * (P2 + P2.transpose())
-        else:
-            P2 = 0.5 * (P2 + P2.T)
+        if P2.ndim == 2:
+            if sparse.issparse(P2):
+                P2 = 0.5 * (P2 + P2.transpose())
+            else:
+                P2 = 0.5 * (P2 + P2.T)
 
         # 1.3 additional validations ##########################################
         if self.check_input:
@@ -1301,7 +1332,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # we rescale weights such that sum(weights) = 1 and this becomes
         # 1/2*deviance + L1 + L2 with deviance=sum(weights * unit_deviance)
         weights_sum = np.sum(weights)
-        weights = weights/np.sum(weights)
+        weights = weights/weights_sum
 
         #######################################################################
         # 3. initialization of coef = (intercept_, coef_)                     #
@@ -1338,6 +1369,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 # with L1 penalty, start with coef = 0
                 # TODO: Are there better options?
                 coef = np.zeros(n_features)
+                if self.fit_intercept:
+                    coef[0] = link.link(np.mean(y))
         elif isinstance(self.start_params, str):
             if self.start_params == 'zero':
                 coef = np.zeros(n_features)
@@ -1546,6 +1579,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 # inner loop
                 # TODO: use sparsity (coefficient already 0 due to L1 penalty)
                 #       => active set of features for featurelist, see paper
+                #          of Improved GLMNET or Gap Safe Screening Rules
+                #          https://arxiv.org/abs/1611.05780
                 # A = f'(w) + d*H(w) + (w+d)*P2
                 # B = H+P2
                 # Note: f'=-score and H=fisher are updated at the end of outer
@@ -1694,7 +1729,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         return self
 
     def linear_predictor(self, X):
-        """The linear_predictor X*coef_ + intercept_.
+        """Compute the linear_predictor = X*coef_ + intercept_.
 
         Parameters
         ----------
@@ -1741,8 +1776,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         return mu*weights
 
     def estimate_phi(self, X, y, sample_weight=None):
-        """Estimation of the dispersion parameter phi.
-        Returns the estimate.
+        """Estimate/fit the dispersion parameter phi.
 
         Parameters
         ----------
@@ -1755,6 +1789,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         sample_weight : {None, array-like}, shape (n_samples,), optional \
                 (default=None)
             Sample weights.
+
+        Returns
+        -------
+        phi : float
+            Dispersion parameter.
         """
         check_is_fitted(self, "coef_")
         _dtype = [np.float64, np.float32]
@@ -1785,15 +1824,17 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     # "AssertionError: -0.28014056555724598 not greater than 0.5"
     # unless GeneralizedLinearRegressor has a score which passes the test.
     def score(self, X, y, sample_weight=None):
-        r"""Returns D^2, a generalization of the coefficient of determination
-        R^2, which uses deviance instead of squared error.
+        r"""Compute D^2, the percentage of deviance explained.
+
+        D^2 is a generalization of the coefficient of determination R^2.
+        R^2 uses squared error and D^2 deviance. Note that those two are equal
+        for family='normal'.
 
         D^2 is defined as
         :math:`D^2 = 1-\frac{D(y_{true},y_{pred})}{D_{null}}`, :math:`D_{null}`
         is the null deviance, i.e. the deviance of a model with intercept
         alone which corresponds to :math:`y_{pred} = \bar{y}`. The mean
-        :math:`\bar{y}` is averaged by sample_weight. In the case of a Normal
-        distribution, D^2 equals R^2.
+        :math:`\bar{y}` is averaged by sample_weight.
         Best possible score is 1.0 and it can be negative (because the
         model can be arbitrarily worse).
 
@@ -1812,7 +1853,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Returns
         -------
         score : float
-            D^2 of self.predict(X) wrt. y.
+            D^2 of self.predict(X) w.r.t. y.
         """
         # Note, default score defined in RegressorMixin is R^2 score.
         # TODO: make D^2 a score function in module metrics (and thereby get
