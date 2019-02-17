@@ -20,7 +20,7 @@ try:
 except ImportError:
     from scipy.misc import logsumexp
 
-from libc.math cimport fabs, exp, log
+from libc.math cimport exp
 
 from .types import Y_DTYPE
 from .types cimport Y_DTYPE_C
