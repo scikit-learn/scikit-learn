@@ -1086,7 +1086,7 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
 
         y : array-like, shape 
               - (n_samples,), valid for `ElasticNetCV` and `LassoCV`.
-              - (n_samples, n_targets), valid for `MultiTaskElasticNetCV` and `MultitaskLassoCV`.
+              - (n_samples, n_tasks), valid for `MultiTaskElasticNetCV` and `MultitaskLassoCV`.
             Target values
         """
         y = check_array(y, copy=False, dtype=[np.float64, np.float32],
@@ -1132,7 +1132,7 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
         if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
             # Keep a reference to X
             reference_to_old_X = X
-            # Let us not impose fortran ordering so far: it is
+            # Let us not impose fortran ordering so far: it isadrinjalali
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
             X = check_array(X, 'csc', copy=False)
