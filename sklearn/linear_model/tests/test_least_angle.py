@@ -690,105 +690,31 @@ def test_lasso_lars_vs_R_implementation():
 
 def test_lasso_lars_copyX_behaviour1():
     """
-    Test that user input regading copyX is not being overridden (it was until
+    Test that user input regarding copyX is not being overridden (it was until
     at least version 0.21)
 
     Correct behaviour is not to create a copy.
 
     """
-    temp = np.asarray
-
-    def ident(x, *args, **kwargs):
-        return x
-
-    np.asarray = ident
     lasso_lars = LassoLarsIC(copy_X=False, precompute=False)
-
-    class CopyWarningArray(np.ndarray):
-
-        def __new__(subtype, shape, dtype=float, buffer=None, offset=0,
-                    strides=None, order=None, info=None):
-            # Create the ndarray instance of our type, given the usual
-            # ndarray input arguments.  This will call the standard
-            # ndarray constructor, but return an object of our type.
-            # It also triggers a call to InfoArray.__array_finalize__
-            obj = super(CopyWarningArray, subtype).__new__(subtype, shape,
-                                                           dtype, buffer,
-                                                           offset, strides,
-                                                           order)
-            # set the new 'info' attribute to the value passed
-            obj.info = info
-            # Finally, we must return the newly created object:
-            return obj
-
-        def copy(self, *args, **kwargs):
-            assert False, "Array is being copied when it should not be copied"
-
-        def __copy__(self, *args, **kwargs):
-            assert False, "Array is being copied when it should not be copied"
-
-        def __deepcopy__(self, *args, **kwargs):
-            assert False, "Array is being copied when it should not be copied"
-
-    X = CopyWarningArray(shape=(20, 5), info="CopyWarningArray")
-    X[:, :] = 1
+    X = np.random.normal(0, 1, (100, 5))
+    X_copy = X.copy()
     y = X[:, 2]
     lasso_lars.fit(X, y)
-    np.asarray = temp
+    assert not np.array_equal(X, X_copy)
 
 
 def test_lasso_lars_copyX_behaviour2():
     """
-    Test that user input regading copyX is not being overridden (it was until
+    Test that user input regarding copyX is not being overridden (it was until
     at least version 0.21)
 
     Correct behaviour is to create a copy.
 
     """
-    temp = np.asarray
-
-    def ident(x, *args, **kwargs):
-        return x
-
-    np.asarray = ident
-    np.array = ident
     lasso_lars = LassoLarsIC(copy_X=True, precompute=False)
-
-    class CopyCreated(Exception):
-        pass
-
-    class CopyWarningArray(np.ndarray):
-
-        def __new__(subtype, shape, dtype=float, buffer=None, offset=0,
-                    strides=None, order=None, info=None):
-            # Create the ndarray instance of our type, given the usual
-            # ndarray input arguments.  This will call the standard
-            # ndarray constructor, but return an object of our type.
-            # It also triggers a call to InfoArray.__array_finalize__
-            obj = super(CopyWarningArray, subtype).__new__(subtype, shape,
-                                                           dtype, buffer,
-                                                           offset, strides,
-                                                           order)
-            # set the new 'info' attribute to the value passed
-            obj.info = info
-            # Finally, we must return the newly created object:
-            return obj
-
-        def copy(self, *args, **kwargs):
-            raise CopyCreated
-
-        def __copy__(self, *args, **kwargs):
-            raise CopyCreated
-
-        def __deepcopy__(self, *args, **kwargs):
-            raise CopyCreated
-
-    X = CopyWarningArray(shape=(20, 5), info="CopyWarningArray")
-    X[:, :] = 1
+    X = np.random.normal(0, 1, (100, 5))
+    X_copy = X.copy()
     y = X[:, 2]
-    # assert_raises(CopyCreated, lasso_lars.fit, X, y)
-    # lasso_lars.fit(X, y)
-    with pytest.raises(CopyCreated):
-        lasso_lars.fit(X, y)
-    np.asarray = temp
-    np.array = temp
+    lasso_lars.fit(X, y)
+    assert np.array_equal(X, X_copy)
