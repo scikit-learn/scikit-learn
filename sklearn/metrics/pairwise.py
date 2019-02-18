@@ -311,20 +311,26 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
 def nan_euclidean_distances(X, Y=None, squared=False,
                             missing_values=np.nan, copy=True):
-    """Calculates euclidean distances in the presence of missing values
+    """Calculate the euclidean distances in the presence of missing values.
 
-    Computes the euclidean distance between each pair of samples (rows) in X
-    and Y, where Y=X is assumed if Y=None.
-    When calculating the distance between a pair of samples, this formulation
-    zero-weights feature coordinates with a missing value in either sample and
-    scales up the weight of the remaining coordinates:
+    Compute the euclidean distance between each pair of samples in X and Y,
+    where Y=X is assumed if Y=None. When calculating the distance between a
+    pair of samples, this formulation zero-weights feature coordinates with a
+    missing value in either sample and scales up the weight of the remaining
+    coordinates:
 
         dist(x,y) = sqrt(weight * sq. distance from non-missing coordinates)
         where,
         weight = Total # of coordinates / # of non-missing coordinates
 
-    Note that if all the coordinates are missing or if there are no common
-    non-missing coordinates then NaN is returned for that pair.
+    For example, the distance between ``[3, na, na, 6]`` and ``[1, na, 4, 5]``
+    is:
+
+        .. math::
+            \\sqrt{\\frac{4}{2}((3-1)^2 + (6-5)^2)}
+
+    If all the coordinates are missing or if there are no common non-missing
+    coordinates then NaN is returned for that pair.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -334,13 +340,13 @@ def nan_euclidean_distances(X, Y=None, squared=False,
 
     Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
 
-    squared : boolean, default=False
+    squared : boolean, optional (default=False)
         Return squared Euclidean distances.
 
-    missing_values : np.nan or integer, default=np.nan
+    missing_values : np.nan or integer, optional (default=np.nan)
         Representation of missing value
 
-    copy : boolean, default=True
+    copy : boolean, optional (default=True)
         Make and use a deep copy of X and Y (if Y exists)
 
     Returns
@@ -387,23 +393,24 @@ def nan_euclidean_distances(X, Y=None, squared=False,
         missing_YT = _get_mask(YT, missing_values)
 
     # Convert to uint8 be used to calculate distances
-    not_missing_X = (~missing_X).astype(np.uint8)
-    not_missing_YT = (~missing_YT).astype(np.uint8)
+    not_missing_X_int = (~missing_X).astype(np.uint8)
+    not_missing_YT_int = (~missing_YT).astype(np.uint8)
 
     # set missing values to zero
     X[missing_X] = 0
     YT[missing_YT] = 0
 
+    # elementwise multiplication
     XX = X.multiply(X) if issparse(X) else X * X
     YTYT = YT.multiply(YT) if issparse(YT) else YT * YT
 
     # Calculate distances
     distances = safe_sparse_dot(X, YT, dense_output=True)
     distances *= -2
-    distances += safe_sparse_dot(XX, not_missing_YT, dense_output=False)
-    distances += safe_sparse_dot(not_missing_X, YTYT, dense_output=False)
+    distances += safe_sparse_dot(XX, not_missing_YT_int, dense_output=False)
+    distances += safe_sparse_dot(not_missing_X_int, YTYT, dense_output=False)
 
-    non_missing_cnt = np.dot(not_missing_X, not_missing_YT)
+    non_missing_cnt = np.dot(not_missing_X_int, not_missing_YT_int)
     non_missing_mask = (non_missing_cnt != 0)
 
     distances[non_missing_mask] *= (
