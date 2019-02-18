@@ -195,13 +195,11 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         self.train_score_ = []
         self.validation_score_ = []
         if self.do_early_stopping_:
-            # Add predictions of the initial model (before the first tree)
-            self.train_score_.append(
-                self._get_scores(X_binned_small_train, y_small_train))
+            # populate train_score and validation_score with the predictions
+            # of the initial model (before the first tree)
+            self._check_early_stopping(X_binned_small_train, y_small_train,
+                                       X_binned_val, y_val)
 
-            if self.validation_fraction is not None:
-                self.validation_score_.append(
-                    self._get_scores(X_binned_val, y_val))
 
         for iteration in range(self.n_estimators):
 
