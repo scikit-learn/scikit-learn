@@ -1260,7 +1260,7 @@ def test_thresdhold_metric_is_permutation_invariance(name):
     random_state = check_random_state(0)
 
     y_score = random_state.rand(n_samples, n_classes)
-    y_score = y_score / y_score.sum(axis=1, keepdims=True)
+    y_score = np.exp(y_score)/np.exp(y_score).sum(axis=-1, keepdims=True)
     y_true = random_state.randint(0, n_classes, size=n_samples)
 
     metric = ALL_METRICS[name]

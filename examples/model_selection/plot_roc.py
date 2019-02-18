@@ -64,7 +64,7 @@ y_score = classifier.fit(X_train, y_train).decision_function(X_test)
 # or weighted by the support (the number of true instances for each label).
 from sklearn.metrics import roc_auc_score
 
-y_score_norm = y_score / y_score.sum(1, keepdims=True)
+y_score_norm = np.exp(y_score)/np.exp(y_score).sum(axis=-1, keepdims=True)
 unweighted_roc_auc_ovr = roc_auc_score(y_test, y_score_norm, multiclass="ovr")
 weighted_roc_auc_ovr = roc_auc_score(
       y_test, y_score_norm, multiclass="ovr", average="weighted")
