@@ -726,8 +726,8 @@ def test_iterative_imputer_missing_at_transform(strategy):
 
     # if there were no missing values at time of fit, then imputer will
     # only use the initial imputer for that feature at transform
-    assert np.all(imputer.transform(X_test)[:, 0] ==
-                  initial_imputer.transform(X_test)[:, 0])
+    assert_allclose(imputer.transform(X_test)[:, 0],
+                    initial_imputer.transform(X_test)[:, 0])
 
 
 def test_iterative_imputer_transform_stochasticity():
@@ -775,8 +775,8 @@ def test_iterative_imputer_transform_stochasticity():
     X_fitted_1b = imputer1.transform(X)
     X_fitted_2 = imputer2.transform(X)
 
-    assert np.all(X_fitted_1a == X_fitted_1b)
-    assert np.all(X_fitted_1a == X_fitted_2)
+    assert_allclose(X_fitted_1a, X_fitted_1b)
+    assert_allclose(X_fitted_1a, X_fitted_2)
 
 
 def test_iterative_imputer_no_missing():
