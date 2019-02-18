@@ -1347,13 +1347,15 @@ def test_multi_target(name, oob_score):
 
     clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
 
-    X, y = datasets.make_classification()
-    # Make y have string classes.
-    y = np.array(['foo' if v else 'bar' for v in y]).reshape((y.shape[0], 1))
+    X = iris.data
 
-    # Make multi-target.
-    ys = np.hstack([y, y])
+    # Make multi column mixed type target.
+    y = np.vstack([
+        iris.target.astype(float),
+        iris.target.astype(int),
+        iris.target.astype(str),
+    ]).T
 
-    # Try to fix and predict.
-    clf.fit(X, ys)
+    # Try to fit and predict.
+    clf.fit(X, y)
     clf.predict(X)
