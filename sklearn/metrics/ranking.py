@@ -374,10 +374,15 @@ def roc_auc_score(y_true, y_score, labels=None,
     if y_type == "multiclass" or (y_type == "binary" and
                                   y_score.ndim == 2 and
                                   y_score.shape[1] > 2):
+        # do not support partial ROC computation for multiclass
+        if max_fpr is not None and max_fpr != 1.:
+            raise ValueError("Partial AUC computation not available in "
+                             "multiclass setting. Parameter 'max_fpr' must be"
+                             " set to `None`. Received `max_fpr={0}` "
+                             "instead.".format(max_fpr))
         return _multiclass_roc_auc_score(_binary_roc_auc_score,
                                          y_true, y_score, labels,
-                                         multiclass, average, sample_weight,
-                                         max_fpr)
+                                         multiclass, average, sample_weight)
     elif y_type == "binary":
         labels = np.unique(y_true)
         y_true = label_binarize(y_true, labels)[:, 0]
@@ -391,19 +396,61 @@ def roc_auc_score(y_true, y_score, labels=None,
 
 
 def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
-                              multiclass, average, sample_weight, max_fpr):
+                              multiclass, average, sample_weight):
+    """Multiclass roc auc score
+
+    Parameters
+    ----------
+    binary_metric : callable
+        The binary metric function to use that accepts the following as input
+            y_true_target : array, shape = [n_samples_target]
+                Some sub-array of y_true for a pair of classes designated
+                positive and negative in the one-vs-one scheme.
+            y_score_target : array, shape = [n_samples_target]
+                Scores corresponding to the probability estimates
+                of a sample belonging to the designated positive class label
+
+    y_true : array-like, shape = (n_samples, )
+        True multiclass labels.
+
+    y_score : array-like, shape = (n_samples, n_classes)
+        Target scores corresponding to probability estimates of a sample
+        belonging to a particular class
+
+    labels : array, shape = [n_classes] or None, optional (default=None)
+        List of labels to index ``y_score`` used for multiclass. If ``None``,
+        the lexicon order of ``y_true`` is used to index ``y_score``.
+
+    multiclass : string, 'ovr' or 'ovo', optional(default='ovr')
+        Determines the type of multiclass configuration to use.
+        ``'ovr'``:
+            Calculate metrics for the multiclass case using the one-vs-rest
+            approach.
+        ``'ovo'``:
+            Calculate metrics for the multiclass case using the one-vs-one
+            approach.
+
+    average : 'macro' or 'weighted', optional (default='macro')
+        Determines the type of averaging performed on the pairwise binary
+        metric scores
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean. This does not take label imbalance into account. Classes
+            are assumed to be uniformly distributed.
+        ``'weighted'``:
+            Calculate metrics for each label, taking into account the
+            prevalence of the classes.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    """
     # validation of the input y_score
     if not np.allclose(1, y_score.sum(axis=1)):
         raise ValueError(
             "Target scores need to be probabilities for multiclass "
             "roc_auc, i.e. they should sum up to 1.0 over classes.")
 
-    # do not support partial ROC computation for multiclass
-    if max_fpr is not None and max_fpr != 1.:
-        raise ValueError("Partial AUC computation not available in "
-                         "multiclass setting. Parameter 'max_fpr' must be"
-                         " set to `None`. Received `max_fpr={0}` "
-                         "instead.".format(max_fpr))
 
     # validation for multiclass parameter specifications
     average_options = ("macro", "weighted")
