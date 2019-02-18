@@ -451,7 +451,6 @@ def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
             "Target scores need to be probabilities for multiclass "
             "roc_auc, i.e. they should sum up to 1.0 over classes.")
 
-
     # validation for multiclass parameter specifications
     average_options = ("macro", "weighted")
     if average not in average_options:
