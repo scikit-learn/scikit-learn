@@ -33,6 +33,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
+from ..preprocessing.label import _encode_python
 
 from .base import _average_binary_score, _average_multiclass_ovo_score
 
@@ -427,6 +428,7 @@ def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
         if set(np.unique(y_true)) > set(unique_labels):
             raise ValueError(
                 "'y_true' contains labels not in parameter 'labels'")
+
     if multiclass == "ovo":
         if sample_weight is not None:
             raise ValueError("Parameter 'sample_weight' is not supported"
@@ -469,9 +471,9 @@ def _encode_y_true_multiclass_ovo(y_true, y_score, labels):
         Encoded y_true
     """
     if labels is not None:
-        y_true_encoded = np.empty_like(y_true, dtype=np.int32)
-        for i, label in enumerate(labels):
-            y_true_encoded[y_true == label] = i
+        _, y_true_encoded = _encode_python(y_true,
+                                           uniques=np.array(labels),
+                                           encode=True)
         return y_true_encoded
 
     if np.issubdtype(y_true.dtype, np.integer):
