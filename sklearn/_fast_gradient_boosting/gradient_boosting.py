@@ -200,7 +200,6 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             self._check_early_stopping(X_binned_small_train, y_small_train,
                                        X_binned_val, y_val)
 
-
         for iteration in range(self.n_estimators):
 
             if self.verbose:
