@@ -373,63 +373,10 @@ def roc_auc_score(y_true, y_score, labels=None,
     if y_type == "multiclass" or (y_type == "binary" and
                                   y_score.ndim == 2 and
                                   y_score.shape[1] > 2):
-        # validation of the input y_score
-        if not np.allclose(1, y_score.sum(axis=1)):
-            raise ValueError(
-                "Target scores need to be probabilities for multiclass "
-                "roc_auc, i.e. they should sum up to 1.0 over classes.")
-
-        # do not support partial ROC computation for multiclass
-        if max_fpr is not None and max_fpr != 1.:
-            raise ValueError("Partial AUC computation not available in "
-                             "multiclass setting. Parameter 'max_fpr' must be"
-                             " set to `None`. Received `max_fpr={0}` "
-                             "instead.".format(max_fpr))
-
-        # validation for multiclass parameter specifications
-        average_options = ("macro", "weighted")
-        if average not in average_options:
-            raise ValueError("Parameter 'average' must be one of {0} for"
-                             " multiclass problems.".format(average_options))
-        multiclass_options = ("ovo", "ovr")
-        if multiclass not in multiclass_options:
-            raise ValueError("Parameter multiclass='{0}' is not supported"
-                             " for multiclass ROC AUC. 'multiclass' must be"
-                             " one of {1}.".format(
-                                 multiclass, multiclass_options))
-        if labels is not None:
-            unique_labels = np.unique(labels)
-            if len(unique_labels) != len(labels):
-                raise ValueError("Parameter 'labels' must be unique")
-            if len(unique_labels) != y_score.shape[1]:
-                raise ValueError(
-                    "Number of given labels, {0}, not equal to the number "
-                    "of columns in 'y_score', {1}".format(
-                        len(unique_labels), y_score.shape[1]))
-            if set(np.unique(y_true)) > set(unique_labels):
-                raise ValueError(
-                    "'y_true' contains labels not in parameter 'labels'")
-        if multiclass == "ovo":
-            if sample_weight is not None:
-                raise ValueError("Parameter 'sample_weight' is not supported"
-                                 " for multiclass one-vs-one ROC AUC."
-                                 " 'sample_weight' must be None in this case.")
-            y_true_encoded = _encode_y_true_multiclass_ovo(
-                y_true, y_score, labels)
-            # Hand & Till (2001) implementation (ovo)
-            return _average_multiclass_ovo_score(
-                _binary_roc_auc_score,
-                y_true_encoded,
-                y_score,
-                average=average)
-        else:
-            # ovr is same as multi-label
-            if labels is None:
-                labels = np.unique(y_true)
-            y_true_multilabel = label_binarize(y_true, labels)
-            return _average_binary_score(
-                 _binary_roc_auc_score, y_true_multilabel, y_score, average,
-                 sample_weight=sample_weight)
+        return _multiclass_roc_auc_score(_binary_roc_auc_score,
+                                         y_true, y_score, labels,
+                                         multiclass, average, sample_weight,
+                                         max_fpr)
     elif y_type == "binary":
         labels = np.unique(y_true)
         y_true = label_binarize(y_true, labels)[:, 0]
@@ -440,6 +387,63 @@ def roc_auc_score(y_true, y_score, labels=None,
         return _average_binary_score(
             _binary_roc_auc_score, y_true, y_score, average,
             sample_weight=sample_weight)
+
+
+def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
+                              multiclass, average, sample_weight, max_fpr):
+    # validation of the input y_score
+    if not np.allclose(1, y_score.sum(axis=1)):
+        raise ValueError(
+            "Target scores need to be probabilities for multiclass "
+            "roc_auc, i.e. they should sum up to 1.0 over classes.")
+
+    # do not support partial ROC computation for multiclass
+    if max_fpr is not None and max_fpr != 1.:
+        raise ValueError("Partial AUC computation not available in "
+                         "multiclass setting. Parameter 'max_fpr' must be"
+                         " set to `None`. Received `max_fpr={0}` "
+                         "instead.".format(max_fpr))
+
+    # validation for multiclass parameter specifications
+    average_options = ("macro", "weighted")
+    if average not in average_options:
+        raise ValueError("Parameter 'average' must be one of {0} for"
+                         " multiclass problems.".format(average_options))
+    multiclass_options = ("ovo", "ovr")
+    if multiclass not in multiclass_options:
+        raise ValueError("Parameter multiclass='{0}' is not supported"
+                         " for multiclass ROC AUC. 'multiclass' must be"
+                         " one of {1}.".format(
+                                multiclass, multiclass_options))
+    if labels is not None:
+        unique_labels = np.unique(labels)
+        if len(unique_labels) != len(labels):
+            raise ValueError("Parameter 'labels' must be unique")
+        if len(unique_labels) != y_score.shape[1]:
+            raise ValueError(
+                "Number of given labels, {0}, not equal to the number "
+                "of columns in 'y_score', {1}".format(
+                    len(unique_labels), y_score.shape[1]))
+        if set(np.unique(y_true)) > set(unique_labels):
+            raise ValueError(
+                "'y_true' contains labels not in parameter 'labels'")
+    if multiclass == "ovo":
+        if sample_weight is not None:
+            raise ValueError("Parameter 'sample_weight' is not supported"
+                             " for multiclass one-vs-one ROC AUC."
+                             " 'sample_weight' must be None in this case.")
+        y_true_encoded = _encode_y_true_multiclass_ovo(
+            y_true, y_score, labels)
+        # Hand & Till (2001) implementation (ovo)
+        return _average_multiclass_ovo_score(binary_metric, y_true_encoded,
+                                             y_score, average=average)
+    else:
+        # ovr is same as multi-label
+        if labels is None:
+            labels = np.unique(y_true)
+        y_true_multilabel = label_binarize(y_true, labels)
+        return _average_binary_score(binary_metric, y_true_multilabel, y_score,
+                                     average, sample_weight=sample_weight)
 
 
 def _encode_y_true_multiclass_ovo(y_true, y_score, labels):

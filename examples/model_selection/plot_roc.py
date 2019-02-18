@@ -60,8 +60,8 @@ y_score = classifier.fit(X_train, y_train).decision_function(X_test)
 ###############################################################################
 # Compute the AUC scores
 # ......................
-# The ROC area can be approximated by taking the average either weighted
-# uniformly or by the priori class distribution.
+# The ROC area can be approximated by taking the average either unweighted
+# or weighted by the support (the number of true instances for each label).
 from sklearn.metrics import roc_auc_score
 
 y_score_norm = y_score / y_score.sum(1, keepdims=True)
