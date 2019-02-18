@@ -111,7 +111,7 @@ def test_error():
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_logistic_cv_mock_scorer():
 
-    class MockScorer(object):
+    class MockScorer:
         def __init__(self):
             self.calls = 0
             self.scores = [0.1, 0.4, 0.8, 0.5]
