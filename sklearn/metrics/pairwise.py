@@ -18,8 +18,6 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import issparse
-from scipy.sparse import isspmatrix_csc
-from scipy.sparse import isspmatrix_csr
 
 from ..utils.validation import _num_samples
 from ..utils.validation import check_non_negative
@@ -40,17 +38,7 @@ from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
     if np.isnan(value_to_mask) or value_to_mask == "NaN":
-        if isspmatrix_csr(X):
-            return csr_matrix(
-                (np.isnan(X.data), X.indices, X.indptr),
-                shape=X.shape, dtype=np.bool).toarray()
-        if isspmatrix_csc(X):
-            return csc_matrix(
-                (np.isnan(X.data), X.indices, X.indptr),
-                shape=X.shape, dtype=np.bool).toarray()
         return np.isnan(X)
-    if issparse(X):
-        return (X == value_to_mask).toarray()
     return X == value_to_mask
 
 
@@ -381,16 +369,29 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     """
 
     force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
-    X, Y = check_pairwise_arrays(X, Y, accept_sparse=['csr', 'csc'],
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse='csr',
                                  force_all_finite=force_all_finite, copy=copy)
 
-    # Get missing mask for X and Y.T
-    missing_X = _get_mask(X, missing_values)
+    # Get missing mask for X
+    if issparse(X):
+        missing_X = csr_matrix(
+            (_get_mask(X.data, missing_values), X.indices, X.indptr),
+            shape=X.shape, dtype=np.bool).toarray()
+    else:
+        missing_X = _get_mask(X, missing_values)
+
+    # Get missing mask for Y.T
     YT = Y.T
     if Y is X:
         missing_YT = missing_X.T
     else:
-        missing_YT = _get_mask(YT, missing_values)
+        # YT is always csc
+        if issparse(YT):
+            missing_YT = csc_matrix(
+                (_get_mask(YT.data, missing_values), YT.indices, YT.indptr),
+                shape=YT.shape, dtype=np.bool).toarray()
+        else:
+            missing_YT = _get_mask(YT, missing_values)
 
     # Convert to uint8 be used to calculate distances
     not_missing_X_int = (~missing_X).astype(np.uint8)
