@@ -145,13 +145,22 @@ def test_numeric_stability():
         assert_array_equal(Xt_expected, Xt)
 
 
+def test_percentile_numeric_stability():
+    X = np.array([0.05, 0.05, 0.95]).reshape(-1, 1)
+    Xt_expected = np.array([5, 5, 9]).reshape(-1, 1)
+
+    Xt = KBinsDiscretizer(n_bins=10,
+                          encode='ordinal',
+                          strategy='quantile').fit_transform(X)
+    assert_array_equal(Xt_expected, Xt)
+
+
 def test_invalid_encode_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode')
     assert_raise_message(ValueError, "Valid options for 'encode' are "
                          "('onehot', 'onehot-dense', 'ordinal'). "
                          "Got encode='invalid-encode' instead.",
                          est.fit, X)
-
 
 def test_encode_options():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],

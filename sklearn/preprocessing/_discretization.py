@@ -161,6 +161,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             elif self.strategy == 'quantile':
                 quantiles = np.linspace(0, 100, n_bins[jj] + 1)
                 bin_edges[jj] = np.asarray(np.percentile(column, quantiles))
+                # Edge cases can lead to numerically unstable values in case of
+                # identical percentiles, but we need to make them monotonic
+                # https://github.com/numpy/numpy/issues/10373
+                np.maximum.accumulate(bin_edges[jj], out=bin_edges[jj])
 
             elif self.strategy == 'kmeans':
                 from ..cluster import KMeans  # fixes import loops
