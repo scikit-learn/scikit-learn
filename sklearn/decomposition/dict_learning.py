@@ -1,6 +1,5 @@
 """ Dictionary learning
 """
-from __future__ import print_function
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 

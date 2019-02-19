@@ -48,7 +48,7 @@ def test_delegate_to_func():
     )
 
     # reset the argument stores.
-    args_store[:] = []  # python2 compatible inplace list clear.
+    args_store[:] = []
     kwargs_store.clear()
     transformed = FunctionTransformer(
         _make_func(args_store, kwargs_store),

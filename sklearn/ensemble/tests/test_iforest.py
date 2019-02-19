@@ -10,7 +10,6 @@ import pytest
 
 import numpy as np
 
-from sklearn.utils.fixes import euler_gamma
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -264,8 +263,8 @@ def test_iforest_average_path_length():
     # It tests non-regression for #8549 which used the wrong formula
     # for average path length, strictly for the integer case
 
-    result_one = 2. * (np.log(4.) + euler_gamma) - 2. * 4. / 5.
-    result_two = 2. * (np.log(998.) + euler_gamma) - 2. * 998. / 999.
+    result_one = 2. * (np.log(4.) + np.euler_gamma) - 2. * 4. / 5.
+    result_two = 2. * (np.log(998.) + np.euler_gamma) - 2. * 998. / 999.
     assert_almost_equal(_average_path_length(1), 1., decimal=10)
     assert_almost_equal(_average_path_length(5), result_one, decimal=10)
     assert_almost_equal(_average_path_length(999), result_two, decimal=10)

@@ -27,7 +27,6 @@ feeding them to the learner.
 #          @FedericoV <https://github.com/FedericoV/>
 # License: BSD 3 clause
 
-from __future__ import print_function
 from glob import glob
 import itertools
 import os.path
@@ -221,7 +220,7 @@ def get_minibatch(doc_iter, size, pos_class=positive_class):
     Note: size is before excluding invalid docs with no topics assigned.
 
     """
-    data = [(u'{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
+    data = [('{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
             for doc in itertools.islice(doc_iter, size)
             if doc['topics']]
     if not len(data):

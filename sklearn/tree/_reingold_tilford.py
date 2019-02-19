@@ -19,7 +19,7 @@
 import numpy as np
 
 
-class DrawTree(object):
+class DrawTree:
     def __init__(self, tree, parent=None, depth=0, number=1):
         self.x = -1.
         self.y = depth
@@ -193,7 +193,7 @@ def second_walk(v, m=0, depth=0, min=None):
     return min
 
 
-class Tree(object):
+class Tree:
     def __init__(self, label="", node_id=-1, *children):
         self.label = label
         self.node_id = node_id
