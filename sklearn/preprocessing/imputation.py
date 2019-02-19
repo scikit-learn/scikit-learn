@@ -14,7 +14,7 @@ from ..utils import deprecated
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from .utils.mask import _get_missing_mask
+from ..utils.mask import _get_missing_mask
 
 
 __all__ = [
