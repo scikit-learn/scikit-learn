@@ -33,6 +33,11 @@ in the FAQ.
 
 .. _citing-scikit-learn:
 
+Governance
+----------
+The decision making process and governance structure of scikit-learn is laid
+out in the `governance document <governance>`_.
+
 Citing scikit-learn
 -------------------
 

@@ -88,6 +88,13 @@ Documentation of scikit-learn |version|
 
             <div class="row-fluid">
                 <div class="span4 box">
+                    <h2><a href="tutorial/machine_learning_map/index.html">Flow Chart</a></h2>
+                    <blockquote>A graphical overview of basic areas of machine
+                        learning, and guidance which kind of algorithms
+                        to use in a given situation.
+                    </blockquote>
+                </div>
+                <div class="span4 box">
                     <h2><a href="related_projects.html">Related packages</a></h2>
                     <blockquote>Other machine learning packages for Python and
                     related projects. Also algorithms that are slightly out of
@@ -97,12 +104,6 @@ Documentation of scikit-learn |version|
                 <div class="span4 box">
                     <h2><a href="roadmap.html">Roadmap</a></h2>
                     <blockquote>Roadmap of the project.
-                    </blockquote>
-                </div>
-                <div class="span4 box">
-                    <h2><a href="governance.html">Project Governance</a></h2>
-                    <blockquote>The governance structure and decision making
-                    process of the scikit-learn project.
                     </blockquote>
                 </div>
 
