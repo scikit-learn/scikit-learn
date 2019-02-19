@@ -204,7 +204,8 @@ indices, for example::
 The cross_validate function and multiple metric evaluation
 ----------------------------------------------------------
 
-The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
+The :func:`cross_validate` function differs from :func:`cross_val_score` in
+two ways:
 
 - It allows specifying multiple metrics for evaluation.
 

@@ -76,7 +76,7 @@ def test_kmeans_results(representation, algo, dtype):
 def test_elkan_results(distribution):
     # check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
-    if distribution is 'normal':
+    if distribution == 'normal':
         X = rnd.normal(size=(50, 10))
     else:
         X, _ = make_blobs(random_state=rnd)

@@ -436,8 +436,9 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
                 return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
             else:
-                predictions = np.zeros((n_samples, self.n_outputs_))
-
+                class_type = self.classes_[0].dtype
+                predictions = np.zeros((n_samples, self.n_outputs_),
+                                       dtype=class_type)
                 for k in range(self.n_outputs_):
                     predictions[:, k] = self.classes_[k].take(
                         np.argmax(proba[:, k], axis=1),
