@@ -58,7 +58,8 @@ from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
 from sklearn.utils import shuffle
 from sklearn.utils.validation import has_fit_parameter, _num_samples
 from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris, load_boston, make_blobs
+from sklearn.datasets import (load_iris, load_boston, make_blobs,
+                              make_multilabel_classification)
 
 
 BOSTON = None
@@ -72,6 +73,24 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
                 'RandomForestRegressor', 'Ridge', 'RidgeCV']
+
+NOT_MULTI_OUTPUT = ["AdaBoostClassifier", "BaggingClassifier", "BernoulliNB",
+                    "CalibratedClassifierCV", "ComplementNB", "GaussianNB",
+                    "GaussianProcessClassifier", "GradientBoostingClassifier",
+                    "LabelPropagation", "LabelSpreading",
+                    "LinearDiscriminantAnalysis", "LogisticRegressionCV",
+                    "LinearSVC", "LogisticRegression", "MLPClassifier",
+                    "LabelBinarizer", "MultinomialNB", "NearestCentroid",
+                    "NuSVC", "PassiveAggressiveClassifier", "Perceptron",
+                    "QuadraticDiscriminantAnalysis", "RidgeClassifier",
+                    "RidgeClassifierCV", "LabelBinarizer", "SGDClassifier",
+                    "SVC", "ARDRegression", "AdaBoostRegressor",
+                    "BayesianRidge", "ElasticNetCV",
+                    "GradientBoostingRegressor", "HuberRegressor", "LarsCV",
+                    "LassoCV", "LassoLarsCV", "LassoLarsIC", "LinearSVR",
+                    "NuSVR", "OrthogonalMatchingPursuitCV",
+                    "PassiveAggressiveRegressor", "RANSACRegressor",
+                    "SGDRegressor", "SVR", "TheilSenRegressor"]
 
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
              'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
@@ -124,6 +143,9 @@ def _yield_classifier_checks(name, classifier):
     yield check_classifiers_one_label
     yield check_classifiers_classes
     yield check_estimators_partial_fit_n_features
+    # test classifiers for multi-target output
+    if name not in NOT_MULTI_OUTPUT:
+        yield check_classifier_multioutput
     # basic consistency testing
     yield check_classifiers_train
     yield partial(check_classifiers_train, readonly_memmap=True)
@@ -177,6 +199,9 @@ def _yield_regressor_checks(name, regressor):
     yield partial(check_regressors_train, readonly_memmap=True)
     yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
+    # test regressors for multi-target output
+    if name not in NOT_MULTI_OUTPUT:
+        yield check_regressor_multioutput
     yield check_regressors_no_decision_function
     yield check_supervised_y_2d
     yield check_supervised_y_no_nan
@@ -1272,6 +1297,23 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
                            " changes between calls to "
                            "partial_fit.".format(name)):
         estimator.partial_fit(X[:, :-1], y)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_classifier_multioutput(name, estimator_orig):
+
+    estimator_orig = clone(estimator_orig)
+    X, y = make_multilabel_classification(random_state=42)
+    y = y.astype(str)
+    estimator_orig.fit(X, y).predict(X)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_regressor_multioutput(name, estimator_orig):
+
+    estimator_orig = clone(estimator_orig)
+    X, y = make_multilabel_classification(random_state=42)
+    estimator_orig.fit(X, y).predict(X)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
