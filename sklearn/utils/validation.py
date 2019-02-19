@@ -18,7 +18,6 @@ from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
 
-from ..externals import six
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
@@ -35,14 +34,18 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 
 def _assert_all_finite(X, allow_nan=False):
     """Like assert_all_finite, but only for ndarray."""
+    # validation is also imported in extmath
+    from .extmath import _safe_accumulator_op
+
     if _get_config()['assume_finite']:
         return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
-    # false positives from overflow in sum method.
+    # false positives from overflow in sum method. The sum is also calculated
+    # safely to reduce dtype induced overflows.
     is_float = X.dtype.kind in 'fc'
-    if is_float and np.isfinite(X.sum()):
+    if is_float and (np.isfinite(_safe_accumulator_op(np.sum, X))):
         pass
     elif is_float:
         msg_err = "Input contains {} or a value too large for {!r}."
@@ -146,40 +149,6 @@ def _num_samples(x):
         return len(x)
 
 
-def _shape_repr(shape):
-    """Return a platform independent representation of an array shape
-
-    Under Python 2, the `long` type introduces an 'L' suffix when using the
-    default %r format for tuples of integers (typically used to store the shape
-    of an array).
-
-    Under Windows 64 bit (and Python 2), the `long` type is used by default
-    in numpy shapes even when the integer dimensions are well below 32 bit.
-    The platform specific type causes string messages or doctests to change
-    from one platform to another which is not desirable.
-
-    Under Python 3, there is no more `long` type so the `L` suffix is never
-    introduced in string representation.
-
-    >>> _shape_repr((1, 2))
-    '(1, 2)'
-    >>> one = 2 ** 64 / 2 ** 64  # force an upcast to `long` under Python 2
-    >>> _shape_repr((one, 2 * one))
-    '(1, 2)'
-    >>> _shape_repr((1,))
-    '(1,)'
-    >>> _shape_repr(())
-    '()'
-    """
-    if len(shape) == 0:
-        return "()"
-    joined = ", ".join("%d" % e for e in shape)
-    if len(shape) == 1:
-        # special notation for singleton tuples
-        joined += ','
-    return "(%s)" % joined
-
-
 def check_memory(memory):
     """Check that ``memory`` is joblib.Memory-like.
 
@@ -201,7 +170,7 @@ def check_memory(memory):
         If ``memory`` is not joblib.Memory-like.
     """
 
-    if memory is None or isinstance(memory, six.string_types):
+    if memory is None or isinstance(memory, str):
         if LooseVersion(joblib_version) < '0.12':
             memory = Memory(cachedir=memory, verbose=0)
         else:
@@ -304,7 +273,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     changed_format = False
 
-    if isinstance(accept_sparse, six.string_types):
+    if isinstance(accept_sparse, str):
         accept_sparse = [accept_sparse]
 
     # Indices dtype validation
@@ -463,7 +432,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     array_orig = array
 
     # store whether originally we wanted numeric dtype
-    dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
+    dtype_numeric = isinstance(dtype, str) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
     if not hasattr(dtype_orig, 'kind'):
@@ -497,7 +466,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
                          '. Got {!r} instead'.format(force_all_finite))
 
     if estimator is not None:
-        if isinstance(estimator, six.string_types):
+        if isinstance(estimator, str):
             estimator_name = estimator
         else:
             estimator_name = estimator.__class__.__name__
@@ -568,13 +537,12 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             _assert_all_finite(array,
                                allow_nan=force_all_finite == 'allow-nan')
 
-    shape_repr = _shape_repr(array.shape)
     if ensure_min_samples > 0:
         n_samples = _num_samples(array)
         if n_samples < ensure_min_samples:
             raise ValueError("Found array with %d sample(s) (shape=%s) while a"
                              " minimum of %d is required%s."
-                             % (n_samples, shape_repr, ensure_min_samples,
+                             % (n_samples, array.shape, ensure_min_samples,
                                 context))
 
     if ensure_min_features > 0 and array.ndim == 2:
@@ -582,7 +550,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         if n_features < ensure_min_features:
             raise ValueError("Found array with %d feature(s) (shape=%s) while"
                              " a minimum of %d is required%s."
-                             % (n_features, shape_repr, ensure_min_features,
+                             % (n_features, array.shape, ensure_min_features,
                                 context))
 
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:

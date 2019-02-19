@@ -1,12 +1,11 @@
 """Testing for Spectral Clustering methods"""
-from __future__ import division
 
 import numpy as np
 from scipy import sparse
 
 import pytest
 
-from sklearn.externals.six.moves import cPickle
+import pickle
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
@@ -52,7 +51,7 @@ def test_spectral_clustering(eigen_solver, assign_labels):
 
         assert adjusted_rand_score(labels, [1, 1, 1, 0, 0, 0, 0]) == 1
 
-        model_copy = cPickle.loads(cPickle.dumps(model))
+        model_copy = pickle.loads(pickle.dumps(model))
         assert model_copy.n_clusters == model.n_clusters
         assert model_copy.eigen_solver == model.eigen_solver
         assert_array_equal(model_copy.labels_, model.labels_)

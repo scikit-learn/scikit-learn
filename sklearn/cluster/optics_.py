@@ -10,7 +10,6 @@ Authors: Shane Grigsby <refuge@rocktalus.com>
 License: BSD 3 clause
 """
 
-from __future__ import division
 import warnings
 import numpy as np
 
@@ -725,7 +724,7 @@ def _automatic_cluster(reachability_plot, ordering,
     return root_node
 
 
-class _TreeNode(object):
+class _TreeNode:
     # automatic cluster helper classes and functions
     def __init__(self, points, start, end, parent_node):
         self.points = points

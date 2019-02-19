@@ -111,7 +111,7 @@ def test_error():
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_logistic_cv_mock_scorer():
 
-    class MockScorer(object):
+    class MockScorer:
         def __init__(self):
             self.calls = 0
             self.scores = [0.1, 0.4, 0.8, 0.5]
@@ -234,7 +234,7 @@ def test_check_solver_option(LR):
 
     # all solvers except 'liblinear' and 'saga'
     for solver in ['newton-cg', 'lbfgs', 'sag']:
-        msg = ("Solver %s supports only l2 penalties, got l1 penalty." %
+        msg = ("Solver %s supports only 'l2' or 'none' penalties," %
                solver)
         lr = LR(solver=solver, penalty='l1', multi_class='ovr')
         assert_raise_message(ValueError, msg, lr.fit, X, y)
@@ -252,6 +252,11 @@ def test_check_solver_option(LR):
                "solver={}.".format(solver))
         lr = LR(solver=solver, penalty='elasticnet')
         assert_raise_message(ValueError, msg, lr.fit, X, y)
+
+    # liblinear does not support penalty='none'
+    msg = "penalty='none' is not supported for the liblinear solver"
+    lr = LR(penalty='none', solver='liblinear')
+    assert_raise_message(ValueError, msg, lr.fit, X, y)
 
 
 @pytest.mark.parametrize('model, params, warn_solver',
@@ -1754,3 +1759,32 @@ def test_logistic_regression_path_deprecation():
     assert_warns_message(DeprecationWarning,
                          "logistic_regression_path was deprecated",
                          logistic_regression_path, X, Y1)
+
+
+@pytest.mark.parametrize('solver', ('lbfgs', 'newton-cg', 'sag', 'saga'))
+def test_penalty_none(solver):
+    # - Make sure warning is raised if penalty='none' and C is set to a
+    #   non-default value.
+    # - Make sure setting penalty='none' is equivalent to setting C=np.inf with
+    #   l2 penalty.
+    X, y = make_classification(n_samples=1000, random_state=0)
+
+    msg = "Setting penalty='none' will ignore the C"
+    lr = LogisticRegression(penalty='none', solver=solver, C=4)
+    assert_warns_message(UserWarning, msg, lr.fit, X, y)
+
+    lr_none = LogisticRegression(penalty='none', solver=solver,
+                                 random_state=0)
+    lr_l2_C_inf = LogisticRegression(penalty='l2', C=np.inf, solver=solver,
+                                     random_state=0)
+    pred_none = lr_none.fit(X, y).predict(X)
+    pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
+    assert_array_equal(pred_none, pred_l2_C_inf)
+
+    lr = LogisticRegressionCV(penalty='none')
+    assert_raise_message(
+        ValueError,
+        "penalty='none' is not useful and not supported by "
+        "LogisticRegressionCV",
+        lr.fit, X, y
+    )

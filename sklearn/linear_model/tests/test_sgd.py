@@ -42,19 +42,19 @@ class SparseSGDClassifier(SGDClassifier):
 
     def fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).fit(X, y, *args, **kw)
+        return super().fit(X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).partial_fit(X, y, *args, **kw)
+        return super().partial_fit(X, y, *args, **kw)
 
     def decision_function(self, X):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).decision_function(X)
+        return super().decision_function(X)
 
     def predict_proba(self, X):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).predict_proba(X)
+        return super().predict_proba(X)
 
 
 class SparseSGDRegressor(SGDRegressor):
@@ -113,7 +113,7 @@ true_result5 = [0, 1, 1]
 ###############################################################################
 # Tests common to classification and regression
 
-class CommonTest(object):
+class CommonTest:
 
     def factory(self, **kwargs):
         if "random_state" not in kwargs:
@@ -585,10 +585,10 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                 assert not hasattr(clf, 'predict_proba')
                 assert not hasattr(clf, 'predict_log_proba')
                 with pytest.raises(AttributeError,
-                                   message=message):
+                                   match=message):
                     clf.predict_proba
                 with pytest.raises(AttributeError,
-                                   message=message):
+                                   match=message):
                     clf.predict_log_proba
 
     def test_sgd_proba(self):
