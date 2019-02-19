@@ -7,7 +7,7 @@ import pytest
 from sklearn.ensemble import FastGradientBoostingRegressor
 from sklearn.ensemble import FastGradientBoostingClassifier
 from sklearn._fast_gradient_boosting.binning import BinMapper
-from sklearn._fast_gradient_boosting.utils import get_lightgbm_estimator
+from sklearn._fast_gradient_boosting.utils import get_equivalent_estimator
 
 
 pytest.importorskip("lightgbm")
@@ -21,11 +21,11 @@ pytest.importorskip("lightgbm")
 ])
 def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
                                      max_leaf_nodes):
-    # Make sure pygbm has the same predictions as LGBM for easy targets.
+    # Make sure sklearn has the same predictions as LGBM for easy targets.
     #
     # In particular when the size of the trees are bound and the number of
     # samples is large enough, the structure of the prediction trees found by
-    # LightGBM and PyGBM should be exactly identical.
+    # LightGBM and sklearn should be exactly identical.
     #
     # Notes:
     # - Several candidate splits may have equal gains when the number of
@@ -59,7 +59,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
         n_iter_no_change=None,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
-    est_lightgbm = get_lightgbm_estimator(est_sklearn)
+    est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lgbm')
 
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
@@ -104,7 +104,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-    est_pygbm = FastGradientBoostingClassifier(
+    est_sklearn = FastGradientBoostingClassifier(
         loss='binary_crossentropy',
         n_estimators=n_estimators,
         max_bins=max_bins,
@@ -112,31 +112,31 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
         n_iter_no_change=None,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
-    est_lightgbm = get_lightgbm_estimator(est_pygbm)
+    est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lgbm')
 
     est_lightgbm.fit(X_train, y_train)
-    est_pygbm.fit(X_train, y_train)
+    est_sklearn.fit(X_train, y_train)
 
     # We need X to be treated an numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)
-    pred_pygbm = est_pygbm.predict(X_train)
-    assert np.mean(pred_pygbm == pred_lightgbm) > .89
+    pred_sklearn = est_sklearn.predict(X_train)
+    assert np.mean(pred_sklearn == pred_lightgbm) > .89
 
     acc_lgbm = accuracy_score(y_train, pred_lightgbm)
-    acc_pygbm = accuracy_score(y_train, pred_pygbm)
-    np.testing.assert_almost_equal(acc_lgbm, acc_pygbm)
+    acc_sklearn = accuracy_score(y_train, pred_sklearn)
+    np.testing.assert_almost_equal(acc_lgbm, acc_sklearn)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
 
         pred_lightgbm = est_lightgbm.predict(X_test)
-        pred_pygbm = est_pygbm.predict(X_test)
-        assert np.mean(pred_pygbm == pred_lightgbm) > .89
+        pred_sklearn = est_sklearn.predict(X_test)
+        assert np.mean(pred_sklearn == pred_lightgbm) > .89
 
         acc_lgbm = accuracy_score(y_test, pred_lightgbm)
-        acc_pygbm = accuracy_score(y_test, pred_pygbm)
-        np.testing.assert_almost_equal(acc_lgbm, acc_pygbm, decimal=2)
+        acc_sklearn = accuracy_score(y_test, pred_sklearn)
+        np.testing.assert_almost_equal(acc_lgbm, acc_sklearn, decimal=2)
 
 
 @pytest.mark.parametrize('seed', range(5))
@@ -166,7 +166,7 @@ def test_same_predictions_multiclass_classification(
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-    est_pygbm = FastGradientBoostingClassifier(
+    est_sklearn = FastGradientBoostingClassifier(
         loss='categorical_crossentropy',
         n_estimators=n_estimators,
         max_bins=max_bins,
@@ -174,40 +174,40 @@ def test_same_predictions_multiclass_classification(
         n_iter_no_change=None,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
-    est_lightgbm = get_lightgbm_estimator(est_pygbm)
+    est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lgbm')
 
     est_lightgbm.fit(X_train, y_train)
-    est_pygbm.fit(X_train, y_train)
+    est_sklearn.fit(X_train, y_train)
 
     # We need X to be treated an numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
     pred_lightgbm = est_lightgbm.predict(X_train)
-    pred_pygbm = est_pygbm.predict(X_train)
-    assert np.mean(pred_pygbm == pred_lightgbm) > .89
+    pred_sklearn = est_sklearn.predict(X_train)
+    assert np.mean(pred_sklearn == pred_lightgbm) > .89
 
     proba_lightgbm = est_lightgbm.predict_proba(X_train)
-    proba_pygbm = est_pygbm.predict_proba(X_train)
+    proba_sklearn = est_sklearn.predict_proba(X_train)
     # assert more than 75% of the predicted probabilities are the same up to
     # the second decimal
-    assert np.mean(np.abs(proba_lightgbm - proba_pygbm) < 1e-2) > .75
+    assert np.mean(np.abs(proba_lightgbm - proba_sklearn) < 1e-2) > .75
 
     acc_lgbm = accuracy_score(y_train, pred_lightgbm)
-    acc_pygbm = accuracy_score(y_train, pred_pygbm)
-    np.testing.assert_almost_equal(acc_lgbm, acc_pygbm, decimal=2)
+    acc_sklearn = accuracy_score(y_train, pred_sklearn)
+    np.testing.assert_almost_equal(acc_lgbm, acc_sklearn, decimal=2)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
 
         pred_lightgbm = est_lightgbm.predict(X_test)
-        pred_pygbm = est_pygbm.predict(X_test)
-        assert np.mean(pred_pygbm == pred_lightgbm) > .89
+        pred_sklearn = est_sklearn.predict(X_test)
+        assert np.mean(pred_sklearn == pred_lightgbm) > .89
 
         proba_lightgbm = est_lightgbm.predict_proba(X_train)
-        proba_pygbm = est_pygbm.predict_proba(X_train)
+        proba_sklearn = est_sklearn.predict_proba(X_train)
         # assert more than 75% of the predicted probabilities are the same up
         # to the second decimal
-        assert np.mean(np.abs(proba_lightgbm - proba_pygbm) < 1e-2) > .75
+        assert np.mean(np.abs(proba_lightgbm - proba_sklearn) < 1e-2) > .75
 
         acc_lgbm = accuracy_score(y_test, pred_lightgbm)
-        acc_pygbm = accuracy_score(y_test, pred_pygbm)
-        np.testing.assert_almost_equal(acc_lgbm, acc_pygbm, decimal=2)
+        acc_sklearn = accuracy_score(y_test, pred_sklearn)
+        np.testing.assert_almost_equal(acc_lgbm, acc_sklearn, decimal=2)
