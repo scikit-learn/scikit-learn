@@ -190,9 +190,12 @@ Nearest neighbors imputation
 The :class:`KNNImputer` class provides imputation for completing missing
 values using the k-Nearest Neighbors approach. Each sample's missing values
 are imputed using values from ``n_neighbors`` nearest neighbors found in the
-training set. In this context, a donor defined to be a neighbor that
-contributes to the imputation of a given sample. If a sample has more than one
-feature missing, then the sample can potentially have multiple sets of
+training set. In this context, a donor is defined to be a neighbor that
+contributes to the imputation of a given sample. For each missing feature in a
+sample, the donors are selected such that they have the feature present and 
+they are one of the ``n_neighbors`` nearest neighbors.
+
+then the sample can potentially have multiple sets of
 ``n_neighbors`` donors depending on the particular feature being imputed.
 
 Each missing feature is then imputed as the average, either weighted or
@@ -204,7 +207,7 @@ imputation. For more information on the methodology, see ref. [OLGA]_.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean feature value of the two nearest
-neighbors of the samples that contain the missing values::
+neighbors of samples with missing values::
 
     >>> import numpy as np
     >>> from sklearn.impute import KNNImputer
