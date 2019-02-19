@@ -1,6 +1,7 @@
 """Transformers for missing value imputation"""
 # Authors: Nicolas Tresegnie <nicolas.tresegnie@gmail.com>
 #          Sergey Feldman <sergeyfeldman@gmail.com>
+#          Ashim Bhattarai <ashimb9@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division

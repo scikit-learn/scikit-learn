@@ -136,7 +136,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Feature| Added the class, :class:`impute.KNNImputer`, to impute missing 
   values using k-Nearest Neighbors. :issue:`2989` by 
-  :user:`Thomas Fan <thomasjpfan>` and :user:`Ashim Bhattarai <ashimb9>`.
+  :user:`Ashim Bhattarai <ashimb9>` and :user:`Thomas Fan <thomasjpfan>`.
 
 :mod:`sklearn.linear_model`
 ...........................

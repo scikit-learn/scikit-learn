@@ -1542,9 +1542,8 @@ def test_knn_imputer_callable_metric():
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed)
 
 
-def test_knn_imputer_complete_features():
+def test_knn_imputer_with_simple_example():
 
-    # Test with use_complete=True
     X = np.array([
         [0,      np.nan,    0,       np.nan],
         [1,      1,         1,       np.nan],
@@ -1577,9 +1576,8 @@ def test_knn_imputer_complete_features():
     assert_array_almost_equal(imputer_comp.fit_transform(X), X_imputed)
 
 
-def test_knn_imputer_complete_features_weighted():
+def test_knn_imputer_with_weighted_features():
 
-    # Test with use_complete=True
     X = np.array([
         [0,      0,     0,       np.nan],
         [1,      1,     1,       np.nan],
