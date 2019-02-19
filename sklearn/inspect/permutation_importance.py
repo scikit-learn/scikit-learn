@@ -6,7 +6,6 @@ from ..metrics import check_scoring
 
 
 def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=30,
-                           n_jobs=None, pre_dispatch='2*n_jobs',
                            random_state=None):
     """Permutation importance for feature evaluation.
 
