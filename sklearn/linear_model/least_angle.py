@@ -761,7 +761,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 ###############################################################################
 # Estimator classes
 
-class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
+class _BaseLars(RegressorMixin, LinearModel):
     """Least Angle Regression model a.k.a. LAR
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
@@ -969,7 +969,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         return self
 
 
-class LassoLars(Lars):
+class Lars(MultiOutputMixin, _BaseLars):
+    pass
+
+
+class _BaseLassoLars(_BaseLars):
     """Lasso model fit with Least Angle Regression a.k.a. Lars
 
     It is a Linear Model trained with an L1 prior as regularizer.
@@ -1229,7 +1233,11 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     return alphas, active, coefs, residues.T
 
 
-class LarsCV(Lars):
+class LassoLars(MultiOutputMixin, _BaseLassoLars):
+    pass
+
+
+class LarsCV(_BaseLars):
     """Cross-validated Least Angle Regression model.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1601,7 +1609,7 @@ class LassoLarsCV(LarsCV):
         # to avoid setting n_nonzero_coefs
 
 
-class LassoLarsIC(LassoLars):
+class LassoLarsIC(_BaseLassoLars):
     """Lasso model fit with Lars using BIC or AIC for model selection
 
     The optimization objective for Lasso is::

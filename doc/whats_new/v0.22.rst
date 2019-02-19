@@ -598,3 +598,9 @@ These changes mostly affect library developers.
   :pr:`14336` by :user:`Gregory Dexter <gdex1>`.
 
 - |Fix| Added ``check_transformer_data_not_an_array`` to checks where missing
+
+- Added two common multioutput estimator tests
+  :func:`~utils.estimator_checks.check_classifier_multioutput` and
+  :func:`~utils.estimator_checks.check_regressor_multioutput`.
+  :pr:`13392` by :user:`Rok Mihevc <rok>`.
+

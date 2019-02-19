@@ -1027,7 +1027,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     return this_mses
 
 
-class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
+class _BaseLinearModelCV(LinearModel, metaclass=ABCMeta):
     """Base class for iterative model fitting along a regularization path"""
 
     @abstractmethod
@@ -1223,7 +1223,11 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         return self
 
 
-class LassoCV(RegressorMixin, LinearModelCV):
+class LinearModelCV(MultiOutputMixin, _BaseLinearModelCV):
+    pass
+
+
+class LassoCV(RegressorMixin, _BaseLinearModelCV):
     """Lasso linear model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1389,7 +1393,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
             random_state=random_state, selection=selection)
 
 
-class ElasticNetCV(RegressorMixin, LinearModelCV):
+class ElasticNetCV(RegressorMixin, _BaseLinearModelCV):
     """Elastic Net model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1909,7 +1913,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.selection = selection
 
 
-class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
+class MultiTaskElasticNetCV(MultiOutputMixin, RegressorMixin,
+                            _BaseLinearModelCV):
     """Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2097,7 +2102,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         return {'multioutput_only': True}
 
 
-class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
+class MultiTaskLassoCV(RegressorMixin, _BaseLinearModelCV):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     See glossary entry for :term:`cross-validation estimator`.
