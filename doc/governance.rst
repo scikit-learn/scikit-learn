@@ -31,7 +31,8 @@ Core developers
 ---------------
 Core developers are community members who have shown that they are dedicated to
 the continued development of the project through ongoing engagement with the
-community. Being a core developer  allows contributors to more easily carry on
+community. They have shown they can be trusted to maintain Scikit-learn with
+care. Being a core developer allows contributors to more easily carry on
 with their project related activities by giving them direct access to the
 project’s repository and is represented as being an organization member on the
 scikit-learn `GitHub organization <https://github.com/orgs/scikit-learn/people>`_.
