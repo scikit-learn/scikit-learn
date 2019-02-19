@@ -548,6 +548,14 @@ regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
 which would cause the covariance matrix to be non-invertible. In this case
 ``'handle_unknown'`` must be set to ``'error'``::
 
+    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> drop_enc = OneHotEncoder(drop='first').fit(X)
+    >>> drop_enc.categories_
+    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
+    >>> drop_enc.transform(X).toarray()
+    array([[1., 1., 1.],
+           [0., 0., 0.]])
+
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
 
