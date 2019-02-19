@@ -2,13 +2,10 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
-
 import numbers
 import warnings
 
 import numpy as np
-import six
 from scipy import sparse
 
 from .. import get_config as _get_config
@@ -166,12 +163,13 @@ class OneHotEncoder(_BaseEncoder):
         features cause problems, such as when feeding the resulting data
         into a neural network or an unregularized regression.
 
-        - None : retain all features.
+        - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
-                    category is present, the feature will be dropped
-                    entirely.
-        - array : ``drop[i]`` is the caetgory in ``X[:,i]`` that should be
-                  dropped. None means all categories should be retained.
+          category is present, the feature will be dropped entirely.
+        - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
+          should be dropped. Any of the elements in this array can be None,
+          which indicates that all categories of feature ``i`` should be
+          retained.
 
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
@@ -224,7 +222,7 @@ class OneHotEncoder(_BaseEncoder):
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        drop_idx_[i] is the index in ``categories_`` of the category to be
+        drop_idx_[i] is the index in ``categories_[i]`` of the category to be
         dropped for each feature. None if all the transformed features will
         be retained.
 
@@ -465,20 +463,10 @@ class OneHotEncoder(_BaseEncoder):
         -------
         self
         """
-        if self.handle_unknown not in ('error', 'ignore'):
-            msg = ("handle_unknown should be either 'error' or 'ignore', "
-                   "got {0}.".format(self.handle_unknown))
-            raise ValueError(msg)
 
         self._handle_deprecations(X)
 
-        # If we have both dropped columns and ignored unknown
-        # values, there will be ambiguous cells. This creates difficulties
-        # in interpreting the model.
-        if self.drop is not None and self.handle_unknown != 'error':
-            raise ValueError(
-                "`handle_unknown` cannot be 'ignore' when the drop parameter "
-                "is specified, as this will create ambiguous cells")
+        self._validate_keywords()
 
         if self._legacy_mode:
             _transform_selected(X, self._legacy_fit_transform, self.dtype,
@@ -493,11 +481,9 @@ class OneHotEncoder(_BaseEncoder):
     def _compute_drop_idx(self):
         if self.drop is None:
             return None
-        elif (isinstance(self.drop, six.string_types) and
-              self.drop == 'first'):
-            return np.zeros(len(self.categories_),
-                            dtype=object)
-        elif not isinstance(self.drop, six.string_types):
+        elif (isinstance(self.drop, str) and self.drop == 'first'):
+            return np.zeros(len(self.categories_), dtype=object)
+        elif not isinstance(self.drop, str):
             try:
                 self.drop = np.asarray(self.drop, dtype=object)
                 droplen = len(self.drop)
@@ -529,6 +515,19 @@ class OneHotEncoder(_BaseEncoder):
             msg = ("Wrong input for parameter `drop`. Expected "
                    "'first', None or array of objects, got {}")
             raise ValueError(msg.format(type(self.drop)))
+
+    def _validate_keywords(self):
+        if self.handle_unknown not in ('error', 'ignore'):
+            msg = ("handle_unknown should be either 'error' or 'ignore', "
+                   "got {0}.".format(self.handle_unknown))
+            raise ValueError(msg)
+        # If we have both dropped columns and ignored unknown
+        # values, there will be ambiguous cells. This creates difficulties
+        # in interpreting the model.
+        if self.drop is not None and self.handle_unknown != 'error':
+            raise ValueError(
+                "`handle_unknown` cannot be 'ignore' when the drop parameter "
+                "is specified, as this will create ambiguous cells")
 
     def _legacy_fit_transform(self, X):
         """Assumes X contains only categorical features."""
@@ -604,20 +603,10 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
-        if self.handle_unknown not in ('error', 'ignore'):
-            msg = ("handle_unknown should be either 'error' or 'ignore', "
-                   "got {0}.".format(self.handle_unknown))
-            raise ValueError(msg)
 
         self._handle_deprecations(X)
 
-        # If we have both dropped columns and ignored unknown
-        # values, there will be ambiguous cells. This creates difficulties
-        # in interpreting the model.
-        if self.drop is not None and self.handle_unknown != 'error':
-            raise ValueError(
-                "`handle_unknown` cannot be 'ignore' when the drop parameter "
-                "is specified, as this will create ambiguous cells")
+        self._validate_keywords()
 
         if self._legacy_mode:
             return _transform_selected(

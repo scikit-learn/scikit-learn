@@ -707,29 +707,25 @@ def test_one_hot_encoder_warning():
     np.testing.assert_no_warnings(enc.fit_transform, X)
 
 
-def test_one_hot_encoder_drop_manual():
-    cats_to_drop = ['def', 3, 56]
+
+@pytest.mark.parametrize("cats_to_drop, exp", [
+    (['def', 3, 56],
+     np.array([[1., 0., 1., 1.],
+               [0., 1., 0., 1.],
+               [0., 0., 0., 0.]], dtype='float64')),
+    (['def', 3, None],
+     np.array([[1., 0., 1., 1., 0.],
+               [0., 1., 0., 1., 0.],
+               [0., 0., 0., 0., 1.]], dtype='float64')),
+    ], ids=['all_specified', 'with-none'])
+def test_one_hot_encoder_drop_manual(cats_to_drop, exp):
     enc = OneHotEncoder(drop=cats_to_drop)
     X = [['abc', 2, 55], ['def', 1, 55], ['def', 3, 56]]
-    exp = np.array([[1., 0., 1., 1.],
-                    [0., 1., 0., 1.],
-                    [0., 0., 0., 0.]], dtype='float64')
-
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
     dropped_cats = np.array([None if feature is None else cat[feature]
                              for cat, feature in zip(enc.categories_,
                                                      enc.drop_idx_)])
     assert_array_equal(dropped_cats, cats_to_drop)
-
-
-def test_one_hot_encoder_none_drop():
-    enc = OneHotEncoder(drop=['def', 3, None])
-    X = [['abc', 2, 55], ['def', 1, 55], ['def', 3, 56]]
-    exp = np.array([[1., 0., 1., 1., 0.],
-                    [0., 1., 0., 1., 0.],
-                    [0., 0., 0., 0., 1.]], dtype='float64')
-    assert_array_equal(enc.fit_transform(X).toarray(), exp)
-
 
 def test_one_hot_encoder_invalid_params():
     enc = OneHotEncoder(drop='second')

@@ -540,6 +540,14 @@ columns for this feature will be all zeros
     array([[1., 0., 0., 0., 0., 0.]])
 
 
+It is also possible to encode each column into ``n_categories - 1`` columns
+instead of ``n_categories`` columns by using the ``'drop'`` parameter. This
+parameter allows the user to specify a category for each feature to be dropped.
+This is useful to avoid co-linearity in the input matrix in non-regularized
+regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
+which would cause the covariance matrix to be non-invertible. In this case
+``'handle_unknown'`` must be set to ``'error'``::
+
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
 
