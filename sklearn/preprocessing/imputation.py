@@ -14,19 +14,12 @@ from ..utils import deprecated
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from .utils.mask import _get_missing_mask
 
 
 __all__ = [
     'Imputer',
 ]
-
-
-def _get_mask(X, value_to_mask):
-    """Compute the boolean mask X == missing_values."""
-    if value_to_mask == "NaN" or np.isnan(value_to_mask):
-        return np.isnan(X)
-    else:
-        return X == value_to_mask
 
 
 def _most_frequent(array, extra_value, n_repeat):
@@ -187,7 +180,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                 n_non_missing = n_zeros_axis
 
                 # Mask the missing elements
-                mask_missing_values = _get_mask(X.data, missing_values)
+                mask_missing_values = _get_missing_mask(X.data, missing_values)
                 mask_valids = np.logical_not(mask_missing_values)
 
                 # Sum only the valid elements
@@ -219,7 +212,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         else:
             # Remove the missing values, for each column
             columns_all = np.hsplit(X.data, X.indptr[1:-1])
-            mask_missing_values = _get_mask(X.data, missing_values)
+            mask_missing_values = _get_missing_mask(X.data, missing_values)
             mask_valids = np.hsplit(np.logical_not(mask_missing_values),
                                     X.indptr[1:-1])
 
@@ -249,7 +242,7 @@ class Imputer(BaseEstimator, TransformerMixin):
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
         X = check_array(X, force_all_finite=False)
-        mask = _get_mask(X, missing_values)
+        mask = _get_missing_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
 
         # Mean
@@ -345,7 +338,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Do actual imputation
         if sparse.issparse(X) and self.missing_values != 0:
-            mask = _get_mask(X.data, self.missing_values)
+            mask = _get_missing_mask(X.data, self.missing_values)
             indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                 np.diff(X.indptr))[mask]
 
@@ -355,7 +348,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             if sparse.issparse(X):
                 X = X.toarray()
 
-            mask = _get_mask(X, self.missing_values)
+            mask = _get_missing_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=self.axis)
             values = np.repeat(valid_statistics, n_missing)
 
