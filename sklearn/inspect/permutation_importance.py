@@ -1,85 +1,11 @@
 """Permutation importance for estimators"""
-from contextlib import contextmanager
-
 import numpy as np
 
-from ..base import is_classifier, clone
 from ..utils import check_random_state
-from ..utils._joblib import Parallel, delayed
-from ..model_selection import check_cv
 from ..metrics import check_scoring
-from ..utils.metaestimators import _safe_split
 
 
-@contextmanager
-def _permute_column(X, column, random_state):
-    """Context manager to permute a column"""
-    original_feature = X[:, column].copy()
-    X[:, column] = random_state.permutation(X[:, column])
-    yield X
-    X[:, column] = original_feature
-
-
-def _fit_and_calcuate_permutation_importance(estimator, X, y, train_indices,
-                                             test_indices, columns, scoring,
-                                             random_state):
-    """Fits and calculates permutation importance
-
-    Fits ``estimator`` on ``X`` and ``y``
-
-    Parameters
-    ----------
-    estimator : object
-        A supervised learning estimator with a `fit` and is compatible with
-        ``scorer``.
-
-    X : array-like, shape = (n_samples, n_features)
-        Training data.
-
-    y : array-like, shape = (n_samples, ...)
-        Target relative to ``X``.
-
-    train_indices : array of int
-        Train indicies.
-
-    test_indices : array of int
-        Test indices.
-
-    columns : list of integers
-        A list of columns to calculate the permutation importance. If `None`,
-        all columns will be used.
-
-    scoring : string, callable or None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-
-    random_state: : RandomState instance
-        Random number generator.
-
-    Returns
-    -------
-    permutation_importance_scores : list
-        Permutation importance scores for each column on the validation set
-        defined by ``test_indices``.
-    """
-    X_train, y_train = _safe_split(estimator, X, y, train_indices)
-    X_test, y_test = _safe_split(estimator, X, y, test_indices, train_indices)
-
-    estimator.fit(X_train, y_train)
-    baseline_score = scoring(estimator, X_test, y_test)
-
-    permutation_importance_scores = []
-    for column in columns:
-        with _permute_column(X_test, column, random_state) as X_perm:
-            feature_score = scoring(estimator, X_perm, y_test)
-            permutation_importance_scores.append(baseline_score -
-                                                 feature_score)
-
-    return permutation_importance_scores
-
-
-def permutation_importance(estimator, X, y, columns=None, scoring=None, cv=5,
+def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=30,
                            n_jobs=None, pre_dispatch='2*n_jobs',
                            random_state=None):
     """Permutation importance for feature evaluation.
@@ -94,7 +20,7 @@ def permutation_importance(estimator, X, y, columns=None, scoring=None, cv=5,
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a `fit` and is compatible with
+        A estimator that has already been `fit` and is compatible with
         ``scorer``.
 
     X : array-like, shape = (n_samples, n_features)
@@ -103,50 +29,13 @@ def permutation_importance(estimator, X, y, columns=None, scoring=None, cv=5,
     y : array-like, shape = (n_samples, ...)
         Target relative to ``X``.
 
-    columns : list of integers, optional (default=None)
-        A list of columns to calculate the permutation importance. If `None`,
-        all columns will be used
-
     scoring : string, callable or None, optional (default=None)
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : int, cross-validation generator or an iterable, optional (default=5)
-        Determines the cross-validation splitting strategy.
-        Possible inputs for cv are:
-
-        - integer, to specify the number of folds.
-        - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
-
-        For integer/None inputs, :class:`KFold` is used.
-
-        Refer :ref:`User Guide <cross_validation>` for the various
-        cross-validation strategies that can be used here.
-
-    n_jobs : int or None, optional (default=None)
-        Number of CPUs to use during the cross validation.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
-
-    pre_dispatch : int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+    n_bootstrap : int, optional (default=30)
+        Number of times to permute a feature
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -158,25 +47,21 @@ def permutation_importance(estimator, X, y, columns=None, scoring=None, cv=5,
     Returns
     -------
 
-    permutation_importance_scores : array, shape (n_columns, n_cv)
-        Permutation importance scores where the rows are ordered corresponding
-        to the ``columns`` argument.
+    scores : array, shape (n_features, bootstrap_samples)
+        Permutation importance scores
     """
 
-    cv = check_cv(cv, y, classifier=is_classifier(estimator))
     random_state = check_random_state(random_state)
     scoring = check_scoring(estimator, scoring=scoring)
+    scores = np.empty(shape=(X.shape[1], n_bootstrap), dtype=np.float)
 
-    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch)
+    baseline_score = scoring(estimator, X, y)
+    for f_idx in range(X.shape[1]):
+        for b_idx in range(n_bootstrap):
+            original_feature = X[:, f_idx].copy()
+            random_state.shuffle(X[:, f_idx])
+            feature_score = scoring(estimator, X, y)
+            scores[f_idx, b_idx] = baseline_score - feature_score
+            X[:, f_idx] = original_feature
 
-    if columns is None:
-        columns = range(0, X.shape[1])
-
-    with parallel:
-        permutation_importance_scores = parallel(
-            delayed(_fit_and_calcuate_permutation_importance)(
-                clone(estimator), X, y, train_indices,
-                test_indices, columns, scoring, random_state
-            ) for train_indices, test_indices in cv.split(X, y))
-
-    return np.array(permutation_importance_scores).T
+    return scores

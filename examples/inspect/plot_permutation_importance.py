@@ -11,15 +11,15 @@ model performance decreases when the feature is permutated.
 In this example, we add a column of random numbers to the diabetes dataset.
 Then we fit a :class:`sklearn.ensemble.RandomForestRegressor` to this modified
 dataset. The feature importance from the random forest is plotted. In this
-case, the ``RANDOM`` feature is considerd more important than the ``age`` or
-``sex`` feature.
+case, the ``RANDOM`` feature is considered more important than the ``age``
+feature.
 
 Next, we use :func:`sklearn.inspect.permutation_importance` to calcuate the
 permutation importance for each feature.
 The `sklearn.inspect.permutation_importance` returns a numpy array where
 values in each row are the cross-validated scores for a feature. The
 permutation importance for the random forest is plotted. In this case,
-The ``RANDOM`` feature is less important than ``sex`` and ``age``.
+the ``RANDOM`` feature is less important than ``age``.
 """
 print(__doc__)
 
@@ -67,9 +67,8 @@ fig, (ax1, ax2) = plt.subplots(1, 2)
 plot_importances(rf.feature_importances_, features, highlight="RAND", ax=ax1)
 ax1.set_title("Feature importance from random forest")
 
-perm_importances = permutation_importance(rf, X, y, random_state=rng,
-                                          scoring="explained_variance")
-perm_importances_mean = perm_importances.mean(axis=1)
+perm_importances = permutation_importance(rf, X, y, random_state=rng)
+perm_importances_mean = perm_importances.mean(axis=-1)
 plot_importances(perm_importances_mean, features, highlight="RAND", ax=ax2)
 ax2.set_title("Permutation importance")
 fig.tight_layout()
