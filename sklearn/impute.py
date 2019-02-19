@@ -31,7 +31,7 @@ from .metrics.pairwise import _NAN_METRICS
 
 from .neighbors.base import _check_weights
 from .neighbors.base import _get_weights
-from .utils.fixes import _object_dtype_isnan
+from .utils.mask import _get_missing_mask
 from .utils import is_scalar_nan
 
 
@@ -54,23 +54,6 @@ def _check_inputs_dtype(X, missing_values):
                          " both numerical. Got X.dtype={} and "
                          " type(missing_values)={}."
                          .format(X.dtype, type(missing_values)))
-
-
-def _get_mask(X, value_to_mask):
-    """Compute the boolean mask X == missing_values."""
-    if is_scalar_nan(value_to_mask):
-        if X.dtype.kind == "f":
-            return np.isnan(X)
-        elif X.dtype.kind in ("i", "u"):
-            # can't have NaNs in integer array.
-            return np.zeros(X.shape, dtype=bool)
-        else:
-            # np.isnan does not work on object dtypes.
-            return _object_dtype_isnan(X)
-    else:
-        # X == value_to_mask with object dytpes does not always perform
-        # element-wise for old versions of numpy
-        return np.equal(X, value_to_mask)
 
 
 def _most_frequent(array, extra_value, n_repeat):
@@ -283,7 +266,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on sparse data."""
-        mask_data = _get_mask(X.data, missing_values)
+        mask_data = _get_missing_mask(X.data, missing_values)
         n_implicit_zeros = X.shape[0] - np.diff(X.indptr)
 
         statistics = np.empty(X.shape[1])
@@ -300,7 +283,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                 column = column[~mask_column]
 
                 # combine explicit and implicit zeros
-                mask_zeros = _get_mask(column, 0)
+                mask_zeros = _get_missing_mask(column, 0)
                 column = column[~mask_zeros]
                 n_explicit_zeros = mask_zeros.sum()
                 n_zeros = n_implicit_zeros[i] + n_explicit_zeros
@@ -321,7 +304,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     def _dense_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on dense data."""
-        mask = _get_mask(X, missing_values)
+        mask = _get_missing_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
 
         # Mean
@@ -394,7 +377,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             valid_statistics = statistics
         else:
             # same as np.isnan but also works for object dtypes
-            invalid_mask = _get_mask(statistics, np.nan)
+            invalid_mask = _get_missing_mask(statistics, np.nan)
             valid_mask = np.logical_not(invalid_mask)
             valid_statistics = statistics[valid_mask]
             valid_statistics_indexes = np.flatnonzero(valid_mask)
@@ -413,14 +396,14 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
-                mask = _get_mask(X.data, self.missing_values)
+                mask = _get_missing_mask(X.data, self.missing_values)
                 indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                     np.diff(X.indptr))[mask]
 
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
                                                                 copy=False)
         else:
-            mask = _get_mask(X, self.missing_values)
+            mask = _get_missing_mask(X, self.missing_values)
             n_missing = np.sum(mask, axis=0)
             values = np.repeat(valid_statistics, n_missing)
             coordinates = np.where(mask.transpose())[::-1]
@@ -853,7 +836,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                         force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
 
-        mask_missing_values = _get_mask(X, self.missing_values)
+        mask_missing_values = _get_missing_mask(X, self.missing_values)
         if self.initial_imputer_ is None:
             self.initial_imputer_ = SimpleImputer(
                                             missing_values=self.missing_values,
@@ -1136,7 +1119,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         """
         if sparse.issparse(X) and self.missing_values != 0:
-            mask = _get_mask(X.data, self.missing_values)
+            mask = _get_missing_mask(X.data, self.missing_values)
 
             # The imputer mask will be constructed with the same sparse format
             # as X.
@@ -1162,7 +1145,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 # case of sparse matrix with 0 as missing values. Implicit and
                 # explicit zeros are considered as missing values.
                 X = X.toarray()
-            imputer_mask = _get_mask(X, self.missing_values)
+            imputer_mask = _get_missing_mask(X, self.missing_values)
             features_with_missing = np.flatnonzero(imputer_mask.sum(axis=0))
 
             if self.sparse is True:
@@ -1426,7 +1409,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         # Retrieve donor values and calculate kNN score
         donors = fit_X_col[potential_donors_idx].take(donors_idx)
         donors = np.ma.array(donors,
-                             mask=_get_mask(donors, self.missing_values))
+                             mask=_get_missing_mask(donors,
+                                                    self.missing_values))
 
         # Final imputation
         imputed = np.ma.average(donors, axis=1, weights=weight_matrix)
@@ -1463,7 +1447,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                              .format(X.shape[0], self.n_neighbors))
 
         # Check if % missing in any samples > sample_max_missing
-        mask = _get_mask(X, self.missing_values)
+        mask = _get_missing_mask(X, self.missing_values)
         if np.any(mask.sum(axis=0) > (X.shape[0] * self.sample_max_missing)):
             raise ValueError("Some columns have more than {}% missing values"
                              .format(self.sample_max_missing * 100))
@@ -1501,7 +1485,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             raise ValueError("Incompatible dimension between the fitted "
                              "dataset and the one to be transformed")
 
-        mask = _get_mask(X, self.missing_values)
+        mask = _get_missing_mask(X, self.missing_values)
         orig_X_shape = X.shape
         if not np.any(mask):
             return X
@@ -1529,7 +1513,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             dist_idx_map[row_misses] = np.arange(0, row_misses.sum(0))
 
             # Find and impute missing
-            mask_fit_X = _get_mask(self.fit_X_, self.missing_values)
+            mask_fit_X = _get_missing_mask(self.fit_X_, self.missing_values)
             for col in range(X.shape[1]):
 
                 if not np.any(mask[:, col]):
@@ -1543,7 +1527,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         # Merge deficient rows and mean impute their missing values
         if np.any(bad_rows):
-            bad_missing_index = np.where(_get_mask(X_bad, self.missing_values))
+            missing_mask = _get_missing_mask(X_bad, self.missing_values)
+            bad_missing_index = np.where(missing_mask)
             X_bad[bad_missing_index] = self.statistics_[bad_missing_index[1]]
             X_merged = np.empty(orig_X_shape)
             X_merged[bad_rows] = X_bad
