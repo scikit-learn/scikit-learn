@@ -708,23 +708,28 @@ def test_one_hot_encoder_warning():
 
 
 @pytest.mark.parametrize("cats_to_drop, exp", [
-    (['def', 3, 56],
-     np.array([[1., 0., 1., 1.],
-               [0., 1., 0., 1.],
-               [0., 0., 0., 0.]], dtype='float64')),
-    (['def', 3, None],
-     np.array([[1., 0., 1., 1., 0.],
-               [0., 1., 0., 1., 0.],
-               [0., 0., 0., 0., 1.]], dtype='float64')),
+    (['def', 12, 3, 56],
+     [[1, 0, 1, 1],
+      [0, 1, 0, 1],
+      [0, 0, 0, 0]]),
+    (['def', None, 3, None],
+     [[1, 1, 0, 1, 1, 0],
+      [0, 1, 1, 0, 1, 0],
+      [0, 1, 0, 0, 0, 1]]),
     ], ids=['all_specified', 'with-none'])
 def test_one_hot_encoder_drop_manual(cats_to_drop, exp):
     enc = OneHotEncoder(drop=cats_to_drop)
-    X = [['abc', 2, 55], ['def', 1, 55], ['def', 3, 56]]
-    assert_array_equal(enc.fit_transform(X).toarray(), exp)
-    dropped_cats = np.array([None if feature is None else cat[feature]
-                             for cat, feature in zip(enc.categories_,
-                                                     enc.drop_idx_)])
+    X = [['abc', 12, 2, 55],
+         ['def', 12, 1, 55],
+         ['def', 12, 3, 56]]
+    trans = enc.fit_transform(X).toarray()
+    assert_array_equal(trans, exp)
+    dropped_cats = [None if feature is None else cat[feature]
+                    for cat, feature in zip(enc.categories_,
+                                            enc.drop_idx_)]
     assert_array_equal(dropped_cats, cats_to_drop)
+    assert_array_equal(np.array(X, dtype=object),
+                       enc.inverse_transform(trans))
 
 
 def test_one_hot_encoder_invalid_params():
@@ -737,7 +742,7 @@ def test_one_hot_encoder_invalid_params():
     enc = OneHotEncoder(handle_unknown='ignore', drop='first')
     assert_raises_regex(
         ValueError,
-        "`handle_unknown` cannot be 'ignore'",
+        "`handle_unknown` must be 'error'",
         enc.fit, [["Male"], ["Female"]])
 
     enc = OneHotEncoder(drop='first')
@@ -787,8 +792,7 @@ def test_categories(density, drop):
     ohe_test.fit(X)
     assert_array_equal(ohe_base.categories_, ohe_test.categories_)
     if drop == 'first':
-        assert_array_equal(ohe_test.drop_idx_,
-                           np.zeros(ohe_test.drop_idx_.shape))
+        assert_array_equal(ohe_test.drop_idx_, 0)
     else:
         for drop_cat, drop_idx, cat_list in zip(drop,
                                                 ohe_test.drop_idx_,

@@ -526,8 +526,8 @@ class OneHotEncoder(_BaseEncoder):
         # in interpreting the model.
         if self.drop is not None and self.handle_unknown != 'error':
             raise ValueError(
-                "`handle_unknown` cannot be 'ignore' when the drop parameter "
-                "is specified, as this will create ambiguous cells")
+                "`handle_unknown` must be 'error' when the drop parameter "
+                "is specified to avoid ambiguities in inverse_transform")
 
     def _legacy_fit_transform(self, X):
         """Assumes X contains only categorical features."""
@@ -777,6 +777,10 @@ class OneHotEncoder(_BaseEncoder):
             else:
                 cats = np.delete(self.categories_[i], self.drop_idx_[i])
             n_categories = len(cats)
+
+            # Only happens if there was a column with a unique
+            # category. In this case we just fill the column with this
+            # unique category value.
             if n_categories == 0:
                 X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
                 j += n_categories
@@ -785,18 +789,19 @@ class OneHotEncoder(_BaseEncoder):
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(_argmax(sub, axis=1)).flatten()
             X_tr[:, i] = cats[labels]
-            if self.handle_unknown == 'ignore' or self.drop is not None:
+            if self.handle_unknown == 'ignore':
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if unknown.any():
-                    # In this case, we can safely assume that all of the nulls
-                    # in each column are the dropped value
-                    if self.drop is not None:
-                        X_tr[unknown, i] = (self.categories_[i][
-                                                self.drop_idx_[i]])
-                    elif self.handle_unknown == 'ignore':
-                        # ignored unknown categories: we have a row of all
-                        # zero
-                        found_unknown[i] = unknown
+                    # ignored unknown categories: we have a row of all
+                    # zero
+                    found_unknown[i] = unknown
+            # drop will either be None or handle_unknown will be error. If
+            # self.drop is not None, then we can safely assume that all of
+            # the nulls in each column are the dropped value
+            elif self.drop is not None:
+                dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
+                if dropped.any():
+                    X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
 
             j += n_categories
 
