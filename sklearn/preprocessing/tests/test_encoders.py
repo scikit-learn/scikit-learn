@@ -707,7 +707,6 @@ def test_one_hot_encoder_warning():
     np.testing.assert_no_warnings(enc.fit_transform, X)
 
 
-
 @pytest.mark.parametrize("cats_to_drop, exp", [
     (['def', 3, 56],
      np.array([[1., 0., 1., 1.],
@@ -726,6 +725,7 @@ def test_one_hot_encoder_drop_manual(cats_to_drop, exp):
                              for cat, feature in zip(enc.categories_,
                                                      enc.drop_idx_)])
     assert_array_equal(dropped_cats, cats_to_drop)
+
 
 def test_one_hot_encoder_invalid_params():
     enc = OneHotEncoder(drop='second')
