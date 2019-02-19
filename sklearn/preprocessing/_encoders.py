@@ -464,9 +464,9 @@ class OneHotEncoder(_BaseEncoder):
         self
         """
 
-        self._handle_deprecations(X)
-
         self._validate_keywords()
+
+        self._handle_deprecations(X)
 
         if self._legacy_mode:
             _transform_selected(X, self._legacy_fit_transform, self.dtype,
@@ -604,9 +604,9 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input.
         """
 
-        self._handle_deprecations(X)
-
         self._validate_keywords()
+
+        self._handle_deprecations(X)
 
         if self._legacy_mode:
             return _transform_selected(
