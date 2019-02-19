@@ -60,8 +60,8 @@ y_score = classifier.fit(X_train, y_train).decision_function(X_test)
 ###############################################################################
 # Compute the AUC scores
 # ......................
-# The ROC area can be approximated by taking the average either unweighted
-# or weighted by the support (the number of true instances for each label).
+# The ROC area can be calculated by taking the average either unweighted
+# or weighted by the number of true instances for each label.
 from sklearn.metrics import roc_auc_score
 
 y_score_norm = np.exp(y_score)/np.exp(y_score).sum(axis=-1, keepdims=True)
@@ -74,7 +74,7 @@ print("One-vs-Rest ROC AUC scores: {0} (unweighted), {1} (weighted)".format(
 ###############################################################################
 # Plotting the ROC curve for virginica
 # ....................................
-# One can draw a ROC curve by considering each element of the label indicator
+# A ROC curve is drawn by considering each element of the label indicator
 # matrix as a binary prediction (micro-averaging). In the following, the ROC
 # curve for virginica is drawn.
 import matplotlib.pyplot as plt
@@ -115,9 +115,8 @@ fig.show()
 ###############################################################################
 # Plot ROC curves for the multiclass problem using One-vs-Rest
 # ............................................................
-# Another evaluation measure for one-vs-rest multi-class classification is
-# macro-averaging, which gives equal weight to the classification of each
-# label.
+# A ROC curve is drawn using macro-averaging, which gives equal weight to the
+# classification of each label.
 from itertools import cycle
 from scipy import interp
 
@@ -170,8 +169,8 @@ fig.show()
 #
 # Compute the AUC score
 # .....................
-# The ROC area can be approximated by taking the average either weighted
-# uniformly (macro) or by prevalence.
+# The ROC area can be calculated by taking the average either unweighted
+# or weighted by the number of true instances for each label.
 macro_roc_auc_ovo = roc_auc_score(
       y_test, y_score_norm, multiclass="ovo", average="macro")
 weighted_roc_auc_ovo = roc_auc_score(
