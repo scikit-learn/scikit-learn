@@ -198,13 +198,13 @@ feature missing, then the sample can potentially have multiple sets of
 Each missing feature is then imputed as the average, either weighted or
 unweighted, of these neighbors. When the number of donor neighbors is less
 than ``n_neighbors``, the training set average for that feature is
-used for imputation. When a row has more than a ``row_max_missing`` fraction
-of its columns missing, then it is excluded from being a donor for imputation. 
-For more information on the methodology, see ref. [OLGA]_.
+used for imputation. When a sample has more than a ``feature_max_missing`` 
+fraction of its features missing, then it is excluded from being a donor for 
+imputation. For more information on the methodology, see ref. [OLGA]_.
 
 The following snippet demonstrates how to replace missing values,
 encoded as ``np.nan``, using the mean feature value of the two nearest
-neighbors of the rows that contain the missing values::
+neighbors of the samples that contain the missing values::
 
     >>> import numpy as np
     >>> from sklearn.impute import KNNImputer

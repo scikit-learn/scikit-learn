@@ -1282,10 +1282,10 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     imputed as the average, either weighted or unweighted, of these neighbors.
     If a sample has more than one feature missing, then the neighbors for that
     sample can be different depending on the particular feature being imputed.
-    When the number of donor neighbors is less than ``n_neighbors``, the
+    When the number of available neighbors is less than ``n_neighbors``, the
     training set average for that feature is used during imputation. When a
-    row has more than a ``row_max_missing`` fraction of its columns missing,
-    then it is excluded from being a neighbor for imputation.
+    sample has more than a ``feature_max_missing`` fraction of its features
+    missing, then it is excluded from being a neighbor for imputation.
 
     Parameters
     ----------
@@ -1316,16 +1316,16 @@ class KNNImputer(BaseEstimator, TransformerMixin):
           accepts two arrays, X and Y, and a ``missing_values`` keyword in
           ``kwds`` and returns a scalar distance value.
 
-    row_max_missing : float, optional (default=0.5)
-        The maximum fraction of columns (i.e. features) that can be missing
-        before the sample is excluded from nearest neighbor imputation. It
-        means that such rows will not be considered a potential donor in
-        ``fit``, and in ``transform`` their missing feature values will be
-        imputed to be the column mean for the entire dataset.
+    feature_max_missing : float, optional (default=0.5)
+        The maximum fraction of features that can be missing
+        before the sample is excluded from nearest neighbor imputation. These
+        samples will not be considered a potential donor in ``fit``, and in
+        ``transform`` their missing feature values will be imputed to be the
+        feature mean for the entire dataset.
 
-    col_max_missing : float, optional (default=0.8)
-        The maximum fraction of rows (or samples) that can be missing
-        for any feature beyond which an error is raised.
+    sample_max_missing : float, optional (default=0.8)
+        The maximum fraction of samples that can be missing for any feature
+        beyond which an error is raised.
 
     copy : boolean, optional(default=True)
         If True, a copy of X will be created. If False, imputation will
@@ -1339,10 +1339,9 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         The 1-D array contains the mean of each feature calculated using
         observed (i.e. non-missing) values. This is used for imputing
         missing values in samples that are either excluded from nearest
-        neighbors search because they have too many ( > row_max_missing)
-        missing features or all of the sample's k-nearest neighbors
-        (i.e., the potential donors) also have the relevant feature value
-        missing.
+        neighbors search because they have too many missing features or
+        all of the sample's k-nearest neighbors (i.e., the potential donors)
+        also have the relevant feature value missing.
 
     References
     ----------
@@ -1366,14 +1365,14 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
     def __init__(self, missing_values=np.nan, n_neighbors=5,
                  weights="uniform", metric="nan_euclidean",
-                 row_max_missing=0.5, col_max_missing=0.8, copy=True):
+                 feature_max_missing=0.5, sample_max_missing=0.8, copy=True):
 
         self.missing_values = missing_values
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
-        self.row_max_missing = row_max_missing
-        self.col_max_missing = col_max_missing
+        self.feature_max_missing = feature_max_missing
+        self.sample_max_missing = sample_max_missing
         self.copy = copy
 
     def _impute(self, dist, receivers_idx,
@@ -1463,15 +1462,15 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             raise ValueError("There are only {} samples, but n_neighbors={}"
                              .format(X.shape[0], self.n_neighbors))
 
-        # Check if % missing in any column > col_max_missing
+        # Check if % missing in any samples > sample_max_missing
         mask = _get_mask(X, self.missing_values)
-        if np.any(mask.sum(axis=0) > (X.shape[0] * self.col_max_missing)):
+        if np.any(mask.sum(axis=0) > (X.shape[0] * self.sample_max_missing)):
             raise ValueError("Some columns have more than {}% missing values"
-                             .format(self.col_max_missing * 100))
+                             .format(self.sample_max_missing * 100))
 
         self.weights = _check_weights(self.weights)
         self.fit_X_ = X[
-            mask.sum(axis=1) <= (mask.shape[1] * self.row_max_missing)]
+            mask.sum(axis=1) <= (mask.shape[1] * self.feature_max_missing)]
         self.statistics_ = np.ma.array(X, mask=mask).mean(axis=0).data
 
         return self
@@ -1509,7 +1508,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         # Check for excessive missingness in rows
         row_total_missing = mask.sum(axis=1)
-        bad_rows = row_total_missing > (mask.shape[1] * self.row_max_missing)
+        bad_rows = row_total_missing > (mask.shape[1] *
+                                        self.feature_max_missing)
         if np.any(bad_rows):
             X_bad = X[bad_rows]
             X = X[~bad_rows]

@@ -1068,7 +1068,7 @@ def test_knn_imputer_zero_missing_value():
     with pytest.raises(ValueError, match=msg):
         imputer.fit(X)
 
-    # Test with % zeros in column > col_max_missing
+    # Test with % zeros in samples > sample_max_missing
     X = np.array([
         [1, 0, 0, 0, 5],
         [2, 1, 0, 2, 3],
@@ -1076,7 +1076,7 @@ def test_knn_imputer_zero_missing_value():
         [4, 6, 0, 5, 13],
     ])
     msg = "Some columns have more than {}% missing values".format(
-        imputer.col_max_missing * 100)
+        imputer.sample_max_missing * 100)
     with pytest.raises(ValueError, match=msg):
         imputer.fit(X)
 
@@ -1147,7 +1147,7 @@ def test_knn_imputer_default():
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed)
     assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
-    # Test with % missing in row > row_max_missing
+    # Test with % missing in features > feature_max_missing
     X = np.array([
         [1,      0,      0,      1],
         [2,      1,      2,      np.nan],
@@ -1236,7 +1236,7 @@ def test_knn_imputer_default():
 def test_knn_imputer_default_with_invalid_input():
     # Test imputation with default values and invalid input
 
-    # Test with % missing in a column > col_max_missing
+    # Test with % missing in a samples > sample_max_missing
     X = np.array([
         [np.nan, 0, 0, 0, 5],
         [np.nan, 1, 0, np.nan, 3],
@@ -1247,7 +1247,7 @@ def test_knn_imputer_default_with_invalid_input():
     ])
     imputer = KNNImputer()
     msg = "Some columns have more than {}% missing values".format(
-        imputer.col_max_missing * 100)
+        imputer.sample_max_missing * 100)
     with pytest.raises(ValueError, match=msg):
         imputer.fit(X)
 
