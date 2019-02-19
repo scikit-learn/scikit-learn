@@ -55,6 +55,10 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Fix| Fixed a bug in :class:`preprocessing.KBinsDiscretizer` where
+  ``strategy='kmeans'`` fails with an error during transformation due to unsorted
+  bin edges. :issue:`13134` by :user:`Sandro Casagrande <SandroCasagrande>`.
+
 - |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the
   deprecation of ``categorical_features`` was handled incorrectly in
   combination with ``handle_unknown='ignore'``.

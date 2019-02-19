@@ -49,12 +49,12 @@ else:
 # We need to import setuptools early, if we want setuptools features,
 # as it monkey-patches the 'setup' function
 # For some commands, use setuptools
-SETUPTOOLS_COMMANDS = set([
+SETUPTOOLS_COMMANDS = {
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
     'bdist_wininst', 'install_egg_info', 'build_sphinx',
     'egg_info', 'easy_install', 'upload', 'bdist_wheel',
     '--single-version-externally-managed',
-])
+}
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     import setuptools
 
@@ -63,8 +63,8 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
         include_package_data=True,
         extras_require={
             'alldeps': (
-                'numpy >= {0}'.format(NUMPY_MIN_VERSION),
-                'scipy >= {0}'.format(SCIPY_MIN_VERSION),
+                'numpy >= {}'.format(NUMPY_MIN_VERSION),
+                'scipy >= {}'.format(SCIPY_MIN_VERSION),
             ),
         },
     )
@@ -161,7 +161,7 @@ cmdclass = {'clean': CleanCommand, 'build_ext': build_ext_subclass}
 # to PyPI at release time.
 # The URL of the artifact repositories are configured in the setup.cfg file.
 
-WHEELHOUSE_UPLOADER_COMMANDS = set(['fetch_artifacts', 'upload_all'])
+WHEELHOUSE_UPLOADER_COMMANDS = {'fetch_artifacts', 'upload_all'}
 if WHEELHOUSE_UPLOADER_COMMANDS.intersection(sys.argv):
     import wheelhouse_uploader.cmd
 
@@ -240,8 +240,8 @@ def setup_package():
                                  ],
                     cmdclass=cmdclass,
                     install_requires=[
-                        'numpy>={0}'.format(NUMPY_MIN_VERSION),
-                        'scipy>={0}'.format(SCIPY_MIN_VERSION)
+                        'numpy>={}'.format(NUMPY_MIN_VERSION),
+                        'scipy>={}'.format(SCIPY_MIN_VERSION)
                     ],
                     **extra_setuptools_args)
 
@@ -264,7 +264,7 @@ def setup_package():
         metadata['version'] = VERSION
     else:
         numpy_status = get_numpy_status()
-        numpy_req_str = "scikit-learn requires NumPy >= {0}.\n".format(
+        numpy_req_str = "scikit-learn requires NumPy >= {}.\n".format(
             NUMPY_MIN_VERSION)
 
         instructions = ("Installation instructions are available on the "
@@ -274,12 +274,12 @@ def setup_package():
         if numpy_status['up_to_date'] is False:
             if numpy_status['version']:
                 raise ImportError("Your installation of Numerical Python "
-                                  "(NumPy) {0} is out-of-date.\n{1}{2}"
+                                  "(NumPy) {} is out-of-date.\n{}{}"
                                   .format(numpy_status['version'],
                                           numpy_req_str, instructions))
             else:
                 raise ImportError("Numerical Python (NumPy) is not "
-                                  "installed.\n{0}{1}"
+                                  "installed.\n{}{}"
                                   .format(numpy_req_str, instructions))
 
         from numpy.distutils.core import setup

@@ -359,7 +359,7 @@ def f_check_param_definition(a, b, c, d, e):
     return a + b + c + d
 
 
-class Klass(object):
+class Klass:
     def f_missing(self, X, y):
         pass
 
@@ -381,7 +381,7 @@ class Klass(object):
         pass
 
 
-class MockEst(object):
+class MockEst:
     def __init__(self):
         """MockEstimator"""
     def fit(self, X, y):
@@ -397,7 +397,7 @@ class MockEst(object):
         return 1.
 
 
-class MockMetaEstimator(object):
+class MockMetaEstimator:
     def __init__(self, delegate):
         """MetaEstimator to check if doctest on delegated methods work.
 
@@ -494,7 +494,7 @@ def test_check_docstring_parameters():
         assert mess in incorrect[0], '"%s" not in "%s"' % (mess, incorrect[0])
 
 
-class RegistrationCounter(object):
+class RegistrationCounter:
     def __init__(self):
         self.nb_calls = 0
 
