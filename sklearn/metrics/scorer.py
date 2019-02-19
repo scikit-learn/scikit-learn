@@ -43,7 +43,7 @@ from ..utils.multiclass import type_of_target
 from ..base import is_regressor
 
 
-class _BaseScorer(object, metaclass=ABCMeta):
+class _BaseScorer(metaclass=ABCMeta):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
