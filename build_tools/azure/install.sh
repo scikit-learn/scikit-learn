@@ -53,7 +53,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     set -x
-    apt-get install python3-scipy libatlas3-base libatlas-base-dev libatlas-dev virtualenv
+    sudo apt-get install python3-scipy libatlas3-base libatlas-base-dev libatlas-dev virtualenv
+    python --version
     python -c "import numpy; print('numpy %s' % numpy.__version__)"
     virtualenv --system-site-packages --python=python3.5 $VIRTUALENV
     source $VIRTUALENV/bin/activate
