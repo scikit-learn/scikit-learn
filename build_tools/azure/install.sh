@@ -21,7 +21,7 @@ if [[ "$DISTRIB" == "ubuntu" ]]; then
     pip install virtualenv numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION
     virtualenv --system-site-packages --python=python3 $VIRTUALENV_DIR
     source $VIRTUALENV_DIR/bin/activate
-    pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION \
+    pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
 fi
 
 python --version
