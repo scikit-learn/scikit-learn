@@ -25,7 +25,6 @@ run_tests() {
 
     export SKLEARN_SKIP_NETWORK_TESTS=1
 
-    set -x
     $TEST_CMD sklearn/preprocessing/tests/
 }
 
