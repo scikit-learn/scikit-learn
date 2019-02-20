@@ -5,6 +5,7 @@
 #          Eric Martin <eric@ericmart.in>
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #          Eric Chang <ericchang2017@u.northwestern.edu>
+#          Sufiyan Adhikari <sufiyan@iitb.ac.in>
 # License: BSD 3 clause
 
 
@@ -45,6 +46,7 @@ __all__ = [
     'OneHotEncoder',
     'RobustScaler',
     'StandardScaler',
+    'StandardSequenceScaler',
     'QuantileTransformer',
     'PowerTransformer',
     'add_dummy_feature',
@@ -808,6 +810,83 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 X += self.mean_
         return X
 
+class StandardSequenceScaler(StandardScaler):
+    """
+    StandardScaler for sequencial data.
+    see https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html
+    for documentation on StandardScaler
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+    
+    def fit(self, X):
+        """
+        X : {array-like, sparse matrix} of shape 
+            [n_samples, n_sequence, n_features], 
+            or list of length 'n_samples' of 2D array-like X's 
+            each of shape [n_sequence, n_features]
+            
+            Pass X as list of sequences when all sequences are 
+            not of same shape
+
+            The data used to compute the mean and standard deviation
+            used for later scaling along the features axis.
+        """
+        X=[xi[j] for xi in X for j in range(len(xi))]
+        return super().fit(X)
+
+    def transform(self, X, copy=None):
+        """
+        X:  {array-like or sparse matrix} of shape [n_sequence, n_features]
+            or [n_samples, n_sequence, n_features]
+            or list of Xs each of shape [n_sequence, n_features] 
+            with each Xs having independent n_sequence
+        
+        Returns:
+            transformed_X of the same type i.e., list or array as given
+        """
+        copy = copy if copy is not None else self.copy
+        #X as list of Xs each of shape [n_sequence, n_features]
+        if isinstance(X, list):
+            """multiple x to transform
+            As all sequences might not be of 
+            the same size, we cannot stack them into array"""
+            return [super().transform(Xi, copy=copy) for Xi in X]
+        #X as an array of shape [n_samples, n_sequence, n_features]
+        if isinstance(X, np.ndarray):
+            if len(X.shape)==3:
+                oldshape=X.shape
+                newshape=[X.shape[0]*X.shape[1], X.shape[2]]
+                X=X.reshape(X, newshape)
+                X=super().transform(X, copy=copy)
+                return np.reshape(X, oldshape)
+        #single X
+        return super().transform(X, copy=copy)
+
+    def inverse_transform(self, X, copy=None):
+        """
+        Inverse transform a transformed sequence data
+        X:  {array-like or sparse matrix} of shape [n_sequence, n_features]
+            or [n_samples, n_sequence, n_features]
+            or list of Xs each of shape [n_sequence, n_features] 
+            with each Xs having independent n_sequence
+        """
+        copy = copy if copy is not None else self.copy
+        #X as list of Xs each of shape [n_sequence, n_features]
+        if isinstance(X, list):
+            """multiple x to inverse transform
+            As all sequences might not be of 
+            the same size, we cannot stack them into array"""
+            return [super().inverse_transform(Xi, copy=copy) for Xi in X]
+        #X as an array of shape [n_samples, n_sequence, n_features]
+        if isinstance(X, np.ndarray):
+            oldshape=X.shape.copy()
+            newshape=[X.shape[0]*X.shape[1], X.shape[2]]
+            X=X.reshape(X, newshape)
+            X=super().inverse_transform(X, copy=copy)
+            return np.reshape(X, oldshape)
+        #single X
+        return super().inverse_transform(X, copy=copy)
 
 class MaxAbsScaler(BaseEstimator, TransformerMixin):
     """Scale each feature by its maximum absolute value.
