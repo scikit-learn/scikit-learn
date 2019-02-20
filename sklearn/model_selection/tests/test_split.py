@@ -1420,6 +1420,14 @@ def test_time_series_max_train_size():
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
+def test_time_series_test_size():
+    pass
+
+
+def test_time_series_gap_size():
+    pass
+
+
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv

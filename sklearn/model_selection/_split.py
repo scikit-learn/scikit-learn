@@ -742,6 +742,13 @@ class TimeSeriesSplit(_BaseKFold):
     max_train_size : int, optional
         Maximum size for a single training set.
 
+    test_size : int, optional
+        Number of samples in each test set. Defaults to ``n_samples / (n_splits + 1)``.
+
+    gap_size : int, default=0
+        Number of samples to exclude from the end of the train set before the test set.
+
+
     Examples
     --------
     >>> import numpy as np
@@ -768,12 +775,14 @@ class TimeSeriesSplit(_BaseKFold):
     with a test set of size ``n_samples//(n_splits + 1)``,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits='warn', max_train_size=None):
+    def __init__(self, n_splits='warn', max_train_size=None, test_size=None, gap_size=0):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
         super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
+        self.test_size = test_size
+        self.gap_size = gap_size
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -802,21 +811,32 @@ class TimeSeriesSplit(_BaseKFold):
         n_samples = _num_samples(X)
         n_splits = self.n_splits
         n_folds = n_splits + 1
+        gap_size = self.gap_size
+        test_size = self.test_size if self.test_size else (n_samples // n_folds)
+
+        # Make sure we have enough samples for the given split parameters
         if n_folds > n_samples:
             raise ValueError(
                 ("Cannot have number of folds ={0} greater"
                  " than the number of samples: {1}.").format(n_folds,
                                                              n_samples))
+        if n_samples - gap_size - (test_size * n_splits) <= 0:
+            raise ValueError(
+                ("Too many splits ={0} for number of samples"
+                 " ={1} with test_size ={2} and gap_size ={3}").format(n_splits,
+                                                                       n_samples,
+                                                                       test_size,
+                                                                       gap_size))
         indices = np.arange(n_samples)
-        test_size = (n_samples // n_folds)
-        test_starts = range(test_size + n_samples % n_folds,
+        test_starts = range(n_samples - n_splits * test_size,
                             n_samples, test_size)
+
         for test_start in test_starts:
-            if self.max_train_size and self.max_train_size < test_start:
-                yield (indices[test_start - self.max_train_size:test_start],
+            if self.max_train_size and self.max_train_size < (test_start - gap_size):
+                yield (indices[test_start - self.max_train_size - gap_size:test_start - gap_size],
                        indices[test_start:test_start + test_size])
             else:
-                yield (indices[:test_start],
+                yield (indices[:test_start - gap_size],
                        indices[test_start:test_start + test_size])
 
 
