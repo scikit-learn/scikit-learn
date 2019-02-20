@@ -21,8 +21,6 @@ except ImportError:
 "
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
-pip list
-
 mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR

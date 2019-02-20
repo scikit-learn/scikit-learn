@@ -78,6 +78,7 @@ jobs:
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test soft dependency'
     - task: PublishTestResults@2
+      condition: always()
       inputs:
         testResultsFiles: ${{ '$(TEST_DIR)/$(JUNITXML)' }}
         testRunTitle: ${{ format('{0}-$(DISTRIB)-$(PYTHON_VERSION)', parameters.name) }}
