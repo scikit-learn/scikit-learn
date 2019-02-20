@@ -17,7 +17,6 @@ make_conda() {
     ./miniconda.sh -b
 
     export PATH=$HOME/miniconda3/bin:$PATH
-    conda update --yes conda
     conda create -n $VIRTUALENV --yes $TO_INSTALL
     source activate $VIRTUALENV
 }
@@ -68,4 +67,4 @@ try:
 except ImportError:
     print('pandas not installed')
 "
-python setup.py develop
+pip isntall -e .

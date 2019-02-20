@@ -9,6 +9,7 @@ jobs:
     vmImage: ${{ parameters.vmImage }}
   variables:
     VIRTUALENV: "testvenv"
+    JUNITXML: "test-data.xml"
   strategy:
     matrix:
       CONDA_PY: "37"
