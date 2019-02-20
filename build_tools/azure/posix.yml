@@ -13,6 +13,9 @@ jobs:
   strategy:
     matrix:
       ${{ if eq(parameters.name, 'Linux') }}:
+        # Linux environment to test that scikit-learn can be built against
+        # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
+        # i.e. numpy 1.11 and scipy 0.17
         py35_np_111:
           DISTRIB: "ubuntu"
           PYTHON_VERSION: "3.5"
