@@ -31,7 +31,6 @@ run_tests() {
 
 
 if [[ "$UNAMESTR" == "Linux" ]]; then
-    deactivate
     source testvenv/bin/activate
 fi
 

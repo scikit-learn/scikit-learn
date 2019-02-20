@@ -19,7 +19,6 @@ make_conda() {
 
 if [[ "$DISTRIB" == "ubuntu" ]]; then
     pip install virtualenv
-    deactivate
     virtualenv --system-site-packages --python=python3 testvenv
     source testvenv/bin/activate
     pip install pytest pytest-cov cython joblib=$JOBLIB_VERSION
