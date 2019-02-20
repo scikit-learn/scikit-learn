@@ -222,8 +222,8 @@ class OneHotEncoder(_BaseEncoder):
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        drop_idx_[i] is the index in ``categories_[i]`` of the category to be
-        dropped for each feature. None if all the transformed features will
+        ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
+        be dropped for each feature. None if all the transformed features will
         be retained.
 
     active_features_ : array
@@ -372,7 +372,6 @@ class OneHotEncoder(_BaseEncoder):
                     )
                     warnings.warn(msg, DeprecationWarning)
             else:
-
                 # check if we have integer or categorical input
                 try:
                     check_array(X, dtype=np.int)
@@ -380,39 +379,23 @@ class OneHotEncoder(_BaseEncoder):
                     self._legacy_mode = False
                     self._categories = 'auto'
                 else:
-                    if self.drop is None:
-                        msg = (
-                            "The handling of integer data will change in "
-                            "version 0.22. Currently, the categories are "
-                            "determined based on the range "
-                            "[0, max(values)], while in the future they "
-                            "will be determined based on the unique "
-                            "values.\nIf you want the future behaviour "
-                            "and silence this warning, you can specify "
-                            "\"categories='auto'\".\n"
-                            "In case you used a LabelEncoder before this "
-                            "OneHotEncoder to convert the categories to "
-                            "integers, then you can now use the "
-                            "OneHotEncoder directly."
-                        )
-                        warnings.warn(msg, FutureWarning)
-                        self._legacy_mode = True
-                        self._n_values = 'auto'
-                    else:
-                        msg = (
-                            "The handling of integer data will change in "
-                            "version 0.22. Currently, the categories are "
-                            "determined based on the range "
-                            "[0, max(values)], while in the future they "
-                            "will be determined based on the unique "
-                            "values.\n The old behavior is not compatible "
-                            "with the `drop` paramenter. Instead, you "
-                            "must manually specify \"categories='auto'\" "
-                            "if you wish to use the `drop` parameter on "
-                            "an array of entirely integer data. This will "
-                            "enable the future behavior."
-                        )
-                        raise ValueError(msg)
+                    msg = (
+                        "The handling of integer data will change in "
+                        "version 0.22. Currently, the categories are "
+                        "determined based on the range "
+                        "[0, max(values)], while in the future they "
+                        "will be determined based on the unique "
+                        "values.\nIf you want the future behaviour "
+                        "and silence this warning, you can specify "
+                        "\"categories='auto'\".\n"
+                        "In case you used a LabelEncoder before this "
+                        "OneHotEncoder to convert the categories to "
+                        "integers, then you can now use the "
+                        "OneHotEncoder directly."
+                    )
+                    warnings.warn(msg, FutureWarning)
+                    self._legacy_mode = True
+                    self._n_values = 'auto'
 
         # if user specified categorical_features -> always use legacy mode
         if self.categorical_features is not None:
@@ -526,8 +509,9 @@ class OneHotEncoder(_BaseEncoder):
         # in interpreting the model.
         if self.drop is not None and self.handle_unknown != 'error':
             raise ValueError(
-                "`handle_unknown` must be 'error' when the drop parameter "
-                "is specified to avoid ambiguities in inverse_transform")
+                "`handle_unknown` must be 'error' when the drop parameter is "
+                "specified, as both would create categories that are all "
+                "zero.")
 
     def _legacy_fit_transform(self, X):
         """Assumes X contains only categorical features."""
@@ -791,9 +775,8 @@ class OneHotEncoder(_BaseEncoder):
             X_tr[:, i] = cats[labels]
             if self.handle_unknown == 'ignore':
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
+                # ignored unknown categories: we have a row of all zero
                 if unknown.any():
-                    # ignored unknown categories: we have a row of all
-                    # zero
                     found_unknown[i] = unknown
             # drop will either be None or handle_unknown will be error. If
             # self.drop is not None, then we can safely assume that all of

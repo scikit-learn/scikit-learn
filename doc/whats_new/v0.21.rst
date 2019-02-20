@@ -274,8 +274,8 @@ Support for Python 3.4 and below has been officially dropped.
   :user:`Raffaello Baluyot <baluyotraf>`
 
 - |Feature| :class:`OneHotEncoder` now supports dropping one feature per category
-  with a new drop parameter. :issue:`6488` and :issue:`6053` by
-  `Drew Johnston <drewmjohnston>`.
+  with a new drop parameter. :issue:`12908` by
+  :user:`Drew Johnston <drewmjohnston>`.
 
 
 :mod:`sklearn.tree`

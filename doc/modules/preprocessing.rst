@@ -541,12 +541,14 @@ columns for this feature will be all zeros
 
 
 It is also possible to encode each column into ``n_categories - 1`` columns
-instead of ``n_categories`` columns by using the ``'drop'`` parameter. This
+instead of ``n_categories`` columns by using the ``drop`` parameter. This
 parameter allows the user to specify a category for each feature to be dropped.
-This is useful to avoid co-linearity in the input matrix in non-regularized
+This is useful to avoid co-linearity in the input matrix in some classifiers.
+Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
-which would cause the covariance matrix to be non-invertible. In this case
-``'handle_unknown'`` must be set to ``'error'``::
+since co-linearity would cause the covariance matrix to be non-invertible. 
+When this paramenter is not None, ``'handle_unknown'`` must be set to 
+``error``::
 
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
