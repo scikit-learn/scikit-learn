@@ -15,7 +15,6 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
-    TEST_DIR="/tmp/sklearn"
     TEST_CMD="pytest --showlocals --durations=20 --pyargs"
 
     mkdir -p $TEST_DIR
@@ -30,10 +29,11 @@ run_tests() {
 
 
 if [[ "$DISTRIB" == "ubuntu" ]]; then
+    deactivate
     source testvenv/bin/activate
 fi
 
-echo $WORLD
-run_tests
+echo $TEST_DIR
+# run_tests
 
 
