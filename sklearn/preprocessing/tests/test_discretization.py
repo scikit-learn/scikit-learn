@@ -260,7 +260,7 @@ def test_overwrite():
 def test_redundant_bins(strategy, expected_bin_edges):
     X = [[0], [0], [0], [0], [3], [3]]
     kbd = KBinsDiscretizer(n_bins=3, strategy=strategy)
-    msg = ("Redundant bins (i.e., bins whose width = 0) "
+    msg = ("Redundant bins (i.e., bins whose width <= 0) "
            "in feature 0 are removed.")
     assert_warns_message(UserWarning, msg, kbd.fit, X)
     assert_array_almost_equal(kbd.bin_edges_[0], expected_bin_edges)
@@ -272,7 +272,7 @@ def test_percentile_numeric_stability():
     Xt = np.array([0, 0, 4]).reshape(-1, 1)
     kbd = KBinsDiscretizer(n_bins=10, encode='ordinal',
                            strategy='quantile')
-    msg = ("Redundant bins (i.e., bins whose width = 0) "
+    msg = ("Redundant bins (i.e., bins whose width <= 0) "
            "in feature 0 are removed.")
     assert_warns_message(UserWarning, msg, kbd.fit, X)
     assert_array_almost_equal(kbd.bin_edges_[0], bin_edges)
