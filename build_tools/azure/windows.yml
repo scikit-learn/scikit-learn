@@ -1,0 +1,18 @@
+
+parameters:
+  name: ''
+  vmImage: ''
+
+jobs:
+- job: ${{ parameters.name }}
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+  strategy:
+    matrix:
+      CONDA_PY: "37"
+
+  steps:
+    - task: CondaEnvironment@1
+      inputs:
+        updateConda: no
+        packageSpecs: ''
