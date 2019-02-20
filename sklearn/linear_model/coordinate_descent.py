@@ -1133,7 +1133,7 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
         if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
             # Keep a reference to X
             reference_to_old_X = X
-            # Let us not impose fortran ordering so far: it isadrinjalali
+            # Let us not impose fortran ordering so far: it is
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
             X = check_array(X, 'csc', copy=False)
