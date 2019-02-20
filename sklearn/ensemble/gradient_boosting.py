@@ -27,6 +27,7 @@ from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator
+from ..base import is_classifier
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -1456,6 +1457,17 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 train_test_split(X, y, sample_weight,
                                  random_state=self.random_state,
                                  test_size=self.validation_fraction))
+            if is_classifier(self):
+                if self.n_classes_ != np.unique(y).shape[0]:
+                    # We choose to error here. The problem is that the init
+                    # estimator would be trained on y, which has some missing
+                    # classes now, so its predictions would not have the
+                    # correct shape.
+                    raise ValueError(
+                        'The training data after the early stopping split '
+                        'is missing some classes. Try using another random '
+                        'seed.'
+                    )
         else:
             X_val = y_val = sample_weight_val = None
 

@@ -175,14 +175,6 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
 
     def get_init_raw_predictions(self, X, estimator):
         predictions = estimator.predict(X)
-        n_samples = X.shape[0]
-        if predictions.shape != (n_samples,):
-            # if the init estimator was trained for e.g. multioutput
-            # regression, raise error
-            raise ValueError(
-                'The init estimator predicted output with shape={}, '
-                'expected shape=({},).'.format(predictions.shape, n_samples)
-                )
         return predictions.reshape(-1, 1).astype(np.float64)
 
 
@@ -668,12 +660,6 @@ class BinomialDeviance(ClassificationLossFunction):
 
     def get_init_raw_predictions(self, X, estimator):
         probas = estimator.predict_proba(X)
-        n_samples = X.shape[0]
-        if probas.shape != (n_samples, 2):
-            raise ValueError(
-                'The init estimator predicted probabilities with shape={}, '
-                'expected shape=({},)'.format(probas.shape, n_samples)
-            )
         proba_pos_class = probas[:, 1]
         eps = np.finfo(np.float32).eps
         proba_pos_class = np.clip(proba_pos_class, eps, 1 - eps)
@@ -782,13 +768,6 @@ class MultinomialDeviance(ClassificationLossFunction):
 
     def get_init_raw_predictions(self, X, estimator):
         probas = estimator.predict_proba(X)
-        n_samples = X.shape[0]
-        if probas.shape != (n_samples, self.K):
-            raise ValueError(
-                'The init estimator predicted probabilities with shape={}, '
-                'expected shape={}'.format(probas.shape, (n_samples, self.K))
-            )
-
         eps = np.finfo(np.float32).eps
         probas = np.clip(probas, eps, 1 - eps)
         raw_predictions = np.log(probas).astype(np.float64)
@@ -885,12 +864,6 @@ class ExponentialLoss(ClassificationLossFunction):
 
     def get_init_raw_predictions(self, X, estimator):
         probas = estimator.predict_proba(X)
-        n_samples = X.shape[0]
-        if probas.shape != (n_samples, 2):
-            raise ValueError(
-                'The init estimator predicted probabilities with shape={}, '
-                'expected shape=({},)'.format(probas.shape, n_samples)
-            )
         proba_pos_class = probas[:, 1]
         eps = np.finfo(np.float32).eps
         proba_pos_class = np.clip(proba_pos_class, eps, 1 - eps)

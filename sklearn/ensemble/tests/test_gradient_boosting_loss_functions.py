@@ -6,7 +6,6 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from numpy.testing import assert_equal
-import pytest
 
 from sklearn.utils import check_random_state
 from sklearn.utils.stats import _weighted_percentile
@@ -19,8 +18,6 @@ from sklearn.ensemble._gb_losses import BinomialDeviance
 from sklearn.ensemble._gb_losses import MultinomialDeviance
 from sklearn.ensemble._gb_losses import ExponentialLoss
 from sklearn.ensemble._gb_losses import LOSS_FUNCTIONS
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import LogisticRegression
 
 
 def test_binomial_deviance():
@@ -276,52 +273,3 @@ def test_init_raw_predictions_values():
         for k in range(n_classes):
             p = (y == k).mean()
         assert_almost_equal(raw_predictions[:, k], np.log(p))
-
-
-def test_bad_init_estimator():
-    # check that the init estimator predict() or predict_proba() methods output
-    # expected shape
-
-    rng = np.random.RandomState(0)
-    n_samples = 100
-
-    X = rng.normal(size=(n_samples, 10))
-
-    # Regression losses
-    # train init estimator on multioutput regression target
-    y_init_est = rng.normal(size=(n_samples, 2))
-    lr = LinearRegression().fit(X, y_init_est)
-    for loss in (LeastSquaresError(n_classes=1),
-                 LeastAbsoluteError(n_classes=1),
-                 QuantileLossFunction(n_classes=1),
-                 HuberLossFunction(n_classes=1)):
-        with pytest.raises(
-                ValueError,
-                match='The init estimator predicted output with shape'
-                ):
-            loss.get_init_raw_predictions(X, estimator=lr)
-
-    # Binomial deviance and exponential loss
-    # train init estimator on 3 classes instead of 2
-    y_init_est = rng.randint(0, 3, size=(n_samples))
-    lr = LogisticRegression(solver='lbfgs', multi_class='auto')
-    lr.fit(X, y_init_est)
-    for loss in (BinomialDeviance(n_classes=2),
-                 ExponentialLoss(n_classes=2)):
-        with pytest.raises(
-                ValueError,
-                match='The init estimator predicted probabilities with shape'
-                ):
-            loss.get_init_raw_predictions(X, estimator=lr)
-
-    # Multinomial deviance
-    # train init estimator on 4 classes instead of 3
-    y_init_est = rng.randint(0, 4, size=(n_samples))
-    lr = LogisticRegression(solver='lbfgs', multi_class='auto')
-    lr.fit(X, y_init_est)
-    loss = MultinomialDeviance(n_classes=3)
-    with pytest.raises(
-            ValueError,
-            match='The init estimator predicted probabilities with shape'
-            ):
-        loss.get_init_raw_predictions(X, estimator=lr)
