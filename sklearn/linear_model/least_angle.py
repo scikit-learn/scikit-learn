@@ -1490,7 +1490,9 @@ class LassoLarsIC(LassoLars):
         y : array-like, shape (n_samples,)
             target values. Will be cast to X's dtype if necessary
 
-        copy_X : boolean, optional, default True
+        copy_X : boolean, optional, default None
+            If provided, this parameter will override the choice
+            of copy_X made at instance creation.
             If ``True``, X will be copied; else, it may be overwritten.
 
         Returns
