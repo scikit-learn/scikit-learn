@@ -106,7 +106,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ``KBinsDiscretizer`` might produce constant features (e.g., when
     ``encode = 'onehot'`` and certain bins do not contain any data).
     These features can be removed with feature selection algorithms
-    (e.g., :class:`sklearn.compose.VarianceThreshold`).
+    (e.g., :class:`sklearn.feature_selection.VarianceThreshold`).
 
     See also
     --------
@@ -189,7 +189,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 bin_edges[jj] = bin_edges[jj][mask]
                 if len(bin_edges[jj]) - 1 != n_bins[jj]:
                     warnings.warn('Redundant bins (i.e., bins whose width '
-                                  '<= 0) in feature %d are removed.' % jj)
+                                  '<= 0) in feature %d are removed. Consider '
+                                  'decreasing the number of bins.' % jj)
                     n_bins[jj] = len(bin_edges[jj]) - 1
 
         self.bin_edges_ = bin_edges
