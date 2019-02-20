@@ -23,7 +23,7 @@ make_conda() {
     source activate $VIRTUALENV
 }
 
-if [[ "$DISTRIB" == "conda"]]; then
+if [[ "$DISTRIB" == "conda" ]]; then
     TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
                 cython=$CYTHON_VERSION"
