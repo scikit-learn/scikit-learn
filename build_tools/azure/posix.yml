@@ -10,6 +10,7 @@ jobs:
   variables:
     TEST_DIR: "/tmp/sklearn"
     VIRTUALENV: "testvenv"
+    JUNITXML: "test-data.xml"
   strategy:
     matrix:
       # ${{ if eq(parameters.name, 'macOS') }}:
@@ -73,3 +74,7 @@ jobs:
     - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test soft dependency'
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: 'test-data-*.xml'
+        testRunTitle: ${{ '$(TEST_DIR)/$(JUNITXML)' }}
