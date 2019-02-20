@@ -56,8 +56,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     n_bins_ : int array, shape (n_features,)
-        Number of bins per feature. Redundant bins (i.e., bins whose width = 0)
-        are removed with a warning.
+        Number of bins per feature. Redundant bins (i.e., bins whose
+        width <= 0) are removed with a warning.
 
     bin_edges_ : array of arrays, shape (n_features, )
         The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
