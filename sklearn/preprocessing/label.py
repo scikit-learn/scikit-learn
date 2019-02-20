@@ -24,10 +24,6 @@ from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
-from ..externals import six
-
-zip = six.moves.zip
-map = six.moves.map
 
 __all__ = [
     'label_binarize',
@@ -794,7 +790,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> mlb.classes_
     array([1, 2, 3])
 
-    >>> mlb.fit_transform([set(['sci-fi', 'thriller']), set(['comedy'])])
+    >>> mlb.fit_transform([{'sci-fi', 'thriller'}, {'comedy'}])
     array([[0, 1, 1],
            [1, 0, 0]])
     >>> list(mlb.classes_)

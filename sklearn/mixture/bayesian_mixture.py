@@ -266,7 +266,7 @@ class BayesianGaussianMixture(BaseMixture):
     mean_precision_ : array-like, shape (n_components,)
         The precision of each components on the mean distribution (Gaussian).
 
-    means_prior_ : array-like, shape (n_features,)
+    mean_prior_ : array-like, shape (n_features,)
         The prior on the mean distribution (Gaussian).
 
     degrees_of_freedom_prior_ : float
@@ -314,7 +314,7 @@ class BayesianGaussianMixture(BaseMixture):
                  degrees_of_freedom_prior=None, covariance_prior=None,
                  random_state=None, warm_start=False, verbose=0,
                  verbose_interval=10):
-        super(BayesianGaussianMixture, self).__init__(
+        super().__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,
             random_state=random_state, warm_start=warm_start,

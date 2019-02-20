@@ -14,8 +14,7 @@ import scipy.sparse
 
 from sklearn.externals import _arff
 from .base import get_data_home
-from ..externals.six import string_types
-from ..externals.six.moves.urllib.error import HTTPError
+from urllib.error import HTTPError
 from ..utils import Bunch
 
 __all__ = ['fetch_openml']
@@ -549,14 +548,14 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         # see issue: https://github.com/openml/OpenML/issues/768)
         target_column = [feature['name'] for feature in features_list
                          if feature['is_target'] == 'true']
-    elif isinstance(target_column, string_types):
+    elif isinstance(target_column, str):
         # for code-simplicity, make target_column by default a list
         target_column = [target_column]
     elif target_column is None:
         target_column = []
     elif not isinstance(target_column, list):
         raise TypeError("Did not recognize type of target_column"
-                        "Should be six.string_type, list or None. Got: "
+                        "Should be str, list or None. Got: "
                         "{}".format(type(target_column)))
     data_columns = _valid_data_column_names(features_list,
                                             target_column)
@@ -612,7 +611,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         raise ValueError('Mix of nominal and non-nominal targets is not '
                          'currently supported')
 
-    description = u"{}\n\nDownloaded from openml.org.".format(
+    description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
 
     # reshape y back to 1-D array, if there is only 1 target column; back

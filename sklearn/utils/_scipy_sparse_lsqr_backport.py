@@ -49,7 +49,6 @@ Adapted for SciPy by Stefan van der Walt.
 
 """
 
-from __future__ import division, print_function, absolute_import
 
 __all__ = ['lsqr']
 

@@ -10,7 +10,6 @@ import pytest
 from pytest import importorskip
 import numpy as np
 import scipy.sparse as sp
-from scipy import __version__ as scipy_version
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
@@ -726,12 +725,12 @@ def test_check_dataframe_warns_on_dtype():
                        dtype='numeric', warn_on_dtype=True)
 
 
-class DummyMemory(object):
+class DummyMemory:
     def cache(self, func):
         return func
 
 
-class WrongDummyMemory(object):
+class WrongDummyMemory:
     pass
 
 

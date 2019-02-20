@@ -1,5 +1,4 @@
 """Test the split module"""
-from __future__ import division
 import warnings
 import pytest
 import numpy as np
@@ -54,9 +53,6 @@ from sklearn.model_selection._split import NSPLIT_WARNING
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
 
-from sklearn.externals import six
-from sklearn.externals.six.moves import zip
-
 from sklearn.utils.fixes import comb
 
 from sklearn.svm import SVC
@@ -74,7 +70,7 @@ test_groups = (
 digits = load_digits()
 
 
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):
@@ -405,9 +401,7 @@ def test_kfold_balance():
     # Check that KFold returns folds with balanced sizes
     for i in range(11, 17):
         kf = KFold(5).split(X=np.ones(i))
-        sizes = []
-        for _, test in kf:
-            sizes.append(len(test))
+        sizes = [len(test) for _, test in kf]
 
         assert (np.max(sizes) - np.min(sizes)) <= 1
         assert_equal(np.sum(sizes), i)
@@ -424,9 +418,7 @@ def test_stratifiedkfold_balance():
         cv = StratifiedKFold(3, shuffle=shuffle)
         for i in range(11, 17):
             skf = cv.split(X[:i], y[:i])
-            sizes = []
-            for _, test in skf:
-                sizes.append(len(test))
+            sizes = [len(test) for _, test in skf]
 
             assert (np.max(sizes) - np.min(sizes)) <= 1
             assert_equal(np.sum(sizes), i)
@@ -483,9 +475,9 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
                                                 cv.split(*data)):
                 # cv.split(...) returns an array of tuples, each tuple
                 # consisting of an array with train indices and test indices
-                with pytest.raises(AssertionError,
-                                   message="The splits for data, are same even"
-                                           " when random state is not set"):
+                # Ensure that the splits for data are not same
+                # when random state is not set
+                with pytest.raises(AssertionError):
                     np.testing.assert_array_equal(test_a, test_b)
 
 
@@ -550,8 +542,7 @@ def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
     ss3 = ShuffleSplit(test_size=np.int32(2), random_state=0).split(X)
-    for typ in six.integer_types:
-        ss4 = ShuffleSplit(test_size=typ(2), random_state=0).split(X)
+    ss4 = ShuffleSplit(test_size=int(2), random_state=0).split(X)
     for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
         assert_array_equal(t1[0], t2[0])
         assert_array_equal(t2[0], t3[0])
@@ -761,14 +752,10 @@ def test_predefinedsplit_with_kfold_split():
         kf_train.append(train_ind)
         kf_test.append(test_ind)
         folds[test_ind] = i
-    ps_train = []
-    ps_test = []
     ps = PredefinedSplit(folds)
     # n_splits is simply the no of unique folds
     assert_equal(len(np.unique(folds)), ps.get_n_splits())
-    for train_ind, test_ind in ps.split():
-        ps_train.append(train_ind)
-        ps_test.append(test_ind)
+    ps_train, ps_test = zip(*ps.split())
     assert_array_equal(ps_train, kf_train)
     assert_array_equal(ps_test, kf_test)
 

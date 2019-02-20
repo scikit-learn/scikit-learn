@@ -2,9 +2,6 @@
 Benchmarks for sampling without replacement of integer.
 
 """
-from __future__ import division
-from __future__ import print_function
-
 import gc
 import sys
 import optparse
@@ -15,7 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
-from sklearn.externals.six.moves import xrange
 from sklearn.utils.random import sample_without_replacement
 
 
@@ -90,55 +86,53 @@ if __name__ == "__main__":
     # Set Python core input
     sampling_algorithm["python-core-sample"] = \
         lambda n_population, n_sample: \
-            random.sample(xrange(n_population), n_sample)
+        random.sample(range(n_population), n_sample)
 
-   ###########################################################################
+    ###########################################################################
     # Set custom automatic method selection
     sampling_algorithm["custom-auto"] = \
         lambda n_population, n_samples, random_state=None: \
-            sample_without_replacement(n_population,
-                                       n_samples,
-                                       method="auto",
-                                       random_state=random_state)
+        sample_without_replacement(n_population, n_samples, method="auto",
+                                   random_state=random_state)
 
     ###########################################################################
     # Set custom tracking based method
     sampling_algorithm["custom-tracking-selection"] = \
         lambda n_population, n_samples, random_state=None: \
-            sample_without_replacement(n_population,
-                                       n_samples,
-                                       method="tracking_selection",
-                                       random_state=random_state)
+        sample_without_replacement(n_population,
+                                   n_samples,
+                                   method="tracking_selection",
+                                   random_state=random_state)
 
     ###########################################################################
     # Set custom reservoir based method
     sampling_algorithm["custom-reservoir-sampling"] = \
         lambda n_population, n_samples, random_state=None: \
-            sample_without_replacement(n_population,
-                                       n_samples,
-                                       method="reservoir_sampling",
-                                       random_state=random_state)
+        sample_without_replacement(n_population,
+                                   n_samples,
+                                   method="reservoir_sampling",
+                                   random_state=random_state)
 
     ###########################################################################
     # Set custom reservoir based method
     sampling_algorithm["custom-pool"] = \
         lambda n_population, n_samples, random_state=None: \
-            sample_without_replacement(n_population,
-                                       n_samples,
-                                       method="pool",
-                                       random_state=random_state)
+        sample_without_replacement(n_population,
+                                   n_samples,
+                                   method="pool",
+                                   random_state=random_state)
 
     ###########################################################################
     # Numpy permutation based
     sampling_algorithm["numpy-permutation"] = \
         lambda n_population, n_sample: \
-            np.random.permutation(n_population)[:n_sample]
+        np.random.permutation(n_population)[:n_sample]
 
     ###########################################################################
     # Remove unspecified algorithm
-    sampling_algorithm = dict((key, value)
-                              for key, value in sampling_algorithm.items()
-                              if key in selected_algorithm)
+    sampling_algorithm = {key: value
+                          for key, value in sampling_algorithm.items()
+                          if key in selected_algorithm}
 
     ###########################################################################
     # Perform benchmark
@@ -156,11 +150,11 @@ if __name__ == "__main__":
         print("Perform benchmarks for %s..." % name, end="")
         time[name] = np.zeros(shape=(opts.n_steps, opts.n_times))
 
-        for step in xrange(opts.n_steps):
-            for it in xrange(opts.n_times):
+        for step in range(opts.n_steps):
+            for it in range(opts.n_times):
                 time[name][step, it] = bench_sample(sampling_algorithm[name],
-                                                      opts.n_population,
-                                                      n_samples[step])
+                                                    opts.n_population,
+                                                    n_samples[step])
 
         print("done")
 

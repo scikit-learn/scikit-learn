@@ -7,7 +7,6 @@
 #          Eric Chang <ericchang2017@u.northwestern.edu>
 # License: BSD 3 clause
 
-from __future__ import division
 
 from itertools import chain, combinations
 import warnings
@@ -17,13 +16,12 @@ import numpy as np
 from scipy import sparse
 from scipy import stats
 from scipy import optimize
+from scipy.special import boxcox
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import boxcox, nanpercentile, nanmedian
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -37,11 +35,6 @@ from ._csr_polynomial_expansion import _csr_polynomial_expansion
 from ._encoders import OneHotEncoder
 
 BOUNDS_THRESHOLD = 1e-7
-
-
-zip = six.moves.zip
-map = six.moves.map
-range = six.moves.range
 
 __all__ = [
     'Binarizer',
@@ -129,6 +122,10 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     NaNs are treated as missing values: disregarded to compute the statistics,
     and maintained during the data transformation.
 
+    We use a biased estimator for the standard deviation, equivalent to
+    `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
+    affect model performance.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -212,6 +209,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     where min, max = feature_range.
 
+    The transformation is calculated as::
+
+        X_scaled = scale * X + min - X.min(axis=0) * scale
+        where scale = (max - min) / (X.max(axis=0) - X.min(axis=0))
+
     This transformation is often used as an alternative to zero mean,
     unit variance scaling.
 
@@ -229,10 +231,12 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     min_ : ndarray, shape (n_features,)
-        Per feature adjustment for minimum.
+        Per feature adjustment for minimum. Equivalent to
+        ``min - X.min(axis=0) * self.scale_``
 
     scale_ : ndarray, shape (n_features,)
-        Per feature relative scaling of the data.
+        Per feature relative scaling of the data. Equivalent to
+        ``(max - min) / (X.max(axis=0) - X.min(axis=0))``
 
         .. versionadded:: 0.17
            *scale_* attribute.
@@ -258,7 +262,6 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> from sklearn.preprocessing import MinMaxScaler
-
     >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
     >>> scaler = MinMaxScaler()
     >>> print(scaler.fit(data))
@@ -412,12 +415,17 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     that it is in the given range on the training set, i.e. between
     zero and one.
 
-    The transformation is given by::
+    The transformation is given by (when ``axis=0``)::
 
         X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
         X_scaled = X_std * (max - min) + min
 
     where min, max = feature_range.
+ 
+    The transformation is calculated as (when ``axis=0``)::
+
+       X_scaled = scale * X + min - X.min(axis=0) * scale
+       where scale = (max - min) / (X.max(axis=0) - X.min(axis=0))
 
     This transformation is often used as an alternative to zero mean,
     unit variance scaling.
@@ -581,6 +589,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     -----
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
+    
+    We use a biased estimator for the standard deviation, equivalent to
+    `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
+    affect model performance.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -1088,7 +1100,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     ...      [ -2.,  1.,  3.],
     ...      [ 4.,  1., -2.]]
     >>> transformer = RobustScaler().fit(X)
-    >>> transformer
+    >>> transformer  # doctest: +NORMALIZE_WHITESPACE
     RobustScaler(copy=True, quantile_range=(25.0, 75.0), with_centering=True,
            with_scaling=True)
     >>> transformer.transform(X)
@@ -1145,7 +1157,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 raise ValueError(
                     "Cannot center sparse matrices: use `with_centering=False`"
                     " instead. See docstring for motivation and alternatives.")
-            self.center_ = nanmedian(X, axis=0)
+            self.center_ = np.nanmedian(X, axis=0)
         else:
             self.center_ = None
 
@@ -1160,8 +1172,8 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 else:
                     column_data = X[:, feature_idx]
 
-                quantiles.append(nanpercentile(column_data,
-                                               self.quantile_range))
+                quantiles.append(np.nanpercentile(column_data,
+                                                  self.quantile_range))
 
             quantiles = np.transpose(quantiles)
 
@@ -1330,6 +1342,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PolynomialFeatures
     >>> X = np.arange(6).reshape(3, 2)
     >>> X
     array([[0, 1],
@@ -2106,7 +2120,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                     size=self.subsample,
                                                     replace=False)
                 col = col.take(subsample_idx, mode='clip')
-            self.quantiles_.append(nanpercentile(col, references))
+            self.quantiles_.append(np.nanpercentile(col, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def _sparse_fit(self, X, random_state):
@@ -2148,7 +2162,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 # quantiles. Force the quantiles to be zeros.
                 self.quantiles_.append([0] * len(references))
             else:
-                self.quantiles_.append(nanpercentile(column_data, references))
+                self.quantiles_.append(
+                        np.nanpercentile(column_data, references))
         self.quantiles_ = np.transpose(self.quantiles_)
 
     def fit(self, X, y=None):
@@ -2599,12 +2614,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         optim_function = {'box-cox': self._box_cox_optimize,
                           'yeo-johnson': self._yeo_johnson_optimize
                           }[self.method]
-        self.lambdas_ = []
-        for col in X.T:
-            with np.errstate(invalid='ignore'):  # hide NaN warnings
-                lmbda = optim_function(col)
-                self.lambdas_.append(lmbda)
-        self.lambdas_ = np.array(self.lambdas_)
+        with np.errstate(invalid='ignore'):  # hide NaN warnings
+            self.lambdas_ = np.array([optim_function(col) for col in X.T])
 
         if self.standardize or force_transform:
             transform_function = {'box-cox': boxcox,
