@@ -2,6 +2,9 @@ parameters:
   name: ''
   vmImage: ''
 
+variables:
+  WORLD: "Hello"
+
 jobs:
 - job: ${{ parameters.name }}
   pool:

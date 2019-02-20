@@ -25,7 +25,7 @@ run_tests() {
     export SKLEARN_SKIP_NETWORK_TESTS=1
 
     set -x
-    $TEST_CMD sklearn
+    $TEST_CMD sklearn/preprocessing/tests/
 }
 
 
@@ -34,6 +34,7 @@ if [[ "$DISTRIB" == "ubuntu" ]]; then
     source testvenv/bin/activate
 fi
 
+echo $WORLD
 run_tests
 
 
