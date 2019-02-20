@@ -1086,7 +1086,8 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
 
         y : array-like, shape 
               - (n_samples,), valid for `ElasticNetCV` and `LassoCV`.
-              - (n_samples, n_tasks), valid for `MultiTaskElasticNetCV` and `MultitaskLassoCV`.
+              - (n_samples, n_tasks), valid for `MultiTaskElasticNetCV` and 
+                `MultitaskLassoCV`.
             Target values
         """
         y = check_array(y, copy=False, dtype=[np.float64, np.float32],
