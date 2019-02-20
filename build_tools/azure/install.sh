@@ -85,4 +85,5 @@ try:
 except ImportError:
     print('pandas not installed')
 "
+pip list
 python -m pip install -e .
