@@ -185,7 +185,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
             # Remove redundant bins (i.e., bins whose width = 0)
             if self.strategy in ('quantile', 'kmeans'):
-                bin_edges[jj] = np.unique(bin_edges[jj])
+                bin_edges[jj] = np.array(
+                    [bin_edges[jj][0]] +
+                    [bin_edges[jj][i] for i in range(1, len(bin_edges[jj]))
+                     if bin_edges[jj][i] - bin_edges[jj][i - 1] > 1e-8])
                 if len(bin_edges[jj]) - 1 != n_bins[jj]:
                     warnings.warn('Redundant bins (i.e., bins whose width = 0)'
                                   ' in feature %d are removed.' % jj)
