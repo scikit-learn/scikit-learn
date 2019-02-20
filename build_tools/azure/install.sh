@@ -66,6 +66,6 @@ try:
     import pandas
     print('pandas %s' % pandas.__version__)
 except ImportError:
-    pass
+    print('pandas not installed')
 "
 python setup.py develop

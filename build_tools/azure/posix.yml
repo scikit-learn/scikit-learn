@@ -81,5 +81,5 @@ jobs:
       displayName: 'Test soft dependency'
     - task: PublishTestResults@2
       inputs:
-        testResultsFiles: 'test-data-*.xml'
-        testRunTitle: ${{ '$(TEST_DIR)/$(JUNITXML)' }}
+        testResultsFiles: ${{ '$(TEST_DIR)/$(JUNITXML)' }}
+        testRunTitle: ${{ format('{0}-$(DISTRIB)-$(PYTHON_VERSION)', parameters.name) }}

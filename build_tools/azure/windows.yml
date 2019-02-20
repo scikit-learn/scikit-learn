@@ -7,6 +7,8 @@ jobs:
 - job: ${{ parameters.name }}
   pool:
     vmImage: ${{ parameters.vmImage }}
+  variables:
+    VIRTUALENV: "testvenv"
   strategy:
     matrix:
       CONDA_PY: "37"
@@ -16,3 +18,6 @@ jobs:
       inputs:
         updateConda: no
         packageSpecs: ''
+    - script: |
+        build_tools\\azure\\install.cmd
+      display: 'Install'

@@ -18,7 +18,7 @@ try:
     import pandas
     print('pandas %s' % pandas.__version__)
 except ImportError:
-    pass
+    print('pandas not installed')
 "
 
 mkdir -p $TEST_DIR

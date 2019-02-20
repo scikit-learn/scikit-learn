@@ -11,11 +11,18 @@ call deactivate
 @rem Display root environment (for debugging)
 conda list
 @rem Clean up any left-over from a previous build
-conda remove --all -q -y -n testenv
-@rem Scipy, CFFI, jinja2 and IPython are optional dependencies, but exercised in the test suite
-conda env create --file=ci\deps\azure-windows-%CONDA_PY%.yaml
+conda remove --all -q -y -n %VIRTUALENV%
+conda env create -n %VIRTUALENV% python=%CONDA_PY% -y
 
-call activate testenv
+call activate %VIRTUALENV%
 conda list
+
+@rem https://github.com/numba/numba/blob/master/buildscripts/incremental/build.cmd
+
+@rem Build numba extensions without silencing compile errors
+python setup.py build_ext -q --inplace
+
+@rem Install pandas locally
+python -m pip install -e .
 
 if %errorlevel% neq 0 exit /b %errorlevel%
