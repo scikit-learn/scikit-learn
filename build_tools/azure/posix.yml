@@ -44,7 +44,6 @@ jobs:
           CYTHON_VERSION: "*"
           PILLOW_VERSION: "4.0.0"
           CONVERAGE: "true"
-          SKLEARN_SITE_JOBLIB: "1"
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring pandas and PyAMG.
       # It also runs with the site joblib instead of the vendored copy of joblib.

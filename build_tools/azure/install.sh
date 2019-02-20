@@ -72,7 +72,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo apt-get install python3-scipy libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
-    pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
+    python -m pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
 fi
 
 python --version
