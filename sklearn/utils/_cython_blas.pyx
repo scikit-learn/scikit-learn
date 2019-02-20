@@ -6,6 +6,8 @@ from scipy.linalg.cython_blas cimport saxpy, daxpy
 from scipy.linalg.cython_blas cimport snrm2, dnrm2
 from scipy.linalg.cython_blas cimport scopy, dcopy
 from scipy.linalg.cython_blas cimport sscal, dscal
+from scipy.linalg.cython_blas cimport srotg, drotg
+from scipy.linalg.cython_blas cimport srot, drot
 from scipy.linalg.cython_blas cimport sgemv, dgemv
 from scipy.linalg.cython_blas cimport sger, dger
 from scipy.linalg.cython_blas cimport sgemm, dgemm
@@ -87,6 +89,32 @@ cdef void _scal(int n, floating alpha, floating *x, int incx) nogil:
 
 cpdef _scal_memview(floating alpha, floating[::1] x):
     _scal(x.shape[0], alpha, &x[0], 1)
+
+
+cdef void _rotg(floating *a, floating *b, floating *c, floating *s) nogil:
+    """Generate plane rotation"""
+    if floating is float:
+        srotg(a, b, c, s)
+    else:
+        drotg(a, b, c, s)
+
+
+cpdef _rotg_memview(floating a, floating b, floating c, floating s):
+    _rotg(&a, &b, &c, &s)
+    return a, b, c, s
+
+
+cdef void _rot(int n, floating *x, int incx, floating *y, int incy,
+               floating c, floating s) nogil:
+    """Apply plane rotation"""
+    if floating is float:
+        srot(&n, x, &incx, y, &incy, &c, &s)
+    else:
+        drot(&n, x, &incx, y, &incy, &c, &s)
+
+
+cpdef _rot_memview(floating[::1] x, floating[::1] y, floating c, floating s):
+    _rot(x.shape[0], &x[0], 1, &y[0], 1, c, s)
 
 
 ################
