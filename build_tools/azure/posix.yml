@@ -7,11 +7,16 @@ jobs:
   pool:
     vmImage: ${{ parameters.vmImage }}
   strategy:
-    matrix:
-      py36:
-        CONDA_PY: "35"
+    ${{ if eq(parameters.name, 'Linux') }}:
+      py35_np_111:
+        DISTRIB: "ubuntu"
+        PYTHON_VERSION: "3.5"
+        NUMPY_VERSION: "1.11.0"
+        SCIPY_VERSION: "0.17.0"
+        PILLOW_VERSION: "4.0.0"
+        SKLEARN_SITE_JOBLIB: "1"
+        JOBLIB_VERSION: "0.11"
 
   steps:
     - script: |
-        echo "Installing Miniconda"
-        build_tools/azure/install_miniconda.sh
+        echo $(DISTRIB)
