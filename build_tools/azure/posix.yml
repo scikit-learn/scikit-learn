@@ -40,6 +40,3 @@ jobs:
     - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test soft dependency'
-      enabled: $CHECK_PYTEST_SOFT_DEPENDENCY
-
-
