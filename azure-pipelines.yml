@@ -4,3 +4,7 @@ jobs:
   parameters:
     name: Linux
     vmImage: ubuntu-16.04
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: macOS
+    vmImage: xcode9-macos10.13

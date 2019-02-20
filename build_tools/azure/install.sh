@@ -2,10 +2,28 @@
 
 set -e
 
+UNAMESTR=`uname`
+
+if [[ "$UNAMESTR" == 'Darwin' ]]; then
+    # install OpenMP not present by default on osx
+    brew install libomp
+
+    # enable OpenMP support for Apple-clang
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+
+    # avoid error due to multiple OpenMP libraries loaded simultaneously
+    export KMP_DUPLICATE_LIB_OK=TRUE
+fi
+
 make_conda() {
     TO_INSTALL="$@"
     # Install Miniconda
-    UNAMESTR=`uname`
     if [[ "$UNAMESTR" == 'Linux' ]]; then
         wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
     elif [[ "$UNAMESTR" == 'Darwin' ]]; then
