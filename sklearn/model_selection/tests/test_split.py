@@ -1421,11 +1421,83 @@ def test_time_series_max_train_size():
 
 
 def test_time_series_test_size():
-    pass
+    X = np.zeros((10, 1))
+
+    # Test alone
+    splits = TimeSeriesSplit(n_splits=3, test_size=3).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0])
+    assert_array_equal(test, [1, 2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3])
+    assert_array_equal(test, [4, 5, 6])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6])
+    assert_array_equal(test, [7, 8, 9])
+
+    # Test with max_train_size
+    splits = TimeSeriesSplit(n_splits=2, test_size=2, max_train_size=4).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3, 4, 5])
+    assert_array_equal(test, [6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [4, 5, 6, 7])
+    assert_array_equal(test, [8, 9])
+
+    # Should fail with not enough data points for configuration
+    assert_raises_regexp(ValueError, "Too many splits.*with test_size",
+                         next, TimeSeriesSplit(n_splits=5, test_size=2).split(X))
 
 
 def test_time_series_gap_size():
-    pass
+    X = np.zeros((10, 1))
+
+    # Test alone
+    splits = TimeSeriesSplit(n_splits=2, gap_size=2).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1])
+    assert_array_equal(test, [4, 5, 6])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [7, 8, 9])
+
+    # Test with max_train_size
+    splits = TimeSeriesSplit(n_splits=3, gap_size=2, max_train_size=2).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1])
+    assert_array_equal(test, [4, 5])
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3])
+    assert_array_equal(test, [6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [4, 5])
+    assert_array_equal(test, [8, 9])
+
+    # Test with test_size
+    splits = TimeSeriesSplit(n_splits=2, gap_size=2,
+                             max_train_size=4, test_size=2).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3])
+    assert_array_equal(test, [6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3, 4, 5])
+    assert_array_equal(test, [8, 9])
+
+    # Verify proper error is thrown
+    assert_raises_regexp(ValueError, "Too many splits.*and gap_size",
+                         next, TimeSeriesSplit(n_splits=4, gap_size=2).split(X))
 
 
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22

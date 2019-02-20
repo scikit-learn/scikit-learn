@@ -746,7 +746,7 @@ class TimeSeriesSplit(_BaseKFold):
         Number of samples in each test set. Defaults to ``n_samples / (n_splits + 1)``.
 
     gap_size : int, default=0
-        Number of samples to exclude from the end of the train set before the test set.
+        Number of samples to exclude from the end of each train set before the test set.
 
 
     Examples
@@ -767,12 +767,32 @@ class TimeSeriesSplit(_BaseKFold):
     TRAIN: [0 1 2] TEST: [3]
     TRAIN: [0 1 2 3] TEST: [4]
     TRAIN: [0 1 2 3 4] TEST: [5]
+    >>> # Fix test_size to 2 with 12 samples
+    >>> X = np.random.randn(12, 2)
+    >>> y = np.random.randint(0, 2, 12)
+    >>> tscv = TimeSeriesSplit3(n_splits=3, test_size=2)
+    >>> for train_index, test_index in tscv.split(X):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [0 1 2 3 4 5] TEST: [6 7]
+    TRAIN: [0 1 2 3 4 5 6 7] TEST: [8 9]
+    TRAIN: [0 1 2 3 4 5 6 7 8 9] TEST: [10 11]
+    >>> # Add in a 2 period gap
+    >>> tscv = TimeSeriesSplit3(n_splits=3, test_size=2, gap_size=2)
+    >>> for train_index, test_index in tscv.split(X):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [0 1 2 3] TEST: [6 7]
+    TRAIN: [0 1 2 3 4 5] TEST: [8 9]
+    TRAIN: [0 1 2 3 4 5 6 7] TEST: [10 11]
 
     Notes
     -----
     The training set has size ``i * n_samples // (n_splits + 1)
     + n_samples % (n_splits + 1)`` in the ``i``th split,
-    with a test set of size ``n_samples//(n_splits + 1)``,
+    with a test set of size ``n_samples//(n_splits + 1)`` by default,
     where ``n_samples`` is the number of samples.
     """
     def __init__(self, n_splits='warn', max_train_size=None, test_size=None, gap_size=0):
@@ -823,7 +843,7 @@ class TimeSeriesSplit(_BaseKFold):
         if n_samples - gap_size - (test_size * n_splits) <= 0:
             raise ValueError(
                 ("Too many splits ={0} for number of samples"
-                 " ={1} with test_size ={2} and gap_size ={3}").format(n_splits,
+                 " ={1} with test_size ={2} and gap_size ={3}.").format(n_splits,
                                                                        n_samples,
                                                                        test_size,
                                                                        gap_size))
