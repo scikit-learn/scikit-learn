@@ -30,5 +30,5 @@ cd $TEST_DIR
 export SKLEARN_SKIP_NETWORK_TESTS=1
 
 set -x
-pytest --showlocals --durations=20 --pyargs sklearn.preprocessing --junitxml=$JUNITXML
+pytest --showlocals --durations=20 --pyargs sklearn --junitxml=$JUNITXML
 set +x

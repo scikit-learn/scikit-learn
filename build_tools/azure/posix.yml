@@ -15,17 +15,17 @@ jobs:
     OPENBLAS_NUM_THREADS: "4"
   strategy:
     matrix:
-      # ${{ if eq(parameters.name, 'macOS') }}:
-      #   pylatest_conda:
-      #     DISTRIB: "conda"
-      #     PYTHON_VERSION: "*"
-      #     INSTALL_MKL: "true"
-      #     NUMPY_VERSION: "*"
-      #     SCIPY_VERSION: "*"
-      #     CYTHON_VERSION: "*"
-      #     PILLOW_VERSION: "*"
-      #     JOBLIB_VERSION: "*"
-      #     CONVERAGE: "true"
+      ${{ if eq(parameters.name, 'macOS') }}:
+        pylatest_conda:
+          DISTRIB: "conda"
+          PYTHON_VERSION: "*"
+          INSTALL_MKL: "true"
+          NUMPY_VERSION: "*"
+          SCIPY_VERSION: "*"
+          CYTHON_VERSION: "*"
+          PILLOW_VERSION: "*"
+          JOBLIB_VERSION: "*"
+          CONVERAGE: "true"
       ${{ if eq(parameters.name, 'Linux') }}:
         # Linux environment to test that scikit-learn can be built against
         # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
