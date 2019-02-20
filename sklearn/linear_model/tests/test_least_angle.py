@@ -688,33 +688,17 @@ def test_lasso_lars_vs_R_implementation():
     ###########################################################################
 
 
-def test_lasso_lars_copyX_behaviour1():
+@pytest.mark.parametrize('copy_X', [True, False])
+def test_lasso_lars_copyX_behaviour(copy_X):
     """
-    Test that user input regarding copyX is not being overridden (it was until
+    Test that user input regarding copy_X is not being overridden (it was until
     at least version 0.21)
 
-    Correct behaviour is not to create a copy.
-
     """
-    lasso_lars = LassoLarsIC(copy_X=False, precompute=False)
+    lasso_lars = LassoLarsIC(copy_X=copy_X, precompute=False)
     X = np.random.normal(0, 1, (100, 5))
     X_copy = X.copy()
     y = X[:, 2]
     lasso_lars.fit(X, y)
-    assert not np.array_equal(X, X_copy)
+    assert copy_X == np.array_equal(X, X_copy)
 
-
-def test_lasso_lars_copyX_behaviour2():
-    """
-    Test that user input regarding copyX is not being overridden (it was until
-    at least version 0.21)
-
-    Correct behaviour is to create a copy.
-
-    """
-    lasso_lars = LassoLarsIC(copy_X=True, precompute=False)
-    X = np.random.normal(0, 1, (100, 5))
-    X_copy = X.copy()
-    y = X[:, 2]
-    lasso_lars.fit(X, y)
-    assert np.array_equal(X, X_copy)
