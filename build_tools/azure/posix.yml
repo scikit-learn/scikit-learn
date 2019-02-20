@@ -2,13 +2,13 @@ parameters:
   name: ''
   vmImage: ''
 
-variables:
-  WORLD: "Hello"
 
 jobs:
 - job: ${{ parameters.name }}
   pool:
     vmImage: ${{ parameters.vmImage }}
+  variables:
+    WORLD: "Hello"
   strategy:
     matrix:
       ${{ if eq(parameters.name, 'Linux') }}:
