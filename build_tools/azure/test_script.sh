@@ -30,7 +30,6 @@ run_tests() {
 
 
 if [[ "$DISTRIB" == "ubuntu" ]]; then
-    source deactivate
     source testvenv/bin/activate
 fi
 
