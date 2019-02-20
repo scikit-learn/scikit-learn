@@ -183,7 +183,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5
                 bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]
 
-            # Remove redundant bins (i.e., bins whose width = 0)
+            # Remove redundant bins (i.e., bins whose width <= 0)
             if self.strategy in ('quantile', 'kmeans'):
                 mask = np.ediff1d(bin_edges[jj], to_begin=np.inf) > 1e-8
                 bin_edges[jj] = bin_edges[jj][mask]
