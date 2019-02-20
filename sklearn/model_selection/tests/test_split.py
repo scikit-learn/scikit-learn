@@ -1502,7 +1502,7 @@ def test_time_series_gap_size():
     assert_raises_regexp(ValueError,
                          "Too many splits.*and gap_size",
                          next,
-                         TimeSeriesSplit(n_splits=4,gap_size=2).split(X))
+                         TimeSeriesSplit(n_splits=4, gap_size=2).split(X))
 
 
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
