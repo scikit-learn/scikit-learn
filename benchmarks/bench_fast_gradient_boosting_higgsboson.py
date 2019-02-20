@@ -86,7 +86,7 @@ print(f"done in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
 if args.lightgbm:
     print("Fitting a LightGBM model...")
     tic = time()
-    lightgbm_est = get_equivalent_estimator(est, lib='lgbm')
+    lightgbm_est = get_equivalent_estimator(est, lib='lightgbm')
     lightgbm_est.fit(data_train, target_train)
     toc = time()
     predicted_test = lightgbm_est.predict(data_test)
@@ -97,7 +97,7 @@ if args.lightgbm:
 if args.xgboost:
     print("Fitting an XGBoost model...")
     tic = time()
-    xgboost_est = get_equivalent_estimator(est, lib='xgb')
+    xgboost_est = get_equivalent_estimator(est, lib='xgboost')
     xgboost_est.fit(data_train, target_train)
     toc = time()
     predicted_test = xgboost_est.predict(data_test)
@@ -108,7 +108,7 @@ if args.xgboost:
 if args.catboost:
     print("Fitting a Catboost model...")
     tic = time()
-    catboost_est = get_equivalent_estimator(est, lib='cat')
+    catboost_est = get_equivalent_estimator(est, lib='catboost')
     catboost_est.fit(data_train, target_train)
     toc = time()
     predicted_test = catboost_est.predict(data_test)

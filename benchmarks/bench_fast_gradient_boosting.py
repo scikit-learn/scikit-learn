@@ -86,7 +86,7 @@ def one_run(n_samples):
             loss = 'binary_crossentropy' if args.n_classes == 2 else \
                 'categorical_crossentropy'
             est.set_params(loss=loss)
-        lightgbm_est = get_equivalent_estimator(est, lib='lgbm')
+        lightgbm_est = get_equivalent_estimator(est, lib='lightgbm')
 
         tic = time()
         lightgbm_est.fit(X_train, y_train)
@@ -108,7 +108,7 @@ def one_run(n_samples):
             loss = 'binary_crossentropy' if args.n_classes == 2 else \
                 'categorical_crossentropy'
             est.set_params(loss=loss)
-        xgb_est = get_equivalent_estimator(est, lib='xgb')
+        xgb_est = get_equivalent_estimator(est, lib='xgboost')
 
         tic = time()
         xgb_est.fit(X_train, y_train)
@@ -130,7 +130,7 @@ def one_run(n_samples):
             loss = 'binary_crossentropy' if args.n_classes == 2 else \
                 'categorical_crossentropy'
             est.set_params(loss=loss)
-        cat_est = get_equivalent_estimator(est, lib='cat')
+        cat_est = get_equivalent_estimator(est, lib='catboost')
 
         tic = time()
         cat_est.fit(X_train, y_train)

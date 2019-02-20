@@ -59,7 +59,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
         n_iter_no_change=None,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
-    est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lgbm')
+    est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lightgbm')
 
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
@@ -112,7 +112,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
         n_iter_no_change=None,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
-    est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lgbm')
+    est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lightgbm')
 
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)
@@ -174,7 +174,7 @@ def test_same_predictions_multiclass_classification(
         n_iter_no_change=None,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes)
-    est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lgbm')
+    est_lightgbm = get_equivalent_estimator(est_sklearn, lib='lightgbm')
 
     est_lightgbm.fit(X_train, y_train)
     est_sklearn.fit(X_train, y_train)

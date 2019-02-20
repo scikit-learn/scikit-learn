@@ -12,7 +12,7 @@ from .types cimport Y_DTYPE_C
 from ..base import is_classifier
 
 
-def get_equivalent_estimator(estimator, lib='lgbm'):
+def get_equivalent_estimator(estimator, lib='lightgbm'):
     """Return an unfitted estimator from another lib with matching hyperparams.
 
     This utility function takes care of renaming the sklearn parameters into
@@ -27,9 +27,9 @@ def get_equivalent_estimator(estimator, lib='lgbm'):
     # max_leaves
     # min_*
 
-    if lib not in ('lgbm', 'xgb', 'cat'):
-        raise ValueError('accepted libs are lgbm, xgb, and cat. got '
-                         '{}'.format(lib))
+    if lib not in ('lightgbm', 'xgboost', 'catboost'):
+        raise ValueError('accepted libs are lightgbm, xgboost, and catboost. '
+                         ' got {}'.format(lib))
 
     sklearn_params = estimator.get_params()
 
@@ -113,7 +113,7 @@ def get_equivalent_estimator(estimator, lib='lgbm'):
         'verbose': bool(sklearn_params['verbose']),
     }
 
-    if lib == 'lgbm':
+    if lib == 'lightgbm':
         from lightgbm import LGBMRegressor
         from lightgbm import LGBMClassifier
         if is_classifier(estimator):
@@ -121,7 +121,7 @@ def get_equivalent_estimator(estimator, lib='lgbm'):
         else:
             return LGBMRegressor(**lgbm_params)
 
-    elif lib == 'xgb':
+    elif lib == 'xgboost':
         from xgboost import XGBRegressor
         from xgboost import XGBClassifier
         if is_classifier(estimator):
