@@ -53,12 +53,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     set -x
-    sudo apt-get install python3-scipy libatlas3-base libatlas-base-dev libatlas-dev virtualenv
-    python3 -c "import numpy; print('numpy %s' % numpy.__version__)"
-    echo "$PYTHONPATH"
-    virtualenv --system-site-packages --python=python3 $VIRTUALENV
+    apt-get install python3-scipy libatlas3-base libatlas-base-dev libatlas-dev virtualenv
+    python -c "import numpy; print('numpy %s' % numpy.__version__)"
+    virtualenv --system-site-packages --python=python3.5 $VIRTUALENV
     source $VIRTUALENV/bin/activate
-    echo "$PYTHONPATH"
     pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
     set +x
 fi
