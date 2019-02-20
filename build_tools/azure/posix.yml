@@ -32,10 +32,6 @@ jobs:
           INSTALL_MKL: "false"
 
   steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.5'
-        architecture: 'x64'
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'

@@ -52,17 +52,12 @@ if [[ "$DISTRIB" == "conda" ]]; then
 	make_conda $TO_INSTALL
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
-    set -x
     sudo apt-get install python3-scipy libatlas3-base libatlas-base-dev libatlas-dev python3-virtualenv
-    which python
-    python -c "import numpy; print('numpy %s' % numpy.__version__)"
-    # virtualenv --system-site-packages --python=python3 $VIRTUALENV
-    # source $VIRTUALENV/bin/activate
-    # pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
-    set +x
+    virtualenv --system-site-packages --python=python3 $VIRTUALENV
+    source $VIRTUALENV/bin/activate
+    pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
 fi
 
-pip list
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
