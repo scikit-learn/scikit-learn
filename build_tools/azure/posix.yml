@@ -7,6 +7,7 @@ jobs:
   pool:
     vmImage: ${{ parameters.vmImage }}
   strategy:
+    matrix:
     ${{ if eq(parameters.name, 'Linux') }}:
       py35_np_111:
         DISTRIB: "ubuntu"
@@ -19,4 +20,5 @@ jobs:
 
   steps:
     - script: |
-        echo $(DISTRIB)
+        build_tools/azure/install.sh
+      displayName: 'Install'
