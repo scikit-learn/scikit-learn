@@ -10,6 +10,7 @@ jobs:
   variables:
     TEST_DIR: "/tmp/sklearn"
     VIRTUALENV_DIR: "testvenv"
+    CHECK_PYTEST_SOFT_DEPENDENCY: false
   strategy:
     matrix:
       ${{ if eq(parameters.name, 'Linux') }}:
@@ -36,3 +37,9 @@ jobs:
     - script: |
         build_tools/azure/test_docs.sh
       displayName: 'Test docs'
+    - script: |
+        build_tools/azure/test_pytest_soft_dependency.sh
+      displayName: 'Test soft dependency'
+      enabled: $(CHECK_PYTEST_SOFT_DEPENDENCY)
+
+

@@ -18,11 +18,11 @@ make_conda() {
 }
 
 if [[ "$DISTRIB" == "ubuntu" ]]; then
-    pip install virtualenv
+    pip install virtualenv numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION
     virtualenv --system-site-packages --python=python3 $VIRTUALENV_DIR
     source $VIRTUALENV_DIR/bin/activate
     pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
-fi
+fI
 
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
