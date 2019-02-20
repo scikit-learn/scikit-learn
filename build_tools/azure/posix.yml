@@ -28,15 +28,15 @@ jobs:
       inputs:
         versionSpec: '3.5'
         architecture: 'x64'
-    # - script: |
-    #     build_tools/azure/install.sh
-    #   displayName: 'Install'
-    # - script: |
-    #     build_tools/azure/test_script.sh
-    #   displayName: 'Test library'
-    # - script: |
-    #     build_tools/azure/test_docs.sh
-    #   displayName: 'Test docs'
+    - script: |
+        build_tools/azure/install.sh
+      displayName: 'Install'
+    - script: |
+        build_tools/azure/test_script.sh
+      displayName: 'Test library'
+    - script: |
+        build_tools/azure/test_docs.sh
+      displayName: 'Test docs'
     - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test soft dependency'

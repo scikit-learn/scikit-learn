@@ -33,7 +33,6 @@ if [[ "$UNAMESTR" == "Linux" ]]; then
     source $VIRTUALENV_DIR/bin/activate
 fi
 
-echo $TEST_DIR
-# run_tests
+run_tests
 
 
