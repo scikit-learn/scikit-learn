@@ -188,25 +188,26 @@ def test_glm_l1_ratio_argument():
         assert_raises(ValueError, glm.fit, X, y)
 
 
-def test_glm_P1_argument():
-    """Test GLM P1 arguments
-    """
+@pytest.mark.parametrize('P1', [['a string', 'a string'], [1, [2]], [1, 2, 3]])
+def test_glm_P1_argument(P1):
+    """Test GLM P1 arguments."""
     y = np.array([1, 2])
     X = np.array([[1], [1]])
-    for P1 in [['a string', 'a string'], [1, [2]], [1, 2, 3]]:
-        glm = GeneralizedLinearRegressor(P1=P1)
-        assert_raises(ValueError, glm.fit, X, y)
+    glm = GeneralizedLinearRegressor(P1=P1)
+    with pytest.raises((ValueError, TypeError)):
+        glm.fit(X, y)
 
 
-# def test_glm_P2_argument():
-#     """Test GLM P2 arguments
-#     """
-#     y = np.array([1, 2])
-#     X = np.array([[1], [1]])
-#     for P2 in [np.full((2, 2), 'a string', dtype=np.dtype('<U8')),
-#                [[1, [2]], [3, 4]], [1, 2, 3], [[1, 2]], [[1], [2]]]:
-#         glm = GeneralizedLinearRegressor(P2=P2, fit_intercept=False)
-#         assert_raises(ValueError, glm.fit, X, y)
+@pytest.mark.parametrize('P2', ['a string', [1, 2, 3], [[2, 3]],
+                                sparse.csr_matrix([1, 2, 3]),
+                                sparse.lil_matrix([[1]])])
+def test_glm_P2_argument(P2):
+    """Test GLM P2 arguments."""
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    glm = GeneralizedLinearRegressor(P2=P2, fit_intercept=False)
+    with pytest.raises((ValueError, TypeError)):
+        glm.fit(X, y)
 
 
 def test_glm_fit_intercept_argument():

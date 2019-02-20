@@ -45,7 +45,10 @@ from __future__ import division
 from abc import ABCMeta, abstractmethod, abstractproperty
 import numbers
 import numpy as np
-from scipy import linalg, optimize, sparse, special
+from scipy import linalg, sparse
+import scipy.sparse.linalg as splinalg
+from scipy.optimize import fmin_l_bfgs_b
+from scipy.special import xlogy
 import warnings
 from .base import LinearRegression
 from .coordinate_descent import ElasticNet
@@ -727,7 +730,7 @@ class TweedieDistribution(ExponentialDispersionModel):
         if p == 1:
             # PoissonDistribution
             # 2 * (y*log(y/mu) - y + mu), with y*log(y/mu)=0 if y=0
-            return 2 * (special.xlogy(y, y/mu) - y + mu)
+            return 2 * (xlogy(y, y/mu) - y + mu)
         elif p == 2:
             # GammaDistribution
             return 2 * (np.log(mu/y)+y/mu-1)
@@ -840,7 +843,7 @@ def _irls_step(X, W, P2, z):
         XtW = X.transpose() * W
         A = XtW * X + L2
         b = XtW * z
-        coef = sparse.linalg.spsolve(A, b)
+        coef = splinalg.spsolve(A, b)
     else:
         XtW = (X.T * W)
         A = XtW.dot(X)
@@ -867,7 +870,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     with inverse link function `h` and s=`sample_weight` (for
     ``sample_weight=None``, one has s=1 and sum(s)=`n_samples`).
-    For `P1=P2=identity` (``P1=None``, ``P2=None``), the penalty is the
+    For ``P1=P2='identity'`` (``P1=None``, ``P2=None``), the penalty is the
     elastic net::
 
             alpha * l1_ratio * ||w||_1
@@ -904,21 +907,24 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
         combination of L1 and L2.
 
-    P1 : {None, array-like}, shape (n_features,), optional \
-            (default=None)
+    P1 : {'identity', array-like}, shape (n_features,), optional \
+            (default='identity')
         With this array, you can exclude coefficients from the L1 penalty.
         Set the corresponding value to 1 (include) or 0 (exclude). The
-        default value ``None`` is the same as a 1d array of ones.
+        default value ``'identity'`` is the same as a 1d array of ones.
         Note that n_features = X.shape[1].
 
-    P2 : {None, array-like, sparse matrix}, shape \
-            (n_features, n_features), optional (default=None)
-        With this square matrix the L2 penalty is calculated as `w P2 w`.
-        This gives a fine control over this penalty (Tikhonov
-        regularization). The diagonal zeros of a diagonal P2, for example,
-        exclude all corresponding coefficients from the L2 penalty.
-        The default value ``None`` is the same as the identity matrix.
-        Note that n_features = X.shape[1]. P2 must be positive semi-definite.
+    P2 : {'identity', array-like, sparse matrix}, shape \
+            (n_features,) or (n_features, n_features), optional \
+            (default='identity')
+        With this option, you can set the P2 matrix in the L2 penalty `w*P2*w`.
+        This gives a fine control over this penalty (Tikhonov regularization).
+        A 2d array is directly used as the square matrix P2. A 1d array is
+        interpreted as diagonal (square) matrix. The default 'identity' sets
+        the identity matrix, which gives the usual squared L2-norm. If you just
+        want to exclude certain coefficients, pass a 1d array filled with 1,
+        and 0 for the coefficients to be excluded.
+        Note that P2 must be positive semi-definite.
 
     fit_intercept : boolean, optional (default=True)
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -1074,7 +1080,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
           Journal of Machine Learning Research 13 (2012) 1999-2030
           https://www.csie.ntu.edu.tw/~cjlin/papers/l1_glmnet/long-glmnet.pdf
     """
-    def __init__(self, alpha=1.0, l1_ratio=0, P1=None, P2=None,
+    def __init__(self, alpha=1.0, l1_ratio=0, P1='identity', P2='identity',
                  fit_intercept=True, family='normal', link='identity',
                  fit_dispersion=None, solver='auto', max_iter=100,
                  tol=1e-4, warm_start=False, start_params='irls',
@@ -1240,20 +1246,23 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("The argument check_input must be bool; got "
                              "(check_input={0})".format(self.check_input))
 
-        if self.P1 is None:
+        if isinstance(self.P1, str) and self.P1 == 'identity':
             P1 = np.ones(X.shape[1])
         else:
-            P1 = np.copy(np.atleast_1d(self.P1))
-            if P1.dtype.kind not in ['b', 'i', 'u', 'f']:
-                raise ValueError("P1 must be a numeric value; "
-                                 "got (dtype={0}).".format(P1.dtype))
+            P1 = np.atleast_1d(self.P1)
+            try:
+                P1 = P1.astype(np.float64, casting='safe', copy=True)
+            except TypeError:
+                raise TypeError("The given P1 cannot be converted to a numeric"
+                                "array; got (P1.dtype={0})."
+                                .format(P1.dtype))
             if (P1.ndim != 1) or (P1.shape[0] != X.shape[1]):
-                raise ValueError("P1 must be either None or a 1d array with "
-                                 "the length of X.shape[1]; "
+                raise ValueError("P1 must be either 'identity' or a 1d array "
+                                 "with the length of X.shape[1]; "
                                  "got (P1.shape[0]={0}), "
                                  "needed (X.shape[1]={1})."
                                  .format(P1.shape[0], X.shape[1]))
-        if self.P2 is None:
+        if isinstance(self.P2, str) and self.P2 == 'identity':
             if not sparse.issparse(X):
                 P2 = np.ones(X.shape[1])
             else:
@@ -1262,8 +1271,15 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         else:
             P2 = check_array(self.P2, copy=True,
                              accept_sparse=['csr', 'csc', 'coo'],
-                             dtype="numeric", ensure_2d=True)
-            if ((P2.ndim != 2) or
+                             dtype=_dtype, ensure_2d=False)
+            if P2.ndim == 1:
+                if P2.shape[0] != X.shape[1]:
+                    raise ValueError("P2 should be a 1d array of shape "
+                                     "(n_features,) with "
+                                     "n_features=X.shape[1]; "
+                                     "got (P2.shape=({0},)), needed ({1},)"
+                                     .format(P2.shape[0], X.shape[1]))
+            elif ((P2.ndim != 2) or
                     (P2.shape[0] != P2.shape[1]) or
                     (P2.shape[0] != X.shape[1])):
                 raise ValueError("P2 must be either None or an array of shape "
@@ -1319,21 +1335,32 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError("Sample weights must be non-negative.")
             # check if P1 has only non-negative values, negative values might
             # indicate group lasso in the future.
-            if self.P1 is not None:
+            if self.P1 != 'identity':
                 if not np.all(P1 >= 0):
                     raise ValueError("P1 must not have negative values.")
             # check if P2 is positive semidefinite
             # np.linalg.cholesky(P2) 'only' asserts positive definite
-            if self.P2 is not None:
-                if sparse.issparse(P2):
-                    # TODO: check sparse P2 for non-negativeness
-                    # raise NotImplementedError("Check sparse P2 for "
-                    #                          "non-negativeness is not yet "
-                    #                          "implemented.")
-                    pass
-                elif P2.ndim == 2:
-                    if not np.all(np.linalg.eigvals(P2) >= -1e-15):
-                        raise ValueError("P2 must be positive definite.")
+            if self.P2 != 'identity':
+                # due to numerical precision, we allow eigenvalues to be a
+                # tiny bit negative
+                epsneg = 10 * np.finfo(P2.dtype).epsneg
+                if P2.ndim == 1 or P2.shape[0] == 1:
+                    if not np.all(P2 >= 0):
+                        raise ValueError("1d array P2 must not have negative "
+                                         "values.")
+                elif sparse.issparse(P2):
+                    # for sparse matrices, not all eigenvals can be computed
+                    # efficiently, use only half of n_features
+                    # k = how many eigenvals to compute
+                    k = np.min([10, n_features // 10 + 1])
+                    sigma = 0  # start searching near this value
+                    which = 'SA'  # find smallest algebraic eigenvalues first
+                    if not np.all(splinalg.eigsh(P2, k=k, sigma=sigma,
+                                                 which=which) >= epsneg):
+                        raise ValueError("P2 must be positive semi-definite.")
+                else:
+                    if not np.all(linalg.eigvalsh(P2) >= epsneg):
+                        raise ValueError("P2 must be positive semi-definite.")
             # TODO: if alpha=0 check that Xnew is not rank deficient
             # TODO: what else to check?
 
@@ -1520,7 +1547,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             args = (Xnew, y, weights, link)
 
             if solver == 'lbfgs':
-                coef, loss, info = optimize.fmin_l_bfgs_b(
+                coef, loss, info = fmin_l_bfgs_b(
                     func, coef, fprime=fprime, args=args,
                     iprint=(self.verbose > 0) - 1, pgtol=self.tol,
                     maxiter=self.max_iter)
