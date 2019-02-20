@@ -4,7 +4,7 @@ set -ex
 
 UNAMESTR=`uname`
 if [[ "$UNAMESTR" == "Linux" ]]; then
-    source testvenv/bin/activate
+    source $VIRTUALENV_DIR/bin/activate
 fi
 
 # make test-doc

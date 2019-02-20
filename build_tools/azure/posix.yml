@@ -9,6 +9,7 @@ jobs:
     vmImage: ${{ parameters.vmImage }}
   variables:
     TEST_DIR: "/tmp/sklearn"
+    VIRTUALENV_DIR: "testvenv"
   strategy:
     matrix:
       ${{ if eq(parameters.name, 'Linux') }}:

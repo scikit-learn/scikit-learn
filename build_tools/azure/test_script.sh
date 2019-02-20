@@ -31,7 +31,7 @@ run_tests() {
 
 
 if [[ "$UNAMESTR" == "Linux" ]]; then
-    source testvenv/bin/activate
+    source $VIRTUALENV_DIR/bin/activate
 fi
 
 echo $TEST_DIR
