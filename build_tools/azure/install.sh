@@ -52,7 +52,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
 	make_conda $TO_INSTALL
 
-else [[ "$DISTRIB" == "ubuntu" ]]; then
+elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo apt-get install python3-scipy libatlas3-base libatlas-base-dev libatlas-dev virtualenv
     virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
