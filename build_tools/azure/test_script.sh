@@ -2,6 +2,8 @@
 
 set -e
 
+UNAMESTR=`uname`
+
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
@@ -28,7 +30,7 @@ run_tests() {
 }
 
 
-if [[ "$DISTRIB" == "ubuntu" ]]; then
+if [[ "$UNAMESTR" == "Linux" ]]; then
     deactivate
     source testvenv/bin/activate
 fi

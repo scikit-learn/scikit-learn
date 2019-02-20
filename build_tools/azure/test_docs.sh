@@ -2,7 +2,8 @@
 
 set -ex
 
-if [[ "$DISTRIB" == "ubuntu" ]]; then
+UNAMESTR=`uname`
+if [[ "$UNAMESTR" == "Linux" ]]; then
     source testvenv/bin/activate
 fi
 
