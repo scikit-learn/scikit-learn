@@ -56,8 +56,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     n_bins_ : int array, shape (n_features,)
-        Number of bins per feature. Bins whose width <= 0 are removed with a
-        warning.
+        Number of bins per feature. Bins whose width are too small
+        (i.e., <= 1e-8) are removed with a warning.
 
     bin_edges_ : array of arrays, shape (n_features, )
         The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
@@ -188,9 +188,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 mask = np.ediff1d(bin_edges[jj], to_begin=np.inf) > 1e-8
                 bin_edges[jj] = bin_edges[jj][mask]
                 if len(bin_edges[jj]) - 1 != n_bins[jj]:
-                    warnings.warn('Bins whose width <= 0 in feature %d are '
-                                  'removed. Consider decreasing the number of '
-                                  'bins.' % jj)
+                    warnings.warn('Bins whose width are too small (i.e., <= '
+                                  '1e-8) in feature %d are removed. Consider '
+                                  'decreasing the number of bins.' % jj)
                     n_bins[jj] = len(bin_edges[jj]) - 1
 
         self.bin_edges_ = bin_edges
