@@ -188,7 +188,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                 mask = np.ediff1d(bin_edges[jj], to_begin=np.inf) > 1e-8
                 bin_edges[jj] = bin_edges[jj][mask]
                 if len(bin_edges[jj]) - 1 != n_bins[jj]:
-                    warnings.warn('Redundant bins (i.e., bins whose width ' 
+                    warnings.warn('Redundant bins (i.e., bins whose width '
                                   '<= 0) in feature %d are removed.' % jj)
                     n_bins[jj] = len(bin_edges[jj]) - 1
 
