@@ -22,3 +22,6 @@ jobs:
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'
+    - script: |
+        build_tools/azure/test_script.sh
+      displayName: 'Test'
