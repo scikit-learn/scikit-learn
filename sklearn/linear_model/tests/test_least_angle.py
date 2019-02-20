@@ -696,9 +696,24 @@ def test_lasso_lars_copyX_behaviour(copy_X):
 
     """
     lasso_lars = LassoLarsIC(copy_X=copy_X, precompute=False)
-    X = np.random.normal(0, 1, (100, 5))
+    rng = np.random.RandomState(0)
+    X = rng.normal(0, 1, (100, 5))
     X_copy = X.copy()
     y = X[:, 2]
     lasso_lars.fit(X, y)
     assert copy_X == np.array_equal(X, X_copy)
 
+
+@pytest.mark.parametrize('copy_X', [True, False])
+def test_lasso_lars_fit_copyX_behaviour(copy_X):
+    """
+    Test that user input to .fit for copy_X overrides default __init__ value
+
+    """
+    lasso_lars = LassoLarsIC(precompute=False)
+    rng = np.random.RandomState(0)
+    X = rng.normal(0, 1, (100, 5))
+    X_copy = X.copy()
+    y = X[:, 2]
+    lasso_lars.fit(X, y, copy_X=copy_X)
+    assert copy_X == np.array_equal(X, X_copy)
