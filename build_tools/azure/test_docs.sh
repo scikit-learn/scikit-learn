@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ "$DISTRIB" == "conda" ]] || [[ "$DISTRIB" == "scipy-dev" ]] ; then
+if [[ "$DISTRIB" == "conda" ]]; then
     export PATH=$MINICONDA_PATH/bin:$PATH
     source activate $VIRTUALENV
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
