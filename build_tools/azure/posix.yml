@@ -10,7 +10,6 @@ jobs:
   variables:
     TEST_DIR: "/tmp/sklearn"
     VIRTUALENV_DIR: "testvenv"
-    CHECK_PYTEST_SOFT_DEPENDENCY: false
   strategy:
     matrix:
       ${{ if eq(parameters.name, 'Linux') }}:
@@ -19,9 +18,16 @@ jobs:
           PYTHON_VERSION: "3.5"
           NUMPY_VERSION: "1.11.0"
           SCIPY_VERSION: "0.17.0"
-          PILLOW_VERSION: "4.0.0"
           SKLEARN_SITE_JOBLIB: "1"
           JOBLIB_VERSION: "0.11"
+        # py35_conda:
+        #   DISTRIB: "ubuntu"
+        #   PYTHON_VERSION: "3.5"
+        #   NUMPY_VERSION: "1.11.0"
+        #   SCIPY_VERSION: "0.17.0"
+        #   PILLOW_VERSION: "4.0.0"
+        #   SKLEARN_SITE_JOBLIB: "1"
+        #   INSTALL_MKL: "false"
 
   steps:
     - task: UsePythonVersion@0
