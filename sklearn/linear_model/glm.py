@@ -583,7 +583,7 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         fisher = safe_sparse_dot(X.T, temp, dense_output=False)
         return eta, mu, score, fisher
 
-    def starting_mu(self, y, weights=1):
+    def starting_mu(self, y, weights=1, ind_weight=0.5):
         """Set starting values for the mean mu.
 
         These may be good starting points for the (unpenalized) IRLS solver.
@@ -595,9 +595,13 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
         weights : array, shape (n_samples,) (default=1)
             Weights or exposure to which variance is inverse proportional.
+
+        ind_weight : float (default=0.5)
+            Must be between 0 and 1. Specifies how much weight is given to the
+            individual observations instead of the mean of y.
         """
-        return ((weights*y+np.mean(weights*y)) /
-                (2.*np.sum(np.ones_like(y)*weights)))
+        return (ind_weight * y +
+                (1. - ind_weight) * np.average(y, weights=weights))
 
 
 class TweedieDistribution(ExponentialDispersionModel):
@@ -852,17 +856,19 @@ def _irls_step(X, W, P2, z):
 class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     """Regression via a Generalized Linear Model (GLM) with penalties.
 
-    GLMs based on a reproductive Exponential Dispersion Model (EDM) with
-    combined L1 and L2 priors as regularizer minimizes the following objective
-    function::
+    GLMs based on a reproductive Exponential Dispersion Model (EDM) aim at
+    fitting and predicting the mean `mu=h(X*w)`. Therefore the fit minimizes
+    the following objective function with combined L1 and L2 priors as
+    regularizer::
 
             1/(2*sum(s)) * deviance(y, h(X*w); s)
             + alpha * l1_ratio * ||P1*w||_1
             + 1/2 * alpha * (1 - l1_ratio) * w*P2*w
 
     with inverse link function `h` and s=`sample_weight` (for
-    `sample_weight=None`, one has s=1 and sum(s)=`n_samples`).
-    For `P1=P2=identity`, the penalty is the elastic net::
+    ``sample_weight=None``, one has s=1 and sum(s)=`n_samples`).
+    For `P1=P2=identity` (``P1=None``, ``P2=None``), the penalty is the
+    elastic net::
 
             alpha * l1_ratio * ||w||_1
             + 1/2 * alpha * (1 - l1_ratio) * ||w||_2^2
@@ -966,24 +972,34 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         as initialization for ``coef_`` and ``intercept_`` (supersedes option
         ``start_params``). If set to ``True`` or if the attribute ``coef_``
         does not exit (first call to ``fit``), option ``start_params`` sets the
-        starting values for ``coef_`` and ``intercept_``.
+        start values for ``coef_`` and ``intercept_``.
 
-    start_params : {None, 'least_squares', 'zero', array of shape \
-            (n_features*, )}, optional (default=None)
-        If an array of size n_features* is supplied, use it as start values
-        for ``coef_`` in the fit. If ``fit_intercept=True``, the first element
+    start_params : {'irls', 'least_squares', 'zero', array of shape \
+            (n_features*, )}, optional (default='irls')
+        Relevant only if ``warm_start=False`` or if fit is called
+        the first time (``self.coef_`` does not yet exist).
+
+        'irls'
+            Start values of mu are calculated by family.starting_mu(..). Then,
+            one step of irls obtains start values for ``coef_`. This gives
+            usually good results.
+
+        'least_squares'
+        Start values for ``coef_`` are obtained by a least squares fit in the
+        link space (y is transformed to the space of the linear predictor).
+
+        'zero'
+        All coefficients are set to zero. If ``fit_intercept=True``, the
+        start value for the intercept is obtained by the average of y.
+
+        array
+        The array of size n_features* is directly used as start values
+        for ``coef_``. If ``fit_intercept=True``, the first element
         is assumed to be the start value for the ``intercept_``.
         Note that n_features* = X.shape[1] + fit_intercept, i.e. it includes
         the intercept in counting.
-        If 'least_squares' is set, the result of a least squares fit in the
-        link space (linear predictor) is taken.
-        If 'zero' is set, all coefficients start with zero.
-        If ``None``, the start values are calculated by setting mu to
-        family.starting_mu(..) and one step of irls.
-        These options only apply if ``warm_start=False`` or if fit is called
-        the first time (``self.coef_`` does not yet exist).
 
-    selection : str, optional (default='random')
+    selection : str, optional (default='cyclic')
         For the solver 'cd' (coordinate descent), the coordinates (features)
         can be updated in either cyclic or random order.
         If set to 'random', a random coefficient is updated every iteration
@@ -1005,7 +1021,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     check_input : boolean, optional (default=True)
         Allow to bypass several checks on input: y values in range of family,
-        sample_weights non-negative, P2 positive semi-definite.
+        sample_weight non-negative, P2 positive semi-definite.
         Don't use this parameter unless you know what you do.
 
     verbose : int, optional (default=0)
@@ -1061,8 +1077,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0, P1=None, P2=None,
                  fit_intercept=True, family='normal', link='identity',
                  fit_dispersion=None, solver='auto', max_iter=100,
-                 tol=1e-4, warm_start=False, start_params=None,
-                 selection='random', random_state=None, copy_X=True,
+                 tol=1e-4, warm_start=False, start_params='irls',
+                 selection='cyclic', random_state=None, copy_X=True,
                  check_input=True, verbose=0):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
@@ -1193,11 +1209,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("The argument warm_start must be bool;"
                              " got {0}".format(self.warm_start))
         start_params = self.start_params
-        if start_params is None:
-            pass
-        elif isinstance(start_params, str):
-            if start_params not in ['least_squares', 'zero']:
-                raise ValueError("The argument start_params must be None, "
+        if isinstance(start_params, str):
+            if start_params not in ['irls', 'least_squares', 'zero']:
+                raise ValueError("The argument start_params must be 'irls', "
                                  "'least-squares', 'zero' or an array of "
                                  " correct length;"
                                  " got(start_params={0})".format(start_params))
@@ -1348,11 +1362,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                        self.coef_))
             else:
                 coef = self.coef_
-        elif self.start_params is None:
-            if self.l1_ratio == 0:
+        elif isinstance(start_params, str):
+            if start_params == 'irls':
                 # See 3.1 IRLS
                 # Use mu_start and apply one irls step to calculate coef
-                mu = family.starting_mu(y, weights)
+                mu = family.starting_mu(y, weights=weights)
                 # linear predictor
                 eta = link.link(mu)
                 # h'(eta)
@@ -1365,16 +1379,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 # solve A*coef = b
                 # A = X' W X + l2 P2, b = X' W z
                 coef = _irls_step(Xnew, W, P2, z)
-            else:
-                # with L1 penalty, start with coef = 0
-                # TODO: Are there better options?
-                coef = np.zeros(n_features)
-                if self.fit_intercept:
-                    coef[0] = link.link(np.mean(y))
-        elif isinstance(self.start_params, str):
-            if self.start_params == 'zero':
-                coef = np.zeros(n_features)
-            elif self.start_params == 'least_squares':
+            elif start_params == 'least_squares':
+                # less restrictive tolerance for finding start values
+                tol = np.max([self.tol, np.sqrt(self.tol)])
                 if self.alpha == 0:
                     reg = LinearRegression(copy_X=True, fit_intercept=False)
                     reg.fit(Xnew, link.link(y))
@@ -1384,18 +1391,21 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     # => use Ridge
                     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
                     reg = Ridge(copy_X=True, fit_intercept=False,
-                                alpha=self.alpha*n_samples,
-                                tol=np.max([self.tol, np.sqrt(self.tol)]))
+                                alpha=self.alpha*n_samples, tol=tol)
                     reg.fit(Xnew, link.link(y))
                     coef = reg.coef_
                 else:
                     # TODO: Does this make sense at all?
                     reg = ElasticNet(copy_X=True, fit_intercept=False,
                                      alpha=self.alpha, l1_ratio=self.l1_ratio,
-                                     tol=np.max([self.tol, np.sqrt(self.tol)]))
+                                     tol=tol)
                     reg.fit(Xnew, link.link(y))
                     coef = reg.coef_
-        else:
+            else:  # start_params == 'zero'
+                coef = np.zeros(n_features)
+                if self.fit_intercept:
+                    coef[0] = link.link(np.average(y, weights=weights))
+        else:  # assign given array as start values
             coef = start_params
 
         #######################################################################
@@ -1560,6 +1570,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             # some precalculations
             eta, mu, score, fisher = family._eta_mu_score_fisher(
                 coef=coef, phi=1, X=Xnew, y=y, weights=weights, link=link)
+            # set up space for search direction d for inner loop
+            d = np.zeros_like(coef)
             # initial stopping tolerance of inner loop
             # use L1-norm of minimum-norm of subgradient of F
             # fp_wP2 = f'(w) + w*P2
@@ -1574,8 +1586,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             # outer loop
             while self.n_iter_ < self.max_iter:
                 self.n_iter_ += 1
-                # initialize search direction d (to be optimized)
-                d = np.zeros_like(coef)
+                # initialize search direction d (to be optimized) with zero
+                d.fill(0)
                 # inner loop
                 # TODO: use sparsity (coefficient already 0 due to L1 penalty)
                 #       => active set of features for featurelist, see paper
