@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 import scipy as sp
-from scipy import sparse
+from scipy import sparse, optimize
 
 from sklearn.linear_model.glm import (
     Link,
@@ -199,8 +199,7 @@ def test_glm_P1_argument(P1):
 
 
 @pytest.mark.parametrize('P2', ['a string', [1, 2, 3], [[2, 3]],
-                                sparse.csr_matrix([1, 2, 3]),
-                                sparse.lil_matrix([[1]])])
+                                sparse.csr_matrix([1, 2, 3])])
 def test_glm_P2_argument(P2):
     """Test GLM P2 arguments."""
     y = np.array([1, 2])
@@ -515,11 +514,28 @@ def test_poisson_enet():
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
     y = np.array([0, 1, 1, 2])
     glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0.5, family='poisson',
-                                     link='log', solver='cd', tol=1e-7,
+                                     link='log', solver='cd', tol=1e-8,
                                      selection='random', random_state=42)
     glm.fit(X, y)
     assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=7)
     assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=7)
+
+    # test results with general optimization procedure
+    def obj(coef):
+        pd = PoissonDistribution()
+        link = LogLink()
+        N = y.shape[0]
+        mu = link.inverse(X @ coef[1:]+coef[0])
+        alpha, l1_ratio = (1, 0.5)
+        return 1./(2.*N) * pd.deviance(y, mu) \
+            + 0.5 * alpha * (1-l1_ratio) * (coef[1:]**2).sum() \
+            + alpha * l1_ratio * np.sum(np.abs(coef[1:]))
+    res = optimize.minimize(obj, [0, 0, 0], method='nelder-mead', tol=1e-10,
+                            options={'maxiter': 1000, 'disp': False})
+    assert_almost_equal(glm.intercept_, res.x[0], decimal=5)
+    assert_almost_equal(glm.coef_, res.x[1:], decimal=5)
+    assert_almost_equal(obj(np.concatenate(([glm.intercept_], glm.coef_))),
+                        res.fun, decimal=8)
 
     # same for start_params='zero' and selection='cyclic'
     # with reduced precision

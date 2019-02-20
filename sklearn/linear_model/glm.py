@@ -830,8 +830,9 @@ def _irls_step(X, W, P2, z):
     -------
     coef: array, shape (X.shape[1])
     """
-    # TODO: scipy.linalg.solve seems faster, but ordinary least squares uses
-    #       scipy.linalg.lstsq. What is more appropriate?
+    # Note: solve vs least squares, what is more appropriate?
+    #       scipy.linalg.solve seems faster, but scipy.linalg.lstsq
+    #       is more robust.
     n_samples, n_features = X.shape
     if sparse.issparse(X):
         W = sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)).tocsr()
@@ -843,7 +844,8 @@ def _irls_step(X, W, P2, z):
         XtW = X.transpose() * W
         A = XtW * X + L2
         b = XtW * z
-        coef = splinalg.spsolve(A, b)
+        # coef = splinalg.spsolve(A, b)
+        coef, *_ = splinalg.lsmr(A, b)
     else:
         XtW = (X.T * W)
         A = XtW.dot(X)
@@ -852,7 +854,8 @@ def _irls_step(X, W, P2, z):
         else:
             A += P2
         b = XtW.dot(z)
-        coef = linalg.solve(A, b)
+        # coef = linalg.solve(A, b, overwrite_a=True, overwrite_b=True)
+        coef, *_ = linalg.lstsq(A, b, overwrite_a=True, overwrite_b=True)
     return coef
 
 
@@ -1340,12 +1343,15 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     raise ValueError("P1 must not have negative values.")
             # check if P2 is positive semidefinite
             # np.linalg.cholesky(P2) 'only' asserts positive definite
-            if self.P2 != 'identity':
+            if not isinstance(self.P2, str):  # self.P2 != 'identity'
                 # due to numerical precision, we allow eigenvalues to be a
                 # tiny bit negative
-                epsneg = 10 * np.finfo(P2.dtype).epsneg
+                epsneg = -10 * np.finfo(P2.dtype).epsneg
                 if P2.ndim == 1 or P2.shape[0] == 1:
-                    if not np.all(P2 >= 0):
+                    p2 = P2
+                    if sparse.issparse(P2):
+                        p2 = P2.toarray()
+                    if not np.all(p2 >= 0):
                         raise ValueError("1d array P2 must not have negative "
                                          "values.")
                 elif sparse.issparse(P2):
@@ -1360,6 +1366,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                         raise ValueError("P2 must be positive semi-definite.")
                 else:
                     if not np.all(linalg.eigvalsh(P2) >= epsneg):
+                        return P2
                         raise ValueError("P2 must be positive semi-definite.")
             # TODO: if alpha=0 check that Xnew is not rank deficient
             # TODO: what else to check?
@@ -1689,7 +1696,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     mn_subgrad = (np.where(coef + d == 0,
                                   np.sign(A)*np.maximum(np.abs(A)-P1, 0),
                                   A+np.sign(coef+d)*P1))
-                    mn_subgrad = np.sum(np.abs(mn_subgrad))
+                    mn_subgrad = linalg.norm(mn_subgrad, ord=1)
                     if mn_subgrad <= inner_tol:
                         if inner_iter == 1:
                             inner_tol = inner_tol/4.
@@ -1740,7 +1747,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 mn_subgrad = (np.where(coef == 0,
                               np.sign(fp_wP2)*np.maximum(np.abs(fp_wP2)-P1, 0),
                               fp_wP2+np.sign(coef)*P1))
-                mn_subgrad = np.sum(np.abs(mn_subgrad))
+                mn_subgrad = linalg.norm(mn_subgrad, ord=1)
                 if mn_subgrad <= self.tol:
                     converged = True
                     break
