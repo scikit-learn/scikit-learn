@@ -2,6 +2,7 @@
 parameters:
   name: ''
   vmImage: ''
+  matrix: []
 
 jobs:
 - job: ${{ parameters.name }}
@@ -14,8 +15,7 @@ jobs:
     TMP_FOLDER: '$(Agent.WorkFolder)\\tmp_folder'
   strategy:
     matrix:
-      py37:
-        CONDA_PY: "37"
+      ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
     - task: CondaEnvironment@1
