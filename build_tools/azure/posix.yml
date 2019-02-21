@@ -37,8 +37,8 @@ jobs:
       condition: and(eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'), eq(variables['DISTRIB'], 'conda'))
     - task: PublishTestResults@2
       inputs:
-        testResultsFiles: ${{ '$(TEST_DIR)/$(JUNITXML)' }}
-        testRunTitle: ${{ format('{0}-$(DISTRIB)-$(PYTHON_VERSION)', parameters.name) }}
+        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
+        testRunTitle: '$(Agent.JobName)'
       displayName: 'Publish Test Results'
       condition: succeededOrFailed()
     - script: |
