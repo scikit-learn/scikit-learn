@@ -83,3 +83,4 @@ jobs:
       inputs:
         testResultsFiles: ${{ '$(TEST_DIR)/$(JUNITXML)' }}
         testRunTitle: ${{ format('{0}-$(DISTRIB)-$(PYTHON_VERSION)', parameters.name) }}
+      displayName: 'Publish Test Results'

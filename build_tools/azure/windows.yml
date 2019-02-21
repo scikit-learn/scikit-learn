@@ -24,12 +24,14 @@ jobs:
         packageSpecs: ''
     - script: |
         build_tools\\azure\\install.cmd
-      display: 'Install'
+      displayName: 'Install'
     - script: |
         build_tools\\azure\\testscript.cmd
-      display: 'Test library'
+      displayName: 'Test library'
     - task: PublishTestResults@2
+      condition: always()
       inputs:
         testResultsFiles: '$(Agent.WorkFolder)\\$(JUNITXML)'
         testRunTitle: 'Windows-$(CONDA_PY)'
+      displayName: 'Publish Test Results'
 
