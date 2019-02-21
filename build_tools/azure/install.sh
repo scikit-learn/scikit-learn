@@ -23,7 +23,6 @@ fi
 
 make_conda() {
     TO_INSTALL="$@"
-    conda update --yes conda
     conda create -n $VIRTUALENV --yes $TO_INSTALL
     source activate $VIRTUALENV
 }
