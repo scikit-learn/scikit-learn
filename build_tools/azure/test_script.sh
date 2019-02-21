@@ -26,8 +26,6 @@ mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
-export SKLEARN_SKIP_NETWORK_TESTS=1
-
 set -x
 python -m pytest --showlocals --durations=20 --pyargs sklearn --junitxml=$JUNITXML
 set +x

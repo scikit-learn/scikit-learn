@@ -10,6 +10,8 @@ jobs:
   variables:
     VIRTUALENV: "testvenv"
     JUNITXML: "test-data.xml"
+    SKLEARN_SKIP_NETWORK_TESTS: "1"
+    TMP_FOLDER: '$(Agent.WorkFolder)\\tmp_folder'
   strategy:
     matrix:
       CONDA_PY: "37"
@@ -22,3 +24,11 @@ jobs:
     - script: |
         build_tools\\azure\\install.cmd
       display: 'Install'
+    - script: |
+        build_tools\\azure\\testscript.cmd
+      display: 'Test library'
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: '$(Agent.WorkFolder)\\$(JUNITXML)'
+        testRunTitle: 'Windows-$(CONDA_PY)'
+
