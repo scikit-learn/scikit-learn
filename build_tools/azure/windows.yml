@@ -14,7 +14,8 @@ jobs:
     TMP_FOLDER: '$(Agent.WorkFolder)\\tmp_folder'
   strategy:
     matrix:
-      CONDA_PY: "37"
+      py37:
+        CONDA_PY: "37"
 
   steps:
     - task: CondaEnvironment@1
