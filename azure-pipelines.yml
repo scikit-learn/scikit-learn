@@ -59,11 +59,13 @@ jobs:
         JOBLIB_VERSION: '*'
         CONVERAGE: 'true'
 
-# - template: build_tools/azure/windows.yml
-#   parameters:
-#     name: Windows
-#     vmImage: vs2017-win2016
-#     matrix:
-#       py37:
-#         CONDA_PY: '3.7'
-#         CHECK_WARNINGS: 'true'
+- template: build_tools/azure/windows.yml
+  parameters:
+    name: Windows
+    vmImage: vs2017-win2016
+    matrix:
+      py37:
+        CONDA_PY: '3.7'
+        CHECK_WARNINGS: 'true'
+      py35:
+        CONDA_PY: '3.5'
