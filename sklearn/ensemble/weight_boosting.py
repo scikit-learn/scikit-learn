@@ -36,20 +36,12 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_array, check_random_state, check_X_y, safe_indexing
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
-from sklearn.utils.validation import has_fit_parameter, check_is_fitted
+from sklearn.utils.validation import has_fit_parameter, check_is_fitted, _num_samples
 
 __all__ = [
     'AdaBoostClassifier',
     'AdaBoostRegressor',
 ]
-
-
-def _len(X):
-    try:
-        n = X.shape[0]
-    except AttributeError:
-        n = len(X)
-    return n
 
 
 class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
@@ -115,8 +107,8 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
-            sample_weight = np.empty(_len(X), dtype=np.float64)
-            sample_weight[:] = 1. / _len(X)
+            sample_weight = np.empty(_num_samples(X), dtype=np.float64)
+            sample_weight[:] = 1. / _num_samples(X)
         else:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             # Normalize existing weights
@@ -745,7 +737,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         n_classes = self.n_classes_
 
         if n_classes == 1:
-            return np.ones((_len(X), 1))
+            return np.ones((_num_samples(X), 1))
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
@@ -995,7 +987,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         # For NumPy >= 1.7.0 use np.random.choice
         cdf = stable_cumsum(sample_weight)
         cdf /= cdf[-1]
-        uniform_samples = random_state.random_sample(_len(X))
+        uniform_samples = random_state.random_sample(_num_samples(X))
         bootstrap_idx = cdf.searchsorted(uniform_samples, side='right')
         # searchsorted returns a scalar
         bootstrap_idx = np.array(bootstrap_idx, copy=False)
@@ -1056,10 +1048,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
         median_idx = median_or_above.argmax(axis=1)
 
-        median_estimators = sorted_idx[np.arange(_len(X)), median_idx]
+        median_estimators = sorted_idx[np.arange(_num_samples(X)), median_idx]
 
         # Return median predictions
-        return predictions[np.arange(_len(X)), median_estimators]
+        return predictions[np.arange(_num_samples(X)), median_estimators]
 
     def predict(self, X):
         """Predict regression value for X.
