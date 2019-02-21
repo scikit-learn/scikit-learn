@@ -1,0 +1,6 @@
+numpy
+scipy
+cython
+pytest
+wheel
+pillow
