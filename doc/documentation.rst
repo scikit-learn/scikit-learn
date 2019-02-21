@@ -101,5 +101,10 @@ Documentation of scikit-learn |version|
                     scope or not well established enough for scikit-learn.
                     </blockquote>
                 </div>
+                <div class="span4 box">
+                    <h2><a href="roadmap.html">Roadmap</a></h2>
+                    <blockquote>Roadmap of the project.
+                    </blockquote>
+                </div>
 
             </div>

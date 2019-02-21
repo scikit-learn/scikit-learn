@@ -10,7 +10,7 @@ The dataset page is available at
 
 import logging
 
-from os import remove
+from os import remove, makedirs
 from os.path import dirname, exists, join
 from gzip import GzipFile
 
@@ -21,7 +21,6 @@ from .base import get_data_home
 from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
-from ..utils.fixes import makedirs
 from ..utils import _joblib
 from .svmlight_format import load_svmlight_files
 from ..utils import shuffle as shuffle_
@@ -209,7 +208,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         category_names = {}
         with GzipFile(filename=topics_archive_path, mode='rb') as f:
             for line in f:
-                line_components = line.decode("ascii").split(u" ")
+                line_components = line.decode("ascii").split(" ")
                 if len(line_components) == 3:
                     cat, doc, _ = line_components
                     if cat not in category_names:

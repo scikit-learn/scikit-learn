@@ -5,7 +5,6 @@ General tests for all estimators in sklearn.
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
-from __future__ import print_function
 
 import os
 import warnings
@@ -194,10 +193,9 @@ def test_all_tests_are_importable():
                                       \.tests(\.|$)|
                                       \._
                                       ''')
-    lookup = dict((name, ispkg)
-                  for _, name, ispkg
-                  in pkgutil.walk_packages(sklearn.__path__,
-                                           prefix='sklearn.'))
+    lookup = {name: ispkg
+              for _, name, ispkg
+              in pkgutil.walk_packages(sklearn.__path__, prefix='sklearn.')}
     missing_tests = [name for name, ispkg in lookup.items()
                      if ispkg
                      and not HAS_TESTS_EXCEPTIONS.search(name)

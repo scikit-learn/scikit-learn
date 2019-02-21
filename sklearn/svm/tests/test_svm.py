@@ -26,7 +26,6 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.externals import six
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -523,17 +522,6 @@ def test_bad_input():
 
 def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError
-    if six.PY2:
-        # Test unicode (same as str on python3)
-        clf = svm.SVC(kernel=u'linear', probability=True)
-        clf.fit(X, Y)
-        clf.predict_proba(T)
-        svm.libsvm.cross_validation(iris.data,
-                                    iris.target.astype(np.float64), 5,
-                                    kernel=u'linear',
-                                    random_seed=0)
-
-    # Test default behavior on both versions
     clf = svm.SVC(gamma='scale', kernel='linear', probability=True)
     clf.fit(X, Y)
     clf.predict_proba(T)

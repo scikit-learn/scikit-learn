@@ -1,7 +1,6 @@
 """
 Todo: cross-check the F-value with stats model
 """
-from __future__ import division
 import itertools
 import warnings
 import numpy as np

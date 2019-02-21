@@ -1595,7 +1595,7 @@ functions or non-estimator constructors.
         performance as in :ref:`grid search <grid_search>`), it may be possible
         to reuse aspects of the model learnt from the previous parameter value,
         saving time.  When ``warm_start`` is true, the existing :term:`fitted`
-        model :term:`attributes` an are used to initialise the new model
+        model :term:`attributes` are used to initialise the new model
         in a subsequent call to :term:`fit`.
 
         Note that this is only applicable for some models and some

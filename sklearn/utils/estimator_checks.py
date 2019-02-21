@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import types
 import warnings
 import sys
@@ -7,12 +5,12 @@ import traceback
 import pickle
 from copy import deepcopy
 from functools import partial
+from inspect import signature
 
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from sklearn.externals.six.moves import zip
 from sklearn.utils import IS_PYPY, _IS_32BIT
 from sklearn.utils import _joblib
 from sklearn.utils._joblib import Memory
@@ -58,9 +56,7 @@ from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
                                       pairwise_distances)
 
 from sklearn.utils import shuffle
-from sklearn.utils.fixes import signature
-from sklearn.utils.validation import (has_fit_parameter, _num_samples,
-                                      LARGE_SPARSE_SUPPORTED)
+from sklearn.utils.validation import has_fit_parameter, _num_samples
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
 
@@ -79,7 +75,9 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
 
 ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
              'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
-             'PowerTransformer', 'QuantileTransformer']
+             'PowerTransformer', 'QuantileTransformer', 'IterativeImputer']
+
+SUPPORT_STRING = ['SimpleImputer', 'MissingIndicator']
 
 
 def _yield_non_meta_checks(name, estimator):
@@ -388,7 +386,7 @@ def set_checking_parameters(estimator):
         estimator.set_params(k=1)
 
 
-class NotAnArray(object):
+class NotAnArray:
     """An object that is convertible to an array
 
     Parameters
@@ -468,18 +466,17 @@ def _generate_sparse_matrix(X_csr):
     for sparse_format in ['dok', 'lil', 'dia', 'bsr', 'csc', 'coo']:
         yield sparse_format, X_csr.asformat(sparse_format)
 
-    if LARGE_SPARSE_SUPPORTED:
-        # Generate large indices matrix only if its supported by scipy
-        X_coo = X_csr.asformat('coo')
-        X_coo.row = X_coo.row.astype('int64')
-        X_coo.col = X_coo.col.astype('int64')
-        yield "coo_64", X_coo
+    # Generate large indices matrix only if its supported by scipy
+    X_coo = X_csr.asformat('coo')
+    X_coo.row = X_coo.row.astype('int64')
+    X_coo.col = X_coo.col.astype('int64')
+    yield "coo_64", X_coo
 
-        for sparse_format in ['csc', 'csr']:
-            X = X_csr.asformat(sparse_format)
-            X.indices = X.indices.astype('int64')
-            X.indptr = X.indptr.astype('int64')
-            yield sparse_format + "_64", X
+    for sparse_format in ['csc', 'csr']:
+        X = X_csr.asformat(sparse_format)
+        X.indices = X.indices.astype('int64')
+        X.indptr = X.indptr.astype('int64')
+        yield sparse_format + "_64", X
 
 
 def check_estimator_sparse_data(name, estimator_orig):
@@ -628,9 +625,16 @@ def check_dtype_object(name, estimator_orig):
         if "Unknown label type" not in str(e):
             raise
 
-    X[0, 0] = {'foo': 'bar'}
-    msg = "argument must be a string or a number"
-    assert_raises_regex(TypeError, msg, estimator.fit, X, y)
+    if name not in SUPPORT_STRING:
+        X[0, 0] = {'foo': 'bar'}
+        msg = "argument must be a string or a number"
+        assert_raises_regex(TypeError, msg, estimator.fit, X, y)
+    else:
+        # Estimators supporting string will not call np.asarray to convert the
+        # data to numeric and therefore, the error will not be raised.
+        # Checking for each element dtype in the input array will be costly.
+        # Refer to #11401 for full discussion.
+        estimator.fit(X, y)
 
 
 def check_complex_data(name, estimator_orig):
@@ -1989,8 +1993,7 @@ def check_no_attributes_set_in_init(name, estimator):
             " from parameters during init. Found attributes %s."
             % (name, sorted(invalid_attr)))
     # Ensure that each parameter is set in init
-    invalid_attr = (set(init_params) - set(vars(estimator))
-                    - set(["self"]))
+    invalid_attr = set(init_params) - set(vars(estimator)) - {"self"}
     assert not invalid_attr, (
             "Estimator %s should store all parameters"
             " as an attribute during init. Did not find "
@@ -2245,9 +2248,11 @@ def check_set_params(name, estimator_orig):
             except (TypeError, ValueError) as e:
                 e_type = e.__class__.__name__
                 # Exception occurred, possibly parameter validation
-                warnings.warn("{} occurred during set_params. "
-                              "It is recommended to delay parameter "
-                              "validation until fit.".format(e_type))
+                warnings.warn("{0} occurred during set_params of param {1} on "
+                              "{2}. It is recommended to delay parameter "
+                              "validation until fit.".format(e_type,
+                                                             param_name,
+                                                             name))
 
                 change_warning_msg = "Estimator's parameters changed after " \
                                      "set_params raised {}".format(e_type)
@@ -2370,10 +2375,9 @@ def check_fit_idempotent(name, estimator_orig):
     # Fit for the first time
     estimator.fit(X_train, y_train)
 
-    result = {}
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X_test)
+    result = {method: getattr(estimator, method)(X_test)
+              for method in check_methods
+              if hasattr(estimator, method)}
 
     # Fit again
     estimator.fit(X_train, y_train)

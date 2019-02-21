@@ -5,7 +5,6 @@ import functools
 import numpy as np
 
 from sklearn.base import BaseEstimator
-from sklearn.externals.six import iterkeys
 from sklearn.datasets import make_classification
 
 from sklearn.utils.testing import assert_raises
@@ -18,7 +17,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 
 
-class DelegatorData(object):
+class DelegatorData:
     def __init__(self, name, construct, skip_methods=(),
                  fit_args=make_classification()):
         self.name = name
@@ -111,7 +110,7 @@ def test_metaestimator_delegation():
             self._check_fit()
             return 1.0
 
-    methods = [k for k in iterkeys(SubEstimator.__dict__)
+    methods = [k for k in SubEstimator.__dict__.keys()
                if not k.startswith('_') and not k.startswith('fit')]
     methods.sort()
 

@@ -185,7 +185,7 @@ for another implementation::
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.Lasso(alpha=0.1)
-    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
+    >>> reg.fit([[0, 0], [1, 1]], [0, 1])  # doctest: +NORMALIZE_WHITESPACE
     Lasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, positive=False, precompute=False, random_state=None,
        selection='cyclic', tol=0.0001, warm_start=False)
@@ -577,8 +577,8 @@ to be Gaussian distributed around :math:`X w`:
 
 .. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha)
 
-Alpha is again treated as a random variable that is to be estimated from the
-data.
+where :math:`\alpha` is again treated as a random variable that is to be
+estimated from the data.
 
 The advantages of Bayesian Regression are:
 
@@ -614,17 +614,22 @@ The prior for the parameter :math:`w` is given by a spherical Gaussian:
 
 The priors over :math:`\alpha` and :math:`\lambda` are chosen to be `gamma
 distributions <https://en.wikipedia.org/wiki/Gamma_distribution>`__, the
-conjugate prior for the precision of the Gaussian.
+conjugate prior for the precision of the Gaussian. The resulting model is
+called *Bayesian Ridge Regression*, and is similar to the classical
+:class:`Ridge`.
 
-The resulting model is called *Bayesian Ridge Regression*, and is similar to the
-classical :class:`Ridge`.  The parameters :math:`w`, :math:`\alpha` and
-:math:`\lambda` are estimated jointly during the fit of the model.  The
-remaining hyperparameters are the parameters of the gamma priors over
-:math:`\alpha` and :math:`\lambda`.  These are usually chosen to be
-*non-informative*.  The parameters are estimated by maximizing the *marginal
-log likelihood*.
+The parameters :math:`w`, :math:`\alpha` and :math:`\lambda` are estimated
+jointly during the fit of the model, the regularization parameters
+:math:`\alpha` and :math:`\lambda` being estimated by maximizing the
+*log marginal likelihood*. The scikit-learn implementation
+is based on the algorithm described in Appendix A of (Tipping, 2001)
+where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
+as suggested in (MacKay, 1992).
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
+The remaining hyperparameters are the parameters :math:`\alpha_1`,
+:math:`\alpha_2`, :math:`\lambda_1` and :math:`\lambda_2` of the gamma priors
+over :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
+*non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_bayesian_ridge_001.png
@@ -639,7 +644,7 @@ Bayesian Ridge Regression is used for regression::
     >>> X = [[0., 0.], [1., 1.], [2., 2.], [3., 3.]]
     >>> Y = [0., 1., 2., 3.]
     >>> reg = linear_model.BayesianRidge()
-    >>> reg.fit(X, Y)
+    >>> reg.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
     BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False, copy_X=True,
            fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
            normalize=False, tol=0.001, verbose=False)
@@ -663,12 +668,13 @@ is more robust to ill-posed problem.
 
  * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py`
 
-.. topic:: References
+.. topic:: References:
 
-  * More details can be found in the article `Bayesian Interpolation
-    <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_
-    by MacKay, David J. C.
+    * Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
 
+    * David J. C. MacKay, `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_, 1992.
+
+    * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
 
 Automatic Relevance Determination - ARD
@@ -731,7 +737,7 @@ or the log-linear classifier. In this model, the probabilities describing the po
 The implementation of logistic regression in scikit-learn can be accessed from
 class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
 Rest, or multinomial logistic regression with optional L2, L1 or Elastic-Net
-regularization.
+regularization. Note that regularization is applied by default.
 
 As an optimization problem, binary class L2 penalized logistic regression
 minimizes the following cost function:
@@ -771,11 +777,11 @@ classifiers. For L1 penalization :func:`sklearn.svm.l1_min_c` allows to
 calculate the lower bound for C in order to get a non "null" (all feature
 weights to zero) model.
 
-The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
-are found to converge faster for some high dimensional data. Setting
-`multi_class` to "multinomial" with these solvers learns a true multinomial
-logistic regression model [5]_, which means that its probability estimates
-should be better calibrated than the default "one-vs-rest" setting.
+The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization or no
+regularization, and are found to converge faster for some high dimensional
+data. Setting `multi_class` to "multinomial" with these solvers learns a true
+multinomial logistic regression model [5]_, which means that its probability
+estimates should be better calibrated than the default "one-vs-rest" setting.
 
 The "sag" solver uses a Stochastic Average Gradient descent [6]_. It is faster
 than other solvers for large datasets, when both the number of samples and the
@@ -786,8 +792,12 @@ non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
 multinomial logistic regression. It is also the only solver that supports
 `penalty="elasticnet"`.
 
-In a nutshell, the following table summarizes the penalties supported by
-each solver:
+The "lbfgs" is an optimization algorithm that approximates the 
+Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
+quasi-Newton methods. The "lbfgs" solver is recommended for use for
+small data-sets but for larger datasets its performance suffers. [9]_
+
+The following table summarizes the penalties supported by each solver:
 
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 |                              |                       **Solvers**                                        |
@@ -804,6 +814,8 @@ each solver:
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 | Elastic-Net                  |       no        |     no      |       no        |    no     |    yes     |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| No penalty ('none')          |       no        |     yes     |       yes       |    yes    |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
 | **Behaviors**                |                                                                          |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 | Penalize the intercept (bad) |       yes       |     no      |       no        |    no     |    no      |
@@ -813,11 +825,10 @@ each solver:
 | Robust to unscaled datasets  |       yes       |     yes     |       yes       |    no     |    no      |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 
-The "saga" solver is often the best choice but requires scaling. The
-"liblinear" solver is used by default for historical reasons.
-
+The "lbfgs" solver is used by default for its robustness. For large datasets
+the "saga" solver is usually faster.
 For large dataset, you may also consider using :class:`SGDClassifier`
-with 'log' loss.
+with 'log' loss, which might be even faster but requires more tuning.
 
 .. topic:: Examples:
 
@@ -865,6 +876,12 @@ to warm-starting (see :term:`Glossary <warm_start>`).
     .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
 
     .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien: `SAGA: A Fast Incremental Gradient Method With Support for Non-Strongly Convex Composite Objectives. <https://arxiv.org/abs/1407.0202>`_
+
+    .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
+
+    .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
+            <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
+
 
 Stochastic Gradient Descent - SGD
 =================================

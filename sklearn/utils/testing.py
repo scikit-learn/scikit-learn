@@ -21,14 +21,9 @@ import scipy as sp
 import scipy.io
 from functools import wraps
 from operator import itemgetter
-try:
-    # Python 2
-    from urllib2 import urlopen
-    from urllib2 import HTTPError
-except ImportError:
-    # Python 3+
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
+from inspect import signature
+from urllib.request import urlopen
+from urllib.error import HTTPError
 
 import tempfile
 import shutil
@@ -56,7 +51,6 @@ from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
 from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 from sklearn.utils._joblib import joblib
 from sklearn.utils._unittest_backport import TestCase
-from sklearn.utils.fixes import signature
 
 additional_names_in_all = []
 try:
@@ -94,8 +88,6 @@ __all__.extend(additional_names_in_all)
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
 assert_not_equal = _dummy.assertNotEqual
-assert_true = _dummy.assertTrue
-assert_false = _dummy.assertFalse
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
@@ -111,6 +103,16 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
+
+deprecation_message = "'assert_true' is deprecated in version 0.21 " \
+                      "and will be removed in version 0.23. " \
+                      "Please use 'assert' instead."
+assert_true = deprecated(deprecation_message)(_dummy.assertTrue)
+
+deprecation_message = "'assert_false' is deprecated in version 0.21 " \
+                      "and will be removed in version 0.23. " \
+                      "Please use 'assert' instead."
+assert_false = deprecated(deprecation_message)(_dummy.assertFalse)
 
 
 def assert_warns(warning_class, func, *args, **kw):
@@ -318,7 +320,7 @@ def ignore_warnings(obj=None, category=Warning):
         return _IgnoreWarnings(category=category)
 
 
-class _IgnoreWarnings(object):
+class _IgnoreWarnings:
     """Improved and simplified Python warnings context manager and decorator.
 
     This class allows the user to ignore the warnings raised by a function.
@@ -505,7 +507,7 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
 
 
 @deprecated('deprecated in version 0.20 to be removed in version 0.22')
-class mock_mldata_urlopen(object):
+class mock_mldata_urlopen:
     """Object that mocks the urlopen function to fake requests to mldata.
 
     When requesting a dataset with a name that is in mock_datasets, this object
@@ -795,8 +797,6 @@ def clean_warning_registry():
     """
     reg = "__warningregistry__"
     for mod_name, mod in list(sys.modules.items()):
-        if 'six.moves' in mod_name:
-            continue
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
 
@@ -821,7 +821,7 @@ def _delete_folder(folder_path, warn=False):
             warnings.warn("Could not delete temporary folder %s" % folder_path)
 
 
-class TempMemmap(object):
+class TempMemmap:
     """
     Parameters
     ----------

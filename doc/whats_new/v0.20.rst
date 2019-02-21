@@ -2,12 +2,86 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_20_3:
+
+Version 0.20.3
+==============
+
+**??, 2019**
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.20.0.
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where computation was single
+  threaded when `n_jobs > 1` or `n_jobs = -1`.
+  :issue:`12949` by :user:`Prabakaran Kumaresshan <nixphix>`.
+
+:mod:`sklearn.compose`
+......................
+
+- |Fix| Fixed a bug in :class:`compose.ColumnTransformer` to handle
+  negative indexes in the columns list of the transformers.
+  :issue:`12946` by :user:`Pierre Tallotte <pierretallotte>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :func:`decomposition.sparse_encode` where computation was single
+  threaded when `n_jobs > 1` or `n_jobs = -1`.
+  :issue:`13005` by :user:`Prabakaran Kumaresshan <nixphix>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| add support for non-numeric data in
+  :class:`sklearn.impute.MissingIndicator` which was not supported while
+  :class:`sklearn.impute.SimpleImputer` was supporting this for some
+  imputation strategies.
+  :issue:`13046` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fixed a bug in :class:`linear_model.MultiTaskElasticNet` and
+  :class:`linear_model.MultiTaskLasso` which were breaking when
+  ``warm_start = True``. :issue:`12360` by :user:`Aakanksha Joshi <joaak>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Fixed a bug in :class:`preprocessing.KBinsDiscretizer` where
+  ``strategy='kmeans'`` fails with an error during transformation due to unsorted
+  bin edges. :issue:`13134` by :user:`Sandro Casagrande <SandroCasagrande>`.
+
+- |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the
+  deprecation of ``categorical_features`` was handled incorrectly in
+  combination with ``handle_unknown='ignore'``.
+  :issue:`12881` by `Joris Van den Bossche`_.
+
+- |Fix| Bins whose width are too small (i.e., <= 1e-8) are removed
+  with a warning in :class:`preprocessing.KBinsDiscretizer`.
+  :issue:`13165` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+:mod:`sklearn.feature_extraction.text`
+......................................
+
+- |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer` which 
+  would result in the sparse feature matrix having conflicting `indptr` and
+  `indices` precisions under very large vocabularies. :issue:`11295` by
+  :user:`Gabriel Vacaliuc <gvacaliuc>`.
+
 .. _changes_0_20_2:
 
 Version 0.20.2
 ==============
 
-**XX, 2019**
+**December 20, 2018**
 
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
@@ -21,6 +95,7 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 - :mod:`sklearn.neighbors` when ``metric=='jaccard'`` (bug fix)
+- use of ``'seuclidean'`` or ``'mahalanobis'`` metrics in some cases (bug fix)
 
 Changelog
 ---------
@@ -32,12 +107,14 @@ Changelog
   unexpected error when columns is pandas Index or pandas Series.
   :issue:`12704` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-:mod:`sklearn.pipeline`
-.......................
+:mod:`sklearn.metrics`
+......................
 
-- |Fix| Fixed a regression in :class:`pipeline.Pipeline` where the ``steps``
-  parameter may not have been updated correctly when a step is set to ``None``
-  or ``'passthrough'``. :user:`Thomas Fan <thomasjpfan>`.
+- |Fix| Fixed a bug in :func:`metrics.pairwise_distances` and
+  :func:`metrics.pairwise_distances_chunked` where parameters ``V`` of
+  ``"seuclidean"`` and ``VI`` of ``"mahalanobis"`` metrics were computed after
+  the data was split into chunks instead of being pre-computed on whole data.
+  :issue:`12701` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -52,6 +129,18 @@ Changelog
 - |Fix| Calling :func:`utils.check_array` on `pandas.Series` with categorical
   data, which raised an error in 0.20.0, now returns the expected output again.
   :issue:`12699` by `Joris Van den Bossche`_.
+
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+adanhawth, Adrin Jalali, Albert Thomas, Andreas Mueller, Dan Stine, Feda Curic,
+Hanmin Qin, Jan S, jeremiedbb, Joel Nothman, Joris Van den Bossche,
+josephsalmon, Katrin Leinweber, Loic Esteve, Muhammad Hassaan Rafique, Nicolas
+Hug, Olivier Grisel, Paul Paczuski, Reshama Shaikh, Sam Waterbury, Shivam
+Kotwalia, Thomas Fan
+
 
 .. _changes_0_20_1:
 

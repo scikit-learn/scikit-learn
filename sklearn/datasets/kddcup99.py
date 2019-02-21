@@ -8,7 +8,6 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 
 """
 
-import sys
 import errno
 from gzip import GzipFile
 import logging
@@ -21,7 +20,6 @@ import numpy as np
 from .base import _fetch_remote
 from .base import get_data_home
 from .base import RemoteFileMetadata
-from ..externals import six
 from ..utils import Bunch
 from ..utils import _joblib
 from ..utils import check_random_state
@@ -205,14 +203,7 @@ def _fetch_brute_kddcup99(data_home=None,
     """
 
     data_home = get_data_home(data_home=data_home)
-    if sys.version_info[0] == 3:
-        # The zlib compression format use by joblib is not compatible when
-        # switching from Python 2 to Python 3, let us use a separate folder
-        # under Python 3:
-        dir_suffix = "-py3"
-    else:
-        # Backward compat for Python 2 users
-        dir_suffix = ""
+    dir_suffix = "-py3"
 
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
@@ -277,8 +268,7 @@ def _fetch_brute_kddcup99(data_home=None,
         file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
         for line in file_.readlines():
-            if six.PY3:
-                line = line.decode()
+            line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
         logger.debug('extraction done')

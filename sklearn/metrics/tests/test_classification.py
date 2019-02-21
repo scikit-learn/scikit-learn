@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 
 from functools import partial
 from itertools import product
@@ -127,10 +126,7 @@ def test_classification_report_dictionary_output():
                                      'precision': 0.5260083136726211,
                                      'recall': 0.596146953405018,
                                      'support': 75},
-                       'micro avg': {'f1-score': 0.5333333333333333,
-                                     'precision': 0.5333333333333333,
-                                     'recall': 0.5333333333333333,
-                                     'support': 75},
+                       'accuracy': 0.5333333333333333,
                        'weighted avg': {'f1-score': 0.47310435663627154,
                                         'precision': 0.5137535108414785,
                                         'recall': 0.5333333333333333,
@@ -143,10 +139,14 @@ def test_classification_report_dictionary_output():
     # assert the 2 dicts are equal.
     assert(report.keys() == expected_report.keys())
     for key in expected_report:
-        assert report[key].keys() == expected_report[key].keys()
-        for metric in expected_report[key]:
-            assert_almost_equal(expected_report[key][metric],
-                                report[key][metric])
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
 
     assert type(expected_report['setosa']['precision']) == float
     assert type(expected_report['macro avg']['precision']) == float
@@ -528,8 +528,10 @@ def test_cohen_kappa():
     y1 = np.array([0] * 46 + [1] * 44 + [2] * 10)
     y2 = np.array([0] * 50 + [1] * 40 + [2] * 10)
     assert_almost_equal(cohen_kappa_score(y1, y2), .9315, decimal=4)
-    assert_almost_equal(cohen_kappa_score(y1, y2, weights="linear"), .9412, decimal=4)
-    assert_almost_equal(cohen_kappa_score(y1, y2, weights="quadratic"), .9541, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2,
+                        weights="linear"), 0.9412, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2,
+                        weights="quadratic"), 0.9541, decimal=4)
 
 
 @ignore_warnings
@@ -885,7 +887,7 @@ def test_classification_report_multiclass():
   versicolor       0.33      0.10      0.15        31
    virginica       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -905,7 +907,7 @@ def test_classification_report_multiclass_balanced():
            1       0.33      0.33      0.33         3
            2       0.33      0.33      0.33         3
 
-   micro avg       0.33      0.33      0.33         9
+    accuracy                           0.33         9
    macro avg       0.33      0.33      0.33         9
 weighted avg       0.33      0.33      0.33         9
 """
@@ -925,7 +927,7 @@ def test_classification_report_multiclass_with_label_detection():
            1       0.33      0.10      0.15        31
            2       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -946,7 +948,7 @@ def test_classification_report_multiclass_with_digits():
   versicolor    0.33333   0.09677   0.15000        31
    virginica    0.41860   0.90000   0.57143        20
 
-   micro avg    0.53333   0.53333   0.53333        75
+    accuracy                        0.53333        75
    macro avg    0.52601   0.59615   0.50998        75
 weighted avg    0.51375   0.53333   0.47310        75
 """
@@ -969,7 +971,7 @@ def test_classification_report_multiclass_with_string_label():
        green       0.33      0.10      0.15        31
          red       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -983,7 +985,7 @@ weighted avg       0.51      0.53      0.47        75
            b       0.33      0.10      0.15        31
            c       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -995,18 +997,18 @@ weighted avg       0.51      0.53      0.47        75
 def test_classification_report_multiclass_with_unicode_label():
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    labels = np.array([u"blue\xa2", u"green\xa2", u"red\xa2"])
+    labels = np.array(["blue\xa2", "green\xa2", "red\xa2"])
     y_true = labels[y_true]
     y_pred = labels[y_pred]
 
-    expected_report = u"""\
+    expected_report = """\
               precision    recall  f1-score   support
 
        blue\xa2       0.83      0.79      0.81        24
       green\xa2       0.33      0.10      0.15        31
         red\xa2       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -1028,7 +1030,7 @@ def test_classification_report_multiclass_with_long_string_label():
 greengreengreengreengreen       0.33      0.10      0.15        31
                       red       0.42      0.90      0.57        20
 
-                micro avg       0.53      0.53      0.53        75
+                 accuracy                           0.53        75
                 macro avg       0.53      0.60      0.51        75
              weighted avg       0.51      0.53      0.47        75
 """
@@ -1127,6 +1129,11 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
     # sp_hamming only works with 1-D arrays
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
+    assert_warns_message(DeprecationWarning,
+                         "The labels parameter is unused. It was"
+                         " deprecated in version 0.21 and"
+                         " will be removed in version 0.23",
+                         hamming_loss, y1, y2, labels=[0, 1])
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -1602,7 +1609,8 @@ def test__check_targets():
     y2 = [(2,), (0, 2,)]
     msg = ('You appear to be using a legacy multi-label data representation. '
            'Sequence of sequences are no longer supported; use a binary array'
-           ' or sparse matrix instead.')
+           ' or sparse matrix instead - the MultiLabelBinarizer'
+           ' transformer can convert to this format.')
     assert_raise_message(ValueError, msg, _check_targets, y1, y2)
 
 

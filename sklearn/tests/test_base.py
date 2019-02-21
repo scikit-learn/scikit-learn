@@ -65,7 +65,7 @@ class Buggy(BaseEstimator):
         self.a = 1
 
 
-class NoEstimator(object):
+class NoEstimator:
     def __init__(self):
         pass
 
@@ -185,7 +185,7 @@ def test_repr():
     )
 
     some_est = T(a=["long_params"] * 1000)
-    assert_equal(len(repr(some_est)), 415)
+    assert_equal(len(repr(some_est)), 495)
 
 
 def test_str():
@@ -233,7 +233,7 @@ def test_set_params_passes_all_parameters():
 
     class TestDecisionTree(DecisionTreeClassifier):
         def set_params(self, **kwargs):
-            super(TestDecisionTree, self).set_params(**kwargs)
+            super().set_params(**kwargs)
             # expected_kwargs is in test scope
             assert kwargs == expected_kwargs
             return self
@@ -381,7 +381,7 @@ def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
         TreeNoVersion.__module__ = module_backup
 
 
-class DontPickleAttributeMixin(object):
+class DontPickleAttributeMixin:
     def __getstate__(self):
         data = self.__dict__.copy()
         data["_attribute_not_pickled"] = None
