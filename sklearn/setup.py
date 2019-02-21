@@ -42,7 +42,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('semi_supervised/tests')
 
     # submodules which have their own setup.py
-    # leave out "linear_model" and "utils" for now; add them after cblas below
     config.add_subpackage('cluster')
     config.add_subpackage('datasets')
     config.add_subpackage('decomposition')
