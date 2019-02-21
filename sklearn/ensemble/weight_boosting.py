@@ -79,7 +79,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                               allow_nd=True,
                               dtype=None)
         else:
-            
             ret = check_X_y(X, y,
                             accept_sparse=accept_sparse,
                             ensure_2d=False,
@@ -113,7 +112,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
 
-        X, y = self._validate_data(X,y)
+        X, y = self._validate_data(X, y)
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
