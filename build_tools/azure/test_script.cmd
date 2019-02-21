@@ -1,3 +1,5 @@
+call activate %VIRTUALENV%
+
 mkdir %TMP_FOLDER%
 cd %TMP_FOLDER%
 

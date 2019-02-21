@@ -8,12 +8,12 @@ jobs:
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
-    TEST_DIR: "/tmp/sklearn"
-    VIRTUALENV: "testvenv"
-    JUNITXML: "test-data.xml"
-    OMP_NUM_THREADS: "4"
-    OPENBLAS_NUM_THREADS: "4"
-    SKLEARN_SKIP_NETWORK_TESTS: "1"
+    TEST_DIR: '/tmp/sklearn'
+    VIRTUALENV: 'testvenv'
+    JUNITXML: 'test-data.xml'
+    OMP_NUM_THREADS: '4'
+    OPENBLAS_NUM_THREADS: '4'
+    SKLEARN_SKIP_NETWORK_TESTS: '1'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
@@ -32,8 +32,8 @@ jobs:
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test soft dependency'
     - task: PublishTestResults@2
-      condition: always()
       inputs:
         testResultsFiles: ${{ '$(TEST_DIR)/$(JUNITXML)' }}
         testRunTitle: ${{ format('{0}-$(DISTRIB)-$(PYTHON_VERSION)', parameters.name) }}
       displayName: 'Publish Test Results'
+      condition: succeededOrFailed()

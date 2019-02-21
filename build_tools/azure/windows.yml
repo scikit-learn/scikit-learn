@@ -9,22 +9,17 @@ jobs:
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
-    VIRTUALENV: "testvenv"
-    JUNITXML: "test-data.xml"
-    SKLEARN_SKIP_NETWORK_TESTS: "1"
+    VIRTUALENV: 'testvenv'
+    JUNITXML: 'test-data.xml'
+    SKLEARN_SKIP_NETWORK_TESTS: '1'
     TMP_FOLDER: '$(Agent.WorkFolder)\tmp_folder'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
-    - task: CondaEnvironment@1
-      inputs:
-        updateConda: true
-        createCustomEnvironment: true
-        environmentName: "testvenv"
-        packageSpecs: 'python=$(CONDA_PY) numpy scipy cython pytest wheel pillow'
-        cleanEnvironment: true
+    - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
+      displayName: Add conda to PATH
     - script: |
         build_tools\\azure\\install.cmd
       displayName: 'Install'
@@ -32,9 +27,8 @@ jobs:
         build_tools\\azure\\test_script.cmd
       displayName: 'Test library'
     - task: PublishTestResults@2
-      condition: always()
       inputs:
         testResultsFiles: '$(TMP_FOLDER)\$(JUNITXML)'
         testRunTitle: 'Windows-$(CONDA_PY)'
       displayName: 'Publish Test Results'
-
+      condition: succeededOrFailed()
