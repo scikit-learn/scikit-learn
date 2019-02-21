@@ -29,10 +29,6 @@ def _parse_version(version_string):
     return tuple(version)
 
 
-# < numpy 1.8.0
-euler_gamma = getattr(np, 'euler_gamma',
-                      0.577215664901532860606512090082402431)
-
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
 

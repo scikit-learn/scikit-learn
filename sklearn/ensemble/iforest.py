@@ -2,15 +2,12 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-from __future__ import division
-
-import numpy as np
-from warnings import warn
-from sklearn.utils.fixes import euler_gamma
-
-from scipy.sparse import issparse
 
 import numbers
+import numpy as np
+from scipy.sparse import issparse
+from warnings import warn
+
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
 from ..utils.fixes import _joblib_parallel_args
@@ -444,7 +441,7 @@ def _average_path_length(n_samples_leaf):
         if n_samples_leaf <= 1:
             return 1.
         else:
-            return 2. * (np.log(n_samples_leaf - 1.) + euler_gamma) - 2. * (
+            return 2. * (np.log(n_samples_leaf - 1.) + np.euler_gamma) - 2. * (
                 n_samples_leaf - 1.) / n_samples_leaf
 
     else:
@@ -458,7 +455,7 @@ def _average_path_length(n_samples_leaf):
 
         average_path_length[mask] = 1.
         average_path_length[not_mask] = 2. * (
-            np.log(n_samples_leaf[not_mask] - 1.) + euler_gamma) - 2. * (
+            np.log(n_samples_leaf[not_mask] - 1.) + np.euler_gamma) - 2. * (
                 n_samples_leaf[not_mask] - 1.) / n_samples_leaf[not_mask]
 
         return average_path_length.reshape(n_samples_leaf_shape)

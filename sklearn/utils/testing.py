@@ -320,7 +320,7 @@ def ignore_warnings(obj=None, category=Warning):
         return _IgnoreWarnings(category=category)
 
 
-class _IgnoreWarnings(object):
+class _IgnoreWarnings:
     """Improved and simplified Python warnings context manager and decorator.
 
     This class allows the user to ignore the warnings raised by a function.
@@ -507,7 +507,7 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
 
 
 @deprecated('deprecated in version 0.20 to be removed in version 0.22')
-class mock_mldata_urlopen(object):
+class mock_mldata_urlopen:
     """Object that mocks the urlopen function to fake requests to mldata.
 
     When requesting a dataset with a name that is in mock_datasets, this object
@@ -794,7 +794,7 @@ def _delete_folder(folder_path, warn=False):
             warnings.warn("Could not delete temporary folder %s" % folder_path)
 
 
-class TempMemmap(object):
+class TempMemmap:
     """
     Parameters
     ----------

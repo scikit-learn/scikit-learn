@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
 
 import re
 
@@ -541,12 +540,12 @@ def test_one_hot_encoder_feature_names():
 
 def test_one_hot_encoder_feature_names_unicode():
     enc = OneHotEncoder()
-    X = np.array([[u'c❤t1', u'dat2']], dtype=object).T
+    X = np.array([['c❤t1', 'dat2']], dtype=object).T
     enc.fit(X)
     feature_names = enc.get_feature_names()
-    assert_array_equal([u'x0_c❤t1', u'x0_dat2'], feature_names)
-    feature_names = enc.get_feature_names(input_features=[u'n👍me'])
-    assert_array_equal([u'n👍me_c❤t1', u'n👍me_dat2'], feature_names)
+    assert_array_equal(['x0_c❤t1', 'x0_dat2'], feature_names)
+    feature_names = enc.get_feature_names(input_features=['n👍me'])
+    assert_array_equal(['n👍me_c❤t1', 'n👍me_dat2'], feature_names)
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,

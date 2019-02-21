@@ -260,7 +260,8 @@ def type_of_target(y):
             raise ValueError('You appear to be using a legacy multi-label data'
                              ' representation. Sequence of sequences are no'
                              ' longer supported; use a binary array or sparse'
-                             ' matrix instead.')
+                             ' matrix instead - the MultiLabelBinarizer'
+                             ' transformer can convert to this format.')
     except IndexError:
         pass
 

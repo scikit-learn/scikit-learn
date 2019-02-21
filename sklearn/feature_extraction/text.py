@@ -11,7 +11,6 @@
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
-from __future__ import unicode_literals, division
 
 import array
 from collections import defaultdict
@@ -31,6 +30,7 @@ from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils.fixes import sp_version
+from ..utils import _IS_32BIT
 
 
 __all__ = ['HashingVectorizer',
@@ -113,7 +113,7 @@ def _check_stop_list(stop):
         return frozenset(stop)
 
 
-class VectorizerMixin(object):
+class VectorizerMixin:
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
@@ -874,7 +874,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         Returns a reordered matrix and modifies the vocabulary in place
         """
         sorted_features = sorted(vocabulary.items())
-        map_index = np.empty(len(sorted_features), dtype=np.int32)
+        map_index = np.empty(len(sorted_features), dtype=X.indices.dtype)
         for new_val, (term, old_val) in enumerate(sorted_features):
             vocabulary[term] = new_val
             map_index[old_val] = new_val
@@ -964,14 +964,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                  " contain stop words")
 
         if indptr[-1] > 2147483648:  # = 2**31 - 1
-            if sp_version >= (0, 14):
-                indices_dtype = np.int64
-            else:
+            if _IS_32BIT:
                 raise ValueError(('sparse CSR array has {} non-zero '
                                   'elements and requires 64 bit indexing, '
-                                  ' which is unsupported with scipy {}. '
-                                  'Please upgrade to scipy >=0.14')
-                                 .format(indptr[-1], '.'.join(sp_version)))
+                                  'which is unsupported with 32 bit Python.')
+                                 .format(indptr[-1]))
+            indices_dtype = np.int64
 
         else:
             indices_dtype = np.int32
@@ -1152,17 +1150,18 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     informative than features that occur in a small fraction of the training
     corpus.
 
-    The formula that is used to compute the tf-idf of term t is
-    tf-idf(d, t) = tf(t) * idf(d, t), and the idf is computed as
-    idf(d, t) = log [ n / df(d, t) ] + 1 (if ``smooth_idf=False``),
-    where n is the total number of documents and df(d, t) is the
-    document frequency; the document frequency is the number of documents d
-    that contain term t. The effect of adding "1" to the idf in the equation
-    above is that terms with zero idf, i.e., terms  that occur in all documents
-    in a training set, will not be entirely ignored.
-    (Note that the idf formula above differs from the standard
-    textbook notation that defines the idf as
-    idf(d, t) = log [ n / (df(d, t) + 1) ]).
+    The formula that is used to compute the tf-idf for a term t of a document d
+    in a document set is tf-idf(t, d) = tf(t, d) * idf(t), and the idf is
+    computed as idf(t) = log [ n / df(t) ] + 1 (if ``smooth_idf=False``), where
+    n is the total number of documents in the document set and df(t) is the
+    document frequency of t; the document frequency is the number of documents
+    in the document set that contain the term t. The effect of adding "1" to
+    the idf in the equation above is that terms with zero idf, i.e., terms
+    that occur in all documents in a training set, will not be entirely
+    ignored.
+    (Note that the idf formula above differs from the standard textbook
+    notation that defines the idf as
+    idf(t) = log [ n / (df(t) + 1) ]).
 
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen

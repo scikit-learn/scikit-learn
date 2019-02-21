@@ -9,7 +9,6 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 
 # License: BSD 3-Clause
 
-from __future__ import print_function
 import warnings
 import numpy as np
 from .exceptions import ChangedBehaviorWarning

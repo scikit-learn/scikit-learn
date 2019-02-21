@@ -611,7 +611,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         raise ValueError('Mix of nominal and non-nominal targets is not '
                          'currently supported')
 
-    description = u"{}\n\nDownloaded from openml.org.".format(
+    description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
 
     # reshape y back to 1-D array, if there is only 1 target column; back

@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 
 from functools import partial
 from itertools import product
@@ -460,7 +459,7 @@ def test_symmetry():
 
     assert_equal(
         SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS),
-        set([]))
+        set())
 
     # Symmetric metric
     for name in SYMMETRIC_METRICS:
