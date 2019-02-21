@@ -10,4 +10,4 @@ source activate $VIRTUALENV
 # from TEST_DIR where pytest has been run
 cp $TEST_DIR/.coverage $BUILD_REPOSITORY_LOCALPATH
 
-codecov --root $BUILD_REPOSITORY_LOCALPATH -t $CODECOV_TOKEN
+codecov --root $BUILD_REPOSITORY_LOCALPATH -t $CODECOV_TOKEN || echo "codecov upload failed"
