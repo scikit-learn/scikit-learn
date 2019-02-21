@@ -423,11 +423,6 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder='drop')
 
-column_trans.fit(X) 
-column_trans.get_feature_names()
-column_trans.transform(X).toarray()
-
-
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
       transformer_weights=None,
