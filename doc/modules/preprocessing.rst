@@ -561,7 +561,7 @@ can introduce nonlinearity to linear models.
 K-bins discretization
 ---------------------
 
-:class:`KBinsDiscretizer` discretizers features into ``k`` bins::
+:class:`KBinsDiscretizer` discretizes features into ``k`` bins::
 
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
