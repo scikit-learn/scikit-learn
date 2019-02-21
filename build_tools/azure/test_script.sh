@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ "$DISTRIB" == "conda" ]] || [[ "$DISTRIB" == "scipy-dev" ]]; then
+if [[ "$DISTRIB" == "conda" ]]; then
     export PATH=$HOME/miniconda3/bin:$PATH
     source activate $VIRTUALENV
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
@@ -22,10 +22,20 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 pip list
 
+TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML --pyargs"
+
+if [[ "$COVERAGE" == "true" ]]; then
+    TEST_CMD="$TEST_CMD --cov sklearn"
+fi
+
+if [[ -n "$CHECK_WARNINGS" ]]; then
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+fi
+
 mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-python -m pytest --showlocals --durations=20 --pyargs sklearn --junitxml=$JUNITXML
+$TEST_CMD sklearn.preprocessing
 set +x

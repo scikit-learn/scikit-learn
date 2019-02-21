@@ -75,6 +75,14 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     python -m pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
 fi
 
+if [[ "$COVERAGE" == "true" ]]; then
+    python -m pip install coverage codecov
+fi
+
+if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
+    python -m pip install sphinx numpydoc  # numpydoc requires sphinx
+fi
+
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
