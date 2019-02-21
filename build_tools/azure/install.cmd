@@ -12,7 +12,7 @@ call deactivate
 conda list
 @rem Clean up any left-over from a previous build
 conda remove --all -q -y -n %VIRTUALENV%
-conda env create -n %VIRTUALENV% python=%CONDA_PY% -y
+conda create -n %VIRTUALENV% -q -y python=%CONDA_PY%
 
 call activate %VIRTUALENV%
 python -m pip install -U pip
