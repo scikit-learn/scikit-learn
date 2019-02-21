@@ -88,7 +88,7 @@ artifacts:
 
 on_success:
   - "cp ../empty_folder/.coverage ."
-  - "codecov"
+  - codecov
   # Upload the generated wheel package to Rackspace
   - "python -m wheelhouse_uploader upload --local-folder=dist sklearn-windows-wheels"
 
