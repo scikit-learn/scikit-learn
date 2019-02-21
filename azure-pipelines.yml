@@ -65,4 +65,5 @@ jobs:
     vmImage: vs2017-win2016
     matrix:
       py37:
-        CONDA_PY: "37"
+        CONDA_PY: "3.7"
+        CHECK_WARNINGS: "true"

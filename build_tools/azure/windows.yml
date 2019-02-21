@@ -12,7 +12,7 @@ jobs:
     VIRTUALENV: "testvenv"
     JUNITXML: "test-data.xml"
     SKLEARN_SKIP_NETWORK_TESTS: "1"
-    TMP_FOLDER: '$(Agent.WorkFolder)\\tmp_folder'
+    TMP_FOLDER: '$(Agent.WorkFolder)\tmp_folder'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
@@ -31,7 +31,7 @@ jobs:
     - task: PublishTestResults@2
       condition: always()
       inputs:
-        testResultsFiles: '$(Agent.WorkFolder)\\$(JUNITXML)'
+        testResultsFiles: '$(TMP_FOLDER)\$(JUNITXML)'
         testRunTitle: 'Windows-$(CONDA_PY)'
       displayName: 'Publish Test Results'
 
