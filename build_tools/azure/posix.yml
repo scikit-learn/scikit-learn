@@ -37,3 +37,7 @@ jobs:
         testRunTitle: ${{ format('{0}-$(DISTRIB)-$(PYTHON_VERSION)', parameters.name) }}
       displayName: 'Publish Test Results'
       condition: succeededOrFailed()
+    - script: |
+        build_tools/azure/upload_codecov.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'), eq(variables['DISTRIB'], 'conda'))
+      failOnStderr: false

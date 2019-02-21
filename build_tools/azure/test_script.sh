@@ -37,5 +37,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD sklearn.preprocessing
+$TEST_CMD sklearn
 set +x
