@@ -431,7 +431,9 @@ class SVC(BaseSVC):
 
     The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
-    to scale to dataset with more than a couple of 10000 samples.
+    to scale to dataset with more than a couple of 10000 samples. For large
+    datasets consider using :class:`LinearSVC` or :class:`SGDClassifier`
+    instead.
 
     The multiclass support is handled according to a one-vs-one scheme.
 
@@ -791,7 +793,11 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     The free parameters in the model are C and epsilon.
 
-    The implementation is based on libsvm.
+    The implementation is based on libsvm. The fit time complexity
+    is more than quadratic with the number of samples which makes it hard
+    to scale to dataset with more than a couple of 10000 samples. For large
+    datasets consider using :class:`LinearSVR` or :class:`SGDRegressor`
+    instead.
 
     Read more in the :ref:`User Guide <svm_regression>`.
 
