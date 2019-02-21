@@ -237,7 +237,8 @@ class GaussianNB(BaseNB):
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
             new_mu = np.average(X, axis=0, weights=sample_weight)
-            new_var = np.average((X - new_mu) ** 2, axis=0, weights=sample_weight)
+            new_var = np.average((X - new_mu) ** 2, axis=0,
+                                 weights=sample_weight)
         else:
             n_new = X.shape[0]
             new_var = np.var(X, axis=0)
@@ -437,6 +438,7 @@ class GaussianNB(BaseNB):
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
+
 
 _ALPHA_MIN = 1e-10
 
