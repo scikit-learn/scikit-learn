@@ -16,9 +16,6 @@ __all__ = ["SelfTrainingClassifier"]
 
 def _validate_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
-    if estimator is None:
-        raise ValueError("base_classifier cannot be None!")
-
     if not hasattr(estimator, "predict_proba"):
         name = type(estimator).__name__
         msg = "base_classifier ({}) should implement predict_proba!"
@@ -146,7 +143,10 @@ class SelfTrainingClassifier(BaseEstimator):
             returns an instance of self.
         """
         X, y = check_X_y(X, y)
-        _validate_estimator(self.base_classifier)
+
+        if self.base_classifier is None:
+            raise ValueError("base_classifier cannot be None!")
+
         self.base_classifier_ = clone(self.base_classifier)
 
         if self.max_iter is not None and self.max_iter < 0:
@@ -163,8 +163,8 @@ class SelfTrainingClassifier(BaseEstimator):
 
         if self.max_iter is not None and not (
                 self.n_iter_no_change < self.max_iter):
-            msg = "n_iter_no_change >= max_iter means "
-            msg += "early stopping is ineffective"
+            msg = "n_iter_no_change >= max_iter means " \
+                "early stopping is ineffective"
             warnings.warn(msg, UserWarning)
 
         has_label = y != -1
@@ -185,6 +185,9 @@ class SelfTrainingClassifier(BaseEstimator):
             self.base_classifier_.fit(
                 X[safe_mask(X, has_label)],
                 self.y_labels_[safe_mask(self.y_labels_, has_label)])
+
+            if self.n_iter_ == 1:
+                _validate_estimator(self.base_classifier)
 
             # Predict on the unlabeled samples
             prob = self.base_classifier_.predict_proba(

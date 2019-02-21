@@ -38,11 +38,11 @@ y_train_missing_dummies = lb.fit_transform(y_train_missing_labels)
 
 def test_missing_predict_proba():
     # Check that an error is thrown if predict_proba is not implemented
-    base_classifier = SVC(gamma="scale")
+    base_classifier = SVC(probability=False)
     self_training = SelfTrainingClassifier(base_classifier)
     message = "base_classifier (SVC) should implement predict_proba!"
     assert_raise_message(ValueError, message, self_training.fit, X_train,
-                         y_train)
+                         y_train_missing_labels)
 
 
 def test_none_classifier():
