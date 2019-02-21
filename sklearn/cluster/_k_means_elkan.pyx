@@ -32,7 +32,7 @@ cpdef _init_bounds_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                          int[::1] labels,
                          floating[::1] upper_bounds,
                          floating[:, ::1] lower_bounds):
-    """Initialize upper and lower bounds for each sample.
+    """Initialize upper and lower bounds for each sample for dense input data.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
     centers this calculates the upper bounds and lower bounds for each sample.
@@ -49,23 +49,24 @@ cpdef _init_bounds_dense(np.ndarray[floating, ndim=2, mode='c'] X,
 
     Parameters
     ----------
-    X : nd-array, shape (n_samples, n_features)
+    X : {float32, float64} ndarray, shape (n_samples, n_features)
         The input data.
 
-    centers : nd-array, shape (n_clusters, n_features)
+    centers : {float32, float64} ndarray, shape (n_clusters, n_features)
         The cluster centers.
 
-    center_half_distances : nd-array, shape (n_clusters, n_clusters)
+    center_half_distances : {float32, float64} ndarray, /
+shape (n_clusters, n_clusters)
         The half of the distance between any 2 clusters centers.
 
-    labels : nd-array, shape(n_samples)
+    labels : int ndarray, shape(n_samples)
         The label for each sample. This array is modified in place.
 
-    lower_bounds : nd-array, shape(n_samples, n_clusters)
+    lower_bounds : {float32, float64} ndarray, shape(n_samples, n_clusters)
         The lower bound on the distance between a sample and each cluster
         center. It is modified in place.
 
-    upper_bounds : nd-array, shape(n_samples,)
+    upper_bounds : {float32, float64} ndarray, shape(n_samples,)
         The distance of each sample from its closest cluster center.  This is
         modified in place by the function.
     """
@@ -100,6 +101,44 @@ cpdef _init_bounds_sparse(X,
                           int[::1] labels,
                           floating[::1] upper_bounds,
                           floating[:, ::1] lower_bounds):
+    """Initialize upper and lower bounds for each sample for sparse input data.
+
+    Given X, centers and the pairwise distances divided by 2.0 between the
+    centers this calculates the upper bounds and lower bounds for each sample.
+    The upper bound for each sample is set to the distance between the sample
+    and the closest center.
+
+    The lower bound for each sample is a one-dimensional array of n_clusters.
+    For each sample i assume that the previously assigned cluster is c1 and the
+    previous closest distance is dist, for a new cluster c2, the
+    lower_bound[i][c2] is set to distance between the sample and this new
+    cluster, if and only if dist > center_half_distances[c1][c2]. This prevents
+    computation of unnecessary distances for each sample to the clusters that
+    it is unlikely to be assigned to.
+
+    Parameters
+    ----------
+    X : csr_matrix, shape (n_samples, n_features)
+        The input data.
+
+    centers : {float32, float64} ndarray, shape (n_clusters, n_features)
+        The cluster centers.
+
+    center_half_distances : {float32, float64} ndarray, /
+shape (n_clusters, n_clusters)
+        The half of the distance between any 2 clusters centers.
+
+    labels : int ndarray, shape(n_samples)
+        The label for each sample. This array is modified in place.
+
+    lower_bounds : {float32, float64} ndarray, shape(n_samples, n_clusters)
+        The lower bound on the distance between a sample and each cluster
+        center. It is modified in place.
+
+    upper_bounds : {float32, float64} ndarray, shape(n_samples,)
+        The distance of each sample from its closest cluster center.  This is
+        modified in place by the function.
+    """
     cdef:
         int n_samples = X.shape[0]
         int n_clusters = centers.shape[0]
@@ -149,7 +188,7 @@ cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[::1] center_shift,
                                      int n_jobs=-1,
                                      bint update_centers=True):
-    """Single iteration of K-means elkan algorithm
+    """Single iteration of K-means elkan algorithm with dense input.
 
     Update labels and centers (inplace), for one iteration, distributed
     over data chunks.
@@ -288,7 +327,7 @@ cdef void _update_chunk_dense(floating *X,
                               floating[::1] upper_bounds,
                               floating[:, ::1] lower_bounds,
                               bint update_centers) nogil:
-    """K-means combined EM step for one data chunk
+    """K-means combined EM step for one dense data chunk.
 
     Compute the partial contribution of a single data chunk to the labels and
     centers.
@@ -365,7 +404,7 @@ cpdef void _elkan_iter_chunked_sparse(X,
                                       floating[::1] center_shift,
                                       int n_jobs=-1,
                                       bint update_centers=True):
-    """Single iteration of K-means elkan algorithm with sparse input
+    """Single iteration of K-means elkan algorithm with sparse input.
 
     Update labels and centers (inplace), for one iteration, distributed
     over data chunks.
@@ -517,7 +556,7 @@ cdef void _update_chunk_sparse(floating[::1] X_data,
                                floating[::1] upper_bounds,
                                floating[:, ::1] lower_bounds,
                                bint update_centers) nogil:
-    """K-means combined EM step for one data chunk
+    """K-means combined EM step for one sparse data chunk.
 
     Compute the partial contribution of a single data chunk to the labels and
     centers.

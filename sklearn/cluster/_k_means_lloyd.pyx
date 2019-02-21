@@ -35,7 +35,7 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[::1] center_shift,
                                      int n_jobs=-1,
                                      bint update_centers=True):
-    """Single iteration of K-means lloyd algorithm
+    """Single iteration of K-means lloyd algorithm with dense input.
 
     Update labels and centers (inplace), for one iteration, distributed
     over data chunks.
@@ -154,7 +154,7 @@ cdef void _update_chunk_dense(floating *X,
                               floating[::1] weight_in_clusters,
                               int[::1] labels,
                               bint update_centers) nogil:
-    """K-means combined EM step for one data chunk
+    """K-means combined EM step for one dense data chunk.
 
     Compute the partial contribution of a single data chunk to the labels and
     centers.
@@ -217,7 +217,7 @@ cpdef void _lloyd_iter_chunked_sparse(X,
                                       floating[::1] center_shift,
                                       int n_jobs=-1,
                                       bint update_centers=True):
-    """Single iteration of K-means lloyd algorithm
+    """Single iteration of K-means lloyd algorithm with sparse input.
 
     Update labels and centers (inplace), for one iteration, distributed
     over data chunks.
@@ -345,7 +345,7 @@ cdef void _update_chunk_sparse(floating[::1] X_data,
                                floating[::1] weight_in_clusters,
                                int[::1] labels,
                                bint update_centers) nogil:
-    """K-means combined EM step for one data chunk
+    """K-means combined EM step for one sparse data chunk.
 
     Compute the partial contribution of a single data chunk to the labels and
     centers.
