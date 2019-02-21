@@ -6,7 +6,6 @@ Author: fabian.pedregosa@inria.fr
 
 import  numpy as np
 cimport numpy as np
-cimport cython
 
 from ..utils._cython_blas cimport _dot, _axpy, _scal, _nrm2
 
@@ -54,10 +53,10 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
         raise ValueError(error_msg)
     
     cdef BlasFunctions blas_functions
-    blas_functions.dot = _dot[cython.double]
+    blas_functions.dot = _dot[double]
     blas_functions.axpy = _axpy[double]
-    blas_functions.scal = _scal[cython.double]
-    blas_functions.nrm2 = _nrm2[cython.double]
+    blas_functions.scal = _scal[double]
+    blas_functions.nrm2 = _nrm2[double]
 
     # early return
     with nogil:
