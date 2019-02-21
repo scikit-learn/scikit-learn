@@ -7,12 +7,12 @@ import json
 import time
 from os.path import expanduser
 
+from joblib import delayed, Parallel, Memory
 import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.datasets import fetch_rcv1, load_iris, load_digits, \
     fetch_20newsgroups_vectorized
-from sklearn.utils import delayed, Parallel, Memory
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split

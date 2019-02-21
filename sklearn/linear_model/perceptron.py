@@ -131,7 +131,7 @@ class Perceptron(BaseSGDClassifier):
     >>> from sklearn.linear_model import Perceptron
     >>> X, y = load_digits(return_X_y=True)
     >>> clf = Perceptron(tol=1e-3, random_state=0)
-    >>> clf.fit(X, y)
+    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     Perceptron(alpha=0.0001, class_weight=None, early_stopping=False, eta0=1.0,
           fit_intercept=True, max_iter=None, n_iter=None, n_iter_no_change=5,
           n_jobs=None, penalty=None, random_state=0, shuffle=True, tol=0.001,
@@ -154,7 +154,7 @@ class Perceptron(BaseSGDClassifier):
                  n_jobs=None, random_state=0, early_stopping=False,
                  validation_fraction=0.1, n_iter_no_change=5,
                  class_weight=None, warm_start=False, n_iter=None):
-        super(Perceptron, self).__init__(
+        super().__init__(
             loss="perceptron", penalty=penalty, alpha=alpha, l1_ratio=0,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, random_state=random_state,

@@ -30,7 +30,7 @@ Y = iris.target
 
 logreg = LogisticRegression(C=1e5, solver='lbfgs', multi_class='multinomial')
 
-# we create an instance of Neighbours Classifier and fit the data.
+# Create an instance of Logistic Regression Classifier and fit the data.
 logreg.fit(X, Y)
 
 # Plot the decision boundary. For that, we will assign a color to each

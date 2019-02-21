@@ -24,10 +24,6 @@ from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
-from ..externals import six
-
-zip = six.moves.zip
-map = six.moves.map
 
 __all__ = [
     'label_binarize',
@@ -794,7 +790,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> mlb.classes_
     array([1, 2, 3])
 
-    >>> mlb.fit_transform([set(['sci-fi', 'thriller']), set(['comedy'])])
+    >>> mlb.fit_transform([{'sci-fi', 'thriller'}, {'comedy'}])
     array([[0, 1, 1],
            [1, 0, 0]])
     >>> list(mlb.classes_)
@@ -824,6 +820,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         self : returns this MultiLabelBinarizer instance
         """
+        self._cached_dict = None
         if self.classes is None:
             classes = sorted(set(itertools.chain.from_iterable(y)))
         elif len(set(self.classes)) < len(self.classes):
@@ -853,6 +850,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
             `y[i]`, and 0 otherwise.
         """
+        self._cached_dict = None
+
         if self.classes is not None:
             return self.fit(y).transform(y)
 
@@ -896,13 +895,20 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        class_to_index = dict(zip(self.classes_, range(len(self.classes_))))
+        class_to_index = self._build_cache()
         yt = self._transform(y, class_to_index)
 
         if not self.sparse_output:
             yt = yt.toarray()
 
         return yt
+
+    def _build_cache(self):
+        if self._cached_dict is None:
+            self._cached_dict = dict(zip(self.classes_,
+                                         range(len(self.classes_))))
+
+        return self._cached_dict
 
     def _transform(self, y, class_mapping):
         """Transforms the label sets with a given mapping

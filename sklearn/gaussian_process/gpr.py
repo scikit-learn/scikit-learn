@@ -15,7 +15,6 @@ from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
-from sklearn.utils.deprecation import deprecated
 from sklearn.exceptions import ConvergenceWarning
 
 
@@ -157,18 +156,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.normalize_y = normalize_y
         self.copy_X_train = copy_X_train
         self.random_state = random_state
-
-    @property
-    @deprecated("Attribute rng was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def rng(self):
-        return self._rng
-
-    @property
-    @deprecated("Attribute y_train_mean was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def y_train_mean(self):
-        return self._y_train_mean
 
     def fit(self, X, y):
         """Fit Gaussian process regression model.

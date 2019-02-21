@@ -25,8 +25,7 @@ from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
-from .utils import Parallel, delayed
-from .externals import six
+from .utils._joblib import Parallel, delayed
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -60,8 +59,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
     return estimator
 
 
-class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
-                                              MetaEstimatorMixin)):
+class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
+                           metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
@@ -221,7 +220,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     """
 
     def __init__(self, estimator, n_jobs=None):
-        super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
+        super().__init__(estimator, n_jobs)
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
@@ -245,7 +244,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         -------
         self : object
         """
-        super(MultiOutputRegressor, self).partial_fit(
+        super().partial_fit(
             X, y, sample_weight=sample_weight)
 
     def score(self, X, y, sample_weight=None):
@@ -312,7 +311,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     """
 
     def __init__(self, estimator, n_jobs=None):
-        super(MultiOutputClassifier, self).__init__(estimator, n_jobs)
+        super().__init__(estimator, n_jobs)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -368,7 +367,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return np.mean(np.all(y == y_pred, axis=1))
 
 
-class _BaseChain(six.with_metaclass(ABCMeta, BaseEstimator)):
+class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     def __init__(self, base_estimator, order=None, cv=None, random_state=None):
         self.base_estimator = base_estimator
         self.order = order
@@ -511,9 +510,9 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         If cv is None the true labels are used when fitting. Otherwise
         possible inputs for cv are:
 
-        * integer, to specify the number of folds in a (Stratified)KFold,
-        * An object to be used as a cross-validation generator.
-        * An iterable yielding train, test splits.
+        - integer, to specify the number of folds in a (Stratified)KFold,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -562,10 +561,10 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        super(ClassifierChain, self).fit(X, Y)
-        self.classes_ = []
-        for chain_idx, estimator in enumerate(self.estimators_):
-            self.classes_.append(estimator.classes_)
+        super().fit(X, Y)
+        self.classes_ = [estimator.classes_
+                         for chain_idx, estimator
+                         in enumerate(self.estimators_)]
         return self
 
     @if_delegate_has_method('base_estimator')
@@ -667,9 +666,9 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         If cv is None the true labels are used when fitting. Otherwise
         possible inputs for cv are:
 
-        * integer, to specify the number of folds in a (Stratified)KFold,
-        * An object to be used as a cross-validation generator.
-        * An iterable yielding train, test splits.
+        - integer, to specify the number of folds in a (Stratified)KFold,
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -708,5 +707,5 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        super(RegressorChain, self).fit(X, Y)
+        super().fit(X, Y)
         return self

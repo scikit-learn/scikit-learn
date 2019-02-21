@@ -3,7 +3,6 @@ import warnings
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.testing import assert_allclose_dense_sparse
-from ..externals.six import string_types
 
 
 def _identity(X):
@@ -136,7 +135,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
             self._check_inverse_transform(X)
         return self
 
-    def transform(self, X, y='deprecated'):
+    def transform(self, X):
         """Transform X using the forward function.
 
         Parameters
@@ -144,22 +143,14 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Input array.
 
-        y : (ignored)
-            .. deprecated::0.19
-
         Returns
         -------
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
+        return self._transform(X, func=self.func, kw_args=self.kw_args)
 
-        return self._transform(X, y=y, func=self.func, kw_args=self.kw_args)
-
-    def inverse_transform(self, X, y='deprecated'):
+    def inverse_transform(self, X):
         """Transform X using the inverse function.
 
         Parameters
@@ -167,35 +158,18 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Input array.
 
-        y : (ignored)
-            .. deprecated::0.19
-
         Returns
         -------
         X_out : array-like, shape (n_samples, n_features)
             Transformed input.
         """
-        if not isinstance(y, string_types) or y != 'deprecated':
-            warnings.warn("The parameter y on inverse_transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-        return self._transform(X, y=y, func=self.inverse_func,
+        return self._transform(X, func=self.inverse_func,
                                kw_args=self.inv_kw_args)
 
-    def _transform(self, X, y=None, func=None, kw_args=None):
+    def _transform(self, X, func=None, kw_args=None):
         X = self._check_input(X)
 
         if func is None:
             func = _identity
 
-        if (not isinstance(self.pass_y, string_types) or
-                self.pass_y != 'deprecated'):
-            # We do this to know if pass_y was set to False / True
-            pass_y = self.pass_y
-            warnings.warn("The parameter pass_y is deprecated since 0.19 and "
-                          "will be removed in 0.21", DeprecationWarning)
-        else:
-            pass_y = False
-
-        return func(X, *((y,) if pass_y else ()),
-                    **(kw_args if kw_args else {}))
+        return func(X, **(kw_args if kw_args else {}))

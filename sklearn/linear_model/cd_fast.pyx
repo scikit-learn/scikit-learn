@@ -16,6 +16,11 @@ from cpython cimport bool
 from cython cimport floating
 import warnings
 
+from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2, 
+                                   _copy, _scal)
+from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
+
+
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t
 
@@ -94,50 +99,6 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
     return m
 
 
-cdef extern from "cblas.h":
-    enum CBLAS_ORDER:
-        CblasRowMajor=101
-        CblasColMajor=102
-    enum CBLAS_TRANSPOSE:
-        CblasNoTrans=111
-        CblasTrans=112
-        CblasConjTrans=113
-        AtlasConj=114
-
-    void daxpy "cblas_daxpy"(int N, double alpha, double *X, int incX,
-                             double *Y, int incY) nogil
-    void saxpy "cblas_saxpy"(int N, float alpha, float *X, int incX,
-                             float *Y, int incY) nogil
-    double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY
-                             ) nogil
-    float sdot "cblas_sdot"(int N, float *X, int incX, float *Y,
-                            int incY) nogil
-    double dasum "cblas_dasum"(int N, double *X, int incX) nogil
-    float sasum "cblas_sasum"(int N, float *X, int incX) nogil
-    void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
-                           double *X, int incX, double *Y, int incY,
-                           double *A, int lda) nogil
-    void sger "cblas_sger"(CBLAS_ORDER Order, int M, int N, float alpha,
-                           float *X, int incX, float *Y, int incY,
-                           float *A, int lda) nogil
-    void dgemv "cblas_dgemv"(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
-                             int M, int N, double alpha, double *A, int lda,
-                             double *X, int incX, double beta,
-                             double *Y, int incY) nogil
-    void sgemv "cblas_sgemv"(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
-                             int M, int N, float alpha, float *A, int lda,
-                             float *X, int incX, float beta,
-                             float *Y, int incY) nogil
-    double dnrm2 "cblas_dnrm2"(int N, double *X, int incX) nogil
-    float snrm2 "cblas_snrm2"(int N, float *X, int incX) nogil
-    void dcopy "cblas_dcopy"(int N, double *X, int incX, double *Y,
-                             int incY) nogil
-    void scopy "cblas_scopy"(int N, float *X, int incX, float *Y,
-                            int incY) nogil
-    void dscal "cblas_dscal"(int N, double alpha, double *X, int incX) nogil
-    void sscal "cblas_sscal"(int N, float alpha, float *X, int incX) nogil
-
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -156,21 +117,10 @@ def enet_coordinate_descent(floating[::1] w,
 
     """
 
-    # fused types version of BLAS functions
     if floating is float:
         dtype = np.float32
-        gemv = sgemv
-        dot = sdot
-        axpy = saxpy
-        asum = sasum
-        copy = scopy
     else:
         dtype = np.float64
-        gemv = dgemv
-        dot = ddot
-        axpy = daxpy
-        asum = dasum
-        copy = dcopy
 
     # get the data information into easy vars
     cdef unsigned int n_samples = X.shape[0]
@@ -209,14 +159,12 @@ def enet_coordinate_descent(floating[::1] w,
 
     with nogil:
         # R = y - np.dot(X, w)
-        copy(n_samples, &y[0], 1, &R[0], 1)
-        gemv(CblasColMajor, CblasNoTrans,
-             n_samples, n_features, -1.0, &X[0, 0], n_samples,
-             &w[0], 1,
-             1.0, &R[0], 1)
+        _copy(n_samples, &y[0], 1, &R[0], 1)
+        _gemv(ColMajor, NoTrans, n_samples, n_features, -1.0, &X[0, 0], 
+              n_samples, &w[0], 1, 1.0, &R[0], 1)
 
         # tol *= np.dot(y, y)
-        tol *= dot(n_samples, &y[0], 1, &y[0], 1)
+        tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -234,10 +182,10 @@ def enet_coordinate_descent(floating[::1] w,
 
                 if w_ii != 0.0:
                     # R += w_ii * X[:,ii]
-                    axpy(n_samples, w_ii, &X[0, ii], 1, &R[0], 1)
+                    _axpy(n_samples, w_ii, &X[0, ii], 1, &R[0], 1)
 
                 # tmp = (X[:,ii]*R).sum()
-                tmp = dot(n_samples, &X[0, ii], 1, &R[0], 1)
+                tmp = _dot(n_samples, &X[0, ii], 1, &R[0], 1)
 
                 if positive and tmp < 0:
                     w[ii] = 0.0
@@ -247,7 +195,7 @@ def enet_coordinate_descent(floating[::1] w,
 
                 if w[ii] != 0.0:
                     # R -=  w[ii] * X[:,ii] # Update residual
-                    axpy(n_samples, -w[ii], &X[0, ii], 1, &R[0], 1)
+                    _axpy(n_samples, -w[ii], &X[0, ii], 1, &R[0], 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -264,7 +212,7 @@ def enet_coordinate_descent(floating[::1] w,
 
                 # XtA = np.dot(X.T, R) - beta * w
                 for i in range(n_features):
-                    XtA[i] = (dot(n_samples, &X[0, i], 1, &R[0], 1)
+                    XtA[i] = (_dot(n_samples, &X[0, i], 1, &R[0], 1)
                               - beta * w[i])
 
                 if positive:
@@ -273,10 +221,10 @@ def enet_coordinate_descent(floating[::1] w,
                     dual_norm_XtA = abs_max(n_features, &XtA[0])
 
                 # R_norm2 = np.dot(R, R)
-                R_norm2 = dot(n_samples, &R[0], 1, &R[0], 1)
+                R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
 
                 # w_norm2 = np.dot(w, w)
-                w_norm2 = dot(n_features, &w[0], 1, &w[0], 1)
+                w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
 
                 if (dual_norm_XtA > alpha):
                     const = alpha / dual_norm_XtA
@@ -286,11 +234,11 @@ def enet_coordinate_descent(floating[::1] w,
                     const = 1.0
                     gap = R_norm2
 
-                l1_norm = asum(n_features, &w[0], 1)
+                l1_norm = _asum(n_features, &w[0], 1)
 
                 # np.dot(R.T, y)
                 gap += (alpha * l1_norm
-                        - const * dot(n_samples, &R[0], 1, &y[0], 1)
+                        - const * _dot(n_samples, &R[0], 1, &y[0], 1)
                         + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
                 if gap < tol:
@@ -336,15 +284,10 @@ def sparse_enet_coordinate_descent(floating [::1] w,
     cdef floating[:] X_T_R
     cdef floating[:] XtA
 
-    # fused types version of BLAS functions
     if floating is float:
         dtype = np.float32
-        dot = sdot
-        asum = sasum
     else:
         dtype = np.float64
-        dot = ddot
-        asum = dasum
 
     norm_cols_X = np.zeros(n_features, dtype=dtype)
     X_T_R = np.zeros(n_features, dtype=dtype)
@@ -397,7 +340,7 @@ def sparse_enet_coordinate_descent(floating [::1] w,
             startptr = endptr
 
         # tol *= np.dot(y, y)
-        tol *= dot(n_samples, &y[0], 1, &y[0], 1)
+        tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
 
         for n_iter in range(max_iter):
 
@@ -486,10 +429,10 @@ def sparse_enet_coordinate_descent(floating [::1] w,
                     dual_norm_XtA = abs_max(n_features, &XtA[0])
 
                 # R_norm2 = np.dot(R, R)
-                R_norm2 = dot(n_samples, &R[0], 1, &R[0], 1)
+                R_norm2 = _dot(n_samples, &R[0], 1, &R[0], 1)
 
                 # w_norm2 = np.dot(w, w)
-                w_norm2 = dot(n_features, &w[0], 1, &w[0], 1)
+                w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
                 if (dual_norm_XtA > alpha):
                     const = alpha / dual_norm_XtA
                     A_norm2 = R_norm2 * const**2
@@ -498,9 +441,9 @@ def sparse_enet_coordinate_descent(floating [::1] w,
                     const = 1.0
                     gap = R_norm2
 
-                l1_norm = asum(n_features, &w[0], 1)
+                l1_norm = _asum(n_features, &w[0], 1)
 
-                gap += (alpha * l1_norm - const * dot(
+                gap += (alpha * l1_norm - const * _dot(
                             n_samples,
                             &R[0], 1,
                             &y[0], 1
@@ -536,17 +479,10 @@ def enet_coordinate_descent_gram(floating[::1] w,
         q = X^T y
     """
 
-    # fused types version of BLAS functions
     if floating is float:
         dtype = np.float32
-        dot = sdot
-        axpy = saxpy
-        asum = sasum
     else:
         dtype = np.float64
-        dot = ddot
-        axpy = daxpy
-        asum = dasum
 
     # get the data information into easy vars
     cdef unsigned int n_samples = y.shape[0]
@@ -601,8 +537,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
 
                 if w_ii != 0.0:
                     # H -= w_ii * Q[ii]
-                    axpy(n_features, -w_ii, Q_ptr + ii * n_features, 1,
-                         H_ptr, 1)
+                    _axpy(n_features, -w_ii, Q_ptr + ii * n_features, 1,
+                          H_ptr, 1)
 
                 tmp = q[ii] - H[ii]
 
@@ -614,8 +550,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
 
                 if w[ii] != 0.0:
                     # H +=  w[ii] * Q[ii] # Update H = X.T X w
-                    axpy(n_features, w[ii], Q_ptr + ii * n_features, 1,
-                         H_ptr, 1)
+                    _axpy(n_features, w[ii], Q_ptr + ii * n_features, 1,
+                          H_ptr, 1)
 
                 # update the maximum absolute coefficient update
                 d_w_ii = fabs(w[ii] - w_ii)
@@ -631,7 +567,7 @@ def enet_coordinate_descent_gram(floating[::1] w,
                 # criterion
 
                 # q_dot_w = np.dot(w, q)
-                q_dot_w = dot(n_features, w_ptr, 1, q_ptr, 1)
+                q_dot_w = _dot(n_features, w_ptr, 1, q_ptr, 1)
 
                 for ii in range(n_features):
                     XtA[ii] = q[ii] - H[ii] - beta * w[ii]
@@ -647,7 +583,7 @@ def enet_coordinate_descent_gram(floating[::1] w,
                 R_norm2 = y_norm2 + tmp - 2.0 * q_dot_w
 
                 # w_norm2 = np.dot(w, w)
-                w_norm2 = dot(n_features, &w[0], 1, &w[0], 1)
+                w_norm2 = _dot(n_features, &w[0], 1, &w[0], 1)
 
                 if (dual_norm_XtA > alpha):
                     const = alpha / dual_norm_XtA
@@ -657,8 +593,8 @@ def enet_coordinate_descent_gram(floating[::1] w,
                     const = 1.0
                     gap = R_norm2
 
-                # The call to dasum is equivalent to the L1 norm of w
-                gap += (alpha * asum(n_features, &w[0], 1) -
+                # The call to asum is equivalent to the L1 norm of w
+                gap += (alpha * _asum(n_features, &w[0], 1) -
                         const * y_norm2 +  const * q_dot_w +
                         0.5 * beta * (1 + const ** 2) * w_norm2)
 
@@ -686,25 +622,11 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
         (1/2) * norm(y - X w, 2)^2 + l1_reg ||w||_21 + (1/2) * l2_reg norm(w, 2)^2
 
     """
-    # fused types version of BLAS functions
+
     if floating is float:
         dtype = np.float32
-        dot = sdot
-        nrm2 = snrm2
-        asum = sasum
-        copy = scopy
-        scal = sscal
-        ger = sger
-        gemv = sgemv
     else:
         dtype = np.float64
-        dot = ddot
-        nrm2 = dnrm2
-        asum = dasum
-        copy = dcopy
-        scal = dscal
-        ger = dger
-        gemv = dgemv
 
     # get the data information into easy vars
     cdef unsigned int n_samples = X.shape[0]
@@ -759,11 +681,11 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
         for ii in range(n_samples):
             for jj in range(n_tasks):
                 R[ii, jj] = Y[ii, jj] - (
-                    dot(n_features, X_ptr + ii, n_samples, W_ptr + jj, n_tasks)
+                    _dot(n_features, X_ptr + ii, n_samples, W_ptr + jj, n_tasks)
                     )
 
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
-        tol = tol * nrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
+        tol = tol * _nrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -778,33 +700,32 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                     continue
 
                 # w_ii = W[:, ii] # Store previous value
-                copy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)
+                _copy(n_tasks, W_ptr + ii * n_tasks, 1, wii_ptr, 1)
 
                 # if np.sum(w_ii ** 2) != 0.0:  # can do better
-                if nrm2(n_tasks, wii_ptr, 1) != 0.0:
+                if _nrm2(n_tasks, wii_ptr, 1) != 0.0:
                     # R += np.dot(X[:, ii][:, None], w_ii[None, :]) # rank 1 update
-                    ger(CblasRowMajor, n_samples, n_tasks, 1.0,
+                    _ger(RowMajor, n_samples, n_tasks, 1.0,
                          X_ptr + ii * n_samples, 1,
                          wii_ptr, 1, &R[0, 0], n_tasks)
 
                 # tmp = np.dot(X[:, ii][None, :], R).ravel()
-                gemv(CblasRowMajor, CblasTrans,
-                      n_samples, n_tasks, 1.0, &R[0, 0], n_tasks,
-                      X_ptr + ii * n_samples, 1, 0.0, &tmp[0], 1)
+                _gemv(RowMajor, Trans, n_samples, n_tasks, 1.0, &R[0, 0],
+                      n_tasks, X_ptr + ii * n_samples, 1, 0.0, &tmp[0], 1)
 
                 # nn = sqrt(np.sum(tmp ** 2))
-                nn = nrm2(n_tasks, &tmp[0], 1)
+                nn = _nrm2(n_tasks, &tmp[0], 1)
 
                 # W[:, ii] = tmp * fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg)
-                copy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
-                scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
-                          W_ptr + ii * n_tasks, 1)
+                _copy(n_tasks, &tmp[0], 1, W_ptr + ii * n_tasks, 1)
+                _scal(n_tasks, fmax(1. - l1_reg / nn, 0) / (norm_cols_X[ii] + l2_reg),
+                      W_ptr + ii * n_tasks, 1)
 
                 # if np.sum(W[:, ii] ** 2) != 0.0:  # can do better
-                if nrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
+                if _nrm2(n_tasks, W_ptr + ii * n_tasks, 1) != 0.0:
                     # R -= np.dot(X[:, ii][:, None], W[:, ii][None, :])
                     # Update residual : rank 1 update
-                    ger(CblasRowMajor, n_samples, n_tasks, -1.0,
+                    _ger(RowMajor, n_samples, n_tasks, -1.0,
                          X_ptr + ii * n_samples, 1, W_ptr + ii * n_tasks, 1,
                          &R[0, 0], n_tasks)
 
@@ -826,7 +747,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 # XtA = np.dot(X.T, R) - l2_reg * W.T
                 for ii in range(n_features):
                     for jj in range(n_tasks):
-                        XtA[ii, jj] = dot(
+                        XtA[ii, jj] = _dot(
                             n_samples, X_ptr + ii * n_samples, 1,
                             &R[0, 0] + jj, n_tasks
                             ) - l2_reg * W[jj, ii]
@@ -835,15 +756,16 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 dual_norm_XtA = 0.0
                 for ii in range(n_features):
                     # np.sqrt(np.sum(XtA ** 2, axis=1))
-                    XtA_axis1norm = nrm2(n_tasks, &XtA[0, 0] + ii * n_tasks, 1)
+                    XtA_axis1norm = _nrm2(n_tasks,
+                                          &XtA[0, 0] + ii * n_tasks, 1)
                     if XtA_axis1norm > dual_norm_XtA:
                         dual_norm_XtA = XtA_axis1norm
 
                 # TODO: use squared L2 norm directly
                 # R_norm = linalg.norm(R, ord='fro')
                 # w_norm = linalg.norm(W, ord='fro')
-                R_norm = nrm2(n_samples * n_tasks, &R[0, 0], 1)
-                w_norm = nrm2(n_features * n_tasks, W_ptr, 1)
+                R_norm = _nrm2(n_samples * n_tasks, &R[0, 0], 1)
+                w_norm = _nrm2(n_features * n_tasks, W_ptr, 1)
                 if (dual_norm_XtA > l1_reg):
                     const =  l1_reg / dual_norm_XtA
                     A_norm = R_norm * const
@@ -862,7 +784,7 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 l21_norm = 0.0
                 for ii in range(n_features):
                     # np.sqrt(np.sum(W ** 2, axis=0))
-                    l21_norm += nrm2(n_tasks, W_ptr + n_tasks * ii, 1)
+                    l21_norm += _nrm2(n_tasks, W_ptr + n_tasks * ii, 1)
 
                 gap += l1_reg * l21_norm - const * ry_sum + \
                      0.5 * l2_reg * (1 + const ** 2) * (w_norm ** 2)

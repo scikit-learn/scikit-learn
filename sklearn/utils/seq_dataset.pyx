@@ -326,7 +326,7 @@ cdef enum:
 
 
 # rand_r replacement using a 32bit XorShift generator
-# See http://www.jstatsoft.org/v08/i14/paper for details
+# See https://www.jstatsoft.org/v08/i14/paper for details
 # XXX copied over from sklearn/tree/_tree.pyx, should refactor
 cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:
     seed[0] ^= <np.uint32_t>(seed[0] << 13)

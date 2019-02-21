@@ -286,7 +286,7 @@ small, as shown in the example and cited reference.
 .. topic:: References:
 
  * `"Web Scale K-Means clustering"
-   <http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
+   <https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
    D. Sculley, *Proceedings of the 19th international conference on World
    wide web* (2010)
 
@@ -387,7 +387,7 @@ is updated according to the following equation:
 
 .. math::
 
-    x_i^{t+1} = x_i^t + m(x_i^t)
+    x_i^{t+1} = m(x_i^t)
 
 Where :math:`N(x_i)` is the neighborhood of samples within a given distance
 around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed for each
@@ -445,7 +445,7 @@ works well for a small number of clusters but is not advised when using
 many clusters.
 
 For two clusters, it solves a convex relaxation of the `normalised
-cuts <http://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
+cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
 the similarity graph: cutting the graph in two so that the weight of the
 edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images:
@@ -1008,7 +1008,7 @@ the user is advised
 
  * Tian Zhang, Raghu Ramakrishnan, Maron Livny
    BIRCH: An efficient data clustering method for large databases.
-   http://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+   https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
 
  * Roberto Perdisci
    JBirch - Java implementation of BIRCH clustering algorithm
@@ -1144,7 +1144,7 @@ random labelings by defining the adjusted Rand index as follows:
 .. topic:: References
 
  * `Comparing Partitions
-   <http://link.springer.com/article/10.1007%2FBF01908075>`_
+   <https://link.springer.com/article/10.1007%2FBF01908075>`_
    L. Hubert and P. Arabie, Journal of Classification 1985
 
  * `Wikipedia entry for the adjusted Rand index
@@ -1311,24 +1311,24 @@ more broadly common names.
    Machine Learning Research 3: 583–617.
    `doi:10.1162/153244303321897735 <http://strehl.com/download/strehl-jmlr02.pdf>`_.
 
- * [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
-   for clusterings comparison". Proceedings of the 26th Annual International
-   Conference on Machine Learning - ICML '09.
-   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
-   ISBN 9781605585161.
-
- * [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
-   Clusterings Comparison: Variants, Properties, Normalization and
-   Correction for Chance". JMLR
-   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
-
  * `Wikipedia entry for the (normalized) Mutual Information
    <https://en.wikipedia.org/wiki/Mutual_Information>`_
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
    
- * [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
+ .. [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
+   for clusterings comparison". Proceedings of the 26th Annual International
+   Conference on Machine Learning - ICML '09.
+   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
+   ISBN 9781605585161.
+
+ .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
+   Clusterings Comparison: Variants, Properties, Normalization and
+   Correction for Chance". JMLR
+   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+   
+ .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
    detection algorithms on artificial networks". Scientific Reports 6: 30750.
    `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
@@ -1483,7 +1483,7 @@ mean of homogeneity and completeness**:
 .. topic:: References
 
  * `V-Measure: A conditional entropy-based external cluster evaluation
-   measure <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
+   measure <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
  .. [B2011] `Identication and Characterization of Events in Social Media
@@ -1551,7 +1551,7 @@ Advantages
 - **Upper-bounded at 1**:  Values close to zero indicate two label
   assignments that are largely independent, while values close to one
   indicate significant agreement. Further, values of exactly 0 indicate
-  **purely** independent label assignments and a AMI of exactly 1 indicates
+  **purely** independent label assignments and a FMI of exactly 1 indicates
   that the two label assignments are equal (with or without permutation).
 
 - **No assumption is made on the cluster structure**: can be used
@@ -1652,17 +1652,17 @@ Drawbacks
  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
-.. _calinski_harabaz_index:
+.. _calinski_harabasz_index:
 
-Calinski-Harabaz Index
-----------------------
+Calinski-Harabasz Index
+-----------------------
 
-If the ground truth labels are not known, the Calinski-Harabaz index
-(:func:`sklearn.metrics.calinski_harabaz_score`) - also known as the Variance 
+If the ground truth labels are not known, the Calinski-Harabasz index
+(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 
-Calinski-Harabaz score relates to a model with better defined clusters.
+Calinski-Harabasz score relates to a model with better defined clusters.
 
-For :math:`k` clusters, the Calinski-Harabaz score :math:`s` is given as the
+For :math:`k` clusters, the Calinski-Harabasz score :math:`s` is given as the
 ratio of the between-clusters dispersion mean and the within-cluster
 dispersion:
 
@@ -1689,16 +1689,15 @@ points in cluster :math:`q`.
   >>> X = dataset.data
   >>> y = dataset.target
 
-In normal usage, the Calinski-Harabaz index is applied to the results of a
+In normal usage, the Calinski-Harabasz index is applied to the results of a
 cluster analysis.
 
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
-  >>> metrics.calinski_harabaz_score(X, labels)  # doctest: +ELLIPSIS
+  >>> metrics.calinski_harabasz_score(X, labels)  # doctest: +ELLIPSIS
   561.62...
-
 
 Advantages
 ~~~~~~~~~~
@@ -1712,7 +1711,7 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- The Calinski-Harabaz index is generally higher for convex clusters than other
+- The Calinski-Harabasz index is generally higher for convex clusters than other
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 
@@ -1750,7 +1749,7 @@ symmetric is:
 Then the Davies-Bouldin index is defined as:
 
 .. math::
-   DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
+   DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
 
 Zero is the lowest possible score. Values closer to zero indicate a better
 partition.
@@ -1791,12 +1790,12 @@ Drawbacks
    "A Cluster Separation Measure"
    IEEE Transactions on Pattern Analysis and Machine Intelligence.
    PAMI-1 (2): 224-227.
-   `doi:10.1109/TPAMI.1979.4766909 <http://dx.doi.org/10.1109/TPAMI.1979.4766909>`_.
+   `doi:10.1109/TPAMI.1979.4766909 <https://doi.org/10.1109/TPAMI.1979.4766909>`_.
 
  * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
    "On Clustering Validation Techniques"
    Journal of Intelligent Information Systems, 17(2-3), 107-145.
-   `doi:10.1023/A:1012801612483 <http://dx.doi.org/10.1023/A:1012801612483>`_.
+   `doi:10.1023/A:1012801612483 <https://doi.org/10.1023/A:1012801612483>`_.
 
  * `Wikipedia entry for Davies-Bouldin index
    <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
