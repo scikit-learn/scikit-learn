@@ -17,8 +17,7 @@ from sklearn.datasets.openml import (_open_openml_url,
                                      _retry_with_clean_cache)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
-from sklearn.externals.six import string_types
-from sklearn.externals.six.moves.urllib.error import HTTPError
+from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
 
@@ -101,7 +100,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
     for feature in data_by_id.feature_names:
-        assert isinstance(feature, string_types)
+        assert isinstance(feature, str)
 
     # TODO: pass in a list of expected nominal features
     for feature, categories in data_by_id.categories.items():
@@ -153,7 +152,7 @@ def _monkey_patch_webbased_functions(context,
     path_suffix = '.gz'
     read_fn = gzip.open
 
-    class MockHTTPResponse(object):
+    class MockHTTPResponse:
         def __init__(self, data, is_gzip):
             self.data = data
             self.is_gzip = is_gzip

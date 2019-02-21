@@ -2,7 +2,6 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import numbers
 import warnings
@@ -12,7 +11,6 @@ from scipy import sparse
 
 from .. import get_config as _get_config
 from ..base import BaseEstimator, TransformerMixin
-from ..externals import six
 from ..utils import check_array
 from ..utils import deprecated
 from ..utils.fixes import _argmax, _object_dtype_isnan
@@ -21,7 +19,6 @@ from ..utils.validation import check_is_fitted
 from .base import _transform_selected
 from .label import _encode, _encode_check_unknown
 
-range = six.moves.range
 
 __all__ = [
     'OneHotEncoder',
@@ -110,7 +107,14 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
                     X_mask[:, i] = valid_mask
-                    Xi = Xi.copy()
+                    # cast Xi into the largest string type necessary
+                    # to handle different lengths of numpy strings
+                    if (self.categories_[i].dtype.kind in ('U', 'S')
+                            and self.categories_[i].itemsize > Xi.itemsize):
+                        Xi = Xi.astype(self.categories_[i].dtype)
+                    else:
+                        Xi = Xi.copy()
+
                     Xi[~valid_mask] = self.categories_[i][0]
             _, encoded = _encode(Xi, self.categories_[i], encode=True)
             X_int[:, i] = encoded
@@ -238,6 +242,7 @@ class OneHotEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
+    ... # doctest: +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None, categories=None,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
@@ -325,6 +330,9 @@ class OneHotEncoder(_BaseEncoder):
             self._legacy_mode = True
 
         else:  # n_values = 'auto'
+            # n_values can also be None (default to catch usage), so set
+            # _n_values to 'auto' explicitly
+            self._n_values = 'auto'
             if self.handle_unknown == 'ignore':
                 # no change in behaviour, no need to raise deprecation warning
                 self._legacy_mode = False
@@ -360,11 +368,10 @@ class OneHotEncoder(_BaseEncoder):
                     )
                     warnings.warn(msg, FutureWarning)
                     self._legacy_mode = True
-                    self._n_values = 'auto'
 
         # if user specified categorical_features -> always use legacy mode
         if self.categorical_features is not None:
-            if (isinstance(self.categorical_features, six.string_types)
+            if (isinstance(self.categorical_features, str)
                     and self.categorical_features == 'all'):
                 warnings.warn(
                     "The 'categorical_features' keyword is deprecated in "
@@ -431,7 +438,7 @@ class OneHotEncoder(_BaseEncoder):
                              "be able to use arbitrary integer values as "
                              "category identifiers.")
         n_samples, n_features = X.shape
-        if (isinstance(self._n_values, six.string_types) and
+        if (isinstance(self._n_values, str) and
                 self._n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
         elif isinstance(self._n_values, numbers.Integral):
@@ -446,7 +453,7 @@ class OneHotEncoder(_BaseEncoder):
             except (ValueError, TypeError):
                 raise TypeError("Wrong type for parameter `n_values`. Expected"
                                 " 'auto', int or array of ints, got %r"
-                                % type(X))
+                                % type(self._n_values))
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
@@ -466,7 +473,7 @@ class OneHotEncoder(_BaseEncoder):
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
 
-        if (isinstance(self._n_values, six.string_types) and
+        if (isinstance(self._n_values, str) and
                 self._n_values == 'auto'):
             mask = np.array(out.sum(axis=0)).ravel() != 0
             active_features = np.where(mask)[0]
@@ -546,7 +553,7 @@ class OneHotEncoder(_BaseEncoder):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-        if (isinstance(self._n_values, six.string_types) and
+        if (isinstance(self._n_values, str) and
                 self._n_values == 'auto'):
             out = out[:, self._active_features_]
 
@@ -697,7 +704,7 @@ class OneHotEncoder(_BaseEncoder):
         feature_names = []
         for i in range(len(cats)):
             names = [
-                input_features[i] + '_' + six.text_type(t) for t in cats[i]]
+                input_features[i] + '_' + str(t) for t in cats[i]]
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)

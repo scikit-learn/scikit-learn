@@ -215,6 +215,25 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
+.. note:: **Using custom scorers in functions where n_jobs > 1**
+
+    While defining the custom scoring function alongside the calling function 
+    should work out of the box with the default joblib backend (loky), 
+    importing it from another module will be a more robust approach and work
+    independently of the joblib backend. 
+
+    For example, to use, ``n_jobs`` greater than 1 in the example below, 
+    ``custom_scoring_function`` function is saved in a user-created module 
+    (``custom_scorer_module.py``) and imported::
+
+        >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
+        >>> cross_val_score(model,
+        ...  X_train,
+        ...  y_train,
+        ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
+        ...  cv=5,
+        ...  n_jobs=-1) # doctest: +SKIP
+
 .. _multimetric_scoring:
 
 Using multiple metric evaluation
@@ -442,10 +461,10 @@ the total number of predictions).
 
 In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
-accuracy, as appropriate, will drop to :math:`\frac{1}{\text{n\_classes}}`.
+accuracy, as appropriate, will drop to :math:`\frac{1}{n\_classes}`.
 
 The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
-the range :math:`\frac{1}{1 - \text{n\_classes}}` to 1, inclusive, with
+the range :math:`\frac{1}{1 - n\_classes}` to 1, inclusive, with
 performance at random scoring 0.
 
 If :math:`y_i` is the true value of the :math:`i`-th sample, and :math:`w_i`
@@ -465,7 +484,7 @@ defined as:
 
 With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
-\frac{1}{\text{n\_classes}}`.  In the binary case, this is also known as
+\frac{1}{n\_classes}`.  In the binary case, this is also known as
 `*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
 or *informedness*.
 
@@ -599,7 +618,7 @@ and inferred labels::
         class 1       0.00      0.00      0.00         1
         class 2       1.00      0.50      0.67         2
    <BLANKLINE>
-      micro avg       0.60      0.60      0.60         5
+       accuracy                           0.60         5
       macro avg       0.56      0.50      0.49         5
    weighted avg       0.67      0.60      0.59         5
    <BLANKLINE>
@@ -887,7 +906,8 @@ To make this more explicit, consider the following notation:
 * :math:`y_l` the subset of :math:`y` with label :math:`l`
 * similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
   :math:`\hat{y}`
-* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
+* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}` for some
+  sets :math:`A` and :math:`B`
 * :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
   (Conventions vary on handling :math:`B = \emptyset`; this implementation uses
   :math:`R(A, B):=0`, and similar for :math:`P`.)
@@ -978,7 +998,7 @@ with a svm classifier in a binary class problem::
   >>> X = [[0], [1]]
   >>> y = [-1, 1]
   >>> est = svm.LinearSVC(random_state=0)
-  >>> est.fit(X, y)
+  >>> est.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
        intercept_scaling=1, loss='squared_hinge', max_iter=1000,
        multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
@@ -996,7 +1016,7 @@ with a svm classifier in a multiclass problem::
   >>> Y = np.array([0, 1, 2, 3])
   >>> labels = np.array([0, 1, 2, 3])
   >>> est = svm.LinearSVC()
-  >>> est.fit(X, Y)
+  >>> est.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
        intercept_scaling=1, loss='squared_hinge', max_iter=1000,
        multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
@@ -1541,7 +1561,7 @@ score associated with each label
 the ranking loss is defined as
 
 .. math::
-  \text{ranking\_loss}(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
+  ranking\_loss(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
     \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0(n_\text{labels} - ||y_i||_0)}
     \left|\left\{(k, l): \hat{f}_{ik} \leq \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
 
@@ -1617,7 +1637,7 @@ then the explained variance is estimated as follow:
 
 .. math::
 
-  \texttt{explained\_{}variance}(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+  explained\_{}variance(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
 
 The best possible score is 1.0, lower values are worse.
 

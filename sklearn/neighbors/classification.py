@@ -125,7 +125,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
 
-        super(KNeighborsClassifier, self).__init__(
+        super().__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
             leaf_size=leaf_size, metric=metric, p=p,
@@ -332,7 +332,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_label=None, metric_params=None, n_jobs=None,
                  **kwargs):
-        super(RadiusNeighborsClassifier, self).__init__(
+        super().__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,

@@ -20,7 +20,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
@@ -30,7 +29,8 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
-from sklearn.externals.joblib import parallel_backend
+from sklearn.utils._joblib import joblib
+from sklearn.utils._joblib import parallel_backend
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -51,6 +51,7 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
 P = (1, 2, 3, 4, np.inf)
+JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
 # Filter deprecation warnings.
 neighbors.kneighbors_graph = ignore_warnings(neighbors.kneighbors_graph)
@@ -1125,7 +1126,7 @@ def test_valid_brute_metric_for_auto_algorithm():
     # check that there is a metric that is valid for brute
     # but not ball_tree (so we actually test something)
     assert_in("cosine", VALID_METRICS['brute'])
-    assert_false("cosine" in VALID_METRICS['ball_tree'])
+    assert "cosine" not in VALID_METRICS['ball_tree']
 
     # Metric which don't required any additional parameter
     require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
@@ -1396,7 +1397,7 @@ def test_same_radius_neighbors_parallel(algorithm):
     assert_array_almost_equal(graph, graph_parallel)
 
 
-@pytest.mark.parametrize('backend', ['loky', 'multiprocessing', 'threading'])
+@pytest.mark.parametrize('backend', JOBLIB_BACKENDS)
 @pytest.mark.parametrize('algorithm', ALGORITHMS)
 def test_knn_forcing_backend(backend, algorithm):
     # Non-regression test which ensure the knn methods are properly working

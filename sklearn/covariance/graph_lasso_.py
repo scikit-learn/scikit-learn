@@ -5,6 +5,7 @@ estimator.
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 # Copyright: INRIA
+from collections.abc import Sequence
 import warnings
 import operator
 import sys
@@ -19,11 +20,10 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
 from ..utils import deprecated
-from ..utils.fixes import _Sequence as Sequence
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..model_selection import check_cv, cross_val_score
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -243,6 +243,9 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 coefs = np.dot(sub_covariance, coefs)
                 covariance_[idx, indices != idx] = coefs
                 covariance_[indices != idx, idx] = coefs
+            if not np.isfinite(precision_.sum()):
+                raise FloatingPointError('The system is too ill-conditioned '
+                                         'for this solver')
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
             if verbose:
@@ -334,7 +337,7 @@ class GraphicalLasso(EmpiricalCovariance):
 
     def __init__(self, alpha=.01, mode='cd', tol=1e-4, enet_tol=1e-4,
                  max_iter=100, verbose=False, assume_centered=False):
-        super(GraphicalLasso, self).__init__(assume_centered=assume_centered)
+        super().__init__(assume_centered=assume_centered)
         self.alpha = alpha
         self.mode = mode
         self.tol = tol
@@ -578,7 +581,7 @@ class GraphicalLassoCV(GraphicalLasso):
     def __init__(self, alphas=4, n_refinements=4, cv='warn', tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
                  verbose=False, assume_centered=False):
-        super(GraphicalLassoCV, self).__init__(
+        super().__init__(
             mode=mode, tol=tol, verbose=verbose, enet_tol=enet_tol,
             max_iter=max_iter, assume_centered=assume_centered)
         self.alphas = alphas

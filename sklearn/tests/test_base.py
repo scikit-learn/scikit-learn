@@ -6,8 +6,6 @@ import scipy.sparse as sp
 
 import sklearn
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
@@ -67,7 +65,7 @@ class Buggy(BaseEstimator):
         self.a = 1
 
 
-class NoEstimator(object):
+class NoEstimator:
     def __init__(self):
         pass
 
@@ -116,7 +114,7 @@ def test_clone_2():
     selector = SelectFpr(f_classif, alpha=0.1)
     selector.own_attribute = "test"
     new_selector = clone(selector)
-    assert_false(hasattr(new_selector, "own_attribute"))
+    assert not hasattr(new_selector, "own_attribute")
 
 
 def test_clone_buggy():
@@ -167,6 +165,15 @@ def test_clone_sparse_matrices():
         assert_array_equal(clf.empty.toarray(), clf_cloned.empty.toarray())
 
 
+def test_clone_estimator_types():
+    # Check that clone works for parameters that are types rather than
+    # instances
+    clf = MyEstimator(empty=MyEstimator)
+    clf2 = clone(clf)
+
+    assert clf.empty is clf2.empty
+
+
 def test_repr():
     # Smoke test the repr of the base estimator.
     my_estimator = MyEstimator()
@@ -178,7 +185,7 @@ def test_repr():
     )
 
     some_est = T(a=["long_params"] * 1000)
-    assert_equal(len(repr(some_est)), 415)
+    assert_equal(len(repr(some_est)), 495)
 
 
 def test_str():
@@ -203,8 +210,8 @@ def test_is_classifier():
     assert is_classifier(svc)
     assert is_classifier(GridSearchCV(svc, {'C': [0.1, 1]}))
     assert is_classifier(Pipeline([('svc', svc)]))
-    assert_true(is_classifier(Pipeline(
-        [('svc_cv', GridSearchCV(svc, {'C': [0.1, 1]}))])))
+    assert is_classifier(Pipeline(
+        [('svc_cv', GridSearchCV(svc, {'C': [0.1, 1]}))]))
 
 
 def test_set_params():
@@ -226,7 +233,7 @@ def test_set_params_passes_all_parameters():
 
     class TestDecisionTree(DecisionTreeClassifier):
         def set_params(self, **kwargs):
-            super(TestDecisionTree, self).set_params(**kwargs)
+            super().set_params(**kwargs)
             # expected_kwargs is in test scope
             assert kwargs == expected_kwargs
             return self
@@ -353,7 +360,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
     tree = TreeNoVersion().fit(iris.data, iris.target)
 
     tree_pickle_noversion = pickle.dumps(tree)
-    assert_false(b"version" in tree_pickle_noversion)
+    assert b"version" not in tree_pickle_noversion
     message = pickle_error_message.format(estimator="TreeNoVersion",
                                           old_version="pre-0.18",
                                           current_version=sklearn.__version__)
@@ -374,7 +381,7 @@ def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
         TreeNoVersion.__module__ = module_backup
 
 
-class DontPickleAttributeMixin(object):
+class DontPickleAttributeMixin:
     def __getstate__(self):
         data = self.__dict__.copy()
         data["_attribute_not_pickled"] = None

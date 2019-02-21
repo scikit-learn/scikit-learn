@@ -59,7 +59,7 @@ def test_samme_proba():
 
     # _samme_proba calls estimator.predict_proba.
     # Make a mock object so I can control what gets returned.
-    class MockEstimator(object):
+    class MockEstimator:
         def predict_proba(self, X):
             assert_array_equal(X.shape, probs.shape)
             return probs
@@ -328,7 +328,7 @@ def test_sparse_classification():
 
         def fit(self, X, y, sample_weight=None):
             """Modification on fit caries data type for later verification."""
-            super(CustomSVC, self).fit(X, y, sample_weight=sample_weight)
+            super().fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)
             return self
 
@@ -425,7 +425,7 @@ def test_sparse_regression():
 
         def fit(self, X, y, sample_weight=None):
             """Modification on fit caries data type for later verification."""
-            super(CustomSVR, self).fit(X, y, sample_weight=sample_weight)
+            super().fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)
             return self
 

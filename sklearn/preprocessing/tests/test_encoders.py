@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import division
 
 import re
 
@@ -226,6 +225,18 @@ def test_one_hot_encoder_categorical_features():
     assert_raises(ValueError, oh.fit, X)
 
 
+def test_one_hot_encoder_categorical_features_ignore_unknown():
+    # GH12881 bug in combination of categorical_features with ignore
+    X = np.array([[1, 2, 3], [4, 5, 6], [2, 3, 2]]).T
+    oh = OneHotEncoder(categorical_features=[2], handle_unknown='ignore')
+
+    with ignore_warnings(category=DeprecationWarning):
+        res = oh.fit_transform(X)
+
+    expected = np.array([[1, 0, 1], [0, 1, 0], [1, 2, 3], [4, 5, 6]]).T
+    assert_array_equal(res.toarray(), expected)
+
+
 def test_one_hot_encoder_handle_unknown():
     X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
     X2 = np.array([[4, 1, 1]])
@@ -271,6 +282,23 @@ def test_one_hot_encoder_no_categorical_features():
     assert_array_equal(X, X_tr)
     assert_array_equal(enc.get_feature_names(), expected_features)
     assert enc.categories_ == []
+
+
+def test_one_hot_encoder_handle_unknown_strings():
+    X = np.array(['11111111', '22', '333', '4444']).reshape((-1, 1))
+    X2 = np.array(['55555', '22']).reshape((-1, 1))
+    # Non Regression test for the issue #12470
+    # Test the ignore option, when categories are numpy string dtype
+    # particularly when the known category strings are larger
+    # than the unknown category strings
+    oh = OneHotEncoder(handle_unknown='ignore')
+    oh.fit(X)
+    X2_passed = X2.copy()
+    assert_array_equal(
+        oh.transform(X2_passed).toarray(),
+        np.array([[0.,  0.,  0.,  0.], [0.,  1.,  0.,  0.]]))
+    # ensure transformed data was not modified in place
+    assert_array_equal(X2, X2_passed)
 
 
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
@@ -512,12 +540,12 @@ def test_one_hot_encoder_feature_names():
 
 def test_one_hot_encoder_feature_names_unicode():
     enc = OneHotEncoder()
-    X = np.array([[u'c❤t1', u'dat2']], dtype=object).T
+    X = np.array([['c❤t1', 'dat2']], dtype=object).T
     enc.fit(X)
     feature_names = enc.get_feature_names()
-    assert_array_equal([u'x0_c❤t1', u'x0_dat2'], feature_names)
-    feature_names = enc.get_feature_names(input_features=[u'n👍me'])
-    assert_array_equal([u'n👍me_c❤t1', u'n👍me_dat2'], feature_names)
+    assert_array_equal(['x0_c❤t1', 'x0_dat2'], feature_names)
+    feature_names = enc.get_feature_names(input_features=['n👍me'])
+    assert_array_equal(['n👍me_c❤t1', 'n👍me_dat2'], feature_names)
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
