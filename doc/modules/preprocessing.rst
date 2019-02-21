@@ -579,7 +579,7 @@ example, these intervals are defined as:
  - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
  - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
- Based on these bin intervals, ``X`` is transformed as follows::
+Based on these bin intervals, ``X`` is transformed as follows::
 
   >>> est.transform(X)                      # doctest: +SKIP
   array([[ 0., 1., 1.],
