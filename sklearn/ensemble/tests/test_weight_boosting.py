@@ -484,7 +484,7 @@ def test_sample_weight_adaboost_regressor():
 
     boost = AdaBoostRegressor(DummyEstimator(), n_estimators=3)
     boost.fit(X, y_regr)
-assert_equal(len(boost.estimator_weights_), len(boost.estimator_errors_))       
+    assert_equal(len(boost.estimator_weights_), len(boost.estimator_errors_))       
         
         
 def test_multidimensional_X():
