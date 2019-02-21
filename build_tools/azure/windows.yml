@@ -20,8 +20,11 @@ jobs:
   steps:
     - task: CondaEnvironment@1
       inputs:
-        updateConda: no
-        packageSpecs: ''
+        updateConda: true
+        createCustomEnvironment: true
+        environmentName: "testvenv"
+        packageSpecs: 'python=$(CONDA_PY) numpy scipy cython pytest wheel pillow'
+        cleanEnvironment: true
     - script: |
         build_tools\\azure\\install.cmd
       displayName: 'Install'
