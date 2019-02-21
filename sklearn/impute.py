@@ -1273,4 +1273,5 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         return self.fit(X, y).transform(X)
 
     def _more_tags(self):
-        return {'allow_nan': True}
+        return {'allow_nan': True,
+                'X_types': ['2darray', 'str']}
