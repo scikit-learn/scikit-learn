@@ -46,4 +46,4 @@ jobs:
       condition: and(succeeded(), eq(variables['COVERAGE'], 'true'), eq(variables['DISTRIB'], 'conda'))
       displayName: 'Upload To Codecov'
       env:
-        CODECOV_TOKEN: $(codecov.key)
+        CODECOV_TOKEN: $(CODECOV_TOKEN)
