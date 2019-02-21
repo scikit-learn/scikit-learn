@@ -9,7 +9,8 @@ from sklearn.utils.testing import assert_equal, assert_greater
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
 
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.ensemble import weight_boosting
@@ -319,65 +320,6 @@ def test_sample_weight_missing():
     assert_raises(ValueError, clf.fit, X, y_regr)
 
 
-def test_sample_weight_adaboost_regressor():
-    """
-    AdaBoostRegressor should work without sample_weights in the base estimator
-
-    The random weighted sampling is done internally in the _boost method in
-    AdaBoostRegressor.
-    """
-    class DummyEstimator(BaseEstimator):
-
-        def fit(self, X, y):
-            pass
-
-        def predict(self, X):
-            return np.zeros(len(X))
-
-    boost = AdaBoostRegressor(DummyEstimator(), n_estimators=3)
-    boost.fit(X, y_regr)
-    assert_equal(len(boost.estimator_weights_), len(boost.estimator_errors_))
-
-
-def test_multidimensional_X():
-    class DummyClassifier(BaseEstimator):
-
-        def fit(self, X, y, sample_weight=None):
-            self.classes_ = np.unique(y)
-            return self
-
-        def predict(self, X):
-            n_samples = len(X)
-            predictions = np.random.choice(self.classes_, n_samples)
-            return predictions
-
-        def predict_proba(self, X):
-            n_samples = len(X)
-            n_classes = len(self.classes_)
-            probas = np.random.randn(n_samples, n_classes)
-            return probas
-
-    class DummyRegressor(BaseEstimator):
-
-        def fit(self, X, y):
-            return self
-
-        def predict(self, X):
-            n_samples = len(X)
-            predictions = np.random.randn(n_samples)
-            return predictions
-
-    X = np.random.randn(50, 3, 3).tolist()
-    yc = np.random.choice([0, 1], 50)
-    yr = np.random.randn(50)
-
-    boost = AdaBoostClassifier(DummyClassifier())
-    boost.fit(X, yc)
-
-    boost = AdaBoostRegressor(DummyRegressor())
-    boost.fit(X, yr)
-
-
 def test_sparse_classification():
     # Check classification with sparse input.
 
@@ -471,7 +413,8 @@ def test_sparse_classification():
         # Verify sparsity of data is maintained during training
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-        assert all([(t == csc_matrix or t == csr_matrix) for t in types])
+        assert all([(t == csc_matrix or t == csr_matrix)
+                   for t in types])
 
 
 def test_sparse_regression():
@@ -521,4 +464,67 @@ def test_sparse_regression():
 
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-        assert all([(t == csc_matrix or t == csr_matrix) for t in types])
+        assert all([(t == csc_matrix or t == csr_matrix)
+                   for t in types])
+
+
+def test_sample_weight_adaboost_regressor():
+    """
+    AdaBoostRegressor should work without sample_weights in the base estimator
+    The random weighted sampling is done internally in the _boost method in
+    AdaBoostRegressor.
+    """
+    class DummyEstimator(BaseEstimator):
+
+        def fit(self, X, y):
+            pass
+
+        def predict(self, X):
+            return np.zeros(X.shape[0])
+
+    boost = AdaBoostRegressor(DummyEstimator(), n_estimators=3)
+    boost.fit(X, y_regr)
+assert_equal(len(boost.estimator_weights_), len(boost.estimator_errors_))       
+        
+        
+def test_multidimensional_X():
+    """ 
+    Check that the AdaBoost estimators can work with n-dimensional
+    data matrix
+    """
+    class DummyClassifier(BaseEstimator):
+
+        def fit(self, X, y, sample_weight=None):
+            self.classes_ = np.unique(y)
+            return self
+
+        def predict(self, X):
+            n_samples = len(X)
+            predictions = np.random.choice(self.classes_, n_samples)
+            return predictions
+
+        def predict_proba(self, X):
+            n_samples = len(X)
+            n_classes = len(self.classes_)
+            probas = np.random.randn(n_samples, n_classes)
+            return probas
+
+    class DummyRegressor(BaseEstimator):
+
+        def fit(self, X, y):
+            return self
+
+        def predict(self, X):
+            n_samples = len(X)
+            predictions = np.random.randn(n_samples)
+            return predictions
+
+    X = np.random.randn(50, 3, 3)
+    yc = np.random.choice([0, 1], 50)
+    yr = np.random.randn(50)
+
+    boost = AdaBoostClassifier(DummyClassifier())
+    boost.fit(X, yc)
+
+    boost = AdaBoostRegressor(DummyRegressor())
+    boost.fit(X, yr)
