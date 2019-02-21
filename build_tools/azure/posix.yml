@@ -8,7 +8,7 @@ jobs:
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
-    TEST_DIR: '/tmp/sklearn'
+    TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     VIRTUALENV: 'testvenv'
     JUNITXML: 'test-data.xml'
     OMP_NUM_THREADS: '4'
@@ -45,3 +45,5 @@ jobs:
         build_tools/azure/upload_codecov.sh
       condition: and(succeeded(), eq(variables['COVERAGE'], 'true'), eq(variables['DISTRIB'], 'conda'))
       displayName: 'Upload To Codecov'
+      env:
+        CODECOV_TOKEN: $(codecov.key)
