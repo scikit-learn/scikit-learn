@@ -1459,7 +1459,7 @@ Scikit-learn introduced estimator tags in version 0.21.  These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
 sparse matrix support, supported output types and supported methods.  The
 estimator tags are a dictionary returned by the method ``_get_tags()``.  These
-tags are used by the common tests and the ``check_estimator`` function to
+tags are used by the common tests and the :func:`sklearn.utils.estomator_checks.check_estimator` function to
 decide what tests to run and what input data is appropriate. Tags can depends on
 estimator parameters or even system architecture and can in general only be
 determined at runtime.
