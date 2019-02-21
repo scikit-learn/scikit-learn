@@ -23,18 +23,6 @@ fi
 
 make_conda() {
     TO_INSTALL="$@"
-    # Install Miniconda
-    if [[ "$UNAMESTR" == 'Linux' ]]; then
-        wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    elif [[ "$UNAMESTR" == 'Darwin' ]]; then
-        wget -q https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh
-    else
-        exit 1
-    fi
-    chmod +x miniconda.sh
-    ./miniconda.sh -b
-
-    export PATH=$HOME/miniconda3/bin:$PATH
     conda update --yes conda
     conda create -n $VIRTUALENV --yes $TO_INSTALL
     source activate $VIRTUALENV

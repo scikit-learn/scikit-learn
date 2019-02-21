@@ -19,6 +19,9 @@ jobs:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
+    - bash: echo "##vso[task.prependpath]$CONDA/bin"
+      displayName: Add conda to PATH
+      condition: eq(variables['DISTRIB'], 'conda')
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'
@@ -31,6 +34,7 @@ jobs:
     - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test soft dependency'
+      condition: and(eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'), eq(variables['DISTRIB'], 'conda'))
     - task: PublishTestResults@2
       inputs:
         testResultsFiles: ${{ '$(TEST_DIR)/$(JUNITXML)' }}
