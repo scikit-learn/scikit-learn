@@ -36,7 +36,9 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_array, check_random_state, check_X_y, safe_indexing
 from ..utils.extmath import stable_cumsum
 from ..metrics import accuracy_score, r2_score
-from sklearn.utils.validation import has_fit_parameter, check_is_fitted, _num_samples
+from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import has_fit_parameter
+from sklearn.utils.validation import _num_samples
 
 __all__ = [
     'AdaBoostClassifier',
