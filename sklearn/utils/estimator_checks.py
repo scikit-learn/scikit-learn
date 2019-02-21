@@ -101,7 +101,7 @@ def _yield_checks(name, estimator):
         # cross-decomposition's "transform" returns X and Y
         yield check_pipeline_consistency
 
-    if (not tags["allow_nan"] and not tags["no_validation"]):
+    if not tags["allow_nan"] and not tags["no_validation"]:
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 

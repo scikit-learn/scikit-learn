@@ -58,7 +58,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         True by default.
     sort : boolean, optional.
         Whether ``feature_names_`` and ``vocabulary_`` should be
-        sorted when fitting.  True by default.
+        sorted when fitting. True by default.
 
     Attributes
     ----------
