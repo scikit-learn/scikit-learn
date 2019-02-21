@@ -1,6 +1,7 @@
 import os
 
 from sklearn._build_utils import maybe_cythonize_extensions
+from sklearn._build_utils import get_blas_info  # noqa
 
 
 def configuration(parent_package='', top_path=None):
