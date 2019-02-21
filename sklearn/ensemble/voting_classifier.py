@@ -337,8 +337,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well
         """
-        return super(VotingClassifier,
-                     self)._get_params('estimators', deep=deep)
+        return super()._get_params('estimators', deep=deep)
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """

@@ -139,10 +139,6 @@ less than 1s:
 
 .. centered:: |orig_img| |pca_img|
 
-Note: with the optional parameter ``svd_solver='randomized'``, we also
-need to give :class:`PCA` the size of the lower-dimensional space
-``n_components`` as a mandatory input parameter.
-
 If we note :math:`n_{\max} = \max(n_{\mathrm{samples}}, n_{\mathrm{features}})` and
 :math:`n_{\min} = \min(n_{\mathrm{samples}}, n_{\mathrm{features}})`, the time complexity
 of the randomized :class:`PCA` is :math:`O(n_{\max}^2 \cdot n_{\mathrm{components}})`

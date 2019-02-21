@@ -113,7 +113,7 @@ def _check_stop_list(stop):
         return frozenset(stop)
 
 
-class VectorizerMixin(object):
+class VectorizerMixin:
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")

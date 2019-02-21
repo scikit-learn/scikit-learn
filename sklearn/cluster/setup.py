@@ -13,6 +13,7 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
 
     config = Configuration('cluster', parent_package, top_path)
+
     config.add_extension('_dbscan_inner',
                          sources=['_dbscan_inner.pyx'],
                          include_dirs=[numpy.get_include()],
