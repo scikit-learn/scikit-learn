@@ -45,8 +45,7 @@ def configuration(parent_package='', top_path=None):
                          join('src', 'liblinear', '*.cpp')]
 
     liblinear_depends = [join('src', 'liblinear', '*.h'),
-                         join('src', 'liblinear', 'liblinear_helper.c'),
-                         join('..', 'utils', '_cython_blas_helpers.h')]
+                         join('src', 'liblinear', 'liblinear_helper.c')]
 
     config.add_extension('liblinear',
                          sources=liblinear_sources,
