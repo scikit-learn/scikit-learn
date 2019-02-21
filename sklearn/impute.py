@@ -1037,6 +1037,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.fit_transform(X)
         return self
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 class MissingIndicator(BaseEstimator, TransformerMixin):
     """Binary indicators for missing values.
