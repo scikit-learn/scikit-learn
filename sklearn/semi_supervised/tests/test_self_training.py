@@ -69,10 +69,17 @@ def test_invalid_params(max_iter, threshold):
 
 def test_invalid_early_stopping():
     base_classifier = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(base_classifier, early_stopping=True,
+    st = SelfTrainingClassifier(base_classifier,
                                 n_iter_no_change=-10)
     message = "n_iter_no_change must be > 0, got"
     assert_raise_message(ValueError, message, st.fit, X_train, y_train)
+
+    st = SelfTrainingClassifier(base_classifier, max_iter=5,
+                                n_iter_no_change=10)
+    assert_warns_message(UserWarning,
+                         "n_iter_no_change >= max_iter means early stopping is"
+                         " ineffective",
+                         st.fit, X_train, y_train)
 
 
 @pytest.mark.parametrize("base_classifier",
@@ -261,13 +268,12 @@ def test_early_stopping():
     st = SelfTrainingClassifier(base_classifier,
                                 max_iter=max_iter,
                                 threshold=threshold,
-                                early_stopping=True,
                                 n_iter_no_change=1)
 
     st_no_stop = SelfTrainingClassifier(base_classifier,
                                         max_iter=max_iter,
                                         threshold=threshold,
-                                        early_stopping=False)
+                                        n_iter_no_change=None)
     st.fit(X_train, y_train_missing_labels)
     st_no_stop.fit(X_train, y_train_missing_labels)
     assert st.n_iter_ < 5

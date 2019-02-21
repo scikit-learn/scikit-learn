@@ -51,14 +51,11 @@ class SelfTrainingClassifier(BaseEstimator):
         until all unlabeled samples have been labeled. In this case, be aware
         that the fit may never terminate.
 
-    early_stopping: boolean, optional (default=True)
-        If early stopping should be applied. If `early_stopping` is True, the
+    n_iter_no_change: int, optional (default=3)
+        If not `None`, early stopping will be applied. In this case, the
         classifier will count the amount of new labels in each iteration. If
-        no new labels are added for `n_iter_no_change` iterations, the
-        classifier will stop fitting early.
-
-    n_iter_no_change: int, option (default=3)
-        Only relevant if `early_stopping` is true. See `early_stopping`.
+        no new labels are added to the training set for `n_iter_no_change`
+        iterations, the classifier will stop fitting early.
 
     Attributes
     ----------
@@ -116,13 +113,11 @@ class SelfTrainingClassifier(BaseEstimator):
                  base_classifier,
                  threshold=0.75,
                  max_iter=10,
-                 early_stopping=True,
                  n_iter_no_change=3):
         self.base_classifier = base_classifier
         self.threshold = threshold
         self.max_iter = max_iter
         self.n_iter_no_change = n_iter_no_change
-        self.early_stopping = early_stopping
 
     def fit(self, X, y):
         """
@@ -157,12 +152,12 @@ class SelfTrainingClassifier(BaseEstimator):
             msg = "threshold must be in [0,1), got {}".format(self.threshold)
             raise ValueError(msg)
 
-        if not 0 < self.n_iter_no_change:
+        if self.n_iter_no_change is not None and not 0 < self.n_iter_no_change:
             msg = "n_iter_no_change must be > 0, got {}"
             raise ValueError(msg.format(self.n_iter_no_change))
 
-        if self.max_iter is not None and not (
-                self.n_iter_no_change < self.max_iter):
+        if self.max_iter is not None and self.n_iter_no_change is not None \
+                and self.n_iter_no_change >= self.max_iter:
             msg = "n_iter_no_change >= max_iter means " \
                 "early stopping is ineffective"
             warnings.warn(msg, UserWarning)
@@ -205,13 +200,14 @@ class SelfTrainingClassifier(BaseEstimator):
             has_label[new_labels_idx] = True
             self.y_labeled_iter_[new_labels_idx] = self.n_iter_
 
-            if self.early_stopping and new_labels_idx.shape[0] == 0:
+            if self.n_iter_no_change is not None and (
+                    new_labels_idx.shape[0] == 0):
                 # no changed labels
                 patience = patience - 1
                 if patience == 0:
                     self.termination_condition_ = "early_stopping"
                     break
-            elif self.early_stopping:
+            elif self.n_iter_no_change is not None:
                 # we changed some labels => reset patience
                 patience = self.n_iter_no_change
 
@@ -219,7 +215,7 @@ class SelfTrainingClassifier(BaseEstimator):
             self.termination_condition_ = "max_iter"
         if np.all(has_label):
             self.termination_condition_ = "all_labeled"
-        if self.n_iter_ == self.max_iter and self.early_stopping:
+        if self.n_iter_ == self.max_iter and self.n_iter_no_change:
             warnings.warn("Maximum number of iterations reached before "
                           "early stopping. Consider increasing max_iter to "
                           "improve the fit.",
