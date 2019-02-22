@@ -38,7 +38,7 @@ y_train_missing_dummies = lb.fit_transform(y_train_missing_labels)
 
 def test_missing_predict_proba():
     # Check that an error is thrown if predict_proba is not implemented
-    base_classifier = SVC(probability=False)
+    base_classifier = SVC(probability=False, gamma='scale')
     self_training = SelfTrainingClassifier(base_classifier)
     message = "base_classifier (SVC) should implement predict_proba!"
     assert_raise_message(ValueError, message, self_training.fit, X_train,
@@ -125,26 +125,6 @@ def test_classification(base_classifier):
                  (n_labeled_samples,))
     assert_equal(st_string.y_labeled_iter_.shape, st_string.y_labels_.shape,
                  (n_labeled_samples,))
-
-
-def test_output_depends_on_parameters():
-    base_classifier = SVC(gamma="scale", probability=True, random_state=42)
-
-    st1 = SelfTrainingClassifier(base_classifier, threshold=0.3)
-    st2 = SelfTrainingClassifier(base_classifier, threshold=0.7)
-    st3 = SelfTrainingClassifier(base_classifier, max_iter=2)
-
-    preds = [st1.fit(X_train, y_train_missing_labels).predict_proba(X_test),
-             st2.fit(X_train, y_train_missing_labels).predict_proba(X_test),
-             st3.fit(X_train, y_train_missing_labels).predict_proba(X_test)]
-    assert st3.termination_condition_ == "max_iter"
-
-    for i, x in enumerate(preds):
-        for j, y in enumerate(preds):
-            if j != i:
-                if np.array_equal(x, y):
-                    pytest.fail("st{} and st{} predictions are equal".format(
-                        i+1, j+1))
 
 
 def test_sanity_classification():
