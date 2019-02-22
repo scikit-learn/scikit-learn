@@ -117,6 +117,11 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23.
   :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
+- |Fix| Fixed a bug in :class:`linear_model.LassoLarsIC`, where user input
+   ``copy_X=False`` at instance creation would be overridden by default
+   parameter value ``copy_X=True`` in ``fit``. 
+   :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
+
 :mod:`sklearn.manifold`
 ............................
 
