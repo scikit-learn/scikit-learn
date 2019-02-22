@@ -22,6 +22,7 @@ else
     master | release*)
       ;;
     *)
+      curl -H "$curlhdr" $endpoint/branches/$TRAVIS_BRANCH
       if [ \"$TRAVIS_BUILD_NUMBER\" != $(curl -H "$curlhdr" \
           $endpoint/branches/$TRAVIS_BRANCH | jq ".branch.number") ]; then
         echo "TRAVIS_BUILD_NUMBER"
