@@ -293,8 +293,8 @@ def test_sparse_oneclasssvm(datasets_index, kernel):
                 [X_blobs[:80], None, X_blobs[80:]],
                 [iris.data, None, iris.data]]
     dataset = datasets[datasets_index]
-    clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
-    sp_clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
+    clf = svm.OneClassSVM(gamma=1, kernel=kernel)
+    sp_clf = svm.OneClassSVM(gamma=1, kernel=kernel)
     check_svm_model_equal(clf, sp_clf, *dataset)
 
 
