@@ -6,7 +6,7 @@ UNAMESTR=`uname`
 
 if [[ "$UNAMESTR" == 'Darwin' ]]; then
     # install OpenMP not present by default on osx
-    brew install libomp
+    HOMEBREW_NO_AUTO_UPDATE=1 brew install libomp
 
     # enable OpenMP support for Apple-clang
     export CC=/usr/bin/clang
