@@ -87,9 +87,9 @@ def test_svc():
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     for dataset in datasets:
         for kernel in kernels:
-            clf = svm.SVC(gamma='scale', kernel=kernel, probability=True,
+            clf = svm.SVC(gamma=1, kernel=kernel, probability=True,
                           random_state=0, decision_function_shape='ovo')
-            sp_clf = svm.SVC(gamma='scale', kernel=kernel, probability=True,
+            sp_clf = svm.SVC(gamma=1, kernel=kernel, probability=True,
                              random_state=0, decision_function_shape='ovo')
             check_svm_model_equal(clf, sp_clf, *dataset)
 
