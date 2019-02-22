@@ -120,6 +120,7 @@ cpdef _init_bounds_sparse(X,
             X_data[X_indptr[i]: X_indptr[i + 1]],
             X_indices[X_indptr[i]: X_indptr[i + 1]],
             centers[0], centers_squared_norms[0], False)
+        print(min_dist)
 
         lower_bounds[i, 0] = min_dist
         for j in range(1, n_clusters):
