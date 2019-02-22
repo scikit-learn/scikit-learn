@@ -1384,7 +1384,8 @@ def test_generate_balanced_sample_indices():
 
 def test_class_weight_balanced_bootstrap():
     # Test class_weight works for multi-output"""
-    forest = RandomForestClassifier(class_weight='balanced_bootstrap',
+    forest = RandomForestClassifier(n_estimators=10,
+                                    class_weight='balanced_bootstrap',
                                     random_state=0)
     X, y = datasets.make_classification(n_samples=100, weights=[0.8, 0.2])
     forest.fit(X, y)
