@@ -13,12 +13,6 @@
 
 set -e
 
-# Fail fast
-if [ $TRAVIS_OS_NAME == "osx" ]
-then
-    brew install jq
-fi
-
 build_tools/travis/travis_fastfail.sh
 
 echo 'List files from cached directories'
@@ -35,9 +29,6 @@ then
 	ccache --max-size 100M --show-stats
 elif [ $TRAVIS_OS_NAME = "osx" ]
 then
-    # install OpenMP not present by default on osx
-    brew install libomp
-
     # enable OpenMP support for Apple-clang
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
@@ -157,3 +148,5 @@ then
 fi
 # Useful for debugging how ccache is used
 # cat $CCACHE_LOGFILE
+
+build_tools/travis/travis_fastfail.sh
