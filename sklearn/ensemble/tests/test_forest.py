@@ -1391,4 +1391,3 @@ def test_class_weight_balanced_bootstrap():
     forest.fit(X, y)
     # Test fail on multi-output
     assert_raises(ValueError, forest.fit, X, X.astype(int))
-
