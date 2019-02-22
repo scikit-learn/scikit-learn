@@ -102,11 +102,12 @@ def _get_class_distribution(y):
 
 
 def _generate_balanced_sample_indices(random_state, balance_data):
-    """Private function used to _parallel_build_trees function.
+    """
+    Private function used to _parallel_build_trees function.
     Generates samples according to the balanced random forest method [1],
-        adapted for multi-class, i.e. a bootstrap sample from the minority
-        class and a random sample with replacement of the same size from all
-        other classes.
+    adapted for multi-class, i.e. a bootstrap sample from the minority
+    class and a random sample with replacement of the same size from all
+    other classes.
     References
     ----------
     .. [1] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to
