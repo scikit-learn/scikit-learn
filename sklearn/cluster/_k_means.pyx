@@ -65,16 +65,17 @@ cdef floating _euclidean_sparse_dense(floating[::1] a_data,
     for i in range(nnz):
         tmp = a_data[i] - b[a_indices[i]]
         result += tmp * tmp - b[a_indices[i]] * b[a_indices[i]]
-    
+
     result += b_squared_norm
 
+    if result < 0: result = 0.0
     if not squared: result = sqrt(result)
-    
+
     return result
 
 
 cpdef floating _inertia_dense(np.ndarray[floating, ndim=2, mode='c'] X,
-                              floating[::1] sample_weight, 
+                              floating[::1] sample_weight,
                               floating[:, ::1] centers,
                               int[::1] labels):
     """Compute inertia for dense input data
@@ -103,7 +104,7 @@ cpdef floating _inertia_sparse(X,
                                floating[:, ::1] centers,
                                int[::1] labels):
     """Compute inertia for sparse input data
-    
+
     Sum of squared distance between each sample and its assigned center.
     """
     cdef:
@@ -192,19 +193,19 @@ cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
         int i, j, k
 
         floating[::1] distances = np.zeros(n_samples, dtype=X_data.base.dtype)
-    
+
     for i in range(n_samples):
         j = labels[i]
         for k in range(X_indptr[i], X_indptr[i + 1]):
             x = (X_data[k] - centers[j, X_indices[k]])
             distances[i] += x * x
 
-    cdef:      
+    cdef:
         int[::1] far_from_centers = np.argpartition(distances, -n_empty)[-n_empty:].astype(np.int32)
 
         int new_cluster_id, old_cluster_id, far_idx, idx
         floating weight
- 
+
     for idx in range(n_empty):
 
         new_cluster_id = empty_clusters[idx]
@@ -213,7 +214,7 @@ cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
         weight = sample_weight[far_idx]
 
         old_cluster_id = labels[far_idx]
-        
+    
         for k in range(X_indptr[far_idx], X_indptr[far_idx + 1]):
             centers[new_cluster_id, X_indices[k]] += X_data[k] * weight
             centers[old_cluster_id, X_indices[k]] -= X_data[k] * weight
@@ -240,7 +241,7 @@ cdef void _mean_and_center_shift(floating[:, ::1] centers_old,
             alpha = 1.0 / weight_in_clusters[j]
             for k in range(n_features):
                 centers_new[j, k] *= alpha
-    
+
     # compute shift distance between old and new centers
     for j in range(n_clusters):
         tmp = 0
