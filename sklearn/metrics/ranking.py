@@ -242,7 +242,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
-                  fpr_range=(0, 1), tpr_range=(0, 1)):
+                  max_fpr="not_used", fpr_range=(0, 1), tpr_range=(0, 1)):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
@@ -284,17 +284,25 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    max_fpr : float > 0 and <= 1, optional
+        If not ``None``, the standardized partial AUC [3]_ over the range
+        [0, max_fpr] is returned.
+
+        .. deprecated:: 0.21
+            ``max_fpr`` was removed in favor for ``fpr_range`` in 0.21
+            and will be removed in 0.23
+
     fpr_range : tuple of float or int, optional (default=(0, 1))
-        Tuple represents [minimum fpr, maximum fpr].
+        Tuple represents [min fpr, max fpr]. Values must be in [0, 1].
         If not (0, 1), the standardized partial AUC [3]_ over fpr_range
-        is returned.  Values must be in [0, 1].
+        is returned.
         Can only specify fpr_range or tpr_range.
 
     tpr_range : tuple of float, optional (default=(0, 1))
-        Tuple represents [minimum tpr, maximum tpr].
+        Tuple represents [min tpr, max tpr]. Values must be in [0, 1].
         If not (0, 1), the associated fpr_range will be calculated,
         and the standardized partial AUC [3]_ over fpr_range
-        is returned.  Values must be in [0, 1].
+        is returned.
         Can only specify fpr_range or tpr_range.
 
     Returns
@@ -328,19 +336,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     0.75
 
     """
-    def _get_fpr_from_tpr(tpr, fpr, tpr_boundary, side):
-        """Calculate fpr at tpr_boundary with linear interpolation."""
-        # Calculate index to insert tpr_boundary into tpr
-        tpr_idx = np.searchsorted(tpr, tpr_boundary, side)
 
-        # Get fpr and tpr ranges that encloses tpr_boundary
-        fpr_interp = [fpr[tpr_idx-1], fpr[tpr_idx]]
-        tpr_interp = [tpr[tpr_idx-1], tpr[tpr_idx]]
-
-        # Interpolate fpr to find value of fpr at tpr_boudary
-        return np.interp(tpr_boundary, tpr_interp, fpr_interp)
-
-    def _binary_roc_auc_score(y_true, y_score, sample_weight=None):
+    def _binary_roc_auc_score(y_true, y_score, sample_weight):
 
         if len(np.unique(y_true)) != 2:
             raise ValueError("Only one class present in y_true. ROC AUC score "
@@ -349,74 +346,63 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         fpr, tpr, _ = roc_curve(y_true, y_score,
                                 sample_weight=sample_weight)
 
-        min_fpr, max_fpr = fpr_range[0], fpr_range[1]
-        min_tpr, max_tpr = tpr_range[0], tpr_range[1]
+        if max_fpr != "not_used":
+            warnings.warn("'max_fpr' was removed in favor for 'fpr_range' "
+                          "in 0.21 and will be removed in 0.23.",
+                          DeprecationWarning)
+            fpr_min, fpr_max = 0, max_fpr
+        else:
+            fpr_min, fpr_max = fpr_range[0], fpr_range[1]
+        tpr_min, tpr_max = tpr_range[0], tpr_range[1]
 
-        if min_fpr == min_tpr == 0 and max_fpr == max_tpr == 1:
+        if fpr_min == tpr_min == 0 and fpr_max == tpr_max == 1:
             return auc(fpr, tpr)
 
-        if (min_fpr != 0 or max_fpr != 1) and (min_tpr != 0 or max_tpr != 1):
+        if (fpr_min != 0 or fpr_max != 1) and (tpr_min != 0 or tpr_max != 1):
             raise ValueError("Can only specify fpr_range or tpr_range.")
 
-        if min_fpr < 0 or max_fpr > 1 or min_fpr > max_fpr:
+        if fpr_min < 0 or fpr_max > 1 or fpr_min > fpr_max:
             raise ValueError(
-                "Expected fpr_range in [0, 1] "
+                "Expected fpr_range to be in [0, 1] "
                 "and fpr_range[0] < fpr_range[1], "
                 "got {}.".format(fpr_range)
             )
-        if min_tpr < 0 or max_tpr > 1 or min_tpr > max_tpr:
+        if tpr_min < 0 or tpr_max > 1 or tpr_min > tpr_max:
             raise ValueError(
-                "Expected tpr_range in [0, 1] "
+                "Expected tpr_range to be in [0, 1] "
                 "and tpr_range[0] < tpr_range[1], "
                 "got {}.".format(tpr_range)
             )
 
         # PAUC Calculation
-        if min_tpr != 0:
-            min_fpr = _get_fpr_from_tpr(tpr, fpr, min_tpr, "left")
-        if max_tpr != 1:
-            max_fpr = _get_fpr_from_tpr(tpr, fpr, max_tpr, "right")
+        # tpr is specified.  Calculate corresponding fpr.
+        if tpr_min != 0:
+            fpr_min = np.interp(tpr_min, tpr, fpr)
+        if tpr_max != 1:
+            fpr_max = np.interp(tpr_max, tpr, fpr)
 
-        if min_fpr != 0:
-            # Find index to insert min_fpr into fpr
-            min_fpr_idx = np.searchsorted(fpr, min_fpr, "left")
+        tpr_min = np.interp(fpr_min, fpr, tpr)
+        tpr_max = np.interp(fpr_max, fpr, tpr)
 
-            # Get fpr and tpr ranges that encloses min_fpr
-            fpr_interp_min = [fpr[min_fpr_idx-1], fpr[min_fpr_idx]]
-            tpr_interp_min = [tpr[min_fpr_idx-1], tpr[min_fpr_idx]]
+        min_idx = np.searchsorted(fpr, fpr_min, "left")
+        max_idx = np.searchsorted(fpr, fpr_max, "right")
 
-            # Truncate fpr
-            fpr = np.concatenate(([min_fpr], fpr[min_fpr_idx:]))
-            # Interpolate tpr to find value of tpr at min_fpr
-            tpr = np.concatenate((
-                np.interp([min_fpr], fpr_interp_min, tpr_interp_min),
-                tpr[min_fpr_idx:]
-            ))
+        partial_fpr = np.concatenate((
+            [fpr_min], fpr[min_idx:max_idx], [fpr_max]
+        ))
+        partial_tpr = np.concatenate((
+            [tpr_min], tpr[min_idx:max_idx], [tpr_max]
+        ))
 
-        if max_fpr != 1:
-            # Find index to insert max_fpr into fpr
-            max_fpr_idx = np.searchsorted(fpr, max_fpr, "right")
+        partial_auc = auc(partial_fpr, partial_tpr)
 
-            # Get fpr and tpr ranges that encloses max_fpr
-            fpr_interp_max = [fpr[max_fpr_idx-1], fpr[max_fpr_idx]]
-            tpr_interp_max = [tpr[max_fpr_idx-1], tpr[max_fpr_idx]]
-
-            # Truncate fpr
-            fpr = np.concatenate((fpr[:max_fpr_idx], [max_fpr]))
-            # Interpolate tpr to find value of tpr at max_fpr
-            tpr = np.concatenate((
-                tpr[:max_fpr_idx],
-                np.interp([max_fpr], fpr_interp_max, tpr_interp_max)
-            ))
-
-        partial_auc = auc(fpr, tpr)
-
-        # McClish correction:
-        # standardize result to be 0.5 if non-discriminant and 1 if maximal
-        min_area = 0.5 * (max_fpr ** 2 - min_fpr ** 2)
-        max_area = max_fpr - min_fpr
+        # McClish standardization:
+        # 0.5 if non-discriminant and 1 if maximal
+        min_area = 0.5 * (fpr_max ** 2 - fpr_min ** 2)
+        max_area = fpr_max - fpr_min
         denom = max_area - min_area
         if denom == 0:
+            # Only if fpr_max == fpr_min
             return 0
         else:
             return 0.5 * (1 + (partial_auc - min_area) / denom)
