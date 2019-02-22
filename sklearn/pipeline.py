@@ -212,8 +212,8 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        fit_params_steps = dict((name, {}) for name, step in self.steps
-                                if step is not None)
+        fit_params_steps = {name: {} for name, step in self.steps
+                            if step is not None}
         for pname, pval in fit_params.items():
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval

@@ -236,9 +236,9 @@ class GaussianNB(BaseNB):
         # Compute (potentially weighted) mean and variance of new datapoints
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
-            new_mu = np.average(X, axis=0, weights=sample_weight / n_new)
+            new_mu = np.average(X, axis=0, weights=sample_weight)
             new_var = np.average((X - new_mu) ** 2, axis=0,
-                                 weights=sample_weight / n_new)
+                                 weights=sample_weight)
         else:
             n_new = X.shape[0]
             new_var = np.var(X, axis=0)
@@ -259,8 +259,7 @@ class GaussianNB(BaseNB):
         old_ssd = n_past * var
         new_ssd = n_new * new_var
         total_ssd = (old_ssd + new_ssd +
-                     (n_past / float(n_new * n_total)) *
-                     (n_new * mu - n_new * new_mu) ** 2)
+                     (n_new * n_past / n_total) * (mu - new_mu) ** 2)
         total_var = total_ssd / n_total
 
         return total_mu, total_var
@@ -439,6 +438,7 @@ class GaussianNB(BaseNB):
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
+
 
 _ALPHA_MIN = 1e-10
 
@@ -816,10 +816,11 @@ class ComplementNB(BaseDiscreteNB):
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
         # BaseNB.predict uses argmax, but ComplementNB operates with argmin.
-        feature_log_prob = -logged
         if self.norm:
             summed = logged.sum(axis=1, keepdims=True)
-            feature_log_prob = -feature_log_prob / summed
+            feature_log_prob = logged / summed
+        else:
+            feature_log_prob = -logged
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):

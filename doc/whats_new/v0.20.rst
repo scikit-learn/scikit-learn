@@ -55,10 +55,18 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Fix| Fixed a bug in :class:`preprocessing.KBinsDiscretizer` where
+  ``strategy='kmeans'`` fails with an error during transformation due to unsorted
+  bin edges. :issue:`13134` by :user:`Sandro Casagrande <SandroCasagrande>`.
+
 - |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where the
   deprecation of ``categorical_features`` was handled incorrectly in
   combination with ``handle_unknown='ignore'``.
   :issue:`12881` by `Joris Van den Bossche`_.
+
+- |Fix| Bins whose width are too small (i.e., <= 1e-8) are removed
+  with a warning in :class:`preprocessing.KBinsDiscretizer`.
+  :issue:`13165` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.feature_extraction.text`
 ......................................

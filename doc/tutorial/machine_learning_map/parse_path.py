@@ -28,7 +28,7 @@ class CaselessPreservingLiteral(CaselessLiteral):
         instead of as defined.
     """
     def __init__( self, matchString ):
-        super(CaselessPreservingLiteral,self).__init__( matchString.upper() )
+        super().__init__(matchString.upper())
         self.name = "'%s'" % matchString
         self.errmsg = "Expected " + self.name
         self.myException.msg = self.errmsg

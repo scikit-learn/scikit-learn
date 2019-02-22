@@ -290,7 +290,7 @@ def _tree_query_parallel_helper(tree, data, n_neighbors, return_distance):
     return tree.query(data, n_neighbors, return_distance)
 
 
-class KNeighborsMixin(object):
+class KNeighborsMixin:
     """Mixin for k-neighbors searches"""
 
     def _kneighbors_reduce_func(self, dist, start,
@@ -579,7 +579,7 @@ def _tree_query_radius_parallel_helper(tree, data, radius, return_distance):
     return tree.query_radius(data, radius, return_distance)
 
 
-class RadiusNeighborsMixin(object):
+class RadiusNeighborsMixin:
     """Mixin for radius-based neighbors searches"""
 
     def _radius_neighbors_reduce_func(self, dist, start,
@@ -853,7 +853,7 @@ class RadiusNeighborsMixin(object):
                           shape=(n_samples1, n_samples2))
 
 
-class SupervisedFloatMixin(object):
+class SupervisedFloatMixin:
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 
@@ -873,7 +873,7 @@ class SupervisedFloatMixin(object):
         return self._fit(X)
 
 
-class SupervisedIntegerMixin(object):
+class SupervisedIntegerMixin:
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 
@@ -916,7 +916,7 @@ class SupervisedIntegerMixin(object):
         return self._fit(X)
 
 
-class UnsupervisedMixin(object):
+class UnsupervisedMixin:
     def fit(self, X, y=None):
         """Fit the model using X as training data
 
