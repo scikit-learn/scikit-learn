@@ -420,7 +420,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> from sklearn.preprocessing import OneHotEncoder
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', OneHotEncoder(dtype='int'),(['city'])),
+  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder='drop')
 
@@ -461,7 +461,7 @@ We can keep the remaining rating columns by setting
 transformation::
 
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', OneHotEncoder(dtype='int'),(['city'])),
+  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder='passthrough')
 
