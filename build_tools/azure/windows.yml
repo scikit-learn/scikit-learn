@@ -29,6 +29,6 @@ jobs:
     - task: PublishTestResults@2
       inputs:
         testResultsFiles: '$(TMP_FOLDER)\$(JUNITXML)'
-        testRunTitle: 'Windows-$(CONDA_PY)'
+        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
       displayName: 'Publish Test Results'
       condition: succeededOrFailed()
