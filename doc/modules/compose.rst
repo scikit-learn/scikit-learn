@@ -478,7 +478,7 @@ the transformation::
 
   >>> from sklearn.preprocessing import MinMaxScaler
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', OneHotEncoder(),(['city'])),
+  ...     [('city_category', OneHotEncoder(), ['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder=MinMaxScaler())
 
