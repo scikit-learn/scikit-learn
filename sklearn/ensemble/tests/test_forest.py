@@ -48,6 +48,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble.forest import _get_class_distribution
+from sklearn.ensemble.forest import _generate_balanced_sample_indices
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import comb
@@ -1359,3 +1361,33 @@ def test_multi_target(name, oob_score):
     # Try to fit and predict.
     clf.fit(X, y)
     clf.predict(X)
+
+
+def test_get_class_distribution():
+    y = np.array([0, 1, 0, 1, 1, 2])
+    classes, class_counts, class_indices = _get_class_distribution(y)
+    assert_array_equal(classes, [0, 1, 2])
+    assert_array_equal(class_counts, [2, 3, 1])
+    assert_array_equal(class_indices[0], [0, 2])
+    assert_array_equal(class_indices[1], [1, 3, 4])
+    assert_array_equal(class_indices[2], [5])
+
+
+def test_generate_balanced_sample_indices():
+    y = np.array([0, 1, 0, 1, 1, 2])
+    random_state = 0
+    balance_data = _get_class_distribution(y)
+    sample_indices = _generate_balanced_sample_indices(random_state,
+                                                       balance_data)
+    assert_array_equal(sample_indices, [0, 3, 5])
+
+
+def test_class_weight_balanced_bootstrap():
+    # Test class_weight works for multi-output"""
+    forest = RandomForestClassifier(class_weight='balanced_bootstrap',
+                                    random_state=0)
+    X, y = datasets.make_classification(n_samples=100, weights=[0.8, 0.2])
+    forest.fit(X, y)
+    # Test fail on multi-output
+    assert_raises(ValueError, forest.fit, X, X.astype(int))
+

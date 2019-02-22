@@ -79,6 +79,55 @@ def _generate_sample_indices(random_state, n_samples):
     return sample_indices
 
 
+def _get_class_distribution(y):
+    """Private function used to fit function.
+    Args: outcome array y
+    Returns: tuple of
+        - classes: list of classes
+        - class_counts: list of count of each class
+        - class_indices: list of indices of each class
+    """
+    if len(y.shape) > 1:
+        if y.shape[1] == 1:
+            y = y.flatten()
+        else:
+            raise ValueError("Balanced random forest not implemented "
+                             "for multi-output")
+
+    classes = np.unique(y)
+    class_indices = [np.nonzero(y == cls)[0] for cls in classes]
+    class_counts = [len(i) for i in class_indices]
+
+    return classes, class_counts, class_indices
+
+
+def _generate_balanced_sample_indices(random_state, balance_data):
+    """Private function used to _parallel_build_trees function.
+    Generates samples according to the balanced random forest method [1],
+        adapted for multi-class, i.e. a bootstrap sample from the minority
+        class and a random sample with replacement of the same size from all
+        other classes.
+    References
+    ----------
+    .. [1] Chen, C., Liaw, A., Breiman, L. (2004) "Using Random Forest to
+           Learn Imbalanced Data", Tech. Rep. 666, 2004
+    """
+    classes, class_counts, class_indices = balance_data
+    min_count = np.min(class_counts)
+    n_class = len(classes)
+
+    random_instance = check_random_state(random_state)
+    sample_indices = np.empty(n_class*min_count, dtype=int)
+
+    for i, cls, count, indices in zip(range(n_class), classes, class_counts,
+                                      class_indices):
+        random_instances = random_instance.randint(0, count, min_count)
+        random_indices = indices[random_instances]
+        sample_indices[i*min_count:(i+1)*min_count] = random_indices
+
+    return sample_indices
+
+
 def _generate_unsampled_indices(random_state, n_samples):
     """Private function used to forest._set_oob_score function."""
     sample_indices = _generate_sample_indices(random_state, n_samples)
@@ -91,7 +140,7 @@ def _generate_unsampled_indices(random_state, n_samples):
 
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
-                          verbose=0, class_weight=None):
+                          verbose=0, class_weight=None, balance_data=None):
     """Private function used to fit a single tree in parallel."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
@@ -103,7 +152,16 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        indices = _generate_sample_indices(tree.random_state, n_samples)
+        if class_weight == 'balanced_bootstrap':
+            if balance_data is None:
+                raise ValueError("_parallel_build_trees called with "
+                                 "class_weight 'balanced_bootstrap' "
+                                 "but no balance_data")
+            indices = _generate_balanced_sample_indices(tree.random_state,
+                                                        balance_data)
+        else:
+            indices = _generate_sample_indices(tree.random_state, n_samples)
+
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
@@ -315,6 +373,11 @@ class BaseForest(BaseEnsemble, metaclass=ABCMeta):
                                           random_state=random_state)
                      for i in range(n_more_estimators)]
 
+            if self.class_weight == 'balanced_bootstrap':
+                balance_data = _get_class_distribution(y)
+            else:
+                balance_data = None
+
             # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
             # making threading more efficient than multiprocessing in
@@ -325,7 +388,8 @@ class BaseForest(BaseEnsemble, metaclass=ABCMeta):
                              **_joblib_parallel_args(prefer='threads'))(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose, class_weight=self.class_weight)
+                    verbose=self.verbose, class_weight=self.class_weight,
+                    balance_data=balance_data)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
@@ -468,6 +532,12 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)
 
+        # use this local class_weight to easily handle
+        # class_weight="balanced_bootstrap" identically to class_weight=None
+        class_weight = self.class_weight
+        if self.class_weight == 'balanced_bootstrap':
+            class_weight = None
+
         y = np.copy(y)
         expanded_class_weight = None
 
@@ -485,20 +555,25 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
         y = y_store_unique_indices
 
         if self.class_weight is not None:
-            valid_presets = ('balanced', 'balanced_subsample')
+            valid_presets = ('balanced',
+                             'balanced_subsample',
+                             'balanced_bootstrap')
             if isinstance(self.class_weight, str):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
-                                     '"balanced" and "balanced_subsample". Given "%s".'
-                                     % self.class_weight)
+                                     '"balanced", "balanced_subsample", '
+                                     'and "balanced_bootstrap". '
+                                     'Given "%s".'
+                                     % class_weight)
                 if self.warm_start:
-                    warn('class_weight presets "balanced" or "balanced_subsample" are '
+                    warn('class_weight presets "balanced", '
+                         '"balanced_subsample", or "balanced_bootstrap" are '
                          'not recommended for warm_start if the fitted data '
                          'differs from the full dataset. In order to use '
-                         '"balanced" weights, use compute_class_weight("balanced", '
-                         'classes, y). In place of y you can use a large '
-                         'enough sample of the full training set target to '
-                         'properly estimate the class frequency '
+                         '"balanced" weights, use compute_class_weight('
+                         '"balanced", classes, y). In place of y you can use a'
+                         'large enough sample of the full training set target '
+                         'to properly estimate the class frequency '
                          'distributions. Pass the resulting weights as the '
                          'class_weight parameter.')
 
@@ -508,8 +583,9 @@ class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
                     class_weight = "balanced"
                 else:
                     class_weight = self.class_weight
-                expanded_class_weight = compute_sample_weight(class_weight,
-                                                              y_original)
+                if self.class_weight != 'balanced_bootstrap':
+                    expanded_class_weight = compute_sample_weight(class_weight,
+                                                                  y_original)
 
         return y, expanded_class_weight
 
@@ -886,8 +962,8 @@ class RandomForestClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
-    None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced", "balanced_subsample" \
+        "balanced_bootstrap" or None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -906,6 +982,10 @@ class RandomForestClassifier(ForestClassifier):
         The "balanced_subsample" mode is the same as "balanced" except that
         weights are computed based on the bootstrap sample for every tree
         grown.
+
+        The "balanced_sbootstrap" triggers the Balanaced Random Forest.
+        Instead of down-weighting majority class(es) it undersamples them.
+        In this case multi-output is not supported.
 
         For multi-output, the weights of each column of y will be multiplied.
 
