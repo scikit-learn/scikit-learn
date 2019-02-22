@@ -34,6 +34,7 @@ matrix:
             - jq
             # install OpenMP not present by default on osx
             - libomp
+          update: true
     # Linux environment to test that scikit-learn can be built against
     # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
     # i.e. numpy 1.11 and scipy 0.17
