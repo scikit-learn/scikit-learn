@@ -211,9 +211,11 @@ def enet_coordinate_descent(floating[::1] w,
                 # stopping criterion
 
                 # XtA = np.dot(X.T, R) - beta * w
-                for i in range(n_features):
-                    XtA[i] = (_dot(n_samples, &X[0, i], 1, &R[0], 1)
-                              - beta * w[i])
+                _copy(n_features, &w[0], 1, &XtA[0], 1)
+                _gemv(ColMajor, Trans,
+                      n_samples, n_features, 1.0, &X[0, 0], n_samples,
+                      &R[0], 1,
+                      -beta, &XtA[0], 1)
 
                 if positive:
                     dual_norm_XtA = max(n_features, &XtA[0])
