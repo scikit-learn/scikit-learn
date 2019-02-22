@@ -13,6 +13,13 @@
 
 set -e
 
+# Fail fast
+if [ $TRAVIS_OS_NAME == "osx" ]
+then
+    brew install jq
+fi
+
+build_tools/travis/travis_fastfail.sh
 
 echo 'List files from cached directories'
 echo 'pip:'
