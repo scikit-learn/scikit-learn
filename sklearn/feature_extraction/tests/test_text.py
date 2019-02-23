@@ -338,7 +338,7 @@ def test_countvectorizer_custom_token_pattern():
     # With no capturing group
     token_pattern = r"[a-z]{2,}|(?:[0-9]{1,3})(?:st|nd|rd|th)?"
     vectorizer = CountVectorizer(token_pattern=token_pattern)
-    X = vectorizer.fit_transform(corpus)
+    vectorizer.fit_transform(corpus)
     expected = ['and', 'document', 'first', 'is', 'one',
                 'second', 'the', 'third', 'this']
     assert_equal(vectorizer.get_feature_names(), expected)
@@ -346,7 +346,7 @@ def test_countvectorizer_custom_token_pattern():
     token_pattern = r"([a-z]{2,})|([0-9]{1,3})(?:st|nd|rd|th)?"
     try:
         vectorizer.set_params(token_pattern=token_pattern)
-        X = vectorizer.fit_transform(corpus)
+        vectorizer.fit_transform(corpus)
         assert False, "we shouldn't get here"
     except ValueError as e:
         assert_in("more than 1 capturing group in token pattern",
