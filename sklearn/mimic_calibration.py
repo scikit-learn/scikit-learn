@@ -183,7 +183,7 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         self.boundary_table, self.calibrated_model = self._mimic_calibration(X, y, self.threshold_pos)
         return self
 
-    def predict_per_row(self, x):
+    def predict_per_element(self, x):
         # linear interpolation
         which_bin = np.digitize([x], self.boundary_table, right=True)[0]
         if ((which_bin == 0) or (which_bin == len(self.boundary_table)-1)):
@@ -208,7 +208,7 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         else:
             calib_prob = []
             for x in pre_calib_prob:
-                y = self.predict_per_row(x)
+                y = self.predict_per_element(x)
                 calib_prob += [y]
             calib_prob = np.array(calib_prob)
         return calib_prob
