@@ -5,7 +5,10 @@ import sys
 
 
 class _MimicCalibration(BaseEstimator, RegressorMixin):
-    """ fit mimic calibration
+    """ mimic calibration
+    reference:
+    https://www.youtube.com/watch?v=Cg--SC76I1I
+    http://tech.magnetic.com/2015/06/click-prediction-with-vowpal-wabbit.html
     """
     def __init__(self, threshold_pos=5, boundary_choice=2, record_history=False):
         self.threshold_pos = threshold_pos
@@ -13,25 +16,27 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         self.record_history = record_history
         self.history_record_table = []
 
-    def get_bin_boundary(self, current_binning, boundary_choice=2):
+    def get_bin_boundary(self, current_binning, boundary_choice):
         """
         current_binning:
-
         [[bl_index, score_min, score_max, score_mean, nPos_temp, total_temp, PosRate_temp]]
 
         boundary_choice:
         0: choose socre_min, ie left boundary of bin
         1: choose socre_max, ie right boundary of bin
         2: choose socre_mean, ie mean score of bin
-
         """
         num_rows = len(current_binning)
         boundary_table_temp = []
-        k = 2
+        k = None
         if (boundary_choice == 0):
             k = 1
-        if (boundary_choice == 2):
+        elif (boundary_choice == 1):
+            k = 2
+        elif (boundary_choice == 2):
             k = 3
+        else:
+            raise Exception("Un-identified boundary choice: {x}".format(x=boundary_choice))
         for i in range(num_rows):
             boundary_table_temp += [current_binning[i][k]]
         return boundary_table_temp
@@ -172,8 +177,6 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         return boundary_table, calibrated_model
 
     def fit(self, X, y, sample_weight=None):
-        """ fit mimic calibration
-        """
         X = column_or_1d(X)
         y = column_or_1d(y)
         X, y = indexable(X, y)
@@ -181,9 +184,11 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         return self
 
     def predict(self, x, debug=False):
-        """x: a raw score, ie pre-calibrated score.
+        """x: a raw probability, ie pre-calibrated probability.
         calibrated_model:
         [[bl_index, score_min, score_max, score_mean, nPos_temp, total_temp, PosRate_temp]]
+        Use calibrated_model to predict the calibrated probability.
+        Perform linear interpolation to find the calibrated probability.
         """
         x = column_or_1d(x)
         if((self.calibrated_model is None) & (debug is False)):
