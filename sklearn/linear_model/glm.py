@@ -765,8 +765,8 @@ class InverseGaussianDistribution(TweedieDistribution):
         super(InverseGaussianDistribution, self).__init__(power=3)
 
 
-class GeneralizedHyperbolicSecand(ExponentialDispersionModel):
-    """A class for the Generalized Hyperbolic Secand (GHS) distribution.
+class GeneralizedHyperbolicSecant(ExponentialDispersionModel):
+    """A class for the Generalized Hyperbolic Secant (GHS) distribution.
 
     The GHS distribution is for tagets y in (-inf, inf).
     """
@@ -1338,7 +1338,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError("Sample weights must be non-negative.")
             # check if P1 has only non-negative values, negative values might
             # indicate group lasso in the future.
-            if self.P1 != 'identity':
+            if not isinstance(self.P1, str):  # if self.P1 != 'identity':
                 if not np.all(P1 >= 0):
                     raise ValueError("P1 must not have negative values.")
             # check if P2 is positive semidefinite
@@ -1366,7 +1366,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                         raise ValueError("P2 must be positive semi-definite.")
                 else:
                     if not np.all(linalg.eigvalsh(P2) >= epsneg):
-                        return P2
                         raise ValueError("P2 must be positive semi-definite.")
             # TODO: if alpha=0 check that Xnew is not rank deficient
             # TODO: what else to check?
