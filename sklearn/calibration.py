@@ -357,7 +357,7 @@ class _CalibratedClassifier(object):
                 calibrator = _MimicCalibration()
             else:
                 raise ValueError('method should be "sigmoid" or '
-                                 '"isotonic". Got %s.' % self.method)
+                                 '"isotonic" or mimic. Got %s.' % self.method)
             calibrator.fit(this_df, Y[:, k], sample_weight)
             self.calibrators_.append(calibrator)
 

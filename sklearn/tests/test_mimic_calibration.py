@@ -16,7 +16,8 @@ def test_mimic_calibration():
     clf = MultinomialNB().fit(X_train, y_train)
     clf_prob = CalibratedClassifierCV(clf, method="mimic", cv="prefit")
     clf_prob.fit(X_calib, y_calib)
-    y_mimic_calibrated_score = clf_prob.predict(y_calib)
+    y_mimic_calibrated_score = clf_prob.predict_proba(X_calib)
+
 
 def test_mimic_calibration_2():
     n_samples = 50
@@ -52,5 +53,5 @@ def test_mimic_calibration_2():
         print(hist_trail)
         plt.plot(hist_trail)
 
-# test_mimic_calibration()
+test_mimic_calibration()
 test_mimic_calibration_2()
