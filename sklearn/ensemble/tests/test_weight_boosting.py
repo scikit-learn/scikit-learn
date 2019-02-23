@@ -529,5 +529,5 @@ def test_multidimensional_X():
     boost.predict_proba(X)
 
     boost = AdaBoostRegressor(DummyRegressor())
-    boost.fit(X, yc)
+    boost.fit(X, yr)
     boost.predict(X)
