@@ -6,12 +6,25 @@
 import copy
 import warnings
 from collections import defaultdict
-from inspect import signature
+import struct
+import inspect
 
 import numpy as np
 
 from . import __version__
 
+_DEFAULT_TAGS = {
+    'non_deterministic': False,
+    'requires_positive_data': False,
+    'X_types': ['2darray'],
+    'poor_score': False,
+    'no_validation': False,
+    'multioutput': False,
+    "allow_nan": False,
+    'stateless': False,
+    'multilabel': False,
+    '_skip_test': False,
+    'multioutput_only': False}
 
 
 def clone(estimator, safe=True):
@@ -61,7 +74,6 @@ def clone(estimator, safe=True):
     return new_object
 
 
-###############################################################################
 def _pprint(params, offset=0, printer=repr):
     """Pretty print the dictionary 'params'
 
@@ -112,7 +124,17 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-###############################################################################
+def _update_if_consistent(dict1, dict2):
+    common_keys = set(dict1.keys()).intersection(dict2.keys())
+    for key in common_keys:
+        if dict1[key] != dict2[key]:
+            raise TypeError("Inconsistent values for tag {}: {} != {}".format(
+                key, dict1[key], dict2[key]
+            ))
+    dict1.update(dict2)
+    return dict1
+
+
 class BaseEstimator:
     """Base class for all estimators in scikit-learn
 
@@ -135,7 +157,7 @@ class BaseEstimator:
 
         # introspect the constructor arguments to find the model parameters
         # to represent
-        init_signature = signature(init)
+        init_signature = inspect.signature(init)
         # Consider the constructor parameters excluding 'self'
         parameters = [p for p in init_signature.parameters.values()
                       if p.name != 'self' and p.kind != p.VAR_KEYWORD]
@@ -255,8 +277,22 @@ class BaseEstimator:
         except AttributeError:
             self.__dict__.update(state)
 
+    def _get_tags(self):
+        collected_tags = {}
+        for base_class in inspect.getmro(self.__class__):
+            if (hasattr(base_class, '_more_tags')
+                    and base_class != self.__class__):
+                more_tags = base_class._more_tags(self)
+                collected_tags = _update_if_consistent(collected_tags,
+                                                       more_tags)
+        if hasattr(self, '_more_tags'):
+            more_tags = self._more_tags()
+            collected_tags = _update_if_consistent(collected_tags, more_tags)
+        tags = _DEFAULT_TAGS.copy()
+        tags.update(collected_tags)
+        return tags
 
-###############################################################################
+
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
     _estimator_type = "classifier"
@@ -289,7 +325,6 @@ class ClassifierMixin:
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
-###############################################################################
 class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
     _estimator_type = "regressor"
@@ -330,7 +365,6 @@ class RegressorMixin:
                         multioutput='variance_weighted')
 
 
-###############################################################################
 class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
     _estimator_type = "clusterer"
@@ -432,7 +466,6 @@ class BiclusterMixin:
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-###############################################################################
 class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
@@ -510,13 +543,27 @@ class OutlierMixin:
         return self.fit(X).predict(X)
 
 
-###############################################################################
 class MetaEstimatorMixin:
+    _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
-    # this is just a tag for the moment
 
 
-###############################################################################
+class MultiOutputMixin(object):
+    """Mixin to mark estimators that support multioutput."""
+    def _more_tags(self):
+        return {'multioutput': True}
+
+
+def _is_32bit():
+    """Detect if process is 32bit Python."""
+    return struct.calcsize('P') * 8 == 32
+
+
+class _UnstableOn32BitMixin(object):
+    """Mark estimators that are non-determinstic on 32bit."""
+    def _more_tags(self):
+        return {'non_deterministic': _is_32bit()}
+
 
 def is_classifier(estimator):
     """Returns True if the given estimator is (probably) a classifier.
