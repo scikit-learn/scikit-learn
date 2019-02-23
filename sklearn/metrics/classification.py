@@ -1400,7 +1400,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     In such cases, the metric will be set to 0, as will f-score, and
     ``UndefinedMetricWarning`` will be raised.
     """
-    if beta <= 0:
+    if beta < 0:
         raise ValueError("beta should be >0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)

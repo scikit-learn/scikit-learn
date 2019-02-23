@@ -205,10 +205,13 @@ def test_precision_recall_f_binary_single_class():
     assert 1. == precision_score([1, 1], [1, 1])
     assert 1. == recall_score([1, 1], [1, 1])
     assert 1. == f1_score([1, 1], [1, 1])
+    assert 1. == fbeta_score([1, 1], [1, 1], 0)
 
     assert 0. == precision_score([-1, -1], [-1, -1])
     assert 0. == recall_score([-1, -1], [-1, -1])
     assert 0. == f1_score([-1, -1], [-1, -1])
+
+    assert 0. == fbeta_score([-1, -1], [-1, -1], float('inf'))
 
 
 @ignore_warnings
@@ -327,7 +330,7 @@ def test_precision_recall_fscore_support_errors():
 
     # Bad beta
     assert_raises(ValueError, precision_recall_fscore_support,
-                  y_true, y_pred, beta=0.0)
+                  y_true, y_pred, beta=-0.1)
 
     # Bad pos_label
     assert_raises(ValueError, precision_recall_fscore_support,
