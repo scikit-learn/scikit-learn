@@ -256,10 +256,20 @@ class VectorizerMixin:
             return strip_accents
 
     def build_tokenizer(self):
-        """Return a function that splits a string into a sequence of tokens"""
+        """Return a function that splits a string into a sequence of tokens
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+
+        For more than one capturing groups, it raises ValueError
+        """
         if self.tokenizer is not None:
             return self.tokenizer
         token_pattern = re.compile(self.token_pattern)
+
+        if token_pattern.groups > 1:
+            raise ValueError("more than 1 capturing group in token pattern")
+
         return lambda doc: token_pattern.findall(doc)
 
     def get_stop_words(self):
