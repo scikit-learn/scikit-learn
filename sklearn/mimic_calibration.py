@@ -161,6 +161,7 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         y_target: 0 or 1
         """
         assert ((y_score.min() >= 0) & (y_score.max() <= 1.0)), "y_score is a probability which is between 0 and 1."
+        assert (len(np.unique(y_score)) > 2), "y_score should be at least 3 different probability."
         assert np.array_equal(np.unique(y_target), np.array([0, 1])), "y_traget must be 0 and 1."
         y_score = column_or_1d(y_score)
         y_target = column_or_1d(y_target)
@@ -172,9 +173,8 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         initial_binning, total_number_pos = self.construct_initial_bin(y_score, y_target, threshold_pos)
         final_binning = self.run_merge_function(initial_binning, self.record_history)
         latest_bin_temp = final_binning[-1]
-        calibrated_model = latest_bin_temp
         boundary_table = self.get_bin_boundary(latest_bin_temp, self.boundary_choice)
-        return boundary_table, calibrated_model
+        return boundary_table, latest_bin_temp
 
     def fit(self, X, y, sample_weight=None):
         X = column_or_1d(X)
@@ -183,27 +183,35 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         self.boundary_table, self.calibrated_model = self._mimic_calibration(X, y, self.threshold_pos)
         return self
 
-    def predict(self, x, debug=False):
-        """x: a raw probability, ie pre-calibrated probability.
+    def predict_per_row(self, x):
+        # linear interpolation
+        which_bin = np.digitize([x], self.boundary_table, right=True)[0]
+        if ((which_bin == 0) or (which_bin == len(self.boundary_table)-1)):
+            y = self.calibrated_model[which_bin][6]
+        else:
+            delta_y = self.calibrated_model[which_bin][6] - self.calibrated_model[which_bin-1][6]
+            delta_x = self.boundary_table[which_bin] - self.boundary_table[which_bin-1]
+            y = self.calibrated_model[which_bin-1][6] + \
+                (1.0*delta_y/delta_x) * (x - self.boundary_table[which_bin-1])
+        return y
+
+    def predict(self, pre_calib_prob):
+        """x_array: a raw probability, ie pre-calibrated probability.
         calibrated_model:
         [[bl_index, score_min, score_max, score_mean, nPos_temp, total_temp, PosRate_temp]]
         Use calibrated_model to predict the calibrated probability.
         Perform linear interpolation to find the calibrated probability.
         """
-        x = column_or_1d(x)
-        if((self.calibrated_model is None) & (debug is False)):
+        pre_calib_prob = column_or_1d(pre_calib_prob)
+        if(self.calibrated_model is None):
             sys.exit("Please calibrate model first by calling fit function.")
         else:
-            # linear interpolation
-            which_bin = np.digitize([x], self.boundary_table, right=True)[0]
-            if ((which_bin == 0) or (which_bin == len(self.boundary_table)-1)):
-                y = self.calibrated_model[which_bin][6]
-            else:
-                delta_y = self.calibrated_model[which_bin][6] - self.calibrated_model[which_bin-1][6]
-                delta_x = self.boundary_table[which_bin] - self.boundary_table[which_bin-1]
-                y = self.calibrated_model[which_bin-1][6] + \
-                    (1.0*delta_y/delta_x) * (x - self.boundary_table[which_bin-1])
-            return y
+            calib_prob = []
+            for x in pre_calib_prob:
+                y = self.predict_per_row(x)
+                calib_prob += [y]
+            calib_prob = np.array(calib_prob)
+        return calib_prob
 
     def get_one_history(self, one_history):
         score_array = []
