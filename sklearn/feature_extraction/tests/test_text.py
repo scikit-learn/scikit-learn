@@ -349,7 +349,8 @@ def test_countvectorizer_custom_token_pattern():
         X = vectorizer.fit_transform(corpus)
         assert False, "we shouldn't get here"
     except ValueError as e:
-        assert_in("more than 1 capturing group in token pattern", str(e).lower())
+        assert_in("more than 1 capturing group in token pattern",
+                  str(e).lower())
 
 
 def test_tf_idf_smoothing():
