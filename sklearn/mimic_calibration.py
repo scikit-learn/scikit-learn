@@ -183,16 +183,26 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         self.boundary_table, self.calibrated_model = self._mimic_calibration(X, y, self.threshold_pos)
         return self
 
-    def predict_per_element(self, x):
+    def predict_per_element(self, x, num_boundary):
         # linear interpolation
         which_bin = np.digitize([x], self.boundary_table, right=True)[0]
         if ((which_bin == 0) or (which_bin == len(self.boundary_table)-1)):
             y = self.calibrated_model[which_bin][6]
         else:
-            delta_y = self.calibrated_model[which_bin][6] - self.calibrated_model[which_bin-1][6]
-            delta_x = self.boundary_table[which_bin] - self.boundary_table[which_bin-1]
-            y = self.calibrated_model[which_bin-1][6] + \
-                (1.0*delta_y/delta_x) * (x - self.boundary_table[which_bin-1])
+            if (which_bin >= num_boundary):
+                # outside bin boundary
+                delta_y = 1.0 - self.calibrated_model[num_boundary-1][6]
+                delta_x = x - self.boundary_table[num_boundary-1]
+                if (delta_x != 0):
+                    y = self.calibrated_model[num_boundary-1][6] + \
+                        (1.0*delta_y/delta_x) * (x - self.boundary_table[num_boundary-1])
+                else:
+                    y = self.calibrated_model[num_boundary-1][6]
+            else:
+                delta_y = self.calibrated_model[which_bin][6] - self.calibrated_model[which_bin-1][6]
+                delta_x = self.boundary_table[which_bin] - self.boundary_table[which_bin-1]
+                y = self.calibrated_model[which_bin-1][6] + \
+                    (1.0*delta_y/delta_x) * (x - self.boundary_table[which_bin-1])
         return y
 
     def predict(self, pre_calib_prob):
@@ -207,8 +217,9 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
             sys.exit("Please calibrate model first by calling fit function.")
         else:
             calib_prob = []
+            num_boundary = len(self.boundary_table)
             for x in pre_calib_prob:
-                y = self.predict_per_element(x)
+                y = self.predict_per_element(x, num_boundary)
                 calib_prob += [y]
             calib_prob = np.array(calib_prob)
         return calib_prob
