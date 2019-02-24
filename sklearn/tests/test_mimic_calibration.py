@@ -3,7 +3,7 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.mimic_calibration import _MimicCalibration
 from copy import copy
-
+import numpy as np
 
 def test_mimic_example():
     n_samples = 1000
@@ -14,7 +14,8 @@ def test_mimic_example():
     X_train, y_train = X[:n_samples], y[:n_samples]
     X_calib, y_calib = X[n_samples:2 * n_samples], y[n_samples:2 * n_samples]
     clf = MultinomialNB().fit(X_train, y_train)
-    y_calib_prob = X_calib.predict_proba(X_calib)
+    y_calib_prob = clf.predict_proba(X_calib)
+    y_calib_prob = np.array([ y[1] for y in y_calib_prob])
     mimic_obj = _MimicCalibration(threshold_pos=5, boundary_choice=2, record_history=False)
     X = y_calib_prob
     y = y_calib
