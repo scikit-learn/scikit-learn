@@ -612,7 +612,7 @@ class ElasticNet(LinearModel, RegressorMixin):
           features with approximately the same scale. You can preprocess the
           data with a scaler from sklearn.preprocessing.
 
-          .. versionadded:: TODO
+          .. versionadded:: 0.21
 
     Attributes
     ----------
