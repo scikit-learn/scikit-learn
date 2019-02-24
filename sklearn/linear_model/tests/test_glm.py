@@ -4,16 +4,18 @@ import pytest
 import scipy as sp
 from scipy import linalg, optimize, sparse
 
+from sklearn.datasets import make_classification
 from sklearn.linear_model.glm import (
     Link,
     IdentityLink,
     LogLink,
+    LogitLink,
     TweedieDistribution,
     NormalDistribution, PoissonDistribution,
     GammaDistribution, InverseGaussianDistribution,
-    GeneralizedHyperbolicSecant,
+    GeneralizedHyperbolicSecant, BinomialDistribution,
     GeneralizedLinearRegressor)
-from sklearn.linear_model import ElasticNet, Ridge
+from sklearn.linear_model import ElasticNet, LogisticRegression, Ridge
 
 from sklearn.utils.testing import (
     assert_equal, assert_almost_equal,
@@ -26,9 +28,19 @@ def test_link_properties(link):
     rng = np.random.RandomState(0)
     x = rng.rand(100)*100
     link = link()  # instatiate object
-    assert_almost_equal(link.link(link.inverse(x)), x, decimal=10)
-    assert_almost_equal(link.inverse_derivative(link.link(x)),
-                        1/link.derivative(x), decimal=10)
+    decimal = 10
+    if isinstance(link, LogitLink):
+        # careful for large x, note expit(36) = 1
+        # limit max eta to 15
+        x = x / 100 * 15
+        decimal = 8
+    assert_almost_equal(link.link(link.inverse(x)), x, decimal=decimal)
+    # if f(g(x)) = x, then f'(g(x)) = 1/g'(x)
+    assert_almost_equal(link.derivative(link.inverse(x)),
+                        1./link.inverse_derivative(x), decimal=decimal)
+    # for LogitLink, in the following x should be between 0 and 1.
+    # assert_almost_equal(link.inverse_derivative(link.link(x)),
+    #                     1./link.derivative(x), decimal=decimal)
 
 
 @pytest.mark.parametrize(
@@ -214,6 +226,12 @@ def test_glm_P2_positive_semidefinite():
     with pytest.raises(ValueError):
         glm.fit(X, y)
 
+    P2 = sparse.csr_matrix(P2)
+    glm = GeneralizedLinearRegressor(P2=P2, fit_intercept=False,
+                                     check_input=True)
+    with pytest.raises(ValueError):
+        glm.fit(X, y)
+
 
 @pytest.mark.parametrize('fit_intercept', ['not bool', 1, 0, [True]])
 def test_glm_fit_intercept_argument(fit_intercept):
@@ -331,7 +349,7 @@ def test_glm_identiy_regression(family, solver):
     coef = [1, 2]
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.dot(X, coef)
-    glm = GeneralizedLinearRegressor(alpha=0, family=family,
+    glm = GeneralizedLinearRegressor(alpha=0, family=family, link='identity',
                                      fit_intercept=False, solver=solver)
     res = glm.fit(X, y)
     assert_array_almost_equal(res.coef_, coef)
@@ -350,7 +368,7 @@ def test_glm_log_regression(family, solver):
     X = np.array([[1, 1, 1, 1, 1], [0, 1, 2, 3, 4]]).T
     y = np.exp(np.dot(X, coef))
     glm = GeneralizedLinearRegressor(
-                alpha=0, family=family, link=LogLink(), fit_intercept=False,
+                alpha=0, family=family, link='log', fit_intercept=False,
                 solver=solver, start_params='least_squares')
     res = glm.fit(X, y)
     assert_array_almost_equal(res.coef_, coef)
@@ -557,3 +575,28 @@ def test_poisson_enet():
     glm.fit(X, y)
     assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=4)
     assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=4)
+
+
+@pytest.mark.parametrize('alpha', [0.01, 0.1, 1, 10])
+def test_binomial_enet(alpha):
+    """Test elastic net regression with binomial family and LogitLink.
+
+    Compare to LogisticRegression.
+    """
+    l1_ratio = 0.5
+    n_samples = 500
+    X, y = make_classification(n_samples=n_samples, n_classes=2, n_features=6,
+                               n_informative=5, n_redundant=0, n_repeated=0,
+                               random_state=0)
+    log = LogisticRegression(
+        penalty='elasticnet', random_state=0, fit_intercept=False, tol=1e-6,
+        max_iter=1000, l1_ratio=l1_ratio, C=1./(n_samples * alpha),
+        solver='saga')
+    log.fit(X, y)
+    glm = GeneralizedLinearRegressor(
+        family=BinomialDistribution(), link=LogitLink(), fit_intercept=False,
+        alpha=alpha, l1_ratio=l1_ratio, solver='cd', selection='cyclic',
+        tol=1e-7)
+    glm.fit(X, y)
+    assert_almost_equal(log.intercept_[0], glm.intercept_, decimal=6)
+    assert_array_almost_equal(log.coef_[0, :], glm.coef_, decimal=6)

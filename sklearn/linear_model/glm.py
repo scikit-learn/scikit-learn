@@ -42,13 +42,12 @@ Generalized Linear Models with Exponential Dispersion Family
 
 
 from __future__ import division
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
 import numbers
 import numpy as np
-from scipy import linalg, sparse
+from scipy import linalg, sparse, special
 import scipy.sparse.linalg as splinalg
 from scipy.optimize import fmin_l_bfgs_b
-from scipy.special import xlogy
 import warnings
 from .base import LinearRegression
 from .coordinate_descent import ElasticNet
@@ -191,6 +190,28 @@ class LogLink(Link):
         return np.exp(lin_pred)
 
 
+class LogitLink(Link):
+    """The logit link function g(x)=logit(x)."""
+
+    def link(self, mu):
+        return special.logit(mu)
+
+    def derivative(self, mu):
+        return 1. / (mu * (1 - mu))
+
+    def inverse(self, lin_pred):
+        return special.expit(lin_pred)
+
+    def inverse_derivative(self, lin_pred):
+        ep = special.expit(lin_pred)
+        return ep * (1. - ep)
+
+    def inverse_derivative2(self, lin_pred):
+        ep = special.expit(lin_pred)
+        ep = special.expit(lin_pred)
+        return ep * (1. - ep) * (1. - 2 * ep)
+
+
 class ExponentialDispersionModel(metaclass=ABCMeta):
     r"""Base class for reproductive Exponential Dispersion Models (EDM).
 
@@ -238,26 +259,25 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
 
     https://en.wikipedia.org/wiki/Exponential_dispersion_model.
     """
-
-    @abstractproperty
+    @property
     def lower_bound(self):
-        """The lower bound of values of Y~EDM."""
-        raise NotImplementedError()
+        """Get the lower bound of values for Y~EDM."""
+        return self._lower_bound
 
-    @abstractproperty
+    @property
     def upper_bound(self):
-        """The upper bound of values of Y~EDM."""
-        raise NotImplementedError()
+        """Get the upper bound of values for Y~EDM."""
+        return self._upper_bound
 
-    @abstractproperty
+    @property
     def include_lower_bound(self):
-        """If True, values of y may equal lower bound: y >= lower_bound."""
-        raise NotImplementedError()
+        """Get True if lower bound for y is included: y >= lower_bound."""
+        return self._include_lower_bound
 
-    @abstractproperty
+    @property
     def include_upper_bound(self):
-        """If True, values of y may equal upper bound: y <= upper_bound."""
-        raise NotImplementedError()
+        """Get True if upper bound for y is includede: y <= upper_bound."""
+        return self._include_upper_bound
 
     def in_y_range(self, x):
         """Returns true if `x` is in the valid range of Y~EDM.
@@ -685,22 +705,6 @@ class TweedieDistribution(ExponentialDispersionModel):
                             .format(power))
         self._power = power
 
-    @property
-    def lower_bound(self):
-        return self._lower_bound
-
-    @property
-    def upper_bound(self):
-        return self._upper_bound
-
-    @property
-    def include_lower_bound(self):
-        return self._include_lower_bound
-
-    @property
-    def include_upper_bound(self):
-        return self._include_upper_bound
-
     def unit_variance(self, mu):
         """Compute the unit variance of a Tweedie distribution v(mu)=mu**power.
 
@@ -730,7 +734,7 @@ class TweedieDistribution(ExponentialDispersionModel):
         if p == 1:
             # PoissonDistribution
             # 2 * (y*log(y/mu) - y + mu), with y*log(y/mu)=0 if y=0
-            return 2 * (xlogy(y, y/mu) - y + mu)
+            return 2 * (special.xlogy(y, y/mu) - y + mu)
         elif p == 2:
             # GammaDistribution
             return 2 * (np.log(mu/y)+y/mu-1)
@@ -776,22 +780,6 @@ class GeneralizedHyperbolicSecant(ExponentialDispersionModel):
         self._include_lower_bound = False
         self._include_upper_bound = False
 
-    @property
-    def lower_bound(self):
-        return self._lower_bound
-
-    @property
-    def upper_bound(self):
-        return self._upper_bound
-
-    @property
-    def include_lower_bound(self):
-        return self._include_lower_bound
-
-    @property
-    def include_upper_bound(self):
-        return self._include_upper_bound
-
     def unit_variance(self, mu):
         return 1 + mu**2
 
@@ -801,6 +789,27 @@ class GeneralizedHyperbolicSecant(ExponentialDispersionModel):
     def unit_deviance(self, y, mu):
         return (2*y*(np.arctan(y) - np.arctan(mu)) +
                 np.log((1+mu**2)/(1+y**2)))
+
+
+class BinomialDistribution(ExponentialDispersionModel):
+    """A class for the Binomial distribution.
+
+    The Binomial distribution is for tagets y in [0, 1].
+    """
+    def __init__(self):
+        self._lower_bound = 0
+        self._upper_bound = 1
+        self._include_lower_bound = True
+        self._include_upper_bound = True
+
+    def unit_variance(self, mu):
+        return mu * (1 - mu)
+
+    def unit_variance_derivative(self, mu):
+        return 1 - 2 * mu
+
+    def unit_deviance(self, y, mu):
+        return 2*(special.xlogy(y, y/mu) + special.xlogy(1-y, (1-y)/(1-mu)))
 
 
 def _irls_step(X, W, P2, z):
@@ -933,15 +942,23 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    family : {'normal', 'poisson', 'gamma', 'inverse.gaussian'} or an instance\
-            of class ExponentialDispersionModel, optional(default='normal')
+    family : {'normal', 'poisson', 'gamma', 'inverse.gaussian', 'binomial'} \
+            or an instance of class ExponentialDispersionModel, \
+            optional(default='normal')
         The distributional assumption of the GLM, i.e. which distribution from
         the EDM, specifies the loss function to be minimized.
 
-    link : {'identity', 'log'} or an instance of class Link,
-        optional (default='identity')
+    link : {'auto', 'identity', 'log', 'logit'} or an instance of class Link,
+        optional (default='auto')
         The link function of the GLM, i.e. mapping from linear predictor
-        (X*coef) to expectation (mu).
+        (X*coef) to expectation (mu). Option 'auto' sets the link depending on
+        the chosen family as follows:
+
+        - 'identity' for family 'normal'
+
+        - 'log' for families 'poisson', 'gamma', 'inverse.gaussian'
+
+        - 'logit' for family 'binomial'
 
     fit_dispersion : {None, 'chisqr', 'deviance'}, optional (defaul=None)
         Method for estimation of the dispersion parameter phi. Whether to use
@@ -1084,7 +1101,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
           https://www.csie.ntu.edu.tw/~cjlin/papers/l1_glmnet/long-glmnet.pdf
     """
     def __init__(self, alpha=1.0, l1_ratio=0, P1='identity', P2='identity',
-                 fit_intercept=True, family='normal', link='identity',
+                 fit_intercept=True, family='normal', link='auto',
                  fit_dispersion=None, solver='auto', max_iter=100,
                  tol=1e-4, warm_start=False, start_params='irls',
                  selection='cyclic', random_state=None, copy_X=True,
@@ -1159,27 +1176,48 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 self._family_instance = GammaDistribution()
             elif self.family == 'inverse.gaussian':
                 self._family_instance = InverseGaussianDistribution()
+            elif self.family == 'binomial':
+                self._family_instance = BinomialDistribution()
             else:
                 raise ValueError(
                     "The family must be an instance of class"
                     " ExponentialDispersionModel or an element of"
-                    " ['normal', 'poisson', 'gamma', 'inverse.gaussian'];"
-                    " got (family={0})".format(self.family))
+                    " ['normal', 'poisson', 'gamma', 'inverse.gaussian', "
+                    "'binomial']; got (family={0})".format(self.family))
 
         # Guarantee that self._link_instance is set to an instance of
         # class Link
         if isinstance(self.link, Link):
             self._link_instance = self.link
         else:
-            if self.link == 'identity':
+            if self.link == 'auto':
+                if isinstance(self._family_instance, TweedieDistribution):
+                    if self._family_instance.power <= 0:
+                        self._link_instance = IdentityLink()
+                    if self._family_instance.power >= 1:
+                        self._link_instance = LogLink()
+                elif isinstance(self._family_instance,
+                                GeneralizedHyperbolicSecant):
+                    self._link_instance = IdentityLink()
+                elif isinstance(self._family_instance, BinomialDistribution):
+                    self._link_instance = LogitLink()
+                else:
+                    raise ValueError("No default link known for the "
+                                     "specified distribution family. Please "
+                                     "set link manually, i.e. not to 'auto'; "
+                                     "got (link='auto', family={}"
+                                     .format(self.family))
+            elif self.link == 'identity':
                 self._link_instance = IdentityLink()
             elif self.link == 'log':
                 self._link_instance = LogLink()
+            elif self.link == 'logit':
+                self._link_instance = LogitLink()
             else:
                 raise ValueError(
-                    "The link must be an instance of class Link or"
-                    " an element of ['identity', 'log']; got (link={0})"
-                    .format(self.link))
+                    "The link must be an instance of class Link or "
+                    "an element of ['auto', 'identity', 'log', 'logit']; "
+                    "got (link={0})".format(self.link))
 
         if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
             raise ValueError("Penalty term must be a non-negative number;"
