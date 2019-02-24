@@ -24,10 +24,6 @@ from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
-from ..externals import six
-
-zip = six.moves.zip
-map = six.moves.map
 
 __all__ = [
     'label_binarize',
@@ -105,7 +101,11 @@ def _encode(values, uniques=None, encode=False):
 
     """
     if values.dtype == object:
-        return _encode_python(values, uniques, encode)
+        try:
+            res = _encode_python(values, uniques, encode)
+        except TypeError:
+            raise TypeError("argument must be a string or number")
+        return res
     else:
         return _encode_numpy(values, uniques, encode)
 
@@ -281,6 +281,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                     "y contains previously unseen labels: %s" % str(diff))
         y = np.asarray(y)
         return self.classes_[y]
+
+    def _more_tags(self):
+        return {'X_types': ['1dlabels']}
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
@@ -514,6 +517,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y_inv = y_inv.toarray()
 
         return y_inv
+
+    def _more_tags(self):
+        return {'X_types': ['1dlabels']}
 
 
 def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
@@ -794,7 +800,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> mlb.classes_
     array([1, 2, 3])
 
-    >>> mlb.fit_transform([set(['sci-fi', 'thriller']), set(['comedy'])])
+    >>> mlb.fit_transform([{'sci-fi', 'thriller'}, {'comedy'}])
     array([[0, 1, 1],
            [1, 0, 0]])
     >>> list(mlb.classes_)
@@ -981,3 +987,6 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
                                  'Also got {0}'.format(unexpected))
             return [tuple(self.classes_.compress(indicators)) for indicators
                     in yt]
+
+    def _more_tags(self):
+        return {'X_types': ['2dlabels']}

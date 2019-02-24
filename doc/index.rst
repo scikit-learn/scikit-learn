@@ -209,6 +209,8 @@
                     </li>
                     <li><strong>Scikit-learn 0.21 will drop support for Python 2.7 and Python 3.4.</strong>
                     </li>
+                    <li><em>December 2018.</em> scikit-learn 0.20.2 is available for download (<a href="whats_new.html#version-0-20-2">Changelog</a>).
+                    </li>
                     <li><em>November 2018.</em> scikit-learn 0.20.1 is available for download (<a href="whats_new.html#version-0-20-1">Changelog</a>).
                     </li>
                     <li><em>September 2018.</em> scikit-learn 0.20.0 is available for download (<a href="whats_new.html#version-0-20-0">Changelog</a>).

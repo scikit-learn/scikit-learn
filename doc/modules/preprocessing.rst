@@ -488,7 +488,7 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-  >>> enc.fit(X)  # doctest: +ELLIPSIS
+  >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
   OneHotEncoder(categorical_features=None, categories=None,
          dtype=<... 'numpy.float64'>, handle_unknown='error',
          n_values=None, sparse=True)
@@ -514,7 +514,7 @@ dataset::
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X) # doctest: +ELLIPSIS
+    >>> enc.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None,
            categories=[...],
            dtype=<... 'numpy.float64'>, handle_unknown='error',
@@ -532,7 +532,7 @@ columns for this feature will be all zeros
 
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X) # doctest: +ELLIPSIS
+    >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None, categories=None,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
@@ -561,7 +561,7 @@ can introduce nonlinearity to linear models.
 K-bins discretization
 ---------------------
 
-:class:`KBinsDiscretizer` discretizers features into ``k`` equal width bins::
+:class:`KBinsDiscretizer` discretizes features into ``k`` bins::
 
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
@@ -579,7 +579,7 @@ example, these intervals are defined as:
  - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
  - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
- Based on these bin intervals, ``X`` is transformed as follows::
+Based on these bin intervals, ``X`` is transformed as follows::
 
   >>> est.transform(X)                      # doctest: +SKIP
   array([[ 0., 1., 1.],

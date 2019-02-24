@@ -12,7 +12,7 @@ from scipy import stats, linalg
 
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets.samples_generator import make_spd_matrix
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture.gaussian_mixture import GaussianMixture
 from sklearn.mixture.gaussian_mixture import (
@@ -68,7 +68,7 @@ def generate_data(n_samples, n_features, weights, means, precisions,
     return X
 
 
-class RandomData(object):
+class RandomData:
     def __init__(self, rng, n_samples=500, n_components=2, n_features=2,
                  scale=50):
         self.n_samples = n_samples

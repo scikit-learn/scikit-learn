@@ -22,8 +22,6 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 
-from sklearn.externals.six import iteritems
-
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
@@ -301,7 +299,7 @@ def test_pairwise_kernels_filter_param():
     assert_raises(TypeError, pairwise_kernels, X, Y, "rbf", **params)
 
 
-@pytest.mark.parametrize('metric, func', iteritems(PAIRED_DISTANCES))
+@pytest.mark.parametrize('metric, func', PAIRED_DISTANCES.items())
 def test_paired_distances(metric, func):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)

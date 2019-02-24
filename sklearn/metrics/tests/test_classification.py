@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 
 from functools import partial
 from itertools import product
@@ -998,11 +997,11 @@ weighted avg       0.51      0.53      0.47        75
 def test_classification_report_multiclass_with_unicode_label():
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    labels = np.array([u"blue\xa2", u"green\xa2", u"red\xa2"])
+    labels = np.array(["blue\xa2", "green\xa2", "red\xa2"])
     y_true = labels[y_true]
     y_pred = labels[y_pred]
 
-    expected_report = u"""\
+    expected_report = """\
               precision    recall  f1-score   support
 
        blue\xa2       0.83      0.79      0.81        24
@@ -1610,7 +1609,8 @@ def test__check_targets():
     y2 = [(2,), (0, 2,)]
     msg = ('You appear to be using a legacy multi-label data representation. '
            'Sequence of sequences are no longer supported; use a binary array'
-           ' or sparse matrix instead.')
+           ' or sparse matrix instead - the MultiLabelBinarizer'
+           ' transformer can convert to this format.')
     assert_raise_message(ValueError, msg, _check_targets, y1, y2)
 
 
