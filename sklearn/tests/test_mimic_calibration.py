@@ -5,6 +5,22 @@ from sklearn.mimic_calibration import _MimicCalibration
 from copy import copy
 
 
+def test_mimic_example():
+    n_samples = 1000
+    X, y = make_classification(n_samples=3 * n_samples, n_features=6,
+                               random_state=42)
+    X -= X.min()  # MultinomialNB only allows positive X
+    # split train and test
+    X_train, y_train = X[:n_samples], y[:n_samples]
+    X_calib, y_calib = X[n_samples:2 * n_samples], y[n_samples:2 * n_samples]
+    clf = MultinomialNB().fit(X_train, y_train)
+    y_calib_prob = X_calib.predict_proba(X_calib)
+    mimic_obj = _MimicCalibration(threshold_pos=5, boundary_choice=2, record_history=False)
+    X = y_calib_prob
+    y = y_calib
+    mimic_obj.fit(X, y)
+    calib_y = mimic_obj.predict(y)
+
 def test_mimic_calibration():
     n_samples = 50
     X, y = make_classification(n_samples=3 * n_samples, n_features=6,
@@ -14,9 +30,8 @@ def test_mimic_calibration():
     X_train, y_train = X[:n_samples], y[:n_samples]
     X_calib, y_calib = X[n_samples:2 * n_samples], y[n_samples:2 * n_samples]
     clf = MultinomialNB().fit(X_train, y_train)
-    clf_prob = CalibratedClassifierCV(clf, method="mimic", cv="prefit")
-    clf_prob.fit(X_calib, y_calib)
-    y_mimic_calibrated_score = clf_prob.predict_proba(X_calib)
+    y_mimic_calibrated_score = clf.predict_proba(X_calib)
+    
 
 
 def test_mimic_calibration_2():
@@ -53,5 +68,8 @@ def test_mimic_calibration_2():
         print(hist_trail)
         plt.plot(hist_trail)
 
+test_mimic_example()
 test_mimic_calibration()
 test_mimic_calibration_2()
+
+
