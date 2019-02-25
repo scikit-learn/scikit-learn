@@ -225,9 +225,6 @@ Changelog
 - |Fix| :func:`datasets.fetch_openml` to retry downloading when reading
   from local cache fails. :issue:`12517` by :user:`Thomas Fan <thomasjpfan>`.
 
-- |Fix| :func:`datasets.load_sample_images` returns images with a deterministic
-  order. :issue:`13250` by :user:`Thomas Fan <thomasjpfan>`.
-
 :mod:`sklearn.decomposition`
 ............................
 
