@@ -17,10 +17,10 @@ from sklearn.utils.seq_dataset import CSRDataset32
 from sklearn.datasets import load_iris
 
 iris = load_iris()
-X = iris.data.astype(np.float64)
-y = iris.target.astype(np.float64)
-X_csr = sp.csr_matrix(X)
-sample_weight = np.arange(y.size, dtype=np.float64)
+X64 = iris.data.astype(np.float64)
+y64 = iris.target.astype(np.float64)
+X_csr64 = sp.csr_matrix(X64)
+sample_weight64 = np.arange(y64.size, dtype=np.float64)
 
 X32 = iris.data.astype(np.float32)
 y32 = iris.target.astype(np.float32)
@@ -42,46 +42,49 @@ def assert_csr_equal_values(current, expected):
 @pytest.mark.parametrize(
     'dataset',
     [
-        ArrayDataset64(X, y, sample_weight, seed=42),
         ArrayDataset32(X32, y32, sample_weight32, seed=42),
-        CSRDataset64(X_csr.data, X_csr.indptr, X_csr.indices, y, sample_weight,
-                     seed=42),
+        ArrayDataset64(X64, y64, sample_weight64, seed=42),
         CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
                      sample_weight32, seed=42),
+        CSRDataset64(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
+                     sample_weight64, seed=42),
     ],
-    ids=['ArrayDataset64', 'ArrayDataset32', 'CSRDataset64', 'CSRDataset32']
+    ids=['ArrayDataset32', 'ArrayDataset64', 'CSRDataset32', 'CSRDataset64']
 )
 def test_seq_dataset_basic_iteration(dataset):
     NUMBER_OF_RUNS = 5
     for _ in range(NUMBER_OF_RUNS):
         # next sample
         xi_, yi, swi, idx = dataset._next_py()
-        xi = sp.csr_matrix((xi_), shape=(1, X.shape[1]))
+        xi = sp.csr_matrix((xi_), shape=(1, X64.shape[1]))
 
-        assert_csr_equal_values(xi, X_csr[idx])
-        assert yi == y[idx]
-        assert swi == sample_weight[idx]
+        assert_csr_equal_values(xi, X_csr64[idx])
+        assert yi == y64[idx]
+        assert swi == sample_weight64[idx]
 
         # random sample
         xi_, yi, swi, idx = dataset._random_py()
-        xi = sp.csr_matrix((xi_), shape=(1, X.shape[1]))
+        xi = sp.csr_matrix((xi_), shape=(1, X64.shape[1]))
 
-        assert_csr_equal_values(xi, X_csr[idx])
-        assert yi == y[idx]
-        assert swi == sample_weight[idx]
+        assert_csr_equal_values(xi, X_csr64[idx])
+        assert yi == y64[idx]
+        assert swi == sample_weight64[idx]
 
 
 @pytest.mark.parametrize(
     'dense_dataset,sparse_dataset',
     [
-        (ArrayDataset64(X, y, sample_weight, seed=42),
-        CSRDataset64(X_csr.data, X_csr.indptr, X_csr.indices, y, sample_weight,
-                     seed=42)),
-        (ArrayDataset32(X32, y32, sample_weight32, seed=42),
-        CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
-                     sample_weight32, seed=42))
+        (
+            ArrayDataset32(X32, y32, sample_weight32, seed=42),
+            CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
+                         sample_weight32, seed=42),
+        ),(
+            ArrayDataset64(X64, y64, sample_weight64, seed=42),
+            CSRDataset64(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
+                         sample_weight64, seed=42),
+        )
     ],
-    ids=['float 64', 'float 32']
+    ids=['float 32', 'float 64']
 )
 def test_seq_dataset_shuffle(dense_dataset, sparse_dataset):
     # not shuffled
@@ -115,12 +118,12 @@ def test_seq_dataset_shuffle(dense_dataset, sparse_dataset):
     [
         (
             ArrayDataset32(X32, y32, sample_weight32, seed=42),
-            ArrayDataset64(X, y, sample_weight, seed=42)
+            ArrayDataset64(X64, y64, sample_weight64, seed=42),
         ),(
             CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
                          sample_weight32, seed=42),
-            CSRDataset64(X_csr.data, X_csr.indptr, X_csr.indices, y,
-                         sample_weight, seed=42)
+            CSRDataset64(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
+                         sample_weight64, seed=42),
         )
     ],
     ids=['ArrayDataset', 'CSRDataset']
