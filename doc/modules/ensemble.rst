@@ -128,15 +128,15 @@ Random Forests
 --------------
 
 In random forests (see :class:`RandomForestClassifier` and
-:class:`RandomForestRegressor` classes), each tree in the ensemble is
-built from a sample drawn with replacement (i.e., a bootstrap sample)
-from the training set. In addition, when splitting a node during the
-construction of the tree, the split that is chosen is no longer the
-best split among all features. Instead, the split that is picked is the
-best split among a random subset of the features. As a result of this
-randomness, the bias of the forest usually slightly increases (with
-respect to the bias of a single non-random tree) but, due to averaging,
-its variance also decreases, usually more than compensating for the
+:class:`RandomForestRegressor` classes), each tree in the ensemble is built
+from a sample drawn with replacement (i.e., a bootstrap sample) from the
+training set. In addition, when splitting a node during the construction of the
+tree, the split that is chosen is no longer the best split among all features,
+unless you leave the default parameter ``max_features=’auto’``. Instead, the
+split that is picked is the best split among a random subset of the features.
+As a result of this randomness, the bias of the forest usually slightly
+increases (with respect to the bias of a single non-random tree) but, due to
+averaging, its variance also decreases, usually more than compensating for the
 increase in bias, hence yielding an overall better model.
 
 In contrast to the original publication [B2001]_, the scikit-learn
@@ -187,6 +187,8 @@ in bias::
     :target: ../auto_examples/ensemble/plot_forest_iris.html
     :align: center
     :scale: 75%
+
+.. _ensemble_parameters:
 
 Parameters
 ----------
