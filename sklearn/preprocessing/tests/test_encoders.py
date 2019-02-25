@@ -331,6 +331,20 @@ def test_one_hot_encoder_dtype_pandas(output_dtype):
     assert_array_equal(oh.fit_transform(X_df), X_expected)
     assert_array_equal(oh.fit(X_df).transform(X_df), X_expected)
 
+def test_one_hot_encoder_feature_dtype():
+    pd = pytest.importorskip('pandas')
+    
+    # checks if the datatypes are correct for each features (object, int, float)
+    X_df = pd.DataFrame({'A': ['a', 'b'], 'B': [1, 2], 'C':[3., 4.]})
+    enc = OneHotEncoder()
+    enc.fit_transform(X_df)
+
+    cat = enc.categories_
+    print(cat)
+    assert cat[0].dtype == object, "{} instead of {}".format(cat[0].dtype, object)
+    assert cat[1].dtype == int, "{} instead of {}".format(cat[1].dtype, int)
+    assert cat[2].dtype == float, "{} instead of {}".format(cat[2].dtype, float)
+
 
 def test_one_hot_encoder_set_params():
     X = np.array([[1, 2]]).T
