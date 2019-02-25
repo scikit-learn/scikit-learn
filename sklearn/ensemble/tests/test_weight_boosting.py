@@ -501,7 +501,7 @@ def test_multidimensional_X():
     yc = rng.choice([0, 1], 50)
     yr = rng.randn(50)
 
-    boost = AdaBoostClassifier(DummyClassifier())
+    boost = AdaBoostClassifier(DummyClassifier(strategy='most_frequent'))
     boost.fit(X, yc)
     boost.predict(X)
     boost.predict_proba(X)
