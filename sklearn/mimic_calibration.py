@@ -5,10 +5,38 @@ import sys
 
 
 class _MimicCalibration(BaseEstimator, RegressorMixin):
-    """ mimic calibration
-    reference:
-    https://www.youtube.com/watch?v=Cg--SC76I1I
-    http://tech.magnetic.com/2015/06/click-prediction-with-vowpal-wabbit.html
+    """ mimic calibration:
+    It is a method to calibrate probability prediction of binary classification model.
+    It requires two inputs, the probability prediction from binary classification model and
+    the binary target (0 and 1).
+    Here is how it is implemented.
+    1. Sort the probabitliy in the ascending. Merge neighbor data points into one bin
+       until the number of positive equal to threshold positive at each bin. In this initial binning,
+       only the last bin may have number of positive less than threshold positive.
+    2. Calculate the number of positive rate at each bin. Merge neighbor two bins if nPos rate in the left bin
+       is greater than right bin.
+    3. Keep step 2. until the nPos rate in the increasing order.
+    4. In this step, we have information at each bin, such as nPos rate, the avg/min/max probability.
+       we record those informations in two places. One is boundary_table. The other is calibrated_model.
+       boundary_table: it records probability at each bin. The default is recording the avg prob of bin.
+       calibrated_model: it records all the information of bin, such nPos rate, the avg/min/max probability.
+       So, boundary_table is part of calibrated_model.
+       The final step is linear interpolation on the prediction.
+       Given probability prediction from binary classification model, we find out which bin it belongs to.
+       Then, we perform linear interpolation in the corresponding bin.
+
+    Parameters
+    ----------
+    threshold_pos: the number of positive at each bin in the initial binning step. default = 5
+    boundary_choice: the choice to decide boundary of probability at each bin.
+      0: choose socre_min, ie left boundary of bin
+      1: choose socre_max, ie right boundary of bin
+      2: choose socre_mean, ie mean score of bin
+    record_history: boolean flag to decide if users want to record the merging bin process.
+
+    Reference:
+      https://www.youtube.com/watch?v=Cg--SC76I1I
+      http://tech.magnetic.com/2015/06/click-prediction-with-vowpal-wabbit.html
     """
     def __init__(self, threshold_pos=5, boundary_choice=2, record_history=False):
         self.threshold_pos = threshold_pos
@@ -157,8 +185,20 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
                            y_score,
                            y_target,
                            number_positive_within_bin=5):
-        """ y_score: the prediction from the model, probability
-        y_target: 0 or 1
+        """ Perform mimic calibration.
+
+        Parameters
+        ----------
+        y_score: 1-d array, the probability prediction from the binary classification model.
+        y_target: 1-d array, the element of this array is 0 or 1.
+        number_positive_within_bin: number of positive in the initial binning.
+
+        Returns
+        -------
+        boundary_table: 1-D array, a seris of boundary of each bin. size = number of bins
+        calibrated_model: 2-D array, shape (number of bins, 6).
+        the 2nd dim of 2-D is detail information of each bin.
+        for example, [bl_index, score_min, score_max, score_mean, nPos, total_num, PosRate]
         """
         assert ((y_score.min() >= 0) & (y_score.max() <= 1.0)), "y_score is a probability which is between 0 and 1."
         assert (len(np.unique(y_score)) > 2), "y_score should be at least 3 different probability."
@@ -170,11 +210,13 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         y_score = y_score[sorted_index]
         y_target = y_target[sorted_index]
         threshold_pos = number_positive_within_bin
+        # initial binning
         initial_binning, total_number_pos = self.construct_initial_bin(y_score, y_target, threshold_pos)
+        # start to merge bin
         final_binning = self.run_merge_function(initial_binning, self.record_history)
-        latest_bin_temp = final_binning[-1]
-        boundary_table = self.get_bin_boundary(latest_bin_temp, self.boundary_choice)
-        return boundary_table, latest_bin_temp
+        calibrated_model = final_binning[-1]
+        boundary_table = self.get_bin_boundary(calibrated_model, self.boundary_choice)
+        return boundary_table, calibrated_model
 
     def fit(self, X, y, sample_weight=None):
         X = column_or_1d(X)
@@ -206,11 +248,16 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         return y
 
     def predict(self, pre_calib_prob):
-        """x_array: a raw probability, ie pre-calibrated probability.
-        calibrated_model:
-        [[bl_index, score_min, score_max, score_mean, nPos_temp, total_temp, PosRate_temp]]
-        Use calibrated_model to predict the calibrated probability.
-        Perform linear interpolation to find the calibrated probability.
+        """ prediction function of mimic calibration.
+        It returns 1-d array, calibrated probability using mimic calibration.
+
+        Parameters
+        ----------
+        pre_calib_prob: 1-d array, the probability prediction from the binary classification model.
+
+        Returns
+        -------
+        calib_prob : 1-d array, the calibrated probability using mimic calibration.
         """
         pre_calib_prob = column_or_1d(pre_calib_prob)
         if(self.calibrated_model is None):
@@ -238,7 +285,6 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
 
     def plot_merge_result(self):
         import matplotlib.pyplot as plt
-        # self.calibrated_model
         data = None
         if (self.record_history):
             data = self.history_record_table
