@@ -72,8 +72,8 @@ def test_kernel_pca_consistent_transform():
 
 
 def test_kernel_pca_deterministic_output():
-    state = np.random.RandomState(0)
-    X = state.rand(10, 10)
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 10)
     eigen_solver = ('arpack', 'dense')
     transformed_X = np.zeros((10 * len(eigen_solver), 2))
 

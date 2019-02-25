@@ -705,8 +705,8 @@ def test_pca_dtype_preservation(svd_solver):
 
 
 def test_pca_deterministic_output():
-    state = np.random.RandomState(0)
-    X = state.rand(10, 10)
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 10)
     transformed_X = np.zeros((10 * len(solver_list), 2))
 
     i = 0
