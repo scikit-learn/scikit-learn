@@ -492,36 +492,14 @@ def test_multidimensional_X():
     Check that the AdaBoost estimators can work with n-dimensional
     data matrix
     """
-    class DummyClassifier(BaseEstimator):
 
-        def fit(self, X, y, sample_weight=None):
-            self.classes_ = np.unique(y)
-            return self
+    from sklearn.dummy import DummyClassifier, DummyRegressor
 
-        def predict(self, X):
-            n_samples = len(X)
-            predictions = np.random.choice(self.classes_, n_samples)
-            return predictions
+    rng = np.random.RandomState(0)
 
-        def predict_proba(self, X):
-            n_samples = len(X)
-            n_classes = len(self.classes_)
-            probas = np.random.randn(n_samples, n_classes)
-            return probas
-
-    class DummyRegressor(BaseEstimator):
-
-        def fit(self, X, y):
-            return self
-
-        def predict(self, X):
-            n_samples = len(X)
-            predictions = np.random.randn(n_samples)
-            return predictions
-
-    X = np.random.randn(50, 3, 3)
-    yc = np.random.choice([0, 1], 50)
-    yr = np.random.randn(50)
+    X = rng.random.randn(50, 3, 3)
+    yc = rng.random.choice([0, 1], 50)
+    yr = rng.random.randn(50)
 
     boost = AdaBoostClassifier(DummyClassifier())
     boost.fit(X, yc)
