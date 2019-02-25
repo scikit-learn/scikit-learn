@@ -3,39 +3,86 @@
 #
 # License: BSD 3 clause
 
-import numpy as np
+from math import log
 
-from sklearn.utils.testing import assert_array_equal
+import numpy as np
+from scipy.linalg import pinvh
+
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils import check_random_state
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
 from sklearn import datasets
+from sklearn.utils.extmath import fast_logdet
+
+diabetes = datasets.load_diabetes()
 
 
-def test_bayesian_on_diabetes():
-    # Test BayesianRidge on diabetes
-    raise SkipTest("test_bayesian_on_diabetes is broken")
-    diabetes = datasets.load_diabetes()
+def test_n_iter():
+    """Check value of n_iter."""
+    X = np.array([[1], [2], [6], [8], [10]])
+    y = np.array([1, 2, 6, 8, 10])
+    clf = BayesianRidge(n_iter=0)
+    msg = "n_iter should be greater than or equal to 1."
+    assert_raise_message(ValueError, msg, clf.fit, X, y)
+
+
+def test_bayesian_ridge_scores():
+    """Check scores attribute shape"""
     X, y = diabetes.data, diabetes.target
 
     clf = BayesianRidge(compute_score=True)
-
-    # Test with more samples than features
     clf.fit(X, y)
-    # Test that scores are increasing at each iteration
-    assert_array_equal(np.diff(clf.scores_) > 0, True)
 
-    # Test with more features than samples
-    X = X[:5, :]
-    y = y[:5]
+    assert clf.scores_.shape == (clf.n_iter_ + 1,)
+
+
+def test_bayesian_ridge_score_values():
+    """Check value of score on toy example.
+
+    Compute log marginal likelihood with equation (36) in Sparse Bayesian
+    Learning and the Relevance Vector Machine (Tipping, 2001):
+
+    - 0.5 * (log |Id/alpha + X.X^T/lambda| +
+             y^T.(Id/alpha + X.X^T/lambda).y + n * log(2 * pi))
+    + lambda_1 * log(lambda) - lambda_2 * lambda
+    + alpha_1 * log(alpha) - alpha_2 * alpha
+
+    and check equality with the score computed during training.
+    """
+
+    X, y = diabetes.data, diabetes.target
+    n_samples = X.shape[0]
+    # check with initial values of alpha and lambda (see code for the values)
+    eps = np.finfo(np.float64).eps
+    alpha_ = 1. / (np.var(y) + eps)
+    lambda_ = 1.
+
+    # value of the parameters of the Gamma hyperpriors
+    alpha_1 = 0.1
+    alpha_2 = 0.1
+    lambda_1 = 0.1
+    lambda_2 = 0.1
+
+    # compute score using formula of docstring
+    score = lambda_1 * log(lambda_) - lambda_2 * lambda_
+    score += alpha_1 * log(alpha_) - alpha_2 * alpha_
+    M = 1. / alpha_ * np.eye(n_samples) + 1. / lambda_ * np.dot(X, X.T)
+    M_inv = pinvh(M)
+    score += - 0.5 * (fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)) +
+                      n_samples * log(2 * np.pi))
+
+    # compute score with BayesianRidge
+    clf = BayesianRidge(alpha_1=alpha_1, alpha_2=alpha_2,
+                        lambda_1=lambda_1, lambda_2=lambda_2,
+                        n_iter=1, fit_intercept=False, compute_score=True)
     clf.fit(X, y)
-    # Test that scores are increasing at each iteration
-    assert_array_equal(np.diff(clf.scores_) > 0, True)
+
+    assert_almost_equal(clf.scores_[0], score, decimal=9)
 
 
 def test_bayesian_ridge_parameter():
@@ -86,8 +133,10 @@ def test_prediction_bayesian_ridge_ard_with_constant_input():
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
-    y = np.full(n_samples, constant_value)
-    expected = np.full(n_samples, constant_value)
+    y = np.full(n_samples, constant_value,
+                dtype=np.array(constant_value).dtype)
+    expected = np.full(n_samples, constant_value,
+                       dtype=np.array(constant_value).dtype)
 
     for clf in [BayesianRidge(), ARDRegression()]:
         y_pred = clf.fit(X, y).predict(X)
@@ -103,7 +152,8 @@ def test_std_bayesian_ridge_ard_with_constant_input():
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
-    y = np.full(n_samples, constant_value)
+    y = np.full(n_samples, constant_value,
+                dtype=np.array(constant_value).dtype)
     expected_upper_boundary = 0.01
 
     for clf in [BayesianRidge(), ARDRegression()]:

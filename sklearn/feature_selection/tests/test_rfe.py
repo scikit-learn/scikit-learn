@@ -1,6 +1,7 @@
 """
 Testing Recursive feature elimination
 """
+
 import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -16,13 +17,13 @@ from sklearn.model_selection import GroupKFold
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_greater, assert_equal, assert_true
+from sklearn.utils.testing import assert_greater, assert_equal
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
 
-class MockClassifier(object):
+class MockClassifier:
     """
     Dummy classifier to test recursive feature elimination
     """
@@ -31,7 +32,7 @@ class MockClassifier(object):
         self.foo_param = foo_param
 
     def fit(self, X, Y):
-        assert_true(len(X) == len(Y))
+        assert len(X) == len(Y)
         self.coef_ = np.ones(X.shape[1], dtype=np.float64)
         return self
 
@@ -212,7 +213,7 @@ def test_rfecv_mockclassifier():
 
 def test_rfecv_verbose_output():
     # Check verbose=1 is producing an output.
-    from sklearn.externals.six.moves import cStringIO as StringIO
+    from io import StringIO
     import sys
     sys.stdout = StringIO()
 
@@ -229,6 +230,27 @@ def test_rfecv_verbose_output():
     assert_greater(len(verbose_output.readline()), 0)
 
 
+def test_rfecv_grid_scores_size():
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = list(iris.target)   # regression test: list should be supported
+
+    # Non-regression test for varying combinations of step and
+    # min_features_to_select.
+    for step, min_features_to_select in [[2, 1], [2, 2], [3, 3]]:
+        rfecv = RFECV(estimator=MockClassifier(), step=step,
+                      min_features_to_select=min_features_to_select, cv=5)
+        rfecv.fit(X, y)
+
+        score_len = np.ceil(
+            (X.shape[1] - min_features_to_select) / step) + 1
+        assert len(rfecv.grid_scores_) == score_len
+        assert len(rfecv.ranking_) == X.shape[1]
+        assert rfecv.n_features_ >= min_features_to_select
+
+
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
     assert_equal(rfe._estimator_type, "classifier")
@@ -320,6 +342,7 @@ def test_number_of_subsets_of_features():
                      formula2(n_features, n_features_to_select, step))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_rfe_cv_n_jobs():
     generator = check_random_state(0)
     iris = load_iris()

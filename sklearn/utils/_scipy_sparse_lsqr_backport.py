@@ -49,7 +49,6 @@ Adapted for SciPy by Stefan van der Walt.
 
 """
 
-from __future__ import division, print_function, absolute_import
 
 __all__ = ['lsqr']
 
@@ -75,7 +74,7 @@ def _sym_ortho(a, b):
     ----------
     .. [1] S.-C. Choi, "Iterative Methods for Singular Linear Equations
            and Least-Squares Problems", Dissertation,
-           http://www.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf
+           https://www.stanford.edu/group/SOL/dissertations/sou-cheng-choi-thesis.pdf
 
     """
     if b == 0:

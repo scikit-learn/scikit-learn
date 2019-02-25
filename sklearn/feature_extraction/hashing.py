@@ -7,8 +7,17 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from . import _hashing
+from ..utils import IS_PYPY
 from ..base import BaseEstimator, TransformerMixin
+
+if not IS_PYPY:
+    from ._hashing import transform as _hashing_transform
+else:
+    def _hashing_transform(*args, **kwargs):
+        raise NotImplementedError(
+                'FeatureHasher is not compatible with PyPy (see '
+                'https://github.com/scikit-learn/scikit-learn/issues/11540 '
+                'for the status updates).')
 
 
 def _iteritems(d):
@@ -155,7 +164,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         elif self.input_type == "string":
             raw_X = (((f, 1) for f in x) for x in raw_X)
         indices, indptr, values = \
-            _hashing.transform(raw_X, self.n_features, self.dtype,
+            _hashing_transform(raw_X, self.n_features, self.dtype,
                                self.alternate_sign)
         n_samples = indptr.shape[0] - 1
 
@@ -169,3 +178,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         if self.non_negative:
             np.abs(X.data, X.data)
         return X
+
+    def _more_tags(self):
+        return {'X_types': [self.input_type]}

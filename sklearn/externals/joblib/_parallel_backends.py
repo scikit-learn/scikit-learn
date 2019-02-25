@@ -7,21 +7,39 @@ import os
 import sys
 import warnings
 import threading
+import functools
+import contextlib
 from abc import ABCMeta, abstractmethod
 
 from .format_stack import format_exc
 from .my_exceptions import WorkerInterrupt, TransportableException
 from ._multiprocessing_helpers import mp
-from ._compat import with_metaclass
+from ._compat import with_metaclass, PY27
 if mp is not None:
-    from .pool import MemmapingPool
+    from .disk import delete_folder
+    from .pool import MemmappingPool
     from multiprocessing.pool import ThreadPool
+    from .executor import get_memmapping_executor
+
+    # Compat between concurrent.futures and multiprocessing TimeoutError
+    from multiprocessing import TimeoutError
+    from .externals.loky._base import TimeoutError as LokyTimeoutError
+    from .externals.loky import process_executor, cpu_count
 
 
 class ParallelBackendBase(with_metaclass(ABCMeta)):
     """Helper abc which defines all methods a ParallelBackend must implement"""
 
     supports_timeout = False
+    nesting_level = 0
+
+    def __init__(self, nesting_level=0):
+        self.nesting_level = nesting_level
+
+    SUPPORTED_CLIB_VARS = [
+        'OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS',
+        'VECLIB_MAXIMUM_THREADS', 'NUMEXPR_NUM_THREADS'
+    ]
 
     @abstractmethod
     def effective_n_jobs(self, n_jobs):
@@ -45,7 +63,8 @@ class ParallelBackendBase(with_metaclass(ABCMeta)):
     def apply_async(self, func, callback=None):
         """Schedule a func to be run"""
 
-    def configure(self, n_jobs=1, parallel=None, **backend_args):
+    def configure(self, n_jobs=1, parallel=None, prefer=None, require=None,
+                  **backend_args):
         """Reconfigure the backend and return the number of workers.
 
         This makes it possible to reuse an existing backend instance for
@@ -54,8 +73,14 @@ class ParallelBackendBase(with_metaclass(ABCMeta)):
         self.parallel = parallel
         return self.effective_n_jobs(n_jobs)
 
+    def start_call(self):
+        """Call-back method called at the beginning of a Parallel call"""
+
+    def stop_call(self):
+        """Call-back method called at the end of a Parallel call"""
+
     def terminate(self):
-        """Shutdown the process or thread pool"""
+        """Shutdown the workers and free the shared memory."""
 
     def compute_batch_size(self):
         """Determine the optimal batch size"""
@@ -86,11 +111,54 @@ class ParallelBackendBase(with_metaclass(ABCMeta)):
         Setting ensure_ready to False is an optimization that can be leveraged
         when aborting tasks via killing processes from a local process pool
         managed by the backend it-self: if we expect no new tasks, there is no
-        point in re-creating a new working pool.
+        point in re-creating new workers.
         """
-        # Does nothing by default: to be overridden in subclasses when canceling
-        # tasks is possible.
+        # Does nothing by default: to be overridden in subclasses when
+        # canceling tasks is possible.
         pass
+
+    def get_nested_backend(self):
+        """Backend instance to be used by nested Parallel calls.
+
+        By default a thread-based backend is used for the first level of
+        nesting. Beyond, switch to sequential backend to avoid spawning too
+        many threads on the host.
+        """
+        nesting_level = getattr(self, 'nesting_level', 0) + 1
+        if nesting_level > 1:
+            return SequentialBackend(nesting_level=nesting_level), None
+        else:
+            return ThreadingBackend(nesting_level=nesting_level), None
+
+    @contextlib.contextmanager
+    def retrieval_context(self):
+        """Context manager to manage an execution context.
+
+        Calls to Parallel.retrieve will be made inside this context.
+
+        By default, this does nothing. It may be useful for subclasses to
+        handle nested parallelism. In particular, it may be required to avoid
+        deadlocks if a backend manages a fixed number of workers, when those
+        workers may be asked to do nested Parallel calls. Without
+        'retrieval_context' this could lead to deadlock, as all the workers
+        managed by the backend may be "busy" waiting for the nested parallel
+        calls to finish, but the backend has no free workers to execute those
+        tasks.
+        """
+        yield
+
+    @classmethod
+    def limit_clib_threads(cls, n_threads=1):
+        """Initializer to limit the number of threads used by some C-libraries.
+
+        This function set the number of threads to `n_threads` for OpenMP, MKL,
+        Accelerated and OpenBLAS libraries, that can be used with scientific
+        computing tools like numpy.
+        """
+        for var in cls.SUPPORTED_CLIB_VARS:
+            var_value = os.environ.get(var, None)
+            if var_value is None:
+                os.environ[var] = str(n_threads)
 
 
 class SequentialBackend(ParallelBackendBase):
@@ -99,6 +167,9 @@ class SequentialBackend(ParallelBackendBase):
     Does not use/create any threading objects, and hence has minimal
     overhead. Used when n_jobs == 1.
     """
+
+    uses_threads = True
+    supports_sharedmem = True
 
     def effective_n_jobs(self, n_jobs):
         """Determine the number of jobs which are going to run in parallel"""
@@ -113,9 +184,19 @@ class SequentialBackend(ParallelBackendBase):
             callback(result)
         return result
 
+    def get_nested_backend(self):
+        # import is not top level to avoid cyclic import errors.
+        from .parallel import get_active_backend
+
+        # SequentialBackend should neither change the nesting level, the
+        # default backend or the number of jobs. Just return the current one.
+        return get_active_backend()
+
 
 class PoolManagerMixin(object):
     """A helper class for managing pool of workers."""
+
+    _pool = None
 
     def effective_n_jobs(self, n_jobs):
         """Determine the number of jobs which are going to run in parallel"""
@@ -126,7 +207,7 @@ class PoolManagerMixin(object):
             # to sequential mode
             return 1
         elif n_jobs < 0:
-            n_jobs = max(mp.cpu_count() + 1 + n_jobs, 1)
+            n_jobs = max(cpu_count() + 1 + n_jobs, 1)
         return n_jobs
 
     def terminate(self):
@@ -136,9 +217,14 @@ class PoolManagerMixin(object):
             self._pool.terminate()  # terminate does a join()
             self._pool = None
 
+    def _get_pool(self):
+        """Used by apply_async to make it possible to implement lazy init"""
+        return self._pool
+
     def apply_async(self, func, callback=None):
         """Schedule a func to be run"""
-        return self._pool.apply_async(SafeFunction(func), callback=callback)
+        return self._get_pool().apply_async(
+            SafeFunction(func), callback=callback)
 
     def abort_everything(self, ensure_ready=True):
         """Shutdown the pool and restart a new one with the same parameters"""
@@ -161,9 +247,13 @@ class AutoBatchingMixin(object):
     # on a single worker while other workers have no work to process any more.
     MAX_IDEAL_BATCH_DURATION = 2
 
-    # Batching counters
-    _effective_batch_size = 1
-    _smoothed_batch_duration = 0.0
+    # Batching counters default values
+    _DEFAULT_EFFECTIVE_BATCH_SIZE = 1
+    _DEFAULT_SMOOTHED_BATCH_DURATION = 0.0
+
+    def __init__(self):
+        self._effective_batch_size = self._DEFAULT_EFFECTIVE_BATCH_SIZE
+        self._smoothed_batch_duration = self._DEFAULT_SMOOTHED_BATCH_DURATION
 
     def compute_batch_size(self):
         """Determine the optimal batch size"""
@@ -207,7 +297,8 @@ class AutoBatchingMixin(object):
             # CallBack as long as the batch_size is constant. Therefore
             # we need to reset the estimate whenever we re-tune the batch
             # size.
-            self._smoothed_batch_duration = 0
+            self._smoothed_batch_duration = \
+                self._DEFAULT_SMOOTHED_BATCH_DURATION
 
         return batch_size
 
@@ -217,7 +308,7 @@ class AutoBatchingMixin(object):
             # Update the smoothed streaming estimate of the duration of a batch
             # from dispatch to completion
             old_duration = self._smoothed_batch_duration
-            if old_duration == 0:
+            if old_duration == self._DEFAULT_SMOOTHED_BATCH_DURATION:
                 # First record of duration for this batch size after the last
                 # reset.
                 new_duration = duration
@@ -227,6 +318,14 @@ class AutoBatchingMixin(object):
                 new_duration = 0.8 * old_duration + 0.2 * duration
             self._smoothed_batch_duration = new_duration
 
+    def reset_batch_stats(self):
+        """Reset batch statistics to default values.
+
+        This avoids interferences with future jobs.
+        """
+        self._effective_batch_size = self._DEFAULT_EFFECTIVE_BATCH_SIZE
+        self._smoothed_batch_duration = self._DEFAULT_SMOOTHED_BATCH_DURATION
+
 
 class ThreadingBackend(PoolManagerMixin, ParallelBackendBase):
     """A ParallelBackend which will use a thread pool to execute batches in.
@@ -234,21 +333,39 @@ class ThreadingBackend(PoolManagerMixin, ParallelBackendBase):
     This is a low-overhead backend but it suffers from the Python Global
     Interpreter Lock if the called function relies a lot on Python objects.
     Mostly useful when the execution bottleneck is a compiled extension that
-    explicitly releases the GIL (for instance a Cython loop wrapped in a
-    "with nogil" block or an expensive call to a library such as NumPy).
+    explicitly releases the GIL (for instance a Cython loop wrapped in a "with
+    nogil" block or an expensive call to a library such as NumPy).
+
+    The actual thread pool is lazily initialized: the actual thread pool
+    construction is delayed to the first call to apply_async.
+
+    ThreadingBackend is used as the default backend for nested calls.
     """
 
     supports_timeout = True
+    uses_threads = True
+    supports_sharedmem = True
 
     def configure(self, n_jobs=1, parallel=None, **backend_args):
         """Build a process or thread pool and return the number of workers"""
         n_jobs = self.effective_n_jobs(n_jobs)
         if n_jobs == 1:
             # Avoid unnecessary overhead and use sequential backend instead.
-            raise FallbackToBackend(SequentialBackend())
+            raise FallbackToBackend(
+                SequentialBackend(nesting_level=self.nesting_level))
         self.parallel = parallel
-        self._pool = ThreadPool(n_jobs)
+        self._n_jobs = n_jobs
         return n_jobs
+
+    def _get_pool(self):
+        """Lazily initialize the thread pool
+
+        The actual pool of worker threads is only initialized at the first
+        call to apply_async.
+        """
+        if self._pool is None:
+            self._pool = ThreadPool(self._n_jobs)
+        return self._pool
 
 
 class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
@@ -283,21 +400,33 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
                     stacklevel=3)
             return 1
 
+        if process_executor._CURRENT_DEPTH > 0:
+            # Mixing loky and multiprocessing in nested loop is not supported
+            if n_jobs != 1:
+                warnings.warn(
+                    'Multiprocessing-backed parallel loops cannot be nested,'
+                    ' below loky, setting n_jobs=1',
+                    stacklevel=3)
+            return 1
+
         if not isinstance(threading.current_thread(), threading._MainThread):
             # Prevent posix fork inside in non-main posix threads
-            warnings.warn(
-                'Multiprocessing-backed parallel loops cannot be nested'
-                ' below threads, setting n_jobs=1',
-                stacklevel=3)
+            if n_jobs != 1:
+                warnings.warn(
+                    'Multiprocessing-backed parallel loops cannot be nested'
+                    ' below threads, setting n_jobs=1',
+                    stacklevel=3)
             return 1
 
         return super(MultiprocessingBackend, self).effective_n_jobs(n_jobs)
 
-    def configure(self, n_jobs=1, parallel=None, **backend_args):
+    def configure(self, n_jobs=1, parallel=None, prefer=None, require=None,
+                  **memmappingpool_args):
         """Build a process or thread pool and return the number of workers"""
         n_jobs = self.effective_n_jobs(n_jobs)
         if n_jobs == 1:
-            raise FallbackToBackend(SequentialBackend())
+            raise FallbackToBackend(
+                SequentialBackend(nesting_level=self.nesting_level))
 
         already_forked = int(os.environ.get(self.JOBLIB_SPAWNED_PROCESS, 0))
         if already_forked:
@@ -314,7 +443,8 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
 
         # Make sure to free as much memory as possible before forking
         gc.collect()
-        self._pool = MemmapingPool(n_jobs, **backend_args)
+        self._pool = MemmappingPool(
+            n_jobs, initializer=self.limit_clib_threads, **memmappingpool_args)
         self.parallel = parallel
         return n_jobs
 
@@ -323,6 +453,93 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
         super(MultiprocessingBackend, self).terminate()
         if self.JOBLIB_SPAWNED_PROCESS in os.environ:
             del os.environ[self.JOBLIB_SPAWNED_PROCESS]
+
+        self.reset_batch_stats()
+
+
+class LokyBackend(AutoBatchingMixin, ParallelBackendBase):
+    """Managing pool of workers with loky instead of multiprocessing."""
+
+    supports_timeout = True
+
+    def configure(self, n_jobs=1, parallel=None, prefer=None, require=None,
+                  idle_worker_timeout=300, **memmappingexecutor_args):
+        """Build a process executor and return the number of workers"""
+        n_jobs = self.effective_n_jobs(n_jobs)
+        if n_jobs == 1:
+            raise FallbackToBackend(
+                SequentialBackend(nesting_level=self.nesting_level))
+
+        self._workers = get_memmapping_executor(
+            n_jobs, timeout=idle_worker_timeout,
+            initializer=self.limit_clib_threads,
+            **memmappingexecutor_args)
+        self.parallel = parallel
+        return n_jobs
+
+    def effective_n_jobs(self, n_jobs):
+        """Determine the number of jobs which are going to run in parallel"""
+        if n_jobs == 0:
+            raise ValueError('n_jobs == 0 in Parallel has no meaning')
+        elif mp is None or n_jobs is None:
+            # multiprocessing is not available or disabled, fallback
+            # to sequential mode
+            return 1
+        elif mp.current_process().daemon:
+            # Daemonic processes cannot have children
+            if n_jobs != 1:
+                warnings.warn(
+                    'Loky-backed parallel loops cannot be called in a'
+                    ' multiprocessing, setting n_jobs=1',
+                    stacklevel=3)
+            return 1
+        elif not isinstance(threading.current_thread(), threading._MainThread):
+            # Prevent posix fork inside in non-main posix threads
+            if n_jobs != 1:
+                warnings.warn(
+                    'Loky-backed parallel loops cannot be nested below '
+                    'threads, setting n_jobs=1',
+                    stacklevel=3)
+            return 1
+        elif n_jobs < 0:
+            n_jobs = max(cpu_count() + 1 + n_jobs, 1)
+        return n_jobs
+
+    def apply_async(self, func, callback=None):
+        """Schedule a func to be run"""
+        future = self._workers.submit(SafeFunction(func))
+        future.get = functools.partial(self.wrap_future_result, future)
+        if callback is not None:
+            future.add_done_callback(callback)
+        return future
+
+    @staticmethod
+    def wrap_future_result(future, timeout=None):
+        """Wrapper for Future.result to implement the same behaviour as
+        AsyncResults.get from multiprocessing."""
+        try:
+            return future.result(timeout=timeout)
+        except LokyTimeoutError:
+            raise TimeoutError()
+
+    def terminate(self):
+        if self._workers is not None:
+            # Terminate does not shutdown the workers as we want to reuse them
+            # in latter calls but we free as much memory as we can by deleting
+            # the shared memory
+            delete_folder(self._workers._temp_folder)
+            self._workers = None
+
+        self.reset_batch_stats()
+
+    def abort_everything(self, ensure_ready=True):
+        """Shutdown the workers and restart a new one with the same parameters
+        """
+        self._workers.shutdown(kill_workers=True)
+        delete_folder(self._workers._temp_folder)
+        self._workers = None
+        if ensure_ready:
+            self.configure(n_jobs=self.parallel.n_jobs, parallel=self.parallel)
 
 
 class ImmediateResult(object):
@@ -353,10 +570,17 @@ class SafeFunction(object):
             # something different, as multiprocessing does not
             # interrupt processing for a KeyboardInterrupt
             raise WorkerInterrupt()
-        except:
-            e_type, e_value, e_tb = sys.exc_info()
-            text = format_exc(e_type, e_value, e_tb, context=10, tb_offset=1)
-            raise TransportableException(text, e_type)
+        except BaseException:
+            if PY27:
+                # Capture the traceback of the worker to make it part of
+                # the final exception message.
+                e_type, e_value, e_tb = sys.exc_info()
+                text = format_exc(e_type, e_value, e_tb, context=10,
+                                  tb_offset=1)
+                raise TransportableException(text, e_type)
+            else:
+                # Rely on Python 3 built-in Remote Traceback reporting
+                raise
 
 
 class FallbackToBackend(Exception):

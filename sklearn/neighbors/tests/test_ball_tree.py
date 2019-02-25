@@ -228,6 +228,8 @@ def test_ball_tree_pickle():
         assert_array_almost_equal(ind1_pyfunc, ind2_pyfunc)
         assert_array_almost_equal(dist1_pyfunc, dist2_pyfunc)
 
+        assert isinstance(bt2, BallTree)
+
     for protocol in (0, 1, 2):
         check_pickle_protocol(protocol)
 

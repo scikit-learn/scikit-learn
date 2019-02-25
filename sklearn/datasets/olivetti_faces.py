@@ -1,28 +1,19 @@
 """Modified Olivetti faces dataset.
 
-The original database was available from
+The original database was available from (now defunct)
 
-    http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
+    https://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
 The version retrieved here comes in MATLAB format from the personal
 web page of Sam Roweis:
 
-    http://www.cs.nyu.edu/~roweis/
-
-There are ten different images of each of 40 distinct subjects. For some
-subjects, the images were taken at different times, varying the lighting,
-facial expressions (open / closed eyes, smiling / not smiling) and facial
-details (glasses / no glasses). All the images were taken against a dark
-homogeneous background with the subjects in an upright, frontal position (with
-tolerance for some side movement).
-
-The original dataset consisted of 92 x 112, while the Roweis version
-consists of 64x64 images.
+    https://cs.nyu.edu/~roweis/
 """
+
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from os.path import exists
+from os.path import dirname, exists, join
 from os import makedirs, remove
 
 import numpy as np
@@ -32,27 +23,32 @@ from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from .base import _pkl_filepath
+from ..utils import _joblib
 from ..utils import check_random_state, Bunch
-from ..externals import joblib
 
 # The original data can be found at:
-# http://cs.nyu.edu/~roweis/data/olivettifaces.mat
+# https://cs.nyu.edu/~roweis/data/olivettifaces.mat
 FACES = RemoteFileMetadata(
     filename='olivettifaces.mat',
     url='https://ndownloader.figshare.com/files/5976027',
     checksum=('b612fb967f2dc77c9c62d3e1266e0c73'
               'd5fca46a4b8906c18e454d41af987794'))
 
-# Grab the module-level docstring to use as a description of the
-# dataset
-MODULE_DOCS = __doc__
-
 
 def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
                          download_if_missing=True):
-    """Loader for the Olivetti faces data-set from AT&T.
+    """Load the Olivetti faces data-set from AT&T (classification).
 
-    Read more in the :ref:`User Guide <olivetti_faces>`.
+    Download it if necessary.
+
+    =================   =====================
+    Classes                                40
+    Samples total                         400
+    Dimensionality                       4096
+    Features            real, between 0 and 1
+    =================   =====================
+
+    Read more in the :ref:`User Guide <olivetti_faces_dataset>`.
 
     Parameters
     ----------
@@ -91,20 +87,6 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
 
     DESCR : string
         Description of the modified Olivetti Faces Dataset.
-
-    Notes
-    ------
-
-    This dataset consists of 10 pictures each of 40 individuals. The original
-    database was available from (now defunct)
-
-        http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
-
-    The version retrieved here comes in MATLAB format from the personal
-    web page of Sam Roweis:
-
-        http://www.cs.nyu.edu/~roweis/
-
     """
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
@@ -122,10 +104,10 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         remove(mat_path)
 
         faces = mfile['faces'].T.copy()
-        joblib.dump(faces, filepath, compress=6)
+        _joblib.dump(faces, filepath, compress=6)
         del mfile
     else:
-        faces = joblib.load(filepath)
+        faces = _joblib.load(filepath)
 
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)
@@ -140,7 +122,12 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         order = random_state.permutation(len(faces))
         faces = faces[order]
         target = target[order]
+
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'olivetti_faces.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     return Bunch(data=faces.reshape(len(faces), -1),
                  images=faces,
                  target=target,
-                 DESCR=MODULE_DOCS)
+                 DESCR=fdescr)

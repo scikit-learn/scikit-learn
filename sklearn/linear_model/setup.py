@@ -1,40 +1,27 @@
 import os
-from os.path import join
 
 import numpy
 
-from sklearn._build_utils import get_blas_info
-
 from Cython import Tempita
-
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration('linear_model', parent_package, top_path)
 
-    cblas_libs, blas_info = get_blas_info()
-
+    libraries = []
     if os.name == 'posix':
-        cblas_libs.append('m')
+        libraries.append('m')
 
-    config.add_extension('cd_fast', sources=['cd_fast.pyx'],
-                         libraries=cblas_libs,
-                         include_dirs=[join('..', 'src', 'cblas'),
-                                       numpy.get_include(),
-                                       blas_info.pop('include_dirs', [])],
-                         extra_compile_args=blas_info.pop('extra_compile_args',
-                                                          []), **blas_info)
+    config.add_extension('cd_fast',
+                         sources=['cd_fast.pyx'],
+                         include_dirs=numpy.get_include(),
+                         libraries=libraries)
 
     config.add_extension('sgd_fast',
                          sources=['sgd_fast.pyx'],
-                         include_dirs=[join('..', 'src', 'cblas'),
-                                       numpy.get_include(),
-                                       blas_info.pop('include_dirs', [])],
-                         libraries=cblas_libs,
-                         extra_compile_args=blas_info.pop('extra_compile_args',
-                                                          []),
-                         **blas_info)
+                         include_dirs=numpy.get_include(),
+                         libraries=libraries)
 
     # generate sag_fast from template
     sag_cython_file = 'sklearn/linear_model/sag_fast.pyx.tp'

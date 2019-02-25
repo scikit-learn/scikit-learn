@@ -2,8 +2,6 @@
 Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
-from __future__ import print_function
-
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Gael Varoquaux
@@ -19,13 +17,11 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..base import RegressorMixin
-from ..utils import arrayfuncs, as_float_array, check_X_y, deprecated
+from ..base import RegressorMixin, MultiOutputMixin
+from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
-from ..utils import Parallel, delayed
-from ..externals.six.moves import xrange
-from ..externals.six import string_types
+from ..utils._joblib import Parallel, delayed
 
 solve_triangular_args = {'check_finite': False}
 
@@ -135,7 +131,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     References
     ----------
     .. [1] "Least Angle Regression", Effron et al.
-           http://statweb.stanford.edu/~tibs/ftp/lars.pdf
+           https://statweb.stanford.edu/~tibs/ftp/lars.pdf
 
     .. [2] `Wikipedia entry on the Least-angle regression
            <https://en.wikipedia.org/wiki/Least-angle_regression>`_
@@ -181,7 +177,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             # and allows to easily swap columns
             X = X.copy('F')
 
-    elif isinstance(Gram, string_types) and Gram == 'auto' or Gram is True:
+    elif isinstance(Gram, str) and Gram == 'auto' or Gram is True:
         if Gram is True or X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
         else:
@@ -431,7 +427,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 idx]
 
             n_active -= 1
-            m, n = idx, n_active
             # handle the case when idx is not length of 1
             drop_idx = [active.pop(ii) for ii in idx]
 
@@ -492,7 +487,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 ###############################################################################
 # Estimator classes
 
-class Lars(LinearModel, RegressorMixin):
+class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
     """Least Angle Regression model a.k.a. LAR
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
@@ -606,7 +601,8 @@ class Lars(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.fit_path = fit_path
 
-    def _get_gram(self, precompute, X, y):
+    @staticmethod
+    def _get_gram(precompute, X, y):
         if (not hasattr(precompute, '__array__')) and (
                 (precompute is True) or
                 (precompute == 'auto' and X.shape[0] > X.shape[1]) or
@@ -636,7 +632,7 @@ class Lars(LinearModel, RegressorMixin):
         if fit_path:
             self.active_ = []
             self.coef_path_ = []
-            for k in xrange(n_targets):
+            for k in range(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, active, coef_path, n_iter_ = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
@@ -656,7 +652,7 @@ class Lars(LinearModel, RegressorMixin):
                                    self.coef_)]
                 self.n_iter_ = self.n_iter_[0]
         else:
-            for k in xrange(n_targets):
+            for k in range(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, _, self.coef_[k], n_iter_ = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
@@ -969,7 +965,9 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
 
 class LarsCV(Lars):
-    """Cross-validated Least Angle Regression model
+    """Cross-validated Least Angle Regression model.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -1005,21 +1003,27 @@ class LarsCV(Lars):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     eps : float, optional
         The machine-precision regularization in the computation of the
@@ -1063,6 +1067,19 @@ class LarsCV(Lars):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import LarsCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
+    >>> reg = LarsCV(cv=5).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9996...
+    >>> reg.alpha_
+    0.0254...
+    >>> reg.predict(X[:1,])
+    array([154.0842...])
+
     See also
     --------
     lars_path, LassoLars, LassoLarsCV
@@ -1071,19 +1088,19 @@ class LarsCV(Lars):
     method = 'lar'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
-                 max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
+                 normalize=True, precompute='auto', cv='warn',
+                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.max_iter = max_iter
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
-        super(LarsCV, self).__init__(fit_intercept=fit_intercept,
-                                     verbose=verbose, normalize=normalize,
-                                     precompute=precompute,
-                                     n_nonzero_coefs=500,
-                                     eps=eps, copy_X=copy_X, fit_path=True,
-                                     positive=positive)
+        super().__init__(fit_intercept=fit_intercept,
+                         verbose=verbose, normalize=normalize,
+                         precompute=precompute,
+                         n_nonzero_coefs=500,
+                         eps=eps, copy_X=copy_X, fit_path=True,
+                         positive=positive)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -1165,16 +1182,11 @@ class LarsCV(Lars):
                   Xy=None, fit_path=True)
         return self
 
-    @property
-    @deprecated("Attribute alpha is deprecated in 0.19 and "
-                "will be removed in 0.21. See ``alpha_`` instead")
-    def alpha(self):
-        # impedance matching for the above Lars.fit (should not be documented)
-        return self.alpha_
-
 
 class LassoLarsCV(LarsCV):
-    """Cross-validated Lasso, using the LARS algorithm
+    """Cross-validated Lasso, using the LARS algorithm.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     The optimization objective for Lasso is::
 
@@ -1214,21 +1226,27 @@ class LassoLarsCV(LarsCV):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
     max_n_alphas : integer, optional
         The maximum number of points on the path used to compute the
         residuals in the cross-validation
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     eps : float, optional
         The machine-precision regularization in the computation of the
@@ -1277,6 +1295,19 @@ class LassoLarsCV(LarsCV):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import LassoLarsCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4.0, random_state=0)
+    >>> reg = LassoLarsCV(cv=5).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9992...
+    >>> reg.alpha_
+    0.0484...
+    >>> reg.predict(X[:1,])
+    array([-77.8723...])
+
     Notes
     -----
 
@@ -1297,8 +1328,8 @@ class LassoLarsCV(LarsCV):
     method = 'lasso'
 
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
-                 max_n_alphas=1000, n_jobs=1, eps=np.finfo(np.float).eps,
+                 normalize=True, precompute='auto', cv='warn',
+                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
                  copy_X=True, positive=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
@@ -1311,7 +1342,7 @@ class LassoLarsCV(LarsCV):
         self.eps = eps
         self.copy_X = copy_X
         self.positive = positive
-        # XXX : we don't use super(LarsCV, self).__init__
+        # XXX : we don't use super().__init__
         # to avoid setting n_nonzero_coefs
 
 
@@ -1446,7 +1477,7 @@ class LassoLarsIC(LassoLars):
         self.eps = eps
         self.fit_path = True
 
-    def fit(self, X, y, copy_X=True):
+    def fit(self, X, y, copy_X=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -1457,7 +1488,9 @@ class LassoLarsIC(LassoLars):
         y : array-like, shape (n_samples,)
             target values. Will be cast to X's dtype if necessary
 
-        copy_X : boolean, optional, default True
+        copy_X : boolean, optional, default None
+            If provided, this parameter will override the choice
+            of copy_X made at instance creation.
             If ``True``, X will be copied; else, it may be overwritten.
 
         Returns
@@ -1465,10 +1498,12 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
+        if copy_X is None:
+            copy_X = self.copy_X
         X, y = check_X_y(X, y, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, copy_X)
         max_iter = self.max_iter
 
         Gram = self.precompute

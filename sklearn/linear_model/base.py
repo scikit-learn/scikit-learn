@@ -13,7 +13,6 @@ Generalized Linear models.
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 # License: BSD 3 clause
 
-from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
 import warnings
@@ -22,10 +21,11 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
+from scipy.special import expit
 
-from ..externals import six
-from ..utils import Parallel, delayed
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..utils._joblib import Parallel, delayed
+from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                    MultiOutputMixin)
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
@@ -100,7 +100,7 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
 
 def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
-                     sample_weight=None, return_mean=False):
+                     sample_weight=None, return_mean=False, check_input=True):
     """
     Centers data to have mean zero along axis 0. If fit_intercept=False or if
     the X is a sparse matrix, no centering is done, but normalization can still
@@ -122,8 +122,15 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
 
-    X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
-                    dtype=FLOAT_DTYPES)
+    if check_input:
+        X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
+                        dtype=FLOAT_DTYPES)
+    elif copy:
+        if sp.issparse(X):
+            X = X.copy()
+        else:
+            X = X.copy(order='K')
+
     y = np.asarray(y, dtype=X.dtype)
 
     if fit_intercept:
@@ -175,7 +182,8 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 def _rescale_data(X, y, sample_weight):
     """Rescale data so as to support sample_weight"""
     n_samples = X.shape[0]
-    sample_weight = sample_weight * np.ones(n_samples)
+    sample_weight = np.full(n_samples, sample_weight,
+                            dtype=np.array(sample_weight).dtype)
     sample_weight = np.sqrt(sample_weight)
     sw_matrix = sparse.dia_matrix((sample_weight, 0),
                                   shape=(n_samples, n_samples))
@@ -184,7 +192,7 @@ def _rescale_data(X, y, sample_weight):
     return X, y
 
 
-class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
+class LinearModel(BaseEstimator, metaclass=ABCMeta):
     """Base class for Linear Models"""
 
     @abstractmethod
@@ -294,10 +302,7 @@ class LinearClassifierMixin(ClassifierMixin):
         multiclass is handled by normalizing that over all classes.
         """
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
+        expit(prob, out=prob)
         if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:
@@ -306,7 +311,7 @@ class LinearClassifierMixin(ClassifierMixin):
             return prob
 
 
-class SparseCoefMixin(object):
+class SparseCoefMixin:
     """Mixin for converting coef_ to and from CSR format.
 
     L1-regularizing estimators should inherit this.
@@ -360,7 +365,7 @@ class SparseCoefMixin(object):
         return self
 
 
-class LinearRegression(LinearModel, RegressorMixin):
+class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     """
     Ordinary least squares Linear Regression.
 
@@ -382,10 +387,12 @@ class LinearRegression(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    n_jobs : int, optional, default 1
-        The number of jobs to use for the computation.
-        If -1 all CPUs are used. This will only provide speedup for
-        n_targets > 1 and sufficient large problems.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use for the computation. This will only provide
+        speedup for n_targets > 1 and sufficient large problems.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -398,6 +405,23 @@ class LinearRegression(LinearModel, RegressorMixin):
     intercept_ : array
         Independent term in the linear model.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.linear_model import LinearRegression
+    >>> X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    >>> # y = 1 * x_0 + 2 * x_1 + 3
+    >>> y = np.dot(X, np.array([1, 2])) + 3
+    >>> reg = LinearRegression().fit(X, y)
+    >>> reg.score(X, y)
+    1.0
+    >>> reg.coef_
+    array([1., 2.])
+    >>> reg.intercept_ # doctest: +ELLIPSIS
+    3.0000...
+    >>> reg.predict(np.array([[3, 5]]))
+    array([16.])
+
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
@@ -406,7 +430,7 @@ class LinearRegression(LinearModel, RegressorMixin):
     """
 
     def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=1):
+                 n_jobs=None):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
@@ -460,8 +484,8 @@ class LinearRegression(LinearModel, RegressorMixin):
                 outs = Parallel(n_jobs=n_jobs_)(
                     delayed(sparse_lsqr)(X, y[:, j].ravel())
                     for j in range(y.shape[1]))
-                self.coef_ = np.vstack(out[0] for out in outs)
-                self._residues = np.vstack(out[3] for out in outs)
+                self.coef_ = np.vstack([out[0] for out in outs])
+                self._residues = np.vstack([out[3] for out in outs])
         else:
             self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y)
@@ -473,7 +497,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         return self
 
 
-def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
+def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
+             check_input=True):
     """Aux function used at beginning of fit in linear models"""
     n_samples, n_features = X.shape
 
@@ -482,11 +507,12 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         precompute = False
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, fit_intercept=fit_intercept, normalize=normalize,
-            copy=False, return_mean=True)
+            copy=False, return_mean=True, check_input=check_input)
     else:
         # copy was done in fit if necessary
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy)
+            X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy,
+            check_input=check_input)
     if hasattr(precompute, '__array__') and (
             fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
             normalize and not np.allclose(X_scale, np.ones(n_features))):
@@ -499,7 +525,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         Xy = None
 
     # precompute if n_samples > n_features
-    if isinstance(precompute, six.string_types) and precompute == 'auto':
+    if isinstance(precompute, str) and precompute == 'auto':
         precompute = (n_samples > n_features)
 
     if precompute is True:

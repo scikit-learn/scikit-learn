@@ -3,6 +3,8 @@
 #
 # License: BSD 3 clause
 
+import pytest
+
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -321,6 +323,28 @@ def test_csr_preprocess_data():
     csr = sparse.csr_matrix(X)
     csr_, y, _, _, _ = _preprocess_data(csr, y, True)
     assert_equal(csr_.getformat(), 'csr')
+
+
+@pytest.mark.parametrize('is_sparse', (True, False))
+@pytest.mark.parametrize('to_copy', (True, False))
+def test_preprocess_copy_data_no_checks(is_sparse, to_copy):
+    X, y = make_regression()
+    X[X < 2.5] = 0.0
+
+    if is_sparse:
+        X = sparse.csr_matrix(X)
+
+    X_, y_, _, _, _ = _preprocess_data(X, y, True,
+                                       copy=to_copy, check_input=False)
+
+    if to_copy and is_sparse:
+        assert not np.may_share_memory(X_.data, X.data)
+    elif to_copy:
+        assert not np.may_share_memory(X_, X)
+    elif is_sparse:
+        assert np.may_share_memory(X_.data, X.data)
+    else:
+        assert np.may_share_memory(X_, X)
 
 
 def test_dtype_preprocess_data():

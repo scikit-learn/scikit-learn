@@ -309,20 +309,34 @@ Power transforms are a family of parametric, monotonic transformations that aim
 to map data from any distribution to as close to a Gaussian distribution as
 possible in order to stabilize variance and minimize skewness.
 
-:class:`PowerTransformer` currently provides one such power transformation,
-the Box-Cox transform. The Box-Cox transform is given by:
+:class:`PowerTransformer` currently provides two such power transformations,
+the Yeo-Johnson transform and the Box-Cox transform.
+
+The Yeo-Johnson transform is given by:
 
 .. math::
-    y_i^{(\lambda)} =
+    x_i^{(\lambda)} =
     \begin{cases}
-    \dfrac{y_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
-    \ln{(y_i)} & \text{if } \lambda = 0,
+     [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
+    \ln{(x_i) + 1} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
+    -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
+     - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
     \end{cases}
 
-Box-Cox can only be applied to strictly positive data. The transformation is
-parameterized by :math:`\lambda`, which is determined through maximum likelihood
-estimation. Here is an example of using Box-Cox to map samples drawn from a
-lognormal distribution to a normal distribution::
+while the Box-Cox transform is given by:
+
+.. math::
+    x_i^{(\lambda)} =
+    \begin{cases}
+    \dfrac{x_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
+    \ln{(x_i)} & \text{if } \lambda = 0,
+    \end{cases}
+
+
+Box-Cox can only be applied to strictly positive data. In both methods, the
+transformation is parameterized by :math:`\lambda`, which is determined through
+maximum likelihood estimation. Here is an example of using Box-Cox to map
+samples drawn from a lognormal distribution to a normal distribution::
 
   >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
   >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
@@ -339,13 +353,14 @@ While the above example sets the `standardize` option to `False`,
 :class:`PowerTransformer` will apply zero-mean, unit-variance normalization
 to the transformed output by default.
 
-Below are examples of Box-Cox applied to various probability distributions.
-Note that when applied to certain distributions, Box-Cox achieves very
-Gaussian-like results, but with others, it is ineffective. This highlights
-the importance of visualizing the data before and after transformation.
+Below are examples of Box-Cox and Yeo-Johnson applied to various probability
+distributions.  Note that when applied to certain distributions, the power
+transforms achieve very Gaussian-like results, but with others, they are
+ineffective. This highlights the importance of visualizing the data before and
+after transformation.
 
-.. figure:: ../auto_examples/preprocessing/images/sphx_glr_plot_power_transformer_001.png
-   :target: ../auto_examples/preprocessing/plot_power_transformer.html
+.. figure:: ../auto_examples/preprocessing/images/sphx_glr_plot_map_data_to_normal_001.png
+   :target: ../auto_examples/preprocessing/plot_map_data_to_normal.html
    :align: center
    :scale: 100
 
@@ -473,7 +488,7 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-  >>> enc.fit(X)  # doctest: +ELLIPSIS
+  >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
   OneHotEncoder(categorical_features=None, categories=None,
          dtype=<... 'numpy.float64'>, handle_unknown='error',
          n_values=None, sparse=True)
@@ -499,7 +514,7 @@ dataset::
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X) # doctest: +ELLIPSIS
+    >>> enc.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None,
            categories=[...],
            dtype=<... 'numpy.float64'>, handle_unknown='error',
@@ -517,7 +532,7 @@ columns for this feature will be all zeros
 
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X) # doctest: +ELLIPSIS
+    >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None, categories=None,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
@@ -539,10 +554,14 @@ features into discrete values. Certain datasets with continuous features
 may benefit from discretization, because discretization can transform the dataset
 of continuous attributes to one with only nominal attributes.
 
+One-hot encoded discretized features can make a model more expressive, while
+maintaining interpretability. For instance, pre-processing with a discretizer
+can introduce nonlinearity to linear models.
+
 K-bins discretization
 ---------------------
 
-:class:`KBinsDiscretizer` discretizers features into ``k`` equal width bins::
+:class:`KBinsDiscretizer` discretizes features into ``k`` bins::
 
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
@@ -560,7 +579,7 @@ example, these intervals are defined as:
  - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
  - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
- Based on these bin intervals, ``X`` is transformed as follows::
+Based on these bin intervals, ``X`` is transformed as follows::
 
   >>> est.transform(X)                      # doctest: +SKIP
   array([[ 0., 1., 1.],

@@ -69,6 +69,9 @@ benchmarks/bench_covertype_data/
 .pytest_cache/
 _configtest.o.d
 
+# Used by mypy
+.mypy_cache/
+
 # files generated from a template
 sklearn/utils/seq_dataset.pyx
 sklearn/utils/seq_dataset.pxd

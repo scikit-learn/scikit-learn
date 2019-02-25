@@ -1,4 +1,3 @@
-from __future__ import division
 
 import functools
 
@@ -77,7 +76,7 @@ def test_input_size_jl_min_dim():
                   2 * [0.9])
 
     johnson_lindenstrauss_min_dim(np.random.randint(1, 10, size=(10, 10)),
-                                  0.5 * np.ones((10, 10)))
+                                  np.full((10, 10), 0.5))
 
 
 ###############################################################################

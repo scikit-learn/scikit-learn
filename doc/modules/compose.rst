@@ -76,13 +76,13 @@ filling in the names automatically::
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
-    >>> pipe.steps[0]
+    >>> pipe.steps[0]  # doctest: +NORMALIZE_WHITESPACE
     ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False))
 
 and as a ``dict`` in ``named_steps``::
 
-    >>> pipe.named_steps['reduce_dim']
+    >>> pipe.named_steps['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
     PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
       svd_solver='auto', tol=0.0, whiten=False)
 
@@ -107,10 +107,10 @@ This is particularly important for doing grid searches::
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
 Individual steps may also be replaced as parameters, and non-final steps may be
-ignored by setting them to ``None``::
+ignored by setting them to ``'passthrough'``::
 
     >>> from sklearn.linear_model import LogisticRegression
-    >>> param_grid = dict(reduce_dim=[None, PCA(5), PCA(10)],
+    >>> param_grid = dict(reduce_dim=['passthrough', PCA(5), PCA(10)],
     ...                   clf=[SVC(), LogisticRegression()],
     ...                   clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
@@ -256,7 +256,6 @@ variable::
 For simple transformations, instead of a Transformer object, a pair of
 functions can be passed, defining the transformation and its inverse mapping::
 
-  >>> from __future__ import division
   >>> def func(x):
   ...     return np.log(x)
   >>> def inverse_func(x):
@@ -342,7 +341,7 @@ and ``value`` is an estimator object::
     >>> estimators = [('linear_pca', PCA()), ('kernel_pca', KernelPCA())]
     >>> combined = FeatureUnion(estimators)
     >>> combined # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
                                    ('kernel_pca', KernelPCA(alpha=1.0,...))],
                  transformer_weights=None)
@@ -353,13 +352,13 @@ Like pipelines, feature unions have a shorthand constructor called
 
 
 Like ``Pipeline``, individual steps may be replaced using ``set_params``,
-and ignored by setting to ``None``::
+and ignored by setting to ``'drop'``::
 
-    >>> combined.set_params(kernel_pca=None)
+    >>> combined.set_params(kernel_pca='drop')
     ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    FeatureUnion(n_jobs=1,
+    FeatureUnion(n_jobs=None,
                  transformer_list=[('linear_pca', PCA(copy=True,...)),
-                                   ('kernel_pca', None)],
+                                   ('kernel_pca', 'drop')],
                  transformer_weights=None)
 
 .. topic:: Examples:
@@ -380,7 +379,7 @@ ColumnTransformer for heterogeneous data
 Many datasets contain features of different types, say text, floats, and dates,
 where each type of feature requires separate preprocessing or feature
 extraction steps.  Often it is easiest to preprocess data before applying
-scikit-learn methods, for example using `pandas <http://pandas.pydata.org/>`__.
+scikit-learn methods, for example using `pandas <https://pandas.pydata.org/>`__.
 Processing your data before passing it to scikit-learn might be problematic for
 one of the following reasons:
 
@@ -395,7 +394,7 @@ transformations for different columns of the data, within a
 :class:`~sklearn.pipeline.Pipeline` that is safe from data leakage and that can
 be parametrized. :class:`~sklearn.compose.ColumnTransformer` works on
 arrays, sparse matrices, and
-`pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__.
+`pandas DataFrames <https://pandas.pydata.org/pandas-docs/stable/>`__.
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
@@ -409,26 +408,30 @@ preprocessing or a specific feature extraction method::
   ...      'user_rating': [4, 5, 4, 3]})
 
 For this data, we might want to encode the ``'city'`` column as a categorical
-variable, but apply a :class:`feature_extraction.text.CountVectorizer
+variable using :class:`preprocessing.OneHotEncoder
+<sklearn.preprocessing.OneHotEncoder>` but apply a 
+:class:`feature_extraction.text.CountVectorizer
 <sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
 each transformer a unique name, say ``'city_category'`` and ``'title_bow'``.
-We can ignore the remaining rating columns by setting ``remainder='drop'``::
+By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
   >>> from sklearn.compose import ColumnTransformer
   >>> from sklearn.feature_extraction.text import CountVectorizer
+  >>> from sklearn.preprocessing import OneHotEncoder
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...      remainder='drop')
+  ...     remainder='drop')
 
   >>> column_trans.fit(X) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='drop', transformer_weights=None,
+  ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
+      transformer_weights=None,
       transformers=...)
 
   >>> column_trans.get_feature_names()
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ['city_category__London', 'city_category__Paris', 'city_category__Sallisaw',
+  ['city_category__x0_London', 'city_category__x0_Paris', 'city_category__x0_Sallisaw',
   'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
   'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
   'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
@@ -443,8 +446,9 @@ We can ignore the remaining rating columns by setting ``remainder='drop'``::
 
 In the above example, the
 :class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
-input and therefore the columns were specified as a string (``'city'``).
-However, other transformers generally expect 2D data, and in that case you need
+input and therefore the columns were specified as a string (``'title'``).
+However, :class:`preprocessing.OneHotEncoder <sklearn.preprocessing.OneHotEncoder>`
+as most of other transformers expects 2D data, therefore in that case you need
 to specify the column as a list of strings (``['city']``).
 
 Apart from a scalar or a single item list, the column selection can be specified
@@ -457,11 +461,11 @@ We can keep the remaining rating columns by setting
 transformation::
 
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...      remainder='passthrough')
+  ...     remainder='passthrough')
 
-  >>> column_trans.fit_transform(X).toarray()
+  >>> column_trans.fit_transform(X)
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 5, 4],
          [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 3, 5],
@@ -474,29 +478,32 @@ the transformation::
 
   >>> from sklearn.preprocessing import MinMaxScaler
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     [('city_category', OneHotEncoder(), ['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...      remainder=MinMaxScaler())
+  ...     remainder=MinMaxScaler())
 
-  >>> column_trans.fit_transform(X)[:, -2:].toarray()
+  >>> column_trans.fit_transform(X)[:, -2:]
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   array([[1. , 0.5],
          [0. , 1. ],
          [0.5, 0.5],
          [1. , 0. ]])
 
-The :func:`~sklearn.compose.make_columntransformer` function is available
+The :func:`~sklearn.compose.make_column_transformer` function is available
 to more easily create a :class:`~sklearn.compose.ColumnTransformer` object.
 Specifically, the names will be given automatically. The equivalent for the
 above example would be::
 
   >>> from sklearn.compose import make_column_transformer
   >>> column_trans = make_column_transformer(
-  ...     ('city', CountVectorizer(analyzer=lambda x: [x])),
-  ...     ('title', CountVectorizer()))
+  ...     (OneHotEncoder(), ['city']),
+  ...     (CountVectorizer(), 'title'),
+  ...     remainder=MinMaxScaler())
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ColumnTransformer(n_jobs=1, remainder='passthrough', transformer_weights=None,
-           transformers=[('countvectorizer-1', ...)
+  ColumnTransformer(n_jobs=None, remainder=MinMaxScaler(copy=True, ...),
+           sparse_threshold=0.3,
+           transformer_weights=None,
+           transformers=[('onehotencoder', ...)
 
 .. topic:: Examples:
 

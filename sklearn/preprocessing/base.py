@@ -5,7 +5,6 @@ from scipy import sparse
 
 from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
-from ..externals import six
 
 
 def _transform_selected(X, transform, dtype, selected="all", copy=True,
@@ -48,7 +47,7 @@ def _transform_selected(X, transform, dtype, selected="all", copy=True,
         raise ValueError("The retain_order option can only be set to True "
                          "for dense matrices.")
 
-    if isinstance(selected, six.string_types) and selected == "all":
+    if isinstance(selected, str) and selected == "all":
         return transform(X)
 
     if len(selected) == 0:

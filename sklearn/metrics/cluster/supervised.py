@@ -14,7 +14,6 @@ better.
 #          Arya McCarthy <arya@jhu.edu>
 # License: BSD 3 clause
 
-from __future__ import division
 
 from math import log
 import warnings
@@ -205,9 +204,9 @@ def adjusted_rand_score(labels_true, labels_pred):
     References
     ----------
 
-    .. [Hubert1985] `L. Hubert and P. Arabie, Comparing Partitions,
-      Journal of Classification 1985`
-      http://link.springer.com/article/10.1007%2FBF01908075
+    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
+      Journal of Classification 1985
+      https://link.springer.com/article/10.1007%2FBF01908075
 
     .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
 
@@ -350,7 +349,7 @@ def homogeneity_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
+       <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -424,7 +423,7 @@ def completeness_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
+       <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -500,7 +499,7 @@ def v_measure_score(labels_true, labels_pred):
 
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
-       <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
+       <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -767,14 +766,14 @@ def normalized_mutual_info_score(labels_true, labels_pred,
                                  average_method='warn'):
     """Normalized Mutual Information between two clusterings.
 
-    Normalized Mutual Information (NMI) is an normalization of the Mutual
+    Normalized Mutual Information (NMI) is a normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
     information) and 1 (perfect correlation). In this function, mutual
     information is normalized by some generalized mean of ``H(labels_true)``
     and ``H(labels_pred))``, defined by the `average_method`.
 
     This measure is not adjusted for chance. Therefore
-    :func:`adjusted_mustual_info_score` might be preferred.
+    :func:`adjusted_mutual_info_score` might be preferred.
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
