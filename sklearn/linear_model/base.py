@@ -24,7 +24,8 @@ from scipy import sparse
 from scipy.special import expit
 
 from ..utils._joblib import Parallel, delayed
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                    MultiOutputMixin)
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
@@ -355,7 +356,7 @@ class SparseCoefMixin:
         return self
 
 
-class LinearRegression(LinearModel, RegressorMixin):
+class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     """
     Ordinary least squares Linear Regression.
 
