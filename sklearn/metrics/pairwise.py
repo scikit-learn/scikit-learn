@@ -27,19 +27,12 @@ from ..utils import gen_batches, get_chunk_n_rows
 from ..utils import is_scalar_nan
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
+from ..utils.mask import _get_missing_mask
 from ..utils._joblib import Parallel
 from ..utils._joblib import delayed
 from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
-
-
-# Get mask for missing values
-def _get_mask(X, value_to_mask):
-    """Compute the boolean mask X == missing_values."""
-    if np.isnan(value_to_mask) or value_to_mask == "NaN":
-        return np.isnan(X)
-    return X == value_to_mask
 
 
 # Utility Functions
@@ -346,8 +339,7 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     >>> from sklearn.metrics.pairwise import nan_euclidean_distances
     >>> nan = float("NaN")
     >>> X = [[0, 1], [1, nan]]
-    >>> # distance between rows of X
-    >>> nan_euclidean_distances(X, X)
+    >>> nan_euclidean_distances(X, X) # distance between rows of X
     array([[0.        , 1.41421356],
            [1.41421356, 0.        ]])
 
@@ -371,14 +363,13 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
     X, Y = check_pairwise_arrays(X, Y, accept_sparse='csr',
                                  force_all_finite=force_all_finite, copy=copy)
-
     # Get missing mask for X
     if issparse(X):
         missing_X = csr_matrix(
-            (_get_mask(X.data, missing_values), X.indices, X.indptr),
+            (_get_missing_mask(X.data, missing_values), X.indices, X.indptr),
             shape=X.shape, dtype=np.bool).toarray()
     else:
-        missing_X = _get_mask(X, missing_values)
+        missing_X = _get_missing_mask(X, missing_values)
 
     # Get missing mask for Y.T
     YT = Y.T
@@ -387,11 +378,12 @@ def nan_euclidean_distances(X, Y=None, squared=False,
     else:
         # YT is always csc
         if issparse(YT):
-            missing_YT = csc_matrix(
-                (_get_mask(YT.data, missing_values), YT.indices, YT.indptr),
+            missing_YT = csc_matrix((
+                _get_missing_mask(YT.data, missing_values),
+                YT.indices, YT.indptr),
                 shape=YT.shape, dtype=np.bool).toarray()
         else:
-            missing_YT = _get_mask(YT, missing_values)
+            missing_YT = _get_missing_mask(YT, missing_values)
 
     # Convert to uint8 be used to calculate distances
     not_missing_X_int = (~missing_X).astype(np.uint8)
@@ -1211,7 +1203,7 @@ def distance_metrics():
     'l1'                    metrics.pairwise.manhattan_distances
     'l2'                    metrics.pairwise.euclidean_distances
     'manhattan'             metrics.pairwise.manhattan_distances
-    'nan_euclidean'      metrics.pairwise.nan_euclidean_distances
+    'nan_euclidean'         metrics.pairwise.nan_euclidean_distances
     ===================     ============================================
 
     Read more in the :ref:`User Guide <metrics>`.
@@ -1579,7 +1571,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
         missing_values = kwds.get("missing_values") if kwds.get(
             "missing_values") is not None else np.nan
 
-        if np.all(_get_mask(X.data if issparse(X) else X, missing_values)):
+        if np.all(_get_missing_mask(X.data if issparse(X)
+                                    else np.array(X), missing_values)):
             raise ValueError(
                 "One or more samples(s) only have missing values.")
 
