@@ -1524,8 +1524,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
-def check_outlier_corruption(estimator, num_outliers,
-                             expected_outliers, decision):
+def check_outlier_corruption(num_outliers, expected_outliers, decision):
     # Check for deviation from the precise given contamination level that may
     # be due to ties in the anomaly scores.
     if num_outliers < expected_outliers:
@@ -1614,8 +1613,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
         # excluded from this if branch.
         if num_outliers != expected_outliers:
             decision = estimator.decision_function(X)
-            check_outlier_corruption(estimator, num_outliers,
-                                     expected_outliers, decision)
+            check_outlier_corruption(num_outliers, expected_outliers, decision)
 
         # raises error when contamination is a scalar and not in [0,1]
         for contamination in [-0.5, 2.3]:
@@ -2422,8 +2420,7 @@ def check_outliers_fit_predict(name, estimator_orig):
         if (num_outliers != expected_outliers and
                 hasattr(estimator, 'decision_function')):
             decision = estimator.decision_function(X)
-            check_outlier_corruption(estimator, num_outliers,
-                                     expected_outliers, decision)
+            check_outlier_corruption(num_outliers, expected_outliers, decision)
 
         # raises error when contamination is a scalar and not in [0,1]
         for contamination in [-0.5, 2.3]:

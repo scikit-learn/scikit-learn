@@ -269,5 +269,4 @@ def test_predicted_outlier_number():
     num_outliers = np.sum(y_pred != 1)
     if num_outliers != expected_outliers:
         y_dec = clf.negative_outlier_factor_
-        check_outlier_corruption(clf, num_outliers,
-                                 expected_outliers, y_dec)
+        check_outlier_corruption(num_outliers, expected_outliers, y_dec)

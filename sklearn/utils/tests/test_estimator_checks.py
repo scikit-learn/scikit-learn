@@ -363,12 +363,12 @@ def test_check_estimator():
 
 
 def test_check_outlier_corruption():
-    # should error on != outlier counts and no support for decision_function
-    assert_raises(AssertionError, check_outlier_corruption, object, 1, 2, [])
-    assert_raises(AssertionError, check_outlier_corruption, object, 2, 1, [])
-
-    # should pass if counts are equal
-    check_outlier_corruption(object, 1, 1, [])
+    # should raise AssertionError
+    decision = np.array([0., 1., 1.5, 2.])
+    assert_raises(AssertionError, check_outlier_corruption, 1, 2, decision)
+    # should pass
+    decision = np.array([0., 1., 1., 2.])
+    check_outlier_corruption(1, 2, decision)
 
 
 def test_check_estimator_transformer_no_mixin():
