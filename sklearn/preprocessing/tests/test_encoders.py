@@ -711,12 +711,10 @@ def test_ordinal_all_nan_raises_error():
 @pytest.mark.parametrize("X, exp_cats", [
     (np.array([[1, 2, np.nan]]).T,
     [np.array([1, 2])]),
-    (np.array([['a', 'b', np.nan], ['d', 'e', 'f']], dtype=object),
+    (np.array([['a', 'b', np.nan]], dtype=object).T,
     [np.array(['a', 'b'])]),
     ], ids=['numeric', 'object'])
 def test_ordinal_encoder_nan_not_in_categories(X, exp_cats):
-    # TODO:
-    # _encode_python() fails sorting object dtype with NaN 
     enc = OrdinalEncoder()
     enc.fit(X)
     X_cats = enc.categories_
@@ -727,8 +725,6 @@ def test_ordinal_encoder_nan_not_in_categories(X, exp_cats):
                                np.array([['a', 'b', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
 def test_ordinal_encoder_passthru_missing(X):
-    # TODO:
-    # _encode_python() fails sorting object dtype with NaN 
     enc = OrdinalEncoder()
     # TEST NaN not encoded with handle_missing="passthrough"
     X_exp = np.array([[0, 1, np.nan]]).T

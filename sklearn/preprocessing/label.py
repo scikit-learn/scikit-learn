@@ -18,6 +18,7 @@ from ..base import BaseEstimator, TransformerMixin
 
 from ..utils.sparsefuncs import min_max_axis
 from ..utils import column_or_1d
+from ..utils.fixes import _object_dtype_isnan
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _num_samples
@@ -60,7 +61,12 @@ def _encode_numpy(values, uniques=None, encode=False):
 def _encode_python(values, uniques=None, encode=False):
     # only used in _encode below, see docstring there for details
     if uniques is None:
-        uniques = sorted(set(values))
+        # Handle missing values
+        missing_vals = _object_dtype_isnan(values)
+        if any(missing_vals):
+            uniques = sorted(set(values[~missing_vals]))
+        else:
+            uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
     if encode:
         table = {val: i for i, val in enumerate(uniques)}
