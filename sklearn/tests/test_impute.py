@@ -923,6 +923,9 @@ def test_iterative_imputer_early_stopping():
      (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
       {'features': 'all', 'sparse': 'random'},
       "'sparse' has to be a boolean or 'auto'"),
+     (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
+      {'missing_values': 0, 'sparse': True},
+      "'missing_values' can not be 0 when 'sparse' is True"),
      (np.array([['a', 'b'], ['c', 'a']], dtype=str),
       np.array([['a', 'b'], ['c', 'a']], dtype=str),
       {}, "MissingIndicator does not support data with dtype")]
@@ -932,6 +935,7 @@ def test_missing_indicator_error(X_fit, X_trans, params, msg_err):
     indicator.set_params(**params)
     with pytest.raises(ValueError, match=msg_err):
         indicator.fit(X_fit).transform(X_trans)
+
 
 
 @pytest.mark.parametrize(
@@ -981,6 +985,11 @@ def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
     assert isinstance(X_trans_mask, np.ndarray)
 
     indicator.set_params(sparse=True)
+    if missing_values == 0:
+        with pytest.raises(ValueError):
+            X_fit_mask_sparse = indicator.fit_transform(X_fit)
+        return
+
     X_fit_mask_sparse = indicator.fit_transform(X_fit)
     X_trans_mask_sparse = indicator.transform(X_trans)
 
@@ -1009,8 +1018,16 @@ def test_missing_indicator_sparse_param(arr_type, missing_values,
 
     indicator = MissingIndicator(missing_values=missing_values,
                                  sparse=param_sparse)
+
+    if param_sparse is True and missing_values == 0:
+        with pytest.raises(ValueError):
+            X_fit_mask = indicator.fit_transform(X_fit)
+        return
+
     X_fit_mask = indicator.fit_transform(X_fit)
     X_trans_mask = indicator.transform(X_trans)
+
+
 
     if param_sparse is True:
         assert X_fit_mask.format == 'csc'
