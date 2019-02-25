@@ -647,7 +647,7 @@ def all_estimators(include_meta_estimators=None,
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname:
+        if ".tests." in modname or "externals" in modname:
             continue
         if IS_PYPY and ('_svmlight_format' in modname or
                         'feature_extraction._hashing' in modname):
