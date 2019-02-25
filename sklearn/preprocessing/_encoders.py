@@ -746,6 +746,12 @@ class OrdinalEncoder(_BaseEncoder):
         - 'allow-nan': accept only np.nan values in array. Values cannot
           be infinite.
 
+    encode_missing : 'retain' or 'encode', (default='retain)
+        How to return missing values.
+
+        = 'retain': Retain all existing nan's in ``transform()``
+        = 'encode': Encode nan's as largest ordinal category
+
 
     Attributes
     ----------
@@ -789,6 +795,7 @@ class OrdinalEncoder(_BaseEncoder):
         self.categories = categories
         self.dtype = dtype
         self.force_all_finite = force_all_finite
+        self.encode_missing = 'retain'
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
