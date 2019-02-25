@@ -631,6 +631,12 @@ each method. Each data sample belongs to one of 10 classes.
 .. centered:: |nca_dim_reduction_1| |nca_dim_reduction_2| |nca_dim_reduction_3|
 
 
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
+ * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
+ * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py`
+
 Mathematical formulation
 ------------------------
 
@@ -701,12 +707,6 @@ Transform
 Here the ``transform`` operation returns :math:`LX^T`, therefore its time
 complexity equals ``n_components * n_features * n_samples_test``. There is no
 added space complexity in the operation.
-
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_classification.py`
- * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
 
 
 .. topic:: References:
