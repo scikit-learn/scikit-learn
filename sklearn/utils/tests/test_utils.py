@@ -68,7 +68,7 @@ def test_deprecated():
         warnings.simplefilter("always")
 
         @deprecated("don't use this")
-        class Ham(object):
+        class Ham:
             SPAM = 1
 
         ham = Ham()

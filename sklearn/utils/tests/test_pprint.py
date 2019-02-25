@@ -1,4 +1,5 @@
 import re
+from pprint import PrettyPrinter
 
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.pipeline import make_pipeline, Pipeline
@@ -313,3 +314,11 @@ def test_length_constraint():
     vectorizer = CountVectorizer(vocabulary=vocabulary)
     repr_ = vectorizer.__repr__()
     assert '...' in repr_
+
+
+def test_builtin_prettyprinter():
+    # non regression test than ensures we can still use the builtin
+    # PrettyPrinter class for estimators (as done e.g. by joblib).
+    # Used to be a bug
+
+    PrettyPrinter().pprint(LogisticRegression())

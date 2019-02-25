@@ -1,6 +1,5 @@
 # Author: Nikolay Mayorov <n59_ru@hotmail.com>
 # License: 3-clause BSD
-from __future__ import division
 
 import numpy as np
 from scipy.sparse import issparse

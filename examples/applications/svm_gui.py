@@ -28,14 +28,9 @@ from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 from matplotlib.contour import ContourSet
 
-try:
-    import tkinter as Tk
-except ImportError:
-    # Backward compat for Python 2
-    import Tkinter as Tk
-
 import sys
 import numpy as np
+import tkinter as Tk
 
 from sklearn import svm
 from sklearn.datasets import dump_svmlight_file
@@ -44,7 +39,7 @@ y_min, y_max = -50, 50
 x_min, x_max = -50, 50
 
 
-class Model(object):
+class Model:
     """The Model which hold the data. It implements the
     observable in the observer pattern and notifies the
     registered observers on change event.
@@ -76,7 +71,7 @@ class Model(object):
         dump_svmlight_file(X, y, file)
 
 
-class Controller(object):
+class Controller:
     def __init__(self, model):
         self.model = model
         self.kernel = Tk.IntVar()
@@ -139,7 +134,7 @@ class Controller(object):
             self.fit()
 
 
-class View(object):
+class View:
     """Test docstring. """
     def __init__(self, root, controller):
         f = Figure()
@@ -166,8 +161,8 @@ class View(object):
 
     def plot_kernels(self):
         self.ax.text(-50, -60, "Linear: $u^T v$")
-        self.ax.text(-20, -60, "RBF: $\exp (-\gamma \| u-v \|^2)$")
-        self.ax.text(10, -60, "Poly: $(\gamma \, u^T v + r)^d$")
+        self.ax.text(-20, -60, r"RBF: $\exp (-\gamma \| u-v \|^2)$")
+        self.ax.text(10, -60, r"Poly: $(\gamma \, u^T v + r)^d$")
 
     def onclick(self, event):
         if event.xdata and event.ydata:
@@ -245,7 +240,7 @@ class View(object):
             raise ValueError("surface type unknown")
 
 
-class ControllBar(object):
+class ControllBar:
     def __init__(self, root, controller):
         fm = Tk.Frame(root)
         kernel_group = Tk.Frame(fm)

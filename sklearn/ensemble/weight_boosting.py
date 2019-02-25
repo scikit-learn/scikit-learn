@@ -62,7 +62,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                  learning_rate=1.,
                  random_state=None):
 
-        super(BaseWeightBoosting, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params)
@@ -376,7 +376,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  algorithm='SAMME.R',
                  random_state=None):
 
-        super(AdaBoostClassifier, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
@@ -409,11 +409,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             raise ValueError("algorithm %s is not supported" % self.algorithm)
 
         # Fit
-        return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(AdaBoostClassifier, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeClassifier(max_depth=1))
 
         #  SAMME-R requires predict_proba-enabled base estimators
@@ -921,7 +921,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                  loss='linear',
                  random_state=None):
 
-        super(AdaBoostRegressor, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
@@ -956,11 +956,11 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                 "loss must be 'linear', 'square', or 'exponential'")
 
         # Fit
-        return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
+        return super().fit(X, y, sample_weight)
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(AdaBoostRegressor, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeRegressor(max_depth=3))
 
     def _boost(self, iboost, X, y, sample_weight, random_state):

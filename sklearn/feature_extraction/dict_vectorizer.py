@@ -3,6 +3,7 @@
 # License: BSD 3 clause
 
 from array import array
+from collections.abc import Mapping
 from operator import itemgetter
 
 import numpy as np
@@ -10,7 +11,6 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
-from ..utils.fixes import _Mapping as Mapping
 
 
 def _tosequence(X):
@@ -57,8 +57,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Whether transform should produce scipy.sparse matrices.
         True by default.
     sort : boolean, optional.
-        Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
-        True by default.
+        Whether ``feature_names_`` and ``vocabulary_`` should be
+        sorted when fitting. True by default.
 
     Attributes
     ----------
@@ -125,7 +125,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         if self.sort:
             feature_names.sort()
-            vocab = dict((f, i) for i, f in enumerate(feature_names))
+            vocab = {f: i for i, f in enumerate(feature_names)}
 
         self.feature_names_ = feature_names
         self.vocabulary_ = vocab
@@ -362,3 +362,6 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                                                     key=itemgetter(1))]
 
         return self
+
+    def _more_tags(self):
+        return {'X_types': ["dict"]}

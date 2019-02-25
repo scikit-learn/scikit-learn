@@ -27,7 +27,6 @@ The main theoretical result behind the efficiency of random projection is the
 #          Arnaud Joly <a.joly@ulg.ac.be>
 # License: BSD 3 clause
 
-from __future__ import division
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -479,7 +478,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     """
     def __init__(self, n_components='auto', eps=0.1, random_state=None):
-        super(GaussianRandomProjection, self).__init__(
+        super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=True,
@@ -616,7 +615,7 @@ class SparseRandomProjection(BaseRandomProjection):
     """
     def __init__(self, n_components='auto', density='auto', eps=0.1,
                  dense_output=False, random_state=None):
-        super(SparseRandomProjection, self).__init__(
+        super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=dense_output,

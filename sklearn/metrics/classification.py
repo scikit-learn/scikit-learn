@@ -21,7 +21,6 @@ the lower the better
 #          Shangwu Yao <shangwuyao@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import warnings
 import numpy as np
@@ -73,9 +72,9 @@ def _check_targets(y_true, y_pred):
     type_true = type_of_target(y_true)
     type_pred = type_of_target(y_pred)
 
-    y_type = set([type_true, type_pred])
-    if y_type == set(["binary", "multiclass"]):
-        y_type = set(["multiclass"])
+    y_type = {type_true, type_pred}
+    if y_type == {"binary", "multiclass"}:
+        y_type = {"multiclass"}
 
     if len(y_type) > 1:
         raise ValueError("Classification metrics can't handle a mix of {0} "
@@ -270,7 +269,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
-    label_to_ind = dict((y, x) for x, y in enumerate(labels))
+    label_to_ind = {y: x for x, y in enumerate(labels)}
     # convert yt, yp into index
     y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
     y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
@@ -1723,7 +1722,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                 "parameter".format(len(labels), len(target_names))
             )
     if target_names is None:
-        target_names = [u'%s' % l for l in labels]
+        target_names = ['%s' % l for l in labels]
 
     headers = ["precision", "recall", "f1-score", "support"]
     # compute per-class results without averaging
@@ -1747,13 +1746,13 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         longest_last_line_heading = 'weighted avg'
         name_width = max(len(cn) for cn in target_names)
         width = max(name_width, len(longest_last_line_heading), digits)
-        head_fmt = u'{:>{width}s} ' + u' {:>9}' * len(headers)
-        report = head_fmt.format(u'', *headers, width=width)
-        report += u'\n\n'
-        row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
+        head_fmt = '{:>{width}s} ' + ' {:>9}' * len(headers)
+        report = head_fmt.format('', *headers, width=width)
+        report += '\n\n'
+        row_fmt = '{:>{width}s} ' + ' {:>9.{digits}f}' * 3 + ' {:>9}\n'
         for row in rows:
             report += row_fmt.format(*row, width=width, digits=digits)
-        report += u'\n'
+        report += '\n'
 
     # compute all applicable averages
     for average in average_options:
@@ -1773,9 +1772,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                 zip(headers, [i.item() for i in avg]))
         else:
             if line_heading == 'accuracy':
-                row_fmt_accuracy = u'{:>{width}s} ' + \
-                        u' {:>9.{digits}}' * 2 + u' {:>9.{digits}f}' + \
-                        u' {:>9}\n'
+                row_fmt_accuracy = '{:>{width}s} ' + \
+                        ' {:>9.{digits}}' * 2 + ' {:>9.{digits}f}' + \
+                        ' {:>9}\n'
                 report += row_fmt_accuracy.format(line_heading, '', '',
                                                   *avg[2:], width=width,
                                                   digits=digits)

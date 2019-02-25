@@ -20,9 +20,6 @@ The module structure is the following:
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
-from __future__ import print_function
-from __future__ import division
-
 from abc import ABCMeta
 from abc import abstractmethod
 
@@ -61,7 +58,7 @@ from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
 
-class QuantileEstimator(object):
+class QuantileEstimator:
     """An estimator predicting the alpha-quantile of the training targets.
 
     Parameters
@@ -114,7 +111,7 @@ class QuantileEstimator(object):
         return y
 
 
-class MeanEstimator(object):
+class MeanEstimator:
     """An estimator predicting the mean of the training targets."""
     def fit(self, X, y, sample_weight=None):
         """Fit the estimator.
@@ -155,7 +152,7 @@ class MeanEstimator(object):
         return y
 
 
-class LogOddsEstimator(object):
+class LogOddsEstimator:
     """An estimator predicting the log odds ratio."""
     scale = 1.0
 
@@ -210,7 +207,7 @@ class ScaledLogOddsEstimator(LogOddsEstimator):
     scale = 0.5
 
 
-class PriorProbabilityEstimator(object):
+class PriorProbabilityEstimator:
     """An estimator predicting the probability of each
     class in the training data.
     """
@@ -253,7 +250,7 @@ class PriorProbabilityEstimator(object):
         return y
 
 
-class ZeroEstimator(object):
+class ZeroEstimator:
     """An estimator that simply predicts zero. """
 
     def fit(self, X, y, sample_weight=None):
@@ -299,7 +296,7 @@ class ZeroEstimator(object):
         return y
 
 
-class LossFunction(object, metaclass=ABCMeta):
+class LossFunction(metaclass=ABCMeta):
     """Abstract base class for various loss functions.
 
     Parameters
@@ -355,7 +352,7 @@ class LossFunction(object, metaclass=ABCMeta):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
-                                learning_rate=1.0, k=0):
+                                learning_rate=0.1, k=0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
         and invokes template method `_update_terminal_region`.
@@ -418,7 +415,7 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
         if n_classes != 1:
             raise ValueError("``n_classes`` must be 1 for regression but "
                              "was %r" % n_classes)
-        super(RegressionLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
 
 
 class LeastSquaresError(RegressionLossFunction):
@@ -469,7 +466,7 @@ class LeastSquaresError(RegressionLossFunction):
 
     def update_terminal_regions(self, tree, X, y, residual, y_pred,
                                 sample_weight, sample_mask,
-                                learning_rate=1.0, k=0):
+                                learning_rate=0.1, k=0):
         """Least squares does not need to update terminal regions.
 
         But it has to update the predictions.
@@ -580,7 +577,7 @@ class HuberLossFunction(RegressionLossFunction):
     """
 
     def __init__(self, n_classes, alpha=0.9):
-        super(HuberLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
         self.alpha = alpha
         self.gamma = None
 
@@ -678,7 +675,7 @@ class QuantileLossFunction(RegressionLossFunction):
         The percentile
     """
     def __init__(self, n_classes, alpha=0.9):
-        super(QuantileLossFunction, self).__init__(n_classes)
+        super().__init__(n_classes)
         self.alpha = alpha
         self.percentile = alpha * 100.0
 
@@ -774,7 +771,7 @@ class BinomialDeviance(ClassificationLossFunction):
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
-        super(BinomialDeviance, self).__init__(1)
+        super().__init__(1)
 
     def init_estimator(self):
         return LogOddsEstimator()
@@ -867,7 +864,7 @@ class MultinomialDeviance(ClassificationLossFunction):
         if n_classes < 3:
             raise ValueError("{0:s} requires more than 2 classes.".format(
                 self.__class__.__name__))
-        super(MultinomialDeviance, self).__init__(n_classes)
+        super().__init__(n_classes)
 
     def init_estimator(self):
         return PriorProbabilityEstimator()
@@ -963,7 +960,7 @@ class ExponentialLoss(ClassificationLossFunction):
             raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
                              .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
-        super(ExponentialLoss, self).__init__(1)
+        super().__init__(1)
 
     def init_estimator(self):
         return ScaledLogOddsEstimator()
@@ -1043,7 +1040,7 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
 INIT_ESTIMATORS = {'zero': ZeroEstimator}
 
 
-class VerboseReporter(object):
+class VerboseReporter:
     """Reports verbose output to stdout.
 
     Parameters
@@ -1201,7 +1198,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # update tree leaves
             loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
                                          sample_weight, sample_mask,
-                                         self.learning_rate, k=k)
+                                         learning_rate=self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -1637,8 +1634,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 normalize=False) for tree in stage) / len(stage)
             total_sum += stage_sum
 
-        importances = total_sum / len(self.estimators_)
-        importances /= importances.sum()
+        importances = total_sum / total_sum.sum()
         return importances
 
     def _validate_y(self, y, sample_weight):
@@ -1948,7 +1944,7 @@ shape (n_estimators, ``loss_.K``)
                  presort='auto', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4):
 
-        super(GradientBoostingClassifier, self).__init__(
+        super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
             criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
@@ -2020,9 +2016,7 @@ shape (n_estimators, ``loss_.K``)
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        for dec in self._staged_decision_function(X):
-            # no yield from in Python2.X
-            yield dec
+        yield from self._staged_decision_function(X)
 
     def predict(self, X):
         """Predict class for X.
@@ -2402,7 +2396,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  warm_start=False, presort='auto', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4):
 
-        super(GradientBoostingRegressor, self).__init__(
+        super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
             criterion=criterion, min_samples_split=min_samples_split,
             min_samples_leaf=min_samples_leaf,
@@ -2474,6 +2468,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             return the index of the leaf x ends up in each estimator.
         """
 
-        leaves = super(GradientBoostingRegressor, self).apply(X)
+        leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves

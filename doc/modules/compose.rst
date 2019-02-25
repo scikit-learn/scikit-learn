@@ -260,7 +260,6 @@ variable::
 For simple transformations, instead of a Transformer object, a pair of
 functions can be passed, defining the transformation and its inverse mapping::
 
-  >>> from __future__ import division
   >>> def func(x):
   ...     return np.log(x)
   >>> def inverse_func(x):
@@ -413,7 +412,9 @@ preprocessing or a specific feature extraction method::
   ...      'user_rating': [4, 5, 4, 3]})
 
 For this data, we might want to encode the ``'city'`` column as a categorical
-variable, but apply a :class:`feature_extraction.text.CountVectorizer
+variable using :class:`preprocessing.OneHotEncoder
+<sklearn.preprocessing.OneHotEncoder>` but apply a 
+:class:`feature_extraction.text.CountVectorizer
 <sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
 each transformer a unique name, say ``'city_category'`` and ``'title_bow'``.
@@ -421,8 +422,9 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
   >>> from sklearn.compose import ColumnTransformer
   >>> from sklearn.feature_extraction.text import CountVectorizer
+  >>> from sklearn.preprocessing import OneHotEncoder
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder='drop')
 
@@ -433,7 +435,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
   >>> column_trans.get_feature_names()
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ['city_category__London', 'city_category__Paris', 'city_category__Sallisaw',
+  ['city_category__x0_London', 'city_category__x0_Paris', 'city_category__x0_Sallisaw',
   'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
   'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
   'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
@@ -448,8 +450,9 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
 In the above example, the
 :class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
-input and therefore the columns were specified as a string (``'city'``).
-However, other transformers generally expect 2D data, and in that case you need
+input and therefore the columns were specified as a string (``'title'``).
+However, :class:`preprocessing.OneHotEncoder <sklearn.preprocessing.OneHotEncoder>`
+as most of other transformers expects 2D data, therefore in that case you need
 to specify the column as a list of strings (``['city']``).
 
 Apart from a scalar or a single item list, the column selection can be specified
@@ -462,7 +465,7 @@ We can keep the remaining rating columns by setting
 transformation::
 
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder='passthrough')
 
@@ -479,7 +482,7 @@ the transformation::
 
   >>> from sklearn.preprocessing import MinMaxScaler
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     [('city_category', OneHotEncoder(), ['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder=MinMaxScaler())
 
@@ -497,14 +500,14 @@ above example would be::
 
   >>> from sklearn.compose import make_column_transformer
   >>> column_trans = make_column_transformer(
-  ...     (CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     (OneHotEncoder(), ['city']),
   ...     (CountVectorizer(), 'title'),
   ...     remainder=MinMaxScaler())
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   ColumnTransformer(n_jobs=None, remainder=MinMaxScaler(copy=True, ...),
            sparse_threshold=0.3,
            transformer_weights=None,
-           transformers=[('countvectorizer-1', ...)
+           transformers=[('onehotencoder', ...)
 
 .. topic:: Examples:
 

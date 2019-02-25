@@ -40,6 +40,7 @@ import scipy.sparse as sp
 import itertools
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
+from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
@@ -129,7 +130,8 @@ class _ConstantPredictor(BaseEstimator):
                          X.shape[0], axis=0)
 
 
-class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
+                          MultiOutputMixin):
     """One-vs-the-rest (OvR) multiclass/multilabel strategy
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
@@ -628,6 +630,10 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
 
+    def _more_tags(self):
+        # FIXME Remove once #10440 is merged
+        return {'_skip_test': True}
+
 
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """(Error-Correcting) Output-Code multiclass strategy
@@ -742,7 +748,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         else:
             self.code_book_[self.code_book_ != 1] = 0
 
-        classes_index = dict((c, i) for i, c in enumerate(self.classes_))
+        classes_index = {c: i for i, c in enumerate(self.classes_)}
 
         Y = np.array([self.code_book_[classes_index[y[i]]]
                       for i in range(X.shape[0])], dtype=np.int)

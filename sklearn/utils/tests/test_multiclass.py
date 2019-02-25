@@ -1,5 +1,4 @@
 
-from __future__ import division
 import numpy as np
 import scipy.sparse as sp
 from itertools import product
@@ -31,7 +30,7 @@ from sklearn.svm import SVC
 from sklearn import datasets
 
 
-class NotAnArray(object):
+class NotAnArray:
     """An object that is convertable to an array. This is useful to
     simulate a Pandas timeseries."""
 
@@ -71,8 +70,8 @@ EXAMPLES = {
         NotAnArray(np.array([1, 0, 2])),
         [0, 1, 2],
         ['a', 'b', 'c'],
-        np.array([u'a', u'b', u'c']),
-        np.array([u'a', u'b', u'c'], dtype=object),
+        np.array(['a', 'b', 'c']),
+        np.array(['a', 'b', 'c'], dtype=object),
         np.array(['a', 'b', 'c'], dtype=object),
     ],
     'multiclass-multioutput': [
@@ -82,8 +81,8 @@ EXAMPLES = {
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
         np.array([['a', 'b'], ['c', 'd']]),
-        np.array([[u'a', u'b'], [u'c', u'd']]),
-        np.array([[u'a', u'b'], [u'c', u'd']], dtype=object),
+        np.array([['a', 'b'], ['c', 'd']]),
+        np.array([['a', 'b'], ['c', 'd']], dtype=object),
         np.array([[1, 0, 2]]),
         NotAnArray(np.array([[1, 0, 2]])),
     ],
@@ -106,7 +105,7 @@ EXAMPLES = {
         ['a', 'b'],
         ['abc', 'def'],
         np.array(['abc', 'def']),
-        [u'a', u'b'],
+        ['a', 'b'],
         np.array(['abc', 'def'], dtype=object),
     ],
     'continuous': [
@@ -126,7 +125,7 @@ EXAMPLES = {
         # sequence of sequences that weren't supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
-        [set([1, 2, 3]), set([1, 2])],
+        [{1, 2, 3}, {1, 2}],
         [frozenset([1, 2, 3]), frozenset([1, 2])],
 
         # and also confusable as sequences of sequences
@@ -141,7 +140,7 @@ EXAMPLES = {
 }
 
 NON_ARRAY_LIKE_EXAMPLES = [
-    set([1, 2, 3]),
+    {1, 2, 3},
     {0: 'a', 1: 'b'},
     {0: [5], 1: [5]},
     'abc',

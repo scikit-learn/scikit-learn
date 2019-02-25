@@ -2,13 +2,13 @@
 #         Arnaud Joly <a.joly@ulg.ac.be>
 #         Maheshakya Wijewardena <maheshakya.10@cse.mrt.ac.lk>
 # License: BSD 3 clause
-from __future__ import division
 
 import warnings
 import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
+from .base import MultiOutputMixin
 from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_array
@@ -19,7 +19,7 @@ from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
 
 
-class DummyClassifier(BaseEstimator, ClassifierMixin):
+class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -72,13 +72,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     n_outputs_ : int,
         Number of outputs.
 
-    outputs_2d_ : bool,
-        True if the output at fit is 2d, else false.
-
     sparse_output_ : bool,
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input y is passed in sparse format.
-
     """
 
     def __init__(self, strategy="stratified", random_state=None,
@@ -185,7 +181,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         constant = self.constant
-        if self.n_outputs_ == 1:
+        if self.n_outputs_ == 1 and not self.output_2d_:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
@@ -194,7 +190,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         # Compute probability only once
         if self.strategy == "stratified":
             proba = self.predict_proba(X)
-            if self.n_outputs_ == 1:
+            if self.n_outputs_ == 1 and not self.output_2d_:
                 proba = [proba]
 
         if self.sparse_output_:
@@ -320,6 +316,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         else:
             return [np.log(p) for p in proba]
 
+    def _more_tags(self):
+        return {'poor_score': True, 'no_validation': True}
+
     def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
 
@@ -349,10 +348,10 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
-        return super(DummyClassifier, self).score(X, y, sample_weight)
+        return super().score(X, y, sample_weight)
 
 
-class DummyRegressor(BaseEstimator, RegressorMixin):
+class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
     """
     DummyRegressor is a regressor that makes predictions using
     simple rules.
@@ -391,9 +390,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
     n_outputs_ : int,
         Number of outputs.
-
-    outputs_2d_ : bool,
-        True if the output at fit is 2d, else false.
     """
 
     def __init__(self, strategy="mean", constant=None, quantile=None):
@@ -512,6 +508,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         return (y, y_std) if return_std else y
 
+    def _more_tags(self):
+        return {'poor_score': True, 'no_validation': True}
+
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
@@ -548,4 +547,4 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         """
         if X is None:
             X = np.zeros(shape=(len(y), 1))
-        return super(DummyRegressor, self).score(X, y, sample_weight)
+        return super().score(X, y, sample_weight)

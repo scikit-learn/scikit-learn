@@ -47,7 +47,7 @@ JUNK_FOOD_DOCS = (
 )
 
 
-class NoFit(object):
+class NoFit:
     """Small class to test parameter dispatching.
     """
 
@@ -950,12 +950,12 @@ def test_pipeline_wrong_memory():
                         " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
-class DummyMemory(object):
+class DummyMemory:
     def cache(self, func):
         return func
 
 
-class WrongDummyMemory(object):
+class WrongDummyMemory:
     pass
 
 

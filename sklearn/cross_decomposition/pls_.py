@@ -13,6 +13,7 @@ from scipy.linalg import pinv2, svd
 from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
+from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
@@ -116,7 +117,7 @@ def _center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class _PLS(BaseEstimator, TransformerMixin, RegressorMixin,
+class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
            metaclass=ABCMeta):
     """Partial Least Squares (PLS)
 
@@ -454,6 +455,9 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin,
         """
         return self.fit(X, y).transform(X, y)
 
+    def _more_tags(self):
+        return {'poor_score': True}
+
 
 class PLSRegression(_PLS):
     """PLS regression
@@ -588,7 +592,7 @@ class PLSRegression(_PLS):
 
     def __init__(self, n_components=2, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
-        super(PLSRegression, self).__init__(
+        super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="regression", mode="A",
             norm_y_weights=False, max_iter=max_iter, tol=tol,
@@ -734,7 +738,7 @@ class PLSCanonical(_PLS):
 
     def __init__(self, n_components=2, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
-        super(PLSCanonical, self).__init__(
+        super().__init__(
             n_components=n_components, scale=scale,
             deflation_mode="canonical", mode="A",
             norm_y_weights=True, algorithm=algorithm,

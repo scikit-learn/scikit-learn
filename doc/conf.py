@@ -12,9 +12,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-from __future__ import print_function
 import sys
 import os
+import warnings
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -74,7 +74,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'scikit-learn'
-copyright = '2007 - 2018, scikit-learn developers (BSD License)'
+copyright = '2007 - 2019, scikit-learn developers (BSD License)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -288,6 +288,11 @@ def setup(app):
 
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve('sklearn',
-                                         u'https://github.com/scikit-learn/'
+                                         'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
+
+warnings.filterwarnings("ignore", category=UserWarning,
+                        module="matplotlib",
+                        message='Matplotlib is currently using agg, which is a'
+                                ' non-GUI backend, so cannot show the figure.')

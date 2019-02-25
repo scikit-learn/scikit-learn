@@ -13,7 +13,6 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 # License: BSD 3 clause
 
 # avoid division truncation
-from __future__ import division
 import warnings
 import numpy as np
 
@@ -126,8 +125,8 @@ class ShrunkCovariance(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
-        super(ShrunkCovariance, self).__init__(store_precision=store_precision,
-                                               assume_centered=assume_centered)
+        super().__init__(store_precision=store_precision,
+                         assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
     def fit(self, X, y=None):
@@ -401,8 +400,8 @@ class LedoitWolf(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  block_size=1000):
-        super(LedoitWolf, self).__init__(store_precision=store_precision,
-                                         assume_centered=assume_centered)
+        super().__init__(store_precision=store_precision,
+                         assume_centered=assume_centered)
         self.block_size = block_size
 
     def fit(self, X, y=None):

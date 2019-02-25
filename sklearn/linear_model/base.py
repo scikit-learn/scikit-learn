@@ -13,7 +13,6 @@ Generalized Linear models.
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 # License: BSD 3 clause
 
-from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
 import warnings
@@ -22,9 +21,11 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
+from scipy.special import expit
 
 from ..utils._joblib import Parallel, delayed
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                    MultiOutputMixin)
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
@@ -292,10 +293,7 @@ class LinearClassifierMixin(ClassifierMixin):
         multiclass is handled by normalizing that over all classes.
         """
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
+        expit(prob, out=prob)
         if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:
@@ -304,7 +302,7 @@ class LinearClassifierMixin(ClassifierMixin):
             return prob
 
 
-class SparseCoefMixin(object):
+class SparseCoefMixin:
     """Mixin for converting coef_ to and from CSR format.
 
     L1-regularizing estimators should inherit this.
@@ -358,7 +356,7 @@ class SparseCoefMixin(object):
         return self
 
 
-class LinearRegression(LinearModel, RegressorMixin):
+class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     """
     Ordinary least squares Linear Regression.
 

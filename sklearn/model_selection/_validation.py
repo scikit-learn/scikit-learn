@@ -9,8 +9,6 @@ functions to validate the model.
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function
-from __future__ import division
 
 import warnings
 import numbers
@@ -489,8 +487,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, _index_param_value(X, v, train))
-                      for k, v in fit_params.items()])
+    fit_params = {k: _index_param_value(X, v, train)
+                  for k, v in fit_params.items()}
 
     train_scores = {}
     if parameters is not None:
@@ -826,8 +824,8 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, _index_param_value(X, v, train))
-                      for k, v in fit_params.items()])
+    fit_params = {k: _index_param_value(X, v, train)
+                  for k, v in fit_params.items()}
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -1464,7 +1462,5 @@ def _aggregate_score_dicts(scores):
     {'a': array([1, 2, 3, 10]),
      'b': array([10, 2, 3, 10])}
     """
-    out = {}
-    for key in scores[0]:
-        out[key] = np.asarray([score[key] for score in scores])
-    return out
+    return {key: np.asarray([score[key] for score in scores])
+            for key in scores[0]}

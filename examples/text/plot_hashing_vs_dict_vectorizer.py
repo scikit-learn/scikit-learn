@@ -17,8 +17,6 @@ for FeatureHasher is to be expected due to hash collisions.
 
 # Author: Lars Buitinck
 # License: BSD 3 clause
-
-from __future__ import print_function
 from collections import defaultdict
 import re
 import sys

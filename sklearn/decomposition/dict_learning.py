@@ -1,6 +1,5 @@
 """ Dictionary learning
 """
-from __future__ import print_function
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
@@ -300,7 +299,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         if regularization is None:
             regularization = 1.
 
-    if effective_n_jobs(n_jobs) or algorithm == 'threshold':
+    if effective_n_jobs(n_jobs) == 1 or algorithm == 'threshold':
         code = _sparse_encode(X,
                               dictionary, gram, cov=cov,
                               algorithm=algorithm,

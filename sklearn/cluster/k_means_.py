@@ -11,7 +11,6 @@
 #          Robert Layton <robertlayton@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 import warnings
 
 import numpy as np
@@ -367,7 +366,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
     else:
         raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
                          " %s" % str(algorithm))
-    if effective_n_jobs(n_jobs):
+    if effective_n_jobs(n_jobs) == 1:
         # For a single thread, less memory is needed if we just store one set
         # of the best results (as opposed to one set per run per thread).
         for it in range(n_init):
@@ -868,15 +867,15 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     >>> from sklearn.cluster import KMeans
     >>> import numpy as np
     >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [4, 2], [4, 4], [4, 0]])
+    ...               [10, 2], [10, 4], [10, 0]])
     >>> kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
     >>> kmeans.labels_
-    array([0, 0, 0, 1, 1, 1], dtype=int32)
-    >>> kmeans.predict([[0, 0], [4, 4]])
-    array([0, 1], dtype=int32)
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> kmeans.predict([[0, 0], [12, 3]])
+    array([1, 0], dtype=int32)
     >>> kmeans.cluster_centers_
-    array([[1., 2.],
-           [4., 2.]])
+    array([[10.,  2.],
+           [ 1.,  2.]])
 
     See also
     --------
@@ -1458,7 +1457,7 @@ class MiniBatchKMeans(KMeans):
                  random_state=None, tol=0.0, max_no_improvement=10,
                  init_size=None, n_init=3, reassignment_ratio=0.01):
 
-        super(MiniBatchKMeans, self).__init__(
+        super().__init__(
             n_clusters=n_clusters, init=init, max_iter=max_iter,
             verbose=verbose, random_state=random_state, tol=tol, n_init=n_init)
 

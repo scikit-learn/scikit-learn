@@ -1311,11 +1311,11 @@ def test_nestimators_future_warning(forest):
 class MyBackend(DEFAULT_JOBLIB_BACKEND):
     def __init__(self, *args, **kwargs):
         self.count = 0
-        super(MyBackend, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def start_call(self):
         self.count += 1
-        return super(MyBackend, self).start_call()
+        return super().start_call()
 
 
 register_parallel_backend('testing', MyBackend)
@@ -1337,3 +1337,25 @@ def test_backend_respected():
         clf.predict_proba(X)
 
     assert ba.count == 0
+
+
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+@pytest.mark.parametrize('oob_score', (True, False))
+def test_multi_target(name, oob_score):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
+
+    X = iris.data
+
+    # Make multi column mixed type target.
+    y = np.vstack([
+        iris.target.astype(float),
+        iris.target.astype(int),
+        iris.target.astype(str),
+    ]).T
+
+    # Try to fit and predict.
+    clf.fit(X, y)
+    clf.predict(X)

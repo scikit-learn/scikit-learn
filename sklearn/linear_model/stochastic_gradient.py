@@ -44,7 +44,7 @@ DEFAULT_EPSILON = 0.1
 # Default value of ``epsilon`` parameter.
 
 
-class _ValidationScoreCallback(object):
+class _ValidationScoreCallback:
     """Callback for early stopping based on validation score"""
 
     def __init__(self, estimator, X_val, y_val, sample_weight_val,
@@ -100,7 +100,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         self._validate_params(set_max_iter=False)
 
     def set_params(self, *args, **kwargs):
-        super(BaseSGD, self).set_params(*args, **kwargs)
+        super().set_params(*args, **kwargs)
         self._validate_params(set_max_iter=False)
         return self
 
@@ -493,7 +493,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
                  class_weight=None, warm_start=False, average=False,
                  n_iter=None):
 
-        super(BaseSGDClassifier, self).__init__(
+        super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon,
@@ -665,7 +665,12 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
                 self.intercept_ = self.standard_intercept_
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
+        """Perform one epoch of stochastic gradient descent on given samples.
+
+        Internally, this method uses ``max_iter = 1``. Therefore, it is not
+        guaranteed that a minimum of the cost function is reached after calling
+        it once. Matters such as objective convergence and early stopping
+        should be handled by the user.
 
         Parameters
         ----------
@@ -975,7 +980,7 @@ class SGDClassifier(BaseSGDClassifier):
                  power_t=0.5, early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, class_weight=None, warm_start=False,
                  average=False, n_iter=None):
-        super(SGDClassifier, self).__init__(
+        super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
@@ -1119,7 +1124,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, warm_start=False, average=False,
                  n_iter=None):
-        super(BaseSGDRegressor, self).__init__(
+        super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon,
@@ -1158,7 +1163,12 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         return self
 
     def partial_fit(self, X, y, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
+        """Perform one epoch of stochastic gradient descent on given samples.
+
+        Internally, this method uses ``max_iter = 1``. Therefore, it is not
+        guaranteed that a minimum of the cost function is reached after calling
+        it once. Matters such as objective convergence and early stopping
+        should be handled by the user.
 
         Parameters
         ----------
@@ -1574,7 +1584,7 @@ class SGDRegressor(BaseSGDRegressor):
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, warm_start=False, average=False,
                  n_iter=None):
-        super(SGDRegressor, self).__init__(
+        super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon,

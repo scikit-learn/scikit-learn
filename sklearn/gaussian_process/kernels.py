@@ -217,10 +217,8 @@ class Kernel(metaclass=ABCMeta):
     @property
     def hyperparameters(self):
         """Returns a list of all hyperparameter specifications."""
-        r = []
-        for attr in dir(self):
-            if attr.startswith("hyperparameter_"):
-                r.append(getattr(self, attr))
+        r = [getattr(self, attr) for attr in dir(self)
+             if attr.startswith("hyperparameter_")]
         return r
 
     @property
@@ -285,10 +283,9 @@ class Kernel(metaclass=ABCMeta):
         bounds : array, shape (n_dims, 2)
             The log-transformed bounds on the kernel's hyperparameters theta
         """
-        bounds = []
-        for hyperparameter in self.hyperparameters:
-            if not hyperparameter.fixed:
-                bounds.append(hyperparameter.bounds)
+        bounds = [hyperparameter.bounds
+                  for hyperparameter in self.hyperparameters
+                  if not hyperparameter.fixed]
         if len(bounds) > 0:
             return np.log(np.vstack(bounds))
         else:
@@ -359,7 +356,7 @@ class Kernel(metaclass=ABCMeta):
         """Returns whether the kernel is stationary. """
 
 
-class NormalizedKernelMixin(object):
+class NormalizedKernelMixin:
     """Mixin for kernels which are normalized: k(X, X)=1.
 
     .. versionadded:: 0.18
@@ -385,7 +382,7 @@ class NormalizedKernelMixin(object):
         return np.ones(X.shape[0])
 
 
-class StationaryKernelMixin(object):
+class StationaryKernelMixin:
     """Mixin for kernels which are stationary: k(X, Y)= f(X-Y).
 
     .. versionadded:: 0.18
@@ -573,12 +570,11 @@ class KernelOperator(Kernel):
     @property
     def hyperparameters(self):
         """Returns a list of all hyperparameter."""
-        r = []
-        for hyperparameter in self.k1.hyperparameters:
-            r.append(Hyperparameter("k1__" + hyperparameter.name,
-                                    hyperparameter.value_type,
-                                    hyperparameter.bounds,
-                                    hyperparameter.n_elements))
+        r = [Hyperparameter("k1__" + hyperparameter.name,
+                            hyperparameter.value_type,
+                            hyperparameter.bounds, hyperparameter.n_elements)
+             for hyperparameter in self.k1.hyperparameters]
+
         for hyperparameter in self.k2.hyperparameters:
             r.append(Hyperparameter("k2__" + hyperparameter.name,
                                     hyperparameter.value_type,
@@ -1297,7 +1293,7 @@ class Matern(RBF):
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
                  nu=1.5):
-        super(Matern, self).__init__(length_scale, length_scale_bounds)
+        super().__init__(length_scale, length_scale_bounds)
         self.nu = nu
 
     def __call__(self, X, Y=None, eval_gradient=False):

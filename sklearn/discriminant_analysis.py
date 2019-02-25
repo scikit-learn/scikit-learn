@@ -9,11 +9,11 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 
 # License: BSD 3-Clause
 
-from __future__ import print_function
 import warnings
 import numpy as np
 from .exceptions import ChangedBehaviorWarning
 from scipy import linalg
+from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model.base import LinearClassifierMixin
@@ -530,10 +530,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Estimated probabilities.
         """
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
+        expit(prob, out=prob)
         if len(self.classes_) == 2:  # binary case
             return np.column_stack([1 - prob, prob])
         else:

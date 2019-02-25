@@ -14,7 +14,6 @@ randomized trees. Single and multi-output problems are both handled.
 #
 # License: BSD 3 clause
 
-from __future__ import division
 
 
 import numbers
@@ -30,6 +29,7 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import is_classifier
+from ..base import MultiOutputMixin
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
@@ -71,7 +71,7 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
+class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -437,8 +437,9 @@ class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
                 return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
             else:
-                predictions = np.zeros((n_samples, self.n_outputs_))
-
+                class_type = self.classes_[0].dtype
+                predictions = np.zeros((n_samples, self.n_outputs_),
+                                       dtype=class_type)
                 for k in range(self.n_outputs_):
                     predictions[:, k] = self.classes_[k].take(
                         np.argmax(proba[:, k], axis=1),
@@ -757,7 +758,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_impurity_split=None,
                  class_weight=None,
                  presort=False):
-        super(DecisionTreeClassifier, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -808,7 +809,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         self : object
         """
 
-        super(DecisionTreeClassifier, self).fit(
+        super().fit(
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
@@ -1100,7 +1101,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  presort=False):
-        super(DecisionTreeRegressor, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -1149,7 +1150,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         self : object
         """
 
-        super(DecisionTreeRegressor, self).fit(
+        super().fit(
             X, y,
             sample_weight=sample_weight,
             check_input=check_input,
@@ -1326,7 +1327,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None):
-        super(ExtraTreeClassifier, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
@@ -1494,7 +1495,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  max_leaf_nodes=None):
-        super(ExtraTreeRegressor, self).__init__(
+        super().__init__(
             criterion=criterion,
             splitter=splitter,
             max_depth=max_depth,
