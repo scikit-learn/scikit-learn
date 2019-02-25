@@ -145,10 +145,17 @@ def test_fused_types_consistency(dataset32, dataset64):
         assert_allclose(yi64, yi32, rtol=1e-5)
 
 
-@pytest.mark.raises(exception=ValueError, msg='Buffer dtype mismatch')
-@pytest.mark.parametrize('dataset', [
-    ArrayDataset64(X32, y32, sample_weight32, seed=42),
-    ArrayDataset32(X64, y64, sample_weight64, seed=42),
-])
-def test_buffer_dtype_mismatch_error(dataset):
-    pass
+def test_buffer_dtype_mismatch_error():
+    with pytest.raises(ValueError, match='Buffer dtype mismatch'):
+        ArrayDataset64(X32, y32, sample_weight32, seed=42),
+
+    with pytest.raises(ValueError, match='Buffer dtype mismatch'):
+        ArrayDataset32(X64, y64, sample_weight64, seed=42),
+
+    with pytest.raises(ValueError, match='Buffer dtype mismatch'):
+        CSRDataset64(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
+                     sample_weight32, seed=42),
+
+    with pytest.raises(ValueError, match='Buffer dtype mismatch'):
+        CSRDataset32(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
+                     sample_weight64, seed=42),
