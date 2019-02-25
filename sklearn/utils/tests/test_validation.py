@@ -149,7 +149,7 @@ def test_ordering():
     X.data = X.data[::-1]
     assert not X.data.flags['C_CONTIGUOUS']
 
-
+@pytest.mark.filterwarnings("ignore::scipy.sparse.SparseEfficiencyWarning")
 @pytest.mark.parametrize(
     "value, force_all_finite",
     [(np.inf, False), (np.nan, 'allow-nan'), (np.nan, False)]
@@ -166,6 +166,7 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
     assert_allclose_dense_sparse(X, X_checked)
 
 
+@pytest.mark.filterwarnings("ignore::scipy.sparse.SparseEfficiencyWarning")
 @pytest.mark.parametrize(
     "value, force_all_finite, match_msg",
     [(np.inf, True, 'Input contains NaN, infinity'),
