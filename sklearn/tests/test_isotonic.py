@@ -489,4 +489,3 @@ def test_make_unique_dtype():
         w = np.ones_like(x)
         x, y, w = _make_unique(x, y, w)
         assert_array_equal(x, [2, 3, 5])
-

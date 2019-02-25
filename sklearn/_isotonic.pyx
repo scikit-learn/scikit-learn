@@ -81,9 +81,11 @@ def _make_unique(np.ndarray[dtype=floating] X,
     unique_values = len(np.unique(X))
     if unique_values == len(X):
         return X, y, sample_weights
-    cdef np.ndarray[dtype=floating] y_out = np.empty(unique_values)
-    cdef np.ndarray[dtype=floating] x_out = np.empty(unique_values)
-    cdef np.ndarray[dtype=floating] weights_out = np.empty(unique_values)
+
+    cdef np.ndarray[dtype=floating] y_out = np.empty(unique_values,
+                                                     dtype=X.dtype)
+    cdef np.ndarray[dtype=floating] x_out = np.empty_like(y_out)
+    cdef np.ndarray[dtype=floating] weights_out = np.empty_like(y_out)
 
     cdef floating current_x = X[0]
     cdef floating current_y = 0
