@@ -830,32 +830,19 @@ def test_warm_start_multitask_lasso():
     assert_array_almost_equal(clf2.coef_, clf.coef_)
 
 
-def test_enet_coordinate_descent():
+@pytest.mark.parametrize('klass, n_classes, kwargs',
+        [(Lasso, 1, dict(precompute=True)),
+         (Lasso, 1, dict(precompute=False)),
+         (MultiTaskLasso, 2, dict()),
+         (MultiTaskLasso, 2, dict()),
+         ])
+def test_enet_coordinate_descent(klass, n_classes, kwargs):
     """Test that a warning is issued if model does not converge"""
-    clf = Lasso(max_iter=2)
+    clf = klass(max_iter=2, **kwargs)
     n_samples = 5
     n_features = 2
-    X = np.ones((n_samples, n_features)) * 1e50
-    y = np.ones(n_samples)
-    assert_warns(ConvergenceWarning, clf.fit, X, y)
-
-
-def test_enet_coordinate_descent_gram():
-    """Test that a warning is issued if model does not converge"""
-    clf = Lasso(precompute=True, max_iter=2)
-    n_samples = 5
-    n_features = 2
-    X = np.ones((n_samples, n_features)) * 1e50
-    y = np.ones(n_samples)
-    assert_warns(ConvergenceWarning, clf.fit, X, y)
-
-
-def test_enet_coordinate_descent_multi_task():
-    """Test that a warning is issued if model does not converge"""
-    clf = MultiTaskLasso(max_iter=2)
-    n_samples = 5
-    n_features = 2
-    n_classes = 2
     X = np.ones((n_samples, n_features)) * 1e50
     y = np.ones((n_samples, n_classes))
+    if klass == Lasso:
+        y = y.ravel()
     assert_warns(ConvergenceWarning, clf.fit, X, y)
