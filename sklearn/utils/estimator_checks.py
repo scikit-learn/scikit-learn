@@ -2349,8 +2349,8 @@ def check_estimator_sparse_dense(name, estimator_orig):
             if name in ['Scaler', 'StandardScaler']:
                 estimator.set_params(with_mean=False)
                 estimator_sp.set_params(with_mean=False)
-        dense_vs_sparse_additional_params = defaultdict({
-                                'Ridge': {'solver': 'cholesky'}})
+        dense_vs_sparse_additional_params = defaultdict(dict,
+                {'Ridge': {'solver': 'cholesky'}})
         params = dense_vs_sparse_additional_params[
             estimator.__class__.__name__]
         estimator.set_params(**params)
