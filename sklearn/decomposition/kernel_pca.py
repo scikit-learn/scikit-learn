@@ -212,8 +212,6 @@ class KernelPCA(BaseEstimator, TransformerMixin, _UnstableOn32BitMixin):
                                                 v0=v0)
 
         # flip eigenvectors' sign to enforce deterministic output
-        # note: copying the second element is needed so that both inputs do
-        # not refer to the same object
         self.alphas_, _ = svd_flip(self.alphas_,
                                    np.empty_like(self.alphas_).T)
 
