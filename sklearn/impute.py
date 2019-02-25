@@ -1211,6 +1211,14 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         if isinstance(self.sparse, bool) and self.sparse and self.missing_values == 0:
             raise ValueError("'missing_values' can not be 0 when 'sparse' is True")
 
+        if sparse.issparse(X):
+            # missing_values = 0 not allowed with sparse data as it would
+            # force densification
+            if self.missing_values == 0:
+                raise ValueError("Imputation not possible when missing_values "
+                                 "== 0 and input is sparse. Provide a dense "
+                                 "array instead.")
+
         if not ((isinstance(self.sparse, str) and
                 self.sparse == "auto") or isinstance(self.sparse, bool)):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
