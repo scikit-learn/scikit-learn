@@ -4,7 +4,7 @@ import pytest
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
-                                   assert_raises)
+                                   assert_raises, assert_array_equal)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -69,6 +69,23 @@ def test_kernel_pca_consistent_transform():
     X[:, 0] = 666
     transformed2 = kpca.transform(X_copy)
     assert_array_almost_equal(transformed1, transformed2)
+
+
+def test_kernel_pca_deterministic_output():
+    state = np.random.RandomState(0)
+    X = state.rand(10, 10)
+    eigen_solver = ('arpack', 'dense')
+    transformed_X = np.zeros((10 * len(eigen_solver), 2))
+
+    i = 0
+    for solver in eigen_solver:
+        for _ in range(10):
+            kpca = KernelPCA(n_components=2, eigen_solver=solver,
+                             random_state=i)
+            transformed_X[i, :] = kpca.fit_transform(X)[0]
+            i += 1
+
+    assert_array_equal(np.isclose(transformed_X, transformed_X[0, :]), True)
 
 
 def test_kernel_pca_sparse():
