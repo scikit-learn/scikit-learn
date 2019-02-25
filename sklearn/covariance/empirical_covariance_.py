@@ -10,7 +10,6 @@ Maximum likelihood covariance estimator.
 # License: BSD 3 clause
 
 # avoid division truncation
-from __future__ import division
 import warnings
 import numpy as np
 from scipy import linalg
@@ -18,6 +17,7 @@ from scipy import linalg
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import fast_logdet
+from ..metrics.pairwise import pairwise_distances
 
 
 def log_likelihood(emp_cov, precision):
@@ -55,7 +55,7 @@ def empirical_covariance(X, assume_centered=False):
     X : ndarray, shape (n_samples, n_features)
         Data from which to compute the covariance estimate
 
-    assume_centered : Boolean
+    assume_centered : boolean
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -103,12 +103,33 @@ class EmpiricalCovariance(BaseEstimator):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : 2D ndarray, shape (n_features, n_features)
         Estimated covariance matrix
 
     precision_ : 2D ndarray, shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import EmpiricalCovariance
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = EmpiricalCovariance().fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7569..., 0.2818...],
+           [0.2818..., 0.3928...]])
+    >>> cov.location_
+    array([0.0622..., 0.0193...])
 
     """
     def __init__(self, store_precision=True, assume_centered=False):
@@ -142,7 +163,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         Returns
         -------
-        precision_ : array-like,
+        precision_ : array-like
             The precision matrix associated to the current covariance object.
 
         """
@@ -162,12 +183,12 @@ class EmpiricalCovariance(BaseEstimator):
           Training data, where n_samples is the number of samples and
           n_features is the number of features.
 
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-            Returns self.
 
         """
         X = check_array(X)
@@ -193,7 +214,8 @@ class EmpiricalCovariance(BaseEstimator):
             X_test is assumed to be drawn from the same distribution than
             the data used in fit (including centering).
 
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------
@@ -262,26 +284,25 @@ class EmpiricalCovariance(BaseEstimator):
 
         return result
 
-    def mahalanobis(self, observations):
+    def mahalanobis(self, X):
         """Computes the squared Mahalanobis distances of given observations.
 
         Parameters
         ----------
-        observations : array-like, shape = [n_observations, n_features]
+        X : array-like, shape = [n_samples, n_features]
             The observations, the Mahalanobis distances of the which we
             compute. Observations are assumed to be drawn from the same
             distribution than the data used in fit.
 
         Returns
         -------
-        mahalanobis_distance : array, shape = [n_observations,]
+        dist : array, shape = [n_samples,]
             Squared Mahalanobis distances of the observations.
 
         """
         precision = self.get_precision()
         # compute mahalanobis distances
-        centered_obs = observations - self.location_
-        mahalanobis_dist = np.sum(
-            np.dot(centered_obs, precision) * centered_obs, 1)
+        dist = pairwise_distances(X, self.location_[np.newaxis, :],
+                                  metric='mahalanobis', VI=precision)
 
-        return mahalanobis_dist
+        return np.reshape(dist, (len(X),)) ** 2

@@ -3,20 +3,19 @@
 #
 # License: BSD 3 clause
 
+import pytest
+
 import numpy as np
 from scipy import sparse
 from scipy import linalg
-from itertools import product
 
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import ignore_warnings
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.base import _preprocess_data
-from sklearn.linear_model.base import sparse_center_data, center_data
 from sklearn.linear_model.base import _rescale_data
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_greater
@@ -324,6 +323,28 @@ def test_csr_preprocess_data():
     assert_equal(csr_.getformat(), 'csr')
 
 
+@pytest.mark.parametrize('is_sparse', (True, False))
+@pytest.mark.parametrize('to_copy', (True, False))
+def test_preprocess_copy_data_no_checks(is_sparse, to_copy):
+    X, y = make_regression()
+    X[X < 2.5] = 0.0
+
+    if is_sparse:
+        X = sparse.csr_matrix(X)
+
+    X_, y_, _, _, _ = _preprocess_data(X, y, True,
+                                       copy=to_copy, check_input=False)
+
+    if to_copy and is_sparse:
+        assert not np.may_share_memory(X_.data, X.data)
+    elif to_copy:
+        assert not np.may_share_memory(X_, X)
+    elif is_sparse:
+        assert np.may_share_memory(X_.data, X.data)
+    else:
+        assert np.may_share_memory(X_, X)
+
+
 def test_dtype_preprocess_data():
     n_samples = 200
     n_features = 2
@@ -402,74 +423,3 @@ def test_rescale_data():
     rescaled_y2 = y * np.sqrt(sample_weight)
     assert_array_almost_equal(rescaled_X, rescaled_X2)
     assert_array_almost_equal(rescaled_y, rescaled_y2)
-
-
-@ignore_warnings  # all deprecation warnings
-def test_deprecation_center_data():
-    n_samples = 200
-    n_features = 2
-
-    w = 1.0 + rng.rand(n_samples)
-    X = rng.rand(n_samples, n_features)
-    y = rng.rand(n_samples)
-
-    param_grid = product([True, False], [True, False], [True, False],
-                         [None, w])
-
-    for (fit_intercept, normalize, copy, sample_weight) in param_grid:
-
-        XX = X.copy()  # such that we can try copy=False as well
-
-        X1, y1, X1_mean, X1_var, y1_mean = \
-            center_data(XX, y, fit_intercept=fit_intercept,
-                        normalize=normalize, copy=copy,
-                        sample_weight=sample_weight)
-
-        XX = X.copy()
-
-        X2, y2, X2_mean, X2_var, y2_mean = \
-            _preprocess_data(XX, y, fit_intercept=fit_intercept,
-                             normalize=normalize, copy=copy,
-                             sample_weight=sample_weight)
-
-        assert_array_almost_equal(X1, X2)
-        assert_array_almost_equal(y1, y2)
-        assert_array_almost_equal(X1_mean, X2_mean)
-        assert_array_almost_equal(X1_var, X2_var)
-        assert_array_almost_equal(y1_mean, y2_mean)
-
-    # Sparse cases
-    X = sparse.csr_matrix(X)
-
-    for (fit_intercept, normalize, copy, sample_weight) in param_grid:
-
-        X1, y1, X1_mean, X1_var, y1_mean = \
-            center_data(X, y, fit_intercept=fit_intercept, normalize=normalize,
-                        copy=copy, sample_weight=sample_weight)
-
-        X2, y2, X2_mean, X2_var, y2_mean = \
-            _preprocess_data(X, y, fit_intercept=fit_intercept,
-                             normalize=normalize, copy=copy,
-                             sample_weight=sample_weight, return_mean=False)
-
-        assert_array_almost_equal(X1.toarray(), X2.toarray())
-        assert_array_almost_equal(y1, y2)
-        assert_array_almost_equal(X1_mean, X2_mean)
-        assert_array_almost_equal(X1_var, X2_var)
-        assert_array_almost_equal(y1_mean, y2_mean)
-
-    for (fit_intercept, normalize) in product([True, False], [True, False]):
-
-        X1, y1, X1_mean, X1_var, y1_mean = \
-            sparse_center_data(X, y, fit_intercept=fit_intercept,
-                               normalize=normalize)
-
-        X2, y2, X2_mean, X2_var, y2_mean = \
-            _preprocess_data(X, y, fit_intercept=fit_intercept,
-                             normalize=normalize, return_mean=True)
-
-        assert_array_almost_equal(X1.toarray(), X2.toarray())
-        assert_array_almost_equal(y1, y2)
-        assert_array_almost_equal(X1_mean, X2_mean)
-        assert_array_almost_equal(X1_var, X2_var)
-        assert_array_almost_equal(y1_mean, y2_mean)

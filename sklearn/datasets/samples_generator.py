@@ -8,6 +8,8 @@ Generate samples of synthetic data sets.
 
 import numbers
 import array
+from collections.abc import Iterable
+
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
@@ -16,9 +18,6 @@ from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
 from ..utils.random import sample_without_replacement
-from ..externals import six
-map = six.moves.map
-zip = six.moves.zip
 
 
 def _generate_hypercube(samples, dimensions, rng):
@@ -42,14 +41,18 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     """Generate a random n-class classification problem.
 
     This initially creates clusters of points normally distributed (std=1)
-    about vertices of an `n_informative`-dimensional hypercube with sides of
-    length `2*class_sep` and assigns an equal number of clusters to each
+    about vertices of an ``n_informative``-dimensional hypercube with sides of
+    length ``2*class_sep`` and assigns an equal number of clusters to each
     class. It introduces interdependence between these features and adds
     various types of further noise to the data.
 
-    Prior to shuffling, `X` stacks a number of these primary "informative"
-    features, "redundant" linear combinations of these, "repeated" duplicates
-    of sampled features, and arbitrary noise for and remaining features.
+    Without shuffling, ``X`` horizontally stacks features in the following
+    order: the primary ``n_informative`` features, followed by ``n_redundant``
+    linear combinations of the informative features, followed by ``n_repeated``
+    duplicates, drawn randomly with replacement from the informative and
+    redundant features. The remaining features are filled with random noise.
+    Thus, without shuffling, all useful features are contained in the columns
+    ``X[:, :n_informative + n_redundant + n_repeated]``.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -59,15 +62,16 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         The number of samples.
 
     n_features : int, optional (default=20)
-        The total number of features. These comprise `n_informative`
-        informative features, `n_redundant` redundant features, `n_repeated`
-        duplicated features and `n_features-n_informative-n_redundant-
-        n_repeated` useless features drawn at random.
+        The total number of features. These comprise ``n_informative``
+        informative features, ``n_redundant`` redundant features,
+        ``n_repeated`` duplicated features and
+        ``n_features-n_informative-n_redundant-n_repeated`` useless features
+        drawn at random.
 
     n_informative : int, optional (default=2)
         The number of informative features. Each class is composed of a number
         of gaussian clusters each located around the vertices of a hypercube
-        in a subspace of dimension `n_informative`. For each cluster,
+        in a subspace of dimension ``n_informative``. For each cluster,
         informative features are drawn independently from  N(0, 1) and then
         randomly linearly combined within each cluster in order to add
         covariance. The clusters are then placed on the vertices of the
@@ -89,10 +93,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     weights : list of floats or None (default=None)
         The proportions of samples assigned to each class. If None, then
-        classes are balanced. Note that if `len(weights) == n_classes - 1`,
+        classes are balanced. Note that if ``len(weights) == n_classes - 1``,
         then the last class weight is automatically inferred.
-        More than `n_samples` samples may be returned if the sum of `weights`
-        exceeds 1.
+        More than ``n_samples`` samples may be returned if the sum of
+        ``weights`` exceeds 1.
 
     flip_y : float, optional (default=0.01)
         The fraction of samples whose class are randomly exchanged. Larger
@@ -119,11 +123,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     shuffle : boolean, optional (default=True)
         Shuffle the samples and the features.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -155,7 +158,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         raise ValueError("Number of informative, redundant and repeated "
                          "features must sum to less than the number of total"
                          " features")
-    if 2 ** n_informative < n_classes * n_clusters_per_class:
+    # Use log2 to avoid overflow errors
+    if n_informative < np.log2(n_classes * n_clusters_per_class):
         raise ValueError("n_classes * n_clusters_per_class must"
                          " be smaller or equal 2 ** n_informative")
     if weights and len(weights) not in [n_classes, n_classes - 1]:
@@ -173,10 +177,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         weights[-1] = 1.0 - sum(weights[:-1])
 
     # Distribute samples among clusters by weight
-    n_samples_per_cluster = []
-    for k in range(n_clusters):
-        n_samples_per_cluster.append(int(n_samples * weights[k % n_classes]
-                                     / n_clusters_per_class))
+    n_samples_per_cluster = [
+        int(n_samples * weights[k % n_classes] / n_clusters_per_class)
+        for k in range(n_clusters)]
+
     for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 
@@ -310,11 +314,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         probabilities of features given classes, from which the data was
         drawn.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -417,11 +420,10 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     n_samples : int, optional (default=12000)
         The number of samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -509,11 +511,10 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
     coef : boolean, optional (default=False)
         If True, the coefficients of the underlying linear model are returned.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -585,7 +586,8 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     Parameters
     ----------
     n_samples : int, optional (default=100)
-        The total number of points generated.
+        The total number of points generated. If odd, the inner circle will
+        have one point more than the outer circle.
 
     shuffle : bool, optional (default=True)
         Whether to shuffle the samples.
@@ -593,13 +595,12 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling and noise.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
-    factor : double < 1 (default=.8)
+    factor : 0 < double < 1 (default=.8)
         Scale factor between inner and outer circle.
 
     Returns
@@ -611,22 +612,25 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
         The integer labels (0 or 1) for class membership of each sample.
     """
 
-    if factor > 1 or factor < 0:
+    if factor >= 1 or factor < 0:
         raise ValueError("'factor' has to be between 0 and 1.")
 
-    generator = check_random_state(random_state)
-    # so as not to have the first point = last point, we add one and then
-    # remove it.
-    linspace = np.linspace(0, 2 * np.pi, n_samples // 2 + 1)[:-1]
-    outer_circ_x = np.cos(linspace)
-    outer_circ_y = np.sin(linspace)
-    inner_circ_x = outer_circ_x * factor
-    inner_circ_y = outer_circ_y * factor
+    n_samples_out = n_samples // 2
+    n_samples_in = n_samples - n_samples_out
 
-    X = np.vstack((np.append(outer_circ_x, inner_circ_x),
-                   np.append(outer_circ_y, inner_circ_y))).T
-    y = np.hstack([np.zeros(n_samples // 2, dtype=np.intp),
-                   np.ones(n_samples // 2, dtype=np.intp)])
+    generator = check_random_state(random_state)
+    # so as not to have the first point = last point, we set endpoint=False
+    linspace_out = np.linspace(0, 2 * np.pi, n_samples_out, endpoint=False)
+    linspace_in = np.linspace(0, 2 * np.pi, n_samples_in, endpoint=False)
+    outer_circ_x = np.cos(linspace_out)
+    outer_circ_y = np.sin(linspace_out)
+    inner_circ_x = np.cos(linspace_in) * factor
+    inner_circ_y = np.sin(linspace_in) * factor
+
+    X = np.vstack([np.append(outer_circ_x, inner_circ_x),
+                   np.append(outer_circ_y, inner_circ_y)]).T
+    y = np.hstack([np.zeros(n_samples_out, dtype=np.intp),
+                   np.ones(n_samples_in, dtype=np.intp)])
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
@@ -653,11 +657,10 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling and noise.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -678,8 +681,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     inner_circ_x = 1 - np.cos(np.linspace(0, np.pi, n_samples_in))
     inner_circ_y = 1 - np.sin(np.linspace(0, np.pi, n_samples_in)) - .5
 
-    X = np.vstack((np.append(outer_circ_x, inner_circ_x),
-                   np.append(outer_circ_y, inner_circ_y))).T
+    X = np.vstack([np.append(outer_circ_x, inner_circ_x),
+                   np.append(outer_circ_y, inner_circ_y)]).T
     y = np.hstack([np.zeros(n_samples_out, dtype=np.intp),
                    np.ones(n_samples_in, dtype=np.intp)])
 
@@ -692,7 +695,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     return X, y
 
 
-def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
+def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
                center_box=(-10.0, 10.0), shuffle=True, random_state=None):
     """Generate isotropic Gaussian blobs for clustering.
 
@@ -700,15 +703,21 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
 
     Parameters
     ----------
-    n_samples : int, optional (default=100)
-        The total number of points equally divided among clusters.
+    n_samples : int or array-like, optional (default=100)
+        If int, it is the total number of points equally divided among
+        clusters.
+        If array-like, each element of the sequence indicates
+        the number of samples per cluster.
 
     n_features : int, optional (default=2)
         The number of features for each sample.
 
     centers : int or array of shape [n_centers, n_features], optional
-        (default=3)
+        (default=None)
         The number of centers to generate, or the fixed center locations.
+        If n_samples is an int and centers is None, 3 centers are generated.
+        If n_samples is array-like, centers must be
+        either None or an array of length equal to the length of n_samples.
 
     cluster_std : float or sequence of floats, optional (default=1.0)
         The standard deviation of the clusters.
@@ -720,11 +729,10 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -743,6 +751,12 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     (10, 2)
     >>> y
     array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
+    >>> X, y = make_blobs(n_samples=[3, 3, 4], centers=None, n_features=2,
+    ...                   random_state=0)
+    >>> print(X.shape)
+    (10, 2)
+    >>> y
+    array([0, 1, 2, 0, 2, 2, 2, 1, 1, 0])
 
     See also
     --------
@@ -750,35 +764,72 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     """
     generator = check_random_state(random_state)
 
-    if isinstance(centers, numbers.Integral):
-        centers = generator.uniform(center_box[0], center_box[1],
-                                    size=(centers, n_features))
+    if isinstance(n_samples, numbers.Integral):
+        # Set n_centers by looking at centers arg
+        if centers is None:
+            centers = 3
+
+        if isinstance(centers, numbers.Integral):
+            n_centers = centers
+            centers = generator.uniform(center_box[0], center_box[1],
+                                        size=(n_centers, n_features))
+
+        else:
+            centers = check_array(centers)
+            n_features = centers.shape[1]
+            n_centers = centers.shape[0]
+
     else:
-        centers = check_array(centers)
-        n_features = centers.shape[1]
+        # Set n_centers by looking at [n_samples] arg
+        n_centers = len(n_samples)
+        if centers is None:
+            centers = generator.uniform(center_box[0], center_box[1],
+                                        size=(n_centers, n_features))
+        try:
+            assert len(centers) == n_centers
+        except TypeError:
+            raise ValueError("Parameter `centers` must be array-like. "
+                             "Got {!r} instead".format(centers))
+        except AssertionError:
+            raise ValueError("Length of `n_samples` not consistent"
+                             " with number of centers. Got n_samples = {} "
+                             "and centers = {}".format(n_samples, centers))
+        else:
+            centers = check_array(centers)
+            n_features = centers.shape[1]
+
+    # stds: if cluster_std is given as list, it must be consistent
+    # with the n_centers
+    if (hasattr(cluster_std, "__len__") and len(cluster_std) != n_centers):
+        raise ValueError("Length of `clusters_std` not consistent with "
+                         "number of centers. Got centers = {} "
+                         "and cluster_std = {}".format(centers, cluster_std))
 
     if isinstance(cluster_std, numbers.Real):
-        cluster_std = np.ones(len(centers)) * cluster_std
+        cluster_std = np.full(len(centers), cluster_std)
 
     X = []
     y = []
 
-    n_centers = centers.shape[0]
-    n_samples_per_center = [int(n_samples // n_centers)] * n_centers
+    if isinstance(n_samples, Iterable):
+        n_samples_per_center = n_samples
+    else:
+        n_samples_per_center = [int(n_samples // n_centers)] * n_centers
 
-    for i in range(n_samples % n_centers):
-        n_samples_per_center[i] += 1
+        for i in range(n_samples % n_centers):
+            n_samples_per_center[i] += 1
 
     for i, (n, std) in enumerate(zip(n_samples_per_center, cluster_std)):
-        X.append(centers[i] + generator.normal(scale=std,
-                                               size=(n, n_features)))
+        X.append(generator.normal(loc=centers[i], scale=std,
+                                  size=(n, n_features)))
         y += [i] * n
 
     X = np.concatenate(X)
     y = np.array(y)
 
     if shuffle:
-        indices = np.arange(n_samples)
+        total_n_samples = np.sum(n_samples)
+        indices = np.arange(total_n_samples)
         generator.shuffle(indices)
         X = X[indices]
         y = y[indices]
@@ -787,7 +838,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
 
 
 def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
-    """Generate the "Friedman \#1" regression problem
+    """Generate the "Friedman #1" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -815,11 +866,10 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset noise. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -850,7 +900,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
 
 
 def make_friedman2(n_samples=100, noise=0.0, random_state=None):
-    """Generate the "Friedman \#2" regression problem
+    """Generate the "Friedman #2" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -877,11 +927,10 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset noise. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -916,7 +965,7 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
 
 def make_friedman3(n_samples=100, noise=0.0, random_state=None):
-    """Generate the "Friedman \#3" regression problem
+    """Generate the "Friedman #3" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -943,11 +992,10 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset noise. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1020,11 +1068,10 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
         The relative importance of the fat noisy tail of the singular values
         profile.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1074,11 +1121,10 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     n_nonzero_coefs : int
         number of active (non-zero) coefficients in each sample
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1134,11 +1180,10 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     n_features : int, optional (default=10)
         The number of features.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1175,11 +1220,10 @@ def make_spd_matrix(n_dim, random_state=None):
     n_dim : int
         The matrix dimension.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1225,11 +1269,10 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     largest_coef : float between 0 and 1, optional (default=0.9)
         The value of the largest coefficient.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1287,11 +1330,10 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1340,11 +1382,10 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1373,7 +1414,7 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
 def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
                             n_features=2, n_classes=3,
                             shuffle=True, random_state=None):
-    """Generate isotropic Gaussian and label samples by quantile
+    r"""Generate isotropic Gaussian and label samples by quantile
 
     This classification dataset is constructed by taking a multi-dimensional
     standard normal distribution and defining classes separated by nested
@@ -1404,11 +1445,10 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1493,11 +1533,10 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1552,15 +1591,14 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
         row_labels = row_labels[row_idx]
         col_labels = col_labels[col_idx]
 
-    rows = np.vstack(row_labels == c for c in range(n_clusters))
-    cols = np.vstack(col_labels == c for c in range(n_clusters))
+    rows = np.vstack([row_labels == c for c in range(n_clusters)])
+    cols = np.vstack([col_labels == c for c in range(n_clusters)])
 
     return result, rows, cols
 
 
 def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
                       maxval=100, shuffle=True, random_state=None):
-
     """Generate an array with block checkerboard structure for
     biclustering.
 
@@ -1586,11 +1624,10 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset creation. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -1650,11 +1687,11 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
         row_labels = row_labels[row_idx]
         col_labels = col_labels[col_idx]
 
-    rows = np.vstack(row_labels == label
-                     for label in range(n_row_clusters)
-                     for _ in range(n_col_clusters))
-    cols = np.vstack(col_labels == label
-                     for _ in range(n_row_clusters)
-                     for label in range(n_col_clusters))
+    rows = np.vstack([row_labels == label
+                      for label in range(n_row_clusters)
+                      for _ in range(n_col_clusters)])
+    cols = np.vstack([col_labels == label
+                      for _ in range(n_row_clusters)
+                      for label in range(n_col_clusters)])
 
     return result, rows, cols

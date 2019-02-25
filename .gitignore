@@ -54,6 +54,7 @@ benchmarks/bench_covertype_data/
 *.prefs
 .pydevproject
 .idea
+.vscode
 
 *.c
 *.cpp
@@ -65,3 +66,8 @@ benchmarks/bench_covertype_data/
 
 # Used by py.test
 .cache
+.pytest_cache/
+_configtest.o.d
+
+# Used by mypy
+.mypy_cache/

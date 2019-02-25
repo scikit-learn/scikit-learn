@@ -53,7 +53,7 @@ cdef double _logsumexp(double* arr, int n_classes) nogil:
 cdef class MultinomialLogLoss:
     cdef double _loss(self, double* prediction, double y, int n_classes,
                       double sample_weight) nogil:
-        """Multinomial Logistic regression loss.
+        r"""Multinomial Logistic regression loss.
 
         The multinomial logistic loss for one sample is:
         loss = - sw \sum_c \delta_{y,c} (prediction[c] - logsumexp(prediction))
@@ -97,7 +97,7 @@ cdef class MultinomialLogLoss:
 
     cdef void _dloss(self, double* prediction, double y, int n_classes,
                      double sample_weight, double* gradient_ptr) nogil:
-        """Multinomial Logistic regression gradient of the loss.
+        r"""Multinomial Logistic regression gradient of the loss.
 
         The gradient of the multinomial logistic loss with respect to a class c,
         and for one sample is:
@@ -248,7 +248,7 @@ def sag(SequentialDataset dataset,
     ---------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
-    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+    https://hal.inria.fr/hal-00860051/document
     (section 4.3)
 
     Defazio, A., Bach, F., Lacoste-Julien, S. (2014),
@@ -568,7 +568,6 @@ cdef void lagged_update(double* weights, double wscale, int xnnz,
                           bint reset,
                           int n_iter) nogil:
     """Hard perform the JIT updates for non-zero features of present sample.
-     
     The updates that awaits are kept in memory using cumulative_sums,
     cumulative_sums_prox, wscale and feature_hist. See original SAGA paper
     (Defazio et al. 2014) for details. If reset=True, we also reset wscale to
@@ -609,7 +608,7 @@ cdef void lagged_update(double* weights, double wscale, int xnnz,
                     weights[idx] = _soft_thresholding(weights[idx],
                                                       cum_sum_prox)
                 else:
-                    last_update_ind = feature_hist[feature_ind] - 1
+                    last_update_ind = feature_hist[feature_ind]
                     if last_update_ind == -1:
                         last_update_ind = sample_itr - 1
                     for lagged_ind in range(sample_itr - 1,

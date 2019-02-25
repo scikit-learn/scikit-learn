@@ -8,7 +8,6 @@ from scipy import interpolate
 from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_array, check_consistent_length
-from .utils import deprecated
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
 import math
@@ -92,10 +91,10 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Parameters
     ----------
-    y : iterable of floating-point values
+    y : iterable of floats
         The data.
 
-    sample_weight : iterable of floating-point values, optional, default: None
+    sample_weight : iterable of floats, optional, default: None
         Weights on each point of the regression.
         If None, weight is set to 1 (equal weights).
 
@@ -111,7 +110,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
 
     Returns
     -------
-    y_ : list of floating-point values
+    y_ : list of floats
         Isotonic fit of y.
 
     References
@@ -189,7 +188,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         Maximum value of input array `X_` for right bound.
 
     f_ : function
-        The stepwise interpolating function that covers the domain `X_`.
+        The stepwise interpolating function that covers the input domain ``X``.
 
     Notes
     -----
@@ -216,34 +215,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.y_max = y_max
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
-
-    @property
-    @deprecated("Attribute ``X_`` is deprecated in version 0.18 and will be"
-                " removed in version 0.20.")
-    def X_(self):
-        return self._X_
-
-    @X_.setter
-    def X_(self, value):
-        self._X_ = value
-
-    @X_.deleter
-    def X_(self):
-        del self._X_
-
-    @property
-    @deprecated("Attribute ``y_`` is deprecated in version 0.18 and will"
-                " be removed in version 0.20.")
-    def y_(self):
-        return self._y_
-
-    @y_.setter
-    def y_(self, value):
-        self._y_ = value
-
-    @y_.deleter
-    def y_(self):
-        del self._y_
 
     def _check_fit_data(self, X, y, sample_weight=None):
         if len(X.shape) != 1:
@@ -405,7 +376,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator. """
-        state = super(IsotonicRegression, self).__getstate__()
+        state = super().__getstate__()
         # remove interpolation method
         state.pop('f_', None)
         return state
@@ -415,6 +386,9 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         We need to rebuild the interpolation function.
         """
-        super(IsotonicRegression, self).__setstate__(state)
+        super().__setstate__(state)
         if hasattr(self, '_necessary_X_') and hasattr(self, '_necessary_y_'):
             self._build_f(self._necessary_X_, self._necessary_y_)
+
+    def _more_tags(self):
+        return {'X_types': ['1darray']}

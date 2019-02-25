@@ -1,3 +1,5 @@
+.. _api_ref:
+
 =============
 API Reference
 =============
@@ -6,9 +8,8 @@ This is the class and function reference of scikit-learn. Please refer to
 the :ref:`full user guide <user_guide>` for further details, as the class and
 function raw specifications may not be enough to give full guidelines on their
 uses.
+For reference on concepts repeated across the API, see :ref:`glossary`.
 
-
-.. _base_ref:
 
 :mod:`sklearn.base`: Base classes and utility functions
 =======================================================
@@ -26,8 +27,10 @@ Base classes
    :template: class.rst
 
    base.BaseEstimator
+   base.BiclusterMixin
    base.ClassifierMixin
    base.ClusterMixin
+   base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
 
@@ -40,9 +43,12 @@ Functions
    :template: function.rst
 
    base.clone
+   base.is_classifier
+   base.is_regressor
    config_context
    get_config
    set_config
+   show_versions
 
 .. _calibration_ref:
 
@@ -93,6 +99,7 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
+   cluster.OPTICS
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
@@ -107,6 +114,7 @@ Functions
 
    cluster.affinity_propagation
    cluster.dbscan
+   cluster.optics
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.mean_shift
@@ -135,6 +143,33 @@ Classes
    SpectralBiclustering
    SpectralCoclustering
 
+.. _compose_ref:
+
+:mod:`sklearn.compose`: Composite Estimators
+============================================
+
+.. automodule:: sklearn.compose
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+    :toctree: generated
+    :template: class.rst
+
+    compose.ColumnTransformer
+    compose.TransformedTargetRegressor
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   compose.make_column_transformer
+
 .. _covariance_ref:
 
 :mod:`sklearn.covariance`: Covariance Estimators
@@ -154,8 +189,8 @@ Classes
 
    covariance.EmpiricalCovariance
    covariance.EllipticEnvelope
-   covariance.GraphLasso
-   covariance.GraphLassoCV
+   covariance.GraphicalLasso
+   covariance.GraphicalLassoCV
    covariance.LedoitWolf
    covariance.MinCovDet
    covariance.OAS
@@ -166,7 +201,7 @@ Classes
    :template: function.rst
 
    covariance.empirical_covariance
-   covariance.graph_lasso
+   covariance.graphical_lasso
    covariance.ledoit_wolf
    covariance.oas
    covariance.shrunk_covariance
@@ -222,8 +257,8 @@ Loaders
    datasets.fetch_kddcup99
    datasets.fetch_lfw_pairs
    datasets.fetch_lfw_people
-   datasets.fetch_mldata
    datasets.fetch_olivetti_faces
+   datasets.fetch_openml
    datasets.fetch_rcv1
    datasets.fetch_species_distributions
    datasets.get_data_home
@@ -234,13 +269,11 @@ Loaders
    datasets.load_files
    datasets.load_iris
    datasets.load_linnerud
-   datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.load_wine
-   datasets.mldata_filename
 
 Samples generator
 -----------------
@@ -604,6 +637,27 @@ Kernels:
    isotonic.check_increasing
    isotonic.isotonic_regression
 
+.. _impute_ref:
+
+:mod:`sklearn.impute`: Impute
+=============================
+
+.. automodule:: sklearn.impute
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`Impute` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   impute.SimpleImputer
+   impute.IterativeImputer
+   impute.MissingIndicator
+   
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -702,10 +756,9 @@ Kernels:
    linear_model.enet_path
    linear_model.lars_path
    linear_model.lasso_path
-   linear_model.lasso_stability_path
-   linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
+   linear_model.ridge_regression
 
 
 .. _manifold_ref:
@@ -763,6 +816,7 @@ details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.check_scoring
    metrics.get_scorer
    metrics.make_scorer
 
@@ -791,6 +845,7 @@ details.
    metrics.jaccard_similarity_score
    metrics.log_loss
    metrics.matthews_corrcoef
+   metrics.multilabel_confusion_matrix
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -810,6 +865,7 @@ details.
    :template: function.rst
 
    metrics.explained_variance_score
+   metrics.max_error
    metrics.mean_absolute_error
    metrics.mean_squared_error
    metrics.mean_squared_log_error
@@ -848,8 +904,10 @@ details.
 
    metrics.adjusted_mutual_info_score
    metrics.adjusted_rand_score
-   metrics.calinski_harabaz_score
+   metrics.calinski_harabasz_score
+   metrics.davies_bouldin_score
    metrics.completeness_score
+   metrics.cluster.contingency_matrix
    metrics.fowlkes_mallows_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
@@ -899,7 +957,6 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
    metrics.pairwise.manhattan_distances
-   metrics.pairwise.pairwise_distances
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
@@ -911,6 +968,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
+   metrics.pairwise_distances_chunked
 
 
 .. _mixture_ref:
@@ -1059,6 +1117,7 @@ Model validation
     multioutput.ClassifierChain
     multioutput.MultiOutputRegressor
     multioutput.MultiOutputClassifier
+    multioutput.RegressorChain
 
 .. _naive_bayes_ref:
 
@@ -1185,7 +1244,7 @@ Model validation
 
    preprocessing.Binarizer
    preprocessing.FunctionTransformer
-   preprocessing.Imputer
+   preprocessing.KBinsDiscretizer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
@@ -1194,7 +1253,9 @@ Model validation
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
+   preprocessing.OrdinalEncoder
    preprocessing.PolynomialFeatures
+   preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
@@ -1212,6 +1273,7 @@ Model validation
    preprocessing.quantile_transform
    preprocessing.robust_scale
    preprocessing.scale
+   preprocessing.power_transform
 
 
 .. _random_projection_ref:
@@ -1337,6 +1399,8 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
+   tree.plot_tree
+   tree.export_text
 
 
 .. _utils_ref:
@@ -1354,8 +1418,16 @@ Low-level methods
 
 .. autosummary::
    :toctree: generated/
+   :template: class.rst
+
+   utils.testing.mock_mldata_urlopen
+
+.. autosummary::
+   :toctree: generated/
    :template: function.rst
 
+   utils.arrayfuncs.cholesky_delete
+   utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
    utils.check_X_y
@@ -1364,11 +1436,27 @@ Low-level methods
    utils.check_random_state
    utils.class_weight.compute_class_weight
    utils.class_weight.compute_sample_weight
+   utils.deprecated
    utils.estimator_checks.check_estimator
    utils.extmath.safe_sparse_dot
+   utils.extmath.randomized_range_finder
+   utils.extmath.randomized_svd
+   utils.extmath.fast_logdet
+   utils.extmath.density
+   utils.extmath.weighted_mode
+   utils.gen_even_slices
+   utils.graph.single_source_shortest_path_length
+   utils.graph_shortest_path.graph_shortest_path
    utils.indexable
+   utils.metaestimators.if_delegate_has_method
+   utils.multiclass.type_of_target
+   utils.multiclass.is_multilabel
+   utils.multiclass.unique_labels
+   utils.murmurhash3_32
    utils.resample
    utils.safe_indexing
+   utils.safe_mask
+   utils.safe_sqr
    utils.shuffle
    utils.sparsefuncs.incr_mean_variance_axis
    utils.sparsefuncs.inplace_column_scale
@@ -1376,66 +1464,67 @@ Low-level methods
    utils.sparsefuncs.inplace_swap_row
    utils.sparsefuncs.inplace_swap_column
    utils.sparsefuncs.mean_variance_axis
+   utils.sparsefuncs.inplace_csr_column_scale
+   utils.sparsefuncs_fast.inplace_csr_row_normalize_l1
+   utils.sparsefuncs_fast.inplace_csr_row_normalize_l2
+   utils.random.sample_without_replacement
    utils.validation.check_is_fitted
    utils.validation.check_memory
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
+   utils.testing.assert_in
+   utils.testing.assert_not_in
+   utils.testing.assert_raise_message
+   utils.testing.all_estimators
+
+Utilities from joblib:
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.parallel_backend
+   utils.register_parallel_backend
 
 Recently deprecated
 ===================
 
-
-To be removed in 0.21
+To be removed in 0.23
 ---------------------
 
 .. autosummary::
    :toctree: generated/
    :template: deprecated_class.rst
 
-   linear_model.RandomizedLasso
-   linear_model.RandomizedLogisticRegression
-   neighbors.LSHForest
-
-
-To be removed in 0.20
----------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   cross_validation.KFold
-   cross_validation.LabelKFold
-   cross_validation.LeaveOneLabelOut
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePOut
-   cross_validation.LeavePLabelOut
-   cross_validation.LabelShuffleSplit
-   cross_validation.ShuffleSplit
-   cross_validation.StratifiedKFold
-   cross_validation.StratifiedShuffleSplit
-   cross_validation.PredefinedSplit
-   decomposition.RandomizedPCA
-   gaussian_process.GaussianProcess
-   grid_search.ParameterGrid
-   grid_search.ParameterSampler
-   grid_search.GridSearchCV
-   grid_search.RandomizedSearchCV
-   mixture.DPGMM
-   mixture.GMM
-   mixture.VBGMM
-
+   utils.Memory
+   utils.Parallel
 
 .. autosummary::
    :toctree: generated/
    :template: deprecated_function.rst
 
-   cross_validation.check_cv
-   cross_validation.cross_val_predict
-   cross_validation.cross_val_score
-   cross_validation.permutation_test_score
-   cross_validation.train_test_split
-   grid_search.fit_grid_point
-   learning_curve.learning_curve
-   learning_curve.validation_curve
+   utils.cpu_count
+   utils.delayed
+   metrics.calinski_harabaz_score
+   linear_model.logistic_regression_path
+
+
+To be removed in 0.22
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
+
+   covariance.GraphLasso
+   covariance.GraphLassoCV
+   preprocessing.Imputer
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   covariance.graph_lasso
+   datasets.fetch_mldata
+   datasets.mldata_filename

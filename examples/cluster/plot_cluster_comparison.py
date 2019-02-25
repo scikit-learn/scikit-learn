@@ -116,6 +116,8 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         n_clusters=params['n_clusters'], eigen_solver='arpack',
         affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=params['eps'])
+    optics = cluster.OPTICS(min_samples=30, maxima_ratio=.8,
+                            rejection_ratio=.4)
     affinity_propagation = cluster.AffinityPropagation(
         damping=params['damping'], preference=params['preference'])
     average_linkage = cluster.AgglomerativeClustering(
@@ -133,6 +135,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         ('Ward', ward),
         ('AgglomerativeClustering', average_linkage),
         ('DBSCAN', dbscan),
+        ('OPTICS', optics),
         ('Birch', birch),
         ('GaussianMixture', gmm)
     )
@@ -169,6 +172,8 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
                                              '#f781bf', '#a65628', '#984ea3',
                                              '#999999', '#e41a1c', '#dede00']),
                                       int(max(y_pred) + 1))))
+        # add black color for outliers (if any)
+        colors = np.append(colors, ["#000000"])
         plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
 
         plt.xlim(-2.5, 2.5)

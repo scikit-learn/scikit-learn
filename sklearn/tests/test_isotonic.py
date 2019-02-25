@@ -7,11 +7,12 @@ from sklearn.isotonic import (check_increasing, isotonic_regression,
                               IsotonicRegression)
 
 from sklearn.utils.testing import (assert_raises, assert_array_equal,
-                                   assert_true, assert_false, assert_equal,
+                                   assert_equal,
                                    assert_array_almost_equal,
                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import shuffle
 
+from scipy.special import expit
 
 def test_permutation_invariance():
     # check that fit is permutation invariant.
@@ -32,7 +33,7 @@ def test_check_increasing_small_number_of_samples():
     y = [1, 1.1, 1.05]
 
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_check_increasing_up():
@@ -41,7 +42,7 @@ def test_check_increasing_up():
 
     # Check that we got increasing=True and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_check_increasing_up_extreme():
@@ -50,7 +51,7 @@ def test_check_increasing_up_extreme():
 
     # Check that we got increasing=True and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_check_increasing_down():
@@ -59,7 +60,7 @@ def test_check_increasing_down():
 
     # Check that we got increasing=False and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_check_increasing_down_extreme():
@@ -68,7 +69,7 @@ def test_check_increasing_down_extreme():
 
     # Check that we got increasing=False and no warnings
     is_increasing = assert_no_warnings(check_increasing, x, y)
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_check_ci_warn():
@@ -80,7 +81,7 @@ def test_check_ci_warn():
                                          check_increasing,
                                          x, y)
 
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_isotonic_regression():
@@ -208,12 +209,12 @@ def test_isotonic_regression_auto_decreasing():
         warnings.simplefilter("always")
         y_ = ir.fit_transform(x, y)
         # work-around for pearson divide warnings in scipy <= 0.17.0
-        assert_true(all(["invalid value encountered in "
-                         in str(warn.message) for warn in w]))
+        assert all(["invalid value encountered in "
+                    in str(warn.message) for warn in w])
 
     # Check that relationship decreases
     is_increasing = y_[0] < y_[-1]
-    assert_false(is_increasing)
+    assert not is_increasing
 
 
 def test_isotonic_regression_auto_increasing():
@@ -227,12 +228,12 @@ def test_isotonic_regression_auto_increasing():
         warnings.simplefilter("always")
         y_ = ir.fit_transform(x, y)
         # work-around for pearson divide warnings in scipy <= 0.17.0
-        assert_true(all(["invalid value encountered in "
-                         in str(warn.message) for warn in w]))
+        assert all(["invalid value encountered in "
+                    in str(warn.message) for warn in w])
 
     # Check that relationship increases
     is_increasing = y_[0] < y_[-1]
-    assert_true(is_increasing)
+    assert is_increasing
 
 
 def test_assert_raises_exceptions():
@@ -371,7 +372,7 @@ def test_isotonic_duplicate_min_entry():
     ir = IsotonicRegression(increasing=True, out_of_bounds="clip")
     ir.fit(x, y)
     all_predictions_finite = np.all(np.isfinite(ir.predict(x)))
-    assert_true(all_predictions_finite)
+    assert all_predictions_finite
 
 
 def test_isotonic_ymin_ymax():
@@ -427,10 +428,7 @@ def test_fast_predict():
     n_samples = 10 ** 3
     # X values over the -10,10 range
     X_train = 20.0 * rng.rand(n_samples) - 10
-    y_train = np.less(
-        rng.rand(n_samples),
-        1.0 / (1.0 + np.exp(-X_train))
-    ).astype('int64')
+    y_train = np.less(rng.rand(n_samples), expit(X_train)).astype('int64')
 
     weights = rng.rand(n_samples)
     # we also want to test that everything still works when some weights are 0

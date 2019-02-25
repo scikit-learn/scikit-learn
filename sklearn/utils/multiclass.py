@@ -6,8 +6,7 @@ Multi-class / multi-label utility function
 ==========================================
 
 """
-from __future__ import division
-from collections import Sequence
+from collections.abc import Sequence
 from itertools import chain
 
 from scipy.sparse import issparse
@@ -17,9 +16,7 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
-from ..externals.six import string_types
-from .validation import check_array
-
+from .validation import check_array, _assert_all_finite
 
 
 def _unique_multiclass(y):
@@ -54,7 +51,7 @@ def unique_labels(*ys):
 
     Parameters
     ----------
-    *ys : array-likes,
+    *ys : array-likes
 
     Returns
     -------
@@ -76,8 +73,8 @@ def unique_labels(*ys):
     # Check that we don't mix label format
 
     ys_types = set(type_of_target(x) for x in ys)
-    if ys_types == set(["binary", "multiclass"]):
-        ys_types = set(["multiclass"])
+    if ys_types == {"binary", "multiclass"}:
+        ys_types = {"multiclass"}
 
     if len(ys_types) > 1:
         raise ValueError("Mix type of y not allowed, got types %s" % ys_types)
@@ -99,7 +96,7 @@ def unique_labels(*ys):
     ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
     # Check that we don't mix string type with number type
-    if (len(set(isinstance(label, string_types) for label in ys_labels)) > 1):
+    if (len(set(isinstance(label, str) for label in ys_labels)) > 1):
         raise ValueError("Mix of label input types (string and number)")
 
     return np.array(sorted(ys_labels))
@@ -237,7 +234,7 @@ def type_of_target(y):
     'multilabel-indicator'
     """
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
-             and not isinstance(y, string_types))
+             and not isinstance(y, str))
 
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
@@ -259,17 +256,18 @@ def type_of_target(y):
     # The old sequence of sequences format
     try:
         if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
-                and not isinstance(y[0], string_types)):
+                and not isinstance(y[0], str)):
             raise ValueError('You appear to be using a legacy multi-label data'
                              ' representation. Sequence of sequences are no'
                              ' longer supported; use a binary array or sparse'
-                             ' matrix instead.')
+                             ' matrix instead - the MultiLabelBinarizer'
+                             ' transformer can convert to this format.')
     except IndexError:
         pass
 
     # Invalid inputs
     if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], string_types)):
+                      not isinstance(y.flat[0], str)):
         return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
     if y.ndim == 2 and y.shape[1] == 0:
@@ -283,6 +281,7 @@ def type_of_target(y):
     # check float and contains non-integer float values
     if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
+        _assert_all_finite(y)
         return 'continuous' + suffix
 
     if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
@@ -401,7 +400,7 @@ def class_distribution(y, sample_weight=None):
 
 
 def _ovr_decision_function(predictions, confidences, n_classes):
-    """Compute a continuous, tie-breaking ovr decision function.
+    """Compute a continuous, tie-breaking OvR decision function from OvO.
 
     It is important to include a continuous value, not only votes,
     to make computing AUC or calibration meaningful.

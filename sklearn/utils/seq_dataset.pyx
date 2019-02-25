@@ -15,11 +15,43 @@ np.import_array()
 
 
 cdef class SequentialDataset:
-    """Base class for datasets with sequential data access. """
+    """Base class for datasets with sequential data access.
+
+    SequentialDataset is used to iterate over the rows of a matrix X and
+    corresponding target values y, i.e. to iterate over samples.
+    There are two methods to get the next sample:
+        - next : Iterate sequentially (optionally randomized)
+        - random : Iterate randomly (with replacement)
+
+    Attributes
+    ----------
+    index : np.ndarray
+        Index array for fast shuffling.
+
+    index_data_ptr : int
+        Pointer to the index array.
+
+    current_index : int
+        Index of current sample in ``index``.
+        The index of current sample in the data is given by
+        index_data_ptr[current_index].
+
+    n_samples : Py_ssize_t
+        Number of samples in the dataset.
+
+    seed : np.uint32_t
+        Seed used for random sampling.
+
+    """
 
     cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
                    int *nnz, double *y, double *sample_weight) nogil:
         """Get the next example ``x`` from the dataset.
+
+        This method gets the next sample looping sequentially over all samples.
+        The order can be shuffled with the method ``shuffle``.
+        Shuffling once before iterating over all samples corresponds to a
+        random draw without replacement. It is used for instance in SGD solver.
 
         Parameters
         ----------
@@ -49,6 +81,10 @@ cdef class SequentialDataset:
                     int *nnz, double *y, double *sample_weight) nogil:
         """Get a random example ``x`` from the dataset.
 
+        This method gets next sample chosen randomly over a uniform
+        distribution. It corresponds to a random draw with replacement.
+        It is used for instance in SAG solver.
+
         Parameters
         ----------
         x_data_ptr : double**
@@ -71,8 +107,8 @@ cdef class SequentialDataset:
 
         Returns
         -------
-        index : int
-            The index sampled
+        current_index : int
+            Index of current sample.
         """
         cdef int current_index = self._get_random_index()
         self._sample(x_data_ptr, x_ind_ptr, nnz, y, sample_weight,
@@ -290,7 +326,7 @@ cdef enum:
 
 
 # rand_r replacement using a 32bit XorShift generator
-# See http://www.jstatsoft.org/v08/i14/paper for details
+# See https://www.jstatsoft.org/v08/i14/paper for details
 # XXX copied over from sklearn/tree/_tree.pyx, should refactor
 cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:
     seed[0] ^= <np.uint32_t>(seed[0] << 13)

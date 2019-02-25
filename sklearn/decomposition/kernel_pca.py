@@ -10,12 +10,12 @@ from scipy.sparse.linalg import eigsh
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _UnstableOn32BitMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(BaseEstimator, TransformerMixin):
+class KernelPCA(BaseEstimator, TransformerMixin, _UnstableOn32BitMixin):
     """Kernel Principal component analysis (KPCA)
 
     Non-linear dimensionality reduction through the use of kernels (see
@@ -89,9 +89,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.18
 
-    n_jobs : int, default=1
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If `-1`, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
         .. versionadded:: 0.18
 
@@ -107,14 +109,26 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         `remove_zero_eig` are not set, then all components are stored.
 
     dual_coef_ : array, (n_samples, n_features)
-        Inverse transform matrix. Set if `fit_inverse_transform` is True.
+        Inverse transform matrix. Only available when
+        ``fit_inverse_transform`` is True.
 
     X_transformed_fit_ : array, (n_samples, n_components)
         Projection of the fitted data on the kernel principal components.
+        Only available when ``fit_inverse_transform`` is True.
 
     X_fit_ : (n_samples, n_features)
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
         a reference. This attribute is used for the calls to transform.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import KernelPCA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = KernelPCA(n_components=7, kernel='linear')
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
 
     References
     ----------
@@ -129,7 +143,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
                  tol=0, max_iter=None, remove_zero_eig=False,
-                 random_state=None, copy_X=True, n_jobs=1):
+                 random_state=None, copy_X=True, n_jobs=None):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -145,7 +159,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.remove_zero_eig = remove_zero_eig
         self.tol = tol
         self.max_iter = max_iter
-        self._centerer = KernelCenterer()
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.copy_X = copy_X
@@ -235,6 +248,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         X = check_array(X, accept_sparse='csr', copy=self.copy_X)
+        self._centerer = KernelCenterer()
         K = self._get_kernel(X)
         self._fit_transform(K)
 

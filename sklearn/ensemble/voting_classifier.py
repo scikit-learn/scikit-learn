@@ -12,13 +12,12 @@ classification estimators.
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..externals.joblib import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
@@ -59,11 +58,13 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
 
-    n_jobs : int, optional (default=1)
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for ``fit``.
-        If -1, then the number of jobs is set to the number of cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
-    flatten_transform : bool, optional (default=None)
+    flatten_transform : bool, optional (default=True)
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
         matrix with shape (n_samples, n_classifiers * n_classes). If
@@ -90,8 +91,9 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.ensemble import RandomForestClassifier, VotingClassifier
-    >>> clf1 = LogisticRegression(random_state=1)
-    >>> clf2 = RandomForestClassifier(random_state=1)
+    >>> clf1 = LogisticRegression(solver='lbfgs', multi_class='multinomial',
+    ...                           random_state=1)
+    >>> clf2 = RandomForestClassifier(n_estimators=50, random_state=1)
     >>> clf3 = GaussianNB()
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
@@ -118,11 +120,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     [1 1 1 2 2 2]
     >>> print(eclf3.transform(X).shape)
     (6, 6)
-    >>>
     """
+    _required_parameters = ['estimators']
 
-    def __init__(self, estimators, voting='hard', weights=None, n_jobs=1,
-                 flatten_transform=None):
+    def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
+                 flatten_transform=True):
         self.estimators = estimators
         self.voting = voting
         self.weights = weights
@@ -193,9 +195,9 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         transformed_y = self.le_.transform(y)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
-                                                 sample_weight=sample_weight)
-                for clf in clfs if clf is not None)
+            delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
+                                             sample_weight=sample_weight)
+            for clf in clfs if clf is not None)
 
         self.named_estimators_ = Bunch(**dict())
         for k, e in zip(self.estimators, self.estimators_):
@@ -216,8 +218,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            The input samples.
 
         Returns
         ----------
@@ -261,8 +262,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            The input samples.
 
         Returns
         ----------
@@ -282,29 +282,24 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Returns
         -------
-        If `voting='soft'` and `flatten_transform=True`:
-          array-like = (n_classifiers, n_samples * n_classes)
-          otherwise array-like = (n_classifiers, n_samples, n_classes)
-            Class probabilities calculated by each classifier.
-        If `voting='hard'`:
-          array-like = [n_samples, n_classifiers]
-            Class labels predicted by each classifier.
+        probabilities_or_labels
+            If `voting='soft'` and `flatten_transform=True`:
+                returns array-like of shape (n_classifiers, n_samples *
+                n_classes), being class probabilities calculated by each
+                classifier.
+            If `voting='soft' and `flatten_transform=False`:
+                array-like of shape (n_classifiers, n_samples, n_classes)
+            If `voting='hard'`:
+                array-like of shape (n_samples, n_classifiers), being
+                class labels predicted by each classifier.
         """
         check_is_fitted(self, 'estimators_')
 
         if self.voting == 'soft':
             probas = self._collect_probas(X)
-            if self.flatten_transform is None:
-                warnings.warn("'flatten_transform' default value will be "
-                              "changed to True in 0.21."
-                              "To silence this warning you may"
-                              " explicitly set flatten_transform=False.",
-                              DeprecationWarning)
+            if not self.flatten_transform:
                 return probas
-            elif not self.flatten_transform:
-                return probas
-            else:
-                return np.hstack(probas)
+            return np.hstack(probas)
 
         else:
             return self._predict(X)
@@ -316,7 +311,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        params: keyword arguments
+        **params : keyword arguments
             Specific parameters using e.g. set_params(parameter_name=new_value)
             In addition, to setting the parameters of the ``VotingClassifier``,
             the individual classifiers of the ``VotingClassifier`` can also be
@@ -331,7 +326,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         eclf.set_params(rf=None)
 
         """
-        super(VotingClassifier, self)._set_params('estimators', **params)
+        super()._set_params('estimators', **params)
         return self
 
     def get_params(self, deep=True):
@@ -339,12 +334,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Parameters
         ----------
-        deep: bool
+        deep : bool
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well
         """
-        return super(VotingClassifier,
-                     self)._get_params('estimators', deep=deep)
+        return super()._get_params('estimators', deep=deep)
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """

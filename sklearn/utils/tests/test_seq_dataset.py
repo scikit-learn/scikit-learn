@@ -1,4 +1,4 @@
-# Author: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
+# Author: Tom Dupre la Tour
 #
 # License: BSD 3 clause
 
@@ -81,4 +81,3 @@ def test_seq_dataset_shuffle():
         _, _, _, idx1 = dataset1._random_py()
         _, _, _, idx2 = dataset2._random_py()
         assert_equal(idx1, idx2)
-
