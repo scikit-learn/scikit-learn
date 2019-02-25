@@ -18,6 +18,7 @@ from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
 
+from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
@@ -53,6 +54,9 @@ def _assert_all_finite(X, allow_nan=False):
                 not allow_nan and not np.isfinite(X).all()):
             type_err = 'infinity' if allow_nan else 'NaN, infinity'
             raise ValueError(msg_err.format(type_err, X.dtype))
+    elif X.dtype == np.dtype('object') and not allow_nan:
+        if _object_dtype_isnan(X).any():
+            raise ValueError("Input contains NaN")
 
 
 def assert_all_finite(X, allow_nan=False):
