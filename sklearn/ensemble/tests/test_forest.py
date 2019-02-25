@@ -1394,3 +1394,25 @@ def test_categorical_data(model, data_params):
 
     # all good features should be more important than all bad features.
     assert np.all([np.all(x > bad_ones) for x in good_ones])
+
+
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+@pytest.mark.parametrize('oob_score', (True, False))
+def test_multi_target(name, oob_score):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
+
+    X = iris.data
+
+    # Make multi column mixed type target.
+    y = np.vstack([
+        iris.target.astype(float),
+        iris.target.astype(int),
+        iris.target.astype(str),
+    ]).T
+
+    # Try to fit and predict.
+    clf.fit(X, y)
+    clf.predict(X)

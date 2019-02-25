@@ -66,6 +66,11 @@ might be found.
 **Please do not email any authors directly to ask for assistance, report bugs,
 or for any other issue related to scikit-learn.**
 
+How should I save, export or deploy estimators for production?
+--------------------------------------------------------------
+
+See :ref:`model_persistence`.
+
 How can I create a bunch object?
 ------------------------------------------------
 

@@ -449,7 +449,7 @@ def test_count_nonzero():
             count_nonzero(X_csr, axis=1, sample_weight=sample_weight).dtype)
 
     # Check dtypes with large sparse matrices too
-    # XXX: test fails on Appveyor (python2.7 32bit)
+    # XXX: test fails on Appveyor (python3.5 32bit)
     try:
         X_csr.indices = X_csr.indices.astype(np.int64)
         X_csr.indptr = X_csr.indptr.astype(np.int64)

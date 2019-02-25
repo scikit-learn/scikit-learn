@@ -10,13 +10,10 @@ with matplotlib.
 This allows the scaling of the algorithm with the problem size to be
 visualized and understood.
 """
-from __future__ import print_function
-
 import numpy as np
 import gc
 from datetime import datetime
 from sklearn.isotonic import isotonic_regression
-from sklearn.utils.bench import total_seconds
 from scipy.special import expit
 import matplotlib.pyplot as plt
 import argparse
@@ -55,8 +52,7 @@ def bench_isotonic_regression(Y):
 
     tstart = datetime.now()
     isotonic_regression(Y)
-    delta = datetime.now() - tstart
-    return total_seconds(delta)
+    return (datetime.now() - tstart).total_seconds()
 
 
 if __name__ == '__main__':

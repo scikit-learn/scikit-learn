@@ -119,8 +119,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
 
-    :func:`cluster.optics` provides a similar clustering with lower memory
-    usage.
+    :func:`cluster.optics <sklearn.cluster.optics>` provides a similar
+    clustering with lower memory usage.
 
     References
     ----------

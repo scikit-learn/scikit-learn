@@ -16,7 +16,7 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
 
 
-class DelegatorData(object):
+class DelegatorData:
     def __init__(self, name, construct, skip_methods=(),
                  fit_args=make_classification()):
         self.name = name
