@@ -1554,7 +1554,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
            normalize=False, positive=False, precompute='auto', random_state=0,
            selection='cyclic', tol=0.0001, verbose=0)
     >>> print(regr.alpha_) # doctest: +ELLIPSIS
-    0.1994727942696716
+    0.199...
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
     0.398...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
