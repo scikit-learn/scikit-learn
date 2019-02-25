@@ -835,7 +835,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     max_fun : int, optional, default 15000
         Only used when solver='lbfgs'. Maximum number of function calls.
         The solver iterates until convergence (determined by 'tol'), number
-        of iterations reaches max_iter, or this  number of function calls.
+        of iterations reaches max_iter, or this number of function calls.
         Note that number of function calls will be greater than or equal to
         the number of iterations for the MLPClassifier.
 
