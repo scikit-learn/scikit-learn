@@ -346,6 +346,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             The transformed data
         """
 
+
         if hasattr(self, '_necessary_X_'):
             dtype = self._necessary_X_.dtype
         else:
@@ -365,7 +366,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         if self.out_of_bounds == "clip":
             T = np.clip(T, self.X_min_, self.X_max_)
 
-        return self.f_(T)
+        res = self.f_(T)
+
+        # on scipy 0.17, interp1d up-casts to float64, so we cast back
+        res = res.astype(T.dtype)
+
+        return res
 
     def predict(self, T):
         """Predict new data by linear interpolation.
