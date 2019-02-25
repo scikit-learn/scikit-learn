@@ -7,7 +7,6 @@ import scipy as sp
 from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
 
-from sklearn.datasets import load_sample_images
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
@@ -36,7 +35,7 @@ def test_grid_to_graph():
     mask = np.zeros((size, size), dtype=np.bool)
     mask[0:roi_size, 0:roi_size] = True
     mask[-roi_size:, -roi_size:] = True
-    mask = mask.reshape(size ** 2)
+    mask = mask.reshape(size**2)
     A = grid_to_graph(n_x=size, n_y=size, mask=mask, return_as=np.ndarray)
     assert connected_components(A)[0] == 2
 
@@ -51,8 +50,8 @@ def test_grid_to_graph():
     assert A.dtype == np.bool
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.int)
     assert A.dtype == np.int
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask,
-                      dtype=np.float64)
+    A = grid_to_graph(
+        n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float64)
     assert A.dtype == np.float64
 
 
@@ -95,10 +94,10 @@ def _downsampled_face():
         from scipy import misc
         face = misc.face(gray=True)
     face = face.astype(np.float32)
-    face = (face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2]
-            + face[1::2, 1::2])
-    face = (face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2]
-            + face[1::2, 1::2])
+    face = (
+        face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2])
+    face = (
+        face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2])
     face = face.astype(np.float32)
     face /= 16.0
     return face
@@ -106,7 +105,7 @@ def _downsampled_face():
 
 def _orange_face(face=None):
     face = _downsampled_face() if face is None else face
-    face_color = np.zeros(face.shape + (3,))
+    face_color = np.zeros(face.shape + (3, ))
     face_color[:, :, 0] = 256 - face
     face_color[:, :, 1] = 256 - face / 2
     face_color[:, :, 2] = 256 - face / 4
@@ -116,11 +115,12 @@ def _orange_face(face=None):
 def _make_images(face=None):
     face = _downsampled_face() if face is None else face
     # make a collection of faces
-    images = np.zeros((3,) + face.shape)
+    images = np.zeros((3, ) + face.shape)
     images[0] = face
     images[1] = face + 1
     images[2] = face + 2
     return images
+
 
 downsampled_face = _downsampled_face()
 orange_face = _orange_face(downsampled_face)
@@ -168,10 +168,10 @@ def test_extract_patches_max_patches():
     patches = extract_patches_2d(face, (p_h, p_w), max_patches=0.5)
     assert_equal(patches.shape, (expected_n_patches, p_h, p_w))
 
-    assert_raises(ValueError, extract_patches_2d, face, (p_h, p_w),
-                  max_patches=2.0)
-    assert_raises(ValueError, extract_patches_2d, face, (p_h, p_w),
-                  max_patches=-1.0)
+    assert_raises(
+        ValueError, extract_patches_2d, face, (p_h, p_w), max_patches=2.0)
+    assert_raises(
+        ValueError, extract_patches_2d, face, (p_h, p_w), max_patches=-1.0)
 
 
 def test_extract_patch_same_size_image():
@@ -224,16 +224,16 @@ def test_patch_extractor_max_patches():
 
     max_patches = 100
     expected_n_patches = len(faces) * max_patches
-    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches,
-                          random_state=0)
+    extr = PatchExtractor(
+        patch_size=(p_h, p_w), max_patches=max_patches, random_state=0)
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
     max_patches = 0.5
-    expected_n_patches = len(faces) * int((i_h - p_h + 1) * (i_w - p_w + 1)
-                                          * max_patches)
-    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches,
-                          random_state=0)
+    expected_n_patches = len(faces) * int(
+        (i_h - p_h + 1) * (i_w - p_w + 1) * max_patches)
+    extr = PatchExtractor(
+        patch_size=(p_h, p_w), max_patches=max_patches, random_state=0)
     patches = extr.transform(faces)
     assert patches.shape == (expected_n_patches, p_h, p_w)
 
@@ -267,12 +267,12 @@ def test_patch_extractor_color():
 
 def test_extract_patches_strided():
 
-    image_shapes_1D = [(10,), (10,), (11,), (10,)]
-    patch_sizes_1D = [(1,), (2,), (3,), (8,)]
-    patch_steps_1D = [(1,), (1,), (4,), (2,)]
+    image_shapes_1D = [(10, ), (10, ), (11, ), (10, )]
+    patch_sizes_1D = [(1, ), (2, ), (3, ), (8, )]
+    patch_steps_1D = [(1, ), (1, ), (4, ), (2, )]
 
-    expected_views_1D = [(10,), (9,), (3,), (2,)]
-    last_patch_1D = [(10,), (8,), (8,), (2,)]
+    expected_views_1D = [(10, ), (9, ), (3, ), (2, )]
+    last_patch_1D = [(10, ), (8, ), (8, ), (2, )]
 
     image_shapes_2D = [(10, 20), (10, 20), (10, 20), (11, 20)]
     patch_sizes_2D = [(2, 2), (10, 10), (10, 11), (6, 6)]
@@ -298,16 +298,16 @@ def test_extract_patches_strided():
          last_patch) in zip(image_shapes, patch_sizes, patch_steps,
                             expected_views, last_patches):
         image = np.arange(np.prod(image_shape)).reshape(image_shape)
-        patches = extract_patches(image, patch_shape=patch_size,
-                                  extraction_step=patch_step)
+        patches = extract_patches(
+            image, patch_shape=patch_size, extraction_step=patch_step)
 
         ndim = len(image_shape)
 
         assert patches.shape[:ndim] == expected_view
-        last_patch_slices = tuple(slice(i, i + j, None) for i, j in
-                                  zip(last_patch, patch_size))
-        assert (patches[(-1, None, None) * ndim] ==
-                image[last_patch_slices].squeeze()).all()
+        last_patch_slices = tuple(
+            slice(i, i + j, None) for i, j in zip(last_patch, patch_size))
+        assert (patches[(-1, None, None) *
+                        ndim] == image[last_patch_slices].squeeze()).all()
 
 
 def test_extract_patches_square():
@@ -317,8 +317,8 @@ def test_extract_patches_square():
     p = 8
     expected_n_patches = ((i_h - p + 1), (i_w - p + 1))
     patches = extract_patches(face, patch_shape=p)
-    assert patches.shape == (expected_n_patches[0],
-                             expected_n_patches[1], p, p)
+    assert patches.shape == (expected_n_patches[0], expected_n_patches[1], p,
+                             p)
 
 
 def test_width_patch():
