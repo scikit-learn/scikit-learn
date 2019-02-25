@@ -118,11 +118,12 @@ in scikit-learn at least in some areas.
 
 Inclusion of a new algorithm speeding up an existing model is easier if:
 
-- It does not introduce new hyper-parameters (as it makes the library
-  more future-proof)
-- It is easy to document clearly when the contribution improves the speed
-  and when it does not.
-- Benchmark clearly show a speed up
+- it does not introduce new hyper-parameters (as it makes the library
+  more future-proof),
+- it is easy to document clearly when the contribution improves the speed
+  and when it does not, for instance "when n_features >>
+  n_samples)",
+- benchmarks clearly show a speed up.
 
 Also note that your implementation need not be in scikit-learn to be used
 together with scikit-learn tools. You can implement your favorite algorithm
