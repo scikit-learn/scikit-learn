@@ -133,7 +133,7 @@ cdef inline void setup_cat_cache(BITSET_t* cachebits, BITSET_t cat_split,
                 val = rand_int(0, 2, &rng_seed)
                 if not val:
                     continue
-                cachebits[j // 64] == bs_set(cachebits[j // 64], j % 64)
+                cachebits[j // 64] = bs_set(cachebits[j // 64], j % 64)
         else:
             # BestSplitter
             # In practice, cache_size here should ALWAYS be 1
