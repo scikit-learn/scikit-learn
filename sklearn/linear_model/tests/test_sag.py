@@ -8,7 +8,7 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.linear_model.sag import get_auto_step_size, sag_solver
+from sklearn.linear_model.sag import get_auto_step_size
 from sklearn.linear_model.sag_fast import _multinomial_grad_loss_all_samples
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.linear_model.base import make_dataset
