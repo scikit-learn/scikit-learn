@@ -711,7 +711,7 @@ def test_pca_deterministic_output():
     for solver in solver_list:
         transformed_X = np.zeros((20, 2))
         for i in range(20):
-            pca = PCA(n_components=2, svd_solver=solver, random_state=i)
+            pca = PCA(n_components=2, svd_solver=solver, random_state=rng)
             transformed_X[i, :] = pca.fit_transform(X)[0]
         assert_allclose(
             transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2))
