@@ -3,8 +3,6 @@ regression (:ref:`least_angle_regression`)
 
 The input data is mostly low rank but is a fat infinite tail.
 """
-from __future__ import print_function
-
 import gc
 import sys
 from time import time
@@ -107,12 +105,12 @@ if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
     fig = plt.figure('scikit-learn OMP vs. LARS benchmark results')
-    for i, (label, timings) in enumerate(sorted(results.iteritems())):
+    for i, (label, timings) in enumerate(sorted(results.items())):
         ax = fig.add_subplot(1, 2, i+1)
         vmax = max(1 - timings.min(), -1 + timings.max())
         plt.matshow(timings, fignum=False, vmin=1 - vmax, vmax=1 + vmax)
-        ax.set_xticklabels([''] + map(str, samples_range))
-        ax.set_yticklabels([''] + map(str, features_range))
+        ax.set_xticklabels([''] + [str(each) for each in samples_range])
+        ax.set_yticklabels([''] + [str(each) for each in features_range])
         plt.xlabel('n_samples')
         plt.ylabel('n_features')
         plt.title(label)

@@ -1,15 +1,15 @@
-# Author: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
+# Author: Tom Dupre la Tour
 #
 # License: BSD 3 clause
 
 import numpy as np
+from numpy.testing import assert_array_equal
 import scipy.sparse as sp
 
 from sklearn.utils.seq_dataset import ArrayDataset, CSRDataset
 from sklearn.datasets import load_iris
 
-from numpy.testing import assert_array_equal
-from nose.tools import assert_equal
+from sklearn.utils.testing import assert_equal
 
 iris = load_iris()
 X = iris.data.astype(np.float64)
@@ -81,4 +81,3 @@ def test_seq_dataset_shuffle():
         _, _, _, idx1 = dataset1._random_py()
         _, _, _, idx2 = dataset2._random_py()
         assert_equal(idx1, idx2)
-

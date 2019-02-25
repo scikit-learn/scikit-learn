@@ -3,7 +3,8 @@ import scipy.sparse as sp
 from scipy import linalg
 from itertools import product
 
-from sklearn.utils.testing import assert_true
+import pytest
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -11,8 +12,11 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns
+
+from sklearn.exceptions import ConvergenceWarning
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
@@ -49,45 +53,47 @@ iris = datasets.load_iris()
 X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
 
+
 DENSE_FILTER = lambda X: X
 SPARSE_FILTER = lambda X: sp.csr_matrix(X)
 
 
-def test_ridge():
+@pytest.mark.parametrize('solver',
+                         ("svd", "sparse_cg", "cholesky", "lsqr", "sag"))
+def test_ridge(solver):
     # Ridge regression convergence test using score
     # TODO: for this test to be robust, we should use a dataset instead
     # of np.random.
     rng = np.random.RandomState(0)
     alpha = 1.0
 
-    for solver in ("svd", "sparse_cg", "cholesky", "lsqr", "sag"):
-        # With more samples than features
-        n_samples, n_features = 6, 5
-        y = rng.randn(n_samples)
-        X = rng.randn(n_samples, n_features)
+    # With more samples than features
+    n_samples, n_features = 6, 5
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
 
-        ridge = Ridge(alpha=alpha, solver=solver)
-        ridge.fit(X, y)
-        assert_equal(ridge.coef_.shape, (X.shape[1], ))
+    ridge = Ridge(alpha=alpha, solver=solver)
+    ridge.fit(X, y)
+    assert_equal(ridge.coef_.shape, (X.shape[1], ))
+    assert_greater(ridge.score(X, y), 0.47)
+
+    if solver in ("cholesky", "sag"):
+        # Currently the only solvers to support sample_weight.
+        ridge.fit(X, y, sample_weight=np.ones(n_samples))
         assert_greater(ridge.score(X, y), 0.47)
 
-        if solver in ("cholesky", "sag"):
-            # Currently the only solvers to support sample_weight.
-            ridge.fit(X, y, sample_weight=np.ones(n_samples))
-            assert_greater(ridge.score(X, y), 0.47)
+    # With more features than samples
+    n_samples, n_features = 5, 10
+    y = rng.randn(n_samples)
+    X = rng.randn(n_samples, n_features)
+    ridge = Ridge(alpha=alpha, solver=solver)
+    ridge.fit(X, y)
+    assert_greater(ridge.score(X, y), .9)
 
-        # With more features than samples
-        n_samples, n_features = 5, 10
-        y = rng.randn(n_samples)
-        X = rng.randn(n_samples, n_features)
-        ridge = Ridge(alpha=alpha, solver=solver)
-        ridge.fit(X, y)
-        assert_greater(ridge.score(X, y), .9)
-
-        if solver in ("cholesky", "sag"):
-            # Currently the only solvers to support sample_weight.
-            ridge.fit(X, y, sample_weight=np.ones(n_samples))
-            assert_greater(ridge.score(X, y), 0.9)
+    if solver in ("cholesky", "sag"):
+        # Currently the only solvers to support sample_weight.
+        ridge.fit(X, y, sample_weight=np.ones(n_samples))
+        assert_greater(ridge.score(X, y), 0.9)
 
 
 def test_primal_dual_relationship():
@@ -137,8 +143,20 @@ def test_ridge_regression_sample_weights():
                 assert_array_almost_equal(coefs, coefs2)
 
 
+def test_ridge_regression_convergence_fail():
+    rng = np.random.RandomState(0)
+    y = rng.randn(5)
+    X = rng.randn(5, 10)
+
+    assert_warns(ConvergenceWarning, ridge_regression,
+                 X, y, alpha=1.0, solver="sparse_cg",
+                 tol=0., max_iter=None, verbose=1)
+
+
 def test_ridge_sample_weights():
     # TODO: loop over sparse data as well
+    # Note: parametrizing this test with pytest results in failed
+    #       assertions, meaning that is is not extremely robust
 
     rng = np.random.RandomState(0)
     param_grid = product((1.0, 1e-2), (True, False),
@@ -153,7 +171,8 @@ def test_ridge_sample_weights():
         for (alpha, intercept, solver) in param_grid:
 
             # Ridge with explicit sample_weight
-            est = Ridge(alpha=alpha, fit_intercept=intercept, solver=solver)
+            est = Ridge(alpha=alpha, fit_intercept=intercept,
+                        solver=solver, tol=1e-6)
             est.fit(X, y, sample_weight=sample_weight)
             coefs = est.coef_
             inter = est.intercept_
@@ -282,7 +301,7 @@ def test_ridge_individual_penalties():
 
     coefs_indiv_pen = [
         Ridge(alpha=penalties, solver=solver, tol=1e-8).fit(X, y).coef_
-        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag']]
+        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag', 'saga']]
     for coef_indiv_pen in coefs_indiv_pen:
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
 
@@ -297,11 +316,18 @@ def _test_ridge_loo(filter_):
 
     ret = []
 
-    ridge_gcv = _RidgeGCV(fit_intercept=False)
-    ridge = Ridge(alpha=1.0, fit_intercept=False)
+    fit_intercept = filter_ == DENSE_FILTER
+    if fit_intercept:
+        X_diabetes_ = X_diabetes - X_diabetes.mean(0)
+    else:
+        X_diabetes_ = X_diabetes
+    ridge_gcv = _RidgeGCV(fit_intercept=fit_intercept)
+    ridge = Ridge(alpha=1.0, fit_intercept=fit_intercept)
+
+    # because fit_intercept is applied
 
     # generalized cross-validation (efficient leave-one-out)
-    decomp = ridge_gcv._pre_compute(X_diabetes, y_diabetes)
+    decomp = ridge_gcv._pre_compute(X_diabetes_, y_diabetes, fit_intercept)
     errors, c = ridge_gcv._errors(1.0, y_diabetes, *decomp)
     values, c = ridge_gcv._values(1.0, y_diabetes, *decomp)
 
@@ -310,10 +336,10 @@ def _test_ridge_loo(filter_):
     values2 = []
     for i in range(n_samples):
         sel = np.arange(n_samples) != i
-        X_new = X_diabetes[sel]
+        X_new = X_diabetes_[sel]
         y_new = y_diabetes[sel]
         ridge.fit(X_new, y_new)
-        value = ridge.predict([X_diabetes[i]])[0]
+        value = ridge.predict([X_diabetes_[i]])[0]
         error = (y_diabetes[i] - value) ** 2
         errors2.append(error)
         values2.append(value)
@@ -324,7 +350,7 @@ def _test_ridge_loo(filter_):
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
-    decomp = ridge_gcv._pre_compute_svd(X_diabetes, y_diabetes)
+    decomp = ridge_gcv._pre_compute_svd(X_diabetes_, y_diabetes, fit_intercept)
     errors3, c = ridge_gcv._errors_svd(ridge.alpha, y_diabetes, *decomp)
     values3, c = ridge_gcv._values_svd(ridge.alpha, y_diabetes, *decomp)
 
@@ -374,6 +400,16 @@ def _test_ridge_loo(filter_):
                               Y_pred, decimal=5)
 
     return ret
+
+
+def _test_ridge_cv_normalize(filter_):
+    ridge_cv = RidgeCV(normalize=True, cv=3)
+    ridge_cv.fit(filter_(10. * X_diabetes), y_diabetes)
+
+    gs = GridSearchCV(Ridge(normalize=True), cv=3,
+                      param_grid={'alpha': ridge_cv.alphas})
+    gs.fit(filter_(10. * X_diabetes), y_diabetes)
+    assert_equal(gs.best_estimator_.alpha, ridge_cv.alpha_)
 
 
 def _test_ridge_cv(filter_):
@@ -427,7 +463,7 @@ def _test_ridge_classifiers(filter_):
     reg = RidgeClassifierCV(cv=cv)
     reg.fit(filter_(X_iris), y_iris)
     y_pred = reg.predict(filter_(X_iris))
-    assert_true(np.mean(y_iris == y_pred) >= 0.8)
+    assert np.mean(y_iris == y_pred) >= 0.8
 
 
 def _test_tolerance(filter_):
@@ -439,7 +475,7 @@ def _test_tolerance(filter_):
     ridge2.fit(filter_(X_diabetes), y_diabetes)
     score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
 
-    assert_true(score >= score2)
+    assert score >= score2
 
 
 def check_dense_sparse(test_func):
@@ -452,14 +488,15 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-def test_dense_sparse():
-    for test_func in (_test_ridge_loo,
-                      _test_ridge_cv,
-                      _test_ridge_diabetes,
-                      _test_multi_ridge_diabetes,
-                      _test_ridge_classifiers,
-                      _test_tolerance):
-        yield check_dense_sparse, test_func
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.parametrize(
+        'test_func',
+        (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
+         _test_ridge_diabetes, _test_multi_ridge_diabetes,
+         _test_ridge_classifiers, _test_tolerance))
+def test_dense_sparse(test_func):
+    check_dense_sparse(test_func)
 
 
 def test_ridge_cv_sparse_svd():
@@ -511,35 +548,37 @@ def test_class_weights():
     assert_array_almost_equal(reg.intercept_, rega.intercept_)
 
 
-def test_class_weight_vs_sample_weight():
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.parametrize('reg', (RidgeClassifier, RidgeClassifierCV))
+def test_class_weight_vs_sample_weight(reg):
     """Check class_weights resemble sample_weights behavior."""
-    for reg in (RidgeClassifier, RidgeClassifierCV):
 
-        # Iris is balanced, so no effect expected for using 'balanced' weights
-        reg1 = reg()
-        reg1.fit(iris.data, iris.target)
-        reg2 = reg(class_weight='balanced')
-        reg2.fit(iris.data, iris.target)
-        assert_almost_equal(reg1.coef_, reg2.coef_)
+    # Iris is balanced, so no effect expected for using 'balanced' weights
+    reg1 = reg()
+    reg1.fit(iris.data, iris.target)
+    reg2 = reg(class_weight='balanced')
+    reg2.fit(iris.data, iris.target)
+    assert_almost_equal(reg1.coef_, reg2.coef_)
 
-        # Inflate importance of class 1, check against user-defined weights
-        sample_weight = np.ones(iris.target.shape)
-        sample_weight[iris.target == 1] *= 100
-        class_weight = {0: 1., 1: 100., 2: 1.}
-        reg1 = reg()
-        reg1.fit(iris.data, iris.target, sample_weight)
-        reg2 = reg(class_weight=class_weight)
-        reg2.fit(iris.data, iris.target)
-        assert_almost_equal(reg1.coef_, reg2.coef_)
+    # Inflate importance of class 1, check against user-defined weights
+    sample_weight = np.ones(iris.target.shape)
+    sample_weight[iris.target == 1] *= 100
+    class_weight = {0: 1., 1: 100., 2: 1.}
+    reg1 = reg()
+    reg1.fit(iris.data, iris.target, sample_weight)
+    reg2 = reg(class_weight=class_weight)
+    reg2.fit(iris.data, iris.target)
+    assert_almost_equal(reg1.coef_, reg2.coef_)
 
-        # Check that sample_weight and class_weight are multiplicative
-        reg1 = reg()
-        reg1.fit(iris.data, iris.target, sample_weight ** 2)
-        reg2 = reg(class_weight=class_weight)
-        reg2.fit(iris.data, iris.target, sample_weight)
-        assert_almost_equal(reg1.coef_, reg2.coef_)
+    # Check that sample_weight and class_weight are multiplicative
+    reg1 = reg()
+    reg1.fit(iris.data, iris.target, sample_weight ** 2)
+    reg2 = reg(class_weight=class_weight)
+    reg2.fit(iris.data, iris.target, sample_weight)
+    assert_almost_equal(reg1.coef_, reg2.coef_)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_class_weights_cv():
     # Test class weights for cross validated ridge classifier.
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
@@ -556,9 +595,9 @@ def test_class_weights_cv():
     assert_array_equal(reg.predict([[-.2, 2]]), np.array([-1]))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_ridgecv_store_cv_values():
-    # Test _RidgeCV's store_cv_values attribute.
-    rng = rng = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
 
     n_samples = 8
     n_features = 5
@@ -566,20 +605,47 @@ def test_ridgecv_store_cv_values():
     alphas = [1e-1, 1e0, 1e1]
     n_alphas = len(alphas)
 
-    r = RidgeCV(alphas=alphas, store_cv_values=True)
+    r = RidgeCV(alphas=alphas, cv=None, store_cv_values=True)
 
     # with len(y.shape) == 1
     y = rng.randn(n_samples)
     r.fit(x, y)
-    assert_equal(r.cv_values_.shape, (n_samples, n_alphas))
+    assert r.cv_values_.shape == (n_samples, n_alphas)
 
     # with len(y.shape) == 2
-    n_responses = 3
-    y = rng.randn(n_samples, n_responses)
+    n_targets = 3
+    y = rng.randn(n_samples, n_targets)
     r.fit(x, y)
-    assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
+    assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+def test_ridge_classifier_cv_store_cv_values():
+    x = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = np.array([1, 1, 1, -1, -1])
+
+    n_samples = x.shape[0]
+    alphas = [1e-1, 1e0, 1e1]
+    n_alphas = len(alphas)
+
+    r = RidgeClassifierCV(alphas=alphas, cv=None, store_cv_values=True)
+
+    # with len(y.shape) == 1
+    n_targets = 1
+    r.fit(x, y)
+    assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
+
+    # with len(y.shape) == 2
+    y = np.array([[1, 1, 1, -1, -1],
+                  [1, -1, 1, -1, 1],
+                  [-1, -1, 1, -1, -1]]).transpose()
+    n_targets = y.shape[1]
+    r.fit(x, y)
+    assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
+
+
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_ridgecv_sample_weight():
     rng = np.random.RandomState(0)
     alphas = (0.1, 1.0, 10.0)
@@ -597,12 +663,10 @@ def test_ridgecv_sample_weight():
 
         # Check using GridSearchCV directly
         parameters = {'alpha': alphas}
-        fit_params = {'sample_weight': sample_weight}
-        gs = GridSearchCV(Ridge(), parameters, fit_params=fit_params,
-                          cv=cv)
-        gs.fit(X, y)
+        gs = GridSearchCV(Ridge(), parameters, cv=cv)
+        gs.fit(X, y, sample_weight=sample_weight)
 
-        assert_equal(ridgecv.alpha_, gs.best_estimator_.alpha)
+        assert ridgecv.alpha_ == gs.best_estimator_.alpha
         assert_array_almost_equal(ridgecv.coef_, gs.best_estimator_.coef_)
 
 
@@ -676,6 +740,36 @@ def test_sparse_design_with_sample_weights():
                                       decimal=6)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+def test_ridgecv_int_alphas():
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    # Integers
+    ridge = RidgeCV(alphas=(1, 10, 100))
+    ridge.fit(X, y)
+
+
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+def test_ridgecv_negative_alphas():
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = [1, 1, 1, -1, -1]
+
+    # Negative integers
+    ridge = RidgeCV(alphas=(-1, -10, -100))
+    assert_raises_regex(ValueError,
+                        "alphas cannot be negative.",
+                        ridge.fit, X, y)
+
+    # Negative floats
+    ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
+    assert_raises_regex(ValueError,
+                        "alphas cannot be negative.",
+                        ridge.fit, X, y)
+
+
 def test_raises_value_error_if_solver_not_supported():
     # Tests whether a ValueError is raised if a non-identified solver
     # is passed to ridge_regression
@@ -707,7 +801,7 @@ def test_n_iter():
     y_n = np.tile(y, (n_targets, 1)).T
 
     for max_iter in range(1, 4):
-        for solver in ('sag', 'lsqr'):
+        for solver in ('sag', 'saga', 'lsqr'):
             reg = Ridge(solver=solver, max_iter=max_iter, tol=1e-12)
             reg.fit(X, y_n)
             assert_array_equal(reg.n_iter_, np.tile(max_iter, n_targets))
@@ -723,12 +817,13 @@ def test_ridge_fit_intercept_sparse():
                            bias=10., random_state=42)
     X_csr = sp.csr_matrix(X)
 
-    dense = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
-    sparse = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
-    dense.fit(X, y)
-    sparse.fit(X_csr, y)
-    assert_almost_equal(dense.intercept_, sparse.intercept_)
-    assert_array_almost_equal(dense.coef_, sparse.coef_)
+    for solver in ['saga', 'sag']:
+        dense = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+        dense.fit(X, y)
+        sparse.fit(X_csr, y)
+        assert_almost_equal(dense.intercept_, sparse.intercept_)
+        assert_array_almost_equal(dense.coef_, sparse.coef_)
 
     # test the solver switch and the corresponding warning
     sparse = Ridge(alpha=1., tol=1.e-15, solver='lsqr', fit_intercept=True)
@@ -782,3 +877,64 @@ def test_errors_and_values_svd_helper():
 def test_ridge_classifier_no_support_multilabel():
     X, y = make_multilabel_classification(n_samples=10, random_state=0)
     assert_raises(ValueError, RidgeClassifier().fit, X, y)
+
+
+def test_dtype_match():
+    rng = np.random.RandomState(0)
+    alpha = 1.0
+
+    n_samples, n_features = 6, 5
+    X_64 = rng.randn(n_samples, n_features)
+    y_64 = rng.randn(n_samples)
+    X_32 = X_64.astype(np.float32)
+    y_32 = y_64.astype(np.float32)
+
+    solvers = ["svd", "sparse_cg", "cholesky", "lsqr"]
+    for solver in solvers:
+
+        # Check type consistency 32bits
+        ridge_32 = Ridge(alpha=alpha, solver=solver)
+        ridge_32.fit(X_32, y_32)
+        coef_32 = ridge_32.coef_
+
+        # Check type consistency 64 bits
+        ridge_64 = Ridge(alpha=alpha, solver=solver)
+        ridge_64.fit(X_64, y_64)
+        coef_64 = ridge_64.coef_
+
+        # Do the actual checks at once for easier debug
+        assert coef_32.dtype == X_32.dtype
+        assert coef_64.dtype == X_64.dtype
+        assert ridge_32.predict(X_32).dtype == X_32.dtype
+        assert ridge_64.predict(X_64).dtype == X_64.dtype
+        assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
+
+
+def test_dtype_match_cholesky():
+    # Test different alphas in cholesky solver to ensure full coverage.
+    # This test is separated from test_dtype_match for clarity.
+    rng = np.random.RandomState(0)
+    alpha = (1.0, 0.5)
+
+    n_samples, n_features, n_target = 6, 7, 2
+    X_64 = rng.randn(n_samples, n_features)
+    y_64 = rng.randn(n_samples, n_target)
+    X_32 = X_64.astype(np.float32)
+    y_32 = y_64.astype(np.float32)
+
+    # Check type consistency 32bits
+    ridge_32 = Ridge(alpha=alpha, solver='cholesky')
+    ridge_32.fit(X_32, y_32)
+    coef_32 = ridge_32.coef_
+
+    # Check type consistency 64 bits
+    ridge_64 = Ridge(alpha=alpha, solver='cholesky')
+    ridge_64.fit(X_64, y_64)
+    coef_64 = ridge_64.coef_
+
+    # Do all the checks at once, like this is easier to debug
+    assert coef_32.dtype == X_32.dtype
+    assert coef_64.dtype == X_64.dtype
+    assert ridge_32.predict(X_32).dtype == X_32.dtype
+    assert ridge_64.predict(X_64).dtype == X_64.dtype
+    assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)

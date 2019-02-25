@@ -1,0 +1,5 @@
+# Examples specific flake8 configuration
+
+[flake8]
+# Same ignore as project-wide plus E402 (imports not at top of file)
+ignore=E121,E123,E126,E24,E226,E704,W503,W504,E402

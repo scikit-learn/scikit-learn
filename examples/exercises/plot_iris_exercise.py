@@ -29,10 +29,10 @@ order = np.random.permutation(n_sample)
 X = X[order]
 y = y[order].astype(np.float)
 
-X_train = X[:.9 * n_sample]
-y_train = y[:.9 * n_sample]
-X_test = X[.9 * n_sample:]
-y_test = y[.9 * n_sample:]
+X_train = X[:int(.9 * n_sample)]
+y_train = y[:int(.9 * n_sample)]
+X_test = X[int(.9 * n_sample):]
+y_test = y[int(.9 * n_sample):]
 
 # fit the model
 for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
@@ -41,10 +41,12 @@ for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
 
     plt.figure(fig_num)
     plt.clf()
-    plt.scatter(X[:, 0], X[:, 1], c=y, zorder=10, cmap=plt.cm.Paired)
+    plt.scatter(X[:, 0], X[:, 1], c=y, zorder=10, cmap=plt.cm.Paired,
+                edgecolor='k', s=20)
 
     # Circle out the test data
-    plt.scatter(X_test[:, 0], X_test[:, 1], s=80, facecolors='none', zorder=10)
+    plt.scatter(X_test[:, 0], X_test[:, 1], s=80, facecolors='none',
+                zorder=10, edgecolor='k')
 
     plt.axis('tight')
     x_min = X[:, 0].min()
@@ -58,8 +60,8 @@ for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
     # Put the result into a color plot
     Z = Z.reshape(XX.shape)
     plt.pcolormesh(XX, YY, Z > 0, cmap=plt.cm.Paired)
-    plt.contour(XX, YY, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
-                levels=[-.5, 0, .5])
+    plt.contour(XX, YY, Z, colors=['k', 'k', 'k'],
+                linestyles=['--', '-', '--'], levels=[-.5, 0, .5])
 
     plt.title(kernel)
 plt.show()

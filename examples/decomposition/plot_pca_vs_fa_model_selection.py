@@ -39,7 +39,7 @@ from sklearn.model_selection import GridSearchCV
 
 print(__doc__)
 
-###############################################################################
+# #############################################################################
 # Create the data
 
 n_samples, n_features, rank = 1000, 50, 10
@@ -55,7 +55,7 @@ X_homo = X + sigma * rng.randn(n_samples, n_features)
 sigmas = sigma * rng.rand(n_features) + sigma / 2.
 X_hetero = X + rng.randn(n_samples, n_features) * sigmas
 
-###############################################################################
+# #############################################################################
 # Fit the models
 
 n_components = np.arange(0, n_features, 5)  # options for n_components
@@ -69,20 +69,20 @@ def compute_scores(X):
     for n in n_components:
         pca.n_components = n
         fa.n_components = n
-        pca_scores.append(np.mean(cross_val_score(pca, X)))
-        fa_scores.append(np.mean(cross_val_score(fa, X)))
+        pca_scores.append(np.mean(cross_val_score(pca, X, cv=5)))
+        fa_scores.append(np.mean(cross_val_score(fa, X, cv=5)))
 
     return pca_scores, fa_scores
 
 
 def shrunk_cov_score(X):
     shrinkages = np.logspace(-2, 0, 30)
-    cv = GridSearchCV(ShrunkCovariance(), {'shrinkage': shrinkages})
-    return np.mean(cross_val_score(cv.fit(X).best_estimator_, X))
+    cv = GridSearchCV(ShrunkCovariance(), {'shrinkage': shrinkages}, cv=5)
+    return np.mean(cross_val_score(cv.fit(X).best_estimator_, X, cv=5))
 
 
 def lw_score(X):
-    return np.mean(cross_val_score(LedoitWolf(), X))
+    return np.mean(cross_val_score(LedoitWolf(), X, cv=5))
 
 
 for X, title in [(X_homo, 'Homoscedastic Noise'),

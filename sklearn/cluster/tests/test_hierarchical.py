@@ -7,13 +7,13 @@ Several basic tests for hierarchical clustering procedures
 # License: BSD 3 clause
 from tempfile import mkdtemp
 import shutil
+import pytest
 from functools import partial
 
 import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -24,7 +24,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
-                                          linkage_tree)
+                                          linkage_tree, _fix_connectivity)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
@@ -34,6 +34,7 @@ from sklearn.cluster._hierarchical import average_merge, max_merge
 from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.datasets import make_moons, make_circles
 
 
 def test_linkage_misc():
@@ -70,7 +71,7 @@ def test_structured_linkage_tree():
         children, n_components, n_leaves, parent = \
             tree_builder(X.T, connectivity)
         n_nodes = 2 * X.shape[1] - 1
-        assert_true(len(children) + n_leaves == n_nodes)
+        assert len(children) + n_leaves == n_nodes
         # Check that ward_tree raises a ValueError with a connectivity matrix
         # of the wrong shape
         assert_raises(ValueError,
@@ -112,9 +113,22 @@ def test_height_linkage_tree():
     for linkage_func in _TREE_BUILDERS.values():
         children, n_nodes, n_leaves, parent = linkage_func(X.T, connectivity)
         n_nodes = 2 * X.shape[1] - 1
-        assert_true(len(children) + n_leaves == n_nodes)
+        assert len(children) + n_leaves == n_nodes
 
 
+def test_agglomerative_clustering_wrong_arg_memory():
+    # Test either if an error is raised when memory is not
+    # either a str or a joblib.Memory instance
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    memory = 5
+    clustering = AgglomerativeClustering(memory=memory)
+    assert_raises(ValueError, clustering.fit, X)
+
+
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
 def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
@@ -123,7 +137,7 @@ def test_agglomerative_clustering():
     n_samples = 100
     X = rng.randn(n_samples, 50)
     connectivity = grid_to_graph(*mask.shape)
-    for linkage in ("ward", "complete", "average"):
+    for linkage in ("ward", "complete", "average", "single"):
         clustering = AgglomerativeClustering(n_clusters=10,
                                              connectivity=connectivity,
                                              linkage=linkage)
@@ -137,7 +151,7 @@ def test_agglomerative_clustering():
                 linkage=linkage)
             clustering.fit(X)
             labels = clustering.labels_
-            assert_true(np.size(np.unique(labels)) == 10)
+            assert np.size(np.unique(labels)) == 10
         finally:
             shutil.rmtree(tempdir)
         # Turn caching off now
@@ -151,7 +165,7 @@ def test_agglomerative_clustering():
                                                          labels), 1)
         clustering.connectivity = None
         clustering.fit(X)
-        assert_true(np.size(np.unique(clustering.labels_)) == 10)
+        assert np.size(np.unique(clustering.labels_)) == 10
         # Check that we raise a TypeError on dense matrices
         clustering = AgglomerativeClustering(
             n_clusters=10,
@@ -211,16 +225,34 @@ def test_ward_agglomeration():
     connectivity = grid_to_graph(*mask.shape)
     agglo = FeatureAgglomeration(n_clusters=5, connectivity=connectivity)
     agglo.fit(X)
-    assert_true(np.size(np.unique(agglo.labels_)) == 5)
+    assert np.size(np.unique(agglo.labels_)) == 5
 
     X_red = agglo.transform(X)
-    assert_true(X_red.shape[1] == 5)
+    assert X_red.shape[1] == 5
     X_full = agglo.inverse_transform(X_red)
-    assert_true(np.unique(X_full[0]).size == 5)
+    assert np.unique(X_full[0]).size == 5
     assert_array_almost_equal(agglo.transform(X_full), X_red)
 
     # Check that fitting with no samples raises a ValueError
     assert_raises(ValueError, agglo.fit, X[:0])
+
+
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
+def test_single_linkage_clustering():
+    # Check that we get the correct result in two emblematic cases
+    moons, moon_labels = make_moons(noise=0.05, random_state=42)
+    clustering = AgglomerativeClustering(n_clusters=2, linkage='single')
+    clustering.fit(moons)
+    assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
+                                                     moon_labels), 1)
+
+    circles, circle_labels = make_circles(factor=0.5, noise=0.025,
+                                          random_state=42)
+    clustering = AgglomerativeClustering(n_clusters=2, linkage='single')
+    clustering.fit(circles)
+    assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
+                                                     circle_labels), 1)
 
 
 def assess_same_labelling(cut1, cut2):
@@ -232,7 +264,7 @@ def assess_same_labelling(cut1, cut2):
         ecut = np.zeros((n, k))
         ecut[np.arange(n), cut] = 1
         co_clust.append(np.dot(ecut, ecut.T))
-    assert_true((co_clust[0] == co_clust[1]).all())
+    assert (co_clust[0] == co_clust[1]).all()
 
 
 def test_scikit_vs_scipy():
@@ -254,12 +286,43 @@ def test_scikit_vs_scipy():
             children_ = out[:, :2].astype(np.int)
             children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X, connectivity)
 
+            # Sort the order of child nodes per row for consistency
+            children.sort(axis=1)
+            assert_array_equal(children, children_, 'linkage tree differs'
+                                                    ' from scipy impl for'
+                                                    ' linkage: ' + linkage)
+
             cut = _hc_cut(k, children, n_leaves)
             cut_ = _hc_cut(k, children_, n_leaves)
             assess_same_labelling(cut, cut_)
 
     # Test error management in _hc_cut
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
+
+
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
+def test_identical_points():
+    # Ensure identical points are handled correctly when using mst with
+    # a sparse connectivity matrix
+    X = np.array([[0, 0, 0], [0, 0, 0],
+                  [1, 1, 1], [1, 1, 1],
+                  [2, 2, 2], [2, 2, 2]])
+    true_labels = np.array([0, 0, 1, 1, 2, 2])
+    connectivity = kneighbors_graph(X, n_neighbors=3, include_self=False)
+    connectivity = 0.5 * (connectivity + connectivity.T)
+    connectivity, n_components = _fix_connectivity(X,
+                                                   connectivity,
+                                                   'euclidean')
+
+    for linkage in ('single', 'average', 'average', 'ward'):
+        clustering = AgglomerativeClustering(n_clusters=3,
+                                             linkage=linkage,
+                                             connectivity=connectivity)
+        clustering.fit(X)
+
+        assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
+                                                         true_labels), 1)
 
 
 def test_connectivity_propagation():
@@ -329,7 +392,7 @@ def test_ward_linkage_tree_return_distance():
 
         assert_array_almost_equal(dist_unstructured, dist_structured)
 
-        for linkage in ['average', 'complete']:
+        for linkage in ['average', 'complete', 'single']:
             structured_items = linkage_tree(
                 X, connectivity=connectivity, linkage=linkage,
                 return_distance=True)[-1]
@@ -387,7 +450,7 @@ def test_ward_linkage_tree_return_distance():
     assert_array_almost_equal(linkage_X_ward[:, 2], out_X_unstructured[4])
     assert_array_almost_equal(linkage_X_ward[:, 2], out_X_structured[4])
 
-    linkage_options = ['complete', 'average']
+    linkage_options = ['complete', 'average', 'single']
     X_linkage_truth = [linkage_X_complete, linkage_X_average]
     for (linkage, X_truth) in zip(linkage_options, X_linkage_truth):
         out_X_unstructured = linkage_tree(
@@ -427,7 +490,7 @@ def test_int_float_dict():
         assert d[key] == value
 
     other_keys = np.arange(50).astype(np.intp)[::2]
-    other_values = 0.5 * np.ones(50)[::2]
+    other_values = np.full(50, 0.5)[::2]
     other = IntFloatDict(other_keys, other_values)
     # Complete smoke test
     max_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
@@ -440,7 +503,8 @@ def test_connectivity_callable():
     connectivity = kneighbors_graph(X, 3, include_self=False)
     aglc1 = AgglomerativeClustering(connectivity=connectivity)
     aglc2 = AgglomerativeClustering(
-        connectivity=partial(kneighbors_graph, n_neighbors=3, include_self=False))
+        connectivity=partial(kneighbors_graph, n_neighbors=3,
+                             include_self=False))
     aglc1.fit(X)
     aglc2.fit(X)
     assert_array_equal(aglc1.labels_, aglc2.labels_)
@@ -507,3 +571,30 @@ def test_agg_n_clusters():
         msg = ("n_clusters should be an integer greater than 0."
                " %s was provided." % str(agc.n_clusters))
         assert_raise_message(ValueError, msg, agc.fit, X)
+
+
+def test_affinity_passed_to_fix_connectivity():
+    # Test that the affinity parameter is actually passed to the pairwise
+    # function
+
+    size = 2
+    rng = np.random.RandomState(0)
+    X = rng.randn(size, size)
+    mask = np.array([True, False, False, True])
+
+    connectivity = grid_to_graph(n_x=size, n_y=size,
+                                 mask=mask, return_as=np.ndarray)
+
+    class FakeAffinity:
+        def __init__(self):
+            self.counter = 0
+
+        def increment(self, *args, **kwargs):
+            self.counter += 1
+            return self.counter
+
+    fa = FakeAffinity()
+
+    linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
+
+    assert_equal(fa.counter, 3)

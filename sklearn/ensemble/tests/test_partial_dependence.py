@@ -1,6 +1,7 @@
 """
 Testing for the partial dependence module.
 """
+import pytest
 
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -103,6 +104,8 @@ def test_partial_dependecy_input():
     assert_raises(ValueError, partial_dependence, clf, [0], grid=grid)
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+# matplotlib Python3.7 warning
 @if_matplotlib
 def test_plot_partial_dependence():
     # Test partial dependence plot function.
@@ -135,6 +138,8 @@ def test_plot_partial_dependence():
     assert all(ax.has_data for ax in axs)
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+# matplotlib Python3.7 warning
 @if_matplotlib
 def test_plot_partial_dependence_input():
     # Test partial dependence plot function input checks.
@@ -170,6 +175,8 @@ def test_plot_partial_dependence_input():
                   clf, X, [{'foo': 'bar'}])
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+# matplotlib Python3.7 warning
 @if_matplotlib
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.

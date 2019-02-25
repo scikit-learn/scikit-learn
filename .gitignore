@@ -54,8 +54,8 @@ benchmarks/bench_covertype_data/
 *.prefs
 .pydevproject
 .idea
+.vscode
 
-cythonize.dat
 *.c
 *.cpp
 
@@ -63,3 +63,11 @@ cythonize.dat
 !*/src/*.cpp
 *.sln
 *.pyproj
+
+# Used by py.test
+.cache
+.pytest_cache/
+_configtest.o.d
+
+# Used by mypy
+.mypy_cache/

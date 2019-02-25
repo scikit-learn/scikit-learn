@@ -133,7 +133,7 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
     x0 : array of float
         Initial guess.
 
-    args: tuple, optional
+    args : tuple, optional
         Arguments passed to func_grad_hess, func and grad.
 
     tol : float
@@ -147,10 +147,10 @@ def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
     maxinner : int
         Number of CG iterations.
 
-    line_search: boolean
+    line_search : boolean
         Whether to use a line search or not.
 
-    warn: boolean
+    warn : boolean
         Whether to warn when didn't converge.
 
     Returns

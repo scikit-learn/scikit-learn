@@ -10,6 +10,8 @@ from sklearn import pipeline
 from sklearn import preprocessing
 from sklearn.utils.testing import assert_less
 
+from scipy.sparse import rand as sparse_rand
+
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']
 
@@ -122,3 +124,15 @@ def test_isomap_clone_bug():
         model.fit(np.random.rand(50, 2))
         assert_equal(model.nbrs_.n_neighbors,
                      n_neighbors)
+
+
+def test_sparse_input():
+    X = sparse_rand(100, 3, density=0.1, format='csr')
+
+    # Should not error
+    for eigen_solver in eigen_solvers:
+        for path_method in path_methods:
+            clf = manifold.Isomap(n_components=2,
+                                  eigen_solver=eigen_solver,
+                                  path_method=path_method)
+            clf.fit(X)

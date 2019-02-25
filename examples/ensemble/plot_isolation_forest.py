@@ -3,7 +3,8 @@
 IsolationForest example
 ==========================================
 
-An example using IsolationForest for anomaly detection.
+An example using :class:`sklearn.ensemble.IsolationForest` for anomaly
+detection.
 
 The IsolationForest 'isolates' observations by randomly selecting a feature
 and then randomly selecting a split value between the maximum and minimum
@@ -14,14 +15,11 @@ number of splittings required to isolate a sample is equivalent to the path
 length from the root node to the terminating node.
 
 This path length, averaged over a forest of such random trees, is a measure
-of abnormality and our decision function.
+of normality and our decision function.
 
 Random partitioning produces noticeable shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path lengths
 for particular samples, they are highly likely to be anomalies.
-
-.. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
-    Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
 
 """
 print(__doc__)
@@ -42,7 +40,8 @@ X_test = np.r_[X + 2, X - 2]
 X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
 
 # fit the model
-clf = IsolationForest(max_samples=100, random_state=rng)
+clf = IsolationForest(behaviour='new', max_samples=100,
+                      random_state=rng, contamination='auto')
 clf.fit(X_train)
 y_pred_train = clf.predict(X_train)
 y_pred_test = clf.predict(X_test)
@@ -56,9 +55,12 @@ Z = Z.reshape(xx.shape)
 plt.title("IsolationForest")
 plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
 
-b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c='white')
-b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c='green')
-c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c='red')
+b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c='white',
+                 s=20, edgecolor='k')
+b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c='green',
+                 s=20, edgecolor='k')
+c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c='red',
+                s=20, edgecolor='k')
 plt.axis('tight')
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))

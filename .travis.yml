@@ -3,25 +3,13 @@ sudo: false
 
 language: python
 
-# Pre-install packages for the ubuntu distribution
 cache:
   apt: true
-  # We use three different cache directory
-  # to work around a Travis bug with multi-platform cache
   directories:
-  - $HOME/sklearn_build_ubuntu
-  - $HOME/sklearn_build_oldest
-  - $HOME/sklearn_build_latest
-  - $HOME/sklearn_build_numpy_dev
   - $HOME/.cache/pip
-  - $HOME/download
-addons:
-  apt:
-    packages:
-      - libatlas3gf-base
-      - libatlas-dev
-      # only required by the DISTRIB="ubuntu" build:
-      - python-scipy
+  - $HOME/.ccache
+
+dist: xenial
 
 env:
   global:
@@ -29,50 +17,66 @@ env:
     - TEST_DIR=/tmp/sklearn
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
-  matrix:
-    # This environment tests that scikit-learn can be built against
-    # versions of numpy, scipy with ATLAS that comes with Ubuntu Precise 12.04
-    - DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.4"
-      CACHED_BUILD_DIR="$HOME/sklearn_build_ubuntu" COVERAGE=true
-    # This environment tests the oldest supported anaconda env
-    - DISTRIB="conda" PYTHON_VERSION="2.6" INSTALL_MKL="false"
-      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0" CYTHON_VERSION="0.21"
-      CACHED_BUILD_DIR="$HOME/sklearn_build_oldest"
-    # This environment tests the newest supported anaconda env
-    # It also runs tests requiring Pandas.
-    - DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" PANDAS_VERSION="0.18.0"
-      CYTHON_VERSION="0.23.4" CACHED_BUILD_DIR="$HOME/sklearn_build_latest"
-    # flake8 linting on diff wrt common ancestor with upstream/master
-    - RUN_FLAKE8="true" SKIP_TESTS="true"
-      DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-      NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.17.0" CYTHON_VERSION="0.23.4"
-      CACHED_BUILD_DIR="$HOME/dummy"
-
 
 matrix:
-  allow_failures:
-    # allow_failures seems to be keyed on the python version
-    # We are using this to allow failures for DISTRIB=scipy-dev-wheels
-    - python: 3.5
-
   include:
-    # This environment tests scikit-learn against numpy and scipy master
+    # Latest dependencies on macOS with MKL
+    - env: DISTRIB="conda" PYTHON_VERSION="*" INSTALL_MKL="true"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" CYTHON_VERSION="*"
+           PILLOW_VERSION="*" JOBLIB_VERSION="*" COVERAGE=true
+      language: generic
+      if: type != cron
+      os: osx
+      addons:
+        homebrew:
+          packages:
+            # For travis_fastfail.sh
+            - jq
+            # install OpenMP not present by default on osx
+            - libomp
+    # Linux environment to test that scikit-learn can be built against
+    # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
+    # i.e. numpy 1.11 and scipy 0.17
+    - env: DISTRIB="ubuntu" PYTHON_VERSION="3.5"
+           NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0"
+           PILLOW_VERSION="4.0.0" COVERAGE=true
+           SKLEARN_SITE_JOBLIB=1 JOBLIB_VERSION="0.11"
+      if: type != cron
+      addons:
+        apt:
+          packages:
+            # these only required by the DISTRIB="ubuntu" builds:
+            - python3-scipy
+            - libatlas3-base
+            - libatlas-base-dev
+            - libatlas-dev
+    # Linux + Python 3.5 build with OpenBLAS and without SITE_JOBLIB
+    - env: DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="false"
+           NUMPY_VERSION="1.11.0" SCIPY_VERSION="0.17.0" CYTHON_VERSION="*"
+           PILLOW_VERSION="4.0.0" COVERAGE=true
+      if: type != cron
+    # Linux environment to test the latest available dependencies and MKL.
+    # It runs tests requiring pandas and PyAMG.
+    # It also runs with the site joblib instead of the vendored copy of joblib.
+    - env: DISTRIB="conda" PYTHON_VERSION="*" INSTALL_MKL="true"
+           NUMPY_VERSION="*" SCIPY_VERSION="*" PANDAS_VERSION="*"
+           CYTHON_VERSION="*" PYAMG_VERSION="*" PILLOW_VERSION="*"
+           JOBLIB_VERSION="*" COVERAGE=true
+           CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
+           SKLEARN_SITE_JOBLIB=1 CHECK_WARNINGS="true"
+      if: type != cron
+    # Linux environment to test scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
-    # Note: libatlas3gf-base is not allowed yet so we need 'sudo':
-    # https://github.com/travis-ci/apt-package-whitelist/issues/2407
-    # Once libatlas3gf-base is on the whitelist it will be possible to replace
-    # the before_install step with and addons/apt/packages declaration.
-    -  python: 3.5
-       env: DISTRIB="scipy-dev-wheels"
-            CACHED_BUILD_DIR="$HOME/sklearn_build_numpy_dev"
-       sudo: True
-       before_install: sudo apt-get install -yqq libatlas3gf-base libatlas-dev
-
+    -  python: 3.7
+       env: DISTRIB="scipy-dev" CHECK_WARNINGS="true"
+       if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
 install: source build_tools/travis/install.sh
-script: bash build_tools/travis/test_script.sh
+script:
+  - bash build_tools/travis/test_script.sh
+  - bash build_tools/travis/test_docs.sh
+  - bash build_tools/travis/test_pytest_soft_dependency.sh
 after_success: source build_tools/travis/after_success.sh
 notifications:
   webhooks:

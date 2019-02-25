@@ -48,7 +48,8 @@ for i, clf in enumerate((gpc_rbf_isotropic, gpc_rbf_anisotropic)):
     plt.imshow(Z, extent=(x_min, x_max, y_min, y_max), origin="lower")
 
     # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=np.array(["r", "g", "b"])[y])
+    plt.scatter(X[:, 0], X[:, 1], c=np.array(["r", "g", "b"])[y],
+                edgecolors=(0, 0, 0))
     plt.xlabel('Sepal length')
     plt.ylabel('Sepal width')
     plt.xlim(xx.min(), xx.max())

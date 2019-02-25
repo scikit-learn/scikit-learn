@@ -1,3 +1,4 @@
+# cython: language_level=3
 # cython: boundscheck=False
 # cython: wraparound=False
 #
@@ -13,8 +14,6 @@ The module contains:
     * Several algorithms to sample integers without replacement.
 
 """
-from __future__ import division
-
 cimport cython
 
 import numpy as np
@@ -41,7 +40,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
         np.int_t n_population,
         np.int_t n_samples,
         random_state=None):
-    """Sample integers without replacement.
+    r"""Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
     replacement.
@@ -149,12 +148,12 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     rng_randint = rng.randint
 
     # Initialize the pool
-    for i in xrange(n_population):
+    for i in range(n_population):
         pool[i] = i
 
     # The following line of code are heavily inspired from python core,
     # more precisely of random.sample.
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         j = rng_randint(n_population - i)  # invariant: non-selected at [0,n-i)
         out[i] = pool[j]
         pool[j] = pool[n_population - i - 1]  # move non-selected item into
@@ -248,7 +247,11 @@ cpdef sample_without_replacement(np.int_t n_population,
         by `np.random`.
 
     method : "auto", "tracking_selection", "reservoir_sampling" or "pool"
-        If method == "auto", an algorithm is automatically selected.
+        If method == "auto", the ratio of n_samples / n_population is used
+        to determine which algorithm to use:
+        If ratio is between 0 and 0.01, tracking selection is used.
+        If ratio is between 0.01 and 0.99, numpy.random.permutation is used.
+        If ratio is greater than 0.99, reservoir sampling is used.
         The order of the selected integers is undefined. If a random order is
         desired, the selected subset should be shuffled.
 
@@ -276,11 +279,17 @@ cpdef sample_without_replacement(np.int_t n_population,
 
     all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
 
+    ratio = n_samples / n_population if n_population != 0.0 else 1.0
+
+    # Check ratio and use permutation unless ratio < 0.01 or ratio > 0.99
+    if method == "auto" and ratio > 0.01 and ratio < 0.99:
+        rng = check_random_state(random_state)
+        return rng.permutation(n_population)[:n_samples]
+
     if method == "auto" or method == "tracking_selection":
         # TODO the pool based method can also be used.
         #      however, it requires special benchmark to take into account
         #      the memory requirement of the array vs the set.
-        ratio = n_samples / n_population if n_population != 0.0 else 1.0
 
         # The value 0.2 has been determined through benchmarking.
         if ratio < 0.2:
@@ -296,7 +305,7 @@ cpdef sample_without_replacement(np.int_t n_population,
 
     elif method == "pool":
         return _sample_without_replacement_with_pool(n_population, n_samples,
-                                                    random_state)
+                                                     random_state)
     else:
         raise ValueError('Expected a method name in %s, got %s. '
                          % (all_methods, method))

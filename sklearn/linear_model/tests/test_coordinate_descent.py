@@ -2,21 +2,20 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
-from sys import version_info
-
 import numpy as np
+import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
 
 from sklearn.datasets import load_boston
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -28,12 +27,6 @@ from sklearn.linear_model.coordinate_descent import Lasso, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
 from sklearn.linear_model import LassoLarsCV, lars_path
 from sklearn.utils import check_array
-
-
-def check_warnings():
-    if version_info < (2, 6):
-        raise SkipTest("Testing for warnings is not supported in versions \
-        older than Python 2.6")
 
 
 def test_lasso_zero():
@@ -152,6 +145,7 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
     return X, y, X_test, y_test
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_lasso_cv():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
@@ -167,16 +161,33 @@ def test_lasso_cv():
     lars = LassoLarsCV(normalize=False, max_iter=30).fit(X, y)
     # for this we check that they don't fall in the grid of
     # clf.alphas further than 1
-    assert_true(np.abs(
-        np.searchsorted(clf.alphas_[::-1], lars.alpha_) -
-        np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1)
+    assert np.abs(np.searchsorted(clf.alphas_[::-1], lars.alpha_) -
+                  np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1
     # check that they also give a similar MSE
-    mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.cv_mse_path_.T)
+    mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.mse_path_.T)
     np.testing.assert_approx_equal(mse_lars(clf.alphas_[5]).mean(),
                                    clf.mse_path_[5].mean(), significant=2)
 
     # test set
     assert_greater(clf.score(X_test, y_test), 0.99)
+
+
+def test_lasso_cv_with_some_model_selection():
+    from sklearn.pipeline import make_pipeline
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.model_selection import StratifiedKFold
+    from sklearn import datasets
+    from sklearn.linear_model import LassoCV
+
+    diabetes = datasets.load_diabetes()
+    X = diabetes.data
+    y = diabetes.target
+
+    pipe = make_pipeline(
+        StandardScaler(),
+        LassoCV(cv=StratifiedKFold(n_splits=5))
+    )
+    pipe.fit(X, y)
 
 
 def test_lasso_cv_positive_constraint():
@@ -187,13 +198,13 @@ def test_lasso_cv_positive_constraint():
     clf_unconstrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2,
                                 n_jobs=1)
     clf_unconstrained.fit(X, y)
-    assert_true(min(clf_unconstrained.coef_) < 0)
+    assert min(clf_unconstrained.coef_) < 0
 
     # On same data, constrained fit has non-negative coefficients
     clf_constrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
                               positive=True, cv=2, n_jobs=1)
     clf_constrained.fit(X, y)
-    assert_true(min(clf_constrained.coef_) >= 0)
+    assert min(clf_constrained.coef_) >= 0
 
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
@@ -220,6 +231,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
         decimal=1)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_enet_path():
     # We use a large number of samples and of informative features so that
     # the l1_ratio selected is more toward ridge than lasso
@@ -277,6 +289,7 @@ def test_enet_path():
     assert_almost_equal(clf1.alpha_, clf2.alpha_)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_path_parameters():
     X, y, _, _ = build_dataset()
     max_iter = 100
@@ -314,11 +327,11 @@ def test_lasso_positive_constraint():
 
     lasso = Lasso(alpha=0.1, max_iter=1000, positive=True)
     lasso.fit(X, y)
-    assert_true(min(lasso.coef_) >= 0)
+    assert min(lasso.coef_) >= 0
 
     lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True, positive=True)
     lasso.fit(X, y)
-    assert_true(min(lasso.coef_) >= 0)
+    assert min(lasso.coef_) >= 0
 
 
 def test_enet_positive_constraint():
@@ -327,7 +340,7 @@ def test_enet_positive_constraint():
 
     enet = ElasticNet(alpha=0.1, max_iter=1000, positive=True)
     enet.fit(X, y)
-    assert_true(min(enet.coef_) >= 0)
+    assert min(enet.coef_) >= 0
 
 
 def test_enet_cv_positive_constraint():
@@ -339,15 +352,16 @@ def test_enet_cv_positive_constraint():
                                         max_iter=max_iter,
                                         cv=2, n_jobs=1)
     enetcv_unconstrained.fit(X, y)
-    assert_true(min(enetcv_unconstrained.coef_) < 0)
+    assert min(enetcv_unconstrained.coef_) < 0
 
     # On same data, constrained fit has non-negative coefficients
     enetcv_constrained = ElasticNetCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
                                       cv=2, positive=True, n_jobs=1)
     enetcv_constrained.fit(X, y)
-    assert_true(min(enetcv_constrained.coef_) >= 0)
+    assert min(enetcv_constrained.coef_) >= 0
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_uniform_targets():
     enet = ElasticNetCV(fit_intercept=True, n_alphas=3)
     m_enet = MultiTaskElasticNetCV(fit_intercept=True, n_alphas=3)
@@ -384,12 +398,15 @@ def test_multi_task_lasso_and_enet():
     Y = np.c_[y, y]
     # Y_test = np.c_[y_test, y_test]
     clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
-    assert_true(0 < clf.dual_gap_ < 1e-5)
+    assert 0 < clf.dual_gap_ < 1e-5
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
     clf = MultiTaskElasticNet(alpha=1, tol=1e-8).fit(X, Y)
-    assert_true(0 < clf.dual_gap_ < 1e-5)
+    assert 0 < clf.dual_gap_ < 1e-5
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
+
+    clf = MultiTaskElasticNet(alpha=1.0, tol=1e-8, max_iter=1)
+    assert_warns_message(ConvergenceWarning, 'did not converge', clf.fit, X, Y)
 
 
 def test_lasso_readonly_data():
@@ -411,7 +428,7 @@ def test_multi_task_lasso_readonly_data():
     with TempMemmap((X, Y)) as (X, Y):
         Y = np.c_[y, y]
         clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
-        assert_true(0 < clf.dual_gap_ < 1e-5)
+        assert 0 < clf.dual_gap_ < 1e-5
         assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
 
@@ -432,12 +449,14 @@ def test_enet_multitarget():
 
 
 def test_multioutput_enetcv_error():
-    X = np.random.randn(10, 2)
-    y = np.random.randn(10, 2)
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)
+    y = rng.randn(10, 2)
     clf = ElasticNetCV()
     assert_raises(ValueError, clf.fit, X, y)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
     clf = MultiTaskElasticNetCV().fit(X, y)
@@ -464,6 +483,7 @@ def test_multitask_enet_and_lasso_cv():
     assert_equal(10, len(clf.alphas_))
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_1d_multioutput_enet_and_multitask_enet_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
@@ -477,6 +497,7 @@ def test_1d_multioutput_enet_and_multitask_enet_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
@@ -489,6 +510,7 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_sparse_input_dtype_enet_and_lassocv():
     X, y, _, _ = build_dataset(n_features=10)
     clf = ElasticNetCV(n_alphas=5)
@@ -506,6 +528,7 @@ def test_sparse_input_dtype_enet_and_lassocv():
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
@@ -610,12 +633,20 @@ def test_random_descent():
 
 
 def test_enet_path_positive():
-    # Test that the coefs returned by positive=True in enet_path are positive
+    # Test positive parameter
 
-    X, y, _, _ = build_dataset(n_samples=50, n_features=50)
+    X, Y, _, _ = build_dataset(n_samples=50, n_features=50, n_targets=2)
+
+    # For mono output
+    # Test that the coefs returned by positive=True in enet_path are positive
     for path in [enet_path, lasso_path]:
-        pos_path_coef = path(X, y, positive=True)[1]
-        assert_true(np.all(pos_path_coef >= 0))
+        pos_path_coef = path(X, Y[:, 0], positive=True)[1]
+        assert np.all(pos_path_coef >= 0)
+
+    # For multi output, positive parameter is not allowed
+    # Test that an error is raised
+    for path in [enet_path, lasso_path]:
+        assert_raises(ValueError, path, X, Y, positive=True)
 
 
 def test_sparse_dense_descent_paths():
@@ -635,16 +666,39 @@ def test_check_input_false():
     clf = ElasticNet(selection='cyclic', tol=1e-8)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
+    # With check_input=False, an exhaustive check is not made on y but its
+    # dtype is still cast in _preprocess_data to X's dtype. So the test should
+    # pass anyway
     X = check_array(X, order='F', dtype='float32')
-    clf.fit(X, y, check_input=True)
-    # Check that an error is raised if data is provided in the wrong dtype,
-    # because of check bypassing
-    assert_raises(ValueError, clf.fit, X, y, check_input=False)
-
+    clf.fit(X, y, check_input=False)
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order='C', dtype='float64')
     assert_raises(ValueError, clf.fit, X, y, check_input=False)
+
+
+@pytest.mark.parametrize("check_input", [True, False])
+def test_enet_copy_X_True(check_input):
+    X, y, _, _ = build_dataset()
+    X = X.copy(order='F')
+
+    original_X = X.copy()
+    enet = ElasticNet(copy_X=True)
+    enet.fit(X, y, check_input=check_input)
+
+    assert_array_equal(original_X, X)
+
+
+def test_enet_copy_X_False_check_input_False():
+    X, y, _, _ = build_dataset()
+    X = X.copy(order='F')
+
+    original_X = X.copy()
+    enet = ElasticNet(copy_X=False)
+    enet.fit(X, y, check_input=False)
+
+    # No copying, X is overwritten
+    assert np.any(np.not_equal(original_X, X))
 
 
 def test_overrided_gram_matrix():
@@ -659,17 +713,17 @@ def test_overrided_gram_matrix():
                          clf.fit, X, y)
 
 
-def test_lasso_non_float_y():
+@pytest.mark.parametrize('model', [ElasticNet, Lasso])
+def test_lasso_non_float_y(model):
     X = [[0, 0], [1, 1], [-1, -1]]
     y = [0, 1, 2]
     y_float = [0.0, 1.0, 2.0]
 
-    for model in [ElasticNet, Lasso]:
-        clf = model(fit_intercept=False)
-        clf.fit(X, y)
-        clf_float = model(fit_intercept=False)
-        clf_float.fit(X, y_float)
-        assert_array_equal(clf.coef_, clf_float.coef_)
+    clf = model(fit_intercept=False)
+    clf.fit(X, y)
+    clf_float = model(fit_intercept=False)
+    clf_float.fit(X, y_float)
+    assert_array_equal(clf.coef_, clf_float.coef_)
 
 
 def test_enet_float_precision():
@@ -691,8 +745,8 @@ def test_enet_float_precision():
                 y = dtype(y)
                 ignore_warnings(clf.fit)(X, y)
 
-                coef[dtype] = clf.coef_
-                intercept[dtype] = clf.intercept_
+                coef[('simple', dtype)] = clf.coef_
+                intercept[('simple', dtype)] = clf.intercept_
 
                 assert_equal(clf.coef_.dtype, dtype)
 
@@ -707,8 +761,70 @@ def test_enet_float_precision():
                 assert_array_almost_equal(clf.intercept_,
                                           clf_precompute.intercept_)
 
-            assert_array_almost_equal(coef[np.float32], coef[np.float64],
-                                      decimal=4)
-            assert_array_almost_equal(intercept[np.float32],
-                                      intercept[np.float64],
-                                      decimal=4)
+                # test multi task enet
+                multi_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
+                clf_multioutput = MultiTaskElasticNet(
+                    alpha=0.5, max_iter=100, fit_intercept=fit_intercept,
+                    normalize=normalize)
+                clf_multioutput.fit(X, multi_y)
+                coef[('multi', dtype)] = clf_multioutput.coef_
+                intercept[('multi', dtype)] = clf_multioutput.intercept_
+                assert_equal(clf.coef_.dtype, dtype)
+
+            for v in ['simple', 'multi']:
+                assert_array_almost_equal(coef[(v, np.float32)],
+                                          coef[(v, np.float64)],
+                                          decimal=4)
+                assert_array_almost_equal(intercept[(v, np.float32)],
+                                          intercept[(v, np.float64)],
+                                          decimal=4)
+
+
+def test_enet_l1_ratio():
+    # Test that an error message is raised if an estimator that
+    # uses _alpha_grid is called with l1_ratio=0
+    msg = ("Automatic alpha grid generation is not supported for l1_ratio=0. "
+           "Please supply a grid by providing your estimator with the "
+           "appropriate `alphas=` argument.")
+    X = np.array([[1, 2, 4, 5, 8], [3, 5, 7, 7, 8]]).T
+    y = np.array([12, 10, 11, 21, 5])
+
+    assert_raise_message(ValueError, msg, ElasticNetCV(
+        l1_ratio=0, random_state=42).fit, X, y)
+    assert_raise_message(ValueError, msg, MultiTaskElasticNetCV(
+        l1_ratio=0, random_state=42).fit, X, y[:, None])
+
+    # Test that l1_ratio=0 is allowed if we supply a grid manually
+    alphas = [0.1, 10]
+    estkwds = {'alphas': alphas, 'random_state': 42}
+    est_desired = ElasticNetCV(l1_ratio=0.00001, **estkwds)
+    est = ElasticNetCV(l1_ratio=0, **estkwds)
+    with ignore_warnings():
+        est_desired.fit(X, y)
+        est.fit(X, y)
+    assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
+
+    est_desired = MultiTaskElasticNetCV(l1_ratio=0.00001, **estkwds)
+    est = MultiTaskElasticNetCV(l1_ratio=0, **estkwds)
+    with ignore_warnings():
+        est.fit(X, y[:, None])
+        est_desired.fit(X, y[:, None])
+    assert_array_almost_equal(est.coef_, est_desired.coef_, decimal=5)
+
+
+def test_coef_shape_not_zero():
+    est_no_intercept = Lasso(fit_intercept=False)
+    est_no_intercept.fit(np.c_[np.ones(3)], np.ones(3))
+    assert est_no_intercept.coef_.shape == (1,)
+
+
+def test_warm_start_multitask_lasso():
+    X, y, X_test, y_test = build_dataset()
+    Y = np.c_[y, y]
+    clf = MultiTaskLasso(alpha=0.1, max_iter=5, warm_start=True)
+    ignore_warnings(clf.fit)(X, Y)
+    ignore_warnings(clf.fit)(X, Y)  # do a second round with 5 iterations
+
+    clf2 = MultiTaskLasso(alpha=0.1, max_iter=10)
+    ignore_warnings(clf2.fit)(X, Y)
+    assert_array_almost_equal(clf2.coef_, clf.coef_)

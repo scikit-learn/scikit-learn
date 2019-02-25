@@ -1,5 +1,7 @@
+from distutils.version import LooseVersion
 import pickle
 import unittest
+import pytest
 
 import numpy as np
 import scipy.sparse as sp
@@ -9,38 +11,50 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import linear_model, datasets, metrics
-from sklearn.base import clone
+from sklearn.base import clone, is_classifier
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
-
+from sklearn.preprocessing import StandardScaler
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import sgd_fast
+from sklearn.model_selection import RandomizedSearchCV
+
+from sklearn.utils import _joblib
+from sklearn.utils._joblib import parallel_backend
+
+
+# 0.23. warning about tol not having its correct default value.
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:max_iter and tol parameters have been")
 
 
 class SparseSGDClassifier(SGDClassifier):
 
     def fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).fit(X, y, *args, **kw)
+        return super().fit(X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).partial_fit(X, y, *args, **kw)
+        return super().partial_fit(X, y, *args, **kw)
 
     def decision_function(self, X):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).decision_function(X)
+        return super().decision_function(X)
 
     def predict_proba(self, X):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).predict_proba(X)
+        return super().predict_proba(X)
 
 
 class SparseSGDRegressor(SGDRegressor):
@@ -96,13 +110,20 @@ Y5 = [1, 1, 1, 2, 2, 2]
 true_result5 = [0, 1, 1]
 
 
-# Classification Test Case
+###############################################################################
+# Tests common to classification and regression
 
-class CommonTest(object):
+class CommonTest:
 
     def factory(self, **kwargs):
         if "random_state" not in kwargs:
             kwargs["random_state"] = 42
+
+        if "tol" not in kwargs:
+            kwargs["tol"] = None
+        if "max_iter" not in kwargs:
+            kwargs["max_iter"] = 5
+
         return self.factory_class(**kwargs)
 
     # a simple implementation of ASGD to use for testing
@@ -143,18 +164,18 @@ class CommonTest(object):
 
     def _test_warm_start(self, X, Y, lr):
         # Test that explicit warm restart...
-        clf = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,
+        clf = self.factory(alpha=0.01, eta0=0.01, shuffle=False,
                            learning_rate=lr)
         clf.fit(X, Y)
 
-        clf2 = self.factory(alpha=0.001, eta0=0.01, n_iter=5, shuffle=False,
+        clf2 = self.factory(alpha=0.001, eta0=0.01, shuffle=False,
                             learning_rate=lr)
         clf2.fit(X, Y,
                  coef_init=clf.coef_.copy(),
                  intercept_init=clf.intercept_.copy())
 
         # ... and implicit warm restart are equivalent.
-        clf3 = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,
+        clf3 = self.factory(alpha=0.01, eta0=0.01, shuffle=False,
                             warm_start=True, learning_rate=lr)
         clf3.fit(X, Y)
 
@@ -176,10 +197,12 @@ class CommonTest(object):
     def test_warm_start_optimal(self):
         self._test_warm_start(X, Y, "optimal")
 
+    def test_warm_start_adaptive(self):
+        self._test_warm_start(X, Y, "adaptive")
+
     def test_input_format(self):
         # Input format tests.
-        clf = self.factory(alpha=0.01, n_iter=5,
-                           shuffle=False)
+        clf = self.factory(alpha=0.01, shuffle=False)
         clf.fit(X, Y)
         Y_ = np.array(Y)[:, np.newaxis]
 
@@ -188,12 +211,12 @@ class CommonTest(object):
 
     def test_clone(self):
         # Test whether clone works ok.
-        clf = self.factory(alpha=0.01, n_iter=5, penalty='l1')
+        clf = self.factory(alpha=0.01, penalty='l1')
         clf = clone(clf)
         clf.set_params(penalty='l2')
         clf.fit(X, Y)
 
-        clf2 = self.factory(alpha=0.01, n_iter=5, penalty='l2')
+        clf2 = self.factory(alpha=0.01, penalty='l2')
         clf2.fit(X, Y)
 
         assert_array_equal(clf.coef_, clf2.coef_)
@@ -202,18 +225,18 @@ class CommonTest(object):
         clf = self.factory(average=True, eta0=.01)
         clf.fit(X, Y)
 
-        assert_true(hasattr(clf, 'average_coef_'))
-        assert_true(hasattr(clf, 'average_intercept_'))
-        assert_true(hasattr(clf, 'standard_intercept_'))
-        assert_true(hasattr(clf, 'standard_coef_'))
+        assert hasattr(clf, 'average_coef_')
+        assert hasattr(clf, 'average_intercept_')
+        assert hasattr(clf, 'standard_intercept_')
+        assert hasattr(clf, 'standard_coef_')
 
         clf = self.factory()
         clf.fit(X, Y)
 
-        assert_false(hasattr(clf, 'average_coef_'))
-        assert_false(hasattr(clf, 'average_intercept_'))
-        assert_false(hasattr(clf, 'standard_intercept_'))
-        assert_false(hasattr(clf, 'standard_coef_'))
+        assert not hasattr(clf, 'average_coef_')
+        assert not hasattr(clf, 'average_intercept_')
+        assert not hasattr(clf, 'standard_intercept_')
+        assert not hasattr(clf, 'standard_coef_')
 
     def test_late_onset_averaging_not_reached(self):
         clf1 = self.factory(average=600)
@@ -238,10 +261,10 @@ class CommonTest(object):
 
         clf1 = self.factory(average=7, learning_rate="constant",
                             loss='squared_loss', eta0=eta0,
-                            alpha=alpha, n_iter=2, shuffle=False)
+                            alpha=alpha, max_iter=2, shuffle=False)
         clf2 = self.factory(average=0, learning_rate="constant",
                             loss='squared_loss', eta0=eta0,
-                            alpha=alpha, n_iter=1, shuffle=False)
+                            alpha=alpha, max_iter=1, shuffle=False)
 
         clf1.fit(X, Y_encode)
         clf2.fit(X, Y_encode)
@@ -256,12 +279,82 @@ class CommonTest(object):
                                   decimal=16)
         assert_almost_equal(clf1.intercept_, average_intercept, decimal=16)
 
-    @raises(ValueError)
     def test_sgd_bad_alpha_for_optimal_learning_rate(self):
         # Check whether expected ValueError on bad alpha, i.e. 0
         # since alpha is used to compute the optimal learning rate
-        self.factory(alpha=0, learning_rate="optimal")
+        assert_raises(ValueError, self.factory,
+                      alpha=0, learning_rate="optimal")
 
+    def test_early_stopping(self):
+        X = iris.data[iris.target > 0]
+        Y = iris.target[iris.target > 0]
+        for early_stopping in [True, False]:
+            max_iter = 1000
+            clf = self.factory(early_stopping=early_stopping, tol=1e-3,
+                               max_iter=max_iter).fit(X, Y)
+            assert clf.n_iter_ < max_iter
+
+    def test_adaptive_longer_than_constant(self):
+        clf1 = self.factory(learning_rate="adaptive", eta0=0.01, tol=1e-3,
+                            max_iter=100)
+        clf1.fit(iris.data, iris.target)
+        clf2 = self.factory(learning_rate="constant", eta0=0.01, tol=1e-3,
+                            max_iter=100)
+        clf2.fit(iris.data, iris.target)
+        assert clf1.n_iter_ > clf2.n_iter_
+
+    def test_validation_set_not_used_for_training(self):
+        X, Y = iris.data, iris.target
+        validation_fraction = 0.4
+        seed = 42
+        shuffle = False
+        max_iter = 10
+        clf1 = self.factory(early_stopping=True,
+                            random_state=np.random.RandomState(seed),
+                            validation_fraction=validation_fraction,
+                            learning_rate='constant', eta0=0.01,
+                            tol=None, max_iter=max_iter, shuffle=shuffle)
+        clf1.fit(X, Y)
+        assert clf1.n_iter_ == max_iter
+
+        clf2 = self.factory(early_stopping=False,
+                            random_state=np.random.RandomState(seed),
+                            learning_rate='constant', eta0=0.01,
+                            tol=None, max_iter=max_iter, shuffle=shuffle)
+
+        if is_classifier(clf2):
+            cv = StratifiedShuffleSplit(test_size=validation_fraction,
+                                        random_state=seed)
+        else:
+            cv = ShuffleSplit(test_size=validation_fraction,
+                              random_state=seed)
+        idx_train, idx_val = next(cv.split(X, Y))
+        idx_train = np.sort(idx_train)  # remove shuffling
+        clf2.fit(X[idx_train], Y[idx_train])
+        assert clf2.n_iter_ == max_iter
+
+        assert_array_equal(clf1.coef_, clf2.coef_)
+
+    def test_n_iter_no_change(self):
+        X, Y = iris.data, iris.target
+        # test that n_iter_ increases monotonically with n_iter_no_change
+        for early_stopping in [True, False]:
+            n_iter_list = [self.factory(early_stopping=early_stopping,
+                                        n_iter_no_change=n_iter_no_change,
+                                        tol=1e-4, max_iter=1000
+                                        ).fit(X, Y).n_iter_
+                           for n_iter_no_change in [2, 3, 10]]
+            assert_array_equal(n_iter_list, sorted(n_iter_list))
+
+    def test_not_enough_sample_for_early_stopping(self):
+        # test an error is raised if the training or validation set is empty
+        clf = self.factory(early_stopping=True, validation_fraction=0.99)
+        with pytest.raises(ValueError):
+            clf.fit(X3, Y3)
+
+
+###############################################################################
+# Classification Test Case
 
 class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
@@ -272,68 +365,78 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         for loss in ("hinge", "squared_hinge", "log", "modified_huber"):
             clf = self.factory(penalty='l2', alpha=0.01, fit_intercept=True,
-                               loss=loss, n_iter=10, shuffle=True)
+                               loss=loss, max_iter=10, shuffle=True)
             clf.fit(X, Y)
             # assert_almost_equal(clf.coef_[0], clf.coef_[1], decimal=7)
             assert_array_equal(clf.predict(T), true_result)
 
-    @raises(ValueError)
     def test_sgd_bad_l1_ratio(self):
         # Check whether expected ValueError on bad l1_ratio
-        self.factory(l1_ratio=1.1)
+        assert_raises(ValueError, self.factory, l1_ratio=1.1)
 
-    @raises(ValueError)
     def test_sgd_bad_learning_rate_schedule(self):
         # Check whether expected ValueError on bad learning_rate
-        self.factory(learning_rate="<unknown>")
+        assert_raises(ValueError, self.factory, learning_rate="<unknown>")
 
-    @raises(ValueError)
     def test_sgd_bad_eta0(self):
         # Check whether expected ValueError on bad eta0
-        self.factory(eta0=0, learning_rate="constant")
+        assert_raises(ValueError, self.factory, eta0=0,
+                      learning_rate="constant")
 
-    @raises(ValueError)
     def test_sgd_bad_alpha(self):
         # Check whether expected ValueError on bad alpha
-        self.factory(alpha=-.1)
+        assert_raises(ValueError, self.factory, alpha=-.1)
 
-    @raises(ValueError)
     def test_sgd_bad_penalty(self):
         # Check whether expected ValueError on bad penalty
-        self.factory(penalty='foobar', l1_ratio=0.85)
+        assert_raises(ValueError, self.factory, penalty='foobar',
+                      l1_ratio=0.85)
 
-    @raises(ValueError)
     def test_sgd_bad_loss(self):
         # Check whether expected ValueError on bad loss
-        self.factory(loss="foobar")
+        assert_raises(ValueError, self.factory, loss="foobar")
 
-    @raises(ValueError)
-    def test_sgd_n_iter_param(self):
+    def test_sgd_max_iter_param(self):
         # Test parameter validity check
-        self.factory(n_iter=-10000)
+        assert_raises(ValueError, self.factory, max_iter=-10000)
 
-    @raises(ValueError)
     def test_sgd_shuffle_param(self):
         # Test parameter validity check
-        self.factory(shuffle="false")
+        assert_raises(ValueError, self.factory, shuffle="false")
 
-    @raises(TypeError)
+    def test_sgd_early_stopping_param(self):
+        # Test parameter validity check
+        assert_raises(ValueError, self.factory, early_stopping="false")
+
+    def test_sgd_validation_fraction(self):
+        # Test parameter validity check
+        assert_raises(ValueError, self.factory, validation_fraction=-.1)
+
+    def test_sgd_n_iter_no_change(self):
+        # Test parameter validity check
+        assert_raises(ValueError, self.factory, n_iter_no_change=0)
+
     def test_argument_coef(self):
         # Checks coef_init not allowed as model argument (only fit)
-        # Provided coef_ does not match dataset.
-        self.factory(coef_init=np.zeros((3,))).fit(X, Y)
+        # Provided coef_ does not match dataset
+        assert_raises(TypeError, self.factory, coef_init=np.zeros((3,)))
 
-    @raises(ValueError)
     def test_provide_coef(self):
         # Checks coef_init shape for the warm starts
         # Provided coef_ does not match dataset.
-        self.factory().fit(X, Y, coef_init=np.zeros((3,)))
+        assert_raises(ValueError, self.factory().fit,
+                      X, Y, coef_init=np.zeros((3,)))
 
-    @raises(ValueError)
     def test_set_intercept(self):
         # Checks intercept_ shape for the warm starts
         # Provided intercept_ does not match dataset.
-        self.factory().fit(X, Y, intercept_init=np.zeros((3,)))
+        assert_raises(ValueError, self.factory().fit,
+                      X, Y, intercept_init=np.zeros((3,)))
+
+    def test_sgd_early_stopping_with_partial_fit(self):
+        # Test parameter validity check
+        assert_raises(ValueError,
+                      self.factory(early_stopping=True).partial_fit, X, Y)
 
     def test_set_intercept_binary(self):
         # Checks intercept_ shape for the warm starts in binary case
@@ -353,7 +456,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            learning_rate='constant',
                            eta0=eta, alpha=alpha,
                            fit_intercept=True,
-                           n_iter=1, average=True, shuffle=False)
+                           max_iter=1, average=True, shuffle=False)
 
         # simple linear function without noise
         y = np.dot(X, w)
@@ -376,28 +479,29 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory().fit(X, Y)
         self.factory().fit(X, Y, intercept_init=clf.intercept_)
 
-    @raises(ValueError)
     def test_sgd_at_least_two_labels(self):
         # Target must have at least two labels
-        self.factory(alpha=0.01, n_iter=20).fit(X2, np.ones(9))
+        clf = self.factory(alpha=0.01, max_iter=20)
+        assert_raises(ValueError, clf.fit, X2, np.ones(9))
 
     def test_partial_fit_weight_class_balanced(self):
         # partial_fit with class_weight='balanced' not supported"""
+        regex = (r"class_weight 'balanced' is not supported for "
+                 r"partial_fit\. In order to use 'balanced' weights, "
+                 r"use compute_class_weight\('balanced', classes, y\). "
+                 r"In place of y you can us a large enough sample "
+                 r"of the full training set target to properly "
+                 r"estimate the class frequency distributions\. "
+                 r"Pass the resulting weights as the class_weight "
+                 r"parameter\.")
         assert_raises_regexp(ValueError,
-                             "class_weight 'balanced' is not supported for "
-                             "partial_fit. In order to use 'balanced' weights, "
-                             "use compute_class_weight\('balanced', classes, y\). "
-                             "In place of y you can us a large enough sample "
-                             "of the full training set target to properly "
-                             "estimate the class frequency distributions. "
-                             "Pass the resulting weights as the class_weight "
-                             "parameter.",
+                             regex,
                              self.factory(class_weight='balanced').partial_fit,
                              X, Y, classes=np.unique(Y))
 
     def test_sgd_multiclass(self):
         # Multi-class test case
-        clf = self.factory(alpha=0.01, n_iter=20).fit(X2, Y2)
+        clf = self.factory(alpha=0.01, max_iter=20).fit(X2, Y2)
         assert_equal(clf.coef_.shape, (3, 2))
         assert_equal(clf.intercept_.shape, (3,))
         assert_equal(clf.decision_function([[0, 0]]).shape, (1, 3))
@@ -412,7 +516,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            learning_rate='constant',
                            eta0=eta, alpha=alpha,
                            fit_intercept=True,
-                           n_iter=1, average=True, shuffle=False)
+                           max_iter=1, average=True, shuffle=False)
 
         np_Y2 = np.array(Y2)
         clf.fit(X2, np_Y2)
@@ -429,17 +533,17 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     def test_sgd_multiclass_with_init_coef(self):
         # Multi-class test case
-        clf = self.factory(alpha=0.01, n_iter=20)
+        clf = self.factory(alpha=0.01, max_iter=20)
         clf.fit(X2, Y2, coef_init=np.zeros((3, 2)),
                 intercept_init=np.zeros(3))
         assert_equal(clf.coef_.shape, (3, 2))
-        assert_true(clf.intercept_.shape, (3,))
+        assert clf.intercept_.shape, (3,)
         pred = clf.predict(T2)
         assert_array_equal(pred, true_result2)
 
     def test_sgd_multiclass_njobs(self):
         # Multi-class test case with multi-core support
-        clf = self.factory(alpha=0.01, n_iter=20, n_jobs=2).fit(X2, Y2)
+        clf = self.factory(alpha=0.01, max_iter=20, n_jobs=2).fit(X2, Y2)
         assert_equal(clf.coef_.shape, (3, 2))
         assert_equal(clf.intercept_.shape, (3,))
         assert_equal(clf.decision_function([[0, 0]]).shape, (1, 3))
@@ -464,39 +568,63 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Provided intercept_ does match dataset.
         clf = self.factory().fit(X2, Y2, intercept_init=np.zeros((3,)))
 
+    def test_sgd_predict_proba_method_access(self):
+        # Checks that SGDClassifier predict_proba and predict_log_proba methods
+        # can either be accessed or raise an appropriate error message
+        # otherwise. See
+        # https://github.com/scikit-learn/scikit-learn/issues/10938 for more
+        # details.
+        for loss in SGDClassifier.loss_functions:
+            clf = SGDClassifier(loss=loss)
+            if loss in ('log', 'modified_huber'):
+                assert hasattr(clf, 'predict_proba')
+                assert hasattr(clf, 'predict_log_proba')
+            else:
+                message = ("probability estimates are not "
+                           "available for loss={!r}".format(loss))
+                assert not hasattr(clf, 'predict_proba')
+                assert not hasattr(clf, 'predict_log_proba')
+                with pytest.raises(AttributeError,
+                                   match=message):
+                    clf.predict_proba
+                with pytest.raises(AttributeError,
+                                   match=message):
+                    clf.predict_log_proba
+
     def test_sgd_proba(self):
         # Check SGD.predict_proba
 
         # Hinge loss does not allow for conditional prob estimate.
         # We cannot use the factory here, because it defines predict_proba
         # anyway.
-        clf = SGDClassifier(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
-        assert_false(hasattr(clf, "predict_proba"))
-        assert_false(hasattr(clf, "predict_log_proba"))
+        clf = SGDClassifier(loss="hinge", alpha=0.01,
+                            max_iter=10, tol=None).fit(X, Y)
+        assert not hasattr(clf, "predict_proba")
+        assert not hasattr(clf, "predict_log_proba")
 
         # log and modified_huber losses can output probability estimates
         # binary case
         for loss in ["log", "modified_huber"]:
-            clf = self.factory(loss="modified_huber", alpha=0.01, n_iter=10)
+            clf = self.factory(loss=loss, alpha=0.01, max_iter=10)
             clf.fit(X, Y)
             p = clf.predict_proba([[3, 2]])
-            assert_true(p[0, 1] > 0.5)
+            assert p[0, 1] > 0.5
             p = clf.predict_proba([[-1, -1]])
-            assert_true(p[0, 1] < 0.5)
+            assert p[0, 1] < 0.5
 
             p = clf.predict_log_proba([[3, 2]])
-            assert_true(p[0, 1] > p[0, 0])
+            assert p[0, 1] > p[0, 0]
             p = clf.predict_log_proba([[-1, -1]])
-            assert_true(p[0, 1] < p[0, 0])
+            assert p[0, 1] < p[0, 0]
 
         # log loss multiclass probability estimates
-        clf = self.factory(loss="log", alpha=0.01, n_iter=10).fit(X2, Y2)
+        clf = self.factory(loss="log", alpha=0.01, max_iter=10).fit(X2, Y2)
 
         d = clf.decision_function([[.1, -.1], [.3, .2]])
         p = clf.predict_proba([[.1, -.1], [.3, .2]])
         assert_array_equal(np.argmax(p, axis=1), np.argmax(d, axis=1))
         assert_almost_equal(p[0].sum(), 1)
-        assert_true(np.all(p[0] >= 0))
+        assert np.all(p[0] >= 0)
 
         p = clf.predict_proba([[-1, -1]])
         d = clf.decision_function([[-1, -1]])
@@ -513,7 +641,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Modified Huber multiclass probability estimates; requires a separate
         # test because the hard zero/one probabilities may destroy the
         # ordering present in decision_function output.
-        clf = self.factory(loss="modified_huber", alpha=0.01, n_iter=10)
+        clf = self.factory(loss="modified_huber", alpha=0.01, max_iter=10)
         clf.fit(X2, Y2)
         d = clf.decision_function([[3, 2]])
         p = clf.predict_proba([[3, 2]])
@@ -542,7 +670,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         Y = Y4[idx]
 
         clf = self.factory(penalty='l1', alpha=.2, fit_intercept=False,
-                           n_iter=2000, shuffle=False)
+                           max_iter=2000, tol=None, shuffle=False)
         clf.fit(X, Y)
         assert_array_equal(clf.coef_[0, 1:-1], np.zeros((4,)))
         pred = clf.predict(X)
@@ -550,13 +678,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         # test sparsify with dense inputs
         clf.sparsify()
-        assert_true(sp.issparse(clf.coef_))
+        assert sp.issparse(clf.coef_)
         pred = clf.predict(X)
         assert_array_equal(pred, Y)
 
         # pickle and unpickle with sparse coef_
         clf = pickle.loads(pickle.dumps(clf))
-        assert_true(sp.issparse(clf.coef_))
+        assert sp.issparse(clf.coef_)
         pred = clf.predict(X)
         assert_array_equal(pred, Y)
 
@@ -566,13 +694,13 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                       [1.0, 1.0], [1.0, 0.0]])
         y = [1, 1, 1, -1, -1]
 
-        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False,
+        clf = self.factory(alpha=0.1, max_iter=1000, fit_intercept=False,
                            class_weight=None)
         clf.fit(X, y)
         assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
 
         # we give a small weights to class 1
-        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False,
+        clf = self.factory(alpha=0.1, max_iter=1000, fit_intercept=False,
                            class_weight={1: 0.001})
         clf.fit(X, y)
 
@@ -584,40 +712,39 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # Test if equal class weights approx. equals no class weights.
         X = [[1, 0], [1, 0], [0, 1], [0, 1]]
         y = [0, 0, 1, 1]
-        clf = self.factory(alpha=0.1, n_iter=1000, class_weight=None)
+        clf = self.factory(alpha=0.1, max_iter=1000, class_weight=None)
         clf.fit(X, y)
 
         X = [[1, 0], [0, 1]]
         y = [0, 1]
-        clf_weighted = self.factory(alpha=0.1, n_iter=1000,
+        clf_weighted = self.factory(alpha=0.1, max_iter=1000,
                                     class_weight={0: 0.5, 1: 0.5})
         clf_weighted.fit(X, y)
 
         # should be similar up to some epsilon due to learning rate schedule
         assert_almost_equal(clf.coef_, clf_weighted.coef_, decimal=2)
 
-    @raises(ValueError)
     def test_wrong_class_weight_label(self):
         # ValueError due to not existing class label.
-        clf = self.factory(alpha=0.1, n_iter=1000, class_weight={0: 0.5})
-        clf.fit(X, Y)
+        clf = self.factory(alpha=0.1, max_iter=1000, class_weight={0: 0.5})
+        assert_raises(ValueError, clf.fit, X, Y)
 
-    @raises(ValueError)
     def test_wrong_class_weight_format(self):
         # ValueError due to wrong class_weight argument type.
-        clf = self.factory(alpha=0.1, n_iter=1000, class_weight=[0.5])
-        clf.fit(X, Y)
+        clf = self.factory(alpha=0.1, max_iter=1000, class_weight=[0.5])
+        assert_raises(ValueError, clf.fit, X, Y)
 
     def test_weights_multiplied(self):
         # Tests that class_weight and sample_weight are multiplicative
         class_weights = {1: .6, 2: .3}
-        sample_weights = np.random.random(Y4.shape[0])
+        rng = np.random.RandomState(0)
+        sample_weights = rng.random_sample(Y4.shape[0])
         multiplied_together = np.copy(sample_weights)
         multiplied_together[Y4 == 1] *= class_weights[1]
         multiplied_together[Y4 == 2] *= class_weights[2]
 
-        clf1 = self.factory(alpha=0.1, n_iter=20, class_weight=class_weights)
-        clf2 = self.factory(alpha=0.1, n_iter=20)
+        clf1 = self.factory(alpha=0.1, max_iter=20, class_weight=class_weights)
+        clf2 = self.factory(alpha=0.1, max_iter=20)
 
         clf1.fit(X4, Y4, sample_weight=sample_weights)
         clf2.fit(X4, Y4, sample_weight=multiplied_together)
@@ -635,17 +762,17 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         rng.shuffle(idx)
         X = X[idx]
         y = y[idx]
-        clf = self.factory(alpha=0.0001, n_iter=1000,
+        clf = self.factory(alpha=0.0001, max_iter=1000,
                            class_weight=None, shuffle=False).fit(X, y)
-        assert_almost_equal(metrics.f1_score(y, clf.predict(X), average='weighted'), 0.96,
-                            decimal=1)
+        f1 = metrics.f1_score(y, clf.predict(X), average='weighted')
+        assert_almost_equal(f1, 0.96, decimal=1)
 
         # make the same prediction using balanced class_weight
-        clf_balanced = self.factory(alpha=0.0001, n_iter=1000,
+        clf_balanced = self.factory(alpha=0.0001, max_iter=1000,
                                     class_weight="balanced",
                                     shuffle=False).fit(X, y)
-        assert_almost_equal(metrics.f1_score(y, clf_balanced.predict(X), average='weighted'), 0.96,
-                            decimal=1)
+        f1 = metrics.f1_score(y, clf_balanced.predict(X), average='weighted')
+        assert_almost_equal(f1, 0.96, decimal=1)
 
         # Make sure that in the balanced case it does not change anything
         # to use "balanced"
@@ -659,19 +786,14 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y_imbalanced = np.concatenate([y] + [y_0] * 10)
 
         # fit a model on the imbalanced data without class weight info
-        clf = self.factory(n_iter=1000, class_weight=None, shuffle=False)
+        clf = self.factory(max_iter=1000, class_weight=None, shuffle=False)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
         assert_less(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
         # fit a model with balanced class_weight enabled
-        clf = self.factory(n_iter=1000, class_weight="balanced", shuffle=False)
-        clf.fit(X_imbalanced, y_imbalanced)
-        y_pred = clf.predict(X)
-        assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
-
-        # fit another using a fit parameter override
-        clf = self.factory(n_iter=1000, class_weight="balanced", shuffle=False)
+        clf = self.factory(max_iter=1000, class_weight="balanced",
+                           shuffle=False)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
         assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
@@ -682,7 +804,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                       [1.0, 1.0], [1.0, 0.0]])
         y = [1, 1, 1, -1, -1]
 
-        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False)
+        clf = self.factory(alpha=0.1, max_iter=1000, fit_intercept=False)
         clf.fit(X, y)
         assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
 
@@ -693,18 +815,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # the prediction on this point should shift
         assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
 
-    @raises(ValueError)
     def test_wrong_sample_weights(self):
         # Test if ValueError is raised if sample_weight has wrong shape
-        clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False)
+        clf = self.factory(alpha=0.1, max_iter=1000, fit_intercept=False)
         # provided sample_weight too long
-        clf.fit(X, Y, sample_weight=np.arange(7))
+        assert_raises(ValueError, clf.fit, X, Y, sample_weight=np.arange(7))
 
-    @raises(ValueError)
     def test_partial_fit_exception(self):
         clf = self.factory(alpha=0.01)
         # classes was not specified
-        clf.partial_fit(X3, Y3)
+        assert_raises(ValueError, clf.partial_fit, X3, Y3)
 
     def test_partial_fit_binary(self):
         third = X.shape[0] // 3
@@ -720,7 +840,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X[third:], Y[third:])
         id2 = id(clf.coef_.data)
         # check that coef_ haven't been re-allocated
-        assert_true(id1, id2)
+        assert id1, id2
 
         y_pred = clf.predict(T)
         assert_array_equal(y_pred, true_result)
@@ -739,7 +859,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X2[third:], Y2[third:])
         id2 = id(clf.coef_.data)
         # check that coef_ haven't been re-allocated
-        assert_true(id1, id2)
+        assert id1, id2
 
     def test_partial_fit_multiclass_average(self):
         third = X2.shape[0] // 3
@@ -764,7 +884,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     def _test_partial_fit_equal_fit(self, lr):
         for X_, Y_, T_ in ((X, Y, T), (X2, Y2, T2)):
-            clf = self.factory(alpha=0.01, eta0=0.01, n_iter=2,
+            clf = self.factory(alpha=0.01, eta0=0.01, max_iter=2,
                                learning_rate=lr, shuffle=False)
             clf.fit(X_, Y_)
             y_pred = clf.decision_function(T_)
@@ -788,6 +908,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
+
+    def test_partial_fit_equal_fit_adaptive(self):
+        self._test_partial_fit_equal_fit("adaptive")
 
     def test_regression_losses(self):
         clf = self.factory(alpha=0.01, learning_rate="constant",
@@ -814,10 +937,9 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
     def test_multiple_fit(self):
         # Test multiple calls of fit w/ different shaped inputs.
-        clf = self.factory(alpha=0.01, n_iter=5,
-                           shuffle=False)
+        clf = self.factory(alpha=0.01, shuffle=False)
         clf.fit(X, Y)
-        assert_true(hasattr(clf, "coef_"))
+        assert hasattr(clf, "coef_")
 
         # Non-regression test: try fitting with a different label set.
         y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
@@ -840,20 +962,19 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
     def test_sgd(self):
         # Check that SGD gives any results.
-        clf = self.factory(alpha=0.1, n_iter=2,
+        clf = self.factory(alpha=0.1, max_iter=2,
                            fit_intercept=False)
         clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
         assert_equal(clf.coef_[0], clf.coef_[1])
 
-    @raises(ValueError)
     def test_sgd_bad_penalty(self):
         # Check whether expected ValueError on bad penalty
-        self.factory(penalty='foobar', l1_ratio=0.85)
+        assert_raises(ValueError, self.factory,
+                      penalty='foobar', l1_ratio=0.85)
 
-    @raises(ValueError)
     def test_sgd_bad_loss(self):
         # Check whether expected ValueError on bad loss
-        self.factory(loss="foobar")
+        assert_raises(ValueError, self.factory, loss="foobar")
 
     def test_sgd_averaged_computed_correctly(self):
         # Tests the average regressor matches the naive implementation
@@ -873,7 +994,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                            learning_rate='constant',
                            eta0=eta, alpha=alpha,
                            fit_intercept=True,
-                           n_iter=1, average=True, shuffle=False)
+                           max_iter=1, average=True, shuffle=False)
 
         clf.fit(X, y)
         average_weights, average_intercept = self.asgd(X, y, eta, alpha)
@@ -900,7 +1021,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                            learning_rate='constant',
                            eta0=eta, alpha=alpha,
                            fit_intercept=True,
-                           n_iter=1, average=True, shuffle=False)
+                           max_iter=1, average=True, shuffle=False)
 
         clf.partial_fit(X[:int(n_samples / 2)][:], y[:int(n_samples / 2)])
         clf.partial_fit(X[int(n_samples / 2):][:], y[int(n_samples / 2):])
@@ -920,7 +1041,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                            learning_rate='constant',
                            eta0=eta, alpha=alpha,
                            fit_intercept=True,
-                           n_iter=1, average=True, shuffle=False)
+                           max_iter=1, average=True, shuffle=False)
 
         n_samples = Y3.shape[0]
 
@@ -942,7 +1063,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         # simple linear function without noise
         y = 0.5 * X.ravel()
 
-        clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
+        clf = self.factory(loss='squared_loss', alpha=0.1, max_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
@@ -951,7 +1072,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         # simple linear function with noise
         y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
-        clf = self.factory(loss='squared_loss', alpha=0.1, n_iter=20,
+        clf = self.factory(loss='squared_loss', alpha=0.1, max_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
@@ -960,28 +1081,28 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
     def test_sgd_epsilon_insensitive(self):
         xmin, xmax = -5, 5
         n_samples = 100
+        rng = np.random.RandomState(0)
         X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
 
         # simple linear function without noise
         y = 0.5 * X.ravel()
 
         clf = self.factory(loss='epsilon_insensitive', epsilon=0.01,
-                           alpha=0.1, n_iter=20,
+                           alpha=0.1, max_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert_true(score > 0.99)
+        assert score > 0.99
 
         # simple linear function with noise
-        y = 0.5 * X.ravel() \
-            + np.random.randn(n_samples, 1).ravel()
+        y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
         clf = self.factory(loss='epsilon_insensitive', epsilon=0.01,
-                           alpha=0.1, n_iter=20,
+                           alpha=0.1, max_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
-        assert_true(score > 0.5)
+        assert score > 0.5
 
     def test_sgd_huber_fit(self):
         xmin, xmax = -5, 5
@@ -992,7 +1113,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         # simple linear function without noise
         y = 0.5 * X.ravel()
 
-        clf = self.factory(loss="huber", epsilon=0.1, alpha=0.1, n_iter=20,
+        clf = self.factory(loss="huber", epsilon=0.1, alpha=0.1, max_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
@@ -1001,7 +1122,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         # simple linear function with noise
         y = 0.5 * X.ravel() + rng.randn(n_samples, 1).ravel()
 
-        clf = self.factory(loss="huber", epsilon=0.1, alpha=0.1, n_iter=20,
+        clf = self.factory(loss="huber", epsilon=0.1, alpha=0.1, max_iter=20,
                            fit_intercept=False)
         clf.fit(X, y)
         score = clf.score(X, y)
@@ -1012,7 +1133,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
 
         n_samples, n_features = 1000, 5
         rng = np.random.RandomState(0)
-        X = np.random.randn(n_samples, n_features)
+        X = rng.randn(n_samples, n_features)
         # ground_truth linear model that generate y from X and to which the
         # models should converge if the regularizer would be set to 0.0
         ground_truth_coef = rng.randn(n_features)
@@ -1024,7 +1145,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
                 cd = linear_model.ElasticNet(alpha=alpha, l1_ratio=l1_ratio,
                                              fit_intercept=False)
                 cd.fit(X, y)
-                sgd = self.factory(penalty='elasticnet', n_iter=50,
+                sgd = self.factory(penalty='elasticnet', max_iter=50,
                                    alpha=alpha, l1_ratio=l1_ratio,
                                    fit_intercept=False)
                 sgd.fit(X, y)
@@ -1048,10 +1169,10 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
         clf.partial_fit(X[third:], Y[third:])
         id2 = id(clf.coef_.data)
         # check that coef_ haven't been re-allocated
-        assert_true(id1, id2)
+        assert id1, id2
 
     def _test_partial_fit_equal_fit(self, lr):
-        clf = self.factory(alpha=0.01, n_iter=2, eta0=0.01,
+        clf = self.factory(alpha=0.01, max_iter=2, eta0=0.01,
                            learning_rate=lr, shuffle=False)
         clf.fit(X, Y)
         y_pred = clf.predict(T)
@@ -1075,6 +1196,9 @@ class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
     def test_partial_fit_equal_fit_invscaling(self):
         self._test_partial_fit_equal_fit("invscaling")
 
+    def test_partial_fit_equal_fit_adaptive(self):
+        self._test_partial_fit_equal_fit("adaptive")
+
     def test_loss_function_epsilon(self):
         clf = self.factory(epsilon=0.9)
         clf.set_params(epsilon=0.1)
@@ -1094,15 +1218,19 @@ def test_l1_ratio():
                                         random_state=1234)
 
     # test if elasticnet with l1_ratio near 1 gives same result as pure l1
-    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet',
-                           l1_ratio=0.9999999999, random_state=42).fit(X, y)
-    est_l1 = SGDClassifier(alpha=0.001, penalty='l1', random_state=42).fit(X, y)
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', tol=None,
+                           max_iter=6, l1_ratio=0.9999999999,
+                           random_state=42).fit(X, y)
+    est_l1 = SGDClassifier(alpha=0.001, penalty='l1', max_iter=6,
+                           random_state=42, tol=None).fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l1.coef_)
 
     # test if elasticnet with l1_ratio near 0 gives same result as pure l2
-    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet',
-                           l1_ratio=0.0000000001, random_state=42).fit(X, y)
-    est_l2 = SGDClassifier(alpha=0.001, penalty='l2', random_state=42).fit(X, y)
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', tol=None,
+                           max_iter=6, l1_ratio=0.0000000001,
+                           random_state=42).fit(X, y)
+    est_l2 = SGDClassifier(alpha=0.001, penalty='l2', max_iter=6,
+                           random_state=42, tol=None).fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l2.coef_)
 
 
@@ -1115,24 +1243,24 @@ def test_underflow_or_overlow():
 
         X = rng.normal(size=(n_samples, n_features))
         X[:, :2] *= 1e300
-        assert_true(np.isfinite(X).all())
+        assert np.isfinite(X).all()
 
         # Use MinMaxScaler to scale the data without introducing a numerical
         # instability (computing the standard deviation naively is not possible
         # on this data)
         X_scaled = MinMaxScaler().fit_transform(X)
-        assert_true(np.isfinite(X_scaled).all())
+        assert np.isfinite(X_scaled).all()
 
         # Define a ground truth on the scaled data
         ground_truth = rng.normal(size=n_features)
         y = (np.dot(X_scaled, ground_truth) > 0.).astype(np.int32)
         assert_array_equal(np.unique(y), [0, 1])
 
-        model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500)
+        model = SGDClassifier(alpha=0.1, loss='squared_hinge', max_iter=500)
 
         # smoke test: model is stable on scaled data
         model.fit(X_scaled, y)
-        assert_true(np.isfinite(model.coef_).all())
+        assert np.isfinite(model.coef_).all()
 
         # model is numerically unstable on unscaled data
         msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
@@ -1144,23 +1272,110 @@ def test_underflow_or_overlow():
 def test_numerical_stability_large_gradient():
     # Non regression test case for numerical stability on scaled problems
     # where the gradient can still explode with some losses
-    model = SGDClassifier(loss='squared_hinge', n_iter=10, shuffle=True,
+    model = SGDClassifier(loss='squared_hinge', max_iter=10, shuffle=True,
                           penalty='elasticnet', l1_ratio=0.3, alpha=0.01,
-                          eta0=0.001, random_state=0)
+                          eta0=0.001, random_state=0, tol=None)
     with np.errstate(all='raise'):
         model.fit(iris.data, iris.target)
-    assert_true(np.isfinite(model.coef_).all())
+    assert np.isfinite(model.coef_).all()
 
 
-def test_large_regularization():
+@pytest.mark.parametrize('penalty', ['l2', 'l1', 'elasticnet'])
+def test_large_regularization(penalty):
     # Non regression tests for numerical stability issues caused by large
     # regularization parameters
-    for penalty in ['l2', 'l1', 'elasticnet']:
-        model = SGDClassifier(alpha=1e5, learning_rate='constant', eta0=0.1,
-                              n_iter=5, penalty=penalty, shuffle=False)
-        with np.errstate(all='raise'):
-            model.fit(iris.data, iris.target)
-        assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))
+    model = SGDClassifier(alpha=1e5, learning_rate='constant', eta0=0.1,
+                          penalty=penalty, shuffle=False,
+                          tol=None, max_iter=6)
+    with np.errstate(all='raise'):
+        model.fit(iris.data, iris.target)
+    assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))
+
+
+def test_tol_parameter():
+    # Test that the tol parameter behaves as expected
+    X = StandardScaler().fit_transform(iris.data)
+    y = iris.target == 1
+
+    # With tol is None, the number of iteration should be equal to max_iter
+    max_iter = 42
+    model_0 = SGDClassifier(tol=None, random_state=0, max_iter=max_iter)
+    model_0.fit(X, y)
+    assert_equal(max_iter, model_0.n_iter_)
+
+    # If tol is not None, the number of iteration should be less than max_iter
+    max_iter = 2000
+    model_1 = SGDClassifier(tol=0, random_state=0, max_iter=max_iter)
+    model_1.fit(X, y)
+    assert_greater(max_iter, model_1.n_iter_)
+    assert_greater(model_1.n_iter_, 5)
+
+    # A larger tol should yield a smaller number of iteration
+    model_2 = SGDClassifier(tol=0.1, random_state=0, max_iter=max_iter)
+    model_2.fit(X, y)
+    assert_greater(model_1.n_iter_, model_2.n_iter_)
+    assert_greater(model_2.n_iter_, 3)
+
+    # Strict tolerance and small max_iter should trigger a warning
+    model_3 = SGDClassifier(max_iter=3, tol=1e-3, random_state=0)
+    model_3 = assert_warns(ConvergenceWarning, model_3.fit, X, y)
+    assert_equal(model_3.n_iter_, 3)
+
+
+def test_future_and_deprecation_warnings():
+    # Test that warnings are raised. Will be removed in 0.21
+
+    def init(max_iter=None, tol=None, n_iter=None, for_partial_fit=False):
+        sgd = SGDClassifier(max_iter=max_iter, tol=tol, n_iter=n_iter)
+        sgd._validate_params(for_partial_fit=for_partial_fit)
+
+    # When all default values are used
+    msg_future = "max_iter and tol parameters have been added in "
+    assert_warns_message(FutureWarning, msg_future, init)
+
+    # When n_iter is specified
+    msg_deprecation = "n_iter parameter is deprecated"
+    assert_warns_message(DeprecationWarning, msg_deprecation, init, 6, 0, 5)
+
+    # When n_iter=None and max_iter is specified but tol=None
+    msg_changed = "If max_iter is set but tol is left unset"
+    assert_warns_message(FutureWarning, msg_changed, init, 100, None, None)
+
+    # When n_iter=None and tol is specified
+    assert_no_warnings(init, None, 1e-3, None)
+    assert_no_warnings(init, 100, 1e-3, None)
+
+    # Test that for_partial_fit will not throw warnings for max_iter or tol
+    assert_no_warnings(init, None, None, None, True)
+
+
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def test_tol_and_max_iter_default_values():
+    # Test that the default values are correctly changed
+    est = SGDClassifier()
+    est._validate_params()
+    assert_equal(est._tol, None)
+    assert_equal(est._max_iter, 5)
+
+    est = SGDClassifier(n_iter=42)
+    est._validate_params()
+    assert_equal(est._tol, None)
+    assert_equal(est._max_iter, 42)
+
+    est = SGDClassifier(tol=1e-2)
+    est._validate_params()
+    assert_equal(est._tol, 1e-2)
+    assert_equal(est._max_iter, 1000)
+
+    est = SGDClassifier(max_iter=42)
+    est._validate_params()
+    assert_equal(est._tol, None)
+    assert_equal(est._max_iter, 42)
+
+    est = SGDClassifier(max_iter=42, tol=1e-2)
+    est._validate_params()
+    assert_equal(est._tol, 1e-2)
+    assert_equal(est._max_iter, 42)
 
 
 def _test_gradient_common(loss_function, cases):
@@ -1275,3 +1490,79 @@ def test_gradient_squared_epsilon_insensitive():
         (2.0, 2.2, -0.2), (-2.0, 1.0, -5.8)
     ]
     _test_gradient_common(loss, cases)
+
+
+def test_multi_thread_multi_class_and_early_stopping():
+    # This is a non-regression test for a bad interaction between
+    # early stopping internal attribute and thread-based parallelism.
+    clf = SGDClassifier(alpha=1e-3, tol=1e-3, max_iter=1000,
+                        early_stopping=True, n_iter_no_change=100,
+                        random_state=0, n_jobs=2)
+    clf.fit(iris.data, iris.target)
+    assert clf.n_iter_ > clf.n_iter_no_change
+    assert clf.n_iter_ < clf.n_iter_no_change + 20
+    assert clf.score(iris.data, iris.target) > 0.8
+
+
+def test_multi_core_gridsearch_and_early_stopping():
+    # This is a non-regression test for a bad interaction between
+    # early stopping internal attribute and process-based multi-core
+    # parallelism.
+    param_grid = {
+        'alpha': np.logspace(-4, 4, 9),
+        'n_iter_no_change': [5, 10, 50],
+    }
+    clf = SGDClassifier(tol=1e-3, max_iter=1000, early_stopping=True,
+                        random_state=0)
+    search = RandomizedSearchCV(clf, param_grid, n_iter=10, cv=5, n_jobs=2,
+                                random_state=0)
+    search.fit(iris.data, iris.target)
+    assert search.best_score_ > 0.8
+
+
+@pytest.mark.skipif(
+        not hasattr(sp, "random"),
+        reason="this test uses scipy.random, that was introduced in version  "
+        "0.17. This skip condition can be dropped as soon as we drop support "
+        "for scipy versions older than 0.17")
+@pytest.mark.parametrize("backend",
+                         ["loky", "multiprocessing", "threading"])
+def test_SGDClassifier_fit_for_all_backends(backend):
+    # This is a non-regression smoke test. In the multi-class case,
+    # SGDClassifier.fit fits each class in a one-versus-all fashion using
+    # joblib.Parallel.  However, each OvA step updates the coef_ attribute of
+    # the estimator in-place. Internally, SGDClassifier calls Parallel using
+    # require='sharedmem'. This test makes sure SGDClassifier.fit works
+    # consistently even when the user asks for a backend that does not provide
+    # sharedmem semantics.
+
+    # We further test a case where memmapping would have been used if
+    # SGDClassifier.fit was called from a loky or multiprocessing backend. In
+    # this specific case, in-place modification of clf.coef_ would have caused
+    # a segmentation fault when trying to write in a readonly memory mapped
+    # buffer.
+
+    if _joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
+        pytest.skip('loky backend does not exist in joblib <0.12')
+
+    random_state = np.random.RandomState(42)
+
+    # Create a classification problem with 50000 features and 20 classes. Using
+    # loky or multiprocessing this make the clf.coef_ exceed the threshold
+    # above which memmaping is used in joblib and loky (1MB as of 2018/11/1).
+    X = sp.random(1000, 50000, density=0.01, format='csr',
+                  random_state=random_state)
+    y = random_state.choice(20, 1000)
+
+    # Begin by fitting a SGD classifier sequentially
+    clf_sequential = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=1,
+                                   random_state=42)
+    clf_sequential.fit(X, y)
+
+    # Fit a SGDClassifier using the specified backend, and make sure the
+    # coefficients are equal to those obtained using a sequential fit
+    clf_parallel = SGDClassifier(tol=1e-3, max_iter=1000, n_jobs=4,
+                                 random_state=42)
+    with parallel_backend(backend=backend):
+        clf_parallel.fit(X, y)
+    assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
