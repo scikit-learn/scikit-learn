@@ -709,3 +709,20 @@ def test_regressor_prediction_independent_of_X(strategy):
     predictions2 = reg2.predict(X2)
 
     assert_array_equal(predictions1, predictions2)
+
+
+@pytest.mark.parametrize("strategy", [
+    "stratified",
+    "most_frequent",
+    "prior",
+    "uniform",
+    "constant"
+])
+def test_dtype_of_classifier_probas(strategy):
+    y = [0, 2, 1, 1]
+    X = [[0]] * 4
+    model = DummyClassifier(strategy=strategy, random_state=0, constant=0)
+    model.fit(X, y)
+    probas = model.predict_proba(X)
+
+    assert probas.dtype == np.float
