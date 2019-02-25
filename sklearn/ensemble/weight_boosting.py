@@ -233,7 +233,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         -------
         z : float
         """
-        self._validate_data(X)
+        X = self._validate_data(X)
 
         for y_pred in self.staged_predict(X):
             if is_classifier(self):
@@ -592,7 +592,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         y : array of shape = [n_samples]
             The predicted classes.
         """
-        self._validate_data(X)
+        X = self._validate_data(X)
 
         pred = self.decision_function(X)
 
@@ -622,7 +622,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         y : generator of array, shape = [n_samples]
             The predicted classes.
         """
-        self._validate_data(X)
+        X = self._validate_data(X)
 
         n_classes = self.n_classes_
         classes = self.classes_
@@ -656,7 +656,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         check_is_fitted(self, "n_classes_")
-        self._validate_data(X)
+        X = self._validate_data(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -699,7 +699,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         check_is_fitted(self, "n_classes_")
-        self._validate_data(X)
+        X = self._validate_data(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -749,7 +749,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             outputs is the same of that of the `classes_` attribute.
         """
         check_is_fitted(self, "n_classes_")
-        self._validate_data(X)
+        X = self._validate_data(X)
 
         n_classes = self.n_classes_
 
@@ -797,7 +797,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
-        self._validate_data(X)
+        X = self._validate_data(X)
 
         n_classes = self.n_classes_
         proba = None
@@ -844,7 +844,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
-        self._validate_data(X)
+        X = self._validate_data(X)
         return np.log(self.predict_proba(X))
 
 
@@ -1116,7 +1116,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         check_is_fitted(self, "estimator_weights_")
-        self._validate_data(X)
+        X = self._validate_data(X)
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)
