@@ -331,20 +331,6 @@ def test_one_hot_encoder_dtype_pandas(output_dtype):
     assert_array_equal(oh.fit_transform(X_df), X_expected)
     assert_array_equal(oh.fit(X_df).transform(X_df), X_expected)
 
-def test_one_hot_encoder_feature_dtype():
-    pd = pytest.importorskip('pandas')
-    
-    # checks if the datatypes are correct for each features (object, int, float)
-    X_df = pd.DataFrame({'A': ['a', 'b'], 'B': [1, 2], 'C':[3., 4.]})
-    enc = OneHotEncoder()
-    enc.fit_transform(X_df)
-
-    cat = enc.categories_
-    print(cat)
-    assert cat[0].dtype == object, "{} instead of {}".format(cat[0].dtype, object)
-    assert cat[1].dtype == int, "{} instead of {}".format(cat[1].dtype, int)
-    assert cat[2].dtype == float, "{} instead of {}".format(cat[2].dtype, float)
-
 
 def test_one_hot_encoder_set_params():
     X = np.array([[1, 2]]).T
@@ -565,8 +551,13 @@ def test_one_hot_encoder_feature_names_unicode():
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
+@pytest.mark.parametrize("as_data_frame", [False, True], ids=['array', 'dataframe'])
 @pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
-def test_one_hot_encoder_raise_missing(X, handle_unknown):
+def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
+    if as_data_frame:
+        pd = pytest.importorskip('pandas')
+        X = pd.DataFrame(X)
+
     ohe = OneHotEncoder(categories='auto', handle_unknown=handle_unknown)
 
     with pytest.raises(ValueError, match="Input contains NaN"):
@@ -575,7 +566,12 @@ def test_one_hot_encoder_raise_missing(X, handle_unknown):
     with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.fit_transform(X)
 
-    ohe.fit(X[:1, :])
+    if as_data_frame:
+        X_partial = X.iloc[:1, :]
+    else:
+        X_partial = X[:1, :]
+
+    ohe.fit(X_partial)
 
     with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.transform(X)
@@ -684,18 +680,18 @@ def test_encoder_dtypes_pandas():
     pd = pytest.importorskip('pandas')
 
     enc = OneHotEncoder(categories='auto')
-    exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
+    exp = np.array([[1., 0., 1., 0., 1., 0.], [0., 1., 0., 1., 0., 1.]], dtype='float64')
 
-    X = pd.DataFrame({'A': [1, 2], 'B': [3, 4]}, dtype='int64')
+    X = pd.DataFrame({'A': [1, 2], 'B': [3, 4], 'C': [5, 6]}, dtype='int64')
     enc.fit(X)
     assert all([enc.categories_[i].dtype == 'int64' for i in range(2)])
     assert_array_equal(enc.transform(X).toarray(), exp)
 
-    X = pd.DataFrame({'A': [1, 2], 'B': ['a', 'b']})
+    X = pd.DataFrame({'A': [1, 2], 'B': ['a', 'b'], 'C': [3., 4.]})
+    X_type = [int, object, float]
     enc.fit(X)
-    assert all([enc.categories_[i].dtype == 'object' for i in range(2)])
+    assert all([enc.categories_[i].dtype == X_type[i] for i in range(3)])
     assert_array_equal(enc.transform(X).toarray(), exp)
-
 
 def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
