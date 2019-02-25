@@ -4,7 +4,7 @@ import pickle
 import copy
 
 from sklearn.isotonic import (check_increasing, isotonic_regression,
-                              IsotonicRegression)
+                              IsotonicRegression, _make_unique)
 
 from sklearn.utils.validation import as_float_array
 from sklearn.utils.testing import (assert_raises, assert_array_equal,
@@ -479,3 +479,14 @@ def test_isotonic_dtype():
             reg.fit(X, y_np, sample_weight=sample_weight)
             res = reg.predict(X)
             assert_equal(res.dtype, expected_dtype)
+
+
+def test_make_unique_dtype():
+    x_list = [2, 2, 2, 3, 5]
+    for dtype in (np.float32, np.float64):
+        x = np.array(x_list, dtype=dtype)
+        y = x.copy()
+        w = np.ones_like(x)
+        x, y, w = _make_unique(x, y, w)
+        assert_array_equal(x, [2, 3, 5])
+
