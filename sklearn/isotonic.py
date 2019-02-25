@@ -259,7 +259,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             mask = sample_weight > 0
             X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
         else:
-            sample_weight = np.ones(len(y)).astype(X.dtype, copy=False)
+            sample_weight = np.ones(len(y), dtype=X.dtype)
 
         order = np.lexsort((y, X))
         X, y, sample_weight = [array[order] for array in [X, y, sample_weight]]
