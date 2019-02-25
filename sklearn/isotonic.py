@@ -346,7 +346,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             The transformed data
         """
 
-
         if hasattr(self, '_necessary_X_'):
             dtype = self._necessary_X_.dtype
         else:
