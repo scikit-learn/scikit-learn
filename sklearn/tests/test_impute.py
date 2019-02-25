@@ -989,7 +989,6 @@ def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
     assert isinstance(X_trans_mask, np.ndarray)
 
     indicator.set_params(sparse=True)
-
     X_fit_mask_sparse = indicator.fit_transform(X_fit)
     X_trans_mask_sparse = indicator.transform(X_trans)
 
