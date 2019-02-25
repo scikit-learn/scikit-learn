@@ -41,7 +41,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
           not do that)
 
         """
-        
+
         X_temp = check_array(X, dtype=None)
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
@@ -54,7 +54,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                     raise ValueError("Input contains NaN")
 
         return X
-    
 
     def _check_X_feature(self, Xi):
         Xi = np.asarray(Xi)
@@ -67,7 +66,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         return Xi
 
-
     def _get_feature(self, X, key):
         if hasattr(X, 'iloc'):
             # pandas dataframes
@@ -76,13 +74,11 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             # numpy arrays, sparse arrays
             return X[:, key]
 
-
     def _fit(self, X, handle_unknown='error'):
-        #if isinstance(X, (list, np.ndarray)):
         if not hasattr(X, 'iloc'):
             # if not pandas dataframes
-             X = self._check_X(X)
-    
+            X = self._check_X(X)
+
         n_samples, n_features = X.shape
 
         if self._categories != 'auto':
@@ -101,7 +97,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             
             Xi = self._get_feature(X, key=i)
             Xi = self._check_X_feature(Xi)
-            
+
             if self._categories == 'auto':
                 cats = _encode(Xi)
             else:

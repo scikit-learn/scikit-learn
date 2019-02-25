@@ -550,8 +550,9 @@ def test_one_hot_encoder_feature_names_unicode():
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
-                         ids=['numeric', 'object'])
-@pytest.mark.parametrize("as_data_frame", [False, True], ids=['array', 'dataframe'])
+                        ids=['numeric', 'object'])
+@pytest.mark.parametrize("as_data_frame", [False, True],
+                        ids=['array', 'dataframe'])
 @pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
 def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
     if as_data_frame:
@@ -680,7 +681,8 @@ def test_encoder_dtypes_pandas():
     pd = pytest.importorskip('pandas')
 
     enc = OneHotEncoder(categories='auto')
-    exp = np.array([[1., 0., 1., 0., 1., 0.], [0., 1., 0., 1., 0., 1.]], dtype='float64')
+    exp = np.array([[1., 0., 1., 0., 1., 0.], 
+                    [0., 1., 0., 1., 0., 1.]], dtype='float64')
 
     X = pd.DataFrame({'A': [1, 2], 'B': [3, 4], 'C': [5, 6]}, dtype='int64')
     enc.fit(X)
