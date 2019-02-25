@@ -2350,11 +2350,16 @@ def check_estimator_sparse_dense(name, estimator_orig):
                 estimator.set_params(with_mean=False)
                 estimator_sp.set_params(with_mean=False)
         dense_vs_sparse_additional_params = defaultdict(dict,
-                {'Ridge': {'solver': 'cholesky'}})
+                {'Ridge': {'solver': 'cholesky'},
+                 })
         params = dense_vs_sparse_additional_params[
             estimator.__class__.__name__]
         estimator.set_params(**params)
         estimator_sp.set_params(**params)
+        # XXX should not be necessary:
+        if 'fit_intercept' in estimator.get_params():
+            estimator.set_params(fit_intercept=False)
+            estimator_sp.set_params(fit_intercept=False)
         set_random_state(estimator)
         set_random_state(estimator_sp)
         try:
