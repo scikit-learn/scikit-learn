@@ -651,6 +651,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                              alternate_sign=self.alternate_sign,
                              non_negative=self.non_negative)
 
+    def _more_tags(self):
+        return {'X_types': ['string']}
+
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
@@ -1124,6 +1127,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return [t for t, i in sorted(self.vocabulary_.items(),
                                      key=itemgetter(1))]
 
+    def _more_tags(self):
+        return {'X_types': ['string']}
+
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
@@ -1303,6 +1309,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         n_features = value.shape[0]
         self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
                                     n=n_features, format='csr')
+
+    def _more_tags(self):
+        return {'X_types': 'sparse'}
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1637,3 +1646,6 @@ class TfidfVectorizer(CountVectorizer):
 
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
+
+    def _more_tags(self):
+        return {'X_types': ['string'], '_skip_test': True}

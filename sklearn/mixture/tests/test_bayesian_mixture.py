@@ -451,6 +451,15 @@ def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
         assert_array_equal(Y_pred1, Y_pred2)
 
 
+def test_bayesian_mixture_fit_predict_n_init():
+    # Check that fit_predict is equivalent to fit.predict, when n_init > 1
+    X = np.random.RandomState(0).randn(1000, 5)
+    gm = BayesianGaussianMixture(n_components=5, n_init=10, random_state=0)
+    y_pred1 = gm.fit_predict(X)
+    y_pred2 = gm.predict(X)
+    assert_array_equal(y_pred1, y_pred2)
+
+
 def test_bayesian_mixture_predict_predict_proba():
     # this is the same test as test_gaussian_mixture_predict_predict_proba()
     rng = np.random.RandomState(0)

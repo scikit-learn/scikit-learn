@@ -283,7 +283,7 @@ def test_check_estimator():
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
-    msg = "TypeError not raised"
+    msg = "ValueError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator,
                         BaseBadClassifier)
     assert_raises_regex(AssertionError, msg, check_estimator,

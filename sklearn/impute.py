@@ -422,6 +422,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         return X
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 class IterativeImputer(BaseEstimator, TransformerMixin):
     """Multivariate imputer that estimates each feature from all the others.
@@ -1034,6 +1037,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.fit_transform(X)
         return self
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 class MissingIndicator(BaseEstimator, TransformerMixin):
     """Binary indicators for missing values.
@@ -1265,3 +1271,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         """
         return self.fit(X, y).transform(X)
+
+    def _more_tags(self):
+        return {'allow_nan': True,
+                'X_types': ['2darray', 'str']}
