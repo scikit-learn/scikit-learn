@@ -707,24 +707,18 @@ def test_one_hot_encoder_warning():
     np.testing.assert_no_warnings(enc.fit_transform, X)
 
 
-@pytest.mark.parametrize("cats_to_drop, exp", [
-    (['def', 12, 3, 56],
-     [[1, 0, 1, 1],
-      [0, 1, 0, 1],
-      [0, 0, 0, 0]]),
-    (['def', None, 3, None],
-     [[1, 1, 0, 1, 1, 0],
-      [0, 1, 1, 0, 1, 0],
-      [0, 1, 0, 0, 0, 1]]),
-    ], ids=['all_specified', 'with-none'])
-def test_one_hot_encoder_drop_manual(cats_to_drop, exp):
+def test_one_hot_encoder_drop_manual():
+    cats_to_drop = ['def', 12, 3, 56]
     enc = OneHotEncoder(drop=cats_to_drop)
     X = [['abc', 12, 2, 55],
          ['def', 12, 1, 55],
          ['def', 12, 3, 56]]
     trans = enc.fit_transform(X).toarray()
+    exp = [[1, 0, 1, 1],
+           [0, 1, 0, 1],
+           [0, 0, 0, 0]]
     assert_array_equal(trans, exp)
-    dropped_cats = [None if feature is None else cat[feature]
+    dropped_cats = [cat[feature]
                     for cat, feature in zip(enc.categories_,
                                             enc.drop_idx_)]
     assert_array_equal(dropped_cats, cats_to_drop)
@@ -773,10 +767,8 @@ def test_invalid_drop_length(drop):
 @pytest.mark.parametrize("density", [True, False],
                          ids=['sparse', 'dense'])
 @pytest.mark.parametrize("drop", ['first',
-                                  ['a', 2, 'b'],
-                                  ['a', None, 'b'],
-                                  [None, None, None]],
-                         ids=['first', 'manual', 'manual_None', 'None'])
+                                 ['a', 2, 'b']],
+                         ids=['first', 'manual'])
 def test_categories(density, drop):
     ohe_base = OneHotEncoder(sparse=density)
     ohe_test = OneHotEncoder(sparse=density, drop=drop)
@@ -791,9 +783,6 @@ def test_categories(density, drop):
         for drop_cat, drop_idx, cat_list in zip(drop,
                                                 ohe_test.drop_idx_,
                                                 ohe_test.categories_):
-            if drop_cat is None:
-                assert drop_idx is None
-            else:
-                assert cat_list[drop_idx] == drop_cat
+            assert cat_list[drop_idx] == drop_cat
     assert isinstance(ohe_test.drop_idx_, np.ndarray)
-    assert ohe_test.drop_idx_.dtype == object
+    assert ohe_test.drop_idx_.dtype == np.int_

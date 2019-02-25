@@ -167,9 +167,7 @@ class OneHotEncoder(_BaseEncoder):
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
         - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
-          should be dropped. Any of the elements in this array can be None,
-          which indicates that all categories of feature ``i`` should be
-          retained.
+          should be dropped.
 
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
@@ -465,7 +463,7 @@ class OneHotEncoder(_BaseEncoder):
         if self.drop is None:
             return None
         elif (isinstance(self.drop, str) and self.drop == 'first'):
-            return np.zeros(len(self.categories_), dtype=object)
+            return np.zeros(len(self.categories_), dtype=np.int_)
         elif not isinstance(self.drop, str):
             try:
                 self.drop = np.asarray(self.drop, dtype=object)
@@ -480,8 +478,7 @@ class OneHotEncoder(_BaseEncoder):
                 raise ValueError(msg.format(len(self.categories_),
                                             len(self.drop)))
             missing_drops = [(i, val) for i, val in enumerate(self.drop)
-                             if val not in self.categories_[i] and
-                             val is not None]
+                             if val not in self.categories_[i]]
             if any(missing_drops):
                 msg = ("The following categories were supposed to be "
                        "dropped, but were not found in the training "
@@ -491,9 +488,8 @@ class OneHotEncoder(_BaseEncoder):
                                     for c, v in missing_drops])))
                 raise ValueError(msg)
             return np.array([np.where(cat_list == val)[0][0]
-                             if val in cat_list else None
                              for (val, cat_list) in
-                             zip(self.drop, self.categories_)], dtype=object)
+                             zip(self.drop, self.categories_)], dtype=np.int_)
         else:
             msg = ("Wrong input for parameter `drop`. Expected "
                    "'first', None or array of objects, got {}")
@@ -657,8 +653,7 @@ class OneHotEncoder(_BaseEncoder):
 
         if self.drop is not None:
             max_val = max(len(cats) for cats in self.categories_)
-            to_drop = np.array([max_val if pos is None else pos
-                                for pos in self.drop_idx_]).reshape(1, -1)
+            to_drop = self.drop_idx_.reshape(1, -1)
 
             # We remove all the dropped categories from mask, and decrement all
             # categories that occur after them to avoid an empty column.
@@ -666,9 +661,7 @@ class OneHotEncoder(_BaseEncoder):
             keep_cells = X_int != to_drop
             X_mask &= keep_cells
             X_int[X_int > to_drop] -= 1
-            n_values = [len(cats) - (drop_idx is not None)
-                        for cats, drop_idx in
-                        zip(self.categories_, self.drop_idx_)]
+            n_values = [len(cats) - 1 for cats in self.categories_]
         else:
             n_values = [len(cats) for cats in self.categories_]
 
@@ -738,9 +731,8 @@ class OneHotEncoder(_BaseEncoder):
             n_transformed_features = sum(len(cats)
                                          for cats in self.categories_)
         else:
-            n_transformed_features = sum(len(cats) - (drop_idx is not None)
-                                         for cats, drop_idx in
-                                         zip(self.categories_, self.drop_idx_))
+            n_transformed_features = sum(len(cats) - 1
+                                         for cats in self.categories_)
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
@@ -756,7 +748,7 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
-            if self.drop is None or self.drop_idx_[i] is None:
+            if self.drop is None:
                 cats = self.categories_[i]
             else:
                 cats = np.delete(self.categories_[i], self.drop_idx_[i])
