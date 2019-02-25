@@ -707,11 +707,9 @@ class TSNE(BaseEstimator):
 
                 if self.metric == "euclidean":
                     distances = pairwise_distances(X, metric=self.metric,
-                                                   squared=True,
-                                                   n_jobs=self.n_jobs)
+                                                   squared=True)
                 else:
-                    distances = pairwise_distances(X, metric=self.metric,
-                                                   n_jobs=self.n_jobs)
+                    distances = pairwise_distances(X, metric=self.metric)
 
                 if np.any(distances < 0):
                     raise ValueError("All distances should be positive, the "
@@ -827,7 +825,7 @@ class TSNE(BaseEstimator):
             obj_func = _kl_divergence
 
         # Learning schedule (part 1): do 250 iteration with lower momentum but
-        # higher learning rate controlled via the early exageration parameter
+        # higher learning rate controlled via the early exaggeration parameter
         P *= self.early_exaggeration
         params, kl_divergence, it = _gradient_descent(obj_func, params,
                                                       **opt_args)

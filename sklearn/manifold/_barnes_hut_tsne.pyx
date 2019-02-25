@@ -161,6 +161,8 @@ cdef float compute_gradient_positive(float[:] val_P,
                         / max(qij, FLOAT32_TINY))
                 for ax in range(n_dimensions):
                     pos_f[i * n_dimensions + ax] += dij * buff[ax]
+
+        free(buff)
     if verbose > 10:
         t2 = clock()
         dt = ((float) (t2 - t1))
@@ -197,10 +199,10 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
         clock_t t1 = 0, t2 = 0, t3 = 0
         int take_timing = 1 if qt.verbose > 20 else 0
 
-    summary = <float*> malloc(sizeof(float) * n * offset)
 
     with nogil, parallel(num_threads=n_jobs):
         # Define thread-local buffers
+        summary = <float*> malloc(sizeof(float) * n * offset)
         pos = <float *> malloc(sizeof(float) * n_dimensions)
         force = <float *> malloc(sizeof(float) * n_dimensions)
         neg_force = <float *> malloc(sizeof(float) * n_dimensions)
@@ -242,13 +244,16 @@ cdef double compute_gradient_negative(float[:, :] pos_reference,
             if take_timing:
                 dta += t2 - t1
                 dtb += t3 - t2
+        free(pos)
+        free(force)
+        free(neg_force)
+        free(summary)
     if take_timing:
         printf("[t-SNE] Tree: %li clock ticks | ", dta)
         printf("Force computation: %li clock ticks\n", dtb)
 
     # Put sum_Q to machine EPSILON to avoid divisions by 0
     sum_Q = max(sum_Q, FLOAT64_EPS)
-    free(summary)
     return sum_Q
 
 
