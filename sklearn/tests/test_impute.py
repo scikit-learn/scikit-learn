@@ -923,9 +923,6 @@ def test_iterative_imputer_early_stopping():
      (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
       {'features': 'all', 'sparse': 'random'},
       "'sparse' has to be a boolean or 'auto'"),
-     (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
-      {'missing_values': 0, 'sparse': True},
-      "'missing_values' cannot be 0 when 'sparse' is True"),
      (np.array([['a', 'b'], ['c', 'a']], dtype=str),
       np.array([['a', 'b'], ['c', 'a']], dtype=str),
       {}, "MissingIndicator does not support data with dtype")]
@@ -972,6 +969,8 @@ def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
     if sparse.issparse(X_fit) and missing_values == 0:
         with pytest.raises(ValueError):
             X_fit_mask_sparse = indicator.fit_transform(X_fit)
+        with pytest.raises(ValueError):
+            X_trans_mask = indicator.transform(X_trans)
         return
 
     X_fit_mask = indicator.fit_transform(X_fit)
@@ -990,10 +989,6 @@ def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
     assert isinstance(X_trans_mask, np.ndarray)
 
     indicator.set_params(sparse=True)
-    if missing_values == 0:
-        with pytest.raises(ValueError):
-            X_fit_mask_sparse = indicator.fit_transform(X_fit)
-        return
 
     X_fit_mask_sparse = indicator.fit_transform(X_fit)
     X_trans_mask_sparse = indicator.transform(X_trans)
@@ -1024,14 +1019,11 @@ def test_missing_indicator_sparse_param(arr_type, missing_values,
     indicator = MissingIndicator(missing_values=missing_values,
                                  sparse=param_sparse)
 
-    if param_sparse is True and missing_values == 0:
-        with pytest.raises(ValueError):
-            X_fit_mask = indicator.fit_transform(X_fit)
-        return
-
     if sparse.issparse(X_fit) and missing_values == 0:
         with pytest.raises(ValueError):
             X_fit_mask = indicator.fit_transform(X_fit)
+        with pytest.raises(ValueError):
+            X_trans_mask = indicator.transform(X_trans)
         return
 
     X_fit_mask = indicator.fit_transform(X_fit)

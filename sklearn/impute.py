@@ -1207,10 +1207,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'features' has to be either 'missing-only' or "
                              "'all'. Got {} instead.".format(self.features))
 
-        if self.sparse is True and self.missing_values == 0:
-            raise ValueError("'missing_values' cannot be 0 "
-                             "when 'sparse' is True")
-
         if sparse.issparse(X):
             # missing_values = 0 not allowed with sparse data as it would
             # force densification
@@ -1251,6 +1247,14 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "
                              "than during fitting.")
+
+        if sparse.issparse(X):
+            # missing_values = 0 not allowed with sparse data as it would
+            # force densification
+            if self.missing_values == 0:
+                raise ValueError("Imputation not possible when missing_values "
+                                 "== 0 and input is sparse. Provide a dense "
+                                 "array instead.")
 
         imputer_mask, features = self._get_missing_features_info(X)
 
