@@ -829,6 +829,28 @@ def test_bh_match_exact():
                               decimal=3)
 
 
+def test_parallel_match_iterative():
+    # check that the ``barnes_hut`` method match the exact one when
+    # ``angle = 0`` and ``perplexity > n_samples / 3``
+    random_state = check_random_state(0)
+    n_features = 10
+    X = random_state.randn(30, n_features).astype(np.float32)
+    X_embeddeds = {}
+    n_iter = {}
+    for n_jobs in [1, 4]:
+        tsne = TSNE(n_components=2, method='barnes_hut', learning_rate=1.0,
+                    init="random", random_state=0, n_iter=251,
+                    perplexity=30.0, angle=0, n_jobs=n_jobs)
+        # Kill the early_exaggeration
+        tsne._EXPLORATION_N_ITER = 0
+        X_embeddeds[n_jobs] = tsne.fit_transform(X)
+        n_iter[n_jobs] = tsne.n_iter_
+
+    assert n_iter[1] == n_iter[4]
+    assert_array_almost_equal(X_embeddeds[1], X_embeddeds[4],
+                              decimal=3)
+
+
 def test_tsne_with_different_distance_metrics():
     """Make sure that TSNE works for different distance metrics"""
     random_state = check_random_state(0)

@@ -189,7 +189,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
 def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
                       angle=0.5, skip_num_points=0, verbose=False,
-                      compute_error=True):
+                      compute_error=True, n_jobs=1):
     """t-SNE objective function: KL divergence of p_ijs and q_ijs.
 
     Uses Barnes-Hut tree methods to calculate the gradient that
@@ -253,10 +253,12 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     error = _barnes_hut_tsne.gradient(val_P, X_embedded, neighbors, indptr,
                                       grad, angle, n_components, verbose,
                                       dof=degrees_of_freedom,
-                                      compute_error=compute_error)
+                                      compute_error=compute_error,
+                                      n_jobs=n_jobs)
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad = grad.ravel()
-    grad *= c
+    if c != 1:
+        grad *= c
 
     return error, grad
 
@@ -335,6 +337,7 @@ def _gradient_descent(objective, p0, it, n_iter,
         args = []
     if kwargs is None:
         kwargs = {}
+
 
     p = p0.copy().ravel()
     update = np.zeros_like(p)
@@ -553,7 +556,7 @@ class TSNE(BaseEstimator):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.  Note that different initializations might result in
+        by `np.random`.  Note that different initialization might result in
         different local minima of the cost function.
 
     method : string (default: 'barnes_hut')
@@ -704,7 +707,8 @@ class TSNE(BaseEstimator):
 
                 if self.metric == "euclidean":
                     distances = pairwise_distances(X, metric=self.metric,
-                                                   squared=True)
+                                                   squared=True,
+                                                   n_jobs=self.n_jobs)
                 else:
                     distances = pairwise_distances(X, metric=self.metric,
                                                    n_jobs=self.n_jobs)
@@ -818,6 +822,7 @@ class TSNE(BaseEstimator):
             opt_args['kwargs']['angle'] = self.angle
             # Repeat verbose argument for _kl_divergence_bh
             opt_args['kwargs']['verbose'] = self.verbose
+            opt_args['kwargs']['n_jobs'] = effective_n_jobs(self.n_jobs)
         else:
             obj_func = _kl_divergence
 

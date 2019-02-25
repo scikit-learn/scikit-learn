@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     # Put TSNE in methods
     tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
-                verbose=args.verbose, n_iter=1000)
+                verbose=args.verbose, n_iter=1000, n_jobs=4)
     methods.append(("sklearn TSNE",
                     lambda data: tsne_fit_transform(tsne, data)))
 
