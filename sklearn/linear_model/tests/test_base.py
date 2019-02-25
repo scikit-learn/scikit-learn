@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_allclose
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.base import _preprocess_data
@@ -25,6 +26,7 @@ from sklearn.datasets.samples_generator import make_regression
 from sklearn.datasets import load_iris
 
 rng = np.random.RandomState(0)
+rtol = 1e-6
 
 
 def test_linear_regression():

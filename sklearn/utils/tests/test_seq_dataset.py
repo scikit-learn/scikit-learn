@@ -4,6 +4,7 @@
 
 import numpy as np
 from numpy.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 import scipy.sparse as sp
 
 from sklearn.utils.seq_dataset import ArrayDataset64 as ArrayDataset
@@ -11,8 +12,6 @@ from sklearn.utils.seq_dataset import CSRDataset64 as CSRDataset
 from sklearn.utils.seq_dataset import ArrayDataset32
 
 from sklearn.datasets import load_iris
-
-from sklearn.utils.testing import assert_equal, assert_array_almost_equal
 
 iris = load_iris()
 X = iris.data.astype(np.float64)
@@ -108,5 +107,5 @@ def test_fused_types_consistency():
         assert isinstance(yi32, float)
         assert isinstance(yi64, float)
 
-        assert_array_almost_equal(xi_data64, xi_data32, decimal=5)
-        assert_array_almost_equal(yi64, yi32, decimal=5)
+        assert_allclose(xi_data64, xi_data32, rtol=1e-5)
+        assert_allclose(yi64, yi32, rtol=1e-5)
