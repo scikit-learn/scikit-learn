@@ -3,6 +3,7 @@ import warnings
 import sys
 import traceback
 import pickle
+from collections import defaultdict
 from copy import deepcopy
 from functools import partial
 from inspect import signature
@@ -398,10 +399,10 @@ def set_checking_parameters(estimator):
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
 
-if "KNeighbors" in estimator.__class__.__name__ :
-        # Override the default 'auto' for sparse dense equivalence
-        # since only 'brute' algo is used for sparse see #1572
-        estimator.set_params(algorithm='brute')
+    if "KNeighbors" in estimator.__class__.__name__ :
+            # Override the default 'auto' for sparse dense equivalence
+            # since only 'brute' algo is used for sparse see #1572
+            estimator.set_params(algorithm='brute')
 
 class NotAnArray:
     """An object that is convertible to an array
@@ -2336,29 +2337,30 @@ def check_classifiers_regression_target(name, estimator_orig):
     if not _safe_tags(e, "no_validation"):
         assert_raises_regex(ValueError, msg, e.fit, X, y)
 
-
-def check_estimator_sparse_dense(name, Estimator):
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+def check_estimator_sparse_dense(name, estimator_orig):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
     X_csr = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
+    estimator = clone(estimator_orig)
+    estimator_sp = clone(estimator_orig)
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
         X_sp = X_csr.asformat(sparse_format)
         # catch deprecation warnings
         with ignore_warnings(category=DeprecationWarning):
             if name in ['Scaler', 'StandardScaler']:
-                estimator = Estimator(with_mean=False)
-                estimator_sp = Estimator(with_mean=False)
-            else:
-                estimator = Estimator()
-                estimator_sp = Estimator()
-        set_testing_parameters(estimator)
-        set_testing_parameters(estimator_sp)
+                estimator.set_params(with_mean=False)
+                estimator_sp.set_params(with_mean=False)
+        dense_vs_sparse_additional_params = defaultdict({
+                                'Ridge': {'solver': 'cholesky'}})
+        params = dense_vs_sparse_additional_params[
+            estimator.__class__.__name__]
+        estimator.set_params(**params)
+        estimator_sp.set_params(**params)
         set_random_state(estimator)
         set_random_state(estimator_sp)
-        #print(np.where(X!=X_sp.toarray()))
-        # fit and predict
         try:
             with ignore_warnings(category=DeprecationWarning):
                 estimator_sp.fit(X_sp, y)
