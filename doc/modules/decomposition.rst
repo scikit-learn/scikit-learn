@@ -23,7 +23,7 @@ scikit-learn, :class:`PCA` is implemented as a *transformer* object
 that learns :math:`n` components in its ``fit`` method, and can be used on new
 data to project it on these components.
 
-PCA centers but does not scale it the input data for each feature before
+PCA centers but does not scale the input data for each feature before
 applying the SVD. The optional parameter parameter ``whiten=True`` makes it
 possible to project the data onto the singular space while scaling each
 component to unit variance. This is often useful if the models down-stream make
@@ -81,8 +81,8 @@ in order update ``explained_variance_ratio_`` incrementally. This is why
 memory usage depends on the number of samples per batch, rather than the
 number of samples to be processed in the dataset.
 
-As in :class:`PCA`, IncrementalPCA centers but does not scale it the input data
-for each feature before applying the SVD.
+As in :class:`PCA`, :class:`IncrementalPCA` centers but does not scale the
+input data for each feature before applying the SVD.
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_incremental_pca_001.png
     :target: ../auto_examples/decomposition/plot_incremental_pca.html
