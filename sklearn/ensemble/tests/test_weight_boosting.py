@@ -497,9 +497,9 @@ def test_multidimensional_X():
 
     rng = np.random.RandomState(0)
 
-    X = rng.random.randn(50, 3, 3)
-    yc = rng.random.choice([0, 1], 50)
-    yr = rng.random.randn(50)
+    X = rng.randn(50, 3, 3)
+    yc = rng.choice([0, 1], 50)
+    yr = rng.randn(50)
 
     boost = AdaBoostClassifier(DummyClassifier())
     boost.fit(X, yc)
