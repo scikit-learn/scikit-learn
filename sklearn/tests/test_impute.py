@@ -925,7 +925,7 @@ def test_iterative_imputer_early_stopping():
       "'sparse' has to be a boolean or 'auto'"),
      (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
       {'missing_values': 0, 'sparse': True},
-      "'missing_values' can not be 0 when 'sparse' is True"),
+      "'missing_values' cannot be 0 when 'sparse' is True"),
      (np.array([['a', 'b'], ['c', 'a']], dtype=str),
       np.array([['a', 'b'], ['c', 'a']], dtype=str),
       {}, "MissingIndicator does not support data with dtype")]
@@ -935,7 +935,6 @@ def test_missing_indicator_error(X_fit, X_trans, params, msg_err):
     indicator.set_params(**params)
     with pytest.raises(ValueError, match=msg_err):
         indicator.fit(X_fit).transform(X_trans)
-
 
 
 @pytest.mark.parametrize(

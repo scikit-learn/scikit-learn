@@ -1109,7 +1109,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     def __init__(self, missing_values=np.nan, features="missing-only",
                  sparse="auto", error_on_new=True):
-
         self.missing_values = missing_values
         self.features = features
         self.sparse = sparse
@@ -1209,7 +1208,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                              "'all'. Got {} instead.".format(self.features))
 
         if self.sparse is True and self.missing_values == 0:
-            raise ValueError("'missing_values' can not be 0 "
+            raise ValueError("'missing_values' cannot be 0 "
                              "when 'sparse' is True")
 
         if sparse.issparse(X):
