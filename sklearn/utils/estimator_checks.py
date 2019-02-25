@@ -47,6 +47,7 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.linear_model.stochastic_gradient import BaseSGD
+from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
@@ -2334,6 +2335,7 @@ def check_classifiers_regression_target(name, estimator_orig):
     if not _safe_tags(e, "no_validation"):
         assert_raises_regex(ValueError, msg, e.fit, X, y)
 
+
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimator_sparse_dense(name, estimator_orig):
     rng = np.random.RandomState(0)
@@ -2343,6 +2345,10 @@ def check_estimator_sparse_dense(name, estimator_orig):
     y = (4 * rng.rand(40)).astype(np.int)
     estimator = clone(estimator_orig)
     estimator_sp = clone(estimator_orig)
+    tags = _safe_tags(estimator_orig)
+    if "multioutput" in tags:
+        y = y[:, np.newaxis]
+
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
         X_sp = X_csr.asformat(sparse_format)
         # catch deprecation warnings
@@ -2350,6 +2356,14 @@ def check_estimator_sparse_dense(name, estimator_orig):
             if name in ['Scaler', 'StandardScaler']:
                 estimator.set_params(with_mean=False)
                 estimator_sp.set_params(with_mean=False)
+            if name in ['RobustScaler']:
+                # XXX naming is not consistent (with_mean vs with_centering) :(
+                estimator.set_params(with_centering=False)
+                estimator_sp.set_params(with_centering=False)
+            if name in ['TransformedTargetRegressor']:
+                # XXX naming is not consistent (with_mean vs with_centering) :(
+                estimator.set_params(regressor=LinearRegression(fit_intercept=False))
+                estimator_sp.set_params(regressor=LinearRegression(fit_intercept=False))
         dense_vs_sparse_additional_params = defaultdict(dict,
                 {'Ridge': {'solver': 'cholesky'},
                  })
@@ -2364,6 +2378,12 @@ def check_estimator_sparse_dense(name, estimator_orig):
         if isinstance(estimator, NeighborsBase):
             estimator.set_params(algorithm='brute')
             estimator_sp.set_params(algorithm='brute')
+        for estimator_attr in ['base_estimator', 'estimator']:
+            if (hasattr(estimator, estimator_attr) and
+                    getattr(estimator, estimator_attr) is not None and
+                    'fit_intercept' in getattr(estimator, estimator_attr).get_params()):
+                getattr(estimator, estimator_attr).set_params(fit_intercept=False)
+                getattr(estimator_sp, estimator_attr).set_params(fit_intercept=False)
         set_random_state(estimator)
         set_random_state(estimator_sp)
         try:
@@ -2377,6 +2397,11 @@ def check_estimator_sparse_dense(name, estimator_orig):
                 assert_equal(pred.shape, pred_sp.shape)
             if hasattr(estimator, 'predict_proba'):
                 probs = estimator.predict_proba(X)
+
+                if isinstance(probs, list):
+                    # XXX : hack for dummy classifier
+                    probs = probs[0]
+
                 assert_equal(probs.shape, (X.shape[0], 4))
         except TypeError as e:
             if 'sparse' not in repr(e):
