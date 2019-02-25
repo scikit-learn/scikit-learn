@@ -972,8 +972,6 @@ def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
     indicator = MissingIndicator(missing_values=missing_values,
                                  features=param_features,
                                  sparse=False)
-
-
     X_fit_mask = indicator.fit_transform(X_fit)
     X_trans_mask = indicator.transform(X_trans)
 
@@ -1046,7 +1044,6 @@ def test_missing_indicator_sparse_param(arr_type, missing_values,
 
     indicator = MissingIndicator(missing_values=missing_values,
                                  sparse=param_sparse)
-
     X_fit_mask = indicator.fit_transform(X_fit)
     X_trans_mask = indicator.transform(X_trans)
 
