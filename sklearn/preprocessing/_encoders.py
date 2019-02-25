@@ -41,7 +41,9 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
           not do that)
 
         """
-
+        if hasattr(X, 'iloc'):
+            # if pandas dataframes
+            return X
         X_temp = check_array(X, dtype=None)
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
             X = check_array(X, dtype=np.object)
@@ -75,9 +77,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             return X[:, key]
 
     def _fit(self, X, handle_unknown='error'):
-        if not hasattr(X, 'iloc'):
-            # if not pandas dataframes
-            X = self._check_X(X)
+        X = self._check_X(X)
 
         n_samples, n_features = X.shape
 
@@ -94,7 +94,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         self.categories_ = []
 
         for i in range(n_features):
-            
             Xi = self._get_feature(X, key=i)
             Xi = self._check_X_feature(Xi)
 
@@ -118,7 +117,9 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         X_mask = np.ones_like(X, dtype=np.bool)
 
         for i in range(n_features):
-            Xi = X[:, i]
+            Xi = self._get_feature(X, key=i)
+            Xi = self._check_X_feature(Xi)
+            
             diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
 

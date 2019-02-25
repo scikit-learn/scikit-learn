@@ -681,7 +681,7 @@ def test_encoder_dtypes_pandas():
     pd = pytest.importorskip('pandas')
 
     enc = OneHotEncoder(categories='auto')
-    exp = np.array([[1., 0., 1., 0., 1., 0.], 
+    exp = np.array([[1., 0., 1., 0., 1., 0.],
                     [0., 1., 0., 1., 0., 1.]], dtype='float64')
 
     X = pd.DataFrame({'A': [1, 2], 'B': [3, 4], 'C': [5, 6]}, dtype='int64')
