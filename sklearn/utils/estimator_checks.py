@@ -2338,7 +2338,7 @@ def check_classifiers_regression_target(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimator_sparse_dense(name, estimator_orig):
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(42)
     X = rng.rand(40, 10)
     X[X < .8] = 0
     X_csr = sparse.csr_matrix(X)
