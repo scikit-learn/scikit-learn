@@ -326,13 +326,3 @@ def test_width_patch():
     x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     assert_raises(ValueError, extract_patches_2d, x, (4, 1))
     assert_raises(ValueError, extract_patches_2d, x, (1, 4))
-
-
-def test_load_sample_images_correct_order():
-    images = load_sample_images().images
-    # assert is china image
-    assert np.all(images[0][0, 0, :] ==
-                  np.array([174, 201, 231], dtype=np.uint8))
-    # assert is flower image
-    assert np.all(images[1][0, 0, :] ==
-                  np.array([2, 19, 13], dtype=np.uint8))
