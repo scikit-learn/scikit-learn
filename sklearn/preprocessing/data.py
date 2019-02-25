@@ -2220,10 +2220,14 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         # find index for lower and higher bounds
         with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-            lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
-                                lower_bound_x)
-            upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
-                                upper_bound_x)
+            if output_distribution == 'normal':
+                lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
+                                    lower_bound_x)
+                upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
+                                    upper_bound_x)
+            if output_distribution == 'uniform':
+                lower_bounds_idx = (X_col == lower_bound_x)
+                upper_bounds_idx = (X_col == upper_bound_x)
 
         isfinite_mask = ~np.isnan(X_col)
         X_col_finite = X_col[isfinite_mask]
