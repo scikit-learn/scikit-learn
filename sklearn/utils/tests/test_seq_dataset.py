@@ -29,8 +29,8 @@ sample_weight32 = np.arange(y32.size, dtype=np.float32)
 def assert_csr_equal(X, Y):
     X.eliminate_zeros()
     Y.eliminate_zeros()
-    assert_equal(X.shape[0], Y.shape[0])
-    assert_equal(X.shape[1], Y.shape[1])
+    assert X.shape[0] == Y.shape[0]
+    assert X.shape[1] == Y.shape[1]
     assert_array_equal(X.data, Y.data)
     assert_array_equal(X.indices, Y.indices)
     assert_array_equal(X.indptr, Y.indptr)
@@ -48,16 +48,16 @@ def test_seq_dataset():
             xi = sp.csr_matrix((xi_), shape=(1, X.shape[1]))
 
             assert_csr_equal(xi, X_csr[idx])
-            assert_equal(yi, y[idx])
-            assert_equal(swi, sample_weight[idx])
+            assert yi == y[idx]
+            assert swi == sample_weight[idx]
 
             # random sample
             xi_, yi, swi, idx = dataset._random_py()
             xi = sp.csr_matrix((xi_), shape=(1, X.shape[1]))
 
             assert_csr_equal(xi, X_csr[idx])
-            assert_equal(yi, y[idx])
-            assert_equal(swi, sample_weight[idx])
+            assert yi == y[idx]
+            assert swi == sample_weight[idx]
 
 
 def test_seq_dataset_shuffle():
@@ -69,13 +69,13 @@ def test_seq_dataset_shuffle():
     for i in range(5):
         _, _, _, idx1 = dataset1._next_py()
         _, _, _, idx2 = dataset2._next_py()
-        assert_equal(idx1, i)
-        assert_equal(idx2, i)
+        assert idx1 == i
+        assert idx2 == i
 
     for i in range(5):
         _, _, _, idx1 = dataset1._random_py()
         _, _, _, idx2 = dataset2._random_py()
-        assert_equal(idx1, idx2)
+        assert idx1 == idx2
 
     seed = 77
     dataset1._shuffle_py(seed)
@@ -84,11 +84,11 @@ def test_seq_dataset_shuffle():
     for i in range(5):
         _, _, _, idx1 = dataset1._next_py()
         _, _, _, idx2 = dataset2._next_py()
-        assert_equal(idx1, idx2)
+        assert idx1 == idx2
 
         _, _, _, idx1 = dataset1._random_py()
         _, _, _, idx2 = dataset2._random_py()
-        assert_equal(idx1, idx2)
+        assert idx1 == idx2
 
 
 def test_fused_types_consistency():
@@ -103,8 +103,8 @@ def test_fused_types_consistency():
         xi_data32, _, _ = xi32
         xi_data64, _, _ = xi64
 
-        assert_equal(xi_data32.dtype, np.float32)
-        assert_equal(xi_data64.dtype, np.float64)
+        assert xi_data32.dtype == np.float32
+        assert xi_data64.dtype == np.float64
         assert isinstance(yi32, float)
         assert isinstance(yi64, float)
 

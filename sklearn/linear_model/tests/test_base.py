@@ -448,8 +448,8 @@ def test_fused_types_make_dataset():
     xi_data_32, _, _ = xi_32
     xi_data_64, _, _ = xi_64
 
-    assert_equal(xi_data_32.dtype, np.float32)
-    assert_equal(xi_data_64.dtype, np.float64)
+    assert xi_data_32.dtype == np.float32
+    assert xi_data_64.dtype == np.float64
     assert isinstance(yi_32, float)
     assert isinstance(yi_64, float)
     # assert_array_almost_equal(yi_64, yi_32, decimal=5)
@@ -462,13 +462,13 @@ def test_fused_types_make_dataset():
     xicsr_data_32, _, _ = xicsr_32
     xicsr_data_64, _, _ = xicsr_64
 
-    assert_equal(xicsr_data_32.dtype, np.float32)
-    assert_equal(xicsr_data_64.dtype, np.float64)
+    assert xicsr_data_32.dtype == np.float32
+    assert xicsr_data_64.dtype == np.float64
     assert isinstance(yicsr_32, float)
     assert isinstance(yicsr_64, float)
 
-    assert_array_almost_equal(xicsr_data_64, xicsr_data_32, decimal=5)
-    assert_array_almost_equal(yicsr_64, yicsr_32, decimal=5)
+    assert_allclose(xicsr_data_64, xicsr_data_32, rtol=rtol)
+    assert_allclose(yicsr_64, yicsr_32, rtol=rtol)
 
     assert_array_equal(xi_data_32, xicsr_data_32)
     assert_array_equal(xi_data_64, xicsr_data_64)
