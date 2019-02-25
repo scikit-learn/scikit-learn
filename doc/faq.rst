@@ -122,7 +122,7 @@ Inclusion of a new algorithm speeding up an existing model is easier if:
   more future-proof),
 - it is easy to document clearly when the contribution improves the speed
   and when it does not, for instance "when n_features >>
-  n_samples)",
+  n_samples",
 - benchmarks clearly show a speed up.
 
 Also note that your implementation need not be in scikit-learn to be used
