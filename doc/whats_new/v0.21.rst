@@ -315,6 +315,13 @@ Support for Python 3.4 and below has been officially dropped.
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 
+:mod:`sklearn.isotonic`
+.......................
+
+- |Feature| Allow different dtypes (such as float32) in
+  :class:`isotonic.IsotonicRegression` :issue:`8769` by :user:`Vlad Niculae <vene>`
+
+
 Multiple modules
 ................
 
