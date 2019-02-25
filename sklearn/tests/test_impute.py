@@ -970,7 +970,6 @@ def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
                                  features=param_features,
                                  sparse=False)
 
-
     if sparse.issparse(X_fit) and missing_values == 0:
         with pytest.raises(ValueError):
             X_fit_mask_sparse = indicator.fit_transform(X_fit)
@@ -1038,8 +1037,6 @@ def test_missing_indicator_sparse_param(arr_type, missing_values,
 
     X_fit_mask = indicator.fit_transform(X_fit)
     X_trans_mask = indicator.transform(X_trans)
-
-
 
     if param_sparse is True:
         assert X_fit_mask.format == 'csc'

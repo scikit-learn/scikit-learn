@@ -1208,8 +1208,9 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'features' has to be either 'missing-only' or "
                              "'all'. Got {} instead.".format(self.features))
 
-        if isinstance(self.sparse, bool) and self.sparse and self.missing_values == 0:
-            raise ValueError("'missing_values' can not be 0 when 'sparse' is True")
+        if self.sparse is True and self.missing_values == 0:
+            raise ValueError("'missing_values' can not be 0 "
+                             "when 'sparse' is True")
 
         if sparse.issparse(X):
             # missing_values = 0 not allowed with sparse data as it would
