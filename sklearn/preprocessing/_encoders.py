@@ -2,7 +2,6 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import numbers
 import warnings
@@ -848,3 +847,6 @@ class OrdinalEncoder(_BaseEncoder):
             X_tr[:, i] = self.categories_[i][labels]
 
         return X_tr
+
+    def _more_tags(self):
+        return {'X_types': ['categorical']}

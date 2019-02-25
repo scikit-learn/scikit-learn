@@ -144,7 +144,8 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         """
 
         if not hasattr(self.estimator, "fit"):
-            raise ValueError("The base estimator should implement a fit method")
+            raise ValueError("The base estimator should implement"
+                             "  a fit method")
 
         X, y = check_X_y(X, y,
                          multi_output=True,
@@ -194,6 +195,9 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             for e in self.estimators_)
 
         return np.asarray(y).T
+
+    def _more_tags(self):
+        return {'multioutput_only': True}
 
 
 class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
@@ -365,6 +369,10 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
                              format(n_outputs_, y.shape[1]))
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))
+
+    def _more_tags(self):
+        # FIXME
+        return {'_skip_test': True}
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
@@ -627,6 +635,9 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
         return Y_decision
 
+    def _more_tags(self):
+        return {'_skip_test': True}
+
 
 class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
     """A multi-label model that arranges regressions into a chain.
@@ -709,3 +720,7 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         """
         super().fit(X, Y)
         return self
+
+    def _more_tags(self):
+        # FIXME
+        return {'_skip_test': True}

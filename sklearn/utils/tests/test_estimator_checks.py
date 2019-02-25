@@ -112,8 +112,7 @@ class ModifiesValueInsteadOfRaisingError(BaseEstimator):
             if p < 0:
                 p = 0
             self.p = p
-        return super(ModifiesValueInsteadOfRaisingError,
-                     self).set_params(**kwargs)
+        return super().set_params(**kwargs)
 
     def fit(self, X, y=None):
         X, y = check_X_y(X, y)
@@ -132,8 +131,7 @@ class ModifiesAnotherValue(BaseEstimator):
             if a is None:
                 kwargs.pop('b')
                 self.b = 'method2'
-        return super(ModifiesAnotherValue,
-                     self).set_params(**kwargs)
+        return super().set_params(**kwargs)
 
     def fit(self, X, y=None):
         X, y = check_X_y(X, y)
@@ -285,7 +283,7 @@ def test_check_estimator():
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
-    msg = "TypeError not raised"
+    msg = "ValueError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator,
                         BaseBadClassifier)
     assert_raises_regex(AssertionError, msg, check_estimator,
@@ -411,11 +409,11 @@ def test_check_estimators_unfitted():
 
 
 def test_check_no_attributes_set_in_init():
-    class NonConformantEstimatorPrivateSet(object):
+    class NonConformantEstimatorPrivateSet:
         def __init__(self):
             self.you_should_not_set_this_ = None
 
-    class NonConformantEstimatorNoParamSet(object):
+    class NonConformantEstimatorNoParamSet:
         def __init__(self, you_should_set_this_=None):
             pass
 

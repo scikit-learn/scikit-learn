@@ -7,7 +7,6 @@
 #          Eric Chang <ericchang2017@u.northwestern.edu>
 # License: BSD 3 clause
 
-from __future__ import division
 
 from itertools import chain, combinations
 import warnings
@@ -210,6 +209,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     where min, max = feature_range.
 
+    The transformation is calculated as::
+
+        X_scaled = scale * X + min - X.min(axis=0) * scale
+        where scale = (max - min) / (X.max(axis=0) - X.min(axis=0))
+
     This transformation is often used as an alternative to zero mean,
     unit variance scaling.
 
@@ -227,10 +231,12 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     min_ : ndarray, shape (n_features,)
-        Per feature adjustment for minimum.
+        Per feature adjustment for minimum. Equivalent to
+        ``min - X.min(axis=0) * self.scale_``
 
     scale_ : ndarray, shape (n_features,)
-        Per feature relative scaling of the data.
+        Per feature relative scaling of the data. Equivalent to
+        ``(max - min) / (X.max(axis=0) - X.min(axis=0))``
 
         .. versionadded:: 0.17
            *scale_* attribute.
@@ -401,6 +407,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X /= self.scale_
         return X
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     """Transforms features by scaling each feature to a given range.
@@ -409,12 +418,17 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     that it is in the given range on the training set, i.e. between
     zero and one.
 
-    The transformation is given by::
+    The transformation is given by (when ``axis=0``)::
 
         X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
         X_scaled = X_std * (max - min) + min
 
     where min, max = feature_range.
+ 
+    The transformation is calculated as (when ``axis=0``)::
+
+       X_scaled = scale * X + min - X.min(axis=0) * scale
+       where scale = (max - min) / (X.max(axis=0) - X.min(axis=0))
 
     This transformation is often used as an alternative to zero mean,
     unit variance scaling.
@@ -797,6 +811,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 X += self.mean_
         return X
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 class MaxAbsScaler(BaseEstimator, TransformerMixin):
     """Scale each feature by its maximum absolute value.
@@ -963,6 +980,9 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         else:
             X *= self.scale_
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 def maxabs_scale(X, axis=0, copy=True):
@@ -1218,6 +1238,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             if self.with_centering:
                 X += self.center_
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
@@ -1711,6 +1734,9 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
+    def _more_tags(self):
+        return {'stateless': True}
+
 
 def binarize(X, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix
@@ -1842,6 +1868,9 @@ class Binarizer(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
+
+    def _more_tags(self):
+        return {'stateless': True}
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
@@ -2369,6 +2398,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return self._transform(X, inverse=True)
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 def quantile_transform(X, axis=0, n_quantiles=1000,
                        output_distribution='uniform',
@@ -2829,6 +2861,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                              .format(valid_methods, self.method))
 
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 def power_transform(X, method='warn', standardize=True, copy=True):

@@ -113,6 +113,12 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self.check_inverse = check_inverse
 
     def _fit_transformer(self, y):
+        """Check transformer and fit transformer.
+
+        Create the default transformer, fit it and make additional inverse
+        check on a subset (optional).
+
+        """
         if (self.transformer is not None and
                 (self.func is not None or self.inverse_func is not None)):
             raise ValueError("'transformer' and functions 'func'/"
@@ -177,19 +183,20 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             y_2d = y
         self._fit_transformer(y_2d)
 
+        # transform y and convert back to 1d array if needed
+        y_trans = self.transformer_.transform(y_2d)
+        # FIXME: a FunctionTransformer can return a 1D array even when validate
+        # is set to True. Therefore, we need to check the number of dimension
+        # first.
+        if y_trans.ndim == 2 and y_trans.shape[1] == 1:
+            y_trans = y_trans.squeeze(axis=1)
+
         if self.regressor is None:
             from ..linear_model import LinearRegression
             self.regressor_ = LinearRegression()
         else:
             self.regressor_ = clone(self.regressor)
 
-        # transform y and convert back to 1d array if needed
-        y_trans = self.transformer_.fit_transform(y_2d)
-        # FIXME: a FunctionTransformer can return a 1D array even when validate
-        # is set to True. Therefore, we need to check the number of dimension
-        # first.
-        if y_trans.ndim == 2 and y_trans.shape[1] == 1:
-            y_trans = y_trans.squeeze(axis=1)
         if sample_weight is None:
             self.regressor_.fit(X, y_trans)
         else:
@@ -226,3 +233,6 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             pred_trans = pred_trans.squeeze(axis=1)
 
         return pred_trans
+
+    def _more_tags(self):
+        return {'poor_score': True, 'no_validation': True}

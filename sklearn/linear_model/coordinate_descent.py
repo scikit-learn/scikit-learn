@@ -13,7 +13,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import LinearModel, _pre_fit
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
@@ -506,7 +506,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 # ElasticNet model
 
 
-class ElasticNet(LinearModel, RegressorMixin):
+class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
     """Linear regression with combined L1 and L2 priors as regularizer.
 
     Minimizes the objective function::
@@ -1048,7 +1048,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     return this_mses
 
 
-class LinearModelCV(LinearModel, metaclass=ABCMeta):
+class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for iterative model fitting along a regularization path"""
 
     @abstractmethod
@@ -1224,9 +1224,9 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
             self.alphas_ = np.asarray(alphas[0])
 
         # Refit the model with the parameters selected
-        common_params = dict((name, value)
-                             for name, value in self.get_params().items()
-                             if name in model.get_params())
+        common_params = {name: value
+                         for name, value in self.get_params().items()
+                         if name in model.get_params()}
         model.set_params(**common_params)
         model.alpha = best_alpha
         model.l1_ratio = best_l1_ratio
@@ -1820,6 +1820,9 @@ class MultiTaskElasticNet(Lasso):
         # return self for chaining fit and predict calls
         return self
 
+    def _more_tags(self):
+        return {'multioutput_only': True}
+
 
 class MultiTaskLasso(MultiTaskElasticNet):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
@@ -2130,6 +2133,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
+    def _more_tags(self):
+        return {'multioutput_only': True}
+
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
@@ -2288,3 +2294,6 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
+
+    def _more_tags(self):
+        return {'multioutput_only': True}

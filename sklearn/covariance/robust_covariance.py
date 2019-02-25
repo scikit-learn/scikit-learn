@@ -7,7 +7,6 @@ Here are implemented estimators that are resistant to outliers.
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
 # License: BSD 3 clause
-from __future__ import division
 
 import warnings
 import numbers

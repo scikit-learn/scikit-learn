@@ -2008,8 +2008,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         label_encoder = LabelEncoder().fit(y)
         y = label_encoder.transform(y)
         if isinstance(class_weight, dict):
-            class_weight = dict((label_encoder.transform([cls])[0], v)
-                                for cls, v in class_weight.items())
+            class_weight = {label_encoder.transform([cls])[0]: v
+                            for cls, v in class_weight.items()}
 
         # The original class labels
         classes = self.classes_ = label_encoder.classes_
