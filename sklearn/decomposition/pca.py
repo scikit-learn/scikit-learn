@@ -106,7 +106,7 @@ class PCA(_BasePCA):
 
     Linear dimensionality reduction using Singular Value Decomposition of the
     data to project it to a lower dimensional space. The input data is centered
-    for each feature before applying the SVD.
+    but not scaled for each feature before applying the SVD.
 
     It uses the LAPACK implementation of the full SVD or a randomized truncated
     SVD by the method of Halko et al. 2009, depending on the shape of the input
