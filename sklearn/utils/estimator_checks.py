@@ -12,6 +12,7 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
+from sklearn.neighbors.base import NeighborsBase
 from sklearn.utils import IS_PYPY
 from sklearn.utils import _joblib
 from sklearn.utils.testing import assert_raises, _get_args
@@ -2360,6 +2361,9 @@ def check_estimator_sparse_dense(name, estimator_orig):
         if 'fit_intercept' in estimator.get_params():
             estimator.set_params(fit_intercept=False)
             estimator_sp.set_params(fit_intercept=False)
+        if isinstance(estimator, NeighborsBase):
+            estimator.set_params(algorithm='brute')
+            estimator_sp.set_params(algorithm='brute')
         set_random_state(estimator)
         set_random_state(estimator_sp)
         try:
