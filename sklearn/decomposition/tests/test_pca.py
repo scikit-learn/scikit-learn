@@ -6,6 +6,7 @@ import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
@@ -706,16 +707,14 @@ def test_pca_dtype_preservation(svd_solver):
 def test_pca_deterministic_output():
     rng = np.random.RandomState(0)
     X = rng.rand(10, 10)
-    transformed_X = np.zeros((10 * len(solver_list), 2))
 
-    i = 0
     for solver in solver_list:
-        for _ in range(10):
+        transformed_X = np.zeros((20, 2))
+        for i in range(20):
             pca = PCA(n_components=2, svd_solver=solver, random_state=i)
             transformed_X[i, :] = pca.fit_transform(X)[0]
-            i += 1
-
-    assert np.isclose(transformed_X, transformed_X[0, :]).all()
+        assert_allclose(
+            transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2))
 
 
 def check_pca_float_dtype_preservation(svd_solver):
