@@ -125,9 +125,6 @@ def get_openmp_flag(compiler):
     return ['-fopenmp']
 
 
-OPENMP_EXTENSIONS = []
-
-
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
 # build_ext has to be imported after setuptools
@@ -144,9 +141,8 @@ class build_ext_subclass(build_ext):
         openmp_flag = get_openmp_flag(compiler)
 
         for e in self.extensions:
-            if e.name in OPENMP_EXTENSIONS:
-                e.extra_compile_args += openmp_flag
-                e.extra_link_args += openmp_flag
+            e.extra_compile_args += openmp_flag
+            e.extra_link_args += openmp_flag
 
         build_ext.build_extensions(self)
 
