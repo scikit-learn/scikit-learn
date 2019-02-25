@@ -767,7 +767,7 @@ def test_invalid_drop_length(drop):
 @pytest.mark.parametrize("density", [True, False],
                          ids=['sparse', 'dense'])
 @pytest.mark.parametrize("drop", ['first',
-                                 ['a', 2, 'b']],
+                                  ['a', 2, 'b']],
                          ids=['first', 'manual'])
 def test_categories(density, drop):
     ohe_base = OneHotEncoder(sparse=density)

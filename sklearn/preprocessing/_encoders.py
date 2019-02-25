@@ -652,7 +652,6 @@ class OneHotEncoder(_BaseEncoder):
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
         if self.drop is not None:
-            max_val = max(len(cats) for cats in self.categories_)
             to_drop = self.drop_idx_.reshape(1, -1)
 
             # We remove all the dropped categories from mask, and decrement all
