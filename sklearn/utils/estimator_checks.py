@@ -399,10 +399,6 @@ def set_checking_parameters(estimator):
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
 
-    if "KNeighbors" in estimator.__class__.__name__ :
-            # Override the default 'auto' for sparse dense equivalence
-            # since only 'brute' algo is used for sparse see #1572
-            estimator.set_params(algorithm='brute')
 
 class NotAnArray:
     """An object that is convertible to an array
