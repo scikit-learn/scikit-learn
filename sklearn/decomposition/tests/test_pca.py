@@ -6,7 +6,6 @@ import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
@@ -716,7 +715,7 @@ def test_pca_deterministic_output():
             transformed_X[i, :] = pca.fit_transform(X)[0]
             i += 1
 
-    assert_array_equal(np.isclose(transformed_X, transformed_X[0, :]), True)
+    assert np.isclose(transformed_X, transformed_X[0, :]).all()
 
 
 def check_pca_float_dtype_preservation(svd_solver):
