@@ -1360,7 +1360,7 @@ def test_saga_vs_liblinear():
 
 @pytest.mark.parametrize('multi_class', ['ovr', 'multinomial'])
 @pytest.mark.parametrize('solver', ['newton-cg', 'saga'])
-def test_dtype_match(multi_class):
+def test_dtype_match(solver, multi_class):
     # Test that np.float32 input data is not cast to np.float64 when possible
 
     X_32 = np.array(X).astype(np.float32)
