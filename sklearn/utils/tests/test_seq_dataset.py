@@ -7,8 +7,8 @@ from numpy.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 import scipy.sparse as sp
 
-from sklearn.utils.seq_dataset import ArrayDataset64 as ArrayDataset
-from sklearn.utils.seq_dataset import CSRDataset64 as CSRDataset
+from sklearn.utils.seq_dataset import ArrayDataset64
+from sklearn.utils.seq_dataset import CSRDataset64
 from sklearn.utils.seq_dataset import ArrayDataset32
 
 from sklearn.datasets import load_iris
@@ -36,8 +36,8 @@ def assert_csr_equal(X, Y):
 
 
 def test_seq_dataset():
-    dataset1 = ArrayDataset(X, y, sample_weight, seed=42)
-    dataset2 = CSRDataset(X_csr.data, X_csr.indptr, X_csr.indices,
+    dataset1 = ArrayDataset64(X, y, sample_weight, seed=42)
+    dataset2 = CSRDataset64(X_csr.data, X_csr.indptr, X_csr.indices,
                           y, sample_weight, seed=42)
 
     for dataset in (dataset1, dataset2):
@@ -60,8 +60,8 @@ def test_seq_dataset():
 
 
 def test_seq_dataset_shuffle():
-    dataset1 = ArrayDataset(X, y, sample_weight, seed=42)
-    dataset2 = CSRDataset(X_csr.data, X_csr.indptr, X_csr.indices,
+    dataset1 = ArrayDataset64(X, y, sample_weight, seed=42)
+    dataset2 = CSRDataset64(X_csr.data, X_csr.indptr, X_csr.indices,
                           y, sample_weight, seed=42)
 
     # not shuffled
@@ -92,7 +92,7 @@ def test_seq_dataset_shuffle():
 
 def test_fused_types_consistency():
     dataset32 = ArrayDataset32(X32, y32, sample_weight32, seed=42)
-    dataset64 = ArrayDataset(X, y, sample_weight, seed=42)
+    dataset64 = ArrayDataset64(X, y, sample_weight, seed=42)
 
     for i in range(5):
         # next sample
