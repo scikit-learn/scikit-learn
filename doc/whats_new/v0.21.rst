@@ -82,7 +82,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
   `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
   `n_components < n_features` instead of
-  `n_components <= min(n_samples, n_features)`. 
+  `n_components <= min(n_samples, n_features)`.
   :issue:`11650` by :user:`Hossein Pourbozorg <hossein-pourbozorg>` and
   :user:`Zijie (ZJ) Poh <zjpoh>`.
 
@@ -138,6 +138,10 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12177` by :user:`Sergey Feldman <sergeyf>` :user:`Ben Lawson
   <benlawson>`.
 
+- |Fix| In :class:`impute.MissingIndicator` avoid implicit densification by
+  raising an exception if input is sparse add `missing_values` property
+  is set to 0. :issue:`13240` by :user:`Bartosz Telenczuk <btel>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -171,7 +175,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`linear_model.LassoLarsIC`, where user input
    ``copy_X=False`` at instance creation would be overridden by default
-   parameter value ``copy_X=True`` in ``fit``. 
+   parameter value ``copy_X=True`` in ``fit``.
    :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
 
 :mod:`sklearn.manifold`

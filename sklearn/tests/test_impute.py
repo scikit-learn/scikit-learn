@@ -935,14 +935,21 @@ def test_missing_indicator_error(X_fit, X_trans, params, msg_err):
 
 
 @pytest.mark.parametrize(
-    "missing_values, dtype",
-    [(np.nan, np.float64),
-     (0, np.int32),
-     (-1, np.int32)])
-@pytest.mark.parametrize(
-    "arr_type",
-    [np.array, sparse.csc_matrix, sparse.csr_matrix, sparse.coo_matrix,
-     sparse.lil_matrix, sparse.bsr_matrix])
+    "missing_values, dtype, arr_type",
+    [(np.nan, np.float64, np.array),
+     (0,      np.int32,   np.array),
+     (-1,     np.int32,   np.array),
+     (np.nan, np.float64, sparse.csc_matrix),
+     (-1,     np.int32,   sparse.csc_matrix),
+     (np.nan, np.float64, sparse.csr_matrix),
+     (-1,     np.int32,   sparse.csr_matrix),
+     (np.nan, np.float64, sparse.coo_matrix),
+     (-1,     np.int32,   sparse.coo_matrix),
+     (np.nan, np.float64, sparse.lil_matrix),
+     (-1,     np.int32,   sparse.lil_matrix),
+     (np.nan, np.float64, sparse.bsr_matrix),
+     (-1,     np.int32,   sparse.bsr_matrix)
+     ])
 @pytest.mark.parametrize(
     "param_features, n_features, features_indices",
     [('missing-only', 2, np.array([0, 1])),
@@ -992,11 +999,42 @@ def test_missing_indicator_new(missing_values, arr_type, dtype, param_features,
     assert_allclose(X_trans_mask_sparse.toarray(), X_trans_mask)
 
 
-@pytest.mark.parametrize("param_sparse", [True, False, 'auto'])
-@pytest.mark.parametrize("missing_values", [np.nan, 0])
 @pytest.mark.parametrize(
     "arr_type",
-    [np.array, sparse.csc_matrix, sparse.csr_matrix, sparse.coo_matrix])
+    [sparse.csc_matrix, sparse.csr_matrix, sparse.coo_matrix,
+     sparse.lil_matrix, sparse.bsr_matrix])
+def test_missing_indicator_raise_on_sparse_with_missing_0(arr_type):
+    # test for sparse input and missing_value == 0
+
+    missing_values = 0
+    X_fit = np.array([[missing_values, missing_values, 1],
+                      [4, missing_values, 2]])
+    X_trans = np.array([[missing_values, missing_values, 1],
+                        [4, 12, 10]])
+
+    # convert the input to the right array format
+    X_fit_sparse = arr_type(X_fit)
+    X_trans_sparse = arr_type(X_trans)
+
+    indicator = MissingIndicator(missing_values=missing_values)
+
+    with pytest.raises(ValueError, match="Sparse input with missing_values=0"):
+        indicator.fit_transform(X_fit_sparse)
+
+    indicator.fit_transform(X_fit)
+    with pytest.raises(ValueError, match="Sparse input with missing_values=0"):
+        indicator.transform(X_trans_sparse)
+
+
+@pytest.mark.parametrize("param_sparse", [True, False, 'auto'])
+@pytest.mark.parametrize("missing_values, arr_type",
+                         [(np.nan, np.array),
+                          (0,      np.array),
+                          (np.nan, sparse.csc_matrix),
+                          (np.nan, sparse.csr_matrix),
+                          (np.nan, sparse.coo_matrix),
+                          (np.nan, sparse.lil_matrix)
+                          ])
 def test_missing_indicator_sparse_param(arr_type, missing_values,
                                         param_sparse):
     # check the format of the output with different sparse parameter
