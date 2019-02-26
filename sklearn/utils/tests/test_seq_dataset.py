@@ -132,11 +132,8 @@ def test_fused_types_consistency(dataset32, dataset64):
     NUMBER_OF_RUNS = 5
     for _ in range(NUMBER_OF_RUNS):
         # next sample
-        xi32, yi32, _, _ = dataset32._next_py()
-        xi64, yi64, _, _ = dataset64._next_py()
-
-        xi_data32, _, _ = xi32
-        xi_data64, _, _ = xi64
+        (xi_data32, _, _), yi32, _, _ = dataset32._next_py()
+        (xi_data64, _, _), yi64, _, _ = dataset64._next_py()
 
         assert xi_data32.dtype == np.float32
         assert xi_data64.dtype == np.float64
