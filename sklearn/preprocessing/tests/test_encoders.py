@@ -412,6 +412,33 @@ def test_one_hot_encoder_inverse():
         msg = re.escape('Shape of the passed X data is not correct')
         assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
 
+@pytest.mark.parametrize("X", 
+    [[1, 2], 
+    np.array([3., 4.])
+    ])
+def test_X_is_not_1D(X):
+    #X = np.array([1, 2])
+    oh = OneHotEncoder()
+
+    msg = ("Expected 2D array, got 1D array instead")
+    assert_raises_regex(ValueError, msg, oh.fit_transform, X)
+    assert_raises_regex(ValueError, msg, oh.fit, X)
+
+
+@pytest.mark.parametrize("X", 
+    [np.array([[[1,2]]]),
+    np.zeros([3,4,5])
+    ])
+def test_X_is_no_more_than2D(X):
+    #X = np.array([1, 2])
+    oh = OneHotEncoder()
+    
+    msg = ("Found array with dim")
+    assert_raises_regex(ValueError, msg, oh.fit_transform, X)
+    assert_raises_regex(ValueError, msg, oh.fit, X)
+
+
+
 
 @pytest.mark.parametrize("X, cat_exp, cat_dtype", [
     ([['abc', 55], ['def', 55]], [['abc', 'def'], [55]], np.object_),

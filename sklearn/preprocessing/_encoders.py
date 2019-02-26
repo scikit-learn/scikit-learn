@@ -41,8 +41,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
           not do that)
 
         """
-        if hasattr(X, 'iloc') and getattr(1, 'ndim',0) == 2:
-            # only if pandas dataframe (not an array, sequence etc...) 
+        if hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2:
+            # only if pandas dataframe (not an array, sequence etc...)
             # ido not check full X,
             # it should be checked column by column (using _check_X_feature())
             return X
