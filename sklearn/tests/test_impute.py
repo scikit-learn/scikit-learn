@@ -1023,6 +1023,7 @@ def test_missing_indicator_raise_on_sparse_with_missing_0(arr_type):
     with pytest.raises(ValueError):
         indicator.transform(X_trans)
 
+
 @pytest.mark.parametrize("param_sparse", [True, False, 'auto'])
 @pytest.mark.parametrize("missing_values, arr_type",
                          [(np.nan, np.array),
