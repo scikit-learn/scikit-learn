@@ -452,9 +452,7 @@ def test_fused_types_make_dataset():
 
     assert xi_data_32.dtype == np.float32
     assert xi_data_64.dtype == np.float64
-    assert isinstance(yi_32, float)
-    assert isinstance(yi_64, float)
-    # assert_array_almost_equal(yi_64, yi_32, decimal=5)
+    assert_allclose(yi_64, yi_32, rtol=rtol)
 
     # csr
     datasetcsr_32, _ = make_dataset(X_csr_32, y_32, sample_weight_32)
@@ -466,8 +464,6 @@ def test_fused_types_make_dataset():
 
     assert xicsr_data_32.dtype == np.float32
     assert xicsr_data_64.dtype == np.float64
-    assert isinstance(yicsr_32, float)
-    assert isinstance(yicsr_64, float)
 
     assert_allclose(xicsr_data_64, xicsr_data_32, rtol=rtol)
     assert_allclose(yicsr_64, yicsr_32, rtol=rtol)
