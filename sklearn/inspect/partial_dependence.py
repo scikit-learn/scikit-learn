@@ -200,7 +200,7 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
 
         - If 'auto', then 'recursion' will be used for
           ``BaseGradientBoosting`` estimators with ``init=None``, and 'brute'
-          used for other estimators.
+          for all other.
 
     Returns
     -------
@@ -362,7 +362,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
 
         - If 'auto', then 'recursion' will be used for
           ``BaseGradientBoosting`` estimators with ``init=None``, and
-          'brute' used for other estimators.
+          'brute' for all other.
 
         Unlike the 'brute' method, 'recursion' does not account for the
         ``init`` predictor of the boosting process. In practice this still
