@@ -133,10 +133,10 @@ Support for Python 3.4 and below has been officially dropped.
   function of other features in a round-robin fashion. :issue:`8478` and
   :issue:`12177` by :user:`Sergey Feldman <sergeyf>` :user:`Ben Lawson
   <benlawson>`.
-  
+
 - |Fix| In :class:`impute.MissingIndicator` avoid implicit densification by
   raising an exception if input is sparse add `missing_values` property
-  is set to 0. :issue:`12750` by :user:`Bartosz Telenczuk <btel>`.
+  is set to 0. :issue:`13240` by :user:`Bartosz Telenczuk <btel>`.
 
 :mod:`sklearn.linear_model`
 ...........................
