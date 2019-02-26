@@ -1,3 +1,4 @@
+# coding: utf-8
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
@@ -5,6 +6,7 @@
 #          Eric Martin <eric@ericmart.in>
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
 #          Eric Chang <ericchang2017@u.northwestern.edu>
+#          Xavier Dupré <xadupre@microsoft.com>
 # License: BSD 3 clause
 
 
@@ -1522,10 +1524,10 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         elif sparse.isspmatrix_csc(X) and self.degree < 4:
             return self.transform(X.tocsr()).tocsc()
         else:
-            combinations = self._combinations(n_features, self.degree,
-                                              self.interaction_only,
-                                              self.include_bias)
             if sparse.isspmatrix(X):
+                combinations = self._combinations(n_features, self.degree,
+                                                  self.interaction_only,
+                                                  self.include_bias)
                 columns = []
                 for comb in combinations:
                     if comb:
@@ -1538,10 +1540,54 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                         columns.append(bias)
                 XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
             else:
-                XP = np.empty((n_samples, self.n_output_features_),
-                              dtype=X.dtype, order=self.order)
-                for i, comb in enumerate(combinations):
-                    XP[:, i] = X[:, comb].prod(1)
+                # When the matrix is small, it is faster to transpose
+                # the matrix first to multiply contiguous memory segments.
+                transpose = X.size <= 1e7 and self.order == 'C'
+                n = X.shape[1]
+
+                if transpose:
+                    X = X.T
+                    XP = np.empty((self.n_output_features_, n_samples),
+                                  dtype=X.dtype, order=self.order)
+                    if self.include_bias:
+                        XP[0, :] = 1
+                else:
+                    XP = np.empty((n_samples, self.n_output_features_),
+                                  dtype=X.dtype, order=self.order)
+
+                    if self.include_bias:
+                        XP[:, 0]= 1
+
+                pos = 1 if self.include_bias else 0
+                for d in range(0, self.degree):
+                    if d == 0:
+                        if transpose:
+                            XP[pos:pos + n, :] = X
+                        else:
+                            XP[:, pos:pos + n] = X
+                        index = list(range(pos, pos + n))
+                        pos += n
+                        index.append(pos)
+                    else:
+                        new_index = []
+                        end = index[-1]
+                        for i in range(0, n):
+                            a = index[i]
+                            new_index.append(pos)
+                            start = a + d if self.interaction_only else a
+                            new_pos = pos + end - start
+                            if transpose:
+                                XP[pos:new_pos, :] = np.multiply(
+                                    XP[start:end, :], X[i:i + 1, :])
+                            else:
+                                XP[:, pos:new_pos] = np.multiply(
+                                    XP[:, start:end], X[:, i:i + 1])
+                            pos = new_pos
+
+                        new_index.append(pos)
+                        index = new_index
+                if transpose:
+                    XP = XP.T.copy()
 
         return XP
 
