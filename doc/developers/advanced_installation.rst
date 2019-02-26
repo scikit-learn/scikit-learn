@@ -38,7 +38,7 @@ basis to help users test bleeding edge features or bug fixes:
 
 ::
 
-  pip install --pre -f https://ea8f9da187ce3f7323b4-ef5ddc96fef712c596c71d053dc2ad71.ssl.cf2.rackcdn.com/ scikit-learn
+  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
 
 
 .. _install_bleeding_edge:
