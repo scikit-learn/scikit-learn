@@ -19,7 +19,7 @@ from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model.base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
-from .utils import check_array, check_X_y, as_float_array
+from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .preprocessing import StandardScaler
@@ -427,7 +427,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Target values.
         """
         # FIXME: Future warning to be removed in 0.23
-        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self, dtype=[np.float64, np.float32])
+        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
+                         dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
         n_classes = len(self.classes_)
