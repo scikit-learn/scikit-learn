@@ -66,6 +66,9 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`datasets.svmlight_format` :issue:`10727` by
   :user:`Bryan K Woods <bryan-woods>`.
 
+- |Fix| :func:`datasets.load_sample_images` returns images with a deterministic
+  order. :issue:`13250` by :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
