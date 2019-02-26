@@ -120,7 +120,7 @@ def test_elkan_results_sparse(distribution):
     # check that results are identical between lloyd and elkan algorithms
     # with sparse input
     rnd = np.random.RandomState(0)
-    if distribution is 'normal':
+    if distribution == 'normal':
         X = sp.random(100, 100, density=0.1, format='csr', random_state=rnd)
         X.data = rnd.randn(len(X.data))
     else:
