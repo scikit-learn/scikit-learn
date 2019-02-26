@@ -401,28 +401,34 @@ def test_verbosity(verbose, evaluate_every, expected_lines,
                     expected_perplexities)
 
 
-def test_lda_dtype_match():
-    # Test that np.float32 input data is not cast to np.float64 when possible
+@pytest.mark.parametrize("data_type, expected_type", [
+    (np.float32, np.float32), (np.float64, np.float64), (np.int32, np.float32),
+    (np.int64, np.float64)])
+def test_lda_dtype_match(data_type, expected_type):
     n_components, X = _build_sparse_mtx()
-    X_32 = np.array(X).astype(np.float32)
-    X_64 = np.array(X).astype(np.float64)
+    for learning_method in ['batch', 'online']:
+        clf = LatentDirichletAllocation(n_components=n_components,
+                                           learning_method=learning_method,
+                              learning_offset=10., total_samples=100)
+        clf.fit(X.astype(data_type))
+        assert clf.components_.dtype == expected_type
 
-    for learning_met in ['batch', 'online']:
-        # Check type consistency
+
+
+def test_lda_numeric_consistency_float32_float64():
+    n_components, X = _build_sparse_mtx()
+    for learning_method in ['batch', 'online']:
         clf_32 = LatentDirichletAllocation(n_components=n_components,
-                                           learning_method=learning_met,
+                                           learning_method=learning_method,
                               learning_offset=10., total_samples=100,
                               random_state=42)
-        clf_32.fit(X_32)
-        assert_equal(clf_32.components_ .dtype, X_32.dtype)
-
+        clf_32.fit(X.astype(np.float32))
         clf_64 = LatentDirichletAllocation(n_components=n_components,
-                                           learning_method=learning_met,
-                                           learning_offset=10., total_samples=100,
-                                           random_state=42)
-        clf_64.fit(X_64)
-        assert_equal(clf_64.components_.dtype, X_64.dtype)
+                                           learning_method=learning_method,
+                              learning_offset=10., total_samples=100,
+                              random_state=42)
+        clf_64.fit(X.astype(np.float64))
 
         # Check value consistency between types
         rtol = 1e-6
-        assert_allclose(clf_32.components_ , clf_64.components_.astype(np.float32), rtol=rtol)
+        assert_allclose(clf_32.components_, clf_64.components_.astype(np.float32), rtol=rtol)

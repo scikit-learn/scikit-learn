@@ -17,7 +17,8 @@ from scipy.special import gammaln
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
-                     gen_batches, gen_even_slices)
+                     gen_batches, gen_even_slices,
+                     as_float_array)
 from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
 from ..utils._joblib import Parallel, delayed, effective_n_jobs
@@ -529,6 +530,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         """
         self._check_params()
         X = self._check_non_neg_array(X, "LatentDirichletAllocation.fit")
+        X = as_float_array(X)
         n_samples, n_features = X.shape
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
