@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_no_warnings
 
-
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
 
@@ -270,6 +269,7 @@ def test_mnb_prior_unobserved_targets():
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
     assert clf.predict([[1, 1]]) == 2
+
 
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB])
 def test_discretenb_partial_fit(cls):
