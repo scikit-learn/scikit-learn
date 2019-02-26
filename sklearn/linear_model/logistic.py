@@ -370,7 +370,7 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
 
-    sample_weight : array-like, shape (n_samples,) optional
+    sample_weight : array-like, shape (n_samples,)
         Array of weights that are assigned to individual samples.
 
     Returns
