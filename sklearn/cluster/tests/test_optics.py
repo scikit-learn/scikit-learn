@@ -43,10 +43,6 @@ def test_correct_number_of_clusters():
     assert_equal(n_clusters_1, n_clusters)
 
     # check attribute types and sizes
-    assert clust.core_sample_indices_.ndim == 1
-    assert clust.core_sample_indices_.size > 0
-    assert clust.core_sample_indices_.dtype.kind == 'i'
-
     assert clust.labels_.shape == (len(X),)
     assert clust.labels_.dtype.kind == 'i'
 
@@ -136,12 +132,7 @@ def test_dbscan_optics_parity(eps, min_samples):
                 np.sum(np.max(contingency, axis=1)))
     disagree = X.shape[0] - agree
 
-    # verify core_labels match
-    assert_array_equal(op.core_sample_indices_,
-                       db.core_sample_indices_)
-
-    non_core_count = len(op.labels_) - len(op.core_sample_indices_)
-    percent_mismatch = np.round((disagree - 1) / non_core_count, 2)
+    percent_mismatch = np.round((disagree - 1) / X.shape[0], 2)
 
     # verify label mismatch is <= 5% labels
     assert percent_mismatch <= 0.05

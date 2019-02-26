@@ -126,9 +126,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Attributes
     ----------
-    core_sample_indices_ : array, shape (n_core_samples,)
-        Indices of core samples.
-
     labels_ : array, shape (n_samples,)
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
@@ -252,12 +249,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         # Extract clusters from the calculated orders and reachability
         if self.cluster_method == 'dbscan':
-            indices_, labels_ = cluster_optics_dbscan(self.reachability_,
+            labels_ = cluster_optics_dbscan(self.reachability_,
                                                       self.core_distances_,
                                                       self.ordering_,
                                                       self.eps)
 
-        self.core_sample_indices_ = indices_
         self.labels_ = labels_
         return self
 
@@ -520,9 +516,6 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
 
     Returns
     -------
-    core_sample_indices_ : array, shape (n_core_samples,)
-        The indices of the core samples.
-
     labels_ : array, shape (n_samples,)
         The estimated labels.
 
@@ -535,5 +528,4 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     near_core = core_distances <= eps
     labels[ordering] = np.cumsum(far_reach[ordering] & near_core[ordering]) - 1
     labels[far_reach & ~near_core] = -1
-    is_core[near_core] = True
-    return np.arange(n_samples)[is_core], labels
+    return labels
