@@ -97,7 +97,7 @@ Support for Python 3.4 and below has been officially dropped.
   :user:`William de Vazelhes<wdevazelhes>`.
   
 :mod:`sklearn.dummy`
-....................................
+....................
 
 - |Fix| Fixed a bug in :class:`dummy.DummyClassifier` where the
   ``predict_proba`` method was returning int32 array instead of
