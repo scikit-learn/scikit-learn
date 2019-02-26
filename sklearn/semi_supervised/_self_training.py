@@ -74,7 +74,9 @@ class SelfTrainingClassifier(BaseEstimator):
     n_iter_ : int
         The amount of iterations the classifier used during fitting.
 
-    termination_condition_: {'max_iter', 'early_stopping', 'all_labeled'}
+    termination_condition_: string {'max_iter',
+                                    'early_stopping',
+                                    'all_labeled'}
         The reason that fitting was stopped.
 
         - 'max_iter': `n_iter_` reached `max_iter`.

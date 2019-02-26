@@ -26,7 +26,6 @@ from sklearn.svm import SVC
 from sklearn.semi_supervised import LabelSpreading
 from sklearn.semi_supervised import SelfTrainingClassifier
 
-rng = np.random.RandomState(0)
 
 iris = datasets.load_iris()
 
@@ -36,6 +35,7 @@ y = iris.target
 # step size in the mesh
 h = .02
 
+rng = np.random.RandomState(0)
 y_rand = rng.rand(y.shape[0])
 y_30 = np.copy(y)
 y_30[y_rand < 0.3] = -1

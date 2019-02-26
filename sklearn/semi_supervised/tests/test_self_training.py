@@ -11,7 +11,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris
-from sklearn.preprocessing import LabelBinarizer
 from sklearn.metrics import accuracy_score
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
@@ -32,17 +31,16 @@ y_train_missing_strings = np.vectorize(mapping.get)(
     y_train_missing_labels).astype(object)
 y_train_missing_strings[y_train_missing_labels == -1] = -1
 
-lb = LabelBinarizer()
-y_train_missing_dummies = lb.fit_transform(y_train_missing_labels)
-
 
 def test_missing_predict_proba():
     # Check that an error is thrown if predict_proba is not implemented
     base_classifier = SVC(probability=False, gamma='scale')
     self_training = SelfTrainingClassifier(base_classifier)
-    message = "base_classifier (SVC) should implement predict_proba!"
-    assert_raise_message(ValueError, message, self_training.fit, X_train,
-                         y_train_missing_labels)
+
+    with pytest.raises(ValueError) as e:
+        message = "base_classifier (SVC) should implement predict_proba!"
+        self_training.fit(X_train, y_train_missing_labels)
+    assert e.value.message == message
 
 
 def test_none_classifier():
