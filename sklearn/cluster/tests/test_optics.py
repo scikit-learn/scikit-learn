@@ -8,8 +8,6 @@ import pytest
 
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import OPTICS
-from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
-from sklearn.cluster.optics_ import _find_local_maxima
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
