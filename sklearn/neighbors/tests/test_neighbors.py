@@ -784,7 +784,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
 
             X2_pre = sparsev(pairwise_distances(X, metric='euclidean'))
             if issparse(sparsev(X2_pre)):
-                assert_raises(ValueError, knn_pre.predict, X2_pre)
+                assert_raises(TypeError, knn_pre.predict, X2_pre)
             else:
                 assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
 
