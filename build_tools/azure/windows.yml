@@ -21,21 +21,23 @@ jobs:
     - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
       displayName: Add conda to PATH for 64 bit Python
       condition: eq(variables['PYTHON_ARCH'], '64')
-    - powershell: |
-        $wc = New-Object net.webclient
-        $wc.Downloadfile("https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86.exe", "miniconda.exe")
-        Start-Process "miniconda.exe" /qn -Wait
-      displayName: Add conda to PATH for 32 bit Python
+    - powershell: Write-Host "##vso[task.prependpath]$env:AGENT_WORKFOLDER\miniconda\Scripts"
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(PYTHON_VERSION)'
+        addToPath: true
+        architecture: 'x86'
+      displayName: Use Python 32 bit
       condition: eq(variables['PYTHON_ARCH'], '32')
-    # - script: |
-    #     build_tools\\azure\\install.cmd
-    #   displayName: 'Install'
-    # - script: |
-    #     build_tools\\azure\\test_script.cmd
-    #   displayName: 'Test Library'
-    # - task: PublishTestResults@2
-    #   inputs:
-    #     testResultsFiles: '$(TMP_FOLDER)\$(JUNITXML)'
-    #     testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
-    #   displayName: 'Publish Test Results'
-    #   condition: succeededOrFailed()
+    - script: |
+        build_tools\\azure\\install.cmd
+      displayName: 'Install'
+    - script: |
+        build_tools\\azure\\test_script.cmd
+      displayName: 'Test Library'
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: '$(TMP_FOLDER)\$(JUNITXML)'
+        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+      displayName: 'Publish Test Results'
+      condition: succeededOrFailed()
