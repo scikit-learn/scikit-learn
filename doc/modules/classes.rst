@@ -657,8 +657,9 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
+   impute.IterativeImputer
    impute.MissingIndicator
-
+   
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -1401,6 +1402,7 @@ Low-level methods
 
    tree.export_graphviz
    tree.plot_tree
+   tree.export_text
 
 
 .. _utils_ref:

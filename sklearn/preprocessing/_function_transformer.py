@@ -143,6 +143,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Input array.
 
+
+
         Returns
         -------
         X_out : array-like, shape (n_samples, n_features)
@@ -157,6 +159,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape (n_samples, n_features)
             Input array.
+
+
 
         Returns
         -------
@@ -173,3 +177,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
             func = _identity
 
         return func(X, **(kw_args if kw_args else {}))
+
+    def _more_tags(self):
+        return {'no_validation': True,
+                'stateless': True}

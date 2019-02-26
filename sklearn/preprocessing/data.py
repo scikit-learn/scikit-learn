@@ -407,6 +407,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X /= self.scale_
         return X
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     """Transforms features by scaling each feature to a given range.
@@ -808,6 +811,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 X += self.mean_
         return X
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 class MaxAbsScaler(BaseEstimator, TransformerMixin):
     """Scale each feature by its maximum absolute value.
@@ -974,6 +980,9 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         else:
             X *= self.scale_
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 def maxabs_scale(X, axis=0, copy=True):
@@ -1229,6 +1238,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
             if self.with_centering:
                 X += self.center_
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
@@ -1722,6 +1734,9 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
+    def _more_tags(self):
+        return {'stateless': True}
+
 
 def binarize(X, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix
@@ -1853,6 +1868,9 @@ class Binarizer(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
+
+    def _more_tags(self):
+        return {'stateless': True}
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
@@ -2380,6 +2398,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return self._transform(X, inverse=True)
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 def quantile_transform(X, axis=0, n_quantiles=1000,
                        output_distribution='uniform',
@@ -2840,6 +2861,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                              .format(valid_methods, self.method))
 
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 def power_transform(X, method='warn', standardize=True, copy=True):
