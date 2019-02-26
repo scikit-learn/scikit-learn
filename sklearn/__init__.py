@@ -16,6 +16,7 @@ import sys
 import re
 import warnings
 import logging
+import os
 
 from ._config import get_config, set_config, config_context
 
@@ -45,6 +46,13 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
 __version__ = '0.21.dev0'
+
+
+# On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
+# simultaneously. This can happen for instance when calling BLAS inside a
+# prange. Setting the following environment variable allows multiple OpenMP
+# libraries.
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "True")
 
 
 try:
