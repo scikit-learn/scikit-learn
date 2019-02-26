@@ -27,6 +27,20 @@ There are different ways to get scikit-learn installed:
     If you wish to contribute to the project, you need to
     :ref:`install the latest development version<install_bleeding_edge>`.
 
+.. _install_nightly_builds:
+
+Installing nightly builds
+=========================
+
+The continuous integration servers of the scikit-learn project build, test
+and upload wheel packages for the most recent Python version on a nightly
+basis to help users test bleeding edge features or bug fixes:
+
+::
+
+  pip install --pre -f https://ea8f9da187ce3f7323b4-ef5ddc96fef712c596c71d053dc2ad71.ssl.cf2.rackcdn.com/ scikit-learn
+
+
 .. _install_bleeding_edge:
 
 Building from source
