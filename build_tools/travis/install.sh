@@ -40,7 +40,7 @@ then
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
     # avoid error due to multiple OpenMP libraries loaded simultaneously
-    export KMP_DUPLICATE_LIB_OK=TRUE
+    # export KMP_DUPLICATE_LIB_OK=TRUE
 fi
 
 make_conda() {
