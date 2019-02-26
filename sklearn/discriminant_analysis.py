@@ -485,9 +485,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             raise ValueError("unknown solver {} (valid solvers are 'svd', "
                              "'lsqr', and 'eigen').".format(self.solver))
         if self.classes_.size == 2:  # treat binary case as a special case
-            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2)
+            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2, dtype=X.dtype)
             self.intercept_ = np.array(self.intercept_[1] - self.intercept_[0],
-                                       ndmin=1)
+                                       ndmin=1, dtype=X.dtype)
         return self
 
     def transform(self, X):
