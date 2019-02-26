@@ -1180,6 +1180,15 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                              "categorical data represented either as an array "
                              "with integer dtype or an array of string values "
                              "with an object dtype.".format(X.dtype))
+
+        if sparse.issparse(X):
+            # missing_values = 0 not allowed with sparse data as it would
+            # force densification
+            if self.missing_values == 0:
+                raise ValueError("Sparse input with missing_values=0 is "
+                                 "not supported. Provide a dense "
+                                 "array instead.")
+
         return X
 
     def fit(self, X, y=None):
@@ -1202,14 +1211,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         if self.features not in ('missing-only', 'all'):
             raise ValueError("'features' has to be either 'missing-only' or "
                              "'all'. Got {} instead.".format(self.features))
-
-        if sparse.issparse(X):
-            # missing_values = 0 not allowed with sparse data as it would
-            # force densification
-            if self.missing_values == 0:
-                raise ValueError("Imputation not possible when missing_values "
-                                 "== 0 and input is sparse. Provide a dense "
-                                 "array instead.")
 
         if not ((isinstance(self.sparse, str) and
                 self.sparse == "auto") or isinstance(self.sparse, bool)):
@@ -1243,14 +1244,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "
                              "than during fitting.")
-
-        if sparse.issparse(X):
-            # missing_values = 0 not allowed with sparse data as it would
-            # force densification
-            if self.missing_values == 0:
-                raise ValueError("Imputation not possible when missing_values "
-                                 "== 0 and input is sparse. Provide a dense "
-                                 "array instead.")
 
         imputer_mask, features = self._get_missing_features_info(X)
 
