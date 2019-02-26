@@ -392,17 +392,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
                              "used for clustering." %
                              (n_samples, self.min_samples))
 
-        if self.min_cluster_size <= 0 or (self.min_cluster_size !=
-                                          int(self.min_cluster_size)
-                                          and self.min_cluster_size > 1):
-            raise ValueError('min_cluster_size must be a positive integer or '
-                             'a float between 0 and 1. Got %r' %
-                             self.min_cluster_size)
-        elif self.min_cluster_size > n_samples:
-            raise ValueError('min_cluster_size must be no greater than the '
-                             'number of samples (%d). Got %d' %
-                             (n_samples, self.min_cluster_size))
-
         if self.cluster_method not in ['dbscan']:
             raise ValueError("cluster_method should be one of"
                              " 'dbscan', but is %s" %
