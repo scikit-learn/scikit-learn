@@ -113,7 +113,7 @@ true_result5 = [0, 1, 1]
 ###############################################################################
 # Tests common to classification and regression
 
-class CommonTest(object):
+class CommonTest:
 
     def factory(self, **kwargs):
         if "random_state" not in kwargs:

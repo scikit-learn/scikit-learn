@@ -344,7 +344,7 @@ once will overwrite what was learned by any previous ``fit()``::
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False)
   >>> clf.predict(X_test)
-  array([1, 0, 1, 1, 0])
+  array([0, 0, 0, 1, 0])
 
 Here, the default kernel ``rbf`` is first changed to ``linear`` via
 :func:`SVC.set_params()<sklearn.svm.SVC.set_params>` after the estimator has

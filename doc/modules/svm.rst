@@ -393,7 +393,7 @@ Tips on Practical Use
     choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
     
-    :class:`LinearSVC` and :class`LinearSVR` are less sensitive to ``C`` when
+    :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
     it becomes large, and prediction results stop improving after a certain 
     threshold. Meanwhile, larger ``C`` values will take more time to train, 
     sometimes up to 10 times longer, as shown by Fan et al. (2008)
