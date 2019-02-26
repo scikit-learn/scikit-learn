@@ -1662,13 +1662,14 @@ def test_sample_weight_cross_validation():
     f2 = np.array([2, 3])       # Fold 2.
     sample_weight = np.array([2000000, 1000000, 1, 999999])
 
+    sum_sample_weight = np.sum(sample_weight)
     norm1_wt_f1 = sample_weight[f1] / np.sum(sample_weight[f1])
     acc1 = (1 - np.dot(y[f1], norm1_wt_f1))
-    ratio_wt_f1 = np.sum(sample_weight[f1]) / np.sum(sample_weight)
+    ratio_wt_f1 = np.sum(sample_weight[f1]) / sum_sample_weight
 
     norm1_wt_f2 = sample_weight[f2] / np.sum(sample_weight[f2])
     acc2 = np.dot(y[f2], norm1_wt_f2)
-    ratio_wt_f2 = np.sum(sample_weight[f2]) / np.sum(sample_weight)
+    ratio_wt_f2 = np.sum(sample_weight[f2]) / sum_sample_weight
 
     # 0.25000025 = 1000001 / 4000000 = 1/3 * 3/4 + 1/1000000 * 1/4
     exp_cv_acc = acc1 * ratio_wt_f1 + acc2 * ratio_wt_f2
@@ -1684,6 +1685,13 @@ def test_sample_weight_cross_validation():
     gscv.fit(X, y, sample_weight=sample_weight)
     best_score = gscv.best_score_
     np.testing.assert_almost_equal(best_score, exp_cv_acc)
+
+    # Assert that the sample weights for each fold were normalized by the
+    # L1 norm.
+    np.testing.assert_almost_equal(np.sum(norm1_wt_f1), 1)
+    np.all(norm1_wt_f1 >= 0)
+    np.testing.assert_almost_equal(np.sum(norm1_wt_f2), 1)
+    np.all(norm1_wt_f2 >= 0)
 
 
 @pytest.mark.parametrize("replications,sample_wt,pass_none", [
