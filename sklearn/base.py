@@ -578,20 +578,22 @@ class OutlierResamplerMixin:
         """
 
         if props is not None:
-           raise NotImplementedError('props is not supported for now')
+            raise NotImplementedError('props is not supported for now')
         if props is None:
             props = {}
 
         # filter out unrequired args
-        required_props = filter(lambda x : x in inspect.signature(super().fit),
+        required_props = filter(lambda x: x in inspect.signature(super().fit),
                                 props.keys())
-        filtered_props = {k : props[k] for k in required_props}
+        filtered_props = {k: props[k] for k in required_props}
 
-        y = self.fit_predict(X)
+        inliers = self.fit_predict(X) == 1
 
-        props = {prop[y == 1] for prop in props}
+        props = {prop[inliers == 1] for prop in props}
 
-        return X[y == 1], y[y == 1], props
+        if props:
+            return X[inliers], y[inliers], props
+        return X[inliers], y[inliers]
 
 
 class MetaEstimatorMixin:

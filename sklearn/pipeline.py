@@ -161,12 +161,21 @@ class Pipeline(_BaseComposition):
         for t in transformers:
             if t is None or t == 'passthrough':
                 continue
-            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
-                    hasattr(t, "transform")):
-                raise TypeError("All intermediate steps should be "
-                                "transformers and implement fit and transform "
-                                "or be the string 'passthrough' "
-                                "'%s' (type %s) doesn't" % (t, type(t)))
+            if (not (hasattr(t, "fit") or
+                     hasattr(t, "fit_transform") or
+                     hasattr(t, "fit_resample")) or
+                    not (hasattr(t, "transform") or
+                         hasattr(t, "fit_resample"))):
+                raise TypeError(
+                    "All intermediate steps of Pipeline should be "
+                    "estimators that implement fit and transform or resample "
+                    "(but not both) '%s' (type %s) doesn't)" % (t, type(t)))
+            if (hasattr(t, "fit_resample") and (hasattr(t, "fit_transform") or
+                                                hasattr(t, "transform"))):
+                raise TypeError(
+                    "All intermediate steps of the chain should be estimators"
+                    " that implement fit and transform or fit_resample."
+                    " '%s' implements both)" % (t))
 
         # We allow last estimator to be None as an identity transformation
         if (estimator is not None and estimator != 'passthrough'
@@ -212,6 +221,7 @@ class Pipeline(_BaseComposition):
         memory = check_memory(self.memory)
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
+        fit_resample_one_cached = memory.cache(_fit_resample_one)
 
         fit_params_steps = {name: {} for name, step in self.steps
                             if step is not None}
@@ -219,6 +229,7 @@ class Pipeline(_BaseComposition):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
+        yt = y
         for step_idx, name, transformer in self._iter(with_final=False):
             if hasattr(memory, 'location'):
                 # joblib >= 0.12
@@ -239,16 +250,21 @@ class Pipeline(_BaseComposition):
             else:
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transfomer
-            Xt, fitted_transformer = fit_transform_one_cached(
-                cloned_transformer, Xt, y, None,
-                **fit_params_steps[name])
+            if (hasattr(cloned_transformer, "transform") or
+                    hasattr(cloned_transformer, "fit_transform")):
+                Xt, fitted_transformer = fit_transform_one_cached(
+                    cloned_transformer, Xt, yt, None,
+                    **fit_params_steps[name])
+            elif hasattr(cloned_transformer, "fit_resample"):
+                Xt, yt, fitted_transformer = fit_resample_one_cached(
+                    cloned_transformer, Xt, yt, **fit_params_steps[name])
             # Replace the transformer of the step with the fitted
             # transformer. This is necessary when loading the transformer
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
         if self._final_estimator == 'passthrough':
-            return Xt, {}
-        return Xt, fit_params_steps[self.steps[-1][0]]
+            return Xt, yt, {}
+        return Xt, yt, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model
@@ -276,9 +292,9 @@ class Pipeline(_BaseComposition):
         self : Pipeline
             This estimator
         """
-        Xt, fit_params = self._fit(X, y, **fit_params)
+        Xt, yt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator != 'passthrough':
-            self._final_estimator.fit(Xt, y, **fit_params)
+            self._final_estimator.fit(Xt, yt, **fit_params)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -309,13 +325,51 @@ class Pipeline(_BaseComposition):
             Transformed samples
         """
         last_step = self._final_estimator
-        Xt, fit_params = self._fit(X, y, **fit_params)
+        Xt, yt, fit_params = self._fit(X, y, **fit_params)
         if hasattr(last_step, 'fit_transform'):
-            return last_step.fit_transform(Xt, y, **fit_params)
+            return last_step.fit_transform(Xt, yt, **fit_params)
         elif last_step == 'passthrough':
             return Xt
         else:
-            return last_step.fit(Xt, y, **fit_params).transform(Xt)
+            return last_step.fit(Xt, yt, **fit_params).transform(Xt)
+
+    @if_delegate_has_method(delegate='_final_estimator')
+    def fit_resample(self, X, y=None, **fit_params):
+        """Fit the model and sample with the final estimator
+
+        Fits all the transformers/samplers one after the other and
+        transform/sample the data, then uses fit_resample on transformed
+        data with the final estimator.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfill input requirements of first step of the
+            pipeline.
+
+        y : iterable, default=None
+            Training targets. Must fulfill label requirements for all steps of
+            the pipeline.
+
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of each step, where
+            each parameter name is prefixed such that parameter ``p`` for step
+            ``s`` has key ``s__p``.
+
+        Returns
+        -------
+        Xt : array-like, shape = [n_samples, n_transformed_features]
+            Transformed samples
+
+        yt : array-like, shape = [n_samples, n_transformed_features]
+            Transformed target
+
+        """
+        last_step = self._final_estimator
+        Xt, yt, fit_params = self._fit(X, y, **fit_params)
+        if last_step == 'passthrough':
+            return Xt
+        return last_step.fit_resample(Xt, yt, **fit_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
@@ -341,6 +395,8 @@ class Pipeline(_BaseComposition):
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
+            if hasattr(transform, "fit_resample"):
+                continue
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict(Xt, **predict_params)
 
@@ -371,8 +427,8 @@ class Pipeline(_BaseComposition):
         -------
         y_pred : array-like
         """
-        Xt, fit_params = self._fit(X, y, **fit_params)
-        return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
+        Xt, yt, fit_params = self._fit(X, y, **fit_params)
+        return self.steps[-1][-1].fit_predict(Xt, yt, **fit_params)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):
@@ -390,6 +446,8 @@ class Pipeline(_BaseComposition):
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
+            if hasattr(transform, "fit_resample"):
+                continue
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_proba(Xt)
 
@@ -409,6 +467,8 @@ class Pipeline(_BaseComposition):
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
+            if hasattr(transform, "fit_resample"):
+                continue
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].decision_function(Xt)
 
@@ -428,6 +488,8 @@ class Pipeline(_BaseComposition):
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
+            if hasattr(transform, "fit_resample"):
+                continue
             Xt = transform.transform(Xt)
         return self.steps[-1][-1].predict_log_proba(Xt)
 
@@ -457,6 +519,8 @@ class Pipeline(_BaseComposition):
     def _transform(self, X):
         Xt = X
         for _, _, transform in self._iter():
+            if hasattr(transform, "fit_resample"):
+                continue
             Xt = transform.transform(Xt)
         return Xt
 
@@ -481,6 +545,8 @@ class Pipeline(_BaseComposition):
         # raise AttributeError if necessary for hasattr behaviour
         # XXX: Handling the None case means we can't use if_delegate_has_method
         for _, _, transform in self._iter():
+            if hasattr(transform, "fit_resample"):
+                continue
             transform.inverse_transform
         return self._inverse_transform
 
@@ -515,6 +581,8 @@ class Pipeline(_BaseComposition):
         """
         Xt = X
         for _, name, transform in self._iter(with_final=False):
+            if hasattr(transform, "fit_resample"):
+                continue
             Xt = transform.transform(Xt)
         score_params = {}
         if sample_weight is not None:
@@ -629,6 +697,11 @@ def _fit_transform_one(transformer, X, y, weight, **fit_params):
     if weight is None:
         return res, transformer
     return res * weight, transformer
+
+def _fit_resample_one(sampler, X, y, **fit_params):
+    X_res, y_res = sampler.fit_resample(X, y, **fit_params)
+
+    return X_res, y_res, sampler
 
 
 class FeatureUnion(_BaseComposition, TransformerMixin):

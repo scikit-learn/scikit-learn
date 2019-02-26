@@ -1,12 +1,16 @@
 """
 Test the pipeline module.
 """
+
+# lots of resample tests were taken from imblearn
+
 from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
 
 import pytest
+from pytest import raises
 import numpy as np
 from scipy import sparse
 
@@ -15,12 +19,14 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
-from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import FeatureUnion, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
@@ -28,12 +34,16 @@ from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_classification
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.utils._joblib import Memory
 from sklearn.utils._joblib import __version__ as joblib_version
 
+from sklearn.covariance import EllipticEnvelope
+from sklearn.ensemble import IsolationForest
+
+R_TOL = 1e-4
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -154,6 +164,34 @@ class DummyEstimatorParams(BaseEstimator):
         return self
 
 
+class DummyResampler(NoTrans):
+    """Resampler which returns the same samples"""
+
+    def fit_resample(self, X, y):
+        self.means_ = np.mean(X, axis=0)
+        # store timestamp to figure out whether the result of 'fit' has been
+        # cached or not
+        self.timestamp_ = time.time()
+        return X, y
+
+
+class FitTransformResample(NoTrans):
+    """Estimator implementing both transform and sample
+    """
+
+    def fit(self, X, y, should_succeed=False):
+        pass
+
+    def fit_resample(self, X, y=None):
+        return X, y
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X)
+
+    def transform(self, X, y=None):
+        return X
+
+
 def test_pipeline_init():
     # Test the various init parameters of the pipeline.
     assert_raises(TypeError, Pipeline)
@@ -186,7 +224,7 @@ def test_pipeline_init():
     # Check that we can't instantiate with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
     assert_raises_regex(TypeError,
-                        'All intermediate steps should be transformers'
+                        'All intermediate steps of Pipeline '
                         '.*\\bNoTrans\\b.*',
                         Pipeline, [('t', NoTrans()), ('svc', clf)])
 
@@ -1033,6 +1071,367 @@ def test_pipeline_memory():
         assert_equal(ts, cached_pipe_2.named_steps['transf_2'].timestamp_)
     finally:
         shutil.rmtree(cachedir)
+
+
+def test_pipeline_memory_resampler():
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+    cachedir = mkdtemp()
+    try:
+        memory = Memory(cachedir, verbose=10)
+        # Test with Transformer + SVC
+        clf = SVC(gamma='scale', probability=True, random_state=0)
+        transf = DummyResampler()
+        pipe = Pipeline([('transf', clone(transf)), ('svc', clf)])
+        cached_pipe = Pipeline(
+            [('transf', transf), ('svc', clf)], memory=memory)
+
+        # Memoize the transformer at the first fit
+        cached_pipe.fit(X, y)
+        pipe.fit(X, y)
+        # Get the time stamp of the tranformer in the cached pipeline
+        expected_ts = cached_pipe.named_steps['transf'].timestamp_
+        # Check that cached_pipe and pipe yield identical results
+        assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
+        assert_array_equal(pipe.predict_proba(X), cached_pipe.predict_proba(X))
+        assert_array_equal(
+            pipe.predict_log_proba(X), cached_pipe.predict_log_proba(X))
+        assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
+        assert_array_equal(pipe.named_steps['transf'].means_,
+                           cached_pipe.named_steps['transf'].means_)
+        assert not hasattr(transf, 'means_')
+        # Check that we are reading the cache while fitting
+        # a second time
+        cached_pipe.fit(X, y)
+        # Check that cached_pipe and pipe yield identical results
+        assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
+        assert_array_equal(pipe.predict_proba(X), cached_pipe.predict_proba(X))
+        assert_array_equal(
+            pipe.predict_log_proba(X), cached_pipe.predict_log_proba(X))
+        assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
+        assert_array_equal(pipe.named_steps['transf'].means_,
+                           cached_pipe.named_steps['transf'].means_)
+        assert cached_pipe.named_steps['transf'].timestamp_ == expected_ts
+        # Create a new pipeline with cloned estimators
+        # Check that even changing the name step does not affect the cache hit
+        clf_2 = SVC(gamma='scale', probability=True, random_state=0)
+        transf_2 = DummyResampler()
+        cached_pipe_2 = Pipeline(
+            [('transf_2', transf_2), ('svc', clf_2)], memory=memory)
+        cached_pipe_2.fit(X, y)
+
+        # Check that cached_pipe and pipe yield identical results
+        assert_array_equal(pipe.predict(X), cached_pipe_2.predict(X))
+        assert_array_equal(
+            pipe.predict_proba(X), cached_pipe_2.predict_proba(X))
+        assert_array_equal(
+            pipe.predict_log_proba(X), cached_pipe_2.predict_log_proba(X))
+        assert_array_equal(pipe.score(X, y), cached_pipe_2.score(X, y))
+        assert_array_equal(pipe.named_steps['transf'].means_,
+                           cached_pipe_2.named_steps['transf_2'].means_)
+        assert cached_pipe_2.named_steps['transf_2'].timestamp_ == expected_ts
+    finally:
+        shutil.rmtree(cachedir)
+
+
+def test_pipeline_methods_pca_outlier_svm():
+    # Test the various methods of the pipeline (pca + svm).
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+
+    # Test with PCA + SVC
+    clf = SVC(gamma='scale', probability=True, random_state=0)
+    pca = PCA()
+    outlier = EllipticEnvelope(random_state=0)
+    pipe = Pipeline([('pca', pca), ('outlier', outlier), ('svc', clf)])
+    pipe.fit(X, y)
+    pipe.predict(X)
+    pipe.predict_proba(X)
+    pipe.predict_log_proba(X)
+    pipe.score(X, y)
+
+
+def test_pipeline_methods_outlier_pca_svm():
+    # Test the various methods of the pipeline (pca + svm).
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+
+    # Test with PCA + SVC
+    clf = SVC(gamma='scale', probability=True, random_state=0)
+    pca = PCA()
+    outlier = EllipticEnvelope(random_state=0)
+    pipe = Pipeline([('outlier', outlier), ('pca', pca), ('svc', clf)])
+    pipe.fit(X, y)
+    pipe.predict(X)
+    pipe.predict_proba(X)
+    pipe.predict_log_proba(X)
+    pipe.score(X, y)
+
+
+def test_pipeline_resample():
+    # Test whether pipeline works with a resampler at the end.
+    # Also test pipeline.fit_resample
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+
+    resampler = EllipticEnvelope(random_state=0)
+    pipeline = Pipeline([('resampler', resampler)])
+
+    # test transform and fit_transform:
+    X_trans, y_trans = pipeline.fit_resample(X, y)
+    X_trans2, y_trans2 = resampler.fit_resample(X, y)
+    assert_allclose(X_trans, X_trans2, rtol=R_TOL)
+    assert_allclose(y_trans, y_trans2, rtol=R_TOL)
+
+    pca = PCA()
+    pipeline = Pipeline([('pca', PCA()), ('resampler', resampler)])
+
+    X_trans, y_trans = pipeline.fit_resample(X, y)
+    X_pca = pca.fit_transform(X)
+    X_trans2, y_trans2 = resampler.fit_resample(X_pca, y)
+    assert_allclose(X_trans, X_trans2, rtol=R_TOL)
+    assert_allclose(y_trans, y_trans2, rtol=R_TOL)
+
+
+def test_pipeline_none_classifier():
+    # Test pipeline using None as preprocessing step and a classifier
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+    clf = LogisticRegression(solver='lbfgs', random_state=0)
+    pipe = make_pipeline(None, clf)
+    pipe.fit(X, y)
+    pipe.predict(X)
+    pipe.predict_proba(X)
+    pipe.decision_function(X)
+    pipe.score(X, y)
+
+
+def test_pipeline_none_resampler_classifier():
+    # Test pipeline using None, an OutlierResampler and a classifier
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+    clf = LogisticRegression(solver='lbfgs', random_state=0)
+    outlier = EllipticEnvelope(random_state=0)
+    pipe = make_pipeline(None, outlier, clf)
+    pipe.fit(X, y)
+    pipe.predict(X)
+    pipe.predict_proba(X)
+    pipe.decision_function(X)
+    pipe.score(X, y)
+
+
+def test_pipeline_resampler_none_classifier():
+    # Test pipeline using an OutlierResampler, None and a classifier
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+    clf = LogisticRegression(solver='lbfgs', random_state=0)
+    outlier = EllipticEnvelope(random_state=0)
+    pipe = make_pipeline(outlier, None, clf)
+    pipe.fit(X, y)
+    pipe.predict(X)
+    pipe.predict_proba(X)
+    pipe.decision_function(X)
+    pipe.score(X, y)
+
+
+def test_pipeline_none_resampler_resample():
+    # Test pipeline using None step and a resampler
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+
+    outlier = EllipticEnvelope(random_state=0)
+    pipe = make_pipeline(None, outlier)
+    pipe.fit_resample(X, y)
+
+
+def test_pipeline_none_transformer():
+    # Test pipeline using None and a transformer that implements transform and
+    # inverse_transform
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+
+    pca = PCA(whiten=True)
+    pipe = make_pipeline(None, pca)
+    pipe.fit(X, y)
+    X_trans = pipe.transform(X)
+    X_inversed = pipe.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_inversed)
+
+
+def test_pipeline_methods_anova_rus():
+    # Test the various methods of the pipeline (anova).
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+    # Test with RandomUnderSampling + Anova + LogisticRegression
+    clf = LogisticRegression(solver='lbfgs')
+    outlier = EllipticEnvelope(random_state=0)
+    filter1 = SelectKBest(f_classif, k=2)
+    pipe = Pipeline([('outlier', outlier),
+                     ('anova', filter1),
+                     ('logistic', clf)])
+    pipe.fit(X, y)
+    pipe.predict(X)
+    pipe.predict_proba(X)
+    pipe.predict_log_proba(X)
+    pipe.score(X, y)
+
+
+def test_pipeline_with_step_that_implements_both_sample_and_transform():
+    # Test the various methods of the pipeline (anova).
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+
+    clf = LogisticRegression(solver='lbfgs')
+    with raises(TypeError):
+        Pipeline([('step', FitTransformResample()), ('logistic', clf)])
+
+
+def test_pipeline_fit_then_sample_with_resampler_last_estimator():
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+
+    outlier1 = EllipticEnvelope(random_state=0)
+    outlier2 = IsolationForest(random_state=0)
+    pipeline = make_pipeline(outlier1, outlier2)
+    X_fit_resample_resampled, y_fit_resample_resampled = \
+        pipeline.fit_resample(X, y)
+    pipeline = make_pipeline(outlier1, outlier2)
+    pipeline.fit(X, y)
+    X_fit_then_sample_res, y_fit_then_sample_res = pipeline.fit_resample(X, y)
+    assert_array_equal(X_fit_resample_resampled, X_fit_then_sample_res)
+    assert_array_equal(y_fit_resample_resampled, y_fit_then_sample_res)
+
+
+def test_pipeline_fit_then_sample_3_resamplers_with_resampler_last_estimator():
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=500,
+        random_state=0)
+
+    outlier1 = EllipticEnvelope(random_state=0)
+    outlier2 = IsolationForest(random_state=0)
+    pipeline = make_pipeline(outlier2, outlier1, outlier2)
+    X_fit_resample, y_fit_resample = pipeline.fit_resample(X, y)
+    pipeline.fit(X, y)
+    X_fit_then_resample, y_fit_then_resample = pipeline.fit_resample(X, y)
+
+    assert_array_equal(X_fit_resample, X_fit_then_resample)
+    assert_array_equal(y_fit_resample, y_fit_then_resample)
 
 
 def test_make_pipeline_memory():
