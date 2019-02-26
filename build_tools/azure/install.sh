@@ -6,19 +6,19 @@ UNAMESTR=`uname`
 
 if [[ "$UNAMESTR" == "Darwin" ]]; then
     # install OpenMP not present by default on osx
-    HOMEBREW_NO_AUTO_UPDATE=1 brew install libiomp
+    HOMEBREW_NO_AUTO_UPDATE=1 brew install libomp
 
     # enable OpenMP support for Apple-clang
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
     export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-    export CFLAGS="$CFLAGS -I/usr/local/opt/libiomp/include"
-    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libiomp/include"
-    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libiomp/lib -liomp"
-    export DYLD_LIBRARY_PATH=/usr/local/opt/libiomp/lib
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
     # avoid error due to multiple OpenMP libraries loaded simultaneously
-    # export KMP_DUPLICATE_LIB_OK=TRUE
+    export KMP_DUPLICATE_LIB_OK=TRUE
 fi
 
 make_conda() {
