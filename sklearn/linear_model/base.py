@@ -468,10 +468,12 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
 
         if sp.issparse(X):
             X_offset_scale = X_offset / X_scale
+
             def matvec(b):
                 return X.dot(b) - b.dot(X_offset_scale)
+
             def rmatvec(b):
-                return X.T.dot(b) - (X_offset_scale) * np.sum(b)
+                return X.T.dot(b) - X_offset_scale * np.sum(b)
 
             X_centered = sparse.linalg.LinearOperator(shape=X.shape,
                                                       matvec=matvec,
