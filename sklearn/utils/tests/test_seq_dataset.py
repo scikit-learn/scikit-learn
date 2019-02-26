@@ -39,20 +39,33 @@ def assert_csr_equal_values(current, expected):
     assert_array_equal(current.indptr, expected.indptr)
 
 
-@pytest.mark.parametrize(
-    'dataset',
-    [
-        ArrayDataset32(X32, y32, sample_weight32, seed=42),
-        ArrayDataset64(X64, y64, sample_weight64, seed=42),
-        CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
-                     sample_weight32, seed=42),
-        CSRDataset64(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
-                     sample_weight64, seed=42),
-    ],
-    ids=['ArrayDataset32', 'ArrayDataset64', 'CSRDataset32', 'CSRDataset64']
-)
-def test_seq_dataset_basic_iteration(dataset):
+def make_dense_dataset_32():
+        return ArrayDataset32(X32, y32, sample_weight32, seed=42)
+
+
+def make_dense_dataset_64():
+        return ArrayDataset64(X64, y64, sample_weight64, seed=42)
+
+
+def make_sparse_dataset_32():
+        return CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
+                            sample_weight32, seed=42)
+
+
+def make_sparse_dataset_64():
+        return CSRDataset64(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
+                            sample_weight64, seed=42)
+
+
+@pytest.mark.parametrize('dataset_constructor', [
+    make_dense_dataset_32,
+    make_dense_dataset_64,
+    make_sparse_dataset_32,
+    make_sparse_dataset_64,
+])
+def test_seq_dataset_basic_iteration(dataset_constructor):
     NUMBER_OF_RUNS = 5
+    dataset = dataset_constructor()
     for _ in range(NUMBER_OF_RUNS):
         # next sample
         xi_, yi, swi, idx = dataset._next_py()
@@ -71,22 +84,12 @@ def test_seq_dataset_basic_iteration(dataset):
         assert swi == sample_weight64[idx]
 
 
-@pytest.mark.parametrize(
-    'dense_dataset,sparse_dataset',
-    [
-        (
-            ArrayDataset32(X32, y32, sample_weight32, seed=42),
-            CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
-                         sample_weight32, seed=42),
-        ),(
-            ArrayDataset64(X64, y64, sample_weight64, seed=42),
-            CSRDataset64(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
-                         sample_weight64, seed=42),
-        )
-    ],
-    ids=['float 32', 'float 64']
-)
-def test_seq_dataset_shuffle(dense_dataset, sparse_dataset):
+@pytest.mark.parametrize('make_dense_dataset,make_sparse_dataset',[
+    (make_dense_dataset_32, make_sparse_dataset_32),
+    (make_dense_dataset_64, make_sparse_dataset_64),
+])
+def test_seq_dataset_shuffle(make_dense_dataset, make_sparse_dataset):
+    dense_dataset, sparse_dataset = make_dense_dataset(), make_sparse_dataset()
     # not shuffled
     for i in range(5):
         _, _, _, idx1 = dense_dataset._next_py()
@@ -113,27 +116,17 @@ def test_seq_dataset_shuffle(dense_dataset, sparse_dataset):
         assert idx1 == idx2
 
 
-@pytest.mark.parametrize(
-    'dataset32,dataset64',
-    [
-        (
-            ArrayDataset32(X32, y32, sample_weight32, seed=42),
-            ArrayDataset64(X64, y64, sample_weight64, seed=42),
-        ),(
-            CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
-                         sample_weight32, seed=42),
-            CSRDataset64(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
-                         sample_weight64, seed=42),
-        )
-    ],
-    ids=['ArrayDataset', 'CSRDataset']
-)
-def test_fused_types_consistency(dataset32, dataset64):
+@pytest.mark.parametrize('make_dataset_32,make_dataset_64', [
+    (make_dense_dataset_32, make_dense_dataset_64),
+    (make_sparse_dataset_32, make_sparse_dataset_64),
+])
+def test_fused_types_consistency(make_dataset_32, make_dataset_64):
+    dataset_32, dataset_64 = make_dataset_32(), make_dataset_64()
     NUMBER_OF_RUNS = 5
     for _ in range(NUMBER_OF_RUNS):
         # next sample
-        (xi_data32, _, _), yi32, _, _ = dataset32._next_py()
-        (xi_data64, _, _), yi64, _, _ = dataset64._next_py()
+        (xi_data32, _, _), yi32, _, _ = dataset_32._next_py()
+        (xi_data64, _, _), yi64, _, _ = dataset_64._next_py()
 
         assert xi_data32.dtype == np.float32
         assert xi_data64.dtype == np.float64
