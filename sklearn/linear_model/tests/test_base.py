@@ -13,6 +13,7 @@ from scipy import linalg
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_allclose
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.base import _preprocess_data
@@ -166,8 +167,8 @@ def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
     clf_sparse = LinearRegression(**params)
     clf_dense.fit(X, y)
     clf_sparse.fit(Xcsr, y)
-    assert_almost_equal(clf_dense.intercept_, clf_sparse.intercept_)
-    assert_array_almost_equal(clf_dense.coef_, clf_sparse.coef_)
+    assert clf_dense.intercept_ == pytest.approx(clf_sparse.intercept_)
+    assert_allclose(clf_dense.coef_, clf_sparse.coef_)
 
 
 def test_linear_regression_multiple_outcome(random_state=0):
