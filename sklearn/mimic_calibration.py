@@ -296,7 +296,9 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
             nP_array += [nP]
         return score_array, nP_array
 
-    def plot_merge_result(self):
+    def plot_history_result(self, show_history_array=[]):
+        """ Visualize merging history.
+        """
         import matplotlib.pyplot as plt
         data = None
         if (self.record_history):
@@ -306,11 +308,17 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
 
         number_of_history = len(data)
         print("plot history size: {x}".format(x=number_of_history))
+        if (len(show_history_array) == 0):
+            show_history_array = range(number_of_history)
+
+        assert(max(show_history_array) <= number_of_history-1), \
+            "The max of history index is number_of_history-1. \
+            Please choose indexs between 0 and {x}".format(x=number_of_history-1)
         for i in range(number_of_history):
             one_history = data[i]
             score_array, nPosRate_array = self.get_one_history(one_history)
             plt.plot(score_array, nPosRate_array, label=str(i))
-        plt.xlabel("score")
-        plt.ylabel("nPos Rate")
+        plt.xlabel("pre calibrated prob")
+        plt.ylabel("mimic calibrated prob")
         plt.legend()
         plt.show()
