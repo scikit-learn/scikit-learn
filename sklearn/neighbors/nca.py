@@ -19,7 +19,8 @@ from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import check_is_fitted, check_array, check_X_y
+from ..utils.validation import (check_is_fitted, check_array, check_X_y,
+                                check_scalar)
 from ..externals.six import integer_types
 from ..exceptions import ConvergenceWarning
 
@@ -297,8 +298,8 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         # Check the preferred embedding dimensionality
         if self.n_components is not None:
-            _check_scalar(self.n_components, 'n_components',
-                          integer_types, 1)
+            check_scalar(self.n_components, 'n_components',
+                         integer_types, 1)
 
             if self.n_components > X.shape[1]:
                 raise ValueError('The preferred embedding dimensionality '
@@ -307,7 +308,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                                  .format(self.n_components, X.shape[1]))
 
         # If warm_start is enabled, check that the inputs are consistent
-        _check_scalar(self.warm_start, 'warm_start', bool)
+        check_scalar(self.warm_start, 'warm_start', bool)
         if self.warm_start and hasattr(self, 'components_'):
             if self.components_.shape[1] != X.shape[1]:
                 raise ValueError('The new inputs dimensionality ({}) does not '
@@ -316,9 +317,9 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                                  .format(X.shape[1],
                                          self.components_.shape[1]))
 
-        _check_scalar(self.max_iter, 'max_iter', integer_types, 1)
-        _check_scalar(self.tol, 'tol', float, 0.)
-        _check_scalar(self.verbose, 'verbose', integer_types, 0)
+        check_scalar(self.max_iter, 'max_iter', integer_types, 1)
+        check_scalar(self.tol, 'tol', float, 0.)
+        check_scalar(self.verbose, 'verbose', integer_types, 0)
 
         if self.callback is not None:
             if not callable(self.callback):
@@ -500,7 +501,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         np.fill_diagonal(weighted_p_ij_sym, -weighted_p_ij.sum(axis=0))
         gradient = 2 * X_embedded.T.dot(weighted_p_ij_sym).dot(X)
         # time complexity of the gradient: O(n_components x n_samples x (
-
         # n_samples + n_features))
 
         if self.verbose:
@@ -511,50 +511,3 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             sys.stdout.flush()
 
         return sign * loss, sign * gradient.ravel()
-
-
-##########################
-# Some helper functions #
-#########################
-
-
-def _check_scalar(x, name, target_type, min_val=None, max_val=None):
-    """Validate scalar parameters type and value.
-
-    Parameters
-    ----------
-    x : object
-        The scalar parameter to validate.
-
-    name : str
-        The name of the parameter to be printed in error messages.
-
-    target_type : type or tuple
-        Acceptable data types for the parameter.
-
-    min_val : float or int, optional (default=None)
-        The minimum value value the parameter can take. If None (default) it
-        is implied that the parameter does not have a lower bound.
-
-    max_val : float or int, optional (default=None)
-        The maximum valid value the parameter can take. If None (default) it
-        is implied that the parameter does not have an upper bound.
-
-    Raises
-    -------
-    TypeError
-        If the parameter's type does not match the desired type.
-
-    ValueError
-        If the parameter's value violates the given bounds.
-    """
-
-    if not isinstance(x, target_type):
-        raise TypeError('`{}` must be an instance of {}, not {}.'
-                        .format(name, target_type, type(x)))
-
-    if min_val is not None and x < min_val:
-        raise ValueError('`{}`= {}, must be >= {}.'.format(name, x, min_val))
-
-    if max_val is not None and x > max_val:
-        raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
