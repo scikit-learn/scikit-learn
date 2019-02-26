@@ -2300,9 +2300,9 @@ def check_set_params(name, estimator_orig):
                 # Exception occurred, possibly parameter validation
                 if not name == 'SGDClassifier':
                     warnings.warn(
-                        "{0} occurred during set_params of param {1} on {2}. It"
-                        " is recommended to delay parameter validation until "
-                        "fit.".format(e_type, param_name, name))
+                        "{0} occurred during set_params of param {1} on {2}."
+                        "It is recommended to delay parameter validation until"
+                        " fit.".format(e_type, param_name, name))
 
                 change_warning_msg = "Estimator's parameters changed after " \
                                      "set_params raised {}".format(e_type)
