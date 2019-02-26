@@ -298,7 +298,7 @@ def test_lda_dimension_warning(n_classes, n_features):
 
 
 @pytest.mark.parametrize("data_type, expected_type", [
-    (np.float32, np.float32), (np.float64, np.float64), (np.int32, np.float32),
+    (np.float32, np.float32), (np.float64, np.float64), (np.int32, np.float64),
     (np.int64, np.float64)])
 def test_lda_dtype_match(data_type, expected_type):
     for (solver, shrinkage) in solver_shrinkage:

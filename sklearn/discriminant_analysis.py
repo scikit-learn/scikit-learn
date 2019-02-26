@@ -427,7 +427,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Target values.
         """
         # FIXME: Future warning to be removed in 0.23
-        X = as_float_array(X)
         X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self, dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
