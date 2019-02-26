@@ -32,9 +32,9 @@ Changelog
 :mod:`sklearn.covariance`
 ......................
 
-- |Fix| Fixed a bug in :func:`covariance.graphical_lasso` so that the case
-  `n_features=2` is handled correctly. :issue:`13276` by :user:`Aurélien
-  Bellet <bellet>`.
+- |Fix| Fixed a regression in :func:`covariance.graphical_lasso` so that
+  the case `n_features=2` is handled correctly. :issue:`13276` by
+  :user:`Aurélien Bellet <bellet>`.
 
 :mod:`sklearn.decomposition`
 ............................
