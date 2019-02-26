@@ -266,9 +266,9 @@ def test_iforest_average_path_length():
 
     result_one = 2. * (np.log(4.) + np.euler_gamma) - 2. * 4. / 5.
     result_two = 2. * (np.log(998.) + np.euler_gamma) - 2. * 998. / 999.
-    assert _average_path_length(0) == 0.
-    assert _average_path_length(1) == 0.
-    assert _average_path_length(2) == 1.
+    assert _average_path_length(0) == pytest.approx(0)
+    assert _average_path_length(1) == pytest.approx(0)
+    assert _average_path_length(2) == pytest.approx(1)
     assert_almost_equal(_average_path_length(5), result_one, decimal=10)
     assert_almost_equal(_average_path_length(999), result_two, decimal=10)
     assert_array_almost_equal(_average_path_length(np.array([1, 2, 5, 999])),

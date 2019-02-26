@@ -1600,7 +1600,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
         # checked as follows for estimators with a novelty parameter such as
         # LocalOutlierFactor (tested in check_outliers_fit_predict)
         expected_outliers = 30
-        contamination = float(expected_outliers)/n_samples
+        contamination = expected_outliers / n_samples
         estimator.set_params(contamination=contamination)
         estimator.fit(X)
         y_pred = estimator.predict(X)
