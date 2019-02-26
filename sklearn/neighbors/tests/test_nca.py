@@ -267,10 +267,10 @@ def test_init_transformation():
                          nca.fit, X, y)
 
 
-@pytest.mark.parametrize('n_samples', [17, 19, 23, 29])
-@pytest.mark.parametrize('n_features', [17, 19, 23, 29])
-@pytest.mark.parametrize('n_classes', [17, 19, 23])
-@pytest.mark.parametrize('n_components', [17, 19, 23, 29])
+@pytest.mark.parametrize('n_samples', [3, 5, 7, 11])
+@pytest.mark.parametrize('n_features', [3, 5, 7, 11])
+@pytest.mark.parametrize('n_classes', [5, 7, 11])
+@pytest.mark.parametrize('n_components', [3, 5, 7, 11])
 def test_auto_init(n_samples, n_features, n_classes, n_components):
     # Test that auto choose the init as expected with every configuration
     # of order of n_samples, n_features, n_classes and n_components.
