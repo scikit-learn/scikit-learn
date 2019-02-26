@@ -2339,7 +2339,7 @@ def check_classifiers_regression_target(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimator_sparse_dense(name, estimator_orig):
     rng = np.random.RandomState(52)
-    X = rng.rand(10, 40)  # so that it works too if kernel='precomputed'
+    X = rng.rand(40, 10)  # so that it works too if kernel='precomputed'
     # or metric='precomputed'
     X[X < .8] = 0
     X_csr = sparse.csr_matrix(X)
