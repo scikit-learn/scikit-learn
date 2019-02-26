@@ -312,8 +312,7 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
             show_history_array = range(number_of_history)
 
         assert(max(show_history_array) <= number_of_history-1), \
-            "The max of history index is number_of_history-1. \
-            Please choose indexs between 0 and {x}".format(x=number_of_history-1)
+            "The max of history index is {x}. Please choose indexs between 0 and {x}".format(x=number_of_history-1)
         for i in show_history_array:
             one_history = data[i]
             score_array, nPosRate_array = self.get_one_history(one_history)
