@@ -1294,34 +1294,32 @@ def test_large_regularization(penalty):
 
 def test_tol_parameter():
     # Test that the tol parameter behaves as expected
-    X, y = datasets.make_classification(n_samples=1000, n_features=100,
-                                        n_informative=5, n_classes=2,
-                                        random_state=1234)
-    for seed in range(10):
-        # With tol is None, the number of iteration should be equal to max_iter
-        max_iter = 42
-        model_0 = SGDClassifier(tol=None, random_state=seed, max_iter=max_iter)
-        model_0.fit(X, y)
-        assert_equal(max_iter, model_0.n_iter_)
+    X = StandardScaler().fit_transform(iris.data)
+    y = iris.target == 1
 
-        # If tol is not None, the number of iteration should be less than
-        # max_iter
-        max_iter = 2000
-        model_1 = SGDClassifier(tol=0, random_state=seed, max_iter=max_iter)
-        model_1.fit(X, y)
-        assert_greater(max_iter, model_1.n_iter_)
-        assert_greater(model_1.n_iter_, 5)
+    # With tol is None, the number of iteration should be equal to max_iter
+    max_iter = 42
+    model_0 = SGDClassifier(tol=None, random_state=0, max_iter=max_iter)
+    model_0.fit(X, y)
+    assert_equal(max_iter, model_0.n_iter_)
 
-        # A larger tol should yield a smaller number of iteration
-        model_2 = SGDClassifier(tol=1., random_state=seed, max_iter=max_iter)
-        model_2.fit(X, y)
-        assert model_1.n_iter_ >= model_2.n_iter_
-        assert_greater(model_2.n_iter_, 3)
+    # If tol is not None, the number of iteration should be less than max_iter
+    max_iter = 2000
+    model_1 = SGDClassifier(tol=0, random_state=0, max_iter=max_iter)
+    model_1.fit(X, y)
+    assert_greater(max_iter, model_1.n_iter_)
+    assert_greater(model_1.n_iter_, 5)
 
-        # Strict tolerance and small max_iter should trigger a warning
-        model_3 = SGDClassifier(max_iter=3, tol=1e-3, random_state=seed)
-        model_3 = assert_warns(ConvergenceWarning, model_3.fit, X, y)
-        assert_equal(model_3.n_iter_, 3)
+    # A larger tol should yield a smaller number of iteration
+    model_2 = SGDClassifier(tol=0.1, random_state=0, max_iter=max_iter)
+    model_2.fit(X, y)
+    assert_greater(model_1.n_iter_, model_2.n_iter_)
+    assert_greater(model_2.n_iter_, 3)
+
+    # Strict tolerance and small max_iter should trigger a warning
+    model_3 = SGDClassifier(max_iter=3, tol=1e-3, random_state=0)
+    model_3 = assert_warns(ConvergenceWarning, model_3.fit, X, y)
+    assert_equal(model_3.n_iter_, 3)
 
 
 def test_future_and_deprecation_warnings():
