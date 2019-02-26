@@ -282,6 +282,11 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`preprocessing.StandardScaler`. :issue:`13007` by
   :user:`Raffaello Baluyot <baluyotraf>`
 
+- |Feature| :class:`OneHotEncoder` now supports dropping one feature per category
+  with a new drop parameter. :issue:`12908` by
+  :user:`Drew Johnston <drewmjohnston>`.
+
+
 :mod:`sklearn.tree`
 ...................
 - |Feature| Decision Trees can now be plotted with matplotlib using
