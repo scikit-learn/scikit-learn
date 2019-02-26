@@ -150,6 +150,26 @@ def test_linear_regression_sparse(random_state=0):
         assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
+@pytest.mark.parametrize('normalize', [True, False])
+@pytest.mark.parametrize('fit_intercept', [True, False])
+def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
+    # Test that linear regression agrees between sparse and dense
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+    Xcsr = sparse.csr_matrix(X)
+    y = rng.rand(n_samples)
+    params = dict(normalize=normalize, fit_intercept=fit_intercept)
+    clf_dense = LinearRegression(**params)
+    clf_sparse = LinearRegression(**params)
+    clf_dense.fit(X, y)
+    clf_sparse.fit(Xcsr, y)
+    assert_almost_equal(clf_dense.intercept_, clf_sparse.intercept_)
+    assert_array_almost_equal(clf_dense.coef_, clf_sparse.coef_)
+
+
 def test_linear_regression_multiple_outcome(random_state=0):
     # Test multiple-outcome linear regressions
     X, y = make_regression(random_state=random_state)
