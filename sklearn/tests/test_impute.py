@@ -1013,15 +1013,17 @@ def test_missing_indicator_raise_on_sparse_with_missing_0(arr_type):
                         [4, 12, 10]])
 
     # convert the input to the right array format
-    X_fit = arr_type(X_fit)
-    X_trans = arr_type(X_trans)
+    X_fit_sparse = arr_type(X_fit)
+    X_trans_sparse = arr_type(X_trans)
 
     indicator = MissingIndicator(missing_values=missing_values)
 
-    with pytest.raises(ValueError):
-        indicator.fit_transform(X_fit)
-    with pytest.raises(ValueError):
-        indicator.transform(X_trans)
+    with pytest.raises(ValueError, match="Sparse input with missing_values=0"):
+        indicator.fit_transform(X_fit_sparse)
+
+    indicator.fit_transform(X_fit)
+    with pytest.raises(ValueError, match="Sparse input with missing_values=0"):
+        indicator.transform(X_trans_sparse)
 
 
 @pytest.mark.parametrize("param_sparse", [True, False, 'auto'])
