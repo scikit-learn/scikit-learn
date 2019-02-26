@@ -5,7 +5,7 @@ These routines execute the OPTICS algorithm, and implement various
 cluster extraction methods of the ordered list.
 
 Authors: Shane Grigsby <refuge@rocktalus.com>
-         Amy X. Zhang <axz@mit.edu>
+         Adrin Jalali <adrinjalali@gmail.com>
          Erich Schubert <erich@debian.org>
 License: BSD 3 clause
 """
@@ -537,28 +537,3 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     labels[far_reach & ~near_core] = -1
     is_core[near_core] = True
     return np.arange(n_samples)[is_core], labels
-
-
-def _is_local_maxima(index, reachability_plot, neighborhood_size):
-    right_idx = slice(index + 1, index + neighborhood_size + 1)
-    left_idx = slice(max(1, index - neighborhood_size - 1), index)
-    return (np.all(reachability_plot[index] >= reachability_plot[left_idx]) and
-            np.all(reachability_plot[index] >= reachability_plot[right_idx]))
-
-
-def _find_local_maxima(reachability_plot, neighborhood_size):
-    local_maxima_points = {}
-    # 1st and last points on Reachability Plot are not taken
-    # as local maxima points
-    for i in range(1, len(reachability_plot) - 1):
-        # if the point is a local maxima on the reachability plot with
-        # regard to neighborhood_size, insert it into priority queue and
-        # maxima list
-        if (reachability_plot[i] > reachability_plot[i - 1] and
-            reachability_plot[i] >= reachability_plot[i + 1] and
-            _is_local_maxima(i, np.array(reachability_plot),
-                             neighborhood_size) == 1):
-            local_maxima_points[i] = reachability_plot[i]
-
-    return sorted(local_maxima_points,
-                  key=local_maxima_points.__getitem__, reverse=True)
