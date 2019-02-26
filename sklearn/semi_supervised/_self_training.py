@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..base import BaseEstimator, clone
+from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
@@ -23,7 +23,7 @@ def _validate_estimator(estimator):
         raise ValueError(msg)
 
 
-class SelfTrainingClassifier(BaseEstimator):
+class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier
 
     This class allows a given supervised classifier to function as a

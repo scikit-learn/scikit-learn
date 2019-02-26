@@ -40,7 +40,7 @@ def test_missing_predict_proba():
     with pytest.raises(ValueError) as e:
         message = "base_classifier (SVC) should implement predict_proba!"
         self_training.fit(X_train, y_train_missing_labels)
-    assert e.value.message == message
+    assert e.value.args[0] == message
 
 
 def test_none_classifier():
