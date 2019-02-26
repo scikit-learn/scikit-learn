@@ -1473,7 +1473,7 @@ def test_quantile_transform_bounds():
 
 def test_quantile_transform_and_inverse():
     X_1 = iris.data
-    X_2 = np.array([[0.], [BOUNDS_THRESHOLD/10], [1.5], [2], [3], [3], [4]])
+    X_2 = np.array([[0.], [BOUNDS_THRESHOLD / 10], [1.5], [2], [3], [3], [4]])
     for X in [X_1, X_2]:
         transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
         X_trans = transformer.fit_transform(X)
