@@ -2339,7 +2339,8 @@ def check_classifiers_regression_target(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimator_sparse_dense(name, estimator_orig):
     rng = np.random.RandomState(42)
-    X = rng.rand(40, 10)
+    X = rng.rand(40, 40)  # so that it works too if kernel='precomputed'
+    # or metric='precomputed'
     X[X < .8] = 0
     X_csr = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
@@ -2361,7 +2362,6 @@ def check_estimator_sparse_dense(name, estimator_orig):
                 estimator.set_params(with_centering=False)
                 estimator_sp.set_params(with_centering=False)
             if name in ['TransformedTargetRegressor']:
-                # XXX naming is not consistent (with_mean vs with_centering) :(
                 estimator.set_params(regressor=LinearRegression(
                     fit_intercept=False))
                 estimator_sp.set_params(regressor=LinearRegression(
@@ -2406,7 +2406,7 @@ def check_estimator_sparse_dense(name, estimator_orig):
 
                 assert_equal(probs.shape, (X.shape[0], 4))
         except TypeError as e:
-            if 'sparse' not in repr(e):
+            if 'sparse' not in str.lower(repr(e)):
                 print("Estimator %s doesn't seem to fail gracefully on "
                       "sparse data: error message state explicitly that "
                       "sparse input is not supported if this is not the case."
