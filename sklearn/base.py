@@ -544,6 +544,56 @@ class OutlierMixin:
         return self.fit(X).predict(X)
 
 
+class OutlierResamplerMixin:
+    """Mixin class for all outlier detection resamplers in scikit-learn. Child
+    classes remove outliers from the passed samples.
+    """
+    _estimator_type = "outlier_resampler"
+
+    def fit_resample(self, X, y, props=None):
+        """Performs fit on X and returns new X and y consisting of only the
+        inliers.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data X.
+
+        y : ndarray, shape (n_samples,)
+            Input data y.
+
+        props : dict of ndarrays, each ndarray has shape (n_samples,), optional
+            dict of params that are passed to fit.
+
+        Returns
+        -------
+        X : ndarray, shape (n_samples, n_features)
+            The input X with outlier samples removed.
+
+        y : ndarray, shape (n_samples,)
+            The input y with outlier samples removed.
+
+        props : dict of ndarrays, each ndarray has shape (n_samples,)
+            `props`, but outlier samples are removed for each each parameter.
+        """
+
+        if props is not None:
+           raise NotImplementedError('props is not supported for now')
+        if props is None:
+            props = {}
+
+        # filter out unrequired args
+        required_props = filter(lambda x : x in inspect.signature(super().fit),
+                                props.keys())
+        filtered_props = {k : props[k] for k in required_props}
+
+        y = self.fit_predict(X)
+
+        props = {prop[y == 1] for prop in props}
+
+        return X[y == 1], y[y == 1], props
+
+
 class MetaEstimatorMixin:
     _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
