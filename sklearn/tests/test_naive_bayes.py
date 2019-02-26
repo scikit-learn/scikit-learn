@@ -243,6 +243,19 @@ def check_partial_fit(cls):
     assert_array_equal(clf1.class_count_, clf3.class_count_)
     assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
+def test_mnb_prior_unobserved_targets():
+    # test smoothing of prior for yet unobserved targets
+
+    # Create toy training data
+    X = np.array([[0, 1], [1, 0]])
+    y = np.array([1, 2, 3, 4, 5, 6])
+
+    # All possible targets
+    classes = np.append(y, 7)
+
+    clf = MultinomialNB()
+    clf.partial_fit(X, y, classes=classes)
+
 
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB])
 def test_discretenb_partial_fit(cls):
