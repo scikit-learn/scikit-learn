@@ -18,6 +18,8 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_no_warnings
+
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -248,13 +250,11 @@ def test_mnb_prior_unobserved_targets():
 
     # Create toy training data
     X = np.array([[0, 1], [1, 0]])
-    y = np.array([1, 2, 3, 4, 5, 6])
-
-    # All possible targets
-    classes = np.append(y, 7)
+    y = np.array([0, 1])
 
     clf = MultinomialNB()
-    clf.partial_fit(X, y, classes=classes)
+    clf.partial_fit(X, y, classes=[0, 1, 2])
+    assert_no_warnings(clf.partial_fit, X, y, classes=[0, 1, 2])
 
 
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB])
