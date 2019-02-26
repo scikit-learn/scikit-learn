@@ -262,6 +262,7 @@ def test_mnb_prior_unobserved_targets():
     assert clf.predict([[1, 0]]) == 1
     assert clf.predict([[1, 1]]) == 0
 
+    # add a training example with previously unobserved class
     assert_no_warnings(
         clf.partial_fit, [[1, 1]], [2]
     )
