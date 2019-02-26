@@ -193,12 +193,7 @@ def optics(X, min_samples=5, max_eps=np.inf, metric='minkowski',
        and Jörg Sander. "OPTICS: ordering points to identify the clustering
        structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
 
-    .. [2] Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
-       "Automatic extraction of clusters from hierarchical clustering
-       representations." In Advances in Knowledge Discovery and Data
-       Mining, pp. 75-87. Springer Berlin Heidelberg, 2003.
-
-    .. [3] Schubert, Erich, Michael Gertz.
+    .. [2] Schubert, Erich, Michael Gertz.
        "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
@@ -348,12 +343,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
        and Jörg Sander. "OPTICS: ordering points to identify the clustering
        structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
 
-    .. [2] Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
-       "Automatic extraction of clusters from hierarchical clustering
-       representations." In Advances in Knowledge Discovery and Data
-       Mining, pp. 75-87. Springer Berlin Heidelberg, 2003.
-
-    .. [3] Schubert, Erich, Michael Gertz.
+    .. [2] Schubert, Erich, Michael Gertz.
        "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
