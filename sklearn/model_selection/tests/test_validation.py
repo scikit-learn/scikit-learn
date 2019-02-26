@@ -1585,11 +1585,14 @@ def test_score():
 
 
 def test_sample_weight():
+    # Test that _fit_and_score properly uses sample_weight from fit_params
+    # when calculating the desired metrics.
+
     X = np.ones([4, 1])         # Constant features to learn intercept.
     y = np.array([1, 0, 1, 0])  # Some +/- for both test and train.
     train = np.array([0, 1])    # First two indices are train.
     test = np.array([2, 3])     # Last two indices are test.
-    sample_weight = np.array([2000000, 1000000, 1, 1000000])
+    sample_weight = np.array([2000000, 1000000, 1, 999999])
 
     exp_test_acc = np.dot(y[test], sample_weight[test]) / np.sum(
         sample_weight[test])
@@ -1647,3 +1650,77 @@ def test_sample_weight():
     # counts.
     assert train_metric == exp_train_pr
     assert test_metric == exp_test_acc
+
+
+def test_sample_weight_cross_validation():
+    # Test that cross validation properly uses sample_weight from fit_params
+    # when calculating the desired metrics.
+
+    X = np.ones([4, 1])         # Constant features to learn intercept.
+    y = np.array([1, 0, 1, 0])  # Some +/- for both test and train.
+    f1 = np.array([0, 1])       # Fold 1.
+    f2 = np.array([2, 3])       # Fold 2.
+    sample_weight = np.array([2000000, 1000000, 1, 999999])
+
+    norm1_wt_f1 = sample_weight[f1] / np.sum(sample_weight[f1])
+    acc1 = (1 - np.dot(y[f1], norm1_wt_f1))
+    ratio_wt_f1 = np.sum(sample_weight[f1]) / np.sum(sample_weight)
+
+    norm1_wt_f2 = sample_weight[f2] / np.sum(sample_weight[f2])
+    acc2 = np.dot(y[f2], norm1_wt_f2)
+    ratio_wt_f2 = np.sum(sample_weight[f2]) / np.sum(sample_weight)
+
+    # 0.25000025 = 1000001 / 4000000 = 1/3 * 3/4 + 1/1000000 * 1/4
+    exp_cv_acc = acc1 * ratio_wt_f1 + acc2 * ratio_wt_f2
+
+    gscv = GridSearchCV(
+        LogisticRegression(),
+        param_grid={"random_state": [15432]},
+        scoring='accuracy',
+        cv=2,
+        return_train_score=True
+    )
+
+    gscv.fit(X, y, sample_weight=sample_weight)
+    best_score = gscv.best_score_
+    np.testing.assert_almost_equal(best_score, exp_cv_acc)
+
+
+@pytest.mark.parametrize("replications,sample_wt,pass_none", [
+    (10000, 1, True),
+    (10000, None, True),
+    (10000, None, False),
+    (1, 10000, True)
+])
+def test_sample_weight_cross_validation_const_wt(
+        replications, sample_wt, pass_none):
+
+    # Test that cross validation properly uses sample_weight from fit_params
+    # and the weight is constant.
+
+    # The expected cross validation accuracy is 0.5.  To see why, look at
+    # the test parameterization: (10000, None, False).
+    exp_cv_acc = 0.5
+
+    X = np.ones([4 * replications, 1])
+    y = np.array([1, 0, 1, 0] * replications)
+
+    gscv = GridSearchCV(
+        LogisticRegression(),
+        param_grid={"random_state": [15432]},
+        scoring='accuracy',
+        cv=2,
+        return_train_score=True
+    )
+
+    if sample_wt is None:
+        if pass_none:
+            gscv.fit(X, y, sample_weight=None)
+        else:
+            gscv.fit(X, y)
+    else:
+        sample_weight = np.ones([4 * replications]) * sample_wt
+        gscv.fit(X, y, sample_weight=sample_weight)
+
+    best_score = gscv.best_score_
+    np.testing.assert_almost_equal(best_score, exp_cv_acc)
