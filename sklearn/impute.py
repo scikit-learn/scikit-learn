@@ -1181,13 +1181,12 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                              "with integer dtype or an array of string values "
                              "with an object dtype.".format(X.dtype))
 
-        if sparse.issparse(X):
+        if sparse.issparse(X) and self.missing_values == 0:
             # missing_values = 0 not allowed with sparse data as it would
             # force densification
-            if self.missing_values == 0:
-                raise ValueError("Sparse input with missing_values=0 is "
-                                 "not supported. Provide a dense "
-                                 "array instead.")
+            raise ValueError("Sparse input with missing_values=0 is "
+                             "not supported. Provide a dense "
+                             "array instead.")
 
         return X
 
