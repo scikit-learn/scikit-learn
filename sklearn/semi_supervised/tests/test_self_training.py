@@ -1,9 +1,7 @@
 import numpy as np
 import pytest
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_warns_message
 from sklearn.exceptions import NotFittedError, ConvergenceWarning
 
 from sklearn.semi_supervised import SelfTrainingClassifier
@@ -37,17 +35,14 @@ def test_missing_predict_proba():
     base_classifier = SVC(probability=False, gamma='scale')
     self_training = SelfTrainingClassifier(base_classifier)
 
-    with pytest.raises(ValueError) as e:
-        message = "base_classifier (SVC) should implement predict_proba!"
+    with pytest.raises(ValueError, match=r"base_classifier \(SVC\) should"):
         self_training.fit(X_train, y_train_missing_labels)
-    assert e.value.args[0] == message
 
 
 def test_none_classifier():
     st = SelfTrainingClassifier(None)
-    msg = "base_classifier cannot be None"
-    assert_raise_message(ValueError, msg, st.fit, X_train,
-                         y_train_missing_labels)
+    with pytest.raises(ValueError, match="base_classifier cannot be None"):
+        st.fit(X_train, y_train_missing_labels)
 
 
 @pytest.mark.parametrize("max_iter, threshold",
@@ -56,28 +51,27 @@ def test_invalid_params(max_iter, threshold):
     # Test negative iterations
     base_classifier = SVC(gamma="scale", probability=True)
     st = SelfTrainingClassifier(base_classifier, max_iter=max_iter)
-    message = "max_iter must be >= 0 or None, got"
-    assert_raise_message(ValueError, message, st.fit, X_train, y_train)
+    with pytest.raises(ValueError, match="max_iter must be >= 0 or None"):
+        st.fit(X_train, y_train)
 
     base_classifier = SVC(gamma="scale", probability=True)
     st = SelfTrainingClassifier(base_classifier, threshold=threshold)
-    message = "threshold must be in [0,1)"
-    assert_raise_message(ValueError, message, st.fit, X_train, y_train)
+    with pytest.raises(ValueError, match="threshold must be in"):
+        st.fit(X_train, y_train)
 
 
 def test_invalid_early_stopping():
     base_classifier = SVC(gamma="scale", probability=True)
     st = SelfTrainingClassifier(base_classifier,
                                 n_iter_no_change=-10)
-    message = "n_iter_no_change must be > 0, got"
-    assert_raise_message(ValueError, message, st.fit, X_train, y_train)
+    with pytest.raises(ValueError, match="n_iter_no_change must be"):
+        st.fit(X_train, y_train)
 
     st = SelfTrainingClassifier(base_classifier, max_iter=5,
                                 n_iter_no_change=10)
-    assert_warns_message(UserWarning,
-                         "n_iter_no_change >= max_iter means early stopping is"
-                         " ineffective",
-                         st.fit, X_train, y_train)
+
+    with pytest.warns(UserWarning, match="early stopping is ineffective"):
+        st.fit(X_train, y_train)
 
 
 @pytest.mark.parametrize("base_classifier",
@@ -166,11 +160,9 @@ def test_zero_iterations(base_classifier, y):
 
     clf1 = SelfTrainingClassifier(base_classifier, max_iter=0)
 
-    assert_warns_message(ConvergenceWarning,
-                         "Maximum number of iterations reached before "
-                         "early stopping. Consider increasing max_iter to "
-                         "improve the fit.",
-                         clf1.fit, X_train, y)
+    with pytest.warns(ConvergenceWarning, match="Maximum number of iterations"
+                      " reached before early stopping"):
+        clf1.fit(X_train, y)
 
     clf2 = base_classifier.fit(X_train[:n_labeled_samples],
                                y[:n_labeled_samples])
@@ -182,10 +174,11 @@ def test_zero_iterations(base_classifier, y):
 def test_notfitted():
     # Test that predicting without training throws an error
     st = SelfTrainingClassifier(KNeighborsClassifier())
-    msg = ("This SelfTrainingClassifier instance is not fitted yet. Call "
-           "'fit' with appropriate arguments before using this method.")
-    assert_raise_message(NotFittedError, msg, st.predict, X_train)
-    assert_raise_message(NotFittedError, msg, st.predict_proba, X_train)
+    msg = "This SelfTrainingClassifier instance is not fitted yet"
+    with pytest.raises(NotFittedError, match=msg):
+        st.predict(X_train)
+    with pytest.raises(NotFittedError, match=msg):
+        st.predict_proba(X_train)
 
 
 def test_prefitted_throws_error():
@@ -194,9 +187,9 @@ def test_prefitted_throws_error():
     knn = KNeighborsClassifier()
     knn.fit(X_train, y_train)
     st = SelfTrainingClassifier(knn)
-    msg = ("This SelfTrainingClassifier instance is not fitted yet. Call "
-           "'fit' with appropriate arguments before using this method.")
-    assert_raise_message(NotFittedError, msg, st.predict, X_train)
+    with pytest.raises(NotFittedError, match="This SelfTrainingClassifier"
+                       " instance is not fitted yet"):
+        st.predict(X_train)
 
 
 @pytest.mark.parametrize("max_iter", range(1, 5))
@@ -208,11 +201,9 @@ def test_y_labeled_iter(max_iter):
     # If we look at the output for self.n_iter_ we can see that samples are
     # labeled only in iteration 1. Therefore early_stopping should only kick in
     # in iteration 5. This implies we fail to converge for max_iter < 4.
-    assert_warns_message(ConvergenceWarning,
-                         "Maximum number of iterations reached before "
-                         "early stopping. Consider increasing max_iter to "
-                         "improve the fit.",
-                         st.fit, X_train, y_train_missing_labels)
+    with pytest.warns(ConvergenceWarning, match="Maximum number of iterations"
+                      " reached before early stopping"):
+        st.fit(X_train, y_train_missing_labels)
     amount_iter_0 = len(st.y_labeled_iter_[st.y_labeled_iter_ == 0])
     assert amount_iter_0 == n_labeled_samples
     # Check that the max of the iterations is less than the total amount of
@@ -227,8 +218,8 @@ def test_no_unlabeled():
     knn = KNeighborsClassifier()
     knn.fit(X_train, y_train)
     st = SelfTrainingClassifier(knn)
-    msg = "y contains no unlabeled samples"
-    assert_warns_message(UserWarning, msg, st.fit, X_train, y_train)
+    with pytest.warns(UserWarning, msg="y contains no unlabeled samples"):
+        st.fit(X_train, y_train)
     assert_array_equal(knn.predict(X_test), st.predict(X_test))
     # Assert that all samples were labeled in iteration 0 (since there were no
     # unlabeled samples).

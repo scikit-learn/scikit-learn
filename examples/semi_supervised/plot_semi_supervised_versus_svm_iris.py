@@ -38,7 +38,7 @@ h = .02
 rng = np.random.RandomState(0)
 y_rand = rng.rand(y.shape[0])
 y_30 = np.copy(y)
-y_30[y_rand < 0.3] = -1
+y_30[y_rand < 0.3] = -1  # set random samples to be unlabeled
 y_50 = np.copy(y)
 y_50[y_rand < 0.5] = -1
 # we create an instance of SVM and fit out data. We do not scale our
