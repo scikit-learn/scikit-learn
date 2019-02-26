@@ -48,7 +48,7 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 __version__ = '0.21.dev0'
 
 
-os.environ.setdefault("KMP_DUPLICATE_LIB_OK", True)
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "True")
 
 
 try:
