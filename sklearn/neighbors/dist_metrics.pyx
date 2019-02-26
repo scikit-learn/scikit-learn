@@ -997,7 +997,8 @@ cdef class HaversineDistance(DistanceMetric):
                               ITYPE_t size) nogil except -1:
         if size != 2:
             with gil:
-                raise ValueError("Haversine distance only valid in 2 dimensions")
+                raise ValueError("Haversine distance only valid "
+                                 "in 2 dimensions")
         cdef DTYPE_t sin_0 = sin(0.5 * (x1[0] - x2[0]))
         cdef DTYPE_t sin_1 = sin(0.5 * (x1[1] - x2[1]))
         return 2 * asin(sqrt(sin_0 * sin_0
