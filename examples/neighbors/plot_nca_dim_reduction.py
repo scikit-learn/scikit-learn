@@ -93,7 +93,7 @@ for i, (name, model) in enumerate(dim_reduction_methods):
     # Embed the data set in 2 dimensions using the fitted model
     X_embedded = model.transform(X)
 
-    # Plot the embedding and show the evaluation score
+    # Plot the projected points and show the evaluation score
     plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=y, s=30, cmap='Set1')
     plt.title("{}, KNN (k={})\nTest accuracy = {:.2f}".format(name,
                                                               n_neighbors,

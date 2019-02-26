@@ -143,9 +143,10 @@ def test_params_validation():
 
     n_components = 10
     assert_raise_message(ValueError,
-                         'The preferred embedding dimensionality '
-                         '`n_components` ({}) cannot be greater '
-                         'than the given data dimensionality ({})!'
+                         'The preferred dimensionality of the '
+                         'projected space `n_components` ({}) cannot '
+                         'be greater than the given data '
+                         'dimensionality ({})!'
                          .format(n_components, X.shape[1]),
                          NCA(n_components=n_components).fit, X, y)
 
@@ -184,8 +185,8 @@ def test_n_components():
     n_components = X.shape[1]
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
     assert_raise_message(ValueError,
-                         'The preferred embedding dimensionality '
-                         '`n_components` ({}) does not match '
+                         'The preferred dimensionality of the '
+                         'projected space `n_components` ({}) does not match '
                          'the output dimensionality of the given '
                          'linear transformation `init` ({})!'
                          .format(n_components, init.shape[0]),
@@ -195,9 +196,10 @@ def test_n_components():
     n_components = X.shape[1] + 2
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
     assert_raise_message(ValueError,
-                         'The preferred embedding dimensionality '
-                         '`n_components` ({}) cannot be greater '
-                         'than the given data dimensionality ({})!'
+                         'The preferred dimensionality of the '
+                         'projected space `n_components` ({}) cannot '
+                         'be greater than the given data '
+                         'dimensionality ({})!'
                          .format(n_components, X.shape[1]),
                          nca.fit, X, y)
 
@@ -259,8 +261,8 @@ def test_init_transformation():
     n_components = X.shape[1] - 2
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
     assert_raise_message(ValueError,
-                         'The preferred embedding dimensionality '
-                         '`n_components` ({}) does not match '
+                         'The preferred dimensionality of the '
+                         'projected space `n_components` ({}) does not match '
                          'the output dimensionality of the given '
                          'linear transformation `init` ({})!'
                          .format(n_components, init.shape[0]),

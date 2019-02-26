@@ -522,10 +522,10 @@ Neighborhood Components Analysis
 Neighborhood Components Analysis (NCA, :class:`NeighborhoodComponentsAnalysis`)
 is a distance metric learning algorithm which aims to improve the accuracy of
 nearest neighbors classification compared to the standard Euclidean distance.
-The algorithm  directly  maximizes  a stochastic  variant  of  the
-leave-one-out k-nearest neighbors (KNN) score on the training set.  It can also
-learn a low-dimensional linear  embedding  of  data  that  can  be used for
-data  visualization and fast classification.
+The algorithm directly maximizes a stochastic variant of the leave-one-out
+k-nearest neighbors (KNN) score on the training set. It can also learn a
+low-dimensional linear projection of data that can be used for data
+visualization and fast classification.
 
 .. |nca_illustration_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_illustration_001.png
    :target: ../auto_examples/neighbors/plot_nca_illustration.html
@@ -543,7 +543,7 @@ generated dataset. We focus on the stochastic KNN classification of point no.
 to their distance, and can be seen as the relative weight (or probability) that
 a stochastic nearest neighbor prediction rule would assign to this point. In
 the original space, sample 3 has many stochastic neighbors from various
-classes, so the right class is not very likely. However, in the embedding space
+classes, so the right class is not very likely. However, in the projected space
 learned by NCA, the only stochastic neighbors with non-negligible weight are
 from the same class as sample 3, guaranteeing that the latter will be well
 classified. See the :ref:`mathematical formulation<mathematical_formulation>`
@@ -567,7 +567,7 @@ irregular decision boundaries.
 To use this model for classification, one needs to combine a
 :class:`NeighborhoodComponentsAnalysis` instance that learns the optimal
 transformation with a :class:`KNeighborsClassifier` instance that performs the
-classification in the embedding space. Here is an example using the two
+classification in the projected space. Here is an example using the two
 classes:
 
     >>> from sklearn.neighbors import (NeighborhoodComponentsAnalysis,
@@ -616,8 +616,8 @@ Neighborhood Component Analysis (:class:`NeighborhoodComponentsAnalysis`) on
 the Digits dataset, a dataset with size :math:`n_{samples} = 1797` and
 :math:`n_{features} = 64`. The data set is split into a training and a test set
 of equal size, then standardized. For evaluation the 3-nearest neighbor
-classification accuracy is computed on the 2-dimensional embedding found by
-each method. Each data sample belongs to one of 10 classes.
+classification accuracy is computed on the 2-dimensional projected points found
+by each method. Each data sample belongs to one of 10 classes.
 
 .. |nca_dim_reduction_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_dim_reduction_001.png
    :target: ../auto_examples/neighbors/plot_nca_dim_reduction.html
@@ -703,9 +703,9 @@ Training
 ^^^^^^^^
 NCA stores a matrix of pairwise distances, taking ``n_samples ** 2`` memory.
 Time complexity depends on the number of iterations done by the optimisation
- algorithm. However, one can set the maximum number of iterations with the
- argument ``max_iter``. For each iteration, time complexity is
- ``O(n_components x n_samples x min(n_samples, n_features)``.
+algorithm. However, one can set the maximum number of iterations with the
+argument ``max_iter``. For each iteration, time complexity is
+``O(n_components x n_samples x min(n_samples, n_features)``.
 
 
 Transform

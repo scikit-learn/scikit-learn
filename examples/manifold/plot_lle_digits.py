@@ -124,7 +124,7 @@ plot_embedding(X_lda,
 
 # ----------------------------------------------------------------------
 # Isomap projection of the digits dataset
-print("Computing Isomap embedding")
+print("Computing Isomap projection")
 t0 = time()
 X_iso = manifold.Isomap(n_neighbors, n_components=2).fit_transform(X)
 print("Done.")
@@ -233,8 +233,8 @@ plot_embedding(X_tsne,
                (time() - t0))
 
 # ----------------------------------------------------------------------
-# NCA embedding of the digits dataset
-print("Computing NCA embedding")
+# NCA projection of the digits dataset
+print("Computing NCA projection")
 nca = neighbors.NeighborhoodComponentsAnalysis(n_components=2, random_state=0)
 t0 = time()
 X_nca = nca.fit_transform(X, y)

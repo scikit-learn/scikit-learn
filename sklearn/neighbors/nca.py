@@ -38,7 +38,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_components : int, optional (default=None)
-        Preferred dimensionality of the embedding.
+        Preferred dimensionality of the projected space.
         If None it will be set to ``n_features``.
 
     init : string or numpy array, optional (default='auto')
@@ -296,15 +296,16 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
-        # Check the preferred embedding dimensionality
+        # Check the preferred dimensionality of the projected space
         if self.n_components is not None:
             check_scalar(self.n_components, 'n_components',
                          integer_types, 1)
 
             if self.n_components > X.shape[1]:
-                raise ValueError('The preferred embedding dimensionality '
-                                 '`n_components` ({}) cannot be greater '
-                                 'than the given data dimensionality ({})!'
+                raise ValueError('The preferred dimensionality of the '
+                                 'projected space `n_components` ({}) cannot '
+                                 'be greater than the given data '
+                                 'dimensionality ({})!'
                                  .format(self.n_components, X.shape[1]))
 
         # If warm_start is enabled, check that the inputs are consistent
@@ -350,10 +351,11 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
             if self.n_components is not None:
                 # Assert that self.n_components = init.shape[0]
                 if self.n_components != init.shape[0]:
-                    raise ValueError('The preferred embedding dimensionality '
-                                     '`n_components` ({}) does not match '
-                                     'the output dimensionality of the given '
-                                     'linear transformation `init` ({})!'
+                    raise ValueError('The preferred dimensionality of the '
+                                     'projected space `n_components` ({}) does'
+                                     ' not match the output dimensionality of '
+                                     'the given linear transformation '
+                                     '`init` ({})!'
                                      .format(self.n_components,
                                              init.shape[0]))
         elif init in ['auto', 'pca', 'lda', 'identity', 'random']:

@@ -955,5 +955,5 @@ when data can be fetched sequentially.
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
 
 
-See also :ref:`_nca_dim_reduction` for dimensionality reduction with
+See also :ref:`nca_dim_reduction` for dimensionality reduction with
 Neighborhood Components Analysis.
