@@ -17,8 +17,8 @@ from sklearn.datasets.openml import (_open_openml_url,
                                      _retry_with_clean_cache)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
-from sklearn.externals.six import string_types
-from sklearn.externals.six.moves.urllib.error import HTTPError
+from sklearn.utils import is_scalar_nan
+from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
 
@@ -38,8 +38,8 @@ def _test_features_list(data_id):
             # XXX: This would be faster with np.take, although it does not
             # handle missing values fast (also not with mode='wrap')
             cat = data_bunch.categories[col_name]
-            result = [cat[idx] if 0 <= idx < len(cat) else None for idx in
-                      data_bunch.data[:, col_idx].astype(int)]
+            result = [None if is_scalar_nan(idx) else cat[int(idx)]
+                      for idx in data_bunch.data[:, col_idx]]
             return np.array(result, dtype='O')
         else:
             # non-nominal attribute
