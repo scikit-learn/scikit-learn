@@ -42,7 +42,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         """
         if hasattr(X, 'iloc'):
-            # if pandas dataframes
+            # if pandas dataframes do not check full X,
+            # it should be checked column by column (using _check_X_feature())
             return X
         X_temp = check_array(X, dtype=None)
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
