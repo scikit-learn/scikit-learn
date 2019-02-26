@@ -7,7 +7,6 @@ import pytest
 
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import OPTICS
-from sklearn.cluster.optics_ import _find_local_maxima
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
@@ -98,6 +97,7 @@ def test_bad_reachability():
     with pytest.warns(UserWarning, match=msg):
         clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015)
         clust.fit(X)
+
 
 def test_close_extract():
     # Test extract where extraction eps is close to scaled epsPrime
