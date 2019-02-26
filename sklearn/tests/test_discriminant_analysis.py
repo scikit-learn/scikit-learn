@@ -7,6 +7,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_equal, assert_no_warnings,
                                    assert_warns_message)
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -294,6 +295,34 @@ def test_lda_dimension_warning(n_classes, n_features):
                       " (default), or a value smaller or equal to "
                       "min(n_features, n_classes - 1).")
         assert_warns_message(FutureWarning, future_msg, lda.fit, X, y)
+
+
+def test_lda_dtype_match():
+    # Test that np.float32 input data is not cast to np.float64 when possible
+    n_features = 2
+    n_classes = 2
+    n_samples = 1000
+    X, y = make_blobs(n_samples=n_samples, n_features=n_features,
+                      centers=n_classes, random_state=11)
+    X_32 = np.array(X).astype(np.float32)
+    y_32 = np.array(y).astype(np.float32)
+    X_64 = np.array(X).astype(np.float64)
+    y_64 = np.array(y).astype(np.float64)
+
+    for test_case in solver_shrinkage:
+        solver, shrinkage = test_case
+        # Check type consistency
+        clf_32 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
+        clf_32.fit(X_32,y_32)
+        assert_equal(clf_32.coef_.dtype, X_32.dtype)
+
+        clf_64 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
+        clf_64.fit(X_64, y_64)
+        assert_equal(clf_64.coef_.dtype, X_64.dtype)
+
+        # Check value consistency between types
+        rtol = 1e-6
+        assert_allclose(clf_32.coef_, clf_64.coef_.astype(np.float32), rtol=rtol)
 
 
 def test_qda():
