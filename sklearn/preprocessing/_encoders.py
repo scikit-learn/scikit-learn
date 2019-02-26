@@ -394,7 +394,6 @@ class OneHotEncoder(_BaseEncoder):
                         )
                         warnings.warn(msg, FutureWarning)
                         self._legacy_mode = True
-                        self._n_values = 'auto'
                     else:
                         msg = (
                             "The handling of integer data will change in "
@@ -403,7 +402,7 @@ class OneHotEncoder(_BaseEncoder):
                             "[0, max(values)], while in the future they "
                             "will be determined based on the unique "
                             "values.\n The old behavior is not compatible "
-                            "with the `drop` paramenter. Instead, you "
+                            "with the `drop` parameter. Instead, you "
                             "must manually specify \"categories='auto'\" "
                             "if you wish to use the `drop` parameter on "
                             "an array of entirely integer data. This will "

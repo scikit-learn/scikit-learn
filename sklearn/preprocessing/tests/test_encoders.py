@@ -739,6 +739,12 @@ def test_one_hot_encoder_invalid_params():
         "`handle_unknown` must be 'error'",
         enc.fit, [["Male"], ["Female"]])
 
+    enc = OneHotEncoder(drop='first')
+    assert_raises_regex(
+        ValueError,
+        "The handling of integer data will change in version",
+        enc.fit, [[1], [2]])
+
     enc = OneHotEncoder(drop='first', categories='auto')
     assert_no_warnings(enc.fit_transform, [[1], [2]])
 
