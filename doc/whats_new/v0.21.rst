@@ -66,6 +66,9 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`datasets.svmlight_format` :issue:`10727` by
   :user:`Bryan K Woods <bryan-woods>`.
 
+- |Fix| :func:`datasets.load_sample_images` returns images with a deterministic
+  order. :issue:`13250` by :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -76,15 +79,16 @@ Support for Python 3.4 and below has been officially dropped.
   the default value is used.
   :issue:`12988` by :user:`Zijie (ZJ) Poh <zjpoh>`.
 
-:mod:`sklearn.decomposition`
-............................
-
 - |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
   `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
   `n_components < n_features` instead of
-  `n_components <= min(n_samples, n_features)`. 
+  `n_components <= min(n_samples, n_features)`.
   :issue:`11650` by :user:`Hossein Pourbozorg <hossein-pourbozorg>` and
   :user:`Zijie (ZJ) Poh <zjpoh>`.
+
+- |Enhancement| :class:`decomposition.KernelPCA` now has deterministic output 
+  (resolved sign ambiguity in eigenvalue decomposition of the kernel matrix).
+  :issue:`13241` by :user:`Aurélien Bellet <bellet>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -134,6 +138,10 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12177` by :user:`Sergey Feldman <sergeyf>` :user:`Ben Lawson
   <benlawson>`.
 
+- |Fix| In :class:`impute.MissingIndicator` avoid implicit densification by
+  raising an exception if input is sparse add `missing_values` property
+  is set to 0. :issue:`13240` by :user:`Bartosz Telenczuk <btel>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -167,7 +175,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`linear_model.LassoLarsIC`, where user input
    ``copy_X=False`` at instance creation would be overridden by default
-   parameter value ``copy_X=True`` in ``fit``. 
+   parameter value ``copy_X=True`` in ``fit``.
    :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
 
 :mod:`sklearn.manifold`
@@ -277,6 +285,10 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed the calculation overflow when using a float16 dtype with
   :class:`preprocessing.StandardScaler`. :issue:`13007` by
   :user:`Raffaello Baluyot <baluyotraf>`
+  
+- |Feature| :class:`OneHotEncoder` now supports dropping one feature per category
+  with a new drop parameter. :issue:`12908` by
+  :user:`Drew Johnston <drewmjohnston>`.
 
 :mod:`sklearn.semi_supervised`
 ..............................
@@ -321,6 +333,13 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`mixture.BayesianGaussianMixture`, where ``fit_predict`` and
   ``fit.predict`` were not equivalent. :issue:`13142` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+
+:mod:`sklearn.isotonic`
+.......................
+
+- |Feature| Allow different dtypes (such as float32) in
+  :class:`isotonic.IsotonicRegression` :issue:`8769` by :user:`Vlad Niculae <vene>`
 
 
 Multiple modules
