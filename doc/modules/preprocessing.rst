@@ -260,18 +260,33 @@ defined by :math:`phi` followed by removal of the mean in that space.
 Non-linear transformation
 =========================
 
+Two types of transformations are available: quantile transforms and power
+transforms. Both quantile and power transforms are based on monotonic
+transformations of the features and thus preserve the rank of the values
+along each feature.
+
+Quantile transforms put all features into the same desired distribution based
+on the formula :math:`G^{-1}(F(X))` where :math:`F` is the cumulative
+distribution function of the feature and :math:`G^{-1}` the
+`quantile function <https://en.wikipedia.org/wiki/Quantile_function>`_ of the
+desired output distribution :math:`G`. This formula is using the two following
+facts: (i) if :math:`X` is a random variable with a continuous cumulative
+distribution function :math:`F` then :math:`F(X)` is uniformly distributed on
+:math:`[0,1]`; (ii) if :math:`U` is a random variable with uniform distribution
+on :math:`[0,1]` then :math:`G^{-1}(U)` has distribution :math:`G`. By performing
+a rank transformation, a quantile transform smooths out unusual distributions
+and is less influenced by outliers than scaling methods. It does, however,
+distort correlations and distances within and across features.
+
+Power transforms are a family of parametric transformations that aim to map
+data from any distribution to as close to a Gaussian distribution.
+
 Mapping to a Uniform distribution
 ---------------------------------
 
-Like scalers, :class:`QuantileTransformer` puts all features into the same,
-known range or distribution. However, by performing a rank transformation, it
-smooths out unusual distributions and is less influenced by outliers than
-scaling methods. It does, however, distort correlations and distances within
-and across features.
-
 :class:`QuantileTransformer` and :func:`quantile_transform` provide a
-non-parametric transformation based on the quantile function to map the data to
-a uniform distribution with values between 0 and 1::
+non-parametric transformation to map the data to a uniform distribution
+with values between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
