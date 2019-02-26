@@ -149,6 +149,7 @@ def test_ordering():
     X.data = X.data[::-1]
     assert not X.data.flags['C_CONTIGUOUS']
 
+
 @pytest.mark.filterwarnings("ignore::scipy.sparse.SparseEfficiencyWarning")
 @pytest.mark.parametrize(
     "value, force_all_finite",
