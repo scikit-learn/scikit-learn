@@ -70,6 +70,31 @@ def test_kmeans_results(representation, algo, dtype):
     assert kmeans.n_iter_ == expected_n_iter
 
 
+@pytest.mark.parametrize("array_constr",
+                         [np.array, sp.csr_matrix],
+                         ids=['dense', 'sparse'])
+@pytest.mark.parametrize("algo", ['full', 'elkan'])
+def test_relocated_clusters(array_constr, algo):
+    # check that empty clusters are relocated as expected
+    X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]])
+
+    # second center too far from others points will be empty at first iter
+    init_centers = np.array([[0.5, 0.5], [3, 3]])
+
+    expected_labels = [0, 0, 1, 1]
+    expected_inertia = 0.25
+    expected_centers = [[0.25, 0], [0.75, 1]]
+    expected_n_iter = 3
+
+    kmeans = KMeans(n_clusters=2, n_init=1, init=init_centers, algorithm=algo)
+    kmeans.fit(X)
+
+    assert_array_equal(kmeans.labels_, expected_labels)
+    assert_almost_equal(kmeans.inertia_, expected_inertia)
+    assert_array_almost_equal(kmeans.cluster_centers_, expected_centers)
+    assert kmeans.n_iter_ == expected_n_iter
+
+
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
 def test_elkan_results(distribution):
     # check that results are identical between lloyd and elkan algorithms

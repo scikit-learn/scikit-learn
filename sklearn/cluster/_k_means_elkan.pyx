@@ -18,9 +18,10 @@ from libc.string cimport memset, memcpy
 from ..utils.extmath import row_norms
 from ._k_means cimport _relocate_empty_clusters_dense
 from ._k_means cimport _relocate_empty_clusters_sparse
-from ._k_means cimport _mean_and_center_shift
 from ._k_means cimport _euclidean_dense_dense
 from ._k_means cimport _euclidean_sparse_dense
+from ._k_means cimport _average_centers
+from ._k_means cimport _center_shift
 
 
 np.import_array()
@@ -186,7 +187,7 @@ cpdef void _elkan_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[:, ::1] lower_bounds,
                                      int[::1] labels,
                                      floating[::1] center_shift,
-                                     int n_jobs=-1,
+                                     int n_jobs,
                                      bint update_centers=True):
     """Single iteration of K-means elkan algorithm with dense input.
 
@@ -256,7 +257,7 @@ shape (n_clusters, n_clusters)
         int n_samples_r = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff
         int start, end
-        int num_threads
+        # int num_threads
 
         int i, j, k
 
@@ -271,40 +272,35 @@ shape (n_clusters, n_clusters)
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-    # set number of threads to be used by openmp
-    num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
+    for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_jobs):
+        # remaining samples added to last chunk
+        if chunk_idx == n_chunks - 1:
+            n_samples_chunk_eff = n_samples_chunk + n_samples_r
+        else:
+            n_samples_chunk_eff = n_samples_chunk
 
-    with nogil, parallel(num_threads=num_threads):
+        start = chunk_idx * n_samples_chunk
+        end = start + n_samples_chunk_eff
 
-        for chunk_idx in prange(n_chunks):
-            # remaining samples added to last chunk
-            if chunk_idx == n_chunks - 1:
-                n_samples_chunk_eff = n_samples_chunk + n_samples_r
-            else:
-                n_samples_chunk_eff = n_samples_chunk
-
-            start = chunk_idx * n_samples_chunk
-            end = start + n_samples_chunk_eff
-
-            _update_chunk_dense(
-                &X[start, 0],
-                sample_weight[start: end],
-                centers_old,
-                centers_new,
-                center_half_distances,
-                distance_next_center,
-                weight_in_clusters,
-                labels[start: end],
-                upper_bounds[start: end],
-                lower_bounds[start: end],
-                update_centers)
+        _update_chunk_dense(
+            &X[start, 0],
+            sample_weight[start: end],
+            centers_old,
+            centers_new,
+            center_half_distances,
+            distance_next_center,
+            weight_in_clusters,
+            labels[start: end],
+            upper_bounds[start: end],
+            lower_bounds[start: end],
+            update_centers)
 
     if update_centers:
-        _relocate_empty_clusters_dense(
-            X, sample_weight, centers_new, weight_in_clusters, labels)
+        _relocate_empty_clusters_dense(X, sample_weight, centers_old,
+                                       centers_new, weight_in_clusters, labels)
 
-        _mean_and_center_shift(
-            centers_old, centers_new, weight_in_clusters, center_shift)
+        _average_centers(centers_new, weight_in_clusters)
+        _center_shift(centers_old, centers_new, center_shift)
 
         # update lower and upper bounds
         for i in range(n_samples):
@@ -402,7 +398,7 @@ cpdef void _elkan_iter_chunked_sparse(X,
                                       floating[:, ::1] lower_bounds,
                                       int[::1] labels,
                                       floating[::1] center_shift,
-                                      int n_jobs=-1,
+                                      int n_jobs,
                                       bint update_centers=True):
     """Single iteration of K-means elkan algorithm with sparse input.
 
@@ -476,7 +472,7 @@ shape (n_clusters, n_clusters)
         int n_samples_r = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff
         int start, end
-        int num_threads
+        # int num_threads
 
         int i, j, k
 
@@ -494,43 +490,41 @@ shape (n_clusters, n_clusters)
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
     # set number of threads to be used by openmp
-    num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
+    # num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
 
-    with nogil, parallel(num_threads=num_threads):
+    for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_jobs):
+        # remaining samples added to last chunk
+        if chunk_idx == n_chunks - 1:
+            n_samples_chunk_eff = n_samples_chunk + n_samples_r
+        else:
+            n_samples_chunk_eff = n_samples_chunk
 
-        for chunk_idx in prange(n_chunks):
-            # remaining samples added to last chunk
-            if chunk_idx == n_chunks - 1:
-                n_samples_chunk_eff = n_samples_chunk + n_samples_r
-            else:
-                n_samples_chunk_eff = n_samples_chunk
+        start = chunk_idx * n_samples_chunk
+        end = start + n_samples_chunk_eff
 
-            start = chunk_idx * n_samples_chunk
-            end = start + n_samples_chunk_eff
-
-            _update_chunk_sparse(
-                X_data[X_indptr[start]: X_indptr[end]],
-                X_indices[X_indptr[start]: X_indptr[end]],
-                X_indptr[start: end],
-                sample_weight[start: end],
-                centers_old,
-                centers_new,
-                centers_squared_norms,
-                center_half_distances,
-                distance_next_center,
-                weight_in_clusters,
-                labels[start: end],
-                upper_bounds[start: end],
-                lower_bounds[start: end],
-                update_centers)
+        _update_chunk_sparse(
+            X_data[X_indptr[start]: X_indptr[end]],
+            X_indices[X_indptr[start]: X_indptr[end]],
+            X_indptr[start: end],
+            sample_weight[start: end],
+            centers_old,
+            centers_new,
+            centers_squared_norms,
+            center_half_distances,
+            distance_next_center,
+            weight_in_clusters,
+            labels[start: end],
+            upper_bounds[start: end],
+            lower_bounds[start: end],
+            update_centers)
 
     if update_centers:
         _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,
-            centers_new, weight_in_clusters, labels)
+            centers_old, centers_new, weight_in_clusters, labels)
 
-        _mean_and_center_shift(
-            centers_old, centers_new, weight_in_clusters, center_shift)
+        _average_centers(centers_new, weight_in_clusters)
+        _center_shift(centers_old, centers_new, center_shift)
 
         # update lower and upper bounds
         for i in range(n_samples):

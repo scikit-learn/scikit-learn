@@ -356,7 +356,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         algorithm = "full"
 
     if algorithm == "auto":
-        algorithm = "elkan"
+        algorithm = "full" if n_clusters == 1 else "elkan"
 
     if algorithm == "full":
         kmeans_single = _kmeans_single_lloyd
@@ -366,7 +366,6 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
         raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
                          " %s" % str(algorithm))
 
-    n_jobs_ = -1 if n_jobs is None else effective_n_jobs(n_jobs)
     seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
 
     # limit number of threads in second level of nested parallelism (i.e. BLAS)
@@ -377,7 +376,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
             labels, inertia, centers, n_iter_ = kmeans_single(
                 X, sample_weight, n_clusters, max_iter=max_iter, init=init,
                 verbose=verbose, tol=tol, x_squared_norms=x_squared_norms,
-                random_state=seed, n_jobs=n_jobs_)
+                random_state=seed, n_jobs=effective_n_jobs(n_jobs))
             # determine if these results are the best so far
             if best_inertia is None or inertia < best_inertia:
                 best_labels = labels.copy()
@@ -409,6 +408,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     # if sp.issparse(X):
     #     raise TypeError("algorithm='elkan' not supported for sparse input X")
 
+    n_jobs_ = effective_n_jobs(n_jobs)
     random_state = check_random_state(random_state)
     sample_weight = _check_sample_weight(X, sample_weight)
 
@@ -446,7 +446,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     for i in range(max_iter):
         elkan_iter(X, sample_weight, centers_old, centers, weight_in_clusters,
                    center_half_distances, distance_next_center, upper_bounds,
-                   lower_bounds, labels, center_shift, n_jobs)
+                   lower_bounds, labels, center_shift, n_jobs_)
 
         # compute new pairwise distances between centers and closest other
         # center of each center for next iterations
@@ -469,7 +469,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     # rerun E-step so that predicted labels match cluster centers
     elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
                center_half_distances, distance_next_center, upper_bounds,
-               lower_bounds, labels, center_shift, n_jobs,
+               lower_bounds, labels, center_shift, n_jobs_,
                update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
@@ -479,7 +479,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
 
 def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
                          init='k-means++', verbose=False, x_squared_norms=None,
-                         random_state=None, tol=1e-4, n_jobs=-1):
+                         random_state=None, tol=1e-4, n_jobs=None):
     """A single run of k-means, assumes preparation completed prior.
 
     Parameters
@@ -546,8 +546,8 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     n_iter : int
         Number of iterations run.
     """
+    n_jobs_ = effective_n_jobs(n_jobs)
     random_state = check_random_state(random_state)
-
     sample_weight = _check_sample_weight(X, sample_weight)
 
     # init
@@ -573,7 +573,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     for i in range(max_iter):
         lloyd_iter(X, sample_weight, x_squared_norms, centers_old, centers,
                    centers_squared_norms, weight_in_clusters, labels,
-                   center_shift, n_jobs)
+                   center_shift, n_jobs_)
 
         if verbose:
             inertia = _inertia(X, sample_weight, centers_old, labels)
@@ -590,14 +590,14 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
     # rerun E-step so that predicted labels match cluster centers
     lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
                centers_squared_norms, weight_in_clusters, labels,
-               center_shift, n_jobs, update_centers=False)
+               center_shift, n_jobs_, update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
     return labels, inertia, centers, i + 1
 
 
-def _labels_inertia(X, sample_weight, x_squared_norms, centers):
+def _labels_inertia(X, sample_weight, x_squared_norms, centers, n_jobs=1):
     """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers.
@@ -641,7 +641,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers):
 
     _labels(X, sample_weight, x_squared_norms, centers,
             centers, centers_squared_norms, weight_in_clusters,
-            labels, center_shift, update_centers=False)
+            labels, center_shift, n_jobs, update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
@@ -1045,7 +1045,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         x_squared_norms = row_norms(X, squared=True)
 
         return _labels_inertia(X, sample_weight, x_squared_norms,
-                               self.cluster_centers_)[0]
+                               self.cluster_centers_,
+                               effective_n_jobs(self.n_jobs))[0]
 
     def score(self, X, y=None, sample_weight=None):
         """Opposite of the value of X on the K-means objective.

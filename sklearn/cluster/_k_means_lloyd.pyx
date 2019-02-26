@@ -18,7 +18,7 @@ from ..utils._cython_blas cimport _gemm
 from ..utils._cython_blas cimport RowMajor, Trans, NoTrans
 from ._k_means cimport _relocate_empty_clusters_dense
 from ._k_means cimport _relocate_empty_clusters_sparse
-from ._k_means cimport _mean_and_center_shift
+from ._k_means cimport _average_centers, _center_shift
 
 
 np.import_array()
@@ -33,7 +33,7 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                                      floating[::1] weight_in_clusters,
                                      int[::1] labels,
                                      floating[::1] center_shift,
-                                     int n_jobs=-1,
+                                     int n_jobs,
                                      bint update_centers=True):
     """Single iteration of K-means lloyd algorithm with dense input.
 
@@ -94,7 +94,7 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         int n_samples_r = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff
         int start, end
-        int num_threads
+        # int num_threads
 
         int j, k
 
@@ -112,37 +112,35 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
     # set number of threads to be used by openmp
-    num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
+    # num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
 
-    with nogil, parallel(num_threads=num_threads):
+    for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_jobs):
+        # remaining samples added to last chunk
+        if chunk_idx == n_chunks - 1:
+            n_samples_chunk_eff = n_samples_chunk + n_samples_r
+        else:
+            n_samples_chunk_eff = n_samples_chunk
 
-        for chunk_idx in prange(n_chunks):
-            # remaining samples added to last chunk
-            if chunk_idx == n_chunks - 1:
-                n_samples_chunk_eff = n_samples_chunk + n_samples_r
-            else:
-                n_samples_chunk_eff = n_samples_chunk
+        start = chunk_idx * n_samples_chunk
+        end = start + n_samples_chunk_eff
 
-            start = chunk_idx * n_samples_chunk
-            end = start + n_samples_chunk_eff
-
-            _update_chunk_dense(
-                &X[start, 0],
-                sample_weight[start: end],
-                x_squared_norms[start: end],
-                centers_old,
-                centers_new,
-                centers_squared_norms,
-                weight_in_clusters,
-                labels[start: end],
-                update_centers)
+        _update_chunk_dense(
+            &X[start, 0],
+            sample_weight[start: end],
+            x_squared_norms[start: end],
+            centers_old,
+            centers_new,
+            centers_squared_norms,
+            weight_in_clusters,
+            labels[start: end],
+            update_centers)
 
     if update_centers:
-        _relocate_empty_clusters_dense(
-            X, sample_weight, centers_new, weight_in_clusters, labels)
+        _relocate_empty_clusters_dense(X, sample_weight, centers_old,
+                                       centers_new, weight_in_clusters, labels)
 
-        _mean_and_center_shift(
-            centers_old, centers_new, weight_in_clusters, center_shift)
+        _average_centers(centers_new, weight_in_clusters)
+        _center_shift(centers_old, centers_new, center_shift)
 
 
 cdef void _update_chunk_dense(floating *X,
@@ -215,7 +213,7 @@ cpdef void _lloyd_iter_chunked_sparse(X,
                                       floating[::1] weight_in_clusters,
                                       int[::1] labels,
                                       floating[::1] center_shift,
-                                      int n_jobs=-1,
+                                      int n_jobs,
                                       bint update_centers=True):
     """Single iteration of K-means lloyd algorithm with sparse input.
 
@@ -275,7 +273,7 @@ cpdef void _lloyd_iter_chunked_sparse(X,
         int n_samples_r = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff = 0
         int start = 0, end = 0
-        int num_threads
+        # int num_threads
 
         int j, k
         floating alpha
@@ -298,40 +296,38 @@ cpdef void _lloyd_iter_chunked_sparse(X,
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
     # set number of threads to be used by openmp
-    num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
+    # num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
 
-    with nogil, parallel(num_threads=num_threads):
+    for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_jobs):
+        # remaining samples added to last chunk
+        if chunk_idx == n_chunks - 1:
+            n_samples_chunk_eff = n_samples_chunk + n_samples_r
+        else:
+            n_samples_chunk_eff = n_samples_chunk
 
-        for chunk_idx in prange(n_chunks):
-            # remaining samples added to last chunk
-            if chunk_idx == n_chunks - 1:
-                n_samples_chunk_eff = n_samples_chunk + n_samples_r
-            else:
-                n_samples_chunk_eff = n_samples_chunk
+        start = chunk_idx * n_samples_chunk
+        end = start + n_samples_chunk_eff
 
-            start = chunk_idx * n_samples_chunk
-            end = start + n_samples_chunk_eff
-
-            _update_chunk_sparse(
-                X_data[X_indptr[start]: X_indptr[end]],
-                X_indices[X_indptr[start]: X_indptr[end]],
-                X_indptr[start: end],
-                sample_weight[start: end],
-                x_squared_norms[start: end],
-                centers_old,
-                centers_new,
-                centers_squared_norms,
-                weight_in_clusters,
-                labels[start: end],
-                update_centers)
+        _update_chunk_sparse(
+            X_data[X_indptr[start]: X_indptr[end]],
+            X_indices[X_indptr[start]: X_indptr[end]],
+            X_indptr[start: end],
+            sample_weight[start: end],
+            x_squared_norms[start: end],
+            centers_old,
+            centers_new,
+            centers_squared_norms,
+            weight_in_clusters,
+            labels[start: end],
+            update_centers)
 
     if update_centers:
         _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,
-            centers_new, weight_in_clusters, labels)
+            centers_old, centers_new, weight_in_clusters, labels)
 
-        _mean_and_center_shift(
-            centers_old, centers_new, weight_in_clusters, center_shift)
+        _average_centers(centers_new, weight_in_clusters)
+        _center_shift(centers_old, centers_new, center_shift)
 
 
 cdef void _update_chunk_sparse(floating[::1] X_data,
