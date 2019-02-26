@@ -127,10 +127,9 @@ out_dims = range(500, 6000, 500)
 ts_svm_times = []
 for k in out_dims:
     ts = TensorSketch(degree=2, n_components=k)
-    ts.fit(fakeData, None)
 
     start = time()
-    ts.transform(fakeData)
+    ts.fit_transform(fakeData, None)
     ts_svm_times.append(time() - start)
 
 # Evaluate scalability of Nystroem as n_components grows
@@ -138,10 +137,9 @@ for k in out_dims:
 ny_svm_times = []
 for k in out_dims:
     ny = Nystroem(kernel="poly", gamma=1., degree=2, coef0=0, n_components=k)
-    ny.fit(fakeData, None)
 
     start = time()
-    ny.transform(fakeData)
+    ny.fit_transform(fakeData, None)
     ny_svm_times.append(time() - start)
 
 # Show results
@@ -151,7 +149,7 @@ plt.plot(out_dims, ts_svm_times, label="TensorSketch", c="orange")
 plt.plot(out_dims, ny_svm_times, label="Nystroem", c="blue")
 plt.legend()
 plt.xlabel("N_components for TensorSketch and Nystroem")
-plt.ylabel("Inference Time \n(s/10.000 samples)")
+plt.ylabel("fit_transform time \n(s/10.000 samples)")
 plt.xlim([out_dims[0], out_dims[-1]])
 plt.tight_layout()
 plt.show()
