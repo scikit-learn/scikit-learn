@@ -550,9 +550,9 @@ def test_one_hot_encoder_feature_names_unicode():
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
-                        ids=['numeric', 'object'])
+                         ids=['numeric', 'object'])
 @pytest.mark.parametrize("as_data_frame", [False, True],
-                        ids=['array', 'dataframe'])
+                         ids=['array', 'dataframe'])
 @pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
 def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
     if as_data_frame:

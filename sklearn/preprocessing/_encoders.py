@@ -119,7 +119,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         for i in range(n_features):
             Xi = self._get_feature(X, key=i)
             Xi = self._check_X_feature(Xi)
-            
+
             diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
 
