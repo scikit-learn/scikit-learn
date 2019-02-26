@@ -281,6 +281,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. Used ony when `cluster_method='dbscan'`.
 
+    min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
+        Minimum number of samples in an OPTICS cluster, expressed as an
+        absolute number or a fraction of the number of samples (rounded
+        to be at least 2).
+        Used only when `extract_method='xi'`.
+
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
@@ -350,10 +356,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
                  metric_params=None, cluster_method='dbscan', eps=0.5,
-                 algorithm='auto', leaf_size=30, n_jobs=None):
+                 min_cluster_size=.005, algorithm='auto', leaf_size=30,
+                 n_jobs=None):
 
         self.max_eps = max_eps
         self.min_samples = min_samples
+        self.min_cluster_size = min_cluster_size
         self.algorithm = algorithm
         self.metric = metric
         self.metric_params = metric_params
@@ -385,6 +393,17 @@ class OPTICS(BaseEstimator, ClusterMixin):
         X = check_array(X, dtype=np.float)
 
         n_samples = len(X)
+
+        if self.min_cluster_size <= 0 or (self.min_cluster_size !=
+                                          int(self.min_cluster_size)
+                                          and self.min_cluster_size > 1):
+            raise ValueError('min_cluster_size must be a positive integer or '
+                             'a float between 0 and 1. Got %r' %
+                             self.min_cluster_size)
+        elif self.min_cluster_size > n_samples:
+            raise ValueError('min_cluster_size must be no greater than the '
+                             'number of samples (%d). Got %d' %
+                             (n_samples, self.min_cluster_size))
 
         if self.min_samples > n_samples:
             raise ValueError("Number of training samples (n_samples=%d) must "
