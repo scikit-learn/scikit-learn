@@ -296,29 +296,22 @@ def test_lda_dimension_warning(n_classes, n_features):
                       "min(n_features, n_classes - 1).")
         assert_warns_message(FutureWarning, future_msg, lda.fit, X, y)
 
+@pytest.mark.parametrize("data_type, expected_type",[
+    (np.float32, np.float32), (np.float64, np.float64), (np.int32, np.float32), (np.int64, np.float64)])
+def test_lda_dtype_match(data_type, expected_type):
+    for (solver, shrinkage) in solver_shrinkage:
+        clf = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
+        clf.fit(X.astype(data_type), y.astype(data_type))
+        assert clf.coef_.dtype == expected_type
 
-def test_lda_dtype_match():
-    # Test that np.float32 input data is not cast to np.float64 when possible
-    n_features = 2
-    n_classes = 2
-    n_samples = 1000
-    X, y = make_blobs(n_samples=n_samples, n_features=n_features,
-                      centers=n_classes, random_state=11)
-    X_32 = np.array(X).astype(np.float32)
-    y_32 = np.array(y).astype(np.float32)
-    X_64 = np.array(X).astype(np.float64)
-    y_64 = np.array(y).astype(np.float64)
 
-    for test_case in solver_shrinkage:
-        solver, shrinkage = test_case
-        # Check type consistency
+
+def test_lda_numeric_consistency_float32_float64():
+    for (solver, shrinkage) in solver_shrinkage:
         clf_32 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
-        clf_32.fit(X_32,y_32)
-        assert_equal(clf_32.coef_.dtype, X_32.dtype)
-
+        clf_32.fit(X.astype(np.float32), y.astype(np.float32))
         clf_64 = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
-        clf_64.fit(X_64, y_64)
-        assert_equal(clf_64.coef_.dtype, X_64.dtype)
+        clf_64.fit(X.astype(np.float64), y.astype(np.float64))
 
         # Check value consistency between types
         rtol = 1e-6
