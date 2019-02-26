@@ -9,6 +9,7 @@ from functools import partial
 
 import pytest
 
+import numpy as np
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
 from sklearn.datasets import load_files
@@ -123,6 +124,14 @@ def test_load_sample_images():
         res = load_sample_images()
         assert_equal(len(res.images), 2)
         assert_equal(len(res.filenames), 2)
+        images = res.images
+
+        # assert is china image
+        assert np.all(images[0][0, 0, :] ==
+                      np.array([174, 201, 231], dtype=np.uint8))
+        # assert is flower image
+        assert np.all(images[1][0, 0, :] ==
+                      np.array([2, 19, 13], dtype=np.uint8))
         assert res.DESCR
     except ImportError:
         warnings.warn("Could not load sample images, PIL is not available.")

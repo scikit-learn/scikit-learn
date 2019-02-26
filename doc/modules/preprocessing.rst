@@ -489,7 +489,7 @@ Continuing the example above::
   >>> enc = preprocessing.OneHotEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
   >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  OneHotEncoder(categorical_features=None, categories=None,
+  OneHotEncoder(categorical_features=None, categories=None, drop=None,
          dtype=<... 'numpy.float64'>, handle_unknown='error',
          n_values=None, sparse=True)
   >>> enc.transform([['female', 'from US', 'uses Safari'],
@@ -516,7 +516,7 @@ dataset::
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None,
-           categories=[...],
+           categories=[...], drop=None,
            dtype=<... 'numpy.float64'>, handle_unknown='error',
            n_values=None, sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
@@ -533,12 +533,30 @@ columns for this feature will be all zeros
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features=None, categories=None,
+    OneHotEncoder(categorical_features=None, categories=None, drop=None,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
+
+It is also possible to encode each column into ``n_categories - 1`` columns
+instead of ``n_categories`` columns by using the ``drop`` parameter. This
+parameter allows the user to specify a category for each feature to be dropped.
+This is useful to avoid co-linearity in the input matrix in some classifiers.
+Such functionality is useful, for example, when using non-regularized
+regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
+since co-linearity would cause the covariance matrix to be non-invertible. 
+When this paramenter is not None, ``handle_unknown`` must be set to 
+``error``::
+
+    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
+    >>> drop_enc.categories_
+    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
+    >>> drop_enc.transform(X).toarray()
+    array([[1., 1., 1.],
+           [0., 0., 0.]])
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
@@ -561,7 +579,7 @@ can introduce nonlinearity to linear models.
 K-bins discretization
 ---------------------
 
-:class:`KBinsDiscretizer` discretizers features into ``k`` bins::
+:class:`KBinsDiscretizer` discretizes features into ``k`` bins::
 
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],

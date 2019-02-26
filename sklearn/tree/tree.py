@@ -29,6 +29,7 @@ from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import is_classifier
+from ..base import MultiOutputMixin
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
@@ -70,7 +71,7 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(BaseEstimator, metaclass=ABCMeta):
+class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
