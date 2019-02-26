@@ -1134,7 +1134,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             The features containing missing values.
 
         """
-        if sparse.issparse(X) and self.missing_values != 0:
+        if sparse.issparse(X):
             mask = _get_mask(X.data, self.missing_values)
 
             # The imputer mask will be constructed with the same sparse format
@@ -1157,10 +1157,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             elif imputer_mask.format == 'csr':
                 imputer_mask = imputer_mask.tocsc()
         else:
-            if sparse.issparse(X):
-                # case of sparse matrix with 0 as missing values. Implicit and
-                # explicit zeros are considered as missing values.
-                X = X.toarray()
             imputer_mask = _get_mask(X, self.missing_values)
             features_with_missing = np.flatnonzero(imputer_mask.sum(axis=0))
 
