@@ -1026,8 +1026,8 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                                                metric_params=metric_params)
 
             # Haversine distance only accepts 2D data
-            feature_sl = (slice(None, 2) 
-                         if metric == 'haversine' else slice(None))
+            feature_sl = (slice(None, 2)
+                          if metric == 'haversine' else slice(None))
 
             neigh.fit(X[:, feature_sl])
             results[algorithm] = neigh.kneighbors(test[:, feature_sl],
@@ -1081,9 +1081,11 @@ def test_valid_brute_metric_for_auto_algorithm():
                                                 metric=metric).fit(X)
                 nn.kneighbors(X)
             else:
-                nn = neighbors.NearestNeighbors(n_neighbors=3,
-                                                algorithm='auto',
-                                                metric=metric).fit(X[slice(None, 2)])
+                nn = neighbors.NearestNeighbors(
+                    n_neighbors=3,
+                    algorithm='auto',
+                    metric=metric
+                ).fit(X[slice(None, 2)])
                 nn.kneighbors(X[slice(None, 2)])
         elif metric == 'precomputed':
             X_precomputed = rng.random_sample((10, 4))
