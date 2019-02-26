@@ -25,7 +25,7 @@ cdef class Criterion:
     # such as the mean in regression and class probabilities in classification.
 
     # Internal structures
-    cdef const DOUBLE_t[:, ::1] y                # Values of y
+    cdef const DOUBLE_t[:, ::1] y        # Values of y
     cdef DOUBLE_t* sample_weight         # Sample weights
 
     cdef SIZE_t* samples                 # Sample indices in X, y
