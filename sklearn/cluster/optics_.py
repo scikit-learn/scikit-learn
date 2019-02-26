@@ -300,8 +300,8 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     return core_distances
 
 
-def compute_optics_graph(X, min_samples, algorithm, leaf_size,
-                         metric, metric_params, p, n_jobs, max_eps):
+def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
+                         algorithm, leaf_size, n_jobs):
     """Computes the OPTICS reachability graph.
 
     Read more in the :ref:`User Guide <optics>`.
