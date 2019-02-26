@@ -43,7 +43,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         """
         if hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2:
             # only if pandas dataframe (not an array, sequence etc...)
-            # ido not check full X,
+            # do not check full X,
             # it should be checked column by column (using _check_X_feature())
             return X
 
@@ -52,11 +52,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             X = check_array(X, dtype=np.object)
         else:
             X = X_temp
-
-        if X.dtype == np.dtype('object'):
-            if not _get_config()['assume_finite']:
-                if _object_dtype_isnan(X).any():
-                    raise ValueError("Input contains NaN")
 
         return X
 

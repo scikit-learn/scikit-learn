@@ -421,20 +421,22 @@ def test_X_is_not_1D(X):
     oh = OneHotEncoder()
 
     msg = ("Expected 2D array, got 1D array instead")
-    assert_raises_regex(ValueError, msg, oh.fit_transform, X)
-    assert_raises_regex(ValueError, msg, oh.fit, X)
+    with pytest.raises(ValueError, match=msg):
+        oh.fit(X)
+    with pytest.raises(ValueError, match=msg):
+        oh.fit_transform(X)
 
 
-@pytest.mark.parametrize("X", [
-    np.array([[[1, 2]]]),
-    np.zeros([3, 4, 5])
-    ])
-def test_X_is_no_more_than2D(X):
+def test_X_is_not_1D_pandas():
+    pd = pytest.importorskip('pandas')
+    X = pd.Series([6, 3, 4, 6])
     oh = OneHotEncoder()
 
-    msg = ("Found array with dim")
-    assert_raises_regex(ValueError, msg, oh.fit_transform, X)
-    assert_raises_regex(ValueError, msg, oh.fit, X)
+    msg = ("Expected 2D array, got 1D array instead")
+    with pytest.raises(ValueError, match=msg):
+        oh.fit(X)
+    with pytest.raises(ValueError, match=msg):
+        oh.fit_transform(X)
 
 
 @pytest.mark.parametrize("X, cat_exp, cat_dtype", [
