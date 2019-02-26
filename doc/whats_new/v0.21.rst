@@ -95,6 +95,14 @@ Support for Python 3.4 and below has been officially dropped.
   ``n_components`` is changed to ``min(n_features, n_classes - 1)`` if so.
   Previously the change was made, but silently. :issue:`11526` by
   :user:`William de Vazelhes<wdevazelhes>`.
+  
+:mod:`sklearn.dummy`
+....................................
+
+- |Fix| Fixed a bug in :class:`dummy.DummyClassifier` where the
+  ``predict_proba`` method was returning int32 array instead of
+  float64 for the ``stratified`` strategy. :issue:`13266` by
+  :user:`Christos Aridas<chkoar>`.
 
 :mod:`sklearn.ensemble`
 .......................
