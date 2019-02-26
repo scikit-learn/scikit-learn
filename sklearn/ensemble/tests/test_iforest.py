@@ -29,6 +29,7 @@ from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 
 from scipy.sparse import csc_matrix, csr_matrix
+from unittest.mock import Mock, patch
 
 rng = check_random_state(0)
 
@@ -325,3 +326,26 @@ def test_behaviour_param():
     clf2 = IsolationForest(behaviour='new', contamination='auto').fit(X_train)
     assert_array_equal(clf1.decision_function([[2., 2.]]),
                        clf2.decision_function([[2., 2.]]))
+
+
+# mock get_chunk_n_rows to actually test more than one chunk (here one
+# chunk = 3 rows:
+@patch(
+    "sklearn.ensemble.iforest.get_chunk_n_rows",
+    side_effect=Mock(**{"return_value": 3}),
+)
+@pytest.mark.parametrize("contamination", [0.25, "auto"])
+@pytest.mark.filterwarnings("ignore:threshold_ attribute")
+def test_iforest_chunks_works1(mocked_get_chunk, contamination):
+    test_iforest_works(contamination)
+
+
+# idem with chunk_size = 5 rows
+@patch(
+    "sklearn.ensemble.iforest.get_chunk_n_rows",
+    side_effect=Mock(**{"return_value": 10}),
+)
+@pytest.mark.parametrize("contamination", [0.25, "auto"])
+@pytest.mark.filterwarnings("ignore:threshold_ attribute")
+def test_iforest_chunks_works2(mocked_get_chunk, contamination):
+    test_iforest_works(contamination)

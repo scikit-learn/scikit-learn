@@ -9,9 +9,14 @@ from scipy.sparse import issparse
 from warnings import warn
 
 from ..tree import ExtraTreeRegressor
-from ..utils import check_random_state, check_array
+from ..utils import (
+    check_random_state,
+    check_array,
+    gen_batches,
+    get_chunk_n_rows,
+)
 from ..utils.fixes import _joblib_parallel_args
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
 from .bagging import BaseBagging
@@ -388,21 +393,69 @@ class IsolationForest(BaseBagging, OutlierMixin):
                              "match the input. Model n_features is {0} and "
                              "input n_features is {1}."
                              "".format(self.n_features_, X.shape[1]))
-        n_samples = X.shape[0]
 
-        n_samples_leaf = np.zeros(n_samples, order="f")
-        depths = np.zeros(n_samples, order="f")
+        # Take the opposite of the scores as bigger is better (here less
+        # abnormal)
+        return -self._compute_chunked_score_samples(X)
+
+    @property
+    def threshold_(self):
+        if self.behaviour != 'old':
+            raise AttributeError("threshold_ attribute does not exist when "
+                                 "behaviour != 'old'")
+        warn("threshold_ attribute is deprecated in 0.20 and will"
+             " be removed in 0.22.", DeprecationWarning)
+        return self._threshold_
+
+    def _compute_chunked_score_samples(self, X, working_memory=None):
+
+        n_samples = _num_samples(X)
 
         if self._max_features == X.shape[1]:
             subsample_features = False
         else:
             subsample_features = True
 
+        # We get as many rows as possible within our working_memory budget to
+        # store self._max_features in each row during computation.
+        #
+        # Note:
+        #  - this will get at least 1 row, even if 1 row of score will
+        #    exceed working_memory.
+        #  - this does only account for temporary memory usage while loading
+        #    the data needed to compute the scores -- the returned scores
+        #    themselves are 1D.
+
+        chunk_n_rows = get_chunk_n_rows(row_bytes=16 * self._max_features,
+                                        max_n_rows=n_samples,
+                                        working_memory=working_memory)
+        slices = gen_batches(n_samples, chunk_n_rows)
+
+        scores = np.zeros(n_samples, order="f")
+
+        for sl in slices:
+            # compute score on the slices of test samples:
+            scores[sl] = self._compute_score_samples(X[sl], subsample_features)
+
+        return scores
+
+    def _compute_score_samples(self, X, subsample_features):
+        """Compute the score of each samples in X going through the extra trees.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix
+
+        subsample_features : bool,
+            whether features should be subsampled
+        """
+        n_samples = X.shape[0]
+
+        depths = np.zeros(n_samples, order="f")
+
         for tree, features in zip(self.estimators_, self.estimators_features_):
-            if subsample_features:
-                X_subset = X[:, features]
-            else:
-                X_subset = X
+            X_subset = X[:, features] if subsample_features else X
+
             leaves_index = tree.apply(X_subset)
             node_indicator = tree.decision_path(X_subset)
             n_samples_leaf = tree.tree_.n_node_samples[leaves_index]
@@ -418,19 +471,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
             / (len(self.estimators_)
                * _average_path_length([self.max_samples_]))
         )
-
-        # Take the opposite of the scores as bigger is better (here less
-        # abnormal)
-        return -scores
-
-    @property
-    def threshold_(self):
-        if self.behaviour != 'old':
-            raise AttributeError("threshold_ attribute does not exist when "
-                                 "behaviour != 'old'")
-        warn("threshold_ attribute is deprecated in 0.20 and will"
-             " be removed in 0.22.", DeprecationWarning)
-        return self._threshold_
+        return scores
 
 
 def _average_path_length(n_samples_leaf):
