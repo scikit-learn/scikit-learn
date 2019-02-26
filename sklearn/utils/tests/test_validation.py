@@ -95,6 +95,7 @@ def test_as_float_array():
         assert not np.isnan(M).any()
 
 
+@pytest.mark.filterwarnings("ignore::scipy.sparse.SparseEfficiencyWarning")
 @pytest.mark.parametrize(
     "X",
     [(np.random.random((10, 2))),

@@ -26,6 +26,7 @@ from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_X_y, check_array
+from sklearn.exceptions import ConvergenceWarning
 
 
 class CorrectNotFittedError(ValueError):
@@ -374,7 +375,8 @@ def test_check_estimator_clones():
     for Estimator in [GaussianMixture, LinearRegression,
                       RandomForestClassifier, NMF, SGDClassifier,
                       MiniBatchKMeans]:
-        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
+        with ignore_warnings(category=(FutureWarning, DeprecationWarning,
+                                       ConvergenceWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
             set_checking_parameters(est)
@@ -384,7 +386,8 @@ def test_check_estimator_clones():
             check_estimator(est)
         assert_equal(old_hash, _joblib.hash(est))
 
-        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
+        with ignore_warnings(category=(FutureWarning, DeprecationWarning,
+                                       ConvergenceWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
             set_checking_parameters(est)

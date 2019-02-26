@@ -85,8 +85,10 @@ def random_choice_csc(n_samples, classes, class_probability=None,
             # Normalize probabilities for the nonzero elements
             classes_j_nonzero = classes[j] != 0
             class_probability_nz = class_prob_j[classes_j_nonzero]
-            class_probability_nz_norm = (class_probability_nz /
-                                         np.sum(class_probability_nz))
+            with np.errstate(invalid='ignore'):
+                # ignore if divide by 0
+                class_probability_nz_norm = (class_probability_nz /
+                                            np.sum(class_probability_nz))
             classes_ind = np.searchsorted(class_probability_nz_norm.cumsum(),
                                           rng.rand(nnz))
             data.extend(classes[j][classes_j_nonzero][classes_ind])
