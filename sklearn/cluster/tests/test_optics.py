@@ -7,7 +7,6 @@ import pytest
 
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import OPTICS
-from sklearn.cluster.optics_ import _TreeNode, _cluster_tree
 from sklearn.cluster.optics_ import _find_local_maxima
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
@@ -85,7 +84,7 @@ def test_bad_extract():
 
     # Compute OPTICS
     clust = OPTICS(max_eps=5.0 * 0.03,
-                   extract_method='dbscan',
+                   cluster_method='dbscan',
                    eps=0.3, min_samples=10)
     assert_raise_message(ValueError, msg, clust.fit, X)
 
@@ -96,9 +95,9 @@ def test_bad_reachability():
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
 
-    clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10)
-    assert_raise_message(ValueError, msg, clust.fit, X)
-
+    with pytest.warns(UserWarning, match=msg):
+        clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015)
+        clust.fit(X)
 
 def test_close_extract():
     # Test extract where extraction eps is close to scaled epsPrime
@@ -108,7 +107,7 @@ def test_close_extract():
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_eps=1.0, extract_method='dbscan',
+    clust = OPTICS(max_eps=1.0, cluster_method='dbscan',
                    eps=0.3, min_samples=10)
     # check warning when centers are passed
     assert_warns(RuntimeWarning, clust.fit, X)
@@ -126,7 +125,7 @@ def test_dbscan_optics_parity(eps, min_samples):
                                 cluster_std=0.4, random_state=0)
 
     # calculate optics with dbscan extract at 0.3 epsilon
-    op = OPTICS(min_samples=min_samples, extract_method='dbscan',
+    op = OPTICS(min_samples=min_samples, cluster_method='dbscan',
                 eps=eps).fit(X)
 
     # calculate dbscan labels
@@ -174,32 +173,6 @@ def test_min_cluster_size_invalid2():
     clust = OPTICS(min_cluster_size=len(X) + 1)
     with pytest.raises(ValueError, match="must be no greater than the "):
         clust.fit(X)
-
-
-@pytest.mark.parametrize("reach, n_child, members", [
-    (np.array([np.inf, 0.9, 0.9, 1.0, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
-               0.9, 0.89, 0.88, 10, .9, .9, .9, .9]), 2, np.r_[0:6]),
-    (np.array([np.inf, 0.9, 0.9, 0.9, 0.89, 0.88, 10, .9, .9, .9, 10, 0.9,
-               0.9, 0.89, 0.88, 100, .9, .9, .9, .9]), 1, np.r_[0:15])])
-def test_cluster_sigmin_pruning(reach, n_child, members):
-    # Tests pruning left and right, insignificant splitpoints, empty nodelists
-    # Parameters chosen specifically for this task
-
-    # Case 1: Three pseudo clusters, 2 of which are too small
-    # Case 2: Two pseudo clusters, 1 of which are too small
-    # Normalize
-    reach = reach / np.max(reach[1:])
-
-    ordering = np.r_[0:20]
-    cluster_boundaries = _find_local_maxima(reach, 5)
-    root = _TreeNode(ordering, 0, 20, None)
-
-    # Build cluster tree inplace on root node
-    _cluster_tree(root, None, cluster_boundaries, reach, ordering,
-                  5, .75, .7, .4, .3)
-    assert_equal(root.split_point, cluster_boundaries[0])
-    assert_equal(n_child, len(root.children))
-    assert_array_equal(members, root.children[0].points)
 
 
 def test_processing_order():
@@ -294,9 +267,9 @@ def test_compare_to_ELKI():
                     clust2.core_distances_[index])
 
 
-def test_wrong_extract_method():
-    clust = OPTICS(extract_method='superfancy')
-    with pytest.raises(ValueError, match="extract_method should be one of "):
+def test_wrong_cluster_method():
+    clust = OPTICS(cluster_method='superfancy')
+    with pytest.raises(ValueError, match="cluster_method should be one of "):
         clust.fit(X)
 
 
@@ -311,7 +284,7 @@ def test_extract_dbscan():
     C4 = [-2, 3] + .2 * rng.randn(n_points_per_cluster, 2)
     X = np.vstack((C1, C2, C3, C4))
 
-    clust = OPTICS(extract_method='dbscan', eps=.5).fit(X)
+    clust = OPTICS(cluster_method='dbscan', eps=.5).fit(X)
     assert_array_equal(np.sort(np.unique(clust.labels_)), [0, 1, 2, 3])
 
 

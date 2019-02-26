@@ -538,6 +538,10 @@ def compute_optics_graph(X, min_samples, algorithm, leaf_size,
                             processed=processed, X=X, nbrs=nbrs,
                             metric=metric, metric_params=metric_params,
                             p=p, max_eps=max_eps)
+    if np.all(np.isinf(reachability_)):
+        warnings.warn("All reachability values are inf. Set a larger"
+                      " max_eps or all data will be considered outliers.",
+                      UserWarning)
     return ordering, core_distances_, reachability_, predecessor_
 
 
