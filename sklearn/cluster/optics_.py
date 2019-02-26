@@ -451,10 +451,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         # Extract clusters from the calculated orders and reachability
         if self.cluster_method == 'dbscan':
-            indices_, labels_ = _extract_optics_dbscan(self.reachability_,
-                                                       self.core_distances_,
-                                                       self.ordering_,
-                                                       self.eps)
+            indices_, labels_ = cluster_optics_dbscan(self.reachability_,
+                                                      self.core_distances_,
+                                                      self.ordering_,
+                                                      self.eps)
 
         self.core_sample_indices_ = indices_
         self.labels_ = labels_
@@ -500,7 +500,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
 
 
 def compute_optics_graph(X, min_samples, algorithm, leaf_size,
-                            metric, metric_params, p, n_jobs, max_eps):
+                         metric, metric_params, p, n_jobs, max_eps):
     n_samples = len(X)
     # Start all points as 'unprocessed' ##
     reachability_ = np.empty(n_samples)
