@@ -4,7 +4,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from .validation import _num_samples, check_array
 
 
-class ArraySlicingWrapper(object):
+class ArraySlicingWrapper:
     """
     Parameters
     ----------
@@ -17,7 +17,7 @@ class ArraySlicingWrapper(object):
         return MockDataFrame(self.array[aslice])
 
 
-class MockDataFrame(object):
+class MockDataFrame:
     """
     Parameters
     ----------
@@ -132,3 +132,6 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         else:
             score = 0.
         return score
+
+    def _more_tags(self):
+        return {'_skip_test': True, 'X_types': ['1dlabel']}

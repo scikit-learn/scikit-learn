@@ -43,6 +43,14 @@ Support for Python 3.4 and below has been officially dropped.
     section should be ordered according to the label ordering above. Entries
     should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Enhancement| Added support to bin the data passed into
+  :class:`calibration.calibration_curve` by quantiles instead of uniformly
+  between 0 and 1.
+  :issue:`13086` by :user:`Scott Cole <srcole>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -67,6 +75,16 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`decomposition.NMF`. A FutureWarning is raised when
   the default value is used.
   :issue:`12988` by :user:`Zijie (ZJ) Poh <zjpoh>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
+  `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
+  `n_components < n_features` instead of
+  `n_components <= min(n_samples, n_features)`. 
+  :issue:`11650` by :user:`Hossein Pourbozorg <hossein-pourbozorg>` and
+  :user:`Zijie (ZJ) Poh <zjpoh>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -107,6 +125,15 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| Deprecated :mod:`externals.six` since we have dropped support for
   Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |MajorFeature| Added :class:`impute.IterativeImputer`, which is a strategy
+  for imputing missing values by modeling each feature with missing values as a
+  function of other features in a round-robin fashion. :issue:`8478` and
+  :issue:`12177` by :user:`Sergey Feldman <sergeyf>` :user:`Ben Lawson
+  <benlawson>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -137,6 +164,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| :func:`linear_model.logistic_regression_path` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
+
+- |Fix| Fixed a bug in :class:`linear_model.LassoLarsIC`, where user input
+   ``copy_X=False`` at instance creation would be overridden by default
+   parameter value ``copy_X=True`` in ``fit``. 
+   :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
 
 :mod:`sklearn.manifold`
 ............................
@@ -184,7 +216,7 @@ Support for Python 3.4 and below has been officially dropped.
 ..............................
 
 - |Feature| Classes :class:`~model_selection.GridSearchCV` and
-  :class:`~model_selection.RandomSearchCV` now allow for refit=callable
+  :class:`~model_selection.RandomizedSearchCV` now allow for refit=callable
   to add flexibility in identifying the best
   estimator. An example for this interface has been added.
   :issue:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
@@ -252,6 +284,10 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`tree.plot_tree` without relying on the ``dot`` library,
   removing a hard-to-install dependency. :issue:`8508` by `Andreas Müller`_.
 
+- |Feature| Decision Trees can now be exported in a human readable
+  textual format using :func:`tree.export.export_text`.
+  :issue:`6261` by `Giuseppe Vettigli <JustGlowing>`.
+
 - |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
   :class:`tree.BaseDecisionTree` and consequently all estimators based
   on it, including :class:`tree.DecisionTreeClassifier`,
@@ -268,6 +304,15 @@ Support for Python 3.4 and below has been officially dropped.
   ``max_depth`` were both specified by the user. Please note that this also
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
+
+:mod:`sklearn.mixture`
+......................
+
+- |Fix| Fixed a bug in :class:`mixture.BaseMixture` and therefore on estimators
+  based on it, i.e. :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture`, where ``fit_predict`` and
+  ``fit.predict`` were not equivalent. :issue:`13142` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 
 Multiple modules

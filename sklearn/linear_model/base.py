@@ -24,7 +24,8 @@ from scipy import sparse
 from scipy.special import expit
 
 from ..utils._joblib import Parallel, delayed
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                    MultiOutputMixin)
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
@@ -301,7 +302,7 @@ class LinearClassifierMixin(ClassifierMixin):
             return prob
 
 
-class SparseCoefMixin(object):
+class SparseCoefMixin:
     """Mixin for converting coef_ to and from CSR format.
 
     L1-regularizing estimators should inherit this.
@@ -355,7 +356,7 @@ class SparseCoefMixin(object):
         return self
 
 
-class LinearRegression(LinearModel, RegressorMixin):
+class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     """
     Ordinary least squares Linear Regression.
 

@@ -58,7 +58,7 @@ from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
 
-class QuantileEstimator(object):
+class QuantileEstimator:
     """An estimator predicting the alpha-quantile of the training targets.
 
     Parameters
@@ -111,7 +111,7 @@ class QuantileEstimator(object):
         return y
 
 
-class MeanEstimator(object):
+class MeanEstimator:
     """An estimator predicting the mean of the training targets."""
     def fit(self, X, y, sample_weight=None):
         """Fit the estimator.
@@ -152,7 +152,7 @@ class MeanEstimator(object):
         return y
 
 
-class LogOddsEstimator(object):
+class LogOddsEstimator:
     """An estimator predicting the log odds ratio."""
     scale = 1.0
 
@@ -207,7 +207,7 @@ class ScaledLogOddsEstimator(LogOddsEstimator):
     scale = 0.5
 
 
-class PriorProbabilityEstimator(object):
+class PriorProbabilityEstimator:
     """An estimator predicting the probability of each
     class in the training data.
     """
@@ -250,7 +250,7 @@ class PriorProbabilityEstimator(object):
         return y
 
 
-class ZeroEstimator(object):
+class ZeroEstimator:
     """An estimator that simply predicts zero. """
 
     def fit(self, X, y, sample_weight=None):
@@ -296,7 +296,7 @@ class ZeroEstimator(object):
         return y
 
 
-class LossFunction(object, metaclass=ABCMeta):
+class LossFunction(metaclass=ABCMeta):
     """Abstract base class for various loss functions.
 
     Parameters
@@ -1040,7 +1040,7 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
 INIT_ESTIMATORS = {'zero': ZeroEstimator}
 
 
-class VerboseReporter(object):
+class VerboseReporter:
     """Reports verbose output to stdout.
 
     Parameters
@@ -1634,8 +1634,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 normalize=False) for tree in stage) / len(stage)
             total_sum += stage_sum
 
-        importances = total_sum / len(self.estimators_)
-        importances /= importances.sum()
+        importances = total_sum / total_sum.sum()
         return importances
 
     def _validate_y(self, y, sample_weight):
