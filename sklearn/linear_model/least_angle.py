@@ -2,8 +2,6 @@
 Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
-from __future__ import print_function
-
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Gael Varoquaux
@@ -19,13 +17,11 @@ from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import arrayfuncs, as_float_array, check_X_y
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils._joblib import Parallel, delayed
-from ..externals.six.moves import xrange
-from ..externals.six import string_types
 
 solve_triangular_args = {'check_finite': False}
 
@@ -181,7 +177,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             # and allows to easily swap columns
             X = X.copy('F')
 
-    elif isinstance(Gram, string_types) and Gram == 'auto' or Gram is True:
+    elif isinstance(Gram, str) and Gram == 'auto' or Gram is True:
         if Gram is True or X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
         else:
@@ -491,7 +487,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 ###############################################################################
 # Estimator classes
 
-class Lars(LinearModel, RegressorMixin):
+class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
     """Least Angle Regression model a.k.a. LAR
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
@@ -636,7 +632,7 @@ class Lars(LinearModel, RegressorMixin):
         if fit_path:
             self.active_ = []
             self.coef_path_ = []
-            for k in xrange(n_targets):
+            for k in range(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, active, coef_path, n_iter_ = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
@@ -656,7 +652,7 @@ class Lars(LinearModel, RegressorMixin):
                                    self.coef_)]
                 self.n_iter_ = self.n_iter_[0]
         else:
-            for k in xrange(n_targets):
+            for k in range(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, _, self.coef_[k], n_iter_ = lars_path(
                     X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
@@ -1099,12 +1095,12 @@ class LarsCV(Lars):
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
-        super(LarsCV, self).__init__(fit_intercept=fit_intercept,
-                                     verbose=verbose, normalize=normalize,
-                                     precompute=precompute,
-                                     n_nonzero_coefs=500,
-                                     eps=eps, copy_X=copy_X, fit_path=True,
-                                     positive=positive)
+        super().__init__(fit_intercept=fit_intercept,
+                         verbose=verbose, normalize=normalize,
+                         precompute=precompute,
+                         n_nonzero_coefs=500,
+                         eps=eps, copy_X=copy_X, fit_path=True,
+                         positive=positive)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -1346,7 +1342,7 @@ class LassoLarsCV(LarsCV):
         self.eps = eps
         self.copy_X = copy_X
         self.positive = positive
-        # XXX : we don't use super(LarsCV, self).__init__
+        # XXX : we don't use super().__init__
         # to avoid setting n_nonzero_coefs
 
 
@@ -1481,7 +1477,7 @@ class LassoLarsIC(LassoLars):
         self.eps = eps
         self.fit_path = True
 
-    def fit(self, X, y, copy_X=True):
+    def fit(self, X, y, copy_X=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -1492,7 +1488,9 @@ class LassoLarsIC(LassoLars):
         y : array-like, shape (n_samples,)
             target values. Will be cast to X's dtype if necessary
 
-        copy_X : boolean, optional, default True
+        copy_X : boolean, optional, default None
+            If provided, this parameter will override the choice
+            of copy_X made at instance creation.
             If ``True``, X will be copied; else, it may be overwritten.
 
         Returns
@@ -1500,10 +1498,12 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
+        if copy_X is None:
+            copy_X = self.copy_X
         X, y = check_X_y(X, y, y_numeric=True)
 
         X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, copy_X)
         max_iter = self.max_iter
 
         Gram = self.precompute

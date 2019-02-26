@@ -12,7 +12,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_warns
@@ -43,19 +42,19 @@ class SparseSGDClassifier(SGDClassifier):
 
     def fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).fit(X, y, *args, **kw)
+        return super().fit(X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).partial_fit(X, y, *args, **kw)
+        return super().partial_fit(X, y, *args, **kw)
 
     def decision_function(self, X):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).decision_function(X)
+        return super().decision_function(X)
 
     def predict_proba(self, X):
         X = sp.csr_matrix(X)
-        return super(SparseSGDClassifier, self).predict_proba(X)
+        return super().predict_proba(X)
 
 
 class SparseSGDRegressor(SGDRegressor):
@@ -114,7 +113,7 @@ true_result5 = [0, 1, 1]
 ###############################################################################
 # Tests common to classification and regression
 
-class CommonTest(object):
+class CommonTest:
 
     def factory(self, **kwargs):
         if "random_state" not in kwargs:
@@ -234,10 +233,10 @@ class CommonTest(object):
         clf = self.factory()
         clf.fit(X, Y)
 
-        assert_false(hasattr(clf, 'average_coef_'))
-        assert_false(hasattr(clf, 'average_intercept_'))
-        assert_false(hasattr(clf, 'standard_intercept_'))
-        assert_false(hasattr(clf, 'standard_coef_'))
+        assert not hasattr(clf, 'average_coef_')
+        assert not hasattr(clf, 'average_intercept_')
+        assert not hasattr(clf, 'standard_intercept_')
+        assert not hasattr(clf, 'standard_coef_')
 
     def test_late_onset_averaging_not_reached(self):
         clf1 = self.factory(average=600)
@@ -586,10 +585,10 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                 assert not hasattr(clf, 'predict_proba')
                 assert not hasattr(clf, 'predict_log_proba')
                 with pytest.raises(AttributeError,
-                                   message=message):
+                                   match=message):
                     clf.predict_proba
                 with pytest.raises(AttributeError,
-                                   message=message):
+                                   match=message):
                     clf.predict_log_proba
 
     def test_sgd_proba(self):
@@ -600,8 +599,8 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # anyway.
         clf = SGDClassifier(loss="hinge", alpha=0.01,
                             max_iter=10, tol=None).fit(X, Y)
-        assert_false(hasattr(clf, "predict_proba"))
-        assert_false(hasattr(clf, "predict_log_proba"))
+        assert not hasattr(clf, "predict_proba")
+        assert not hasattr(clf, "predict_log_proba")
 
         # log and modified_huber losses can output probability estimates
         # binary case

@@ -17,7 +17,7 @@ Courtesy of Jock A. Blackard and Colorado State University.
 from gzip import GzipFile
 import logging
 from os.path import dirname, exists, join
-from os import remove
+from os import remove, makedirs
 
 import numpy as np
 
@@ -26,7 +26,6 @@ from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
 from .base import _pkl_filepath
-from ..utils.fixes import makedirs
 from ..utils import _joblib
 from ..utils import check_random_state
 

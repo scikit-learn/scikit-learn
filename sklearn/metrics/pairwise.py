@@ -1120,13 +1120,29 @@ def _check_chunk_size(reduced, chunk_size):
                         'Expected sequence(s) of length %d.' %
                         (reduced if is_tuple else reduced[0], chunk_size))
     if any(_num_samples(r) != chunk_size for r in reduced):
-        # XXX: we use int(_num_samples...) because sometimes _num_samples
-        #      returns a long in Python 2, even for small numbers.
-        actual_size = tuple(int(_num_samples(r)) for r in reduced)
+        actual_size = tuple(_num_samples(r) for r in reduced)
         raise ValueError('reduce_func returned object of length %s. '
                          'Expected same length as input: %d.' %
                          (actual_size if is_tuple else actual_size[0],
                           chunk_size))
+
+
+def _precompute_metric_params(X, Y, metric=None, **kwds):
+    """Precompute data-derived metric parameters if not provided
+    """
+    if metric == "seuclidean" and 'V' not in kwds:
+        if X is Y:
+            V = np.var(X, axis=0, ddof=1)
+        else:
+            V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
+        return {'V': V}
+    if metric == "mahalanobis" and 'VI' not in kwds:
+        if X is Y:
+            VI = np.linalg.inv(np.cov(X.T)).T
+        else:
+            VI = np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T
+        return {'VI': VI}
+    return {}
 
 
 def pairwise_distances_chunked(X, Y=None, reduce_func=None,
@@ -1201,6 +1217,8 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     --------
     Without reduce_func:
 
+    >>> import numpy as np
+    >>> from sklearn.metrics import pairwise_distances_chunked
     >>> X = np.random.RandomState(0).rand(5, 3)
     >>> D_chunk = next(pairwise_distances_chunked(X))
     >>> D_chunk  # doctest: +ELLIPSIS
@@ -1263,6 +1281,10 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
                                         max_n_rows=n_samples_X,
                                         working_memory=working_memory)
         slices = gen_batches(n_samples_X, chunk_n_rows)
+
+    # precompute data-derived metric params
+    params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+    kwds.update(**params)
 
     for sl in slices:
         if sl.start == 0 and sl.stop == n_samples_X:
@@ -1394,6 +1416,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
         X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+
+        # precompute data-derived metric params
+        params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+        kwds.update(**params)
 
         if effective_n_jobs(n_jobs) == 1 and X is Y:
             return distance.squareform(distance.pdist(X, metric=metric,
@@ -1549,8 +1575,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         func = metric.__call__
     elif metric in PAIRWISE_KERNEL_FUNCTIONS:
         if filter_params:
-            kwds = dict((k, kwds[k]) for k in kwds
-                        if k in KERNEL_PARAMS[metric])
+            kwds = {k: kwds[k] for k in kwds
+                    if k in KERNEL_PARAMS[metric]}
         func = PAIRWISE_KERNEL_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)

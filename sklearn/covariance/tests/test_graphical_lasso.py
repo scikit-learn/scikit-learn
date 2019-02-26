@@ -12,7 +12,7 @@ from sklearn.utils.testing import assert_array_less
 from sklearn.covariance import (graphical_lasso, GraphicalLasso,
                                 GraphicalLassoCV, empirical_covariance)
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
-from sklearn.externals.six.moves import StringIO
+from io import StringIO
 from sklearn.utils import check_random_state
 from sklearn import datasets
 

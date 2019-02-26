@@ -1,7 +1,7 @@
 """Test the search module"""
 
-from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.externals.six.moves import xrange
+from collections.abc import Iterable, Sized
+from io import StringIO
 from itertools import chain, product
 import pickle
 import sys
@@ -13,8 +13,6 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils.fixes import sp_version
-from sklearn.utils.fixes import PY3_OR_LATER
-from sklearn.utils.fixes import _Iterable as Iterable, _Sized as Sized
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
@@ -22,7 +20,6 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
@@ -157,7 +154,7 @@ def test_parameter_grid():
     assert_equal(len(grid2), 6)
 
     # loop to assert we can iterate over the grid multiple times
-    for i in xrange(2):
+    for i in range(2):
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
         points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
         assert_equal(points,
@@ -337,17 +334,17 @@ def test_classes__property():
     # Test that regressors do not have a classes_ attribute
     grid_search = GridSearchCV(Ridge(), {'alpha': [1.0, 2.0]})
     grid_search.fit(X, y)
-    assert_false(hasattr(grid_search, 'classes_'))
+    assert not hasattr(grid_search, 'classes_')
 
     # Test that the grid searcher has no classes_ attribute before it's fit
     grid_search = GridSearchCV(LinearSVC(random_state=0), {'C': Cs})
-    assert_false(hasattr(grid_search, 'classes_'))
+    assert not hasattr(grid_search, 'classes_')
 
     # Test that the grid searcher has no classes_ attribute without a refit
     grid_search = GridSearchCV(LinearSVC(random_state=0),
                                {'C': Cs}, refit=False)
     grid_search.fit(X, y)
-    assert_false(hasattr(grid_search, 'classes_'))
+    assert not hasattr(grid_search, 'classes_')
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -372,9 +369,9 @@ def test_no_refit():
     for scoring in [None, ['accuracy', 'precision']]:
         grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=False)
         grid_search.fit(X, y)
-        assert_true(not hasattr(grid_search, "best_estimator_") and
-                    hasattr(grid_search, "best_index_") and
-                    hasattr(grid_search, "best_params_"))
+        assert not hasattr(grid_search, "best_estimator_") and \
+            hasattr(grid_search, "best_index_") and \
+            hasattr(grid_search, "best_params_")
 
         # Make sure the functions predict/transform etc raise meaningful
         # error messages
@@ -429,10 +426,7 @@ def test_grid_search_when_param_grid_includes_range():
     # Test that the best estimator contains the right value for foo_param
     clf = MockClassifier()
     grid_search = None
-    if PY3_OR_LATER:
-        grid_search = GridSearchCV(clf, {'foo_param': range(1, 4)})
-    else:
-        grid_search = GridSearchCV(clf, {'foo_param': xrange(1, 4)})
+    grid_search = GridSearchCV(clf, {'foo_param': range(1, 4)})
     grid_search.fit(X, y)
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
@@ -597,6 +591,112 @@ def test_refit():
     clf.fit(X, y)
 
 
+def test_refit_callable():
+    """
+    Test refit=callable, which adds flexibility in identifying the
+    "best" estimator.
+    """
+    def refit_callable(cv_results):
+        """
+        A dummy function tests `refit=callable` interface.
+        Return the index of a model that has the least
+        `mean_test_score`.
+        """
+        # Fit a dummy clf with `refit=True` to get a list of keys in
+        # clf.cv_results_.
+        X, y = make_classification(n_samples=100, n_features=4,
+                                   random_state=42)
+        clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                           scoring='precision', refit=True, cv=5)
+        clf.fit(X, y)
+        # Ensure that `best_index_ != 0` for this dummy clf
+        assert clf.best_index_ != 0
+
+        # Assert every key matches those in `cv_results`
+        for key in clf.cv_results_.keys():
+            assert key in cv_results
+
+        return cv_results['mean_test_score'].argmin()
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                       scoring='precision', refit=refit_callable, cv=5)
+    clf.fit(X, y)
+
+    assert clf.best_index_ == 0
+    # Ensure `best_score_` is disabled when using `refit=callable`
+    assert not hasattr(clf, 'best_score_')
+
+
+def test_refit_callable_invalid_type():
+    """
+    Test implementation catches the errors when 'best_index_' returns an
+    invalid result.
+    """
+    def refit_callable_invalid_type(cv_results):
+        """
+        A dummy function tests when returned 'best_index_' is not integer.
+        """
+        return None
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
+                       scoring='precision', refit=refit_callable_invalid_type,
+                       cv=5)
+    with pytest.raises(TypeError,
+                       match='best_index_ returned is not an integer'):
+        clf.fit(X, y)
+
+
+def test_refit_callable_out_bound():
+    """
+    Test implementation catches the errors when 'best_index_' returns an
+    out of bound result.
+    """
+    def refit_callable_out_bound(cv_results):
+        """
+        A dummy function tests when returned 'best_index_' is out of bounds.
+        """
+        return -1
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
+                       scoring='precision', refit=refit_callable_out_bound,
+                       cv=5)
+    with pytest.raises(IndexError, match='best_index_ index out of range'):
+        clf.fit(X, y)
+
+
+def test_refit_callable_multi_metric():
+    """
+    Test refit=callable in multiple metric evaluation setting
+    """
+    def refit_callable(cv_results):
+        """
+        A dummy function tests `refit=callable` interface.
+        Return the index of a model that has the least
+        `mean_test_prec`.
+        """
+        assert 'mean_test_prec' in cv_results
+        return cv_results['mean_test_prec'].argmin()
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+    scoring = {'Accuracy': make_scorer(accuracy_score), 'prec': 'precision'}
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                       scoring=scoring, refit=refit_callable, cv=5)
+    clf.fit(X, y)
+
+    assert clf.best_index_ == 0
+    # Ensure `best_score_` is disabled when using `refit=callable`
+    assert not hasattr(clf, 'best_score_')
+
+
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_gridsearch_nd():
@@ -744,10 +844,10 @@ def check_cv_results_array_types(search, param_keys, score_keys):
     assert all(isinstance(cv_results[param], np.ma.MaskedArray)
                for param in param_keys)
     assert all(cv_results[key].dtype == object for key in param_keys)
-    assert_false(any(isinstance(cv_results[key], np.ma.MaskedArray)
-                     for key in score_keys))
-    assert_true(all(cv_results[key].dtype == np.float64
-                    for key in score_keys if not key.startswith('rank')))
+    assert not any(isinstance(cv_results[key], np.ma.MaskedArray)
+                   for key in score_keys)
+    assert all(cv_results[key].dtype == np.float64
+               for key in score_keys if not key.startswith('rank'))
 
     scorer_keys = search.scorer_.keys() if search.multimetric_ else ['score']
 
@@ -792,27 +892,27 @@ def test_grid_search_cv_results():
         cv_results = search.cv_results_
         # Check if score and timing are reasonable
         assert all(cv_results['rank_test_score'] >= 1)
-        assert_true(all(cv_results[k] >= 0) for k in score_keys
-                    if k is not 'rank_test_score')
-        assert_true(all(cv_results[k] <= 1) for k in score_keys
-                    if 'time' not in k and
-                    k is not 'rank_test_score')
+        assert (all(cv_results[k] >= 0) for k in score_keys
+                if k is not 'rank_test_score')
+        assert (all(cv_results[k] <= 1) for k in score_keys
+                if 'time' not in k and
+                k is not 'rank_test_score')
         # Check cv_results structure
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
         # Check masking
         cv_results = search.cv_results_
         n_candidates = len(search.cv_results_['params'])
-        assert_true(all((cv_results['param_C'].mask[i] and
-                         cv_results['param_gamma'].mask[i] and
-                         not cv_results['param_degree'].mask[i])
-                        for i in range(n_candidates)
-                        if cv_results['param_kernel'][i] == 'linear'))
-        assert_true(all((not cv_results['param_C'].mask[i] and
-                         not cv_results['param_gamma'].mask[i] and
-                         cv_results['param_degree'].mask[i])
-                        for i in range(n_candidates)
-                        if cv_results['param_kernel'][i] == 'rbf'))
+        assert all((cv_results['param_C'].mask[i] and
+                    cv_results['param_gamma'].mask[i] and
+                    not cv_results['param_degree'].mask[i])
+                   for i in range(n_candidates)
+                   if cv_results['param_kernel'][i] == 'linear')
+        assert all((not cv_results['param_C'].mask[i] and
+                    not cv_results['param_gamma'].mask[i] and
+                    cv_results['param_degree'].mask[i])
+                   for i in range(n_candidates)
+                   if cv_results['param_kernel'][i] == 'rbf')
 
 
 def test_random_search_cv_results():
@@ -846,8 +946,8 @@ def test_random_search_cv_results():
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
         # For random_search, all the param array vals should be unmasked
-        assert_false(any(np.ma.getmaskarray(cv_results['param_C'])) or
-                     any(np.ma.getmaskarray(cv_results['param_gamma'])))
+        assert not(any(np.ma.getmaskarray(cv_results['param_C'])) or
+                   any(np.ma.getmaskarray(cv_results['param_gamma'])))
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -921,7 +1021,7 @@ def test_search_iid_param():
 
     for search in (grid_search, random_search):
         search.fit(X, y)
-        assert_false(search.iid)
+        assert not search.iid
 
         test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
                                                           % s][0]
@@ -1020,9 +1120,9 @@ def compare_cv_results_multimetric_with_single(
 
     # Check if score and timing are reasonable, also checks if the keys
     # are present
-    assert_true(all((np.all(cv_results_multi[k] <= 1) for k in (
+    assert all((np.all(cv_results_multi[k] <= 1) for k in (
                     'mean_score_time', 'std_score_time', 'mean_fit_time',
-                    'std_fit_time'))))
+                    'std_fit_time')))
 
     # Compare the keys, other than time keys, among multi-metric and
     # single metric grid search results. np.testing.assert_equal performs a
@@ -1038,7 +1138,7 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
     if refit:
         assert_equal(search_multi.refit, 'accuracy')
     else:
-        assert_false(search_multi.refit)
+        assert not search_multi.refit
     assert_equal(search_acc.refit, refit)
 
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
@@ -1075,10 +1175,10 @@ def test_search_cv_results_rank_tie_breaking():
                             cv_results['mean_test_score'][1])
         assert_almost_equal(cv_results['mean_train_score'][0],
                             cv_results['mean_train_score'][1])
-        assert_false(np.allclose(cv_results['mean_test_score'][1],
-                                 cv_results['mean_test_score'][2]))
-        assert_false(np.allclose(cv_results['mean_train_score'][1],
-                                 cv_results['mean_train_score'][2]))
+        assert not np.allclose(cv_results['mean_test_score'][1],
+                               cv_results['mean_test_score'][2])
+        assert not np.allclose(cv_results['mean_train_score'][1],
+                               cv_results['mean_train_score'][2])
         # 'min' rank should be assigned to the tied candidates
         assert_almost_equal(search.cv_results_['rank_test_score'], [1, 1, 3])
 
@@ -1264,7 +1364,7 @@ def test_predict_proba_disabled():
     y = [0, 0, 1, 1, 1]
     clf = SVC(gamma='scale', probability=False)
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
-    assert_false(hasattr(gs, "predict_proba"))
+    assert not hasattr(gs, "predict_proba")
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -1415,7 +1515,7 @@ def test_stochastic_gradient_loss_param():
 
     # When the estimator is not fitted, `predict_proba` is not available as the
     # loss is 'hinge'.
-    assert_false(hasattr(clf, "predict_proba"))
+    assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)
     clf.predict_proba(X)
     clf.predict_log_proba(X)
@@ -1427,9 +1527,9 @@ def test_stochastic_gradient_loss_param():
     }
     clf = GridSearchCV(estimator=SGDClassifier(tol=1e-3, loss='hinge'),
                        param_grid=param_grid)
-    assert_false(hasattr(clf, "predict_proba"))
+    assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)
-    assert_false(hasattr(clf, "predict_proba"))
+    assert not hasattr(clf, "predict_proba")
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -1463,9 +1563,9 @@ def test_grid_search_cv_splits_consistency():
     gs2.fit(X, y)
 
     # Give generator as a cv parameter
-    assert_true(isinstance(KFold(n_splits=n_splits,
-                                 shuffle=True, random_state=0).split(X, y),
-                           GeneratorType))
+    assert isinstance(KFold(n_splits=n_splits,
+                            shuffle=True, random_state=0).split(X, y),
+                      GeneratorType)
     gs3 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]},
                        cv=KFold(n_splits=n_splits, shuffle=True,
@@ -1557,7 +1657,7 @@ def test_custom_run_search():
 
     class CustomSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(CustomSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
         def _run_search(self, evaluate):
             results = evaluate([{'max_depth': 1}, {'max_depth': 2}])
@@ -1588,7 +1688,7 @@ def test_custom_run_search():
 def test__custom_fit_no_run_search():
     class NoRunSearchSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(NoRunSearchSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
         def fit(self, X, y=None, groups=None, **fit_params):
             return self
@@ -1598,7 +1698,7 @@ def test__custom_fit_no_run_search():
 
     class BadSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(BadSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
     with pytest.raises(NotImplementedError,
                        match="_run_search not implemented."):
@@ -1610,18 +1710,66 @@ def test_deprecated_grid_search_iid():
     depr_message = ("The default of the `iid` parameter will change from True "
                     "to False in version 0.22")
     X, y = make_blobs(n_samples=54, random_state=0, centers=2)
-    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=3)
+    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
+                        param_grid={'C': [10]}, cv=3)
     # no warning with equally sized test sets
     assert_no_warnings(grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=5)
+    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
+                        param_grid={'C': [10]}, cv=5)
     # warning because 54 % 5 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=2)
+    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
+                        param_grid={'C': [10]}, cv=2)
     # warning because stratification into two classes and 27 % 2 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=KFold(2))
+    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
+                        param_grid={'C': [10]}, cv=KFold(2))
     # no warning because no stratification and 54 % 2 == 0
     assert_no_warnings(grid.fit, X, y)
+
+
+def test_empty_cv_iterator_error():
+    # Use global X, y
+
+    # create cv
+    cv = KFold(n_splits=3).split(X)
+
+    # pop all of it, this should cause the expected ValueError
+    [u for u in cv]
+    # cv is empty now
+
+    train_size = 100
+    ridge = RandomizedSearchCV(Ridge(), {'alpha': [1e-3, 1e-2, 1e-1]},
+                               cv=cv, n_jobs=-1)
+
+    # assert that this raises an error
+    with pytest.raises(ValueError,
+                       match='No fits were performed. '
+                             'Was the CV iterator empty\\? '
+                             'Were there no candidates\\?'):
+        ridge.fit(X[:train_size], y[:train_size])
+
+
+def test_random_search_bad_cv():
+    # Use global X, y
+
+    class BrokenKFold(KFold):
+        def get_n_splits(self, *args, **kw):
+            return 1
+
+    # create bad cv
+    cv = BrokenKFold(n_splits=3)
+
+    train_size = 100
+    ridge = RandomizedSearchCV(Ridge(), {'alpha': [1e-3, 1e-2, 1e-1]},
+                               cv=cv, n_jobs=-1)
+
+    # assert that this raises an error
+    with pytest.raises(ValueError,
+                       match='cv.split and cv.get_n_splits returned '
+                             'inconsistent results. Expected \\d+ '
+                             'splits, got \\d+'):
+        ridge.fit(X[:train_size], y[:train_size])

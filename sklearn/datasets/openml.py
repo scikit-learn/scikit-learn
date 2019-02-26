@@ -7,21 +7,14 @@ from warnings import warn
 from contextlib import closing
 from functools import wraps
 
-try:
-    # Python 3+
-    from urllib.request import urlopen, Request
-except ImportError:
-    # Python 2
-    from urllib2 import urlopen, Request
-
+from urllib.request import urlopen, Request
 
 import numpy as np
 import scipy.sparse
 
 from sklearn.externals import _arff
 from .base import get_data_home
-from ..externals.six import string_types, PY2, BytesIO
-from ..externals.six.moves.urllib.error import HTTPError
+from urllib.error import HTTPError
 from ..utils import Bunch
 
 __all__ = ['fetch_openml']
@@ -89,8 +82,6 @@ def _open_openml_url(openml_path, data_home):
     if data_home is None:
         fsrc = urlopen(req)
         if is_gzip(fsrc):
-            if PY2:
-                fsrc = BytesIO(fsrc.read())
             return gzip.GzipFile(fileobj=fsrc, mode='rb')
         return fsrc
 
@@ -357,16 +348,9 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
             else:
                 return_type = _arff.DENSE
 
-            if PY2:
-                arff_file = _arff.load(
-                    response.read(),
-                    encode_nominal=encode_nominal,
-                    return_type=return_type,
-                )
-            else:
-                arff_file = _arff.loads(response.read().decode('utf-8'),
-                                        encode_nominal=encode_nominal,
-                                        return_type=return_type)
+            arff_file = _arff.loads(response.read().decode('utf-8'),
+                                    encode_nominal=encode_nominal,
+                                    return_type=return_type)
         return arff_file
 
     return _arff_load()
@@ -564,14 +548,14 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         # see issue: https://github.com/openml/OpenML/issues/768)
         target_column = [feature['name'] for feature in features_list
                          if feature['is_target'] == 'true']
-    elif isinstance(target_column, string_types):
+    elif isinstance(target_column, str):
         # for code-simplicity, make target_column by default a list
         target_column = [target_column]
     elif target_column is None:
         target_column = []
     elif not isinstance(target_column, list):
         raise TypeError("Did not recognize type of target_column"
-                        "Should be six.string_type, list or None. Got: "
+                        "Should be str, list or None. Got: "
                         "{}".format(type(target_column)))
     data_columns = _valid_data_column_names(features_list,
                                             target_column)
@@ -627,7 +611,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         raise ValueError('Mix of nominal and non-nominal targets is not '
                          'currently supported')
 
-    description = u"{}\n\nDownloaded from openml.org.".format(
+    description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
 
     # reshape y back to 1-D array, if there is only 1 target column; back

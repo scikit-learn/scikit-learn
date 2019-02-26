@@ -2,7 +2,6 @@
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
-from __future__ import division
 import numpy as np
 import scipy as sp
 from scipy import ndimage
@@ -11,7 +10,7 @@ from scipy.sparse.csgraph import connected_components
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
-from sklearn.utils.testing import (assert_equal, assert_true, assert_raises,
+from sklearn.utils.testing import (assert_equal, assert_raises,
                                    ignore_warnings)
 
 
@@ -306,8 +305,8 @@ def test_extract_patches_strided():
         assert patches.shape[:ndim] == expected_view
         last_patch_slices = tuple(slice(i, i + j, None) for i, j in
                                   zip(last_patch, patch_size))
-        assert_true((patches[(-1, None, None) * ndim] ==
-                    image[last_patch_slices].squeeze()).all())
+        assert (patches[(-1, None, None) * ndim] ==
+                image[last_patch_slices].squeeze()).all()
 
 
 def test_extract_patches_square():
@@ -317,8 +316,8 @@ def test_extract_patches_square():
     p = 8
     expected_n_patches = ((i_h - p + 1), (i_w - p + 1))
     patches = extract_patches(face, patch_shape=p)
-    assert_true(patches.shape == (expected_n_patches[0], expected_n_patches[1],
-                                  p, p))
+    assert patches.shape == (expected_n_patches[0],
+                             expected_n_patches[1], p, p)
 
 
 def test_width_patch():

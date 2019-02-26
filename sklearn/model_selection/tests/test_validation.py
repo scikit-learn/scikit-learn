@@ -1,5 +1,4 @@
 """Test the validation module"""
-from __future__ import division
 
 import sys
 import warnings
@@ -14,8 +13,6 @@ from sklearn.exceptions import FitFailedWarning
 
 from sklearn.model_selection.tests.test_search import FailingClassifier
 
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -70,7 +67,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.multiclass import OneVsRestClassifier
@@ -117,8 +114,7 @@ class MockImprovingEstimator(BaseEstimator):
 class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     """Dummy classifier that provides partial_fit"""
     def __init__(self, n_max_train_sizes):
-        super(MockIncrementalImprovingEstimator,
-              self).__init__(n_max_train_sizes)
+        super().__init__(n_max_train_sizes)
         self.x = None
 
     def _is_training_data(self, X):
@@ -154,18 +150,16 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
     """Dummy classifier that disallows repeated calls of fit method"""
 
     def fit(self, X_subset, y_subset):
-        assert_false(
-            hasattr(self, 'fit_called_'),
-            'fit is called the second time'
-        )
+        assert not hasattr(self, 'fit_called_'), \
+                   'fit is called the second time'
         self.fit_called_ = True
-        return super(type(self), self).fit(X_subset, y_subset)
+        return super().fit(X_subset, y_subset)
 
     def predict(self, X):
         raise NotImplementedError
 
 
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):
@@ -193,27 +187,27 @@ class MockClassifier(object):
         if X.ndim >= 3 and not self.allow_nd:
             raise ValueError('X cannot be d')
         if sample_weight is not None:
-            assert_true(sample_weight.shape[0] == X.shape[0],
-                        'MockClassifier extra fit_param sample_weight.shape[0]'
-                        ' is {0}, should be {1}'.format(sample_weight.shape[0],
-                                                        X.shape[0]))
+            assert sample_weight.shape[0] == X.shape[0], (
+                'MockClassifier extra fit_param ' 
+                'sample_weight.shape[0] is {0}, should be {1}'
+                .format(sample_weight.shape[0], X.shape[0]))
         if class_prior is not None:
-            assert_true(class_prior.shape[0] == len(np.unique(y)),
-                        'MockClassifier extra fit_param class_prior.shape[0]'
-                        ' is {0}, should be {1}'.format(class_prior.shape[0],
-                                                        len(np.unique(y))))
+            assert class_prior.shape[0] == len(np.unique(y)), (
+                'MockClassifier extra fit_param class_prior.shape[0]'
+                ' is {0}, should be {1}'.format(class_prior.shape[0],
+                                                len(np.unique(y))))
         if sparse_sample_weight is not None:
             fmt = ('MockClassifier extra fit_param sparse_sample_weight'
                    '.shape[0] is {0}, should be {1}')
-            assert_true(sparse_sample_weight.shape[0] == X.shape[0],
-                        fmt.format(sparse_sample_weight.shape[0], X.shape[0]))
+            assert sparse_sample_weight.shape[0] == X.shape[0], \
+                fmt.format(sparse_sample_weight.shape[0], X.shape[0])
         if sparse_param is not None:
             fmt = ('MockClassifier extra fit_param sparse_param.shape '
                    'is ({0}, {1}), should be ({2}, {3})')
-            assert_true(sparse_param.shape == P_sparse.shape,
-                        fmt.format(sparse_param.shape[0],
-                                   sparse_param.shape[1],
-                                   P_sparse.shape[0], P_sparse.shape[1]))
+            assert sparse_param.shape == P_sparse.shape, (
+                fmt.format(sparse_param.shape[0],
+                           sparse_param.shape[1],
+                           P_sparse.shape[0], P_sparse.shape[1]))
         return self
 
     def predict(self, T):
@@ -457,10 +451,10 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
                    {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
 
-    keys_sans_train = set(('test_r2', 'test_neg_mean_squared_error',
-                           'fit_time', 'score_time'))
+    keys_sans_train = {'test_r2', 'test_neg_mean_squared_error',
+                       'fit_time', 'score_time'}
     keys_with_train = keys_sans_train.union(
-        set(('train_r2', 'train_neg_mean_squared_error')))
+            {'train_r2', 'train_neg_mean_squared_error'})
 
     for return_train_score in (True, False):
         for scoring in all_scoring:
@@ -1275,13 +1269,13 @@ def test_check_is_permutation():
     p = np.arange(100)
     rng.shuffle(p)
     assert _check_is_permutation(p, 100)
-    assert_false(_check_is_permutation(np.delete(p, 23), 100))
+    assert not _check_is_permutation(np.delete(p, 23), 100)
 
     p[0] = 23
-    assert_false(_check_is_permutation(p, 100))
+    assert not _check_is_permutation(p, 100)
 
     # Check if the additional duplicate indices are caught
-    assert_false(_check_is_permutation(np.hstack((p, 0)), 100))
+    assert not _check_is_permutation(np.hstack((p, 0)), 100)
 
 
 def test_cross_val_predict_sparse_prediction():

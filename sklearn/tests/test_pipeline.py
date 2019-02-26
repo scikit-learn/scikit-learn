@@ -10,12 +10,10 @@ import pytest
 import numpy as np
 from scipy import sparse
 
-from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
@@ -47,7 +45,7 @@ JUNK_FOOD_DOCS = (
 )
 
 
-class NoFit(object):
+class NoFit:
     """Small class to test parameter dispatching.
     """
 
@@ -203,7 +201,7 @@ def test_pipeline_init():
 
     # Test clone
     pipe2 = assert_no_warnings(clone, pipe)
-    assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
+    assert not pipe.named_steps['svc'] is pipe2.named_steps['svc']
 
     # Check that apart from estimators, the parameters are the same
     params = pipe.get_params(deep=True)
@@ -411,7 +409,7 @@ def test_fit_predict_with_intermediate_fit_params():
                      clf__should_succeed=True)
     assert pipe.named_steps['transf'].fit_params['should_get_this']
     assert pipe.named_steps['clf'].successful
-    assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
+    assert 'should_succeed' not in pipe.named_steps['transf'].fit_params
 
 
 def test_predict_with_predict_params():
@@ -451,7 +449,7 @@ def test_feature_union():
 
     # Test clone
     fs2 = assert_no_warnings(clone, fs)
-    assert_false(fs.transformer_list[0][1] is fs2.transformer_list[0][1])
+    assert fs.transformer_list[0][1] is not fs2.transformer_list[0][1]
 
     # test setting parameters
     fs.set_params(select__k=2)
@@ -575,6 +573,27 @@ def test_pipeline_named_steps():
 
 
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipeline_correctly_adjusts_steps(passthrough):
+    X = np.array([[1]])
+    y = np.array([1])
+    mult2 = Mult(mult=2)
+    mult3 = Mult(mult=3)
+    mult5 = Mult(mult=5)
+
+    pipeline = Pipeline([
+        ('m2', mult2),
+        ('bad', passthrough),
+        ('m3', mult3),
+        ('m5', mult5)
+    ])
+
+    pipeline.fit(X, y)
+    expected_names = ['m2', 'bad', 'm3', 'm5']
+    actual_names = [name for name, _ in pipeline.steps]
+    assert expected_names == actual_names
+
+
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
 def test_set_pipeline_step_passthrough(passthrough):
     X = np.array([[1]])
     y = np.array([1])
@@ -652,25 +671,25 @@ def test_pipeline_ducktyping():
     pipeline.inverse_transform
 
     pipeline = make_pipeline(Transf())
-    assert_false(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline('passthrough')
     assert pipeline.steps[0] == ('passthrough', 'passthrough')
-    assert_false(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline(Transf(), NoInvTransf())
-    assert_false(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
-    assert_false(hasattr(pipeline, 'inverse_transform'))
+    assert not hasattr(pipeline, 'inverse_transform')
 
     pipeline = make_pipeline(NoInvTransf(), Transf())
-    assert_false(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
-    assert_false(hasattr(pipeline, 'inverse_transform'))
+    assert not hasattr(pipeline, 'inverse_transform')
 
 
 def test_make_pipeline():
@@ -928,12 +947,12 @@ def test_pipeline_wrong_memory():
                         " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
-class DummyMemory(object):
+class DummyMemory:
     def cache(self, func):
         return func
 
 
-class WrongDummyMemory(object):
+class WrongDummyMemory:
     pass
 
 
@@ -981,7 +1000,7 @@ def test_pipeline_memory():
         assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
         assert_array_equal(pipe.named_steps['transf'].means_,
                            cached_pipe.named_steps['transf'].means_)
-        assert_false(hasattr(transf, 'means_'))
+        assert not hasattr(transf, 'means_')
         # Check that we are reading the cache while fitting
         # a second time
         cached_pipe.fit(X, y)

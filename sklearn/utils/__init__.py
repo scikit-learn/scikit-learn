@@ -1,6 +1,7 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+from collections.abc import Sequence
 import numbers
 import platform
 import struct
@@ -13,7 +14,6 @@ from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
-from .fixes import _Sequence as Sequence
 from .deprecation import deprecated
 from .validation import (as_float_array,
                          assert_all_finite,
@@ -90,7 +90,7 @@ class Bunch(dict):
     """
 
     def __init__(self, **kwargs):
-        super(Bunch, self).__init__(kwargs)
+        super().__init__(kwargs)
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -633,9 +633,6 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-
     # convert from numpy.bool_ to python bool to ensure that testing
     # is_scalar_nan(x) is True does not fail.
-    # Redondant np.floating is needed because numbers can't match np.float32
-    # in python 2.
-    return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))
+    return bool(isinstance(x, numbers.Real) and np.isnan(x))

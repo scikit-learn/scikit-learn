@@ -29,7 +29,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -805,9 +804,9 @@ def test_min_impurity_split():
         # impurity 1e-7
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        assert_true(est.min_impurity_split is None,
-                    "Failed, min_impurity_split = {0} > 1e-7".format(
-                        est.min_impurity_split))
+        assert est.min_impurity_split is None, (
+            "Failed, min_impurity_split = {0} > 1e-7".format(
+                est.min_impurity_split))
         try:
             assert_warns(DeprecationWarning, est.fit, X, y)
         except AssertionError:
@@ -1242,8 +1241,8 @@ def test_arrays_persist():
         value = getattr(DecisionTreeClassifier().fit([[0], [1]],
                                                      [0, 1]).tree_, attr)
         # if pointing to freed memory, contents may be arbitrary
-        assert_true(-3 <= value.flat[0] < 3,
-                    'Array points to arbitrary memory')
+        assert -3 <= value.flat[0] < 3, \
+            'Array points to arbitrary memory'
 
 
 def test_only_constant_features():
@@ -1829,3 +1828,23 @@ def test_empty_leaf_infinite_threshold():
         infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
         assert len(infinite_threshold) == 0
         assert len(empty_leaf) == 0
+
+
+@pytest.mark.parametrize('name', CLF_TREES)
+def test_multi_target(name):
+    Tree = CLF_TREES[name]
+
+    clf = Tree()
+
+    X = iris.data
+
+    # Make multi column mixed type target.
+    y = np.vstack([
+        iris.target.astype(float),
+        iris.target.astype(int),
+        iris.target.astype(str),
+    ]).T
+
+    # Try to fit and predict.
+    clf.fit(X, y)
+    clf.predict(X)

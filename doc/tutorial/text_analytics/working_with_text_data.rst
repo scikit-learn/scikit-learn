@@ -156,8 +156,8 @@ It is possible to get back the category names as follows::
   sci.med
 
 You might have noticed that the samples were shuffled randomly when we called
-``fetch_20newsgroups(..., shuffle=True, random_state=42)``: this is useful if 
-you wish to select only a subset of samples to quickly train a model and get a 
+``fetch_20newsgroups(..., shuffle=True, random_state=42)``: this is useful if
+you wish to select only a subset of samples to quickly train a model and get a
 first idea of the results before re-training on the complete dataset later.
 
 
@@ -205,7 +205,7 @@ Tokenizing text with ``scikit-learn``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Text preprocessing, tokenizing and filtering of stopwords are all included
-in :class:`CountVectorizer`, which builds a dictionary of features and 
+in :class:`CountVectorizer`, which builds a dictionary of features and
 transforms documents to feature vectors::
 
   >>> from sklearn.feature_extraction.text import CountVectorizer
@@ -214,8 +214,8 @@ transforms documents to feature vectors::
   >>> X_train_counts.shape
   (2257, 35788)
 
-:class:`CountVectorizer` supports counts of N-grams of words or consecutive 
-characters. Once fitted, the vectorizer has built a dictionary of feature 
+:class:`CountVectorizer` supports counts of N-grams of words or consecutive
+characters. Once fitted, the vectorizer has built a dictionary of feature
 indices::
 
   >>> count_vect.vocabulary_.get(u'algorithm')
@@ -327,7 +327,7 @@ like a compound classifier::
 
 
 The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
-We will use them to perform grid search for suitable hyperparameters below. 
+We will use them to perform grid search for suitable hyperparameters below.
 We can now train the model with a single command::
 
   >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
@@ -369,7 +369,7 @@ classifier object into our pipeline::
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
   0.9127...
 
-We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further 
+We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further
 utilities for more detailed performance analysis of the results::
 
   >>> from sklearn import metrics
@@ -383,7 +383,7 @@ utilities for more detailed performance analysis of the results::
                  sci.med       0.94      0.90      0.92       396
   soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
-               micro avg       0.91      0.91      0.91      1502
+                accuracy                           0.91      1502
                macro avg       0.92      0.91      0.91      1502
             weighted avg       0.92      0.91      0.91      1502
   <BLANKLINE>

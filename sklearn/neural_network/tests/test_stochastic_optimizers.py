@@ -3,8 +3,7 @@ import numpy as np
 from sklearn.neural_network._stochastic_optimizers import (BaseOptimizer,
                                                            SGDOptimizer,
                                                            AdamOptimizer)
-from sklearn.utils.testing import (assert_array_equal, assert_false,
-                                   assert_equal)
+from sklearn.utils.testing import (assert_array_equal, assert_equal)
 
 
 shapes = [(4, 6), (6, 8), (7, 8, 9)]
@@ -53,7 +52,7 @@ def test_sgd_optimizer_trigger_stopping():
     params = [np.zeros(shape) for shape in shapes]
     lr = 2e-6
     optimizer = SGDOptimizer(params, lr, lr_schedule='adaptive')
-    assert_false(optimizer.trigger_stopping('', False))
+    assert not optimizer.trigger_stopping('', False)
     assert_equal(lr / 5, optimizer.learning_rate)
     assert optimizer.trigger_stopping('', False)
 
