@@ -150,11 +150,11 @@ cdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c'] 
         int n_features = X.shape[1]
 
         floating[::1] distances = ((np.asarray(X) - np.asarray(centers_old)[labels])**2).sum(axis=1)
-        int[::1] far_from_centers = np.argpartition(distances, -n_empty)[:n_empty-1:-1].astype(np.int32)
+        int[::1] far_from_centers = np.argpartition(distances, -n_empty)[:-n_empty-1:-1].astype(np.int32)
 
         int new_cluster_id, old_cluster_id, far_idx, idx, k
         floating weight
-    print()
+
     for idx in range(n_empty):
 
         new_cluster_id = empty_clusters[idx]
@@ -205,7 +205,7 @@ cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
             centers_old[j], centers_squared_norms[j], True)
 
     cdef:
-        int[::1] far_from_centers = np.argpartition(distances, -n_empty)[:n_empty-1:-1].astype(np.int32)
+        int[::1] far_from_centers = np.argpartition(distances, -n_empty)[:-n_empty-1:-1].astype(np.int32)
 
         int new_cluster_id, old_cluster_id, far_idx, idx
         floating weight
