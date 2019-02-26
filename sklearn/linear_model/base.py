@@ -33,8 +33,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils.seq_dataset import ArrayDataset32, CSRDataset32
-from ..utils.seq_dataset import ArrayDataset64 as ArrayDataset
-from ..utils.seq_dataset import CSRDataset64 as CSRDataset
+from ..utils.seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
 from ..preprocessing.data import normalize as f_normalize
@@ -85,8 +84,8 @@ def make_dataset(X, y, sample_weight, random_state=None):
         CSRData = CSRDataset32
         ArrayData = ArrayDataset32
     else:
-        CSRData = CSRDataset
-        ArrayData = ArrayDataset
+        CSRData = CSRDataset64
+        ArrayData = ArrayDataset64
 
     if sp.issparse(X):
         dataset = CSRData(X.data, X.indptr, X.indices, y, sample_weight,
