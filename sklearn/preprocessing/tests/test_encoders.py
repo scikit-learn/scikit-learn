@@ -414,10 +414,8 @@ def test_one_hot_encoder_inverse():
 
 @pytest.mark.parametrize("X", 
     [[1, 2], 
-    np.array([3., 4.])
-    ])
+    np.array([3., 4.])])
 def test_X_is_not_1D(X):
-    #X = np.array([1, 2])
     oh = OneHotEncoder()
 
     msg = ("Expected 2D array, got 1D array instead")
@@ -425,19 +423,15 @@ def test_X_is_not_1D(X):
     assert_raises_regex(ValueError, msg, oh.fit, X)
 
 
-@pytest.mark.parametrize("X", 
-    [np.array([[[1,2]]]),
-    np.zeros([3,4,5])
-    ])
+@pytest.mark.parametrize("X",
+    [np.array([[[1, 2]]]),
+     np.zeros([3, 4, 5])])
 def test_X_is_no_more_than2D(X):
-    #X = np.array([1, 2])
     oh = OneHotEncoder()
-    
+
     msg = ("Found array with dim")
     assert_raises_regex(ValueError, msg, oh.fit_transform, X)
     assert_raises_regex(ValueError, msg, oh.fit, X)
-
-
 
 
 @pytest.mark.parametrize("X, cat_exp, cat_dtype", [
@@ -721,6 +715,7 @@ def test_encoder_dtypes_pandas():
     enc.fit(X)
     assert all([enc.categories_[i].dtype == X_type[i] for i in range(3)])
     assert_array_equal(enc.transform(X).toarray(), exp)
+
 
 def test_one_hot_encoder_warning():
     enc = OneHotEncoder()
