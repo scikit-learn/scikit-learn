@@ -831,11 +831,10 @@ def test_warm_start_multitask_lasso():
 
 
 @pytest.mark.parametrize('klass, n_classes, kwargs',
-        [(Lasso, 1, dict(precompute=True)),
-         (Lasso, 1, dict(precompute=False)),
-         (MultiTaskLasso, 2, dict()),
-         (MultiTaskLasso, 2, dict()),
-         ])
+                         [(Lasso, 1, dict(precompute=True)),
+                          (Lasso, 1, dict(precompute=False)),
+                          (MultiTaskLasso, 2, dict()),
+                          (MultiTaskLasso, 2, dict())])
 def test_enet_coordinate_descent(klass, n_classes, kwargs):
     """Test that a warning is issued if model does not converge"""
     clf = klass(max_iter=2, **kwargs)
