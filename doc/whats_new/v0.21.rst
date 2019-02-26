@@ -108,7 +108,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed the output of the average path length computed in
   :class:`ensemble.IsolationForest` when the input is either 0, 1 or 2.
   :issue:`13251` by :user:`Albert Thomas <albertcthomas>`
-  and `joshuakennethjones <joshuakennethjones>`_.
+  and :user:`joshuakennethjones <joshuakennethjones>`.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
