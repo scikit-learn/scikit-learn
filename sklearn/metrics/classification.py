@@ -925,8 +925,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     Notes
     -----
     When ``true positive + false positive == 0`` or
-    ``true positive + false negative == 0``, f-score will be set to 0
-    and ``UndefinedMetricWarning`` will be raised.
+    ``true positive + false negative == 0``, f-score returns 0 and raises
+    ``UndefinedMetricWarning``.
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
                        pos_label=pos_label, average=average,
@@ -1044,8 +1044,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     Notes
     -----
     When ``true positive + false positive == 0`` or
-    ``true positive + false negative == 0``, f-score will be set to 0
-    and ``UndefinedMetricWarning`` will be raised.
+    ``true positive + false negative == 0``, f-score returns 0 and raises
+    ``UndefinedMetricWarning``.
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  beta=beta,
@@ -1422,8 +1422,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Notes
     -----
-    When ``true positive + false positive == 0``, precision will be set to 0
-    and ``UndefinedMetricWarning`` will be raised.
+    When ``true positive + false positive == 0``, precision returns 0 and
+    raises ``UndefinedMetricWarning``.
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
@@ -1528,8 +1528,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
     Notes
     -----
-    When ``true positive + false negative == 0``, recall will be set to 0
-    and ``UndefinedMetricWarning`` will be raised.
+    When ``true positive + false negative == 0``, recall returns 0 and raises
+    ``UndefinedMetricWarning``.
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
