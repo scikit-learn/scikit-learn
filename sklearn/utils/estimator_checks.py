@@ -2362,8 +2362,10 @@ def check_estimator_sparse_dense(name, estimator_orig):
                 estimator_sp.set_params(with_centering=False)
             if name in ['TransformedTargetRegressor']:
                 # XXX naming is not consistent (with_mean vs with_centering) :(
-                estimator.set_params(regressor=LinearRegression(fit_intercept=False))
-                estimator_sp.set_params(regressor=LinearRegression(fit_intercept=False))
+                estimator.set_params(regressor=LinearRegression(
+                    fit_intercept=False))
+                estimator_sp.set_params(regressor=LinearRegression(
+                    fit_intercept=False))
         dense_vs_sparse_additional_params = defaultdict(dict,
                 {'Ridge': {'solver': 'cholesky'},
                  })
