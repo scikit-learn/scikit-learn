@@ -285,7 +285,7 @@ def plot(outname=None):
 
 
 if __name__ == '__main__':
-    solvers = ['saga', ]
+    solvers = ['saga', 'liblinear', 'lightning']
     penalties = ['l1', 'l2']
     n_samples = [100000, 300000, 500000, 800000, None]
     single_target = True
