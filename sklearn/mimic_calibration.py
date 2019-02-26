@@ -1,3 +1,7 @@
+"""Mimic Calibration of predicted probabilities."""
+# Author: Pin-Ju Tien <pinju.tien@gmail.com>
+# ref: NYC ML Meetup talk given by Sam Steingold. https://www.youtube.com/watch?v=Cg--SC76I1I
+
 import numpy as np
 from .base import BaseEstimator, RegressorMixin
 from .utils import indexable, column_or_1d
@@ -84,12 +88,9 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
 
         Returns
         ----------
-        it return the info of each bin and every bin has nPos = threshold_pos.
-        bl_index: corresponding left index in the sorted score/target.
-        score_min, score_max, score_mean: score/probability info in each bin.
-        nPos: the number of positive in the bin which should be threshold_pos except the last bin.
-        nPosRate: the positive rate in the bin.
-        bin_info: [[bl_index, score_min, score_max, score_mean, nPos_temp, total_temp, nPosRate_temp]]
+        bin_info: 2-D array, shape (number of bins, 6).
+          [[bl_index, score_min, score_max, score_mean, nPos_temp, total_temp, nPosRate_temp]]
+        total_number_pos: integer, number of positive.
 
         """
         bin_right_index_array = []
@@ -219,6 +220,18 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         return boundary_table, calibrated_model
 
     def fit(self, X, y, sample_weight=None):
+        """ perform mimic calibration.
+
+        Parameters
+        ----------
+        X: 1-d array, the probability prediction from the binary classification model.
+        y: 1-d array, binary target, its element is 0 or 1.
+
+        Returns
+        -------
+        self : object
+            Returns an instance of self.
+        """
         X = column_or_1d(X)
         y = column_or_1d(y)
         X, y = indexable(X, y)
