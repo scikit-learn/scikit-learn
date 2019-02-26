@@ -1567,12 +1567,10 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
     assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
     decision = estimator.decision_function(X)
-    assert decision.dtype == np.dtype('float')
-    assert decision.shape == (n_samples,)
-
     scores = estimator.score_samples(X)
-    assert scores.dtype == np.dtype('float')
-    assert scores.shape == (n_samples,)
+    for output in [decision, scores]:
+        assert output.dtype == np.dtype('float')
+        assert output.shape == (n_samples,)
 
     # raises error on malformed input for predict
     assert_raises(ValueError, estimator.predict, X.T)

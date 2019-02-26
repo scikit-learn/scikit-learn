@@ -440,7 +440,7 @@ def _average_path_length(n_samples_leaf):
     if isinstance(n_samples_leaf, INTEGER_TYPES):
         if n_samples_leaf <= 1:
             return 0.
-        if n_samples_leaf <= 2:
+        elif n_samples_leaf <= 2:
             return 1.
         else:
             return 2. * (np.log(n_samples_leaf - 1.) + np.euler_gamma) - 2. * (

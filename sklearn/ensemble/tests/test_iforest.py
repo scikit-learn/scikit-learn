@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_allclose
 
 from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
@@ -269,10 +270,15 @@ def test_iforest_average_path_length():
     assert _average_path_length(0) == pytest.approx(0)
     assert _average_path_length(1) == pytest.approx(0)
     assert _average_path_length(2) == pytest.approx(1)
-    assert_almost_equal(_average_path_length(5), result_one, decimal=10)
-    assert_almost_equal(_average_path_length(999), result_two, decimal=10)
-    assert_array_almost_equal(_average_path_length(np.array([1, 2, 5, 999])),
-                              [0., 1., result_one, result_two], decimal=10)
+    assert_allclose(_average_path_length(5), result_one)
+    assert_allclose(_average_path_length(999), result_two)
+    assert_allclose(_average_path_length(np.array([1, 2, 5, 999])),
+                    [0., 1., result_one, result_two])
+
+    # _average_path_length is increasing
+    avg_path_length = _average_path_length(np.arange(5))
+    assert_array_equal(avg_path_length, np.sort(avg_path_length))
+
 
 
 @pytest.mark.filterwarnings('ignore:default contamination')
