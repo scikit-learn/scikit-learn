@@ -1576,6 +1576,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                             new_index.append(pos)
                             start = a + d if self.interaction_only else a
                             new_pos = pos + end - start
+                            if new_pos <= pos:
+                                break
                             if transpose:
                                 XP[pos:new_pos, :] = np.multiply(
                                     XP[start:end, :], X[i:i + 1, :])
