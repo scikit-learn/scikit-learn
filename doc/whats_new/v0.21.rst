@@ -138,8 +138,8 @@ Support for Python 3.4 and below has been officially dropped.
 ...........................
 
 - |Enhancement| :class:`linear_model.make_dataset` now preserves
-  ``float32`` and ``float64`` dtypes. :issues:`8769` and `11000` by
-  :user:`Nelle Varoquaux`_, :user:`Arthur Imbert`_,
+  ``float32`` and ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
+  :user:`Nelle Varoquaux`_, :user:`Arthur Imbert <Henley13>`,
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Feature| :class:`linear_model.LogisticRegression` and
