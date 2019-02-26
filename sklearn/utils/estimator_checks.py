@@ -1540,7 +1540,7 @@ def check_outlier_corruption(num_outliers, expected_outliers, decision):
     sorted_decision = np.sort(decision)
     msg = ('The number of predicted outliers is not equal to the expected '
            'number of outliers and this difference is not explained by the '
-           'number of ties is the decision_function values')
+           'number of ties in the decision_function values')
     assert len(np.unique(sorted_decision[start:end])) == 1, msg
 
 
