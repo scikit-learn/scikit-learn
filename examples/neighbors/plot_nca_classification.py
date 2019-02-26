@@ -1,15 +1,16 @@
 """
-============================================================================
-Comparing Nearest Neighbors and Neighborhood Components Analysis
-============================================================================
+=============================================================================
+Comparing Nearest Neighbors with and without Neighborhood Components Analysis
+=============================================================================
 
 An example comparing nearest neighbors classification with and without
 Neighborhood Components Analysis.
 
-It will plot the decision boundaries for each class determined by a simple
-Nearest Neighbors classifier against the decision boundaries determined by a
-Neighborhood Components Analysis classifier. The latter aims to find a distance
-metric that maximizes the nearest neighbor classification accuracy on a given
+It will plot the class decision boundaries given by a Nearest Neighbors
+classifier when using the Euclidean distance on the original features, versus
+using the Euclidean distance after the transformation learned by Neighborhood
+Components Analysis. The latter aims to find a linear transformation that
+maximises the (stochastic) nearest neighbor classification accuracy on the
 training set.
 """
 

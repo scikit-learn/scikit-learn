@@ -538,13 +538,16 @@ data  visualization and fast classification.
 .. centered:: |nca_illustration_1| |nca_illustration_2|
 
 In the above illustrating figure, we consider some points from a randomly
-generated dataset. We focus on the stochastic KNN classification of point no. 3,
-the thickness of a bond representing a softmax distance hence the weight of the
-neighbor vote in the classification. In the original space, sample 3 has many
-stochastic neighbors from various classes, so the right class is not very
-likely. However, in the embedding space learned by NCA, the only non-negligible
-stochastic neighbors are from the same class as sample 3, guaranteeing that the
-latter will be well classified.
+generated dataset. We focus on the stochastic KNN classification of point no.
+3. The thickness of a link between sample 3 and another point is proportional
+to their distance, and can be seen as the relative weight (or probability) that
+a stochastic nearest neighbor prediction rule would assign to this point. In
+the original space, sample 3 has many stochastic neighbors from various
+classes, so the right class is not very likely. However, in the embedding space
+learned by NCA, the only stochastic neighbors with non-negligible weight are
+from the same class as sample 3, guaranteeing that the latter will be well
+classified. See the :ref:`mathematical formulation<mathematical_formulation>`
+for more details.
 
 
 Classification
@@ -595,7 +598,7 @@ classes:
 
 The plot shows decision boundaries for Nearest Neighbor Classification and
 Neighborhood Components Analysis classification on the iris dataset, when
-training and scoring on only two features, for visualisation purpose.
+training and scoring on only two features, for visualisation purposes.
 
 .. _nca_dim_reduction:
 
@@ -637,12 +640,15 @@ each method. Each data sample belongs to one of 10 classes.
  * :ref:`sphx_glr_auto_examples_neighbors_plot_nca_dim_reduction.py`
  * :ref:`sphx_glr_auto_examples_manifold_plot_lle_digits.py`
 
+.. _nca_mathematical_formulation:
+
 Mathematical formulation
 ------------------------
 
 The goal of NCA is to learn an optimal linear transformation matrix of size
-``(n_components, n_features)``, which maximises in average the probability
-:math:`p_i` of sample :math:`i` being correctly classified, i.e.:
+``(n_components, n_features)``, which maximises the sum over all samples
+:math:`i` of the probability :math:`p_i` that math:`i` is correctly classified,
+i.e.:
 
 .. math::
 
@@ -682,10 +688,10 @@ where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
 Implementation
 --------------
 
-This implementation follows what is explained in the original paper. For the
-optimisation method, it currently uses scipy's l-bfgs-b with a full gradient
-computation at each iteration, to avoid to tune the learning rate and provide
-stable learning.
+This implementation follows what is explained in the original paper [1]_. For
+the optimisation method, it currently uses scipy's l-bfgs-b with a full
+gradient computation at each iteration, to avoid to tune the learning rate and
+provide stable learning.
 
 See the examples below and the doc  string of
 :meth:`NeighborhoodComponentsAnalysis.fit` for further information.
@@ -711,10 +717,10 @@ added space complexity in the operation.
 
 .. topic:: References:
 
-   * | `"Neighbourhood Components Analysis". Advances in Neural Information"
-       <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
-     | J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov, Advances in
-     | Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
+.. [1] `"Neighbourhood Components Analysis". Advances in Neural Information"
+     <http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf>`_,
+     J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov, Advances in
+     Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
-   * `Wikipedia entry on Neighborhood Components Analysis
+.. [2] `Wikipedia entry on Neighborhood Components Analysis
      <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_

@@ -24,7 +24,7 @@ that a stochastic nearest neighbor algorithm will give the best accuracy.
 Like LDA, it is a supervised method.
 
 One can see that NCA enforces a clustering of the data that is visually
-meaningful even after the large dimensionality reduction.
+meaningful despite the large reduction in dimension.
 """
 
 # License: BSD 3 clause
