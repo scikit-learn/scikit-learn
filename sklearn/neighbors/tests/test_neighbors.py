@@ -1085,8 +1085,8 @@ def test_valid_brute_metric_for_auto_algorithm():
                     n_neighbors=3,
                     algorithm='auto',
                     metric=metric
-                ).fit(X[slice(None, 2)])
-                nn.kneighbors(X[slice(None, 2)])
+                ).fit(X[:, :2])
+                nn.kneighbors(X[:, :2])
         elif metric == 'precomputed':
             X_precomputed = rng.random_sample((10, 4))
             Y_precomputed = rng.random_sample((3, 4))
@@ -1098,7 +1098,8 @@ def test_valid_brute_metric_for_auto_algorithm():
             nb_p.kneighbors(DYX)
 
     for metric in VALID_METRICS_SPARSE['brute']:
-        if metric != 'precomputed' and metric not in require_params:
+        if (metric not in ['precomputed', 'haversine']
+            and metric not in require_params):
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
             nn.kneighbors(Xcsr)
