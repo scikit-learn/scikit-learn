@@ -298,8 +298,11 @@ def test_lda_dimension_warning(n_classes, n_features):
 
 
 @pytest.mark.parametrize("data_type, expected_type", [
-    (np.float32, np.float32), (np.float64, np.float64), (np.int32, np.float64),
-    (np.int64, np.float64)])
+    (np.float32, np.float32),
+    (np.float64, np.float64),
+    (np.int32, np.float64),
+    (np.int64, np.float64)
+])
 def test_lda_dtype_match(data_type, expected_type):
     for (solver, shrinkage) in solver_shrinkage:
         clf = LinearDiscriminantAnalysis(solver=solver, shrinkage=shrinkage)
@@ -316,8 +319,7 @@ def test_lda_numeric_consistency_float32_float64():
 
         # Check value consistency between types
         rtol = 1e-6
-        assert_allclose(clf_32.coef_, clf_64.coef_.astype(np.float32),
-                        rtol=rtol)
+        assert_allclose(clf_32.coef_, clf_64.coef_, rtol=rtol)
 
 
 def test_qda():
