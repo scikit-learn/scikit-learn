@@ -377,23 +377,39 @@ class OneHotEncoder(_BaseEncoder):
                     self._legacy_mode = False
                     self._categories = 'auto'
                 else:
-                    msg = (
-                        "The handling of integer data will change in "
-                        "version 0.22. Currently, the categories are "
-                        "determined based on the range "
-                        "[0, max(values)], while in the future they "
-                        "will be determined based on the unique "
-                        "values.\nIf you want the future behaviour "
-                        "and silence this warning, you can specify "
-                        "\"categories='auto'\".\n"
-                        "In case you used a LabelEncoder before this "
-                        "OneHotEncoder to convert the categories to "
-                        "integers, then you can now use the "
-                        "OneHotEncoder directly."
-                    )
-                    warnings.warn(msg, FutureWarning)
-                    self._legacy_mode = True
-                    self._n_values = 'auto'
+                    if self.drop is None:
+                        msg = (
+                            "The handling of integer data will change in "
+                            "version 0.22. Currently, the categories are "
+                            "determined based on the range "
+                            "[0, max(values)], while in the future they "
+                            "will be determined based on the unique "
+                            "values.\nIf you want the future behaviour "
+                            "and silence this warning, you can specify "
+                            "\"categories='auto'\".\n"
+                            "In case you used a LabelEncoder before this "
+                            "OneHotEncoder to convert the categories to "
+                            "integers, then you can now use the "
+                            "OneHotEncoder directly."
+                        )
+                        warnings.warn(msg, FutureWarning)
+                        self._legacy_mode = True
+                        self._n_values = 'auto'
+                    else:
+                        msg = (
+                            "The handling of integer data will change in "
+                            "version 0.22. Currently, the categories are "
+                            "determined based on the range "
+                            "[0, max(values)], while in the future they "
+                            "will be determined based on the unique "
+                            "values.\n The old behavior is not compatible "
+                            "with the `drop` paramenter. Instead, you "
+                            "must manually specify \"categories='auto'\" "
+                            "if you wish to use the `drop` parameter on "
+                            "an array of entirely integer data. This will "
+                            "enable the future behavior."
+                        )
+                        raise ValueError(msg)
 
         # if user specified categorical_features -> always use legacy mode
         if self.categorical_features is not None:
