@@ -66,6 +66,9 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`datasets.svmlight_format` :issue:`10727` by
   :user:`Bryan K Woods <bryan-woods>`.
 
+- |Fix| :func:`datasets.load_sample_images` returns images with a deterministic
+  order. :issue:`13250` by :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -278,6 +281,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed the calculation overflow when using a float16 dtype with
   :class:`preprocessing.StandardScaler`. :issue:`13007` by
   :user:`Raffaello Baluyot <baluyotraf>`
+
+- |Feature| :class:`OneHotEncoder` now supports dropping one feature per category
+  with a new drop parameter. :issue:`12908` by
+  :user:`Drew Johnston <drewmjohnston>`.
+
 
 :mod:`sklearn.tree`
 ...................
