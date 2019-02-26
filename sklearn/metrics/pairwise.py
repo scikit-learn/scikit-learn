@@ -1059,9 +1059,10 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
-    # TODO: in some cases, backend='threading' may be appropriate
+    # enforce a threading backend to prevent data the communication
+    # overhead
     fd = delayed(func)
-    ret = Parallel(n_jobs=n_jobs, verbose=0)(
+    ret = Parallel(backend="threading", n_jobs=n_jobs, verbose=0)(
         fd(X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
 
