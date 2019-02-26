@@ -314,7 +314,7 @@ class _MimicCalibration(BaseEstimator, RegressorMixin):
         assert(max(show_history_array) <= number_of_history-1), \
             "The max of history index is number_of_history-1. \
             Please choose indexs between 0 and {x}".format(x=number_of_history-1)
-        for i in range(number_of_history):
+        for i in show_history_array:
             one_history = data[i]
             score_array, nPosRate_array = self.get_one_history(one_history)
             plt.plot(score_array, nPosRate_array, label=str(i))
