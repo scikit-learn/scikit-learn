@@ -17,16 +17,16 @@ def configuration(parent_package="", top_path=None):
                          sources=["splitting.pyx"],
                          include_dirs=[numpy.get_include()])
 
-    config.add_extension("binning",
-                         sources=["binning.pyx"],
+    config.add_extension("_binning",
+                         sources=["_binning.pyx"],
                          include_dirs=[numpy.get_include()])
 
-    config.add_extension("predictor",
-                         sources=["predictor.pyx"],
+    config.add_extension("_predictor",
+                         sources=["_predictor.pyx"],
                          include_dirs=[numpy.get_include()])
 
-    config.add_extension("loss",
-                         sources=["loss.pyx"],
+    config.add_extension("_loss",
+                         sources=["_loss.pyx"],
                          include_dirs=[numpy.get_include()])
 
     config.add_extension("types",

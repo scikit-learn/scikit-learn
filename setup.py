@@ -128,9 +128,9 @@ def get_openmp_flag(compiler):
 OPENMP_EXTENSIONS = [
     "sklearn._fast_gradient_boosting._gradient_boosting",
     "sklearn._fast_gradient_boosting.splitting",
-    "sklearn._fast_gradient_boosting.binning",
-    "sklearn._fast_gradient_boosting.predictor",
-    "sklearn._fast_gradient_boosting.loss",
+    "sklearn._fast_gradient_boosting._binning",
+    "sklearn._fast_gradient_boosting._predictor",
+    "sklearn._fast_gradient_boosting._loss",
 ]
 
 

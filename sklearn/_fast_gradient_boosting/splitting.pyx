@@ -9,6 +9,8 @@
 - Apply a split to a node, i.e. split the indices of the samples at the node
   into the newly created left and right childs.
 """
+# Author: Nicolas Hug
+
 cimport cython
 from cython.parallel import prange
 import numpy as np

@@ -1,31 +1,24 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: nonecheck=False
-# cython: language_level=3
 """
 This module contains the BinMapper class.
 
-BinMapper is used for mapping a real-valued dataset into integer-valued bins
-with equally-spaced thresholds.
+BinMapper is used for mapping a real-valued dataset into integer-valued bins.
+Bin thresholds are computed with the quantiles so that each bin contains
+approximately the same number of samples.
 """
-cimport cython
+# Author: Nicolas Hug
 
 import numpy as np
-cimport numpy as np
-from cython.parallel import prange
 
 from ..utils import check_random_state, check_array
-from ..utils.validation import check_is_fitted
 from ..base import BaseEstimator, TransformerMixin
+from ..utils.validation import check_is_fitted
+from ._binning import _map_to_bins
 from .types import X_DTYPE, X_BINNED_DTYPE
-from .types cimport X_DTYPE_C, X_BINNED_DTYPE_C
 
 
 def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
                              random_state=None):
-    """Extract feature-wise equally-spaced quantiles from numerical data
-
+    """Extract feature-wise quantiles from numerical data.
 
     Return
     ------
@@ -64,55 +57,11 @@ def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
     return binning_thresholds
 
 
-cpdef _map_to_bins(const X_DTYPE_C [:, :] data, list binning_thresholds,
-                   X_BINNED_DTYPE_C [::1, :] binned):
-    """Bin numerical values to discrete integer-coded levels.
-
-    Parameters
-    ----------
-    data : array-like, shape=(n_samples, n_features)
-        The numerical data to bin.
-    binning_thresholds : tuple of arrays
-        For each feature, stores the increasing numeric values that are
-        used to separate the bins.
-    binned : array-like, shape=(n_samples, n_features)
-        Output array, must be fortran aligned.
-    """
-    cdef:
-        int feature_idx
-
-    for feature_idx in range(data.shape[1]):
-        _map_num_col_to_bins(data[:, feature_idx],
-                             binning_thresholds[feature_idx],
-                             binned[:, feature_idx])
-
-
-cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
-                                const X_DTYPE_C [:] binning_thresholds,
-                                X_BINNED_DTYPE_C [:] binned):
-    """Binary search to the find the bin index for each value in data."""
-    cdef:
-        int i
-        int left
-        int right
-        int middle
-
-    for i in prange(data.shape[0], schedule='static', nogil=True):
-        left, right = 0, binning_thresholds.shape[0]
-        while left < right:
-            middle = (right + left - 1) // 2
-            if data[i] <= binning_thresholds[middle]:
-                right = middle
-            else:
-                left = middle + 1
-        binned[i] = left
-
-
 class BinMapper(BaseEstimator, TransformerMixin):
     """Transformer that maps a dataset into integer-valued bins.
 
-    The bins are created in a feature-wise fashion, with equally-spaced
-    quantiles.
+    The bins are created in a feature-wise fashion, using quantiles so that
+    each bins contains approximately the same number of samples.
 
     Large datasets are subsampled, but the feature-wise quantiles should
     remain stable.

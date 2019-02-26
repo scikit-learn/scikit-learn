@@ -1,4 +1,6 @@
 """Fast Gradient Boosting decision trees for classification and regression."""
+# Author: Nicolas Hug
+
 from abc import ABC, abstractmethod
 
 import numpy as np

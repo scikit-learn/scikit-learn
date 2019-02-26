@@ -8,6 +8,8 @@ A histogram is an array with n_bins entry of type HISTOGRAM_DTYPE. Each
 feature has its own histogram. A histogram contains the sum of gradients and
 hessians of all the samples belonging to each bin.
 """
+# Author: Nicolas Hug
+
 cimport cython
 
 import numpy as np

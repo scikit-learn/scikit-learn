@@ -3,6 +3,7 @@
 # cython: wraparound=False
 # cython: language_level=3
 """This module contains utility routines."""
+# Author: Nicolas Hug
 
 from cython.parallel import prange
 

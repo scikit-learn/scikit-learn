@@ -3,6 +3,8 @@
 # cython: wraparound=False
 # cython: language_level=3
 
+# Author: Nicolas Hug
+
 cimport cython
 from cython.parallel import prange
 import numpy as np
