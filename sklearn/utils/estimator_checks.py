@@ -2098,14 +2098,18 @@ def check_estimators_two_data_types(name, estimator_orig, X, y, obj_type):
         y_ = NotAnArray(np.asarray(y))
         X_ = NotAnArray(np.asarray(X))
     else:
-        import pytest
-        pd = pytest.importorskip('pandas')
-        y_ = np.asarray(y)
-        if y_.ndim == 1:
-            y_ = pd.Series(y_)
-        else:
-            y_ = pd.DataFrame(y_)
-        X_ = pd.DataFrame(np.asarray(X))
+        try:
+            import pandas as pd
+            y_ = np.asarray(y)
+            if y_.ndim == 1:
+                y_ = pd.Series(y_)
+            else:
+                y_ = pd.DataFrame(y_)
+            X_ = pd.DataFrame(np.asarray(X))
+
+        except ImportError:
+            raise SkipTest("pandas is not installed: not checking estimators "
+                           "for pandas objects.")
 
     # fit
     estimator_1.fit(X_, y_)
