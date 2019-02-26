@@ -2391,6 +2391,7 @@ def check_estimator_sparse_dense(name, estimator_orig):
         set_random_state(estimator)
         set_random_state(estimator_sp)
         X = pairwise_estimator_convert_X(X, estimator)
+        X_csr = pairwise_estimator_convert_X(X_csr, estimator)
         try:
             with ignore_warnings(category=DeprecationWarning):
                 estimator_sp.fit(X_sp, y)
