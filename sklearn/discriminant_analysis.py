@@ -19,7 +19,7 @@ from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model.base import LinearClassifierMixin
 from .covariance import ledoit_wolf, empirical_covariance, shrunk_covariance
 from .utils.multiclass import unique_labels
-from .utils import check_array, check_X_y
+from .utils import check_array, check_X_y, as_float_array
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .preprocessing import StandardScaler
@@ -427,7 +427,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Target values.
         """
         # FIXME: Future warning to be removed in 0.23
-        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self)
+        X = as_float_array(X)
+        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self, dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
         n_classes = len(self.classes_)
@@ -485,10 +486,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             raise ValueError("unknown solver {} (valid solvers are 'svd', "
                              "'lsqr', and 'eigen').".format(self.solver))
         if self.classes_.size == 2:  # treat binary case as a special case
-            my_type = np.float32 if (X.dtype in [np.float32, np.int32]) else np.float64
-            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2, dtype=my_type)
+            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2,
+                                  dtype=X.dtype)
             self.intercept_ = np.array(self.intercept_[1] - self.intercept_[0],
-                                       ndmin=1, dtype=my_type)
+                                       ndmin=1, dtype=X.dtype)
         return self
 
     def transform(self, X):
