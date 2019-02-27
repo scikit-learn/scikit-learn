@@ -197,6 +197,7 @@ def test_sgd_bad_loss(klass):
     # Check whether expected ValueError on bad loss
     assert_raises(ValueError, klass, loss="foobar")
 
+
 def _test_warm_start(klass, X, Y, lr):
     # Test that explicit warm restart...
     clf = klass(alpha=0.01, eta0=0.01, shuffle=False,
