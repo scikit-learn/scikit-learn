@@ -1574,7 +1574,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                         for i in range(0, n):
                             a = index[i]
                             new_index.append(pos)
-                            start = a + d if self.interaction_only else a
+                            start = a + (index[i+1] - index[i] if self.interaction_only else 0)
                             new_pos = pos + end - start
                             if new_pos <= pos:
                                 break
