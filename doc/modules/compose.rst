@@ -115,9 +115,32 @@ ignored by setting them to ``'passthrough'``::
     ...                   clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
+
 To enable model inspection, `Pipeline` sets a ``input_features_`` attribute on
 all pipeline steps during fitting. This allows the user to understand how
-features are transformed during a pipeline:
+features are transformed during a pipeline::
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.feature_selection import SelectKBest
+    >>> iris = load_iris()
+    >>> pipe = Pipeline(steps=[
+    ...    ('select', SelectKBest(k=2)),
+    ...    ('clf', LogisticRegression())])
+    >>> pipe.fit(iris.data, iris.target)
+    ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
+    Pipeline(memory=None,
+              steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
+    >>> pipe.named_steps.clf.input_features_
+    array(['x2', 'x3'], dtype='<U2')
+
+You can also provide custom feature names for a more human readable format using
+set_feature_names::
+
+    >>> pipe.set_feature_names(iris.feature_names)
+    >>> pipe.named_steps.select.input_features_
+    ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
+    >>> pipe.named_steps.clf.input_features_
+    array(['petal length (cm)', 'petal width (cm)'], dtype='<U17')
 
 .. topic:: Examples:
 
@@ -435,11 +458,11 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
   >>> column_trans.get_feature_names()
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ['city_category__x0_London', 'city_category__x0_Paris', 'city_category__x0_Sallisaw',
-  'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
-  'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
-  'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
-  'title_bow__wrath']
+  ['city_category__city_London', 'city_category__city_Paris', 'city_category__city_Sallisaw',
+   'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
+   'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
+   'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
+   'title_bow__wrath']
 
   >>> column_trans.transform(X).toarray()
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
