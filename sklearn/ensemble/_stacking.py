@@ -39,6 +39,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    _required_parameters = ['estimators']
 
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
@@ -359,7 +360,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     0...
 
     """
-    def __init__(self, estimators=None, final_estimator=None, cv=None,
+    def __init__(self, estimators, final_estimator=None, cv=None,
                  method_estimators='auto', pass_through=False, n_jobs=1,
                  random_state=None, verbose=0):
         super().__init__(
@@ -493,7 +494,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     0...
 
     """
-    def __init__(self, estimators=None, final_estimator=None, cv=None,
+    def __init__(self, estimators, final_estimator=None, cv=None,
                  method_estimators='auto', pass_through=False, n_jobs=1,
                  random_state=None, verbose=0):
         super().__init__(
