@@ -93,6 +93,10 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
+- |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
+  preserves ``float32`` and ``float64`` dtypes. :issues:`8769` and
+  :issues:`11000` by :user:`Thibault Sejourne <thibsej>`
+
 - |Fix| A ``ChangedBehaviourWarning`` is now raised when
   :class:`discriminant_analysis.LinearDiscriminantAnalysis` is given as
   parameter ``n_components > min(n_features, n_classes - 1)``, and
@@ -157,6 +161,11 @@ Support for Python 3.4 and below has been officially dropped.
 
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Enhancement| :class:`linear_model.make_dataset` now preserves
+  ``float32`` and ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
+  :user:`Nelle Varoquaux`_, :user:`Arthur Imbert <Henley13>`,
+  :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
