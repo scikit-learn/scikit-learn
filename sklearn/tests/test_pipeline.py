@@ -40,8 +40,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.utils._joblib import Memory
 from sklearn.utils._joblib import __version__ as joblib_version
 
-from sklearn.covariance import EllipticEnvelope
-from sklearn.ensemble import IsolationForest
+from sklearn.svm import OneClassSVM
+from sklearn.neighbors import LocalOutlierFactor
 
 R_TOL = 1e-4
 
@@ -1160,7 +1160,7 @@ def test_pipeline_methods_pca_outlier_svm():
     # Test with PCA + SVC
     clf = SVC(gamma='scale', probability=True, random_state=0)
     pca = PCA()
-    outlier = EllipticEnvelope(random_state=0)
+    outlier = OneClassSVM(gamma='scale')
     pipe = Pipeline([('pca', pca), ('outlier', outlier), ('svc', clf)])
     pipe.fit(X, y)
     pipe.predict(X)
@@ -1186,7 +1186,7 @@ def test_pipeline_methods_outlier_pca_svm():
     # Test with PCA + SVC
     clf = SVC(gamma='scale', probability=True, random_state=0)
     pca = PCA()
-    outlier = EllipticEnvelope(random_state=0)
+    outlier = OneClassSVM(gamma='scale')
     pipe = Pipeline([('outlier', outlier), ('pca', pca), ('svc', clf)])
     pipe.fit(X, y)
     pipe.predict(X)
@@ -1210,7 +1210,7 @@ def test_pipeline_resample():
         n_samples=500,
         random_state=0)
 
-    resampler = EllipticEnvelope(random_state=0)
+    resampler = OneClassSVM(gamma='scale')
     pipeline = Pipeline([('resampler', resampler)])
 
     # test transform and fit_transform:
@@ -1265,7 +1265,7 @@ def test_pipeline_none_resampler_classifier():
         n_samples=500,
         random_state=0)
     clf = LogisticRegression(solver='lbfgs', random_state=0)
-    outlier = EllipticEnvelope(random_state=0)
+    outlier = OneClassSVM(gamma='scale')
     pipe = make_pipeline(None, outlier, clf)
     pipe.fit(X, y)
     pipe.predict(X)
@@ -1288,7 +1288,7 @@ def test_pipeline_resampler_none_classifier():
         n_samples=500,
         random_state=0)
     clf = LogisticRegression(solver='lbfgs', random_state=0)
-    outlier = EllipticEnvelope(random_state=0)
+    outlier = OneClassSVM(gamma='scale')
     pipe = make_pipeline(outlier, None, clf)
     pipe.fit(X, y)
     pipe.predict(X)
@@ -1311,7 +1311,7 @@ def test_pipeline_none_resampler_resample():
         n_samples=500,
         random_state=0)
 
-    outlier = EllipticEnvelope(random_state=0)
+    outlier = OneClassSVM(gamma='scale')
     pipe = make_pipeline(None, outlier)
     pipe.fit_resample(X, y)
 
@@ -1354,7 +1354,7 @@ def test_pipeline_methods_anova_outlier():
         random_state=0)
     # Test with RandomUnderSampling + Anova + LogisticRegression
     clf = LogisticRegression(solver='lbfgs')
-    outlier = EllipticEnvelope(random_state=0)
+    outlier = OneClassSVM(gamma='scale')
     filter1 = SelectKBest(f_classif, k=2)
     pipe = Pipeline([('outlier', outlier),
                      ('anova', filter1),
@@ -1364,7 +1364,6 @@ def test_pipeline_methods_anova_outlier():
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
     pipe.score(X, y)
-
 
 
 def test_pipeline_with_step_that_implements_both_sample_and_transform():
@@ -1399,8 +1398,8 @@ def test_pipeline_fit_then_sample_with_resampler_last_estimator():
         n_samples=500,
         random_state=0)
 
-    outlier1 = EllipticEnvelope(random_state=0)
-    outlier2 = IsolationForest(random_state=0)
+    outlier1 = OneClassSVM(gamma='scale')
+    outlier2 = LocalOutlierFactor(contamination=0.1)
     pipeline = make_pipeline(outlier1, outlier2)
     X_fit_resample_resampled, y_fit_resample_resampled = \
         pipeline.fit_resample(X, y)
@@ -1424,8 +1423,8 @@ def test_pipeline_fit_then_sample_3_resamplers_with_resampler_last_estimator():
         n_samples=500,
         random_state=0)
 
-    outlier1 = EllipticEnvelope(random_state=0)
-    outlier2 = IsolationForest(random_state=0)
+    outlier1 = OneClassSVM(gamma='scale')
+    outlier2 = LocalOutlierFactor(contamination=0.1)
     pipeline = make_pipeline(outlier2, outlier1, outlier2)
     X_fit_resample, y_fit_resample = pipeline.fit_resample(X, y)
     pipeline.fit(X, y)
@@ -1449,6 +1448,7 @@ def test_make_pipeline_memory():
 
     shutil.rmtree(cachedir)
 
+
 def test_shape_correct_after_resample():
     X, y = make_classification(
         n_classes=2,
@@ -1462,17 +1462,18 @@ def test_shape_correct_after_resample():
         n_samples=50,
         random_state=0)
 
-    ell = EllipticEnvelope(random_state=0)
-    pipe = make_pipeline (ell, None)
+    outlier = OneClassSVM(gamma='scale')
+    pipe = make_pipeline(outlier, None)
 
-    outliers = ell.fit_predict(X, y) == -1
+    outliers = outlier.fit_predict(X, y) == -1
     n_outliers = np.sum(outliers)
-    assert n_outliers > 0 # we have some outliers in the dataset
+    assert n_outliers > 0  # we have some outliers in the dataset
 
     X_new, y_new = pipe.fit_resample(X, y)
 
     assert X_new.shape[0] == X.shape[0] - n_outliers
     assert y_new.shape[0] == y.shape[0] - n_outliers
+
 
 def test_resamplers_not_called():
     X, y = make_classification(
@@ -1506,6 +1507,7 @@ def test_resamplers_not_called():
 
     pipe.fit(X, y)
     assert hasattr(dre, "means_")
+
 
 def test_clusterer_and_resampler_error():
     X, y = make_classification(
