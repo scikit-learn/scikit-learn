@@ -1556,7 +1556,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                                   dtype=X.dtype, order=self.order)
 
                     if self.include_bias:
-                        XP[:, 0]= 1
+                        XP[:, 0] = 1
 
                 pos = 1 if self.include_bias else 0
                 for d in range(0, self.degree):
@@ -1574,7 +1574,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                         for i in range(0, n):
                             a = index[i]
                             new_index.append(pos)
-                            start = a + (index[i+1] - index[i] if self.interaction_only else 0)
+                            start = a + (index[i+1] - index[i] 
+                                if self.interaction_only else 0)
                             new_pos = pos + end - start
                             if new_pos <= pos:
                                 break
