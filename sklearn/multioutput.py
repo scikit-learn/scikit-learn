@@ -145,7 +145,8 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         """
 
         if not hasattr(self.estimator, "fit"):
-            raise ValueError("The base estimator should implement a fit method")
+            raise ValueError("The base estimator should implement"
+                             " a fit method")
 
         X, y = check_X_y(X, y,
                          multi_output=True,
@@ -186,7 +187,8 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         check_is_fitted(self, 'estimators_')
         if not hasattr(self.estimator, "predict"):
-            raise ValueError("The base estimator should implement a predict method")
+            raise ValueError("The base estimator should implement"
+                             " a predict method")
 
         X = check_array(X, accept_sparse=True)
 
@@ -331,8 +333,8 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         check_is_fitted(self, 'estimators_')
-        if not hasattr(self.estimators_[0], "predict_proba"):
-            raise ValueError("The base estimator should implement"
+        if not hasattr(self.estimator, "predict_proba"):
+            raise ValueError("The base estimator should implement "
                              "predict_proba method")
 
         results = [estimator.predict_proba(X) for estimator in
@@ -340,7 +342,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return results
 
     def score(self, X, y):
-        """"Returns the mean accuracy on the given test data and labels.
+        """Returns the mean accuracy on the given test data and labels.
 
         Parameters
         ----------
