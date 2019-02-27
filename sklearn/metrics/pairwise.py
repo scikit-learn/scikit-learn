@@ -1049,9 +1049,9 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
-def _dist_wrapper(dist_func, dist_matrix, slice, *args, **kwargs):
+def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
     """Write in-place to a slice of a distance matrix"""
-    dist_matrix[:, slice] = dist_func(*args, **kwargs)
+    dist_matrix[:, slice_] = dist_func(*args, **kwargs)
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
