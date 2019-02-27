@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -1528,8 +1527,29 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False):
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
+def check_outlier_corruption(num_outliers, expected_outliers, decision):
+    # Check for deviation from the precise given contamination level that may
+    # be due to ties in the anomaly scores.
+    if num_outliers < expected_outliers:
+        start = num_outliers
+        end = expected_outliers + 1
+    else:
+        start = expected_outliers
+        end = num_outliers + 1
+
+    # ensure that all values in the 'critical area' are tied,
+    # leading to the observed discrepancy between provided
+    # and actual contamination levels.
+    sorted_decision = np.sort(decision)
+    msg = ('The number of predicted outliers is not equal to the expected '
+           'number of outliers and this difference is not explained by the '
+           'number of ties in the decision_function values')
+    assert len(np.unique(sorted_decision[start:end])) == 1, msg
+
+
 def check_outliers_train(name, estimator_orig, readonly_memmap=True):
-    X, _ = make_blobs(n_samples=300, random_state=0)
+    n_samples = 300
+    X, _ = make_blobs(n_samples=n_samples, random_state=0)
     X = shuffle(X, random_state=7)
 
     if readonly_memmap:
@@ -1550,17 +1570,15 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
     assert_array_equal(np.unique(y_pred), np.array([-1, 1]))
 
     decision = estimator.decision_function(X)
-    assert decision.dtype == np.dtype('float')
-
-    score = estimator.score_samples(X)
-    assert score.dtype == np.dtype('float')
+    scores = estimator.score_samples(X)
+    for output in [decision, scores]:
+        assert output.dtype == np.dtype('float')
+        assert output.shape == (n_samples,)
 
     # raises error on malformed input for predict
     assert_raises(ValueError, estimator.predict, X.T)
 
     # decision_function agrees with predict
-    decision = estimator.decision_function(X)
-    assert decision.shape == (n_samples,)
     dec_pred = (decision >= 0).astype(np.int)
     dec_pred[dec_pred == 0] = -1
     assert_array_equal(dec_pred, y_pred)
@@ -1569,9 +1587,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
     assert_raises(ValueError, estimator.decision_function, X.T)
 
     # decision_function is a translation of score_samples
-    y_scores = estimator.score_samples(X)
-    assert y_scores.shape == (n_samples,)
-    y_dec = y_scores - estimator.offset_
+    y_dec = scores - estimator.offset_
     assert_allclose(y_dec, decision)
 
     # raises error on malformed input for score_samples
@@ -1584,11 +1600,21 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
         # set to 'auto'. This is true for the training set and cannot thus be
         # checked as follows for estimators with a novelty parameter such as
         # LocalOutlierFactor (tested in check_outliers_fit_predict)
-        contamination = 0.1
+        expected_outliers = 30
+        contamination = expected_outliers / n_samples
         estimator.set_params(contamination=contamination)
         estimator.fit(X)
         y_pred = estimator.predict(X)
-        assert_almost_equal(np.mean(y_pred != 1), contamination)
+
+        num_outliers = np.sum(y_pred != 1)
+        # num_outliers should be equal to expected_outliers unless
+        # there are ties in the decision_function values. this can
+        # only be tested for estimators with a decision_function
+        # method, i.e. all estimators except LOF which is already
+        # excluded from this if branch.
+        if num_outliers != expected_outliers:
+            decision = estimator.decision_function(X)
+            check_outlier_corruption(num_outliers, expected_outliers, decision)
 
         # raises error when contamination is a scalar and not in [0,1]
         for contamination in [-0.5, 2.3]:
@@ -2446,7 +2472,8 @@ def check_decision_proba_consistency(name, estimator_orig):
 def check_outliers_fit_predict(name, estimator_orig):
     # Check fit_predict for outlier detectors.
 
-    X, _ = make_blobs(n_samples=300, random_state=0)
+    n_samples = 300
+    X, _ = make_blobs(n_samples=n_samples, random_state=0)
     X = shuffle(X, random_state=7)
     n_samples, n_features = X.shape
     estimator = clone(estimator_orig)
@@ -2468,10 +2495,20 @@ def check_outliers_fit_predict(name, estimator_orig):
     if hasattr(estimator, "contamination"):
         # proportion of outliers equal to contamination parameter when not
         # set to 'auto'
-        contamination = 0.1
+        expected_outliers = 30
+        contamination = float(expected_outliers)/n_samples
         estimator.set_params(contamination=contamination)
         y_pred = estimator.fit_predict(X)
-        assert_almost_equal(np.mean(y_pred != 1), contamination)
+
+        num_outliers = np.sum(y_pred != 1)
+        # num_outliers should be equal to expected_outliers unless
+        # there are ties in the decision_function values. this can
+        # only be tested for estimators with a decision_function
+        # method
+        if (num_outliers != expected_outliers and
+                hasattr(estimator, 'decision_function')):
+            decision = estimator.decision_function(X)
+            check_outlier_corruption(num_outliers, expected_outliers, decision)
 
         # raises error when contamination is a scalar and not in [0,1]
         for contamination in [-0.5, 2.3]:
