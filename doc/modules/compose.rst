@@ -115,6 +115,10 @@ ignored by setting them to ``'passthrough'``::
     ...                   clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
 
+To enable model inspection, `Pipeline` sets a ``input_features_`` attribute on
+all pipeline steps during fitting. This allows the user to understand how
+features are transformed during a pipeline:
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
