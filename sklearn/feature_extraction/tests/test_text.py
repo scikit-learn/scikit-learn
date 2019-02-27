@@ -341,16 +341,16 @@ def test_countvectorizer_custom_token_pattern():
     vectorizer.fit_transform(corpus)
     expected = ['and', 'document', 'first', 'is', 'one',
                 'second', 'the', 'third', 'this']
-    assert_equal(vectorizer.get_feature_names(), expected)
+    assert vectorizer.get_feature_names() == expected
     # With 2 capturing groups
     token_pattern = r"([a-z]{2,})|([0-9]{1,3})(?:st|nd|rd|th)?"
-    try:
-        vectorizer.set_params(token_pattern=token_pattern)
+    message = "more than 1 capturing group in token pattern"
+
+    def func(token_pattern):
+        vectorizer = CountVectorizer(token_pattern=token_pattern)
         vectorizer.fit_transform(corpus)
-        assert False, "we shouldn't get here"
-    except ValueError as e:
-        assert_in("more than 1 capturing group in token pattern",
-                  str(e).lower())
+
+    assert_raise_message(ValueError, message, func, token_pattern)
 
 
 def test_tf_idf_smoothing():

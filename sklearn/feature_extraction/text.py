@@ -256,13 +256,7 @@ class VectorizerMixin:
             return strip_accents
 
     def build_tokenizer(self):
-        """Return a function that splits a string into a sequence of tokens
-
-        If there is a capturing group in token_pattern then the
-        captured group content, not the entire match, becomes the token.
-
-        For more than one capturing groups, it raises ValueError
-        """
+        """Return a function that splits a string into a sequence of tokens"""
         if self.tokenizer is not None:
             return self.tokenizer
         token_pattern = re.compile(self.token_pattern)
@@ -485,6 +479,10 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        For more than one capturing groups, it raises ValueError
 
     ngram_range : tuple (min_n, max_n), default=(1, 1)
         The lower and upper boundary of the range of n-values for different
@@ -746,6 +744,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        For more than one capturing groups, it raises ValueError
 
     ngram_range : tuple (min_n, max_n)
         The lower and upper boundary of the range of n-values for different
@@ -1397,6 +1399,10 @@ class TfidfVectorizer(CountVectorizer):
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
+
+        If there is a capturing group in token_pattern then the
+        captured group content, not the entire match, becomes the token.
+        For more than one capturing groups, it raises ValueError
 
     ngram_range : tuple (min_n, max_n) (default=(1, 1))
         The lower and upper boundary of the range of n-values for different
