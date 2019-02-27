@@ -6,6 +6,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils._clibs import (get_thread_limits, set_thread_limits,
                                   get_openblas_version, thread_limits_context,
                                   _CLibsWrapper)
+from sklearn.utils._clibs_helpers import check_num_threads
 
 
 SKIP_OPENBLAS = get_openblas_version() is None
@@ -112,3 +113,13 @@ def test_thread_limit_context():
                 assert limits[clib] == 1
 
     assert get_thread_limits() == old_limits
+
+
+def test_openmp_limit_num_threads():
+    old_num_threads = check_num_threads(100)
+
+    for n_threads in [1, 2, 4]:
+        with thread_limits_context(limits=n_threads):
+            assert check_num_threads(100) == n_threads
+
+        assert check_num_threads(100) == old_num_threads
