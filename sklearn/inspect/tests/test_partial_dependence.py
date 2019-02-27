@@ -20,13 +20,13 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import MultiTaskLasso
-from sklearn.svm import SVC
 from sklearn.datasets import load_boston, load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.cluster import KMeans
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.dummy import DummyClassifier
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 
 # toy sample
@@ -149,7 +149,9 @@ def test_grid_from_X():
 @pytest.mark.parametrize('est, method',
                          [(LinearRegression(), 'brute'),
                           (GradientBoostingRegressor(random_state=0),
-                          'recursion')])
+                          'recursion'),
+                          (GradientBoostingRegressor(random_state=0),
+                          'brute')])
 def test_partial_dependence_helpers(est, method, target_feature):
     # Check that what is returned by _partial_dependence_brute or
     # _partial_dependece_recursion is equivalent to manually setting a target
@@ -171,7 +173,8 @@ def test_partial_dependence_helpers(est, method, target_feature):
                      [123]])
 
     if method == 'brute':
-        pdp = _partial_dependence_brute(est, grid, features, X)
+        pdp = _partial_dependence_brute(est, grid, features, X,
+                                        response='auto')
     else:
         pdp = _partial_dependence_recursion(est, grid, features)
 
@@ -183,6 +186,26 @@ def test_partial_dependence_helpers(est, method, target_feature):
 
     pdp = pdp[0]  # (shape is (1, 2) so make it (2,))
     assert_array_almost_equal(pdp, mean_predictions, decimal=3)
+
+
+@pytest.mark.parametrize('target_feature', (0, 1, 2, 3, 4, 5))
+def test_recursion_decision_function(target_feature):
+    # Make sure the recursion method (implicitely uses decision_function) has
+    # the same result as using brute method with response=decision
+
+    X, y = make_classification(n_classes=2, n_clusters_per_class=1,
+                               random_state=1)
+    assert np.mean(y) == .5  # make sure the init estimator predicts 0 anyway
+
+    est = GradientBoostingClassifier(random_state=0, loss='deviance')
+    est.fit(X, y)
+
+    preds_1, _ = partial_dependence(est, target_feature, X,
+                                    response='decision', method='recursion')
+    preds_2, _ = partial_dependence(est, target_feature, X,
+                                    response='decision', method='brute')
+
+    assert_array_almost_equal(preds_1, preds_2, decimal=5)
 
 
 @pytest.mark.parametrize('est', (LinearRegression(),
@@ -256,6 +279,39 @@ def test_partial_dependence_input():
                         "est must be a fitted regressor or classifier",
                         partial_dependence, KMeans(), [0], X)
 
+    assert_warns_message(
+        UserWarning,
+        'The response parameter is ignored for regressors',
+        partial_dependence, lr, [0], X, response='proba')
+
+    assert_raises_regex(
+        ValueError,
+        "With the 'recursion' method, the response must be 'decision'.",
+        partial_dependence, gbc, [0], X, response='proba', method='recursion')
+
+    assert_raises_regex(ValueError,
+                        "response blahblah is invalid. Accepted response",
+                        partial_dependence, gbc, [0], X, response='blahblah')
+
+    class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
+        pass
+    bad_clf = NoPredictProbaNoDecisionFunction()
+
+    assert_raises_regex(
+        ValueError,
+        'The estimator has no predict_proba and no decision_function method.',
+        partial_dependence, bad_clf, [0], X, response='auto')
+
+    assert_raises_regex(
+        ValueError,
+        'The estimator has no predict_proba method.',
+        partial_dependence, bad_clf, [0], X, response='proba')
+
+    assert_raises_regex(
+        ValueError,
+        'The estimator has no decision_function method.',
+        partial_dependence, bad_clf, [0], X, response='decision')
+
     assert_raises_regex(ValueError,
                         "method blahblah is invalid. Accepted method names "
                         "are brute, recursion, auto.",
@@ -265,9 +321,6 @@ def test_partial_dependence_input():
                         'est must be an instance of BaseGradientBoosting '
                         'for the "recursion" method',
                         partial_dependence, lr, [0], X, method='recursion')
-
-    assert_raises_regex(ValueError, "est requires a predict_proba()",
-                        partial_dependence, SVC(), [0], X)
 
     for feature in (-1, 1000000):
         for est in (lr, gbc):

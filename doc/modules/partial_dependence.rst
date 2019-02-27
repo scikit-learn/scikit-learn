@@ -7,11 +7,11 @@ Partial dependence plots
 
 .. currentmodule:: sklearn.inspect
 
-Partial dependence plots (PDP) show the dependence between the target response
-and a set of 'target' features, marginalizing over the values of all other
-features (the 'complement' features). Intuitively, we can interpret the
-partial dependence as the expected target response [1]_ as a function of the
-'target' features.
+Partial dependence plots (PDP) show the dependence between the target
+response [1]_ and a set of 'target' features, marginalizing over the values
+of all other features (the 'complement' features). Intuitively, we can
+interpret the partial dependence as the expected target response as a
+function of the 'target' features.
 
 Due to the limits of human perception the size of the target feature set
 must be small (usually, one or two) thus the target features are usually
@@ -104,9 +104,9 @@ which the trees were trained.
 
 .. rubric:: Footnotes
 
-.. [1] For classification, the target response is the probability of a class.
-   In particular for binary classification, this is the probability of the
-   positive class.
+.. [1] For classification, the target response may be the probability of a
+   class (the positive class for binary classification), or the decision
+   function.
 
 .. topic:: Examples:
 

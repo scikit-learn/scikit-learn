@@ -116,16 +116,40 @@ def _partial_dependence_recursion(est, grid, features):
     return averaged_predictions
 
 
-def _partial_dependence_brute(est, grid, features, X):
+def _partial_dependence_brute(est, grid, features, X, response):
     averaged_predictions = []
+
+    # define the prediction_method (predict, predict_proba, decision_function).
+    if is_regressor(est):
+        prediction_method = est.predict
+    else:
+        predict_proba = getattr(est, 'predict_proba', None)
+        decision_function = getattr(est, 'decision_function', None)
+        if response == 'auto':
+            # try predict_proba, then decision_function if it doesn't exist
+            prediction_method = predict_proba or decision_function
+        else:
+            prediction_method = (predict_proba if response == 'predict'
+                                 else decision_function)
+        if prediction_method is None:
+            if response == 'auto':
+                raise ValueError(
+                    'The estimator has no predict_proba and no '
+                    'decision_function method.'
+                )
+            elif response == 'proba':
+                raise ValueError('The estimator has no predict_proba method.')
+            else:
+                raise ValueError(
+                    'The estimator has no decision_function method.')
+
     for new_values in grid:
         X_eval = X.copy()
         for i, variable in enumerate(features):
             X_eval[:, variable] = new_values[i]
 
         try:
-            predictions = (est.predict(X_eval) if is_regressor(est)
-                           else est.predict_proba(X_eval))
+            predictions = prediction_method(X_eval)
         except NotFittedError:
             raise ValueError('est parameter must be a fitted estimator')
 
@@ -157,8 +181,9 @@ def _partial_dependence_brute(est, grid, features, X):
     return averaged_predictions
 
 
-def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
-                       grid_resolution=100, method='auto'):
+def partial_dependence(est, features, X, response='auto',
+                       percentiles=(0.05, 0.95), grid_resolution=100,
+                       method='auto'):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
@@ -179,6 +204,14 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
         ``X`` is used both to generate a grid of values for the
         ``features``, and to compute the averaged predictions when
         method is 'brute'.
+    response : 'auto', 'proba' or 'decision', optional (default='auto') :
+        Specifies whether to use ``est.predict_proba()`` or
+        ``est.decision_function()`` as the target response. For regressors
+        this parameter is ignored and the response is always the output of
+        ``est.predict()``. By default, ``predict_proba()`` is tried first
+        and we revert to ``decision_function()`` if it doesn't exist. If
+        ``method`` is 'recursion', the response is always the output of
+        ``decision_function()`.
     percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
@@ -193,7 +226,9 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
           With this method, ``X`` is only used to build the
           grid. This method does not account for the ``init`` predicor of
           the boosting process, which may lead to incorrect values (see
-          :ref:`this warning<warning_recursion_init>`).
+          :ref:`this warning<warning_recursion_init_plot>`). With this
+          method, the target response of a classifier is always the decision
+          function, not the predicted probabilities.
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
@@ -253,10 +288,19 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
 
     X = check_array(X)
 
+    accepted_responses = ('auto', 'proba', 'decision')
+    if response not in accepted_responses:
+        raise ValueError(
+            'response {} is invalid. Accepted response names are {}.'.format(
+                response, ', '.join(accepted_responses)))
+
+    if is_regressor(est) and response != 'auto':
+        warnings.warn("The response parameter is ignored for regressors.",
+                      UserWarning)
     accepted_methods = ('brute', 'recursion', 'auto')
     if method not in accepted_methods:
         raise ValueError(
-            'method {} is invalid. Accepted method names are {}, auto.'.format(
+            'method {} is invalid. Accepted method names are {}.'.format(
                 method, ', '.join(accepted_methods)))
 
     if method == 'auto':
@@ -270,14 +314,19 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
             raise ValueError(
                 'est must be an instance of BaseGradientBoosting '
                 'for the "recursion" method. Try using method="brute".')
+        if response == 'auto':
+            response = 'decision'
+
+        if response != 'decision':
+            raise ValueError(
+                "With the 'recursion' method, the response must be 'decision'."
+                "Got {}.".format(response)
+            )
         check_is_fitted(est, 'estimators_',
                         msg='est parameter must be a fitted estimator')
         # Note: if method is brute, this check is done at prediction time
         n_features = est.n_features_
     else:
-        if is_classifier(est) and not hasattr(est, 'predict_proba'):
-            raise ValueError('est requires a predict_proba() method for '
-                             'method="brute" for classification.')
         n_features = X.shape[1]
 
     features = np.asarray(features, dtype=np.int32, order='C').ravel()
@@ -289,7 +338,7 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
                                 grid_resolution)
     if method == 'brute':
         averaged_predictions = _partial_dependence_brute(est, grid,
-                                                         features, X)
+                                                         features, X, response)
     else:
         averaged_predictions = _partial_dependence_recursion(est, grid,
                                                              features)
@@ -303,10 +352,10 @@ def partial_dependence(est, features, X, percentiles=(0.05, 0.95),
 
 
 def plot_partial_dependence(est, X, features, feature_names=None,
-                            target=None, n_cols=3, grid_resolution=100,
-                            percentiles=(0.05, 0.95), method='auto',
-                            n_jobs=1, verbose=0, fig=None, line_kw=None,
-                            contour_kw=None, **fig_kw):
+                            target=None, response='auto', n_cols=3,
+                            grid_resolution=100, percentiles=(0.05, 0.95),
+                            method='auto', n_jobs=1, verbose=0, fig=None,
+                            line_kw=None, contour_kw=None, **fig_kw):
     """Partial dependence plots.
 
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
@@ -318,8 +367,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     ----------
     est : BaseEstimator
         A fitted classification or regression model. Classifiers must have a
-        ``predict_proba()`` method. Multioutput-multiclass estimators aren't
-        supported.
+        ``predict_proba()`` or ``decision_function`` method.
+        Multioutput-multiclass estimators aren't supported.
     X : array-like, shape=(n_samples, n_features)
         The data to use to build the grid of values on which the dependence
         will be evaluated. This is usually the training data.
@@ -339,6 +388,14 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         - In a multioutput setting, specifies the task for which the PDPs
           should be computed
         Ignored in binary classification or classical regression settings.
+    response : 'auto', 'proba' or 'decision', optional (default='auto') :
+        Specifies whether to use ``est.predict_proba()`` or
+        ``est.decision_function()`` as the target response. For regressors
+        this parameter is ignored and the response is always the output of
+        ``est.predict()``. By default, ``predict_proba()`` is tried first
+        and we revert to ``decision_function()`` if it doesn't exist. If
+        ``method`` is 'recursion', the response is always the output of
+        ``decision_function()`.
     n_cols : int, optional (default=3)
         The maximum number of columns in the grid plot.
     grid_resolution : int, optional (default=100)
@@ -355,7 +412,9 @@ def plot_partial_dependence(est, X, features, feature_names=None,
           With this method, ``X`` is optional and is only used to build the
           grid. This method does not account for the ``init`` predicor of
           the boosting process, which may lead to incorrect values (see
-          :ref:`this warning<warning_recursion_init_plot>`).
+          :ref:`this warning<warning_recursion_init_plot>`). With this
+          method, the target response of a classifier is always the decision
+          function, not the predicted probabilities.
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
@@ -486,7 +545,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
 
     # compute averaged predictions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(partial_dependence)(est, fxs, X=X, method=method,
+        delayed(partial_dependence)(est, fxs, X=X, response=response,
+                                    method=method,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles)
         for fxs in features)
