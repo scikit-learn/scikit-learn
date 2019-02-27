@@ -1671,12 +1671,21 @@ def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2, exp):
     sample_weight = np.array(sample_wt)
 
     sum_sample_weight = np.sum(sample_weight)
+
     norm1_wt_f1 = sample_weight[f1] / np.sum(sample_weight[f1])
+    y1 = y[f1]
+    model2 = [np.round(np.dot(y[f2], sample_weight[f2])/np.sum(sample_weight[f2]))] * len(f2)
+    sklearn_acc1 = accuracy_score(y1, model2, sample_weight=sample_weight[f1])
+
     acc1 = np.dot(y[f1], norm1_wt_f1)
     acc1 = acc1 if not flip_acc_1 else 1 - acc1
     ratio_wt_f1 = np.sum(sample_weight[f1]) / sum_sample_weight
 
     norm1_wt_f2 = sample_weight[f2] / np.sum(sample_weight[f2])
+    y2 = y[f2]
+    model1 = [np.round(np.dot(y[f1], sample_weight[f1])/np.sum(sample_weight[f1]))] * len(f1)
+    sklearn_acc2 = accuracy_score(y2, model1, sample_weight=sample_weight[f2])
+
     acc2 = np.dot(y[f2], norm1_wt_f2)
     acc2 = acc2 if not flip_acc_2 else 1 - acc2
     ratio_wt_f2 = np.sum(sample_weight[f2]) / sum_sample_weight
@@ -1697,6 +1706,8 @@ def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2, exp):
 
     # Assert the above math for exp_cv_acc is correct.
     np.testing.assert_almost_equal(exp_cv_acc, exp, decimal=12)
+    np.testing.assert_almost_equal(acc1, sklearn_acc1, decimal=12)
+    np.testing.assert_almost_equal(acc2, sklearn_acc2, decimal=12)
 
     # Assert that the sample weights for each fold were normalized by the
     # L1 norm.
