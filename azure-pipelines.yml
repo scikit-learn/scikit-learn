@@ -9,7 +9,6 @@ jobs:
       # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
       # i.e. numpy 1.11 and scipy 0.17
       py35_np_atlas:
-        CHECK_WARNINGS: 'true'
         DISTRIB: 'ubuntu'
         PYTHON_VERSION: '3.5'
         SKLEARN_SITE_JOBLIB: '1'
@@ -42,6 +41,7 @@ jobs:
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         SKLEARN_SITE_JOBLIB: '1'
+        CHECK_WARNINGS: 'true'
 
 - template: build_tools/azure/posix.yml
   parameters:
