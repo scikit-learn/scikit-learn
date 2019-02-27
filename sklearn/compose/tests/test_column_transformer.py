@@ -15,7 +15,6 @@ from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_almost_equal
 
 from sklearn.base import BaseEstimator
-from sklearn.externals import six
 from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError, DataConversionWarning
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
@@ -817,7 +816,7 @@ def test_column_transformer_remainder_numpy(key):
 def test_column_transformer_remainder_pandas(key):
     # test different ways that columns are specified with passthrough
     pd = pytest.importorskip('pandas')
-    if isinstance(key, six.string_types) and key == 'pd-index':
+    if isinstance(key, str) and key == 'pd-index':
         key = pd.Index(['first'])
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -1020,3 +1019,15 @@ def test_column_transformer_callable_specifier():
     assert_array_equal(ct.fit(X_df).transform(X_df), X_res_first)
     assert callable(ct.transformers[0][2])
     assert ct.transformers_[0][2] == ['first']
+
+
+def test_column_transformer_negative_column_indexes():
+    X = np.random.randn(2, 2)
+    X_categories = np.array([[1], [2]])
+    X = np.concatenate([X, X_categories], axis=1)
+
+    ohe = OneHotEncoder(categories='auto')
+
+    tf_1 = ColumnTransformer([('ohe', ohe, [-1])], remainder='passthrough')
+    tf_2 = ColumnTransformer([('ohe', ohe,  [2])], remainder='passthrough')
+    assert_array_equal(tf_1.fit_transform(X), tf_2.fit_transform(X))

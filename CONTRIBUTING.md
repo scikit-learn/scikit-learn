@@ -34,6 +34,7 @@ Quick links to:
 * [Submitting a bug report or feature request](http://scikit-learn.org/dev/developers/contributing.html#submitting-a-bug-report-or-a-feature-request)
 * [Contributing code](http://scikit-learn.org/dev/developers/contributing.html#contributing-code)
 * [Coding guidelines](http://scikit-learn.org/dev/developers/contributing.html#coding-guidelines)
+* [Tips to read current code](http://scikit-learn.org/dev/developers/contributing.html#reading-code)
 
 Code of Conduct
 ---------------

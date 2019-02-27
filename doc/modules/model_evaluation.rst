@@ -102,7 +102,7 @@ Usage examples:
     >>> clf = svm.SVC(gamma='scale', random_state=0)
     >>> cross_val_score(clf, X, y, scoring='recall_macro',
     ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
+    array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
@@ -214,6 +214,25 @@ the following two rules:
   ``estimator`` prediction quality on ``X``, with reference to ``y``.
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
+
+.. note:: **Using custom scorers in functions where n_jobs > 1**
+
+    While defining the custom scoring function alongside the calling function 
+    should work out of the box with the default joblib backend (loky), 
+    importing it from another module will be a more robust approach and work
+    independently of the joblib backend. 
+
+    For example, to use, ``n_jobs`` greater than 1 in the example below, 
+    ``custom_scoring_function`` function is saved in a user-created module 
+    (``custom_scorer_module.py``) and imported::
+
+        >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
+        >>> cross_val_score(model,
+        ...  X_train,
+        ...  y_train,
+        ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
+        ...  cv=5,
+        ...  n_jobs=-1) # doctest: +SKIP
 
 .. _multimetric_scoring:
 
@@ -1928,7 +1947,7 @@ change the kernel::
 
   >>> clf = SVC(gamma='scale', kernel='rbf', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
-  0.97...
+  0.94...
 
 We see that the accuracy was boosted to almost 100%.  A cross validation
 strategy is recommended for a better estimate of the accuracy, if it

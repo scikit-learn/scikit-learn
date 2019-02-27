@@ -255,8 +255,8 @@ def test_sparse_output_multilabel_binarizer():
     # test input as iterable of iterables
     inputs = [
         lambda: [(2, 3), (1,), (1, 2)],
-        lambda: (set([2, 3]), set([1]), set([1, 2])),
-        lambda: iter([iter((2, 3)), iter((1,)), set([1, 2])]),
+        lambda: ({2, 3}, {1}, {1, 2}),
+        lambda: iter([iter((2, 3)), iter((1,)), {1, 2}]),
     ]
     indicator_mat = np.array([[0, 1, 1],
                               [1, 0, 0],
@@ -299,8 +299,8 @@ def test_multilabel_binarizer():
     # test input as iterable of iterables
     inputs = [
         lambda: [(2, 3), (1,), (1, 2)],
-        lambda: (set([2, 3]), set([1]), set([1, 2])),
-        lambda: iter([iter((2, 3)), iter((1,)), set([1, 2])]),
+        lambda: ({2, 3}, {1}, {1, 2}),
+        lambda: iter([iter((2, 3)), iter((1,)), {1, 2}]),
     ]
     indicator_mat = np.array([[0, 1, 1],
                               [1, 0, 0],
