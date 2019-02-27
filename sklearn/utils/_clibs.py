@@ -218,13 +218,13 @@ class _CLibsWrapper:
 
         LIST_MODULES_ALL = 0x03
 
-        Psapi = self._get_windll('Psapi')
-        Kernel32 = self._get_windll('kernel32')
+        ps_api = self._get_windll('Psapi')
+        kernel_32 = self._get_windll('kernel32')
 
-        hProcess = Kernel32.OpenProcess(
+        h_process = kernel_32.OpenProcess(
             PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
             False, os.getpid())
-        if not hProcess:
+        if not h_process:
             raise OSError('Could not open PID %s' % os.getpid())
 
         found_module_path = None
@@ -236,8 +236,8 @@ class _CLibsWrapper:
             while True:
                 buf = (HMODULE * buf_count)()
                 buf_size = ctypes.sizeof(buf)
-                if not Psapi.EnumProcessModulesEx(
-                        hProcess, ctypes.byref(buf), buf_size,
+                if not ps_api.EnumProcessModulesEx(
+                        h_process, ctypes.byref(buf), buf_size,
                         ctypes.byref(needed), LIST_MODULES_ALL):
                     raise OSError('EnumProcessModulesEx failed')
                 if buf_size >= needed.value:
@@ -245,22 +245,22 @@ class _CLibsWrapper:
                 buf_count = needed.value // (buf_size // buf_count)
 
             count = needed.value // (buf_size // buf_count)
-            hModules = map(HMODULE, buf[:count])
+            h_modules = map(HMODULE, buf[:count])
 
             # Loop through all the module headers and get the module file name
             buf = ctypes.create_unicode_buffer(MAX_PATH)
-            nSize = DWORD()
-            for hModule in hModules:
-                if not Psapi.GetModuleFileNameExW(
-                        hProcess, hModule, ctypes.byref(buf),
-                        ctypes.byref(nSize)):
+            n_size = DWORD()
+            for h_module in h_modules:
+                if not ps_api.GetModuleFileNameExW(
+                        h_process, h_module, ctypes.byref(buf),
+                        ctypes.byref(n_size)):
                     raise OSError('GetModuleFileNameEx failed')
                 module_path = buf.value
                 module_basename = os.path.basename(module_path).lower()
                 if module_basename.startswith(module_name):
                     found_module_path = module_path
         finally:
-            Kernel32.CloseHandle(hProcess)
+            kernel_32.CloseHandle(h_process)
 
         if found_module_path:
             return ctypes.CDLL(found_module_path)
