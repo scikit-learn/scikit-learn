@@ -48,12 +48,11 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         'auto'
             Depending on ``n_components``, the most reasonable initialization
-            will be chosen among the following ones. First, we try to use
-            'lda', as it uses labels information: if ``n_components <=
-            n_classes``, ``init='lda'``. If we can't, we then try 'pca', as it
-            projects data in meaningful directions (those of higher variance):
-            if ``n_components < min(n_features, n_samples)``, ``init = 'pca'``.
-            Otherwise, we just use 'identity'.
+            will be chosen. If ``n_components <= n_classes`` we use 'lda', as
+            it uses labels information. If not, but
+            ``n_components < min(n_features, n_samples)``, we use 'pca', as
+            it projects data in meaningful directions (those of higher
+            variance). Otherwise, we just use 'identity'.
 
         'pca'
             ``n_components`` principal components of the inputs passed
@@ -95,9 +94,10 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
     callback : callable, optional (default=None)
         If not None, this function is called after every iteration of the
-        optimizer, taking as arguments the current solution (transformation)
-        and the number of iterations. This might be useful in case one wants
-        to examine or store the transformation found after each iteration.
+        optimizer, taking as arguments the current solution (flattened
+        transformation matrix) and the number of iterations. This might be
+        useful in case one wants to examine or store the transformation
+        found after each iteration.
 
     verbose : int, optional (default=0)
         If 0, no progress messages will be printed.

@@ -953,7 +953,7 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         Acceptable data types for the parameter.
 
     min_val : float or int, optional (default=None)
-        The minimum value value the parameter can take. If None (default) it
+        The minimum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have a lower bound.
 
     max_val : float or int, optional (default=None)

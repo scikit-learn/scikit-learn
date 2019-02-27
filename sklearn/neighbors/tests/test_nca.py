@@ -26,8 +26,8 @@ def test_simple_example():
     """Test on a simple example.
 
     Puts four points in the input space where the opposite labels points are
-    next to each other. After transform the same labels points should be next
-    to each other.
+    next to each other. After transform the samples from the same class
+    should be next to each other.
 
     """
     X = np.array([[0, 0], [0, 1], [2, 0], [2, 1]])
@@ -36,23 +36,24 @@ def test_simple_example():
                                          random_state=42)
     nca.fit(X, y)
     X_t = nca.transform(X)
-    np.testing.assert_equal(pairwise_distances(X_t).argsort()[:, 1],
-                            np.array([2, 3, 0, 1]))
+    assert_array_equal(pairwise_distances(X_t).argsort()[:, 1],
+                       np.array([2, 3, 0, 1]))
 
 
 def test_toy_example_collapse_points():
     """Test on a toy example of three points that should collapse
 
-    Test that on this simple example, the new points are collapsed:
-    Two same label points with a different label point in the middle.
-    The objective is 2/(1 + exp(d/2)), with d the euclidean distance
-    between the two same labels points. This is maximized for d=0
-    (because d>=0), with an objective equal to 1 (loss=-1.).
+    We build a simple example: two points from the same class and a point from
+    a different class in the middle of them. On this simple example, the new
+    (transformed) points should all collapse into one single point. Indeed, the
+    objective is 2/(1 + exp(d/2)), with d the euclidean distance between the
+    two samples from the same class. This is maximized for d=0 (because d>=0),
+    with an objective equal to 1 (loss=-1.).
 
     """
-    random_state = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
     input_dim = 5
-    two_points = random_state.randn(2, input_dim)
+    two_points = rng.randn(2, input_dim)
     X = np.vstack([two_points, two_points.mean(axis=0)[np.newaxis, :]])
     y = [0, 0, 1]
 
@@ -90,10 +91,10 @@ def test_finite_differences():
     approximation.
     """
     # Initialize the transformation `M`, as well as `X` and `y` and `NCA`
-    random_state = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
     X, y = make_classification()
-    M = random_state.randn(random_state.randint(1, X.shape[1] + 1),
-                           X.shape[1])
+    M = rng.randn(rng.randint(1, X.shape[1] + 1),
+                  X.shape[1])
     nca = NeighborhoodComponentsAnalysis()
     nca.n_iter_ = 0
     mask = y[:, np.newaxis] == y[np.newaxis, :]
@@ -114,7 +115,7 @@ def test_params_validation():
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
     NCA = NeighborhoodComponentsAnalysis
-    random_state = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
 
     # TypeError
     assert_raises(TypeError, NCA(max_iter='21').fit, X, y)
@@ -133,7 +134,7 @@ def test_params_validation():
                          '`max_iter`= -1, must be >= 1.',
                          NCA(max_iter=-1).fit, X, y)
 
-    init = random_state.rand(5, 3)
+    init = rng.rand(5, 3)
     assert_raise_message(ValueError,
                          'The output dimensionality ({}) of the given linear '
                          'transformation `init` cannot be greater than its '
@@ -175,11 +176,11 @@ def test_transformation_dimensions():
 
 
 def test_n_components():
-    random_state = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
 
-    init = random_state.rand(X.shape[1] - 1, 3)
+    init = rng.rand(X.shape[1] - 1, 3)
 
     # n_components = X.shape[1] != transformation.shape[0]
     n_components = X.shape[1]
@@ -209,7 +210,7 @@ def test_n_components():
 
 
 def test_init_transformation():
-    random_state = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
     X, y = make_blobs(n_samples=30, centers=6, n_features=5, random_state=0)
 
     # Start learning from scratch
@@ -232,12 +233,12 @@ def test_init_transformation():
     nca_lda = NeighborhoodComponentsAnalysis(init='lda')
     nca_lda.fit(X, y)
 
-    init = random_state.rand(X.shape[1], X.shape[1])
+    init = rng.rand(X.shape[1], X.shape[1])
     nca = NeighborhoodComponentsAnalysis(init=init)
     nca.fit(X, y)
 
     # init.shape[1] must match X.shape[1]
-    init = random_state.rand(X.shape[1], X.shape[1] + 1)
+    init = rng.rand(X.shape[1], X.shape[1] + 1)
     nca = NeighborhoodComponentsAnalysis(init=init)
     assert_raise_message(ValueError,
                          'The input dimensionality ({}) of the given '
@@ -247,7 +248,7 @@ def test_init_transformation():
                          nca.fit, X, y)
 
     # init.shape[0] must be <= init.shape[1]
-    init = random_state.rand(X.shape[1] + 1, X.shape[1])
+    init = rng.rand(X.shape[1] + 1, X.shape[1])
     nca = NeighborhoodComponentsAnalysis(init=init)
     assert_raise_message(ValueError,
                          'The output dimensionality ({}) of the given '
@@ -257,7 +258,7 @@ def test_init_transformation():
                          nca.fit, X, y)
 
     # init.shape[0] must match n_components
-    init = random_state.rand(X.shape[1], X.shape[1])
+    init = rng.rand(X.shape[1], X.shape[1])
     n_components = X.shape[1] - 2
     nca = NeighborhoodComponentsAnalysis(init=init, n_components=n_components)
     assert_raise_message(ValueError,
@@ -276,17 +277,17 @@ def test_init_transformation():
 def test_auto_init(n_samples, n_features, n_classes, n_components):
     # Test that auto choose the init as expected with every configuration
     # of order of n_samples, n_features, n_classes and n_components.
-    random_state = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
     nca_base = NeighborhoodComponentsAnalysis(init='auto',
                                               n_components=n_components,
                                               max_iter=1,
-                                              random_state=random_state)
+                                              random_state=rng)
     if n_classes >= n_samples:
         pass
         # n_classes > n_samples is impossible, and n_classes == n_samples
         # throws an error from lda but is an absurd case
     else:
-        X = random_state.randn(n_samples, n_features)
+        X = rng.randn(n_samples, n_features)
         y = np.tile(range(n_classes), n_samples // n_classes + 1)[:n_samples]
         if n_components > n_features:
             # this would return a ValueError, which is already tested in
@@ -359,13 +360,13 @@ def test_warm_start_effectiveness():
 def test_verbose(init_name, capsys):
     # assert there is proper output when verbose = 1, for every initialization
     # except auto because auto will call one of the others
-    random_state = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
     X, y = make_blobs(n_samples=30, centers=6, n_features=5, random_state=0)
     regexp_init = r'... done in \ *\d+\.\d{2}s'
     msgs = {'pca': "Finding principal components" + regexp_init,
             'lda': "Finding most discriminative components" + regexp_init}
     if init_name == 'precomputed':
-        init = random_state.randn(X.shape[1], X.shape[1])
+        init = rng.randn(X.shape[1], X.shape[1])
     else:
         init = init_name
     nca = NeighborhoodComponentsAnalysis(verbose=1, init=init)
@@ -461,6 +462,7 @@ def test_callback(capsys):
     max_iter = 10
 
     def my_cb(transformation, n_iter):
+        assert transformation.shape == (iris_data.shape[1]**2,)
         rem_iter = max_iter - n_iter
         print('{} iterations remaining...'.format(rem_iter))
 

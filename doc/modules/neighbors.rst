@@ -689,11 +689,11 @@ Implementation
 --------------
 
 This implementation follows what is explained in the original paper [1]_. For
-the optimisation method, it currently uses scipy's l-bfgs-b with a full
+the optimisation method, it currently uses scipy's L-BFGS-B with a full
 gradient computation at each iteration, to avoid to tune the learning rate and
 provide stable learning.
 
-See the examples below and the doc  string of
+See the examples below and the docstring of
 :meth:`NeighborhoodComponentsAnalysis.fit` for further information.
 
 Complexity
@@ -705,7 +705,7 @@ NCA stores a matrix of pairwise distances, taking ``n_samples ** 2`` memory.
 Time complexity depends on the number of iterations done by the optimisation
 algorithm. However, one can set the maximum number of iterations with the
 argument ``max_iter``. For each iteration, time complexity is
-``O(n_components x n_samples x min(n_samples, n_features)``.
+``O(n_components x n_samples x min(n_samples, n_features))``.
 
 
 Transform
