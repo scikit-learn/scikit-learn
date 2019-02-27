@@ -437,7 +437,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             Transformed feature names
         """
         if input_features is None:
-            raise TypeError("Don't have input_features")
+            input_features = ['x%d' % i
+                              for i in range(self.statistics_.shape[0])]
         return np.array(input_features)[self._valid_mask]
 
     def _more_tags(self):

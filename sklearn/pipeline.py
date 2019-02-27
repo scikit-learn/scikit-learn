@@ -26,6 +26,17 @@ from .utils.metaestimators import _BaseComposition
 __all__ = ['Pipeline', 'FeatureUnion', 'make_pipeline', 'make_union']
 
 
+def _get_feature_names(X):
+    if hasattr(X, 'columns'):
+        feature_names = X.columns
+    elif getattr(X, 'ndim', 0) > 1:
+        feature_names = getattr(X, 'columns',
+                                ['x%d' % i for i in range(X.shape[1])])
+    else:
+        feature_names = None
+    return feature_names
+
+
 class Pipeline(_BaseComposition):
     """Pipeline of transforms with a final estimator.
 
@@ -280,9 +291,7 @@ class Pipeline(_BaseComposition):
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator != 'passthrough':
             self._final_estimator.fit(Xt, y, **fit_params)
-
-        if hasattr(X, 'columns'):
-            self.set_feature_names(X.columns)
+        self.set_feature_names(_get_feature_names(X))
 
         return self
 
@@ -320,8 +329,7 @@ class Pipeline(_BaseComposition):
         elif last_step != 'passthrough':
             Xt = last_step.fit(Xt, y, **fit_params).transform(Xt)
 
-        if hasattr(X, 'columns'):
-            self.set_feature_names(X.columns)
+        self.set_feature_names(_get_feature_names(X))
 
         return Xt
 
@@ -539,6 +547,20 @@ class Pipeline(_BaseComposition):
         return getattr(self.steps[0][1], '_pairwise', False)
 
     def set_feature_names(self, input_features):
+        """Set the input feature names for all steps.
+        
+        Sets the input_features_ attribute on the pipeline and
+        on all pipeline steps using the provided input feature names
+        as input for the first step.
+        
+        Some estimators like `ColumnTransformer` and `CountVectorizer`
+        might ignore the provided input feature names.
+        
+        Parameters
+        ----------
+        
+        
+        """
         self.input_features_ = input_features
         feature_names = input_features
         for _, name, transform in self._iter(with_final=False):
