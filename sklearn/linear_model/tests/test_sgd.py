@@ -445,7 +445,8 @@ def test_sgd_bad_penalty(klass):
                   l1_ratio=0.85)
 
 
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDRegressor, SparseSGDRegressor])
 def test_sgd_bad_loss(klass):
     # Check whether expected ValueError on bad loss
     assert_raises(ValueError, klass, loss="foobar")
@@ -1293,7 +1294,7 @@ def test_partial_fit(klass):
 @pytest.mark.parametrize('klass', [SGDRegressor, SparseSGDRegressor])
 @pytest.mark.parametrize('lr',
                          ["constant", "optimal", "invscaling", "adaptive"])
-def _test_partial_fit_equal_fit(klass, lr):
+def test_partial_fit_equal_fit(klass, lr):
     clf = klass(alpha=0.01, max_iter=2, eta0=0.01,
                 learning_rate=lr, shuffle=False)
     clf.fit(X, Y)
