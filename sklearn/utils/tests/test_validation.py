@@ -821,7 +821,7 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
                            ValueError('`test_name3`= 5, must be <= 4.'))])
 def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
                               err_msg):
-    """Test that check_scalar returns the right error if a wrong input type is
+    """Test that check_scalar returns the right error if a wrong input is
     given"""
     with pytest.raises(Exception) as raised_error:
         check_scalar(x, target_name, target_type=target_type,

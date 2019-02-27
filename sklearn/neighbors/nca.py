@@ -33,7 +33,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     to improve the classification accuracy of a stochastic nearest neighbors
     rule in the transformed space.
 
-    Read more in the :ref:`User Guide <NeighborhoodComponentsAnalysis>`.
+    Read more in the :ref:`User Guide <nca>`.
 
     Parameters
     ----------
@@ -58,14 +58,14 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         'pca'
             ``n_components`` principal components of the inputs passed
             to :meth:`fit` will be used to initialize the transformation.
-            (See :class:`PCA`)
+            (See `decomposition.PCA`)
 
         'lda'
             ``min(n_components, n_classes)`` most discriminative
             components of the inputs passed to :meth:`fit` will be used to
             initialize the transformation. (If ``n_components > n_classes``,
             the rest of the components will be zero.) (See
-            :class:`LinearDiscriminantAnalysis`)
+            `discriminant_analysis.LinearDiscriminantAnalysis`)
 
         'identity'
             If ``n_components`` is strictly smaller than the
@@ -74,7 +74,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         'random'
             The initial transformation will be a random array of shape
-            (n_components, n_features). Each value is sampled from the
+            `(n_components, n_features)`. Each value is sampled from the
             standard normal distribution.
 
         numpy array
@@ -102,9 +102,9 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     verbose : int, optional (default=0)
         If 0, no progress messages will be printed.
         If 1, progress messages will be printed to stdout.
-        If > 1, progress messages will be printed and the ``iprint``
-        parameter of :meth:`_minimize_lbfgsb` of `scipy.optimize` will be set
-        to ``verbose - 2``.
+        If > 1, progress messages will be printed and the ``disp``
+        parameter of :func:`scipy.optimize.minimize` will be set to
+        ``verbose - 2``.
 
     random_state : int or numpy.RandomState or None, optional (default=None)
         A pseudo random number generator object or a seed for it if int. If

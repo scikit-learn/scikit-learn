@@ -546,7 +546,7 @@ the original space, sample 3 has many stochastic neighbors from various
 classes, so the right class is not very likely. However, in the projected space
 learned by NCA, the only stochastic neighbors with non-negligible weight are
 from the same class as sample 3, guaranteeing that the latter will be well
-classified. See the :ref:`mathematical formulation<mathematical_formulation>`
+classified. See the :ref:`mathematical formulation <nca_mathematical_formulation>`
 for more details.
 
 
@@ -647,8 +647,8 @@ Mathematical formulation
 
 The goal of NCA is to learn an optimal linear transformation matrix of size
 ``(n_components, n_features)``, which maximises the sum over all samples
-:math:`i` of the probability :math:`p_i` that math:`i` is correctly classified,
-i.e.:
+:math:`i` of the probability :math:`p_i` that :math:`i` is correctly
+classified, i.e.:
 
 .. math::
 
