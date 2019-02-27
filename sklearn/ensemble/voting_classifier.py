@@ -121,6 +121,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>> print(eclf3.transform(X).shape)
     (6, 6)
     """
+    _required_parameters = ['estimators']
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
                  flatten_transform=True):
