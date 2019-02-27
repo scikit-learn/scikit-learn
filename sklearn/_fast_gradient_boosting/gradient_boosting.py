@@ -102,9 +102,13 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         self.n_features_ = X.shape[1]  # used for validation in predict()
 
         # we need this stateful variable to tell raw_predict() that it was
-        # called from fit(), which only passes pre-binned data to
-        # raw_predict() via the scorer_ attribute. predicting is faster on
-        # pre-binned data.
+        # called from fit() (this current method), and that the data it has
+        # received is pre-binned.
+        # predicting is faster on pre-binned data, so we want early stopping
+        # predictions to be made on pre-binned data. Unfortunately the scorer_
+        # can only call predict() or predict_proba(), not raw_predict(), and
+        # there's no way to tell the scorer that it needs to predict binned
+        # data.
         self._in_fit = True
 
         # bin the data
@@ -276,7 +280,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
 
         self.train_score_ = np.asarray(self.train_score_)
         self.validation_score_ = np.asarray(self.validation_score_)
-        self._in_fit = False
+        del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
 
     def _check_early_stopping(self, X_binned_train, y_train,
@@ -316,8 +320,8 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
                                for score in recent_scores]
         return not any(recent_improvements)
 
-    def _get_scores(self, X, y):
-        """Compute scores on data X with target y.
+    def _get_scores(self, X_binned, y):
+        """Compute scores on data X_binned with target y.
 
         Scores are computed with a scorer if scoring parameter is not
         'loss', else with the loss. As higher is always better, we return
@@ -325,10 +329,10 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         """
 
         if self.scoring != 'loss':
-            return self.scorer_(self, X, y)
+            return self.scorer_(self, X_binned, y)
 
         # Else, use loss
-        raw_predictions = self._raw_predict(X)
+        raw_predictions = self._raw_predict(X_binned)
         return -self.loss_(y, raw_predictions)
 
     def _print_iteration_stats(self, iteration_start_time):
@@ -385,7 +389,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
                 'X has {} features but this estimator was trained with '
                 '{} features.'.format(X.shape[1], self.n_features_)
             )
-        is_binned = self._in_fit and X.dtype == X_BINNED_DTYPE
+        is_binned = getattr(self, '_in_fit', False)
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
             shape=(self._n_trees_per_iteration, n_samples),
