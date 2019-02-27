@@ -712,6 +712,11 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.manifold`
 .......................
 
+- |Efficiency| Add a parameter `n_jobs` for t-SNE using openMP prange to
+  parallelize the gradient computation and using parallel k-neighbors
+  lookups.
+  :issue:`13213` by :user:`Thomas Moreau <tommoral>`
+
 - |Efficiency| Make :func:`manifold.tsne.trustworthiness` use an inverted index
   instead of an `np.where` lookup to find the rank of neighbors in the input
   space. This improves efficiency in particular when computed with
