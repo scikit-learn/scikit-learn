@@ -66,6 +66,9 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`datasets.svmlight_format` :issue:`10727` by
   :user:`Bryan K Woods <bryan-woods>`.
 
+- |Fix| :func:`datasets.load_sample_images` returns images with a deterministic
+  order. :issue:`13250` by :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -79,7 +82,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
   `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
   `n_components < n_features` instead of
-  `n_components <= min(n_samples, n_features)`. 
+  `n_components <= min(n_samples, n_features)`.
   :issue:`11650` by :user:`Hossein Pourbozorg <hossein-pourbozorg>` and
   :user:`Zijie (ZJ) Poh <zjpoh>`.
 
@@ -90,12 +93,24 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
+- |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
+  preserves ``float32`` and ``float64`` dtypes. :issues:`8769` and
+  :issues:`11000` by :user:`Thibault Sejourne <thibsej>`
+
 - |Fix| A ``ChangedBehaviourWarning`` is now raised when
   :class:`discriminant_analysis.LinearDiscriminantAnalysis` is given as
   parameter ``n_components > min(n_features, n_classes - 1)``, and
   ``n_components`` is changed to ``min(n_features, n_classes - 1)`` if so.
   Previously the change was made, but silently. :issue:`11526` by
   :user:`William de Vazelhes<wdevazelhes>`.
+  
+:mod:`sklearn.dummy`
+....................
+
+- |Fix| Fixed a bug in :class:`dummy.DummyClassifier` where the
+  ``predict_proba`` method was returning int32 array instead of
+  float64 for the ``stratified`` strategy. :issue:`13266` by
+  :user:`Christos Aridas<chkoar>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -105,6 +120,11 @@ Support for Python 3.4 and below has been officially dropped.
   fit calls do release the GIL. This changes reduces memory usage and
   communication overhead. :issue:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
+
+- |Fix| Fixed the output of the average path length computed in
+  :class:`ensemble.IsolationForest` when the input is either 0, 1 or 2.
+  :issue:`13251` by :user:`Albert Thomas <albertcthomas>`
+  and :user:`joshuakennethjones <joshuakennethjones>`.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
@@ -135,8 +155,17 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12177` by :user:`Sergey Feldman <sergeyf>` :user:`Ben Lawson
   <benlawson>`.
 
+- |Fix| In :class:`impute.MissingIndicator` avoid implicit densification by
+  raising an exception if input is sparse add `missing_values` property
+  is set to 0. :issue:`13240` by :user:`Bartosz Telenczuk <btel>`.
+
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Enhancement| :class:`linear_model.make_dataset` now preserves
+  ``float32`` and ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
+  :user:`Nelle Varoquaux`_, :user:`Arthur Imbert <Henley13>`,
+  :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
@@ -168,8 +197,13 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`linear_model.LassoLarsIC`, where user input
    ``copy_X=False`` at instance creation would be overridden by default
-   parameter value ``copy_X=True`` in ``fit``. 
+   parameter value ``copy_X=True`` in ``fit``.
    :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
+
+- |Fix| Fixed a bug in :class:`linear_model.LinearRegression` that
+  was not returning the same coeffecients and intercepts with
+  ``fit_intercept=True`` in sparse and dense case.
+  :issue:`13279` by `Alexandre Gramfort`_
 
 :mod:`sklearn.manifold`
 ............................
@@ -279,6 +313,11 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`preprocessing.StandardScaler`. :issue:`13007` by
   :user:`Raffaello Baluyot <baluyotraf>`
 
+- |Feature| :class:`OneHotEncoder` now supports dropping one feature per category
+  with a new drop parameter. :issue:`12908` by
+  :user:`Drew Johnston <drewmjohnston>`.
+
+
 :mod:`sklearn.tree`
 ...................
 - |Feature| Decision Trees can now be plotted with matplotlib using
@@ -314,6 +353,13 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`mixture.BayesianGaussianMixture`, where ``fit_predict`` and
   ``fit.predict`` were not equivalent. :issue:`13142` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+
+:mod:`sklearn.isotonic`
+.......................
+
+- |Feature| Allow different dtypes (such as float32) in
+  :class:`isotonic.IsotonicRegression` :issue:`8769` by :user:`Vlad Niculae <vene>`
 
 
 Multiple modules
