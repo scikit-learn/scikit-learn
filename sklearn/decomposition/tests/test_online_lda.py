@@ -402,8 +402,11 @@ def test_verbosity(verbose, evaluate_every, expected_lines,
 
 
 @pytest.mark.parametrize("data_type, expected_type", [
-    (np.float32, np.float32), (np.float64, np.float64), (np.int32, np.float32),
-    (np.int64, np.float64)])
+    (np.float32, np.float32),
+    (np.float64, np.float64),
+    (np.int32, np.float64),
+    (np.int64, np.float64)
+])
 def test_lda_dtype_match(data_type, expected_type):
     n_components, X = _build_sparse_mtx()
     for learning_method in ['batch', 'online']:
