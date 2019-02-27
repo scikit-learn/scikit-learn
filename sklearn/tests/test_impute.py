@@ -1422,7 +1422,7 @@ def test_knn_imputer_weight_uniform():
         [5, 6],
         [7, 7],
         [9, 8],
-        [11,10]
+        [11, 10]
     ])
 
     imputer = KNNImputer(weights="uniform")
