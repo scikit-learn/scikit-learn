@@ -266,9 +266,9 @@ def gradient(float[:] val_P,
              int n_dimensions,
              int verbose,
              int dof=1,
-             int n_jobs=1,
              long skip_num_points=0,
-             bint compute_error=1):
+             bint compute_error=1,
+             int n_jobs=1):
     # This function is designed to be called from external Python
     # it passes the 'forces' array by reference and fills thats array
     # up in-place
