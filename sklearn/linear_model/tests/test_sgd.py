@@ -138,7 +138,7 @@ true_result5 = [0, 1, 1]
 
 
 ###############################################################################
-# Tests common to classification and regression
+# Common Test Case to classification and regression
 
 # a simple implementation of ASGD to use for testing
 # uses squared loss to find the gradient
@@ -175,6 +175,27 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
 
     return average_weights, average_intercept
 
+
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDRegressor, SparseSGDRegressor])
+def test_sgd_bad_alpha(klass):
+    # Check whether expected ValueError on bad alpha
+    assert_raises(ValueError, klass, alpha=-.1)
+
+
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDRegressor, SparseSGDRegressor])
+def test_sgd_bad_penalty(klass):
+    # Check whether expected ValueError on bad penalty
+    assert_raises(ValueError, klass, penalty='foobar',
+                  l1_ratio=0.85)
+
+
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDRegressor, SparseSGDRegressor])
+def test_sgd_bad_loss(klass):
+    # Check whether expected ValueError on bad loss
+    assert_raises(ValueError, klass, loss="foobar")
 
 def _test_warm_start(klass, X, Y, lr):
     # Test that explicit warm restart...
@@ -428,28 +449,6 @@ def test_sgd_bad_eta0(klass):
     # Check whether expected ValueError on bad eta0
     assert_raises(ValueError, klass, eta0=0,
                   learning_rate="constant")
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
-                                   SGDRegressor, SparseSGDRegressor])
-def test_sgd_bad_alpha(klass):
-    # Check whether expected ValueError on bad alpha
-    assert_raises(ValueError, klass, alpha=-.1)
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
-                                   SGDRegressor, SparseSGDRegressor])
-def test_sgd_bad_penalty(klass):
-    # Check whether expected ValueError on bad penalty
-    assert_raises(ValueError, klass, penalty='foobar',
-                  l1_ratio=0.85)
-
-
-@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
-                                   SGDRegressor, SparseSGDRegressor])
-def test_sgd_bad_loss(klass):
-    # Check whether expected ValueError on bad loss
-    assert_raises(ValueError, klass, loss="foobar")
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
