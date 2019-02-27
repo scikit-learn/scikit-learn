@@ -1700,9 +1700,10 @@ def test_sample_weight_cross_validation(
     sign = 1 if greater_is_better else -1
     exp_cv_score = sign * (met1 * ratio_wt_f1 + met2 * ratio_wt_f2)
 
+    # There's nothing special about GridSearchCV. Could be RandomizedSearchCV.
     gscv = GridSearchCV(
         LogisticRegression(),
-        param_grid={"random_state": [15432]},
+        {"random_state": [15432]},  # parameters
         scoring=make_scorer(metric, greater_is_better, needs_proba),
         cv=2,
         return_train_score=True
