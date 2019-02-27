@@ -1652,7 +1652,11 @@ def test_sample_weight():
     assert test_metric == exp_test_acc
 
 
-def test_sample_weight_cross_validation():
+@pytest.mark.parametrize("sample_wt,flip_acc_1,flip_acc_2", [
+    ([100000, 200000, 100000, 200000], False, False),
+    ([2000000, 1000000, 1, 999999], False, True)
+])
+def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2):
     # Test that cross validation properly uses sample_weight from fit_params
     # when calculating the desired metrics.
 
@@ -1660,18 +1664,19 @@ def test_sample_weight_cross_validation():
     y = np.array([1, 0, 1, 0])  # Some +/- for both test and train.
     f1 = np.array([0, 1])       # Fold 1.
     f2 = np.array([2, 3])       # Fold 2.
-    sample_weight = np.array([2000000, 1000000, 1, 999999])
+    sample_weight = np.array(sample_wt)
 
     sum_sample_weight = np.sum(sample_weight)
     norm1_wt_f1 = sample_weight[f1] / np.sum(sample_weight[f1])
-    acc1 = (1 - np.dot(y[f1], norm1_wt_f1))
+    acc1 = np.dot(y[f1], norm1_wt_f1)
+    acc1 = acc1 if flip_acc_1 else 1 - acc1
     ratio_wt_f1 = np.sum(sample_weight[f1]) / sum_sample_weight
 
     norm1_wt_f2 = sample_weight[f2] / np.sum(sample_weight[f2])
     acc2 = np.dot(y[f2], norm1_wt_f2)
+    acc2 = acc2 if flip_acc_2 else 1 - acc2
     ratio_wt_f2 = np.sum(sample_weight[f2]) / sum_sample_weight
 
-    # 0.25000025 = 1000001 / 4000000 = 1/3 * 3/4 + 1/1000000 * 1/4
     exp_cv_acc = acc1 * ratio_wt_f1 + acc2 * ratio_wt_f2
 
     gscv = GridSearchCV(
@@ -1684,7 +1689,7 @@ def test_sample_weight_cross_validation():
 
     gscv.fit(X, y, sample_weight=sample_weight)
     best_score = gscv.best_score_
-    np.testing.assert_almost_equal(best_score, exp_cv_acc)
+    np.testing.assert_almost_equal(best_score, exp_cv_acc, decimal=12)
 
     # Assert that the sample weights for each fold were normalized by the
     # L1 norm.
