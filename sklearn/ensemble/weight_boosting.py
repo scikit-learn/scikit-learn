@@ -70,7 +70,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.random_state = random_state
 
     def _validate_data(self, X, y=None):
-        
+
         # Accept or convert to these sparse matrix formats so we can
         # use safe_indexing
         accept_sparse = ['csr', 'csc']
