@@ -1,12 +1,16 @@
 """
-====================================================
-Imputing missing values before building an estimator
-====================================================
+=============================================================
+Imputing missing values with kNN before building an estimator
+=============================================================
 
 Missing values can be replaced by the mean, the median or the most frequent
 value using the basic :class:`sklearn.impute.SimpleImputer`.
 The median is a more robust estimator for data with high magnitude variables
 which could dominate results (otherwise known as a 'long tail').
+
+With ``KNNImputer``, missing values can be imputed based on a supervised
+estimator using the weighted or unweighted mean of the desired number of
+nearest neighbors.
 
 Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
 round-robin linear regression, treating every variable as an output in
@@ -27,7 +31,8 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, make_union
-from sklearn.impute import SimpleImputer, IterativeImputer, MissingIndicator
+from sklearn.impute import (
+    SimpleImputer, KNNImputer, IterativeImputer, MissingIndicator)
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
@@ -79,6 +84,13 @@ def get_results(dataset):
     imputer = SimpleImputer(missing_values=0, strategy="mean")
     mean_impute_scores = get_scores_for_imputer(imputer, X_missing, y_missing)
 
+    # Estimate the score after kNN-imputation of the missing values
+    knnimpute_and_rf = make_pipeline(
+        KNNImputer(missing_values=0, sample_max_missing=0.99),
+        RandomForestRegressor(random_state=0, n_estimators=100))
+    knn_impute_scores = cross_val_score(knnimpute_and_rf, X_missing, y_missing,
+                                        scoring='neg_mean_squared_error')
+
     # Estimate the score after iterative imputation of the missing values
     imputer = IterativeImputer(missing_values=0,
                                random_state=0,
@@ -90,6 +102,7 @@ def get_results(dataset):
     return ((full_scores.mean(), full_scores.std()),
             (zero_impute_scores.mean(), zero_impute_scores.std()),
             (mean_impute_scores.mean(), mean_impute_scores.std()),
+            (knn_impute_scores.mean(), knn_impute_scores.std()),
             (iterative_impute_scores.mean(), iterative_impute_scores.std()))
 
 
@@ -107,17 +120,18 @@ xval = np.arange(n_bars)
 x_labels = ['Full data',
             'Zero imputation',
             'Mean Imputation',
-            'Multivariate Imputation']
-colors = ['r', 'g', 'b', 'orange']
+            'KNN Imputation',
+            'Iterative Imputation']
+colors = ['r', 'g', 'b', 'orange', 'black']
 
 # plot diabetes results
 plt.figure(figsize=(12, 6))
 ax1 = plt.subplot(121)
-for j in xval:
-    ax1.barh(j, mses_diabetes[j], xerr=stds_diabetes[j],
-             color=colors[j], alpha=0.6, align='center')
+for item in xval:
+    ax1.barh(item, mses_diabetes[item], xerr=stds_diabetes[item],
+             color=colors[item], alpha=0.6, align='center')
 
-ax1.set_title('Imputation Techniques with Diabetes Data')
+ax1.set_title('Different Imputation Techniques applied to Diabetes Data')
 ax1.set_xlim(left=np.min(mses_diabetes) * 0.9,
              right=np.max(mses_diabetes) * 1.1)
 ax1.set_yticks(xval)
@@ -127,11 +141,11 @@ ax1.set_yticklabels(x_labels)
 
 # plot boston results
 ax2 = plt.subplot(122)
-for j in xval:
-    ax2.barh(j, mses_boston[j], xerr=stds_boston[j],
-             color=colors[j], alpha=0.6, align='center')
+for item in xval:
+    ax2.barh(item, mses_boston[item], xerr=stds_boston[item],
+             color=colors[item], alpha=0.6, align='center')
 
-ax2.set_title('Imputation Techniques with Boston Data')
+ax2.set_title('Different Imputation Techniques applied to Boston Data')
 ax2.set_yticks(xval)
 ax2.set_xlabel('MSE')
 ax2.invert_yaxis()
