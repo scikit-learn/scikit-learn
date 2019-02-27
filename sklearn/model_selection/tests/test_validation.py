@@ -1653,7 +1653,11 @@ def test_sample_weight():
 
 
 @pytest.mark.parametrize("sample_wt,flip_acc_1,flip_acc_2", [
+    ([1, 999999, 1, 999999], False, False),
     ([100000, 200000, 100000, 200000], False, False),
+    ([100000, 100000, 100000, 100000], False, False),
+    ([200000, 100000, 200000, 100000], True, True),
+    ([999999, 1, 999999, 1], True, True),
     ([2000000, 1000000, 1, 999999], False, True)
 ])
 def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2):
