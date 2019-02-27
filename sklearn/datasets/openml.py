@@ -6,6 +6,8 @@ from os.path import join
 from warnings import warn
 from contextlib import closing
 from functools import wraps
+import itertools
+from collections.abc import Generator
 
 from urllib.request import urlopen, Request
 
@@ -210,7 +212,7 @@ def _sparse_data_to_array(arff_data, include_columns):
     return y
 
 
-def _convert_arff_data(arff_data, col_slice_x, col_slice_y):
+def _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape=None):
     """
     converts the arff object into the appropriate matrix type (np.array or
     scipy.sparse.csr_matrix) based on the 'data part' (i.e., in the
@@ -234,8 +236,10 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y):
     X : np.array or scipy.sparse.csr_matrix
     y : np.array
     """
-    if isinstance(arff_data, list):
-        data = np.array(arff_data, dtype=np.float64)
+    if isinstance(arff_data, Generator):
+        data = np.fromiter(itertools.chain.from_iterable(arff_data),
+                           dtype='float64', count=shape[0]*shape[1])
+        data = data.reshape(*shape)
         X = np.array(data[:, col_slice_x], dtype=np.float64)
         y = np.array(data[:, col_slice_y], dtype=np.float64)
         return X, y
@@ -333,6 +337,20 @@ def _get_data_features(data_id, data_home):
     return json_data['data_features']['feature']
 
 
+def _get_data_shape(data_info):
+    # Using the data_info dictionary from _get_data_info_by_name to extract
+    # the number of samples / features
+    for d in data_info['quality']:
+        if d['name'] == 'NumberOfFeatures':
+            n_features = int(float(d['value']))
+            break
+    for d in data_info['quality']:
+        if d['name'] == 'NumberOfInstances':
+            n_samples = int(float(d['value']))
+            break
+    return (n_samples, n_features)
+
+
 def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
     # Accesses an ARFF file on the OpenML server. Documentation:
     # https://www.openml.org/api_data_docs#!/data/get_download_id
@@ -346,7 +364,7 @@ def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
             if sparse is True:
                 return_type = _arff.COO
             else:
-                return_type = _arff.DENSE
+                return_type = _arff.DENSE_GEN
 
             arff_file = _arff.loads(response.read().decode('utf-8'),
                                     encode_nominal=encode_nominal,
@@ -587,7 +605,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     # obtain the data
     arff = _download_data_arff(data_description['file_id'], return_sparse,
                                data_home)
-    arff_data = arff['data']
+
     # nominal attributes is a dict mapping from the attribute name to the
     # possible values. Includes also the target column (which will be popped
     # off below, before it will be packed in the Bunch object)
@@ -595,7 +613,8 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                           if isinstance(v, list) and
                           k in data_columns + target_column}
 
-    X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
+    shape = _get_data_shape(data_info)
+    X, y = _convert_arff_data(arff['data'], col_slice_x, col_slice_y, shape)
 
     is_classification = {col_name in nominal_attributes
                          for col_name in target_column}
