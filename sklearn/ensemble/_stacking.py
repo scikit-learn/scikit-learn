@@ -110,7 +110,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         eclf.set_params(rf=None)
 
         """
-        super(_BaseStacking, self)._set_params('estimators', **params)
+        super()._set_params('estimators', **params)
         return self
 
     def get_params(self, deep=True):
@@ -122,7 +122,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well.
         """
-        return super(_BaseStacking, self)._get_params('estimators', deep=deep)
+        return super()._get_params('estimators', deep=deep)
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
@@ -362,7 +362,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     def __init__(self, estimators=None, final_estimator=None, cv=None,
                  method_estimators='auto', pass_through=False, n_jobs=1,
                  random_state=None, verbose=0):
-        super(StackingClassifier, self).__init__(
+        super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
@@ -370,11 +370,13 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
             pass_through=pass_through,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose
+        )
 
     def _validate_meta_estimator(self):
-        super(StackingClassifier, self)._validate_final_estimator(
-            default=LogisticRegression(random_state=self.random_state))
+        super()._validate_final_estimator(
+            default=LogisticRegression(random_state=self.random_state)
+        )
         if not is_classifier(self.final_estimator_):
             raise AttributeError('`final_estimator` attribute should be a '
                                  'classifier.')
@@ -494,7 +496,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     def __init__(self, estimators=None, final_estimator=None, cv=None,
                  method_estimators='auto', pass_through=False, n_jobs=1,
                  random_state=None, verbose=0):
-        super(StackingRegressor, self).__init__(
+        super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
@@ -502,11 +504,13 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
             pass_through=pass_through,
             n_jobs=n_jobs,
             random_state=random_state,
-            verbose=verbose)
+            verbose=verbose
+        )
 
     def _validate_meta_estimator(self):
-        super(StackingRegressor, self)._validate_final_estimator(
-            default=LinearRegression())
+        super()._validate_final_estimator(
+            default=LinearRegression()
+        )
         if not is_regressor(self.final_estimator_):
             raise AttributeError('`final_estimator` attribute should be a '
                                  'regressor.')
