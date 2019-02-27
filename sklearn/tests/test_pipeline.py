@@ -30,6 +30,7 @@ from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.utils._joblib import Memory
 from sklearn.utils._joblib import __version__ as joblib_version
@@ -1048,3 +1049,29 @@ def test_make_pipeline_memory():
     assert pipeline.memory is None
 
     shutil.rmtree(cachedir)
+    
+
+def test_input_feature_names_pandas():
+    pass
+
+    
+def test_set_input_features():
+    pipe = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler()),
+        ('select', SelectKBest(k=2)),
+        ('clf', LogisticRegression())])
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+    xs = np.array(['x0', 'x1', 'x2', 'x3'])
+    assert_array_equal(pipe.input_features_, xs)
+    mask = pipe.named_steps.select.get_support()
+    assert_array_equal(pipe.named_steps.clf.input_features_, xs[mask])
+    pipe.set_feature_names(iris.feature_names)
+    assert_array_equal(pipe.input_features_, iris.feature_names)
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       np.array(iris.feature_names)[mask])
+
+    
+def test_input_features_count_vectorizer():
+    pass
