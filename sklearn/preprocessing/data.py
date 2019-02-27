@@ -2027,10 +2027,12 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     to spread out the most frequent values. It also reduces the impact of
     (marginal) outliers: this is therefore a robust preprocessing scheme.
 
-    The transformation is applied on each feature independently.
-    The cumulative distribution function of a feature is used to project the
-    original values. Features values of new/unseen data that fall below
-    or above the fitted range will be mapped to the bounds of the output
+    The transformation is applied on each feature independently. First an
+    estimate of the cumulative distribution function of a feature is
+    used to map the original values to a uniform distribution. The obtained
+    values are then mapped to the desired output distribution using the
+    associated quantile function. Features values of new/unseen data that fall
+    below or above the fitted range will be mapped to the bounds of the output
     distribution. Note that this transform is non-linear. It may distort linear
     correlations between variables measured at the same scale but renders
     variables measured at different scales more directly comparable.
@@ -2231,11 +2233,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     def _transform_col(self, X_col, quantiles, inverse):
         """Private function to transform a single feature"""
 
-        if self.output_distribution == 'normal':
-            output_distribution = 'norm'
-        else:
-            output_distribution = self.output_distribution
-        output_distribution = getattr(stats, output_distribution)
+        output_distribution = self.output_distribution
 
         if not inverse:
             lower_bound_x = quantiles[0]
@@ -2247,15 +2245,22 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             upper_bound_x = 1
             lower_bound_y = quantiles[0]
             upper_bound_y = quantiles[-1]
-            #  for inverse transform, match a uniform PDF
+            #  for inverse transform, match a uniform distribution
             with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-                X_col = output_distribution.cdf(X_col)
+                if output_distribution == 'normal':
+                    X_col = stats.norm.cdf(X_col)
+                # else output distribution is already a uniform distribution
+
         # find index for lower and higher bounds
         with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-            lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
-                                lower_bound_x)
-            upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
-                                upper_bound_x)
+            if output_distribution == 'normal':
+                lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
+                                    lower_bound_x)
+                upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
+                                    upper_bound_x)
+            if output_distribution == 'uniform':
+                lower_bounds_idx = (X_col == lower_bound_x)
+                upper_bounds_idx = (X_col == upper_bound_x)
 
         isfinite_mask = ~np.isnan(X_col)
         X_col_finite = X_col[isfinite_mask]
@@ -2277,18 +2282,20 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         X_col[upper_bounds_idx] = upper_bound_y
         X_col[lower_bounds_idx] = lower_bound_y
-        # for forward transform, match the output PDF
+        # for forward transform, match the output distribution
         if not inverse:
             with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-                X_col = output_distribution.ppf(X_col)
-            # find the value to clip the data to avoid mapping to
-            # infinity. Clip such that the inverse transform will be
-            # consistent
-            clip_min = output_distribution.ppf(BOUNDS_THRESHOLD -
-                                               np.spacing(1))
-            clip_max = output_distribution.ppf(1 - (BOUNDS_THRESHOLD -
-                                                    np.spacing(1)))
-            X_col = np.clip(X_col, clip_min, clip_max)
+                if output_distribution == 'normal':
+                    X_col = stats.norm.ppf(X_col)
+                    # find the value to clip the data to avoid mapping to
+                    # infinity. Clip such that the inverse transform will be
+                    # consistent
+                    clip_min = stats.norm.ppf(BOUNDS_THRESHOLD - np.spacing(1))
+                    clip_max = stats.norm.ppf(1 - (BOUNDS_THRESHOLD -
+                                                   np.spacing(1)))
+                    X_col = np.clip(X_col, clip_min, clip_max)
+                # else output distribution is uniform and the ppf is the
+                # identity function so we let X_col unchanged
 
         return X_col
 
@@ -2305,7 +2312,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 raise ValueError('QuantileTransformer only accepts'
                                  ' non-negative sparse matrices.')
 
-        # check the output PDF
+        # check the output distribution
         if self.output_distribution not in ('normal', 'uniform'):
             raise ValueError("'output_distribution' has to be either 'normal'"
                              " or 'uniform'. Got '{}' instead.".format(
@@ -2415,10 +2422,12 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     to spread out the most frequent values. It also reduces the impact of
     (marginal) outliers: this is therefore a robust preprocessing scheme.
 
-    The transformation is applied on each feature independently.
-    The cumulative distribution function of a feature is used to project the
-    original values. Features values of new/unseen data that fall below
-    or above the fitted range will be mapped to the bounds of the output
+    The transformation is applied on each feature independently. First an
+    estimate of the cumulative distribution function of a feature is
+    used to map the original values to a uniform distribution. The obtained
+    values are then mapped to the desired output distribution using the
+    associated quantile function. Features values of new/unseen data that fall
+    below or above the fitted range will be mapped to the bounds of the output
     distribution. Note that this transform is non-linear. It may distort linear
     correlations between variables measured at the same scale but renders
     variables measured at different scales more directly comparable.
