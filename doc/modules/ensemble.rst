@@ -291,13 +291,13 @@ to the prediction function.
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
-.. _random_trees_embedding:
-
 .. topic:: References
 
  .. [L2014] G. Louppe,
          "Understanding Random Forests: From Theory to Practice",
          PhD Thesis, U. of Liege, 2014.
+
+.. _random_trees_embedding:
 
 Totally Random Trees Embedding
 ------------------------------
@@ -1053,10 +1053,10 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
     :align: center
     :scale: 75%
 
-Using the `VotingClassifier` with `GridSearch`
-----------------------------------------------
+Using the `VotingClassifier` with `GridSearchCV`
+------------------------------------------------
 
-The `VotingClassifier` can also be used together with `GridSearch` in order
+The `VotingClassifier` can also be used together with `GridSearchCV` in order
 to tune the hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV

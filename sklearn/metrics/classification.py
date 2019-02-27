@@ -21,7 +21,6 @@ the lower the better
 #          Shangwu Yao <shangwuyao@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import warnings
 import numpy as np
@@ -73,9 +72,9 @@ def _check_targets(y_true, y_pred):
     type_true = type_of_target(y_true)
     type_pred = type_of_target(y_pred)
 
-    y_type = set([type_true, type_pred])
-    if y_type == set(["binary", "multiclass"]):
-        y_type = set(["multiclass"])
+    y_type = {type_true, type_pred}
+    if y_type == {"binary", "multiclass"}:
+        y_type = {"multiclass"}
 
     if len(y_type) > 1:
         raise ValueError("Classification metrics can't handle a mix of {0} "
@@ -158,7 +157,6 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import accuracy_score
     >>> y_pred = [0, 2, 1, 3]
     >>> y_true = [0, 1, 2, 3]
@@ -169,6 +167,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
@@ -270,7 +269,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
-    label_to_ind = dict((y, x) for x, y in enumerate(labels))
+    label_to_ind = {y: x for x, y in enumerate(labels)}
     # convert yt, yp into index
     y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
     y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
@@ -633,7 +632,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import jaccard_similarity_score
     >>> y_pred = [0, 2, 1, 3]
     >>> y_true = [0, 1, 2, 3]
@@ -644,6 +642,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),\
         np.ones((2, 2)))
     0.75
@@ -804,6 +803,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
@@ -1209,6 +1209,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import precision_recall_fscore_support
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
@@ -1396,7 +1397,6 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Examples
     --------
-
     >>> from sklearn.metrics import precision_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1645,12 +1645,14 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
               ...
             }
 
-        The reported averages include micro average (averaging the
-        total true positives, false negatives and false positives), macro
-        average (averaging the unweighted mean per label), weighted average
-        (averaging the support-weighted mean per label) and sample average
-        (only for multilabel classification). See also
-        :func:`precision_recall_fscore_support` for more details on averages.
+        The reported averages include macro average (averaging the unweighted
+        mean per label), weighted average (averaging the support-weighted mean
+        per label), sample average (only for multilabel classification) and
+        micro average (averaging the total true positives, false negatives and
+        false positives) it is only shown for multi-label or multi-class
+        with a subset of classes because it is accuracy otherwise.
+        See also:func:`precision_recall_fscore_support` for more details
+        on averages.
 
         Note that in binary classification, recall of the positive class
         is also known as "sensitivity"; recall of the negative class is
@@ -1674,9 +1676,22 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
          class 1       0.00      0.00      0.00         1
          class 2       1.00      0.67      0.80         3
     <BLANKLINE>
-       micro avg       0.60      0.60      0.60         5
+        accuracy                           0.60         5
        macro avg       0.50      0.56      0.49         5
     weighted avg       0.70      0.60      0.61         5
+    <BLANKLINE>
+    >>> y_pred = [1, 1, 0]
+    >>> y_true = [1, 1, 1]
+    >>> print(classification_report(y_true, y_pred, labels=[1, 2, 3]))
+                  precision    recall  f1-score   support
+    <BLANKLINE>
+               1       1.00      0.67      0.80         3
+               2       0.00      0.00      0.00         0
+               3       0.00      0.00      0.00         0
+    <BLANKLINE>
+       micro avg       1.00      0.67      0.80         3
+       macro avg       0.33      0.22      0.27         3
+    weighted avg       1.00      0.67      0.80         3
     <BLANKLINE>
     """
 
@@ -1688,6 +1703,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         labels_given = False
     else:
         labels = np.asarray(labels)
+
+    # labelled micro average
+    micro_is_accuracy = ((y_type == 'multiclass' or y_type == 'binary') and
+                         (not labels_given or
+                          (set(labels) == set(unique_labels(y_true, y_pred)))))
 
     if target_names is not None and len(labels) != len(target_names):
         if labels_given:
@@ -1702,7 +1722,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                 "parameter".format(len(labels), len(target_names))
             )
     if target_names is None:
-        target_names = [u'%s' % l for l in labels]
+        target_names = ['%s' % l for l in labels]
 
     headers = ["precision", "recall", "f1-score", "support"]
     # compute per-class results without averaging
@@ -1726,17 +1746,21 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         longest_last_line_heading = 'weighted avg'
         name_width = max(len(cn) for cn in target_names)
         width = max(name_width, len(longest_last_line_heading), digits)
-        head_fmt = u'{:>{width}s} ' + u' {:>9}' * len(headers)
-        report = head_fmt.format(u'', *headers, width=width)
-        report += u'\n\n'
-        row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
+        head_fmt = '{:>{width}s} ' + ' {:>9}' * len(headers)
+        report = head_fmt.format('', *headers, width=width)
+        report += '\n\n'
+        row_fmt = '{:>{width}s} ' + ' {:>9.{digits}f}' * 3 + ' {:>9}\n'
         for row in rows:
             report += row_fmt.format(*row, width=width, digits=digits)
-        report += u'\n'
+        report += '\n'
 
     # compute all applicable averages
     for average in average_options:
-        line_heading = average + ' avg'
+        if average.startswith('micro') and micro_is_accuracy:
+            line_heading = 'accuracy'
+        else:
+            line_heading = average + ' avg'
+
         # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
@@ -1747,10 +1771,20 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
             report_dict[line_heading] = dict(
                 zip(headers, [i.item() for i in avg]))
         else:
-            report += row_fmt.format(line_heading, *avg,
-                                     width=width, digits=digits)
+            if line_heading == 'accuracy':
+                row_fmt_accuracy = '{:>{width}s} ' + \
+                        ' {:>9.{digits}}' * 2 + ' {:>9.{digits}f}' + \
+                        ' {:>9}\n'
+                report += row_fmt_accuracy.format(line_heading, '', '',
+                                                  *avg[2:], width=width,
+                                                  digits=digits)
+            else:
+                report += row_fmt.format(line_heading, *avg,
+                                         width=width, digits=digits)
 
     if output_dict:
+        if 'accuracy' in report_dict.keys():
+            report_dict['accuracy'] = report_dict['accuracy']['precision']
         return report_dict
     else:
         return report
@@ -1771,11 +1805,16 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    labels : array, shape = [n_labels], optional (default=None)
+    labels : array, shape = [n_labels], optional (default='deprecated')
         Integer array of labels. If not provided, labels will be inferred
         from y_true and y_pred.
 
         .. versionadded:: 0.18
+        .. deprecated:: 0.21
+           This parameter ``labels`` is deprecated in version 0.21 and will
+           be removed in version 0.23. Hamming loss uses ``y_true.shape[1]``
+           for the number of labels when y_true is binary label indicators,
+           so it is unnecessary for the user to specify.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -1826,6 +1865,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     In the multilabel case with binary label indicators:
 
+    >>> import numpy as np
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
@@ -1833,10 +1873,11 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.asarray(labels)
+    if labels is not None:
+        warnings.warn("The labels parameter is unused. It was"
+                      " deprecated in version 0.21 and"
+                      " will be removed in version 0.23",
+                      DeprecationWarning)
 
     if sample_weight is None:
         weight_average = 1.
@@ -1847,7 +1888,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
         n_differences = count_nonzero(y_true - y_pred,
                                       sample_weight=sample_weight)
         return (n_differences /
-                (y_true.shape[0] * len(labels) * weight_average))
+                (y_true.shape[0] * y_true.shape[1] * weight_average))
 
     elif y_type in ["binary", "multiclass"]:
         return _weighted_sum(y_true != y_pred, sample_weight, normalize=True)
@@ -1906,6 +1947,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
 
     Examples
     --------
+    >>> from sklearn.metrics import log_loss
     >>> log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
@@ -2036,7 +2078,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     >>> X = [[0], [1]]
     >>> y = [-1, 1]
     >>> est = svm.LinearSVC(random_state=0)
-    >>> est.fit(X, y)
+    >>> est.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
          multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
@@ -2049,11 +2091,12 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     In the multiclass case:
 
+    >>> import numpy as np
     >>> X = np.array([[0], [1], [2], [3]])
     >>> Y = np.array([0, 1, 2, 3])
     >>> labels = np.array([0, 1, 2, 3])
     >>> est = svm.LinearSVC()
-    >>> est.fit(X, Y)
+    >>> est.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
          multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,

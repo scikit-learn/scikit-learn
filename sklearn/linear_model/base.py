@@ -13,7 +13,6 @@ Generalized Linear models.
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 # License: BSD 3 clause
 
-from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
 import warnings
@@ -22,10 +21,11 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
+from scipy.special import expit
 
-from ..externals import six
-from ..utils import Parallel, delayed
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..utils._joblib import Parallel, delayed
+from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                    MultiOutputMixin)
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
@@ -183,7 +183,7 @@ def _rescale_data(X, y, sample_weight):
     return X, y
 
 
-class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
+class LinearModel(BaseEstimator, metaclass=ABCMeta):
     """Base class for Linear Models"""
 
     @abstractmethod
@@ -293,10 +293,7 @@ class LinearClassifierMixin(ClassifierMixin):
         multiclass is handled by normalizing that over all classes.
         """
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
+        expit(prob, out=prob)
         if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:
@@ -305,7 +302,7 @@ class LinearClassifierMixin(ClassifierMixin):
             return prob
 
 
-class SparseCoefMixin(object):
+class SparseCoefMixin:
     """Mixin for converting coef_ to and from CSR format.
 
     L1-regularizing estimators should inherit this.
@@ -359,7 +356,7 @@ class SparseCoefMixin(object):
         return self
 
 
-class LinearRegression(LinearModel, RegressorMixin):
+class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     """
     Ordinary least squares Linear Regression.
 
@@ -519,7 +516,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
         Xy = None
 
     # precompute if n_samples > n_features
-    if isinstance(precompute, six.string_types) and precompute == 'auto':
+    if isinstance(precompute, str) and precompute == 'auto':
         precompute = (n_samples > n_features)
 
     if precompute is True:

@@ -115,7 +115,6 @@ __all__ = [
     'pairwise_distances',
     'pairwise_distances_argmin',
     'pairwise_distances_argmin_min',
-    'pairwise_distances_argmin_min',
     'pairwise_distances_chunked',
     'pairwise_kernels',
     'precision_recall_curve',

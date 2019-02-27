@@ -22,16 +22,15 @@ from scipy.sparse import coo_matrix
 
 import pytest
 
-from sklearn.utils import _joblib
-from sklearn.utils import parallel_backend
-from sklearn.utils import register_parallel_backend
-from sklearn.externals.joblib.parallel import LokyBackend
+from sklearn.utils._joblib import joblib
+from sklearn.utils._joblib import parallel_backend
+from sklearn.utils._joblib import register_parallel_backend
+from sklearn.utils._joblib import __version__ as __joblib_version__
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
@@ -85,6 +84,10 @@ boston.target = boston.target[perm]
 # also make a hastie_10_2 dataset
 hastie_X, hastie_y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
 hastie_X = hastie_X.astype(np.float32)
+
+# Get the default backend in joblib to test parallelism and interaction with
+# different backends
+DEFAULT_JOBLIB_BACKEND = joblib.parallel.get_active_backend()[0].__class__
 
 FOREST_CLASSIFIERS = {
     "ExtraTreesClassifier": ExtraTreesClassifier,
@@ -186,12 +189,12 @@ def test_boston(name, criterion):
 def check_regressor_attributes(name):
     # Regression models should not have a classes_ attribute.
     r = FOREST_REGRESSORS[name](random_state=0)
-    assert_false(hasattr(r, "classes_"))
-    assert_false(hasattr(r, "n_classes_"))
+    assert not hasattr(r, "classes_")
+    assert not hasattr(r, "n_classes_")
 
     r.fit([[1, 2, 3], [4, 5, 6]], [1, 2])
-    assert_false(hasattr(r, "classes_"))
-    assert_false(hasattr(r, "n_classes_"))
+    assert not hasattr(r, "classes_")
+    assert not hasattr(r, "n_classes_")
 
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
@@ -434,7 +437,7 @@ def check_oob_score_raise_error(name):
                                      (False, False)]:
             est = ForestEstimator(oob_score=oob_score, bootstrap=bootstrap,
                                   random_state=0)
-            assert_false(hasattr(est, "oob_score_"))
+            assert not hasattr(est, "oob_score_")
 
         # No bootstrap
         assert_raises(ValueError, ForestEstimator(oob_score=True,
@@ -445,6 +448,7 @@ def check_oob_score_raise_error(name):
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_oob_score_raise_error(name):
     check_oob_score_raise_error(name)
+
 
 def check_gridsearch(name):
     forest = FOREST_CLASSIFIERS[name]()
@@ -528,20 +532,51 @@ def check_multioutput(name):
     if name in FOREST_CLASSIFIERS:
         with np.errstate(divide="ignore"):
             proba = est.predict_proba(X_test)
-            assert_equal(len(proba), 2)
-            assert_equal(proba[0].shape, (4, 2))
-            assert_equal(proba[1].shape, (4, 4))
+            assert len(proba) == 2
+            assert proba[0].shape == (4, 2)
+            assert proba[1].shape == (4, 4)
 
             log_proba = est.predict_log_proba(X_test)
-            assert_equal(len(log_proba), 2)
-            assert_equal(log_proba[0].shape, (4, 2))
-            assert_equal(log_proba[1].shape, (4, 4))
+            assert len(log_proba) == 2
+            assert log_proba[0].shape == (4, 2)
+            assert log_proba[1].shape == (4, 4)
 
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 def test_multioutput(name):
     check_multioutput(name)
+
+
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+def test_multioutput_string(name):
+    # Check estimators on multi-output problems with string outputs.
+
+    X_train = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-2, 1],
+               [-1, 1], [-1, 2], [2, -1], [1, -1], [1, -2]]
+    y_train = [["red", "blue"], ["red", "blue"], ["red", "blue"],
+               ["green", "green"], ["green", "green"], ["green", "green"],
+               ["red", "purple"], ["red", "purple"], ["red", "purple"],
+               ["green", "yellow"], ["green", "yellow"], ["green", "yellow"]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [["red", "blue"], ["green", "green"],
+              ["red", "purple"], ["green", "yellow"]]
+
+    est = FOREST_ESTIMATORS[name](random_state=0, bootstrap=False)
+    y_pred = est.fit(X_train, y_train).predict(X_test)
+    assert_array_equal(y_pred, y_test)
+
+    with np.errstate(divide="ignore"):
+        proba = est.predict_proba(X_test)
+        assert len(proba) == 2
+        assert proba[0].shape == (4, 2)
+        assert proba[1].shape == (4, 4)
+
+        log_proba = est.predict_log_proba(X_test)
+        assert len(log_proba) == 2
+        assert log_proba[0].shape == (4, 2)
+        assert log_proba[1].shape == (4, 4)
 
 
 def check_classes_shape(name):
@@ -743,7 +778,8 @@ def check_min_samples_split(name):
     assert_greater(np.min(node_samples), len(X) * 0.5 - 1,
                    "Failed with {0}".format(name))
 
-    est = ForestEstimator(min_samples_split=0.5, n_estimators=1, random_state=0)
+    est = ForestEstimator(min_samples_split=0.5, n_estimators=1,
+                          random_state=0)
     est.fit(X, y)
     node_idx = est.estimators_[0].tree_.children_left != -1
     node_samples = est.estimators_[0].tree_.n_node_samples[node_idx]
@@ -1171,7 +1207,7 @@ def check_warm_start_oob(name):
     clf_3 = ForestEstimator(n_estimators=15, max_depth=3, warm_start=True,
                             random_state=1, bootstrap=True, oob_score=False)
     clf_3.fit(X, y)
-    assert not(hasattr(clf_3, 'oob_score_'))
+    assert not hasattr(clf_3, 'oob_score_')
 
     clf_3.set_params(oob_score=True)
     ignore_warnings(clf_3.fit)(X, y)
@@ -1272,20 +1308,20 @@ def test_nestimators_future_warning(forest):
     est = assert_no_warnings(est.fit, X, y)
 
 
-class MyBackend(LokyBackend):
+class MyBackend(DEFAULT_JOBLIB_BACKEND):
     def __init__(self, *args, **kwargs):
         self.count = 0
-        super(MyBackend, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def start_call(self):
         self.count += 1
-        return super(MyBackend, self).start_call()
+        return super().start_call()
 
 
 register_parallel_backend('testing', MyBackend)
 
 
-@pytest.mark.skipif(_joblib.__version__ < LooseVersion('0.12'),
+@pytest.mark.skipif(__joblib_version__ < LooseVersion('0.12'),
                     reason='tests not yet supported in joblib <0.12')
 @skip_if_no_parallel
 def test_backend_respected():
@@ -1301,3 +1337,25 @@ def test_backend_respected():
         clf.predict_proba(X)
 
     assert ba.count == 0
+
+
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+@pytest.mark.parametrize('oob_score', (True, False))
+def test_multi_target(name, oob_score):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
+
+    X = iris.data
+
+    # Make multi column mixed type target.
+    y = np.vstack([
+        iris.target.astype(float),
+        iris.target.astype(int),
+        iris.target.astype(str),
+    ]).T
+
+    # Try to fit and predict.
+    clf.fit(X, y)
+    clf.predict(X)

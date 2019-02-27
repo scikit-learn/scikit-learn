@@ -568,7 +568,6 @@ cdef void lagged_update(double* weights, double wscale, int xnnz,
                           bint reset,
                           int n_iter) nogil:
     """Hard perform the JIT updates for non-zero features of present sample.
-     
     The updates that awaits are kept in memory using cumulative_sums,
     cumulative_sums_prox, wscale and feature_hist. See original SAGA paper
     (Defazio et al. 2014) for details. If reset=True, we also reset wscale to
@@ -609,7 +608,7 @@ cdef void lagged_update(double* weights, double wscale, int xnnz,
                     weights[idx] = _soft_thresholding(weights[idx],
                                                       cum_sum_prox)
                 else:
-                    last_update_ind = feature_hist[feature_ind] - 1
+                    last_update_ind = feature_hist[feature_ind]
                     if last_update_ind == -1:
                         last_update_ind = sample_itr - 1
                     for lagged_ind in range(sample_itr - 1,

@@ -2,16 +2,12 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-from __future__ import division
-
-import numpy as np
-from warnings import warn
-from sklearn.utils.fixes import euler_gamma
-
-from scipy.sparse import issparse
 
 import numbers
-from ..externals import six
+import numpy as np
+from scipy.sparse import issparse
+from warnings import warn
+
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
 from ..utils.fixes import _joblib_parallel_args
@@ -166,7 +162,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
                  behaviour='old',
                  random_state=None,
                  verbose=0):
-        super(IsolationForest, self).__init__(
+        super().__init__(
             base_estimator=ExtraTreeRegressor(
                 max_features=1,
                 splitter='random',
@@ -242,7 +238,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
 
-        if isinstance(self.max_samples, six.string_types):
+        if isinstance(self.max_samples, str):
             if self.max_samples == 'auto':
                 max_samples = min(256, n_samples)
             else:
@@ -267,9 +263,9 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
-        super(IsolationForest, self)._fit(X, y, max_samples,
-                                          max_depth=max_depth,
-                                          sample_weight=sample_weight)
+        super()._fit(X, y, max_samples,
+                     max_depth=max_depth,
+                     sample_weight=sample_weight)
 
         if self.behaviour == 'old':
             # in this case, decision_function = 0.5 + self.score_samples(X):
@@ -443,9 +439,11 @@ def _average_path_length(n_samples_leaf):
     """
     if isinstance(n_samples_leaf, INTEGER_TYPES):
         if n_samples_leaf <= 1:
+            return 0.
+        elif n_samples_leaf <= 2:
             return 1.
         else:
-            return 2. * (np.log(n_samples_leaf - 1.) + euler_gamma) - 2. * (
+            return 2. * (np.log(n_samples_leaf - 1.) + np.euler_gamma) - 2. * (
                 n_samples_leaf - 1.) / n_samples_leaf
 
     else:
@@ -454,12 +452,14 @@ def _average_path_length(n_samples_leaf):
         n_samples_leaf = n_samples_leaf.reshape((1, -1))
         average_path_length = np.zeros(n_samples_leaf.shape)
 
-        mask = (n_samples_leaf <= 1)
-        not_mask = np.logical_not(mask)
+        mask_1 = n_samples_leaf <= 1
+        mask_2 = n_samples_leaf == 2
+        not_mask = ~np.logical_or(mask_1, mask_2)
 
-        average_path_length[mask] = 1.
+        average_path_length[mask_1] = 0.
+        average_path_length[mask_2] = 1.
         average_path_length[not_mask] = 2. * (
-            np.log(n_samples_leaf[not_mask] - 1.) + euler_gamma) - 2. * (
+            np.log(n_samples_leaf[not_mask] - 1.) + np.euler_gamma) - 2. * (
                 n_samples_leaf[not_mask] - 1.) / n_samples_leaf[not_mask]
 
         return average_path_length.reshape(n_samples_leaf_shape)

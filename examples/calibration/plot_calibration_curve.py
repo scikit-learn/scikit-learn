@@ -129,6 +129,6 @@ def plot_calibration_curve(est, name, fig_index):
 plot_calibration_curve(GaussianNB(), "Naive Bayes", 1)
 
 # Plot calibration curve for Linear SVC
-plot_calibration_curve(LinearSVC(), "SVC", 2)
+plot_calibration_curve(LinearSVC(max_iter=10000), "SVC", 2)
 
 plt.show()

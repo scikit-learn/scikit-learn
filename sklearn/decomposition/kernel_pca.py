@@ -8,14 +8,15 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
+from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _UnstableOn32BitMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(BaseEstimator, TransformerMixin):
+class KernelPCA(BaseEstimator, TransformerMixin, _UnstableOn32BitMixin):
     """Kernel Principal component analysis (KPCA)
 
     Non-linear dimensionality reduction through the use of kernels (see
@@ -209,6 +210,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                                                 tol=self.tol,
                                                 maxiter=self.max_iter,
                                                 v0=v0)
+
+        # flip eigenvectors' sign to enforce deterministic output
+        self.alphas_, _ = svd_flip(self.alphas_,
+                                   np.empty_like(self.alphas_).T)
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]

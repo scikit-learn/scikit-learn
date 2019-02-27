@@ -3,7 +3,6 @@
 #          Giorgio Patrini
 #
 # License: BSD 3 clause
-from __future__ import division
 
 import warnings
 import itertools
@@ -11,27 +10,8 @@ import itertools
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse, stats
+from scipy.sparse import random as sparse_random
 
-try:
-    from scipy.sparse import random as sparse_random
-except ImportError:
-    from sklearn.utils.validation import check_random_state
-
-    def sparse_random(num_rows, num_cols, density, random_state=None):
-        # Helper function to create sparse random matrices.
-        # TODO: remove once scipy < 0.17 is no longer supported and just use
-        # scipy.sparse.random
-        # Note that this is not strictly equivalent to what scipy.sparse.random
-        # does as in our case the density is only correct in expectation but
-        # this is enough for our tests.
-        rng = check_random_state(random_state)
-        X = rng.uniform(size=(num_rows, num_cols))
-        zero_mask = rng.uniform(size=(num_rows, num_cols)) > density
-        X[zero_mask] = 0
-        return sparse.csr_matrix(X)
-
-
-from distutils.version import LooseVersion
 import pytest
 
 from sklearn.utils import gen_batches
@@ -47,7 +27,6 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_allclose
@@ -74,6 +53,7 @@ from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.preprocessing.data import PowerTransformer
 from sklearn.preprocessing.data import power_transform
+from sklearn.preprocessing.data import BOUNDS_THRESHOLD
 from sklearn.exceptions import DataConversionWarning, NotFittedError
 
 from sklearn.base import clone
@@ -170,8 +150,8 @@ def test_polynomial_feature_names():
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
     feature_names = poly.get_feature_names(
-        [u"\u0001F40D", u"\u262E", u"\u05D0"])
-    assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
+        ["\u0001F40D", "\u262E", "\u05D0"])
+    assert_array_equal(["1", "\u0001F40D", "\u262E", "\u05D0"],
                        feature_names)
 
 
@@ -390,15 +370,10 @@ def test_standard_scaler_numerical_stability():
     # was empirically found to cause numerical problems with np.mean & np.std.
 
     x = np.full(8, np.log(1e-5), dtype=np.float64)
-    if LooseVersion(np.__version__) >= LooseVersion('1.9'):
-        # This does not raise a warning as the number of samples is too low
-        # to trigger the problem in recent numpy
-        x_scaled = assert_no_warnings(scale, x)
-        assert_array_almost_equal(scale(x), np.zeros(8))
-    else:
-        w = "standard deviation of the data is probably very close to 0"
-        x_scaled = assert_warns_message(UserWarning, w, scale, x)
-        assert_array_almost_equal(x_scaled, np.zeros(8))
+    # This does not raise a warning as the number of samples is too low
+    # to trigger the problem in recent numpy
+    x_scaled = assert_no_warnings(scale, x)
+    assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
     x = np.full(10, np.log(1e-5), dtype=np.float64)
@@ -433,7 +408,7 @@ def test_scaler_2d_arrays():
 
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_equal(scaler.n_samples_seen_, n_samples)
 
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
@@ -448,17 +423,17 @@ def test_scaler_2d_arrays():
     assert_array_almost_equal(X_scaled_back, X)
 
     X_scaled = scale(X, axis=1, with_std=False)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=1), n_samples * [0.0])
     X_scaled = scale(X, axis=1, with_std=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=1), n_samples * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=1), n_samples * [1.0])
     # Check that the data hasn't been modified
     assert X_scaled is not X
 
     X_scaled = scaler.fit(X).transform(X, copy=False)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
@@ -468,18 +443,43 @@ def test_scaler_2d_arrays():
     X[:, 0] = 1.0  # first feature is a constant, non zero feature
     scaler = StandardScaler()
     X_scaled = scaler.fit(X).transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
     assert_array_almost_equal(X_scaled.mean(axis=0), n_features * [0.0])
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
     assert X_scaled is not X
 
 
+def test_scaler_float16_overflow():
+    # Test if the scaler will not overflow on float16 numpy arrays
+    rng = np.random.RandomState(0)
+    # float16 has a maximum of 65500.0. On the worst case 5 * 200000 is 100000
+    # which is enough to overflow the data type
+    X = rng.uniform(5, 10, [200000, 1]).astype(np.float16)
+
+    with np.errstate(over='raise'):
+        scaler = StandardScaler().fit(X)
+        X_scaled = scaler.transform(X)
+
+    # Calculate the float64 equivalent to verify result
+    X_scaled_f64 = StandardScaler().fit_transform(X.astype(np.float64))
+
+    # Overflow calculations may cause -inf, inf, or nan. Since there is no nan
+    # input, all of the outputs should be finite. This may be redundant since a
+    # FloatingPointError exception will be thrown on overflow above.
+    assert np.all(np.isfinite(X_scaled))
+
+    # The normal distribution is very unlikely to go above 4. At 4.0-8.0 the
+    # float16 precision is 2^-8 which is around 0.004. Thus only 2 decimals are
+    # checked to account for precision differences.
+    assert_array_almost_equal(X_scaled, X_scaled_f64, decimal=2)
+
+
 def test_handle_zeros_in_scale():
     s1 = np.array([0, 1, 2, 3])
     s2 = _handle_zeros_in_scale(s1, copy=True)
 
-    assert_false(s1[0] == s2[0])
+    assert not s1[0] == s2[0]
     assert_array_equal(s1, np.array([0, 1, 2, 3]))
     assert_array_equal(s2, np.array([1, 1, 2, 3]))
 
@@ -806,15 +806,15 @@ def test_scaler_without_centering():
 
     scaler = StandardScaler(with_mean=False).fit(X)
     X_scaled = scaler.transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
 
     scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
     X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
+    assert not np.any(np.isnan(X_csr_scaled.data))
 
     scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
     X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
-    assert_false(np.any(np.isnan(X_csc_scaled.data)))
+    assert not np.any(np.isnan(X_csc_scaled.data))
 
     assert_array_almost_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csr.var_)
@@ -952,19 +952,19 @@ def test_scaler_int():
     with warnings.catch_warnings(record=True):
         scaler = StandardScaler(with_mean=False).fit(X)
         X_scaled = scaler.transform(X, copy=True)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
         X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
+    assert not np.any(np.isnan(X_csr_scaled.data))
 
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
         scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
         X_csc_scaled = scaler_csc.transform(X_csc, copy=True)
-    assert_false(np.any(np.isnan(X_csc_scaled.data)))
+    assert not np.any(np.isnan(X_csc_scaled.data))
 
     assert_array_almost_equal(scaler.mean_, scaler_csr.mean_)
     assert_array_almost_equal(scaler.var_, scaler_csr.var_)
@@ -1496,12 +1496,13 @@ def test_quantile_transform_bounds():
 
 
 def test_quantile_transform_and_inverse():
-    # iris dataset
-    X = iris.data
-    transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
-    X_trans = transformer.fit_transform(X)
-    X_trans_inv = transformer.inverse_transform(X_trans)
-    assert_array_almost_equal(X, X_trans_inv)
+    X_1 = iris.data
+    X_2 = np.array([[0.], [BOUNDS_THRESHOLD / 10], [1.5], [2], [3], [3], [4]])
+    for X in [X_1, X_2]:
+        transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
+        X_trans = transformer.fit_transform(X)
+        X_trans_inv = transformer.inverse_transform(X_trans)
+        assert_array_almost_equal(X, X_trans_inv, decimal=9)
 
 
 def test_quantile_transform_nan():
@@ -1539,10 +1540,10 @@ def test_scale_function_without_centering():
     X_csr = sparse.csr_matrix(X)
 
     X_scaled = scale(X, with_mean=False)
-    assert_false(np.any(np.isnan(X_scaled)))
+    assert not np.any(np.isnan(X_scaled))
 
     X_csr_scaled = scale(X_csr, with_mean=False)
-    assert_false(np.any(np.isnan(X_csr_scaled.data)))
+    assert not np.any(np.isnan(X_csr_scaled.data))
 
     # test csc has same outcome
     X_csc_scaled = scale(X_csr.tocsc(), with_mean=False)
