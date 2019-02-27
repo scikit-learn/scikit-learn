@@ -78,7 +78,7 @@ test_script:
         } else {
             $env:PYTEST_ARGS = ""
         }
-  - "pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sklearn"
+  - "pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs --cov=sklearn sklearn"
   # Move back to the project folder
   - cd "../scikit-learn"
 
@@ -87,6 +87,8 @@ artifacts:
   - path: dist\*
 
 on_success:
+  - "cp ../empty_folder/.coverage ."
+  - codecov
   # Upload the generated wheel package to Rackspace
   - "python -m wheelhouse_uploader upload --local-folder=dist sklearn-windows-wheels"
 
