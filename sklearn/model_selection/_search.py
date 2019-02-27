@@ -840,7 +840,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         if self.return_train_score:
             if train_sample_weight_sums is None:
                 # Because the cv iterators may not iterate over the entire
-                # dataset we can't just use the dataset size directly.
+                # dataset, we can't just use the dataset size directly.
                 samples = int(np.sum(test_sample_counts[:n_splits]))
                 train_sample_counts = samples - \
                     np.array(test_sample_counts[:n_splits], dtype=np.int)
