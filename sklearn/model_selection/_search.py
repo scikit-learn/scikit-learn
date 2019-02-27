@@ -651,7 +651,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             def is_none(x):
                 return x is None
 
-            def collape_nones(xs):
+            def collapse_nones(xs):
                 return None if xs is None or any(map(is_none, xs)) else xs
 
             def weights_sums(train_ind, test_ind, sample_weight):
@@ -702,8 +702,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 else:
                     out, train_wts, test_wts = ([], [], [])
 
-                train_wts = collape_nones(train_wts)
-                test_wts = collape_nones(test_wts)
+                train_wts = collapse_nones(train_wts)
+                test_wts = collapse_nones(test_wts)
 
                 if len(out) < 1:
                     raise ValueError('No fits were performed. '
