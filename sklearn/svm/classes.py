@@ -8,6 +8,7 @@ from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
 from ..utils import check_X_y
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
+from ..utils.solver_convergence import _check_convergence_params
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,
@@ -220,6 +221,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
+        self.tol, self.max_iter = _check_convergence_params(self.tol,
+                self.max_iter)
+
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
@@ -407,6 +411,9 @@ class LinearSVR(LinearModel, RegressorMixin):
             warnings.warn(msg % (old_loss, self.loss, old_loss, '1.0'),
                           DeprecationWarning)
         # ---------------------------------------------------------------------
+
+        self.tol, self.max_iter = _check_convergence_params(self.tol,
+                self.max_iter)
 
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"

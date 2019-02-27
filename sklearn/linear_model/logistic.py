@@ -30,6 +30,7 @@ from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
 from ..utils import deprecated
+from ..utils.solver_convergence import _check_convergence_params
 from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
@@ -1528,6 +1529,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             _dtype = np.float64
         else:
             _dtype = [np.float64, np.float32]
+        
+        self.tol, self.max_iter = _check_convergence_params(self.tol,
+                self.max_iter, solver)
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
                          accept_large_sparse=solver != 'liblinear')
