@@ -247,9 +247,6 @@ class Pipeline(_BaseComposition):
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
 
-        if hasattr(X, 'columns'):
-            self.set_feature_names(X.columns)
-
         if self._final_estimator == 'passthrough':
             return Xt, {}
         return Xt, fit_params_steps[self.steps[-1][0]]
@@ -283,6 +280,10 @@ class Pipeline(_BaseComposition):
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator != 'passthrough':
             self._final_estimator.fit(Xt, y, **fit_params)
+
+        if hasattr(X, 'columns'):
+            self.set_feature_names(X.columns)
+
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -315,11 +316,14 @@ class Pipeline(_BaseComposition):
         last_step = self._final_estimator
         Xt, fit_params = self._fit(X, y, **fit_params)
         if hasattr(last_step, 'fit_transform'):
-            return last_step.fit_transform(Xt, y, **fit_params)
-        elif last_step == 'passthrough':
-            return Xt
-        else:
-            return last_step.fit(Xt, y, **fit_params).transform(Xt)
+            Xt = last_step.fit_transform(Xt, y, **fit_params)
+        elif last_step != 'passthrough':
+            Xt = last_step.fit(Xt, y, **fit_params).transform(Xt)
+
+        if hasattr(X, 'columns'):
+            self.set_feature_names(X.columns)
+
+        return Xt
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
@@ -533,11 +537,11 @@ class Pipeline(_BaseComposition):
     def _pairwise(self):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
-    
+
     def set_feature_names(self, input_features):
         self.input_features_ = input_features
         feature_names = input_features
-        for name, transform in self._iter(with_final=True):
+        for _, name, transform in self._iter(with_final=False):
             transform.input_features_ = feature_names
             if not hasattr(transform, "get_feature_names"):
                 raise TypeError("Transformer {} does provide"
@@ -547,6 +551,7 @@ class Pipeline(_BaseComposition):
                     input_features=feature_names)
             except TypeError:
                 feature_names = transform.get_feature_names()
+        self._final_estimator.input_features_ = feature_names
 
     def get_feature_names(self, input_features=None):
         """Get feature names for transformation.
@@ -566,7 +571,7 @@ class Pipeline(_BaseComposition):
             Transformed feature names
         """
         feature_names = input_features
-        for name, transform in self._iter(with_final=True):
+        for _, name, transform in self._iter(with_final=True):
             if not hasattr(transform, "get_feature_names"):
                 raise TypeError("Transformer {} does provide"
                                 " get_feature_names".format(name))
