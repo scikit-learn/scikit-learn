@@ -366,3 +366,6 @@ class Imputer(BaseEstimator, TransformerMixin):
             X[coordinates] = values
 
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
