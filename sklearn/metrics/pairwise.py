@@ -1049,6 +1049,11 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
+def _dist_wrapper(dist, mat, slice, *args, **kwargs):
+    """write in-place to a slice of a distance matrix"""
+    mat[:, slice] = dist(*args, **kwargs)
+
+
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
     and compute them in parallel"""
@@ -1059,14 +1064,15 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
-    # enforce a threading backend to prevent data the communication
+    # enforce a threading backend to prevent data communication
     # overhead
-    fd = delayed(func)
-    ret = Parallel(backend="threading", n_jobs=n_jobs, verbose=0)(
-        fd(X, Y[s], **kwds)
+    fd = delayed(_dist_wrapper)
+    ret = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype)
+    Parallel(backend="threading", n_jobs=n_jobs, verbose=0)(
+        fd(func, ret, s, X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
 
-    return np.hstack(ret)
+    return ret
 
 
 def _pairwise_callable(X, Y, metric, **kwds):
