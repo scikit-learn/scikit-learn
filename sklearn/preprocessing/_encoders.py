@@ -39,7 +39,9 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         - convert list of strings to object dtype
         - check for missing values for object dtype data (check_array does
           not do that)
-        """        
+        - return list of features (arrays)
+
+        """
 
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             X_temp = check_array(X, dtype=None)
