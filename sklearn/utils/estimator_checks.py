@@ -2067,7 +2067,8 @@ def check_classifier_data_not_an_array(name, estimator_orig):
     y = [1, 1, 1, 2, 2, 2]
     y = multioutput_estimator_convert_y_2d(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
-        check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type)
+        check_estimators_data_not_an_array(name, estimator_orig, X, y,
+                                           obj_type)
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -2076,7 +2077,8 @@ def check_regressor_data_not_an_array(name, estimator_orig):
     X = pairwise_estimator_convert_X(X, estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
-        check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type)
+        check_estimators_data_not_an_array(name, estimator_orig, X, y,
+                                           obj_type)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
