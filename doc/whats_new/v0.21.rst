@@ -182,6 +182,12 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.metrics`
 ......................
 
+- |Efficiency| Force ``joblib`` to use the ``'threading'`` backend in
+  :func:`metrics.pairwise.pairwise_distances` when ``n_jobs`` is greater than
+  1.
+  :issue:`8216` by :user:`Pierre Glaser <pierreglaser>` and
+  :user:`Romuald Menuet <zanospi>`
+
 - |Feature| Added the :func:`metrics.max_error` metric and a corresponding
   ``'max_error'`` scorer for single output regression.
   :issue:`12232` by :user:`Krishna Sangeeth <whiletruelearn>`.
