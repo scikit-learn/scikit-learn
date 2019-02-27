@@ -4,7 +4,7 @@ import pytest
 from pytest import approx
 
 from sklearn._fast_gradient_boosting.grower import TreeGrower
-from sklearn._fast_gradient_boosting.binning import BinMapper
+from sklearn._fast_gradient_boosting.binning import _BinMapper
 from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
 from sklearn._fast_gradient_boosting.types import Y_DTYPE
 from sklearn._fast_gradient_boosting.types import G_H_DTYPE
@@ -206,7 +206,7 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
     if noise:
         y_scale = y.std()
         y += rng.normal(scale=noise, size=n_samples) * y_scale
-    mapper = BinMapper(max_bins=n_bins)
+    mapper = _BinMapper(max_bins=n_bins)
     X = mapper.fit_transform(X)
 
     all_gradients = y.astype(G_H_DTYPE)
@@ -245,7 +245,7 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
     # data = linear target, 3 features, 1 irrelevant.
     X = rng.normal(size=(n_samples, 3))
     y = X[:, 0] - X[:, 1]
-    mapper = BinMapper(max_bins=max_bins)
+    mapper = _BinMapper(max_bins=max_bins)
     X = mapper.fit_transform(X)
 
     all_gradients = y.astype(G_H_DTYPE)

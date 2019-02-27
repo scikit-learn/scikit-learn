@@ -15,7 +15,7 @@ from sklearn.preprocessing import LabelEncoder
 from ._gradient_boosting import _update_raw_predictions
 from .types import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
 
-from .binning import BinMapper
+from .binning import _BinMapper
 from .grower import TreeGrower
 from .loss import _LOSSES
 
@@ -116,7 +116,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             print("Binning {:.3f} GB of data: ".format(X.nbytes / 1e9), end="",
                   flush=True)
         tic = time()
-        self.bin_mapper_ = BinMapper(max_bins=self.max_bins, random_state=rng)
+        self.bin_mapper_ = _BinMapper(max_bins=self.max_bins, random_state=rng)
         X_binned = self.bin_mapper_.fit_transform(X)
         toc = time()
         if self.verbose:

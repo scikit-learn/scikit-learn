@@ -57,7 +57,7 @@ def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
     return binning_thresholds
 
 
-class BinMapper(BaseEstimator, TransformerMixin):
+class _BinMapper(BaseEstimator, TransformerMixin):
     """Transformer that maps a dataset into integer-valued bins.
 
     The bins are created in a feature-wise fashion, using quantiles so that

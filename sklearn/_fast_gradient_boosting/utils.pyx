@@ -7,7 +7,7 @@
 
 from cython.parallel import prange
 
-from .binning import BinMapper
+from .binning import _BinMapper
 from .types cimport G_H_DTYPE_C
 from .types cimport Y_DTYPE_C
 from ..base import is_classifier
@@ -64,7 +64,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
         'boost_from_average': True,
         'enable_bundle': False,  # also makes feature order consistent
         'min_data_in_bin': 1,
-        'subsample_for_bin': BinMapper().subsample,
+        'subsample_for_bin': _BinMapper().subsample,
     }
 
     if sklearn_params['loss'] == 'categorical_crossentropy':

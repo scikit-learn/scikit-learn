@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 import pytest
 
-from sklearn._fast_gradient_boosting.binning import BinMapper
+from sklearn._fast_gradient_boosting.binning import _BinMapper
 from sklearn._fast_gradient_boosting.grower import TreeGrower
 from sklearn._fast_gradient_boosting.types import G_H_DTYPE
 
@@ -15,7 +15,7 @@ def test_boston_dataset(max_bins):
     X_train, X_test, y_train, y_test = train_test_split(
         boston.data, boston.target, random_state=42)
 
-    mapper = BinMapper(max_bins=max_bins, random_state=42)
+    mapper = _BinMapper(max_bins=max_bins, random_state=42)
     X_train_binned = mapper.fit_transform(X_train)
 
     # Init gradients and hessians to that of least squares loss

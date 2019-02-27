@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 import pytest
 
-from sklearn._fast_gradient_boosting.binning import BinMapper
+from sklearn._fast_gradient_boosting.binning import _BinMapper
 from sklearn._fast_gradient_boosting.binning import _find_binning_thresholds
 from sklearn._fast_gradient_boosting.binning import _map_to_bins
 from sklearn._fast_gradient_boosting.types import X_DTYPE, X_BINNED_DTYPE
@@ -94,7 +94,7 @@ def test_bin_mapper_random_data(n_bins):
     expected_count_per_bin = n_samples // n_bins
     tol = int(0.05 * expected_count_per_bin)
 
-    mapper = BinMapper(max_bins=n_bins, random_state=42).fit(DATA)
+    mapper = _BinMapper(max_bins=n_bins, random_state=42).fit(DATA)
     binned = mapper.transform(DATA)
 
     assert binned.shape == (n_samples, n_features)
@@ -124,7 +124,7 @@ def test_bin_mapper_small_random_data(n_samples, n_bins):
     data = np.random.RandomState(42).normal(size=n_samples).reshape(-1, 1)
     assert len(np.unique(data)) == n_samples
 
-    mapper = BinMapper(max_bins=n_bins, random_state=42)
+    mapper = _BinMapper(max_bins=n_bins, random_state=42)
     binned = mapper.fit_transform(data)
 
     assert binned.shape == data.shape
@@ -140,7 +140,7 @@ def test_bin_mapper_small_random_data(n_samples, n_bins):
 ])
 def test_bin_mapper_identity_repeated_values(n_bins, n_distinct, multiplier):
     data = np.array(list(range(n_distinct)) * multiplier).reshape(-1, 1)
-    binned = BinMapper(max_bins=n_bins).fit_transform(data)
+    binned = _BinMapper(max_bins=n_bins).fit_transform(data)
     assert_array_equal(data, binned)
 
 
@@ -157,12 +157,12 @@ def test_bin_mapper_repeated_values_invariance(n_distinct):
 
     data = data.reshape(-1, 1)
 
-    mapper_1 = BinMapper(max_bins=n_distinct)
+    mapper_1 = _BinMapper(max_bins=n_distinct)
     binned_1 = mapper_1.fit_transform(data)
     assert_array_equal(np.unique(binned_1[:, 0]), np.arange(n_distinct))
 
     # Adding more bins to the mapper yields the same results (same thresholds)
-    mapper_2 = BinMapper(max_bins=min(256, n_distinct * 3))
+    mapper_2 = _BinMapper(max_bins=min(256, n_distinct * 3))
     binned_2 = mapper_2.fit_transform(data)
 
     assert_allclose(mapper_1.bin_thresholds_[0], mapper_2.bin_thresholds_[0])
@@ -176,7 +176,7 @@ def test_bin_mapper_repeated_values_invariance(n_distinct):
 ])
 def test_bin_mapper_identity_small(n_bins, scale, offset):
     data = np.arange(n_bins).reshape(-1, 1) * scale + offset
-    binned = BinMapper(max_bins=n_bins).fit_transform(data)
+    binned = _BinMapper(max_bins=n_bins).fit_transform(data)
     assert_array_equal(binned, np.arange(n_bins).reshape(-1, 1))
 
 
@@ -192,8 +192,8 @@ def test_bin_mapper_identity_small(n_bins, scale, offset):
 def test_bin_mapper_idempotence(n_bins_small, n_bins_large):
     assert n_bins_large >= n_bins_small
     data = np.random.RandomState(42).normal(size=30000).reshape(-1, 1)
-    mapper_small = BinMapper(max_bins=n_bins_small)
-    mapper_large = BinMapper(max_bins=n_bins_large)
+    mapper_small = _BinMapper(max_bins=n_bins_small)
+    mapper_large = _BinMapper(max_bins=n_bins_large)
     binned_small = mapper_small.fit_transform(data)
     binned_large = mapper_large.fit_transform(binned_small)
     assert_array_equal(binned_small, binned_large)
@@ -208,14 +208,14 @@ def test_n_bins_per_feature(max_bins, diff):
     n_unique_values = max_bins + diff
     X = list(range(n_unique_values)) * 2
     X = np.array(X).reshape(-1, 1)
-    mapper = BinMapper(max_bins=max_bins).fit(X)
+    mapper = _BinMapper(max_bins=max_bins).fit(X)
     assert np.all(mapper.n_bins_per_feature_ == min(max_bins, n_unique_values))
 
 
 def test_subsample():
     # Make sure bin thresholds are different when applying subsampling
-    mapper_no_subsample = BinMapper(subsample=None, random_state=0).fit(DATA)
-    mapper_subsample = BinMapper(subsample=256, random_state=0).fit(DATA)
+    mapper_no_subsample = _BinMapper(subsample=None, random_state=0).fit(DATA)
+    mapper_subsample = _BinMapper(subsample=256, random_state=0).fit(DATA)
 
     for feature in range(DATA.shape[1]):
         assert not np.allclose(mapper_no_subsample.bin_thresholds_[feature],
