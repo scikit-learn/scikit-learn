@@ -188,7 +188,6 @@ class Pipeline(_BaseComposition):
                 "or be the string 'passthrough'. "
                 "'%s' (type %s) doesn't" % (estimator, type(estimator)))
 
-
     def _iter(self, with_final=True, with_resamplers=True):
         """
         Generate (name, trans) tuples excluding 'passthrough' transformers
@@ -203,7 +202,6 @@ class Pipeline(_BaseComposition):
                                       (with_resamplers and
                                        hasattr(trans, 'fit_resample'))):
                 yield idx, name, trans
-
 
     @property
     def _estimator_type(self):
@@ -435,8 +433,9 @@ class Pipeline(_BaseComposition):
         """
         if self._resamplers_exist:
             raise NotImplementedError("Pipelines containing resamplers that"
-            " have an estimator implementing fit_predict as their last stage "
-            "are currently not supported.")
+                                      " have an estimator implementing "
+                                      "fit_predict as their last stage "
+                                      "are currently not supported.")
         Xt, yt, fit_params = self._fit(X, y, **fit_params)
         return self.steps[-1][-1].fit_predict(Xt, yt, **fit_params)
 
@@ -690,6 +689,7 @@ def _fit_transform_one(transformer, X, y, weight, **fit_params):
     if weight is None:
         return res, transformer
     return res * weight, transformer
+
 
 def _fit_resample_one(sampler, X, y, **fit_params):
     X_res, y_res = sampler.fit_resample(X, y, **fit_params)
