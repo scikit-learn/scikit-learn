@@ -252,7 +252,7 @@ def test_multi_output_classification():
 
 def test_multiclass_multioutput_estimator():
     # test to check meta of meta estimators
-    svc = LinearSVC(random_state=0)
+    svc = LinearSVC(random_state=0, tol=1e-1, C=.1)
     multi_class_svc = OneVsRestClassifier(svc)
     multi_target_svc = MultiOutputClassifier(multi_class_svc)
 
@@ -349,7 +349,7 @@ def test_multi_output_classification_partial_fit_sample_weights():
 def test_multi_output_exceptions():
     # NotFittedError when fit is not done but score, predict and
     # and predict_proba are called
-    moc = MultiOutputClassifier(LinearSVC(random_state=0))
+    moc = MultiOutputClassifier(LinearSVC(random_state=0, tol=1e-1, C=.1))
     assert_raises(NotFittedError, moc.predict, y)
     assert_raises(NotFittedError, moc.predict_proba, y)
     assert_raises(NotFittedError, moc.score, X, y)
@@ -380,7 +380,7 @@ def generate_multilabel_dataset_with_correlations():
 def test_classifier_chain_fit_and_predict_with_linear_svc():
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain = ClassifierChain(LinearSVC())
+    classifier_chain = ClassifierChain(LinearSVC(tol=1e-1, C=.1))
     classifier_chain.fit(X, Y)
 
     Y_pred = classifier_chain.predict(X)
