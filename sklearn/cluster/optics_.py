@@ -251,9 +251,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Extract clusters from the calculated orders and reachability
         if self.cluster_method == 'dbscan':
             labels_ = cluster_optics_dbscan(self.reachability_,
-                                                      self.core_distances_,
-                                                      self.ordering_,
-                                                      self.eps)
+                                            self.core_distances_,
+                                            self.ordering_,
+                                            self.eps)
 
         self.labels_ = labels_
         return self
@@ -522,7 +522,6 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
 
     """
     n_samples = len(core_distances)
-    is_core = np.zeros(n_samples, dtype=bool)
     labels = np.zeros(n_samples, dtype=int)
 
     far_reach = reachability > eps
