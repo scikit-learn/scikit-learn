@@ -7,10 +7,6 @@ implemented in 0.20.2 against implementation from PR #13290.
 # License: MIT
 
 from time import time
-import sys
-import warnings
-import numbers
-
 from itertools import combinations, chain
 from itertools import combinations_with_replacement as combinations_w_r
 
@@ -21,7 +17,6 @@ import matplotlib.pyplot as plt
 import pandas
 
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.utils.testing import ignore_warnings
 
 
 ##############################
@@ -83,10 +78,10 @@ def bench(n_obs, n_features, degrees, interactions_only, orders,
                         obs = dict(n=n, nfeat=nfeat, order=order,
                                    interaction_only=interaction_only,
                                    degree=degree)
-                        fct1 = fct_polynomial_features_0_20_2(X,
-                                                              degree, interaction_only, order)
-                        fct2 = fct_polynomial_features(X,
-                                                       degree, interaction_only, order)
+                        fct1 = fct_polynomial_features_0_20_2(
+                            X, degree, interaction_only, order)
+                        fct2 = fct_polynomial_features(
+                            X, degree, interaction_only, order)
 
                         # creates different inputs to avoid caching in any ways
                         Xs = []
@@ -102,7 +97,7 @@ def bench(n_obs, n_features, degrees, interactions_only, orders,
                             p1 = fct1(X)
                             r += 1
                             if time() - st >= 1:
-                                break # stops if longer than a second
+                                break  # stops if longer than a second
                         end = time()
                         obs["time_0_20_2"] = (end - st) / r
 
@@ -144,7 +139,7 @@ def plot_results(df, verbose=False):
                     a.set_ylabel("Time (s) degree={}".format(degree),
                                  fontsize='x-small')
 
-                for color, nfeat in zip('br', sorted(set(df.nfeat))):
+                for color, nfeat in zip('brgy', sorted(set(df.nfeat))):
                     subset = df[(df.degree == degree) & (df.nfeat == nfeat) &
                                 (df.interaction_only == interaction_only) &
                                 (df.order == order)]
@@ -167,9 +162,9 @@ def plot_results(df, verbose=False):
     plt.suptitle("Benchmark for PolynomialFeatures", fontsize=16)
 
 
-def run_bench(repeat=10, verbose=False):
-    n_obs = [1, 10, 100, 1000, 10000]
-    n_features = [10, 20]
+def run_bench(repeat=100, verbose=False):
+    n_obs = [1, 10, 100, 1000, 10000, 100000]
+    n_features = [10, 20, 50]
     degrees = [2, 3, 4]
     interactions_only = [False, True]
     orders = ['C', 'F']
@@ -188,5 +183,7 @@ def run_bench(repeat=10, verbose=False):
 
 
 if __name__ == '__main__':
-    run_bench(verbose=True)
+    df = run_bench(verbose=True)
+    plt.savefig("bench_polynomial_features.png")
+    df.to_csv("bench_polynomial_features.csv", index=False)
     plt.show()
