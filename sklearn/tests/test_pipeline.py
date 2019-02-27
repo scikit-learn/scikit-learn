@@ -1077,10 +1077,11 @@ def test_input_feature_names_pandas():
         ('select', SelectKBest(k=2)),
         ('clf', LogisticRegression())])
     iris = load_iris()
-    df = pd.DataFrame(iris.data, names=iris.feature_names)
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
     pipe.fit(df, iris.target)
+    mask = pipe.named_steps.select.get_support()
     assert_array_equal(pipe.named_steps.clf.input_features_,
-                       iris.feature_names)
+                       np.array(iris.feature_names)[mask])
 
 
 def test_input_features_passthrough():

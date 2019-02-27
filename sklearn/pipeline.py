@@ -567,15 +567,15 @@ class Pipeline(_BaseComposition):
         feature_names = input_features
         for _, name, transform in self._iter(with_final=False):
             transform.input_features_ = feature_names
-            if not hasattr(transform, "get_feature_names"):
-                raise TypeError("Transformer {} does provide"
-                                " get_feature_names".format(name))
             try:
                 feature_names = transform.get_feature_names(
                     input_features=feature_names)
             except TypeError:
                 feature_names = transform.get_feature_names()
-        self._final_estimator.input_features_ = feature_names
+            except AttributeError:
+                feature_names = None
+        if self._final_estimator != "passthrough":
+            self._final_estimator.input_features_ = feature_names
 
     def get_feature_names(self, input_features=None):
         """Get feature names for transformation.
