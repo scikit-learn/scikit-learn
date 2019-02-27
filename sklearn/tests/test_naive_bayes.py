@@ -675,6 +675,7 @@ def test_alpha():
                          X, y, classes=[0, 1])
 
 
+@pytest.mark.filterwarnings("ignore:Alpha too small will result:UserWarning")
 def test_alpha_vector():
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])

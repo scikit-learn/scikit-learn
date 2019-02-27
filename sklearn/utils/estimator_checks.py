@@ -2266,10 +2266,6 @@ def check_get_params_invariance(name, estimator_orig):
                shallow_params.items())
 
 
-class SklearnCheckEstimatorWarning(UserWarning):
-    pass
-
-
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_set_params(name, estimator_orig):
     # Check that get_params() returns the same thing
