@@ -43,6 +43,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('preprocessing/tests')
     config.add_subpackage('semi_supervised')
     config.add_subpackage('semi_supervised/tests')
+    config.add_subpackage('experimental')
+    config.add_subpackage('experimental/tests')
 
     # submodules which have their own setup.py
     config.add_subpackage('cluster')
@@ -59,7 +61,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('svm')
     config.add_subpackage('_fast_gradient_boosting')
     config.add_subpackage('linear_model')
-    config.add_subpackage('experimental')
 
     # add cython extension module for isotonic regression
     config.add_extension('_isotonic',
