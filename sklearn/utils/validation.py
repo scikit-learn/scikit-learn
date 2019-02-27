@@ -940,6 +940,16 @@ def check_non_negative(X, whom):
 
 
 def warn_args(f):
+    """Decorator for methods that issues warnings for positional arguments
+
+    Using the keyword-only argument syntax in pep 3102, arguments after the
+    * will issue a warning when passed as a positional argument.
+
+    Parameters
+    ----------
+    f : function
+        function to check arguments on
+    """
     argspec = getfullargspec(f)
     kwonlyargs = argspec.kwonlyargs
     orig_spec = argspec.args
