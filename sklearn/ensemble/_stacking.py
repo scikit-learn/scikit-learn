@@ -32,8 +32,8 @@ from ..utils.validation import has_fit_parameter
 from ..utils.validation import check_is_fitted
 
 
-class _BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
-                                   MetaEstimatorMixin, TransformerMixin)):
+class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
+                    metaclass=ABCMeta):
     """Base class for stacking method.
 
     Warning: This class should not be used directly. Use derived classes
@@ -41,7 +41,7 @@ class _BaseStacking(with_metaclass(ABCMeta, _BaseComposition,
     """
 
     @abstractmethod
-    def __init__(self, estimators=None, final_estimator=None, cv=None,
+    def __init__(self, estimators, final_estimator=None, cv=None,
                  method_estimators='auto', pass_through=False, n_jobs=1,
                  random_state=None, verbose=0):
         self.estimators = estimators
