@@ -1148,6 +1148,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 imputer_mask = imputer_mask.tocsc()
         else:
             imputer_mask = _get_missing_mask(X, self.missing_values)
+            features_with_missing = np.flatnonzero(imputer_mask.sum(axis=0))
 
             if self.sparse is True:
                 imputer_mask = sparse.csc_matrix(imputer_mask)
