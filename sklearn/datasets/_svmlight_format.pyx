@@ -5,7 +5,7 @@
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 #
-# cython: language_level=3str, boundscheck=False, wraparound=False
+# cython: language_level=2, boundscheck=False, wraparound=False
 
 import array
 from cpython cimport array

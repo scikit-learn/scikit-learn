@@ -29,11 +29,6 @@ def get_dispatch(dtypes):
 
 }}
 
-
-"""
-SAG and SAGA implementation
-WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
-"""
 #------------------------------------------------------------------------------
 
 # cython: cdivision=True
@@ -46,6 +41,11 @@ WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
 #          Arthur Mensch <arthur.mensch@m4x.org
 #
 # License: BSD 3 clause
+
+"""
+SAG and SAGA implementation
+WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
+"""
 
 cimport numpy as np
 import numpy as np
