@@ -953,9 +953,11 @@ def warn_args(f):
         if extra_args > 0:
             # ignore first 'self' argument for class methods
             err_args = args[1:] if is_class_method else args
-            warnings.warn("Got arguments, {}, should use keyword args "
-                          "for {}".format(err_args,
-                                          ', '.join(kwonlyargs[:extra_args])),
+            args_msg = ['{}={}'.format(name, arg)
+                        for name, arg in zip(kwonlyargs[:extra_args],
+                                             err_args[-extra_args:])]
+            warnings.warn("Should use keyword args: "
+                          "{}".format(', '.join(args_msg)),
                           DeprecationWarning)
         kwargs.update({k: arg for k, arg in zip(orig_spec, args)})
         return f(**kwargs)

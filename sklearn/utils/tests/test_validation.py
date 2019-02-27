@@ -807,15 +807,13 @@ def test_warn_args_warns_for_function():
         pass
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Got arguments, \(1, 2, 3\), "
-                            r"should use keyword args for "
-                            r"c"):
+                      match=r"Should use keyword args: "
+                            r"c=3"):
         f1(1, 2, 3)
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Got arguments, \(1, 2, 3, 4\), "
-                            r"should use keyword args for "
-                            r"c, d"):
+                      match=r"Should use keyword args: "
+                            r"c=3, d=4"):
         f1(1, 2, 3, 4)
 
     @warn_args
@@ -823,9 +821,8 @@ def test_warn_args_warns_for_function():
         pass
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Got arguments, \(1, 2\), "
-                            r"should use keyword args for "
-                            r"b"):
+                      match=r"Should use keyword args: "
+                            r"b=2"):
         f2(1, 2)
 
 
@@ -837,15 +834,13 @@ def test_warn_args_warns_for_class():
             pass
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Got arguments, \(1, 2, 3\), "
-                            r"should use keyword args for "
-                            r"c"):
+                      match=r"Should use keyword args: "
+                            r"c=3"):
         A1(1, 2, 3)
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Got arguments, \(1, 2, 3, 4\), "
-                            r"should use keyword args for "
-                            r"c, d"):
+                      match=r"Should use keyword args: "
+                            r"c=3, d=4"):
         A1(1, 2, 3, 4)
 
     class A2:
@@ -854,13 +849,11 @@ def test_warn_args_warns_for_class():
             pass
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Got arguments, \(1, 2, 3\), "
-                            r"should use keyword args for "
-                            r"c"):
+                      match=r"Should use keyword args: "
+                            r"c=3"):
         A2(1, 2, 3)
 
     with pytest.warns(DeprecationWarning,
-                      match=r"Got arguments, \(1, 2, 3, 4\), "
-                            r"should use keyword args for "
-                            r"c, d"):
+                      match=r"Should use keyword args: "
+                            r"c=3, d=4"):
         A2(1, 2, 3, 4)
