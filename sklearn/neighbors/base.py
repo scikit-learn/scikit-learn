@@ -217,7 +217,7 @@ class NeighborsBase(BaseEstimator, metaclass=ABCMeta):
                 warnings.warn("cannot use tree with sparse input: "
                               "using brute force")
             if (self.effective_metric_ not in VALID_METRICS_SPARSE['brute']
-                and not callable(self.effective_metric_)):
+                    and not callable(self.effective_metric_)):
                 raise ValueError("Metric '%s' not valid for sparse input. "
                                  "Use sorted(sklearn.neighbors."
                                  "VALID_METRICS_SPARSE['brute']) "

@@ -1099,7 +1099,7 @@ def test_valid_brute_metric_for_auto_algorithm():
 
     for metric in VALID_METRICS_SPARSE['brute']:
         if (metric not in ['precomputed', 'haversine']
-            and metric not in require_params):
+                and metric not in require_params):
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
             nn.kneighbors(Xcsr)
