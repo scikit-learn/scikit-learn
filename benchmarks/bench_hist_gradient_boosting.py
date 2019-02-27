@@ -3,8 +3,8 @@ import argparse
 
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.experimental import HistGradientBoostingClassifier
+from sklearn.experimental import HistGradientBoostingRegressor
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
 from sklearn._fast_gradient_boosting.utils import get_equivalent_estimator
@@ -61,7 +61,7 @@ def one_run(n_samples):
     print("Fitting a sklearn model...")
     tic = time()
     est = Estimator(learning_rate=lr,
-                    n_estimators=n_trees,
+                    max_iter=n_trees,
                     max_bins=max_bins,
                     max_leaf_nodes=n_leaf_nodes,
                     n_iter_no_change=None,

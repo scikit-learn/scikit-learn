@@ -4,8 +4,8 @@ from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.experimental import HistGradientBoostingRegressor
+from sklearn.experimental import HistGradientBoostingClassifier
 from sklearn._fast_gradient_boosting.binning import _BinMapper
 from sklearn._fast_gradient_boosting.utils import get_equivalent_estimator
 

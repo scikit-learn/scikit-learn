@@ -506,7 +506,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     Examples
     --------
     >>> from sklearn.datasets import load_boston
-    >>> from sklearn.ensemble import HistGradientBoostingRegressor
+    >>> from sklearn.experimental import HistGradientBoostingRegressor
     >>> X, y = load_boston(return_X_y=True)
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
@@ -651,7 +651,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     Examples
     --------
     >>> from sklearn.datasets import load_iris
-    >>> from sklearn.ensemble import HistGradientBoostingClassifier
+    >>> from sklearn.experimental import HistGradientBoostingClassifier
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = HistGradientBoostingClassifier().fit(X, y)
     >>> clf.score(X, y)

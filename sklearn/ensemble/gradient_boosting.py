@@ -1918,8 +1918,9 @@ shape (n_estimators, ``loss_.K``)
 
     See also
     --------
-    HistGradientBoostingClassifier, sklearn.tree.DecisionTreeClassifier,
-    RandomForestClassifier AdaBoostClassifier
+    sklearn.experimental.HistGradientBoostingClassifier,
+    sklearn.tree.DecisionTreeClassifier, RandomForestClassifier
+    AdaBoostClassifier
 
     References
     ----------
@@ -2372,8 +2373,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     See also
     --------
-    HistGradientBoostingRegressor, sklearn.tree.DecisionTreeRegressor,
-    RandomForestRegressor
+    sklearn.experimental.HistGradientBoostingRegressor,
+    sklearn.tree.DecisionTreeRegressor, RandomForestRegressor
 
     References
     ----------

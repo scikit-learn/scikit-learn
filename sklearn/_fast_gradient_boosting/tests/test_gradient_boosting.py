@@ -2,8 +2,8 @@ import pytest
 from sklearn.datasets import make_classification, make_regression
 from sklearn.utils.estimator_checks import check_estimator
 
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.experimental import HistGradientBoostingClassifier
+from sklearn.experimental import HistGradientBoostingRegressor
 
 
 X_classification, y_classification = make_classification(random_state=0)

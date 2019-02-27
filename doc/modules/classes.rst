@@ -415,8 +415,6 @@ Samples generator
    ensemble.ExtraTreesRegressor
    ensemble.GradientBoostingClassifier
    ensemble.GradientBoostingRegressor
-   ensemble.HistGradientBoostingClassifier
-   ensemble.HistGradientBoostingRegressor
    ensemble.IsolationForest
    ensemble.RandomForestClassifier
    ensemble.RandomForestRegressor
@@ -1488,6 +1486,24 @@ Utilities from joblib:
 
    utils.parallel_backend
    utils.register_parallel_backend
+
+.. _experimental_ref:
+
+Experimental
+============
+
+.. automodule:: sklearn.experimental
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   experimental.HistGradientBoostingRegressor
+   experimental.HistGradientBoostingClassifier
 
 Recently deprecated
 ===================

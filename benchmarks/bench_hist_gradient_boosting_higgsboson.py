@@ -9,7 +9,7 @@ import pandas as pd
 from joblib import Memory
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.experimental import HistGradientBoostingClassifier
 from sklearn._fast_gradient_boosting.utils import get_equivalent_estimator
 
 
@@ -70,7 +70,7 @@ tic = time()
 est = HistGradientBoostingClassifier(
     loss='binary_crossentropy',
     learning_rate=lr,
-    n_estimators=n_trees,
+    max_iter=n_trees,
     max_bins=max_bins,
     max_leaf_nodes=n_leaf_nodes,
     n_iter_no_change=None,
