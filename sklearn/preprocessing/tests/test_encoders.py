@@ -724,7 +724,7 @@ def test_ordinal_encoder_nan_not_in_categories(X, exp_cats):
 @pytest.mark.parametrize("X", [np.array([[1, 2, np.nan]]).T,
                                np.array([['a', 'b', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
-def test_ordinal_encoder_passthru_missing(X):
+def test_ordinal_encoder_retain_missing(X):
     enc = OrdinalEncoder()
     # TEST NaN not encoded with handle_missing="passthrough"
     X_exp = np.array([[0, 1, np.nan]]).T
@@ -732,33 +732,22 @@ def test_ordinal_encoder_passthru_missing(X):
 
 
 @pytest.mark.parametrize("X", [
-    np.array([[1, 2, np.nan]]),
-    np.array([['a', 'b', np.nan]], dtype=np.object_),
+    np.array([[1, np.nan, np.nan]]).T,
+    np.array([['a', np.nan, np.nan]], dtype=object).T,
     ], ids=['numeric', 'object'])
 def test_ordinal_encoder_nan_is_largest_category(X):
-    enc = OrdinalEncoder(handle_missing="encode")
+    enc = OrdinalEncoder(encode_missing="encode")
     enc.fit(X)
-    X_cats = enc._categories
-    X_cats_expected = np.array([[0, 1, 2]])
+    X_cats = enc.categories_
+    X_cats_expected = np.array([[0, 1, 1]])
     assert_array_equal(X_cats, X_cats_expected)
 
 
-@pytest.mark.parametrize("X", [np.array([[1, np.nan]]),
-                               np.array([['a', np.nan]], dtype=object)],
+@pytest.mark.parametrize("X", [np.array([[1, 2, np.nan]]),
+                               np.array([['a', 'b', np.nan]], dtype=object)],
                          ids=['numeric', 'object'])
 def test_ordinal_encoder_encode_missing(X):
-    enc = OrdinalEncoder(handle_missing="encode")
-    enc.fit(X)
-    # TEST NaN encoded with handle_missing="encode"
-    X_exp = np.array([[0, np.nan]])
-    assert_array_equal(X_exp, enc.fit_transform(X))
-
-
-@pytest.mark.parametrize("X", [np.array([[1, np.nan]]),
-                               np.array([['a', np.nan]], dtype=object)],
-                         ids=['numeric', 'object'])
-def test_ordinal_encoder_encode_missing(X):
-    enc = OrdinalEncoder(handle_missing="encode")
+    enc = OrdinalEncoder(encode_missing="encode")
     enc.fit(X)
     # TEST NaN encoded with handle_missing="encode"
     X_exp = np.array([[0, np.nan]])

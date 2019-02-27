@@ -791,11 +791,11 @@ class OrdinalEncoder(_BaseEncoder):
     """
 
     def __init__(self, categories='auto', dtype=np.float64,
-                 force_all_finite=False):
+                 force_all_finite=False, encode_missing='retain'):
         self.categories = categories
         self.dtype = dtype
         self.force_all_finite = force_all_finite
-        self.encode_missing = 'retain'
+        self.encode_missing = encode_missing
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
