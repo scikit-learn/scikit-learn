@@ -5,7 +5,7 @@ parameters:
   matrix: []
 
 jobs:
-- job: ${{ format('{0}-{1}', parameters.name, variables['PYTHON_ARCH']) }}
+- job: ${{ format('{0} $(PYTHON_ARCH)', parameters.name) }}
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
