@@ -10,10 +10,13 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.decomposition import FactorAnalysis
 from sklearn.utils.testing import ignore_warnings
+
+import pytest
 
 
 # Ignore warnings from switching to more power iterations in randomized_svd
@@ -83,3 +86,41 @@ def test_factor_analysis():
         precision = fa.get_precision()
         assert_array_almost_equal(np.dot(cov, precision),
                                   np.eye(X.shape[1]), 12)
+
+
+@pytest.mark.parametrize("data_type, expected_type", [
+    (np.float32, np.float32),
+    (np.float64, np.float64),
+    (np.int32, np.float64),
+    (np.int64, np.float64)
+])
+def test_lda_dtype_match(data_type, expected_type):
+    rng = np.random.RandomState(0)
+    n_samples, n_features, n_components = 20, 5, 3
+    W = rng.randn(n_components, n_features)
+    h = rng.randn(n_samples, n_components)
+    noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
+    X = np.dot(h, W) + noise
+    for method in ['randomized', 'lapack']:
+        clf = FactorAnalysis(n_components=n_components, svd_method=method)
+        clf.fit(X.astype(data_type))
+        assert clf.components_.dtype == expected_type
+
+
+
+def test_lda_numeric_consistency_float32_float64():
+    rng = np.random.RandomState(0)
+    n_samples, n_features, n_components = 20, 5, 3
+    W = rng.randn(n_components, n_features)
+    h = rng.randn(n_samples, n_components)
+    noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
+    X = np.dot(h, W) + noise
+    for method in ['randomized', 'lapack']:
+        clf_32 = FactorAnalysis(n_components=n_components, svd_method=method, random_state=42)
+        clf_32.fit(X.astype(np.float32))
+        clf_64 = FactorAnalysis(n_components=n_components, svd_method=method, random_state=42)
+        clf_64.fit(X.astype(np.float64))
+
+        # Check value consistency between types
+        rtol = 1e-5
+        assert_allclose(clf_32.components_, clf_64.components_, rtol=rtol)
