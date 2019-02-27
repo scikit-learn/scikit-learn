@@ -648,18 +648,22 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             all_candidate_params = []
             all_out = []
 
-            def _weights_sums(train_ind, test_ind, sample_weight):
-                # NOTE: Calculating total_wt in a loop is wasteful b/c it
-                #       should be the same on every loop iteration.
+            def is_none(x):
+                return x is None
+
+            def collape_nones(xs):
+                return None if xs is None or any(map(is_none, xs)) else xs
+
+            def weights_sums(train_ind, test_ind, sample_weight):
                 if sample_weight is None:
-                    train_wt = len(train_ind)
-                    test_wt = len(test_ind)
+                    train_wt = None
+                    test_wt = None
                 else:
                     train_wt = np.sum(sample_weight[train_ind])
                     test_wt = np.sum(sample_weight[test_ind])
                 return train_wt, test_wt
 
-            def _fit_and_score_and_sw_sum(est, X, y, train, test,
+            def fit_and_score_and_sw_sum(est, X, y, train, test,
                                           parameters,
                                           **fit_and_score_kwargs):
                 res = _fit_and_score(est, X, y, train=train, test=test,
@@ -670,7 +674,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                     .get("fit_params", {}) \
                     .get("sample_weight", None)
 
-                train_wt, test_wt = _weights_sums(train, test, sample_weight)
+                train_wt, test_wt = weights_sums(train, test, sample_weight)
                 return res, train_wt, test_wt
 
             def evaluate_candidates(candidate_params):
@@ -682,7 +686,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                           " totalling {2} fits".format(
                               n_splits, n_candidates, n_candidates * n_splits))
 
-                out = parallel(delayed(_fit_and_score_and_sw_sum)(
+                out = parallel(delayed(fit_and_score_and_sw_sum)(
                                                        clone(base_estimator),
                                                        X, y,
                                                        train=train, test=test,
@@ -692,7 +696,14 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                                in product(candidate_params,
                                           cv.split(X, y, groups)))
 
-                out, train_wts, test_wts = zip(*out)
+                out = list(out)
+                if 0 < len(out):
+                    out, train_wts, test_wts = zip(*out)
+                else:
+                    out, train_wts, test_wts = ([], [], [])
+
+                train_wts = collape_nones(train_wts)
+                test_wts = collape_nones(test_wts)
 
                 if len(out) < 1:
                     raise ValueError('No fits were performed. '
@@ -826,15 +837,16 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         # training train_sample_weight_sums needs to be done first because
         # test_sample_counts overrides itself in the IF statement below with
         # test_sample_weight_sums.
-        if train_sample_weight_sums is None:
-            samples = int(np.sum(test_sample_counts[:n_splits]))
-            train_sample_counts = \
-                np.array(test_sample_counts[:n_splits], dtype=np.int) - \
-                samples
-        else:
-            train_sample_counts = np.array(
-                train_sample_weight_sums[:n_splits],
-                dtype=np.float64)
+        if self.return_train_score:
+            if train_sample_weight_sums is None:
+                samples = int(np.sum(test_sample_counts[:n_splits]))
+                train_sample_counts = \
+                    np.array(test_sample_counts[:n_splits], dtype=np.int) - \
+                    samples
+            else:
+                train_sample_counts = np.array(
+                    train_sample_weight_sums[:n_splits],
+                    dtype=np.float64)
 
         if test_sample_weight_sums is None:
             # NOTE test_sample counts (weights) remain the same for all
@@ -876,9 +888,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 # _store('train_%s' % scorer_name, train_scores[scorer_name],
                 #        splits=True)
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
-                       splits=True, rank=True,
-                       weights=train_sample_counts if iid else None
-                       )
+                       splits=True,
+                       weights=train_sample_counts if iid else None)
 
         return results
 
