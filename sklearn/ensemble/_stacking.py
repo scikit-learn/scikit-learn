@@ -16,8 +16,6 @@ from ..base import MetaEstimatorMixin
 from .base import _parallel_fit_estimator
 
 from sklearn.externals.joblib import Parallel, delayed
-from sklearn.externals.six import with_metaclass
-from sklearn.externals.six import string_types
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
@@ -169,7 +167,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             raise ValueError('All estimators are None. At least one is '
                              'required to be an estimator.')
 
-        if isinstance(self.method_estimators, string_types):
+        if isinstance(self.method_estimators, str):
             if self.method_estimators != 'auto':
                 raise AttributeError('When "method_estimators" is a '
                                      'string, it should be "auto". Got {} '
@@ -351,11 +349,21 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.ensemble import StackingClassifier
-    >>> estimators = [('lr', LogisticRegression()), ('svr', LinearSVC())]
-    >>> clf = StackingClassifier(estimators=estimators,
-    ...                          final_estimator=RandomForestClassifier())
+    >>> estimators = [
+    ...     ('lr', LogisticRegression(solver='lbfgs', multi_class='auto',
+    ...                               tol=1e-1)),
+    ...     ('svr', LinearSVC(tol=1e-1, random_state=42))
+    ... ]
+    >>> clf = StackingClassifier(
+    ...     estimators=estimators,
+    ...     final_estimator=RandomForestClassifier(n_estimators=10,
+    ...                                            random_state=42),
+    ...     cv=5,
+    ... )
     >>> from sklearn.model_selection import train_test_split
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ... X, y, stratify=y, random_state=42
+    ... )
     >>> clf.fit(X_train, y_train).score(X_test, y_test) # doctest: +ELLIPSIS
     0...
 
@@ -375,8 +383,14 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         )
 
     def _validate_meta_estimator(self):
+        # FIXME: remove the parameters in 0.23
         super()._validate_final_estimator(
-            default=LogisticRegression(random_state=self.random_state)
+            default=LogisticRegression(
+                solver='lbfgs',
+                max_iter=1000,
+                multi_class='auto',
+                random_state=self.random_state
+            )
         )
         if not is_classifier(self.final_estimator_):
             raise AttributeError('`final_estimator` attribute should be a '
@@ -485,12 +499,21 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     >>> from sklearn.svm import LinearSVR
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.ensemble import StackingRegressor
-    >>> estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
-    >>> clf = StackingRegressor(estimators=estimators,
-    ...                         final_estimator=RandomForestRegressor())
+    >>> estimators = [
+    ...     ('lr', LinearRegression()),
+    ...     ('svr', LinearSVR(tol=1e-1, random_state=42))
+    ... ]
+    >>> reg = StackingRegressor(
+    ...     estimators=estimators,
+    ...     final_estimator=RandomForestRegressor(n_estimators=10,
+    ...                                           random_state=42),
+    ...     cv=5
+    ... )
     >>> from sklearn.model_selection import train_test_split
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y)
-    >>> clf.fit(X_train, y_train).score(X_test, y_test) # doctest: +ELLIPSIS
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ... X, y, random_state=42
+    ... )
+    >>> reg.fit(X_train, y_train).score(X_test, y_test) # doctest: +ELLIPSIS
     0...
 
     """
