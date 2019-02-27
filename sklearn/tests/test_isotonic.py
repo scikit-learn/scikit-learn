@@ -431,7 +431,8 @@ def test_fast_predict():
     n_samples = 10 ** 3
     # X values over the -10,10 range
     X_train = 20.0 * rng.rand(n_samples) - 10
-    y_train = np.less(rng.rand(n_samples), expit(X_train)).astype('int64')
+    y_train = np.less(rng.rand(n_samples),
+                      expit(X_train)).astype('int64').astype('float64')
 
     weights = rng.rand(n_samples)
     # we also want to test that everything still works when some weights are 0
