@@ -1051,6 +1051,7 @@ def test_make_pipeline_memory():
     shutil.rmtree(cachedir)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_set_input_features():
     pipe = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='median')),
@@ -1069,6 +1070,7 @@ def test_set_input_features():
                        np.array(iris.feature_names)[mask])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_input_feature_names_pandas():
     pd = pytest.importorskip("pandas")
     pipe = Pipeline(steps=[
@@ -1084,6 +1086,7 @@ def test_input_feature_names_pandas():
                        np.array(iris.feature_names)[mask])
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_input_features_passthrough():
     pipe = Pipeline(steps=[
         ('imputer', 'passthrough'),
@@ -1099,6 +1102,7 @@ def test_input_features_passthrough():
                        iris.feature_names)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_input_features_count_vectorizer():
     pipe = Pipeline(steps=[
         ('vect', CountVectorizer()),
