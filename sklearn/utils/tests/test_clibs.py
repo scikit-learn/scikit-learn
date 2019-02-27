@@ -99,6 +99,8 @@ def test_set_thread_limits_bad_input():
 
 
 def test_thread_limit_context():
+    # Tests the thread limits context manager
+
     old_limits = get_thread_limits()
 
     with thread_limits_context(limits=1):
@@ -116,6 +118,9 @@ def test_thread_limit_context():
 
 
 def test_openmp_limit_num_threads():
+    # checks that OpenMP effectively uses the number of threads requested by
+    # the context manager
+
     old_num_threads = check_num_threads(100)
 
     for n_threads in [1, 2, 4]:
