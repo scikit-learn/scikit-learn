@@ -30,8 +30,8 @@ def test_init_parameters_validation(GradientBoosting, X, y):
 
     with pytest.raises(
             ValueError,
-            match="n_estimators=0 must not be smaller than 1"):
-        GradientBoosting(n_estimators=0).fit(X, y)
+            match="max_iter=0 must not be smaller than 1"):
+        GradientBoosting(max_iter=0).fit(X, y)
 
     with pytest.raises(
             ValueError,
@@ -91,7 +91,7 @@ def test_init_parameters_validation(GradientBoosting, X, y):
 def test_early_stopping_regression(scoring, validation_fraction,
                                    n_iter_no_change, tol):
 
-    n_estimators = 200
+    max_iter = 200
 
     X, y = make_regression(random_state=0)
 
@@ -99,15 +99,15 @@ def test_early_stopping_regression(scoring, validation_fraction,
                                        scoring=scoring,
                                        tol=tol,
                                        validation_fraction=validation_fraction,
-                                       n_estimators=n_estimators,
+                                       max_iter=max_iter,
                                        n_iter_no_change=n_iter_no_change,
                                        random_state=0)
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
-        assert n_iter_no_change <= gb.n_estimators_ < n_estimators
+        assert n_iter_no_change <= gb.n_iter_ < max_iter
     else:
-        assert gb.n_estimators_ == n_estimators
+        assert gb.n_iter_ == max_iter
 
 
 @pytest.mark.parametrize('data', (
@@ -127,7 +127,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
 def test_early_stopping_classification(data, scoring, validation_fraction,
                                        n_iter_no_change, tol):
 
-    n_estimators = 50
+    max_iter = 50
 
     X, y = data
 
@@ -136,15 +136,15 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
         scoring=scoring,
         tol=tol,
         validation_fraction=validation_fraction,
-        n_estimators=n_estimators,
+        max_iter=max_iter,
         n_iter_no_change=n_iter_no_change,
         random_state=0)
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
-        assert n_iter_no_change <= gb.n_estimators_ < n_estimators
+        assert n_iter_no_change <= gb.n_iter_ < max_iter
     else:
-        assert gb.n_estimators_ == n_estimators
+        assert gb.n_iter_ == max_iter
 
 
 def test_should_stop():

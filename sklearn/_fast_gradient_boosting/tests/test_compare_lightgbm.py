@@ -39,7 +39,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
 
     rng = np.random.RandomState(seed=seed)
     n_samples = n_samples
-    n_estimators = 1
+    max_iter = 1
     max_bins = 256
 
     X, y = make_regression(n_samples=n_samples, n_features=5,
@@ -53,7 +53,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
     est_sklearn = FastGradientBoostingRegressor(
-        n_estimators=n_estimators,
+        max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
         n_iter_no_change=None,
@@ -91,7 +91,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
 
     rng = np.random.RandomState(seed=seed)
     n_samples = n_samples
-    n_estimators = 1
+    max_iter = 1
     max_bins = 256
 
     X, y = make_classification(n_samples=n_samples, n_classes=2, n_features=5,
@@ -106,7 +106,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
 
     est_sklearn = FastGradientBoostingClassifier(
         loss='binary_crossentropy',
-        n_estimators=n_estimators,
+        max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
         n_iter_no_change=None,
@@ -151,7 +151,7 @@ def test_same_predictions_multiclass_classification(
 
     rng = np.random.RandomState(seed=seed)
     n_samples = n_samples
-    n_estimators = 1
+    max_iter = 1
     max_bins = 256
     lr = 1
 
@@ -168,7 +168,7 @@ def test_same_predictions_multiclass_classification(
 
     est_sklearn = FastGradientBoostingClassifier(
         loss='categorical_crossentropy',
-        n_estimators=n_estimators,
+        max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=lr,
         n_iter_no_change=None,

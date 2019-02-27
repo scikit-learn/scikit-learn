@@ -50,7 +50,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     lgbm_params = {
         'objective': lgbm_loss_mapping[sklearn_params['loss']],
         'learning_rate': sklearn_params['learning_rate'],
-        'n_estimators': sklearn_params['n_estimators'],
+        'n_estimators': sklearn_params['max_iter'],
         'num_leaves': sklearn_params['max_leaf_nodes'],
         'max_depth': sklearn_params['max_depth'],
         'min_child_samples': sklearn_params['min_samples_leaf'],
@@ -84,7 +84,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
         'grow_policy': 'lossguide',  # so that we can set max_leaves
         'objective': xgb_loss_mapping[sklearn_params['loss']],
         'learning_rate': sklearn_params['learning_rate'],
-        'n_estimators': sklearn_params['n_estimators'],
+        'n_estimators': sklearn_params['max_iter'],
         'max_leaves': sklearn_params['max_leaf_nodes'],
         'max_depth': sklearn_params['max_depth'] or 0,
         'lambda': sklearn_params['l2_regularization'],
@@ -105,7 +105,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     cat_params = {
         'loss_function': cat_loss_mapping[sklearn_params['loss']],
         'learning_rate': sklearn_params['learning_rate'],
-        'iterations': sklearn_params['n_estimators'],
+        'iterations': sklearn_params['max_iter'],
         'depth': sklearn_params['max_depth'],
         'reg_lambda': sklearn_params['l2_regularization'],
         'max_bin': sklearn_params['max_bins'],

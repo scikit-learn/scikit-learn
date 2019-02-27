@@ -24,13 +24,13 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
     """Base class for fast gradient boosting estimators."""
 
     @abstractmethod
-    def __init__(self, loss, learning_rate, n_estimators, max_leaf_nodes,
+    def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
                  max_depth, min_samples_leaf, l2_regularization, max_bins,
                  scoring, validation_fraction, n_iter_no_change, tol, verbose,
                  random_state):
         self.loss = loss
         self.learning_rate = learning_rate
-        self.n_estimators = n_estimators
+        self.max_iter = max_iter
         self.max_leaf_nodes = max_leaf_nodes
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
@@ -58,9 +58,9 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         if self.learning_rate <= 0:
             raise ValueError('learning_rate={} must '
                              'be strictly positive'.format(self.learning_rate))
-        if self.n_estimators < 1:
-            raise ValueError('n_estimators={} must not be smaller '
-                             'than 1.'.format(self.n_estimators))
+        if self.max_iter < 1:
+            raise ValueError('max_iter={} must not be smaller '
+                             'than 1.'.format(self.max_iter))
         if self.n_iter_no_change is not None and self.n_iter_no_change < 0:
             raise ValueError('n_iter_no_change={} must be '
                              'positive.'.format(self.n_iter_no_change))
@@ -188,9 +188,9 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             prediction_dim=self._n_trees_per_iteration
         )
 
-        # estimators_ is a matrix (list of lists) of TreePredictor objects
+        # predictors is a matrix (list of lists) of TreePredictor objects
         # with shape (n_iter_, n_trees_per_iteration)
-        self.estimators_ = estimators = []
+        self._predictors = predictors = []
 
         # scorer_ is a callable with signature (est, X, y) and calls
         # est.predict() or est.predict_proba() depending on its nature.
@@ -206,18 +206,18 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             self._check_early_stopping(X_binned_small_train, y_small_train,
                                        X_binned_val, y_val)
 
-        for iteration in range(self.n_estimators):
+        for iteration in range(self.max_iter):
 
             if self.verbose:
                 iteration_start_time = time()
-                print("[{}/{}] ".format(iteration + 1, self.n_estimators),
+                print("[{}/{}] ".format(iteration + 1, self.max_iter),
                       end='', flush=True)
 
             # Update gradients and hessians, inplace
             self.loss_.update_gradients_and_hessians(gradients, hessians,
                                                      y_train, raw_predictions)
 
-            estimators.append([])
+            predictors.append([])
 
             # Build `n_trees_per_iteration` trees.
             for k in range(self._n_trees_per_iteration):
@@ -236,9 +236,9 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
                 acc_apply_split_time += grower.total_apply_split_time
                 acc_find_split_time += grower.total_find_split_time
 
-                estimator = grower.make_predictor(
+                predictor = grower.make_predictor(
                     bin_thresholds=self.bin_mapper_.bin_thresholds_)
-                estimators[-1].append(estimator)
+                predictors[-1].append(predictor)
 
                 # Update raw_predictions with the predictions of the newly
                 # created tree.
@@ -263,12 +263,12 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         if self.verbose:
             duration = time() - fit_start_time
             n_total_leaves = sum(
-                estimator.get_n_leaf_nodes()
-                for predictors_at_ith_iteration in self.estimators_
-                for estimator in predictors_at_ith_iteration)
+                predictor.get_n_leaf_nodes()
+                for predictors_at_ith_iteration in self._predictors
+                for predictor in predictors_at_ith_iteration)
             n_predictors = sum(
                 len(predictors_at_ith_iteration)
-                for predictors_at_ith_iteration in self.estimators_)
+                for predictors_at_ith_iteration in self._predictors)
             print("Fit {} trees in {:.3f} s, ({} total leaves)".format(
                 n_predictors, duration, n_total_leaves))
             print("{:<32} {:.3f}s".format('Time spent finding best splits:',
@@ -340,14 +340,14 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         log_msg = ''
 
         predictors_of_ith_iteration = [
-            predictors_list for predictors_list in self.estimators_[-1]
+            predictors_list for predictors_list in self._predictors[-1]
             if predictors_list
         ]
         n_trees = len(predictors_of_ith_iteration)
-        max_depth = max(estimator.get_max_depth()
-                        for estimator in predictors_of_ith_iteration)
-        n_leaves = sum(estimator.get_n_leaf_nodes()
-                       for estimator in predictors_of_ith_iteration)
+        max_depth = max(predictor.get_max_depth()
+                        for predictor in predictors_of_ith_iteration)
+        n_leaves = sum(predictor.get_n_leaf_nodes()
+                       for predictor in predictors_of_ith_iteration)
 
         if n_trees == 1:
             log_msg += ("{} tree, {} leaves, ".format(n_trees, n_leaves))
@@ -383,7 +383,7 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             The raw predicted values.
         """
         X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE])
-        check_is_fitted(self, 'estimators_')
+        check_is_fitted(self, '_predictors')
         if X.shape[1] != self.n_features_:
             raise ValueError(
                 'X has {} features but this estimator was trained with '
@@ -396,10 +396,10 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
             dtype=self._baseline_prediction.dtype
         )
         raw_predictions += self._baseline_prediction
-        for predictors_of_ith_iteration in self.estimators_:
-            for k, estimator in enumerate(predictors_of_ith_iteration):
-                predict = (estimator.predict_binned if is_binned
-                           else estimator.predict)
+        for predictors_of_ith_iteration in self._predictors:
+            for k, predictor in enumerate(predictors_of_ith_iteration):
+                predict = (predictor.predict_binned if is_binned
+                           else predictor.predict)
                 raw_predictions[k, :] += predict(X)
 
         return raw_predictions
@@ -413,9 +413,9 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         pass
 
     @property
-    def n_estimators_(self):
-        check_is_fitted(self, 'estimators_')
-        return len(self.estimators_)
+    def n_iter_(self):
+        check_is_fitted(self, '_predictors')
+        return len(self._predictors)
 
 
 class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
@@ -439,7 +439,7 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
         shrinkage.
-    n_estimators : int, optional(default=100)
+    max_iter : int, optional(default=100)
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees.
     max_leaf_nodes : int or None, optional(default=None)
@@ -489,18 +489,15 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
 
     Attributes
     ----------
-    n_estimators_ : int
-        The number of estimators as selected by early stopping (if
-        n_iter_no_change is not None). Otherwise it is set to n_estimators.
-    estimators_ : list of lists, shape=(n_estimators, n_trees_per_iteration)
-        The collection of fitted sub-estimators. The number of trees per
-        iteration is ``n_classes`` in multiclass classification, else 1.
-    train_score_ : array, shape=(n_estimators + 1)
+    n_iter_ : int
+        The number of iterations as selected by early stopping (if
+        n_iter_no_change is not None). Otherwise it corresponds to max_iter.
+    train_score_ : array, shape=(max_iter + 1)
         The scores at each iteration on the training data. The first entry is
         the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. Empty if no early
         stopping.
-    validation_score_ : array, shape=(n_estimators + 1)
+    validation_score_ : array, shape=(max_iter + 1)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
@@ -519,12 +516,12 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
     _VALID_LOSSES = ('least_squares',)
 
     def __init__(self, loss='least_squares', learning_rate=0.1,
-                 n_estimators=100, max_leaf_nodes=31, max_depth=None,
+                 max_iter=100, max_leaf_nodes=31, max_depth=None,
                  min_samples_leaf=5, l2_regularization=0., max_bins=256,
                  scoring=None, validation_fraction=0.1, n_iter_no_change=None,
                  tol=1e-7, verbose=0, random_state=None):
         super(FastGradientBoostingRegressor, self).__init__(
-            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
@@ -586,7 +583,7 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
         shrinkage.
-    n_estimators : int, optional(default=100)
+    max_iter : int, optional(default=100)
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees for binary classification. For multiclass
         classification, `n_classes` trees per iteration are built.
@@ -637,18 +634,15 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
 
     Attributes
     ----------
-    n_estimators_ : int
+    n_iter_ : int
         The number of estimators as selected by early stopping (if
-        n_iter_no_change is not None). Otherwise it is set to n_estimators.
-    estimators_ : list of lists, shape=(n_estimators, n_trees_per_iteration)
-        The collection of fitted sub-estimators. The number of trees per
-        iteration is ``n_classes`` in multiclass classification, else 1.
-    train_score_ : array, shape=(n_estimators + 1)
+        n_iter_no_change is not None). Otherwise it corresponds to max_iter.
+    train_score_ : array, shape=(max_iter + 1)
         The scores at each iteration on the training data. The first entry is
         the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. Empty if no early
         stopping.
-    validation_score_ : array, shape=(n_estimators + 1)
+    validation_score_ : array, shape=(max_iter + 1)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
@@ -667,13 +661,13 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
     _VALID_LOSSES = ('binary_crossentropy', 'categorical_crossentropy',
                      'auto')
 
-    def __init__(self, loss='auto', learning_rate=0.1, n_estimators=100,
+    def __init__(self, loss='auto', learning_rate=0.1, max_iter=100,
                  max_leaf_nodes=31, max_depth=None, min_samples_leaf=5,
                  l2_regularization=0., max_bins=256, scoring=None,
                  validation_fraction=0.1, n_iter_no_change=None, tol=1e-7,
                  verbose=0, random_state=None):
         super(FastGradientBoostingClassifier, self).__init__(
-            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
+            loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
             l2_regularization=l2_regularization, max_bins=max_bins,
