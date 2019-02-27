@@ -1049,12 +1049,8 @@ def test_make_pipeline_memory():
     assert pipeline.memory is None
 
     shutil.rmtree(cachedir)
-    
 
-def test_input_feature_names_pandas():
-    pass
 
-    
 def test_set_input_features():
     pipe = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='median')),
@@ -1071,6 +1067,20 @@ def test_set_input_features():
     assert_array_equal(pipe.input_features_, iris.feature_names)
     assert_array_equal(pipe.named_steps.clf.input_features_,
                        np.array(iris.feature_names)[mask])
+
+
+def test_input_feature_names_pandas():
+    pd = pytest.importorskip("pandas")
+    pipe = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler()),
+        ('select', SelectKBest(k=2)),
+        ('clf', LogisticRegression())])
+    iris = load_iris()
+    df = pd.DataFrame(iris.data, names=iris.feature_names)
+    pipe.fit(df, iris.target)
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       iris.feature_names)
 
 
 def test_input_features_passthrough():
