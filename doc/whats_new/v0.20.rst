@@ -7,6 +7,26 @@
 Version 0.20.3
 ==============
 
+**July 29, 2019**
+
+This is a bug-fix release with some bug fixes applied to version 0.20.3.
+
+Changelog
+---------
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
+  shuffles each class's samples with the same ``random_state``,
+  making ``shuffle=True`` ineffective.
+  :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+ .. _changes_0_20_3:
+
+Version 0.20.3
+==============
+
 **March 1, 2019**
 
 This is a bug-fix release with some minor documentation improvements and
