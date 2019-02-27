@@ -1072,6 +1072,19 @@ def test_set_input_features():
     assert_array_equal(pipe.named_steps.clf.input_features_,
                        np.array(iris.feature_names)[mask])
 
-    
-def test_input_features_count_vectorizer():
+
+def test_input_features_passthrough():
     pass
+
+
+def test_input_features_count_vectorizer():
+    pipe = Pipeline(steps=[
+        ('vect', CountVectorizer()),
+        ('clf', LogisticRegression())])
+    y = ["pizza" in x for x in JUNK_FOOD_DOCS]
+    pipe.fit(JUNK_FOOD_DOCS, y)
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
+    pipe.set_feature_names(["nonsense_is_ignored"])
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
