@@ -246,6 +246,10 @@ class Pipeline(_BaseComposition):
             # transformer. This is necessary when loading the transformer
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
+
+        if hasattr(X, 'columns'):
+            self.set_feature_names(X.columns)
+
         if self._final_estimator == 'passthrough':
             return Xt, {}
         return Xt, fit_params_steps[self.steps[-1][0]]
@@ -529,6 +533,20 @@ class Pipeline(_BaseComposition):
     def _pairwise(self):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
+    
+    def set_feature_names(self, input_features):
+        self.input_features_ = input_features
+        feature_names = input_features
+        for name, transform in self._iter(with_final=True):
+            transform.input_features_ = feature_names
+            if not hasattr(transform, "get_feature_names"):
+                raise TypeError("Transformer {} does provide"
+                                " get_feature_names".format(name))
+            try:
+                feature_names = transform.get_feature_names(
+                    input_features=feature_names)
+            except TypeError:
+                feature_names = transform.get_feature_names()
 
     def get_feature_names(self, input_features=None):
         """Get feature names for transformation.
@@ -548,8 +566,7 @@ class Pipeline(_BaseComposition):
             Transformed feature names
         """
         feature_names = input_features
-        with_final = hasattr(self._final_estimator, "transform")
-        for name, transform in self._iter(with_final=with_final):
+        for name, transform in self._iter(with_final=True):
             if not hasattr(transform, "get_feature_names"):
                 raise TypeError("Transformer {} does provide"
                                 " get_feature_names".format(name))
