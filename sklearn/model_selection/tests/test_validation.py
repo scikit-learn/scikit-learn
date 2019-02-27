@@ -1654,20 +1654,19 @@ def test_sample_weight():
     assert test_metric == exp_test_acc
 
 
-@pytest.mark.parametrize(
-    "met_name,metric,greater_is_better,needs_proba,sample_wt", [
-    ("accuracy", accuracy_score, True, False, [1, 999999, 1, 999999]),
-    ("accuracy", accuracy_score, True, False, [100000, 200000, 100000, 200000]),
-    ("accuracy", accuracy_score, True, False, [100000, 100000, 100000, 100000]),
-    ("accuracy", accuracy_score, True, False, [200000, 100000, 200000, 100000]),
-    ("accuracy", accuracy_score, True, False, [999999, 1, 999999, 1]),
-    ("accuracy", accuracy_score, True, False, [2000000, 1000000, 1, 999999]),
-    ("precision", precision_score, True, False, [2000000, 1000000, 1, 999999]),
-    ("neg_log_loss", log_loss, False, True, [2500000, 500000, 200000, 100000]),
-    ("brier_score_loss", brier_score_loss, False, True, [2500000, 500000, 200000, 100000]),
+@pytest.mark.parametrize("metric,greater_is_better,needs_proba,sample_wt", [
+    (accuracy_score, True, False, [1, 999999, 1, 999999]),
+    (accuracy_score, True, False, [100000, 200000, 100000, 200000]),
+    (accuracy_score, True, False, [100000, 100000, 100000, 100000]),
+    (accuracy_score, True, False, [200000, 100000, 200000, 100000]),
+    (accuracy_score, True, False, [999999, 1, 999999, 1]),
+    (accuracy_score, True, False, [2000000, 1000000, 1, 999999]),
+    (precision_score, True, False, [2000000, 1000000, 1, 999999]),
+    (log_loss, False, True, [2500000, 500000, 200000, 100000]),
+    (brier_score_loss, False, True, [2500000, 500000, 200000, 100000]),
 ])
 def test_sample_weight_cross_validation(
-        met_name, metric, greater_is_better, needs_proba, sample_wt):
+        metric, greater_is_better, needs_proba, sample_wt):
     # Test that cross validation properly uses sample_weight from fit_params
     # when calculating the desired metrics.
 
@@ -1704,7 +1703,7 @@ def test_sample_weight_cross_validation(
     gscv = GridSearchCV(
         LogisticRegression(),
         param_grid={"random_state": [15432]},
-        scoring=met_name,
+        scoring=make_scorer(metric, greater_is_better, needs_proba),
         cv=2,
         return_train_score=True
     )
