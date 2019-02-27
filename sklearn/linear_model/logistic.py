@@ -1314,7 +1314,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Default will change from 'liblinear' to 'lbfgs' in 0.22.
 
     max_iter : int, optional (default=100)
-        Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
 
     multi_class : str, {'ovr', 'multinomial', 'auto'}, optional (default='ovr')
