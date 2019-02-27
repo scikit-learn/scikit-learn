@@ -182,9 +182,8 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.metrics`
 ......................
 
-- |Efficiency| Force ``joblib`` to use the ``'threading'`` backend in
-  :func:`metrics.pairwise.pairwise_distances` when ``n_jobs`` is greater than
-  1.
+- |Efficiency| Faster :func:`metrics.pairwise.pairwise_distances` with `n_jobs`
+  > 1 by using a thread-based backend, instead of process-based backends.
   :issue:`8216` by :user:`Pierre Glaser <pierreglaser>` and
   :user:`Romuald Menuet <zanospi>`
 

@@ -1066,7 +1066,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
     # enforce a threading backend to prevent data communication overhead
     fd = delayed(_dist_wrapper)
-    ret = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype)
+    ret = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype, order='F')
     Parallel(backend="threading", n_jobs=n_jobs)(
         fd(func, ret, s, X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
