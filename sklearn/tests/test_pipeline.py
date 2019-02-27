@@ -1339,7 +1339,7 @@ def test_pipeline_none_transformer():
     assert_array_almost_equal(X, X_inversed)
 
 
-def test_pipeline_methods_anova_rus():
+def test_pipeline_methods_anova_outlier():
     # Test the various methods of the pipeline (anova).
     X, y = make_classification(
         n_classes=2,
@@ -1364,6 +1364,7 @@ def test_pipeline_methods_anova_rus():
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
     pipe.score(X, y)
+
 
 
 def test_pipeline_with_step_that_implements_both_sample_and_transform():
@@ -1447,3 +1448,81 @@ def test_make_pipeline_memory():
     assert pipeline.memory is None
 
     shutil.rmtree(cachedir)
+
+def test_shape_correct_after_resample():
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=50,
+        random_state=0)
+
+    ell = EllipticEnvelope(random_state=0)
+    pipe = make_pipeline (ell, None)
+
+    outliers = ell.fit_predict(X, y) == -1
+    n_outliers = np.sum(outliers)
+    assert n_outliers > 0 # we have some outliers in the dataset
+
+    X_new, y_new = pipe.fit_resample(X, y)
+
+    assert X_new.shape[0] == X.shape[0] - n_outliers
+    assert y_new.shape[0] == y.shape[0] - n_outliers
+
+def test_resamplers_not_called():
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=50,
+        random_state=0)
+
+    mul2 = Mult(2)
+    dre = DummyResampler()
+    mul3 = Mult(3)
+
+    pipe = make_pipeline(mul2, dre, mul3)
+    pipe.fit(X, y)
+
+    assert hasattr(dre, "means_")
+    delattr(dre, "means_")
+
+    pipe.predict(X)
+    assert not hasattr(dre, "means_")
+
+    pipe.fit_transform(X, y)
+    assert hasattr(dre, "means_")
+    delattr(dre, "means_")
+
+    pipe.fit(X, y)
+    assert hasattr(dre, "means_")
+
+def test_clusterer_and_resampler_error():
+    X, y = make_classification(
+        n_classes=2,
+        class_sep=2,
+        weights=[0.1, 0.9],
+        n_informative=3,
+        n_redundant=1,
+        flip_y=0,
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=10,
+        random_state=0)
+
+    dre = DummyResampler()
+    pipe = make_pipeline(dre, KMeans())
+    msg = "have an estimator implementing fit_predict as their last stage"
+    with pytest.raises(NotImplementedError,
+                       match=msg):
+        pipe.fit_predict(X, y)
