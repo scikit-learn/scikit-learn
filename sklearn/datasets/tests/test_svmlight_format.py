@@ -242,7 +242,7 @@ def test_dump():
                     # where X.astype(dtype) overflows. The result is
                     # then platform dependent and X_dense.astype(dtype) may be
                     # different from X_sparse.astype(dtype).asarray().
-                    X_input = X.astype(dtype, copy=False)
+                    X_input = X.astype(dtype)
 
                     dump_svmlight_file(X_input, y, f, comment="test",
                                        zero_based=zero_based)
