@@ -40,21 +40,21 @@ def assert_csr_equal_values(current, expected):
 
 
 def make_dense_dataset_32():
-        return ArrayDataset32(X32, y32, sample_weight32, seed=42)
+    return ArrayDataset32(X32, y32, sample_weight32, seed=42)
 
 
 def make_dense_dataset_64():
-        return ArrayDataset64(X64, y64, sample_weight64, seed=42)
+    return ArrayDataset64(X64, y64, sample_weight64, seed=42)
 
 
 def make_sparse_dataset_32():
-        return CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
-                            sample_weight32, seed=42)
+    return CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
+                        sample_weight32, seed=42)
 
 
 def make_sparse_dataset_64():
-        return CSRDataset64(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
-                            sample_weight64, seed=42)
+    return CSRDataset64(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
+                        sample_weight64, seed=42)
 
 
 @pytest.mark.parametrize('dataset_constructor', [
@@ -84,7 +84,7 @@ def test_seq_dataset_basic_iteration(dataset_constructor):
         assert swi == sample_weight64[idx]
 
 
-@pytest.mark.parametrize('make_dense_dataset,make_sparse_dataset',[
+@pytest.mark.parametrize('make_dense_dataset,make_sparse_dataset', [
     (make_dense_dataset_32, make_sparse_dataset_32),
     (make_dense_dataset_64, make_sparse_dataset_64),
 ])
