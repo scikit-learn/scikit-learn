@@ -236,7 +236,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
                     "Warning, max_eps (%s) is close to eps (%s): "
                     "Output may be unstable." % (self.max_eps, self.eps),
                     RuntimeWarning, stacklevel=2)
-                # Stability warning is documented in _extract_dbscan method...
+                # Stability warning is documented in cluster_optics_dbscan
+                # method...
 
         (self.ordering_, self.core_distances_, self.reachability_,
          self.predecessor_) = compute_optics_graph(
