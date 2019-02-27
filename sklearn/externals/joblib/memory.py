@@ -96,8 +96,11 @@ def register_store_backend(backend_name, backend):
     _STORE_BACKENDS[backend_name] = backend
 
 
-def _store_backend_factory(backend, location, verbose=0, backend_options={}):
+def _store_backend_factory(backend, location, verbose=0, backend_options=None):
     """Return the correct store object for the given location."""
+    if backend_options is None:
+        backend_options = {}
+
     if isinstance(location, StoreBackendBase):
         return location
     elif isinstance(location, _basestring):
@@ -207,8 +210,11 @@ class MemorizedResult(Logger):
     def __init__(self, location, func, args_id, backend='local',
                  mmap_mode=None, verbose=0, timestamp=None, metadata=None):
         Logger.__init__(self)
-        self.func = func
         self.func_id = _build_func_identifier(func)
+        if isinstance(func, _basestring):
+            self.func = func
+        else:
+            self.func = self.func_id
         self.args_id = args_id
         self.store_backend = _store_backend_factory(backend, location,
                                                     verbose=verbose)
@@ -241,8 +247,21 @@ class MemorizedResult(Logger):
                                    metadata=self.metadata)
         else:
             msg = None
-        return self.store_backend.load_item(
-            [self.func_id, self.args_id], msg=msg, verbose=self.verbose)
+
+        try:
+            return self.store_backend.load_item(
+                [self.func_id, self.args_id], msg=msg, verbose=self.verbose)
+        except (ValueError, KeyError) as exc:
+            # KeyError is expected under Python 2.7, ValueError under Python 3
+            new_exc = KeyError(
+                "Error while trying to load a MemorizedResult's value. "
+                "It seems that this folder is corrupted : {}".format(
+                    os.path.join(
+                        self.store_backend.location, self.func_id,
+                        self.args_id)
+                ))
+            new_exc.__cause__ = exc
+            raise new_exc
 
     def clear(self):
         """Clear value from cache"""
@@ -252,14 +271,15 @@ class MemorizedResult(Logger):
         return ('{class_name}(location="{location}", func="{func}", '
                 'args_id="{args_id}")'
                 .format(class_name=self.__class__.__name__,
-                        location=self.store_backend,
+                        location=self.store_backend.location,
                         func=self.func,
                         args_id=self.args_id
                         ))
-    def __reduce__(self):
-        return (self.__class__,
-                (self.store_backend, self.func, self.args_id),
-                {'mmap_mode': self.mmap_mode})
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['timestamp'] = None
+        return state
 
 
 class NotMemorizedResult(object):
@@ -324,9 +344,6 @@ class NotMemorizedFunc(object):
     def call_and_shelve(self, *args, **kwargs):
         return NotMemorizedResult(self.func(*args, **kwargs))
 
-    def __reduce__(self):
-        return (self.__class__, (self.func,))
-
     def __repr__(self):
         return '{0}(func={1})'.format(self.__class__.__name__, self.func)
 
@@ -386,6 +403,7 @@ class MemorizedFunc(Logger):
         self.mmap_mode = mmap_mode
         self.compress = compress
         self.func = func
+
         if ignore is None:
             ignore = []
         self.ignore = ignore
@@ -421,28 +439,44 @@ class MemorizedFunc(Logger):
             doc = func.__doc__
         self.__doc__ = 'Memoized version of %s' % doc
 
-    def _cached_call(self, args, kwargs):
+    def _cached_call(self, args, kwargs, shelving=False):
         """Call wrapped function and cache result, or read cache if available.
 
         This function returns the wrapped function output and some metadata.
 
+        Arguments:
+        ----------
+
+        args, kwargs: list and dict
+            input arguments for wrapped function
+
+        shelving: bool
+            True when called via the call_and_shelve function.
+
+
         Returns
         -------
-        output: value or tuple
-            what is returned by wrapped function
+        output: value or tuple or None
+            Output of the wrapped function.
+            If shelving is True and the call has been already cached,
+            output is None.
 
         argument_hash: string
-            hash of function arguments
+            Hash of function arguments.
 
         metadata: dict
-            some metadata about wrapped function call (see _persist_input())
+            Some metadata about wrapped function call (see _persist_input()).
         """
-        # Compare the function code with the previous to see if the
-        # function code has changed
         func_id, args_id = self._get_output_identifiers(*args, **kwargs)
         metadata = None
         msg = None
+
+        # Wether or not the memorized function must be called
+        must_call = False
+
         # FIXME: The statements below should be try/excepted
+        # Compare the function code with the previous to see if the
+        # function code has changed
         if not (self._check_previous_func_code(stacklevel=4) and
                 self.store_backend.contains_item([func_id, args_id])):
             if self._verbose > 10:
@@ -452,16 +486,7 @@ class MemorizedFunc(Logger):
                           .format(name, args_id,
                                   self.store_backend.
                                   get_cached_func_info([func_id])['location']))
-            out, metadata = self.call(*args, **kwargs)
-            if self.mmap_mode is not None:
-                # Memmap the output at the first call to be consistent with
-                # later calls
-                if self._verbose:
-                    msg = _format_load_msg(func_id, args_id,
-                                           timestamp=self.timestamp,
-                                           metadata=metadata)
-                out = self.store_backend.load_item([func_id, args_id], msg=msg,
-                                                   verbose=self._verbose)
+            must_call = True
         else:
             try:
                 t0 = time.time()
@@ -469,8 +494,16 @@ class MemorizedFunc(Logger):
                     msg = _format_load_msg(func_id, args_id,
                                            timestamp=self.timestamp,
                                            metadata=metadata)
-                out = self.store_backend.load_item([func_id, args_id], msg=msg,
-                                                   verbose=self._verbose)
+
+                if not shelving:
+                    # When shelving, we do not need to load the output
+                    out = self.store_backend.load_item(
+                        [func_id, args_id],
+                        msg=msg,
+                        verbose=self._verbose)
+                else:
+                    out = None
+
                 if self._verbose > 4:
                     t = time.time() - t0
                     _, name = get_func_name(self.func)
@@ -482,8 +515,19 @@ class MemorizedFunc(Logger):
                 self.warn('Exception while loading results for '
                           '{}\n {}'.format(signature, traceback.format_exc()))
 
-                out, metadata = self.call(*args, **kwargs)
-                args_id = None
+                must_call = True
+
+        if must_call:
+            out, metadata = self.call(*args, **kwargs)
+            if self.mmap_mode is not None:
+                # Memmap the output at the first call to be consistent with
+                # later calls
+                if self._verbose:
+                    msg = _format_load_msg(func_id, args_id,
+                                           timestamp=self.timestamp,
+                                           metadata=metadata)
+                out = self.store_backend.load_item([func_id, args_id], msg=msg,
+                                                   verbose=self._verbose)
 
         return (out, args_id, metadata)
 
@@ -502,7 +546,7 @@ class MemorizedFunc(Logger):
             class "NotMemorizedResult" is used when there is no cache
             activated (e.g. location=None in Memory).
         """
-        _, args_id, metadata = self._cached_call(args, kwargs)
+        _, args_id, metadata = self._cached_call(args, kwargs, shelving=True)
         return MemorizedResult(self.store_backend, self.func, args_id,
                                metadata=metadata, verbose=self._verbose - 1,
                                timestamp=self.timestamp)
@@ -510,14 +554,13 @@ class MemorizedFunc(Logger):
     def __call__(self, *args, **kwargs):
         return self._cached_call(args, kwargs)[0]
 
-    def __reduce__(self):
+    def __getstate__(self):
         """ We don't store the timestamp when pickling, to avoid the hash
             depending from it.
-            In addition, when unpickling, we run the __init__
         """
-        return (self.__class__, (self.func, None),
-                {k: v for k, v in vars(self).items()
-                 if k not in ('timestamp', 'func')})
+        state = self.__dict__.copy()
+        state['timestamp'] = None
+        return state
 
     # ------------------------------------------------------------------------
     # Private interface
@@ -745,9 +788,10 @@ class MemorizedFunc(Logger):
     # ------------------------------------------------------------------------
 
     def __repr__(self):
-        return ("{0}(func={1}, location={2})".format(self.__class__.__name__,
-                                                     self.func,
-                                                     self.store_backend,))
+        return '{class_name}(func={func}, location={location})'.format(
+            class_name=self.__class__.__name__,
+            func=self.func,
+            location=self.store_backend.location,)
 
 
 ###############################################################################
@@ -776,6 +820,12 @@ class Memory(Logger):
             The 'local' backend is using regular filesystem operations to
             manipulate data (open, mv, etc) in the backend.
 
+        cachedir: str or None, optional
+
+            .. deprecated: 0.12
+                'cachedir' has been deprecated in 0.12 and will be
+                removed in 0.14. Use the 'location' parameter instead.
+
         mmap_mode: {None, 'r+', 'r', 'w+', 'c'}, optional
             The memmapping mode used when loading from cache
             numpy arrays. See numpy.load for the meaning of the
@@ -797,20 +847,14 @@ class Memory(Logger):
         backend_options: dict, optional
             Contains a dictionnary of named parameters used to configure
             the store backend.
-
-        cachedir: str or None, optional
-
-            .. deprecated: 0.12
-                'cachedir' has been deprecated in 0.12 and will be
-                removed in 0.14. Use the 'location' parameter instead.
     """
     # ------------------------------------------------------------------------
     # Public interface
     # ------------------------------------------------------------------------
 
-    def __init__(self, location=None, backend='local', mmap_mode=None,
-                 compress=False, verbose=1, bytes_limit=None,
-                 backend_options={}, cachedir=None):
+    def __init__(self, location=None, backend='local', cachedir=None,
+                 mmap_mode=None, compress=False, verbose=1, bytes_limit=None,
+                 backend_options=None):
         # XXX: Bad explanation of the None value of cachedir
         Logger.__init__(self)
         self._verbose = verbose
@@ -818,6 +862,11 @@ class Memory(Logger):
         self.timestamp = time.time()
         self.bytes_limit = bytes_limit
         self.backend = backend
+        self.compress = compress
+        if backend_options is None:
+            backend_options = {}
+        self.backend_options = backend_options
+
         if compress and mmap_mode is not None:
             warnings.warn('Compressed results cannot be memmapped',
                           stacklevel=2)
@@ -897,9 +946,11 @@ class Memory(Logger):
             mmap_mode = self.mmap_mode
         if isinstance(func, MemorizedFunc):
             func = func.func
-        return MemorizedFunc(func, self.store_backend, mmap_mode=mmap_mode,
-                             ignore=ignore, verbose=verbose,
-                             timestamp=self.timestamp)
+        return MemorizedFunc(func, location=self.store_backend,
+                             backend=self.backend,
+                             ignore=ignore, mmap_mode=mmap_mode,
+                             compress=self.compress,
+                             verbose=verbose, timestamp=self.timestamp)
 
     def clear(self, warn=True):
         """ Erase the complete cache directory.
@@ -932,14 +983,15 @@ class Memory(Logger):
     # ------------------------------------------------------------------------
 
     def __repr__(self):
-        return '{0}(location={1})'.format(
-            self.__class__.__name__, (repr(None) if self.store_backend is None
-                                      else repr(self.store_backend)))
+        return '{class_name}(location={location})'.format(
+            class_name=self.__class__.__name__,
+            location=(None if self.store_backend is None
+                      else self.store_backend.location))
 
-    def __reduce__(self):
+    def __getstate__(self):
         """ We don't store the timestamp when pickling, to avoid the hash
             depending from it.
-            In addition, when unpickling, we run the __init__
         """
-        return (self.__class__, (), {k: v for k, v in vars(self).items()
-                                     if k != 'timestamp'})
+        state = self.__dict__.copy()
+        state['timestamp'] = None
+        return state

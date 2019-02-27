@@ -42,20 +42,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 from __future__ import print_function
 
-import dis
-from functools import partial
-import imp
 import io
-import itertools
-import logging
+import dis
+import sys
+import types
 import opcode
-import operator
 import pickle
 import struct
-import sys
-import traceback
-import types
+import logging
 import weakref
+import operator
+import importlib
+import itertools
+import traceback
+from functools import partial
 
 
 # cloudpickle is meant for inter process communication: we expect all
@@ -76,6 +76,22 @@ else:
     from pickle import _Pickler as Pickler
     from io import BytesIO as StringIO
     PY3 = True
+
+
+# Container for the global namespace to ensure consistent unpickling of
+# functions defined in dynamic modules (modules not registed in sys.modules).
+_dynamic_modules_globals = weakref.WeakValueDictionary()
+
+
+class _DynamicModuleFuncGlobals(dict):
+    """Global variables referenced by a function defined in a dynamic module
+
+    To avoid leaking references we store such context in a WeakValueDictionary
+    instance.  However instances of python builtin types such as dict cannot
+    be used directly as values in such a construct, hence the need for a
+    derived class.
+    """
+    pass
 
 
 def _make_cell_set_template_code():
@@ -163,7 +179,7 @@ def cell_set(cell, value):
     )(value)
 
 
-#relevant opcodes
+# relevant opcodes
 STORE_GLOBAL = opcode.opmap['STORE_GLOBAL']
 DELETE_GLOBAL = opcode.opmap['DELETE_GLOBAL']
 LOAD_GLOBAL = opcode.opmap['LOAD_GLOBAL']
@@ -173,7 +189,7 @@ EXTENDED_ARG = dis.EXTENDED_ARG
 
 
 def islambda(func):
-    return getattr(func,'__name__') == '<lambda>'
+    return getattr(func, '__name__') == '<lambda>'
 
 
 _BUILTIN_TYPE_NAMES = {}
@@ -270,45 +286,31 @@ class CloudPickler(Pickler):
             if 'recursion' in e.args[0]:
                 msg = """Could not pickle object as excessively deep recursion required."""
                 raise pickle.PicklingError(msg)
+            else:
+                raise
 
     def save_memoryview(self, obj):
         self.save(obj.tobytes())
+
     dispatch[memoryview] = save_memoryview
 
     if not PY3:
         def save_buffer(self, obj):
             self.save(str(obj))
-        dispatch[buffer] = save_buffer
 
-    def save_unsupported(self, obj):
-        raise pickle.PicklingError("Cannot pickle objects of type %s" % type(obj))
-    dispatch[types.GeneratorType] = save_unsupported
-
-    # itertools objects do not pickle!
-    for v in itertools.__dict__.values():
-        if type(v) is type:
-            dispatch[v] = save_unsupported
+        dispatch[buffer] = save_buffer  # noqa: F821 'buffer' was removed in Python 3
 
     def save_module(self, obj):
         """
         Save a module as an import
         """
-        mod_name = obj.__name__
-        # If module is successfully found then it is not a dynamically created module
-        if hasattr(obj, '__file__'):
-            is_dynamic = False
-        else:
-            try:
-                _find_module(mod_name)
-                is_dynamic = False
-            except ImportError:
-                is_dynamic = True
-
         self.modules.add(obj)
-        if is_dynamic:
-            self.save_reduce(dynamic_subimport, (obj.__name__, vars(obj)), obj=obj)
+        if _is_dynamic(obj):
+            self.save_reduce(dynamic_subimport, (obj.__name__, vars(obj)),
+                             obj=obj)
         else:
             self.save_reduce(subimport, (obj.__name__,), obj=obj)
+
     dispatch[types.ModuleType] = save_module
 
     def save_codeobject(self, obj):
@@ -329,6 +331,7 @@ class CloudPickler(Pickler):
                 obj.co_firstlineno, obj.co_lnotab, obj.co_freevars, obj.co_cellvars
             )
         self.save_reduce(types.CodeType, args, obj=obj)
+
     dispatch[types.CodeType] = save_codeobject
 
     def save_function(self, obj, name=None):
@@ -337,7 +340,13 @@ class CloudPickler(Pickler):
         Determines what kind of function obj is (e.g. lambda, defined at
         interactive prompt, etc) and handles the pickling appropriately.
         """
-        if obj in _BUILTIN_TYPE_CONSTRUCTORS:
+        try:
+            should_special_case = obj in _BUILTIN_TYPE_CONSTRUCTORS
+        except TypeError:
+            # Methods of builtin types aren't hashable in python 2.
+            should_special_case = False
+
+        if should_special_case:
             # We keep a special-cased cache of built-in type constructors at
             # global scope, because these functions are structured very
             # differently in different python versions and implementations (for
@@ -420,6 +429,7 @@ class CloudPickler(Pickler):
         else:
             write(pickle.GLOBAL + modname + '\n' + name + '\n')
             self.memoize(obj)
+
     dispatch[types.FunctionType] = save_function
 
     def _save_subimports(self, code, top_level_dependencies):
@@ -427,19 +437,22 @@ class CloudPickler(Pickler):
         Ensure de-pickler imports any package child-modules that
         are needed by the function
         """
+
         # check if any known dependency is an imported package
         for x in top_level_dependencies:
             if isinstance(x, types.ModuleType) and hasattr(x, '__package__') and x.__package__:
                 # check if the package has any currently loaded sub-imports
                 prefix = x.__name__ + '.'
-                for name, module in sys.modules.items():
+                # A concurrent thread could mutate sys.modules,
+                # make sure we iterate over a copy to avoid exceptions
+                for name in list(sys.modules):
                     # Older versions of pytest will add a "None" module to sys.modules.
                     if name is not None and name.startswith(prefix):
                         # check whether the function can address the sub-module
                         tokens = set(name[len(prefix):].split('.'))
                         if not tokens - set(code.co_names):
                             # ensure unpickler executes this import
-                            self.save(module)
+                            self.save(sys.modules[name])
                             # then discards the reference to it
                             self.write(pickle.POP)
 
@@ -453,6 +466,15 @@ class CloudPickler(Pickler):
         """
         clsdict = dict(obj.__dict__)  # copy dict proxy to a dict
         clsdict.pop('__weakref__', None)
+
+        # For ABCMeta in python3.7+, remove _abc_impl as it is not picklable.
+        # This is a fix which breaks the cache but this only makes the first
+        # calls to issubclass slower.
+        if "_abc_impl" in clsdict:
+            import abc
+            (registry, _, _, _) = abc._get_dump(obj)
+            clsdict["_abc_impl"] = [subclass_weakref()
+                                    for subclass_weakref in registry]
 
         # On PyPy, __doc__ is a readonly attribute, so we need to include it in
         # the initial skeleton class.  This is safe because we know that the
@@ -545,9 +567,13 @@ class CloudPickler(Pickler):
             'globals': f_globals,
             'defaults': defaults,
             'dict': dct,
-            'module': func.__module__,
             'closure_values': closure_values,
+            'module': func.__module__,
+            'name': func.__name__,
+            'doc': func.__doc__,
         }
+        if hasattr(func, '__annotations__') and sys.version_info >= (3, 7):
+            state['annotations'] = func.__annotations__
         if hasattr(func, '__qualname__'):
             state['qualname'] = func.__qualname__
         save(state)
@@ -572,8 +598,7 @@ class CloudPickler(Pickler):
                 # PyPy "builtin-code" object
                 out_names = set()
             else:
-                out_names = set(names[oparg]
-                                for op, oparg in _walk_global_ops(co))
+                out_names = {names[oparg] for _, oparg in _walk_global_ops(co)}
 
                 # see if nested function have any global refs
                 if co.co_consts:
@@ -614,7 +639,16 @@ class CloudPickler(Pickler):
         # save the dict
         dct = func.__dict__
 
-        base_globals = self.globals_ref.get(id(func.__globals__), {})
+        base_globals = self.globals_ref.get(id(func.__globals__), None)
+        if base_globals is None:
+            # For functions defined in a well behaved module use
+            # vars(func.__module__) for base_globals. This is necessary to
+            # share the global variables across multiple pickled functions from
+            # this module.
+            if hasattr(func, '__module__') and func.__module__ is not None:
+                base_globals = func.__module__
+            else:
+                base_globals = {}
         self.globals_ref[id(func.__globals__)] = base_globals
 
         return (code, f_globals, defaults, closure, dct, base_globals)
@@ -623,6 +657,7 @@ class CloudPickler(Pickler):
         if obj.__module__ == "__builtin__":
             return self.save_global(obj)
         return self.save_function(obj)
+
     dispatch[types.BuiltinFunctionType] = save_builtin_function
 
     def save_global(self, obj, name=None, pack=struct.pack):
@@ -632,6 +667,13 @@ class CloudPickler(Pickler):
         The name of this method is somewhat misleading: all types get
         dispatched here.
         """
+        if obj is type(None):
+            return self.save_reduce(type, (None,), obj=obj)
+        elif obj is type(Ellipsis):
+            return self.save_reduce(type, (Ellipsis,), obj=obj)
+        elif obj is type(NotImplemented):
+            return self.save_reduce(type, (NotImplemented,), obj=obj)
+
         if obj.__module__ == "__main__":
             return self.save_dynamic_class(obj)
 
@@ -661,7 +703,8 @@ class CloudPickler(Pickler):
                 self.save_reduce(types.MethodType, (obj.__func__, obj.__self__), obj=obj)
             else:
                 self.save_reduce(types.MethodType, (obj.__func__, obj.__self__, obj.__self__.__class__),
-                         obj=obj)
+                                 obj=obj)
+
     dispatch[types.MethodType] = save_instancemethod
 
     def save_inst(self, obj):
@@ -715,11 +758,13 @@ class CloudPickler(Pickler):
     def save_property(self, obj):
         # properties not correctly saved in python
         self.save_reduce(property, (obj.fget, obj.fset, obj.fdel, obj.__doc__), obj=obj)
+
     dispatch[property] = save_property
 
     def save_classmethod(self, obj):
         orig_func = obj.__func__
         self.save_reduce(type(obj), (orig_func,), obj=obj)
+
     dispatch[classmethod] = save_classmethod
     dispatch[staticmethod] = save_classmethod
 
@@ -730,7 +775,7 @@ class CloudPickler(Pickler):
                 return item
         items = obj(Dummy())
         if not isinstance(items, tuple):
-            items = (items, )
+            items = (items,)
         return self.save_reduce(operator.itemgetter, items)
 
     if type(operator.itemgetter) is type:
@@ -761,16 +806,16 @@ class CloudPickler(Pickler):
     def save_file(self, obj):
         """Save a file"""
         try:
-            import StringIO as pystringIO #we can't use cStringIO as it lacks the name attribute
+            import StringIO as pystringIO  # we can't use cStringIO as it lacks the name attribute
         except ImportError:
             import io as pystringIO
 
-        if not hasattr(obj, 'name') or  not hasattr(obj, 'mode'):
+        if not hasattr(obj, 'name') or not hasattr(obj, 'mode'):
             raise pickle.PicklingError("Cannot pickle files that do not map to an actual file")
         if obj is sys.stdout:
-            return self.save_reduce(getattr, (sys,'stdout'), obj=obj)
+            return self.save_reduce(getattr, (sys, 'stdout'), obj=obj)
         if obj is sys.stderr:
-            return self.save_reduce(getattr, (sys,'stderr'), obj=obj)
+            return self.save_reduce(getattr, (sys, 'stderr'), obj=obj)
         if obj is sys.stdin:
             raise pickle.PicklingError("Cannot pickle standard input")
         if obj.closed:
@@ -805,10 +850,10 @@ class CloudPickler(Pickler):
     def save_not_implemented(self, obj):
         self.save_reduce(_gen_not_implemented, ())
 
-    if PY3:
-        dispatch[io.TextIOWrapper] = save_file
-    else:
+    try:               # Python 2
         dispatch[file] = save_file
+    except NameError:  # Python 3
+        dispatch[io.TextIOWrapper] = save_file
 
     dispatch[type(Ellipsis)] = save_ellipsis
     dispatch[type(NotImplemented)] = save_not_implemented
@@ -822,6 +867,11 @@ class CloudPickler(Pickler):
         self.save_reduce(logging.getLogger, (obj.name,), obj=obj)
 
     dispatch[logging.Logger] = save_logger
+
+    def save_root_logger(self, obj):
+        self.save_reduce(logging.getLogger, (), obj=obj)
+
+    dispatch[logging.RootLogger] = save_root_logger
 
     """Special functions for Add-on libraries"""
     def inject_addons(self):
@@ -896,9 +946,8 @@ def subimport(name):
 
 
 def dynamic_subimport(name, vars):
-    mod = imp.new_module(name)
+    mod = types.ModuleType(name)
     mod.__dict__.update(vars)
-    sys.modules[name] = mod
     return mod
 
 
@@ -928,7 +977,7 @@ def _modules_to_main(modList):
         if type(modname) is str:
             try:
                 mod = __import__(modname)
-            except Exception as e:
+            except Exception:
                 sys.stderr.write('warning: could not import %s\n.  '
                                  'Your function may unexpectedly error due to this import failing;'
                                  'A version mismatch is likely.  Specific error was:\n' % modname)
@@ -937,7 +986,7 @@ def _modules_to_main(modList):
                 setattr(main, mod.__name__, mod)
 
 
-#object generators:
+# object generators:
 def _genpartial(func, args, kwds):
     if not args:
         args = ()
@@ -945,8 +994,10 @@ def _genpartial(func, args, kwds):
         kwds = {}
     return partial(func, *args, **kwds)
 
+
 def _gen_ellipsis():
     return Ellipsis
+
 
 def _gen_not_implemented():
     return NotImplemented
@@ -1008,9 +1059,19 @@ def _fill_function(*args):
     else:
         raise ValueError('Unexpected _fill_value arguments: %r' % (args,))
 
-    func.__globals__.update(state['globals'])
+    # Only set global variables that do not exist.
+    for k, v in state['globals'].items():
+        if k not in func.__globals__:
+            func.__globals__[k] = v
+
     func.__defaults__ = state['defaults']
     func.__dict__ = state['dict']
+    if 'annotations' in state:
+        func.__annotations__ = state['annotations']
+    if 'doc' in state:
+        func.__doc__  = state['doc']
+    if 'name' in state:
+        func.__name__ = state['name']
     if 'module' in state:
         func.__module__ = state['module']
     if 'qualname' in state:
@@ -1041,6 +1102,20 @@ def _make_skel_func(code, cell_count, base_globals=None):
     """
     if base_globals is None:
         base_globals = {}
+    elif isinstance(base_globals, str):
+        base_globals_name = base_globals
+        try:
+            # First try to reuse the globals from the module containing the
+            # function. If it is not possible to retrieve it, fallback to an
+            # empty dictionary.
+            base_globals = vars(importlib.import_module(base_globals))
+        except ImportError:
+            base_globals = _dynamic_modules_globals.get(
+                    base_globals_name, None)
+            if base_globals is None:
+                base_globals = _DynamicModuleFuncGlobals()
+            _dynamic_modules_globals[base_globals_name] = base_globals
+
     base_globals['__builtins__'] = __builtins__
 
     closure = (
@@ -1056,27 +1131,49 @@ def _rehydrate_skeleton_class(skeleton_class, class_dict):
 
     See CloudPickler.save_dynamic_class for more info.
     """
+    registry = None
     for attrname, attr in class_dict.items():
-        setattr(skeleton_class, attrname, attr)
+        if attrname == "_abc_impl":
+            registry = attr
+        else:
+            setattr(skeleton_class, attrname, attr)
+    if registry is not None:
+        for subclass in registry:
+            skeleton_class.register(subclass)
+
     return skeleton_class
 
 
-def _find_module(mod_name):
+def _is_dynamic(module):
     """
-    Iterate over each part instead of calling imp.find_module directly.
-    This function is able to find submodules (e.g. sickit.tree)
+    Return True if the module is special module that cannot be imported by its
+    name.
     """
-    path = None
-    for part in mod_name.split('.'):
-        if path is not None:
-            path = [path]
-        file, path, description = imp.find_module(part, path)
-        if file is not None:
-            file.close()
-    return path, description
+    # Quick check: module that have __file__ attribute are not dynamic modules.
+    if hasattr(module, '__file__'):
+        return False
+
+    if hasattr(module, '__spec__'):
+        return module.__spec__ is None
+    else:
+        # Backward compat for Python 2
+        import imp
+        try:
+            path = None
+            for part in module.__name__.split('.'):
+                if path is not None:
+                    path = [path]
+                f, path, description = imp.find_module(part, path)
+                if f is not None:
+                    f.close()
+        except ImportError:
+            return True
+        return False
+
 
 """Constructors for 3rd party libraries
 Note: These can never be renamed due to client compatibility issues"""
+
 
 def _getobject(modname, attribute):
     mod = __import__(modname, fromlist=[attribute])

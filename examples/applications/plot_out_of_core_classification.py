@@ -27,7 +27,6 @@ feeding them to the learner.
 #          @FedericoV <https://github.com/FedericoV/>
 # License: BSD 3 clause
 
-from __future__ import print_function
 from glob import glob
 import itertools
 import os.path
@@ -40,8 +39,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
-from sklearn.externals.six.moves import html_parser
-from sklearn.externals.six.moves.urllib.request import urlretrieve
+from html.parser import HTMLParser
+from urllib.request import urlretrieve
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model import SGDClassifier
@@ -60,11 +59,11 @@ def _not_in_sphinx():
 #
 
 
-class ReutersParser(html_parser.HTMLParser):
+class ReutersParser(HTMLParser):
     """Utility class to parse a SGML file and yield documents one at a time."""
 
     def __init__(self, encoding='latin-1'):
-        html_parser.HTMLParser.__init__(self)
+        HTMLParser.__init__(self)
         self._reset()
         self.encoding = encoding
 
@@ -208,7 +207,7 @@ positive_class = 'acq'
 
 # Here are some classifiers that support the `partial_fit` method
 partial_fit_classifiers = {
-    'SGD': SGDClassifier(max_iter=5),
+    'SGD': SGDClassifier(max_iter=5, tol=1e-3),
     'Perceptron': Perceptron(tol=1e-3),
     'NB Multinomial': MultinomialNB(alpha=0.01),
     'Passive-Aggressive': PassiveAggressiveClassifier(tol=1e-3),
@@ -221,7 +220,7 @@ def get_minibatch(doc_iter, size, pos_class=positive_class):
     Note: size is before excluding invalid docs with no topics assigned.
 
     """
-    data = [(u'{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
+    data = [('{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
             for doc in itertools.islice(doc_iter, size)
             if doc['topics']]
     if not len(data):
@@ -333,6 +332,7 @@ def plot_accuracy(x, y, x_legend):
     plt.grid(True)
     plt.plot(x, y)
 
+
 rcParams['legend.fontsize'] = 10
 cls_names = list(sorted(cls_stats.keys()))
 
@@ -358,9 +358,8 @@ plt.legend(cls_names, loc='best')
 # Plot fitting times
 plt.figure()
 fig = plt.gcf()
-cls_runtime = []
-for cls_name, stats in sorted(cls_stats.items()):
-    cls_runtime.append(stats['total_fit_time'])
+cls_runtime = [stats['total_fit_time']
+               for cls_name, stats in sorted(cls_stats.items())]
 
 cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')
@@ -370,7 +369,7 @@ ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
                      color=bar_colors)
 
-ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
+ax.set_xticks(np.linspace(0, len(cls_names) - 1, len(cls_names)))
 ax.set_xticklabels(cls_names, fontsize=10)
 ymax = max(cls_runtime) * 1.2
 ax.set_ylim((0, ymax))
@@ -385,8 +384,11 @@ def autolabel(rectangles):
         ax.text(rect.get_x() + rect.get_width() / 2.,
                 1.05 * height, '%.4f' % height,
                 ha='center', va='bottom')
+        plt.setp(plt.xticks()[1], rotation=30)
+
 
 autolabel(rectangles)
+plt.tight_layout()
 plt.show()
 
 # Plot prediction times
@@ -404,7 +406,7 @@ ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
                      color=bar_colors)
 
-ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
+ax.set_xticks(np.linspace(0, len(cls_names) - 1, len(cls_names)))
 ax.set_xticklabels(cls_names, fontsize=8)
 plt.setp(plt.xticks()[1], rotation=30)
 ymax = max(cls_runtime) * 1.2
@@ -412,4 +414,5 @@ ax.set_ylim((0, ymax))
 ax.set_ylabel('runtime (s)')
 ax.set_title('Prediction Times (%d instances)' % n_test_documents)
 autolabel(rectangles)
+plt.tight_layout()
 plt.show()

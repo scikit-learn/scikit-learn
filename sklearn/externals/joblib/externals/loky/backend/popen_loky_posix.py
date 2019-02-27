@@ -127,7 +127,8 @@ if sys.platform != "win32":
             set_spawning_popen(self)
             try:
                 prep_data = spawn.get_preparation_data(
-                    process_obj._name, process_obj.init_main_module)
+                    process_obj._name,
+                    getattr(process_obj, "init_main_module", True))
                 reduction.dump(prep_data, fp)
                 reduction.dump(process_obj, fp)
 
@@ -150,9 +151,10 @@ if sys.platform != "win32":
                     cmd_python += ['--semaphore',
                                    str(reduction._mk_inheritable(tracker_fd))]
                 self._fds.extend([child_r, child_w, tracker_fd])
-                util.debug("launch python with cmd:\n%s" % cmd_python)
                 from .fork_exec import fork_exec
                 pid = fork_exec(cmd_python, self._fds)
+                util.debug("launched python with pid {} and cmd:\n{}"
+                           .format(pid, cmd_python))
                 self.sentinel = parent_r
 
                 method = 'getbuffer'

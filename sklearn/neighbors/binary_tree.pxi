@@ -292,7 +292,7 @@ Additional keywords are passed to the distance metric class.
 
 Attributes
 ----------
-data : np.ndarray
+data : memory view
     The training data
 
 Examples

@@ -13,7 +13,7 @@ from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
 
 
 # Make an X that looks somewhat like a small tf-idf matrix.
-# XXX newer versions of SciPy have scipy.sparse.rand for this.
+# XXX newer versions of SciPy >0.16 have scipy.sparse.rand for this.
 shape = 60, 55
 n_samples, n_features = shape
 rng = check_random_state(42)

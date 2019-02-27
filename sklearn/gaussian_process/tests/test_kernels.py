@@ -5,8 +5,8 @@
 
 import pytest
 import numpy as np
+from inspect import signature
 
-from sklearn.utils.fixes import signature
 from sklearn.gaussian_process.kernels import _approx_fprime
 
 from sklearn.metrics.pairwise \

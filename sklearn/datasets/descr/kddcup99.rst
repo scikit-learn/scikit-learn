@@ -6,7 +6,7 @@ Kddcup 99 dataset
 The KDD Cup '99 dataset was created by processing the tcpdump portions
 of the 1998 DARPA Intrusion Detection System (IDS) Evaluation dataset,
 created by MIT Lincoln Lab [1]. The artificial data (described on the `dataset's
-homepage <http://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html>`_) was
+homepage <https://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html>`_) was
 generated using a closed network and hand-injected attacks to produce a
 large number of different types of attack with normal activity in the
 background. As the initial goal was to produce a large training set for

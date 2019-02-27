@@ -6,8 +6,7 @@
 # This is the exact and Barnes-Hut t-SNE implementation. There are other
 # modifications of the algorithm:
 # * Fast Optimization for t-SNE:
-#   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
-from __future__ import division
+#   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
 import warnings
 from time import time
@@ -25,8 +24,6 @@ from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
-from ..externals.six import string_types
-from ..utils import deprecated
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -455,18 +452,27 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
                       "parameter instead.", DeprecationWarning)
         metric = 'precomputed'
     dist_X = pairwise_distances(X, metric=metric)
+    if metric == 'precomputed':
+        dist_X = dist_X.copy()
+    # we set the diagonal to np.inf to exclude the points themselves from
+    # their own neighborhood
+    np.fill_diagonal(dist_X, np.inf)
     ind_X = np.argsort(dist_X, axis=1)
+    # `ind_X[i]` is the index of sorted distances between i and other samples
     ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
         return_distance=False)
 
+    # We build an inverted index of neighbors in the input space: For sample i,
+    # we define `inverted_index[i]` as the inverted index of sorted distances:
+    # inverted_index[i][ind_X[i]] = np.arange(1, n_sample + 1)
     n_samples = X.shape[0]
-    t = 0.0
-    ranks = np.zeros(n_neighbors)
-    for i in range(n_samples):
-        for j in range(n_neighbors):
-            ranks[j] = np.where(ind_X[i] == ind_X_embedded[i, j])[0][0]
-        ranks -= n_neighbors
-        t += np.sum(ranks[ranks > 0])
+    inverted_index = np.zeros((n_samples, n_samples), dtype=int)
+    ordered_indices = np.arange(n_samples + 1)
+    inverted_index[ordered_indices[:-1, np.newaxis],
+                   ind_X] = ordered_indices[1:]
+    ranks = inverted_index[ordered_indices[:-1, np.newaxis],
+                           ind_X_embedded] - n_neighbors
+    t = np.sum(ranks[ranks > 0])
     t = 1.0 - t * (2.0 / (n_samples * n_neighbors *
                           (2.0 * n_samples - 3.0 * n_neighbors - 1.0)))
     return t
@@ -614,11 +620,11 @@ class TSNE(BaseEstimator):
         Using t-SNE. Journal of Machine Learning Research 9:2579-2605, 2008.
 
     [2] van der Maaten, L.J.P. t-Distributed Stochastic Neighbor Embedding
-        http://homepage.tudelft.nl/19j49/t-SNE.html
+        https://lvdmaaten.github.io/tsne/
 
     [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
-        http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
+        https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
     """
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250
@@ -672,7 +678,7 @@ class TSNE(BaseEstimator):
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.metric == "precomputed":
-            if isinstance(self.init, string_types) and self.init == 'pca':
+            if isinstance(self.init, str) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
@@ -804,12 +810,6 @@ class TSNE(BaseEstimator):
                           X_embedded=X_embedded,
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
-
-    @property
-    @deprecated("Attribute n_iter_final was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use ``n_iter_`` instead")
-    def n_iter_final(self):
-        return self.n_iter_
 
     def _tsne(self, P, degrees_of_freedom, n_samples, X_embedded,
               neighbors=None, skip_num_points=0):

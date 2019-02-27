@@ -36,20 +36,13 @@ Arch Linux
 
 Arch Linux's package is provided through the `official repositories
 <https://www.archlinux.org/packages/?q=scikit-learn>`_ as
-``python-scikit-learn`` for Python 3 and ``python2-scikit-learn`` for Python 2.
+``python-scikit-learn`` for Python.
 It can be installed by typing the following command:
 
 .. code-block:: none
 
      # pacman -S python-scikit-learn
 
-or:
-
-.. code-block:: none
-
-     # pacman -S python2-scikit-learn
-
-depending on the version of Python you use.
 
 
 NetBSD

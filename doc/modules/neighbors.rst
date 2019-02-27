@@ -307,7 +307,7 @@ keyword ``algorithm = 'kd_tree'``, and are computed using the class
 .. topic:: References:
 
    * `"Multidimensional binary search trees used for associative searching"
-     <http://dl.acm.org/citation.cfm?doid=361002.361007>`_,
+     <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
      Bentley, J.L., Communications of the ACM (1975)
 
 
