@@ -605,3 +605,41 @@ def test_encode_util(values, expected):
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
     _, encoded = _encode(values, uniques, encode=True)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+
+
+@pytest.mark.parametrize(
+        "values, expected",
+        [(np.array([2, 1, 3, 1, 3, np.nan]),
+          np.array([1, 2, 3]),
+          np.array([1, 0, 2, 0, 2, np.nan])),
+         (np.array(['b', 'a', 'c', 'a', 'c', np.nan], dtype=object),
+          np.array(['a', 'b', 'c'], dtype=object),
+          np.array([1, 0, 2, 0, 2, np.nan]))],
+        ids=['numeric', 'object'])
+def test_encode_util_with_retain_nan(values, expected):
+    uniques = _encode(values, encode_missing='retain')
+    assert_array_equal(uniques, expected)
+    uniques, encoded = _encode(values, encode=True, encode_missing='retain')
+    assert_array_equal(uniques, expected)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+    _, encoded = _encode(values, uniques, encode=True, encode_missing='retain')
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+
+
+@pytest.mark.parametrize(
+        "values, expected",
+        [(np.array([2, 1, 3, 1, 3, np.nan]),
+          np.array([1, 2, 3, np.nan]),
+          np.array([1, 0, 2, 0, 2, 3])),
+         (np.array(['b', 'a', 'c', 'a', 'c', np.nan], dtype=object),
+          np.array(['a', 'b', 'c', np.nan], dtype=object),
+          np.array([1, 0, 2, 0, 2, 3]))],
+        ids=['numeric', 'object'])
+def test_encode_util_with_encode_nan(values, expected):
+    uniques = _encode(values, encode_missing='encode')
+    assert_array_equal(uniques, expected)
+    uniques, encoded = _encode(values, encode=True, encode_missing='encode')
+    assert_array_equal(uniques, expected)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+    _, encoded = _encode(values, uniques, encode=True, encode_missing='encode')
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
