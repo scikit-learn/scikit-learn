@@ -964,7 +964,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
         elif solver in ['sag', 'saga']:
             if multi_class == 'multinomial':
-                target = target.astype(np.float64)
+                target = target.astype(X.dtype, copy=False)
                 loss = 'multinomial'
             else:
                 loss = 'log'
@@ -1486,6 +1486,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Returns
         -------
         self : object
+
+        Notes
+        -----
+        The SAGA solver supports both float64 and float32 bit arrays.
         """
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
@@ -1520,10 +1524,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        if solver in ['newton-cg']:
-            _dtype = [np.float64, np.float32]
-        else:
+        if solver in ['lbfgs', 'liblinear']:
             _dtype = np.float64
+        else:
+            _dtype = [np.float64, np.float32]
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
                          accept_large_sparse=solver != 'liblinear')
