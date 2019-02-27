@@ -1050,7 +1050,7 @@ def distance_metrics():
 
 
 def _dist_wrapper(dist, mat, slice, *args, **kwargs):
-    """write in-place to a slice of a distance matrix"""
+    """Write in-place to a slice of a distance matrix"""
     mat[:, slice] = dist(*args, **kwargs)
 
 
@@ -1064,8 +1064,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
-    # enforce a threading backend to prevent data communication
-    # overhead
+    # enforce a threading backend to prevent data communication overhead
     fd = delayed(_dist_wrapper)
     ret = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype)
     Parallel(backend="threading", n_jobs=n_jobs, verbose=0)(
