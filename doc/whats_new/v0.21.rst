@@ -24,7 +24,7 @@ random sampling procedures.
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
 - :class:`ensemble.GradientBoostingClassifier` for multiclass
   classification. |Fix|
-- :func:`utils.multiclass._ovr_decision_function`. |Fix|
+- :func:`svm.SVC.decision_function` and :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
 
 
 Details are listed in the changelog below.
@@ -353,12 +353,17 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| Allow different dtypes (such as float32) in
   :class:`isotonic.IsotonicRegression` :issue:`8769` by :user:`Vlad Niculae <vene>`
 
-:mod:`sklearn.utils`
+:mod:`sklearn.svm`
 ....................
-- |Fix| Fixed an issue in :func:`utils.multiclass._ovr_decision_function` which would give
-  different results when applied to a subset due to local scaling method.
-  :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`
+- |Fix| Fixed an issue in :func:`svm.SVC.decision_function` which would give
+  different results when applied to a subset due to local scaling method in
+  :func:`utils.multiclass._ovr_decision_function`. :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`
 
+:mod:`sklearn.multiclass`
+....................
+- |Fix| Fixed an issue in :func:`multiclass.OneVsOneClassifier.decision_function` which would give
+  different results when applied to a subset due to local scaling method in
+  :func:`utils.multiclass._ovr_decision_function`. :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`
 
 Multiple modules
 ................
