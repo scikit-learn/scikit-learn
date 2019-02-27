@@ -125,7 +125,7 @@ def get_openmp_flag(compiler):
     return ['-fopenmp']
 
 
-OPENMP_EXTENSIONS = []
+OPENMP_EXTENSIONS = ["sklearn.utils._clibs_helpers"]
 
 
 # custom build_ext command to set OpenMP compile flags depending on os and
