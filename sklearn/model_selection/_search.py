@@ -840,9 +840,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         if self.return_train_score:
             if train_sample_weight_sums is None:
                 samples = int(np.sum(test_sample_counts[:n_splits]))
-                train_sample_counts = \
-                    np.array(test_sample_counts[:n_splits], dtype=np.int) - \
-                    samples
+                train_sample_counts = samples - \
+                    np.array(test_sample_counts[:n_splits], dtype=np.int)
             else:
                 train_sample_counts = np.array(
                     train_sample_weight_sums[:n_splits],
