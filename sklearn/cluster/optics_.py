@@ -245,8 +245,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
              leaf_size=self.leaf_size, metric=self.metric,
              metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs,
              max_eps=self.max_eps)
-        # Start all points as noise ##
-        self.labels_ = np.full(n_samples, -1, dtype=int)
 
         # Extract clusters from the calculated orders and reachability
         if self.cluster_method == 'dbscan':
