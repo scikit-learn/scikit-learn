@@ -1092,16 +1092,15 @@ Stacked generalization
 ----------------------
 
 Stacked generalization is a method for combining estimators to reduce their
-biases [W1992]. More precisely, the predictions of each individual estimators
+biases [W1992]. More precisely, the predictions of each individual estimator
 are stacked together and used by another estimator to compute the final
 prediction. This final estimator is trained through cross-validation.
 
 The :class:`StackingClassifier` and :class:`StackingRegressor` provides such
-strategies which can be applied to classification and regression problem.
+strategies which can be applied to classification and regression problems.
 
 The ``estimators`` parameter corresponds to the list of the estimators which
-are stacked together. It should be given as a list of name and instance of
-estimators::
+are stacked together. It should be given as a list of name and estimator::
 
   >>> from sklearn.linear_model import RidgeCV, LassoCV
   >>> from sklearn.svm import SVR
@@ -1109,7 +1108,7 @@ estimators::
   ...               ('lasso', LassoCV(random_state=42)),
   ...               ('svr', SVR(C=1, gamma=1e-6, kernel='rbf'))]
 
-The ``final_estimator`` will combine the prediction of the ``estimators``. It
+The ``final_estimator`` will combine the predictions of the ``estimators``. It
 needs to be a classifier or a regressor when using :class:`StackingClassifier`
 or :class:`StackingRegressor`, respectively::
 
@@ -1130,7 +1129,7 @@ to be called on the training data::
   >>> reg.fit(X_train, y_train)  # doctest: +ELLIPSIS
   StackingRegressor(...)
 
-During this fitting, the ``estimators`` are fitted on the whole training data
+During training, the ``estimators`` are fitted on the whole training data
 ``X_train``. To generalize and avoid over-fitting, the ``final_estimator`` is
 trained by cross-validation using internally
 :func:`sklearn.model_selection.cross_val_predict`.
