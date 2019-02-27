@@ -594,6 +594,9 @@ class Pipeline(_BaseComposition):
         feature_names : array-like of string
             Transformed feature names
         """
+        if input_features is None and hasattr(self, 'input_features_'):
+            input_features = self.input_features_
+
         feature_names = input_features
         for _, name, transform in self._iter(with_final=True):
             if not hasattr(transform, "get_feature_names"):
