@@ -115,7 +115,7 @@ classifiers are constructed and each one trains data from two classes.
 To provide a consistent interface with other classifiers, the
 ``decision_function_shape`` option allows to monotically transform the results of the
 "one-against-one" classifiers to a decision function of shape ``(n_samples,
-n_classes)`` using the function :func:`_ovr_decision_function` :ref:`multiclass`::
+n_classes)``.
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
