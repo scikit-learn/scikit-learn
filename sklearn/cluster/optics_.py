@@ -97,13 +97,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
     xi : float, between 0 and 1
         The steepness threshold for the Xi method to detect Xi-steep
         areas. Clusters are then hierarchically formed using these
-        areas. It is used when `extract_method='xi'`.
+        areas. It is used when `cluster_method='xi'`.
 
     min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
-        Used only when `extract_method='xi'`.
+        Used only when `cluster_method='xi'`.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
