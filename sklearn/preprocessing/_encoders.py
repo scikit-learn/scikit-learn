@@ -39,8 +39,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         - convert list of strings to object dtype
         - check for missing values for object dtype data (check_array does
           not do that)
-
         """        
+
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             X_temp = check_array(X, dtype=None)
             if not hasattr(X, 'dtype') and\
@@ -83,9 +83,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             if len(self._categories) != n_features:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
-
         self.categories_ = []
-        
+
         for i in range(n_features):
             Xi = X_list[i]
 
