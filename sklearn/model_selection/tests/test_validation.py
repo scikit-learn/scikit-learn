@@ -1652,13 +1652,13 @@ def test_sample_weight():
     assert test_metric == exp_test_acc
 
 
-@pytest.mark.parametrize("sample_wt,flip_acc_1,flip_acc_2, exp", [
-    ([1, 999999, 1, 999999], False, False, 999999/1000000),
-    ([100000, 200000, 100000, 200000], False, False, 2/3),
-    ([100000, 100000, 100000, 100000], False, False, 1/2),
-    ([200000, 100000, 200000, 100000], True, True, 2/3),
-    ([999999, 1, 999999, 1], True, True, 999999/1000000),
-    ([2000000, 1000000, 1, 999999], False, True, 1000001/4000000)
+@pytest.mark.parametrize("sample_wt,flip_acc_1,flip_acc_2,exp", [
+    ([1, 999999, 1, 999999], True, True, 999999/1000000),
+    ([100000, 200000, 100000, 200000], True, True, 2/3),
+    ([100000, 100000, 100000, 100000], True, True, 1/2),
+    ([200000, 100000, 200000, 100000], False, False, 2/3),
+    ([999999, 1, 999999, 1], False, False, 999999/1000000),
+    ([2000000, 1000000, 1, 999999], True, False, 1000001/4000000)
 ])
 def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2, exp):
     # Test that cross validation properly uses sample_weight from fit_params
@@ -1673,12 +1673,12 @@ def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2, exp):
     sum_sample_weight = np.sum(sample_weight)
     norm1_wt_f1 = sample_weight[f1] / np.sum(sample_weight[f1])
     acc1 = np.dot(y[f1], norm1_wt_f1)
-    acc1 = acc1 if flip_acc_1 else 1 - acc1
+    acc1 = acc1 if not flip_acc_1 else 1 - acc1
     ratio_wt_f1 = np.sum(sample_weight[f1]) / sum_sample_weight
 
     norm1_wt_f2 = sample_weight[f2] / np.sum(sample_weight[f2])
     acc2 = np.dot(y[f2], norm1_wt_f2)
-    acc2 = acc2 if flip_acc_2 else 1 - acc2
+    acc2 = acc2 if not flip_acc_2 else 1 - acc2
     ratio_wt_f2 = np.sum(sample_weight[f2]) / sum_sample_weight
 
     exp_cv_acc = acc1 * ratio_wt_f1 + acc2 * ratio_wt_f2
