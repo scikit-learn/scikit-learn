@@ -6,6 +6,7 @@ Pipeline Anova SVM
 Simple usage of Pipeline that runs successively a univariate
 feature selection with anova and then a C-SVM of the selected features.
 """
+import matplotlib.pyplot as plt
 from sklearn import svm
 from sklearn.datasets import samples_generator
 from sklearn.feature_selection import SelectKBest, f_regression
@@ -17,7 +18,7 @@ print(__doc__)
 
 # import some data to play with
 X, y = samples_generator.make_classification(
-    n_features=20, n_informative=3, n_redundant=0, n_classes=4,
+    n_features=20, n_informative=3, n_redundant=0, n_classes=2,
     n_clusters_per_class=2)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
@@ -32,3 +33,8 @@ anova_svm = make_pipeline(anova_filter, clf)
 anova_svm.fit(X_train, y_train)
 y_pred = anova_svm.predict(X_test)
 print(classification_report(y_test, y_pred))
+
+# access and plot the coefficients of the fitted model
+plt.bar((0, 1, 2), anova_svm.named_steps.svc.coef_.ravel())
+plt.xticks((0, 1, 2), anova_svm.named_steps.svc.input_features_)
+plt.show()
