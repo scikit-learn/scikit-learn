@@ -52,8 +52,8 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_001.png
-   :target: ../auto_examples/svm/plot_iris.html
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_svc_001.png
+   :target: ../auto_examples/svm/plot_iris_svc.html
    :align: center
 
 
@@ -279,7 +279,7 @@ set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_svm_plot_iris.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`,
  * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
  * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
@@ -393,7 +393,7 @@ Tips on Practical Use
     choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
     
-    :class:`LinearSVC` and :class`LinearSVR` are less sensitive to ``C`` when
+    :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
     it becomes large, and prediction results stop improving after a certain 
     threshold. Meanwhile, larger ``C`` values will take more time to train, 
     sometimes up to 10 times longer, as shown by Fan et al. (2008)

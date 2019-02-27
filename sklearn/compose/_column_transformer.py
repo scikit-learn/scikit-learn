@@ -6,7 +6,6 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
-from __future__ import division
 
 from itertools import chain
 
@@ -16,7 +15,6 @@ from scipy import sparse
 
 from ..base import clone, TransformerMixin
 from ..utils._joblib import Parallel, delayed
-from ..externals import six
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
@@ -86,7 +84,7 @@ boolean mask array or callable
         estimator must support `fit` and `transform`.
 
     sparse_threshold : float, default = 0.3
-        If the output of the different transfromers contains sparse matrices,
+        If the output of the different transformers contains sparse matrices,
         these will be stacked as a sparse matrix if the overall density is
         lower than this value. Use ``sparse_threshold=0`` to always return
         dense.  When the transformed output consists of all dense data, the
@@ -144,6 +142,7 @@ boolean mask array or callable
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.compose import ColumnTransformer
     >>> from sklearn.preprocessing import Normalizer
     >>> ct = ColumnTransformer(
@@ -159,6 +158,7 @@ boolean mask array or callable
            [0.5, 0.5, 0. , 1. ]])
 
     """
+    _required_parameters = ['transformers']
 
     def __init__(self, transformers, remainder='drop', sparse_threshold=0.3,
                  n_jobs=None, transformer_weights=None):
@@ -313,8 +313,8 @@ boolean mask array or callable
 
         """
         # Use Bunch object to improve autocomplete
-        return Bunch(**dict([(name, trans) for name, trans, _
-                             in self.transformers_]))
+        return Bunch(**{name: trans for name, trans, _
+                        in self.transformers_})
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -546,7 +546,7 @@ def _check_key_type(key, superclass):
     ----------
     key : scalar, list, slice, array-like
         The column specification to check
-    superclass : int or six.string_types
+    superclass : int or str
         The type for which to check the `key`
 
     """
@@ -561,7 +561,7 @@ def _check_key_type(key, superclass):
         if superclass is int:
             return key.dtype.kind == 'i'
         else:
-            # superclass = six.string_types
+            # superclass = str
             return key.dtype.kind in ('O', 'U', 'S')
     return False
 
@@ -590,7 +590,7 @@ def _get_column(X, key):
     # check whether we have string column names or integers
     if _check_key_type(key, int):
         column_names = False
-    elif _check_key_type(key, six.string_types):
+    elif _check_key_type(key, str):
         column_names = True
     elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
@@ -628,21 +628,18 @@ def _get_column_indices(X, key):
     """
     n_columns = X.shape[1]
 
-    if _check_key_type(key, int):
-        if isinstance(key, int):
-            return [key]
-        elif isinstance(key, slice):
-            return list(range(n_columns)[key])
-        else:
-            return list(key)
-
-    elif _check_key_type(key, six.string_types):
+    if (_check_key_type(key, int)
+            or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
+        # Convert key into positive indexes
+        idx = np.arange(n_columns)[key]
+        return np.atleast_1d(idx).tolist()
+    elif _check_key_type(key, str):
         try:
             all_columns = list(X.columns)
         except AttributeError:
             raise ValueError("Specifying the columns using strings is only "
                              "supported for pandas DataFrames")
-        if isinstance(key, six.string_types):
+        if isinstance(key, str):
             columns = [key]
         elif isinstance(key, slice):
             start, stop = key.start, key.stop
@@ -658,10 +655,6 @@ def _get_column_indices(X, key):
             columns = list(key)
 
         return [all_columns.index(col) for col in columns]
-
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
-        # boolean mask
-        return list(np.arange(n_columns)[key])
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
@@ -692,7 +685,7 @@ def _validate_transformers(transformers):
         return True
 
     for t in transformers:
-        if isinstance(t, six.string_types) and t in ('drop', 'passthrough'):
+        if isinstance(t, str) and t in ('drop', 'passthrough'):
             continue
         if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
                 hasattr(t, "transform")):

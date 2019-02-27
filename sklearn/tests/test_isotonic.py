@@ -4,14 +4,16 @@ import pickle
 import copy
 
 from sklearn.isotonic import (check_increasing, isotonic_regression,
-                              IsotonicRegression)
+                              IsotonicRegression, _make_unique)
 
+from sklearn.utils.validation import as_float_array
 from sklearn.utils.testing import (assert_raises, assert_array_equal,
                                    assert_equal,
                                    assert_array_almost_equal,
                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import shuffle
 
+from scipy.special import expit
 
 def test_permutation_invariance():
     # check that fit is permutation invariant.
@@ -427,10 +429,7 @@ def test_fast_predict():
     n_samples = 10 ** 3
     # X values over the -10,10 range
     X_train = 20.0 * rng.rand(n_samples) - 10
-    y_train = np.less(
-        rng.rand(n_samples),
-        1.0 / (1.0 + np.exp(-X_train))
-    ).astype('int64')
+    y_train = np.less(rng.rand(n_samples), expit(X_train)).astype('int64')
 
     weights = rng.rand(n_samples)
     # we also want to test that everything still works when some weights are 0
@@ -461,3 +460,32 @@ def test_isotonic_copy_before_fit():
     # https://github.com/scikit-learn/scikit-learn/issues/6628
     ir = IsotonicRegression()
     copy.copy(ir)
+
+
+def test_isotonic_dtype():
+    y = [2, 1, 4, 3, 5]
+    weights = np.array([.9, .9, .9, .9, .9], dtype=np.float64)
+    reg = IsotonicRegression()
+
+    for dtype in (np.int32, np.int64, np.float32, np.float64):
+        for sample_weight in (None, weights.astype(np.float32), weights):
+            y_np = np.array(y, dtype=dtype)
+            expected_dtype = as_float_array(y_np).dtype
+
+            res = isotonic_regression(y_np, sample_weight=sample_weight)
+            assert_equal(res.dtype, expected_dtype)
+
+            X = np.arange(len(y)).astype(dtype)
+            reg.fit(X, y_np, sample_weight=sample_weight)
+            res = reg.predict(X)
+            assert_equal(res.dtype, expected_dtype)
+
+
+def test_make_unique_dtype():
+    x_list = [2, 2, 2, 3, 5]
+    for dtype in (np.float32, np.float64):
+        x = np.array(x_list, dtype=dtype)
+        y = x.copy()
+        w = np.ones_like(x)
+        x, y, w = _make_unique(x, y, w)
+        assert_array_equal(x, [2, 3, 5])

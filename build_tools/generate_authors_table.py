@@ -6,8 +6,6 @@ of hard-coded contributors.
 The table should be updated for each new inclusion in the teams.
 Generating the table requires admin rights.
 """
-from __future__ import print_function
-
 import sys
 import requests
 import getpass
