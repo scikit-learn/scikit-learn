@@ -6,6 +6,7 @@ from itertools import product
 import pytest
 
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
@@ -906,7 +907,7 @@ def test_dtype_match(solver):
     assert coef_64.dtype == X_64.dtype
     assert ridge_32.predict(X_32).dtype == X_32.dtype
     assert ridge_64.predict(X_64).dtype == X_64.dtype
-    assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
+    assert_allclose(ridge_32.coef_, ridge_64.coef_, rtol=1e-5)
 
 
 def test_dtype_match_cholesky():
