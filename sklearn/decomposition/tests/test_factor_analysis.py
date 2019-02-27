@@ -18,6 +18,13 @@ from sklearn.utils.testing import ignore_warnings
 
 import pytest
 
+# Global testing variable
+rng = np.random.RandomState(0)
+n_samples, n_features, n_components = 20, 5, 3
+W = rng.randn(n_components, n_features)
+h = rng.randn(n_samples, n_components)
+noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
+X = np.dot(h, W) + noise
 
 # Ignore warnings from switching to more power iterations in randomized_svd
 @ignore_warnings
@@ -88,40 +95,30 @@ def test_factor_analysis():
                                   np.eye(X.shape[1]), 12)
 
 
-@pytest.mark.parametrize("data_type, expected_type", [
-    (np.float32, np.float32),
-    (np.float64, np.float64),
-    (np.int32, np.float64),
-    (np.int64, np.float64)
+@pytest.mark.parametrize("data_type, expected_type, noise_variance_init", [
+    (np.float32, np.float32, None),
+    (np.float64, np.float64, None),
+    (np.int32, np.float64, None),
+    (np.int64, np.float64, None),
+    (np.float32, np.float32, np.ones(n_features)),
+    (np.float64, np.float64, np.ones(n_features)),
+    (np.int32, np.float64, np.ones(n_features)),
+    (np.int64, np.float64, np.ones(n_features))
 ])
-def test_lda_dtype_match(data_type, expected_type):
-    rng = np.random.RandomState(0)
-    n_samples, n_features, n_components = 20, 5, 3
-    W = rng.randn(n_components, n_features)
-    h = rng.randn(n_samples, n_components)
-    noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
-    X = np.dot(h, W) + noise
+def test_lda_dtype_match(data_type, expected_type, noise_variance_init):
     for method in ['randomized', 'lapack']:
-        clf = FactorAnalysis(n_components=n_components, svd_method=method)
+        clf = FactorAnalysis(n_components=n_components, svd_method=method,
+                             noise_variance_init=noise_variance_init)
         clf.fit(X.astype(data_type))
         assert clf.components_.dtype == expected_type
 
 
-
-def test_lda_numeric_consistency_float32_float64():
-    rng = np.random.RandomState(0)
-    n_samples, n_features, n_components = 2000, 5, 3
-    W = rng.randn(n_components, n_features)
-    h = rng.randn(n_samples, n_components)
-    noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
-    X = np.dot(h, W) + noise
-    for method in ['randomized', 'lapack']:
-        clf_32 = FactorAnalysis(n_components=n_components, svd_method=method, random_state=42)
-        clf_32.fit(X.astype(np.float32))
-        clf_64 = FactorAnalysis(n_components=n_components, svd_method=method, random_state=42)
-        clf_64.fit(X.astype(np.float64))
-
-        # Check value consistency between types
-        rtol = 1e-5
-        import pdb; pdb.set_trace()
-        assert_allclose(clf_32.components_, clf_64.components_, rtol=rtol)
+@pytest.mark.parametrize("method", ['lapack', 'randomized'])
+def test_lda_numeric_consistency_float32_float64(method):
+    clf_32 = FactorAnalysis(n_components=n_components, svd_method=method,
+                            random_state=42)
+    clf_32.fit(X.astype(np.float32))
+    clf_64 = FactorAnalysis(n_components=n_components, svd_method=method,
+                            random_state=42)
+    clf_64.fit(X.astype(np.float64))
+    assert_allclose(clf_32.components_, clf_64.components_, rtol=1e-5)

@@ -189,7 +189,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         loglike = []
         old_ll = -np.inf
-        SMALL = 1e-8 if X.dtype in [np.float32] else 1e-12
+        SMALL = 1e-12
 
         # we'll modify svd outputs to return unexplained variance
         # to allow for unified computation of loglikelihood
