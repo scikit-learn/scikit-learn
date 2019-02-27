@@ -50,7 +50,9 @@ from sklearn.datasets import load_digits
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import brier_score_loss
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import log_loss
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
@@ -1585,11 +1587,14 @@ def test_score():
 
 
 def test_sample_weight():
+    # Test that _fit_and_score properly uses sample_weight from fit_params
+    # when calculating the desired metrics.
+
     X = np.ones([4, 1])         # Constant features to learn intercept.
     y = np.array([1, 0, 1, 0])  # Some +/- for both test and train.
     train = np.array([0, 1])    # First two indices are train.
     test = np.array([2, 3])     # Last two indices are test.
-    sample_weight = np.array([2000000, 1000000, 1, 1000000])
+    sample_weight = np.array([2000000, 1000000, 1, 999999])
 
     exp_test_acc = np.dot(y[test], sample_weight[test]) / np.sum(
         sample_weight[test])
@@ -1647,3 +1652,109 @@ def test_sample_weight():
     # counts.
     assert train_metric == exp_train_pr
     assert test_metric == exp_test_acc
+
+
+@pytest.mark.parametrize("metric,greater_is_better,needs_proba,sample_wt", [
+    (accuracy_score, True, False, [1, 999999, 1, 999999]),
+    (accuracy_score, True, False, [100000, 200000, 100000, 200000]),
+    (accuracy_score, True, False, [100000, 100000, 100000, 100000]),
+    (accuracy_score, True, False, [200000, 100000, 200000, 100000]),
+    (accuracy_score, True, False, [999999, 1, 999999, 1]),
+    (accuracy_score, True, False, [2000000, 1000000, 1, 999999]),
+    (precision_score, True, False, [2000000, 1000000, 1, 999999]),
+    (log_loss, False, True, [2500000, 500000, 200000, 100000]),
+    (brier_score_loss, False, True, [2500000, 500000, 200000, 100000]),
+])
+def test_sample_weight_cross_validation(
+        metric, greater_is_better, needs_proba, sample_wt):
+    # Test that cross validation properly uses sample_weight from fit_params
+    # when calculating the desired metrics.
+
+    def train(y, norm1_wt, needs_proba):
+        m = [np.dot(y, norm1_wt)] * len(y)
+        return m if needs_proba else np.round(m)
+
+    X = np.ones([4, 1])         # Constant features to learn intercept.
+    y = np.array([1, 0, 1, 0])  # Some +/- for both test and train.
+    f1 = np.array([0, 1])       # Fold 1.
+    f2 = np.array([2, 3])       # Fold 2.
+    sample_weight = np.array(sample_wt)
+
+    sum_sample_weight = np.sum(sample_weight)
+
+    y1 = y[f1]
+    norm1_wt_f1 = sample_weight[f1] / np.sum(sample_weight[f1])
+    model1 = train(y1, norm1_wt_f1, needs_proba)
+
+    y2 = y[f2]
+    norm1_wt_f2 = sample_weight[f2] / np.sum(sample_weight[f2])
+    model2 = train(y2, norm1_wt_f2, needs_proba)
+
+    # Notice normalized sample_weight.
+    met1 = metric(y1, model2, sample_weight=norm1_wt_f1)
+    met2 = metric(y2, model1, sample_weight=norm1_wt_f2)
+
+    ratio_wt_f1 = np.sum(sample_weight[f1]) / sum_sample_weight
+    ratio_wt_f2 = np.sum(sample_weight[f2]) / sum_sample_weight
+
+    sign = 1 if greater_is_better else -1
+    exp_cv_score = sign * (met1 * ratio_wt_f1 + met2 * ratio_wt_f2)
+
+    # There's nothing special about GridSearchCV. Could be RandomizedSearchCV.
+    gscv = GridSearchCV(
+        LogisticRegression(),
+        {"random_state": [15432]},  # parameters
+        scoring=make_scorer(metric, greater_is_better, needs_proba),
+        cv=2,
+        return_train_score=True
+    )
+
+    gscv.fit(X, y, sample_weight=sample_weight)
+    best_score = gscv.best_score_
+    np.testing.assert_almost_equal(exp_cv_score, best_score, decimal=5)
+
+    # Assert that sample_weight for each fold is normalized by the L1 norm.
+    np.testing.assert_almost_equal(np.sum(norm1_wt_f1), 1)
+    assert np.all(norm1_wt_f1 >= 0)
+    np.testing.assert_almost_equal(np.sum(norm1_wt_f2), 1)
+    assert np.all(norm1_wt_f2 >= 0)
+
+
+@pytest.mark.parametrize("replications,sample_wt,pass_none", [
+    (10000, 1, True),
+    (10000, None, True),
+    (10000, None, False),
+    (1, 10000, True)
+])
+def test_sample_weight_cross_validation_const_wt(
+        replications, sample_wt, pass_none):
+
+    # Test that cross validation properly uses sample_weight from fit_params
+    # and the weight is constant.
+
+    # The expected cross validation accuracy is 0.5.  To see why, look at
+    # the test parameterization: (10000, None, False).
+    exp_cv_acc = 0.5
+
+    X = np.ones([4 * replications, 1])
+    y = np.array([1, 0, 1, 0] * replications)
+
+    gscv = GridSearchCV(
+        LogisticRegression(),
+        param_grid={"random_state": [15432]},
+        scoring='accuracy',
+        cv=2,
+        return_train_score=True
+    )
+
+    if sample_wt is None:
+        if pass_none:
+            gscv.fit(X, y, sample_weight=None)
+        else:
+            gscv.fit(X, y)
+    else:
+        sample_weight = np.ones([4 * replications]) * sample_wt
+        gscv.fit(X, y, sample_weight=sample_weight)
+
+    best_score = gscv.best_score_
+    np.testing.assert_almost_equal(best_score, exp_cv_acc)
