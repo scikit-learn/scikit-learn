@@ -118,7 +118,7 @@ def _yield_classifier_checks(name, classifier):
     tags = _safe_tags(classifier)
 
     # test classifiers can handle non-array data and pandas objects
-    yield check_classifier_two_data_types
+    yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
     yield check_classifiers_classes
@@ -169,7 +169,7 @@ def _yield_regressor_checks(name, regressor):
     # basic testing
     yield check_regressors_train
     yield partial(check_regressors_train, readonly_memmap=True)
-    yield check_regressor_two_data_types
+    yield check_regressor_data_not_an_array
     yield check_estimators_partial_fit_n_features
     yield check_regressors_no_decision_function
     if not tags["no_validation"]:
@@ -222,7 +222,7 @@ def _yield_outliers_checks(name, estimator):
         yield check_outliers_train
         yield partial(check_outliers_train, readonly_memmap=True)
         # test outlier detectors can handle non-array data
-        yield check_classifier_two_data_types
+        yield check_classifier_data_not_an_array
         # test if NotFittedError is raised
         yield check_estimators_unfitted
 
@@ -2061,26 +2061,26 @@ def check_sparsify_coefficients(name, estimator_orig):
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_classifier_two_data_types(name, estimator_orig):
+def check_classifier_data_not_an_array(name, estimator_orig):
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
     X = pairwise_estimator_convert_X(X, estimator_orig)
     y = [1, 1, 1, 2, 2, 2]
     y = multioutput_estimator_convert_y_2d(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
-        check_estimators_two_data_types(name, estimator_orig, X, y, obj_type)
+        check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type)
 
 
 @ignore_warnings(category=DeprecationWarning)
-def check_regressor_two_data_types(name, estimator_orig):
+def check_regressor_data_not_an_array(name, estimator_orig):
     X, y = _boston_subset(n_samples=50)
     X = pairwise_estimator_convert_X(X, estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
-        check_estimators_two_data_types(name, estimator_orig, X, y, obj_type)
+        check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_estimators_two_data_types(name, estimator_orig, X, y, obj_type):
+def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     if name in CROSS_DECOMPOSITION:
         raise SkipTest("Skipping check_estimators_data_not_an_array "
                        "for cross decomposition module as estimators "
@@ -2098,6 +2098,9 @@ def check_estimators_two_data_types(name, estimator_orig, X, y, obj_type):
         y_ = NotAnArray(np.asarray(y))
         X_ = NotAnArray(np.asarray(X))
     else:
+        # Here pandas objects (Series and DataFrame) are tested explicitly
+        # because some estimators may handle them (especially their indexing)
+        # specially.
         try:
             import pandas as pd
             y_ = np.asarray(y)
