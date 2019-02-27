@@ -39,7 +39,8 @@ from sklearn.utils.validation import (
     assert_all_finite,
     check_memory,
     check_non_negative,
-    _num_samples
+    _num_samples,
+    warn_args
 )
 import sklearn
 
@@ -797,3 +798,69 @@ def test_retrieve_samples_from_non_standard_shape():
 
     X = TestNonNumericShape()
     assert _num_samples(X) == len(X)
+
+
+def test_warn_args_warns_for_function():
+
+    @warn_args
+    def f1(a, b, *, c=1, d=1):
+        pass
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Got arguments, \(1, 2, 3\), "
+                            r"should use keyword args for "
+                            r"c"):
+        f1(1, 2, 3)
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Got arguments, \(1, 2, 3, 4\), "
+                            r"should use keyword args for "
+                            r"c, d"):
+        f1(1, 2, 3, 4)
+
+    @warn_args
+    def f2(a=1, *, b=1, c=1, d=1):
+        pass
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Got arguments, \(1, 2\), "
+                            r"should use keyword args for "
+                            r"b"):
+        f2(1, 2)
+
+
+def test_warn_args_warns_for_class():
+
+    class A1:
+        @warn_args
+        def __init__(self, a, b, *, c=1, d=1):
+            pass
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Got arguments, \(1, 2, 3\), "
+                            r"should use keyword args for "
+                            r"c"):
+        A1(1, 2, 3)
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Got arguments, \(1, 2, 3, 4\), "
+                            r"should use keyword args for "
+                            r"c, d"):
+        A1(1, 2, 3, 4)
+
+    class A2:
+        @warn_args
+        def __init__(self, a=1, b=1, *, c=1, d=1):
+            pass
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Got arguments, \(1, 2, 3\), "
+                            r"should use keyword args for "
+                            r"c"):
+        A2(1, 2, 3)
+
+    with pytest.warns(DeprecationWarning,
+                      match=r"Got arguments, \(1, 2, 3, 4\), "
+                            r"should use keyword args for "
+                            r"c, d"):
+        A2(1, 2, 3, 4)

@@ -1788,3 +1788,11 @@ def test_penalty_none(solver):
         "LogisticRegressionCV",
         lr.fit, X, y
     )
+
+
+def test_logistic_warns_with_args():
+    with pytest.warns(DeprecationWarning,
+                      match=r"Got arguments, \('l1',\), "
+                            r"should use keyword args for "
+                            r"penalty"):
+        LogisticRegression('l1')

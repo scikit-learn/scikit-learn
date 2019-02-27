@@ -8,13 +8,14 @@
 #          Nicolas Tresegnie
 # License: BSD 3 clause
 
+from functools import wraps
 import warnings
 import numbers
 
 import numpy as np
 import scipy.sparse as sp
 from distutils.version import LooseVersion
-from inspect import signature
+from inspect import signature, getfullargspec
 
 from numpy.core.numeric import ComplexWarning
 
@@ -936,3 +937,26 @@ def check_non_negative(X, whom):
 
     if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def warn_args(f):
+    argspec = getfullargspec(f)
+    kwonlyargs = argspec.kwonlyargs
+    orig_spec = argspec.args
+
+    # Assumes class method has 'self' as first argument
+    is_class_method = orig_spec and 'self' == orig_spec[0]
+
+    @wraps(f)
+    def inner_f(*args, **kwargs):
+        extra_args = len(args) - len(orig_spec)
+        if extra_args > 0:
+            # ignore first 'self' argument for class methods
+            err_args = args[1:] if is_class_method else args
+            warnings.warn("Got arguments, {}, should use keyword args "
+                          "for {}".format(err_args,
+                                          ', '.join(kwonlyargs[:extra_args])),
+                          DeprecationWarning)
+        kwargs.update({k: arg for k, arg in zip(orig_spec, args)})
+        return f(**kwargs)
+    return inner_f

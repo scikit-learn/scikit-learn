@@ -28,7 +28,7 @@ from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
 from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
-from ..utils.validation import check_X_y
+from ..utils.validation import check_X_y, warn_args
 from ..utils import deprecated
 from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
@@ -1442,7 +1442,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         https://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
     """
 
-    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
+    @warn_args
+    def __init__(self, *, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='warn', max_iter=100,
                  multi_class='warn', verbose=0, warm_start=False, n_jobs=None,
