@@ -1652,15 +1652,15 @@ def test_sample_weight():
     assert test_metric == exp_test_acc
 
 
-@pytest.mark.parametrize("sample_wt,flip_acc_1,flip_acc_2", [
-    ([1, 999999, 1, 999999], False, False),
-    ([100000, 200000, 100000, 200000], False, False),
-    ([100000, 100000, 100000, 100000], False, False),
-    ([200000, 100000, 200000, 100000], True, True),
-    ([999999, 1, 999999, 1], True, True),
-    ([2000000, 1000000, 1, 999999], False, True)
+@pytest.mark.parametrize("sample_wt,flip_acc_1,flip_acc_2, exp", [
+    ([1, 999999, 1, 999999], False, False, 0.999999),
+    ([100000, 200000, 100000, 200000], False, False, 2/3.0),
+    ([100000, 100000, 100000, 100000], False, False, 1/2.0),
+    ([200000, 100000, 200000, 100000], True, True, 2/3.0),
+    ([999999, 1, 999999, 1], True, True, 0.999999),
+    ([2000000, 1000000, 1, 999999], False, True, 0.25000025)
 ])
-def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2):
+def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2, exp):
     # Test that cross validation properly uses sample_weight from fit_params
     # when calculating the desired metrics.
 
@@ -1693,7 +1693,10 @@ def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2):
 
     gscv.fit(X, y, sample_weight=sample_weight)
     best_score = gscv.best_score_
-    np.testing.assert_almost_equal(best_score, exp_cv_acc, decimal=12)
+    np.testing.assert_almost_equal(exp_cv_acc, best_score, decimal=12)
+
+    # Assert the above math for exp_cv_acc is correct.
+    np.testing.assert_almost_equal(exp_cv_acc, exp, decimal=12)
 
     # Assert that the sample weights for each fold were normalized by the
     # L1 norm.
