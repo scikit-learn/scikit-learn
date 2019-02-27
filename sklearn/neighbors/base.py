@@ -17,7 +17,7 @@ from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
-from ..base import BaseEstimator
+from ..base import BaseEstimator, MultiOutputMixin
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, gen_even_slices
@@ -284,7 +284,7 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
         return neigh_ind
 
 
-class NeighborsBase(BaseEstimator, metaclass=ABCMeta):
+class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
     @abstractmethod

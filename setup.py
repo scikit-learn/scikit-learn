@@ -11,15 +11,23 @@ import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
 import traceback
-import builtins
+try:
+    import builtins
+    # This is a bit (!) hackish: we are setting a global variable so that the
+    # main sklearn __init__ can detect if it is being loaded by the setup
+    # routine, to avoid attempting to load components that aren't built yet:
+    # the numpy distutils extensions that are used by scikit-learn to
+    # recursively build the compiled extensions in sub-packages is based on the
+    # Python import machinery.
+    builtins.__SKLEARN_SETUP__ = True
+except ImportError:
+    # Python 2 is not support but we will raise an explicit error message next.
+    pass
 
-# This is a bit (!) hackish: we are setting a global variable so that the main
-# sklearn __init__ can detect if it is being loaded by the setup routine, to
-# avoid attempting to load components that aren't built yet:
-# the numpy distutils extensions that are used by scikit-learn to recursively
-# build the compiled extensions in sub-packages is based on the Python import
-# machinery.
-builtins.__SKLEARN_SETUP__ = True
+if sys.version_info < (3, 5):
+    raise RuntimeError("Scikit-learn requires Python 3.5 or later. The current"
+                       " Python version is %s installed in %s."
+                       % (platform.python_version(), sys.executable))
 
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
