@@ -277,6 +277,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
 
             elif self.strategy == "stratified":
                 out = rs.multinomial(1, class_prior_[k], size=n_samples)
+                out = out.astype(np.float64)
 
             elif self.strategy == "uniform":
                 out = np.ones((n_samples, n_classes_[k]), dtype=np.float64)
