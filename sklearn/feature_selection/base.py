@@ -119,7 +119,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         Xt = np.zeros((X.shape[0], support.size), dtype=X.dtype)
         Xt[:, support] = X
         return Xt
-    
+
     def get_feature_names(self, input_features=None):
         mask = self.get_support()
         if input_features is None:

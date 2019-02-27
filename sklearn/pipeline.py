@@ -548,18 +548,20 @@ class Pipeline(_BaseComposition):
 
     def set_feature_names(self, input_features):
         """Set the input feature names for all steps.
-        
+
         Sets the input_features_ attribute on the pipeline and
         on all pipeline steps using the provided input feature names
         as input for the first step.
-        
+
         Some estimators like `ColumnTransformer` and `CountVectorizer`
         might ignore the provided input feature names.
-        
+
         Parameters
         ----------
-        
-        
+        input_features : array-like of string or None
+            Feature names to use as input feature names for the first step
+            of the pipeline.
+
         """
         self.input_features_ = input_features
         feature_names = input_features
