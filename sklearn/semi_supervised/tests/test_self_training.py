@@ -8,7 +8,7 @@ from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris, make_blobs
 from sklearn.metrics import accuracy_score
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
@@ -218,7 +218,7 @@ def test_no_unlabeled():
     knn = KNeighborsClassifier()
     knn.fit(X_train, y_train)
     st = SelfTrainingClassifier(knn)
-    with pytest.warns(UserWarning, msg="y contains no unlabeled samples"):
+    with pytest.warns(UserWarning, match="y contains no unlabeled samples"):
         st.fit(X_train, y_train)
     assert_array_equal(knn.predict(X_test), st.predict(X_test))
     # Assert that all samples were labeled in iteration 0 (since there were no
@@ -249,3 +249,15 @@ def test_early_stopping():
     assert_array_equal(st_no_stop.predict(X_test), st.predict(X_test))
     assert st.termination_condition_ == "early_stopping"
     assert st_no_stop.termination_condition_ == "max_iter" or "all_labeled"
+
+
+def test_strings_no_unlabeled():
+    # regression test
+    classifier_orig = SelfTrainingClassifier(KNeighborsClassifier())
+    X, y = make_blobs(n_samples=30, random_state=0,
+                      cluster_std=0.1)
+    labels_multiclass = ["one", "two", "three"]
+
+    y_strings = np.take(labels_multiclass, y)
+
+    classifier_orig.fit(X, y_strings)

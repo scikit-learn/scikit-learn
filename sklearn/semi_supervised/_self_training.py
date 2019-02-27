@@ -1,10 +1,11 @@
 import numpy as np
 
-from ..base import BaseEstimator, MetaEstimatorMixin, clone
+from ..base import MetaEstimatorMixin, clone
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
 from ..exceptions import ConvergenceWarning
+from ..utils.metaestimators import _BaseComposition
 import warnings
 
 __all__ = ["SelfTrainingClassifier"]
@@ -23,7 +24,7 @@ def _validate_estimator(estimator):
         raise ValueError(msg)
 
 
-class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
+class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
     """Self-training classifier
 
     This class allows a given supervised classifier to function as a
@@ -164,7 +165,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 "early stopping is ineffective"
             warnings.warn(msg, UserWarning)
 
-        has_label = y != -1
+        # XXX: y != -1 somehow doesn't work when y is an array of only strings
+        # (it returns a scalar instead of an array). Is there a better way?
+        has_label = np.vectorize(lambda x: x != -1)(y)
 
         if np.all(has_label):
             warnings.warn("y contains no unlabeled samples", UserWarning)
