@@ -80,7 +80,22 @@ def _encode_python(values, uniques=None, encode=False):
         return uniques
 
 
-def _encode(values, uniques=None, encode=False):
+def _encode_retain_missing(uniques, encoded=None):
+
+    missing_vals = np.isnan(uniques)
+
+    if np.all(missing_vals):
+        raise ValueError, 'All values are NaN'
+
+    if encoded is not None and np.any(missing_vals):
+        encoded[np.argmax(encoded)] = np.nan
+        return uniques[~missing_vals], encoded
+
+    else:
+        return uniques[~missing_vals]
+
+
+def _encode(values, uniques=None, encode=False, encode_missing='retain'):
     """Helper function to factorize (find uniques) and encode values.
 
     Uses pure python method for object dtype, and numpy method for
@@ -100,6 +115,11 @@ def _encode(values, uniques=None, encode=False):
         already have been determined in fit).
     encode : bool, default False
         If True, also encode the values into integer codes based on `uniques`.
+    encode_missing : str, (default 'retain')
+        Supported are 'retain' and 'encode'. If 'retain', NaN's are not
+        added to categories and NaN value is retained in encoded data.
+        If 'encode', NaN's are categorized and encoded as largest
+        ordinal category.
 
     Returns
     -------
@@ -110,10 +130,17 @@ def _encode(values, uniques=None, encode=False):
         If ``encode=True``.
 
     """
-    if values.dtype == object:
-        return _encode_python(values, uniques, encode)
+    if encode_missing == 'retain':
+        if values.dtype == object:
+            return _encode_retain_missing(_encode_python(values, uniques, encode))
+        else:
+            return _encode_retain_missing(_encode_numpy(values, uniques, encode))
+
     else:
-        return _encode_numpy(values, uniques, encode)
+        if values.dtype == object:
+            return _encode_python(values, uniques, encode)
+        else:
+            return _encode_numpy(values, uniques, encode)
 
 
 def _encode_check_unknown(values, uniques, return_mask=False):
