@@ -164,7 +164,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = check_array(X, copy=self.copy, dtype=np.float64)
+        X = check_array(X, copy=self.copy, dtype=[np.float64, np.float32])
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -185,11 +185,11 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
                 raise ValueError("noise_variance_init dimension does not "
                                  "with number of features : %d != %d" %
                                  (len(self.noise_variance_init), n_features))
-            psi = np.array(self.noise_variance_init)
+            psi = np.array(self.noise_variance_init, dtype=X.dtype)
 
         loglike = []
         old_ll = -np.inf
-        SMALL = 1e-12
+        SMALL = 1e-8 if X.dtype in [np.float32] else 1e-12
 
         # we'll modify svd outputs to return unexplained variance
         # to allow for unified computation of loglikelihood
@@ -260,8 +260,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'components_')
 
-        X = check_array(X)
-        Ih = np.eye(len(self.components_))
+        X = check_array(X, dtype=[np.float64, np.float32])
+        Ih = np.eye(len(self.components_), dtype=X.dtype)
 
         X_transformed = X - self.mean_
 

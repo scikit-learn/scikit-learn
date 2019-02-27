@@ -110,7 +110,7 @@ def test_lda_dtype_match(data_type, expected_type):
 
 def test_lda_numeric_consistency_float32_float64():
     rng = np.random.RandomState(0)
-    n_samples, n_features, n_components = 20, 5, 3
+    n_samples, n_features, n_components = 2000, 5, 3
     W = rng.randn(n_components, n_features)
     h = rng.randn(n_samples, n_components)
     noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
@@ -123,4 +123,5 @@ def test_lda_numeric_consistency_float32_float64():
 
         # Check value consistency between types
         rtol = 1e-5
+        import pdb; pdb.set_trace()
         assert_allclose(clf_32.components_, clf_64.components_, rtol=rtol)
