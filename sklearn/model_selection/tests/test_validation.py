@@ -50,7 +50,9 @@ from sklearn.datasets import load_digits
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import brier_score_loss
 from sklearn.metrics import confusion_matrix
+from sklearn.metrics import log_loss
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
@@ -1652,17 +1654,26 @@ def test_sample_weight():
     assert test_metric == exp_test_acc
 
 
-@pytest.mark.parametrize("sample_wt,flip_acc_1,flip_acc_2,exp", [
-    ([1, 999999, 1, 999999], True, True, 999999/1000000),
-    ([100000, 200000, 100000, 200000], True, True, 2/3),
-    ([100000, 100000, 100000, 100000], True, True, 1/2),
-    ([200000, 100000, 200000, 100000], False, False, 2/3),
-    ([999999, 1, 999999, 1], False, False, 999999/1000000),
-    ([2000000, 1000000, 1, 999999], True, False, 1000001/4000000)
+@pytest.mark.parametrize(
+    "met_name,metric,greater_is_better,needs_proba,sample_wt", [
+    ("accuracy", accuracy_score, True, False, [1, 999999, 1, 999999]),
+    ("accuracy", accuracy_score, True, False, [100000, 200000, 100000, 200000]),
+    ("accuracy", accuracy_score, True, False, [100000, 100000, 100000, 100000]),
+    ("accuracy", accuracy_score, True, False, [200000, 100000, 200000, 100000]),
+    ("accuracy", accuracy_score, True, False, [999999, 1, 999999, 1]),
+    ("accuracy", accuracy_score, True, False, [2000000, 1000000, 1, 999999]),
+    ("precision", precision_score, True, False, [2000000, 1000000, 1, 999999]),
+    ("neg_log_loss", log_loss, False, True, [2500000, 500000, 200000, 100000]),
+    ("brier_score_loss", brier_score_loss, False, True, [2500000, 500000, 200000, 100000]),
 ])
-def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2, exp):
+def test_sample_weight_cross_validation(
+        met_name, metric, greater_is_better, needs_proba, sample_wt):
     # Test that cross validation properly uses sample_weight from fit_params
     # when calculating the desired metrics.
+
+    def train(y, norm1_wt, needs_proba):
+        m = [np.dot(y, norm1_wt)] * len(y)
+        return m if needs_proba else np.round(m)
 
     X = np.ones([4, 1])         # Constant features to learn intercept.
     y = np.array([1, 0, 1, 0])  # Some +/- for both test and train.
@@ -1672,49 +1683,41 @@ def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2, exp):
 
     sum_sample_weight = np.sum(sample_weight)
 
-    norm1_wt_f1 = sample_weight[f1] / np.sum(sample_weight[f1])
     y1 = y[f1]
-    model2 = [np.round(np.dot(y[f2], sample_weight[f2])/np.sum(sample_weight[f2]))] * len(f2)
-    sklearn_acc1 = accuracy_score(y1, model2, sample_weight=sample_weight[f1])
+    norm1_wt_f1 = sample_weight[f1] / np.sum(sample_weight[f1])
+    model1 = train(y1, norm1_wt_f1, needs_proba)
 
-    acc1 = np.dot(y[f1], norm1_wt_f1)
-    acc1 = acc1 if not flip_acc_1 else 1 - acc1
-    ratio_wt_f1 = np.sum(sample_weight[f1]) / sum_sample_weight
-
-    norm1_wt_f2 = sample_weight[f2] / np.sum(sample_weight[f2])
     y2 = y[f2]
-    model1 = [np.round(np.dot(y[f1], sample_weight[f1])/np.sum(sample_weight[f1]))] * len(f1)
-    sklearn_acc2 = accuracy_score(y2, model1, sample_weight=sample_weight[f2])
+    norm1_wt_f2 = sample_weight[f2] / np.sum(sample_weight[f2])
+    model2 = train(y2, norm1_wt_f2, needs_proba)
 
-    acc2 = np.dot(y[f2], norm1_wt_f2)
-    acc2 = acc2 if not flip_acc_2 else 1 - acc2
+    # Notice normalized sample_weight.
+    met1 = metric(y1, model2, sample_weight=norm1_wt_f1)
+    met2 = metric(y2, model1, sample_weight=norm1_wt_f2)
+
+    ratio_wt_f1 = np.sum(sample_weight[f1]) / sum_sample_weight
     ratio_wt_f2 = np.sum(sample_weight[f2]) / sum_sample_weight
 
-    exp_cv_acc = acc1 * ratio_wt_f1 + acc2 * ratio_wt_f2
+    sign = 1 if greater_is_better else -1
+    exp_cv_score = sign * (met1 * ratio_wt_f1 + met2 * ratio_wt_f2)
 
     gscv = GridSearchCV(
         LogisticRegression(),
         param_grid={"random_state": [15432]},
-        scoring='accuracy',
+        scoring=met_name,
         cv=2,
         return_train_score=True
     )
 
     gscv.fit(X, y, sample_weight=sample_weight)
     best_score = gscv.best_score_
-    np.testing.assert_almost_equal(exp_cv_acc, best_score, decimal=12)
+    np.testing.assert_almost_equal(exp_cv_score, best_score, decimal=5)
 
-    # Assert the above math for exp_cv_acc is correct.
-    np.testing.assert_almost_equal(exp_cv_acc, exp, decimal=12)
-    np.testing.assert_almost_equal(acc1, sklearn_acc1, decimal=12)
-    np.testing.assert_almost_equal(acc2, sklearn_acc2, decimal=12)
-
-    # Assert that the sample weights for each fold were normalized by the
-    # L1 norm.
+    # Assert that sample_weight for each fold is normalized by the L1 norm.
     np.testing.assert_almost_equal(np.sum(norm1_wt_f1), 1)
-    np.all(norm1_wt_f1 >= 0)
+    assert np.all(norm1_wt_f1 >= 0)
     np.testing.assert_almost_equal(np.sum(norm1_wt_f2), 1)
-    np.all(norm1_wt_f2 >= 0)
+    assert np.all(norm1_wt_f2 >= 0)
 
 
 @pytest.mark.parametrize("replications,sample_wt,pass_none", [
