@@ -25,6 +25,7 @@ _OPENML_PREFIX = "https://openml.org/"
 _SEARCH_NAME = "api/v1/json/data/list/data_name/{}/limit/2"
 _DATA_INFO = "api/v1/json/data/{}"
 _DATA_FEATURES = "api/v1/json/data/features/{}"
+_DATA_QUALITIES = "api/v1/json/data/qualities/{}"
 _DATA_FILE = "data/v1/download/{}"
 
 
@@ -240,8 +241,8 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape=None):
         data = np.fromiter(itertools.chain.from_iterable(arff_data),
                            dtype='float64', count=shape[0]*shape[1])
         data = data.reshape(*shape)
-        X = np.array(data[:, col_slice_x], dtype=np.float64)
-        y = np.array(data[:, col_slice_y], dtype=np.float64)
+        X = data[:, col_slice_x]
+        y = data[:, col_slice_y]
         return X, y
     elif isinstance(arff_data, tuple):
         arff_data_X = _split_sparse_columns(arff_data, col_slice_x)
@@ -337,14 +338,24 @@ def _get_data_features(data_id, data_home):
     return json_data['data_features']['feature']
 
 
-def _get_data_shape(data_info):
+def _get_data_qualities(data_id, data_home):
+    # OpenML API function:
+    # https://www.openml.org/api_docs#!/data/get_data_qualities_id
+    url = _DATA_QUALITIES.format(data_id)
+    error_message = "Dataset with data_id {} not found.".format(data_id)
+    json_data = _get_json_content_from_openml_api(url, error_message, True,
+                                                  data_home)
+    return json_data['data_qualities']['quality']
+
+
+def _get_data_shape(data_qualities):
     # Using the data_info dictionary from _get_data_info_by_name to extract
     # the number of samples / features
-    for d in data_info['quality']:
+    for d in data_qualities:
         if d['name'] == 'NumberOfFeatures':
             n_features = int(float(d['value']))
             break
-    for d in data_info['quality']:
+    for d in data_qualities:
         if d['name'] == 'NumberOfInstances':
             n_samples = int(float(d['value']))
             break
@@ -526,7 +537,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
         data_id = data_info['did']
     elif data_id is not None:
         # from the previous if statement, it is given that name is None
-        if version is not "active":
+        if version != "active":
             raise ValueError(
                 "Dataset data_id={} and version={} passed, but you can only "
                 "specify a numeric data_id or a version, not "
@@ -602,6 +613,12 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if data_description['format'].lower() == 'sparse_arff':
         return_sparse = True
 
+    if not return_sparse:
+        data_qualities = _get_data_qualities(data_id, data_home)
+        shape = _get_data_shape(data_qualities)
+    else:
+        shape = None
+
     # obtain the data
     arff = _download_data_arff(data_description['file_id'], return_sparse,
                                data_home)
@@ -613,7 +630,6 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
                           if isinstance(v, list) and
                           k in data_columns + target_column}
 
-    shape = _get_data_shape(data_info)
     X, y = _convert_arff_data(arff['data'], col_slice_x, col_slice_y, shape)
 
     is_classification = {col_name in nominal_attributes
