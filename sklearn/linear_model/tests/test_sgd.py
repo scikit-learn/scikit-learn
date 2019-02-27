@@ -727,13 +727,13 @@ def test_sgd_proba(klass):
     d = clf.decision_function([[-1, -1]])
     assert_array_equal(np.argsort(p[0]), np.argsort(d[0]))
 
-    l = clf.predict_log_proba([[3, 2]])
+    lp = clf.predict_log_proba([[3, 2]])
     p = clf.predict_proba([[3, 2]])
-    assert_array_almost_equal(np.log(p), l)
+    assert_array_almost_equal(np.log(p), lp)
 
-    l = clf.predict_log_proba([[-1, -1]])
+    lp = clf.predict_log_proba([[-1, -1]])
     p = clf.predict_proba([[-1, -1]])
-    assert_array_almost_equal(np.log(p), l)
+    assert_array_almost_equal(np.log(p), lp)
 
     # Modified Huber multiclass probability estimates; requires a separate
     # test because the hard zero/one probabilities may destroy the
