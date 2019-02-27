@@ -35,6 +35,7 @@ mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
+export "KMP_DUPLICATE_LIB_OK=TRUE"
 set -x
 $TEST_CMD sklearn.utils
 set +x
