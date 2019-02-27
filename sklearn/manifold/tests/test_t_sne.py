@@ -11,6 +11,7 @@ from sklearn.exceptions import EfficiencyWarning
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils import check_random_state
@@ -825,8 +826,7 @@ def test_bh_match_exact():
         n_iter[method] = tsne.n_iter_
 
     assert n_iter['exact'] == n_iter['barnes_hut']
-    assert_array_almost_equal(X_embeddeds['exact'], X_embeddeds['barnes_hut'],
-                              decimal=3)
+    assert_allclose(X_embeddeds['exact'], X_embeddeds['barnes_hut'], rtol=1e-4)
 
 
 def test_parallel_match_iterative():
@@ -847,8 +847,7 @@ def test_parallel_match_iterative():
         n_iter[n_jobs] = tsne.n_iter_
 
     assert n_iter[1] == n_iter[4]
-    assert_array_almost_equal(X_embeddeds[1], X_embeddeds[4],
-                              decimal=3)
+    assert_allclose(X_embeddeds[1], X_embeddeds[4])
 
 
 def test_tsne_with_different_distance_metrics():
