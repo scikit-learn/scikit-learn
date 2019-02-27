@@ -168,7 +168,7 @@ def libsvm_sparse_train ( int n_features,
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
     cdef np.ndarray intercept
-    intercept = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+    intercept = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
     copy_intercept (intercept.data, model, intercept.shape)
 
     # copy model.SV
@@ -196,8 +196,8 @@ def libsvm_sparse_train ( int n_features,
     cdef np.ndarray probA, probB
     if probability != 0:
         if svm_type < 2: # SVC and NuSVC
-            probA = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
-            probB = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+            probA = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
+            probB = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
             copy_probB(probB.data, model, probB.shape)
         else:
             probA = np.empty(1, dtype=np.float64)
