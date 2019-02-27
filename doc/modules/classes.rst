@@ -415,8 +415,8 @@ Samples generator
    ensemble.ExtraTreesRegressor
    ensemble.GradientBoostingClassifier
    ensemble.GradientBoostingRegressor
-   ensemble.FastGradientBoostingClassifier
-   ensemble.FastGradientBoostingRegressor
+   ensemble.HistGradientBoostingClassifier
+   ensemble.HistGradientBoostingRegressor
    ensemble.IsolationForest
    ensemble.RandomForestClassifier
    ensemble.RandomForestRegressor

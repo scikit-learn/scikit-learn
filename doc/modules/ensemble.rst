@@ -458,8 +458,8 @@ trees.
 
 
 .. note::
-  :class:`FastGradientBoostingClassifier` and
-  :class:`FastGradientBoostingRegressor` were introduced in version 0.21 and
+  :class:`HistGradientBoostingClassifier` and
+  :class:`HistGradientBoostingRegressor` were introduced in version 0.21 and
   are considerably faster than :class:`GradientBoostingClassifier` and
   :class:`GradientBoostingRegressor` when the number of samples is bigger than
   ``10 000``. These fast estimators first bin the input samples `X` into

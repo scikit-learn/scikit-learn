@@ -9,7 +9,7 @@ import pandas as pd
 from joblib import Memory
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score
-from sklearn.ensemble import FastGradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn._fast_gradient_boosting.utils import get_equivalent_estimator
 
 
@@ -67,7 +67,7 @@ print(f"Training set with {n_samples} records with {n_features} features.")
 
 print("Fitting a sklearn model...")
 tic = time()
-est = FastGradientBoostingClassifier(
+est = HistGradientBoostingClassifier(
     loss='binary_crossentropy',
     learning_rate=lr,
     n_estimators=n_trees,

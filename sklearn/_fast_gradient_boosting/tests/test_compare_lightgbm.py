@@ -4,8 +4,8 @@ from sklearn.datasets import make_classification, make_regression
 import numpy as np
 import pytest
 
-from sklearn.ensemble import FastGradientBoostingRegressor
-from sklearn.ensemble import FastGradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn._fast_gradient_boosting.binning import _BinMapper
 from sklearn._fast_gradient_boosting.utils import get_equivalent_estimator
 
@@ -52,7 +52,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-    est_sklearn = FastGradientBoostingRegressor(
+    est_sklearn = HistGradientBoostingRegressor(
         max_iter=max_iter,
         max_bins=max_bins,
         learning_rate=1,
@@ -104,7 +104,7 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-    est_sklearn = FastGradientBoostingClassifier(
+    est_sklearn = HistGradientBoostingClassifier(
         loss='binary_crossentropy',
         max_iter=max_iter,
         max_bins=max_bins,
@@ -166,7 +166,7 @@ def test_same_predictions_multiclass_classification(
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-    est_sklearn = FastGradientBoostingClassifier(
+    est_sklearn = HistGradientBoostingClassifier(
         loss='categorical_crossentropy',
         max_iter=max_iter,
         max_bins=max_bins,

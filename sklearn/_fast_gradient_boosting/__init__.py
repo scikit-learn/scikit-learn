@@ -3,7 +3,7 @@
 The implementation is a port from pygbm which is itself strongly inspired
 from LightGBM.
 """
-from .gradient_boosting import FastGradientBoostingClassifier
-from .gradient_boosting import FastGradientBoostingRegressor
+from .gradient_boosting import HistGradientBoostingClassifier
+from .gradient_boosting import HistGradientBoostingRegressor
 
-__all__ = ["FastGradientBoostingClassifier", "FastGradientBoostingRegressor"]
+__all__ = ["HistGradientBoostingClassifier", "HistGradientBoostingRegressor"]

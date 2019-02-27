@@ -20,8 +20,8 @@ from .grower import TreeGrower
 from .loss import _LOSSES
 
 
-class BaseFastGradientBoosting(BaseEstimator, ABC):
-    """Base class for fast gradient boosting estimators."""
+class BaseHistGradientBoosting(BaseEstimator, ABC):
+    """Base class for histogram-based gradient boosting estimators."""
 
     @abstractmethod
     def __init__(self, loss, learning_rate, max_iter, max_leaf_nodes,
@@ -418,8 +418,8 @@ class BaseFastGradientBoosting(BaseEstimator, ABC):
         return len(self._predictors)
 
 
-class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
-    """Fast Gradient Boosting Regression Tree.
+class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
+    """Histogram-based Gradient Boosting Regression Tree.
 
     This estimator is much faster than
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
@@ -506,9 +506,9 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
     Examples
     --------
     >>> from sklearn.datasets import load_boston
-    >>> from sklearn.ensemble import FastGradientBoostingRegressor
+    >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> X, y = load_boston(return_X_y=True)
-    >>> est = FastGradientBoostingRegressor().fit(X, y)
+    >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
     0.99...
     """
@@ -520,7 +520,7 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
                  min_samples_leaf=5, l2_regularization=0., max_bins=256,
                  scoring=None, validation_fraction=0.1, n_iter_no_change=None,
                  tol=1e-7, verbose=0, random_state=None):
-        super(FastGradientBoostingRegressor, self).__init__(
+        super(HistGradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,
@@ -556,9 +556,9 @@ class FastGradientBoostingRegressor(BaseFastGradientBoosting, RegressorMixin):
         return _LOSSES[self.loss]()
 
 
-class FastGradientBoostingClassifier(BaseFastGradientBoosting,
+class HistGradientBoostingClassifier(BaseHistGradientBoosting,
                                      ClassifierMixin):
-    """Fast Gradient Boosting Classification Tree.
+    """Histogram-based Gradient Boosting Classification Tree.
 
     This estimator is much faster than
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
@@ -651,9 +651,9 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
     Examples
     --------
     >>> from sklearn.datasets import load_iris
-    >>> from sklearn.ensemble import FastGradientBoostingClassifier
+    >>> from sklearn.ensemble import HistGradientBoostingClassifier
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = FastGradientBoostingClassifier().fit(X, y)
+    >>> clf = HistGradientBoostingClassifier().fit(X, y)
     >>> clf.score(X, y)
     1.0
     """
@@ -666,7 +666,7 @@ class FastGradientBoostingClassifier(BaseFastGradientBoosting,
                  l2_regularization=0., max_bins=256, scoring=None,
                  validation_fraction=0.1, n_iter_no_change=None, tol=1e-7,
                  verbose=0, random_state=None):
-        super(FastGradientBoostingClassifier, self).__init__(
+        super(HistGradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, max_iter=max_iter,
             max_leaf_nodes=max_leaf_nodes, max_depth=max_depth,
             min_samples_leaf=min_samples_leaf,

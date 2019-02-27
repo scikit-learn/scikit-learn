@@ -3,8 +3,8 @@ import argparse
 
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import FastGradientBoostingClassifier
-from sklearn.ensemble import FastGradientBoostingRegressor
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
 from sklearn._fast_gradient_boosting.utils import get_equivalent_estimator
@@ -41,11 +41,11 @@ def get_estimator_and_data():
                                    n_classes=args.n_classes,
                                    n_clusters_per_class=1,
                                    random_state=0)
-        return X, y, FastGradientBoostingClassifier
+        return X, y, HistGradientBoostingClassifier
     elif args.problem == 'regression':
         X, y = make_regression(args.n_samples_max,
                                n_features=args.n_features, random_state=0)
-        return X, y, FastGradientBoostingRegressor
+        return X, y, HistGradientBoostingRegressor
 
 
 X, y, Estimator = get_estimator_and_data()
