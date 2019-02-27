@@ -21,6 +21,7 @@ from .kd_tree import KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..metrics.pairwise import VALID_METRICS_SPARSE_BRUTE
 from ..utils import check_X_y, check_array, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
@@ -44,8 +45,7 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
 
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
-                            brute=[x for x in PAIRWISE_DISTANCE_FUNCTIONS.keys()
-                                   if x != 'haversine'])
+                            brute=VALID_METRICS_SPARSE_BRUTE)
 
 
 def _check_weights(weights):

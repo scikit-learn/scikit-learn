@@ -1062,6 +1062,12 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'precomputed': None,  # HACK: precomputed is always allowed, never called
 }
 
+# List to exclude haversine distance from those allowed
+# with brute algorithm on sparse matrices
+VALID_METRICS_SPARSE_BRUTE = [
+    x for x in PAIRWISE_DISTANCE_FUNCTIONS.keys()
+    if x != 'haversine'
+]
 
 def distance_metrics():
     """Valid metrics for pairwise_distances.
