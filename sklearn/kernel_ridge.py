@@ -6,14 +6,14 @@
 
 import numpy as np
 
-from .base import BaseEstimator, RegressorMixin
+from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
 from .linear_model.ridge import _solve_cholesky_kernel
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 
 
-class KernelRidge(BaseEstimator, RegressorMixin):
+class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
     """Kernel ridge regression.
 
     Kernel ridge regression (KRR) combines ridge regression (linear least
@@ -48,7 +48,9 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     kernel : string or callable, default="linear"
         Kernel mapping used internally. A callable should accept two arguments
         and the keyword arguments passed to this object as kernel_params, and
-        should return a floating point number.
+        should return a floating point number. Set to "precomputed" in
+        order to pass a precomputed kernel matrix to the estimator
+        methods instead of samples.
 
     gamma : float, default=None
         Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
@@ -73,7 +75,9 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         Representation of weight vector(s) in kernel space
 
     X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
-        Training data, which is also required for prediction
+        Training data, which is also required for prediction. If
+        kernel == "precomputed" this is instead the precomputed
+        training matrix, shape = [n_samples, n_samples].
 
     References
     ----------
@@ -130,7 +134,9 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training data
+            Training data. If kernel == "precomputed" this is instead
+            a precomputed kernel matrix, shape = [n_samples,
+            n_samples].
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values
@@ -173,7 +179,10 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Samples.
+            Samples. If kernel == "precomputed" this is instead a
+            precomputed kernel matrix, shape = [n_samples,
+            n_samples_fitted], where n_samples_fitted is the number of
+            samples used in the fitting for this estimator.
 
         Returns
         -------

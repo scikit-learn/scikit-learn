@@ -83,7 +83,7 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 # GridSearch for an optimal shrinkage coefficient
 tuned_parameters = [{'shrinkage': shrinkages}]
-cv = GridSearchCV(ShrunkCovariance(), tuned_parameters)
+cv = GridSearchCV(ShrunkCovariance(), tuned_parameters, cv=5)
 cv.fit(X_train)
 
 # Ledoit-Wolf optimal shrinkage coefficient estimate

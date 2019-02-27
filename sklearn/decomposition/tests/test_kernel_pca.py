@@ -1,9 +1,10 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
-                                   assert_raises)
+                                   assert_raises, assert_allclose)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -68,6 +69,21 @@ def test_kernel_pca_consistent_transform():
     X[:, 0] = 666
     transformed2 = kpca.transform(X_copy)
     assert_array_almost_equal(transformed1, transformed2)
+
+
+def test_kernel_pca_deterministic_output():
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 10)
+    eigen_solver = ('arpack', 'dense')
+
+    for solver in eigen_solver:
+        transformed_X = np.zeros((20, 2))
+        for i in range(20):
+            kpca = KernelPCA(n_components=2, eigen_solver=solver,
+                             random_state=rng)
+            transformed_X[i, :] = kpca.fit_transform(X)[0]
+        assert_allclose(
+            transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2))
 
 
 def test_kernel_pca_sparse():
@@ -172,6 +188,9 @@ def test_kernel_pca_invalid_kernel():
     assert_raises(ValueError, kpca.fit, X_fit)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model.
@@ -186,6 +205,9 @@ def test_gridsearch_pipeline():
     assert_equal(grid_search.best_score_, 1)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline_precomputed():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model using a precomputed kernel.
@@ -201,6 +223,8 @@ def test_gridsearch_pipeline_precomputed():
     assert_equal(grid_search.best_score_, 1)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_nested_circles():
     # Test the linear separability of the first 2D KPCA transform
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,

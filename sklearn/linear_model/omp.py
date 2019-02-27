@@ -13,10 +13,10 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel, _pre_fit
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
-from ..externals.joblib import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
@@ -191,7 +191,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     """
     Gram = Gram.copy('F') if copy_Gram else np.asfortranarray(Gram)
 
-    if copy_Xy:
+    if copy_Xy or not Xy.flags.writeable:
         Xy = Xy.copy()
 
     min_float = np.finfo(Gram.dtype).eps
@@ -340,7 +340,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+    https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
     X = check_array(X, order='F', copy=copy_X)
@@ -479,7 +479,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+    https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
     Gram = check_array(Gram, order='F', copy=copy_Gram)
@@ -491,6 +491,9 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         Xy = Xy[:, np.newaxis]
         if tol is not None:
             norms_squared = [norms_squared]
+    if copy_Xy or not Xy.flags.writeable:
+        # Make the copy once instead of many times in _gram_omp itself.
+        Xy = Xy.copy()
 
     if n_nonzero_coefs is None and tol is None:
         n_nonzero_coefs = int(0.1 * len(Gram))
@@ -515,7 +518,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         out = _gram_omp(
             Gram, Xy[:, k], n_nonzero_coefs,
             norms_squared[k] if tol is not None else None, tol,
-            copy_Gram=copy_Gram, copy_Xy=copy_Xy,
+            copy_Gram=copy_Gram, copy_Xy=False,
             return_path=return_path)
         if return_path:
             _, idx, coefs, n_iter = out
@@ -536,7 +539,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         return np.squeeze(coef)
 
 
-class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
+class OrthogonalMatchingPursuit(LinearModel, RegressorMixin, MultiOutputMixin):
     """Orthogonal Matching Pursuit model (OMP)
 
     Read more in the :ref:`User Guide <omp>`.
@@ -580,6 +583,17 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     n_iter_ : int or array-like
         Number of active features across every target.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import OrthogonalMatchingPursuit
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(noise=4, random_state=0)
+    >>> reg = OrthogonalMatchingPursuit().fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9991...
+    >>> reg.predict(X[:1,])
+    array([-78.3854...])
+
     Notes
     -----
     Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
@@ -590,7 +604,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
-    http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
+    https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     See also
     --------
@@ -740,7 +754,9 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
 
 class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
-    """Cross-validated Orthogonal Matching Pursuit model (OMP)
+    """Cross-validated Orthogonal Matching Pursuit model (OMP).
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     Read more in the :ref:`User Guide <omp>`.
 
@@ -774,17 +790,23 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
+
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean or integer, optional
         Sets the verbosity amount
@@ -805,6 +827,20 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         Number of active features across every target for the model refit with
         the best hyperparameters got by cross-validating across all folds.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import OrthogonalMatchingPursuitCV
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_features=100, n_informative=10,
+    ...                        noise=4, random_state=0)
+    >>> reg = OrthogonalMatchingPursuitCV(cv=5).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9991...
+    >>> reg.n_nonzero_coefs_
+    10
+    >>> reg.predict(X[:1,])
+    array([-78.3854...])
+
     See also
     --------
     orthogonal_mp
@@ -819,7 +855,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     """
     def __init__(self, copy=True, fit_intercept=True, normalize=True,
-                 max_iter=None, cv=None, n_jobs=1, verbose=False):
+                 max_iter=None, cv='warn', n_jobs=None, verbose=False):
         self.copy = copy
         self.fit_intercept = fit_intercept
         self.normalize = normalize

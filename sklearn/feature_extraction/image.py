@@ -51,7 +51,7 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 
 
 def _compute_gradient_3d(edges, img):
-    n_x, n_y, n_z = img.shape
+    _, n_y, n_z = img.shape
     gradient = np.abs(img[edges[0] // (n_y * n_z),
                       (edges[0] % (n_y * n_z)) // n_z,
                       (edges[0] % (n_y * n_z)) % n_z] -
@@ -286,7 +286,7 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
 
     patch_strides = arr.strides
 
-    slices = [slice(None, None, st) for st in extraction_step]
+    slices = tuple(slice(None, None, st) for st in extraction_step)
     indexing_strides = arr[slices].strides
 
     patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) //
@@ -331,33 +331,33 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     Returns
     -------
     patches : array, shape = (n_patches, patch_height, patch_width) or
-         (n_patches, patch_height, patch_width, n_channels)
-         The collection of patches extracted from the image, where `n_patches`
-         is either `max_patches` or the total number of patches that can be
-         extracted.
+        (n_patches, patch_height, patch_width, n_channels)
+        The collection of patches extracted from the image, where `n_patches`
+        is either `max_patches` or the total number of patches that can be
+        extracted.
 
     Examples
     --------
-
+    >>> from sklearn.datasets import load_sample_image
     >>> from sklearn.feature_extraction import image
-    >>> one_image = np.arange(16).reshape((4, 4))
-    >>> one_image
-    array([[ 0,  1,  2,  3],
-           [ 4,  5,  6,  7],
-           [ 8,  9, 10, 11],
-           [12, 13, 14, 15]])
+    >>> # Use the array data from the first image in this dataset:
+    >>> one_image = load_sample_image("china.jpg")
+    >>> print('Image shape: {}'.format(one_image.shape))
+    Image shape: (427, 640, 3)
     >>> patches = image.extract_patches_2d(one_image, (2, 2))
-    >>> print(patches.shape)
-    (9, 2, 2)
-    >>> patches[0]
-    array([[0, 1],
-           [4, 5]])
-    >>> patches[1]
-    array([[1, 2],
-           [5, 6]])
-    >>> patches[8]
-    array([[10, 11],
-           [14, 15]])
+    >>> print('Patches shape: {}'.format(patches.shape))
+    Patches shape: (272214, 2, 2, 3)
+    >>> # Here are just two of these patches:
+    >>> print(patches[1]) # doctest: +NORMALIZE_WHITESPACE
+    [[[174 201 231]
+      [174 201 231]]
+     [[173 200 230]
+      [173 200 230]]]
+    >>> print(patches[800])# doctest: +NORMALIZE_WHITESPACE
+    [[[187 214 243]
+      [188 215 244]]
+     [[187 214 243]
+      [188 215 244]]]
     """
     i_h, i_w = image.shape[:2]
     p_h, p_w = patch_size
@@ -420,7 +420,6 @@ def reconstruct_from_patches_2d(patches, image_size):
     -------
     image : array, shape = image_size
         the reconstructed image
-
     """
     i_h, i_w = image_size[:2]
     p_h, p_w = patches.shape[1:3]
@@ -461,7 +460,21 @@ class PatchExtractor(BaseEstimator):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_sample_images
+    >>> from sklearn.feature_extraction import image
+    >>> # Use the array data from the second image in this dataset:
+    >>> X = load_sample_images().images[1]
+    >>> print('Image shape: {}'.format(X.shape))
+    Image shape: (427, 640, 3)
+    >>> pe = image.PatchExtractor(patch_size=(2, 2))
+    >>> pe_fit = pe.fit(X)
+    >>> pe_trans = pe.transform(X)
+    >>> print('Patches shape: {}'.format(pe_trans.shape))
+    Patches shape: (545706, 2, 2)
     """
+
     def __init__(self, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
@@ -472,6 +485,11 @@ class PatchExtractor(BaseEstimator):
 
         This method is just there to implement the usual API and hence
         work in pipelines.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            Training data.
         """
         return self
 
@@ -493,7 +511,6 @@ class PatchExtractor(BaseEstimator):
              The collection of patches extracted from the images, where
              `n_patches` is either `n_samples * max_patches` or the total
              number of patches that can be extracted.
-
         """
         self.random_state = check_random_state(self.random_state)
         n_images, i_h, i_w = X.shape[:3]
@@ -517,3 +534,6 @@ class PatchExtractor(BaseEstimator):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
                 image, patch_size, self.max_patches, self.random_state)
         return patches
+
+    def _more_tags(self):
+        return {'X_types': ['3darray']}

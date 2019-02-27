@@ -17,9 +17,10 @@ the lower the better
 #          Noel Dawe <noel@dawe.me>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import warnings
+from functools import partial
+
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.stats import rankdata
@@ -125,7 +126,7 @@ def auc(x, y, reorder='deprecated'):
     return area
 
 
-def average_precision_score(y_true, y_score, average="macro",
+def average_precision_score(y_true, y_score, average="macro", pos_label=1,
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores
 
@@ -150,7 +151,7 @@ def average_precision_score(y_true, y_score, average="macro",
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels (either {0, 1} or {-1, 1}).
+        True binary labels or binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -173,6 +174,12 @@ def average_precision_score(y_true, y_score, average="macro",
         ``'samples'``:
             Calculate metrics for each instance, and find their average.
 
+        Will be ignored when ``y_true`` is binary.
+
+    pos_label : int or str (default=1)
+        The label of the positive class. Only applied to binary ``y_true``.
+        For multilabel-indicator ``y_true``, ``pos_label`` is fixed to 1.
+
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
@@ -183,7 +190,7 @@ def average_precision_score(y_true, y_score, average="macro",
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <http://en.wikipedia.org/w/index.php?title=Information_retrieval&
+           <https://en.wikipedia.org/w/index.php?title=Information_retrieval&
            oldid=793358396#Average_precision>`_
 
     See also
@@ -209,17 +216,28 @@ def average_precision_score(y_true, y_score, average="macro",
       are weighted by the change in recall since the last operating point.
     """
     def _binary_uninterpolated_average_precision(
-            y_true, y_score, sample_weight=None):
+            y_true, y_score, pos_label=1, sample_weight=None):
         precision, recall, _ = precision_recall_curve(
-            y_true, y_score, sample_weight=sample_weight)
+            y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
         # Return the step function integral
         # The following works because the last entry of precision is
         # guaranteed to be 1, as returned by precision_recall_curve
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
-    return _average_binary_score(_binary_uninterpolated_average_precision,
-                                 y_true, y_score, average,
-                                 sample_weight=sample_weight)
+    y_type = type_of_target(y_true)
+    if y_type == "multilabel-indicator" and pos_label != 1:
+        raise ValueError("Parameter pos_label is fixed to 1 for "
+                         "multilabel-indicator y_true. Do not set "
+                         "pos_label or set pos_label to 1.")
+    elif y_type == "binary":
+        present_labels = np.unique(y_true)
+        if len(present_labels) == 2 and pos_label not in present_labels:
+            raise ValueError("pos_label=%r is invalid. Set it to a label in "
+                             "y_true." % pos_label)
+    average_precision = partial(_binary_uninterpolated_average_precision,
+                                pos_label=pos_label)
+    return _average_binary_score(average_precision, y_true, y_score,
+                                 average, sample_weight=sample_weight)
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
@@ -260,6 +278,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         ``'samples'``:
             Calculate metrics for each instance, and find their average.
 
+        Will be ignored when ``y_true`` is binary.
+
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
@@ -280,7 +300,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
            Letters, 2006, 27(8):861-874.
 
     .. [3] `Analyzing a portion of the ROC curve. McClish, 1989
-            <http://www.ncbi.nlm.nih.gov/pubmed/2668680>`_
+            <https://www.ncbi.nlm.nih.gov/pubmed/2668680>`_
 
     See also
     --------
@@ -501,6 +521,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
                                              sample_weight=sample_weight)
 
     precision = tps / (tps + fps)
+    precision[np.isnan(precision)] = 0
     recall = tps / tps[-1]
 
     # stop when full recall attained

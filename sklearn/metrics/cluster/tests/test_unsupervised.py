@@ -1,19 +1,21 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 from scipy.sparse import csr_matrix
 
 from sklearn import datasets
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_warns_message
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances
+from sklearn.metrics.cluster import calinski_harabasz_score
 from sklearn.metrics.cluster import calinski_harabaz_score
+from sklearn.metrics.cluster import davies_bouldin_score
 
 
 def test_silhouette():
@@ -33,13 +35,13 @@ def test_silhouette():
         assert_greater(score_precomputed, 0)
         # Test without calculating D
         score_euclidean = silhouette_score(X, y, metric='euclidean')
-        assert_almost_equal(score_precomputed, score_euclidean)
+        pytest.approx(score_precomputed, score_euclidean)
 
         if X is X_dense:
             score_dense_without_sampling = score_precomputed
         else:
-            assert_almost_equal(score_euclidean,
-                                score_dense_without_sampling)
+            pytest.approx(score_euclidean,
+                          score_dense_without_sampling)
 
         # Test with sampling
         score_precomputed = silhouette_score(D, y, metric='precomputed',
@@ -50,12 +52,12 @@ def test_silhouette():
                                            random_state=0)
         assert_greater(score_precomputed, 0)
         assert_greater(score_euclidean, 0)
-        assert_almost_equal(score_euclidean, score_precomputed)
+        pytest.approx(score_euclidean, score_precomputed)
 
         if X is X_dense:
             score_dense_with_sampling = score_precomputed
         else:
-            assert_almost_equal(score_euclidean, score_dense_with_sampling)
+            pytest.approx(score_euclidean, score_dense_with_sampling)
 
 
 def test_cluster_size_1():
@@ -76,7 +78,7 @@ def test_cluster_size_1():
     #            silhouette    = [1., 1.]
 
     silhouette = silhouette_score(X, labels)
-    assert_false(np.isnan(silhouette))
+    assert not np.isnan(silhouette)
     ss = silhouette_samples(X, labels)
     assert_array_equal(ss, [0, .5, .5, 0, 1, 1])
 
@@ -120,12 +122,14 @@ def test_silhouette_paper_example():
                                     (labels2, expected2, score2)]:
         expected = [expected[name] for name in names]
         # we check to 2dp because that's what's in the paper
-        assert_almost_equal(expected, silhouette_samples(D, np.array(labels),
-                                                         metric='precomputed'),
-                            decimal=2)
-        assert_almost_equal(score, silhouette_score(D, np.array(labels),
-                                                    metric='precomputed'),
-                            decimal=2)
+        pytest.approx(expected,
+                      silhouette_samples(D, np.array(labels),
+                                         metric='precomputed'),
+                      abs=1e-2)
+        pytest.approx(score,
+                      silhouette_score(D, np.array(labels),
+                                       metric='precomputed'),
+                      abs=1e-2)
 
 
 def test_correct_labelsize():
@@ -166,30 +170,80 @@ def test_non_numpy_labels():
         silhouette_score(list(X), list(y)), silhouette_score(X, y))
 
 
-def test_calinski_harabaz_score():
+def assert_raises_on_only_one_label(func):
+    """Assert message when there is only one label"""
     rng = np.random.RandomState(seed=0)
-
-    # Assert message when there is only one label
     assert_raise_message(ValueError, "Number of labels is",
-                         calinski_harabaz_score,
+                         func,
                          rng.rand(10, 2), np.zeros(10))
 
-    # Assert message when all point are in different clusters
+
+def assert_raises_on_all_points_same_cluster(func):
+    """Assert message when all point are in different clusters"""
+    rng = np.random.RandomState(seed=0)
     assert_raise_message(ValueError, "Number of labels is",
-                         calinski_harabaz_score,
+                         func,
                          rng.rand(10, 2), np.arange(10))
 
+
+def test_calinski_harabasz_score():
+    assert_raises_on_only_one_label(calinski_harabasz_score)
+
+    assert_raises_on_all_points_same_cluster(calinski_harabasz_score)
+
     # Assert the value is 1. when all samples are equals
-    assert_equal(1., calinski_harabaz_score(np.ones((10, 2)),
-                                            [0] * 5 + [1] * 5))
+    assert_equal(1., calinski_harabasz_score(np.ones((10, 2)),
+                                             [0] * 5 + [1] * 5))
 
     # Assert the value is 0. when all the mean cluster are equal
-    assert_equal(0., calinski_harabaz_score([[-1, -1], [1, 1]] * 10,
-                                            [0] * 10 + [1] * 10))
+    assert_equal(0., calinski_harabasz_score([[-1, -1], [1, 1]] * 10,
+                                             [0] * 10 + [1] * 10))
 
     # General case (with non numpy arrays)
     X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 +
          [[0, 4], [1, 3]] * 5 + [[3, 1], [4, 0]] * 5)
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
-    assert_almost_equal(calinski_harabaz_score(X, labels),
-                        45 * (40 - 4) / (5 * (4 - 1)))
+    pytest.approx(calinski_harabasz_score(X, labels),
+                  45 * (40 - 4) / (5 * (4 - 1)))
+
+
+def test_deprecated_calinski_harabaz_score():
+    depr_message = ("Function 'calinski_harabaz_score' has been renamed "
+                    "to 'calinski_harabasz_score' "
+                    "and will be removed in version 0.23.")
+    assert_warns_message(DeprecationWarning, depr_message,
+                         calinski_harabaz_score,
+                         np.ones((10, 2)), [0] * 5 + [1] * 5)
+
+
+def test_davies_bouldin_score():
+    assert_raises_on_only_one_label(davies_bouldin_score)
+    assert_raises_on_all_points_same_cluster(davies_bouldin_score)
+
+    # Assert the value is 0. when all samples are equals
+    assert davies_bouldin_score(np.ones((10, 2)),
+                                [0] * 5 + [1] * 5) == pytest.approx(0.0)
+
+    # Assert the value is 0. when all the mean cluster are equal
+    assert davies_bouldin_score([[-1, -1], [1, 1]] * 10,
+                                [0] * 10 + [1] * 10) == pytest.approx(0.0)
+
+    # General case (with non numpy arrays)
+    X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 +
+         [[0, 4], [1, 3]] * 5 + [[3, 1], [4, 0]] * 5)
+    labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
+    pytest.approx(davies_bouldin_score(X, labels), 2 * np.sqrt(0.5) / 3)
+
+    # Ensure divide by zero warning is not raised in general case
+    with pytest.warns(None) as record:
+        davies_bouldin_score(X, labels)
+    div_zero_warnings = [
+        warning for warning in record
+        if "divide by zero encountered" in warning.message.args[0]
+    ]
+    assert len(div_zero_warnings) == 0
+
+    # General case - cluster have one sample
+    X = ([[0, 0], [2, 2], [3, 3], [5, 5]])
+    labels = [0, 0, 1, 2]
+    pytest.approx(davies_bouldin_score(X, labels), (5. / 4) / 3)

@@ -1,8 +1,6 @@
-from __future__ import division, print_function
 
 import pytest
 import numpy as np
-from itertools import product
 import warnings
 from scipy.sparse import csr_matrix
 
@@ -138,7 +136,7 @@ def _average_precision_slow(y_true, y_score):
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-       <http://en.wikipedia.org/wiki/Average_precision>`_
+       <https://en.wikipedia.org/wiki/Average_precision>`_
     """
     precision, recall, threshold = precision_recall_curve(y_true, y_score)
     precision = list(reversed(precision))
@@ -177,19 +175,19 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
-def test_roc_curve():
+@pytest.mark.parametrize('drop', [True, False])
+def test_roc_curve(drop):
     # Test Area under Receiver Operating Characteristic (ROC) curve
     y_true, _, probas_pred = make_prediction(binary=True)
     expected_auc = _auc(y_true, probas_pred)
 
-    for drop in [True, False]:
-        fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
-                                         drop_intermediate=drop)
-        roc_auc = auc(fpr, tpr)
-        assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
-        assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
-        assert_equal(fpr.shape, tpr.shape)
-        assert_equal(fpr.shape, thresholds.shape)
+    fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
+                                     drop_intermediate=drop)
+    roc_auc = auc(fpr, tpr)
+    assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
+    assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_end_points():
@@ -277,8 +275,7 @@ def test_roc_curve_one_label():
     w = UndefinedMetricWarning
     fpr, tpr, thresholds = assert_warns(w, roc_curve, y_true, y_pred)
     # all true labels, all fpr should be nan
-    assert_array_equal(fpr,
-                       np.nan * np.ones(len(thresholds)))
+    assert_array_equal(fpr, np.full(len(thresholds), np.nan))
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
@@ -287,8 +284,7 @@ def test_roc_curve_one_label():
                                         [1 - x for x in y_true],
                                         y_pred)
     # all negative labels, all tpr should be nan
-    assert_array_equal(tpr,
-                       np.nan * np.ones(len(thresholds)))
+    assert_array_equal(tpr, np.full(len(thresholds), np.nan))
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
@@ -431,6 +427,7 @@ def test_auc():
     assert_array_almost_equal(auc(x, y), 0.5)
 
 
+@pytest.mark.filterwarnings("ignore: The 'reorder' parameter")  # 0.22
 def test_auc_duplicate_values():
     # Test Area Under Curve (AUC) computation with duplicate values
 
@@ -438,6 +435,8 @@ def test_auc_duplicate_values():
     # from numpy.argsort(x), which was reordering the tied 0's in this example
     # and resulting in an incorrect area computation. This test detects the
     # error.
+
+    # This will not work again in the future! so regression?
     x = [-2.0, 0.0, 0.0, 0.0, 1.0]
     y1 = [2.0, 0.0, 0.5, 1.0, 1.0]
     y2 = [2.0, 1.0, 0.0, 0.5, 1.0]
@@ -483,7 +482,7 @@ def test_auc_score_non_binary_class():
     y_true = np.ones(10, dtype="int")
     assert_raise_message(ValueError, "ROC AUC score is not defined",
                          roc_auc_score, y_true, y_pred)
-    y_true = -np.ones(10, dtype="int")
+    y_true = np.full(10, -1, dtype="int")
     assert_raise_message(ValueError, "ROC AUC score is not defined",
                          roc_auc_score, y_true, y_pred)
     # y_true contains three different class values
@@ -502,7 +501,7 @@ def test_auc_score_non_binary_class():
         y_true = np.ones(10, dtype="int")
         assert_raise_message(ValueError, "ROC AUC score is not defined",
                              roc_auc_score, y_true, y_pred)
-        y_true = -np.ones(10, dtype="int")
+        y_true = np.full(10, -1, dtype="int")
         assert_raise_message(ValueError, "ROC AUC score is not defined",
                              roc_auc_score, y_true, y_pred)
 
@@ -538,21 +537,6 @@ def test_precision_recall_curve():
     assert_array_almost_equal(t, np.array([1, 2, 3, 4]))
     assert_equal(p.size, r.size)
     assert_equal(p.size, t.size + 1)
-
-
-def test_precision_recall_curve_pos_label():
-    y_true, _, probas_pred = make_prediction(binary=False)
-    pos_label = 2
-    p, r, thresholds = precision_recall_curve(y_true,
-                                              probas_pred[:, pos_label],
-                                              pos_label=pos_label)
-    p2, r2, thresholds2 = precision_recall_curve(y_true == pos_label,
-                                                 probas_pred[:, pos_label])
-    assert_array_almost_equal(p, p2)
-    assert_array_almost_equal(r, r2)
-    assert_array_almost_equal(thresholds, thresholds2)
-    assert_equal(p.size, r.size)
-    assert_equal(p.size, thresholds.size + 1)
 
 
 def _test_precision_recall_curve(y_true, probas_pred):
@@ -695,6 +679,24 @@ def test_average_precision_constant_values():
     # The precision is then the fraction of positive whatever the recall
     # is, as there is only one threshold:
     assert_equal(average_precision_score(y_true, y_score), .25)
+
+
+def test_average_precision_score_pos_label_errors():
+    # Raise an error when pos_label is not in binary y_true
+    y_true = np.array([0, 1])
+    y_pred = np.array([0, 1])
+    error_message = ("pos_label=2 is invalid. Set it to a label in y_true.")
+    assert_raise_message(ValueError, error_message, average_precision_score,
+                         y_true, y_pred, pos_label=2)
+    # Raise an error for multilabel-indicator y_true with
+    # pos_label other than 1
+    y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
+    y_pred = np.array([[0.9, 0.1], [0.1, 0.9], [0.8, 0.2], [0.2, 0.8]])
+    error_message = ("Parameter pos_label is fixed to 1 for multilabel"
+                     "-indicator y_true. Do not set pos_label or set "
+                     "pos_label to 1.")
+    assert_raise_message(ValueError, error_message, average_precision_score,
+                         y_true, y_pred, pos_label=0)
 
 
 def test_score_scale_invariance():
@@ -923,18 +925,29 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
     assert_almost_equal(score_lrap, score_my_lrap)
 
 
-def test_label_ranking_avp():
-    for fn in [label_ranking_average_precision_score, _my_lrap]:
-        yield check_lrap_toy, fn
-        yield check_lrap_without_tie_and_increasing_score, fn
-        yield check_lrap_only_ties, fn
-        yield check_zero_or_all_relevant_labels, fn
-        yield check_lrap_error_raised, label_ranking_average_precision_score
+@pytest.mark.parametrize(
+        'check',
+        (check_lrap_toy,
+         check_lrap_without_tie_and_increasing_score,
+         check_lrap_only_ties,
+         check_zero_or_all_relevant_labels))
+@pytest.mark.parametrize(
+        'func',
+        (label_ranking_average_precision_score, _my_lrap))
+def test_label_ranking_avp(check, func):
+    check(func)
 
-    for n_samples, n_classes, random_state in product((1, 2, 8, 20),
-                                                      (2, 5, 10),
-                                                      range(1)):
-        yield (check_alternative_lrap_implementation,
+
+def test_lrap_error_raised():
+    check_lrap_error_raised(label_ranking_average_precision_score)
+
+
+@pytest.mark.parametrize('n_samples', (1, 2, 8, 20))
+@pytest.mark.parametrize('n_classes', (2, 5, 10))
+@pytest.mark.parametrize('random_state', range(1))
+def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
+
+    check_alternative_lrap_implementation(
                label_ranking_average_precision_score,
                n_classes, n_samples, random_state)
 

@@ -56,7 +56,7 @@ X, y = nudge_images(X, y)
 
 #----------------------------------------------------------------------
 # Visualize the clustering
-def plot_clustering(X_red, X, labels, title=None):
+def plot_clustering(X_red, labels, title=None):
     x_min, x_max = np.min(X_red, axis=0), np.max(X_red, axis=0)
     X_red = (X_red - x_min) / (x_max - x_min)
 
@@ -87,7 +87,7 @@ for linkage in ('ward', 'average', 'complete', 'single'):
     clustering.fit(X_red)
     print("%s :\t%.2fs" % (linkage, time() - t0))
 
-    plot_clustering(X_red, X, clustering.labels_, "%s linkage" % linkage)
+    plot_clustering(X_red, clustering.labels_, "%s linkage" % linkage)
 
 
 plt.show()
