@@ -817,7 +817,7 @@ def test_ridge_fit_intercept_sparse():
                            bias=10., random_state=42)
     X_csr = sp.csr_matrix(X)
 
-    for solver in ['saga', 'sag']:
+    for solver in ['saga', 'sag', 'sparse_cg']:
         dense = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
         sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
         dense.fit(X, y)

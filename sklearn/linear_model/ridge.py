@@ -33,10 +33,11 @@ from ..metrics.scorer import check_scoring
 from ..exceptions import ConvergenceWarning
 
 
-def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
+def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
+                     fit_intercept=False):
     n_samples, n_features = X.shape
     X1 = sp_linalg.aslinearoperator(X)
-    coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
+    coefs = np.empty((y.shape[1], n_features + int(fit_intercept)), dtype=X.dtype)
 
     if n_features > n_samples:
         def create_mv(curr_alpha):
@@ -64,7 +65,7 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
             except TypeError:
                 # old scipy
                 coef, info = sp_linalg.cg(C, y_column, tol=tol)
-            coefs[i] = X1.rmatvec(coef)
+            coefs[i, :n_features] = X1.rmatvec(coef)
         else:
             # linear ridge
             # w = inv(X^t X + alpha*Id) * X.T y
@@ -73,11 +74,11 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
                 (n_features, n_features), matvec=mv, dtype=X.dtype)
             # FIXME atol
             try:
-                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                coefs[i, :n_features], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
                                               tol=tol, atol='legacy')
             except TypeError:
                 # old scipy
-                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                coefs[i, :n_features], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
                                               tol=tol)
 
         if info < 0:
@@ -326,7 +327,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     -----
     This function won't compute the intercept.
     """
-    if return_intercept and sparse.issparse(X) and solver != 'sag':
+    if return_intercept and sparse.issparse(X) and solver not in ['sag', 'sparse_cg']:
         if solver != 'auto':
             warnings.warn("In Ridge, only 'sag' solver can currently fit the "
                           "intercept when X is sparse. Solver has been "
@@ -395,7 +396,17 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     n_iter = None
     if solver == 'sparse_cg':
-        coef = _solve_sparse_cg(X, y, alpha, max_iter, tol, verbose)
+        coef_ = _solve_sparse_cg(X, y, alpha,
+                                 max_iter=max_iter,
+                                 tol=tol,
+                                 verbose=verbose,
+                                 fit_intercept=return_intercept)
+
+        if return_intercept:
+            coef = coef_[:, :-1]
+            intercept = coef_[:, -1]
+        else:
+            coef = coef_
 
     elif solver == 'lsqr':
         coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
