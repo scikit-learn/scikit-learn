@@ -886,8 +886,6 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                    splits=True, rank=True,
                    weights=test_sample_counts if iid else None)
             if self.return_train_score:
-                # _store('train_%s' % scorer_name, train_scores[scorer_name],
-                #        splits=True)
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
                        splits=True,
                        weights=train_sample_counts if iid else None)
