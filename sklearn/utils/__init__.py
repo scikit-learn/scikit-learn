@@ -20,6 +20,7 @@ from .validation import (as_float_array,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric)
+from ._clibs_helpers import effective_n_jobs_openmp
 from .. import get_config
 
 
@@ -64,7 +65,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
            "register_parallel_backend", "hash", "effective_n_jobs",
-           "resample", "shuffle"]
+           "resample", "shuffle", "effective_n_jobs_openmp"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32

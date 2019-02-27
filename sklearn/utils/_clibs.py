@@ -12,7 +12,7 @@ import os
 import threading
 import ctypes
 from ctypes.util import find_library
-from contextlib import contextmanager as contextmanager
+from contextlib import contextmanager
 
 
 # Structure to cast the info on dynamically loaded library. See
