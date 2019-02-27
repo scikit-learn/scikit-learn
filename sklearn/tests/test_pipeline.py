@@ -1074,7 +1074,18 @@ def test_set_input_features():
 
 
 def test_input_features_passthrough():
-    pass
+    pipe = Pipeline(steps=[
+        ('imputer', 'passthrough'),
+        ('scaler', StandardScaler()),
+        ('select', 'passthrough'),
+        ('clf', LogisticRegression())])
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+    xs = ['x0', 'x1', 'x2', 'x3']
+    assert_array_equal(pipe.named_steps.clf.input_features_, xs)
+    pipe.set_feature_names(iris.feature_names)
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       iris.feature_names)
 
 
 def test_input_features_count_vectorizer():
