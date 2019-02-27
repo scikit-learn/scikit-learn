@@ -1653,12 +1653,12 @@ def test_sample_weight():
 
 
 @pytest.mark.parametrize("sample_wt,flip_acc_1,flip_acc_2, exp", [
-    ([1, 999999, 1, 999999], False, False, 0.999999),
-    ([100000, 200000, 100000, 200000], False, False, 2/3.0),
-    ([100000, 100000, 100000, 100000], False, False, 1/2.0),
-    ([200000, 100000, 200000, 100000], True, True, 2/3.0),
-    ([999999, 1, 999999, 1], True, True, 0.999999),
-    ([2000000, 1000000, 1, 999999], False, True, 0.25000025)
+    ([1, 999999, 1, 999999], False, False, 999999/1000000),
+    ([100000, 200000, 100000, 200000], False, False, 2/3),
+    ([100000, 100000, 100000, 100000], False, False, 1/2),
+    ([200000, 100000, 200000, 100000], True, True, 2/3),
+    ([999999, 1, 999999, 1], True, True, 999999/1000000),
+    ([2000000, 1000000, 1, 999999], False, True, 1000001/4000000)
 ])
 def test_sample_weight_cross_validation(sample_wt, flip_acc_1, flip_acc_2, exp):
     # Test that cross validation properly uses sample_weight from fit_params
