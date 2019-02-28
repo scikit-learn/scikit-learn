@@ -3,7 +3,9 @@
 Neighborhood Component Analysis
 """
 
-# License: BSD 3 Clause
+# Authors: William de Vazelhes <wdevazelhes@gmail.com>
+#          John Chiotellis <ioannis.chiotellis@in.tum.de>
+# License: BSD 3 clause
 
 from __future__ import print_function
 
@@ -438,7 +440,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        transformation : array, shape(n_components, n_features)
+        transformation : array, shape=(n_components * n_features,)
             The solution computed by the optimizer in this iteration.
         """
         if self.callback is not None:

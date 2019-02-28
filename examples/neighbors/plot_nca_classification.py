@@ -35,7 +35,7 @@ dataset = datasets.load_iris()
 X, y = dataset.data, dataset.target
 
 # we only take two features. We could avoid this ugly
-# slicing by using a two-dim datasets
+# slicing by using a two-dim dataset
 X = X[:, [0, 2]]
 
 X_train, X_test, y_train, y_test = \
