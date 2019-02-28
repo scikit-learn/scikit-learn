@@ -196,7 +196,8 @@ def test_prefitted_throws_error():
 def test_y_labeled_iter(max_iter):
     # Check that the amount of datapoints labeled in iteration 0 is equal to
     # the amount of labeled datapoints we passed.
-    st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=max_iter)
+    st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=max_iter,
+                                n_iter_no_change=3)
 
     # If we look at the output for self.n_iter_ we can see that samples are
     # labeled only in iteration 1. Therefore early_stopping should only kick in

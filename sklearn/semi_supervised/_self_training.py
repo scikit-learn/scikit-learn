@@ -116,7 +116,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
                  base_classifier,
                  threshold=0.75,
                  max_iter=10,
-                 n_iter_no_change=3):
+                 n_iter_no_change=1):
         self.base_classifier = base_classifier
         self.threshold = threshold
         self.max_iter = max_iter
@@ -165,9 +165,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
                 "early stopping is ineffective"
             warnings.warn(msg, UserWarning)
 
-        # XXX: y != -1 somehow doesn't work when y is an array of only strings
-        # (it returns a scalar instead of an array). Is there a better way?
-        has_label = np.vectorize(lambda x: x != -1)(y)
+        has_label = y.astype(object) != -1
 
         if np.all(has_label):
             warnings.warn("y contains no unlabeled samples", UserWarning)
@@ -197,7 +195,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
 
             # Select samples where confidence is above the threshold
             confident_labels_mask = max_proba > self.threshold
-
             new_labels_idx = np.flatnonzero(~has_label)[confident_labels_mask]
 
             # Add newly labeled confident predictions to the dataset
