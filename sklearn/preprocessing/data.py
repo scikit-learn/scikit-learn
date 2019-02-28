@@ -2041,7 +2041,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_quantiles : int, optional (default=1000)
+    n_quantiles : int, optional (default=1000 or n_samples)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
         If n_quantiles is larger than the number of samples, n_quantiles is set
