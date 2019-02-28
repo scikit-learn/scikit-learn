@@ -483,7 +483,9 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
 
         # all other solvers work at both float precision levels
         _dtype = [np.float64, np.float32]
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=_dtype,
+        X, y = check_X_y(X, y,
+                         accept_sparse='csr',
+                         dtype=_dtype,
                          multi_output=True, y_numeric=True)
 
         if ((sample_weight is not None) and
