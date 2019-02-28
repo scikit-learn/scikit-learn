@@ -43,8 +43,7 @@ def test_histogram_split(n_bins):
                                 min_hessian_to_split,
                                 min_samples_leaf, min_gain_to_split)
 
-            histograms = np.zeros(shape=(1, n_bins), dtype=HISTOGRAM_DTYPE)
-            splitter.compute_histograms_brute(sample_indices, histograms)
+            histograms = splitter.compute_histograms_brute(sample_indices)
             split_info = splitter.find_node_split(
                 sample_indices, histograms, sum_gradients,
                 sum_hessians)
@@ -99,18 +98,14 @@ def test_gradient_and_hessian_sanity(constant_hessian):
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split)
 
-    hists_parent = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
-    hists_left = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
-    hists_right = np.zeros(shape=(n_features, n_bins), dtype=HISTOGRAM_DTYPE)
-
-    splitter.compute_histograms_brute(sample_indices, hists_parent)
+    hists_parent = splitter.compute_histograms_brute(sample_indices)
     si_parent = splitter.find_node_split(sample_indices, hists_parent,
                                          sum_gradients, sum_hessians)
     sample_indices_left, sample_indices_right, _ = splitter.split_indices(
         si_parent, sample_indices)
 
-    splitter.compute_histograms_brute(sample_indices_left, hists_left)
-    splitter.compute_histograms_brute(sample_indices_right, hists_right)
+    hists_left = splitter.compute_histograms_brute(sample_indices_left)
+    hists_right = splitter.compute_histograms_brute(sample_indices_right)
     si_left = splitter.find_node_split(sample_indices_left, hists_left,
                                        si_parent.sum_gradient_left,
                                        si_parent.sum_hessian_left)
@@ -137,6 +132,9 @@ def test_gradient_and_hessian_sanity(constant_hessian):
 
     # make sure sum of gradients in histograms are the same for all features,
     # and make sure they're equal to their expected value
+    hists_parent = np.asarray(hists_parent, dtype=HISTOGRAM_DTYPE)
+    hists_left = np.asarray(hists_left, dtype=HISTOGRAM_DTYPE)
+    hists_right = np.asarray(hists_right, dtype=HISTOGRAM_DTYPE)
     for hists, indices in (
             (hists_parent, sample_indices),
             (hists_left, sample_indices_left),
@@ -197,8 +195,7 @@ def test_split_indices():
 
     assert_array_almost_equal(sample_indices, splitter.partition)
 
-    histograms = np.zeros(shape=(2, n_bins), dtype=HISTOGRAM_DTYPE)
-    splitter.compute_histograms_brute(sample_indices, histograms)
+    histograms = splitter.compute_histograms_brute(sample_indices)
     si_root = splitter.find_node_split(sample_indices, histograms,
                                        sum_gradients, sum_hessians)
 
@@ -251,8 +248,7 @@ def test_min_gain_to_split():
                         min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split)
 
-    histograms = np.zeros(shape=(1, n_bins), dtype=HISTOGRAM_DTYPE)
-    splitter.compute_histograms_brute(sample_indices, histograms)
+    histograms = splitter.compute_histograms_brute(sample_indices)
     split_info = splitter.find_node_split(sample_indices, histograms,
                                           sum_gradients, sum_hessians)
     assert split_info.gain == -1

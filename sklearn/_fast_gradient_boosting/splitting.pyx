@@ -513,8 +513,7 @@ cdef class Splitter:
 
     def compute_histograms_brute(
             Splitter self,
-            const unsigned int [::1] sample_indices,  # IN
-            hist_struct [:, ::1] histograms):  # OUT
+            const unsigned int [::1] sample_indices):  # IN
         """Compute the histograms of the node by scanning through all the data.
 
         For a given feature, the complexity is O(n_samples)
@@ -523,9 +522,12 @@ cdef class Splitter:
         ----------
         sample_indices : array of int
             The indices of the samples at the node to split.
+
+        Returns
+        -------
         histograms : array of HISTOGRAM_DTYPE of \
                 shape(n_features, max_bins)
-            The histograms of the current node (to be computed)
+            The histograms of the current node
         """
         cdef:
             int n_samples
@@ -537,6 +539,10 @@ cdef class Splitter:
             G_H_DTYPE_C [::1] gradients = self.gradients
             G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
             G_H_DTYPE_C [::1] hessians = self.hessians
+            hist_struct [:, ::1] histograms = np.zeros(
+                shape=(self.n_features, self.max_bins),
+                dtype=HISTOGRAM_DTYPE
+            )
 
         with nogil:
             n_samples = sample_indices.shape[0]
@@ -557,6 +563,8 @@ cdef class Splitter:
                 # Compute histogram of each feature
                 self._compute_histogram_single_feature(
                     feature_idx, sample_indices, histograms)
+
+        return histograms
 
     cdef void _compute_histogram_single_feature(
             Splitter self,
@@ -597,8 +605,7 @@ cdef class Splitter:
     def compute_histograms_subtraction(
             Splitter self,
             hist_struct [:, ::1] parent_histograms,  # IN
-            hist_struct [:, ::1] sibling_histograms,  # IN
-            hist_struct [:, ::1] histograms):  # OUT
+            hist_struct [:, ::1] sibling_histograms):  # IN
         """Compute the histograms of the node using the subtraction trick.
 
         hist(parent) = hist(left_child) + hist(right_child)
@@ -617,14 +624,21 @@ cdef class Splitter:
         sibling_histograms : array of HISTOGRAM_DTYPE of \
                 shape(n_features, max_bins)
             The histograms of the sibling
+
+        Returns
+        -------
         histograms : array of HISTOGRAM_DTYPE of \
                 shape(n_features, max_bins)
-            The histograms of the current node (to be computed)
+            The histograms of the current node
         """
 
         cdef:
             int feature_idx
             int n_features = self.n_features
+            hist_struct [:, ::1] histograms = np.zeros(
+                shape=(self.n_features, self.max_bins),
+                dtype=HISTOGRAM_DTYPE
+            )
 
         for feature_idx in prange(n_features, nogil=True):
             # Compute histogram of each feature
@@ -633,6 +647,7 @@ cdef class Splitter:
                                  parent_histograms,
                                  sibling_histograms,
                                  histograms)
+        return histograms
 
 
 cdef inline Y_DTYPE_C _split_gain(

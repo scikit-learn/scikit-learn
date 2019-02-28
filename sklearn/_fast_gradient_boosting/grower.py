@@ -13,7 +13,6 @@ from timeit import default_timer as time
 from .splitting import Splitter
 from .predictor import TreePredictor, PREDICTOR_RECORD_DTYPE
 from .utils import sum_parallel
-from .types import HISTOGRAM_DTYPE
 
 
 class TreeNode:
@@ -279,7 +278,8 @@ class TreeGrower:
             return
 
         # self._compute_spittability(self.root)
-        self._compute_histograms_brute(self.root)
+        self.root.histograms = self.splitter.compute_histograms_brute(
+            self.root.sample_indices)
         self._compute_best_split_and_push(self.root)
 
     def _compute_best_split_and_push(self, node):
@@ -387,8 +387,15 @@ class TreeGrower:
                 smallest_child = right_child_node
                 largest_child = left_child_node
 
-            self._compute_histograms_brute(smallest_child)
-            self._compute_histograms_subtraction(largest_child)
+            # We use the brute O(n_samples) method on the child that has the
+            # smallest number of samples, and the subtraction trick O(n_bins)
+            # on the other one.
+            smallest_child.histograms = \
+                self.splitter.compute_histograms_brute(
+                    smallest_child.sample_indices)
+            largest_child.histograms = \
+                self.splitter.compute_histograms_subtraction(
+                    node.histograms, smallest_child.histograms)
 
             if should_split_left:
                 self._compute_best_split_and_push(left_child_node)
@@ -396,36 +403,6 @@ class TreeGrower:
                 self._compute_best_split_and_push(right_child_node)
 
         return left_child_node, right_child_node
-
-    def _compute_histograms_brute(self, node):
-        """Compute the histograms of the node by scanning through all the data.
-
-        For a given feature, the complexity is O(n_samples)
-        """
-        node.histograms = np.zeros(shape=(self.n_features, self.max_bins),
-                                   dtype=HISTOGRAM_DTYPE)
-        self.splitter.compute_histograms_brute(node.sample_indices,
-                                               node.histograms)
-
-    def _compute_histograms_subtraction(self, node):
-        """Compute the histograms of the node using the subtraction trick.
-
-        hist(parent) = hist(left_child) + hist(right_child)
-
-        For a given feature, the complexity is O(n_bins). This is much more
-        efficient than compute_histograms_brute, but it's only possible for one
-        of the siblings.
-        """
-        node.histograms = np.zeros(shape=(self.n_features, self.max_bins),
-                                   dtype=HISTOGRAM_DTYPE)
-
-        if node.parent.left_child is node:
-            sibling = node.parent.right_child
-        else:
-            sibling = node.parent.left_child
-        self.splitter.compute_histograms_subtraction(node.parent.histograms,
-                                                     sibling.histograms,
-                                                     node.histograms)
 
     def can_split_further(self):
         """Return True if there are still nodes to split."""
