@@ -38,10 +38,6 @@ from .types import HISTOGRAM_DTYPE
 # related to the GIL release and the custom histogram dtype) when using 1d
 # histogram arrays.
 
-# epsilon for comparing gains to avoid floating precision issues that might be
-# caused by the (slightly non-deterministic) parallel sums over gradients and
-# hessians
-cdef Y_DTYPE_C EPS = 1e-13
 
 cdef struct split_info_struct:
     # Same as the SplitInfo class, but we need a C struct to use it in the
@@ -203,7 +199,7 @@ cdef class Splitter:
         self.left_indices_buffer = np.empty_like(self.partition)
         self.right_indices_buffer = np.empty_like(self.partition)
 
-    def split_indices(self, SplitInfo split_info, unsigned int [::1]
+    def split_indices(Splitter self, SplitInfo split_info, unsigned int [::1]
                       sample_indices):
         """Split samples into left and right arrays.
 
@@ -359,14 +355,15 @@ cdef class Splitter:
                 sample_indices[right_child_position:],
                 right_child_position)
 
-    def find_node_split(self,
-                        const unsigned int [::1] sample_indices,  # IN
-                        hist_struct [:, ::1] histograms):  # OUT
+    def find_node_split(
+            Splitter self,
+            const unsigned int [::1] sample_indices,  # IN
+            hist_struct [:, ::1] histograms,  # IN
+            const Y_DTYPE_C sum_gradients,
+            const Y_DTYPE_C sum_hessians):
         """For each feature, find the best bin to split on at a given node.
 
-        Return the best split info among all features, and the histograms of
-        all the features. The histograms are computed by scanning the whole
-        data.
+        Return the best split info among all features.
 
         Parameters
         ----------
@@ -374,7 +371,11 @@ cdef class Splitter:
             The indices of the samples at the node to split.
         histograms : array of HISTOGRAM_DTYPE of \
                 shape(n_features, max_bins)
-            The histograms of the current node (to be computed)
+            The histograms of the current node.
+        sum_gradients : float
+            The sum of the gradients for each sample at the node
+        sum_hessians : float
+            The sum of the hessians for each sample at the node
 
         Returns
         -------
@@ -386,184 +387,17 @@ cdef class Splitter:
             int feature_idx
             int best_feature_idx
             int n_features = self.n_features
-            int i
-            unsigned int thread_idx
-            unsigned int [:] starts
-            unsigned int [:] ends
-            unsigned int n_threads
             split_info_struct split_info
             split_info_struct * split_infos
-            Y_DTYPE_C sum_gradients = 0.
-            Y_DTYPE_C sum_hessians = 0.
-            # need local views to avoid python interactions
-            G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
-            G_H_DTYPE_C [::1] gradients = self.gradients
-            G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
-            G_H_DTYPE_C [::1] hessians = self.hessians
-
-        with nogil:
-            n_samples = sample_indices.shape[0]
-
-            # Populate ordered_gradients and ordered_hessians. (Already done
-            # for root) Ordering the gradients and hessians helps to improve
-            # cache hit.
-            if sample_indices.shape[0] != gradients.shape[0]:
-                if self.hessians_are_constant:
-                    for i in prange(n_samples, schedule='static'):
-                        ordered_gradients[i] = gradients[sample_indices[i]]
-                else:
-                    for i in prange(n_samples, schedule='static'):
-                        ordered_gradients[i] = gradients[sample_indices[i]]
-                        ordered_hessians[i] = hessians[sample_indices[i]]
-
-            # Compute sums of gradients and hessians at the node
-            for i in prange(n_samples, schedule='static'):
-                sum_gradients += ordered_gradients[i]
-            if self.hessians_are_constant:
-                sum_hessians = n_samples
-            else:
-                # Using prange seems to be OK here
-                for i in prange(n_samples, schedule='static'):
-                    sum_hessians += ordered_hessians[i]
-
-            split_infos = <split_info_struct *> malloc(
-                self.n_features * sizeof(split_info_struct))
-            for feature_idx in prange(n_features):
-                # Compute histogram of each feature
-                self._compute_histogram(feature_idx, sample_indices,
-                                        histograms)
-
-                # and get the best possible split for the feature among all
-                # bins
-                split_info = self._find_best_bin_to_split_helper(
-                    feature_idx, histograms, n_samples,
-                    sum_gradients, sum_hessians)
-                split_infos[feature_idx] = split_info
-
-            # then compute best possible split among all feature
-            best_feature_idx = self._find_best_feature_to_split_helper(
-                split_infos)
-            split_info = split_infos[best_feature_idx]
-
-        out = SplitInfo(
-            split_info.gain,
-            split_info.feature_idx,
-            split_info.bin_idx,
-            split_info.sum_gradient_left,
-            split_info.sum_hessian_left,
-            split_info.sum_gradient_right,
-            split_info.sum_hessian_right,
-            split_info.n_samples_left,
-            split_info.n_samples_right,
-        )
-        free(split_infos)
-        return out
-
-    cdef void _compute_histogram(self,
-                                 const int feature_idx,
-                                 const unsigned int [::1] sample_indices,  # IN
-                                 hist_struct [:, ::1] histograms  # OUT
-                                 ) nogil:
-        """Compute the histogram for a given feature."""
-
-        cdef:
-            unsigned int n_samples = sample_indices.shape[0]
-            const X_BINNED_DTYPE_C [::1] X_binned = \
-                self.X_binned[:, feature_idx]
-            unsigned int root_node = X_binned.shape[0] == n_samples
-            G_H_DTYPE_C [::1] ordered_gradients = \
-                self.ordered_gradients[:n_samples]
-            G_H_DTYPE_C [::1] ordered_hessians = \
-                self.ordered_hessians[:n_samples]
-
-        if root_node:
-            if self.hessians_are_constant:
-                _build_histogram_root_no_hessian(feature_idx, X_binned,
-                                                 ordered_gradients,
-                                                 histograms)
-            else:
-                _build_histogram_root(feature_idx, X_binned,
-                                      ordered_gradients, ordered_hessians,
-                                      histograms)
-        else:
-            if self.hessians_are_constant:
-                _build_histogram_no_hessian(feature_idx,
-                                            sample_indices, X_binned,
-                                            ordered_gradients, histograms)
-            else:
-                _build_histogram(feature_idx, sample_indices,
-                                 X_binned, ordered_gradients,
-                                 ordered_hessians, histograms)
-
-    def find_node_split_subtraction(
-            Splitter self,
-            unsigned int [::1] sample_indices,  # IN
-            Y_DTYPE_C sum_gradients,
-            Y_DTYPE_C sum_hessians,
-            hist_struct [:, ::1] parent_histograms,  # IN
-            hist_struct [:, ::1] sibling_histograms,  # IN
-            hist_struct [:, ::1] histograms):  # OUT
-        """For each feature, find the best bin to split on at a given node.
-
-        Return the best split info among all features, and the histograms of
-        all the features.
-
-        This does the same job as ``find_node_split()`` but uses the
-        histograms of the parent and sibling of the node to split. This
-        allows to use the identity: ``histogram(parent) = histogram(node) -
-        histogram(sibling)``, which is significantly faster than computing
-        the histograms from data.
-
-        Returns the best SplitInfo among all features, along with all the
-        feature histograms that can be later used to compute the sibling or
-        children histograms by substraction.
-
-        Parameters
-        ----------
-        sample_indices : array of int
-            The indices of the samples at the node to split.
-        sum_gradients : float
-            Sum of the samples gradients at the current node
-        sum_hessians : float
-            Sum of the samples hessians at the current node
-        parent_histograms : array of HISTOGRAM_DTYPE of \
-                shape(n_features, max_bins)
-            The histograms of the parent
-        sibling_histograms : array of HISTOGRAM_DTYPE of \
-                shape(n_features, max_bins)
-            The histograms of the sibling
-        histograms : array of HISTOGRAM_DTYPE of \
-                shape(n_features, max_bins)
-            The histograms of the current node (to be computed)
-
-        Returns
-        -------
-        best_split_info : SplitInfo
-            The info about the best possible split among all features.
-        """
-
-        cdef:
-            int feature_idx
-            int n_features = self.n_features
-            unsigned int n_samples
-            split_info_struct split_info
-            split_info_struct * split_infos
-            int i
 
         with nogil:
             n_samples = sample_indices.shape[0]
 
             split_infos = <split_info_struct *> malloc(
                 self.n_features * sizeof(split_info_struct))
+
             for feature_idx in prange(n_features):
-                # Compute histogram of each feature
-                _subtract_histograms(feature_idx,
-                                     self.max_bins,
-                                     parent_histograms,
-                                     sibling_histograms,
-                                     histograms)
-                # and get the best possible split for the feature among all
-                # bins
+                # For each feature, find best bin to split on
                 split_info = self._find_best_bin_to_split_helper(
                     feature_idx, histograms, n_samples,
                     sum_gradients, sum_hessians)
@@ -597,8 +431,8 @@ cdef class Splitter:
             int best_feature_idx = 0
 
         for feature_idx in range(1, self.n_features):
-            if (split_infos[feature_idx].gain -
-                    split_infos[best_feature_idx].gain) > EPS:
+            if (split_infos[feature_idx].gain >
+                    split_infos[best_feature_idx].gain):
                 best_feature_idx = feature_idx
         return best_feature_idx
 
@@ -664,7 +498,7 @@ cdef class Splitter:
                                sum_gradients, sum_hessians,
                                self.l2_regularization)
 
-            if gain - best_split.gain > EPS and gain > self.min_gain_to_split:
+            if gain > best_split.gain and gain > self.min_gain_to_split:
                 best_split.gain = gain
                 best_split.feature_idx = feature_idx
                 best_split.bin_idx = bin_idx
@@ -677,33 +511,128 @@ cdef class Splitter:
 
         return best_split
 
-    # Only used for tests (python code cannot use cdef types)
-    # Not sure if this is a good practice...
-    def _find_best_split_wrapper(
-            self,
-            int feature_idx,
-            unsigned int [::1] sample_indices,
-            hist_struct [:, ::1] histograms,
-            Y_DTYPE_C sum_gradients,
-            Y_DTYPE_C sum_hessians):
+    def compute_histograms_brute(
+            Splitter self,
+            const unsigned int [::1] sample_indices,  # IN
+            hist_struct [:, ::1] histograms):  # OUT
+        """Compute the histograms of the node by scanning through all the data.
 
-        self._compute_histogram(feature_idx, sample_indices, histograms)
-        n_samples = sample_indices.shape[0]
-        split_info = self._find_best_bin_to_split_helper(
-            feature_idx, histograms, n_samples,
-            sum_gradients, sum_hessians)
+        For a given feature, the complexity is O(n_samples)
 
-        return SplitInfo(
-            split_info.gain,
-            split_info.feature_idx,
-            split_info.bin_idx,
-            split_info.sum_gradient_left,
-            split_info.sum_hessian_left,
-            split_info.sum_gradient_right,
-            split_info.sum_hessian_right,
-            split_info.n_samples_left,
-            split_info.n_samples_right,
-        )
+        Parameters
+        ----------
+        sample_indices : array of int
+            The indices of the samples at the node to split.
+        histograms : array of HISTOGRAM_DTYPE of \
+                shape(n_features, max_bins)
+            The histograms of the current node (to be computed)
+        """
+        cdef:
+            int n_samples
+            int feature_idx
+            int n_features = self.n_features
+            int i
+            # need local views to avoid python interactions
+            G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
+            G_H_DTYPE_C [::1] gradients = self.gradients
+            G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
+            G_H_DTYPE_C [::1] hessians = self.hessians
+
+        with nogil:
+            n_samples = sample_indices.shape[0]
+
+            # Populate ordered_gradients and ordered_hessians. (Already done
+            # for root) Ordering the gradients and hessians helps to improve
+            # cache hit.
+            if sample_indices.shape[0] != gradients.shape[0]:
+                if self.hessians_are_constant:
+                    for i in prange(n_samples, schedule='static'):
+                        ordered_gradients[i] = gradients[sample_indices[i]]
+                else:
+                    for i in prange(n_samples, schedule='static'):
+                        ordered_gradients[i] = gradients[sample_indices[i]]
+                        ordered_hessians[i] = hessians[sample_indices[i]]
+
+            for feature_idx in prange(n_features):
+                # Compute histogram of each feature
+                self._compute_histogram_single_feature(
+                    feature_idx, sample_indices, histograms)
+
+    cdef void _compute_histogram_single_feature(
+            Splitter self,
+            const int feature_idx,
+            const unsigned int [::1] sample_indices,  # IN
+            hist_struct [:, ::1] histograms) nogil:  # OUT
+        """Compute the histogram for a given feature."""
+
+        cdef:
+            unsigned int n_samples = sample_indices.shape[0]
+            const X_BINNED_DTYPE_C [::1] X_binned = \
+                self.X_binned[:, feature_idx]
+            unsigned int root_node = X_binned.shape[0] == n_samples
+            G_H_DTYPE_C [::1] ordered_gradients = \
+                self.ordered_gradients[:n_samples]
+            G_H_DTYPE_C [::1] ordered_hessians = \
+                self.ordered_hessians[:n_samples]
+
+        if root_node:
+            if self.hessians_are_constant:
+                _build_histogram_root_no_hessian(feature_idx, X_binned,
+                                                 ordered_gradients,
+                                                 histograms)
+            else:
+                _build_histogram_root(feature_idx, X_binned,
+                                      ordered_gradients, ordered_hessians,
+                                      histograms)
+        else:
+            if self.hessians_are_constant:
+                _build_histogram_no_hessian(feature_idx,
+                                            sample_indices, X_binned,
+                                            ordered_gradients, histograms)
+            else:
+                _build_histogram(feature_idx, sample_indices,
+                                 X_binned, ordered_gradients,
+                                 ordered_hessians, histograms)
+
+    def compute_histograms_subtraction(
+            Splitter self,
+            hist_struct [:, ::1] parent_histograms,  # IN
+            hist_struct [:, ::1] sibling_histograms,  # IN
+            hist_struct [:, ::1] histograms):  # OUT
+        """Compute the histograms of the node using the subtraction trick.
+
+        hist(parent) = hist(left_child) + hist(right_child)
+
+        For a given feature, the complexity is O(n_bins). This is much more
+        efficient than compute_histograms_brute, but it's only possible for one
+        of the siblings.
+
+        Parameters
+        ----------
+        sample_indices : array of int
+            The indices of the samples at the node to split.
+        parent_histograms : array of HISTOGRAM_DTYPE of \
+                shape(n_features, max_bins)
+            The histograms of the parent
+        sibling_histograms : array of HISTOGRAM_DTYPE of \
+                shape(n_features, max_bins)
+            The histograms of the sibling
+        histograms : array of HISTOGRAM_DTYPE of \
+                shape(n_features, max_bins)
+            The histograms of the current node (to be computed)
+        """
+
+        cdef:
+            int feature_idx
+            int n_features = self.n_features
+
+        for feature_idx in prange(n_features, nogil=True):
+            # Compute histogram of each feature
+            _subtract_histograms(feature_idx,
+                                 self.max_bins,
+                                 parent_histograms,
+                                 sibling_histograms,
+                                 histograms)
 
 
 cdef inline Y_DTYPE_C _split_gain(

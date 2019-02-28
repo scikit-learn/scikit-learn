@@ -278,67 +278,18 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
-        self._compute_spittability(self.root)
+        # self._compute_spittability(self.root)
+        self._compute_histograms_brute(self.root)
+        self._compute_best_split_and_push(self.root)
 
-    def _compute_spittability(self, node, only_hist=False):
-        """Compute histograms and best possible split of a node.
+    def _compute_best_split_and_push(self, node):
+        """Compute the best possible split (SplitInfo) of a given node.
 
-        If the best possible gain is 0 or if the constraints aren't met
-        (min_samples_leaf, min_hessian_to_split, min_gain_to_split) then the
-        node is finalized (transformed into a leaf), else it is pushed on
-        the splittable node heap.
+        Also push it in the heap of splittable nodes if gain isn't zero."""
 
-        Parameters
-        ----------
-        node : TreeNode
-            The node to evaluate.
-        only_hist : bool, optional (default=False)
-            Whether to only compute the histograms and the SplitInfo. It is
-            set to ``True`` when ``_compute_spittability`` was called by a
-            sibling node: we only want to compute the histograms (which also
-            computes the ``SplitInfo``), not finalize or push the node. If
-            ``_compute_spittability`` is called again by the grower on this
-            same node, the histograms won't be computed again.
-        """
-        # Compute split_info and histograms if not already done
-        if node.split_info is None and node.histograms is None:
-            # If the sibling has less samples, compute its hist first (with
-            # the regular method) and use the subtraction method for the
-            # current node
-            if node.sibling is not None:  # root has no sibling
-                if node.sibling.n_samples < node.n_samples:
-                    self._compute_spittability(node.sibling, only_hist=True)
-                    # As hist of sibling is now computed we'll use the hist
-                    # subtraction method for the current node.
-                    node.hist_subtraction = True
-
-            tic = time()
-            histograms = np.zeros(shape=(self.n_features, self.max_bins),
-                                  dtype=HISTOGRAM_DTYPE)
-            if node.hist_subtraction:
-                if node is node.parent.right_child:
-                    sum_gradients = node.parent.split_info.sum_gradient_right
-                    sum_hessians = node.parent.split_info.sum_hessian_right
-                else:
-                    sum_gradients = node.parent.split_info.sum_gradient_left
-                    sum_hessians = node.parent.split_info.sum_hessian_left
-                split_info = self.splitter.find_node_split_subtraction(
-                    node.sample_indices,
-                    sum_gradients, sum_hessians, node.parent.histograms,
-                    node.sibling.histograms, histograms)
-            else:
-                split_info = self.splitter.find_node_split(
-                    node.sample_indices, histograms)
-            toc = time()
-            node.find_split_time = toc - tic
-            self.total_find_split_time += node.find_split_time
-            node.split_info = split_info
-            node.histograms = histograms
-
-        if only_hist:
-            # _compute_spittability was called by a sibling. We only needed to
-            # compute the histogram.
-            return
+        node.split_info = self.splitter.find_node_split(
+            node.sample_indices, node.histograms, node.sum_gradients,
+            node.sum_hessians)
 
         if node.split_info.gain <= 0:  # no valid split
             # Note: this condition is reached if either all the leaves are
@@ -346,7 +297,6 @@ class TreeGrower:
             # constraints, (min_hessians_to_split, min_gain_to_split,
             # min_samples_leaf)
             self._finalize_leaf(node)
-
         else:
             heappush(self.splittable_nodes, node)
 
@@ -416,15 +366,66 @@ class TreeGrower:
 
         if left_child_node.n_samples < self.min_samples_leaf * 2:
             self._finalize_leaf(left_child_node)
-        else:
-            self._compute_spittability(left_child_node)
-
         if right_child_node.n_samples < self.min_samples_leaf * 2:
             self._finalize_leaf(right_child_node)
-        else:
-            self._compute_spittability(right_child_node)
+
+        # Compute histograms of childs, and compute their best possible split
+        # (if needed)
+        should_split_left = left_child_node.value is None  # node isn't a leaf
+        should_split_right = right_child_node.value is None
+        if should_split_left or should_split_right:
+
+            # We will compute the histograms of both nodes even if one of them
+            # is a leaf, since computing the second histogram is very cheap
+            # (using histogram subtraction).
+            n_samples_left = left_child_node.sample_indices.shape[0]
+            n_samples_right = right_child_node.sample_indices.shape[0]
+            if n_samples_left < n_samples_right:
+                smallest_child = left_child_node
+                largest_child = right_child_node
+            else:
+                smallest_child = right_child_node
+                largest_child = left_child_node
+
+            self._compute_histograms_brute(smallest_child)
+            self._compute_histograms_subtraction(largest_child)
+
+            if should_split_left:
+                self._compute_best_split_and_push(left_child_node)
+            if should_split_right:
+                self._compute_best_split_and_push(right_child_node)
 
         return left_child_node, right_child_node
+
+    def _compute_histograms_brute(self, node):
+        """Compute the histograms of the node by scanning through all the data.
+
+        For a given feature, the complexity is O(n_samples)
+        """
+        node.histograms = np.zeros(shape=(self.n_features, self.max_bins),
+                                   dtype=HISTOGRAM_DTYPE)
+        self.splitter.compute_histograms_brute(node.sample_indices,
+                                               node.histograms)
+
+    def _compute_histograms_subtraction(self, node):
+        """Compute the histograms of the node using the subtraction trick.
+
+        hist(parent) = hist(left_child) + hist(right_child)
+
+        For a given feature, the complexity is O(n_bins). This is much more
+        efficient than compute_histograms_brute, but it's only possible for one
+        of the siblings.
+        """
+        node.histograms = np.zeros(shape=(self.n_features, self.max_bins),
+                                   dtype=HISTOGRAM_DTYPE)
+
+        if node.parent.left_child is node:
+            sibling = node.parent.right_child
+        else:
+            sibling = node.parent.left_child
+        self.splitter.compute_histograms_subtraction(node.parent.histograms,
+                                                     sibling.histograms,
+                                                     node.histograms)
 
     def can_split_further(self):
         """Return True if there are still nodes to split."""
