@@ -939,7 +939,7 @@ def check_non_negative(X, whom):
         raise ValueError("Negative values in data passed to %s" % whom)
 
 
-def warn_args(f):
+def deprecate_positional_args(f):
     """Decorator for methods that issues warnings for positional arguments
 
     Using the keyword-only argument syntax in pep 3102, arguments after the
@@ -954,15 +954,15 @@ def warn_args(f):
     kwonlyargs = argspec.kwonlyargs
     orig_spec = argspec.args
 
-    # Assumes class method has 'self' as first argument
-    is_class_method = orig_spec and 'self' == orig_spec[0]
+    # Assumes instance method has 'self' as first argument
+    is_method = orig_spec and 'self' == orig_spec[0]
 
     @wraps(f)
     def inner_f(*args, **kwargs):
         extra_args = len(args) - len(orig_spec)
         if extra_args > 0:
-            # ignore first 'self' argument for class methods
-            err_args = args[1:] if is_class_method else args
+            # ignore first 'self' argument for instance methods
+            err_args = args[1:] if is_method else args
             args_msg = ['{}={}'.format(name, arg)
                         for name, arg in zip(kwonlyargs[:extra_args],
                                              err_args[-extra_args:])]

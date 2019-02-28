@@ -40,7 +40,7 @@ from sklearn.utils.validation import (
     check_memory,
     check_non_negative,
     _num_samples,
-    warn_args
+    deprecate_positional_args
 )
 import sklearn
 
@@ -800,9 +800,9 @@ def test_retrieve_samples_from_non_standard_shape():
     assert _num_samples(X) == len(X)
 
 
-def test_warn_args_warns_for_function():
+def test_deprecate_positional_args_warns_for_function():
 
-    @warn_args
+    @deprecate_positional_args
     def f1(a, b, *, c=1, d=1):
         pass
 
@@ -816,7 +816,7 @@ def test_warn_args_warns_for_function():
                             r"c=3, d=4"):
         f1(1, 2, 3, 4)
 
-    @warn_args
+    @deprecate_positional_args
     def f2(a=1, *, b=1, c=1, d=1):
         pass
 
@@ -826,10 +826,10 @@ def test_warn_args_warns_for_function():
         f2(1, 2)
 
 
-def test_warn_args_warns_for_class():
+def test_deprecate_positional_args_warns_for_class():
 
     class A1:
-        @warn_args
+        @deprecate_positional_args
         def __init__(self, a, b, *, c=1, d=1):
             pass
 
@@ -844,7 +844,7 @@ def test_warn_args_warns_for_class():
         A1(1, 2, 3, 4)
 
     class A2:
-        @warn_args
+        @deprecate_positional_args
         def __init__(self, a=1, b=1, *, c=1, d=1):
             pass
 
