@@ -391,10 +391,3 @@ These changes mostly affect library developers.
   when `fit` is called twice with the same data, the ouput of
   `predict`, `predict_proba`, `transform`, and `decision_function` does not
   change. :issue:`12328` by :user:`Nicolas Hug <NicolasHug>`
-
-- Add ``test_check_class_weight_balanced_linear_classifier`` to                 
-  `~utils.tests.test_estimator_checks`, which tests that the check              
-  :func:`~utils.estimator_checks.check_class_weight_balanced_linear_classifier` 
-  is actually checking classifiers that are calculating incorrect               
-  balanced weights when ``class_weight=balanced``. :issue:`9079`                  
-  by :user:`Pavel Soriano <psorianom>`.  
