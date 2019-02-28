@@ -61,10 +61,10 @@ def _encode_numpy(values, uniques=None, encode=False):
 def _encode_python(values, uniques=None, encode=False):
     # only used in _encode below, see docstring there for details
     if uniques is None:
-        # Handle missing values
+        # Handle missing values so to not fail sort
         missing_vals = _object_dtype_isnan(values)
-        if any(missing_vals):
-            uniques = sorted(set(values[~missing_vals]))
+        if np.any(missing_vals):
+            uniques = sorted(set(values[~missing_vals])) + [np.nan]
         else:
             uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
@@ -80,22 +80,7 @@ def _encode_python(values, uniques=None, encode=False):
         return uniques
 
 
-def _encode_retain_missing(uniques, encoded=None):
-
-    missing_vals = np.isnan(uniques)
-
-    if np.all(missing_vals):
-        raise ValueError, 'All values are NaN'
-
-    if encoded is not None and np.any(missing_vals):
-        encoded[np.argmax(encoded)] = np.nan
-        return uniques[~missing_vals], encoded
-
-    else:
-        return uniques[~missing_vals]
-
-
-def _encode(values, uniques=None, encode=False, encode_missing='retain'):
+def _encode(values, uniques=None, encode=False):
     """Helper function to factorize (find uniques) and encode values.
 
     Uses pure python method for object dtype, and numpy method for
@@ -115,11 +100,6 @@ def _encode(values, uniques=None, encode=False, encode_missing='retain'):
         already have been determined in fit).
     encode : bool, default False
         If True, also encode the values into integer codes based on `uniques`.
-    encode_missing : str, (default 'retain')
-        Supported are 'retain' and 'encode'. If 'retain', NaN's are not
-        added to categories and NaN value is retained in encoded data.
-        If 'encode', NaN's are categorized and encoded as largest
-        ordinal category.
 
     Returns
     -------
@@ -130,17 +110,11 @@ def _encode(values, uniques=None, encode=False, encode_missing='retain'):
         If ``encode=True``.
 
     """
-    if encode_missing == 'retain':
-        if values.dtype == object:
-            return _encode_retain_missing(_encode_python(values, uniques, encode))
-        else:
-            return _encode_retain_missing(_encode_numpy(values, uniques, encode))
 
+    if values.dtype == object:
+        return _encode_python(values, uniques, encode)
     else:
-        if values.dtype == object:
-            return _encode_python(values, uniques, encode)
-        else:
-            return _encode_numpy(values, uniques, encode)
+        return _encode_numpy(values, uniques, encode)
 
 
 def _encode_check_unknown(values, uniques, return_mask=False):
@@ -169,6 +143,10 @@ def _encode_check_unknown(values, uniques, return_mask=False):
         Additionally returned if ``return_mask=True``.
 
     """
+    # Removing NaN's
+    uniques = uniques[~_object_dtype_isnan(uniques)]
+    values = values[~_object_dtype_isnan(values)]
+
     if values.dtype == object:
         uniques_set = set(uniques)
         diff = list(set(values) - uniques_set)
