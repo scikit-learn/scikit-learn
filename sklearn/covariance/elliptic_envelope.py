@@ -72,13 +72,11 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.covariance import EllipticEnvelope
-    >>> from sklearn.datasets import make_gaussian_quantiles
-    >>> real_cov = np.array([[.8, .3],
+    >>> true_cov = np.array([[.8, .3],
     ...                      [.3, .4]])
-    >>> np.random.seed(0)
-    >>> X = np.random.multivariate_normal(mean=[0, 0],
-    ...                                   cov=real_cov,
-    ...                                   size=500)
+    >>> X = np.random.RandomState(0).multivariate_normal(mean=[0, 0],
+    ...                                                  cov=true_cov,
+    ...                                                  size=500)
     >>> cov = EllipticEnvelope(random_state=0).fit(X)
     >>> # predict returns 1 for an inlier and -1 for an outlier
     >>> cov.predict([[0, 0],
