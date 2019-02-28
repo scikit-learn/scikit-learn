@@ -1054,6 +1054,7 @@ def test_make_pipeline_memory():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_set_input_features():
     pipe = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='median')),
@@ -1082,6 +1083,7 @@ def test_set_input_features():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_input_feature_names_pandas():
     pd = pytest.importorskip("pandas")
     pipe = Pipeline(steps=[
@@ -1098,6 +1100,7 @@ def test_input_feature_names_pandas():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_input_features_passthrough():
     pipe = Pipeline(steps=[
         ('imputer', 'passthrough'),
@@ -1114,6 +1117,7 @@ def test_input_features_passthrough():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_input_features_count_vectorizer():
     pipe = Pipeline(steps=[
         ('vect', CountVectorizer()),
@@ -1128,6 +1132,7 @@ def test_input_features_count_vectorizer():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_input_features_nested():
     pipe = Pipeline(steps=[
         ('inner_pipe', Pipeline(steps=[('select', SelectKBest(k=2)),
@@ -1147,6 +1152,7 @@ def test_input_features_nested():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_input_features_meta_pipe():
     ovr = OneVsRestClassifier(Pipeline(steps=[('select', SelectKBest(k=2)),
                                               ('clf', LogisticRegression())]))
@@ -1167,6 +1173,7 @@ def test_input_features_meta_pipe():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_input_features_meta():
     ovr = OneVsRestClassifier(LogisticRegression())
     pipe = Pipeline(steps=[('select', SelectKBest(k=2)), ('ovr', ovr)])
