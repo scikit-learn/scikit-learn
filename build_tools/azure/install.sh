@@ -61,6 +61,21 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
+
+elif [[ "$DISTRIB" == "scipy-dev" ]]; then
+    make_conda python=$PYTHON_VERSION
+    python -m pip install --upgrade pip setuptools
+
+    echo "Installing numpy and scipy master wheels"
+    dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
+    python -m pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
+    echo "Installing joblib master"
+    python -m pip install https://github.com/joblib/joblib/archive/master.zip
+    export SKLEARN_SITE_JOBLIB=1
+    echo "Installing pillow master"
+    python -m pip install https://github.com/python-pillow/Pillow/archive/master.zip
+    python -m pip install pytest pytest-cov
+
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then

@@ -2,7 +2,7 @@
 
 set -e
 
-# called when DISTRIB=="conda"
+# called when DISTRIB=="conda" or "scipy-dev"
 source activate $VIRTUALENV
 conda remove -y py pytest || pip uninstall -y py pytest
 
