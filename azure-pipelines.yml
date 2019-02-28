@@ -67,5 +67,7 @@ jobs:
       py37:
         CONDA_PY: '3.7'
         CHECK_WARNINGS: 'true'
+        COVERAGE: 'true'
       py35:
         CONDA_PY: '3.5'
+        COVERAGE: 'true'
