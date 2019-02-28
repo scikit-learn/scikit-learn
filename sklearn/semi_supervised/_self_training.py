@@ -18,10 +18,8 @@ __all__ = ["SelfTrainingClassifier"]
 def _validate_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
     if not hasattr(estimator, "predict_proba"):
-        name = type(estimator).__name__
         msg = "base_classifier ({}) should implement predict_proba!"
-        msg = msg.format(name)
-        raise ValueError(msg)
+        raise ValueError(msg.format(type(estimator).__name__))
 
 
 class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
@@ -52,7 +50,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
         until all unlabeled samples have been labeled. In this case, be aware
         that the fit may never terminate.
 
-    n_iter_no_change: int, optional (default=3)
+    n_iter_no_change: int, optional (default=1)
         If not `None`, early stopping will be applied. In this case, the
         classifier will count the amount of new labels in each iteration. If
         no new labels are added to the training set for `n_iter_no_change`
@@ -73,7 +71,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
         iteration.
 
     n_iter_ : int
-        The amount of iterations the classifier used during fitting.
+        The number of round of self-training, that is the number of times the
+        base estimator is fitted on relabeled variants of the training set.
 
     termination_condition_: string {'max_iter',
                                     'early_stopping',
