@@ -1,14 +1,15 @@
 import os
-from os.path import join
-import warnings
 
 from sklearn._build_utils import maybe_cythonize_extensions
 
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, BlasNotFoundError
+    from numpy.distutils.system_info import get_info
     import numpy
+
+    # needs to be called during build otherwise show_version may fail sometimes
+    get_info('blas_opt', 0)
 
     libraries = []
     if os.name == 'posix':
@@ -44,7 +45,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('semi_supervised/tests')
 
     # submodules which have their own setup.py
-    # leave out "linear_model" and "utils" for now; add them after cblas below
     config.add_subpackage('cluster')
     config.add_subpackage('datasets')
     config.add_subpackage('decomposition')
@@ -55,7 +55,9 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('metrics')
     config.add_subpackage('neighbors')
     config.add_subpackage('tree')
+    config.add_subpackage('utils')
     config.add_subpackage('svm')
+    config.add_subpackage('linear_model')
 
     # add cython extension module for isotonic regression
     config.add_extension('_isotonic',
@@ -64,25 +66,13 @@ def configuration(parent_package='', top_path=None):
                          libraries=libraries,
                          )
 
-    # some libs needs cblas, fortran-compiled BLAS will not be sufficient
-    blas_info = get_info('blas_opt', 0)
-    if (not blas_info) or (
-            ('NO_ATLAS_INFO', 1) in blas_info.get('define_macros', [])):
-        config.add_library('cblas',
-                           sources=[join('src', 'cblas', '*.c')])
-        warnings.warn(BlasNotFoundError.__doc__)
-
-    # the following packages depend on cblas, so they have to be build
-    # after the above.
-    config.add_subpackage('linear_model')
-    config.add_subpackage('utils')
-
     # add the test directory
     config.add_subpackage('tests')
 
     maybe_cythonize_extensions(top_path, config)
 
     return config
+
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup

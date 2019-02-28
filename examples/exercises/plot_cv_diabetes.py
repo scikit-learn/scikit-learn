@@ -9,7 +9,6 @@ This exercise is used in the :ref:`cv_estimators_tut` part of the
 :ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
 """
 
-from __future__ import print_function
 print(__doc__)
 
 import numpy as np

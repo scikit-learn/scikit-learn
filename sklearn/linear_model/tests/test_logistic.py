@@ -111,7 +111,7 @@ def test_error():
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_logistic_cv_mock_scorer():
 
-    class MockScorer(object):
+    class MockScorer:
         def __init__(self):
             self.calls = 0
             self.scores = [0.1, 0.4, 0.8, 0.5]
@@ -1359,7 +1359,8 @@ def test_saga_vs_liblinear():
 
 
 @pytest.mark.parametrize('multi_class', ['ovr', 'multinomial'])
-def test_dtype_match(multi_class):
+@pytest.mark.parametrize('solver', ['newton-cg', 'saga'])
+def test_dtype_match(solver, multi_class):
     # Test that np.float32 input data is not cast to np.float64 when possible
 
     X_32 = np.array(X).astype(np.float32)
@@ -1367,8 +1368,6 @@ def test_dtype_match(multi_class):
     X_64 = np.array(X).astype(np.float64)
     y_64 = np.array(Y1).astype(np.float64)
     X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
-
-    solver = 'newton-cg'
 
     # Check type consistency
     lr_32 = LogisticRegression(solver=solver, multi_class=multi_class,

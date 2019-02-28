@@ -1,7 +1,6 @@
 """
 Testing Recursive feature elimination
 """
-from __future__ import division
 
 import pytest
 import numpy as np
@@ -24,7 +23,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
 
-class MockClassifier(object):
+class MockClassifier:
     """
     Dummy classifier to test recursive feature elimination
     """

@@ -659,8 +659,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or 'precomputed'.
+        "manhattan", "cosine", or "precomputed".
         If linkage is "ward", only "euclidean" is accepted.
+        If "precomputed", a distance matrix (instead of a similarity matrix)
+        is needed as input for the fit method.
 
     memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the output of the computation of the tree.
