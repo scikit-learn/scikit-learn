@@ -99,11 +99,15 @@ completion in interactive environments::
     >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
     True
 
-A sub-pipeline can also be extracted, which is convenient for performing
-only some of the transformations (or their inverse):
+A sub-pipeline can also be extracted using the slicing notation commonly used
+for Python Sequences such as lists or strings (although only a step of 1 is
+permitted). This is convenient for performing only some of the transformations
+(or their inverse):
 
     >>> clf[:1] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     Pipeline(steps=[('reduce_dim', PCA(copy=True, ...))])
+    >>> clf[-1:] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Pipeline(steps=[('svc', SVC(C=10, ...))])
 
 Nested parameters
 .................
@@ -141,13 +145,6 @@ or by name::
 
     >>> clf['reduce_dim']
     PCA(copy=True, n_components=None, whiten=False)
-
-A sub-pipeline can also be extracted, which is convenient for performing
-only some of the transformations (or their inverse):
-
-    >>> clf[:1] # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
-                                       whiten=False))])
 
 .. topic:: Examples:
 
