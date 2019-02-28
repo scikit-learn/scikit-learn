@@ -4,7 +4,6 @@ parameters:
   matrix: []
   toRun: true
 
-
 jobs:
 - job: ${{ parameters.name }}
   condition: ${{ parameters.toRun }}

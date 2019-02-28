@@ -204,7 +204,7 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         # https://github.com/scikit-learn/scikit-learn/issues/4134
         d_gap = np.inf
         # set a sub_covariance buffer
-        sub_covariance = np.ascontiguousarray(covariance_[1:, 1:])
+        sub_covariance = np.copy(covariance_[1:, 1:], order='C')
         for i in range(max_iter):
             for idx in range(n_features):
                 # To keep the contiguous matrix `sub_covariance` equal to

@@ -10,7 +10,6 @@ import pytest
 
 import numpy as np
 
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -278,7 +277,6 @@ def test_iforest_average_path_length():
     # _average_path_length is increasing
     avg_path_length = _average_path_length(np.arange(5))
     assert_array_equal(avg_path_length, np.sort(avg_path_length))
-
 
 
 @pytest.mark.filterwarnings('ignore:default contamination')

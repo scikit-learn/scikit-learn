@@ -93,6 +93,10 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
+- |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
+  preserves ``float32`` and ``float64`` dtypes. :issues:`8769` and
+  :issues:`11000` by :user:`Thibault Sejourne <thibsej>`
+
 - |Fix| A ``ChangedBehaviourWarning`` is now raised when
   :class:`discriminant_analysis.LinearDiscriminantAnalysis` is given as
   parameter ``n_components > min(n_features, n_classes - 1)``, and
@@ -135,6 +139,10 @@ Support for Python 3.4 and below has been officially dropped.
   value of ``learning_rate`` in ``update_terminal_regions`` is not consistent
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
+  
+- |Enhancement| Minimized the validation of X in
+  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  :issue:`13174` by :user:`Christos Aridas <chkoar>`.
 
 :mod:`sklearn.externals`
 ........................
@@ -157,6 +165,11 @@ Support for Python 3.4 and below has been officially dropped.
 
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Enhancement| :class:`linear_model.make_dataset` now preserves
+  ``float32`` and ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
+  :user:`Nelle Varoquaux`_, :user:`Arthur Imbert <Henley13>`,
+  :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
@@ -190,6 +203,11 @@ Support for Python 3.4 and below has been officially dropped.
    ``copy_X=False`` at instance creation would be overridden by default
    parameter value ``copy_X=True`` in ``fit``.
    :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
+
+- |Fix| Fixed a bug in :class:`linear_model.LinearRegression` that
+  was not returning the same coeffecients and intercepts with
+  ``fit_intercept=True`` in sparse and dense case.
+  :issue:`13279` by `Alexandre Gramfort`_
 
 :mod:`sklearn.manifold`
 ............................
@@ -252,6 +270,11 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`~model_selection.learning_curve`, and
   :func:`~model_selection.validation_curve` only the latter is required.
   :issue:`12613` and :issue:`12669` by :user:`Marc Torrellas <marctorrellas>`.
+
+- |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
+  shuffles each class's samples with the same ``random_state``,
+  making ``shuffle=True`` ineffective.
+  :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.neighbors`
 ........................
