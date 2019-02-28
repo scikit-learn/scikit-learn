@@ -25,15 +25,15 @@ distance is the most common choice.
 Neighbors-based methods are known as *non-generalizing* machine
 learning methods, since they simply "remember" all of its training data
 (possibly transformed into a fast indexing structure such as a
-:ref:`Ball Tree <ball_tree>` or :ref:`KD Tree <kd_tree>`.).
+:ref:`Ball Tree <ball_tree>` or :ref:`KD Tree <kd_tree>`).
 
 Despite its simplicity, nearest neighbors has been successful in a
 large number of classification and regression problems, including
-handwritten digits or satellite image scenes. Being a non-parametric method,
+handwritten digits and satellite image scenes. Being a non-parametric method,
 it is often successful in classification situations where the decision
 boundary is very irregular.
 
-The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
+The classes in :mod:`sklearn.neighbors` can handle either NumPy arrays or
 `scipy.sparse` matrices as input.  For dense matrices, a large number of
 possible distance metrics are supported.  For sparse matrices, arbitrary
 Minkowski metrics are supported for searches.
@@ -62,8 +62,8 @@ of each option, see `Nearest Neighbor Algorithms`_.
     .. warning::
 
         Regarding the Nearest Neighbors algorithms, if two
-        neighbors, neighbor `k+1` and `k`, have identical distances but
-        but different labels, the results will depend on the ordering of the
+        neighbors :math:`k+1` and :math:`k` have identical distances
+        but different labels, the result will depend on the ordering of the
         training data.
 
 Finding the Nearest Neighbors
@@ -85,12 +85,12 @@ used:
            [4, 3],
            [5, 4]]...)
     >>> distances
-    array([[ 0.        ,  1.        ],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.41421356],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.        ],
-           [ 0.        ,  1.41421356]])
+    array([[0.        , 1.        ],
+           [0.        , 1.        ],
+           [0.        , 1.41421356],
+           [0.        , 1.        ],
+           [0.        , 1.        ],
+           [0.        , 1.41421356]])
 
 Because the query set matches the training set, the nearest neighbor of each
 point is the point itself, at a distance of zero.
@@ -99,18 +99,18 @@ It is also possible to efficiently produce a sparse graph showing the
 connections between neighboring points:
 
     >>> nbrs.kneighbors_graph(X).toarray()
-    array([[ 1.,  1.,  0.,  0.,  0.,  0.],
-           [ 1.,  1.,  0.,  0.,  0.,  0.],
-           [ 0.,  1.,  1.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  1.,  1.,  0.],
-           [ 0.,  0.,  0.,  1.,  1.,  0.],
-           [ 0.,  0.,  0.,  0.,  1.,  1.]])
+    array([[1., 1., 0., 0., 0., 0.],
+           [1., 1., 0., 0., 0., 0.],
+           [0., 1., 1., 0., 0., 0.],
+           [0., 0., 0., 1., 1., 0.],
+           [0., 0., 0., 1., 1., 0.],
+           [0., 0., 0., 0., 1., 1.]])
 
-Our dataset is structured such that points nearby in index order are nearby
+The dataset is structured such that points nearby in index order are nearby
 in parameter space, leading to an approximately block-diagonal matrix of
 K-nearest neighbors.  Such a sparse graph is useful in a variety of
 circumstances which make use of spatial relationships between points for
-unsupervised learning: in particular, see :class:`sklearn.manifold.IsoMap`,
+unsupervised learning: in particular, see :class:`sklearn.manifold.Isomap`,
 :class:`sklearn.manifold.LocallyLinearEmbedding`, and
 :class:`sklearn.cluster.SpectralClustering`.
 
@@ -134,10 +134,10 @@ have the same interface; we'll show an example of using the KD Tree here:
            [5, 4]]...)
 
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
-for more information on the options available for neighbors searches,
-including specification of query strategies, of various distance metrics, etc.
-For a list of available metrics, see the documentation of the
-:class:`DistanceMetric` class.
+for more information on the options available for nearest neighbors searches,
+including specification of query strategies, distance metrics, etc. For a list 
+of available metrics, see the documentation of the :class:`DistanceMetric` 
+class.
 
 .. _classification:
 
@@ -160,10 +160,9 @@ training point, where :math:`r` is a floating-point value specified by
 the user.
 
 The :math:`k`-neighbors classification in :class:`KNeighborsClassifier`
-is the more commonly used of the two techniques.  The
-optimal choice of the value :math:`k` is highly data-dependent: in general
-a larger :math:`k` suppresses the effects of noise, but makes the
-classification boundaries less distinct.
+is the most commonly used technique. The optimal choice of the value :math:`k` 
+is highly data-dependent: in general a larger :math:`k` suppresses the effects 
+of noise, but makes the classification boundaries less distinct.
 
 In cases where the data is not uniformly sampled, radius-based neighbors
 classification in :class:`RadiusNeighborsClassifier` can be a better choice.
@@ -180,15 +179,13 @@ be accomplished through the ``weights`` keyword.  The default value,
 ``weights = 'uniform'``, assigns uniform weights to each neighbor.
 ``weights = 'distance'`` assigns weights proportional to the inverse of the
 distance from the query point.  Alternatively, a user-defined function of the
-distance can be supplied which is used to compute the weights.
+distance can be supplied to compute the weights.
 
-
-
-.. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_1.png
+.. |classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 
-.. |classification_2| image:: ../auto_examples/neighbors/images/plot_classification_2.png
+.. |classification_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_002.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 
@@ -196,7 +193,7 @@ distance can be supplied which is used to compute the weights.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_classification.py`: an example of
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`: an example of
     classification using nearest neighbors.
 
 .. _regression:
@@ -206,7 +203,7 @@ Nearest Neighbors Regression
 
 Neighbors-based regression can be used in cases where the data labels are
 continuous rather than discrete variables.  The label assigned to a query
-point is computed based the mean of the labels of its nearest neighbors.
+point is computed based on the mean of the labels of its nearest neighbors.
 
 scikit-learn implements two different neighbors regressors:
 :class:`KNeighborsRegressor` implements learning based on the :math:`k`
@@ -227,17 +224,17 @@ weights proportional to the inverse of the distance from the query point.
 Alternatively, a user-defined function of the distance can be supplied,
 which will be used to compute the weights.
 
-.. figure:: ../auto_examples/neighbors/images/plot_regression_1.png
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_regression_001.png
    :target: ../auto_examples/neighbors/plot_regression.html
    :align: center
    :scale: 75
 
 The use of multi-output nearest neighbors for regression is demonstrated in
-:ref:`example_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/plot_multioutput_face_completion_1.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
    :target: ../auto_examples/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
@@ -245,10 +242,10 @@ the lower half of those faces.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_regression.py`: an example of regression
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
     using nearest neighbors.
 
-  * :ref:`example_plot_multioutput_face_completion.py`: an example of
+  * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`: an example of
     multi-output regression using nearest neighbors.
 
 
@@ -261,7 +258,7 @@ Brute Force
 -----------
 
 Fast computation of nearest neighbors is an active area of research in
-machine learning.  The most naive neighbor search implementation involves
+machine learning. The most naive neighbor search implementation involves
 the brute-force computation of distances between all pairs of points in the
 dataset: for :math:`N` samples in :math:`D` dimensions, this approach scales
 as :math:`O[D N^2]`.  Efficient brute-force neighbors searches can be very
@@ -286,7 +283,7 @@ The basic idea is that if point :math:`A` is very distant from point
 then we know that points :math:`A` and :math:`C`
 are very distant, *without having to explicitly calculate their distance*.
 In this way, the computational cost of a nearest neighbors search can be
-reduced to :math:`O[D N \log(N)]` or better.  This is a significant
+reduced to :math:`O[D N \log(N)]` or better. This is a significant
 improvement over brute-force for large :math:`N`.
 
 An early approach to taking advantage of this aggregate information was
@@ -294,10 +291,10 @@ the *KD tree* data structure (short for *K-dimensional tree*), which
 generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
 to an arbitrary number of dimensions.  The KD tree is a binary tree
 structure which recursively partitions the parameter space along the data
-axes, dividing it into nested orthotopic regions into which data points
+axes, dividing it into nested orthotropic regions into which data points
 are filed.  The construction of a KD tree is very fast: because partitioning
 is performed only along the data axes, no :math:`D`-dimensional distances
-need to be computed.  Once constructed, the nearest neighbor of a query
+need to be computed. Once constructed, the nearest neighbor of a query
 point can be determined with only :math:`O[\log(N)]` distance computations.
 Though the KD tree approach is very fast for low-dimensional (:math:`D < 20`)
 neighbors searches, it becomes inefficient as :math:`D` grows very large:
@@ -310,7 +307,7 @@ keyword ``algorithm = 'kd_tree'``, and are computed using the class
 .. topic:: References:
 
    * `"Multidimensional binary search trees used for associative searching"
-     <http://dl.acm.org/citation.cfm?doid=361002.361007>`_,
+     <https://dl.acm.org/citation.cfm?doid=361002.361007>`_,
      Bentley, J.L., Communications of the ACM (1975)
 
 
@@ -323,9 +320,8 @@ To address the inefficiencies of KD Trees in higher dimensions, the *ball tree*
 data structure was developed.  Where KD trees partition data along
 Cartesian axes, ball trees partition data in a series of nesting
 hyper-spheres.  This makes tree construction more costly than that of the
-KD tree, but
-results in a data structure which can be very efficient on highly-structured
-data, even in very high dimensions.
+KD tree, but results in a data structure which can be very efficient on 
+highly structured data, even in very high dimensions.
 
 A ball tree recursively divides the data into
 nodes defined by a centroid :math:`C` and radius :math:`r`, such that each
@@ -367,7 +363,7 @@ depends on a number of factors:
     to precisely characterise.  For small :math:`D` (less than 20 or so)
     the cost is approximately :math:`O[D\log(N)]`, and the KD tree
     query can be very efficient.
-    For larger :math:`D`, the cost increases to nearly `O[DN]`, and
+    For larger :math:`D`, the cost increases to nearly :math:`O[DN]`, and
     the overhead due to the tree
     structure can lead to queries which are slower than brute force.
 
@@ -419,13 +415,16 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2` 
-and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the 
-``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is based on the assumption that the number of query points is at least the 
-same order as the number of training points, and that ``leaf_size`` is 
-close to its default value of ``30``.
+Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2`
+and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
+``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the
+``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
+``'ball_tree'``. It selects ``'brute'`` if :math:`k < N/2` and the
+``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of
+``'kd_tree'`` or ``'ball_tree'``. It selects ``'brute'`` if :math:`k >= N/2`.
+This choice is based on the assumption that the number of query points is at
+least the same order as the number of training points, and that ``leaf_size``
+is close to its default value of ``30``.
 
 Effect of ``leaf_size``
 -----------------------
@@ -456,6 +455,7 @@ leaf nodes.  The level of this switch can be specified with the parameter
 
 ``leaf_size`` is not referenced for brute force queries.
 
+.. _nearest_centroid_classifier:
 
 Nearest Centroid Classifier
 ===========================
@@ -466,9 +466,9 @@ similar to the label updating phase of the :class:`sklearn.KMeans` algorithm.
 It also has no parameters to choose, making it a good baseline classifier. It
 does, however, suffer on non-convex classes, as well as when classes have
 drastically different variances, as equal variance in all dimensions is
-assumed. See Linear Discriminant Analysis (:class:`sklearn.lda.LDA`) and
-Quadratic Discriminant Analysis (:class:`sklearn.qda.QDA`) for more complex
-methods that do not make this assumption. Usage of the default
+assumed. See Linear Discriminant Analysis (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
+and Quadratic Discriminant Analysis (:class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`)
+for more complex methods that do not make this assumption. Usage of the default
 :class:`NearestCentroid` is simple:
 
     >>> from sklearn.neighbors.nearest_centroid import NearestCentroid
@@ -485,10 +485,10 @@ methods that do not make this assumption. Usage of the default
 Nearest Shrunken Centroid
 -------------------------
 
-The :class:`NearestCentroid` classifier has a `shrink_threshold` parameter,
+The :class:`NearestCentroid` classifier has a ``shrink_threshold`` parameter,
 which implements the nearest shrunken centroid classifier. In effect, the value
 of each feature for each centroid is divided by the within-class variance of
-that feature. The feature values are then reduced by `shrink_threshold`. Most
+that feature. The feature values are then reduced by ``shrink_threshold``. Most
 notably, if a particular feature value crosses zero, it is set
 to zero. In effect, this removes the feature from affecting the classification.
 This is useful, for example, for removing noisy features.
@@ -496,17 +496,17 @@ This is useful, for example, for removing noisy features.
 In the example below, using a small shrink threshold increases the accuracy of
 the model from 0.81 to 0.82.
 
-.. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_1.png
-   :target: ../auto_examples/neighbors/plot_classification.html
+.. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nearest_centroid_001.png
+   :target: ../auto_examples/neighbors/plot_nearest_centroid.html
    :scale: 50
 
-.. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_2.png
-   :target: ../auto_examples/neighbors/plot_classification.html
+.. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nearest_centroid_002.png
+   :target: ../auto_examples/neighbors/plot_nearest_centroid.html
    :scale: 50
 
 .. centered:: |nearest_centroid_1| |nearest_centroid_2|
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_nearest_centroid.py`: an example of
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.

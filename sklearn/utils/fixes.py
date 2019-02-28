@@ -6,229 +6,228 @@ at which the fixe is no longer needed.
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
+#          Lars Buitinck
 #
 # License: BSD 3 clause
 
-from operator import itemgetter
-import inspect
-from sklearn.externals import six
+from distutils.version import LooseVersion
 
 import numpy as np
+import scipy.sparse as sp
+import scipy
+from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 
 
-def lsqr(X, y, tol=1e-3):
-    import scipy.sparse.linalg as sp_linalg
-    from ..utils.extmath import safe_sparse_dot
-
-    if hasattr(sp_linalg, 'lsqr'):
-        # scipy 0.8 or greater
-        return sp_linalg.lsqr(X, y)
-    else:
-        n_samples, n_features = X.shape
-        if n_samples > n_features:
-            coef, _ = sp_linalg.cg(safe_sparse_dot(X.T, X),
-                                   safe_sparse_dot(X.T, y),
-                                   tol=tol)
-        else:
-            coef, _ = sp_linalg.cg(safe_sparse_dot(X, X.T), y, tol=tol)
-            coef = safe_sparse_dot(X.T, coef)
-
-        residues = y - safe_sparse_dot(X, coef)
-        return coef, None, None, residues
+def _parse_version(version_string):
+    version = []
+    for x in version_string.split('.'):
+        try:
+            version.append(int(x))
+        except ValueError:
+            # x may be of the form dev-1ea1592
+            version.append(x)
+    return tuple(version)
 
 
-def _unique(ar, return_index=False, return_inverse=False):
-    """A replacement for the np.unique that appeared in numpy 1.4.
-
-    While np.unique existed long before, keyword return_inverse was
-    only added in 1.4.
-    """
-    try:
-        ar = ar.flatten()
-    except AttributeError:
-        if not return_inverse and not return_index:
-            items = sorted(set(ar))
-            return np.asarray(items)
-        else:
-            ar = np.asarray(ar).flatten()
-
-    if ar.size == 0:
-        if return_inverse and return_index:
-            return ar, np.empty(0, np.bool), np.empty(0, np.bool)
-        elif return_inverse or return_index:
-            return ar, np.empty(0, np.bool)
-        else:
-            return ar
-
-    if return_inverse or return_index:
-        perm = ar.argsort()
-        aux = ar[perm]
-        flag = np.concatenate(([True], aux[1:] != aux[:-1]))
-        if return_inverse:
-            iflag = np.cumsum(flag) - 1
-            iperm = perm.argsort()
-            if return_index:
-                return aux[flag], perm[flag], iflag[iperm]
-            else:
-                return aux[flag], iflag[iperm]
-        else:
-            return aux[flag], perm[flag]
-
-    else:
-        ar.sort()
-        flag = np.concatenate(([True], ar[1:] != ar[:-1]))
-        return ar[flag]
-
-np_version = []
-for x in np.__version__.split('.'):
-    try:
-        np_version.append(int(x))
-    except ValueError:
-        # x may be of the form dev-1ea1592
-        np_version.append(x)
-np_version = tuple(np_version)
-
-if np_version[:2] < (1, 5):
-    unique = _unique
-else:
-    unique = np.unique
+np_version = _parse_version(np.__version__)
+sp_version = _parse_version(scipy.__version__)
 
 
-def _logaddexp(x1, x2, out=None):
-    """Fix np.logaddexp in numpy < 1.4 when x1 == x2 == -np.inf."""
-    if out is not None:
-        result = np.logaddexp(x1, x2, out=out)
-    else:
-        result = np.logaddexp(x1, x2)
-
-    result[np.logical_and(x1 == -np.inf, x2 == -np.inf)] = -np.inf
-
-    return result
-
-if np_version[:2] < (1, 4):
-    logaddexp = _logaddexp
-else:
-    logaddexp = np.logaddexp
-
-
-def _bincount(X, weights=None, minlength=None):
-    """Replacing np.bincount in numpy < 1.6 to provide minlength."""
-    result = np.bincount(X, weights)
-    if len(result) >= minlength:
-        return result
-    out = np.zeros(minlength, np.int)
-    out[:len(result)] = result
-    return out
-
-if np_version[:2] < (1, 6):
-    bincount = _bincount
-else:
-    bincount = np.bincount
-
-
-def _copysign(x1, x2):
-    """Slow replacement for np.copysign, which was introduced in numpy 1.4"""
-    return np.abs(x1) * np.sign(x2)
-
-if not hasattr(np, 'copysign'):
-    copysign = _copysign
-else:
-    copysign = np.copysign
-
-
-def _in1d(ar1, ar2, assume_unique=False):
-    """Replacement for in1d that is provided for numpy >= 1.4"""
-    if not assume_unique:
-        ar1, rev_idx = unique(ar1, return_inverse=True)
-        ar2 = np.unique(ar2)
-    ar = np.concatenate((ar1, ar2))
-    # We need this to be a stable sort, so always use 'mergesort'
-    # here. The values from the first array should always come before
-    # the values from the second array.
-    order = ar.argsort(kind='mergesort')
-    sar = ar[order]
-    equal_adj = (sar[1:] == sar[:-1])
-    flag = np.concatenate((equal_adj, [False]))
-    indx = order.argsort(kind='mergesort')[:len(ar1)]
-
-    if assume_unique:
-        return flag[indx]
-    else:
-        return flag[indx][rev_idx]
-
-if not hasattr(np, 'in1d'):
-    in1d = _in1d
-else:
-    in1d = np.in1d
-
-
-def qr_economic(A, **kwargs):
-    """Compat function for the QR-decomposition in economic mode
-
-    Scipy 0.9 changed the keyword econ=True to mode='economic'
-    """
-    import scipy.linalg
-    # trick: triangular solve has introduced in 0.9
-    if hasattr(scipy.linalg, 'solve_triangular'):
-        return scipy.linalg.qr(A, mode='economic', **kwargs)
-    else:
-        import warnings
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            return scipy.linalg.qr(A, econ=True, **kwargs)
-
-
-def savemat(file_name, mdict, oned_as="column", **kwargs):
-    """MATLAB-format output routine that is compatible with SciPy 0.7's.
-
-    0.7.2 (or .1?) added the oned_as keyword arg with 'column' as the default
-    value. It issues a warning if this is not provided, stating that "This will
-    change to 'row' in future versions."
-    """
-    import scipy.io
-    try:
-        return scipy.io.savemat(file_name, mdict, oned_as=oned_as, **kwargs)
-    except TypeError:
-        return scipy.io.savemat(file_name, mdict, **kwargs)
-
-try:
-    from numpy import count_nonzero
+try:  # SciPy >= 0.19
+    from scipy.special import comb, logsumexp
 except ImportError:
-    def count_nonzero(X):
-        return len(np.flatnonzero(X))
+    from scipy.misc import comb, logsumexp  # noqa
 
-# little danse to see if np.copy has an 'order' keyword argument
-if 'order' in inspect.getargspec(np.copy)[0]:
-    def safe_copy(X):
-        # Copy, but keep the order
-        return np.copy(X, order='K')
+
+if sp_version >= (0, 19):
+    def _argmax(arr_or_spmatrix, axis=None):
+        return arr_or_spmatrix.argmax(axis=axis)
 else:
-    # Before an 'order' argument was introduced, numpy wouldn't muck with
-    # the ordering
-    safe_copy = np.copy
+    # Backport of argmax functionality from scipy 0.19.1, can be removed
+    # once support for scipy 0.18 and below is dropped
 
-try:
-    if (not np.allclose(np.divide(.4, 1), np.divide(.4, 1, dtype=np.float))
-            or not np.allclose(np.divide(.4, 1), .4)):
-        raise TypeError('Divide not working with dtype: '
-                        'https://github.com/numpy/numpy/issues/3484')
-    divide = np.divide
+    def _find_missing_index(ind, n):
+        for k, a in enumerate(ind):
+            if k != a:
+                return k
 
-except TypeError:
-    # Compat for old versions of np.divide that do not provide support for
-    # the dtype args
-    def divide(x1, x2, out=None, dtype=None):
-        out_orig = out
-        if out is None:
-            out = np.asarray(x1, dtype=dtype)
-            if out is x1:
-                out = x1.copy()
+        k += 1
+        if k < n:
+            return k
         else:
-            if out is not x1:
-                out[:] = x1
-        if dtype is not None and out.dtype != dtype:
-            out = out.astype(dtype)
-        out /= x2
-        if out_orig is None and np.isscalar(x1):
-            out = np.asscalar(out)
-        return out
+            return -1
+
+    def _arg_min_or_max_axis(self, axis, op, compare):
+        if self.shape[axis] == 0:
+            raise ValueError("Can't apply the operation along a zero-sized "
+                             "dimension.")
+
+        if axis < 0:
+            axis += 2
+
+        zero = self.dtype.type(0)
+
+        mat = self.tocsc() if axis == 0 else self.tocsr()
+        mat.sum_duplicates()
+
+        ret_size, line_size = mat._swap(mat.shape)
+        ret = np.zeros(ret_size, dtype=int)
+
+        nz_lines, = np.nonzero(np.diff(mat.indptr))
+        for i in nz_lines:
+            p, q = mat.indptr[i:i + 2]
+            data = mat.data[p:q]
+            indices = mat.indices[p:q]
+            am = op(data)
+            m = data[am]
+            if compare(m, zero) or q - p == line_size:
+                ret[i] = indices[am]
+            else:
+                zero_ind = _find_missing_index(indices, line_size)
+                if m == zero:
+                    ret[i] = min(am, zero_ind)
+                else:
+                    ret[i] = zero_ind
+
+        if axis == 1:
+            ret = ret.reshape(-1, 1)
+
+        return np.asmatrix(ret)
+
+    def _arg_min_or_max(self, axis, out, op, compare):
+        if out is not None:
+            raise ValueError("Sparse matrices do not support "
+                             "an 'out' parameter.")
+
+        # validateaxis(axis)
+
+        if axis is None:
+            if 0 in self.shape:
+                raise ValueError("Can't apply the operation to "
+                                 "an empty matrix.")
+
+            if self.nnz == 0:
+                return 0
+            else:
+                zero = self.dtype.type(0)
+                mat = self.tocoo()
+                mat.sum_duplicates()
+                am = op(mat.data)
+                m = mat.data[am]
+
+                if compare(m, zero):
+                    return mat.row[am] * mat.shape[1] + mat.col[am]
+                else:
+                    size = np.product(mat.shape)
+                    if size == mat.nnz:
+                        return am
+                    else:
+                        ind = mat.row * mat.shape[1] + mat.col
+                        zero_ind = _find_missing_index(ind, size)
+                        if m == zero:
+                            return min(zero_ind, am)
+                        else:
+                            return zero_ind
+
+        return _arg_min_or_max_axis(self, axis, op, compare)
+
+    def _sparse_argmax(self, axis=None, out=None):
+        return _arg_min_or_max(self, axis, out, np.argmax, np.greater)
+
+    def _argmax(arr_or_matrix, axis=None):
+        if sp.issparse(arr_or_matrix):
+            return _sparse_argmax(arr_or_matrix, axis=axis)
+        else:
+            return arr_or_matrix.argmax(axis=axis)
+
+
+def parallel_helper(obj, methodname, *args, **kwargs):
+    """Workaround for Python 2 limitations of pickling instance methods
+
+    Parameters
+    ----------
+    obj
+    methodname
+    *args
+    **kwargs
+
+    """
+    return getattr(obj, methodname)(*args, **kwargs)
+
+
+if np_version < (1, 12):
+    class MaskedArray(np.ma.MaskedArray):
+        # Before numpy 1.12, np.ma.MaskedArray object is not picklable
+        # This fix is needed to make our model_selection.GridSearchCV
+        # picklable as the ``cv_results_`` param uses MaskedArray
+        def __getstate__(self):
+            """Return the internal state of the masked array, for pickling
+            purposes.
+
+            """
+            cf = 'CF'[self.flags.fnc]
+            data_state = super(np.ma.MaskedArray, self).__reduce__()[2]
+            return data_state + (np.ma.getmaskarray(self).tostring(cf),
+                                 self._fill_value)
+else:
+    from numpy.ma import MaskedArray    # noqa
+
+
+# Fix for behavior inconsistency on numpy.equal for object dtypes.
+# For numpy versions < 1.13, numpy.equal tests element-wise identity of objects
+# instead of equality. This fix returns the mask of NaNs in an array of
+# numerical or object values for all numpy versions.
+if np_version < (1, 13):
+    def _object_dtype_isnan(X):
+        return np.frompyfunc(lambda x: x != x, 1, 1)(X).astype(bool)
+else:
+    def _object_dtype_isnan(X):
+        return X != X
+
+
+def _joblib_parallel_args(**kwargs):
+    """Set joblib.Parallel arguments in a compatible way for 0.11 and 0.12+
+
+    For joblib 0.11 this maps both ``prefer`` and ``require`` parameters to
+    a specific ``backend``.
+
+    Parameters
+    ----------
+
+    prefer : str in {'processes', 'threads'} or None
+        Soft hint to choose the default backend if no specific backend
+        was selected with the parallel_backend context manager.
+
+    require : 'sharedmem' or None
+        Hard condstraint to select the backend. If set to 'sharedmem',
+        the selected backend will be single-host and thread-based even
+        if the user asked for a non-thread based backend with
+        parallel_backend.
+
+    See joblib.Parallel documentation for more details
+    """
+    from . import _joblib
+
+    if _joblib.__version__ >= LooseVersion('0.12'):
+        return kwargs
+
+    extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
+    if extra_args:
+        raise NotImplementedError('unhandled arguments %s with joblib %s'
+                                  % (list(extra_args), _joblib.__version__))
+    args = {}
+    if 'prefer' in kwargs:
+        prefer = kwargs['prefer']
+        if prefer not in ['threads', 'processes', None]:
+            raise ValueError('prefer=%s is not supported' % prefer)
+        args['backend'] = {'threads': 'threading',
+                           'processes': 'multiprocessing',
+                           None: None}[prefer]
+
+    if 'require' in kwargs:
+        require = kwargs['require']
+        if require not in [None, 'sharedmem']:
+            raise ValueError('require=%s is not supported' % require)
+        if require == 'sharedmem':
+            args['backend'] = 'threading'
+    return args

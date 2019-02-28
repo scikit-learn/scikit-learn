@@ -3,12 +3,10 @@
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Sparseness support by Lars Buitinck
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
-
-import warnings
 
 import numpy as np
 from scipy import stats
@@ -19,19 +17,21 @@ from .base import \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
-from ..utils import atleast2d_or_csr
+from ..utils import check_array
 
 
 class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                            SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing the k-nearest neighbors vote.
 
+    Read more in the :ref:`User Guide <classification>`.
+
     Parameters
     ----------
     n_neighbors : int, optional (default = 5)
-        Number of neighbors to use by default for :meth:`k_neighbors` queries.
+        Number of neighbors to use by default for :meth:`kneighbors` queries.
 
-    weights : str or callable
+    weights : str or callable, optional (default = 'uniform')
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -42,8 +42,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.
-
-        Uniform weights are used by default.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -63,20 +61,26 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or DistanceMetric object (default='minkowski')
-        the distance metric to use for the tree.  The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
-        list of available metrics.
-
     p : integer, optional (default = 2)
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric : string or callable, default 'minkowski'
+        the distance metric to use for the tree.  The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
+
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
+    n_jobs : int or None, optional (default=None)
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+        Doesn't affect :meth:`fit` method.
 
     Examples
     --------
@@ -89,7 +93,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     >>> print(neigh.predict([[1.1]]))
     [0]
     >>> print(neigh.predict_proba([[0.9]]))
-    [[ 0.66666667  0.33333333]]
+    [[0.66666667 0.33333333]]
 
     See also
     --------
@@ -106,26 +110,24 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     .. warning::
 
        Regarding the Nearest Neighbors algorithms, if it is found that two
-       neighbors, neighbor `k+1` and `k`, have identical distances but
+       neighbors, neighbor `k+1` and `k`, have identical distances
        but different labels, the results will depend on the ordering of the
        training data.
 
-    http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, n_neighbors=5,
                  weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', **kwargs):
-        if kwargs:
-            if 'warn_on_equidistant' in kwargs:
-                kwargs.pop('warn_on_equidistant')
-                warnings.warn("The warn_on_equidistant parameter is "
-                              "deprecated and will be removed in 0.16.",
-                              DeprecationWarning,
-                              stacklevel=2)
-        self._init_params(n_neighbors=n_neighbors,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p, **kwargs)
+                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
+                 **kwargs):
+
+        super().__init__(
+            n_neighbors=n_neighbors,
+            algorithm=algorithm,
+            leaf_size=leaf_size, metric=metric, p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -133,18 +135,18 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
-
         classes_ = self.classes_
         _y = self._y
         if not self.outputs_2d_:
@@ -175,8 +177,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X : array, shape = (n_samples, n_features)
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
@@ -185,7 +188,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -228,10 +231,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                 SupervisedIntegerMixin, ClassifierMixin):
     """Classifier implementing a vote among neighbors within a given radius
 
+    Read more in the :ref:`User Guide <classification>`.
+
     Parameters
     ----------
     radius : float, optional (default = 1.0)
-        Range of parameter space to use by default for :meth`radius_neighbors`
+        Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
     weights : str or callable
@@ -252,7 +257,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDtree`
+        - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -266,25 +271,30 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or DistanceMetric object (default='minkowski')
-        the distance metric to use for the tree.  The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
-        list of available metrics.
-
     p : integer, optional (default = 2)
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric : string or callable, default 'minkowski'
+        the distance metric to use for the tree.  The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
 
     outlier_label : int, optional (default = None)
         Label, which is given for outlier samples (samples with no
         neighbors on given radius).
         If set to None, ValueError is raised, when outlier is detected.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
+    n_jobs : int or None, optional (default=None)
+        The number of parallel jobs to run for neighbors search.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Examples
     --------
@@ -309,16 +319,19 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
-    http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
+    https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
-                 outlier_label=None, **kwargs):
-        self._init_params(radius=radius,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size,
-                          metric=metric, p=p, **kwargs)
+                 outlier_label=None, metric_params=None, n_jobs=None,
+                 **kwargs):
+        super().__init__(
+              radius=radius,
+              algorithm=algorithm,
+              leaf_size=leaf_size,
+              metric=metric, p=p, metric_params=metric_params,
+              n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 
@@ -327,8 +340,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array of shape [n_samples, n_features]
-            A 2-D array representing the test points.
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
 
         Returns
         -------
@@ -336,7 +350,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             Class labels for each data sample.
 
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
@@ -363,18 +377,18 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
-            pred_labels = np.array([_y[ind, k] for ind in neigh_ind],
-                                   dtype=object)
+            pred_labels = np.zeros(len(neigh_ind), dtype=object)
+            pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
             if weights is None:
                 mode = np.array([stats.mode(pl)[0]
                                  for pl in pred_labels[inliers]], dtype=np.int)
             else:
-                mode = np.array([weighted_mode(pl, w)[0]
-                                 for (pl, w)
-                                 in zip(pred_labels[inliers], weights)],
-                                dtype=np.int)
+                mode = np.array(
+                    [weighted_mode(pl, w)[0]
+                     for (pl, w) in zip(pred_labels[inliers], weights[inliers])
+                     ], dtype=np.int)
 
-            mode = mode.ravel().astype(np.int)
+            mode = mode.ravel()
 
             y_pred[inliers, k] = classes_k.take(mode)
 

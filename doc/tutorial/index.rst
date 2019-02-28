@@ -3,15 +3,24 @@
 
 
 .. include:: ../includes/big_toc_css.rst
+.. include:: ../tune_toc.rst
 
-Tutorial: Statistical Learning for scientific data analysis
-=======================================================================
+======================
+scikit-learn Tutorials
+======================
+
+|
 
 .. toctree::
    :maxdepth: 2
 
+   basic/tutorial.rst
    statistical_inference/index.rst
+   text_analytics/working_with_text_data.rst
+   machine_learning_map/index
+   ../presentations
 
+|
 
 .. note:: **Doctest Mode**
 

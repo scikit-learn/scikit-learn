@@ -59,29 +59,31 @@ is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
 """
-print(__doc__)
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
 
-import datetime
+import sys
 
 import numpy as np
-import pylab as pl
-from matplotlib import finance
+import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
+
+import pandas as pd
 
 from sklearn import cluster, covariance, manifold
 
-###############################################################################
+print(__doc__)
+
+
+# #############################################################################
 # Retrieve the data from Internet
 
-# Choose a time period reasonnably calm (not too long ago so that we get
-# high-tech firms, and before the 2008 crash)
-d1 = datetime.datetime(2003, 01, 01)
-d2 = datetime.datetime(2008, 01, 01)
+# The data is from 2003 - 2008. This is reasonably calm: (not too long ago so
+# that we get high-tech firms, and before the 2008 crash). This kind of
+# historical data can be obtained for from APIs like the quandl.com and
+# alphavantage.co ones.
 
-# kraft symbol has now changed from KFT to MDLZ in yahoo
 symbol_dict = {
     'TOT': 'Total',
     'XOM': 'Exxon',
@@ -99,7 +101,6 @@ symbol_dict = {
     'AMZN': 'Amazon',
     'TM': 'Toyota',
     'CAJ': 'Canon',
-    'MTU': 'Mitsubishi',
     'SNE': 'Sony',
     'F': 'Ford',
     'HMC': 'Honda',
@@ -108,9 +109,8 @@ symbol_dict = {
     'BA': 'Boeing',
     'KO': 'Coca Cola',
     'MMM': '3M',
-    'MCD': 'Mc Donalds',
+    'MCD': 'McDonald\'s',
     'PEP': 'Pepsi',
-    'MDLZ': 'Kraft Foods',
     'K': 'Kellogg',
     'UN': 'Unilever',
     'MAR': 'Marriott',
@@ -126,11 +126,9 @@ symbol_dict = {
     'AAPL': 'Apple',
     'SAP': 'SAP',
     'CSCO': 'Cisco',
-    'TXN': 'Texas instruments',
+    'TXN': 'Texas Instruments',
     'XRX': 'Xerox',
-    'LMT': 'Lookheed Martin',
     'WMT': 'Wal-Mart',
-    'WAG': 'Walgreen',
     'HD': 'Home Depot',
     'GSK': 'GlaxoSmithKline',
     'PFE': 'Pfizer',
@@ -144,20 +142,27 @@ symbol_dict = {
     'CAT': 'Caterpillar',
     'DD': 'DuPont de Nemours'}
 
-symbols, names = np.array(symbol_dict.items()).T
 
-quotes = [finance.quotes_historical_yahoo(symbol, d1, d2, asobject=True)
-          for symbol in symbols]
+symbols, names = np.array(sorted(symbol_dict.items())).T
 
-open = np.array([q.open for q in quotes]).astype(np.float)
-close = np.array([q.close for q in quotes]).astype(np.float)
+quotes = []
+
+for symbol in symbols:
+    print('Fetching quote history for %r' % symbol, file=sys.stderr)
+    url = ('https://raw.githubusercontent.com/scikit-learn/examples-data/'
+           'master/financial-data/{}.csv')
+    quotes.append(pd.read_csv(url.format(symbol)))
+
+close_prices = np.vstack([q['close'] for q in quotes])
+open_prices = np.vstack([q['open'] for q in quotes])
 
 # The daily variations of the quotes are what carry most information
-variation = close - open
+variation = close_prices - open_prices
 
-###############################################################################
+
+# #############################################################################
 # Learn a graphical structure from the correlations
-edge_model = covariance.GraphLassoCV()
+edge_model = covariance.GraphicalLassoCV(cv=5)
 
 # standardize the time series: using correlations rather than covariance
 # is more efficient for structure recovery
@@ -165,7 +170,7 @@ X = variation.copy().T
 X /= X.std(axis=0)
 edge_model.fit(X)
 
-###############################################################################
+# #############################################################################
 # Cluster using affinity propagation
 
 _, labels = cluster.affinity_propagation(edge_model.covariance_)
@@ -174,7 +179,7 @@ n_labels = labels.max()
 for i in range(n_labels + 1):
     print('Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i])))
 
-###############################################################################
+# #############################################################################
 # Find a low-dimension embedding for visualization: find the best position of
 # the nodes (the stocks) on a 2D plane
 
@@ -186,12 +191,12 @@ node_position_model = manifold.LocallyLinearEmbedding(
 
 embedding = node_position_model.fit_transform(X.T).T
 
-###############################################################################
+# #############################################################################
 # Visualization
-pl.figure(1, facecolor='w', figsize=(10, 8))
-pl.clf()
-ax = pl.axes([0., 0., 1., 1.])
-pl.axis('off')
+plt.figure(1, facecolor='w', figsize=(10, 8))
+plt.clf()
+ax = plt.axes([0., 0., 1., 1.])
+plt.axis('off')
 
 # Display a graph of the partial correlations
 partial_correlations = edge_model.precision_.copy()
@@ -201,19 +206,19 @@ partial_correlations *= d[:, np.newaxis]
 non_zero = (np.abs(np.triu(partial_correlations, k=1)) > 0.02)
 
 # Plot the nodes using the coordinates of our embedding
-pl.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
-           cmap=pl.cm.spectral)
+plt.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
+            cmap=plt.cm.nipy_spectral)
 
 # Plot the edges
 start_idx, end_idx = np.where(non_zero)
-#a sequence of (*line0*, *line1*, *line2*), where::
+# a sequence of (*line0*, *line1*, *line2*), where::
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
 segments = [[embedding[:, start], embedding[:, stop]]
             for start, stop in zip(start_idx, end_idx)]
 values = np.abs(partial_correlations[non_zero])
 lc = LineCollection(segments,
-                    zorder=0, cmap=pl.cm.hot_r,
-                    norm=pl.Normalize(0, .7 * values.max()))
+                    zorder=0, cmap=plt.cm.hot_r,
+                    norm=plt.Normalize(0, .7 * values.max()))
 lc.set_array(values)
 lc.set_linewidths(15 * values)
 ax.add_collection(lc)
@@ -241,16 +246,16 @@ for index, (name, label, (x, y)) in enumerate(
     else:
         verticalalignment = 'top'
         y = y - .002
-    pl.text(x, y, name, size=10,
-            horizontalalignment=horizontalalignment,
-            verticalalignment=verticalalignment,
-            bbox=dict(facecolor='w',
-                      edgecolor=pl.cm.spectral(label / float(n_labels)),
-                      alpha=.6))
+    plt.text(x, y, name, size=10,
+             horizontalalignment=horizontalalignment,
+             verticalalignment=verticalalignment,
+             bbox=dict(facecolor='w',
+                       edgecolor=plt.cm.nipy_spectral(label / float(n_labels)),
+                       alpha=.6))
 
-pl.xlim(embedding[0].min() - .15 * embedding[0].ptp(),
-        embedding[0].max() + .10 * embedding[0].ptp(),)
-pl.ylim(embedding[1].min() - .03 * embedding[1].ptp(),
-        embedding[1].max() + .03 * embedding[1].ptp())
+plt.xlim(embedding[0].min() - .15 * embedding[0].ptp(),
+         embedding[0].max() + .10 * embedding[0].ptp(),)
+plt.ylim(embedding[1].min() - .03 * embedding[1].ptp(),
+         embedding[1].max() + .03 * embedding[1].ptp())
 
-pl.show()
+plt.show()

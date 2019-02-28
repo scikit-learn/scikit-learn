@@ -17,7 +17,7 @@ of :class:`RBFSampler`, which uses random Fourier features) and different sized
 subsets of the training set (for :class:`Nystroem`) for the approximate mapping
 are shown.
 
-Please not that the dataset here is not large enough to show the benefits
+Please note that the dataset here is not large enough to show the benefits
 of kernel approximation, as the exact SVM is still reasonably fast.
 
 Sampling more dimensions clearly leads to better classification results, but
@@ -48,7 +48,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 # Standard scientific Python imports
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
@@ -68,12 +68,14 @@ data = digits.data / 16.
 data -= data.mean(axis=0)
 
 # We learn the digits on the first half of the digits
-data_train, targets_train = data[:n_samples / 2], digits.target[:n_samples / 2]
+data_train, targets_train = (data[:n_samples // 2],
+                             digits.target[:n_samples // 2])
 
 
 # Now predict the value of the digit on the second half:
-data_test, targets_test = data[n_samples / 2:], digits.target[n_samples / 2:]
-#data_test = scaler.transform(data_test)
+data_test, targets_test = (data[n_samples // 2:],
+                           digits.target[n_samples // 2:])
+# data_test = scaler.transform(data_test)
 
 # Create a classifier: a support vector classifier
 kernel_svm = svm.SVC(gamma=.2)
@@ -124,10 +126,10 @@ for D in sample_sizes:
     fourier_scores.append(fourier_score)
 
 # plot the results:
-pl.figure(figsize=(8, 8))
-accuracy = pl.subplot(211)
+plt.figure(figsize=(8, 8))
+accuracy = plt.subplot(211)
 # second y axis for timeings
-timescale = pl.subplot(212)
+timescale = plt.subplot(212)
 
 accuracy.plot(sample_sizes, nystroem_scores, label="Nystroem approx. kernel")
 timescale.plot(sample_sizes, nystroem_times, '--',
@@ -169,7 +171,7 @@ pca = PCA(n_components=8).fit(data_train)
 
 X = pca.transform(data_train)
 
-# Gemerate grid along first two principal components
+# Generate grid along first two principal components
 multiples = np.arange(-2, 2, 0.1)
 # steps along first component
 first = multiples[:, np.newaxis] * pca.components_[0, :]
@@ -186,25 +188,26 @@ titles = ['SVC with rbf kernel',
           'SVC (linear kernel)\n with Nystroem rbf feature map\n'
           'n_components=100']
 
-pl.tight_layout()
-pl.figure(figsize=(12, 5))
+plt.tight_layout()
+plt.figure(figsize=(12, 5))
 
 # predict and plot
 for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
                          fourier_approx_svm)):
     # Plot the decision boundary. For that, we will assign a color to each
-    # point in the mesh [x_min, m_max]x[y_min, y_max].
-    pl.subplot(1, 3, i + 1)
+    # point in the mesh [x_min, x_max]x[y_min, y_max].
+    plt.subplot(1, 3, i + 1)
     Z = clf.predict(flat_grid)
 
     # Put the result into a color plot
     Z = Z.reshape(grid.shape[:-1])
-    pl.contourf(multiples, multiples, Z, cmap=pl.cm.Paired)
-    pl.axis('off')
+    plt.contourf(multiples, multiples, Z, cmap=plt.cm.Paired)
+    plt.axis('off')
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=pl.cm.Paired)
+    plt.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired,
+                edgecolors=(0, 0, 0))
 
-    pl.title(titles[i])
-pl.tight_layout()
-pl.show()
+    plt.title(titles[i])
+plt.tight_layout()
+plt.show()

@@ -11,14 +11,16 @@ are represented by the dashed lines.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import datasets
 from sklearn.linear_model import SGDClassifier
 
 # import some data to play with
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features. We could
-                      # avoid this ugly slicing by using a two-dim dataset
+
+# we only take the first two features. We could
+# avoid this ugly slicing by using a two-dim dataset
+X = iris.data[:, :2]
 y = iris.target
 colors = "bry"
 
@@ -36,7 +38,7 @@ X = (X - mean) / std
 
 h = .02  # step size in the mesh
 
-clf = SGDClassifier(alpha=0.001, n_iter=100).fit(X, y)
+clf = SGDClassifier(alpha=0.001, max_iter=100, tol=1e-3).fit(X, y)
 
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -45,24 +47,24 @@ xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                      np.arange(y_min, y_max, h))
 
 # Plot the decision boundary. For that, we will assign a color to each
-# point in the mesh [x_min, m_max]x[y_min, y_max].
+# point in the mesh [x_min, x_max]x[y_min, y_max].
 Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
-cs = pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
-pl.axis('tight')
+cs = plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
+plt.axis('tight')
 
 # Plot also the training points
 for i, color in zip(clf.classes_, colors):
     idx = np.where(y == i)
-    pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
-               cmap=pl.cm.Paired)
-pl.title("Decision surface of multi-class SGD")
-pl.axis('tight')
+    plt.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
+                cmap=plt.cm.Paired, edgecolor='black', s=20)
+plt.title("Decision surface of multi-class SGD")
+plt.axis('tight')
 
 # Plot the three one-against-all classifiers
-xmin, xmax = pl.xlim()
-ymin, ymax = pl.ylim()
+xmin, xmax = plt.xlim()
+ymin, ymax = plt.ylim()
 coef = clf.coef_
 intercept = clf.intercept_
 
@@ -71,10 +73,11 @@ def plot_hyperplane(c, color):
     def line(x0):
         return (-(x0 * coef[c, 0]) - intercept[c]) / coef[c, 1]
 
-    pl.plot([xmin, xmax], [line(xmin), line(xmax)],
-            ls="--", color=color)
+    plt.plot([xmin, xmax], [line(xmin), line(xmax)],
+             ls="--", color=color)
+
 
 for i, color in zip(clf.classes_, colors):
     plot_hyperplane(i, color)
-pl.legend()
-pl.show()
+plt.legend()
+plt.show()

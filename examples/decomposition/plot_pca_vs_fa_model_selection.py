@@ -1,10 +1,7 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 """
-=================================================================
-Model selection with Probabilistic (PCA) and Factor Analysis (FA)
-=================================================================
+===============================================================
+Model selection with Probabilistic PCA and Factor Analysis (FA)
+===============================================================
 
 Probabilistic PCA and Factor Analysis are probabilistic models.
 The consequence is that the likelihood of new data can be used
@@ -26,22 +23,23 @@ Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
 by Thomas P. Minka is also compared.
 
 """
-print(__doc__)
 
 # Authors: Alexandre Gramfort
 #          Denis A. Engemann
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from scipy import linalg
 
 from sklearn.decomposition import PCA, FactorAnalysis
 from sklearn.covariance import ShrunkCovariance, LedoitWolf
-from sklearn.cross_validation import cross_val_score
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 
-###############################################################################
+print(__doc__)
+
+# #############################################################################
 # Create the data
 
 n_samples, n_features, rank = 1000, 50, 10
@@ -57,36 +55,34 @@ X_homo = X + sigma * rng.randn(n_samples, n_features)
 sigmas = sigma * rng.rand(n_features) + sigma / 2.
 X_hetero = X + rng.randn(n_samples, n_features) * sigmas
 
-###############################################################################
+# #############################################################################
 # Fit the models
 
 n_components = np.arange(0, n_features, 5)  # options for n_components
 
 
 def compute_scores(X):
-    pca = PCA()
+    pca = PCA(svd_solver='full')
     fa = FactorAnalysis()
 
     pca_scores, fa_scores = [], []
     for n in n_components:
         pca.n_components = n
         fa.n_components = n
-        pca_scores.append(np.mean(cross_val_score(pca, X)))
-        fa_scores.append(np.mean(cross_val_score(fa, X)))
+        pca_scores.append(np.mean(cross_val_score(pca, X, cv=5)))
+        fa_scores.append(np.mean(cross_val_score(fa, X, cv=5)))
 
     return pca_scores, fa_scores
 
 
 def shrunk_cov_score(X):
     shrinkages = np.logspace(-2, 0, 30)
-    cv = GridSearchCV(ShrunkCovariance(), {'shrinkage': shrinkages})
-    a = cv.fit(X).best_estimator_
-    return np.mean(cross_val_score(cv.fit(X).best_estimator_, X))
+    cv = GridSearchCV(ShrunkCovariance(), {'shrinkage': shrinkages}, cv=5)
+    return np.mean(cross_val_score(cv.fit(X).best_estimator_, X, cv=5))
 
 
 def lw_score(X):
-    a = LedoitWolf().fit(X)
-    return np.mean(cross_val_score(LedoitWolf(), X))
+    return np.mean(cross_val_score(LedoitWolf(), X, cv=5))
 
 
 for X, title in [(X_homo, 'Homoscedastic Noise'),
@@ -95,7 +91,7 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
     n_components_pca = n_components[np.argmax(pca_scores)]
     n_components_fa = n_components[np.argmax(fa_scores)]
 
-    pca = PCA(n_components='mle')
+    pca = PCA(svd_solver='full', n_components='mle')
     pca.fit(X)
     n_components_pca_mle = pca.n_components_
 
@@ -103,26 +99,27 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
     print("best n_components by FactorAnalysis CV = %d" % n_components_fa)
     print("best n_components by PCA MLE = %d" % n_components_pca_mle)
 
-    pl.figure()
-    pl.plot(n_components, pca_scores, 'b', label='PCA scores')
-    pl.plot(n_components, fa_scores, 'r', label='FA scores')
-    pl.axvline(rank, color='g', label='TRUTH: %d' % rank, linestyle='-')
-    pl.axvline(n_components_pca, color='b',
-               label='PCA CV: %d' % n_components_pca, linestyle='--')
-    pl.axvline(n_components_fa, color='r',
-               label='FactorAnalysis CV: %d' % n_components_fa, linestyle='--')
-    pl.axvline(n_components_pca_mle, color='k',
-               label='PCA MLE: %d' % n_components_pca_mle, linestyle='--')
+    plt.figure()
+    plt.plot(n_components, pca_scores, 'b', label='PCA scores')
+    plt.plot(n_components, fa_scores, 'r', label='FA scores')
+    plt.axvline(rank, color='g', label='TRUTH: %d' % rank, linestyle='-')
+    plt.axvline(n_components_pca, color='b',
+                label='PCA CV: %d' % n_components_pca, linestyle='--')
+    plt.axvline(n_components_fa, color='r',
+                label='FactorAnalysis CV: %d' % n_components_fa,
+                linestyle='--')
+    plt.axvline(n_components_pca_mle, color='k',
+                label='PCA MLE: %d' % n_components_pca_mle, linestyle='--')
 
     # compare with other covariance estimators
-    pl.axhline(shrunk_cov_score(X), color='violet',
-               label='Shrunk Covariance MLE', linestyle='-.')
-    pl.axhline(lw_score(X), color='orange',
-               label='LedoitWolf MLE' % n_components_pca_mle, linestyle='-.')
+    plt.axhline(shrunk_cov_score(X), color='violet',
+                label='Shrunk Covariance MLE', linestyle='-.')
+    plt.axhline(lw_score(X), color='orange',
+                label='LedoitWolf MLE' % n_components_pca_mle, linestyle='-.')
 
-    pl.xlabel('nb of components')
-    pl.ylabel('CV scores')
-    pl.legend(loc='lower right')
-    pl.title(title)
+    plt.xlabel('nb of components')
+    plt.ylabel('CV scores')
+    plt.legend(loc='lower right')
+    plt.title(title)
 
-pl.show()
+plt.show()

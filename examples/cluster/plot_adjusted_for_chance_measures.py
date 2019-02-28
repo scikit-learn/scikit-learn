@@ -26,10 +26,9 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from time import time
 from sklearn import metrics
-
 
 def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
                              fixed_n_classes=None, n_runs=5, seed=42):
@@ -41,25 +40,29 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
     When fixed_n_classes is not None the first labeling is considered a ground
     truth class assignment with fixed number of classes.
     """
-    random_labels = np.random.RandomState(seed).random_integers
+    random_labels = np.random.RandomState(seed).randint
     scores = np.zeros((len(n_clusters_range), n_runs))
 
     if fixed_n_classes is not None:
-        labels_a = random_labels(low=0, high=fixed_n_classes - 1,
-                                 size=n_samples)
+        labels_a = random_labels(low=0, high=fixed_n_classes, size=n_samples)
 
     for i, k in enumerate(n_clusters_range):
         for j in range(n_runs):
             if fixed_n_classes is None:
-                labels_a = random_labels(low=0, high=k - 1, size=n_samples)
-            labels_b = random_labels(low=0, high=k - 1, size=n_samples)
+                labels_a = random_labels(low=0, high=k, size=n_samples)
+            labels_b = random_labels(low=0, high=k, size=n_samples)
             scores[i, j] = score_func(labels_a, labels_b)
     return scores
+
+
+def ami_score(U, V):
+    return metrics.adjusted_mutual_info_score(U, V,
+                                              average_method='arithmetic')
 
 score_funcs = [
     metrics.adjusted_rand_score,
     metrics.v_measure_score,
-    metrics.adjusted_mutual_info_score,
+    ami_score,
     metrics.mutual_info_score,
 ]
 
@@ -68,7 +71,7 @@ score_funcs = [
 n_samples = 100
 n_clusters_range = np.linspace(2, n_samples, 10).astype(np.int)
 
-pl.figure(1)
+plt.figure(1)
 
 plots = []
 names = []
@@ -79,16 +82,16 @@ for score_func in score_funcs:
     t0 = time()
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     print("done in %0.3fs" % (time() - t0))
-    plots.append(pl.errorbar(
+    plots.append(plt.errorbar(
         n_clusters_range, np.median(scores, axis=1), scores.std(axis=1))[0])
     names.append(score_func.__name__)
 
-pl.title("Clustering measures for 2 random uniform labelings\n"
-         "with equal number of clusters")
-pl.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
-pl.ylabel('Score value')
-pl.legend(plots, names)
-pl.ylim(ymin=-0.05, ymax=1.05)
+plt.title("Clustering measures for 2 random uniform labelings\n"
+          "with equal number of clusters")
+plt.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
+plt.ylabel('Score value')
+plt.legend(plots, names)
+plt.ylim(bottom=-0.05, top=1.05)
 
 
 # Random labeling with varying n_clusters against ground class labels
@@ -98,7 +101,7 @@ n_samples = 1000
 n_clusters_range = np.linspace(2, 100, 10).astype(np.int)
 n_classes = 10
 
-pl.figure(2)
+plt.figure(2)
 
 plots = []
 names = []
@@ -110,14 +113,14 @@ for score_func in score_funcs:
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range,
                                       fixed_n_classes=n_classes)
     print("done in %0.3fs" % (time() - t0))
-    plots.append(pl.errorbar(
+    plots.append(plt.errorbar(
         n_clusters_range, scores.mean(axis=1), scores.std(axis=1))[0])
     names.append(score_func.__name__)
 
-pl.title("Clustering measures for random uniform labeling\n"
-         "against reference assignment with %d classes" % n_classes)
-pl.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
-pl.ylabel('Score value')
-pl.ylim(ymin=-0.05, ymax=1.05)
-pl.legend(plots, names)
-pl.show()
+plt.title("Clustering measures for random uniform labeling\n"
+          "against reference assignment with %d classes" % n_classes)
+plt.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
+plt.ylabel('Score value')
+plt.ylim(bottom=-0.05, top=1.05)
+plt.legend(plots, names)
+plt.show()

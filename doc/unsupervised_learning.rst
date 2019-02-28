@@ -14,6 +14,5 @@ Unsupervised learning
     modules/decomposition
     modules/covariance
     modules/outlier_detection
-    modules/hmm
     modules/density
-    modules/neural_networks
+    modules/neural_networks_unsupervised

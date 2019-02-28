@@ -15,14 +15,13 @@ VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
                  'ChebyshevDistance', 'MinkowskiDistance']
 
 
-#----------------------------------------------------------------------
-# Here's our big hack: we can't subclass BinaryTree, because polymorphism
-# doesn't work in cython.  The dual-tree queries defined in BinaryTree
-# break if we try this approach.  So we use a literal include to "inherit"
-# all the boiler-plate code, and assign BinaryTree to KDTree.  The
-# specifics of the implementation are the functions in this module.
 include "binary_tree.pxi"
-KDTree = BinaryTree
+
+# Inherit KDTree from BinaryTree
+cdef class KDTree(BinaryTree):
+    __doc__ = CLASS_DOC.format(**DOC_DICT)
+    pass
+
 
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a KD Tree
@@ -70,6 +69,8 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
         for j in range(n_features):
             lower_bounds[j] = fmin(lower_bounds[j], data_row[j])
             upper_bounds[j] = fmax(upper_bounds[j], data_row[j])
+
+    for j in range(n_features):
         if tree.dist_metric.p == INF:
             rad = fmax(rad, 0.5 * (upper_bounds[j] - lower_bounds[j]))
         else:
@@ -86,7 +87,8 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
     return 0
 
 
-cdef DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
+cdef DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node,
+                       DTYPE_t* pt) nogil except -1:
     """Compute the minimum reduced-distance between a point and a node"""
     cdef ITYPE_t n_features = tree.data.shape[1]
     cdef DTYPE_t d, d_lo, d_hi, rdist=0.0
@@ -147,7 +149,7 @@ cdef DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
 
 
 cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
-                             DTYPE_t* min_dist, DTYPE_t* max_dist) except -1:
+                             DTYPE_t* min_dist, DTYPE_t* max_dist) nogil except -1:
     """Compute the minimum and maximum distance between a point and a node"""
     cdef ITYPE_t n_features = tree.data.shape[1]
 

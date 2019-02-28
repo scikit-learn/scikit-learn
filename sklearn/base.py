@@ -1,17 +1,33 @@
-"""Base class for all estimators."""
+"""Base classes for all estimators."""
+
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
 import copy
-import inspect
 import warnings
+from collections import defaultdict
+import platform
+import inspect
 
 import numpy as np
-from scipy import sparse
-from .externals import six
+
+from . import __version__
+from sklearn.utils import _IS_32BIT
+
+_DEFAULT_TAGS = {
+    'non_deterministic': False,
+    'requires_positive_data': False,
+    'X_types': ['2darray'],
+    'poor_score': False,
+    'no_validation': False,
+    'multioutput': False,
+    "allow_nan": False,
+    'stateless': False,
+    'multilabel': False,
+    '_skip_test': False,
+    'multioutput_only': False}
 
 
-###############################################################################
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
 
@@ -21,11 +37,11 @@ def clone(estimator, safe=True):
 
     Parameters
     ----------
-    estimator: estimator object, or list, tuple or set of objects
+    estimator : estimator object, or list, tuple or set of objects
         The estimator or group of estimators to be cloned
 
-    safe: boolean, optional
-        If safe is false, clone will fall back to a deepcopy on objects
+    safe : boolean, optional
+        If safe is false, clone will fall back to a deep copy on objects
         that are not estimators.
 
     """
@@ -33,17 +49,17 @@ def clone(estimator, safe=True):
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
-    elif not hasattr(estimator, 'get_params'):
+    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
         if not safe:
             return copy.deepcopy(estimator)
         else:
             raise TypeError("Cannot clone object '%s' (type %s): "
-                            "it does not seem to be a scikit-learn estimator a"
-                            " it does not implement a 'get_params' methods."
+                            "it does not seem to be a scikit-learn estimator "
+                            "as it does not implement a 'get_params' methods."
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
-    for name, param in six.iteritems(new_object_params):
+    for name, param in new_object_params.items():
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
@@ -52,65 +68,25 @@ def clone(estimator, safe=True):
     for name in new_object_params:
         param1 = new_object_params[name]
         param2 = params_set[name]
-        if isinstance(param1, np.ndarray):
-            # For most ndarrays, we do not test for complete equality
-            if not isinstance(param2, type(param1)):
-                equality_test = False
-            elif (param1.ndim > 0
-                    and param1.shape[0] > 0
-                    and isinstance(param2, np.ndarray)
-                    and param2.ndim > 0
-                    and param2.shape[0] > 0):
-                equality_test = (
-                    param1.shape == param2.shape
-                    and param1.dtype == param2.dtype
-                    # We have to use '.flat' for 2D arrays
-                    and param1.flat[0] == param2.flat[0]
-                    and param1.flat[-1] == param2.flat[-1]
-                )
-            else:
-                equality_test = np.all(param1 == param2)
-        elif sparse.issparse(param1):
-            # For sparse matrices equality doesn't work
-            if not sparse.issparse(param2):
-                equality_test = False
-            elif param1.size == 0 or param2.size == 0:
-                equality_test = (
-                    param1.__class__ == param2.__class__
-                    and param1.size == 0
-                    and param2.size == 0
-                )
-            else:
-                equality_test = (
-                    param1.__class__ == param2.__class__
-                    and param1.data[0] == param2.data[0]
-                    and param1.data[-1] == param2.data[-1]
-                    and param1.nnz == param2.nnz
-                    and param1.shape == param2.shape
-                )
-        else:
-            equality_test = new_object_params[name] == params_set[name]
-        if not equality_test:
+        if param1 is not param2:
             raise RuntimeError('Cannot clone object %s, as the constructor '
-                               'does not seem to set parameter %s' %
+                               'either does not set or modifies parameter %s' %
                                (estimator, name))
-
     return new_object
 
 
-###############################################################################
 def _pprint(params, offset=0, printer=repr):
     """Pretty print the dictionary 'params'
 
     Parameters
     ----------
-    params: dict
+    params : dict
         The dictionary to pretty print
 
-    offset: int
+    offset : int
         The offset in characters to add at the begin of each line.
 
-    printer:
+    printer : callable
         The function to convert entries to strings, typically
         the builtin str or repr
 
@@ -121,7 +97,7 @@ def _pprint(params, offset=0, printer=repr):
     params_list = list()
     this_line_length = offset
     line_sep = ',\n' + (1 + offset // 2) * ' '
-    for i, (k, v) in enumerate(sorted(six.iteritems(params))):
+    for i, (k, v) in enumerate(sorted(params.items())):
         if type(v) is float:
             # use str for representing floating point numbers
             # this way we get consistent representation across
@@ -149,50 +125,60 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-###############################################################################
-class BaseEstimator(object):
+def _update_if_consistent(dict1, dict2):
+    common_keys = set(dict1.keys()).intersection(dict2.keys())
+    for key in common_keys:
+        if dict1[key] != dict2[key]:
+            raise TypeError("Inconsistent values for tag {}: {} != {}".format(
+                key, dict1[key], dict2[key]
+            ))
+    dict1.update(dict2)
+    return dict1
+
+
+class BaseEstimator:
     """Base class for all estimators in scikit-learn
 
     Notes
     -----
     All estimators should specify all the parameters that can be set
-    at the class level in their __init__ as explicit keyword
-    arguments (no *args, **kwargs).
+    at the class level in their ``__init__`` as explicit keyword
+    arguments (no ``*args`` or ``**kwargs``).
     """
 
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
-        try:
-            # fetch the constructor or the original constructor before
-            # deprecation wrapping if any
-            init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+        # fetch the constructor or the original constructor before
+        # deprecation wrapping if any
+        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
+        if init is object.__init__:
+            # No explicit constructor to introspect
+            return []
 
-            # introspect the constructor arguments to find the model parameters
-            # to represent
-            args, varargs, kw, default = inspect.getargspec(init)
-            if not varargs is None:
+        # introspect the constructor arguments to find the model parameters
+        # to represent
+        init_signature = inspect.signature(init)
+        # Consider the constructor parameters excluding 'self'
+        parameters = [p for p in init_signature.parameters.values()
+                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
+        for p in parameters:
+            if p.kind == p.VAR_POSITIONAL:
                 raise RuntimeError("scikit-learn estimators should always "
                                    "specify their parameters in the signature"
                                    " of their __init__ (no varargs)."
-                                   " %s doesn't follow this convention."
-                                   % (cls, ))
-            # Remove 'self'
-            # XXX: This is going to fail if the init is a staticmethod, but
-            # who would do this?
-            args.pop(0)
-        except TypeError:
-            # No explicit __init__
-            args = []
-        args.sort()
-        return args
+                                   " %s with constructor %s doesn't "
+                                   " follow this convention."
+                                   % (cls, init_signature))
+        # Extract and sort argument names excluding 'self'
+        return sorted([p.name for p in parameters])
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
         Parameters
         ----------
-        deep: boolean, optional
+        deep : boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
@@ -203,21 +189,7 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            # We need deprecation warnings to always be on in order to
-            # catch deprecated param values.
-            # This is set in utils/__init__.py but it gets overwritten
-            # when running under python3 somehow.
-            warnings.simplefilter("always", DeprecationWarning)
-            try:
-                with warnings.catch_warnings(record=True) as w:
-                    value = getattr(self, key, None)
-                if len(w) and w[0].category == DeprecationWarning:
-                # if the parameter is deprecated, don't show it
-                    continue
-            finally:
-                warnings.filters.pop(0)
-
-            # XXX: should we rather test if instance of estimator?
+            value = getattr(self, key, None)
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -228,7 +200,7 @@ class BaseEstimator(object):
         """Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
-        (such as pipelines). The former have parameters of the form
+        (such as pipelines). The latter have parameters of the form
         ``<component>__<parameter>`` so that it's possible to update each
         component of a nested object.
 
@@ -237,53 +209,112 @@ class BaseEstimator(object):
         self
         """
         if not params:
-            # Simple optimisation to gain speed (inspect is slow)
+            # Simple optimization to gain speed (inspect is slow)
             return self
         valid_params = self.get_params(deep=True)
-        for key, value in six.iteritems(params):
-            split = key.split('__', 1)
-            if len(split) > 1:
-                # nested objects case
-                name, sub_name = split
-                if not name in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s' %
-                                     (name, self))
-                sub_object = valid_params[name]
-                sub_object.set_params(**{sub_name: value})
+
+        nested_params = defaultdict(dict)  # grouped by prefix
+        for key, value in params.items():
+            key, delim, sub_key = key.partition('__')
+            if key not in valid_params:
+                raise ValueError('Invalid parameter %s for estimator %s. '
+                                 'Check the list of available parameters '
+                                 'with `estimator.get_params().keys()`.' %
+                                 (key, self))
+
+            if delim:
+                nested_params[key][sub_key] = value
             else:
-                # simple objects case
-                if not key in valid_params:
-                    raise ValueError('Invalid parameter %s ' 'for estimator %s'
-                                     % (key, self.__class__.__name__))
                 setattr(self, key, value)
+                valid_params[key] = value
+
+        for key, sub_params in nested_params.items():
+            valid_params[key].set_params(**sub_params)
+
         return self
 
     def __repr__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
-                                               offset=len(class_name),),)
+        from .utils._pprint import _EstimatorPrettyPrinter
 
-    def __str__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name,
-                           _pprint(self.get_params(deep=True),
-                                   offset=len(class_name), printer=str,),)
+        N_CHAR_MAX = 700  # number of non-whitespace or newline chars
+        N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
+
+        # use ellipsis for sequences with a lot of elements
+        pp = _EstimatorPrettyPrinter(
+            compact=True, indent=1, indent_at_name=True,
+            n_max_elements_to_show=N_MAX_ELEMENTS_TO_SHOW)
+
+        repr_ = pp.pformat(self)
+
+        # Use bruteforce ellipsis if string is very long
+        if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
+            lim = N_CHAR_MAX // 2
+            repr_ = repr_[:lim] + '...' + repr_[-lim:]
+        return repr_
+
+    def __getstate__(self):
+        try:
+            state = super().__getstate__()
+        except AttributeError:
+            state = self.__dict__.copy()
+
+        if type(self).__module__.startswith('sklearn.'):
+            return dict(state.items(), _sklearn_version=__version__)
+        else:
+            return state
+
+    def __setstate__(self, state):
+        if type(self).__module__.startswith('sklearn.'):
+            pickle_version = state.pop("_sklearn_version", "pre-0.18")
+            if pickle_version != __version__:
+                warnings.warn(
+                    "Trying to unpickle estimator {0} from version {1} when "
+                    "using version {2}. This might lead to breaking code or "
+                    "invalid results. Use at your own risk.".format(
+                        self.__class__.__name__, pickle_version, __version__),
+                    UserWarning)
+        try:
+            super().__setstate__(state)
+        except AttributeError:
+            self.__dict__.update(state)
+
+    def _get_tags(self):
+        collected_tags = {}
+        for base_class in inspect.getmro(self.__class__):
+            if (hasattr(base_class, '_more_tags')
+                    and base_class != self.__class__):
+                more_tags = base_class._more_tags(self)
+                collected_tags = _update_if_consistent(collected_tags,
+                                                       more_tags)
+        if hasattr(self, '_more_tags'):
+            more_tags = self._more_tags()
+            collected_tags = _update_if_consistent(collected_tags, more_tags)
+        tags = _DEFAULT_TAGS.copy()
+        tags.update(collected_tags)
+        return tags
 
 
-###############################################################################
-class ClassifierMixin(object):
+class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
+    _estimator_type = "classifier"
 
-    def score(self, X, y):
+    def score(self, X, y, sample_weight=None):
         """Returns the mean accuracy on the given test data and labels.
+
+        In multi-label classification, this is the subset accuracy
+        which is a harsh metric since you require for each sample that
+        each label set be correctly predicted.
 
         Parameters
         ----------
         X : array-like, shape = (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape = (n_samples,)
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
             True labels for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
 
         Returns
         -------
@@ -292,28 +323,37 @@ class ClassifierMixin(object):
 
         """
         from .metrics import accuracy_score
-        return accuracy_score(y, self.predict(X))
+        return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
-###############################################################################
-class RegressorMixin(object):
+class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
+    _estimator_type = "regressor"
 
-    def score(self, X, y):
+    def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the regression
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the residual
+        The coefficient R^2 is defined as (1 - u/v), where u is the residual
+        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
         sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        Best possible score is 1.0, lower values are worse.
+        The best possible score is 1.0 and it can be negative (because the
+        model can be arbitrarily worse). A constant model that always
+        predicts the expected value of y, disregarding the input features,
+        would get a R^2 score of 0.0.
 
         Parameters
         ----------
         X : array-like, shape = (n_samples, n_features)
-            Test samples.
+            Test samples. For some estimators this may be a
+            precomputed kernel matrix instead, shape = (n_samples,
+            n_samples_fitted], where n_samples_fitted is the number of
+            samples used in the fitting for the estimator.
 
-        y : array-like, shape = (n_samples,)
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
             True values for X.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
 
         Returns
         -------
@@ -322,12 +362,14 @@ class RegressorMixin(object):
         """
 
         from .metrics import r2_score
-        return r2_score(y, self.predict(X))
+        return r2_score(y, self.predict(X), sample_weight=sample_weight,
+                        multioutput='variance_weighted')
 
 
-###############################################################################
-class ClusterMixin(object):
+class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
+    _estimator_type = "clusterer"
+
     def fit_predict(self, X, y=None):
         """Performs clustering on X and returns cluster labels.
 
@@ -336,9 +378,12 @@ class ClusterMixin(object):
         X : ndarray, shape (n_samples, n_features)
             Input data.
 
+        y : Ignored
+            not used, present for API consistency by convention.
+
         Returns
         -------
-        y : ndarray, shape (n_samples,)
+        labels : ndarray, shape (n_samples,)
             cluster labels
         """
         # non-optimized default implementation; override when a better
@@ -347,7 +392,7 @@ class ClusterMixin(object):
         return self.labels_
 
 
-class BiclusterMixin(object):
+class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""
 
     @property
@@ -363,6 +408,11 @@ class BiclusterMixin(object):
 
         Only works if ``rows_`` and ``columns_`` attributes exist.
 
+        Parameters
+        ----------
+        i : int
+            The index of the cluster.
+
         Returns
         -------
         row_ind : np.array, dtype=np.intp
@@ -371,33 +421,53 @@ class BiclusterMixin(object):
             Indices of columns in the dataset that belong to the bicluster.
 
         """
-        from .cluster.bicluster.utils import get_indices
-        return get_indices(self.rows_[i], self.columns_[i])
+        rows = self.rows_[i]
+        columns = self.columns_[i]
+        return np.nonzero(rows)[0], np.nonzero(columns)[0]
 
     def get_shape(self, i):
         """Shape of the i'th bicluster.
+
+        Parameters
+        ----------
+        i : int
+            The index of the cluster.
 
         Returns
         -------
         shape : (int, int)
             Number of rows and columns (resp.) in the bicluster.
         """
-        from .cluster.bicluster.utils import get_shape
-        return get_shape(self.rows_[i], self.columns_[i])
+        indices = self.get_indices(i)
+        return tuple(len(i) for i in indices)
 
     def get_submatrix(self, i, data):
         """Returns the submatrix corresponding to bicluster `i`.
 
+        Parameters
+        ----------
+        i : int
+            The index of the cluster.
+        data : array
+            The data.
+
+        Returns
+        -------
+        submatrix : array
+            The submatrix corresponding to bicluster i.
+
+        Notes
+        -----
         Works with sparse matrices. Only works if ``rows_`` and
         ``columns_`` attributes exist.
-
         """
-        from .cluster.bicluster.utils import get_submatrix
-        return get_submatrix(self.rows_[i], self.columns_[i], data)
+        from .utils.validation import check_array
+        data = check_array(data, accept_sparse='csr')
+        row_ind, col_ind = self.get_indices(i)
+        return data[row_ind[:, np.newaxis], col_ind]
 
 
-###############################################################################
-class TransformerMixin(object):
+class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -430,27 +500,111 @@ class TransformerMixin(object):
             return self.fit(X, y, **fit_params).transform(X)
 
 
-###############################################################################
-class MetaEstimatorMixin(object):
+class DensityMixin:
+    """Mixin class for all density estimators in scikit-learn."""
+    _estimator_type = "DensityEstimator"
+
+    def score(self, X, y=None):
+        """Returns the score of the model on the data X
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+
+        Returns
+        -------
+        score : float
+        """
+        pass
+
+
+class OutlierMixin:
+    """Mixin class for all outlier detection estimators in scikit-learn."""
+    _estimator_type = "outlier_detector"
+
+    def fit_predict(self, X, y=None):
+        """Performs fit on X and returns labels for X.
+
+        Returns -1 for outliers and 1 for inliers.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data.
+
+        y : Ignored
+            not used, present for API consistency by convention.
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            1 for inliers, -1 for outliers.
+        """
+        # override for transductive outlier detectors like LocalOulierFactor
+        return self.fit(X).predict(X)
+
+
+class MetaEstimatorMixin:
+    _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
-    # this is just a tag for the moment
 
 
-###############################################################################
-# XXX: Temporary solution to figure out if an estimator is a classifier
+class MultiOutputMixin(object):
+    """Mixin to mark estimators that support multioutput."""
+    def _more_tags(self):
+        return {'multioutput': True}
 
-def _get_sub_estimator(estimator):
-    """Returns the final estimator if there is any."""
-    if hasattr(estimator, 'estimator'):
-        # GridSearchCV and other CV-tuned estimators
-        return _get_sub_estimator(estimator.estimator)
-    if hasattr(estimator, 'steps'):
-        # Pipeline
-        return _get_sub_estimator(estimator.steps[-1][1])
-    return estimator
+
+class _UnstableArchMixin(object):
+    """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+    def _more_tags(self):
+        return {'non_deterministic': (
+            _IS_32BIT or platform.machine().startswith(('ppc', 'powerpc')))}
 
 
 def is_classifier(estimator):
-    """Returns True if the given estimator is (probably) a classifier."""
-    estimator = _get_sub_estimator(estimator)
-    return isinstance(estimator, ClassifierMixin)
+    """Returns True if the given estimator is (probably) a classifier.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a classifier and False otherwise.
+    """
+    return getattr(estimator, "_estimator_type", None) == "classifier"
+
+
+def is_regressor(estimator):
+    """Returns True if the given estimator is (probably) a regressor.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a regressor and False otherwise.
+    """
+    return getattr(estimator, "_estimator_type", None) == "regressor"
+
+
+def is_outlier_detector(estimator):
+    """Returns True if the given estimator is (probably) an outlier detector.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is an outlier detector and False otherwise.
+    """
+    return getattr(estimator, "_estimator_type", None) == "outlier_detector"

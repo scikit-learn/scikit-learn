@@ -1,6 +1,7 @@
 """
 Testing for the partial dependence module.
 """
+import pytest
 
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -28,7 +29,7 @@ iris = datasets.load_iris()
 
 
 def test_partial_dependence_classifier():
-    """Test partial dependence for classifier """
+    # Test partial dependence for classifier
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
 
@@ -48,7 +49,7 @@ def test_partial_dependence_classifier():
 
 
 def test_partial_dependence_multiclass():
-    """Test partial dependence for multi-class classifier """
+    # Test partial dependence for multi-class classifier
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
 
@@ -63,7 +64,7 @@ def test_partial_dependence_multiclass():
 
 
 def test_partial_dependence_regressor():
-    """Test partial dependence for regressor """
+    # Test partial dependence for regressor
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
 
@@ -76,7 +77,7 @@ def test_partial_dependence_regressor():
 
 
 def test_partial_dependecy_input():
-    """Test input validation of partial dependence. """
+    # Test input validation of partial dependence.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
 
@@ -103,9 +104,11 @@ def test_partial_dependecy_input():
     assert_raises(ValueError, partial_dependence, clf, [0], grid=grid)
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+# matplotlib Python3.7 warning
 @if_matplotlib
 def test_plot_partial_dependence():
-    """Test partial dependence plot function. """
+    # Test partial dependence plot function.
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
 
@@ -135,9 +138,11 @@ def test_plot_partial_dependence():
     assert all(ax.has_data for ax in axs)
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+# matplotlib Python3.7 warning
 @if_matplotlib
 def test_plot_partial_dependence_input():
-    """Test partial dependence plot function input checks. """
+    # Test partial dependence plot function input checks.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
 
     # not fitted yet
@@ -170,9 +175,11 @@ def test_plot_partial_dependence_input():
                   clf, X, [{'foo': 'bar'}])
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+# matplotlib Python3.7 warning
 @if_matplotlib
 def test_plot_partial_dependence_multiclass():
-    """Test partial dependence plot function on multi-class input. """
+    # Test partial dependence plot function on multi-class input.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
 

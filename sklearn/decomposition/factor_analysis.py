@@ -15,9 +15,9 @@ Algorithm 21.1
 
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <denis-alexander.engemann@inria.fr>
 
-# Licence: BSD3
+# License: BSD3
 
 import warnings
 from math import sqrt, log
@@ -26,10 +26,10 @@ from scipy import linalg
 
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals.six.moves import xrange
-from ..utils import array2d, check_arrays, check_random_state
-from ..utils.extmath import fast_logdet, fast_dot, randomized_svd
-from ..utils import ConvergenceWarning
+from ..utils import check_array, check_random_state
+from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
+from ..utils.validation import check_is_fitted
+from ..exceptions import ConvergenceWarning
 
 
 class FactorAnalysis(BaseEstimator, TransformerMixin):
@@ -51,6 +51,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     `loading` matrix, the transformation of the latent variables to the
     observed ones, using expectation-maximization (EM).
 
+    Read more in the :ref:`User Guide <FA>`.
+
     Parameters
     ----------
     n_components : int | None
@@ -67,9 +69,6 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     max_iter : int
         Maximum number of iterations.
-
-    verbose : int | bool
-        Print verbose output.
 
     noise_variance_init : None | array, shape=(n_features,)
         The initial guess of the noise variance for each feature.
@@ -88,20 +87,35 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling. Only used
-        if ``svd_method`` equals 'randomized'
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Only used when ``svd_method`` equals 'randomized'.
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Components with maximum variance.
 
-    `loglike_` : list, [n_iterations]
+    loglike_ : list, [n_iterations]
         The log likelihood at each iteration.
 
-    `noise_variance_` : array, shape=(n_features,)
+    noise_variance_ : array, shape=(n_features,)
         The estimated noise variance for each feature.
+
+    n_iter_ : int
+        Number of iterations run.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import FactorAnalysis
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = FactorAnalysis(n_components=7, random_state=0)
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
 
     References
     ----------
@@ -121,7 +135,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         non-Gaussian latent variables.
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
-                 verbose=0, noise_variance_init=None, svd_method='randomized',
+                 noise_variance_init=None, svd_method='randomized',
                  iterated_power=3, random_state=0):
         self.n_components = n_components
         self.copy = copy
@@ -131,13 +145,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % svd_method)
         self.svd_method = svd_method
-        if verbose:
-            warnings.warn('The `verbose` parameter has been deprecated and '
-                          'will be removed in 0.16. To reduce verbosity '
-                          'silence Python warnings instead.',
-                          DeprecationWarning)
 
-        self.verbose = verbose
         self.noise_variance_init = noise_variance_init
         self.iterated_power = iterated_power
         self.random_state = random_state
@@ -150,12 +158,13 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Training data.
 
+        y : Ignored
+
         Returns
         -------
         self
         """
-        X = array2d(check_arrays(X, copy=self.copy, sparse_format='dense',
-                    dtype=np.float)[0])
+        X = check_array(X, copy=self.copy, dtype=np.float64)
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -188,7 +197,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             def my_svd(X):
                 _, s, V = linalg.svd(X, full_matrices=False)
                 return (s[:n_components], V[:n_components],
-                        np.dot(s[n_components:].flat, s[n_components:].flat))
+                        squared_norm(s[n_components:]))
         elif self.svd_method == 'randomized':
             random_state = check_random_state(self.random_state)
 
@@ -196,12 +205,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
                 _, s, V = randomized_svd(X, n_components,
                                          random_state=random_state,
                                          n_iter=self.iterated_power)
-                return s, V, np.dot(X.flat, X.flat) - np.dot(s, s)
+                return s, V, squared_norm(X) - squared_norm(s)
         else:
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % self.svd_method)
 
-        for i in xrange(self.max_iter):
+        for i in range(self.max_iter):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
             s, V, unexp_var = my_svd(X / (sqrt_psi * nsqrt))
@@ -230,6 +239,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         self.components_ = W
         self.noise_variance_ = psi
         self.loglike_ = loglike
+        self.n_iter_ = i + 1
         return self
 
     def transform(self, X):
@@ -248,15 +258,17 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
             The latent variables of X.
         """
-        X = array2d(X)
+        check_is_fitted(self, 'components_')
+
+        X = check_array(X)
         Ih = np.eye(len(self.components_))
 
         X_transformed = X - self.mean_
 
         Wpsi = self.components_ / self.noise_variance_
         cov_z = linalg.inv(Ih + np.dot(Wpsi, self.components_.T))
-        tmp = fast_dot(X_transformed, Wpsi.T)
-        X_transformed = fast_dot(tmp, cov_z)
+        tmp = np.dot(X_transformed, Wpsi.T)
+        X_transformed = np.dot(tmp, cov_z)
 
         return X_transformed
 
@@ -270,6 +282,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         cov : array, shape (n_features, n_features)
             Estimated covariance of data.
         """
+        check_is_fitted(self, 'components_')
+
         cov = np.dot(self.components_.T, self.components_)
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
@@ -282,6 +296,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         precision : array, shape (n_features, n_features)
             Estimated precision of data.
         """
+        check_is_fitted(self, 'components_')
+
         n_features = self.components_.shape[1]
 
         # handle corner cases first
@@ -306,18 +322,19 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The data
 
         Returns
         -------
-        ll: array, shape (n_samples,)
+        ll : array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
+        check_is_fitted(self, 'components_')
+
         Xr = X - self.mean_
         precision = self.get_precision()
         n_features = X.shape[1]
-        log_like = np.zeros(X.shape[0])
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
         log_like -= .5 * (n_features * log(2. * np.pi)
                           - fast_logdet(precision))
@@ -328,12 +345,14 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The data
+
+        y : Ignored
 
         Returns
         -------
-        ll: float
+        ll : float
             Average log-likelihood of the samples under the current model
         """
         return np.mean(self.score_samples(X))

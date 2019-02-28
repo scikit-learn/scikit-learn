@@ -31,7 +31,7 @@ Python, Cython or C/C++?
 In general, the scikit-learn project emphasizes the **readability** of
 the source code to make it easy for the project users to dive into the
 source code so as to understand how the algorithm behaves on their data
-but also for ease of maintanability (by the developers).
+but also for ease of maintainability (by the developers).
 
 When implementing a new algorithm is thus recommended to **start
 implementing it in Python using Numpy and Scipy** by taking care of avoiding
@@ -40,7 +40,7 @@ this means trying to **replace any nested for loops by calls to equivalent
 Numpy array methods**. The goal is to avoid the CPU wasting time in the
 Python interpreter rather than crunching numbers to fit your statistical
 model. It's generally a good idea to consider NumPy and SciPy performance tips:
-http://wiki.scipy.org/PerformanceTips
+https://scipy.github.io/old-wiki/pages/PerformanceTips
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
@@ -72,51 +72,17 @@ following:
      parallelism** that is amenable to **multi-processing** by using the
      ``joblib.Parallel`` class.
 
-When using Cython, include the generated C source code alongside with
-the Cython source code. The goal is to make it possible to install the
-scikit on any machine with Python, Numpy, Scipy and C/C++ compiler.
+When using Cython, use either
 
-Memory and implicit copies
-==========================
+   $ python setup.py build_ext -i
+   $ python setup.py install
 
-Some of the numpy and scipy core functions are optimized for Fortran contiguous
-data. In the case of the dot product, for numpy vetsions < 1.8, this leads to
-implicit copies performed to adjust data to the needs of the underlying
-Fortran routines (See section `Linear Algebra on large Arrays`
-on http://wiki.scipy.org/PerformanceTips). This not only consumes memory
-but also takes additional time.
+to generate C files. You are responsible for adding .c/.cpp extensions along
+with build parameters in each submodule ``setup.py``.
 
-For convenience, if the numpy version available is older than 1.8, we internally
-use an optimized `numpy.dot` function that saves additional copies and improves
-speed by directly calling the Fortran routines with the appropriate data input
-while preserving the `numpy.dot` call signature. This means it can be used as a
-replacement for `numpy.dot`. example::
-
-  >>> import numpy as np
-
-  >>> from sklearn.utils.extmath import fast_dot
-
-  >>> X = np.random.random_sample([2, 10])
-
-  >>> np.allclose(np.dot(X, X.T), fast_dot(X, X.T))
-  True
-
-However this requires data to be exactly 2 dimensional and of the same type,
-either single or double precision float. If these requirements aren't met or
-the BLAS package is not available, the call is silently dispatched to
-`numpy.dot`. If you want to be sure when the original `numpy.dot` has been
-invoked and when our `fast_dot` function has been used you can activate the
-related warning which is silenced by default. example::
-
-  >>> import warnings
-
-  >>> from sklearn.utils.validation import NonBLASDotWarning
-
-  >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
-
-If numpy > 1.8 is available the `fast_dot` is not necessary. In that case
-the `numpy.dot` is being used. The issue has also been fixed in the 1.7.2
-maintenance branch.
+C/C++ generated files are embedded in distributed stable packages. The goal is
+to make it possible to install scikit-learn stable version
+on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
 .. _profiling-python-code:
 
@@ -128,8 +94,8 @@ loads and prepare you data and then use the IPython integrated profiler
 for interactively exploring the relevant part for the code.
 
 Suppose we want to profile the Non Negative Matrix Factorization module
-of the scikit. Let us setup a new IPython session and load the digits
-dataset and as in the :ref:`example_plot_digits_classification.py` example::
+of scikit-learn. Let us setup a new IPython session and load the digits
+dataset and as in the :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py` example::
 
   In [1]: from sklearn.decomposition import NMF
 
@@ -145,7 +111,7 @@ overhead and save it somewhere for later reference::
   In [4]: %timeit NMF(n_components=16, tol=1e-2).fit(X)
   1 loops, best of 3: 1.7 s per loop
 
-To have have a look at the overall performance profile using the ``%prun``
+To have a look at the overall performance profile using the ``%prun``
 magic command::
 
   In [5]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)
@@ -165,7 +131,7 @@ magic command::
           1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
           1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
 
-The ``totime`` columns is the most interesting: it gives to total time spent
+The ``tottime`` column is the most interesting: it gives to total time spent
 executing the code of a given function ignoring the time spent in executing the
 sub-functions. The real total time (local code + sub-function calls) is given by
 the ``cumtime`` column.
@@ -211,43 +177,21 @@ trying to optimize their implementation).
 
 It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
-Python code: it takes around 100% of the cumulated time of the module. In
+Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
-us install ``line-prof`` and wire it to IPython::
+us install ``line_profiler`` and wire it to IPython::
 
-  $ pip install line-profiler
+  $ pip install line_profiler
 
-- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
-  ensure the following lines are present::
-
-    import IPython.ipapi
-    ip = IPython.ipapi.get()
-
-  Towards the end of the file, define the ``%lprun`` magic::
-
-    import line_profiler
-    ip.expose_magic('lprun', line_profiler.magic_lprun)
-
-- **Under IPython 0.11+**, first create a configuration profile::
+- **Under IPython 0.13+**, first create a configuration profile::
 
     $ ipython profile create
 
-  Then create a file named ``~/.ipython/extensions/line_profiler_ext.py`` with
-  the following content::
+  Then register the line_profiler extension in
+  ``~/.ipython/profile_default/ipython_config.py``::
 
-    import line_profiler
-
-    def load_ipython_extension(ip):
-        ip.define_magic('lprun', line_profiler.magic_lprun)
-
-  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
-
-    c.TerminalIPythonApp.extensions = [
-        'line_profiler_ext',
-    ]
-    c.InteractiveShellApp.extensions = [
-        'line_profiler_ext',
-    ]
+    c.TerminalIPythonApp.extensions.append('line_profiler')
+    c.InteractiveShellApp.extensions.append('line_profiler')
 
   This will register the ``%lprun`` magic command in the IPython terminal
   application and the other frontends such as qtconsole and notebook.
@@ -283,13 +227,13 @@ Now restart IPython and let us use this new toy::
      178                                               # values justified in the paper
      179        48          144      3.0      0.0      alpha = 1
      180        48          113      2.4      0.0      beta = 0.1
-     181       638         1880      2.9      0.1      for n_iter in xrange(1, max_iter + 1):
+     181       638         1880      2.9      0.1      for n_iter in range(1, max_iter + 1):
      182       638       195133    305.9     10.2          grad = np.dot(WtW, H) - WtV
      183       638       495761    777.1     25.9          proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
      184       638         2449      3.8      0.1          if proj_gradient < tol:
      185        48          130      2.7      0.0              break
      186
-     187      1474         4474      3.0      0.2          for inner_iter in xrange(1, 20):
+     187      1474         4474      3.0      0.2          for inner_iter in range(1, 20):
      188      1474        83833     56.9      4.4              Hn = H - alpha * grad
      189                                                       # Hn = np.where(Hn > 0, Hn, 0)
      190      1474       194239    131.8     10.1              Hn = _pos(Hn)
@@ -306,46 +250,23 @@ Memory usage profiling
 ======================
 
 You can analyze in detail the memory usage of any Python code with the help of
-`memory_profiler <http://pypi.python.org/pypi/memory_profiler>`_. First,
+`memory_profiler <https://pypi.org/project/memory_profiler/>`_. First,
 install the latest version::
 
     $ pip install -U memory_profiler
 
 Then, setup the magics in a manner similar to ``line_profiler``.
 
-- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
-  ensure the following lines are present::
-
-    import IPython.ipapi
-    ip = IPython.ipapi.get()
-
-  Towards the end of the file, define the ``%memit`` and ``%mprun`` magics::
-
-    import memory_profiler
-    ip.expose_magic('memit', memory_profiler.magic_memit)
-    ip.expose_magic('mprun', memory_profiler.magic_mprun)
-
 - **Under IPython 0.11+**, first create a configuration profile::
 
     $ ipython profile create
 
-  Then create a file named ``~/.ipython/extensions/memory_profiler_ext.py``
-  with the following content::
+  Then register the extension in
+  ``~/.ipython/profile_default/ipython_config.py``
+  alongside the line profiler::
 
-    import memory_profiler
-
-    def load_ipython_extension(ip):
-        ip.define_magic('memit', memory_profiler.magic_memit)
-        ip.define_magic('mprun', memory_profiler.magic_mprun)
-
-  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
-
-    c.TerminalIPythonApp.extensions = [
-        'memory_profiler_ext',
-    ]
-    c.InteractiveShellApp.extensions = [
-        'memory_profiler_ext',
-    ]
+    c.TerminalIPythonApp.extensions.append('memory_profiler')
+    c.InteractiveShellApp.extensions.append('memory_profiler')
 
   This will register the ``%memit`` and ``%mprun`` magic commands in the
   IPython terminal application and the other frontends such as qtconsole and
@@ -370,8 +291,8 @@ directory::
          7     13.61 MB -152.59 MB       del b
          8     13.61 MB    0.00 MB       return a
 
-Another useful magic that ``memory_profiler`` defines is `%memit`, which is
-analogous to `%timeit`. It can be used as follows::
+Another useful magic that ``memory_profiler`` defines is ``%memit``, which is
+analogous to ``%timeit``. It can be used as follows::
 
     In [1]: import numpy as np
 
@@ -403,7 +324,7 @@ project.
 TODO: html report, type declarations, bound checks, division by zero checks,
 memory alignment, direct blas calls...
 
-- http://www.euroscipy.org/file/3696?vid=download
+- https://www.youtube.com/watch?v=gMvkiQ-gOW8
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
 - http://conference.scipy.org/proceedings/SciPy2009/paper_2/
 
@@ -423,8 +344,8 @@ Using yep and google-perftools
 
 Easy profiling without special compilation options use yep:
 
-- http://pypi.python.org/pypi/yep
-- http://fseoane.net/blog/2011/a-profiler-for-python-extensions/
+- https://pypi.org/project/yep/
+- http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
 .. note::
 
@@ -432,7 +353,7 @@ Easy profiling without special compilation options use yep:
   can be triggered with the ``--lines`` option. However this
   does not seem to work correctly at the time of writing. This
   issue can be tracked on the `project issue tracker
-  <https://code.google.com/p/google-perftools/issues/detail?id=326>`_.
+  <https://github.com/gperftools/gperftools>`_.
 
 
 
@@ -462,14 +383,12 @@ TODO: give a simple teaser example here.
 
 Checkout the official joblib documentation:
 
-- http://packages.python.org/joblib/
+- https://joblib.readthedocs.io
 
 
 .. _warm-restarts:
 
-A sample algorithmic trick: warm restarts for cross validation
-==============================================================
+A simple algorithmic trick: warm restarts
+=========================================
 
-TODO: demonstrate the warm restart tricks for cross validation of linear
-regression with Coordinate Descent.
-
+See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm-start>`_

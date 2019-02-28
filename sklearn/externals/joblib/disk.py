@@ -3,16 +3,23 @@ Disk management utilities.
 """
 
 # Authors: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Lars Buitinck
 # Copyright (c) 2010 Gael Varoquaux
 # License: BSD Style, 3 clauses.
 
 
-import errno
 import os
-import shutil
 import sys
 import time
+import errno
+import shutil
+import warnings
+
+
+try:
+    WindowsError
+except NameError:
+    WindowsError = OSError
 
 
 def disk_used(path):
@@ -31,18 +38,17 @@ def disk_used(path):
     return int(size / 1024.)
 
 
-def memstr_to_kbytes(text):
-    """ Convert a memory text to it's value in kilobytes.
+def memstr_to_bytes(text):
+    """ Convert a memory text to its value in bytes.
     """
     kilo = 1024
-    units = dict(K=1, M=kilo, G=kilo ** 2)
+    units = dict(K=kilo, M=kilo ** 2, G=kilo ** 3)
     try:
         size = int(units[text[-1]] * float(text[:-1]))
     except (KeyError, ValueError):
         raise ValueError(
-                "Invalid literal for size give: %s (type %s) should be "
-                "alike '10G', '500M', '50K'." % (text, type(text))
-                )
+            "Invalid literal for size give: %s (type %s) should be "
+            "alike '10G', '500M', '50K'." % (text, type(text)))
     return size
 
 
@@ -58,8 +64,11 @@ def mkdirp(d):
 
 
 # if a rmtree operation fails in rm_subdirs, wait for this much time (in secs),
-# then retry once. if it still fails, raise the exception
+# then retry up to RM_SUBDIRS_N_RETRY times. If it still fails, raise the
+# exception. this mecanism ensures that the sub-process gc have the time to
+# collect and close the memmaps before we fail.
 RM_SUBDIRS_RETRY_TIME = 0.1
+RM_SUBDIRS_N_RETRY = 5
 
 
 def rm_subdirs(path, onerror=None):
@@ -81,7 +90,7 @@ def rm_subdirs(path, onerror=None):
     names = []
     try:
         names = os.listdir(path)
-    except os.error as err:
+    except os.error:
         if onerror is not None:
             onerror(os.listdir, path, sys.exc_info())
         else:
@@ -89,19 +98,27 @@ def rm_subdirs(path, onerror=None):
 
     for name in names:
         fullname = os.path.join(path, name)
-        if os.path.isdir(fullname):
-            if onerror is not None:
-                shutil.rmtree(fullname, False, onerror)
-            else:
-                # allow the rmtree to fail once, wait and re-try.
-                # if the error is raised again, fail
-                err_count = 0
-                while True:
-                    try:
-                        shutil.rmtree(fullname, False, None)
-                        break
-                    except os.error:
-                        if err_count > 0:
-                            raise
-                        err_count += 1
-                        time.sleep(RM_SUBDIRS_RETRY_TIME)
+        delete_folder(fullname, onerror=onerror)
+
+
+def delete_folder(folder_path, onerror=None):
+    """Utility function to cleanup a temporary folder if it still exists."""
+    if os.path.isdir(folder_path):
+        if onerror is not None:
+            shutil.rmtree(folder_path, False, onerror)
+        else:
+            # allow the rmtree to fail once, wait and re-try.
+            # if the error is raised again, fail
+            err_count = 0
+            while True:
+                try:
+                    shutil.rmtree(folder_path, False, None)
+                    break
+                except (OSError, WindowsError):
+                    err_count += 1
+                    if err_count > RM_SUBDIRS_N_RETRY:
+                        warnings.warn(
+                            "Unable to delete folder {} after {} tentatives."
+                            .format(folder_path, RM_SUBDIRS_N_RETRY))
+                        raise
+                    time.sleep(RM_SUBDIRS_RETRY_TIME)

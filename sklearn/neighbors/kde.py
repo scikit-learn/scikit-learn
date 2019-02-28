@@ -7,7 +7,8 @@ Kernel Density Estimation
 import numpy as np
 from scipy.special import gammainc
 from ..base import BaseEstimator
-from ..utils import array2d, check_random_state
+from ..utils import check_array, check_random_state, check_consistent_length
+
 from ..utils.extmath import row_norms
 from .ball_tree import BallTree, DTYPE
 from .kd_tree import KDTree
@@ -23,6 +24,8 @@ TREE_DICT = {'ball_tree': BallTree, 'kd_tree': KDTree}
 # TODO: create a density estimation base class?
 class KernelDensity(BaseEstimator):
     """Kernel Density Estimation
+
+    Read more in the :ref:`User Guide <kernel_density>`.
 
     Parameters
     ----------
@@ -110,7 +113,7 @@ class KernelDensity(BaseEstimator):
         else:
             raise ValueError("invalid algorithm: '{0}'".format(algorithm))
 
-    def fit(self, X):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit the Kernel Density model on the data.
 
         Parameters
@@ -118,15 +121,29 @@ class KernelDensity(BaseEstimator):
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+        sample_weight : array_like, shape (n_samples,), optional
+            List of sample weights attached to the data X.
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
-        X = array2d(X, order='C', dtype=DTYPE)
+        X = check_array(X, order='C', dtype=DTYPE)
+
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, order='C', dtype=DTYPE,
+                                        ensure_2d=False)
+            if sample_weight.ndim != 1:
+                raise ValueError("the shape of sample_weight must be ({0},),"
+                                 " but was {1}".format(X.shape[0],
+                                                       sample_weight.shape))
+            check_consistent_length(X, sample_weight)
+            if sample_weight.min() <= 0:
+                raise ValueError("sample_weight must have positive values")
 
         kwargs = self.metric_params
         if kwargs is None:
             kwargs = {}
         self.tree_ = TREE_DICT[algorithm](X, metric=self.metric,
                                           leaf_size=self.leaf_size,
+                                          sample_weight=sample_weight,
                                           **kwargs)
         return self
 
@@ -141,14 +158,19 @@ class KernelDensity(BaseEstimator):
 
         Returns
         -------
-        density : ndarray
-            The array of log(density) evaluations.  This has shape X.shape[:-1]
+        density : ndarray, shape (n_samples,)
+            The array of log(density) evaluations. These are normalized to be
+            probability densities, so values will be low for high-dimensional
+            data.
         """
         # The returned density is normalized to the number of points.
         # For it to be a probability, we must scale it.  For this reason
         # we'll also scale atol.
-        X = array2d(X, order='C', dtype=DTYPE)
-        N = self.tree_.data.shape[0]
+        X = check_array(X, order='C', dtype=DTYPE)
+        if self.tree_.sample_weight is None:
+            N = self.tree_.data.shape[0]
+        else:
+            N = self.tree_.sum_weight
         atol_N = self.atol * N
         log_density = self.tree_.kernel_density(
             X, h=self.bandwidth, kernel=self.kernel, atol=atol_N,
@@ -156,8 +178,8 @@ class KernelDensity(BaseEstimator):
         log_density -= np.log(N)
         return log_density
 
-    def score(self, X):
-        """Compute the log probability under the model.
+    def score(self, X, y=None):
+        """Compute the total log probability density under the model.
 
         Parameters
         ----------
@@ -167,8 +189,10 @@ class KernelDensity(BaseEstimator):
 
         Returns
         -------
-        logprob : array_like, shape (n_samples,)
-            Log probabilities of each data point in X.
+        logprob : float
+            Total log-likelihood of the data in X. This is normalized to be a
+            probability density, so the value will be low for high-dimensional
+            data.
         """
         return np.sum(self.score_samples(X))
 
@@ -182,8 +206,11 @@ class KernelDensity(BaseEstimator):
         n_samples : int, optional
             Number of samples to generate. Defaults to 1.
 
-        random_state : RandomState or an int seed (0 by default)
-            A random number generator instance.
+        random_state : int, RandomState instance or None. default to None
+            If int, random_state is the seed used by the random number
+            generator; If RandomState instance, random_state is the random
+            number generator; If None, the random number generator is the
+            RandomState instance used by `np.random`.
 
         Returns
         -------
@@ -197,10 +224,15 @@ class KernelDensity(BaseEstimator):
         data = np.asarray(self.tree_.data)
 
         rng = check_random_state(random_state)
-        i = rng.randint(data.shape[0], size=n_samples)
-
+        u = rng.uniform(0, 1, size=n_samples)
+        if self.tree_.sample_weight is None:
+            i = (u * data.shape[0]).astype(np.int64)
+        else:
+            cumsum_weight = np.cumsum(np.asarray(self.tree_.sample_weight))
+            sum_weight = cumsum_weight[-1]
+            i = np.searchsorted(cumsum_weight, u * sum_weight)
         if self.kernel == 'gaussian':
-            return rng.normal(data[i], self.bandwidth)
+            return np.atleast_2d(rng.normal(data[i], self.bandwidth))
 
         elif self.kernel == 'tophat':
             # we first draw points from a d-dimensional normal distribution,

@@ -1,5 +1,5 @@
 """ Module to give helpful messages to the user that did not
-compile the scikit properly.
+compile scikit-learn properly.
 """
 import os
 
@@ -18,7 +18,7 @@ def raise_build_error(e):
     # directory to help debugging on the mailing list.
     local_dir = os.path.split(__file__)[0]
     msg = STANDARD_MSG
-    if local_dir == "sklearn/check_build":
+    if local_dir == "sklearn/__check_build":
         # Picking up the local install: this will work only if the
         # install is an 'inplace build'
         msg = INPLACE_MSG
@@ -41,6 +41,6 @@ to build the package before using it: run `python setup.py install` or
 %s""" % (e, local_dir, ''.join(dir_content).strip(), msg))
 
 try:
-    from ._check_build import check_build
+    from ._check_build import check_build  # noqa
 except ImportError as e:
     raise_build_error(e)

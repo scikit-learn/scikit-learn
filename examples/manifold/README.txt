@@ -3,5 +3,5 @@
 Manifold learning
 -----------------------
 
-Examples concerning the :mod:`sklearn.manifold` package.
+Examples concerning the :mod:`sklearn.manifold` module.
 

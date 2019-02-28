@@ -10,19 +10,19 @@ Maximum likelihood covariance estimator.
 # License: BSD 3 clause
 
 # avoid division truncation
-from __future__ import division
 import warnings
 import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator
-from ..utils import array2d
-from ..utils.extmath import fast_logdet, pinvh
+from ..utils import check_array
+from ..utils.extmath import fast_logdet
+from ..metrics.pairwise import pairwise_distances
 
 
 def log_likelihood(emp_cov, precision):
     """Computes the sample mean of the log_likelihood under a covariance model
-    
+
     computes the empirical expected log-likelihood (accounting for the
     normalization terms and scaling), allowing for universal comparison (beyond
     this software package)
@@ -34,7 +34,7 @@ def log_likelihood(emp_cov, precision):
 
     precision : 2D ndarray (n_features, n_features)
         The precision matrix of the covariance model to be tested
-    
+
     Returns
     -------
     sample mean of the log-likelihood
@@ -52,10 +52,10 @@ def empirical_covariance(X, assume_centered=False):
 
     Parameters
     ----------
-    X : 2D ndarray, shape (n_samples, n_features)
+    X : ndarray, shape (n_samples, n_features)
         Data from which to compute the covariance estimate
 
-    assume_centered : Boolean
+    assume_centered : boolean
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -70,6 +70,8 @@ def empirical_covariance(X, assume_centered=False):
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
+
+    if X.shape[0] == 1:
         warnings.warn("Only one sample available. "
                       "You may want to reshape your data array")
 
@@ -78,11 +80,15 @@ def empirical_covariance(X, assume_centered=False):
     else:
         covariance = np.cov(X.T, bias=1)
 
+    if covariance.ndim == 0:
+        covariance = np.array([[covariance]])
     return covariance
 
 
 class EmpiricalCovariance(BaseEstimator):
     """Maximum likelihood covariance estimator
+
+    Read more in the :ref:`User Guide <covariance>`.
 
     Parameters
     ----------
@@ -97,12 +103,33 @@ class EmpiricalCovariance(BaseEstimator):
 
     Attributes
     ----------
-    `covariance_` : 2D ndarray, shape (n_features, n_features)
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
+    covariance_ : 2D ndarray, shape (n_features, n_features)
         Estimated covariance matrix
 
-    `precision_` : 2D ndarray, shape (n_features, n_features)
+    precision_ : 2D ndarray, shape (n_features, n_features)
         Estimated pseudo-inverse matrix.
         (stored only if store_precision is True)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import EmpiricalCovariance
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = EmpiricalCovariance().fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7569..., 0.2818...],
+           [0.2818..., 0.3928...]])
+    >>> cov.location_
+    array([0.0622..., 0.0193...])
 
     """
     def __init__(self, store_precision=True, assume_centered=False):
@@ -122,12 +149,12 @@ class EmpiricalCovariance(BaseEstimator):
             is computed.
 
         """
-        covariance = array2d(covariance)
+        covariance = check_array(covariance)
         # set covariance
         self.covariance_ = covariance
         # set precision
         if self.store_precision:
-            self.precision_ = pinvh(covariance)
+            self.precision_ = linalg.pinvh(covariance)
         else:
             self.precision_ = None
 
@@ -136,14 +163,14 @@ class EmpiricalCovariance(BaseEstimator):
 
         Returns
         -------
-        `precision_` : array-like,
+        precision_ : array-like
             The precision matrix associated to the current covariance object.
 
         """
         if self.store_precision:
             precision = self.precision_
         else:
-            precision = pinvh(self.covariance_)
+            precision = linalg.pinvh(self.covariance_)
         return precision
 
     def fit(self, X, y=None):
@@ -156,14 +183,15 @@ class EmpiricalCovariance(BaseEstimator):
           Training data, where n_samples is the number of samples and
           n_features is the number of features.
 
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------
         self : object
-            Returns self.
 
         """
+        X = check_array(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
@@ -186,7 +214,8 @@ class EmpiricalCovariance(BaseEstimator):
             X_test is assumed to be drawn from the same distribution than
             the data used in fit (including centering).
 
-        y : not used, present for API consistence purpose.
+        y
+            not used, present for API consistence purpose.
 
         Returns
         -------
@@ -244,7 +273,7 @@ class EmpiricalCovariance(BaseEstimator):
         else:
             raise NotImplementedError(
                 "Only spectral and frobenius norms are implemented")
-        # optionaly scale the error norm
+        # optionally scale the error norm
         if scaling:
             squared_norm = squared_norm / error.shape[0]
         # finally get either the squared norm or the norm
@@ -255,29 +284,25 @@ class EmpiricalCovariance(BaseEstimator):
 
         return result
 
-    def mahalanobis(self, observations):
-        """Computes the Mahalanobis distances of given observations.
-
-        The provided observations are assumed to be centered. One may want to
-        center them using a location estimate first.
+    def mahalanobis(self, X):
+        """Computes the squared Mahalanobis distances of given observations.
 
         Parameters
         ----------
-        observations : array-like, shape = [n_observations, n_features]
+        X : array-like, shape = [n_samples, n_features]
             The observations, the Mahalanobis distances of the which we
             compute. Observations are assumed to be drawn from the same
-            distribution than the data used in fit (including centering).
+            distribution than the data used in fit.
 
         Returns
         -------
-        mahalanobis_distance : array, shape = [n_observations,]
-            Mahalanobis distances of the observations.
+        dist : array, shape = [n_samples,]
+            Squared Mahalanobis distances of the observations.
 
         """
         precision = self.get_precision()
         # compute mahalanobis distances
-        centered_obs = observations - self.location_
-        mahalanobis_dist = np.sum(
-            np.dot(centered_obs, precision) * centered_obs, 1)
+        dist = pairwise_distances(X, self.location_[np.newaxis, :],
+                                  metric='mahalanobis', VI=precision)
 
-        return mahalanobis_dist
+        return np.reshape(dist, (len(X),)) ** 2

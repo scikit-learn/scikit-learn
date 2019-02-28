@@ -14,7 +14,7 @@ to run out of memory a MemoryError will be raised. In practice this is
 not very helpful since hight changes are malloc fails inside svm.cpp,
 where no sort of memory checks are done.
 
-[1] http://www.csie.ntu.edu.tw/~cjlin/libsvm/
+[1] https://www.csie.ntu.edu.tw/~cjlin/libsvm/
 
 Notes
 -----
@@ -54,7 +54,7 @@ LIBSVM_KERNEL_TYPES = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 def fit(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-    int svm_type=0, str kernel='rbf', int degree=3,
+    int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -88,8 +88,8 @@ def fit(
         set to polynomial), 3 by default.
 
     gamma : float64, optional
-        Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF). 0.1 by default.
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
 
     coef0 : float64, optional
         Independent parameter in poly/sigmoid kernel. 0 by default.
@@ -148,8 +148,6 @@ def fit(
     intercept : array
         intercept in decision function
 
-    label : labels for different classes (only relevant in classification).
-
     probA, probB : array
         probability estimates, empty array for probability=False
     """
@@ -204,7 +202,7 @@ def fit(
 
     # the intercept is just model.rho but with sign changed
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] intercept
-    intercept = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+    intercept = np.empty(int((n_class*(n_class-1))/2), dtype=np.float64)
     copy_intercept (intercept.data, model, intercept.shape)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] support
@@ -225,16 +223,12 @@ def fit(
     n_class_SV = np.empty(n_class, dtype=np.int32)
     copy_nSV(n_class_SV.data, model)
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
-    label = np.empty((n_class), dtype=np.int32)
-    copy_label(label.data, model)
-
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probA
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probB
     if probability != 0:
         if svm_type < 2: # SVC and NuSVC
-            probA = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
-            probB = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+            probA = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
+            probB = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
             copy_probB(probB.data, model, probB.shape)
         else:
             probA = np.empty(1, dtype=np.float64)
@@ -247,7 +241,7 @@ def fit(
     svm_free_and_destroy_model(&model)
     free(problem.x)
 
-    return (support, support_vectors, n_class_SV, sv_coef, intercept, label,
+    return (support, support_vectors, n_class_SV, sv_coef, intercept,
            probA, probB, fit_status)
 
 
@@ -279,7 +273,6 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
             np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
             np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-            np.ndarray[np.int32_t, ndim=1, mode='c'] label,
             np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
             int svm_type=0, kernel='rbf', int degree=3,
@@ -294,7 +287,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     Parameters
     ----------
-    X: array-like, dtype=float, size=[n_samples, n_features]
+    X : array-like, dtype=float, size=[n_samples, n_features]
     svm_type : {0, 1, 2, 3, 4}
         Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
@@ -302,7 +295,8 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     degree : int
         Degree of the polynomial kernel.
     gamma : float
-        Gamma parameter in RBF kernel.
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
     coef0 : float
         Independent parameter in poly/sigmoid kernel.
 
@@ -324,8 +318,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                        class_weight_label.data, class_weight.data)
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
-                      sv_coef.data, intercept.data, nSV.data,
-                      label.data, probA.data, probB.data)
+                      sv_coef.data, intercept.data, nSV.data, probA.data, probB.data)
 
     #TODO: use check_model
     try:
@@ -347,10 +340,9 @@ def predict_proba(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, str kernel='rbf', int degree=3,
+    int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
@@ -372,7 +364,7 @@ def predict_proba(
 
     Parameters
     ----------
-    X: array-like, dtype=float
+    X : array-like, dtype=float
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
 
     Returns
@@ -393,7 +385,7 @@ def predict_proba(
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
-                      label.data, probA.data, probB.data)
+                      probA.data, probB.data)
 
     cdef np.npy_intp n_class = get_nr(model)
     try:
@@ -415,7 +407,6 @@ def decision_function(
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, kernel='rbf', int degree=3,
@@ -448,7 +439,7 @@ def decision_function(
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
-                      label.data, probA.data, probB.data)
+                      probA.data, probB.data)
 
     if svm_type > 1:
         n_class = 1
@@ -471,7 +462,7 @@ def decision_function(
 def cross_validation(
     np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-    int n_fold, svm_type=0, str kernel='rbf', int degree=3,
+    int n_fold, svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -487,9 +478,9 @@ def cross_validation(
     Parameters
     ----------
 
-    X: array-like, dtype=float, size=[n_samples, n_features]
+    X : array-like, dtype=float, size=[n_samples, n_features]
 
-    Y: array, dtype=float, size=[n_samples]
+    Y : array, dtype=float, size=[n_samples]
         target vector
 
     svm_type : {0, 1, 2, 3, 4}
@@ -504,8 +495,8 @@ def cross_validation(
         set to polynomial)
 
     gamma : float
-        Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF)
+        Gamma parameter in rbf, poly and sigmoid kernels. Ignored by other
+        kernels. 0.1 by default.
 
     coef0 : float
         Independent parameter in poly/sigmoid kernel.

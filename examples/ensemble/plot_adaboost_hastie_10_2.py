@@ -3,11 +3,11 @@
 Discrete versus Real AdaBoost
 =============================
 
-This example is based on Figure 10.2 from Hastie et al 2009 [1] and illustrates
-the difference in performance between the discrete SAMME [2] boosting
-algorithm and real SAMME.R boosting algorithm. Both algorithms are evaluated
-on a binary classification task where the target Y is a non-linear function
-of 10 input features.
+This example is based on Figure 10.2 from Hastie et al 2009 [1]_ and
+illustrates the difference in performance between the discrete SAMME [2]_
+boosting algorithm and real SAMME.R boosting algorithm. Both algorithms are
+evaluated on a binary classification task where the target Y is a non-linear
+function of 10 input features.
 
 Discrete SAMME AdaBoost adapts based on errors in predicted class labels
 whereas real SAMME.R uses the predicted class probabilities.
@@ -26,11 +26,12 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
+import matplotlib.pyplot as plt
+
 from sklearn import datasets
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import zero_one_loss
 from sklearn.ensemble import AdaBoostClassifier
-import pylab as pl
 
 
 n_estimators = 400
@@ -64,7 +65,7 @@ ada_real = AdaBoostClassifier(
     algorithm="SAMME.R")
 ada_real.fit(X_train, y_train)
 
-fig = pl.figure()
+fig = plt.figure()
 ax = fig.add_subplot(111)
 
 ax.plot([1, n_estimators], [dt_stump_err] * 2, 'k-',
@@ -108,4 +109,4 @@ ax.set_ylabel('error rate')
 leg = ax.legend(loc='upper right', fancybox=True)
 leg.get_frame().set_alpha(0.7)
 
-pl.show()
+plt.show()

@@ -108,7 +108,7 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
                             char *SV, npy_intp *SV_dims,
                             char *support, npy_intp *support_dims,
                             npy_intp *sv_coef_strides,
-                            char *sv_coef, char *rho, char *nSV, char *label,
+                            char *sv_coef, char *rho, char *nSV,
                             char *probA, char *probB)
 {
     struct svm_model *model;
@@ -148,7 +148,8 @@ struct svm_model *set_model(struct svm_parameter *param, int nr_class,
      */
     if (param->svm_type < 2) {
         memcpy(model->nSV, nSV,     model->nr_class * sizeof(int));
-        memcpy(model->label, label, model->nr_class * sizeof(int));
+        for(i=0; i < model->nr_class; i++)
+            model->label[i] = i;
     }
 
     for (i=0; i < model->nr_class-1; i++) {
@@ -276,16 +277,6 @@ void copy_nSV(char *data, struct svm_model *model)
     memcpy(data, model->nSV, model->nr_class * sizeof(int));
 }
 
-/*
- * same as above with model->label
- * TODO: maybe merge into the previous?
- */
-void copy_label(char *data, struct svm_model *model)
-{
-    if (model->label == NULL) return;
-    memcpy(data, model->label, model->nr_class * sizeof(int));
-}
-
 void copy_probA(char *data, struct svm_model *model, npy_intp * dims)
 {
     memcpy(data, model->probA, dims[0] * sizeof(double));
@@ -392,11 +383,6 @@ int free_param(struct svm_parameter *param)
 }
 
 
-/* rely on built-in facility to control verbose output
- * in the versions of libsvm >= 2.89
- */
-#if LIBSVM_VERSION && LIBSVM_VERSION >= 289
-
 /* borrowed from original libsvm code */
 static void print_null(const char *s) {}
 
@@ -409,14 +395,7 @@ static void print_string_stdout(const char *s)
 /* provide convenience wrapper */
 void set_verbosity(int verbosity_flag){
 	if (verbosity_flag)
-# if LIBSVM_VERSION < 291
-		svm_print_string = &print_string_stdout;
-	else
-		svm_print_string = &print_null;
-# else
 		svm_set_print_string_function(&print_string_stdout);
 	else
 		svm_set_print_string_function(&print_null);
-# endif
 }
-#endif

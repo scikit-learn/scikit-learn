@@ -1,7 +1,7 @@
 #ifndef _LIBSVM_H
 #define _LIBSVM_H
 
-#define LIBSVM_VERSION 300
+#define LIBSVM_VERSION 310
 
 #ifdef __cplusplus
 extern "C" {
@@ -10,7 +10,7 @@ extern "C" {
 struct svm_node
 {
 	int dim;
-	int ind; /* index. A bit redundanat, but needed if using a
+	int ind; /* index. A bit redundant, but needed if using a
                     precomputed kernel */
 	double *values;
 };

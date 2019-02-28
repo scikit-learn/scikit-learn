@@ -44,15 +44,15 @@ computationally costly.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from scipy import linalg
 
 from sklearn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
     log_likelihood, empirical_covariance
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 
-###############################################################################
+# #############################################################################
 # Generate sample data
 n_features, n_samples = 40, 20
 np.random.seed(42)
@@ -64,7 +64,7 @@ coloring_matrix = np.random.normal(size=(n_features, n_features))
 X_train = np.dot(base_X_train, coloring_matrix)
 X_test = np.dot(base_X_test, coloring_matrix)
 
-###############################################################################
+# #############################################################################
 # Compute the likelihood on test data
 
 # spanning a range of possible shrinkage coefficient values
@@ -78,12 +78,12 @@ real_cov = np.dot(coloring_matrix.T, coloring_matrix)
 emp_cov = empirical_covariance(X_train)
 loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
-###############################################################################
+# #############################################################################
 # Compare different approaches to setting the parameter
 
 # GridSearch for an optimal shrinkage coefficient
 tuned_parameters = [{'shrinkage': shrinkages}]
-cv = GridSearchCV(ShrunkCovariance(), tuned_parameters)
+cv = GridSearchCV(ShrunkCovariance(), tuned_parameters, cv=5)
 cv.fit(X_train)
 
 # Ledoit-Wolf optimal shrinkage coefficient estimate
@@ -94,38 +94,38 @@ loglik_lw = lw.fit(X_train).score(X_test)
 oa = OAS()
 loglik_oa = oa.fit(X_train).score(X_test)
 
-###############################################################################
+# #############################################################################
 # Plot results
-fig = pl.figure()
-pl.title("Regularized covariance: likelihood and shrinkage coefficient")
-pl.xlabel('Regularizaton parameter: shrinkage coefficient')
-pl.ylabel('Error: negative log-likelihood on test data')
+fig = plt.figure()
+plt.title("Regularized covariance: likelihood and shrinkage coefficient")
+plt.xlabel('Regularization parameter: shrinkage coefficient')
+plt.ylabel('Error: negative log-likelihood on test data')
 # range shrinkage curve
-pl.loglog(shrinkages, negative_logliks, label="Negative log-likelihood")
+plt.loglog(shrinkages, negative_logliks, label="Negative log-likelihood")
 
-pl.plot(pl.xlim(), 2 * [loglik_real], '--r',
-        label="Real covariance likelihood")
+plt.plot(plt.xlim(), 2 * [loglik_real], '--r',
+         label="Real covariance likelihood")
 
 # adjust view
 lik_max = np.amax(negative_logliks)
 lik_min = np.amin(negative_logliks)
-ymin = lik_min - 6. * np.log((pl.ylim()[1] - pl.ylim()[0]))
+ymin = lik_min - 6. * np.log((plt.ylim()[1] - plt.ylim()[0]))
 ymax = lik_max + 10. * np.log(lik_max - lik_min)
 xmin = shrinkages[0]
 xmax = shrinkages[-1]
 # LW likelihood
-pl.vlines(lw.shrinkage_, ymin, -loglik_lw, color='magenta',
-          linewidth=3, label='Ledoit-Wolf estimate')
+plt.vlines(lw.shrinkage_, ymin, -loglik_lw, color='magenta',
+           linewidth=3, label='Ledoit-Wolf estimate')
 # OAS likelihood
-pl.vlines(oa.shrinkage_, ymin, -loglik_oa, color='purple',
-          linewidth=3, label='OAS estimate')
+plt.vlines(oa.shrinkage_, ymin, -loglik_oa, color='purple',
+           linewidth=3, label='OAS estimate')
 # best CV estimator likelihood
-pl.vlines(cv.best_estimator_.shrinkage, ymin,
-          -cv.best_estimator_.score(X_test), color='cyan',
-          linewidth=3, label='Cross-validation best estimate')
+plt.vlines(cv.best_estimator_.shrinkage, ymin,
+           -cv.best_estimator_.score(X_test), color='cyan',
+           linewidth=3, label='Cross-validation best estimate')
 
-pl.ylim(ymin, ymax)
-pl.xlim(xmin, xmax)
-pl.legend()
+plt.ylim(ymin, ymax)
+plt.xlim(xmin, xmax)
+plt.legend()
 
-pl.show()
+plt.show()

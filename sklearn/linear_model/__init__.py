@@ -16,20 +16,23 @@ from .least_angle import (Lars, LassoLars, lars_path, LarsCV, LassoLarsCV,
                           LassoLarsIC)
 from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
                                  lasso_path, enet_path, MultiTaskLasso,
-                                 MultiTaskElasticNet)
+                                 MultiTaskElasticNet, MultiTaskElasticNetCV,
+                                 MultiTaskLassoCV)
+from .huber import HuberRegressor
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
                     ridge_regression)
-from .logistic import LogisticRegression
+from .logistic import (LogisticRegression, LogisticRegressionCV,
+                       logistic_regression_path)
 from .omp import (orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit,
                   OrthogonalMatchingPursuitCV)
 from .passive_aggressive import PassiveAggressiveClassifier
 from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
-from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
-                            lasso_stability_path)
+
 from .ransac import RANSACRegressor
+from .theil_sen import TheilSenRegressor
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
@@ -37,6 +40,7 @@ __all__ = ['ARDRegression',
            'ElasticNetCV',
            'Hinge',
            'Huber',
+           'HuberRegressor',
            'Lars',
            'LarsCV',
            'Lasso',
@@ -47,16 +51,17 @@ __all__ = ['ARDRegression',
            'LinearRegression',
            'Log',
            'LogisticRegression',
+           'LogisticRegressionCV',
            'ModifiedHuber',
            'MultiTaskElasticNet',
+           'MultiTaskElasticNetCV',
            'MultiTaskLasso',
+           'MultiTaskLassoCV',
            'OrthogonalMatchingPursuit',
            'OrthogonalMatchingPursuitCV',
            'PassiveAggressiveClassifier',
            'PassiveAggressiveRegressor',
            'Perceptron',
-           'RandomizedLasso',
-           'RandomizedLogisticRegression',
            'Ridge',
            'RidgeCV',
            'RidgeClassifier',
@@ -64,10 +69,11 @@ __all__ = ['ARDRegression',
            'SGDClassifier',
            'SGDRegressor',
            'SquaredLoss',
+           'TheilSenRegressor',
            'enet_path',
            'lars_path',
            'lasso_path',
-           'lasso_stability_path',
+           'logistic_regression_path',
            'orthogonal_mp',
            'orthogonal_mp_gram',
            'ridge_regression',

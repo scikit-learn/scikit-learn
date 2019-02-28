@@ -13,17 +13,17 @@ density estimation problem and use the `OneClassSVM` provided
 by the package `sklearn.svm` as our modeling tool.
 The dataset is provided by Phillips et. al. (2006).
 If available, the example uses
-`basemap <http://matplotlib.sourceforge.net/basemap/doc/html/>`_
+`basemap <https://matplotlib.org/basemap/>`_
 to plot the coast lines and national boundaries of South America.
 
 The two species are:
 
  - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+   <http://www.iucnredlist.org/details/3038/0>`_ ,
    the Brown-throated Sloth.
 
  - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+   <http://www.iucnredlist.org/details/13408/0>`_ ,
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
@@ -31,7 +31,7 @@ References
 ----------
 
  * `"Maximum entropy modeling of species geographic distributions"
-   <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
+   <http://rob.schapire.net/papers/ecolmod.pdf>`_
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
 """
@@ -41,12 +41,10 @@ References
 #
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 from time import time
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.datasets.base import Bunch
 from sklearn.datasets import fetch_species_distributions
@@ -64,20 +62,17 @@ except ImportError:
 print(__doc__)
 
 
-def create_species_bunch(species_name,
-                         train, test,
-                         coverages, xgrid, ygrid):
-    """
-    create a bunch with information about a particular organism
+def create_species_bunch(species_name, train, test, coverages, xgrid, ygrid):
+    """Create a bunch with information about a particular organism
 
     This will use the test/train record arrays to extract the
     data specific to the given species name.
     """
     bunch = Bunch(name=' '.join(species_name.split("_")[:2]))
-
+    species_name = species_name.encode('ascii')
     points = dict(test=test, train=train)
 
-    for label, pts in points.iteritems():
+    for label, pts in points.items():
         # choose points associated with the desired species
         pts = pts[pts['species'] == species_name]
         bunch['pts_%s' % label] = pts
@@ -90,8 +85,8 @@ def create_species_bunch(species_name,
     return bunch
 
 
-def plot_species_distribution(species=["bradypus_variegatus_0",
-                                       "microryzomys_minutus_0"]):
+def plot_species_distribution(species=("bradypus_variegatus_0",
+                                       "microryzomys_minutus_0")):
     """
     Plot the species distribution.
     """
@@ -146,7 +141,7 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         print("done.")
 
         # Plot map of South America
-        pl.subplot(1, 2, i + 1)
+        plt.subplot(1, 2, i + 1)
         if basemap:
             print(" - plot coastlines using basemap")
             m = Basemap(projection='cyl', llcrnrlat=Y.min(),
@@ -156,11 +151,11 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
             m.drawcountries()
         else:
             print(" - plot coastlines from coverage")
-            pl.contour(X, Y, land_reference,
-                       levels=[-9999], colors="k",
-                       linestyles="solid")
-            pl.xticks([])
-            pl.yticks([])
+            plt.contour(X, Y, land_reference,
+                        levels=[-9998], colors="k",
+                        linestyles="solid")
+            plt.xticks([])
+            plt.yticks([])
 
         print(" - predict species distribution")
 
@@ -171,7 +166,7 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         idx = np.where(land_reference > -9999)
         coverages_land = data.coverages[:, idx[0], idx[1]].T
 
-        pred = clf.decision_function((coverages_land - mean) / std)[:, 0]
+        pred = clf.decision_function((coverages_land - mean) / std)
         Z *= pred.min()
         Z[idx[0], idx[1]] = pred
 
@@ -179,33 +174,32 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         Z[land_reference == -9999] = -9999
 
         # plot contours of the prediction
-        pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
-        pl.colorbar(format='%.2f')
+        plt.contourf(X, Y, Z, levels=levels, cmap=plt.cm.Reds)
+        plt.colorbar(format='%.2f')
 
         # scatter training/testing points
-        pl.scatter(species.pts_train['dd long'], species.pts_train['dd lat'],
-                   s=2 ** 2, c='black',
-                   marker='^', label='train')
-        pl.scatter(species.pts_test['dd long'], species.pts_test['dd lat'],
-                   s=2 ** 2, c='black',
-                   marker='x', label='test')
-        pl.legend()
-        pl.title(species.name)
-        pl.axis('equal')
+        plt.scatter(species.pts_train['dd long'], species.pts_train['dd lat'],
+                    s=2 ** 2, c='black',
+                    marker='^', label='train')
+        plt.scatter(species.pts_test['dd long'], species.pts_test['dd lat'],
+                    s=2 ** 2, c='black',
+                    marker='x', label='test')
+        plt.legend()
+        plt.title(species.name)
+        plt.axis('equal')
 
-        # Compute AUC w.r.t. background points
+        # Compute AUC with regards to background points
         pred_background = Z[background_points[0], background_points[1]]
-        pred_test = clf.decision_function((species.cov_test - mean)
-                                          / std)[:, 0]
+        pred_test = clf.decision_function((species.cov_test - mean) / std)
         scores = np.r_[pred_test, pred_background]
         y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
         fpr, tpr, thresholds = metrics.roc_curve(y, scores)
         roc_auc = metrics.auc(fpr, tpr)
-        pl.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
+        plt.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
         print("\n Area under the ROC curve : %f" % roc_auc)
 
     print("\ntime elapsed: %.2fs" % (time() - t0))
 
 
 plot_species_distribution()
-pl.show()
+plt.show()

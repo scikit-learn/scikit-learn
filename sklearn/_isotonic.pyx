@@ -1,54 +1,119 @@
+# Author: Nelle Varoquaux, Andrew Tulloch, Antony Lee
+
+# Uses the pool adjacent violators algorithm (PAVA), with the
+# enhancement of searching for the longest decreasing subsequence to
+# pool at each step.
+
 import numpy as np
 cimport numpy as np
 cimport cython
-
-ctypedef np.float64_t DOUBLE
+from cython cimport floating
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
-                         np.ndarray[DOUBLE, ndim=1] weight,
-                         np.ndarray[DOUBLE, ndim=1] solution):
-
+def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
     cdef:
-        Py_ssize_t current, i
-        unsigned int len_active_set
-        DOUBLE v, w
+        Py_ssize_t n = y.shape[0], i, k
+        floating prev_y, sum_wy, sum_w
+        Py_ssize_t[::1] target = np.arange(n, dtype=np.intp)
 
-    len_active_set = y.shape[0]
-    active_set = [[weight[i] * y[i], weight[i], [i, ]]
-                  for i in range(len_active_set)]
-    current = 0
+    # target describes a list of blocks.  At any time, if [i..j] (inclusive) is
+    # an active block, then target[i] := j and target[j] := i.
 
-    while current < len_active_set - 1:
-        while current < len_active_set -1 and \
-              (active_set[current][0] * active_set[current + 1][1] <= 
-               active_set[current][1] * active_set[current + 1][0]):
-            current += 1
+    # For "active" indices (block starts):
+    # w[i] := sum{w_orig[j], j=[i..target[i]]}
+    # y[i] := sum{y_orig[j]*w_orig[j], j=[i..target[i]]} / w[i]
 
-        if current == len_active_set - 1:
-            break
+    with nogil:
+        i = 0
+        while i < n:
+            k = target[i] + 1
+            if k == n:
+                break
+            if y[i] < y[k]:
+                i = k
+                continue
+            sum_wy = w[i] * y[i]
+            sum_w = w[i]
+            while True:
+                # We are within a decreasing subsequence.
+                prev_y = y[k]
+                sum_wy += w[k] * y[k]
+                sum_w += w[k]
+                k = target[k] + 1
+                if k == n or prev_y < y[k]:
+                    # Non-singleton decreasing subsequence is finished,
+                    # update first entry.
+                    y[i] = sum_wy / sum_w
+                    w[i] = sum_w
+                    target[i] = k - 1
+                    target[k - 1] = i
+                    if i > 0:
+                        # Backtrack if we can.  This makes the algorithm
+                        # single-pass and ensures O(n) complexity.
+                        i = target[i - 1]
+                    # Otherwise, restart from the same point.
+                    break
+        # Reconstruct the solution.
+        i = 0
+        while i < n:
+            k = target[i] + 1
+            y[i + 1 : k] = y[i]
+            i = k
 
-        # merge two groups
-        active_set[current][0] += active_set[current + 1][0]
-        active_set[current][1] += active_set[current + 1][1]
-        active_set[current][2] += active_set[current + 1][2]
 
-        active_set.pop(current + 1)
-        len_active_set -= 1
-        while current > 0 and \
-              (active_set[current - 1][0] * active_set[current][1] > 
-               active_set[current - 1][1] * active_set[current][0]):
-            current -= 1
-            active_set[current][0] += active_set[current + 1][0]
-            active_set[current][1] += active_set[current + 1][1]
-            active_set[current][2] += active_set[current + 1][2]
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _make_unique(np.ndarray[dtype=floating] X,
+                 np.ndarray[dtype=floating] y,
+                 np.ndarray[dtype=floating] sample_weights):
+    """Average targets for duplicate X, drop duplicates.
 
-            active_set.pop(current + 1)
-            len_active_set -= 1
+    Aggregates duplicate X values into a single X value where
+    the target y is a (sample_weighted) average of the individual
+    targets.
 
-    for v, w, idx in active_set:
-        solution[idx] = v / w
-    return solution
+    Assumes that X is ordered, so that all duplicates follow each other.
+    """
+    unique_values = len(np.unique(X))
+    if unique_values == len(X):
+        return X, y, sample_weights
+
+    cdef np.ndarray[dtype=floating] y_out = np.empty(unique_values,
+                                                     dtype=X.dtype)
+    cdef np.ndarray[dtype=floating] x_out = np.empty_like(y_out)
+    cdef np.ndarray[dtype=floating] weights_out = np.empty_like(y_out)
+
+    cdef floating current_x = X[0]
+    cdef floating current_y = 0
+    cdef floating current_weight = 0
+    cdef floating y_old = 0
+    cdef int i = 0
+    cdef int current_count = 0
+    cdef int j
+    cdef floating x
+    cdef int n_samples = len(X)
+    for j in range(n_samples):
+        x = X[j]
+        if x != current_x:
+            # next unique value
+            x_out[i] = current_x
+            weights_out[i] = current_weight
+            y_out[i] = current_y / current_weight
+            i += 1
+            current_x = x
+            current_weight = sample_weights[j]
+            current_y = y[j] * sample_weights[j]
+            current_count = 1
+        else:
+            current_weight += sample_weights[j]
+            current_y += y[j] * sample_weights[j]
+            current_count += 1
+
+    x_out[i] = current_x
+    weights_out[i] = current_weight
+    y_out[i] = current_y / current_weight
+    return x_out, y_out, weights_out
