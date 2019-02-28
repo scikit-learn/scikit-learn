@@ -60,9 +60,6 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
 
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
-    dtype = X.dtype
-    del X
-
     if n_features > n_samples:
         def create_mv(curr_alpha):
             def _mv(x):
@@ -82,7 +79,7 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
             C = sp_linalg.LinearOperator(
-                (n_samples, n_samples), matvec=mv, dtype=dtype)
+                (n_samples, n_samples), matvec=mv, dtype=X.dtype)
             # FIXME atol
             try:
                 coef, info = sp_linalg.cg(C, y_column, tol=tol, atol='legacy')
@@ -95,7 +92,7 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
             # w = inv(X^t X + alpha*Id) * X.T y
             y_column = X1.rmatvec(y_column)
             C = sp_linalg.LinearOperator(
-                (n_features, n_features), matvec=mv, dtype=dtype)
+                (n_features, n_features), matvec=mv, dtype=X.dtype)
             # FIXME atol
             try:
                 coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
@@ -530,14 +527,15 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
             sample_weight=sample_weight, return_mean=True)
 
         # temporary fix for fitting the intercept with sparse data using 'sag'
-        if sparse.issparse(X) and self.fit_intercept and self.solver in ['sag', 'saga']:
-            self.coef_, self.n_iter_, intercept = ridge_regression(
+        if (sparse.issparse(X) and self.fit_intercept and
+            self.solver != 'sparse_cg'):
+            self.coef_, self.n_iter_, self.intercept_ = ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=True)
             # add the offset which was subtracted by _preprocess_data
-            self.intercept_ = intercept + y_offset
+            self.intercept_ += y_offset
         else:
             if sparse.issparse(X):
                 params = {'X_offset': X_offset,
