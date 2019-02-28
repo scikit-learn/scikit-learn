@@ -190,6 +190,28 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
         return np.ones(X.shape[0])
 
 
+class BadBalancedWeightsClassifier(BaseBadClassifier):
+    def __init__(self, class_weight=None):
+        self.class_weight = class_weight
+
+    def fit(self, X, y):
+        from sklearn.preprocessing import LabelEncoder
+        from sklearn.utils import compute_class_weight
+
+        label_encoder = LabelEncoder().fit(y)
+        classes = label_encoder.classes_
+        class_weight = compute_class_weight(self.class_weight, classes, y)
+
+        # Intentionally modify the balanced class_weight
+        # to simulate a bug and raise an exception
+        if self.class_weight == "balanced":
+            class_weight += 1.
+
+        # Simply assigning coef_ to the class_weight
+        self.coef_ = class_weight
+        return self
+
+
 class BadTransformerWithoutMixin(BaseEstimator):
     def fit(self, X, y=None):
         X = check_array(X)
@@ -463,27 +485,6 @@ def run_tests_without_pytest():
 
 
 def test_check_class_weight_balanced_linear_classifier():
-    class BadBalancedWeightsClassifier(BaseBadClassifier):
-        def __init__(self, class_weight=None):
-            self.class_weight = class_weight
-
-        def fit(self, X, y):
-            from sklearn.preprocessing import LabelEncoder
-            from sklearn.utils import compute_class_weight
-
-            label_encoder = LabelEncoder().fit(y)
-            classes = label_encoder.classes_
-            class_weight = compute_class_weight(self.class_weight, classes, y)
-
-            # Intentionally modify the balanced class_weight
-            # to simulate a bug and raise an exception
-            if self.class_weight == "balanced":
-                class_weight += 1.
-
-            # Simply assigning coef_ to the class_weight
-            self.coef_ = class_weight
-            return self
-
     # check that ill-computed balanced weights raises an exception
     assert_raises_regex(AssertionError,
                         "Classifier estimator_name is not computing"
