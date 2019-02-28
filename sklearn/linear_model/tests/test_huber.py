@@ -205,4 +205,4 @@ def test_huber_bool():
     # Test that it does not crash with bool data
     X, y = make_regression(n_samples=200, n_features=2, noise=4.0, random_state=0)
     X_bool = X > 0
-    huber = HuberRegressor().fit(X_bool, y)
+    HuberRegressor().fit(X_bool, y)
