@@ -431,30 +431,28 @@ def test_one_hot_encoder_inverse(sparse_, drop):
     assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
 
 
+@pytest.mark.parametrize("method", ['fit', 'fit_transform'])
 @pytest.mark.parametrize("X", [
     [1, 2],
     np.array([3., 4.])
     ])
-def test_X_is_not_1D(X):
+def test_X_is_not_1D(X, method):
     oh = OneHotEncoder()
 
     msg = ("Expected 2D array, got 1D array instead")
     with pytest.raises(ValueError, match=msg):
-        oh.fit(X)
-    with pytest.raises(ValueError, match=msg):
-        oh.fit_transform(X)
+        getattr(oh, method)(X)
 
 
-def test_X_is_not_1D_pandas():
+@pytest.mark.parametrize("method", ['fit', 'fit_transform'])
+def test_X_is_not_1D_pandas(method):
     pd = pytest.importorskip('pandas')
     X = pd.Series([6, 3, 4, 6])
     oh = OneHotEncoder()
 
     msg = ("Expected 2D array, got 1D array instead")
     with pytest.raises(ValueError, match=msg):
-        oh.fit(X)
-    with pytest.raises(ValueError, match=msg):
-        oh.fit_transform(X)
+        getattr(oh, method)(X)
 
 
 @pytest.mark.parametrize("X, cat_exp, cat_dtype", [

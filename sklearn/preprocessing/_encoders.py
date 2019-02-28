@@ -40,28 +40,30 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
           not do that)
         - return list of features (arrays): this list of features is
           constructed feature by feature to preserve the data types
-          of pandas DataFrame columns), as elsewhere information is lost and cannot be used, eg for the `categories`_ attribute.
+          of pandas DataFrame columns), as elsewhere information is lost
+          and cannot be used, eg for the `categories`_ attribute.
 
         """
         # if not a dataframe, do normal check_array validation
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             X_temp = check_array(X, dtype=None)
-            if not hasattr(X, 'dtype') and\
-               np.issubdtype(X_temp.dtype, np.str_):
+            if (not hasattr(X, 'dtype')
+                    and np.issubdtype(X_temp.dtype, np.str_)):
                 X = check_array(X, dtype=np.object)
             else:
                 X = X_temp
             needs_validation = False
         else:
             # pandas dataframe, do validation later column by column, in order
-            # to keep the dtype information to be used in the encoders attributes.
+            # to keep the dtype information to be used
+            # in the encoders attributes.
             needs_validation = True
 
         n_samples, n_features = X.shape
         X_columns = []
 
         for i in range(n_features):
-            Xi = self._get_feature(X, key=i)
+            Xi = self._get_feature(X, feature_idx=i)
             Xi = check_array(Xi, ensure_2d=False, dtype=None,
                              force_all_finite=needs_validation)
 
@@ -73,13 +75,12 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             X_columns.append(Xi)
         return X_columns, n_samples, n_features
 
-    def _get_feature(self, X, key):
+    def _get_feature(self, X, feature_idx):
         if hasattr(X, 'iloc'):
             # pandas dataframes
-            return X.iloc[:, key]
-        else:
-            # numpy arrays, sparse arrays
-            return X[:, key]
+            return X.iloc[:, feature_idx]
+        # numpy arrays, sparse arrays
+        return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
