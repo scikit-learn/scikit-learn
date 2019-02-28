@@ -42,7 +42,7 @@ Support for Python 3.4 and below has been officially dropped.
     See version doc/whats_new/v0.20.rst for structure. Entries should be
     prefixed with one of the labels: |MajorFeature|, |Feature|, |Efficiency|,
     |Enhancement|, |Fix| or |API|. They should be under a heading for the
-    relevant module (or *Multiple Modules* or *Miscellaneous*), and within each
+    relevant module (or *Mufltiple Modules* or *Miscellaneous*), and within each
     section should be ordered according to the label ordering above. Entries
     should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
 
@@ -233,6 +233,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| `sparse_cg` solver in :class:`linear_model.ridge.Ridge`
   now supports fitting the intercept (i.e. ``fit_intercept=True``) when
   inputs are sparse . :issue:`13336` by :user:`Bartosz Telenczuk <btel>`
+
+- |Fix| Fixed a bug in :class:`linear_model.HuberRegressor` that was
+  broken when X was of dtype bool.
+  :issue:`13314` by `Alexandre Gramfort`_.
+
 
 :mod:`sklearn.manifold`
 ............................
