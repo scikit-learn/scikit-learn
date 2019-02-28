@@ -47,7 +47,7 @@ jobs:
   parameters:
     name: Linux
     vmImage: ubuntu-16.04
-    toRun: contains($(Build.SourceVersionMessage), '[scipy-dev]')
+    toRun: ${{ contains('$(Build.SourceVersionMessage)', '[scipy-dev]') }}
     matrix:
       pylatest_scipy_dev:
         DISTRIB: 'scipy-dev'
