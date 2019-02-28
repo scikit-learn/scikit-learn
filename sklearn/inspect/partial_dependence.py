@@ -562,9 +562,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
             raise ValueError(
                 'target must be specified for multi-output regressors')
         if not 0 <= target <= pd.shape[0]:
-                raise ValueError(
-                    'target must be in [0, n_tasks], got {}.'.format(
-                        target))
+            raise ValueError(
+                'target must be in [0, n_tasks], got {}.'.format( target))
         target_idx = target
     else:
         target_idx = 0
