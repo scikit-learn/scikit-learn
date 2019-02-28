@@ -550,7 +550,7 @@ class OutlierResamplerMixin:
     """
     _estimator_type = "outlier_resampler"
 
-    def fit_resample(self, X, y, props=None):
+    def fit_resample(self, X, y):
         """Performs fit on X and returns new X and y consisting of only the
         inliers.
 
@@ -562,9 +562,6 @@ class OutlierResamplerMixin:
         y : ndarray, shape (n_samples,)
             Input data y.
 
-        props : dict of ndarrays, each ndarray has shape (n_samples,), optional
-            dict of params that are passed to fit.
-
         Returns
         -------
         X : ndarray, shape (n_samples, n_features)
@@ -572,16 +569,9 @@ class OutlierResamplerMixin:
 
         y : ndarray, shape (n_samples,)
             The input y with outlier samples removed.
-
-        props : dict of ndarrays, each ndarray has shape (n_samples,)
-            `props`, but outlier samples are removed for each each parameter.
         """
 
         inliers = self.fit_predict(X) == 1
-
-        if props:
-            props = {prop[inliers == 1] for prop in props}
-            return X[inliers], y[inliers], props
 
         return X[inliers], y[inliers]
 

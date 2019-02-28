@@ -2499,14 +2499,6 @@ def check_resampler_structure(name, estimator_orig):
     X, y = make_blobs(n_samples=10)
     X_new, y_new = estimator_orig.fit_resample(X, y)
 
-    props = {
-        'weight': np.arange(10),
-        'other': np.arange(10),
-        'more': np.arange(10)
-    }
-    X_new, y_new, props_new = estimator_orig.fit_resample(X, y, props)
-    assert props.key() == props_new.keys()
-
 
 def check_resample_repeated(name, estimator_orig):
     X, y = make_blobs(n_samples=10)
