@@ -938,3 +938,31 @@ def test_dtype_match_cholesky():
     assert ridge_32.predict(X_32).dtype == X_32.dtype
     assert ridge_64.predict(X_64).dtype == X_64.dtype
     assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
+
+
+@pytest.mark.parametrize(
+    'solver', ['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'])
+@pytest.mark.parametrize('assert_tolerance', [1e-1, 1e-2, 1e-3, 1e-6])
+def test_ridge_regression_dtype_stability(solver, assert_tolerance):
+    n_samples, n_features = 6, 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+    RANDOM_STATE = np.random.RandomState(0)
+    ALPHA = 1.0
+
+    results = { current_dtype: ridge_regression(X.astype(current_dtype),
+                                                y.astype(current_dtype),
+                                                alpha=ALPHA,
+                                                solver=solver,
+                                                random_state=RANDOM_STATE,
+                                                sample_weight=None,
+                                                max_iter=None,
+                                                tol=1e-3,
+                                                return_n_iter=False,
+                                                return_intercept=False)
+                for current_dtype in (np.float32, np.float64)}
+
+    assert results[np.float32].dtype == np.float32
+    assert results[np.float64].dtype == np.float64
+    assert_allclose(results[np.float32], results[np.float64],
+                    rtol=assert_tolerance)
