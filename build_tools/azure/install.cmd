@@ -15,7 +15,7 @@ conda create -n %VIRTUALENV% -q -y python=%CONDA_PY% numpy scipy cython pytest w
 call activate %VIRTUALENV%
 pip install -U pip
 if "%COVERAGE%" == "true" (
-    pip install coverage codecov
+    pip install coverage codecov pytest-cov
 )
 
 python --version
