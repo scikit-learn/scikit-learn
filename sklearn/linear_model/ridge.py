@@ -228,8 +228,7 @@ def _solve_svd(X, y, alpha):
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
-                     return_n_iter=False, return_intercept=False,
-                     X_scale=None, X_offset=None):
+                     return_n_iter=False, return_intercept=False):
     """Solve the ridge equation by the method of normal equations.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
@@ -349,6 +348,25 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     -----
     This function won't compute the intercept.
     """
+
+    return _ridge_regression(X, y, alpha,
+                             sample_weight=sample_weight,
+                             solver=solver,
+                             max_iter=max_iter,
+                             tol=tol,
+                             verbose=verbose,
+                             random_state=random_state,
+                             return_n_iter=return_n_iter,
+                             return_intercept=return_intercept,
+                             X_scale=None,
+                             X_offset=None)
+
+
+def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
+                     max_iter=None, tol=1e-3, verbose=0, random_state=None,
+                     return_n_iter=False, return_intercept=False,
+                     X_scale=None, X_offset=None):
+
     if (return_intercept and sparse.issparse(X) and
        solver not in ['sag', 'sparse_cg']):
         if solver != 'auto':
@@ -530,7 +548,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
         # temporary fix for fitting the intercept with sparse data using 'sag'
         if (sparse.issparse(X) and self.fit_intercept and
            self.solver != 'sparse_cg'):
-            self.coef_, self.n_iter_, self.intercept_ = ridge_regression(
+            self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
@@ -543,7 +561,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                           'X_scale': X_scale}
             else:
                 params = {}
-            self.coef_, self.n_iter_ = ridge_regression(
+            self.coef_, self.n_iter_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
