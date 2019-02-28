@@ -347,6 +347,8 @@ And some work with binary and multilabel (but not multiclass) problems:
 In the following sub-sections, we will describe each of those functions,
 preceded by some notes on common API and metric definition.
 
+.. _average:
+
 From binary to multiclass and multilabel
 ----------------------------------------
 
@@ -355,8 +357,6 @@ Some metrics are essentially defined for binary classification tasks (e.g.
 only the positive label is evaluated, assuming by default that the positive
 class is labelled ``1`` (though this may be configurable through the
 ``pos_label`` parameter).
-
-.. _average:
 
 In extending a binary metric to multiclass or multilabel problems, the data
 is treated as a collection of binary problems, one for each class.
@@ -941,7 +941,8 @@ with a ground truth label set :math:`y_i` and predicted label set
 
 :func:`jaccard_score` works like :func:`precision_recall_fscore_support` as a
 naively set-wise measure applying natively to binary targets, and extended to
-apply to multilabel and multiclass through the use of `average`.
+apply to multilabel and multiclass through the use of `average` (see
+:ref:`above <average>`).
 
 In the multilabel case with binary label indicators: ::
 
