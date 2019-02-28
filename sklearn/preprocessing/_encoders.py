@@ -855,10 +855,7 @@ class OrdinalEncoder(_BaseEncoder):
             Transformed input.
 
         """
-        # TODO:
-        # -- Does it make sense to have force_all_finite functionality
-        #    if NaN's are being masked before _transform?
-        # -- Need to have functionality to encode missing values
+
         X = self._check_X(X, force_all_finite=False)
         X_new = X.copy()
 
