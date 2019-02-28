@@ -227,7 +227,8 @@ O(n_classes^2) complexity. However, this method may be advantageous for
 algorithms such as kernel algorithms which don't scale well with
 ``n_samples``. This is because each individual learning problem only involves
 a small subset of the data whereas, with one-vs-the-rest, the complete
-dataset is used ``n_classes`` times.
+dataset is used ``n_classes`` times. The decision function is the result
+of a monotonic transformation of the one-versus-one classification.
 
 Multiclass learning
 -------------------

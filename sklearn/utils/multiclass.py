@@ -431,17 +431,13 @@ def _ovr_decision_function(predictions, confidences, n_classes):
             votes[predictions[:, k] == 1, j] += 1
             k += 1
 
-    max_confidences = sum_of_confidences.max()
-    min_confidences = sum_of_confidences.min()
-
-    if max_confidences == min_confidences:
-        return votes
-
-    # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
+    # Monotonically transform the sum_of_confidences to (-1/3, 1/3)
+    # and add it with votes. The monotonic transformation  is
+    # f: x -> x / (3 * (|x| + 1)), it uses 1/3 instead of 1/2
+    # to ensure that we won't reach the limits and change vote order.
     # The motivation is to use confidence levels as a way to break ties in
     # the votes without switching any decision made based on a difference
     # of 1 vote.
-    eps = np.finfo(sum_of_confidences.dtype).eps
-    max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
-    scale = (0.5 - eps) / max_abs_confidence
-    return votes + sum_of_confidences * scale
+    transformed_confidences = (sum_of_confidences /
+                               (3 * (np.abs(sum_of_confidences) + 1)))
+    return votes + transformed_confidences
