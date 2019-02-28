@@ -794,8 +794,8 @@ example using the two classes:
     >>> knn = KNeighborsClassifier(n_neighbors=3)
     >>> knn.fit(lmnn.transform(X_train), y_train) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
-    >>> print(knn.score(lmnn.transform(X_test), y_test))
-    0.971428571429
+    >>> print(knn.score(lmnn.transform(X_test), y_test)) # doctest: +ELLIPSIS
+    0.971428...
 Alternatively, one can create a :class:`sklearn.pipeline.Pipeline` instance
 that automatically applies the transformation when fitting or predicting:
 
@@ -805,8 +805,8 @@ that automatically applies the transformation when fitting or predicting:
     >>> lmnn_pipe = Pipeline([('lmnn', lmnn), ('knn', knn)])
     >>> lmnn_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS
     Pipeline(...)
-    >>> print(lmnn_pipe.score(X_test, y_test))
-    0.971428571429
+    >>> print(lmnn_pipe.score(X_test, y_test)) # doctest: +ELLIPSIS
+    0.971428...
 
 .. |lmnn_classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_classification_001.png
    :target: ../auto_examples/neighbors/plot_lmnn_classification.html

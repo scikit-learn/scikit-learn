@@ -183,13 +183,13 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     >>> knn = KNeighborsClassifier(n_neighbors=3)
     >>> knn.fit(X_train, y_train) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
-    >>> print(knn.score(X_test, y_test))
-    0.933333333333
+    >>> print(knn.score(X_test, y_test)) # doctest: +ELLIPSIS
+    0.933333...
     >>> # Now fit on the data transformed by the learned transformation
     >>> knn.fit(lmnn.transform(X_train), y_train) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
-    >>> print(knn.score(lmnn.transform(X_test), y_test))
-    0.971428571429
+    >>> print(knn.score(lmnn.transform(X_test), y_test)) # doctest: +ELLIPSIS
+    0.971428...
 
     .. warning::
 
