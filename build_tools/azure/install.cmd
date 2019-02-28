@@ -13,7 +13,11 @@ conda remove --all -q -y -n %VIRTUALENV%
 conda create -n %VIRTUALENV% -q -y python=%CONDA_PY% numpy scipy cython pytest wheel pillow
 
 call activate %VIRTUALENV%
-python -m pip install -U pip
+pip install -U pip
+if "%COVERAGE%" == "true" (
+    pip install coverage codecov
+)
+
 python --version
 pip --version
 
