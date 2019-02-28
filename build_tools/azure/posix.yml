@@ -23,7 +23,7 @@ jobs:
   steps:
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
-      condition: eq(variables['DISTRIB'], 'conda')
+      condition: in(variables['DISTRIB'], 'conda', 'scipy-dev')
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'
