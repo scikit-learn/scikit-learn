@@ -2,7 +2,7 @@
 
 set -e
 
-if [[ "$DISTRIB" == "conda" ]] | [[ "$DISTRIB" == "scipy-dev" ]]; then
+if [[ "$DISTRIB" == "conda" ]] || [[ "$DISTRIB" == "scipy-dev" ]]; then
     source activate $VIRTUALENV
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     source $VIRTUALENV/bin/activate
