@@ -24,6 +24,9 @@ random sampling procedures.
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
 - :class:`ensemble.GradientBoostingClassifier` for multiclass
   classification. |Fix|
+- :func:`svm.SVC.decision_function` and
+  :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
+
 
 Details are listed in the changelog below.
 
@@ -139,6 +142,10 @@ Support for Python 3.4 and below has been officially dropped.
   value of ``learning_rate`` in ``update_terminal_regions`` is not consistent
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
+  
+- |Enhancement| Minimized the validation of X in
+  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  :issue:`13174` by :user:`Christos Aridas <chkoar>`.
 
 :mod:`sklearn.externals`
 ........................
@@ -200,6 +207,11 @@ Support for Python 3.4 and below has been officially dropped.
    parameter value ``copy_X=True`` in ``fit``.
    :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
 
+- |Fix| Fixed a bug in :class:`linear_model.LinearRegression` that
+  was not returning the same coeffecients and intercepts with
+  ``fit_intercept=True`` in sparse and dense case.
+  :issue:`13279` by `Alexandre Gramfort`_
+
 :mod:`sklearn.manifold`
 ............................
 
@@ -211,6 +223,11 @@ Support for Python 3.4 and below has been officially dropped.
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Efficiency| Faster :func:`metrics.pairwise.pairwise_distances` with `n_jobs`
+  > 1 by using a thread-based backend, instead of process-based backends.
+  :issue:`8216` by :user:`Pierre Glaser <pierreglaser>` and
+  :user:`Romuald Menuet <zanospi>`
 
 - |Feature| Added the :func:`metrics.max_error` metric and a corresponding
   ``'max_error'`` scorer for single output regression.
@@ -262,8 +279,19 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`~model_selection.validation_curve` only the latter is required.
   :issue:`12613` and :issue:`12669` by :user:`Marc Torrellas <marctorrellas>`.
 
+- |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
+  shuffles each class's samples with the same ``random_state``,
+  making ``shuffle=True`` ineffective.
+  :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 :mod:`sklearn.neighbors`
 ........................
+
+- |MajorFeature| A metric learning algorithm:
+  :class:`neighbors.NeighborhoodComponentsAnalysis`, which implements the
+  Neighborhood Components Analysis algorithm described in Goldberger et al.
+  (2005). :issue:`10058` by :user:`William de Vazelhes
+  <wdevazelhes>` and :user:`John Chiotellis <johny-c>`.
 
 - |API| Methods in :class:`neighbors.NearestNeighbors` :
   :func:`~neighbors.NearestNeighbors.kneighbors`,
@@ -356,6 +384,23 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| Allow different dtypes (such as float32) in
   :class:`isotonic.IsotonicRegression` :issue:`8769` by :user:`Vlad Niculae <vene>`
 
+:mod:`sklearn.svm`
+..................
+
+- |Fix| Fixed an issue in :func:`svm.SVC.decision_function`
+  when ``decision_function_shape='ovr'``. The decision_function value of a given
+  sample was different depending on whether the decision_function was evaluated
+  on the sample alone or on a batch containing this same sample due to the scaling
+  used in decision_function. :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
+
+:mod:`sklearn.multiclass`
+.........................
+
+- |Fix| Fixed an issue in :func:`multiclass.OneVsOneClassifier.decision_function`
+  where the decision_function value of a given sample was different depending on
+  whether the decision_function was evaluated on the sample alone or on a batch
+  containing this same sample due to the scaling used in decision_function.
+  :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
 Multiple modules
 ................
