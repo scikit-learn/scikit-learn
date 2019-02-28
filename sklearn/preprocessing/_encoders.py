@@ -39,8 +39,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         - check for missing values for object dtype data (check_array does
           not do that)
         - return list of features (arrays): this list of features is
-                constructed feature by feature to preserver the data types
-                of pandas DataFrame columns)
+          constructed feature by feature to preserve the data types
+          of pandas DataFrame columns)
 
         """
         # if not a dataframe, do normal check_array validation
