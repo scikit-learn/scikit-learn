@@ -54,7 +54,6 @@ jobs:
         CHECK_WARNINGS: 'true'
         PYTHON_VERSION: '3.7'
 
-
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
