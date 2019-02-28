@@ -1260,6 +1260,12 @@ def test_quantile_transform_check_error():
     assert_raise_message(ValueError,
                          'Expected 2D array, got scalar array instead',
                          transformer.transform, 10)
+    # check that a warning is raised is n_quantiles > n_samples
+    transformer = QuantileTransformer(n_quantiles=100)
+    assert_warns_message(UserWarning,
+                         "n_quantiles will be set to n_samples",
+                         transformer.fit, X)
+    assert transformer.n_quantiles == X.shape[0]
 
 
 def test_quantile_transform_sparse_ignore_zeros():

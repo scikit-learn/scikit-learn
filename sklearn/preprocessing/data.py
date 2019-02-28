@@ -424,7 +424,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
         X_scaled = X_std * (max - min) + min
 
     where min, max = feature_range.
- 
+
     The transformation is calculated as (when ``axis=0``)::
 
        X_scaled = scale * X + min - X.min(axis=0) * scale
@@ -592,7 +592,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     -----
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
-    
+
     We use a biased estimator for the standard deviation, equivalent to
     `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
     affect model performance.
@@ -2044,6 +2044,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     n_quantiles : int, optional (default=1000)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
+        If n_quantiles is larger than the number of samples, n_quantiles is set
+        to the number of samples as a larger number of quantiles does not give
+        a better approximation of the cumulative distribution function
+        estimator.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
@@ -2218,6 +2222,17 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                        self.subsample))
 
         X = self._check_inputs(X)
+        n_samples = X.shape[0]
+
+        if self.n_quantiles > n_samples:
+            self.n_quantiles = n_samples
+            warnings.warn("n_quantiles (%s) is greater than the total number "
+                          "of samples (%s). n_quantiles will be set to "
+                          "n_samples as more quantiles do not lead to a "
+                          "better approximation of the used cumulative "
+                          "distribution function estimator."
+                          % (self.n_quantiles, n_samples))
+
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
@@ -2446,6 +2461,10 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     n_quantiles : int, optional (default=1000)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
+        If n_quantiles is larger than the number of samples, n_quantiles is set
+        to the number of samples as a larger number of quantiles does not give
+        a better approximation of the cumulative distribution function
+        estimator.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
