@@ -815,6 +815,7 @@ def test_n_iter():
 def test_ridge_fit_intercept_sparse():
     X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
                            bias=10., random_state=42)
+
     X_csr = sp.csr_matrix(X)
 
     for solver in ['saga', 'sag', 'sparse_cg']:
@@ -822,8 +823,8 @@ def test_ridge_fit_intercept_sparse():
         sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
         dense.fit(X, y)
         sparse.fit(X_csr, y)
-        assert_almost_equal(dense.intercept_, sparse.intercept_)
         assert_array_almost_equal(dense.coef_, sparse.coef_)
+        assert_almost_equal(dense.intercept_, sparse.intercept_)
 
     # test the solver switch and the corresponding warning
     sparse = Ridge(alpha=1., tol=1.e-15, solver='lsqr', fit_intercept=True)

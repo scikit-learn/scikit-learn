@@ -34,10 +34,34 @@ from ..exceptions import ConvergenceWarning
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
-                     fit_intercept=False):
+                     fit_intercept=False, X_offset=None, X_scale=None):
+
+    def _get_rescaled_operator(X):
+
+        X_offset_scale = X_offset / X_scale
+
+        def matvec(b):
+            return X.dot(b) - b.dot(X_offset_scale)
+
+        def rmatvec(b):
+            return X.T.dot(b) - X_offset_scale * np.sum(b)
+
+        X1 = sparse.linalg.LinearOperator(shape=X.shape,
+                                          matvec=matvec,
+                                          rmatvec=rmatvec)
+        return X1
+
     n_samples, n_features = X.shape
-    X1 = sp_linalg.aslinearoperator(X)
-    coefs = np.empty((y.shape[1], n_features + int(fit_intercept)), dtype=X.dtype)
+
+    if X_offset is None or X_scale is None:
+        X1 = sp_linalg.aslinearoperator(X)
+    else:
+        X1 = _get_rescaled_operator(X)
+
+    coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
+
+    dtype = X.dtype
+    del X
 
     if n_features > n_samples:
         def create_mv(curr_alpha):
@@ -58,27 +82,27 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
             C = sp_linalg.LinearOperator(
-                (n_samples, n_samples), matvec=mv, dtype=X.dtype)
+                (n_samples, n_samples), matvec=mv, dtype=dtype)
             # FIXME atol
             try:
                 coef, info = sp_linalg.cg(C, y_column, tol=tol, atol='legacy')
             except TypeError:
                 # old scipy
                 coef, info = sp_linalg.cg(C, y_column, tol=tol)
-            coefs[i, :n_features] = X1.rmatvec(coef)
+            coefs[i] = X1.rmatvec(coef)
         else:
             # linear ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             y_column = X1.rmatvec(y_column)
             C = sp_linalg.LinearOperator(
-                (n_features, n_features), matvec=mv, dtype=X.dtype)
+                (n_features, n_features), matvec=mv, dtype=dtype)
             # FIXME atol
             try:
-                coefs[i, :n_features], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
                                               tol=tol, atol='legacy')
             except TypeError:
                 # old scipy
-                coefs[i, :n_features], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
                                               tol=tol)
 
         if info < 0:
@@ -207,7 +231,8 @@ def _solve_svd(X, y, alpha):
 
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
-                     return_n_iter=False, return_intercept=False):
+                     return_n_iter=False, return_intercept=False,
+                     X_scale=None, X_offset=None):
     """Solve the ridge equation by the method of normal equations.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
@@ -329,7 +354,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     """
     if return_intercept and sparse.issparse(X) and solver not in ['sag', 'sparse_cg']:
         if solver != 'auto':
-            warnings.warn("In Ridge, only 'sag' solver can currently fit the "
+            warnings.warn("In Ridge, only 'sag' and 'sparse_cg' solvers can currently fit the "
                           "intercept when X is sparse. Solver has been "
                           "automatically changed into 'sag'.")
         solver = 'sag'
@@ -396,17 +421,13 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     n_iter = None
     if solver == 'sparse_cg':
-        coef_ = _solve_sparse_cg(X, y, alpha,
+        coef = _solve_sparse_cg(X, y, alpha,
                                  max_iter=max_iter,
                                  tol=tol,
                                  verbose=verbose,
-                                 fit_intercept=return_intercept)
-
-        if return_intercept:
-            coef = coef_[:, :-1]
-            intercept = coef_[:, -1]
-        else:
-            coef = coef_
+                                 fit_intercept=return_intercept,
+                                 X_offset=X_offset,
+                                 X_scale=X_scale)
 
     elif solver == 'lsqr':
         coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
@@ -503,24 +524,32 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                 np.atleast_1d(sample_weight).ndim > 1):
             raise ValueError("Sample weights must be 1D array or scalar")
 
+        # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
-            sample_weight=sample_weight)
+            sample_weight=sample_weight, return_mean=True)
 
         # temporary fix for fitting the intercept with sparse data using 'sag'
-        if sparse.issparse(X) and self.fit_intercept:
-            self.coef_, self.n_iter_, self.intercept_ = ridge_regression(
+        if sparse.issparse(X) and self.fit_intercept and self.solver in ['sag', 'saga']:
+            self.coef_, self.n_iter_, intercept = ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=True)
-            self.intercept_ += y_offset
+            # add the offset which was subtracted by _preprocess_data
+            self.intercept_ = intercept + y_offset
         else:
+            if sparse.issparse(X):
+                params = {'X_offset': X_offset,
+                          'X_scale': X_scale}
+            else:
+                params = {}
             self.coef_, self.n_iter_ = ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
-                return_intercept=False)
+                return_intercept=False, **params)
+
             self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
