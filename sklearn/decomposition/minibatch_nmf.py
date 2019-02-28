@@ -130,12 +130,12 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         elif self.init == 'random':
             W = self.random_state.gamma(
                 shape=1, scale=1,
-                size=(self.n_components, self.n_vocab))
+                size=(self.n_components, self.n_features_))
         else:
             raise AttributeError(
                 'Initialization method %s does not exist.' % self.init)
         W /= W.sum(axis=1, keepdims=True)
-        A = np.ones((self.n_components, self.n_vocab)) * 1E-10
+        A = np.ones((self.n_components, self.n_features_)) * 1E-10
         B = A.copy()
         return W, A, B
 
@@ -152,7 +152,7 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         """
         # needs to be changed to check is X contains strings or not
         if sparse.issparse(X):
-            n_samples, self.n_vocab = X.shape
+            n_samples, self.n_features_ = X.shape
             H = np.ones((n_samples, self.n_components))
             H = self._rescale_H(X, H)
             self.W, self.A, self.B = self._init_W(X)
@@ -182,7 +182,7 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
 
     def partial_fit(self, X, y=None):
         if hasattr(self, 'iter'):
-            assert X.shape[1] == self.n_vocab
+            assert X.shape[1] == self.n_features_
             if sparse.issparse(X):
                 n_samples, _ = X.shape
                 H = np.ones((n_samples, self.n_components))
@@ -191,7 +191,7 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
                 # not implemented yet
         else:
             if sparse.issparse(X):
-                n_samples, self.n_vocab = X.shape
+                n_samples, self.n_features_ = X.shape
                 H = np.ones((n_samples, self.n_components))
                 H = self._rescale_H(X, H)
                 self.W, self.A, self.B = self._init_W(X)
@@ -220,7 +220,7 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         X_new : 2-d array, shape [n_samples, n_components]
             Transformed input.
         """
-        assert X.shape[1] == self.n_vocab
+        assert X.shape[1] == self.n_features_
         n_samples, _ = X.shape
 
         H = np.ones((n_samples, self.n_components))
