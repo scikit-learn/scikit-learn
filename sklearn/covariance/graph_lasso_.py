@@ -337,13 +337,13 @@ class GraphicalLasso(EmpiricalCovariance):
     --------
     >>> import numpy as np
     >>> from sklearn.covariance import GraphicalLasso
-    >>> real_cov = np.array([[.8, 0., .2, 0.],
+    >>> true_cov = np.array([[.8, 0., .2, 0.],
     ...                      [0., .4, 0., 0.],
     ...                      [.2, 0., .3, .1],
     ...                      [0., 0., .1, .7]])
     >>> np.random.seed(0)
     >>> X = np.random.multivariate_normal(mean=[0, 0, 0, 0],
-    ...                                   cov=real_cov,
+    ...                                   cov=true_cov,
     ...                                   size=200)
     >>> cov = GraphicalLasso().fit(X)
     >>> np.around(cov.covariance_, decimals=3)
@@ -592,13 +592,13 @@ class GraphicalLassoCV(GraphicalLasso):
     --------
     >>> import numpy as np
     >>> from sklearn.covariance import GraphicalLassoCV
-    >>> real_cov = np.array([[.8, 0., .2, 0.],
+    >>> true_cov = np.array([[.8, 0., .2, 0.],
     ...                      [0., .4, 0., 0.],
     ...                      [.2, 0., .3, .1],
     ...                      [0., 0., .1, .7]])
     >>> np.random.seed(0)
     >>> X = np.random.multivariate_normal(mean=[0, 0, 0, 0],
-    ...                                   cov=real_cov,
+    ...                                   cov=true_cov,
     ...                                   size=200)
     >>> cov = GraphicalLassoCV(cv=5).fit(X)
     >>> np.around(cov.covariance_, decimals=3)
