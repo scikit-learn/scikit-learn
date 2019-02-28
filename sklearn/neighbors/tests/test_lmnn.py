@@ -8,8 +8,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 
 from sklearn import datasets
 from sklearn.neighbors import LargeMarginNearestNeighbor
@@ -57,7 +55,7 @@ def test_neighbors_iris():
     knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
     knn.fit(LX, iris_target)
 
-    assert_true(knn.score(LX, iris_target) > 0.95)
+    assert(knn.score(LX, iris_target) > 0.95)
 
 
 def test_neighbors_digits():
@@ -157,7 +155,7 @@ def test_params_validation():
 
     n_jobs = 0
     assert_raise_message(ValueError,
-                         'Parameter n_jobs == 0 has no meaning.',
+                         'n_jobs == 0 in Parallel has no meaning',
                          LMNN(n_jobs=n_jobs).fit, X, y)
 
     # test min_class_size < 2
@@ -315,13 +313,13 @@ def test_warm_start_effectiveness():
     diff_cold = np.sum(np.abs(transformation_cold_plus_one -
                               transformation_cold))
 
-    assert_true(diff_warm < 2.0,
-                "Transformer changed significantly after one iteration even "
-                "though it was warm-started.")
+    assert(diff_warm < 2.0,
+           "Transformer changed significantly after one iteration even "
+           "though it was warm-started.")
 
-    assert_true(diff_cold > diff_warm,
-                "Cold-started transformer changed less significantly than "
-                "warm-started transformer after one iteration.")
+    assert(diff_cold > diff_warm,
+           "Cold-started transformer changed less significantly than "
+           "warm-started transformer after one iteration.")
 
 
 def test_max_impostors():
@@ -346,7 +344,7 @@ def test_neighbors_params():
     lmnn.fit(iris_data, iris_target)
     components_euclidean = lmnn.components_
 
-    assert_false(np.allclose(components_hamming, components_euclidean))
+    assert(not np.allclose(components_hamming, components_euclidean))
 
 
 def test_impostor_store():
@@ -474,7 +472,7 @@ def test_random_state():
     lmnn.fit(X, y)
     transformation_3 = lmnn.components_
 
-    assert_false(np.allclose(transformation_2, transformation_3))
+    assert(not np.allclose(transformation_2, transformation_3))
 
 
 def test_same_lmnn_parallel():
