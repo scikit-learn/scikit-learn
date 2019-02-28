@@ -139,6 +139,10 @@ Support for Python 3.4 and below has been officially dropped.
   value of ``learning_rate`` in ``update_terminal_regions`` is not consistent
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
+  
+- |Enhancement| Minimized the validation of X in
+  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  :issue:`13174` by :user:`Christos Aridas <chkoar>`.
 
 :mod:`sklearn.externals`
 ........................
@@ -200,6 +204,11 @@ Support for Python 3.4 and below has been officially dropped.
    parameter value ``copy_X=True`` in ``fit``.
    :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
 
+- |Fix| Fixed a bug in :class:`linear_model.LinearRegression` that
+  was not returning the same coeffecients and intercepts with
+  ``fit_intercept=True`` in sparse and dense case.
+  :issue:`13279` by `Alexandre Gramfort`_
+
 :mod:`sklearn.manifold`
 ............................
 
@@ -211,6 +220,11 @@ Support for Python 3.4 and below has been officially dropped.
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Efficiency| Faster :func:`metrics.pairwise.pairwise_distances` with `n_jobs`
+  > 1 by using a thread-based backend, instead of process-based backends.
+  :issue:`8216` by :user:`Pierre Glaser <pierreglaser>` and
+  :user:`Romuald Menuet <zanospi>`
 
 - |Feature| Added the :func:`metrics.max_error` metric and a corresponding
   ``'max_error'`` scorer for single output regression.
@@ -261,6 +275,11 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`~model_selection.learning_curve`, and
   :func:`~model_selection.validation_curve` only the latter is required.
   :issue:`12613` and :issue:`12669` by :user:`Marc Torrellas <marctorrellas>`.
+
+- |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
+  shuffles each class's samples with the same ``random_state``,
+  making ``shuffle=True`` ineffective.
+  :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.neighbors`
 ........................
