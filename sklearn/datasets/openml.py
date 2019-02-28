@@ -362,19 +362,12 @@ def _get_data_shape(data_qualities):
     # the number of samples / features
     if data_qualities is None:
         return None
-    for d in data_qualities:
-        if d['name'] == 'NumberOfFeatures':
-            n_features = int(float(d['value']))
-            break
-    else:
+    qualities = {d['name']: d['value'] for d in data_qualities}
+    try:
+        return (int(float(qualities['NumberOfInstances'])),
+                int(float(qualities['NumberOfFeatures'])))
+    except AttributeError:
         return None
-    for d in data_qualities:
-        if d['name'] == 'NumberOfInstances':
-            n_samples = int(float(d['value']))
-            break
-    else:
-        return None
-    return (n_samples, n_features)
 
 
 def _download_data_arff(file_id, sparse, data_home, encode_nominal=True):
@@ -631,7 +624,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if not return_sparse:
         data_qualities = _get_data_qualities(data_id, data_home)
         shape = _get_data_shape(data_qualities)
-        # if the data qualities were not available, we cans still get the
+        # if the data qualities were not available, we can still get the
         # n_features from the feature list, with the n_samples unknown
         if shape is None:
             shape = (-1, len(features_list))
