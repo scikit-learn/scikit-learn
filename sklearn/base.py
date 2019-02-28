@@ -6,6 +6,7 @@
 import copy
 import warnings
 from collections import defaultdict
+import platform
 import inspect
 
 import numpy as np
@@ -596,10 +597,11 @@ class MultiOutputMixin(object):
         return {'multioutput': True}
 
 
-class _UnstableOn32BitMixin(object):
-    """Mark estimators that are non-determinstic on 32bit."""
+class _UnstableArchMixin(object):
+    """Mark estimators that are non-determinstic on 32bit or PowerPC"""
     def _more_tags(self):
-        return {'non_deterministic': _IS_32BIT}
+        return {'non_deterministic': (
+            _IS_32BIT or platform.machine().startswith(('ppc', 'powerpc')))}
 
 
 def is_classifier(estimator):
