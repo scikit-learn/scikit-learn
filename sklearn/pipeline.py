@@ -94,7 +94,7 @@ class Pipeline(_BaseComposition):
     ...                      # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Pipeline(memory=None,
              steps=[('anova', SelectKBest(...)),
-                    ('svc', SVC(...))])
+                    ('svc', LinearSVC(...))])
     >>> prediction = anova_svm.predict(X)
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.83
