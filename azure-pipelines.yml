@@ -1,10 +1,10 @@
 # Adapted from https://github.com/pandas-dev/pandas/blob/master/azure-pipelines.yml
 jobs:
-- template: build_tools/azure/posix.yml
-  parameters:
-    name: Linux
-    vmImage: ubuntu-16.04
-    matrix:
+# - template: build_tools/azure/posix.yml
+#   parameters:
+#     name: Linux
+#     vmImage: ubuntu-16.04
+#     matrix:
       # Linux environment to test that scikit-learn can be built against
       # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
       # i.e. numpy 1.11 and scipy 0.17
