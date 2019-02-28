@@ -1136,7 +1136,7 @@ def test_input_features_nested():
 
                  
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-def test_input_features_meta():
+def test_input_features_meta_pipe():
     ovr = OneVsRestClassifier(Pipeline(steps=[('select', SelectKBest(k=2)),
                                               ('clf', LogisticRegression())]))
     pipe = Pipeline(steps=[('ovr', ovr)])
@@ -1152,4 +1152,22 @@ def test_input_features_meta():
     assert_array_equal(pipe.input_features_, iris.feature_names)
     assert_array_equal(inner_pipe.input_features_, iris.feature_names)
     assert_array_equal(inner_pipe.named_steps.clf.input_features_,
+                       np.array(iris.feature_names)[mask])
+                       
+
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+def test_input_features_meta():
+    ovr = OneVsRestClassifier(LogisticRegression())
+    pipe = Pipeline(steps=[('select', SelectKBest(k=2)), ('ovr', ovr)])
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+    xs = np.array(['x0', 'x1', 'x2', 'x3'])
+    assert_array_equal(pipe.input_features_, xs)
+    # check 0ths estimator in OVR only
+    one_logreg = pipe.named_steps.ovr.estimators_[0]
+    mask = pipe.named_steps.select.get_support()
+    assert_array_equal(one_logreg.input_features_, xs[mask])
+    pipe.get_feature_names(iris.feature_names)
+    assert_array_equal(pipe.input_features_, iris.feature_names)
+    assert_array_equal(one_logreg.input_features_,
                        np.array(iris.feature_names)[mask])

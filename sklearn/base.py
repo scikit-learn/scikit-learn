@@ -599,6 +599,7 @@ class MetaEstimatorMixin:
     def get_feature_names(self, input_features=None):
         sub_ests = _get_sub_estimators(self)
         for est in sub_ests:
+            est.input_features_ = input_features
             if hasattr(est, "get_feature_names"):
                 # doing hassattr instead of a try-except on everything
                 # b/c catching AttributeError makes recursive code
@@ -610,7 +611,6 @@ class MetaEstimatorMixin:
                     est.get_feature_names()
                 except NotFittedError:
                     pass
-        print("done recursing")
 
 
 class MultiOutputMixin(object):
