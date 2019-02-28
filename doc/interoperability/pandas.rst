@@ -28,7 +28,7 @@ Every Scikit-learn estimator/transformer/pipeline
 (for the rest of this section we shall call these primitives)
 supports the use of DataFrames as inputs which is achieved by obtaining a
 `NumPy array <https://docs.scipy.org/doc/numpy/user/>`__ using
-the :meth:`.values` property of the DataFrame class. The only exception where a
+the :meth:`np.asarray()` on a DataFrame object. The only exception where a
 a DataFrame is being used explicitly is the
 :class:`~sklearn.compose.ColumnTransformer` which is briefly
 discussed below `Dealing with heterogenous data`_.
@@ -45,7 +45,7 @@ There are several conditions on using a DataFrame as an input to
 Scikit-learn primitives, one of which is that the data in the
 DataFrame columns used by the estimator are of numerical type. Other conditions
 and pitfalls are described in subsequent sections. The numerical condition can
-be checked e.g. using something like:
+be checked e.g. using something like::
 
   >>> import pandas as pd
   >>> from pandas.api.types import is_numeric_dtype
@@ -66,12 +66,12 @@ of the issues arising as a result are outlined below and sources
 (where available) of
 discussions and work-arounds (the latter is provided without guarantee that the
 workaround will still work) are provided. It should also be mentioned that if
-the DataFrame contains heterogenous data, the :meth:`.to_numpy` property will
+the DataFrame contains heterogenous data, the :meth:`np.asarray()` function will
 create an in-memory copy of the DataFrame, thus using a NumPy array in the
 first place can be more memory efficient as well as avoiding some of the
 potential pitfalls when using DataFrames. If the DataFrame contains only
 homogenous data in the first place, no in-memory copy will be created using
-:meth:`.to_numpy`.
+:meth:`np.asarray()`.
 
 Pandas in **not** Pandas out
 ============================
@@ -80,40 +80,34 @@ Some primitives in Scikit-learn support the pandas in pandas out, however it
 should generally be assumed that you get a Numpy array as an output when
 providing a DataFrame as an input.
 
-Example for Pandas working with Scikit-learn primitive:
+Example for Pandas working with Scikit-learn primitive::
 
->>> import numpy as np
->>> from sklearn.datasets import load_iris
->>> import pandas as pd
->>>
->>> # make a dataframe
->>> iris = load_iris()
->>> X, y = iris.data[:-1,:], iris.target[:-1]
->>> iris_pd = pd.DataFrame(X)
->>> iris_pd.columns = iris.feature_names
->>> iris_pd['target'] = y
->>>
->>> from sklearn.model_selection import train_test_split
->>> train, test = train_test_split(iris_pd.copy(), test_size= 0.3)
->>>
->>> type(train)
-<class 'pandas.core.frame.DataFrame'>
+  >>> import numpy as np
+  >>> from sklearn.datasets import load_iris
+  >>> import pandas as pd
+  >>>
+  >>> # make a dataframe
+  >>> iris = load_iris()
+  >>> X, y = iris.data[:-1,:], iris.target[:-1]
+  >>> iris_pd = pd.DataFrame(X)
+  >>> iris_pd.columns = iris.feature_names
+  >>> iris_pd['target'] = y
+  >>>
+  >>> from sklearn.model_selection import train_test_split
+  >>> train, test = train_test_split(iris_pd.copy(), test_size= 0.3)
+  >>>
+  >>> type(train)
+  <class 'pandas.core.frame.DataFrame'>
 
-However, removing some random values from the dataset and using the
-:class:`~sklearn.impute.SimpleImputer` to replace the NaNs returns a NumPy
-array instead of a DataFrame even though we use a DataFrame as input.
+However, using the :class:`~sklearn.preprocessing.StandardScaler` returns a
+NumPy array instead of a DataFrame even though we use a DataFrame as input::
 
->>> rng = np.random.RandomState(42)
->>> # selecting some random indices to replace
->>> idx = train.index[rng.binomial(1, 0.2, train.shape[0]).astype(bool)]
->>> train.loc[idx, 'sepal length (cm)'] = np.nan
->>>
->>> from sklearn.impute import SimpleImputer
->>>
->>> imputer = SimpleImputer()
->>> X = imputer.fit_transform(train)
->>> type(X)
-<class 'numpy.ndarray'>
+  >>> from sklearn.preprocessing import StandardScaler
+  >>>
+  >>> scaler = StandardScaler()
+  >>> X = scaler.fit_transform(train)
+  >>> type(X)
+  <class 'numpy.ndarray'>
 
 As this example shows, at the moment it is not guaranteed that Scikit-learn
 primitivies with :meth:`.fit`, :meth:`.transform` (and :meth:`.predict`)
@@ -130,63 +124,53 @@ The column ordering problem
 Because Scikit-learn transforms DataFrames to NumPy arrays, it should be
 assumed, that all information and benefits of column names is lost and that
 from that point forward, only column order and not column labels stay relevant.
-This can cause problems when e.g. pickling a trained estimator and later
-applying it to a new DataFrame that, while having the same data columns and
-labels, has those in a different order compared to the original DataFrame.
-Intuitively it might be assumed that because Scikit-learn handles the use of
-DataFrames so smoothly in most cases, the same goes for re-ordering labeled
-DataFrames but this is **not** the case.
+This can cause problems in general when predicting unseen data using a previously
+trained estimator and applying it to the new data as it does not matter
+that the unseen/new data has the same data columns and labels, they still
+**must** be provided in the correct order too.
+Scikit-learn does not check that the column order is consistent nor does
+it do any automatic re-ordering of DataFrame columns!
 
 An example of how this might impact your future prediction can be seen in the
-example given below (original with slight modifications adjusting for current
-API, thanks to `SauceCat <https://github.com/scikit-learn/scikit-learn/issues/7242#issue-173131995>`__).
+example given below::
 
->>> # for simplification, consider a very simple case
->>> from sklearn.datasets import load_iris
->>> import pandas as pd
->>>
->>> # make a dataframe
->>> iris = load_iris()
->>> X, y = iris.data[:-1,:], iris.target[:-1]
->>> iris_pd = pd.DataFrame(X)
->>> iris_pd.columns = iris.feature_names
->>> iris_pd['target'] = y
->>>
->>> from sklearn.model_selection import train_test_split
->>> train, test = train_test_split(iris_pd, test_size= 0.3, random_state=42)
->>>
->>> feature_columns_train = ['sepal length (cm)','sepal width (cm)',
-...                          'petal length (cm)','petal width (cm)']
->>> # last two correct order
->>> feature_columns_test = ['sepal length (cm)','sepal width (cm)',
-...                         'petal width (cm)','petal length (cm)']
->>> # last two switched order
->>>
->>> from sklearn.linear_model import LogisticRegression
->>> lg = LogisticRegression(n_jobs=4, random_state=123, verbose=0,
-...                         penalty='l2', C=1.0,
-...                         solver='lbfgs', multi_class='auto')
->>> lg.fit(train[feature_columns_train], train['target'])
-LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-                   intercept_scaling=1, l1_ratio=None, max_iter=100,
-                   multi_class='auto', n_jobs=4, penalty='l2', random_state=123,
-                   solver='lbfgs', tol=0.0001, verbose=0, warm_start=False)
->>>
->>> prob1 = lg.predict_proba(test[feature_columns_train])
->>> prob1[:5]
-array([[4.11775575e-03, 8.20651654e-01, 1.75230591e-01],
-       [9.42197387e-01, 5.78021174e-02, 4.96014488e-07],
-       [2.80792378e-07, 5.36112664e-03, 9.94638593e-01],
-       [6.92583081e-03, 7.79167290e-01, 2.13906879e-01],
-       [1.64170075e-03, 7.43560544e-01, 2.54797756e-01]])
->>> # result is actually
->>> prob2 = lg.predict_proba(test[feature_columns_test])
->>> prob2[:5]
-array([[7.97326265e-01, 1.74068589e-01, 2.86051460e-02],
-       [9.96001477e-01, 3.99849230e-03, 3.08998201e-08],
-       [2.50514227e-03, 7.47234078e-03, 9.90022517e-01],
-       [7.15353463e-01, 2.33443544e-01, 5.12029929e-02],
-       [5.67215000e-01, 3.41931708e-01, 9.08532926e-02]])
+  >>> from sklearn.datasets import load_iris
+  >>> import pandas as pd
+  >>>
+  >>> # make a dataframe
+  >>> iris = load_iris()
+  >>> X, y = iris.data[:-1,:], iris.target[:-1]
+  >>> iris_pd = pd.DataFrame(X)
+  >>> iris_pd.columns = iris.feature_names
+  >>> iris_pd['target'] = y
+  >>>
+  >>> from sklearn.model_selection import train_test_split
+  >>> train, test = train_test_split(iris_pd, test_size= 0.3, random_state=42)
+  >>>
+  >>> feature_columns_train = ['sepal length (cm)','sepal width (cm)',
+  ...                          'petal length (cm)','petal width (cm)']
+  >>> # last two correct order
+  >>> feature_columns_test = ['sepal length (cm)','sepal width (cm)',
+  ...                         'petal width (cm)','petal length (cm)']
+  >>> # last two switched order
+  >>>
+  >>> from sklearn.linear_model import LogisticRegression
+  >>> lg = LogisticRegression(n_jobs=4, random_state=123, verbose=0,
+  ...                         penalty='l2', C=1.0,
+  ...                         solver='lbfgs', multi_class='auto')
+  >>> lg.fit(train[feature_columns_train], train['target'])
+  LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+                     intercept_scaling=1, l1_ratio=None, max_iter=100,
+                     multi_class='auto', n_jobs=4, penalty='l2', random_state=123,
+                     solver='lbfgs', tol=0.0001, verbose=0, warm_start=False)
+  >>>
+  >>> res1 = lg.predict(test[feature_columns_train])
+  >>> res1[:5]
+  array([1, 0, 2, 1, 1])
+  >>> # result is actually
+  >>> res2 = lg.predict(test[feature_columns_test])
+  >>> res2[:5]
+  array([0, 0, 2, 0, 0])
 
 
 At the time of writing, it is the users responsibility to ensure that the
@@ -196,18 +180,16 @@ whether or not this will change in the future and this
 `issue <https://github.com/scikit-learn/scikit-learn/issues/7242>`__ should be
 watched and used to update this paragraph in the future. A simple and straight-
 forward way of ensuring that column ordering and column labels are the same is
-using something like :meth:`df.loc[:, list of column names]` to enforce the
+using something like `df[list of column names]` to enforce the
 correct ordering.
 
 Handling Categorical data
 =========================
 
-Section to be extended.
+Please see the following references to get started:
 
-See the following references to get started:
-
-- https://scikit-learn.org/stable/glossary.html#term-categorical-feature
-- https://scikit-learn.org/stable/modules/preprocessing.html#preprocessing-categorical-features
+- :term:`categorical feature`
+- :ref:`preprocessing_categorical_features`
 - https://github.com/scikit-learn-contrib/sklearn-pandas
 
 
@@ -216,7 +198,8 @@ Dealing with heterogenous data
 
 Many modern datasets used with Scikit-learn contain heterogenous data. For the
 purpose of adding bespoke preprocessing steps for separate columns, Scikit-
-learn provides an experimental :class:`~sklearn.compose.ColumnTransformer` API.
+learn provides an experimental :class:`~sklearn.compose.ColumnTransformer` API
+(:ref:`column_transformer`).
 This API (which might change in the future) allows the definition of different
 transformation steps to be applied to different columns in either arrays,
 sparse matrices or pandas DataFrames.
@@ -224,9 +207,11 @@ sparse matrices or pandas DataFrames.
 Dealing with missing values
 ===========================
 
-As per the glosary, most Scikit-learn primitives do not work with missing
+As per the glossary, most Scikit-learn primitives do not work with missing
 values. If they do, NaN is the preferred representation of missing values. For
-more details, see https://scikit-learn.org/stable/glossary.html#term-missing-values.
+more details, see :term:`missing values`. Non-numeric data is now also supported
+via the ``'most_frequent'`` or ``'constant'`` of the :class:`SimpleImputer`
+class. For details see :ref:`impute`.
 
 
 Sparse DataFrames Handling
@@ -237,10 +222,6 @@ Sparse DataFrames Handling
   ``Sparse DataFrames`` are not automatically converted to ``scipy.sparse``
   matrices.
 
-This is an issue which has vastly improved from pandas version 0.21.1 onwards.
-The conversation from DataFrames has been largely optimised and are much faster
-to convert.
-
 In general, Sparse data structures (i.e. DataFrames, Series, Arrays) are memory
 optimised structures of their standard counterparts. They work on the principle
 that they contain a lot of NaN, 0, or another repeating value (this can be
@@ -250,9 +231,9 @@ available memory. However one has to be careful they don't get converted into
 the dense format by mistake.
 
 In Pandas, the main sparse data structures is: :class:`~pandas.SparseArray`.
-Both :class:`~pandas.SparseDataFrame` and :class:`~pandas.SparseSeries` exists
-but don't offer significant advantages over DataFrames where the columns are
-SparseArrays and will be deprecated at some point in the future.
+However, Scikit-learn does not support sparse Pandas structures and by default
+they will be converted to dense numpy arrays. The best way to use sparse
+arrays in Scikit-learn is to convert them manually to sparce Scipy matrices.
 The methods: :meth:`.to_sparse(fill_value=0)` and :meth:`.to_dense()` can be
 used to convert between normal and sparse data structures.
 The `.density` property can be called on the sparse structures to report
