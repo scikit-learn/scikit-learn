@@ -204,6 +204,13 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
+def _get_valid_accept_sparse(is_X_sparse, solver):
+    if is_X_sparse and solver in ['auto', 'sag', 'saga']:
+        return 'csr'
+    else:
+        return ['csr', 'csc', 'coo']
+
+
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
                      return_n_iter=False, return_intercept=False,
@@ -339,10 +346,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                           "automatically changed into 'sag'.")
         solver = 'sag'
 
-    _dtype = [np.float64, np.float32]
-
     if check_input:
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=_dtype,
+        _dtype = [np.float64, np.float32]
+        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), solver)
+        X = check_array(X, accept_sparse=_accept_sparse, dtype=_dtype,
                         order="C")
         y = check_array(y, dtype=X.dtype, ensure_2d=False, order="C")
     check_consistent_length(X, y)
@@ -483,8 +490,10 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
 
         # all other solvers work at both float precision levels
         _dtype = [np.float64, np.float32]
+        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
+                                                  self.solver)
         X, y = check_X_y(X, y,
-                         accept_sparse='csr',
+                         accept_sparse=_accept_sparse,
                          dtype=_dtype,
                          multi_output=True, y_numeric=True)
 
@@ -829,8 +838,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         -------
         self : returns an instance of self.
         """
-        check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                  multi_output=True)
+        _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
+                                                  self.solver)
+        check_X_y(X, y, accept_sparse=_accept_sparse, multi_output=True)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
