@@ -2,7 +2,7 @@ parameters:
   name: ''
   vmImage: ''
   matrix: []
-  toRun: 'false'
+  toRun: 'true'
 
 jobs:
 - job: ${{ parameters.name }}
