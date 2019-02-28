@@ -910,6 +910,7 @@ class _RidgeGCV(LinearModel):
 
     def _pre_compute(self, X, y, centered_kernel=True):
         # even if X is very sparse, K is usually very dense
+        n_samples, n_features = X.shape
         K = safe_sparse_dot(X, X.T, dense_output=True)
         # the following emulates an additional constant regressor
         # corresponding to fit_intercept=True
@@ -960,13 +961,14 @@ class _RidgeGCV(LinearModel):
         return y - (c / G_diag), c
 
     def _pre_compute_svd(self, X, y, centered_kernel=True):
-        if sparse.issparse(X):
-            raise TypeError("SVD not supported for sparse matrices")
         if centered_kernel:
             X = np.hstack((X, np.ones((X.shape[0], 1))))
         # to emulate fit_intercept=True situation, add a column on ones
         # Note that by centering, the other columns are orthogonal to that one
-        U, s, _ = linalg.svd(X, full_matrices=0)
+        if sparse.issparse(X):
+            U, s, _ = sp_linalg.svds(X)
+        else:
+            U, s, _ = linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
@@ -1027,7 +1029,7 @@ class _RidgeGCV(LinearModel):
         with_sw = len(np.shape(sample_weight))
 
         if gcv_mode is None or gcv_mode == 'auto':
-            if sparse.issparse(X) or n_features > n_samples or with_sw:
+            if n_features > n_samples or with_sw:
                 gcv_mode = 'eigen'
             else:
                 gcv_mode = 'svd'
@@ -1283,8 +1285,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     See glossary entry for :term:`cross-validation estimator`.
 
     By default, it performs Generalized Cross-Validation, which is a form of
-    efficient Leave-One-Out cross-validation. Currently, only the n_features >
-    n_samples case is handled efficiently.
+    efficient Leave-One-Out cross-validation.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
 
