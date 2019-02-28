@@ -2,10 +2,12 @@ parameters:
   name: ''
   vmImage: ''
   matrix: []
+  toRun: true
+
 
 jobs:
 - job: ${{ parameters.name }}
-  condition: and(eq(variables['DISTRIB'], 'scipy-dev'), eq(variables['Build.Reason'], 'Schedule'))
+  condition: ${{ parameters.toRun }}
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:

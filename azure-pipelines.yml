@@ -47,11 +47,13 @@ jobs:
   parameters:
     name: Linux
     vmImage: ubuntu-16.04
+    toRun: eq(variables['Build.Reason'], 'Schedule')
     matrix:
       pylatest_scipy_dev:
         DISTRIB: 'scipy-dev'
         CHECK_WARNINGS: 'true'
         PYTHON_VERSION: '3.7'
+
 
 # - template: build_tools/azure/posix.yml
 #   parameters:
