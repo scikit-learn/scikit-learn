@@ -2,9 +2,11 @@ parameters:
   name: ''
   vmImage: ''
   matrix: []
+  toRun: 'false'
 
 jobs:
 - job: ${{ parameters.name }}
+  condition: ${{ parameters.toRun }}
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
