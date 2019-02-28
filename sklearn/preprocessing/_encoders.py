@@ -38,10 +38,12 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         - convert list of strings to object dtype
         - check for missing values for object dtype data (check_array does
           not do that)
-        - return list of features (arrays)
+        - return list of features (arrays): this list of features is
+                constructed feature by feature to preserver the data types
+                of pandas DataFrame columns)
 
         """
-
+        # if not a dataframe, do normal check_array validation"
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             X_temp = check_array(X, dtype=None)
             if not hasattr(X, 'dtype') and\
@@ -51,9 +53,10 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                 X = X_temp
             needs_validation = False
         else:
+            # pandas dataframe, do validation later column by column
             needs_validation = True
 
-        n_samples, n_features = np.shape(X)
+        n_samples, n_features = X.shape
         X_columns = []
 
         for i in range(n_features):
