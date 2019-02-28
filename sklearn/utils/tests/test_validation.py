@@ -191,10 +191,10 @@ def test_check_array_force_all_finite_object():
     X = np.array([['a', 'b', np.nan]], dtype=object).T
 
     X_checked = check_array(X, dtype=None, force_all_finite='allow-nan')
-    #assert_allclose_dense_sparse(X, X_checked)
+    assert X is X_checked
 
     X_checked = check_array(X, dtype=None, force_all_finite=False)
-    #assert_allclose_dense_sparse(X, X_checked)
+    assert X is X_checked
 
     with pytest.raises(ValueError, match='Input contains NaN'):
         check_array(X, dtype=None, force_all_finite=True)
