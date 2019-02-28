@@ -926,10 +926,9 @@ Similarly, labels not present in the data sample may be accounted for in macro-a
 Jaccard similarity coefficient score
 -------------------------------------
 
-The :func:`jaccard_score` function computes the average (default)
-or sum of `Jaccard similarity coefficients
-<https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the Jaccard index,
-between pairs of label sets.
+The :func:`jaccard_score` function computes the average of `Jaccard similarity
+coefficients <https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the
+Jaccard index, between pairs of label sets.
 
 The Jaccard similarity coefficient of the :math:`i`-th samples,
 with a ground truth label set :math:`y_i` and predicted label set
@@ -948,12 +947,16 @@ In the multilabel case with binary label indicators: ::
 
   >>> import numpy as np
   >>> from sklearn.metrics import jaccard_score
-  >>> y_true = np.array([[0, 1], [1, 1]])
-  >>> y_pred = np.ones((2, 2))
-  >>> jaccard_score(y_true, y_pred, average='samples')
-  0.75
-  >>> jaccard_score(y_true, y_pred, average='macro')
-  0.75
+  >>> y_true = np.array([[0, 1, 1],
+  ...                    [1, 1, 0]])
+  >>> y_pred = np.array([[1, 1, 1],
+  ...                    [1, 0, 0]])
+  >>> jaccard_score(y_true[0], y_pred[0])  # doctest: +ELLIPSIS
+  0.6666...
+  >>> jaccard_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  0.6666...
+  >>> jaccard_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
+  0.5833...
 
 Multiclass problems are binarized and treated like the corresponding
 multilabel problem: ::

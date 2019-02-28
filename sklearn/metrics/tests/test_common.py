@@ -863,8 +863,6 @@ def test_raise_value_error_multilabel_sequences(name):
 
 @pytest.mark.parametrize('name', METRICS_WITH_NORMALIZE_OPTION)
 def test_normalize_option_binary_classification(name):
-    if name in METRIC_UNDEFINED_BINARY:
-        return
     # Test in the binary case
     n_samples = 20
     random_state = check_random_state(0)
@@ -882,8 +880,6 @@ def test_normalize_option_binary_classification(name):
 
 @pytest.mark.parametrize('name', METRICS_WITH_NORMALIZE_OPTION)
 def test_normalize_option_multiclass_classification(name):
-    if name in METRIC_UNDEFINED_MULTICLASS:
-        return
     # Test in the multiclass case
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 4, size=(20, ))

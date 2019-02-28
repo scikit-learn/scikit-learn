@@ -1217,13 +1217,10 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     return result
 
 
-_ALL_ZERO = object()  # sentinel for special, degenerate case
-
-
 def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     """Validation associated with set-wise metrics
 
-    Returns identified labels or _ALL_ZERO sentinel
+    Returns identified labels
     """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
     if average not in average_options and average != 'binary':
