@@ -893,12 +893,12 @@ def test_dtype_match(solver):
     y_32 = y_64.astype(np.float32)
 
     # Check type consistency 32bits
-    ridge_32 = Ridge(alpha=alpha, solver=solver)
+    ridge_32 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=1e-10,)
     ridge_32.fit(X_32, y_32)
     coef_32 = ridge_32.coef_
 
     # Check type consistency 64 bits
-    ridge_64 = Ridge(alpha=alpha, solver=solver)
+    ridge_64 = Ridge(alpha=alpha, solver=solver, max_iter=500, tol=1e-10,)
     ridge_64.fit(X_64, y_64)
     coef_64 = ridge_64.coef_
 
@@ -907,7 +907,7 @@ def test_dtype_match(solver):
     assert coef_64.dtype == X_64.dtype
     assert ridge_32.predict(X_32).dtype == X_32.dtype
     assert ridge_64.predict(X_64).dtype == X_64.dtype
-    assert_allclose(ridge_32.coef_, ridge_64.coef_, rtol=1e-5)
+    assert_allclose(ridge_32.coef_, ridge_64.coef_, rtol=1e-4)
 
 
 def test_dtype_match_cholesky():
@@ -946,7 +946,8 @@ def test_dtype_match_cholesky():
 def test_ridge_regression_dtype_stability(solver, assert_tolerance):
     n_samples, n_features = 6, 5
     X = rng.randn(n_samples, n_features)
-    y = rng.randn(n_samples)
+    coef = rng.randn(n_features)
+    y = np.dot(X, coef) + 0.01 * rng.randn(n_samples)
     RANDOM_STATE = np.random.RandomState(0)
     ALPHA = 1.0
 
@@ -956,13 +957,14 @@ def test_ridge_regression_dtype_stability(solver, assert_tolerance):
                                                 solver=solver,
                                                 random_state=RANDOM_STATE,
                                                 sample_weight=None,
-                                                max_iter=None,
-                                                tol=1e-3,
+                                                max_iter=500,
+                                                tol=1e-10,
                                                 return_n_iter=False,
                                                 return_intercept=False)
                 for current_dtype in (np.float32, np.float64)}
 
     assert results[np.float32].dtype == np.float32
     assert results[np.float64].dtype == np.float64
-    assert_allclose(results[np.float32], results[np.float64],
-                    rtol=assert_tolerance)
+    assert_allclose(results[np.float32], results[np.float64], rtol=1e-5)
+
+
