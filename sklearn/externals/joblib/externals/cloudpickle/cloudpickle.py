@@ -42,20 +42,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 from __future__ import print_function
 
-import dis
-from functools import partial
-import imp
 import io
-import itertools
-import logging
+import dis
+import sys
+import types
 import opcode
-import operator
 import pickle
 import struct
-import sys
-import traceback
-import types
+import logging
 import weakref
+import operator
+import importlib
+import itertools
+import traceback
+from functools import partial
 
 
 # cloudpickle is meant for inter process communication: we expect all
@@ -76,6 +76,22 @@ else:
     from pickle import _Pickler as Pickler
     from io import BytesIO as StringIO
     PY3 = True
+
+
+# Container for the global namespace to ensure consistent unpickling of
+# functions defined in dynamic modules (modules not registed in sys.modules).
+_dynamic_modules_globals = weakref.WeakValueDictionary()
+
+
+class _DynamicModuleFuncGlobals(dict):
+    """Global variables referenced by a function defined in a dynamic module
+
+    To avoid leaking references we store such context in a WeakValueDictionary
+    instance.  However instances of python builtin types such as dict cannot
+    be used directly as values in such a construct, hence the need for a
+    derived class.
+    """
+    pass
 
 
 def _make_cell_set_template_code():
@@ -288,20 +304,10 @@ class CloudPickler(Pickler):
         """
         Save a module as an import
         """
-        mod_name = obj.__name__
-        # If module is successfully found then it is not a dynamically created module
-        if hasattr(obj, '__file__'):
-            is_dynamic = False
-        else:
-            try:
-                _find_module(mod_name)
-                is_dynamic = False
-            except ImportError:
-                is_dynamic = True
-
         self.modules.add(obj)
-        if is_dynamic:
-            self.save_reduce(dynamic_subimport, (obj.__name__, vars(obj)), obj=obj)
+        if _is_dynamic(obj):
+            self.save_reduce(dynamic_subimport, (obj.__name__, vars(obj)),
+                             obj=obj)
         else:
             self.save_reduce(subimport, (obj.__name__,), obj=obj)
 
@@ -566,7 +572,7 @@ class CloudPickler(Pickler):
             'name': func.__name__,
             'doc': func.__doc__,
         }
-        if hasattr(func, '__annotations__'):
+        if hasattr(func, '__annotations__') and sys.version_info >= (3, 7):
             state['annotations'] = func.__annotations__
         if hasattr(func, '__qualname__'):
             state['qualname'] = func.__qualname__
@@ -661,6 +667,13 @@ class CloudPickler(Pickler):
         The name of this method is somewhat misleading: all types get
         dispatched here.
         """
+        if obj is type(None):
+            return self.save_reduce(type, (None,), obj=obj)
+        elif obj is type(Ellipsis):
+            return self.save_reduce(type, (Ellipsis,), obj=obj)
+        elif obj is type(NotImplemented):
+            return self.save_reduce(type, (NotImplemented,), obj=obj)
+
         if obj.__module__ == "__main__":
             return self.save_dynamic_class(obj)
 
@@ -933,7 +946,7 @@ def subimport(name):
 
 
 def dynamic_subimport(name, vars):
-    mod = imp.new_module(name)
+    mod = types.ModuleType(name)
     mod.__dict__.update(vars)
     return mod
 
@@ -1090,12 +1103,18 @@ def _make_skel_func(code, cell_count, base_globals=None):
     if base_globals is None:
         base_globals = {}
     elif isinstance(base_globals, str):
-        if sys.modules.get(base_globals, None) is not None:
-            # this checks if we can import the previous environment the object
-            # lived in
-            base_globals = vars(sys.modules[base_globals])
-        else:
-            base_globals = {}
+        base_globals_name = base_globals
+        try:
+            # First try to reuse the globals from the module containing the
+            # function. If it is not possible to retrieve it, fallback to an
+            # empty dictionary.
+            base_globals = vars(importlib.import_module(base_globals))
+        except ImportError:
+            base_globals = _dynamic_modules_globals.get(
+                    base_globals_name, None)
+            if base_globals is None:
+                base_globals = _DynamicModuleFuncGlobals()
+            _dynamic_modules_globals[base_globals_name] = base_globals
 
     base_globals['__builtins__'] = __builtins__
 
@@ -1125,19 +1144,31 @@ def _rehydrate_skeleton_class(skeleton_class, class_dict):
     return skeleton_class
 
 
-def _find_module(mod_name):
+def _is_dynamic(module):
     """
-    Iterate over each part instead of calling imp.find_module directly.
-    This function is able to find submodules (e.g. scikit.tree)
+    Return True if the module is special module that cannot be imported by its
+    name.
     """
-    path = None
-    for part in mod_name.split('.'):
-        if path is not None:
-            path = [path]
-        file, path, description = imp.find_module(part, path)
-        if file is not None:
-            file.close()
-    return path, description
+    # Quick check: module that have __file__ attribute are not dynamic modules.
+    if hasattr(module, '__file__'):
+        return False
+
+    if hasattr(module, '__spec__'):
+        return module.__spec__ is None
+    else:
+        # Backward compat for Python 2
+        import imp
+        try:
+            path = None
+            for part in module.__name__.split('.'):
+                if path is not None:
+                    path = [path]
+                f, path, description = imp.find_module(part, path)
+                if f is not None:
+                    f.close()
+        except ImportError:
+            return True
+        return False
 
 
 """Constructors for 3rd party libraries

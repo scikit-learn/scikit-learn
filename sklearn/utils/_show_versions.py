@@ -103,17 +103,14 @@ def show_versions():
     deps_info = _get_deps_info()
     blas_info = _get_blas_info()
 
-    print('\nSystem')
-    print('------')
+    print('\nSystem:')
     for k, stat in sys_info.items():
         print("{k:>10}: {stat}".format(k=k, stat=stat))
 
-    print('\nBLAS')
-    print('----')
+    print('\nBLAS:')
     for k, stat in blas_info.items():
         print("{k:>10}: {stat}".format(k=k, stat=stat))
 
-    print('\nPython deps')
-    print('-----------')
+    print('\nPython deps:')
     for k, stat in deps_info.items():
         print("{k:>10}: {stat}".format(k=k, stat=stat))

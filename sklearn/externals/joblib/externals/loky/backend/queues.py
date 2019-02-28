@@ -22,7 +22,7 @@ from multiprocessing.queues import Full
 from multiprocessing.queues import _sentinel, Queue as mp_Queue
 from multiprocessing.queues import SimpleQueue as mp_SimpleQueue
 
-from .reduction import CustomizableLokyPickler
+from .reduction import loads, dumps
 from .context import assert_spawning, get_context
 
 
@@ -147,8 +147,7 @@ class Queue(mp_Queue):
                             return
 
                         # serialize the data before acquiring the lock
-                        obj_ = CustomizableLokyPickler.dumps(
-                            obj, reducers=reducers)
+                        obj_ = dumps(obj, reducers=reducers)
                         if wacquire is None:
                             send_bytes(obj_)
                         else:
@@ -227,12 +226,12 @@ class SimpleQueue(mp_SimpleQueue):
             with self._rlock:
                 res = self._reader.recv_bytes()
             # unserialize the data after having released the lock
-            return CustomizableLokyPickler.loads(res)
+            return loads(res)
 
     # Overload put to use our customizable reducer
     def put(self, obj):
         # serialize the data before acquiring the lock
-        obj = CustomizableLokyPickler.dumps(obj, reducers=self._reducers)
+        obj = dumps(obj, reducers=self._reducers)
         if self._wlock is None:
             # writes to a message oriented win32 pipe are atomic
             self._writer.send_bytes(obj)

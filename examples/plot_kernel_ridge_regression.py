@@ -35,7 +35,6 @@ on the parameters epsilon and C of the SVR.
 # License: BSD 3 clause
 
 
-from __future__ import division
 import time
 
 import numpy as np

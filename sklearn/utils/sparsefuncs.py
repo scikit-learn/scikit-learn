@@ -467,7 +467,8 @@ def count_nonzero(X, axis=None, sample_weight=None):
     elif axis == 1:
         out = np.diff(X.indptr)
         if sample_weight is None:
-            return out
+            # astype here is for consistency with axis=0 dtype
+            return out.astype('intp')
         return out * sample_weight
     elif axis == 0:
         if sample_weight is None:
