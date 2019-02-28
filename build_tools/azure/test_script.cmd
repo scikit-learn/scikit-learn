@@ -15,4 +15,4 @@ if "%COVERAGE%" == "true" (
 
 pytest --junitxml=%JUNITXML% --showlocals --durations=20 %PYTEST_ARGS% --pyargs sklearn.utils
 
-ls %TMP_FOLDER%
+ls -al %TMP_FOLDER%
