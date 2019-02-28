@@ -1582,11 +1582,17 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                             if new_pos <= pos:
                                 break
                             if transpose:
-                                XP[pos:new_pos, :] = np.multiply(
-                                    XP[start:end, :], X[i:i + 1, :])
+                                np.multiply(XP[start:end, :],
+                                            X[i:i + 1, :],
+                                            out=XP[pos:new_pos, :],
+                                            where=True,
+                                            casting='no')
                             else:
-                                XP[:, pos:new_pos] = np.multiply(
-                                    XP[:, start:end], X[:, i:i + 1])
+                                np.multiply(XP[:, start:end],
+                                            X[:, i:i + 1],
+                                            out=XP[:, pos:new_pos],
+                                            where=True,
+                                            casting='no')
                             pos = new_pos
 
                         new_index.append(pos)

@@ -124,7 +124,8 @@ def bench(n_obs, n_features, degrees, interactions_only, orders,
 ##############################
 
 def plot_results(df, verbose=False):
-    fig, ax = plt.subplots(3, 4, figsize=(16, 12))
+    nrows = len(set(df.degree))
+    fig, ax = plt.subplots(nrows, 4, figsize=(16, 12))
     pos = 0
 
     for di, degree in enumerate(sorted(set(df.degree))):
@@ -164,7 +165,7 @@ def plot_results(df, verbose=False):
 def run_bench(repeat=100, verbose=False):
     n_obs = [1, 10, 100, 1000, 10000]
     n_features = [10, 20]
-    degrees = [2, 3, 4]
+    degrees = [2, 3]
     interactions_only = [False, True]
     orders = ['C', 'F']
 
