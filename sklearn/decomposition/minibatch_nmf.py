@@ -5,6 +5,7 @@ from scipy import sparse
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import row_norms, safe_sparse_dot
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils import gen_batches
 # from sklearn.utils import check_array
 
 from sklearn.cluster.k_means_ import _k_init
@@ -150,12 +151,12 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        # needs to be changed to check is X contains strings or not
+        n_samples, self.n_features_ = X.shape
+
         if sparse.issparse(X):
-            n_samples, self.n_features_ = X.shape
             H = np.ones((n_samples, self.n_components))
             H = self._rescale_H(X, H)
-            self.W, self.A, self.B = self._init_W(X)
+            self.W_, self.A_, self.B_ = self._init_W(X)
             # self.rho = self.r**(self.batch_size / n_samples)
         # else:
             # not implemented yet
@@ -166,16 +167,16 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         for iter in range(self.max_iter):
             for i, (Ht, Vt) in enumerate(mini_batch(H, X, n=self.batch_size)):
                 if i == n_batch-1:
-                    W_last = self.W
-                Ht[:] = self._e_step(Vt, self.W, Ht,
+                    W_last = self.W_
+                Ht[:] = self._e_step(Vt, self.W_, Ht,
                                      max_iter=self.max_iter_e_step)
-                self.W, self.A, self.B = self._m_step(Vt, self.W,
-                                                      self.A, self.B, Ht,
-                                                      self.iter)
+                self.W_, self.A_, self.B_ = self._m_step(Vt, self.W_,
+                                                         self.A_, self.B_, Ht,
+                                                         self.iter)
                 self.iter += 1
                 if i == n_batch-1:
                     W_change = np.linalg.norm(
-                        self.W - W_last) / np.linalg.norm(W_last)
+                        self.W_ - W_last) / np.linalg.norm(W_last)
             if (W_change < self.tol) and (iter >= self.min_iter - 1):
                 break
         return self
@@ -183,28 +184,30 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
     def partial_fit(self, X, y=None):
         if hasattr(self, 'iter'):
             assert X.shape[1] == self.n_features_
+            n_samples, _ = X.shape
+
             if sparse.issparse(X):
-                n_samples, _ = X.shape
                 H = np.ones((n_samples, self.n_components))
                 H = self._rescale_H(X, H)
             # else:
                 # not implemented yet
         else:
+            n_samples, self.n_features_ = X.shape
+
             if sparse.issparse(X):
-                n_samples, self.n_features_ = X.shape
                 H = np.ones((n_samples, self.n_components))
                 H = self._rescale_H(X, H)
-                self.W, self.A, self.B = self._init_W(X)
+                self.W_, self.A_, self.B_ = self._init_W(X)
                 self.iter = 1
                 # self.rho = self.r**(self.batch_size / n_samples)
             # else:
                 # not implemented yet
 
         for i, (Ht, Vt) in enumerate(mini_batch(H, X, n=self.batch_size)):
-            Ht[:] = self._e_step(Vt, self.W, Ht,
+            Ht[:] = self._e_step(Vt, self.W_, Ht,
                                  max_iter=self.max_iter_e_step)
-            self.W, self.A, self.B = self._m_step(
-                Vt, self.W, self.A, self.B, Ht, self.iter)
+            self.W_, self.A_, self.B_ = self._m_step(
+                Vt, self.W_, self.A, self.B_, Ht, self.iter)
             self.iter += 1
 
     def transform(self, X):
@@ -227,7 +230,7 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         H = self._rescale_H(X, H)
 
         for Ht, Vt in mini_batch(H, X, n=self.batch_size):
-            Ht[:] = self._e_step(Vt, self.W, Ht, max_iter=50)
+            Ht[:] = self._e_step(Vt, self.W_, Ht, max_iter=50)
         return H
 
 
