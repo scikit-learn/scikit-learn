@@ -238,8 +238,12 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape=None):
     y : np.array
     """
     if isinstance(arff_data, Generator):
+        if shape[0] == -1:
+            count = -1
+        else:
+            count = shape[0] * shape[1]
         data = np.fromiter(itertools.chain.from_iterable(arff_data),
-                           dtype='float64', count=shape[0]*shape[1])
+                           dtype='float64', count=count)
         data = data.reshape(*shape)
         X = data[:, col_slice_x]
         y = data[:, col_slice_y]
@@ -345,20 +349,31 @@ def _get_data_qualities(data_id, data_home):
     error_message = "Dataset with data_id {} not found.".format(data_id)
     json_data = _get_json_content_from_openml_api(url, error_message, True,
                                                   data_home)
-    return json_data['data_qualities']['quality']
+    try:
+        return json_data['data_qualities']['quality']
+    except KeyError:
+        # the qualities might not be available, but we still try to process
+        # the data
+        return None
 
 
 def _get_data_shape(data_qualities):
     # Using the data_info dictionary from _get_data_info_by_name to extract
     # the number of samples / features
+    if data_qualities is None:
+        return None
     for d in data_qualities:
         if d['name'] == 'NumberOfFeatures':
             n_features = int(float(d['value']))
             break
+    else:
+        return None
     for d in data_qualities:
         if d['name'] == 'NumberOfInstances':
             n_samples = int(float(d['value']))
             break
+    else:
+        return None
     return (n_samples, n_features)
 
 
@@ -616,6 +631,10 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     if not return_sparse:
         data_qualities = _get_data_qualities(data_id, data_home)
         shape = _get_data_shape(data_qualities)
+        # if the data qualities were not available, we cans still get the
+        # n_features from the feature list, with the n_samples unknown
+        if shape is None:
+            shape = (-1, len(features_list))
     else:
         shape = None
 
