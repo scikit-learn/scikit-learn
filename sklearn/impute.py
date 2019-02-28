@@ -436,6 +436,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         feature_names : array-like of string
             Transformed feature names
         """
+        check_is_fitted(self, 'statistics_')
         if input_features is None:
             input_features = ['x%d' % i
                               for i in range(self.statistics_.shape[0])]
