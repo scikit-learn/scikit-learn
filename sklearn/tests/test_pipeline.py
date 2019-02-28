@@ -1080,6 +1080,7 @@ def test_set_input_features():
     assert_array_equal(pipe.named_steps.clf.input_features_,
                        np.array(iris.feature_names)[mask])
 
+
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_input_feature_names_pandas():
     pd = pytest.importorskip("pandas")
@@ -1125,6 +1126,7 @@ def test_input_features_count_vectorizer():
     assert_array_equal(pipe.named_steps.clf.input_features_,
                        ['beer', 'burger', 'coke', 'copyright', 'pizza', 'the'])
 
+
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_input_features_nested():
     pipe = Pipeline(steps=[
@@ -1135,13 +1137,15 @@ def test_input_features_nested():
     xs = np.array(['x0', 'x1', 'x2', 'x3'])
     assert_array_equal(pipe.input_features_, xs)
     mask = pipe.named_steps.inner_pipe.named_steps.select.get_support()
-    assert_array_equal(pipe.named_steps.inner_pipe.named_steps.clf.input_features_, xs[mask])
+    assert_array_equal(
+        pipe.named_steps.inner_pipe.named_steps.clf.input_features_, xs[mask])
     pipe.get_feature_names(iris.feature_names)
     assert_array_equal(pipe.input_features_, iris.feature_names)
-    assert_array_equal(pipe.named_steps.inner_pipe.named_steps.clf.input_features_,
-                       np.array(iris.feature_names)[mask])
+    assert_array_equal(
+        pipe.named_steps.inner_pipe.named_steps.clf.input_features_,
+        np.array(iris.feature_names)[mask])
 
-                 
+
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_input_features_meta_pipe():
     ovr = OneVsRestClassifier(Pipeline(steps=[('select', SelectKBest(k=2)),
@@ -1160,7 +1164,7 @@ def test_input_features_meta_pipe():
     assert_array_equal(inner_pipe.input_features_, iris.feature_names)
     assert_array_equal(inner_pipe.named_steps.clf.input_features_,
                        np.array(iris.feature_names)[mask])
-                       
+
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_input_features_meta():
