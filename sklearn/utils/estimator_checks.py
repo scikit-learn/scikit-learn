@@ -216,6 +216,9 @@ def _yield_outliers_checks(name, estimator):
     if hasattr(estimator, 'fit_predict'):
         yield check_outliers_fit_predict
 
+    if hasattr(estimator, 'fit_resample'):
+        yield check_outlier_resamplers
+
     # checks for estimators that can be used on a test set
     if hasattr(estimator, 'predict'):
         yield check_outliers_train
@@ -224,6 +227,12 @@ def _yield_outliers_checks(name, estimator):
         yield check_classifier_data_not_an_array
         # test if NotFittedError is raised
         yield check_estimators_unfitted
+
+
+def _yield_resamplers_checks(name, estimator):
+    yield check_resampler_structure
+    yield check_resamplers_have_no_transform
+    yield check_resample_repeated
 
 
 def _yield_all_checks(name, estimator):
@@ -249,6 +258,9 @@ def _yield_all_checks(name, estimator):
             yield check
     if hasattr(estimator, 'transform'):
         for check in _yield_transformer_checks(name, estimator):
+            yield check
+    if hasattr(estimator, 'fit_resample'):
+        for check in _yield_resamplers_checks(name, estimator):
             yield check
     if isinstance(estimator, ClusterMixin):
         for check in _yield_clustering_checks(name, estimator):
@@ -2470,3 +2482,41 @@ def check_fit_idempotent(name, estimator_orig):
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(X_test)
             assert_allclose_dense_sparse(result[method], new_result)
+
+
+def check_outlier_resamplers(name, estimator_orig):
+    X, y = make_blobs(random_state=0)
+    outliers = estimator_orig.fit_predict(X, y) == -1
+    n_outliers = np.sum(outliers)
+
+    X_new, y_new = estimator_orig.fit_resample(X, y)
+
+    assert X_new.shape[0] == X.shape[0] - n_outliers
+    assert y_new.shape[0] == y.shape[0] - n_outliers
+
+
+def check_resampler_structure(name, estimator_orig):
+    X, y = make_blobs(n_samples=10)
+    X_new, y_new = estimator_orig.fit_resample(X, y)
+
+    props = {
+        'weight': np.arange(10),
+        'other': np.arange(10),
+        'more': np.arange(10)
+    }
+    X_new, y_new, props_new = estimator_orig.fit_resample(X, y, props)
+    assert props.key() == props_new.keys()
+
+
+def check_resample_repeated(name, estimator_orig):
+    X, y = make_blobs(n_samples=10)
+    X_new, y_new = estimator_orig.fit_resample(X, y)
+    X_new2, y_new2 = estimator_orig.fit_resample(X, y)
+
+    assert_array_equal(X_new, X_new2)
+    assert_array_equal(y_new, y_new2)
+
+
+def check_resamplers_have_no_transform(name, estimator_orig):
+    assert not hasattr(estimator_orig, 'transform')
+    assert not hasattr(estimator_orig, 'fit_transform')
