@@ -470,7 +470,7 @@ trees.
   supported.
 
   The following doc focuses on :class:`GradientBoostingClassifier` and
-  :class:`GradientBoostingRegressor` only, which might be prefered for small
+  :class:`GradientBoostingRegressor` only, which might be preferred for small
   sample sizes since binning may lead to split points that are too approximate
   in this setting.
 

@@ -428,7 +428,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     splitting points to consider, and allows the algorithm to leverage
     integer-based data structures. For small sample sizes,
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-    might be prefered since binning may lead to split points that are too
+    might be preferred since binning may lead to split points that are too
     approximate in this setting.
 
     Parameters
@@ -567,7 +567,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     splitting points to consider, and allows the algorithm to leverage
     integer-based data structures. For small sample sizes,
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-    might be prefered since binning may lead to split points that are too
+    might be preferred since binning may lead to split points that are too
     approximate in this setting.
 
     Parameters
