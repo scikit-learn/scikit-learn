@@ -199,3 +199,10 @@ def test_huber_better_r2_score():
 
     # The huber model should also fit poorly on the outliers.
     assert_greater(ridge_outlier_score, huber_outlier_score)
+
+
+def test_huber_bool():
+    # Test that it does not crash with bool data
+    X, y = make_regression(n_samples=200, n_features=2, noise=4.0, random_state=0)
+    X_bool = X > 0
+    huber = HuberRegressor().fit(X_bool, y)
