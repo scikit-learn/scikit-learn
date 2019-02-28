@@ -27,17 +27,6 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
     r: float, default=1
         Weight parameter for the update of the W matrix
 
-    hashing: boolean, default=False
-        If true, HashingVectorizer is used instead of CountVectorizer.
-
-    hashing_n_features: int, default=2**10
-        Number of features for the HashingVectorizer. Only relevant if
-        hashing=True.
-
-    hashing: boolean, default=True
-        If true, the weight matrix W is rescaled at each iteration
-        to have an l1 norm equal to 1 for each row.
-
     tol: float, default=1E-3
         Tolerance for the convergence of the matrix W
 
@@ -60,8 +49,7 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=10, batch_size=512,
-                 r=.001, hashing=False,
-                 hashing_n_features=2**12, init='k-means++',
+                 r=.001, init='k-means++',
                  tol=1E-4, min_iter=2, max_iter=5, ngram_range=(2, 4),
                  add_words=False, random_state=None,
                  rescale_W=True, max_iter_e_step=20):
@@ -70,8 +58,6 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         self.r = r
         self.batch_size = batch_size
         self.tol = tol
-        self.hashing = hashing
-        self.hashing_n_features = hashing_n_features
         self.max_iter = max_iter
         self.min_iter = min_iter
         self.init = init
