@@ -555,8 +555,8 @@ class MultiOutputMixin(object):
         return {'multioutput': True}
 
 
-class _UnstableOn32BitMixin(object):
-    """Mark estimators that are non-determinstic on 32bit."""
+class _UnstableArchMixin(object):
+    """Mark estimators that are non-determinstic on 32bit and PowerPC"""
     def _more_tags(self):
         return {'non_deterministic': (
             _IS_32BIT or platform.machine().startswith(('ppc', 'powerpc')))}
