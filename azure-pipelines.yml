@@ -45,7 +45,7 @@ jobs:
 
 - template: build_tools/azure/posix.yml
   parameters:
-    name: Linux
+    name: Linux scipydev
     vmImage: ubuntu-16.04
     toRun: eq(variables['Build.Reason'], 'Schedule')
     matrix:
