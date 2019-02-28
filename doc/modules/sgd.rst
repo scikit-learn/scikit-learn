@@ -154,7 +154,7 @@ one-vs-all classification.
 
 :class:`SGDClassifier` supports both weighted classes and weighted
 instances via the fit parameters ``class_weight`` and ``sample_weight``. See
-the examples below and the doc string of :meth:`SGDClassifier.fit` for
+the examples below and the docstring of :meth:`SGDClassifier.fit` for
 further information.
 
 .. topic:: Examples:
