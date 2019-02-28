@@ -40,7 +40,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
           not do that)
         - return list of features (arrays): this list of features is
           constructed feature by feature to preserve the data types
-          of pandas DataFrame columns)
+          of pandas DataFrame columns), as elsewhere information is lost and cannot be used, eg for the `categories`_ attribute.
 
         """
         # if not a dataframe, do normal check_array validation
