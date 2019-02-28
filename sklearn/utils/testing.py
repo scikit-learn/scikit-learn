@@ -320,7 +320,7 @@ def ignore_warnings(obj=None, category=Warning):
         return _IgnoreWarnings(category=category)
 
 
-class _IgnoreWarnings(object):
+class _IgnoreWarnings:
     """Improved and simplified Python warnings context manager and decorator.
 
     This class allows the user to ignore the warnings raised by a function.
@@ -507,7 +507,7 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
 
 
 @deprecated('deprecated in version 0.20 to be removed in version 0.22')
-class mock_mldata_urlopen(object):
+class mock_mldata_urlopen:
     """Object that mocks the urlopen function to fake requests to mldata.
 
     When requesting a dataset with a name that is in mock_datasets, this object
@@ -577,38 +577,9 @@ def uninstall_mldata_mock():
     datasets.mldata.urlopen = urlopen
 
 
-# Meta estimators need another estimator to be instantiated.
-META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
-                   "MultiOutputRegressor", "MultiOutputClassifier",
-                   "OutputCodeClassifier", "OneVsRestClassifier",
-                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
-                   "RegressorChain"]
-# estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion",
-         "GridSearchCV", "RandomizedSearchCV",
-         "SelectFromModel", "ColumnTransformer"]
-
-# some strange ones
-DONT_TEST = ['SparseCoder', 'DictVectorizer',
-             'LabelBinarizer', 'LabelEncoder',
-             'MultiLabelBinarizer', 'TfidfTransformer',
-             'TfidfVectorizer', 'IsotonicRegression',
-             'OneHotEncoder', 'RandomTreesEmbedding', 'OrdinalEncoder',
-             'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
-             'TruncatedSVD', 'PolynomialFeatures',
-             'GaussianRandomProjectionHash', 'HashingVectorizer',
-             'CheckingClassifier', 'PatchExtractor', 'CountVectorizer',
-             # GradientBoosting base estimators, maybe should
-             # exclude them in another way
-             'ZeroEstimator', 'ScaledLogOddsEstimator',
-             'QuantileEstimator', 'MeanEstimator',
-             'LogOddsEstimator', 'PriorProbabilityEstimator',
-             '_SigmoidCalibration', 'VotingClassifier']
-
-
-def all_estimators(include_meta_estimators=False,
-                   include_other=False, type_filter=None,
-                   include_dont_test=False):
+def all_estimators(include_meta_estimators=None,
+                   include_other=None, type_filter=None,
+                   include_dont_test=None):
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
@@ -619,15 +590,16 @@ def all_estimators(include_meta_estimators=False,
     Parameters
     ----------
     include_meta_estimators : boolean, default=False
-        Whether to include meta-estimators that can be constructed using
-        an estimator as their first argument. These are currently
-        BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
-        OneVsRestClassifier, RFE, RFECV.
+        Deprecated, ignored.
+        .. deprecated:: 0.21
+           ``include_meta_estimators`` has been deprecated and has no effect in
+           0.21 and will be removed in 0.23.
 
     include_other : boolean, default=False
-        Wether to include meta-estimators that are somehow special and can
-        not be default-constructed sensibly. These are currently
-        Pipeline, FeatureUnion and GridSearchCV
+        Deprecated, ignored.
+        .. deprecated:: 0.21
+           ``include_other`` has been deprecated and has not effect in 0.21 and
+           will be removed in 0.23.
 
     type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
@@ -637,7 +609,10 @@ def all_estimators(include_meta_estimators=False,
         get the estimators that fit at least one of the types.
 
     include_dont_test : boolean, default=False
-        Whether to include "special" label estimator or test processors.
+        Deprecated, ignored.
+        .. deprecated:: 0.21
+           ``include_dont_test`` has been deprecated and has no effect in 0.21
+           and will be removed in 0.23.
 
     Returns
     -------
@@ -652,12 +627,27 @@ def all_estimators(include_meta_estimators=False,
             return False
         return True
 
+    if include_other is not None:
+        warnings.warn("include_other was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
+    if include_dont_test is not None:
+        warnings.warn("include_dont_test was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
+    if include_meta_estimators is not None:
+        warnings.warn("include_meta_estimators was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
     all_classes = []
     # get parent folder
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname:
+        if ".tests." in modname or "externals" in modname:
             continue
         if IS_PYPY and ('_svmlight_format' in modname or
                         'feature_extraction._hashing' in modname):
@@ -674,14 +664,6 @@ def all_estimators(include_meta_estimators=False,
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
-    if not include_dont_test:
-        estimators = [c for c in estimators if not c[0] in DONT_TEST]
-
-    if not include_other:
-        estimators = [c for c in estimators if not c[0] in OTHER]
-    # possibly get rid of meta estimators
-    if not include_meta_estimators:
-        estimators = [c for c in estimators if not c[0] in META_ESTIMATORS]
     if type_filter is not None:
         if not isinstance(type_filter, list):
             type_filter = [type_filter]
@@ -821,7 +803,7 @@ def _delete_folder(folder_path, warn=False):
             warnings.warn("Could not delete temporary folder %s" % folder_path)
 
 
-class TempMemmap(object):
+class TempMemmap:
     """
     Parameters
     ----------

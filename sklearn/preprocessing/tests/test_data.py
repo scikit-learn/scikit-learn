@@ -53,7 +53,8 @@ from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.preprocessing.data import PowerTransformer
 from sklearn.preprocessing.data import power_transform
-from sklearn.exceptions import DataConversionWarning, NotFittedError
+from sklearn.preprocessing.data import BOUNDS_THRESHOLD
+from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
@@ -149,8 +150,8 @@ def test_polynomial_feature_names():
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
     feature_names = poly.get_feature_names(
-        [u"\u0001F40D", u"\u262E", u"\u05D0"])
-    assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
+        ["\u0001F40D", "\u262E", "\u05D0"])
+    assert_array_equal(["1", "\u0001F40D", "\u262E", "\u05D0"],
                        feature_names)
 
 
@@ -1495,12 +1496,13 @@ def test_quantile_transform_bounds():
 
 
 def test_quantile_transform_and_inverse():
-    # iris dataset
-    X = iris.data
-    transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
-    X_trans = transformer.fit_transform(X)
-    X_trans_inv = transformer.inverse_transform(X_trans)
-    assert_array_almost_equal(X, X_trans_inv)
+    X_1 = iris.data
+    X_2 = np.array([[0.], [BOUNDS_THRESHOLD / 10], [1.5], [2], [3], [3], [4]])
+    for X in [X_1, X_2]:
+        transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
+        X_trans = transformer.fit_transform(X)
+        X_trans_inv = transformer.inverse_transform(X_trans)
+        assert_array_almost_equal(X, X_trans_inv, decimal=9)
 
 
 def test_quantile_transform_nan():
@@ -1691,19 +1693,6 @@ def test_maxabs_scaler_transform_one_row_csr():
     assert_array_almost_equal(X_trans.toarray(), X_expected.toarray())
     X_scaled_back = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
-
-
-def test_warning_scaling_integers():
-    # Check warning when scaling integer data
-    X = np.array([[1, 2, 0],
-                  [0, 0, 0]], dtype=np.uint8)
-
-    w = "Data with input dtype uint8 was converted to float64"
-
-    clean_warning_registry()
-    assert_warns_message(DataConversionWarning, w, scale, X)
-    assert_warns_message(DataConversionWarning, w, StandardScaler().fit, X)
-    assert_warns_message(DataConversionWarning, w, MinMaxScaler().fit, X)
 
 
 def test_maxabs_scaler_1d():

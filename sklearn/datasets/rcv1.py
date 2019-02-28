@@ -208,7 +208,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         category_names = {}
         with GzipFile(filename=topics_archive_path, mode='rb') as f:
             for line in f:
-                line_components = line.decode("ascii").split(u" ")
+                line_components = line.decode("ascii").split(" ")
                 if len(line_components) == 3:
                     cat, doc, _ = line_components
                     if cat not in category_names:

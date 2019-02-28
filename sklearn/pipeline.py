@@ -113,6 +113,7 @@ class Pipeline(_BaseComposition):
     """
 
     # BaseEstimator interface
+    _required_parameters = ['steps']
 
     def __init__(self, steps, memory=None):
         self.steps = steps
@@ -212,8 +213,8 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        fit_params_steps = dict((name, {}) for name, step in self.steps
-                                if step is not None)
+        fit_params_steps = {name: {} for name, step in self.steps
+                            if step is not None}
         for pname, pval in fit_params.items():
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
@@ -676,6 +677,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     """
+    _required_parameters = ["transformer_list"]
+
     def __init__(self, transformer_list, n_jobs=None,
                  transformer_weights=None):
         self.transformer_list = transformer_list
