@@ -53,7 +53,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                 X = X_temp
             needs_validation = False
         else:
-            # pandas dataframe, do validation later column by column
+            # pandas dataframe, do validation later column by column, in order
+            # to keep the dtype information to be used in the encoders attributes.
             needs_validation = True
 
         n_samples, n_features = X.shape
