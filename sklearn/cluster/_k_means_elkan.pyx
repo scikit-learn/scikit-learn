@@ -254,14 +254,13 @@ shape (n_clusters, n_clusters)
         # necessary to get parallelism. Chunk size chosed to be same as lloyd's
         int n_samples_chunk = 256 if n_samples > 256 else n_samples
         int n_chunks = n_samples // n_samples_chunk
-        int n_samples_r = n_samples % n_samples_chunk
+        int n_samples_rem = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff
         int start, end
-        # int num_threads
 
         int i, j, k
 
-    # If n_samples < 256 there's still one chunk of size n_samples_r
+    # If n_samples < 256 there's still one chunk of size n_samples_rem
     if n_chunks == 0:
         n_chunks = 1
         n_samples_chunk = 0
@@ -275,7 +274,7 @@ shape (n_clusters, n_clusters)
     for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_jobs):
         # remaining samples added to last chunk
         if chunk_idx == n_chunks - 1:
-            n_samples_chunk_eff = n_samples_chunk + n_samples_r
+            n_samples_chunk_eff = n_samples_chunk + n_samples_rem
         else:
             n_samples_chunk_eff = n_samples_chunk
 
@@ -469,16 +468,15 @@ shape (n_clusters, n_clusters)
         # necessary to get parallelism. Chunk size chosed to be same as lloyd's
         int n_samples_chunk = 256 if n_samples > 256 else n_samples
         int n_chunks = n_samples // n_samples_chunk
-        int n_samples_r = n_samples % n_samples_chunk
+        int n_samples_rem = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff
         int start, end
-        # int num_threads
 
         int i, j, k
 
         floating[::1] centers_squared_norms = row_norms(centers_new, squared=True)
 
-    # If n_samples < 256 there's still one chunk of size n_samples_r
+    # If n_samples < 256 there's still one chunk of size n_samples_rem
     if n_chunks == 0:
         n_chunks = 1
         n_samples_chunk = 0
@@ -489,13 +487,10 @@ shape (n_clusters, n_clusters)
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-    # set number of threads to be used by openmp
-    # num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
-
     for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_jobs):
         # remaining samples added to last chunk
         if chunk_idx == n_chunks - 1:
-            n_samples_chunk_eff = n_samples_chunk + n_samples_r
+            n_samples_chunk_eff = n_samples_chunk + n_samples_rem
         else:
             n_samples_chunk_eff = n_samples_chunk
 

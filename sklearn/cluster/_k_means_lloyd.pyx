@@ -91,14 +91,13 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         # optimal in all situations.
         int n_samples_chunk = 256 if n_samples > 256 else n_samples
         int n_chunks = n_samples // n_samples_chunk
-        int n_samples_r = n_samples % n_samples_chunk
+        int n_samples_rem = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff
         int start, end
-        # int num_threads
 
         int j, k
 
-    # If n_samples < 256 there's still one chunk of size n_samples_r
+    # If n_samples < 256 there's still one chunk of size n_samples_rem
     if n_chunks == 0:
         n_chunks = 1
         n_samples_chunk = 0
@@ -111,13 +110,10 @@ cpdef void _lloyd_iter_chunked_dense(np.ndarray[floating, ndim=2, mode='c'] X,
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-    # set number of threads to be used by openmp
-    # num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
-
     for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_jobs):
         # remaining samples added to last chunk
         if chunk_idx == n_chunks - 1:
-            n_samples_chunk_eff = n_samples_chunk + n_samples_r
+            n_samples_chunk_eff = n_samples_chunk + n_samples_rem
         else:
             n_samples_chunk_eff = n_samples_chunk
 
@@ -270,10 +266,9 @@ cpdef void _lloyd_iter_chunked_sparse(X,
         # However, splitting in chunks is necessary to get parallelism.
         int n_samples_chunk = 256 if n_samples > 256 else n_samples
         int n_chunks = n_samples // n_samples_chunk
-        int n_samples_r = n_samples % n_samples_chunk
+        int n_samples_rem = n_samples % n_samples_chunk
         int chunk_idx, n_samples_chunk_eff = 0
         int start = 0, end = 0
-        # int num_threads
 
         int j, k
         floating alpha
@@ -282,7 +277,7 @@ cpdef void _lloyd_iter_chunked_sparse(X,
         int[::1] X_indices = X.indices
         int[::1] X_indptr = X.indptr
 
-    # If n_samples < 256 there's still one chunk of size n_samples_r
+    # If n_samples < 256 there's still one chunk of size n_samples_rem
     if n_chunks == 0:
         n_chunks = 1
         n_samples_chunk = 0
@@ -295,13 +290,10 @@ cpdef void _lloyd_iter_chunked_sparse(X,
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
 
-    # set number of threads to be used by openmp
-    # num_threads = n_jobs if n_jobs != -1 else openmp.omp_get_max_threads()
-
     for chunk_idx in prange(n_chunks, nogil=True, num_threads=n_jobs):
         # remaining samples added to last chunk
         if chunk_idx == n_chunks - 1:
-            n_samples_chunk_eff = n_samples_chunk + n_samples_r
+            n_samples_chunk_eff = n_samples_chunk + n_samples_rem
         else:
             n_samples_chunk_eff = n_samples_chunk
 

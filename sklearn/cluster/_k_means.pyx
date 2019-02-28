@@ -35,6 +35,7 @@ cdef floating _euclidean_dense_dense(floating* a,
         int rem = n_features % 4
         floating result = 0
 
+    # We manually unroll the loop for better cache optimization.
     for i in range(n):
         result += ((a[0] - b[0]) * (a[0] - b[0])
                   +(a[1] - b[1]) * (a[1] - b[1])
@@ -45,9 +46,7 @@ cdef floating _euclidean_dense_dense(floating* a,
     for i in range(rem):
         result += (a[i] - b[i]) * (a[i] - b[i])
 
-    if not squared: result = sqrt(result)
-
-    return result
+    return result if squared else sqrt(result)
 
 
 cdef floating _euclidean_sparse_dense(floating[::1] a_data,
@@ -69,9 +68,8 @@ cdef floating _euclidean_sparse_dense(floating[::1] a_data,
     result += b_squared_norm
 
     if result < 0: result = 0.0
-    if not squared: result = sqrt(result)
 
-    return result
+    return result is squared else sqrt(result)
 
 
 cpdef floating _inertia_dense(np.ndarray[floating, ndim=2, mode='c'] X,
@@ -79,7 +77,7 @@ cpdef floating _inertia_dense(np.ndarray[floating, ndim=2, mode='c'] X,
                               floating[:, ::1] centers,
                               int[::1] labels):
     """Compute inertia for dense input data
-    
+
     Sum of squared distance between each sample and its assigned center.
     """
     cdef:
@@ -118,7 +116,7 @@ cpdef floating _inertia_sparse(X,
 
         floating sq_dist = 0.0
         floating inertia = 0.0
-    
+
         floating[::1] centers_squared_norms = row_norms(centers, squared=True)
 
     for i in range(n_samples):
@@ -170,7 +168,6 @@ cdef void _relocate_empty_clusters_dense(np.ndarray[floating, ndim=2, mode='c'] 
 
         weight_in_clusters[new_cluster_id] = weight
         weight_in_clusters[old_cluster_id] -= weight
-    print('ok')
 
 cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
                                           int[::1] X_indices,
@@ -218,7 +215,7 @@ cdef void _relocate_empty_clusters_sparse(floating[::1] X_data,
         weight = sample_weight[far_idx]
 
         old_cluster_id = labels[far_idx]
-    
+
         for k in range(X_indptr[far_idx], X_indptr[far_idx + 1]):
             centers_new[old_cluster_id, X_indices[k]] -= X_data[k] * weight
             centers_new[new_cluster_id, X_indices[k]] = X_data[k] * weight
