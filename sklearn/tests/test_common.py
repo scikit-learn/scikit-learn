@@ -18,18 +18,21 @@ import pytest
 from sklearn.utils.testing import clean_warning_registry
 from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 
 import sklearn
+from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
 
 from sklearn.linear_model.base import LinearClassifierMixin
+from sklearn.linear_model import Ridge
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.utils import IS_PYPY
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
+    _safe_tags,
     set_checking_parameters,
     check_parameters_default_constructible,
     check_no_attributes_set_in_init,
@@ -44,38 +47,46 @@ def test_all_estimator_no_base_class():
         assert not name.lower().startswith('base'), msg
 
 
-def test_all_estimators():
-    estimators = all_estimators(include_meta_estimators=True)
-
-    # Meta sanity-check to make sure that the estimator introspection runs
-    # properly
-    assert_greater(len(estimators), 0)
-
-
 @pytest.mark.parametrize(
         'name, Estimator',
-        all_estimators(include_meta_estimators=True)
+        all_estimators()
 )
 def test_parameters_default_constructible(name, Estimator):
     # Test that estimators are default-constructible
     check_parameters_default_constructible(name, Estimator)
 
 
-def _tested_non_meta_estimators():
+def _tested_estimators():
     for name, Estimator in all_estimators():
         if issubclass(Estimator, BiclusterMixin):
             continue
         if name.startswith("_"):
             continue
-        yield name, Estimator
+        # FIXME _skip_test should be used here (if we could)
+
+        required_parameters = getattr(Estimator, "_required_parameters", [])
+        if len(required_parameters):
+            if required_parameters in (["estimator"], ["base_estimator"]):
+                if issubclass(Estimator, RegressorMixin):
+                    estimator = Estimator(Ridge())
+                else:
+                    estimator = Estimator(LinearDiscriminantAnalysis())
+            else:
+                warnings.warn("Can't instantiate estimator {} which requires "
+                              "parameters {}".format(name,
+                                                     required_parameters),
+                              SkipTestWarning)
+                continue
+        else:
+            estimator = Estimator()
+        yield name, estimator
 
 
 def _generate_checks_per_estimator(check_generator, estimators):
     with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        for name, Estimator in estimators:
-            estimator = Estimator()
+        for name, estimator in estimators:
             for check in check_generator(name, estimator):
-                yield name, Estimator, check
+                yield estimator, check
 
 
 def _rename_partial(val):
@@ -83,30 +94,38 @@ def _rename_partial(val):
         kwstring = "".join(["{}={}".format(k, v)
                             for k, v in val.keywords.items()])
         return "{}({})".format(val.func.__name__, kwstring)
+    # FIXME once we have short reprs we can use them here!
+    if hasattr(val, "get_params") and not isinstance(val, type):
+        return type(val).__name__
 
 
 @pytest.mark.parametrize(
-        "name, Estimator, check",
+        "estimator, check",
         _generate_checks_per_estimator(_yield_all_checks,
-                                       _tested_non_meta_estimators()),
+                                       _tested_estimators()),
         ids=_rename_partial
 )
-def test_non_meta_estimators(name, Estimator, check):
-    # Common tests for non-meta estimators
+def test_estimators(estimator, check):
+    # Common tests for estimator instances
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
-        estimator = Estimator()
         set_checking_parameters(estimator)
+        name = estimator.__class__.__name__
         check(name, estimator)
 
 
-@pytest.mark.parametrize("name, Estimator",
-                         _tested_non_meta_estimators())
-def test_no_attributes_set_in_init(name, Estimator):
-    # input validation etc for non-meta estimators
+@pytest.mark.parametrize("name, estimator",
+                         _tested_estimators())
+def test_no_attributes_set_in_init(name, estimator):
+    # input validation etc for all estimators
     with ignore_warnings(category=(DeprecationWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
-        estimator = Estimator()
+        tags = _safe_tags(estimator)
+        if tags['_skip_test']:
+            warnings.warn("Explicit SKIP via _skip_test tag for "
+                          "{}.".format(name),
+                          SkipTestWarning)
+            return
         # check this on class
         check_no_attributes_set_in_init(name, estimator)
 
@@ -143,6 +162,11 @@ def _tested_linear_classifiers():
     clean_warning_registry()
     with warnings.catch_warnings(record=True):
         for name, clazz in classifiers:
+            required_parameters = getattr(clazz, "_required_parameters", [])
+            if len(required_parameters):
+                # FIXME
+                continue
+
             if ('class_weight' in clazz().get_params().keys() and
                     issubclass(clazz, LinearClassifierMixin)):
                 yield name, clazz
@@ -193,10 +217,9 @@ def test_all_tests_are_importable():
                                       \.tests(\.|$)|
                                       \._
                                       ''')
-    lookup = dict((name, ispkg)
-                  for _, name, ispkg
-                  in pkgutil.walk_packages(sklearn.__path__,
-                                           prefix='sklearn.'))
+    lookup = {name: ispkg
+              for _, name, ispkg
+              in pkgutil.walk_packages(sklearn.__path__, prefix='sklearn.')}
     missing_tests = [name for name, ispkg in lookup.items()
                      if ispkg
                      and not HAS_TESTS_EXCEPTIONS.search(name)

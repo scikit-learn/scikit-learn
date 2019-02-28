@@ -27,6 +27,18 @@ There are different ways to get scikit-learn installed:
     If you wish to contribute to the project, you need to
     :ref:`install the latest development version<install_bleeding_edge>`.
 
+.. _install_nightly_builds:
+
+Installing nightly builds
+=========================
+
+The continuous integration servers of the scikit-learn project build, test
+and upload wheel packages for the most recent Python version on a nightly
+basis to help users test bleeding edge features or bug fixes::
+
+  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+
+
 .. _install_bleeding_edge:
 
 Building from source
@@ -118,8 +130,8 @@ You first need to install the OpenMP library::
 
 Then you need to set the following environment variables::
 
-    export CC=clang
-    export CXX=clang++
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
     export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
     export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"

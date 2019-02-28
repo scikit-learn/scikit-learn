@@ -115,7 +115,7 @@ following rules before submitting:
    `new algorithm requirements
    <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
--  If you are submitting a bug report, we strongly encourage you to follow the guidelines in 
+-  If you are submitting a bug report, we strongly encourage you to follow the guidelines in
    :ref:`filing_bugs`.
 
 .. _filing_bugs:
@@ -193,7 +193,7 @@ then submit a "pull request" (PR):
     account on the GitHub user account. For more details on how to fork a
     repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
- 3. Clone your fork of the scikit-learn repo from your GitHub account to your 
+ 3. Clone your fork of the scikit-learn repo from your GitHub account to your
     local disk::
 
         $ git clone git@github.com:YourLogin/scikit-learn.git
@@ -203,7 +203,7 @@ then submit a "pull request" (PR):
 
         $ pip install --editable .
 
-    for more details about advanced installation, see the 
+    for more details about advanced installation, see the
     :ref:`install_bleeding_edge` section.
 
  5. Create a branch to hold your development changes::
@@ -276,7 +276,7 @@ rules before submitting a pull request:
 
 * Follow the `coding-guidelines`_ (see below). To make sure that
   your PR does not add PEP8 violations you can run
-  `./build_tools/travis/flake8_diff.sh` or `make flake8-diff` on a
+  `./build_tools/circle/flake8_diff.sh` or `make flake8-diff` on a
   Unix-like system.
 
 * When applicable, use the validation tools and scripts in the
@@ -329,8 +329,7 @@ rules before submitting a pull request:
   accepted. Bug-fixes or new features should be provided with
   `non-regression tests
   <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
-  verify the correct behavior of the fix or feature. These tests verify the
-  correct behavior of the fix or feature. In this manner, further
+  verify the correct behavior of the fix or feature. In this manner, further
   modifications on the code base are granted to be consistent with the
   desired behavior. For the case of bug fixes, at the time of the PR, the
   non-regression tests should fail for the code base in the master branch
@@ -342,8 +341,8 @@ rules before submitting a pull request:
   documentation, see the :ref:`contribute_documentation` section.
 
 * The documentation should also include expected time and space complexity
-  of the algorithm and scalability, e.g. "this algorithm can scale to a 
-  large number of samples > 100000, but does not scale in dimensionality: 
+  of the algorithm and scalability, e.g. "this algorithm can scale to a
+  large number of samples > 100000, but does not scale in dimensionality:
   n_features is expected to be lower than 100".
 
 You can also check for common programming errors with the following tools:
@@ -390,7 +389,7 @@ Continuous Integration (CI)
 * Travis is used for testing on Linux platforms
 * Appveyor is used for testing on Windows platforms
 * CircleCI is used to build the docs for viewing, for linting with flake8, and
-    for testing with PyPy on Linux 
+    for testing with PyPy on Linux
 
 Please note that if one of the following markers appear in the latest commit
 message, the following actions are taken.
@@ -489,7 +488,7 @@ documents live in the source code repository under the ``doc/`` directory.
 
 You can edit the documentation using any text editor, and then generate the
 HTML output by typing ``make html`` from the ``doc/`` directory. Alternatively,
-``make`` can be used to quickly generate the documentation without the example 
+``make`` can be used to quickly generate the documentation without the example
 gallery. The resulting HTML files will be placed in ``_build/html/stable`` and are viewable
 in a web browser. See the ``README``file in the ``doc/`` directory for more information.
 
@@ -548,10 +547,10 @@ details, and give intuition to the reader on what the algorithm does.
 
 Basically, to elaborate on the above, it is best to always
 start with a small paragraph with a hand-waving explanation of what the
-method does to the data. Then, it is very helpful to point out why the feature is 
+method does to the data. Then, it is very helpful to point out why the feature is
 useful and when it should be used - the latter also including "big O"
-(:math:`O\left(g\left(n\right)\right)`) complexities of the algorithm, as opposed 
-to just *rules of thumb*, as the latter can be very machine-dependent. If those 
+(:math:`O\left(g\left(n\right)\right)`) complexities of the algorithm, as opposed
+to just *rules of thumb*, as the latter can be very machine-dependent. If those
 complexities are not available, then rules of thumb may be provided instead.
 
 Secondly, a generated figure from an example (as mentioned in the previous
@@ -882,10 +881,10 @@ When the change is in a class, we validate and raise warning in ``fit``::
           self.k = k
 
       def fit(self, X, y):
-          if k != 'not_used':
+          if self.k != 'not_used':
               warnings.warn("'k' was renamed to n_clusters in version 0.13 and "
                             "will be removed in 0.15.", DeprecationWarning)
-              self._n_clusters = k
+              self._n_clusters = self.k
           else:
               self._n_clusters = self.n_clusters
 
@@ -1225,6 +1224,14 @@ Optional Arguments
 In iterative algorithms, the number of iterations should be specified by
 an integer called ``n_iter``.
 
+Pairwise Attributes
+^^^^^^^^^^^^^^^^^^^
+
+An estimator that accept ``X`` of shape ``(n_samples, n_samples)`` and defines
+a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
+the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
+the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
+to slice rows and columns.
 
 Rolling your own estimator
 ==========================
@@ -1412,22 +1419,18 @@ advised to maintain notes on the `GitHub wiki
 Specific models
 ---------------
 
-Classifiers should accept ``y`` (target) arguments to ``fit``
-that are sequences (lists, arrays) of either strings or integers.
-They should not assume that the class labels
-are a contiguous range of integers;
-instead, they should store a list of classes
-in a ``classes_`` attribute or property.
-The order of class labels in this attribute
-should match the order in which ``predict_proba``, ``predict_log_proba``
-and ``decision_function`` return their values.
-The easiest way to achieve this is to put::
+Classifiers should accept ``y`` (target) arguments to ``fit`` that are
+sequences (lists, arrays) of either strings or integers.  They should not
+assume that the class labels are a contiguous range of integers; instead, they
+should store a list of classes in a ``classes_`` attribute or property.  The
+order of class labels in this attribute should match the order in which
+``predict_proba``, ``predict_log_proba`` and ``decision_function`` return their
+values.  The easiest way to achieve this is to put::
 
     self.classes_, y = np.unique(y, return_inverse=True)
 
-in ``fit``.
-This returns a new ``y`` that contains class indexes, rather than labels,
-in the range [0, ``n_classes``).
+in ``fit``.  This returns a new ``y`` that contains class indexes, rather than
+labels, in the range [0, ``n_classes``).
 
 A classifier's ``predict`` method should return
 arrays containing class labels from ``classes_``.
@@ -1438,13 +1441,88 @@ this can be achieved with::
         D = self.decision_function(X)
         return self.classes_[np.argmax(D, axis=1)]
 
-In linear models, coefficients are stored in an array called ``coef_``,
-and the independent term is stored in ``intercept_``.
-``sklearn.linear_model.base`` contains a few base classes and mixins
-that implement common linear model patterns.
+In linear models, coefficients are stored in an array called ``coef_``, and the
+independent term is stored in ``intercept_``.  ``sklearn.linear_model.base``
+contains a few base classes and mixins that implement common linear model
+patterns.
 
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
+
+Estimator Tags
+--------------
+.. warning::
+
+    The estimator tags are experimental and the API is subject to change.
+
+Scikit-learn introduced estimator tags in version 0.21.  These are annotations
+of estimators that allow programmatic inspection of their capabilities, such as
+sparse matrix support, supported output types and supported methods.  The
+estimator tags are a dictionary returned by the method ``_get_tags()``.  These
+tags are used by the common tests and the :func:`sklearn.utils.estomator_checks.check_estimator` function to
+decide what tests to run and what input data is appropriate. Tags can depends on
+estimator parameters or even system architecture and can in general only be
+determined at runtime.
+
+The default value of all tags except for ``X_types`` is ``False``.
+
+The current set of estimator tags are:
+
+non_deterministic
+    whether the estimator is not deterministic given a fixed ``random_state``
+
+requires_positive_data - unused for now
+    whether the estimator requires positive X.
+
+no_validation
+    whether the estimator skips input-validation. This is only meant for stateless and dummy transformers!
+
+multioutput - unused for now
+    whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
+
+multilabel
+    whether the estimator supports multilabel output
+
+stateless
+    whether the estimator needs access to data for fitting. Even though
+    an estimator is stateless, it might still need a call to ``fit`` for initialization.
+
+allow_nan
+    whether the estimator supports data with missing values encoded as np.NaN
+
+poor_score
+    whether the estimator fails to provide a "reasonable" test-set score, which
+    currently for regression is an R2 of 0.5 on a subset of the boston housing
+    dataset, and for classification an accuracy of 0.83 on
+    ``make_blobs(n_samples=300, random_state=0)``. These datasets and values
+    are based on current estimators in sklearn and might be replaced by
+    something more systematic.
+
+multioutput_only
+    whether estimator supports only multi-output classification or regression.
+
+_skip_test
+    whether to skip common tests entirely. Don't use this unless you have a *very good* reason.
+
+X_types
+    Supported input types for X as list of strings. Tests are currently only run if '2darray' is contained
+    in the list, signifying that the estimator takes continuous 2d numpy arrays as input. The default
+    value is ['2darray']. Other possible types are ``'string'``, ``'sparse'``,
+    ``'categorical'``, ``dict``, ``'1dlabels'`` and ``'2dlabels'``.
+    The goals is that in the future the supported input type will determine the
+    data used during testsing, in particular for ``'string'``, ``'sparse'`` and
+    ``'categorical'`` data.  For now, the test for sparse data do not make use
+    of the ``'sparse'`` tag.
+
+
+In addition to the tags, estimators are also need to declare any non-optional
+parameters to ``__init__`` in the ``_required_parameters`` class attribute,
+which is a list or tuple.  If ``_required_parameters`` is only
+``["estimator"]`` or ``["base_estimator"]``, then the estimator will be
+instantiated with an instance of ``LinearDiscriminantAnalysis`` (or
+``RidgeRegression`` if the estimator is a regressor) in the tests. The choice
+of these two models is somewhat idiosyncratic but both should provide robust
+closed-form solutions.
 
 .. _reading-code:
 

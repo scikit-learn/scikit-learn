@@ -43,7 +43,7 @@ from ..utils.multiclass import type_of_target
 from ..base import is_regressor
 
 
-class _BaseScorer(object, metaclass=ABCMeta):
+class _BaseScorer(metaclass=ABCMeta):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
@@ -480,7 +480,6 @@ neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
-f1_scorer = make_scorer(f1_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 jaccard_scorer = make_scorer(jaccard_score)
 
@@ -489,8 +488,6 @@ roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
-precision_scorer = make_scorer(precision_score)
-recall_scorer = make_scorer(recall_score)
 
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,

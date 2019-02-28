@@ -479,7 +479,7 @@ def test_symmetry():
 
     assert_equal(
         SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS),
-        set([]))
+        set())
 
     # Symmetric metric
     for name in SYMMETRIC_METRICS:
@@ -740,8 +740,8 @@ def test_classification_inf_nan_input(metric):
     # Classification metrics all raise a mixed input exception
     for y_true, y_score in invalids:
         assert_raise_message(ValueError,
-                             "Classification metrics can't handle a mix "
-                             "of binary and continuous targets",
+                             "Input contains NaN, infinity or a "
+                             "value too large",
                              metric, y_true, y_score)
 
 

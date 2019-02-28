@@ -725,12 +725,12 @@ def test_check_dataframe_warns_on_dtype():
                        dtype='numeric', warn_on_dtype=True)
 
 
-class DummyMemory(object):
+class DummyMemory:
     def cache(self, func):
         return func
 
 
-class WrongDummyMemory(object):
+class WrongDummyMemory:
     pass
 
 

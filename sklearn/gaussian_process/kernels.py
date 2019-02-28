@@ -356,7 +356,7 @@ class Kernel(metaclass=ABCMeta):
         """Returns whether the kernel is stationary. """
 
 
-class NormalizedKernelMixin(object):
+class NormalizedKernelMixin:
     """Mixin for kernels which are normalized: k(X, X)=1.
 
     .. versionadded:: 0.18
@@ -382,7 +382,7 @@ class NormalizedKernelMixin(object):
         return np.ones(X.shape[0])
 
 
-class StationaryKernelMixin(object):
+class StationaryKernelMixin:
     """Mixin for kernels which are stationary: k(X, Y)= f(X-Y).
 
     .. versionadded:: 0.18

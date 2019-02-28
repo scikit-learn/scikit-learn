@@ -39,7 +39,7 @@ y_min, y_max = -50, 50
 x_min, x_max = -50, 50
 
 
-class Model(object):
+class Model:
     """The Model which hold the data. It implements the
     observable in the observer pattern and notifies the
     registered observers on change event.
@@ -71,7 +71,7 @@ class Model(object):
         dump_svmlight_file(X, y, file)
 
 
-class Controller(object):
+class Controller:
     def __init__(self, model):
         self.model = model
         self.kernel = Tk.IntVar()
@@ -134,7 +134,7 @@ class Controller(object):
             self.fit()
 
 
-class View(object):
+class View:
     """Test docstring. """
     def __init__(self, root, controller):
         f = Figure()
@@ -240,7 +240,7 @@ class View(object):
             raise ValueError("surface type unknown")
 
 
-class ControllBar(object):
+class ControllBar:
     def __init__(self, root, controller):
         fm = Tk.Frame(root)
         kernel_group = Tk.Frame(fm)
