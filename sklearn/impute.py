@@ -1549,3 +1549,6 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             X_merged[~bad_rows] = X
             X = X_merged
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
