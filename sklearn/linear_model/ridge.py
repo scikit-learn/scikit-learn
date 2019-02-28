@@ -349,11 +349,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     -----
     This function won't compute the intercept.
     """
-    if return_intercept and sparse.issparse(X) and solver not in ['sag', 'sparse_cg']:
+    if (return_intercept and sparse.issparse(X) and
+       solver not in ['sag', 'sparse_cg']):
         if solver != 'auto':
-            warnings.warn("In Ridge, only 'sag' and 'sparse_cg' solvers can currently fit the "
-                          "intercept when X is sparse. Solver has been "
-                          "automatically changed into 'sag'.")
+            warnings.warn("In Ridge, only 'sag' and 'sparse_cg' solvers "
+                          "can currently fit the intercept when X is sparse."
+                          " Solver has been automatically changed into 'sag'.")
         solver = 'sag'
 
     _dtype = [np.float64, np.float32]
@@ -419,12 +420,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     n_iter = None
     if solver == 'sparse_cg':
         coef = _solve_sparse_cg(X, y, alpha,
-                                 max_iter=max_iter,
-                                 tol=tol,
-                                 verbose=verbose,
-                                 fit_intercept=return_intercept,
-                                 X_offset=X_offset,
-                                 X_scale=X_scale)
+                                max_iter=max_iter,
+                                tol=tol,
+                                verbose=verbose,
+                                fit_intercept=return_intercept,
+                                X_offset=X_offset,
+                                X_scale=X_scale)
 
     elif solver == 'lsqr':
         coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
@@ -528,7 +529,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
 
         # temporary fix for fitting the intercept with sparse data using 'sag'
         if (sparse.issparse(X) and self.fit_intercept and
-            self.solver != 'sparse_cg'):
+           self.solver != 'sparse_cg'):
             self.coef_, self.n_iter_, self.intercept_ = ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
