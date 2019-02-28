@@ -21,7 +21,6 @@ jobs:
     - powershell: Write-Host "##vso[task.prependpath]$env:CONDA\Scripts"
       displayName: Add conda to PATH for 64 bit Python
       condition: eq(variables['PYTHON_ARCH'], '64')
-    - powershell: Write-Host "##vso[task.prependpath]$env:AGENT_WORKFOLDER\miniconda\Scripts"
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '$(PYTHON_VERSION)'
