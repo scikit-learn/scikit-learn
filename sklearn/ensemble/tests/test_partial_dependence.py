@@ -48,24 +48,23 @@ def test_partial_dependence_classifier():
     assert axes is None
     assert_array_equal(pdp, pdp_2)
 
-    # with trivial (noop) sample weights
+    # with trivial (no-op) sample weights
     clf.fit(X, y, sample_weight=np.ones(len(y)))
 
-    pdp_w1, axes_w1 = partial_dependence(clf, [0], X=X, grid_resolution=5)
+    pdp_w, axes_w = partial_dependence(clf, [0], X=X, grid_resolution=5)
 
-    assert pdp_w1.shape == (1, 4)
-    assert axes_w1[0].shape[0] == 4
-    assert_array_equal(pdp_w1, pdp)
+    assert pdp_w.shape == (1, 4)
+    assert axes_w[0].shape[0] == 4
+    assert_array_equal(pdp_w, pdp)
 
     # with non-trivial sample weights
     clf.fit(X, y, sample_weight=w)
 
     pdp_w2, axes_w2 = partial_dependence(clf, [0], X=X, grid_resolution=5)
 
-    # only 4 grid points instead of 5 because only 4 unique X[:,0] vals
     assert pdp_w2.shape == (1, 4)
     assert axes_w2[0].shape[0] == 4
-    assert pdp_w2[0, 0] != pdp_w1[0, 0]
+    assert pdp_w2[0, 0] != pdp_w[0, 0]
 
 
 def test_partial_dependence_multiclass():
