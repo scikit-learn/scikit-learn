@@ -815,6 +815,7 @@ class OrdinalEncoder(_BaseEncoder):
         self._categories = self.categories
         self._fit(X, force_all_finite=self.force_all_finite)
 
+        X = self._check_X(X, force_all_finite=False)
 
         new_cats = []
         for i, cats in enumerate(self.categories_):
@@ -858,9 +859,8 @@ class OrdinalEncoder(_BaseEncoder):
         # -- Does it make sense to have force_all_finite functionality
         #    if NaN's are being masked before _transform?
         # -- Need to have functionality to encode missing values
+        X = self._check_X(X, force_all_finite=False)
         X_new = X.copy()
-
-        # if self.encode_missing == 'retain':
 
         # Make missing mask
         missing_mask = _object_dtype_isnan(X)
@@ -874,23 +874,19 @@ class OrdinalEncoder(_BaseEncoder):
 
         # Replace masked NaN's
         X_int, _ = self._transform(X_new, force_all_finite=self.force_all_finite)
-        X_with_missing = X_int.astype(self.dtype, copy=True) # Is this step necessary?
-
-
-        if self.encode_missing == 'encode':
-            for i in range(X_with_missing.shape[1]):
+        X_encoded = X_int.astype(self.dtype, copy=True)
+        if np.any(missing_mask):
+            for i in range(X_encoded.shape[1]):
                 missing_column = missing_mask[:, i]
                 if np.any(missing_column):
-                    X_max = X_with_missing.max(axis=0)
-                    X_with_missing[:, i][missing_column] = X_max[i] + 1
+                    if self.encode_missing == 'encode':
+                        X_max = X_encoded.max(axis=0)
+                        X_encoded[:, i][missing_column] = X_max[i] + 1
+                    else:
+                        X_encoded[:, i][missing_column] = np.nan
 
-        else:
-            X_with_missing[missing_mask] = np.nan
+        return X_encoded
 
-        return X_with_missing
-        # else:
-        #     X_int, _ = self._transform(X, force_all_finite=self.force_all_finite)
-        #     return X_int
 
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
