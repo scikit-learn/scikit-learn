@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-from ..externals import six
 
 
 def compute_class_weight(class_weight, classes, y):
@@ -114,12 +113,12 @@ def compute_sample_weight(class_weight, y, indices=None):
         y = np.reshape(y, (-1, 1))
     n_outputs = y.shape[1]
 
-    if isinstance(class_weight, six.string_types):
+    if isinstance(class_weight, str):
         if class_weight not in ['balanced']:
             raise ValueError('The only valid preset for class_weight is '
                              '"balanced". Given "%s".' % class_weight)
     elif (indices is not None and
-          not isinstance(class_weight, six.string_types)):
+          not isinstance(class_weight, str)):
         raise ValueError('The only valid class_weight for subsampling is '
                          '"balanced". Given "%s".' % class_weight)
     elif n_outputs > 1:
@@ -150,12 +149,12 @@ def compute_sample_weight(class_weight, y, indices=None):
             y_subsample = y[indices, k]
             classes_subsample = np.unique(y_subsample)
 
-            weight_k = np.choose(np.searchsorted(classes_subsample,
-                                                 classes_full),
-                                 compute_class_weight(class_weight_k,
-                                                      classes_subsample,
-                                                      y_subsample),
-                                 mode='clip')
+            weight_k = np.take(compute_class_weight(class_weight_k,
+                                                    classes_subsample,
+                                                    y_subsample),
+                               np.searchsorted(classes_subsample,
+                                               classes_full),
+                               mode='clip')
 
             classes_missing = set(classes_full) - set(classes_subsample)
         else:

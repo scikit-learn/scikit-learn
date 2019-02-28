@@ -247,7 +247,8 @@ def test_classifier_matching():
             n_iter = 300
         clf = LogisticRegression(solver=solver, fit_intercept=fit_intercept,
                                  tol=1e-11, C=1. / alpha / n_samples,
-                                 max_iter=n_iter, random_state=10)
+                                 max_iter=n_iter, random_state=10,
+                                 multi_class='ovr')
         clf.fit(X, y)
 
         weights, intercept = sag_sparse(X, y, step_size, alpha, n_iter=n_iter,
@@ -311,11 +312,12 @@ def test_sag_pobj_matches_logistic_regression():
 
     clf1 = LogisticRegression(solver='sag', fit_intercept=False, tol=.0000001,
                               C=1. / alpha / n_samples, max_iter=max_iter,
-                              random_state=10)
+                              random_state=10, multi_class='ovr')
     clf2 = clone(clf1)
     clf3 = LogisticRegression(fit_intercept=False, tol=.0000001,
                               C=1. / alpha / n_samples, max_iter=max_iter,
-                              random_state=10)
+                              random_state=10, multi_class='ovr',
+                              solver='lbfgs')
 
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -507,7 +509,7 @@ def test_sag_classifier_computed_correctly():
 
     clf1 = LogisticRegression(solver='sag', C=1. / alpha / n_samples,
                               max_iter=n_iter, tol=tol, random_state=77,
-                              fit_intercept=fit_intercept)
+                              fit_intercept=fit_intercept, multi_class='ovr')
     clf2 = clone(clf1)
 
     clf1.fit(X, y)
@@ -547,7 +549,7 @@ def test_sag_multiclass_computed_correctly():
 
     clf1 = LogisticRegression(solver='sag', C=1. / alpha / n_samples,
                               max_iter=max_iter, tol=tol, random_state=77,
-                              fit_intercept=fit_intercept)
+                              fit_intercept=fit_intercept, multi_class='ovr')
     clf2 = clone(clf1)
 
     clf1.fit(X, y)
@@ -591,6 +593,7 @@ def test_sag_multiclass_computed_correctly():
         assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
 
 
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_results():
     """tests if classifier results match target"""
     alpha = .1
@@ -634,7 +637,7 @@ def test_binary_classifier_class_weight():
     class_weight = {1: .45, -1: .55}
     clf1 = LogisticRegression(solver='sag', C=1. / alpha / n_samples,
                               max_iter=n_iter, tol=tol, random_state=77,
-                              fit_intercept=fit_intercept,
+                              fit_intercept=fit_intercept, multi_class='ovr',
                               class_weight=class_weight)
     clf2 = clone(clf1)
 
@@ -681,7 +684,7 @@ def test_multiclass_classifier_class_weight():
 
     clf1 = LogisticRegression(solver='sag', C=1. / alpha / n_samples,
                               max_iter=max_iter, tol=tol, random_state=77,
-                              fit_intercept=fit_intercept,
+                              fit_intercept=fit_intercept, multi_class='ovr',
                               class_weight=class_weight)
     clf2 = clone(clf1)
     clf1.fit(X, y)
@@ -728,6 +731,7 @@ def test_multiclass_classifier_class_weight():
         assert_almost_equal(clf2.intercept_[i], intercept2[i], decimal=1)
 
 
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_single_class():
     """tests if ValueError is thrown with only one class"""
     X = [[1, 2], [3, 4]]
@@ -740,6 +744,7 @@ def test_classifier_single_class():
                          X, y)
 
 
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_step_size_alpha_error():
     X = [[0, 0], [0, 0]]
     y = [1, -1]

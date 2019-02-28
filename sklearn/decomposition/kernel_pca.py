@@ -8,6 +8,7 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
+from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
@@ -89,9 +90,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.18
 
-    n_jobs : int, default=1
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If `-1`, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
         .. versionadded:: 0.18
 
@@ -118,6 +121,16 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
         a reference. This attribute is used for the calls to transform.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import KernelPCA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = KernelPCA(n_components=7, kernel='linear')
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
+
     References
     ----------
     Kernel PCA was introduced in:
@@ -131,7 +144,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
                  tol=0, max_iter=None, remove_zero_eig=False,
-                 random_state=None, copy_X=True, n_jobs=1):
+                 random_state=None, copy_X=True, n_jobs=None):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -197,6 +210,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                                                 tol=self.tol,
                                                 maxiter=self.max_iter,
                                                 v0=v0)
+
+        # flip eigenvectors' sign to enforce deterministic output
+        self.alphas_, _ = svd_flip(self.alphas_,
+                                   np.empty_like(self.alphas_).T)
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]

@@ -22,42 +22,57 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
-from sklearn import linear_model, decomposition, datasets
+from sklearn import datasets
+from sklearn.decomposition import PCA
+from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 
-logistic = linear_model.LogisticRegression()
 
-pca = decomposition.PCA()
+# Define a pipeline to search for the best combination of PCA truncation
+# and classifier regularization.
+logistic = SGDClassifier(loss='log', penalty='l2', early_stopping=True,
+                         max_iter=10000, tol=1e-5, random_state=0)
+pca = PCA()
 pipe = Pipeline(steps=[('pca', pca), ('logistic', logistic)])
 
 digits = datasets.load_digits()
 X_digits = digits.data
 y_digits = digits.target
 
+# Parameters of pipelines can be set using ‘__’ separated parameter names:
+param_grid = {
+    'pca__n_components': [5, 20, 30, 40, 50, 64],
+    'logistic__alpha': np.logspace(-4, 4, 5),
+}
+search = GridSearchCV(pipe, param_grid, iid=False, cv=5)
+search.fit(X_digits, y_digits)
+print("Best parameter (CV score=%0.3f):" % search.best_score_)
+print(search.best_params_)
+
 # Plot the PCA spectrum
 pca.fit(X_digits)
 
-plt.figure(1, figsize=(4, 3))
-plt.clf()
-plt.axes([.2, .2, .7, .7])
-plt.plot(pca.explained_variance_, linewidth=2)
-plt.axis('tight')
-plt.xlabel('n_components')
-plt.ylabel('explained_variance_')
+fig, (ax0, ax1) = plt.subplots(nrows=2, sharex=True, figsize=(6, 6))
+ax0.plot(pca.explained_variance_ratio_, linewidth=2)
+ax0.set_ylabel('PCA explained variance')
 
-# Prediction
-n_components = [20, 40, 64]
-Cs = np.logspace(-4, 4, 3)
-
-# Parameters of pipelines can be set using ‘__’ separated parameter names:
-estimator = GridSearchCV(pipe,
-                         dict(pca__n_components=n_components,
-                              logistic__C=Cs))
-estimator.fit(X_digits, y_digits)
-
-plt.axvline(estimator.best_estimator_.named_steps['pca'].n_components,
+ax0.axvline(search.best_estimator_.named_steps['pca'].n_components,
             linestyle=':', label='n_components chosen')
-plt.legend(prop=dict(size=12))
+ax0.legend(prop=dict(size=12))
+
+# For each number of components, find the best classifier results
+results = pd.DataFrame(search.cv_results_)
+components_col = 'param_pca__n_components'
+best_clfs = results.groupby(components_col).apply(
+    lambda g: g.nlargest(1, 'mean_test_score'))
+
+best_clfs.plot(x=components_col, y='mean_test_score', yerr='std_test_score',
+               legend=False, ax=ax1)
+ax1.set_ylabel('Classification accuracy (val)')
+ax1.set_xlabel('n_components')
+
+plt.tight_layout()
 plt.show()

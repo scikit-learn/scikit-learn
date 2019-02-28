@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 
 from functools import partial
 from itertools import product
@@ -14,7 +13,6 @@ from sklearn import svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize
 from sklearn.utils.validation import check_random_state
-from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_raises, clean_warning_registry
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
@@ -47,6 +45,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
+from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import calibration_loss
 
 from sklearn.metrics.classification import _check_targets
@@ -124,16 +123,36 @@ def test_classification_report_dictionary_output():
                                      'recall': 0.90000000000000002,
                                      'f1-score': 0.57142857142857151,
                                      'support': 20},
-                       'avg / total': {'precision': 0.51375351084147847,
-                                       'recall': 0.53333333333333333,
-                                       'f1-score': 0.47310435663627154,
-                                       'support': 75}}
+                       'macro avg': {'f1-score': 0.5099797365754813,
+                                     'precision': 0.5260083136726211,
+                                     'recall': 0.596146953405018,
+                                     'support': 75},
+                       'accuracy': 0.5333333333333333,
+                       'weighted avg': {'f1-score': 0.47310435663627154,
+                                        'precision': 0.5137535108414785,
+                                        'recall': 0.5333333333333333,
+                                        'support': 75}}
 
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names, output_dict=True)
 
-    assert_dict_equal(report, expected_report)
+    # assert the 2 dicts are equal.
+    assert(report.keys() == expected_report.keys())
+    for key in expected_report:
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
+
+    assert type(expected_report['setosa']['precision']) == float
+    assert type(expected_report['macro avg']['precision']) == float
+    assert type(expected_report['setosa']['support']) == int
+    assert type(expected_report['macro avg']['support']) == int
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
@@ -180,6 +199,7 @@ def test_precision_recall_f1_score_binary():
                             (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
 
+@ignore_warnings
 def test_precision_recall_f_binary_single_class():
     # Test precision, recall and F1 score behave with a single positive or
     # negative class
@@ -353,6 +373,138 @@ def test_confusion_matrix_binary():
          [str(y) for y in y_pred])
 
 
+def test_multilabel_confusion_matrix_binary():
+    # Test multilabel confusion matrix - binary classification case
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    def test(y_true, y_pred):
+        cm = multilabel_confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[[17, 8], [3, 22]],
+                                [[22, 3], [8, 17]]])
+
+    test(y_true, y_pred)
+    test([str(y) for y in y_true],
+         [str(y) for y in y_pred])
+
+
+def test_multilabel_confusion_matrix_multiclass():
+    # Test multilabel confusion matrix - multi-class case
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    def test(y_true, y_pred, string_type=False):
+        # compute confusion matrix with default labels introspection
+        cm = multilabel_confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[[47, 4], [5, 19]],
+                                [[38, 6], [28, 3]],
+                                [[30, 25], [2, 18]]])
+
+        # compute confusion matrix with explicit label ordering
+        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+        cm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+        assert_array_equal(cm, [[[47, 4], [5, 19]],
+                                [[30, 25], [2, 18]],
+                                [[38, 6], [28, 3]]])
+
+        # compute confusion matrix with super set of present labels
+        labels = ['0', '2', '1', '3'] if string_type else [0, 2, 1, 3]
+        cm = multilabel_confusion_matrix(y_true, y_pred, labels=labels)
+        assert_array_equal(cm, [[[47, 4], [5, 19]],
+                                [[30, 25], [2, 18]],
+                                [[38, 6], [28, 3]],
+                                [[75, 0], [0, 0]]])
+
+    test(y_true, y_pred)
+    test(list(str(y) for y in y_true),
+         list(str(y) for y in y_pred),
+         string_type=True)
+
+
+def test_multilabel_confusion_matrix_multilabel():
+    # Test multilabel confusion matrix - multilabel-indicator case
+    from scipy.sparse import csc_matrix, csr_matrix
+
+    y_true = np.array([[1, 0, 1], [0, 1, 0], [1, 1, 0]])
+    y_pred = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+    y_true_csr = csr_matrix(y_true)
+    y_pred_csr = csr_matrix(y_pred)
+    y_true_csc = csc_matrix(y_true)
+    y_pred_csc = csc_matrix(y_pred)
+
+    # cross test different types
+    sample_weight = np.array([2, 1, 3])
+    real_cm = [[[1, 0], [1, 1]],
+               [[1, 0], [1, 1]],
+               [[0, 2], [1, 0]]]
+    trues = [y_true, y_true_csr, y_true_csc]
+    preds = [y_pred, y_pred_csr, y_pred_csc]
+
+    for y_true_tmp in trues:
+        for y_pred_tmp in preds:
+            cm = multilabel_confusion_matrix(y_true_tmp, y_pred_tmp)
+            assert_array_equal(cm, real_cm)
+
+    # test support for samplewise
+    cm = multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    assert_array_equal(cm, [[[1, 0], [1, 1]],
+                            [[1, 1], [0, 1]],
+                            [[0, 1], [2, 0]]])
+
+    # test support for labels
+    cm = multilabel_confusion_matrix(y_true, y_pred, labels=[2, 0])
+    assert_array_equal(cm, [[[0, 2], [1, 0]],
+                            [[1, 0], [1, 1]]])
+
+    # test support for labels with samplewise
+    cm = multilabel_confusion_matrix(y_true, y_pred, labels=[2, 0],
+                                     samplewise=True)
+    assert_array_equal(cm, [[[0, 0], [1, 1]],
+                            [[1, 1], [0, 0]],
+                            [[0, 1], [1, 0]]])
+
+    # test support for sample_weight with sample_wise
+    cm = multilabel_confusion_matrix(y_true, y_pred,
+                                     sample_weight=sample_weight,
+                                     samplewise=True)
+    assert_array_equal(cm, [[[2, 0], [2, 2]],
+                            [[1, 1], [0, 1]],
+                            [[0, 3], [6, 0]]])
+
+
+def test_multilabel_confusion_matrix_errors():
+    y_true = np.array([[1, 0, 1], [0, 1, 0], [1, 1, 0]])
+    y_pred = np.array([[1, 0, 0], [0, 1, 1], [0, 0, 1]])
+
+    # Bad sample_weight
+    assert_raise_message(ValueError, "inconsistent numbers of samples",
+                         multilabel_confusion_matrix,
+                         y_true, y_pred, sample_weight=[1, 2])
+    assert_raise_message(ValueError, "bad input shape",
+                         multilabel_confusion_matrix,
+                         y_true, y_pred,
+                         sample_weight=[[1, 2, 3],
+                                        [2, 3, 4],
+                                        [3, 4, 5]])
+
+    # Bad labels
+    assert_raise_message(ValueError, "All labels must be in [0, n labels)",
+                         multilabel_confusion_matrix,
+                         y_true, y_pred, labels=[-1])
+    assert_raise_message(ValueError, "All labels must be in [0, n labels)",
+                         multilabel_confusion_matrix,
+                         y_true, y_pred, labels=[3])
+
+    # Using samplewise outside multilabel
+    assert_raise_message(ValueError, "Samplewise metrics",
+                         multilabel_confusion_matrix,
+                         [0, 1, 2], [1, 2, 0], samplewise=True)
+
+    # Bad y_type
+    assert_raise_message(ValueError, "multiclass-multioutput is not supported",
+                         multilabel_confusion_matrix,
+                         [[0, 1, 2], [2, 1, 0]],
+                         [[1, 2, 0], [1, 0, 2]])
+
+
 def test_cohen_kappa():
     # These label vectors reproduce the contingency matrix from Artstein and
     # Poesio (2008), Table 1: np.array([[20, 20], [10, 50]]).
@@ -378,8 +530,10 @@ def test_cohen_kappa():
     y1 = np.array([0] * 46 + [1] * 44 + [2] * 10)
     y2 = np.array([0] * 50 + [1] * 40 + [2] * 10)
     assert_almost_equal(cohen_kappa_score(y1, y2), .9315, decimal=4)
-    assert_almost_equal(cohen_kappa_score(y1, y2, weights="linear"), .9412, decimal=4)
-    assert_almost_equal(cohen_kappa_score(y1, y2, weights="quadratic"), .9541, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2,
+                        weights="linear"), 0.9412, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2,
+                        weights="quadratic"), 0.9541, decimal=4)
 
 
 @ignore_warnings
@@ -729,27 +883,55 @@ def test_classification_report_multiclass():
 
     # print classification report with class names
     expected_report = """\
-             precision    recall  f1-score   support
+              precision    recall  f1-score   support
 
-     setosa       0.83      0.79      0.81        24
- versicolor       0.33      0.10      0.15        31
-  virginica       0.42      0.90      0.57        20
+      setosa       0.83      0.79      0.81        24
+  versicolor       0.33      0.10      0.15        31
+   virginica       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+    accuracy                           0.53        75
+   macro avg       0.53      0.60      0.51        75
+weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names)
     assert_equal(report, expected_report)
+
+
+def test_classification_report_multiclass_balanced():
+    y_true, y_pred = [0, 0, 0, 1, 1, 1, 2, 2, 2], [0, 1, 2, 0, 1, 2, 0, 1, 2]
+
+    expected_report = """\
+              precision    recall  f1-score   support
+
+           0       0.33      0.33      0.33         3
+           1       0.33      0.33      0.33         3
+           2       0.33      0.33      0.33         3
+
+    accuracy                           0.33         9
+   macro avg       0.33      0.33      0.33         9
+weighted avg       0.33      0.33      0.33         9
+"""
+    report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
+
+
+def test_classification_report_multiclass_with_label_detection():
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
     # print classification report with label detection
     expected_report = """\
-             precision    recall  f1-score   support
+              precision    recall  f1-score   support
 
-          0       0.83      0.79      0.81        24
-          1       0.33      0.10      0.15        31
-          2       0.42      0.90      0.57        20
+           0       0.83      0.79      0.81        24
+           1       0.33      0.10      0.15        31
+           2       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+    accuracy                           0.53        75
+   macro avg       0.53      0.60      0.51        75
+weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
@@ -762,29 +944,19 @@ def test_classification_report_multiclass_with_digits():
 
     # print classification report with class names
     expected_report = """\
-             precision    recall  f1-score   support
+              precision    recall  f1-score   support
 
-     setosa    0.82609   0.79167   0.80851        24
- versicolor    0.33333   0.09677   0.15000        31
-  virginica    0.41860   0.90000   0.57143        20
+      setosa    0.82609   0.79167   0.80851        24
+  versicolor    0.33333   0.09677   0.15000        31
+   virginica    0.41860   0.90000   0.57143        20
 
-avg / total    0.51375   0.53333   0.47310        75
+    accuracy                        0.53333        75
+   macro avg    0.52601   0.59615   0.50998        75
+weighted avg    0.51375   0.53333   0.47310        75
 """
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names, digits=5)
-    assert_equal(report, expected_report)
-    # print classification report with label detection
-    expected_report = """\
-             precision    recall  f1-score   support
-
-          0       0.83      0.79      0.81        24
-          1       0.33      0.10      0.15        31
-          2       0.42      0.90      0.57        20
-
-avg / total       0.51      0.53      0.47        75
-"""
-    report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
 
 
@@ -795,25 +967,29 @@ def test_classification_report_multiclass_with_string_label():
     y_pred = np.array(["blue", "green", "red"])[y_pred]
 
     expected_report = """\
-             precision    recall  f1-score   support
+              precision    recall  f1-score   support
 
-       blue       0.83      0.79      0.81        24
-      green       0.33      0.10      0.15        31
-        red       0.42      0.90      0.57        20
+        blue       0.83      0.79      0.81        24
+       green       0.33      0.10      0.15        31
+         red       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+    accuracy                           0.53        75
+   macro avg       0.53      0.60      0.51        75
+weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
 
     expected_report = """\
-             precision    recall  f1-score   support
+              precision    recall  f1-score   support
 
-          a       0.83      0.79      0.81        24
-          b       0.33      0.10      0.15        31
-          c       0.42      0.90      0.57        20
+           a       0.83      0.79      0.81        24
+           b       0.33      0.10      0.15        31
+           c       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+    accuracy                           0.53        75
+   macro avg       0.53      0.60      0.51        75
+weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred,
                                    target_names=["a", "b", "c"])
@@ -823,18 +999,20 @@ avg / total       0.51      0.53      0.47        75
 def test_classification_report_multiclass_with_unicode_label():
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    labels = np.array([u"blue\xa2", u"green\xa2", u"red\xa2"])
+    labels = np.array(["blue\xa2", "green\xa2", "red\xa2"])
     y_true = labels[y_true]
     y_pred = labels[y_pred]
 
-    expected_report = u"""\
-             precision    recall  f1-score   support
+    expected_report = """\
+              precision    recall  f1-score   support
 
-      blue\xa2       0.83      0.79      0.81        24
-     green\xa2       0.33      0.10      0.15        31
-       red\xa2       0.42      0.90      0.57        20
+       blue\xa2       0.83      0.79      0.81        24
+      green\xa2       0.33      0.10      0.15        31
+        red\xa2       0.42      0.90      0.57        20
 
-avg / total       0.51      0.53      0.47        75
+    accuracy                           0.53        75
+   macro avg       0.53      0.60      0.51        75
+weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
@@ -843,7 +1021,7 @@ avg / total       0.51      0.53      0.47        75
 def test_classification_report_multiclass_with_long_string_label():
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    labels = np.array(["blue", "green"*5, "red"])
+    labels = np.array(["blue", "green" * 5, "red"])
     y_true = labels[y_true]
     y_pred = labels[y_pred]
 
@@ -854,7 +1032,9 @@ def test_classification_report_multiclass_with_long_string_label():
 greengreengreengreengreen       0.33      0.10      0.15        31
                       red       0.42      0.90      0.57        20
 
-              avg / total       0.51      0.53      0.47        75
+                 accuracy                           0.53        75
+                macro avg       0.53      0.60      0.51        75
+             weighted avg       0.51      0.53      0.47        75
 """
 
     report = classification_report(y_true, y_pred)
@@ -887,6 +1067,7 @@ def test_classification_report_no_labels_target_names_unequal_length():
                          y_true, y_pred, target_names=target_names)
 
 
+@ignore_warnings
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50
@@ -902,14 +1083,17 @@ def test_multilabel_classification_report():
                                                random_state=1)
 
     expected_report = """\
-             precision    recall  f1-score   support
+              precision    recall  f1-score   support
 
-          0       0.50      0.67      0.57        24
-          1       0.51      0.74      0.61        27
-          2       0.29      0.08      0.12        26
-          3       0.52      0.56      0.54        27
+           0       0.50      0.67      0.57        24
+           1       0.51      0.74      0.61        27
+           2       0.29      0.08      0.12        26
+           3       0.52      0.56      0.54        27
 
-avg / total       0.45      0.51      0.46       104
+   micro avg       0.50      0.51      0.50       104
+   macro avg       0.45      0.51      0.46       104
+weighted avg       0.45      0.51      0.46       104
+ samples avg       0.46      0.42      0.40       104
 """
 
     report = classification_report(y_true, y_pred)
@@ -948,6 +1132,11 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
     # sp_hamming only works with 1-D arrays
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
+    assert_warns_message(DeprecationWarning,
+                         "The labels parameter is unused. It was"
+                         " deprecated in version 0.21 and"
+                         " will be removed in version 0.23",
+                         hamming_loss, y1, y2, labels=[0, 1])
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -1260,6 +1449,17 @@ def test_prf_warnings():
            'being set to 0.0 due to no true samples.')
     my_assert(w, msg, f, [-1, -1], [1, 1], average='binary')
 
+    clean_warning_registry()
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        precision_recall_fscore_support([0, 0], [0, 0], average="binary")
+        msg = ('Recall and F-score are ill-defined and '
+               'being set to 0.0 due to no true samples.')
+        assert_equal(str(record.pop().message), msg)
+        msg = ('Precision and F-score are ill-defined and '
+               'being set to 0.0 due to no predicted samples.')
+        assert_equal(str(record.pop().message), msg)
+
 
 def test_recall_warnings():
     assert_no_warnings(recall_score,
@@ -1275,16 +1475,23 @@ def test_recall_warnings():
         assert_equal(str(record.pop().message),
                      'Recall is ill-defined and '
                      'being set to 0.0 due to no true samples.')
+        recall_score([0, 0], [0, 0])
+        assert_equal(str(record.pop().message),
+                     'Recall is ill-defined and '
+                     'being set to 0.0 due to no true samples.')
 
 
 def test_precision_warnings():
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
-
         precision_score(np.array([[1, 1], [1, 1]]),
                         np.array([[0, 0], [0, 0]]),
                         average='micro')
+        assert_equal(str(record.pop().message),
+                     'Precision is ill-defined and '
+                     'being set to 0.0 due to no predicted samples.')
+        precision_score([0, 0], [0, 0])
         assert_equal(str(record.pop().message),
                      'Precision is ill-defined and '
                      'being set to 0.0 due to no predicted samples.')
@@ -1313,6 +1520,13 @@ def test_fscore_warnings():
             assert_equal(str(record.pop().message),
                          'F-score is ill-defined and '
                          'being set to 0.0 due to no true samples.')
+            score([0, 0], [0, 0])
+            assert_equal(str(record.pop().message),
+                         'F-score is ill-defined and '
+                         'being set to 0.0 due to no true samples.')
+            assert_equal(str(record.pop().message),
+                         'F-score is ill-defined and '
+                         'being set to 0.0 due to no predicted samples.')
 
 
 def test_prf_average_binary_data_non_binary():
@@ -1423,7 +1637,8 @@ def test__check_targets():
     y2 = [(2,), (0, 2,)]
     msg = ('You appear to be using a legacy multi-label data representation. '
            'Sequence of sequences are no longer supported; use a binary array'
-           ' or sparse matrix instead.')
+           ' or sparse matrix instead - the MultiLabelBinarizer'
+           ' transformer can convert to this format.')
     assert_raise_message(ValueError, msg, _check_targets, y1, y2)
 
 

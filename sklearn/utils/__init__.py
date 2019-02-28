@@ -1,26 +1,59 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+from collections.abc import Sequence
 import numbers
 import platform
+import struct
 
+import warnings
 import numpy as np
 from scipy.sparse import issparse
-import warnings
 
 from .murmurhash import murmurhash3_32
+from .class_weight import compute_class_weight, compute_sample_weight
+from . import _joblib
+from ..exceptions import DataConversionWarning
+from .deprecation import deprecated
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric)
-from .class_weight import compute_class_weight, compute_sample_weight
-from ._joblib import cpu_count, Parallel, Memory, delayed, hash
-from ._joblib import parallel_backend
-from ..exceptions import DataConversionWarning
-from ..utils.fixes import _Sequence as Sequence
-from .deprecation import deprecated
 from .. import get_config
+
+
+# Do not deprecate parallel_backend and register_parallel_backend as they are
+# needed to tune `scikit-learn` behavior and have different effect if called
+# from the vendored version or or the site-package version. The other are
+# utilities that are independent of scikit-learn so they are not part of
+# scikit-learn public API.
+parallel_backend = _joblib.parallel_backend
+register_parallel_backend = _joblib.register_parallel_backend
+
+# deprecate the joblib API in sklearn in favor of using directly joblib
+msg = ("deprecated in version 0.20.1 to be removed in version 0.23. "
+       "Please import this functionality directly from joblib, which can "
+       "be installed with: pip install joblib.")
+deprecate = deprecated(msg)
+
+delayed = deprecate(_joblib.delayed)
+cpu_count = deprecate(_joblib.cpu_count)
+hash = deprecate(_joblib.hash)
+effective_n_jobs = deprecate(_joblib.effective_n_jobs)
+
+
+# for classes, deprecated will change the object in _joblib module so we need
+# to subclass them.
+@deprecate
+class Memory(_joblib.Memory):
+    pass
+
+
+@deprecate
+class Parallel(_joblib.Parallel):
+    pass
+
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
@@ -30,9 +63,11 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_consistent_length", "check_X_y", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
-           "hash"]
+           "register_parallel_backend", "hash", "effective_n_jobs",
+           "resample", "shuffle"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
+_IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
 class Bunch(dict):
@@ -55,7 +90,7 @@ class Bunch(dict):
     """
 
     def __init__(self, **kwargs):
-        super(Bunch, self).__init__(kwargs)
+        super().__init__(kwargs)
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -397,7 +432,7 @@ def safe_sqr(X, copy=True):
     return X
 
 
-def gen_batches(n, batch_size):
+def gen_batches(n, batch_size, min_batch_size=0):
     """Generator to create slices containing batch_size elements, from 0 to n.
 
     The last slice may contain less than batch_size elements, when batch_size
@@ -408,6 +443,8 @@ def gen_batches(n, batch_size):
     n : int
     batch_size : int
         Number of element in each batch
+    min_batch_size : int, default=0
+        Minimum batch size to produce.
 
     Yields
     ------
@@ -422,10 +459,16 @@ def gen_batches(n, batch_size):
     [slice(0, 3, None), slice(3, 6, None)]
     >>> list(gen_batches(2, 3))
     [slice(0, 2, None)]
+    >>> list(gen_batches(7, 3, min_batch_size=0))
+    [slice(0, 3, None), slice(3, 6, None), slice(6, 7, None)]
+    >>> list(gen_batches(7, 3, min_batch_size=2))
+    [slice(0, 3, None), slice(3, 7, None)]
     """
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
+        if end + min_batch_size > n:
+            continue
         yield slice(start, end)
         start = end
     if start < n:
@@ -475,45 +518,6 @@ def gen_even_slices(n, n_packs, n_samples=None):
                 end = min(n_samples, end)
             yield slice(start, end, None)
             start = end
-
-
-def _get_n_jobs(n_jobs):
-    """Get number of jobs for the computation.
-
-    This function reimplements the logic of joblib to determine the actual
-    number of jobs depending on the cpu count. If -1 all CPUs are used.
-    If 1 is given, no parallel computing code is used at all, which is useful
-    for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
-    Thus for n_jobs = -2, all CPUs but one are used.
-
-    Parameters
-    ----------
-    n_jobs : int
-        Number of jobs stated in joblib convention.
-
-    Returns
-    -------
-    n_jobs : int
-        The actual number of jobs as positive integer.
-
-    Examples
-    --------
-    >>> from sklearn.utils import _get_n_jobs
-    >>> _get_n_jobs(4)
-    4
-    >>> jobs = _get_n_jobs(-2)
-    >>> assert jobs == max(cpu_count() - 1, 1)
-    >>> _get_n_jobs(0)
-    Traceback (most recent call last):
-    ...
-    ValueError: Parameter n_jobs == 0 has no meaning.
-    """
-    if n_jobs < 0:
-        return max(cpu_count() + 1 + n_jobs, 1)
-    elif n_jobs == 0:
-        raise ValueError('Parameter n_jobs == 0 has no meaning.')
-    else:
-        return n_jobs
 
 
 def tosequence(x):
@@ -629,9 +633,6 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-
     # convert from numpy.bool_ to python bool to ensure that testing
     # is_scalar_nan(x) is True does not fail.
-    # Redondant np.floating is needed because numbers can't match np.float32
-    # in python 2.
-    return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))
+    return bool(isinstance(x, numbers.Real) and np.isnan(x))

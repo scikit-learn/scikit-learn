@@ -19,6 +19,15 @@ Note that the word "experiment" is not intended
 to denote academic use only,
 because even in commercial settings
 machine learning usually starts out experimentally.
+Here is a flowchart of typical cross validation workflow in model training.
+The best parameters can be determined by
+:ref:`grid search <grid_search>` techniques.
+
+.. image:: ../images/grid_search_workflow.png
+   :width: 400px
+   :height: 240px
+   :alt: Grid Search Workflow
+   :align: center
 
 In scikit-learn a random split into training and test sets
 can be quickly computed with the :func:`train_test_split` helper function.
@@ -90,6 +99,10 @@ but does not waste too much data
 which is a major advantage in problems such as inverse inference
 where the number of samples is very small.
 
+.. image:: ../images/grid_search_cross_validation.png
+   :width: 500px
+   :height: 300px
+   :align: center
 
 Computing cross-validated metrics
 =================================
@@ -142,6 +155,21 @@ validation iterator instead, for instance::
   >>> cross_val_score(clf, iris.data, iris.target, cv=cv)  # doctest: +ELLIPSIS
   array([0.977..., 0.977..., 1.  ..., 0.955..., 1.        ])
 
+Another option is to use an iterable yielding (train, test) splits as arrays of
+indices, for example::
+
+  >>> def custom_cv_2folds(X):
+  ...     n = X.shape[0]
+  ...     i = 1
+  ...     while i <= 2:
+  ...         idx = np.arange(n * (i - 1) / 2, n * i / 2, dtype=int)
+  ...         yield idx, idx
+  ...         i += 1
+  ...
+  >>> custom_cv = custom_cv_2folds(iris.data)
+  >>> cross_val_score(clf, iris.data, iris.target, cv=custom_cv)
+  array([1.        , 0.973...])
+
 .. topic:: Data transformation with held out data
 
     Just as it is important to test a predictor on data held-out from
@@ -176,7 +204,8 @@ validation iterator instead, for instance::
 The cross_validate function and multiple metric evaluation
 ----------------------------------------------------------
 
-The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
+The :func:`cross_validate` function differs from :func:`cross_val_score` in
+two ways:
 
 - It allows specifying multiple metrics for evaluation.
 
@@ -191,9 +220,9 @@ And for multiple metric evaluation, the return value is a dict with the
 following keys -
 ``['test_<scorer1_name>', 'test_<scorer2_name>', 'test_<scorer...>', 'fit_time', 'score_time']``
 
-``return_train_score`` is set to ``True`` by default. It adds train score keys
-for all the scorers. If train scores are not needed, this should be set to
-``False`` explicitly.
+``return_train_score`` is set to ``False`` by default to save computation time.
+To evaluate the scores on the training set as well you need to be set to
+``True``.
 
 You may also retain the estimator fitted on each training set by setting
 ``return_estimator=True``.
@@ -206,7 +235,7 @@ predefined scorer names::
     >>> scoring = ['precision_macro', 'recall_macro']
     >>> clf = svm.SVC(kernel='linear', C=1, random_state=0)
     >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
-    ...                         cv=5, return_train_score=False)
+    ...                         cv=5)
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
     >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
@@ -231,7 +260,7 @@ Here is an example of ``cross_validate`` using a single metric::
     ...                         scoring='precision_macro', cv=5,
     ...                         return_estimator=True)
     >>> sorted(scores.keys())
-    ['estimator', 'fit_time', 'score_time', 'test_score', 'train_score']
+    ['estimator', 'fit_time', 'score_time', 'test_score']
 
 
 Obtaining predictions by cross-validation
@@ -323,6 +352,14 @@ Example of 2-fold cross-validation on a dataset with 4 samples::
   [2 3] [0 1]
   [0 1] [2 3]
 
+Here is a visualization of the cross-validation behavior. Note that
+:class:`KFold` is not affected by classes or groups.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_004.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
+
 Each fold is constituted by two arrays: the first one is related to the
 *training set*, and the second one to the *test set*.
 Thus, one can create the training/test sets using numpy indexing::
@@ -412,9 +449,9 @@ fold cross validation should be preferred to LOO.
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
    <http://web.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
-   <http://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
+   <https://people.csail.mit.edu/romer/papers/CrossVal_SDM08.pdf>`_, SIAM 2008;
  * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to
-   Statistical Learning <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013.
+   Statistical Learning <https://www-bcf.usc.edu/~gareth/ISL/>`_, Springer 2013.
 
 
 Leave P Out (LPO)
@@ -471,6 +508,14 @@ Here is a usage example::
   [2 7 5 8 0 3 4] [6 1 9]
   [4 1 0 6 8 9 3] [5 2 7]
 
+Here is a visualization of the cross-validation behavior. Note that
+:class:`ShuffleSplit` is not affected by classes or groups.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_006.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
+
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and
 the proportion of samples on each side of the train / test split.
@@ -506,6 +551,13 @@ two slightly unbalanced classes::
   [0 1 3 4 5 8 9] [2 6 7]
   [0 1 2 4 5 6 7] [3 8 9]
 
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_007.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
+
 :class:`RepeatedStratifiedKFold` can be used to repeat Stratified K-Fold n times
 with different randomization in each repetition.
 
@@ -516,6 +568,13 @@ Stratified Shuffle Split
 :class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
 stratified splits, *i.e* which creates splits by preserving the same
 percentage for each target class as in the complete set.
+
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_009.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
 
 .. _group_cv:
 
@@ -569,6 +628,12 @@ Each subject is in a different testing fold, and the same subject is never in
 both testing and training. Notice that the folds do not have exactly the same
 size due to the imbalance in the data.
 
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_005.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
 
 Leave One Group Out
 ^^^^^^^^^^^^^^^^^^^
@@ -645,6 +710,13 @@ Here is a usage example::
   [2 3 4 5] [0 1 6 7]
   [4 5 6 7] [0 1 2 3]
 
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_008.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
+
 This class is useful when the behavior of :class:`LeavePGroupsOut` is
 desired, but the number of groups is large enough that generating all
 possible partitions with :math:`P` groups withheld would be prohibitively
@@ -709,6 +781,12 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
   [0 1 2 3] [4]
   [0 1 2 3 4] [5]
 
+Here is a visualization of the cross-validation behavior.
+
+.. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_indices_010.png
+   :target: ../auto_examples/model_selection/plot_cv_indices.html
+   :align: center
+   :scale: 75%
 
 A note on shuffling
 ===================

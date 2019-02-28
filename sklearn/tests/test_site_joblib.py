@@ -1,6 +1,8 @@
 import os
+import pytest
+from sklearn import externals
 from sklearn.externals import joblib as joblib_vendored
-from sklearn.utils import Parallel, delayed, Memory, parallel_backend
+from sklearn.utils._joblib import Parallel, delayed, Memory, parallel_backend
 
 if os.environ.get('SKLEARN_SITE_JOBLIB', False):
     import joblib as joblib_site
@@ -9,6 +11,11 @@ else:
 
 
 def test_old_pickle(tmpdir):
+    vendored_joblib_home = os.path.dirname(joblib_vendored.__file__)
+    sklearn_externals_home = os.path.dirname(externals.__file__)
+    if not vendored_joblib_home.startswith(sklearn_externals_home):
+        pytest.skip("joblib is physically unvendored (e.g. as in debian)")
+
     # Check that a pickle that references sklearn.external.joblib can load
     f = tmpdir.join('foo.pkl')
     f.write(b'\x80\x02csklearn.externals.joblib.numpy_pickle\nNumpyArrayWrappe'
