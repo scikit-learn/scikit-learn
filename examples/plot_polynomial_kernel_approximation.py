@@ -55,7 +55,7 @@ from time import time
 
 # Import SVM classifiers and feature map approximation algorithms
 from sklearn.svm import LinearSVC, SVC
-from sklearn.kernel_approximation import Nystroem, TensorSketch
+from sklearn.kernel_approximation import Nystroem, PolynomialSampler
 from sklearn.pipeline import Pipeline
 
 # Split data in train and test sets
@@ -73,18 +73,18 @@ lsvm_score = 100*lsvm.score(X_test, Y_test)
 ksvm = SVC(kernel="poly", degree=2, gamma=1.).fit(X_train, Y_train)
 ksvm_score = 100*ksvm.score(X_test, Y_test)
 
-# Evaluate TensorSketch + LinearSVM
-ts_svm_scores = []
+# Evaluate PolynomialSampler + LinearSVM
+ps_svm_scores = []
 n_test = 5
 
 # To compensate for the stochasticity of the method, we make n_tets runs
 for k in out_dims:
     score_avg = 0
     for _ in range(n_test):
-        ts_svm = Pipeline([("PS", PolynomialSampler(degree=2, n_components=k)),
+        ps_svm = Pipeline([("PS", PolynomialSampler(degree=2, n_components=k)),
                            ("SVM", LinearSVC())])
-        score_avg += ts_svm.fit(X_train, Y_train).score(X_test, Y_test)
-    ts_svm_scores.append(100*score_avg/n_test)
+        score_avg += ps_svm.fit(X_train, Y_train).score(X_test, Y_test)
+    ps_svm_scores.append(100*score_avg/n_test)
 
 # Evaluate Nystroem + LinearSVM
 ny_svm_scores = []
@@ -102,7 +102,7 @@ for k in out_dims:
 # Show results
 plt.figure(figsize=(6, 4))
 plt.title("Accuracy results")
-plt.plot(out_dims, ts_svm_scores, label="PolynomialSampler + linear SVM",
+plt.plot(out_dims, ps_svm_scores, label="PolynomialSampler + linear SVM",
          c="orange")
 plt.plot(out_dims, ny_svm_scores, label="Nystroem + linear SVM",
          c="blue")
@@ -116,7 +116,7 @@ plt.ylabel("Accuracy (%)")
 plt.xlim([out_dims[0], out_dims[-1]])
 plt.tight_layout()
 
-# Now lets evaluate the scalability of TensorSketch vs Nystroem
+# Now lets evaluate the scalability of PolynomialSampler vs Nystroem
 # First we generate some fake data with a lot of samples
 
 fakeData = np.random.randn(10000, 100)
@@ -124,14 +124,14 @@ fakeDataY = np.random.randint(0, high=10, size=(10000))
 
 out_dims = range(500, 6000, 500)
 
-# Evaluate scalability of TensorSketch as n_components grows
-ts_svm_times = []
+# Evaluate scalability of PolynomialSampler as n_components grows
+ps_svm_times = []
 for k in out_dims:
-    ts = PolynomialSampler(degree=2, n_components=k)
+    ps = PolynomialSampler(degree=2, n_components=k)
 
     start = time()
-    ts.fit_transform(fakeData, None)
-    ts_svm_times.append(time() - start)
+    ps.fit_transform(fakeData, None)
+    ps_svm_times.append(time() - start)
 
 # Evaluate scalability of Nystroem as n_components grows
 # This can take a while due to the inefficient training phase
@@ -146,7 +146,7 @@ for k in out_dims:
 # Show results
 plt.figure(figsize=(6, 4))
 plt.title("Scalability results")
-plt.plot(out_dims, ts_svm_times, label="PolynomialSampler", c="orange")
+plt.plot(out_dims, ps_svm_times, label="PolynomialSampler", c="orange")
 plt.plot(out_dims, ny_svm_times, label="Nystroem", c="blue")
 plt.legend()
 plt.xlabel("N_components for PolynomialSampler and Nystroem")
