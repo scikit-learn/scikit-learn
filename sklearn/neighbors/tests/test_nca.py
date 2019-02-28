@@ -1,3 +1,12 @@
+# coding: utf-8
+"""
+Testing for Neighborhood Component Analysis module (sklearn.neighbors.nca)
+"""
+
+# Authors: William de Vazelhes <wdevazelhes@gmail.com>
+#          John Chiotellis <ioannis.chiotellis@in.tum.de>
+# License: BSD 3 clause
+
 import pytest
 import re
 import numpy as np
