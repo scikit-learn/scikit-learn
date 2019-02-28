@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
@@ -10,7 +12,7 @@
 
 import numpy as np
 cimport numpy as np
-from _tree cimport Node
+from ._tree cimport Node
 from sklearn.neighbors.quad_tree cimport Cell
 
 ctypedef np.npy_float32 DTYPE_t          # Type of X

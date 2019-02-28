@@ -287,6 +287,12 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.neighbors`
 ........................
 
+- |MajorFeature| A metric learning algorithm:
+  :class:`neighbors.NeighborhoodComponentsAnalysis`, which implements the
+  Neighborhood Components Analysis algorithm described in Goldberger et al.
+  (2005). :issue:`10058` by :user:`William de Vazelhes
+  <wdevazelhes>` and :user:`John Chiotellis <johny-c>`.
+
 - |API| Methods in :class:`neighbors.NearestNeighbors` :
   :func:`~neighbors.NearestNeighbors.kneighbors`,
   :func:`~neighbors.NearestNeighbors.radius_neighbors`,
