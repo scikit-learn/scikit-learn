@@ -12,7 +12,7 @@ from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
-from sklearn.kernel_approximation import TensorSketch
+from sklearn.kernel_approximation import PolynomialSampler
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
 
 # generate data
@@ -23,17 +23,17 @@ X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
-def test_tensor_sketch():
-    # test that TensorSketch approximates polynomial
+def test_polynomial_sampler():
+    # test that PolynomialSampler approximates polynomial
     # kernel on random data
 
     # compute exact kernel for degree=2
     kernel = np.dot(X, Y.T)**2
 
     # approximate kernel mapping
-    ts_transform = TensorSketch(n_components=1000, degree=2, random_state=42)
-    X_trans = ts_transform.fit_transform(X)
-    Y_trans = ts_transform.transform(Y)
+    ps_transform = PolynomialSampler(n_components=1000, degree=2, random_state=42)
+    X_trans = ps_transform.fit_transform(X)
+    Y_trans = ps_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     error = kernel - kernel_approx
@@ -46,10 +46,10 @@ def test_tensor_sketch():
     kernel = (np.dot(X, Y.T)+4)**3
 
     # approximate kernel mapping
-    ts_transform = TensorSketch(n_components=4000, coef0=4,
-                                degree=3, random_state=42)
-    X_trans = ts_transform.fit_transform(X)
-    Y_trans = ts_transform.transform(Y)
+    ps_transform = PolynomialSampler(n_components=4000, coef0=4,
+                                     degree=3, random_state=42)
+    X_trans = ps_transform.fit_transform(X)
+    Y_trans = ps_transform.transform(Y)
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     error = kernel - kernel_approx
