@@ -43,7 +43,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                 of pandas DataFrame columns)
 
         """
-        # if not a dataframe, do normal check_array validation"
+        # if not a dataframe, do normal check_array validation
         if not (hasattr(X, 'iloc') and getattr(X, 'ndim', 0) == 2):
             X_temp = check_array(X, dtype=None)
             if not hasattr(X, 'dtype') and\
