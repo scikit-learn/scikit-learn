@@ -14,6 +14,8 @@ import ctypes
 from ctypes.util import find_library
 from contextlib import contextmanager
 
+from ._clibs_helpers import openmp_num_threads
+
 
 # Structure to cast the info on dynamically loaded library. See
 # https://linux.die.net/man/3/dl_iterate_phdr for more details.
@@ -67,9 +69,13 @@ class _CLibsWrapper:
         for clib, (module_name, _, _) in self.SUPPORTED_CLIBS.items():
             delattr(self, clib)
 
-    def set_thread_limits(self, limits=1, subset=None):
-        """Limit maximal number of threads used by supported C-libraries"""
-        if isinstance(limits, int):
+    def set_thread_limits(self, limits=None, subset=None):
+        """Limit maximal number of threads used by supported C-libraries.
+
+        Return a dict of pairs {clib: bool} where bool is True when clib can be
+        dynamically scaled with this function.
+        """
+        if isinstance(limits, int) or limits is None:
             if subset in ("all", None):
                 clibs = self.SUPPORTED_CLIBS.keys()
             elif subset == "blas":
@@ -82,8 +88,8 @@ class _CLibsWrapper:
             limits = {clib: limits for clib in clibs}
 
         if not isinstance(limits, dict):
-            raise TypeError("limits must either be an int or a dict. Got {} "
-                            "instead".format(type(limits)))
+            raise TypeError("limits must either be an int, a dict or None. "
+                            "Got {} instead".format(type(limits)))
 
         dynamic_threadpool_size = {}
         self._load()
@@ -92,7 +98,8 @@ class _CLibsWrapper:
                 module = getattr(self, clib, None)
                 if module is not None:
                     _set = getattr(module, _set)
-                    _set(limits[clib])
+                    if limits[clib] is not None:
+                        _set(openmp_num_threads(limits[clib]))
                     dynamic_threadpool_size[clib] = True
                 else:
                     dynamic_threadpool_size[clib] = False
@@ -294,7 +301,7 @@ def _get_wrapper(reload_clib=False):
     return _clibs_wrapper
 
 
-def set_thread_limits(limits=1, subset=None, reload_clib=False):
+def _set_thread_limits(limits=None, subset=None, reload_clib=False):
     """Limit the number of threads available for threadpools in supported C-lib
 
     Set the maximal number of thread that can be used in thread pools used in
@@ -303,7 +310,7 @@ def set_thread_limits(limits=1, subset=None, reload_clib=False):
 
     Parameters
     ----------
-    limits : int or dict, (default=1)
+    limits : int or dict, (default=None)
         Maximum number of thread that can be used in thread pools
 
         If int, sets the maximum number of thread to `limits` for each C-lib
@@ -311,6 +318,8 @@ def set_thread_limits(limits=1, subset=None, reload_clib=False):
 
         If dict(supported_libraries: max_threads), sets a custom maximum number
         of thread for each C-lib.
+
+        If None, does not do anything.
 
     subset : string or None, optional (default="all")
         Subset of C-libs to limit. Used only if `limits` is an int
@@ -348,7 +357,7 @@ def get_thread_limits(reload_clib=True):
 
     Returns
     -------
-    thread_limits : dict
+    limits : dict
         Contains the maximal number of threads that can be used in supported
         libraries or None when the library is not available. The key of the
         dictionary are "openmp_gnu", "openmp_intel", "openmp_win32",
@@ -358,13 +367,16 @@ def get_thread_limits(reload_clib=True):
     return wrapper.get_thread_limits()
 
 
-@contextmanager
-def thread_limits_context(limits=1, subset=None):
-    """Context manager for C-libs thread limits
+class thread_pool_limits:
+    """Change the default number of threads used in thread pools.
+
+    This class can be used either as a function (the construction of this
+    object limits the number of threads) or as a context manager, in a `with`
+    block.
 
     Parameters
     ----------
-    limits : int or dict, (default=1)
+    limits : int or dict, (default=None)
         Maximum number of thread that can be used in thread pools
 
         If int, sets the maximum number of thread to `limits` for each C-lib
@@ -372,6 +384,8 @@ def thread_limits_context(limits=1, subset=None):
 
         If dict(supported_libraries: max_threads), sets a custom maximum number
         of thread for each C-lib.
+
+        If None, does not do anything.
 
     subset : string or None, optional (default="all")
         Subset of C-libs to limit. Used only if `limits` is an int
@@ -382,14 +396,25 @@ def thread_limits_context(limits=1, subset=None):
 
         "openmp" : limit only OpenMP supported C-libs. It can affect the number
                    of threads used by the BLAS C-libs if they rely on OpenMP.
-    """
-    old_limits = get_thread_limits()
-    set_thread_limits(limits=limits, subset=subset)
 
-    try:
-        yield
-    finally:
-        set_thread_limits(limits=old_limits)
+    .. versionadded:: 0.21
+
+    """
+    def __init__(self, limits=None, subset=None):
+
+        self.old_limits = get_thread_limits()
+        _set_thread_limits(limits=limits, subset=subset)
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, type, value, traceback):
+        self.unregister()
+
+    def unregister(self):
+        _set_thread_limits(limits=self.old_limits)
+
+
 
 
 def get_openblas_version(reload_clib=True):

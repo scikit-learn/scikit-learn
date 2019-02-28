@@ -2,20 +2,21 @@ cimport openmp
 from cython.parallel import prange
 
 
-cpdef int openmp_n_threads(n_jobs=None):
-    """Determine the number of threads for OpenMP
+cpdef int openmp_num_threads(n_threads=None):
+    """Determine the effective number of threads used for parallel OpenMP calls
 
-    The behavior differs from joblib's effective_n_jobs for n_jobs=None in
-    which case openmp_n_threads returns openmp.omp_get_max_threads().
+    For n_threads=None, returns openmp.omp_get_max_threads().
+    For n_threads > 0, use this as the maximal number of threads for parallel
+    OpenMP calls and for n_threads < 0, use the maximal number of threads minus
+    - n_threads + 1.
+    Raise a ValueError for n_threads=0.
     """
-    if n_jobs is None:
-        return openmp.omp_get_max_threads()
-    elif n_jobs == 0:
-        raise ValueError("n_jobs=0 is invalid")
-    elif n_jobs < 0:
-        return openmp.omp_get_max_threads() + n_jobs + 1
+    if n_threads == 0:
+        raise ValueError("n_threads=0 is invalid")
+    elif n_threads < 0:
+        return max(1, openmp.omp_get_max_threads() + n_threads + 1)
     else:
-        return n_jobs
+        return n_threads
 
 
 def check_num_threads(int n=100):
