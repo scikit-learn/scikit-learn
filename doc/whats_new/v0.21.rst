@@ -225,10 +225,14 @@ Support for Python 3.4 and below has been officially dropped.
   was not returning the same coeffecients and intercepts with
   ``fit_intercept=True`` in sparse and dense case.
   :issue:`13279` by `Alexandre Gramfort`_
-
+  
 - |API| :func:`linear_model.logistic_regression_path` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
+
+- |Enhancement| `sparse_cg` solver in :class:`linear_model.ridge.Ridge`
+  now supports fitting the intercept (i.e. ``fit_intercept=True``) when
+  inputs are sparse . :issue:`13336` by :user:`Bartosz Telenczuk <btel>`
 
 :mod:`sklearn.manifold`
 ............................
