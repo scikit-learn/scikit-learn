@@ -115,10 +115,8 @@ def test_thread_limit_context(subset):
 
     old_limits = get_thread_limits()
 
-
     with thread_pool_limits(limits=None, subset=subset):
         assert get_thread_limits() == old_limits
-
 
     with thread_pool_limits(limits=1, subset=subset):
         limits = get_thread_limits()

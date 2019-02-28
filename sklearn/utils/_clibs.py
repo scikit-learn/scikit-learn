@@ -12,7 +12,6 @@ import os
 import threading
 import ctypes
 from ctypes.util import find_library
-from contextlib import contextmanager
 
 from ._clibs_helpers import openmp_num_threads
 
@@ -413,8 +412,6 @@ class thread_pool_limits:
 
     def unregister(self):
         _set_thread_limits(limits=self.old_limits)
-
-
 
 
 def get_openblas_version(reload_clib=True):
