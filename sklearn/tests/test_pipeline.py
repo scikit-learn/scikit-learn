@@ -1150,5 +1150,6 @@ def test_input_features_meta():
     assert_array_equal(inner_pipe.named_steps.clf.input_features_, xs[mask])
     pipe.get_feature_names(iris.feature_names)
     assert_array_equal(pipe.input_features_, iris.feature_names)
+    assert_array_equal(inner_pipe.input_features_, iris.feature_names)
     assert_array_equal(inner_pipe.named_steps.clf.input_features_,
                        np.array(iris.feature_names)[mask])
