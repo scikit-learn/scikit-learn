@@ -28,7 +28,7 @@ __all__ = ['Pipeline', 'FeatureUnion', 'make_pipeline', 'make_union']
 
 def _get_feature_names(X):
     if hasattr(X, 'columns'):
-        feature_names = X.columns
+        feature_names = np.array(X.columns)
     elif getattr(X, 'ndim', 0) > 1:
         feature_names = getattr(X, 'columns',
                                 ['x%d' % i for i in range(X.shape[1])])
