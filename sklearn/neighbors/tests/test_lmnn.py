@@ -14,7 +14,6 @@ from sklearn.utils.testing import assert_false
 from sklearn import datasets
 from sklearn.neighbors import LargeMarginNearestNeighbor
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors.lmnn import make_lmnn_pipeline
 from sklearn.neighbors.lmnn import _paired_distances_blockwise
 from sklearn.neighbors.lmnn import _euclidean_distances_without_checks
 from sklearn.metrics.pairwise import paired_euclidean_distances
@@ -561,31 +560,3 @@ def test_euclidean_distances_without_checks():
     distances2 = _euclidean_distances_without_checks(X, X_norm_squared=XX)
 
     assert_array_equal(distances1, distances2)
-
-
-def test_pipeline_equivalency():
-    X = iris_data
-    y = iris_target
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-
-    # Use init='identity' to ensure reproducibility
-    lmnn_params = dict(n_neighbors=3, max_iter=10, init='identity',
-                       random_state=42)
-    n_neighbors = 3
-
-    lmnn = LargeMarginNearestNeighbor(**lmnn_params)
-    lmnn.fit(X_train, y_train)
-
-    lmnn_pipe = make_lmnn_pipeline(**lmnn_params)
-    lmnn_pipe.fit(X_train, y_train)
-
-    pipe_transformation = lmnn_pipe.named_steps.lmnn.components_
-    assert_array_almost_equal(lmnn.components_, pipe_transformation)
-
-    knn = KNeighborsClassifier(n_neighbors=n_neighbors)
-    knn.fit(lmnn.transform(X_train), y_train)
-    score = knn.score(lmnn.transform(X_test), y_test)
-
-    score_pipe = lmnn_pipe.score(X_test, y_test)
-
-    assert_equal(score, score_pipe)

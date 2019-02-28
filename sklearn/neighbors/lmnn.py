@@ -16,7 +16,6 @@ from scipy.optimize import minimize
 from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
 
 from ..base import BaseEstimator, TransformerMixin
-from ..pipeline import Pipeline
 from ..neighbors import NearestNeighbors, KNeighborsClassifier
 from ..decomposition import PCA
 from ..utils import gen_batches
@@ -24,7 +23,8 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.extmath import _euclidean_distances_without_checks
 from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted, check_array, check_X_y
+from ..utils.validation import (check_is_fitted, check_array, check_X_y,
+                                check_scalar)
 from ..externals.six import integer_types, string_types
 from ..exceptions import ConvergenceWarning
 
@@ -434,8 +434,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Check the preferred embedding dimensionality
         if self.n_components is not None:
-            _check_scalar(self.n_components, 'n_components',
-                          integer_types, 1)
+            check_scalar(self.n_components, 'n_components',
+                         integer_types, 1)
 
             if self.n_components > X.shape[1]:
                 raise ValueError('The preferred embedding dimensionality '
@@ -444,7 +444,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                  .format(self.n_components, X.shape[1]))
 
         # If warm_start is enabled, check that the inputs are consistent
-        _check_scalar(self.warm_start, 'warm_start', bool)
+        check_scalar(self.warm_start, 'warm_start', bool)
         if self.warm_start and hasattr(self, 'components_'):
             if self.components_.shape[1] != X.shape[1]:
                 raise ValueError('The new inputs dimensionality ({}) does not '
@@ -453,18 +453,18 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                  .format(X.shape[1],
                                          self.components_.shape[1]))
 
-        _check_scalar(self.n_neighbors, 'n_neighbors', integer_types, 1,
-                      X.shape[0] - 1)
-        _check_scalar(self.max_iter, 'max_iter', integer_types, 1)
-        _check_scalar(self.tol, 'tol', float, 0.)
-        _check_scalar(self.weight_push_loss, 'weight_push_loss', float, 0., 1.)
+        check_scalar(self.n_neighbors, 'n_neighbors', integer_types, 1,
+                     X.shape[0] - 1)
+        check_scalar(self.max_iter, 'max_iter', integer_types, 1)
+        check_scalar(self.tol, 'tol', float, 0.)
+        check_scalar(self.weight_push_loss, 'weight_push_loss', float, 0., 1.)
         if self.weight_push_loss == 0:
             raise ValueError('`weight_push_loss` cannot be zero.')
 
-        _check_scalar(self.max_impostors, 'max_impostors', integer_types, 1)
-        _check_scalar(self.impostor_store, 'impostor_store', string_types)
-        _check_scalar(self.n_jobs, 'n_jobs', integer_types)
-        _check_scalar(self.verbose, 'verbose', integer_types, 0)
+        check_scalar(self.max_impostors, 'max_impostors', integer_types, 1)
+        check_scalar(self.impostor_store, 'impostor_store', string_types)
+        check_scalar(self.n_jobs, 'n_jobs', integer_types)
+        check_scalar(self.verbose, 'verbose', integer_types, 0)
 
         if self.impostor_store not in ['auto', 'sparse', 'list']:
             raise ValueError("`impostor_store` must be 'auto', 'sparse' or "
@@ -521,7 +521,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         neighbors_params = self.neighbors_params
         if neighbors_params is not None:
-            _check_scalar(neighbors_params, 'neighbors_params', dict)
+            check_scalar(neighbors_params, 'neighbors_params', dict)
             neighbors_params.setdefault('n_jobs', self.n_jobs)
             # Attempt to instantiate a NearestNeighbors instance here to
             # raise any errors before actually fitting
@@ -1140,162 +1140,3 @@ def _sum_weighted_outer_differences(X, weights):
     result = np.dot(X.T, laplacian_dot_X)
 
     return result
-
-
-def _check_scalar(x, name, target_type, min_val=None, max_val=None):
-    """Validate scalar parameters type and value.
-
-    Parameters
-    ----------
-    x : object
-        The scalar parameter to validate.
-
-    name : str
-        The name of the parameter to be printed in error messages.
-
-    target_type : type or tuple
-        Acceptable data types for the parameter.
-
-    min_val : float or int, optional (default=None)
-        The minimum value value the parameter can take. If None (default) it
-        is implied that the parameter does not have a lower bound.
-
-    max_val: float or int, optional (default=None)
-        The maximum valid value the parameter can take. If None (default) it
-        is implied that the parameter does not have an upper bound.
-
-    Raises
-    -------
-    TypeError
-        If the parameter's type does not match the desired type.
-
-    ValueError
-        If the parameter's value violates the given bounds.
-    """
-
-    if not isinstance(x, target_type):
-        raise TypeError('`{}` must be an instance of {}, not {}.'
-                        .format(name, target_type, type(x)))
-
-    if min_val is not None and x < min_val:
-        raise ValueError('`{}`= {}, must be >= {}.'.format(name, x, min_val))
-
-    if max_val is not None and x > max_val:
-        raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
-
-
-#####################################################################
-# Convenience function to construct the trivial LMNN - KNN pipeline #
-#####################################################################
-
-def make_lmnn_pipeline(
-        n_neighbors=3, n_components=None, init='pca', warm_start=False,
-        max_impostors=500000, neighbors_params=None, weight_push_loss=0.5,
-        impostor_store='auto', max_iter=50, tol=1e-5, callback=None,
-        store_opt_result=False, verbose=0, random_state=None, n_jobs=1,
-        n_neighbors_predict=None, weights='uniform', algorithm='auto',
-        leaf_size=30, n_jobs_predict=None, **kwargs):
-    """Constructs a LargeMarginNearestNeighbor - KNeighborsClassifier pipeline.
-
-    See LargeMarginNearestNeighbor module documentation for details.
-
-    Parameters
-    ----------
-    n_neighbors_predict : int, optional (default=None)
-        The number of neighbors to use during prediction. If None (default)
-        the value of ``n_neighbors`` used to train the model is used.
-
-    weights : str or callable, optional (default = 'uniform')
-        weight function used in prediction.  Possible values:
-
-        - 'uniform' : uniform weights.  All points in each neighborhood
-          are weighted equally.
-        - 'distance' : weight points by the inverse of their distance.
-          in this case, closer neighbors of a query point will have a
-          greater influence than neighbors which are further away.
-        - [callable] : a user-defined function which accepts an
-          array of distances, and returns an array of the same shape
-          containing the weights.
-
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
-        Algorithm used to compute the nearest neighbors:
-
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
-        - 'brute' will use a brute-force search.
-        - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method.
-
-        Note: fitting on sparse input will override the setting of
-        this parameter, using brute force.
-
-    leaf_size : int, optional (default = 30)
-        Leaf size passed to BallTree or KDTree.  This can affect the
-        speed of the construction and query, as well as the memory
-        required to store the tree.  The optimal value depends on the
-        nature of the problem.
-
-    n_jobs_predict : int, optional (default=None)
-        The number of parallel jobs to run for neighbors search during
-        prediction. If None (default), then the value of ``n_jobs`` is used.
-
-    memory : None, str or object with the joblib.Memory interface, optional
-        Used to cache the fitted transformers of the pipeline. By default,
-        no caching is performed. If a string is given, it is the path to
-        the caching directory. Enabling caching triggers a clone of
-        the transformers before fitting. Therefore, the transformer
-        instance given to the pipeline cannot be inspected
-        directly. Use the attribute ``named_steps`` or ``steps`` to
-        inspect estimators within the pipeline. Caching the
-        transformers is advantageous when fitting is time consuming.
-
-
-    Returns
-    -------
-    lmnn_pipe : Pipeline
-        A Pipeline instance with two steps: a ``LargeMarginNearestNeighbor``
-        instance that is used to fit the model and a ``KNeighborsClassifier``
-        instance that is used for prediction.
-
-
-    Examples
-    --------
-    >>> from sklearn.neighbors import make_lmnn_pipeline
-    >>> from sklearn.datasets import load_iris
-    >>> from sklearn.model_selection import train_test_split
-    >>> X, y = load_iris(return_X_y=True)
-    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
-    ... stratify=y, test_size=0.7, random_state=42)
-    >>> lmnn_pipe = make_lmnn_pipeline(n_neighbors=3, n_neighbors_predict=3,
-    ... random_state=42)
-    >>> lmnn_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS
-    Pipeline(...)
-    >>> print(lmnn_pipe.score(X_test, y_test))
-    0.971428571429
-
-    """
-
-    memory = kwargs.pop('memory', None)
-    if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
-
-    lmnn = LargeMarginNearestNeighbor(
-        n_neighbors=n_neighbors, n_components=n_components, init=init,
-        warm_start=warm_start, max_impostors=max_impostors,
-        neighbors_params=neighbors_params, weight_push_loss=weight_push_loss,
-        impostor_store=impostor_store, max_iter=max_iter, tol=tol,
-        callback=callback, store_opt_result=store_opt_result, verbose=verbose,
-        random_state=random_state, n_jobs=n_jobs)
-
-    if n_neighbors_predict is None:
-        n_neighbors_predict = n_neighbors
-
-    if n_jobs_predict is None:
-        n_jobs_predict = n_jobs
-
-    knn = KNeighborsClassifier(
-        n_neighbors=n_neighbors_predict, weights=weights, algorithm=algorithm,
-        leaf_size=leaf_size, n_jobs=n_jobs_predict)
-
-    return Pipeline([('lmnn', lmnn), ('knn', knn)], memory=memory)

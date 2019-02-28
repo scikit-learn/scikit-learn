@@ -317,6 +317,11 @@ Support for Python 3.4 and below has been officially dropped.
   (2005). :issue:`10058` by :user:`William de Vazelhes
   <wdevazelhes>` and :user:`John Chiotellis <johny-c>`.
 
+- |MajorFeature| A metric learning algorithm:
+  :class:`neighbors.LargeMarginNearestNeighbor`, which implements the
+  Large Margin Nearest Neighbor algorithm described in Weinberger et al.
+  (2006). :issue:`8602` by :user:`John Chiotellis <johny-c>`.
+
 - |API| Methods in :class:`neighbors.NearestNeighbors` :
   :func:`~neighbors.NearestNeighbors.kneighbors`,
   :func:`~neighbors.NearestNeighbors.radius_neighbors`,
