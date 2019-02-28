@@ -709,46 +709,58 @@ def test_ordinal_all_nan_raises_error():
 
 
 @pytest.mark.parametrize("X, exp_cats", [
-    (np.array([[1, 2, np.nan]]).T,
+    (np.array([[1, 2, 1, 2, np.nan]]).T,
     [np.array([1, 2])]),
-    (np.array([['a', 'b', np.nan]], dtype=object).T,
+    (np.array([['a', 'b', 'a', 'b', np.nan]], dtype=object).T,
     [np.array(['a', 'b'])]),
     ], ids=['numeric', 'object'])
 def test_ordinal_encoder_nan_not_in_categories(X, exp_cats):
-    enc = OrdinalEncoder()
+    enc = OrdinalEncoder(encode_missing='retain')
     enc.fit(X)
     X_cats = enc.categories_
     assert_array_equal(X_cats, exp_cats)
 
 
-@pytest.mark.parametrize("X", [np.array([[1, 2, np.nan]]).T,
-                               np.array([['a', 'b', np.nan]], dtype=object).T],
+@pytest.mark.parametrize("X, exp_cats", [
+    (np.array([[1, 2, 1, 2, np.nan]]).T,
+    [np.array([1, 2, np.nan])]),
+    (np.array([['a', 'b', 'a', 'b', np.nan]], dtype=object).T,
+    [np.array(['a', 'b', np.nan], dtype=object)]),
+    ], ids=['numeric', 'object'])
+def test_ordinal_encoder_nan_in_categories(X, exp_cats):
+    # Fails on object dtype. Categories are of dtype "<U3"
+    enc = OrdinalEncoder(encode_missing='encode')
+    enc.fit(X)
+    X_cats = enc.categories_
+    assert_array_equal(X_cats, exp_cats)
+
+
+@pytest.mark.parametrize("X", [np.array([[1, 2, np.nan, np.nan]]).T,
+                               np.array([['a', 'b', np.nan, np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
 def test_ordinal_encoder_retain_missing(X):
-    enc = OrdinalEncoder()
-    # TEST NaN not encoded with handle_missing="passthrough"
-    X_exp = np.array([[0, 1, np.nan]]).T
+    enc = OrdinalEncoder(encode_missing='retain')
+    X_exp = np.array([[0, 1, np.nan, np.nan]]).T
     assert_array_equal(X_exp, enc.fit_transform(X))
 
 
-@pytest.mark.parametrize("X", [
-    np.array([[1, np.nan, np.nan]]).T,
-    np.array([['a', np.nan, np.nan]], dtype=object).T,
-    ], ids=['numeric', 'object'])
-def test_ordinal_encoder_nan_is_largest_category(X):
+@pytest.mark.parametrize("X, exp_cats", [
+    (np.array([[1, 2, np.nan, np.nan]]).T,
+     np.array([[1, 2, np.nan]])),
+    (np.array([['a', 'b', np.nan, np.nan]], dtype=object).T,
+     np.array([['a', 'b', np.nan]], dtype=object))], ids=['numeric', 'object'])
+def test_ordinal_encoder_handle_multiple_nan_vals(X, exp_cats):
     enc = OrdinalEncoder(encode_missing="encode")
     enc.fit(X)
     X_cats = enc.categories_
-    X_cats_expected = np.array([[0, 1, 1]])
-    assert_array_equal(X_cats, X_cats_expected)
+    assert_array_equal(exp_cats, X_cats)
 
 
-@pytest.mark.parametrize("X", [np.array([[1, 2, np.nan]]),
-                               np.array([['a', 'b', np.nan]], dtype=object)],
+@pytest.mark.parametrize("X", [np.array([[1, 2, np.nan, np.nan]]).T,
+                               np.array([['a', 'b', np.nan, np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
 def test_ordinal_encoder_encode_missing(X):
     enc = OrdinalEncoder(encode_missing="encode")
-    enc.fit(X)
-    # TEST NaN encoded with handle_missing="encode"
-    X_exp = np.array([[0, np.nan]])
+    # TODO: object dtype fails on previously unseen labels nan
+    X_exp = np.array([[0, 1, 2, 2]]).T
     assert_array_equal(X_exp, enc.fit_transform(X))

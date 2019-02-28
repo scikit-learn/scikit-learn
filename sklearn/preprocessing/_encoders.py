@@ -746,11 +746,11 @@ class OrdinalEncoder(_BaseEncoder):
         - 'allow-nan': accept only np.nan values in array. Values cannot
           be infinite.
 
-    encode_missing : 'retain' or 'encode', (default='retain)
-        How to return missing values.
-
-        = 'retain': Retain all existing nan's in ``transform()``
-        = 'encode': Encode nan's as largest ordinal category
+    encode_missing : str, (default 'retain')
+        Supported are 'retain' and 'encode'. If 'retain', NaN's are not
+        added to categories and NaN value is retained in encoded data.
+        If 'encode', NaN's are categorized and encoded as largest
+        ordinal category.
 
 
     Attributes
@@ -815,14 +815,26 @@ class OrdinalEncoder(_BaseEncoder):
         self._categories = self.categories
         self._fit(X, force_all_finite=self.force_all_finite)
 
+
         new_cats = []
         for i, cats in enumerate(self.categories_):
 
+            # Create missing mask
+            if cats.dtype == object:
+                missing_mask = _object_dtype_isnan(cats)
+            else:
+                missing_mask = np.isnan(cats)
+
+            # Raise error if fitting a column that has all NaN's
             if np.all(_object_dtype_isnan(X[:, i])):
                 raise ValueError("All NaN's in column {}".format(i))
 
-            missing_mask = _object_dtype_isnan(cats)
-            new_cats.append(cats[~missing_mask])
+            if self.encode_missing == 'encode':
+                cats_with_one_nan = np.append(cats[~missing_mask], np.nan)
+                new_cats.append(cats_with_one_nan)
+            else:
+                new_cats.append(cats[~missing_mask])
+
 
         self.categories_ = new_cats
 
@@ -843,9 +855,12 @@ class OrdinalEncoder(_BaseEncoder):
 
         """
         # TODO:
-        # -- Does it make sense to have force_all_finite functionality if NaN's are being masked before _transform?
+        # -- Does it make sense to have force_all_finite functionality
+        #    if NaN's are being masked before _transform?
         # -- Need to have functionality to encode missing values
         X_new = X.copy()
+
+        # if self.encode_missing == 'retain':
 
         # Make missing mask
         missing_mask = _object_dtype_isnan(X)
@@ -859,10 +874,23 @@ class OrdinalEncoder(_BaseEncoder):
 
         # Replace masked NaN's
         X_int, _ = self._transform(X_new, force_all_finite=self.force_all_finite)
-        X_with_missing = X_int.astype(self.dtype, copy=True)
-        X_with_missing[missing_mask] = np.nan
+        X_with_missing = X_int.astype(self.dtype, copy=True) # Is this step necessary?
+
+
+        if self.encode_missing == 'encode':
+            for i in range(X_with_missing.shape[1]):
+                missing_column = missing_mask[:, i]
+                if np.any(missing_column):
+                    X_max = X_with_missing.max(axis=0)
+                    X_with_missing[:, i][missing_column] = X_max[i] + 1
+
+        else:
+            X_with_missing[missing_mask] = np.nan
 
         return X_with_missing
+        # else:
+        #     X_int, _ = self._transform(X, force_all_finite=self.force_all_finite)
+        #     return X_int
 
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
