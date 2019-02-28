@@ -93,6 +93,21 @@ Changelog
   ``1 / (n_features * X.var())``.
   :issue:`13221` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+Adrin Jalali, Agamemnon Krasoulis, Albert Thomas, Andreas Mueller, Aurélien
+Bellet, bertrandhaut, Bharat Raghunathan, Dowon, Emmanuel Arias, Fibinse
+Xavier, Finn O'Shea, Gabriel Vacaliuc, Gael Varoquaux, Guillaume Lemaitre,
+Hanmin Qin, joaak, Joel Nothman, Joris Van den Bossche, Jérémie Méhault, kms15,
+Kossori Aruku, maikia, Manuel López-Ibáñez, Marco Gorelli, MarcoGorelli,
+mferrari3, Mickaël Schoentgen, Nicolas Hug, pavlos kallis, Pierre Glaser,
+pierretallotte, Prabakaran Kumaresshan, Reshama Shaikh, Rohit Kapoor, Roman
+Yurchak, SandroCasagrande, Tashay Green, Thomas Fan, Vishaal Kapoor, Zhuyi Xue,
+Zijie (ZJ) Poh
+
 .. _changes_0_20_2:
 
 Version 0.20.2
