@@ -7,7 +7,7 @@ import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
-from .utils import as_float_array, check_array, check_consistent_length
+from .utils import check_array, check_consistent_length
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
 import math
@@ -119,7 +119,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
     order = np.s_[:] if increasing else np.s_[::-1]
-    y = as_float_array(y)
+    y = check_array(y, ensure_2d=False, dtype=[np.float64, np.float32])
     y = np.array(y[order], dtype=y.dtype)
     if sample_weight is None:
         sample_weight = np.ones(len(y), dtype=y.dtype)
@@ -240,9 +240,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
-        X = as_float_array(X)
-        y = check_array(y, dtype=X.dtype, ensure_2d=False)
-        check_consistent_length(X, y, sample_weight)
         self._check_fit_data(X, y, sample_weight)
 
         # Determine increasing if auto-determination requested
@@ -318,6 +315,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         X is stored for future use, as `transform` needs X to interpolate
         new input data.
         """
+        check_params = dict(accept_sparse=False, ensure_2d=False,
+                            dtype=[np.float64, np.float32])
+        X = check_array(X, **check_params)
+        y = check_array(y, **check_params)
+        check_consistent_length(X, y, sample_weight)
+
         # Transform y by running the isotonic regression algorithm and
         # transform X accordingly.
         X, y = self._build_y(X, y, sample_weight)
