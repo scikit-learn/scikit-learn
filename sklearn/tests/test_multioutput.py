@@ -179,7 +179,7 @@ def test_multi_output_classification_partial_fit_parallelism():
 
 # check predict_proba passes
 def test_multi_output_predict_proba():
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, tol=1e-3)
     param = {'loss': ('hinge', 'log', 'modified_huber')}
 
     # inner function for custom scoring
@@ -189,7 +189,7 @@ def test_multi_output_predict_proba():
         else:
             return 0.0
     grid_clf = GridSearchCV(sgd_linear_clf, param_grid=param,
-                            scoring=custom_scorer, cv=3)
+                            scoring=custom_scorer, cv=3, error_score=np.nan)
     multi_target_linear = MultiOutputClassifier(grid_clf)
     multi_target_linear.fit(X, y)
 
