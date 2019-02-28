@@ -49,12 +49,12 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.kernel_approximation import TensorSketch
+    >>> from sklearn.kernel_approximation import PolynomialSampler
     >>> from sklearn.svm import LinearSVC
     >>> X = [[0, 0], [1, 1], [1, 0], [0, 1]]
     >>> y = [0, 0, 1, 1]
-    >>> ts = TensorSketch(degree=3, random_state=1)
-    >>> X_features = ts.fit_transform(X)
+    >>> ps = PolynomialSampler(degree=3, random_state=1)
+    >>> X_features = ps.fit_transform(X)
     >>> clf = LinearSVC()
     >>> clf.fit(X_features, y)
     ... # doctest: +NORMALIZE_WHITESPACE

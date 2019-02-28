@@ -154,13 +154,13 @@ above for the :class:`RBFSampler`. The only difference is in the free
 parameter, that is called :math:`c`.
 For a motivation for this mapping and the mathematical details see [LS2010]_.
 
-Tensor Sketch Method for Polynomial Kernel Approximation
+TensorSketch Method for Polynomial Kernel Approximation
 --------------------------------------------------------
 
-The Tensor Sketch [PP2013]_ method, as implemented in :class:`TensorSketch` is a scalable,
-data-independent method for polynomial kernel approximation. This method obtains
-a Count Sketch [CCF2002]_ of the outer product of two vectors (or a vector with itself),
-which an be used as an approximation of the polynomial kernel feature space.
+The TensorSketch [PP2013]_ method, as implemented in :class:`PolynomialSampler`, is a
+scalable, data-independent method for polynomial kernel approximation. This method
+obtains a Count Sketch [CCF2002]_ of the outer product of two vectors (or a vector with
+itself), which an be used as an approximation of the polynomial kernel feature space.
 In particular, instead of explicitly computing the outer product, TensorSketch
 computes the Count Sketch of the vectors and then uses polynomial multiplication
 via the Fast Fourier Transform to compute the Count Sketch of their outer product.
