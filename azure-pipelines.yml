@@ -45,16 +45,13 @@ jobs:
 
 - template: build_tools/azure/posix.yml
   parameters:
-    name: '$(Build.SourceVersionMessage)'
+    name: Linux
     vmImage: ubuntu-16.04
-    toRun: ${{ contains('$(Build.SourceVersionMessage)', '[scipy-dev]') }}
     matrix:
       pylatest_scipy_dev:
         DISTRIB: 'scipy-dev'
         CHECK_WARNINGS: 'true'
         PYTHON_VERSION: '3.7'
-
-
 
 # - template: build_tools/azure/posix.yml
 #   parameters:
