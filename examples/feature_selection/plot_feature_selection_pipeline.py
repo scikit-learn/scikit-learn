@@ -35,6 +35,6 @@ y_pred = anova_svm.predict(X_test)
 print(classification_report(y_test, y_pred))
 
 # access and plot the coefficients of the fitted model
-plt.bar((0, 1, 2), anova_svm.named_steps.svc.coef_.ravel())
-plt.xticks((0, 1, 2), anova_svm.named_steps.svc.input_features_)
+plt.barh((0, 1, 2), anova_svm.named_steps.svc.coef_.ravel())
+plt.yticks((0, 1, 2), anova_svm.named_steps.svc.input_features_)
 plt.show()
