@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
+from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression, Lasso
@@ -1059,6 +1060,7 @@ def test_set_input_features():
         ('scaler', StandardScaler()),
         ('select', SelectKBest(k=2)),
         ('clf', LogisticRegression())])
+    assert_raises(NotFittedError, pipe.get_feature_names)
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = np.array(['x0', 'x1', 'x2', 'x3'])

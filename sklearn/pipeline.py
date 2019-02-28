@@ -16,6 +16,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
+from .exceptions import NotFittedError
 from .utils._joblib import Parallel, delayed
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
@@ -565,8 +566,8 @@ class Pipeline(_BaseComposition):
         """
         if input_features is not None:
             self.input_features_ = input_features
-        if self.input_features_ is None:
-            raise ValueError("No feature names provided and none stored.")
+        if getattr(self, 'input_features_', None) is None:
+            raise NotFittedError("Estimator Pipeline not fitted.")
         feature_names = self.input_features_
         for _, name, transform in self._iter(with_final=True):
             transform.input_features_ = feature_names
