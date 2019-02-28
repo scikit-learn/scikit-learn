@@ -546,7 +546,7 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
 
-    def get_feature_names(self, input_features):
+    def get_feature_names(self, input_features=None):
         """Set the input feature names for all steps.
 
         Sets the input_features_ attribute on the pipeline and
@@ -563,8 +563,11 @@ class Pipeline(_BaseComposition):
             of the pipeline.
 
         """
-        self.input_features_ = input_features
-        feature_names = input_features
+        if input_features is not None:
+            self.input_features_ = input_features
+        if self.input_features_ is None:
+            raise ValueError("No feature names provided and none stored.")
+        feature_names = self.input_features_
         for _, name, transform in self._iter(with_final=True):
             transform.input_features_ = feature_names
             if hasattr(transform, "get_feature_names"):

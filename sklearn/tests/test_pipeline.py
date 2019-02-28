@@ -1071,7 +1071,12 @@ def test_set_input_features():
     assert_array_equal(pipe.input_features_, iris.feature_names)
     assert_array_equal(pipe.named_steps.clf.input_features_,
                        np.array(iris.feature_names)[mask])
-
+    # check that empty get_feature_names() doesn't overwrite
+    res = pipe.get_feature_names()
+    assert res is None
+    assert_array_equal(pipe.input_features_, iris.feature_names)
+    assert_array_equal(pipe.named_steps.clf.input_features_,
+                       np.array(iris.feature_names)[mask])
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 def test_input_feature_names_pandas():
