@@ -57,10 +57,10 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             its parameters to be set using ``set_params`` and searched in grid
             search.
         transformer : estimator or {'passthrough', 'drop'}
-            Estimator must support :term:`fit` and :term:`transform`.
-            Special-cased strings 'drop' and 'passthrough' are accepted as
-            well, to indicate to drop the columns or to pass them through
-            untransformed, respectively.
+            Estimator must support `fit` and `transform`. Special-cased
+            strings 'drop' and 'passthrough' are accepted as well, to
+            indicate to drop the columns or to pass them through untransformed,
+            respectively.
         column(s) : string or int, array-like of string or int, slice, \
 boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
@@ -81,7 +81,7 @@ boolean mask array or callable
         the transformers.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support :term:`fit` and :term:`transform`.
+        estimator must support `fit` and `transform`.
 
     sparse_threshold : float, default = 0.3
         If the output of the different transformers contains sparse matrices,
@@ -759,7 +759,7 @@ def make_column_transformer(*transformers, **kwargs):
         the transformers.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support :term:`fit` and :term:`transform`.
+        estimator must support `fit` and `transform`.
 
     sparse_threshold : float, default = 0.3
         If the transformed output consists of a mix of sparse and dense data,
