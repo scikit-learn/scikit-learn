@@ -1262,9 +1262,10 @@ def test_quantile_transform_check_error():
                          transformer.transform, 10)
     # check that a warning is raised is n_quantiles > n_samples
     transformer = QuantileTransformer(n_quantiles=100)
-    assert_warns_message(UserWarning,
-                         "n_quantiles will be set to n_samples",
-                         transformer.fit, X)
+    warn_msg = "n_quantiles will be set to n_samples"
+    with pytest.warns(UserWarning, match=warn_msg) as record:
+        transformer.fit(X)
+    assert len(record) == 1
     assert transformer.n_quantiles_ == X.shape[0]
 
 
