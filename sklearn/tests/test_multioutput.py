@@ -33,6 +33,7 @@ from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
+from sklearn.model_selection import GridSearchCV
 
 
 def test_multi_target_regression():
@@ -176,16 +177,21 @@ def test_multi_output_classification_partial_fit_parallelism():
 
 # check predict_proba passes
 def test_multi_output_predict_proba():
-    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
-    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
-    multi_target_linear.fit(X, y)
-    multi_target_linear.predict_proba(X)
-
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
-    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+    param = {'loss': ('hinge', 'log', 'modified_huber')}
+
+    # inner function for custom scoring
+    def custom_scorer(estimator, X, y):
+        if hasattr(estimator, "predict_proba"):
+            return 1.0
+        else:
+            return 0.0
+    grid_clf = GridSearchCV(sgd_linear_clf, param_grid=param,
+                            scoring=custom_scorer)
+    multi_target_linear = MultiOutputClassifier(grid_clf)
     multi_target_linear.fit(X, y)
-    with pytest.raises(ValueError):
-        multi_target_linear.predict_proba(X)
+
+    multi_target_linear.predict_proba(X)
 
 
 def test_multi_output_classification_partial_fit():
