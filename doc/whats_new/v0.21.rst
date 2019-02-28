@@ -357,16 +357,20 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.svm`
 ..................
 
-- |Fix| Fixed an issue in :func:`svm.SVC.decision_function` which would give
-  different results when applied to a subset due to local scaling method.
-  :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
+- |Fix| Fixed an issue in :func:`svm.SVC.decision_function`
+  when ``decision_function_shape='ovr'``. The decision_function value of a given
+  sample was different depending on whether the decision_function was evaluated
+  on the sample alone or on a batch containing this same sample due to the scaling
+  used in decision_function. :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
 :mod:`sklearn.multiclass`
 .........................
 
 - |Fix| Fixed an issue in :func:`multiclass.OneVsOneClassifier.decision_function`
-  which would give different results when applied to a subset due to local scaling
-  method. :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
+  where the decision_function value of a given sample was different depending on
+  whether the decision_function was evaluated on the sample alone or on a batch
+  containing this same sample due to the scaling used in decision_function.
+  :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
 Multiple modules
 ................
