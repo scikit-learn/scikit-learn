@@ -636,7 +636,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         return Y_decision
 
     def _more_tags(self):
-        return {'_skip_test': True}
+        return {'multioutput_only': True}
 
 
 class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
@@ -722,5 +722,4 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         return self
 
     def _more_tags(self):
-        # FIXME
-        return {'_skip_test': True}
+        return {'multioutput_only': True}
