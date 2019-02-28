@@ -2,6 +2,7 @@
 #cython: boundscheck=False
 #cython: wraparound=False
 #cython: cdivision=True
+# cython: language_level=3
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
@@ -69,6 +70,8 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
         for j in range(n_features):
             lower_bounds[j] = fmin(lower_bounds[j], data_row[j])
             upper_bounds[j] = fmax(upper_bounds[j], data_row[j])
+
+    for j in range(n_features):
         if tree.dist_metric.p == INF:
             rad = fmax(rad, 0.5 * (upper_bounds[j] - lower_bounds[j]))
         else:
@@ -147,7 +150,7 @@ cdef DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt) except -1:
 
 
 cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
-                             DTYPE_t* min_dist, DTYPE_t* max_dist) except -1:
+                             DTYPE_t* min_dist, DTYPE_t* max_dist) nogil except -1:
     """Compute the minimum and maximum distance between a point and a node"""
     cdef ITYPE_t n_features = tree.data.shape[1]
 

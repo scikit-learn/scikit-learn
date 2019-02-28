@@ -1,6 +1,8 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
+# cython: language_level=3
+#
 # Author: Thomas Moreau <thomas.moreau.2010@gmail.com>
 # Author: Olivier Grisel <olivier.grisel@ensta.fr>
 
@@ -422,7 +424,7 @@ cdef class _QuadTree:
             the query point:
             - results[idx:idx+n_dimensions] contains the coordinate-wise
                 difference between the query point and the summary cell idx.
-                This is usefull in t-SNE to compute the negative forces.
+                This is useful in t-SNE to compute the negative forces.
             - result[idx+n_dimensions+1] contains the squared euclidean
                 distance to the summary cell idx.
             - result[idx+n_dimensions+2] contains the number of point of the

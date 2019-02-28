@@ -7,6 +7,8 @@
 #          Nelson Liu <nelson@nelsonliu.me>
 #
 # License: BSD 3 clause
+#
+# cython: language_level=3
 
 # See _tree.pyx for details.
 

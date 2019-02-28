@@ -24,7 +24,7 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
-	$(PYTEST) --showlocals -v sklearn
+	$(PYTEST) --showlocals -v sklearn --durations=20
 test-sphinxext:
 	$(PYTEST) --showlocals -v doc/sphinxext/
 test-doc:
@@ -60,4 +60,4 @@ code-analysis:
 	pylint -E -i y sklearn/ -d E1103,E0611,E1101
 
 flake8-diff:
-	./build_tools/travis/flake8_diff.sh
+	./build_tools/circle/flake8_diff.sh

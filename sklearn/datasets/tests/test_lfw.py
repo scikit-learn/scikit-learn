@@ -13,15 +13,8 @@ import os
 import shutil
 import tempfile
 import numpy as np
-from sklearn.externals import six
-try:
-    try:
-        from scipy.misc import imsave
-    except ImportError:
-        from scipy.misc.pilutil import imsave
-except ImportError:
-    imsave = None
-
+from functools import partial
+from sklearn.externals._pilutil import pillow_installed, imsave
 from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people
 
@@ -29,6 +22,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_raises
+from sklearn.datasets.tests.test_common import check_return_X_y
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
@@ -48,7 +42,7 @@ FAKE_NAMES = [
 
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
-    if imsave is None:
+    if not pillow_installed:
         raise SkipTest("PIL not installed.")
 
     if not os.path.exists(LFW_HOME):
@@ -76,30 +70,31 @@ def setup_module():
 
     # add some random file pollution to test robustness
     with open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb') as f:
-        f.write(six.b('Text file to be ignored by the dataset loader.'))
+        f.write(b'Text file to be ignored by the dataset loader.')
 
     # generate some pairing metadata files using the same format as LFW
     with open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb') as f:
-        f.write(six.b("10\n"))
-        more_than_two = [name for name, count in six.iteritems(counts)
+        f.write(b"10\n")
+        more_than_two = [name for name, count in counts.items()
                          if count >= 2]
         for i in range(5):
             name = random_state.choice(more_than_two)
             first, second = random_state.sample(range(counts[name]), 2)
-            f.write(six.b('%s\t%d\t%d\n' % (name, first, second)))
+            f.write(('%s\t%d\t%d\n' % (name, first, second)).encode())
 
         for i in range(5):
             first_name, second_name = random_state.sample(FAKE_NAMES, 2)
             first_index = random_state.choice(np.arange(counts[first_name]))
             second_index = random_state.choice(np.arange(counts[second_name]))
-            f.write(six.b('%s\t%d\t%s\t%d\n' % (first_name, first_index,
-                                                second_name, second_index)))
+            f.write(('%s\t%d\t%s\t%d\n' % (first_name, first_index,
+                                           second_name, second_index)
+                     ).encode())
 
     with open(os.path.join(LFW_HOME, 'pairsDevTest.txt'), 'wb') as f:
-        f.write(six.b("Fake place holder that won't be tested"))
+        f.write(b"Fake place holder that won't be tested")
 
     with open(os.path.join(LFW_HOME, 'pairs.txt'), 'wb') as f:
-        f.write(six.b("Fake place holder that won't be tested"))
+        f.write(b"Fake place holder that won't be tested")
 
 
 def teardown_module():
@@ -145,6 +140,13 @@ def test_load_fake_lfw_people():
     assert_array_equal(lfw_people.target_names,
                        ['Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro',
                         'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
+
+    # test return_X_y option
+    fetch_func = partial(fetch_lfw_people, data_home=SCIKIT_LEARN_DATA,
+                         resize=None,
+                         slice_=None, color=True,
+                         download_if_missing=False)
+    check_return_X_y(lfw_people, fetch_func)
 
 
 def test_load_fake_lfw_people_too_restrictive():

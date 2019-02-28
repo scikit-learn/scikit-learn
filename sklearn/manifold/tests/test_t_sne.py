@@ -1,7 +1,9 @@
 import sys
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 import numpy as np
 import scipy.sparse as sp
+
+import pytest
 
 from sklearn.neighbors import BallTree
 from sklearn.neighbors import NearestNeighbors
@@ -14,6 +16,8 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
@@ -48,11 +52,11 @@ def test_gradient_descent_stops():
         def __init__(self):
             self.it = -1
 
-        def __call__(self, _):
+        def __call__(self, _, compute_error=True):
             self.it += 1
             return (10 - self.it) / 10.0, np.array([1e-5])
 
-    def flat_function(_):
+    def flat_function(_, compute_error=True):
         return 0.0, np.ones(1)
 
     # Gradient norm
@@ -288,9 +292,37 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
                     early_exaggeration=2.0, metric="precomputed",
                     random_state=i, verbose=0)
         X_embedded = tsne.fit_transform(D)
-        t = trustworthiness(D, X_embedded, n_neighbors=1,
-                            precomputed=True)
+        t = trustworthiness(D, X_embedded, n_neighbors=1, metric="precomputed")
         assert t > .95
+
+
+def test_trustworthiness_precomputed_deprecation():
+    # FIXME: Remove this test in v0.23
+
+    # Use of the flag `precomputed` in trustworthiness parameters has been
+    # deprecated, but will still work until v0.23.
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
+                              pairwise_distances(X), X, precomputed=True), 1.)
+    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
+                              pairwise_distances(X), X, metric='precomputed',
+                              precomputed=True), 1.)
+    assert_raises(ValueError, assert_warns, DeprecationWarning,
+                  trustworthiness, X, X, metric='euclidean', precomputed=True)
+    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
+                              pairwise_distances(X), X, metric='euclidean',
+                              precomputed=True), 1.)
+
+
+def test_trustworthiness_not_euclidean_metric():
+    # Test trustworthiness with a metric different from 'euclidean' and
+    # 'precomputed'
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    assert_equal(trustworthiness(X, X, metric='cosine'),
+                 trustworthiness(pairwise_distances(X, metric='cosine'), X,
+                                 metric='precomputed'))
 
 
 def test_early_exaggeration_too_small():
@@ -566,21 +598,35 @@ def test_no_sparse_on_barnes_hut():
                          tsne.fit_transform, X_csr)
 
 
-def test_64bit():
+@pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
+@pytest.mark.parametrize('dt', [np.float32, np.float64])
+def test_64bit(method, dt):
     # Ensure 64bit arrays are handled correctly.
     random_state = check_random_state(0)
-    methods = ['barnes_hut', 'exact']
-    for method in methods:
-        for dt in [np.float32, np.float64]:
-            X = random_state.randn(50, 2).astype(dt)
-            tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
-                        random_state=0, method=method, verbose=0)
-            X_embedded = tsne.fit_transform(X)
-            effective_type = X_embedded.dtype
 
-            # tsne cython code is only single precision, so the output will
-            # always be single precision, irrespectively of the input dtype
-            assert effective_type == np.float32
+    X = random_state.randn(50, 2).astype(dt)
+    tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
+                random_state=0, method=method, verbose=0)
+    X_embedded = tsne.fit_transform(X)
+    effective_type = X_embedded.dtype
+
+    # tsne cython code is only single precision, so the output will
+    # always be single precision, irrespectively of the input dtype
+    assert effective_type == np.float32
+
+
+@pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
+def test_kl_divergence_not_nan(method):
+    # Ensure kl_divergence_ is computed at last iteration
+    # even though n_iter % n_iter_check != 0, i.e. 1003 % 50 != 0
+    random_state = check_random_state(0)
+
+    X = random_state.randn(50, 2)
+    tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
+                random_state=0, method=method, verbose=0, n_iter=1003)
+    tsne.fit_transform(X)
+
+    assert not np.isnan(tsne.kl_divergence_)
 
 
 def test_barnes_hut_angle():
@@ -763,9 +809,9 @@ def assert_uniform_grid(Y, try_name=None):
     assert_less(largest_to_mean, 2, msg=try_name)
 
 
-def test_uniform_grid():
-    for method in ['barnes_hut', 'exact']:
-        yield check_uniform_grid, method
+@pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
+def test_uniform_grid(method):
+    check_uniform_grid(method)
 
 
 def test_bh_match_exact():

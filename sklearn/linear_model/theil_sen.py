@@ -7,7 +7,6 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 #
 # License: BSD 3 clause
 
-from __future__ import division, print_function, absolute_import
 
 import warnings
 from itertools import combinations
@@ -20,9 +19,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils import check_X_y, _get_n_jobs
-from ..externals.joblib import Parallel, delayed
-from ..externals.six.moves import xrange as range
+from ..utils import check_X_y
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -249,9 +247,11 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         random number generator; If None, the random number generator is the
         RandomState instance used by `np.random`.
 
-    n_jobs : integer, optional, default 1
-        Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs.
+    n_jobs : int or None, optional (default=None)
+        Number of CPUs to use during the cross validation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     verbose : boolean, optional, default False
         Verbose mode when fitting the model.
@@ -274,6 +274,18 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
         Number of combinations taken into account from 'n choose k', where n is
         the number of samples and k is the number of subsamples.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import TheilSenRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(
+    ...     n_samples=200, n_features=2, noise=4.0, random_state=0)
+    >>> reg = TheilSenRegressor(random_state=0).fit(X, y)
+    >>> reg.score(X, y) # doctest: +ELLIPSIS
+    0.9884...
+    >>> reg.predict(X[:1,])
+    array([-31.5871...])
+
     References
     ----------
     - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
@@ -283,7 +295,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
 
     def __init__(self, fit_intercept=True, copy_X=True,
                  max_subpopulation=1e4, n_subsamples=None, max_iter=300,
-                 tol=1.e-3, random_state=None, n_jobs=1, verbose=False):
+                 tol=1.e-3, random_state=None, n_jobs=None, verbose=False):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
         self.max_subpopulation = int(max_subpopulation)
@@ -368,7 +380,7 @@ class TheilSenRegressor(LinearModel, RegressorMixin):
                                            replace=False)
                        for _ in range(self.n_subpopulation_)]
 
-        n_jobs = _get_n_jobs(self.n_jobs)
+        n_jobs = effective_n_jobs(self.n_jobs)
         index_list = np.array_split(indices, n_jobs)
         weights = Parallel(n_jobs=n_jobs,
                            verbose=self.verbose)(

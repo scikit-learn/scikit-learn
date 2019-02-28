@@ -4,9 +4,12 @@ import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix, issparse)
 
+import pytest
+
 from sklearn import metrics
 from sklearn import neighbors, datasets
 from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -14,15 +17,17 @@ from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
+
+from sklearn.utils._joblib import joblib
+from sklearn.utils._joblib import parallel_backend
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -43,6 +48,7 @@ SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
 P = (1, 2, 3, 4, np.inf)
+JOBLIB_BACKENDS = list(joblib.parallel.BACKENDS.keys())
 
 # Filter deprecation warnings.
 neighbors.kneighbors_graph = ignore_warnings(neighbors.kneighbors_graph)
@@ -108,6 +114,28 @@ def test_unsupervised_inputs():
         assert_array_almost_equal(ind1, ind2)
 
 
+def test_n_neighbors_datatype():
+    # Test to check whether n_neighbors is integer
+    X = [[1, 1], [1, 1], [1, 1]]
+    expected_msg = "n_neighbors does not take .*float.* " \
+                   "value, enter integer value"
+    msg = "Expected n_neighbors > 0. Got -3"
+
+    neighbors_ = neighbors.NearestNeighbors(n_neighbors=3.)
+    assert_raises_regex(TypeError, expected_msg, neighbors_.fit, X)
+    assert_raises_regex(ValueError, msg,
+                        neighbors_.kneighbors, X=X, n_neighbors=-3)
+    assert_raises_regex(TypeError, expected_msg,
+                        neighbors_.kneighbors, X=X, n_neighbors=3.)
+
+
+def test_not_fitted_error_gets_raised():
+    X = [[1]]
+    neighbors_ = neighbors.NearestNeighbors()
+    assert_raises(NotFittedError, neighbors_.kneighbors_graph, X)
+    assert_raises(NotFittedError, neighbors_.radius_neighbors_graph, X)
+
+
 def test_precomputed(random_state=42):
     """Tests unsupervised NearestNeighbors with a distance matrix."""
     # Note: smaller samples may result in spurious test success
@@ -163,6 +191,7 @@ def test_precomputed(random_state=42):
         assert_array_almost_equal(pred_X, pred_D)
 
 
+@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_precomputed_cross_validation():
     # Ensure array is split correctly
     rng = np.random.RandomState(0)
@@ -345,9 +374,6 @@ def test_radius_neighbors_classifier_when_no_neighbors():
                                    clf.predict(z1))
                 if outlier_label is None:
                     assert_raises(ValueError, clf.predict, z2)
-                elif False:
-                    assert_array_equal(np.array([1, outlier_label]),
-                                       clf.predict(z2))
 
 
 def test_radius_neighbors_classifier_outlier_labeling():
@@ -577,7 +603,7 @@ def test_kneighbors_regressor(n_samples=40,
             knn.fit(X, y)
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = knn.predict(X[:n_test_pts] + epsilon)
-            assert_true(np.all(abs(y_pred - y_target) < 0.3))
+            assert np.all(abs(y_pred - y_target) < 0.3)
 
 
 def test_KNeighborsRegressor_multioutput_uniform_weight():
@@ -631,7 +657,7 @@ def test_kneighbors_regressor_multioutput(n_samples=40,
         y_pred = knn.predict(X[:n_test_pts] + epsilon)
         assert_equal(y_pred.shape, y_target.shape)
 
-        assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
+        assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
 def test_radius_neighbors_regressor(n_samples=40,
@@ -657,7 +683,7 @@ def test_radius_neighbors_regressor(n_samples=40,
             neigh.fit(X, y)
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
-            assert_true(np.all(abs(y_pred - y_target) < radius / 2))
+            assert np.all(abs(y_pred - y_target) < radius / 2)
 
     # test that nan is returned when no nearby observations
     for weights in ['uniform', 'distance']:
@@ -665,14 +691,14 @@ def test_radius_neighbors_regressor(n_samples=40,
                                                    weights=weights,
                                                    algorithm='auto')
         neigh.fit(X, y)
-        X_test_nan = np.ones((1, n_features))*-1
+        X_test_nan = np.full((1, n_features), -1.)
         empty_warning_msg = ("One or more samples have no neighbors "
                              "within specified radius; predicting NaN.")
         pred = assert_warns_message(UserWarning,
                                     empty_warning_msg,
                                     neigh.predict,
                                     X_test_nan)
-        assert_true(np.all(np.isnan(pred)))
+        assert np.all(np.isnan(pred))
 
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
@@ -729,7 +755,7 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
         y_pred = rnn.predict(X[:n_test_pts] + epsilon)
 
         assert_equal(y_pred.shape, y_target.shape)
-        assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
+        assert np.all(np.abs(y_pred - y_target) < 0.3)
 
 
 def test_kneighbors_regressor_sparse(n_samples=40,
@@ -754,14 +780,13 @@ def test_kneighbors_regressor_sparse(n_samples=40,
 
         for sparsev in SPARSE_OR_DENSE:
             X2 = sparsev(X)
-            assert_true(np.mean(knn.predict(X2).round() == y) > 0.95)
+            assert np.mean(knn.predict(X2).round() == y) > 0.95
 
             X2_pre = sparsev(pairwise_distances(X, metric='euclidean'))
             if issparse(sparsev(X2_pre)):
                 assert_raises(ValueError, knn_pre.predict, X2_pre)
             else:
-                assert_true(
-                    np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95)
+                assert np.mean(knn_pre.predict(X2_pre).round() == y) > 0.95
 
 
 def test_neighbors_iris():
@@ -777,7 +802,7 @@ def test_neighbors_iris():
 
         clf.set_params(n_neighbors=9, algorithm=algorithm)
         clf.fit(iris.data, iris.target)
-        assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.95)
+        assert np.mean(clf.predict(iris.data) == iris.target) > 0.95
 
         rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm)
         rgs.fit(iris.data, iris.target)
@@ -1027,7 +1052,7 @@ def test_valid_brute_metric_for_auto_algorithm():
     # check that there is a metric that is valid for brute
     # but not ball_tree (so we actually test something)
     assert_in("cosine", VALID_METRICS['brute'])
-    assert_false("cosine" in VALID_METRICS['ball_tree'])
+    assert "cosine" not in VALID_METRICS['ball_tree']
 
     # Metric which don't required any additional parameter
     require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
@@ -1244,33 +1269,76 @@ def test_include_self_neighbors_graph():
     assert_array_equal(rng_not_self, [[0., 1.], [1., 0.]])
 
 
-def test_same_knn_parallel():
+@pytest.mark.parametrize('algorithm', ALGORITHMS)
+def test_same_knn_parallel(algorithm):
     X, y = datasets.make_classification(n_samples=30, n_features=5,
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    def check_same_knn_parallel(algorithm):
+    clf = neighbors.KNeighborsClassifier(n_neighbors=3,
+                                         algorithm=algorithm)
+    clf.fit(X_train, y_train)
+    y = clf.predict(X_test)
+    dist, ind = clf.kneighbors(X_test)
+    graph = clf.kneighbors_graph(X_test, mode='distance').toarray()
+
+    clf.set_params(n_jobs=3)
+    clf.fit(X_train, y_train)
+    y_parallel = clf.predict(X_test)
+    dist_parallel, ind_parallel = clf.kneighbors(X_test)
+    graph_parallel = \
+        clf.kneighbors_graph(X_test, mode='distance').toarray()
+
+    assert_array_equal(y, y_parallel)
+    assert_array_almost_equal(dist, dist_parallel)
+    assert_array_equal(ind, ind_parallel)
+    assert_array_almost_equal(graph, graph_parallel)
+
+
+@pytest.mark.parametrize('algorithm', ALGORITHMS)
+def test_same_radius_neighbors_parallel(algorithm):
+    X, y = datasets.make_classification(n_samples=30, n_features=5,
+                                        n_redundant=0, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    clf = neighbors.RadiusNeighborsClassifier(radius=10,
+                                              algorithm=algorithm)
+    clf.fit(X_train, y_train)
+    y = clf.predict(X_test)
+    dist, ind = clf.radius_neighbors(X_test)
+    graph = clf.radius_neighbors_graph(X_test, mode='distance').toarray()
+
+    clf.set_params(n_jobs=3)
+    clf.fit(X_train, y_train)
+    y_parallel = clf.predict(X_test)
+    dist_parallel, ind_parallel = clf.radius_neighbors(X_test)
+    graph_parallel = \
+        clf.radius_neighbors_graph(X_test, mode='distance').toarray()
+
+    assert_array_equal(y, y_parallel)
+    for i in range(len(dist)):
+        assert_array_almost_equal(dist[i], dist_parallel[i])
+        assert_array_equal(ind[i], ind_parallel[i])
+    assert_array_almost_equal(graph, graph_parallel)
+
+
+@pytest.mark.parametrize('backend', JOBLIB_BACKENDS)
+@pytest.mark.parametrize('algorithm', ALGORITHMS)
+def test_knn_forcing_backend(backend, algorithm):
+    # Non-regression test which ensure the knn methods are properly working
+    # even when forcing the global joblib backend.
+    with parallel_backend(backend):
+        X, y = datasets.make_classification(n_samples=30, n_features=5,
+                                            n_redundant=0, random_state=0)
+        X_train, X_test, y_train, y_test = train_test_split(X, y)
+
         clf = neighbors.KNeighborsClassifier(n_neighbors=3,
-                                             algorithm=algorithm)
+                                             algorithm=algorithm,
+                                             n_jobs=3)
         clf.fit(X_train, y_train)
-        y = clf.predict(X_test)
-        dist, ind = clf.kneighbors(X_test)
-        graph = clf.kneighbors_graph(X_test, mode='distance').toarray()
-
-        clf.set_params(n_jobs=3)
-        clf.fit(X_train, y_train)
-        y_parallel = clf.predict(X_test)
-        dist_parallel, ind_parallel = clf.kneighbors(X_test)
-        graph_parallel = \
-            clf.kneighbors_graph(X_test, mode='distance').toarray()
-
-        assert_array_equal(y, y_parallel)
-        assert_array_almost_equal(dist, dist_parallel)
-        assert_array_equal(ind, ind_parallel)
-        assert_array_almost_equal(graph, graph_parallel)
-
-    for algorithm in ALGORITHMS:
-        yield check_same_knn_parallel, algorithm
+        clf.predict(X_test)
+        clf.kneighbors(X_test)
+        clf.kneighbors_graph(X_test, mode='distance').toarray()
 
 
 def test_dtype_convert():
@@ -1285,7 +1353,7 @@ def test_dtype_convert():
 
 def test_sparse_metric_callable():
     def sparse_metric(x, y):  # Metric accepting sparse matrix input (only)
-        assert_true(issparse(x) and issparse(y))
+        assert issparse(x) and issparse(y)
         return x.dot(y.T).A.item()
 
     X = csr_matrix([  # Population matrix

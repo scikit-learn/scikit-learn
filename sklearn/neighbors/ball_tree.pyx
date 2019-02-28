@@ -2,6 +2,7 @@
 #cython: boundscheck=False
 #cython: wraparound=False
 #cython: cdivision=True
+# cython: language_level=3
 
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
 # License: BSD 3 clause
@@ -62,17 +63,34 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
     cdef DTYPE_t* data = &tree.data[0, 0]
     cdef DTYPE_t* centroid = &tree.node_bounds[0, i_node, 0]
 
+    cdef bint with_sample_weight = tree.sample_weight is not None
+    cdef DTYPE_t* sample_weight
+    cdef DTYPE_t sum_weight_node
+    if with_sample_weight:
+        sample_weight = &tree.sample_weight[0]
+
     # determine Node centroid
     for j in range(n_features):
         centroid[j] = 0
 
-    for i in range(idx_start, idx_end):
-        this_pt = data + n_features * idx_array[i]
-        for j from 0 <= j < n_features:
-            centroid[j] += this_pt[j]
+    if with_sample_weight:
+        sum_weight_node = 0
+        for i in range(idx_start, idx_end):
+            sum_weight_node += sample_weight[idx_array[i]]
+            this_pt = data + n_features * idx_array[i]
+            for j from 0 <= j < n_features:
+                centroid[j] += this_pt[j] * sample_weight[idx_array[i]]
 
-    for j in range(n_features):
-        centroid[j] /= n_points
+        for j in range(n_features):
+            centroid[j] /= sum_weight_node
+    else:
+        for i in range(idx_start, idx_end):
+            this_pt = data + n_features * idx_array[i]
+            for j from 0 <= j < n_features:
+                centroid[j] += this_pt[j]
+
+        for j in range(n_features):
+            centroid[j] /= n_points
 
     # determine Node radius
     radius = 0
@@ -105,7 +123,7 @@ cdef inline DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node,
 
 
 cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
-                             DTYPE_t* min_dist, DTYPE_t* max_dist) except -1:
+                             DTYPE_t* min_dist, DTYPE_t* max_dist) nogil except -1:
     """Compute the minimum and maximum distance between a point and a node"""
     cdef DTYPE_t dist_pt = tree.dist(pt, &tree.node_bounds[0, i_node, 0],
                                      tree.data.shape[1])

@@ -290,6 +290,24 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     n_iter_ : int
         Number of iterations taken to converge.
 
+    Examples
+    --------
+    >>> from sklearn.cluster import AffinityPropagation
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> clustering = AffinityPropagation().fit(X)
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    AffinityPropagation(affinity='euclidean', convergence_iter=15, copy=True,
+              damping=0.5, max_iter=200, preference=None, verbose=False)
+    >>> clustering.labels_
+    array([0, 0, 0, 1, 1, 1])
+    >>> clustering.predict([[0, 0], [4, 4]])
+    array([0, 1])
+    >>> clustering.cluster_centers_
+    array([[1, 2],
+           [4, 2]])
+
     Notes
     -----
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
@@ -390,5 +408,5 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         else:
             warnings.warn("This model does not have any cluster centers "
                           "because affinity propagation did not converge. "
-                          "Labeling every sample as '-1'.")
+                          "Labeling every sample as '-1'.", ConvergenceWarning)
             return np.array([-1] * X.shape[0])

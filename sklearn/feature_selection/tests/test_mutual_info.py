@@ -1,12 +1,10 @@
-from __future__ import division
 
 import numpy as np
-from numpy.testing import run_module_suite
 from scipy.sparse import csr_matrix
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_equal, assert_almost_equal,
-                                   assert_false, assert_raises, assert_equal,
+                                   assert_raises, assert_equal,
                                    assert_greater)
 from sklearn.feature_selection.mutual_info_ import (
     mutual_info_regression, mutual_info_classif, _compute_mi)
@@ -199,8 +197,4 @@ def test_mutual_info_options():
         assert_array_equal(mi_1, mi_2)
         assert_array_equal(mi_3, mi_4)
 
-    assert_false(np.allclose(mi_1, mi_3))
-
-
-if __name__ == '__main__':
-    run_module_suite()
+    assert not np.allclose(mi_1, mi_3)

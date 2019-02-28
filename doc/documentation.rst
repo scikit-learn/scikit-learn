@@ -1,3 +1,5 @@
+:orphan:
+
 .. raw:: html
 
   <div class="container-index">
@@ -14,7 +16,7 @@ Documentation of scikit-learn |version|
                     <h2><a href="tutorial/basic/tutorial.html">Quick Start</a></h2>
                     <blockquote>A very short introduction into machine learning
                     problems and how to solve them using scikit-learn.
-                    Introduced basic concepts and conventions.
+                    Presents basic concepts and conventions.
                     </blockquote>
                 </div>
                 <div class="span4 box">
@@ -97,6 +99,11 @@ Documentation of scikit-learn |version|
                     <blockquote>Other machine learning packages for Python and
                     related projects. Also algorithms that are slightly out of
                     scope or not well established enough for scikit-learn.
+                    </blockquote>
+                </div>
+                <div class="span4 box">
+                    <h2><a href="roadmap.html">Roadmap</a></h2>
+                    <blockquote>Roadmap of the project.
                     </blockquote>
                 </div>
 

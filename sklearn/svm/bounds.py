@@ -32,8 +32,6 @@ def l1_min_c(X, y, loss='squared_hinge', fit_intercept=True,
         Specifies the loss function.
         With 'squared_hinge' it is the squared hinge loss (a.k.a. L2 loss).
         With 'log' it is the loss of logistic regression models.
-        'l2' is accepted as an alias for 'squared_hinge', for backward
-        compatibility reasons, but should not be used in new code.
 
     fit_intercept : bool, default: True
         Specifies if the intercept should be fitted by the model.
@@ -52,7 +50,7 @@ def l1_min_c(X, y, loss='squared_hinge', fit_intercept=True,
         minimum value for C
     """
     if loss not in ('squared_hinge', 'log'):
-        raise ValueError('loss type not in ("squared_hinge", "log", "l2")')
+        raise ValueError('loss type not in ("squared_hinge", "log")')
 
     X = check_array(X, accept_sparse='csc')
     check_consistent_length(X, y)
@@ -61,7 +59,8 @@ def l1_min_c(X, y, loss='squared_hinge', fit_intercept=True,
     # maximum absolute value over classes and features
     den = np.max(np.abs(safe_sparse_dot(Y, X)))
     if fit_intercept:
-        bias = intercept_scaling * np.ones((np.size(y), 1))
+        bias = np.full((np.size(y), 1), intercept_scaling,
+                       dtype=np.array(intercept_scaling).dtype)
         den = max(den, abs(np.dot(Y, bias)).max())
 
     if den == 0.0:

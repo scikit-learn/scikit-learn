@@ -9,6 +9,8 @@ import numpy as np
 from scipy.spatial import distance
 from scipy import sparse
 
+import pytest
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
@@ -79,10 +81,12 @@ def test_dbscan_sparse():
     assert_array_equal(labels_dense, labels_sparse)
 
 
-def test_dbscan_sparse_precomputed():
+@pytest.mark.parametrize('include_self', [False, True])
+def test_dbscan_sparse_precomputed(include_self):
     D = pairwise_distances(X)
     nn = NearestNeighbors(radius=.9).fit(X)
-    D_sparse = nn.radius_neighbors_graph(mode='distance')
+    X_ = X if include_self else None
+    D_sparse = nn.radius_neighbors_graph(X=X_, mode='distance')
     # Ensure it is sparse not merely on diagonals:
     assert D_sparse.nnz < D.shape[0] * (D.shape[0] - 1)
     core_sparse, labels_sparse = dbscan(D_sparse,
@@ -93,6 +97,21 @@ def test_dbscan_sparse_precomputed():
                                       metric='precomputed')
     assert_array_equal(core_dense, core_sparse)
     assert_array_equal(labels_dense, labels_sparse)
+
+
+@pytest.mark.parametrize('use_sparse', [True, False])
+@pytest.mark.parametrize('metric', ['precomputed', 'minkowski'])
+def test_dbscan_input_not_modified(use_sparse, metric):
+    # test that the input is not modified by dbscan
+    X = np.random.RandomState(0).rand(10, 10)
+    X = sparse.csr_matrix(X) if use_sparse else X
+    X_copy = X.copy()
+    dbscan(X, metric=metric)
+
+    if use_sparse:
+        assert_array_equal(X.toarray(), X_copy.toarray())
+    else:
+        assert_array_equal(X, X_copy)
 
 
 def test_dbscan_no_core_samples():
@@ -306,38 +325,38 @@ def test_weighted_dbscan():
     assert_array_equal(label1, est.labels_)
 
 
-def test_dbscan_core_samples_toy():
+@pytest.mark.parametrize('algorithm', ['brute', 'kd_tree', 'ball_tree'])
+def test_dbscan_core_samples_toy(algorithm):
     X = [[0], [2], [3], [4], [6], [8], [10]]
     n_samples = len(X)
 
-    for algorithm in ['brute', 'kd_tree', 'ball_tree']:
-        # Degenerate case: every sample is a core sample, either with its own
-        # cluster or including other close core samples.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=1)
-        assert_array_equal(core_samples, np.arange(n_samples))
-        assert_array_equal(labels, [0, 1, 1, 1, 2, 3, 4])
+    # Degenerate case: every sample is a core sample, either with its own
+    # cluster or including other close core samples.
+    core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                  min_samples=1)
+    assert_array_equal(core_samples, np.arange(n_samples))
+    assert_array_equal(labels, [0, 1, 1, 1, 2, 3, 4])
 
-        # With eps=1 and min_samples=2 only the 3 samples from the denser area
-        # are core samples. All other points are isolated and considered noise.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=2)
-        assert_array_equal(core_samples, [1, 2, 3])
-        assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
+    # With eps=1 and min_samples=2 only the 3 samples from the denser area
+    # are core samples. All other points are isolated and considered noise.
+    core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                  min_samples=2)
+    assert_array_equal(core_samples, [1, 2, 3])
+    assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
 
-        # Only the sample in the middle of the dense area is core. Its two
-        # neighbors are edge samples. Remaining samples are noise.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=3)
-        assert_array_equal(core_samples, [2])
-        assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
+    # Only the sample in the middle of the dense area is core. Its two
+    # neighbors are edge samples. Remaining samples are noise.
+    core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                  min_samples=3)
+    assert_array_equal(core_samples, [2])
+    assert_array_equal(labels, [-1, 0, 0, 0, -1, -1, -1])
 
-        # It's no longer possible to extract core samples with eps=1:
-        # everything is noise.
-        core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
-                                      min_samples=4)
-        assert_array_equal(core_samples, [])
-        assert_array_equal(labels, -np.ones(n_samples))
+    # It's no longer possible to extract core samples with eps=1:
+    # everything is noise.
+    core_samples, labels = dbscan(X, algorithm=algorithm, eps=1,
+                                  min_samples=4)
+    assert_array_equal(core_samples, [])
+    assert_array_equal(labels, np.full(n_samples, -1.))
 
 
 def test_dbscan_precomputed_metric_with_degenerate_input_arrays():

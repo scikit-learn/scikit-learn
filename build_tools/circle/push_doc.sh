@@ -4,7 +4,7 @@
 # The behavior of the script is controlled by environment variable defined
 # in the circle.yml in the top level folder of the project.
 
-set -e
+set -ex
 
 if [ -z $CIRCLE_PROJECT_USERNAME ];
 then USERNAME="sklearn-ci";
@@ -25,10 +25,10 @@ GENERATED_DOC_DIR=$(readlink -f $GENERATED_DOC_DIR)
 
 if [ "$CIRCLE_BRANCH" = "master" ]
 then
-	dir=dev
+    dir=dev
 else
-	# Strip off .X
-	dir="${CIRCLE_BRANCH::-2}"
+    # Strip off .X
+    dir="${CIRCLE_BRANCH::-2}"
 fi
 
 MSG="Pushing the docs to $dir/ for branch: $CIRCLE_BRANCH, commit $CIRCLE_SHA1"
@@ -38,11 +38,23 @@ if [ ! -d $DOC_REPO ];
 then git clone --depth 1 --no-checkout "git@github.com:scikit-learn/"$DOC_REPO".git";
 fi
 cd $DOC_REPO
-git config core.sparseCheckout true
+
+# check if it's a new branch
+
 echo $dir > .git/info/sparse-checkout
-git checkout $CIRCLE_BRANCH
-git reset --hard origin/$CIRCLE_BRANCH
-git rm -rf $dir/ && rm -rf $dir/
+if ! git show HEAD:$dir >/dev/null
+then
+	# directory does not exist. Need to make it so sparse checkout works
+	mkdir $dir
+	touch $dir/index.html
+	git add $dir
+fi
+git checkout master
+git reset --hard origin/master
+if [ -d $dir ]
+then
+	git rm -rf $dir/ && rm -rf $dir/
+fi
 cp -R $GENERATED_DOC_DIR $dir
 git config user.email "olivier.grisel+sklearn-ci@gmail.com"
 git config user.name $USERNAME

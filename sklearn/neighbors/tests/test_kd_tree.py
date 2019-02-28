@@ -1,11 +1,14 @@
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+
+import pytest
+
 from sklearn.neighbors.kd_tree import (KDTree, NeighborsHeap,
                                        simultaneous_sort, kernel_norm,
                                        nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import SkipTest, assert_allclose
+from sklearn.utils.testing import assert_allclose
 
 rng = np.random.RandomState(42)
 V = rng.random_sample((3, 3))
@@ -37,18 +40,17 @@ def check_neighbors(dualtree, breadth_first, k, metric, X, Y, kwargs):
     assert_array_almost_equal(dist1, dist2)
 
 
-def test_kd_tree_query():
+@pytest.mark.parametrize('metric', METRICS)
+@pytest.mark.parametrize('k', (1, 3, 5))
+@pytest.mark.parametrize('dualtree', (True, False))
+@pytest.mark.parametrize('breadth_first', (True, False))
+def test_kd_tree_query(metric, k, dualtree, breadth_first):
     rng = check_random_state(0)
     X = rng.random_sample((40, DIMENSION))
     Y = rng.random_sample((10, DIMENSION))
 
-    for (metric, kwargs) in METRICS.items():
-        for k in (1, 3, 5):
-            for dualtree in (True, False):
-                for breadth_first in (True, False):
-                    yield (check_neighbors,
-                           dualtree, breadth_first,
-                           k, metric, X, Y, kwargs)
+    kwargs = METRICS[metric]
+    check_neighbors(dualtree, breadth_first, k, metric, X, Y, kwargs)
 
 
 def test_kd_tree_query_radius(n_samples=100, n_features=10):
@@ -118,22 +120,24 @@ def check_results(kernel, h, atol, rtol, breadth_first, Y, kdt, dens_true):
                     rtol=max(rtol, 1e-7))
 
 
-def test_kd_tree_kde(n_samples=100, n_features=3):
+@pytest.mark.parametrize('kernel',
+                         ['gaussian', 'tophat', 'epanechnikov',
+                          'exponential', 'linear', 'cosine'])
+@pytest.mark.parametrize('h', [0.01, 0.1, 1])
+def test_kd_tree_kde(kernel, h):
+    n_samples, n_features = (100, 3)
     rng = check_random_state(0)
     X = rng.random_sample((n_samples, n_features))
     Y = rng.random_sample((n_samples, n_features))
     kdt = KDTree(X, leaf_size=10)
 
-    for kernel in ['gaussian', 'tophat', 'epanechnikov',
-                   'exponential', 'linear', 'cosine']:
-        for h in [0.01, 0.1, 1]:
-            dens_true = compute_kernel_slow(Y, X, kernel, h)
+    dens_true = compute_kernel_slow(Y, X, kernel, h)
 
-            for rtol in [0, 1E-5]:
-                for atol in [1E-6, 1E-2]:
-                    for breadth_first in (True, False):
-                        yield (check_results, kernel, h, atol, rtol,
-                               breadth_first, Y, kdt, dens_true)
+    for rtol in [0, 1E-5]:
+        for atol in [1E-6, 1E-2]:
+            for breadth_first in (True, False):
+                check_results(kernel, h, atol, rtol,
+                              breadth_first, Y, kdt, dens_true)
 
 
 def test_gaussian_kde(n_samples=1000):
@@ -145,10 +149,7 @@ def test_gaussian_kde(n_samples=1000):
 
     for h in [0.01, 0.1, 1]:
         kdt = KDTree(x_in[:, None])
-        try:
-            gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
-        except TypeError:
-            raise SkipTest("Old scipy, does not accept explicit bandwidth.")
+        gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
 
         dens_kdt = kdt.kernel_density(x_out[:, None], h) / n_samples
         dens_gkde = gkde.evaluate(x_out)
@@ -156,7 +157,9 @@ def test_gaussian_kde(n_samples=1000):
         assert_array_almost_equal(dens_kdt, dens_gkde, decimal=3)
 
 
-def test_kd_tree_two_point(n_samples=100, n_features=3):
+@pytest.mark.parametrize('dualtree', (True, False))
+def test_kd_tree_two_point(dualtree):
+    n_samples, n_features = (100, 3)
     rng = check_random_state(0)
     X = rng.random_sample((n_samples, n_features))
     Y = rng.random_sample((n_samples, n_features))
@@ -166,15 +169,12 @@ def test_kd_tree_two_point(n_samples=100, n_features=3):
     D = DistanceMetric.get_metric("euclidean").pairwise(Y, X)
     counts_true = [(D <= ri).sum() for ri in r]
 
-    def check_two_point(r, dualtree):
-        counts = kdt.two_point_correlation(Y, r=r, dualtree=dualtree)
-        assert_array_almost_equal(counts, counts_true)
-
-    for dualtree in (True, False):
-        yield check_two_point, r, dualtree
+    counts = kdt.two_point_correlation(Y, r=r, dualtree=dualtree)
+    assert_array_almost_equal(counts, counts_true)
 
 
-def test_kd_tree_pickle():
+@pytest.mark.parametrize('protocol', (0, 1, 2))
+def test_kd_tree_pickle(protocol):
     import pickle
     rng = check_random_state(0)
     X = rng.random_sample((10, 3))
@@ -187,9 +187,9 @@ def test_kd_tree_pickle():
         ind2, dist2 = kdt2.query(X)
         assert_array_almost_equal(ind1, ind2)
         assert_array_almost_equal(dist1, dist2)
+        assert isinstance(kdt2, KDTree)
 
-    for protocol in (0, 1, 2):
-        yield check_pickle_protocol, protocol
+    check_pickle_protocol(protocol)
 
 
 def test_neighbors_heap(n_pts=5, n_nbrs=10):

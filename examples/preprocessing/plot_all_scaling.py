@@ -8,7 +8,7 @@ Compare the effect of different scalers on data with outliers
 
 Feature 0 (median income in a block) and feature 5 (number of households) of
 the `California housing dataset
-<http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html>`_ have very
+<https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.html>`_ have very
 different scales and contain some very large outliers. These two
 characteristics lead to difficulties to visualize the data and, more
 importantly, they can degrade the predictive performance of many machine
@@ -46,8 +46,6 @@ of the results_.
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
 #          Thomas Unterthiner
 # License: BSD 3 clause
-
-from __future__ import print_function
 
 import numpy as np
 
@@ -87,6 +85,8 @@ distributions = [
         MaxAbsScaler().fit_transform(X)),
     ('Data after robust scaling',
         RobustScaler(quantile_range=(25, 75)).fit_transform(X)),
+    ('Data after power transformation (Yeo-Johnson)',
+     PowerTransformer(method='yeo-johnson').fit_transform(X)),
     ('Data after power transformation (Box-Cox)',
      PowerTransformer(method='box-cox').fit_transform(X)),
     ('Data after quantile transformation (gaussian pdf)',
@@ -102,6 +102,8 @@ distributions = [
 # scale the output between 0 and 1 for the colorbar
 y = minmax_scale(y_full)
 
+# plasma does not exist in matplotlib < 1.5
+cmap = getattr(cm, 'plasma_r', cm.hot_r)
 
 def create_axes(title, figsize=(16, 6)):
     fig = plt.figure(figsize=figsize)
@@ -153,7 +155,7 @@ def plot_distribution(axes, X, y, hist_nbins=50, title="",
     ax.set_ylabel(x1_label)
 
     # The scatter plot
-    colors = cm.plasma_r(y)
+    colors = cmap(y)
     ax.scatter(X[:, 0], X[:, 1], alpha=0.5, marker='o', s=5, lw=0, c=colors)
 
     # Removing the top and the right spine for aesthetics
@@ -209,7 +211,7 @@ def make_plot(item_idx):
                       title="Zoom-in")
 
     norm = mpl.colors.Normalize(y_full.min(), y_full.max())
-    mpl.colorbar.ColorbarBase(ax_colorbar, cmap=cm.plasma_r,
+    mpl.colorbar.ColorbarBase(ax_colorbar, cmap=cmap,
                               norm=norm, orientation='vertical',
                               label='Color mapping for values of y')
 
@@ -292,21 +294,21 @@ make_plot(3)
 make_plot(4)
 
 ##############################################################################
-# PowerTransformer (Box-Cox)
-# --------------------------
+# PowerTransformer
+# ----------------
 #
-# ``PowerTransformer`` applies a power transformation to each
-# feature to make the data more Gaussian-like. Currently,
-# ``PowerTransformer`` implements the Box-Cox transform. The Box-Cox transform
-# finds the optimal scaling factor to stabilize variance and mimimize skewness
-# through maximum likelihood estimation. By default, ``PowerTransformer`` also
-# applies zero-mean, unit variance normalization to the transformed output.
-# Note that Box-Cox can only be applied to positive, non-zero data. Income and
-# number of households happen to be strictly positive, but if negative values
-# are present, a constant can be added to each feature to shift it into the
-# positive range - this is known as the two-parameter Box-Cox transform.
+# ``PowerTransformer`` applies a power transformation to each feature to make
+# the data more Gaussian-like. Currently, ``PowerTransformer`` implements the
+# Yeo-Johnson and Box-Cox transforms. The power transform finds the optimal
+# scaling factor to stabilize variance and mimimize skewness through maximum
+# likelihood estimation. By default, ``PowerTransformer`` also applies
+# zero-mean, unit variance normalization to the transformed output. Note that
+# Box-Cox can only be applied to strictly positive data. Income and number of
+# households happen to be strictly positive, but if negative values are present
+# the Yeo-Johnson transformed is to be preferred.
 
 make_plot(5)
+make_plot(6)
 
 ##############################################################################
 # QuantileTransformer (Gaussian output)
@@ -317,7 +319,7 @@ make_plot(5)
 # Note that this non-parametetric transformer introduces saturation artifacts
 # for extreme values.
 
-make_plot(6)
+make_plot(7)
 
 ###################################################################
 # QuantileTransformer (uniform output)
@@ -335,7 +337,7 @@ make_plot(6)
 # any outlier by setting them to the a priori defined range boundaries (0 and
 # 1).
 
-make_plot(7)
+make_plot(8)
 
 ##############################################################################
 # Normalizer
@@ -348,6 +350,6 @@ make_plot(7)
 # transformed data only lie in the positive quadrant. This would not be the
 # case if some original features had a mix of positive and negative values.
 
-make_plot(8)
+make_plot(9)
 
 plt.show()
