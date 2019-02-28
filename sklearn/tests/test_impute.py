@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.mask import _get_missing_mask
 
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer, KNNImputer
@@ -1086,8 +1087,7 @@ def test_knn_imputer_shape():
             assert X_imputed.shape == (n_rows, n_cols)
 
 
-def test_knn_imputer_zero_missing_value():
-    # Test imputation when missing_values == 0
+def test_knn_imputer_errors():
     missing_values = 0
     n_neighbors = 2
     imputer = KNNImputer(missing_values=missing_values,
@@ -1119,9 +1119,14 @@ def test_knn_imputer_zero_missing_value():
         imputer.fit(X)
 
 
-def test_knn_imputer_zero_nan_missing_values():
+def _missing_mean(X, missing_value):
+    masked_X = np.ma.array(X, mask=_get_missing_mask(X, missing_value))
+    return np.ma.average(masked_X, axis=0).data
+
+
+@pytest.mark.parametrize("na", [np.nan, -1])
+def test_knn_imputer_zero_nan_imputes_the_same(na):
     # Test with an imputable matrix and also compare with missing_values=np.NaN
-    na = np.nan
     X_zero = np.array([
         [1, 0, 1, 1, 1.],
         [2, 2, 2, 2, 2],
@@ -1135,7 +1140,7 @@ def test_knn_imputer_zero_nan_missing_values():
         [3, 3, 3, 3, na],
         [6, 6, na, 6, 6],
     ])
-    statistics_mean = np.nanmean(X_nan, axis=0)
+    statistics_mean = _missing_mean(X_nan, na)
 
     X_imputed = np.array([
         [1, 2.5, 1, 1, 1.],
@@ -1147,7 +1152,7 @@ def test_knn_imputer_zero_nan_missing_values():
     imputer_zero = KNNImputer(missing_values=0, n_neighbors=2,
                               weights="uniform")
 
-    imputer_nan = KNNImputer(missing_values=np.nan,
+    imputer_nan = KNNImputer(missing_values=na,
                              n_neighbors=2,
                              weights="uniform")
 
@@ -1157,9 +1162,9 @@ def test_knn_imputer_zero_nan_missing_values():
                               imputer_nan.fit_transform(X_nan))
 
 
-def test_knn_imputer_default():
+@pytest.mark.parametrize("na", [np.nan, -1])
+def test_knn_imputer_verify(na):
     # Test imputation with default parameter values
-    na = np.nan
 
     # Test with an imputable matrix
     X = np.array([
@@ -1171,7 +1176,7 @@ def test_knn_imputer_default():
         [8, 8, 8, 8],
         [16, 15, 18, 19],
     ])
-    statistics_mean = np.nanmean(X, axis=0)
+    statistics_mean = _missing_mean(X, na)
 
     X_imputed = np.array([
         [1, 0, 0, 1],
@@ -1183,7 +1188,7 @@ def test_knn_imputer_default():
         [16, 15, 18, 19],
     ])
 
-    imputer = KNNImputer()
+    imputer = KNNImputer(missing_values=na)
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed)
     assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
@@ -1198,7 +1203,7 @@ def test_knn_imputer_default():
         [19, 19, 19, 19],
         [na, na, na, 19],
     ])
-    statistics_mean = np.nanmean(X, axis=0)
+    statistics_mean = _missing_mean(X, na)
     r7c0, r7c1, r7c2, _ = statistics_mean
 
     X_imputed = np.array([
@@ -1212,7 +1217,7 @@ def test_knn_imputer_default():
         [r7c0, r7c1, r7c2, 19],
     ])
 
-    imputer = KNNImputer()
+    imputer = KNNImputer(missing_values=na)
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed, decimal=6)
     assert_array_almost_equal(imputer.statistics_, statistics_mean, decimal=6)
 
@@ -1227,7 +1232,7 @@ def test_knn_imputer_default():
         [20, 20, 20, 20],
         [22, 22, 22, 22]
     ])
-    statistics_mean = np.nanmean(X, axis=0)
+    statistics_mean = _missing_mean(X, na)
 
     X_imputed = np.array([
         [1, 0, 0, 21],
@@ -1240,7 +1245,7 @@ def test_knn_imputer_default():
         [22, 22, 22, 22]
     ])
 
-    imputer = KNNImputer()
+    imputer = KNNImputer(missing_values=na)
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed)
     assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
@@ -1254,12 +1259,12 @@ def test_knn_imputer_default():
         [9, 8],
         [11, 16]
     ])
-    statistics_mean = np.nanmean(X, axis=0)
+    statistics_mean = _missing_mean(X, na)
 
     Y = np.array([
         [1, 0],
         [3, 2],
-        [4, np.nan]
+        [4, na]
     ])
 
     Y_imputed = np.array([
@@ -1268,15 +1273,14 @@ def test_knn_imputer_default():
         [4, 4.8]
     ])
 
-    imputer = KNNImputer()
+    imputer = KNNImputer(missing_values=na)
     assert_array_almost_equal(imputer.fit(X).transform(Y), Y_imputed)
     assert_array_almost_equal(imputer.statistics_, statistics_mean)
 
 
-def test_knn_imputer_default_with_invalid_input():
+@pytest.mark.parametrize("na", [np.nan, -1])
+def test_knn_imputer_default_with_invalid_input(na):
     # Test imputation with default values and invalid input
-    na = np.nan
-
     # Test with % missing in a samples > sample_max_missing
     X = np.array([
         [na, 0, 0, 0, 5],
@@ -1313,7 +1317,7 @@ def test_knn_imputer_default_with_invalid_input():
         [na, 7, 0, 7, 8],
         [6, 6, 2, 5, 7],
     ])
-    with pytest.raises(ValueError, match="Input contains infinity"):
+    with pytest.raises(ValueError, match="Input contains (infinity|NaN)"):
         KNNImputer(missing_values=na).fit(X)
 
     # Test with inf present in matrix passed in transform()
@@ -1334,13 +1338,12 @@ def test_knn_imputer_default_with_invalid_input():
         [na, 7, 0, 7, 8],
         [6, 6, 2, 5, 7],
     ])
-    with pytest.raises(ValueError, match="Input contains infinity"):
+    with pytest.raises(ValueError, match="Input contains (infinity|NaN)"):
         KNNImputer(missing_values=na).fit(X_fit).transform(X)
 
 
-def test_knn_imputer_n_neighbors():
-
-    na = np.nan
+@pytest.mark.parametrize("na", [np.nan, -1])
+def test_knn_imputer_n_neighbors(na):
 
     X = np.array([
         [0, 0],
@@ -1351,7 +1354,7 @@ def test_knn_imputer_n_neighbors():
         [na, 8],
         [14, 13]
     ])
-    statistics_mean = np.nanmean(X, axis=0)
+    statistics_mean = _missing_mean(X, na)
 
     # Test with 1 neighbor
     X_imputed_1NN = np.array([
@@ -1365,7 +1368,7 @@ def test_knn_imputer_n_neighbors():
     ])
 
     n_neighbors = 1
-    imputer = KNNImputer(n_neighbors=n_neighbors)
+    imputer = KNNImputer(n_neighbors=n_neighbors, missing_values=na)
 
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed_1NN)
     assert_array_almost_equal(imputer.statistics_, statistics_mean)
@@ -1392,8 +1395,9 @@ def test_knn_imputer_n_neighbors():
     ])
 
     n_neighbors = 6
-    imputer = KNNImputer(n_neighbors=6)
-    imputer_plus1 = KNNImputer(n_neighbors=n_neighbors + 1)
+    imputer = KNNImputer(n_neighbors=6, missing_values=na)
+    imputer_plus1 = KNNImputer(n_neighbors=n_neighbors + 1,
+                               missing_values=na)
 
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed_6NN)
     assert_array_almost_equal(imputer.statistics_, statistics_mean)
@@ -1401,9 +1405,9 @@ def test_knn_imputer_n_neighbors():
         X).transform(X))
 
 
-def test_knn_imputer_weight_uniform():
+@pytest.mark.parametrize("na", [np.nan, -1])
+def test_knn_imputer_weight_uniform(na):
 
-    na = np.nan
     X = np.array([
         [0, 0],
         [na, 2],
@@ -1425,14 +1429,14 @@ def test_knn_imputer_weight_uniform():
         [11, 10]
     ])
 
-    imputer = KNNImputer(weights="uniform")
+    imputer = KNNImputer(weights="uniform", missing_values=na)
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed_uniform)
 
     # Test with "callable" weight
     def no_weight(dist=None):
         return None
 
-    imputer = KNNImputer(weights=no_weight)
+    imputer = KNNImputer(weights=no_weight, missing_values=na)
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed_uniform)
 
 
