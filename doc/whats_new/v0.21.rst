@@ -396,5 +396,5 @@ These changes mostly affect library developers.
   `~utils.tests.test_estimator_checks`, which tests that the check              
   :func:`~utils.estimator_checks.check_class_weight_balanced_linear_classifier` 
   is actually checking classifiers that are calculating incorrect               
-  balanced weights when `class_weight=balanced`. :issue:`9079`                  
+  balanced weights when ``class_weight=balanced``. :issue:`9079`                  
   by :user:`Pavel Soriano <psorianom>`.  
