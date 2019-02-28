@@ -471,7 +471,6 @@ def test_sparse_regression():
 def test_sample_weight_adaboost_regressor():
     """
     AdaBoostRegressor should work without sample_weights in the base estimator
-
     The random weighted sampling is done internally in the _boost method in
     AdaBoostRegressor.
     """
@@ -486,3 +485,27 @@ def test_sample_weight_adaboost_regressor():
     boost = AdaBoostRegressor(DummyEstimator(), n_estimators=3)
     boost.fit(X, y_regr)
     assert_equal(len(boost.estimator_weights_), len(boost.estimator_errors_))
+
+
+def test_multidimensional_X():
+    """
+    Check that the AdaBoost estimators can work with n-dimensional
+    data matrix
+    """
+
+    from sklearn.dummy import DummyClassifier, DummyRegressor
+
+    rng = np.random.RandomState(0)
+
+    X = rng.randn(50, 3, 3)
+    yc = rng.choice([0, 1], 50)
+    yr = rng.randn(50)
+
+    boost = AdaBoostClassifier(DummyClassifier(strategy='most_frequent'))
+    boost.fit(X, yc)
+    boost.predict(X)
+    boost.predict_proba(X)
+
+    boost = AdaBoostRegressor(DummyRegressor())
+    boost.fit(X, yr)
+    boost.predict(X)

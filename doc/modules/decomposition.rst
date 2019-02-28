@@ -957,3 +957,7 @@ when data can be fetched sequentially.
     * `"Stochastic Variational Inference"
       <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
+
+
+See also :ref:`nca_dim_reduction` for dimensionality reduction with
+Neighborhood Components Analysis.

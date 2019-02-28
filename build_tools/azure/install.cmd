@@ -6,13 +6,17 @@ set PIP_INSTALL=pip install -q
 
 @echo on
 
-@rem Deactivate any environment
-call deactivate
-@rem Clean up any left-over from a previous build
-conda remove --all -q -y -n %VIRTUALENV%
-conda create -n %VIRTUALENV% -q -y python=%CONDA_PY% numpy scipy cython pytest wheel pillow
+IF "%PYTHON_ARCH%"=="64" (
+    @rem Deactivate any environment
+    call deactivate
+    @rem Clean up any left-over from a previous build
+    conda remove --all -q -y -n %VIRTUALENV%
+    conda create -n %VIRTUALENV% -q -y python=%PYTHON_VERSION% numpy scipy cython pytest wheel pillow
 
-call activate %VIRTUALENV%
+    call activate %VIRTUALENV%
+) else (
+    pip install numpy scipy cython pytest wheel pillow
+)
 python -m pip install -U pip
 python --version
 pip --version
