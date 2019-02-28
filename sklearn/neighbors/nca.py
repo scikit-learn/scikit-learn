@@ -299,8 +299,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         # Check the preferred dimensionality of the projected space
         if self.n_components is not None:
-            check_scalar(self.n_components, 'n_components',
-                         int, 1)
+            check_scalar(self.n_components, 'n_components', int, 1)
 
             if self.n_components > X.shape[1]:
                 raise ValueError('The preferred dimensionality of the '
