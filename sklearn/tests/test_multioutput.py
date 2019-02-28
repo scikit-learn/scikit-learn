@@ -189,7 +189,7 @@ def test_multi_output_predict_proba():
         else:
             return 0.0
     grid_clf = GridSearchCV(sgd_linear_clf, param_grid=param,
-                            scoring=custom_scorer)
+                            scoring=custom_scorer, cv=3)
     multi_target_linear = MultiOutputClassifier(grid_clf)
     multi_target_linear.fit(X, y)
 
