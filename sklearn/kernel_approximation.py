@@ -23,9 +23,9 @@ from .utils.validation import check_is_fitted
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
-class TensorSketch(BaseEstimator, TransformerMixin):
-    """Tensor Sketch [1] approximates the feature map of the polynomial
-    kernel by efficiently computing a Count Sketch [2]
+class PolynomialSampler(BaseEstimator, TransformerMixin):
+    """Implements Tensor Sketch [1], which approximates the feature map
+    of the polynomial kernel by efficiently computing a Count Sketch [2]
     of the outer product of a vector with itself.
 
     Parameters

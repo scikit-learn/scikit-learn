@@ -8,21 +8,22 @@ of an Homogeneoys Polynomial kernel.
 
 .. currentmodule:: sklearn.kernel_approximation
 
-It shows how to use :class:`TensorSketch` and :class:`Nystroem` to
+It shows how to use :class:`PolynomialSampler` and :class:`Nystroem` to
 approximate the feature map of a polynomial kernel for
 classification with an SVM on the digits dataset. Results using a linear
 SVM in the original space, a linear SVM using the approximate mappings
 and a kernelized SVM are compared.
 
 The first plot shows the classification accuracy of Nystroem [2] and
-TensorSketch [1] as the output dimension (n_components) grows. It also shows
-the accuracy of a linear SVM and a polynomial kernel SVM on the same data.
+PolynomialSampler [1] as the output dimension (n_components) grows.
+It also shows the accuracy of a linear SVM and a polynomial kernel SVM
+on the same data.
 
-The second plot explores the scalability of TensorSketch and Nystroem.
-For a sufficiently large output dimension, TensorSketch should be faster
+The second plot explores the scalability of PolynomialSampler and Nystroem.
+For a sufficiently large output dimension, PolynomialSampler should be faster
 as it is O(n(d+klog k)) while Nystroem is O(n(dk+k^2)). In addition,
 Nystroem requires a time-consuming training phase, while training is
-almost immediate for TensorSketch, whose training phase boils down to
+almost immediate for PolynomialSampler, whose training phase boils down to
 initializing some random variables (because is data-independent).
 
 [1] Pham, N., & Pagh, R. (2013, August). Fast and scalable polynomial
@@ -80,7 +81,7 @@ n_test = 5
 for k in out_dims:
     score_avg = 0
     for _ in range(n_test):
-        ts_svm = Pipeline([("TS", TensorSketch(degree=2, n_components=k)),
+        ts_svm = Pipeline([("PS", PolynomialSampler(degree=2, n_components=k)),
                            ("SVM", LinearSVC())])
         score_avg += ts_svm.fit(X_train, Y_train).score(X_test, Y_test)
     ts_svm_scores.append(100*score_avg/n_test)
@@ -92,7 +93,7 @@ n_test = 5
 for k in out_dims:
     score_avg = 0
     for _ in range(n_test):
-        ny_svm = Pipeline([("TS", Nystroem(kernel="poly", gamma=1., degree=2,
+        ny_svm = Pipeline([("NY", Nystroem(kernel="poly", gamma=1., degree=2,
                                            coef0=0, n_components=k)),
                            ("SVM", LinearSVC())])
         score_avg += ny_svm.fit(X_train, Y_train).score(X_test, Y_test)
@@ -101,7 +102,7 @@ for k in out_dims:
 # Show results
 plt.figure(figsize=(6, 4))
 plt.title("Accuracy results")
-plt.plot(out_dims, ts_svm_scores, label="TensorSketch + linear SVM",
+plt.plot(out_dims, ts_svm_scores, label="PolynomialSampler + linear SVM",
          c="orange")
 plt.plot(out_dims, ny_svm_scores, label="Nystroem + linear SVM",
          c="blue")
@@ -110,7 +111,7 @@ plt.plot([out_dims[0], out_dims[-1]], [lsvm_score, lsvm_score],
 plt.plot([out_dims[0], out_dims[-1]], [ksvm_score, ksvm_score],
          label="Poly-kernel SVM", c="red", dashes=[2, 2])
 plt.legend()
-plt.xlabel("N_components for TensorSketch and Nystroem")
+plt.xlabel("N_components for PolynomialSampler and Nystroem")
 plt.ylabel("Accuracy (%)")
 plt.xlim([out_dims[0], out_dims[-1]])
 plt.tight_layout()
@@ -126,7 +127,7 @@ out_dims = range(500, 6000, 500)
 # Evaluate scalability of TensorSketch as n_components grows
 ts_svm_times = []
 for k in out_dims:
-    ts = TensorSketch(degree=2, n_components=k)
+    ts = PolynomialSampler(degree=2, n_components=k)
 
     start = time()
     ts.fit_transform(fakeData, None)
@@ -145,10 +146,10 @@ for k in out_dims:
 # Show results
 plt.figure(figsize=(6, 4))
 plt.title("Scalability results")
-plt.plot(out_dims, ts_svm_times, label="TensorSketch", c="orange")
+plt.plot(out_dims, ts_svm_times, label="PolynomialSampler", c="orange")
 plt.plot(out_dims, ny_svm_times, label="Nystroem", c="blue")
 plt.legend()
-plt.xlabel("N_components for TensorSketch and Nystroem")
+plt.xlabel("N_components for PolynomialSampler and Nystroem")
 plt.ylabel("fit_transform time \n(s/10.000 samples)")
 plt.xlim([out_dims[0], out_dims[-1]])
 plt.tight_layout()
