@@ -134,9 +134,9 @@ features are transformed during a pipeline::
     array(['x2', 'x3'], dtype='<U2')
 
 You can also provide custom feature names for a more human readable format using
-set_feature_names::
+get_feature_names::
 
-    >>> pipe.set_feature_names(iris.feature_names)
+    >>> pipe.get_feature_names(iris.feature_names)
     >>> pipe.named_steps.select.input_features_
     ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
     >>> pipe.named_steps.clf.input_features_

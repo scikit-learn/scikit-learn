@@ -291,7 +291,7 @@ class Pipeline(_BaseComposition):
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator != 'passthrough':
             self._final_estimator.fit(Xt, y, **fit_params)
-        self.set_feature_names(_get_feature_names(X))
+        self.get_feature_names(_get_feature_names(X))
 
         return self
 
@@ -329,7 +329,7 @@ class Pipeline(_BaseComposition):
         elif last_step != 'passthrough':
             Xt = last_step.fit(Xt, y, **fit_params).transform(Xt)
 
-        self.set_feature_names(_get_feature_names(X))
+        self.get_feature_names(_get_feature_names(X))
 
         return Xt
 
@@ -546,7 +546,7 @@ class Pipeline(_BaseComposition):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
 
-    def set_feature_names(self, input_features):
+    def get_feature_names(self, input_features):
         """Set the input feature names for all steps.
 
         Sets the input_features_ attribute on the pipeline and
@@ -565,7 +565,7 @@ class Pipeline(_BaseComposition):
         """
         self.input_features_ = input_features
         feature_names = input_features
-        for _, name, transform in self._iter(with_final=False):
+        for _, name, transform in self._iter(with_final=True):
             transform.input_features_ = feature_names
             try:
                 feature_names = transform.get_feature_names(
@@ -574,10 +574,9 @@ class Pipeline(_BaseComposition):
                 feature_names = transform.get_feature_names()
             except AttributeError:
                 feature_names = None
-        if self._final_estimator != "passthrough":
-            self._final_estimator.input_features_ = feature_names
+        return feature_names
 
-    def get_feature_names(self, input_features=None):
+    # def get_feature_names(self, input_features=None):
         """Get feature names for transformation.
 
         Transform input features using the pipeline.
@@ -594,20 +593,6 @@ class Pipeline(_BaseComposition):
         feature_names : array-like of string
             Transformed feature names
         """
-        if input_features is None and hasattr(self, 'input_features_'):
-            input_features = self.input_features_
-
-        feature_names = input_features
-        for _, name, transform in self._iter(with_final=True):
-            if not hasattr(transform, "get_feature_names"):
-                raise TypeError("Transformer {} does provide"
-                                " get_feature_names".format(name))
-            try:
-                feature_names = transform.get_feature_names(
-                    input_features=feature_names)
-            except TypeError:
-                    feature_names = transform.get_feature_names()
-        return feature_names
 
 
 def _name_estimators(estimators):
