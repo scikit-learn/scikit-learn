@@ -6,7 +6,6 @@
 import copy
 import warnings
 from collections import defaultdict
-import struct
 import inspect
 
 import numpy as np
@@ -577,22 +576,12 @@ class OutlierResamplerMixin:
             `props`, but outlier samples are removed for each each parameter.
         """
 
-        if props is not None:
-            raise NotImplementedError('props is not supported for now')
-        # if props is None:
-        #     props = {}
+        inliers = self.fit_predict(X) == 1
 
-        # filter out unrequired args
-        # required_props = filter(lambda x: x in inspect.signature(super().fit),
-        #                         props.keys())
-        # filtered_props = {k: props[k] for k in required_props}
+        if props:
+            props = {prop[inliers == 1] for prop in props}
+            return X[inliers], y[inliers], props
 
-        # inliers = self.fit_predict(X) == 1
-
-        # props = {prop[inliers == 1] for prop in props}
-
-        # if props:
-        #     return X[inliers], y[inliers], props
         return X[inliers], y[inliers]
 
 
