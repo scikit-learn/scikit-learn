@@ -1,3 +1,5 @@
+@echo on
+
 call activate %VIRTUALENV%
 
 mkdir %TMP_FOLDER%
