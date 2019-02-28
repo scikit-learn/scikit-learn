@@ -81,7 +81,8 @@ Accessing steps
 ...............
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute,
-but can be accessed by index or name by indexing (with ``[idx]``) the pipe::
+but can be accessed by index or name by indexing (with ``[idx]``) the
+Pipeline::
 
     >>> pipe.steps[0]  # doctest: +NORMALIZE_WHITESPACE
     ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None,
