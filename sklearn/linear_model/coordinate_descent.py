@@ -23,7 +23,6 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
-from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
 
@@ -481,13 +480,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
         n_iters.append(n_iter_)
-        if dual_gap_ > eps_:
-            warnings.warn('Objective did not converge.' +
-                          ' You might want' +
-                          ' to increase the number of iterations.' +
-                          ' Fitting data with very small alpha' +
-                          ' may cause precision problems.',
-                          ConvergenceWarning)
 
         if verbose:
             if verbose > 2:
@@ -1554,7 +1546,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
            normalize=False, positive=False, precompute='auto', random_state=0,
            selection='cyclic', tol=0.0001, verbose=0)
     >>> print(regr.alpha_) # doctest: +ELLIPSIS
-    0.1994727942696716
+    0.199...
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
     0.398...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
@@ -1811,11 +1803,6 @@ class MultiTaskElasticNet(Lasso):
                 check_random_state(self.random_state), random)
 
         self._set_intercept(X_offset, y_offset, X_scale)
-
-        if self.dual_gap_ > self.eps_:
-            warnings.warn('Objective did not converge, you might want'
-                          ' to increase the number of iterations',
-                          ConvergenceWarning)
 
         # return self for chaining fit and predict calls
         return self
