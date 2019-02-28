@@ -6,11 +6,15 @@
 import copy
 import warnings
 from collections import defaultdict
+from collections.abc import Iterable
+
 import inspect
 
 import numpy as np
 
 from . import __version__
+from .exceptions import NotFittedError
+
 from sklearn.utils import _IS_32BIT
 
 _DEFAULT_TAGS = {
@@ -573,9 +577,39 @@ class OneToOneMixin(object):
                              " input feature names for {}".format(self))
 
 
+def _get_sub_estimators(est, fitted_only=True):
+    attrs = [getattr(est, x, None) for x in dir(est) if not x.startswith("_")]
+
+    def _recurse_sub_ests(candidates):
+        sub_ests = []
+        for a in candidates:
+            if hasattr(a, "set_params") and hasattr(a, "fit"):
+                sub_ests.append(a)
+            elif isinstance(a, Iterable) and not isinstance(a, str):
+                sub_ests.extend(_recurse_sub_ests(a))
+        return sub_ests
+    return list(set(_recurse_sub_ests(attrs)))
+
+
 class MetaEstimatorMixin:
     _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
+
+    def get_feature_names(self, input_features=None):
+        sub_ests = _get_sub_estimators(self)
+        for est in sub_ests:
+            if hasattr(est, "get_feature_names"):
+                # doing hassattr instead of a try-except on everything
+                # b/c catching AttributeError makes recursive code
+                # impossible to debug
+                try:
+                    est.get_feature_names(input_features=input_features)
+                except TypeError:
+                    # do we need this?
+                    est.get_feature_names()
+                except NotFittedError:
+                    pass
+        print("done recursing")
 
 
 class MultiOutputMixin(object):
