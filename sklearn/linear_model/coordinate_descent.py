@@ -13,7 +13,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import LinearModel, _pre_fit
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
@@ -23,7 +23,6 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
-from ..exceptions import ConvergenceWarning
 
 from . import cd_fast
 
@@ -481,13 +480,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
         n_iters.append(n_iter_)
-        if dual_gap_ > eps_:
-            warnings.warn('Objective did not converge.' +
-                          ' You might want' +
-                          ' to increase the number of iterations.' +
-                          ' Fitting data with very small alpha' +
-                          ' may cause precision problems.',
-                          ConvergenceWarning)
 
         if verbose:
             if verbose > 2:
@@ -506,7 +498,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 # ElasticNet model
 
 
-class ElasticNet(LinearModel, RegressorMixin):
+class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
     """Linear regression with combined L1 and L2 priors as regularizer.
 
     Minimizes the objective function::
@@ -800,7 +792,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             return safe_sparse_dot(X, self.coef_.T,
                                    dense_output=True) + self.intercept_
         else:
-            return super(ElasticNet, self)._decision_function(X)
+            return super()._decision_function(X)
 
 
 ###############################################################################
@@ -932,7 +924,7 @@ class Lasso(ElasticNet):
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
-        super(Lasso, self).__init__(
+        super().__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
             normalize=normalize, precompute=precompute, copy_X=copy_X,
             max_iter=max_iter, tol=tol, warm_start=warm_start,
@@ -1048,7 +1040,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     return this_mses
 
 
-class LinearModelCV(LinearModel, metaclass=ABCMeta):
+class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for iterative model fitting along a regularization path"""
 
     @abstractmethod
@@ -1166,14 +1158,11 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
         alphas = self.alphas
         n_l1_ratio = len(l1_ratios)
         if alphas is None:
-            alphas = []
-            for l1_ratio in l1_ratios:
-                alphas.append(_alpha_grid(
-                    X, y, l1_ratio=l1_ratio,
-                    fit_intercept=self.fit_intercept,
-                    eps=self.eps, n_alphas=self.n_alphas,
-                    normalize=self.normalize,
-                    copy_X=self.copy_X))
+            alphas = [_alpha_grid(X, y, l1_ratio=l1_ratio,
+                                  fit_intercept=self.fit_intercept,
+                                  eps=self.eps, n_alphas=self.n_alphas,
+                                  normalize=self.normalize, copy_X=self.copy_X)
+                      for l1_ratio in l1_ratios]
         else:
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
@@ -1227,9 +1216,9 @@ class LinearModelCV(LinearModel, metaclass=ABCMeta):
             self.alphas_ = np.asarray(alphas[0])
 
         # Refit the model with the parameters selected
-        common_params = dict((name, value)
-                             for name, value in self.get_params().items()
-                             if name in model.get_params())
+        common_params = {name: value
+                         for name, value in self.get_params().items()
+                         if name in model.get_params()}
         model.set_params(**common_params)
         model.alpha = best_alpha
         model.l1_ratio = best_l1_ratio
@@ -1404,7 +1393,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv='warn', verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
-        super(LassoCV, self).__init__(
+        super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
@@ -1557,7 +1546,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
            normalize=False, positive=False, precompute='auto', random_state=0,
            selection='cyclic', tol=0.0001, verbose=0)
     >>> print(regr.alpha_) # doctest: +ELLIPSIS
-    0.1994727942696716
+    0.199...
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
     0.398...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
@@ -1815,13 +1804,11 @@ class MultiTaskElasticNet(Lasso):
 
         self._set_intercept(X_offset, y_offset, X_scale)
 
-        if self.dual_gap_ > self.eps_:
-            warnings.warn('Objective did not converge, you might want'
-                          ' to increase the number of iterations',
-                          ConvergenceWarning)
-
         # return self for chaining fit and predict calls
         return self
+
+    def _more_tags(self):
+        return {'multioutput_only': True}
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
@@ -2133,6 +2120,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.random_state = random_state
         self.selection = selection
 
+    def _more_tags(self):
+        return {'multioutput_only': True}
+
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
@@ -2285,9 +2275,12 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
                  cv='warn', verbose=False, n_jobs=None, random_state=None,
                  selection='cyclic'):
-        super(MultiTaskLassoCV, self).__init__(
+        super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs, random_state=random_state,
             selection=selection)
+
+    def _more_tags(self):
+        return {'multioutput_only': True}

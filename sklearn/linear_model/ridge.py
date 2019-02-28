@@ -19,7 +19,7 @@ from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from .sag import sag_solver
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_X_y
@@ -463,8 +463,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         return coef
 
 
-class _BaseRidge(LinearModel, metaclass=ABCMeta):
-
+class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
@@ -653,10 +652,11 @@ class Ridge(_BaseRidge, RegressorMixin):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
-        super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
-                                    normalize=normalize, copy_X=copy_X,
-                                    max_iter=max_iter, tol=tol, solver=solver,
-                                    random_state=random_state)
+        super().__init__(
+            alpha=alpha, fit_intercept=fit_intercept,
+            normalize=normalize, copy_X=copy_X,
+            max_iter=max_iter, tol=tol, solver=solver,
+            random_state=random_state)
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
@@ -676,7 +676,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        return super(Ridge, self).fit(X, y, sample_weight=sample_weight)
+        return super().fit(X, y, sample_weight=sample_weight)
 
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
@@ -802,7 +802,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
-        super(RidgeClassifier, self).__init__(
+        super().__init__(
             alpha=alpha, fit_intercept=fit_intercept, normalize=normalize,
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver,
             random_state=random_state)
@@ -849,7 +849,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             sample_weight = (sample_weight *
                              compute_sample_weight(self.class_weight, y))
 
-        super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
+        super().fit(X, Y, sample_weight=sample_weight)
         return self
 
     @property
@@ -1106,7 +1106,7 @@ class _RidgeGCV(LinearModel):
         return self
 
 
-class _BaseRidgeCV(LinearModel):
+class _BaseRidgeCV(LinearModel, MultiOutputMixin):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
@@ -1385,7 +1385,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None,
                  store_cv_values=False):
-        super(RidgeClassifierCV, self).__init__(
+        super().__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
             scoring=scoring, cv=cv, store_cv_values=store_cv_values)
         self.class_weight = class_weight

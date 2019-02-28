@@ -1,5 +1,4 @@
 """Test the validation module"""
-from __future__ import division
 
 import sys
 import warnings
@@ -115,8 +114,7 @@ class MockImprovingEstimator(BaseEstimator):
 class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     """Dummy classifier that provides partial_fit"""
     def __init__(self, n_max_train_sizes):
-        super(MockIncrementalImprovingEstimator,
-              self).__init__(n_max_train_sizes)
+        super().__init__(n_max_train_sizes)
         self.x = None
 
     def _is_training_data(self, X):
@@ -155,13 +153,13 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
         assert not hasattr(self, 'fit_called_'), \
                    'fit is called the second time'
         self.fit_called_ = True
-        return super(type(self), self).fit(X_subset, y_subset)
+        return super().fit(X_subset, y_subset)
 
     def predict(self, X):
         raise NotImplementedError
 
 
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):

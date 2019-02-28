@@ -3,7 +3,6 @@
 # Author: Gilles Louppe <g.louppe@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import itertools
 import numbers
@@ -202,7 +201,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                  n_jobs=None,
                  random_state=None,
                  verbose=0):
-        super(BaseBagging, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators)
 
@@ -565,7 +564,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                  random_state=None,
                  verbose=0):
 
-        super(BaggingClassifier, self).__init__(
+        super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             max_samples=max_samples,
@@ -580,7 +579,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(BaggingClassifier, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeClassifier())
 
     def _set_oob_score(self, X, y):
@@ -935,7 +934,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
                  n_jobs=None,
                  random_state=None,
                  verbose=0):
-        super(BaggingRegressor, self).__init__(
+        super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             max_samples=max_samples,
@@ -990,7 +989,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     def _validate_estimator(self):
         """Check the estimator and set the base_estimator_ attribute."""
-        super(BaggingRegressor, self)._validate_estimator(
+        super()._validate_estimator(
             default=DecisionTreeRegressor())
 
     def _set_oob_score(self, X, y):

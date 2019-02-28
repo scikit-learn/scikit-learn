@@ -3,7 +3,6 @@
 #          Giorgio Patrini
 #
 # License: BSD 3 clause
-from __future__ import division
 
 import warnings
 import itertools
@@ -54,7 +53,8 @@ from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.preprocessing.data import PowerTransformer
 from sklearn.preprocessing.data import power_transform
-from sklearn.exceptions import DataConversionWarning, NotFittedError
+from sklearn.preprocessing.data import BOUNDS_THRESHOLD
+from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
@@ -150,8 +150,8 @@ def test_polynomial_feature_names():
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
     feature_names = poly.get_feature_names(
-        [u"\u0001F40D", u"\u262E", u"\u05D0"])
-    assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
+        ["\u0001F40D", "\u262E", "\u05D0"])
+    assert_array_equal(["1", "\u0001F40D", "\u262E", "\u05D0"],
                        feature_names)
 
 
@@ -448,6 +448,31 @@ def test_scaler_2d_arrays():
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
     assert X_scaled is not X
+
+
+def test_scaler_float16_overflow():
+    # Test if the scaler will not overflow on float16 numpy arrays
+    rng = np.random.RandomState(0)
+    # float16 has a maximum of 65500.0. On the worst case 5 * 200000 is 100000
+    # which is enough to overflow the data type
+    X = rng.uniform(5, 10, [200000, 1]).astype(np.float16)
+
+    with np.errstate(over='raise'):
+        scaler = StandardScaler().fit(X)
+        X_scaled = scaler.transform(X)
+
+    # Calculate the float64 equivalent to verify result
+    X_scaled_f64 = StandardScaler().fit_transform(X.astype(np.float64))
+
+    # Overflow calculations may cause -inf, inf, or nan. Since there is no nan
+    # input, all of the outputs should be finite. This may be redundant since a
+    # FloatingPointError exception will be thrown on overflow above.
+    assert np.all(np.isfinite(X_scaled))
+
+    # The normal distribution is very unlikely to go above 4. At 4.0-8.0 the
+    # float16 precision is 2^-8 which is around 0.004. Thus only 2 decimals are
+    # checked to account for precision differences.
+    assert_array_almost_equal(X_scaled, X_scaled_f64, decimal=2)
 
 
 def test_handle_zeros_in_scale():
@@ -1471,12 +1496,13 @@ def test_quantile_transform_bounds():
 
 
 def test_quantile_transform_and_inverse():
-    # iris dataset
-    X = iris.data
-    transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
-    X_trans = transformer.fit_transform(X)
-    X_trans_inv = transformer.inverse_transform(X_trans)
-    assert_array_almost_equal(X, X_trans_inv)
+    X_1 = iris.data
+    X_2 = np.array([[0.], [BOUNDS_THRESHOLD / 10], [1.5], [2], [3], [3], [4]])
+    for X in [X_1, X_2]:
+        transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
+        X_trans = transformer.fit_transform(X)
+        X_trans_inv = transformer.inverse_transform(X_trans)
+        assert_array_almost_equal(X, X_trans_inv, decimal=9)
 
 
 def test_quantile_transform_nan():
@@ -1667,19 +1693,6 @@ def test_maxabs_scaler_transform_one_row_csr():
     assert_array_almost_equal(X_trans.toarray(), X_expected.toarray())
     X_scaled_back = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
-
-
-def test_warning_scaling_integers():
-    # Check warning when scaling integer data
-    X = np.array([[1, 2, 0],
-                  [0, 0, 0]], dtype=np.uint8)
-
-    w = "Data with input dtype uint8 was converted to float64"
-
-    clean_warning_registry()
-    assert_warns_message(DataConversionWarning, w, scale, X)
-    assert_warns_message(DataConversionWarning, w, StandardScaler().fit, X)
-    assert_warns_message(DataConversionWarning, w, MinMaxScaler().fit, X)
 
 
 def test_maxabs_scaler_1d():

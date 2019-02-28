@@ -243,11 +243,11 @@ def test_oneclass():
     clf.fit(X)
     pred = clf.predict(T)
 
-    assert_array_equal(pred, [-1, -1, -1])
+    assert_array_equal(pred, [1, -1, -1])
     assert_equal(pred.dtype, np.dtype('intp'))
-    assert_array_almost_equal(clf.intercept_, [-1.117], decimal=3)
+    assert_array_almost_equal(clf.intercept_, [-1.218], decimal=3)
     assert_array_almost_equal(clf.dual_coef_,
-                              [[0.681, 0.139, 0.68, 0.14, 0.68, 0.68]],
+                              [[0.750, 0.750, 0.750, 0.750]],
                               decimal=3)
     assert_raises(AttributeError, lambda: clf.coef_)
 
@@ -1003,9 +1003,9 @@ def test_gamma_scale():
 
     clf = svm.SVC(gamma='scale')
     assert_no_warnings(clf.fit, X, y)
-    assert_equal(clf._gamma, 2.)
+    assert_almost_equal(clf._gamma, 4)
 
-    # X_std ~= 1 shouldn't raise warning, for when
+    # X_var ~= 1 shouldn't raise warning, for when
     # gamma is not explicitly set.
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
     assert_no_warnings(clf.fit, X, y)

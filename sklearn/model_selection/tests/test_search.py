@@ -1,5 +1,6 @@
 """Test the search module"""
 
+from collections.abc import Iterable, Sized
 from io import StringIO
 from itertools import chain, product
 import pickle
@@ -12,7 +13,6 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils.fixes import sp_version
-from sklearn.utils.fixes import _Iterable as Iterable, _Sized as Sized
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
@@ -589,6 +589,112 @@ def test_refit():
     clf = GridSearchCV(BrokenClassifier(), [{'parameter': [0, 1]}],
                        scoring="precision", refit=True)
     clf.fit(X, y)
+
+
+def test_refit_callable():
+    """
+    Test refit=callable, which adds flexibility in identifying the
+    "best" estimator.
+    """
+    def refit_callable(cv_results):
+        """
+        A dummy function tests `refit=callable` interface.
+        Return the index of a model that has the least
+        `mean_test_score`.
+        """
+        # Fit a dummy clf with `refit=True` to get a list of keys in
+        # clf.cv_results_.
+        X, y = make_classification(n_samples=100, n_features=4,
+                                   random_state=42)
+        clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                           scoring='precision', refit=True, cv=5)
+        clf.fit(X, y)
+        # Ensure that `best_index_ != 0` for this dummy clf
+        assert clf.best_index_ != 0
+
+        # Assert every key matches those in `cv_results`
+        for key in clf.cv_results_.keys():
+            assert key in cv_results
+
+        return cv_results['mean_test_score'].argmin()
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                       scoring='precision', refit=refit_callable, cv=5)
+    clf.fit(X, y)
+
+    assert clf.best_index_ == 0
+    # Ensure `best_score_` is disabled when using `refit=callable`
+    assert not hasattr(clf, 'best_score_')
+
+
+def test_refit_callable_invalid_type():
+    """
+    Test implementation catches the errors when 'best_index_' returns an
+    invalid result.
+    """
+    def refit_callable_invalid_type(cv_results):
+        """
+        A dummy function tests when returned 'best_index_' is not integer.
+        """
+        return None
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
+                       scoring='precision', refit=refit_callable_invalid_type,
+                       cv=5)
+    with pytest.raises(TypeError,
+                       match='best_index_ returned is not an integer'):
+        clf.fit(X, y)
+
+
+def test_refit_callable_out_bound():
+    """
+    Test implementation catches the errors when 'best_index_' returns an
+    out of bound result.
+    """
+    def refit_callable_out_bound(cv_results):
+        """
+        A dummy function tests when returned 'best_index_' is out of bounds.
+        """
+        return -1
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
+                       scoring='precision', refit=refit_callable_out_bound,
+                       cv=5)
+    with pytest.raises(IndexError, match='best_index_ index out of range'):
+        clf.fit(X, y)
+
+
+def test_refit_callable_multi_metric():
+    """
+    Test refit=callable in multiple metric evaluation setting
+    """
+    def refit_callable(cv_results):
+        """
+        A dummy function tests `refit=callable` interface.
+        Return the index of a model that has the least
+        `mean_test_prec`.
+        """
+        assert 'mean_test_prec' in cv_results
+        return cv_results['mean_test_prec'].argmin()
+
+    X, y = make_classification(n_samples=100, n_features=4,
+                               random_state=42)
+    scoring = {'Accuracy': make_scorer(accuracy_score), 'prec': 'precision'}
+    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.01, 0.1, 1]},
+                       scoring=scoring, refit=refit_callable, cv=5)
+    clf.fit(X, y)
+
+    assert clf.best_index_ == 0
+    # Ensure `best_score_` is disabled when using `refit=callable`
+    assert not hasattr(clf, 'best_score_')
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
@@ -1551,7 +1657,7 @@ def test_custom_run_search():
 
     class CustomSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(CustomSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
         def _run_search(self, evaluate):
             results = evaluate([{'max_depth': 1}, {'max_depth': 2}])
@@ -1582,7 +1688,7 @@ def test_custom_run_search():
 def test__custom_fit_no_run_search():
     class NoRunSearchSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(NoRunSearchSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
         def fit(self, X, y=None, groups=None, **fit_params):
             return self
@@ -1592,7 +1698,7 @@ def test__custom_fit_no_run_search():
 
     class BadSearchCV(BaseSearchCV):
         def __init__(self, estimator, **kwargs):
-            super(BadSearchCV, self).__init__(estimator, **kwargs)
+            super().__init__(estimator, **kwargs)
 
     with pytest.raises(NotImplementedError,
                        match="_run_search not implemented."):
@@ -1604,18 +1710,66 @@ def test_deprecated_grid_search_iid():
     depr_message = ("The default of the `iid` parameter will change from True "
                     "to False in version 0.22")
     X, y = make_blobs(n_samples=54, random_state=0, centers=2)
-    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=3)
+    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
+                        param_grid={'C': [10]}, cv=3)
     # no warning with equally sized test sets
     assert_no_warnings(grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=5)
+    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
+                        param_grid={'C': [10]}, cv=5)
     # warning because 54 % 5 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=2)
+    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
+                        param_grid={'C': [10]}, cv=2)
     # warning because stratification into two classes and 27 % 2 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=KFold(2))
+    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
+                        param_grid={'C': [10]}, cv=KFold(2))
     # no warning because no stratification and 54 % 2 == 0
     assert_no_warnings(grid.fit, X, y)
+
+
+def test_empty_cv_iterator_error():
+    # Use global X, y
+
+    # create cv
+    cv = KFold(n_splits=3).split(X)
+
+    # pop all of it, this should cause the expected ValueError
+    [u for u in cv]
+    # cv is empty now
+
+    train_size = 100
+    ridge = RandomizedSearchCV(Ridge(), {'alpha': [1e-3, 1e-2, 1e-1]},
+                               cv=cv, n_jobs=-1)
+
+    # assert that this raises an error
+    with pytest.raises(ValueError,
+                       match='No fits were performed. '
+                             'Was the CV iterator empty\\? '
+                             'Were there no candidates\\?'):
+        ridge.fit(X[:train_size], y[:train_size])
+
+
+def test_random_search_bad_cv():
+    # Use global X, y
+
+    class BrokenKFold(KFold):
+        def get_n_splits(self, *args, **kw):
+            return 1
+
+    # create bad cv
+    cv = BrokenKFold(n_splits=3)
+
+    train_size = 100
+    ridge = RandomizedSearchCV(Ridge(), {'alpha': [1e-3, 1e-2, 1e-1]},
+                               cv=cv, n_jobs=-1)
+
+    # assert that this raises an error
+    with pytest.raises(ValueError,
+                       match='cv.split and cv.get_n_splits returned '
+                             'inconsistent results. Expected \\d+ '
+                             'splits, got \\d+'):
+        ridge.fit(X[:train_size], y[:train_size])
