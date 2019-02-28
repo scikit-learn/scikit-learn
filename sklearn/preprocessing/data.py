@@ -2076,6 +2076,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
+    n_quantiles_ : integer
+        The actual number of quantiles used to discretize the cumulative
+        distribution function.
+
     quantiles_ : ndarray, shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
 
@@ -2225,18 +2229,18 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
         n_samples = X.shape[0]
 
         if self.n_quantiles > n_samples:
-            self.n_quantiles = n_samples
             warnings.warn("n_quantiles (%s) is greater than the total number "
                           "of samples (%s). n_quantiles will be set to "
                           "n_samples as more quantiles do not lead to a "
                           "better approximation of the used cumulative "
                           "distribution function estimator."
                           % (self.n_quantiles, n_samples))
+        self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
 
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
-        self.references_ = np.linspace(0, 1, self.n_quantiles,
+        self.references_ = np.linspace(0, 1, self.n_quantiles_,
                                        endpoint=True)
         if sparse.issparse(X):
             self._sparse_fit(X, rng)

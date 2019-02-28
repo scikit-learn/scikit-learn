@@ -1265,7 +1265,7 @@ def test_quantile_transform_check_error():
     assert_warns_message(UserWarning,
                          "n_quantiles will be set to n_samples",
                          transformer.fit, X)
-    assert transformer.n_quantiles == X.shape[0]
+    assert transformer.n_quantiles_ == X.shape[0]
 
 
 def test_quantile_transform_sparse_ignore_zeros():
