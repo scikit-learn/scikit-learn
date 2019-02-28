@@ -29,12 +29,27 @@ Changelog
   negative indexes in the columns list of the transformers.
   :issue:`12946` by :user:`Pierre Tallotte <pierretallotte>`.
 
+:mod:`sklearn.covariance`
+......................
+
+- |Fix| Fixed a regression in :func:`covariance.graphical_lasso` so that
+  the case `n_features=2` is handled correctly. :issue:`13276` by
+  :user:`Aurélien Bellet <bellet>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
 - |Fix| Fixed a bug in :func:`decomposition.sparse_encode` where computation was single
   threaded when `n_jobs > 1` or `n_jobs = -1`.
   :issue:`13005` by :user:`Prabakaran Kumaresshan <nixphix>`.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer` which 
+  would result in the sparse feature matrix having conflicting `indptr` and
+  `indices` precisions under very large vocabularies. :issue:`11295` by
+  :user:`Gabriel Vacaliuc <gvacaliuc>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -68,13 +83,15 @@ Changelog
   with a warning in :class:`preprocessing.KBinsDiscretizer`.
   :issue:`13165` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-:mod:`sklearn.feature_extraction.text`
-......................................
+:mod:`sklearn.svm`
+..................
 
-- |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer` which 
-  would result in the sparse feature matrix having conflicting `indptr` and
-  `indices` precisions under very large vocabularies. :issue:`11295` by
-  :user:`Gabriel Vacaliuc <gvacaliuc>`.
+- |FIX| Fixed a bug in :class:`svm.SVC`, :class:`svm.NuSVC`, :class:`svm.SVR`,
+  :class:`svm.NuSVR` and :class:`svm.OneClassSVM` where the ``scale`` option
+  of parameter ``gamma`` is erroneously defined as
+  ``1 / (n_features * X.std())``. It's now defined as
+  ``1 / (n_features * X.var())``.
+  :issue:`13221` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 .. _changes_0_20_2:
 

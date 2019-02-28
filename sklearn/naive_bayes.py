@@ -460,8 +460,14 @@ class BaseDiscreteNB(BaseNB):
                                  " classes.")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
+            with warnings.catch_warnings():
+                # silence the warning when count is 0 because class was not yet
+                # observed
+                warnings.simplefilter("ignore", RuntimeWarning)
+                log_class_count = np.log(self.class_count_)
+
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (np.log(self.class_count_) -
+            self.class_log_prior_ = (log_class_count -
                                      np.log(self.class_count_.sum()))
         else:
             self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
@@ -622,6 +628,9 @@ class BaseDiscreteNB(BaseNB):
 
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
+
+    def _more_tags(self):
+        return {'poor_score': True}
 
 
 class MultinomialNB(BaseDiscreteNB):

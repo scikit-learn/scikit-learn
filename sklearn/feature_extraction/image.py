@@ -338,10 +338,10 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     Examples
     --------
-    >>> from sklearn.datasets import load_sample_images
+    >>> from sklearn.datasets import load_sample_image
     >>> from sklearn.feature_extraction import image
     >>> # Use the array data from the first image in this dataset:
-    >>> one_image = load_sample_images().images[0]
+    >>> one_image = load_sample_image("china.jpg")
     >>> print('Image shape: {}'.format(one_image.shape))
     Image shape: (427, 640, 3)
     >>> patches = image.extract_patches_2d(one_image, (2, 2))
@@ -534,3 +534,6 @@ class PatchExtractor(BaseEstimator):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
                 image, patch_size, self.max_patches, self.random_state)
         return patches
+
+    def _more_tags(self):
+        return {'X_types': ['3darray']}

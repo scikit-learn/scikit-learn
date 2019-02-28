@@ -158,6 +158,7 @@ boolean mask array or callable
            [0.5, 0.5, 0. , 1. ]])
 
     """
+    _required_parameters = ['transformers']
 
     def __init__(self, transformers, remainder='drop', sparse_threshold=0.3,
                  n_jobs=None, transformer_weights=None):
