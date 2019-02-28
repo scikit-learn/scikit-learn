@@ -968,3 +968,16 @@ def test_ridge_regression_dtype_stability(solver, assert_tolerance):
     assert_allclose(results[np.float32], results[np.float64], rtol=1e-5)
 
 
+def test_replicate_segfault():
+    from scipy import sparse
+    my_ridge = Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
+        normalize=False, random_state=None, solver='auto', tol=0.001)
+
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10)
+    X[X < .8] = 0
+    # X = pairwise_estimator_convert_X(X, estimator_orig)
+    X_csr = sparse.csr_matrix(X).asformat('csc')
+    y = (4 * rng.rand(40)).astype(np.int)
+
+    my_ridge.fit(X_csr, y)

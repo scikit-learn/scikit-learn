@@ -246,7 +246,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
 
     if check_input:
         _dtype = [np.float64, np.float32]
-        X = check_array(X, dtype=_dtype, accept_sparse='csr', order='C')
+        X = check_array(X, dtype=_dtype, accept_sparse='csr', order='C')  # XXXX: If i pass a csc X then we are in trouble
         y = check_array(y, dtype=_dtype, ensure_2d=False, order='C')
 
     n_samples, n_features = X.shape[0], X.shape[1]
