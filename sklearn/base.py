@@ -600,6 +600,9 @@ class MetaEstimatorMixin:
             Input features to the meta-estimator.
         """
         sub_ests = _get_sub_estimators(self)
+        if hasattr(sub_ests, 'shape'):
+            # Gradient boosting has a 2d array of estimators
+            sub_ests = sub_ests.ravel()
         for est in sub_ests:
             est.input_features_ = input_features
             if hasattr(est, "get_feature_names"):
