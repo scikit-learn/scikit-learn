@@ -114,7 +114,6 @@ Functions
 
    cluster.affinity_propagation
    cluster.dbscan
-   cluster.optics
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.mean_shift
@@ -655,8 +654,9 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
+   impute.IterativeImputer
    impute.MissingIndicator
-
+   
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -1399,6 +1399,7 @@ Low-level methods
 
    tree.export_graphviz
    tree.plot_tree
+   tree.export_text
 
 
 .. _utils_ref:

@@ -1711,8 +1711,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 normalize=False) for tree in stage) / len(stage)
             total_sum += stage_sum
 
-        importances = total_sum / len(self.estimators_)
-        importances /= importances.sum()
+        importances = total_sum / total_sum.sum()
         return importances
 
     def _validate_y(self, y, sample_weight):

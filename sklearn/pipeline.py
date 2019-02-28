@@ -113,6 +113,7 @@ class Pipeline(_BaseComposition):
     """
 
     # BaseEstimator interface
+    _required_parameters = ['steps']
 
     def __init__(self, steps, memory=None):
         self.steps = steps
@@ -676,6 +677,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     """
+    _required_parameters = ["transformer_list"]
+
     def __init__(self, transformer_list, n_jobs=None,
                  transformer_weights=None):
         self.transformer_list = transformer_list
