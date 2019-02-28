@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
@@ -38,7 +39,7 @@ from sklearn.datasets import make_regression
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, _IS_32BIT
 from sklearn.datasets import make_multilabel_classification
 
 diabetes = datasets.load_diabetes()
@@ -950,6 +951,7 @@ def test_ridge_regression_dtype_stability(solver, assert_tolerance):
     y = np.dot(X, coef) + 0.01 * rng.randn(n_samples)
     RANDOM_STATE = np.random.RandomState(0)
     ALPHA = 1.0
+    rtol = 1e-2 if os.name == 'nt' and _IS_32BIT else 1e-5
 
     results = { current_dtype: ridge_regression(X.astype(current_dtype),
                                                 y.astype(current_dtype),
