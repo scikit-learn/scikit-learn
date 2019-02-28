@@ -592,6 +592,13 @@ class MetaEstimatorMixin:
     """Mixin class for all meta estimators in scikit-learn."""
 
     def get_feature_names(self, input_features=None):
+        """Ensure feature names are set on sub-estimators
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            Input features to the meta-estimator.
+        """
         sub_ests = _get_sub_estimators(self)
         for est in sub_ests:
             est.input_features_ = input_features
