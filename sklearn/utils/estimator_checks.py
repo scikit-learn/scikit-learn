@@ -2510,7 +2510,10 @@ def check_resampler_structure(name, estimator_orig):
 
 def check_resample_repeated(name, estimator_orig):
     X, y = make_blobs(n_samples=10)
+
+    set_random_state(estimator_orig, random_state=0)
     X_new, y_new = estimator_orig.fit_resample(X, y)
+    set_random_state(estimator_orig, random_state=0)
     X_new2, y_new2 = estimator_orig.fit_resample(X, y)
 
     assert_array_equal(X_new, X_new2)
