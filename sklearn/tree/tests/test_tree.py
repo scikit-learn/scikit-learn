@@ -1830,6 +1830,26 @@ def test_empty_leaf_infinite_threshold():
         assert len(empty_leaf) == 0
 
 
+@pytest.mark.parametrize('name', CLF_TREES)
+def test_multi_target(name):
+    Tree = CLF_TREES[name]
+
+    clf = Tree()
+
+    X = iris.data
+
+    # Make multi column mixed type target.
+    y = np.vstack([
+        iris.target.astype(float),
+        iris.target.astype(int),
+        iris.target.astype(str),
+    ]).T
+
+    # Try to fit and predict.
+    clf.fit(X, y)
+    clf.predict(X)
+
+
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS)
 @pytest.mark.parametrize(
     "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "boston"}))

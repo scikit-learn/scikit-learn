@@ -269,7 +269,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
-    label_to_ind = dict((y, x) for x, y in enumerate(labels))
+    label_to_ind = {y: x for x, y in enumerate(labels)}
     # convert yt, yp into index
     y_pred = np.array([label_to_ind.get(x, n_labels + 1) for x in y_pred])
     y_true = np.array([label_to_ind.get(x, n_labels + 1) for x in y_true])
@@ -922,6 +922,11 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
 
+    Notes
+    -----
+    When ``true positive + false positive == 0`` or
+    ``true positive + false negative == 0``, f-score returns 0 and raises
+    ``UndefinedMetricWarning``.
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
                        pos_label=pos_label, average=average,
@@ -1036,6 +1041,11 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     ... # doctest: +ELLIPSIS
     array([0.71..., 0.        , 0.        ])
 
+    Notes
+    -----
+    When ``true positive + false positive == 0`` or
+    ``true positive + false negative == 0``, f-score returns 0 and raises
+    ``UndefinedMetricWarning``.
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  beta=beta,
@@ -1233,6 +1243,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
 
+    Notes
+    -----
+    When ``true positive + false positive == 0``, precision is undefined;
+    When ``true positive + false negative == 0``, recall is undefined.
+    In such cases, the metric will be set to 0, as will f-score, and
+    ``UndefinedMetricWarning`` will be raised.
     """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
     if average not in average_options and average != 'binary':
@@ -1247,13 +1263,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     if average == 'binary':
         if y_type == 'binary':
-            if pos_label not in present_labels:
-                if len(present_labels) < 2:
-                    # Only negative labels
-                    return (0., 0., 0., 0)
-                else:
-                    raise ValueError("pos_label=%r is not a valid label: %r" %
-                                     (pos_label, present_labels))
+            if pos_label not in present_labels and len(present_labels) >= 2:
+                raise ValueError("pos_label=%r is not a valid label: %r" %
+                                 (pos_label, present_labels))
             labels = [pos_label]
         else:
             raise ValueError("Target is %s but average='binary'. Please "
@@ -1279,7 +1291,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         true_sum = np.array([true_sum.sum()])
 
     # Finally, we have all our sufficient statistics. Divide! #
-
     beta2 = beta ** 2
     with np.errstate(divide='ignore', invalid='ignore'):
         # Divide, and on zero-division, set scores to 0 and warn:
@@ -1297,7 +1308,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         f_score[tp_sum == 0] = 0.0
 
     # Average the results
-
     if average == 'weighted':
         weights = true_sum
         if weights.sum() == 0:
@@ -1410,6 +1420,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     >>> precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
     array([0.66..., 0.        , 0.        ])
 
+    Notes
+    -----
+    When ``true positive + false positive == 0``, precision returns 0 and
+    raises ``UndefinedMetricWarning``.
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
@@ -1512,6 +1526,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     >>> recall_score(y_true, y_pred, average=None)
     array([1., 0., 0.])
 
+    Notes
+    -----
+    When ``true positive + false negative == 0``, recall returns 0 and raises
+    ``UndefinedMetricWarning``.
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
@@ -1722,7 +1740,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                 "parameter".format(len(labels), len(target_names))
             )
     if target_names is None:
-        target_names = [u'%s' % l for l in labels]
+        target_names = ['%s' % l for l in labels]
 
     headers = ["precision", "recall", "f1-score", "support"]
     # compute per-class results without averaging
@@ -1746,13 +1764,13 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         longest_last_line_heading = 'weighted avg'
         name_width = max(len(cn) for cn in target_names)
         width = max(name_width, len(longest_last_line_heading), digits)
-        head_fmt = u'{:>{width}s} ' + u' {:>9}' * len(headers)
-        report = head_fmt.format(u'', *headers, width=width)
-        report += u'\n\n'
-        row_fmt = u'{:>{width}s} ' + u' {:>9.{digits}f}' * 3 + u' {:>9}\n'
+        head_fmt = '{:>{width}s} ' + ' {:>9}' * len(headers)
+        report = head_fmt.format('', *headers, width=width)
+        report += '\n\n'
+        row_fmt = '{:>{width}s} ' + ' {:>9.{digits}f}' * 3 + ' {:>9}\n'
         for row in rows:
             report += row_fmt.format(*row, width=width, digits=digits)
-        report += u'\n'
+        report += '\n'
 
     # compute all applicable averages
     for average in average_options:
@@ -1772,9 +1790,9 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                 zip(headers, [i.item() for i in avg]))
         else:
             if line_heading == 'accuracy':
-                row_fmt_accuracy = u'{:>{width}s} ' + \
-                        u' {:>9.{digits}}' * 2 + u' {:>9.{digits}f}' + \
-                        u' {:>9}\n'
+                row_fmt_accuracy = '{:>{width}s} ' + \
+                        ' {:>9.{digits}}' * 2 + ' {:>9.{digits}f}' + \
+                        ' {:>9}\n'
                 report += row_fmt_accuracy.format(line_heading, '', '',
                                                   *avg[2:], width=width,
                                                   digits=digits)

@@ -182,6 +182,29 @@ render these plots inline automatically::
    :align: center
    :scale: 75
 
+Alternatively, the tree can also be exported in textual format with the
+function :func:`export_text`. This method doesn't require the installation
+of external libraries and is more compact:
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.tree.export import export_text
+    >>> iris = load_iris()
+    >>> X = iris['data']
+    >>> y = iris['target']
+    >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
+    >>> decision_tree = decision_tree.fit(X, y)
+    >>> r = export_text(decision_tree, feature_names=iris['feature_names'])
+    >>> print(r)
+    |--- petal width (cm) <= 0.80
+    |   |--- class: 0
+    |--- petal width (cm) >  0.80
+    |   |--- petal width (cm) <= 1.75
+    |   |   |--- class: 1
+    |   |--- petal width (cm) >  1.75
+    |   |   |--- class: 2
+    <BLANKLINE>
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`

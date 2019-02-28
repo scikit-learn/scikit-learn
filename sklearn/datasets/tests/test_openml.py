@@ -17,6 +17,7 @@ from sklearn.datasets.openml import (_open_openml_url,
                                      _retry_with_clean_cache)
 from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
+from sklearn.utils import is_scalar_nan
 from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
@@ -37,8 +38,8 @@ def _test_features_list(data_id):
             # XXX: This would be faster with np.take, although it does not
             # handle missing values fast (also not with mode='wrap')
             cat = data_bunch.categories[col_name]
-            result = [cat[idx] if 0 <= idx < len(cat) else None for idx in
-                      data_bunch.data[:, col_idx].astype(int)]
+            result = [None if is_scalar_nan(idx) else cat[int(idx)]
+                      for idx in data_bunch.data[:, col_idx]]
             return np.array(result, dtype='O')
         else:
             # non-nominal attribute
@@ -54,7 +55,7 @@ def _test_features_list(data_id):
                          'code relatively simple')
     data_arff = _download_data_arff(data_description['file_id'],
                                     sparse, None, False)
-    data_downloaded = np.array(data_arff['data'], dtype='O')
+    data_downloaded = np.array(list(data_arff['data']), dtype='O')
 
     for i in range(len(data_bunch.feature_names)):
         # XXX: Test per column, as this makes it easier to avoid problems with
@@ -152,7 +153,7 @@ def _monkey_patch_webbased_functions(context,
     path_suffix = '.gz'
     read_fn = gzip.open
 
-    class MockHTTPResponse(object):
+    class MockHTTPResponse:
         def __init__(self, data, is_gzip):
             self.data = data
             self.is_gzip = is_gzip

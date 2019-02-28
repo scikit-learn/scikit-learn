@@ -1,3 +1,8 @@
+# Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
+# License: BSD 3 clause, (C) 2011
+#
+# cython: language_level=3
+
 """
 Routines for performing shortest-path graph searches
 
@@ -5,9 +10,6 @@ The main interface is in the function `graph_shortest_path`.  This
 calls cython routines that compute the shortest path using either
 the Floyd-Warshall algorithm, or Dykstra's algorithm with Fibonacci Heaps.
 """
-
-# Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD 3 clause, (C) 2011
 
 import numpy as np
 cimport numpy as np

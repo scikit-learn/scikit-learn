@@ -247,7 +247,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
 
-class _CalibratedClassifier(object):
+class _CalibratedClassifier:
     """Probability calibration with isotonic regression or sigmoid.
 
     It assumes that base_estimator has already been fit, and trains the
@@ -519,12 +519,13 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
+def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
+                      strategy='uniform'):
     """Compute true and predicted probabilities for a calibration curve.
 
-     The method assumes the inputs come from a binary classifier.
+    The method assumes the inputs come from a binary classifier.
 
-     Calibration curves may also be referred to as reliability diagrams.
+    Calibration curves may also be referred to as reliability diagrams.
 
     Read more in the :ref:`User Guide <calibration>`.
 
@@ -545,6 +546,14 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
         Number of bins. A bigger number requires more data. Bins with no data
         points (i.e. without corresponding values in y_prob) will not be
         returned, thus there may be fewer than n_bins in the return value.
+
+    strategy : {'uniform', 'quantile'}, (default='uniform')
+        Strategy used to define the widths of the bins.
+
+        uniform
+            All bins have identical widths.
+        quantile
+            All bins have the same number of points.
 
     Returns
     -------
@@ -572,7 +581,16 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
 
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
 
-    bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+    if strategy == 'quantile':  # Determine bin edges by distribution of data
+        quantiles = np.linspace(0, 1, n_bins + 1)
+        bins = np.percentile(y_prob, quantiles * 100)
+        bins[-1] = bins[-1] + 1e-8
+    elif strategy == 'uniform':
+        bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+    else:
+        raise ValueError("Invalid entry to 'strategy' input. Strategy "
+                         "must be either 'quantile' or 'uniform'.")
+
     binids = np.digitize(y_prob, bins) - 1
 
     bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))
