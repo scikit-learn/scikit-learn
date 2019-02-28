@@ -547,11 +547,12 @@ class Pipeline(_BaseComposition):
         return getattr(self.steps[0][1], '_pairwise', False)
 
     def get_feature_names(self, input_features=None):
-        """Set the input feature names for all steps.
+        """Get the feature names for all steps.
 
         Sets the input_features_ attribute on the pipeline and
         on all pipeline steps using the provided input feature names
-        as input for the first step.
+        as input for the first step, and returns the output features
+        if the last step is a transformer.
 
         Some estimators like `ColumnTransformer` and `CountVectorizer`
         might ignore the provided input feature names.
@@ -561,6 +562,12 @@ class Pipeline(_BaseComposition):
         input_features : array-like of string or None
             Feature names to use as input feature names for the first step
             of the pipeline.
+
+        Returns
+        -------
+        feature_names : array-like of string or None
+            Output feature names of the last step if it is a transformer,
+            and None otherwise.
 
         """
         if input_features is not None or not hasattr(self, 'input_features_'):
@@ -581,24 +588,6 @@ class Pipeline(_BaseComposition):
             else:
                 feature_names = None
         return feature_names
-
-    # def get_feature_names(self, input_features=None):
-        """Get feature names for transformation.
-
-        Transform input features using the pipeline.
-        If the last step is a transformer, it's included
-        in the transformation, otherwise it's not.
-
-        Parameters
-        ----------
-        input_features : array-like of string
-            Input feature names.
-
-        Returns
-        -------
-        feature_names : array-like of string
-            Transformed feature names
-        """
 
 
 def _name_estimators(estimators):
