@@ -943,8 +943,7 @@ def test_dtype_match_cholesky():
 
 @pytest.mark.parametrize(
     'solver', ['svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'])
-@pytest.mark.parametrize('assert_tolerance', [1e-1, 1e-2, 1e-3, 1e-6])
-def test_ridge_regression_dtype_stability(solver, assert_tolerance):
+def test_ridge_regression_dtype_stability(solver):
     n_samples, n_features = 6, 5
     X = rng.randn(n_samples, n_features)
     coef = rng.randn(n_features)
@@ -967,7 +966,7 @@ def test_ridge_regression_dtype_stability(solver, assert_tolerance):
 
     assert results[np.float32].dtype == np.float32
     assert results[np.float64].dtype == np.float64
-    assert_allclose(results[np.float32], results[np.float64], rtol=1e-5)
+    assert_allclose(results[np.float32], results[np.float64], rtol=rtol)
 
 
 def test_replicate_segfault():
