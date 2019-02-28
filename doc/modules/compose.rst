@@ -45,6 +45,9 @@ The last estimator may be any type (transformer, classifier, etc.).
 Usage
 -----
 
+Construction
+............
+
 The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
 the ``key`` is a string containing the name you want to give this step and ``value``
 is an estimator object::
@@ -74,17 +77,36 @@ filling in the names automatically::
                                                     class_prior=None,
                                                     fit_prior=True))])
 
-The estimators of a pipeline are stored as a list in the ``steps`` attribute::
+Accessing steps
+...............
+
+The estimators of a pipeline are stored as a list in the ``steps`` attribute,
+but can be accessed by index or name by indexing (with ``[idx]``) the pipe::
 
     >>> pipe.steps[0]  # doctest: +NORMALIZE_WHITESPACE
-    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False))
-
-and as a ``dict`` in ``named_steps``::
-
-    >>> pipe.named_steps['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
+    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None,
+                       random_state=None, svd_solver='auto', tol=0.0,
+                       whiten=False))
+    >>> pipe[0]  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False)
+        svd_solver='auto', tol=0.0, whiten=False)
+    >>> pipe['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
+    PCA(copy=True, ...)
+
+Pipeline's `named_steps` attribute allows accessing steps by name with tab
+completion in interactive environments::
+
+    >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
+    True
+
+A sub-pipeline can also be extracted, which is convenient for performing
+only some of the transformations (or their inverse):
+
+    >>> clf[:1] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Pipeline(steps=[('reduce_dim', PCA(copy=True, ...))])
+
+Nested parameters
+.................
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
@@ -93,11 +115,6 @@ Parameters of the estimators in the pipeline can be accessed using the
     Pipeline(memory=None,
              steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
                     ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
-
-Attributes of named_steps map to keys, enabling tab completion in interactive environments::
-
-    >>> pipe.named_steps.reduce_dim is pipe.named_steps['reduce_dim']
-    True
 
 This is particularly important for doing grid searches::
 
@@ -114,6 +131,23 @@ ignored by setting them to ``'passthrough'``::
     ...                   clf=[SVC(), LogisticRegression()],
     ...                   clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
+
+The estimators of the pipeline can be retrieved by index:
+
+    >>> clf[0]
+    PCA(copy=True, n_components=None, whiten=False)
+
+or by name::
+
+    >>> clf['reduce_dim']
+    PCA(copy=True, n_components=None, whiten=False)
+
+A sub-pipeline can also be extracted, which is convenient for performing
+only some of the transformations (or their inverse):
+
+    >>> clf[:1] # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
+                                       whiten=False))])
 
 .. topic:: Examples:
 
