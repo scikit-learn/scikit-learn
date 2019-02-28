@@ -460,6 +460,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The predicted values.
 
         """
+        check_is_fitted(self, 'estimators_')
         X = check_array(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
