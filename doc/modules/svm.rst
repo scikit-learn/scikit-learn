@@ -113,9 +113,9 @@ approach (Knerr et al., 1990) for multi- class classification. If
 ``n_class`` is the number of classes, then ``n_class * (n_class - 1) / 2``
 classifiers are constructed and each one trains data from two classes.
 To provide a consistent interface with other classifiers, the
-``decision_function_shape`` option allows to aggregate the results of the
+``decision_function_shape`` option allows to monotically transform the results of the
 "one-against-one" classifiers to a decision function of shape ``(n_samples,
-n_classes)``::
+n_classes)``.
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
