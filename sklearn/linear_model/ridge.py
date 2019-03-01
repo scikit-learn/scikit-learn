@@ -31,6 +31,7 @@ from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics.scorer import check_scoring
 from ..exceptions import ConvergenceWarning
+from ..utils.sparsefuncs import mean_variance_axis
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
@@ -1104,6 +1105,61 @@ class _RidgeGCV(LinearModel):
             self.cv_values_ = cv_values.reshape(cv_values_shape)
 
         return self
+
+
+def _centered_gram(X):
+    if sparse.issparse(X):
+        X_m, _ = mean_variance_axis(X, axis=0)
+    else:
+        X_m = X.mean(axis=0)
+    X_mX = safe_sparse_dot(X_m, X.T, dense_output=True)
+    return (safe_sparse_dot(X, X.T, dense_output=True) + np.dot(X_m, X_m)
+            - X_mX - X_mX[:, None], X_m)
+
+
+class _WIPNewRidgeGCV(_RidgeGCV):
+
+    def _pre_compute(self, X, y, centered_kernel):
+        if sparse.issparse(X) and self.fit_intercept:
+            return self._pre_compute_gram(X, y)
+        return super()._pre_compute(X, y, centered_kernel)
+
+    def _set_intercept(self, X_offset, y_offset, X_scale):
+        if getattr(self, '_X_offset', None) is not None:
+            X_offset = self._X_offset
+        super()._set_intercept(X_offset, y_offset, X_scale)
+
+    def _pre_compute_gram(self, X, y):
+        K, X_m = _centered_gram(X)
+        K += np.ones_like(K)
+        v, Q = linalg.eigh(K)
+        QT_y = np.dot(Q.T, y)
+        self._X_offset = X_m
+        return v, Q, QT_y
+
+    def _errors_and_values_helper(self, alpha, y, v, Q, QT_y):
+        w = 1. / (v + alpha)
+        constant_column = np.var(Q, 0) < 1.e-12
+        if not constant_column.any():
+            warnings.warn('intercept was not a singular vector of gram matrix')
+        w[constant_column] = 0
+
+        c = np.dot(Q, self._diag_dot(w, QT_y))
+        G_diag = self._decomp_diag(w, Q)
+        # handle case where y is 2-d
+        if len(y.shape) != 1:
+            G_diag = G_diag[:, np.newaxis]
+        return G_diag, c
+
+    def fit(self, X, y, sample_weight=None):
+        if (sparse.issparse(X) and (X.shape[0] > X.shape[1])
+                and self.fit_intercept and self.gcv_mode != 'eigen'):
+            warnings.warn(
+                'Cannot use an SVD of X if X is sparse '
+                'and fit_intercept is true. will therefore set '
+                'gcv_mode to "eigen", which can cause performance issues '
+                'if n_samples is much larger than n_features')
+        super().fit(X, y, sample_weight=sample_weight)
 
 
 class _BaseRidgeCV(LinearModel, MultiOutputMixin):
