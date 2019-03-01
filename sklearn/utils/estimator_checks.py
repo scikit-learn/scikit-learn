@@ -2364,8 +2364,11 @@ def check_classifiers_regression_target(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimator_sparse_dense(name, estimator_orig):
     rng = np.random.RandomState(52)
-    X, y = make_blobs(random_state=rng, n_samples=40, center_box=(-1, 1))
-    X[X < .8] = 0
+    X, y = make_blobs(random_state=rng, n_samples=40)
+    # for put some points to zero to have a little bit of sparsity
+    X = np.abs(X)  # we need positive data for ComplementNB for instance
+    X[rng.choice(X.shape[0], size=10, replace=False),
+      rng.randint(X.shape[1], size=10)] = 0.
     X_csr = sparse.csr_matrix(X)
     estimator = clone(estimator_orig)
     estimator_sp = clone(estimator_orig)
@@ -2396,9 +2399,6 @@ def check_estimator_sparse_dense(name, estimator_orig):
             estimator.__class__.__name__]
         estimator.set_params(**params)
         estimator_sp.set_params(**params)
-        if isinstance(estimator, NeighborsBase):
-            estimator.set_params(algorithm='brute')
-            estimator_sp.set_params(algorithm='brute')
         for estimator_attr in ['base_estimator', 'estimator']:
             if (hasattr(estimator, estimator_attr) and
                     getattr(estimator, estimator_attr) is not None and
