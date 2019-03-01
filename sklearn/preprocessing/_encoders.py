@@ -65,13 +65,8 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             Xi = self._get_feature(X, feature_idx=i)
             Xi = check_array(Xi, ensure_2d=False, dtype=None,
                              force_all_finite=needs_validation)
-
-            if Xi.dtype == np.dtype('object'):
-                if not _get_config()['assume_finite']:
-                    if _object_dtype_isnan(Xi).any():
-                        raise ValueError("Input contains NaN")
-
             X_columns.append(Xi)
+
         return X_columns, n_samples, n_features
 
     def _get_feature(self, X, feature_idx):
