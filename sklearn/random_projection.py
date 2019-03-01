@@ -588,7 +588,7 @@ class SparseRandomProjection(BaseRandomProjection):
     --------
     >>> import numpy as np
     >>> from sklearn.random_projection import SparseRandomProjection
-    >>> rng = np.RandomState(42)
+    >>> rng = np.random.RandomState(0)
     >>> X = rng.rand(100, 10000)
     >>> transformer = SparseRandomProjection()
     >>> X_new = transformer.fit_transform(X)

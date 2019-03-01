@@ -302,7 +302,7 @@ Examples
 Query for k-nearest neighbors
 
     >>> import numpy as np
-    >>> rng = np.RandomState(42)
+    >>> rng = np.random.RandomState(0)
     >>> X = rng.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP
     >>> dist, ind = tree.query(X[:1], k=3)                # doctest: +SKIP
@@ -316,7 +316,7 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
 
     >>> import numpy as np
     >>> import pickle
-    >>> rng = np.RandomState(42)
+    >>> rng = np.random.RandomState(0)
     >>> X = rng.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)        # doctest: +SKIP
     >>> s = pickle.dumps(tree)                     # doctest: +SKIP
@@ -330,7 +330,7 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
 Query for neighbors within a given radius
 
     >>> import numpy as np
-    >>> rng = np.RandomState(42)
+    >>> rng = np.random.RandomState(0)
     >>> X = rng.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)     # doctest: +SKIP
     >>> print(tree.query_radius(X[:1], r=0.3, count_only=True))
@@ -343,7 +343,7 @@ Query for neighbors within a given radius
 Compute a gaussian kernel density estimate:
 
     >>> import numpy as np
-    >>> rng = np.RandomState(42)
+    >>> rng = np.random.RandomState(42)
     >>> X = rng.random((100, 3))
     >>> tree = {BinaryTree}(X)                # doctest: +SKIP
     >>> tree.kernel_density(X[:3], h=0.1, kernel='gaussian')
@@ -352,7 +352,7 @@ Compute a gaussian kernel density estimate:
 Compute a two-point auto-correlation function
 
     >>> import numpy as np
-    >>> rng = np.RandomState(42)
+    >>> rng = np.random.RandomState(0)
     >>> X = rng.random((30, 3))
     >>> r = np.linspace(0, 1, 5)
     >>> tree = {BinaryTree}(X)                # doctest: +SKIP

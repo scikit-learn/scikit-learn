@@ -874,7 +874,7 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> from sklearn.svm import SVR
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
-    >>> rng = np.RandomState(42)
+    >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = SVR(gamma='scale', C=1.0, epsilon=0.2)

@@ -152,7 +152,7 @@ def compute_kernel_slow(Y, X, kernel, h):
 @pytest.mark.parametrize("breadth_first", [True, False])
 def test_ball_tree_kde(kernel, h, rtol, atol, breadth_first, n_samples=100,
                        n_features=3):
-    rng = np.RandomState(42)
+    rng = np.random.RandomState(0)
     X = rng.random((n_samples, n_features))
     Y = rng.random((n_samples, n_features))
     bt = BallTree(X, leaf_size=10)

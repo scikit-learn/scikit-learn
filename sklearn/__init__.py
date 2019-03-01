@@ -103,5 +103,5 @@ def setup_module(module):
         _random_seed = np.random.uniform() * (2 ** 31 - 1)
     _random_seed = int(_random_seed)
     print("I: Seeding RNGs with %r" % _random_seed)
-    rng = np.RandomState(_random_seed)
+    rng = np.random.RandomState(_random_seed)
     rng.seed(_random_seed)

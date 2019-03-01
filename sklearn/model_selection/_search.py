@@ -228,7 +228,7 @@ class ParameterSampler:
     >>> from sklearn.model_selection import ParameterSampler
     >>> from scipy.stats.distributions import expon
     >>> import numpy as np
-    >>> rng = np.RandomState(42)
+    >>> rng = np.random.RandomState(0)
     >>> param_grid = {'a':[1, 2], 'b': expon()}
     >>> param_list = list(ParameterSampler(param_grid, n_iter=4))
     >>> rounded_list = [dict((k, round(v, 6)) for (k, v) in d.items())
