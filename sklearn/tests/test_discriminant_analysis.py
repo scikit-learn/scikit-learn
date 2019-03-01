@@ -96,29 +96,71 @@ def test_lda_predict():
     assert_raises(ValueError, clf.fit, X, y)
 
 
-def test_lda_predict_proba():
-    # Test LDA posterior probabilities
-    # Binary case
-    clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y6)
-    probas = clf.predict_proba(X6)
-    assert_allclose(
-        probas[0],
-        np.array([0.91942108, 0.08057892])
+@pytest.mark.parametrize("n_classes", [2, 3])
+def test_lda_predict_proba(n_classes):
+    def generate_dataset(n_samples, centers, covariances, random_state=None):
+        """Generate a multivariate normal data given some centers and
+        covariances"""
+        rng = check_random_state(random_state)
+        X = np.vstack([rng.multivariate_normal(mean, cov,
+                                               size=n_samples // len(centers))
+                       for mean, cov in zip(centers, covariances)])
+        y = np.hstack([[clazz] * (n_samples // len(centers))
+                       for clazz in range(len(centers))])
+        return X, y
+
+    blob_centers = np.array([[0, 0], [-10, 40], [-30, 30]])[:n_classes]
+    blob_stds = np.array([[[10, 10], [10, 100]]] * len(blob_centers))
+    X, y = generate_dataset(
+        n_samples=90000, centers=blob_centers, covariances=blob_stds,
+        random_state=42
     )
-    # Multiclass case
-    clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y7)
-    pred = clf.predict(X6)
-    probas = clf.predict_proba(X6)
-    # Check that argmax of predict_proba gives same results as predict
-    assert_array_equal(pred, clf.classes_[np.argmax(probas, axis=1)])
-    # Check that probabilities sum up to 1
-    assert_allclose(np.sum(probas, axis=1),
-                    np.ones((probas.shape[0],)))
-    # Numerical check
-    assert_allclose(
-        probas[0],
-        np.array([0.25128617, 0.36876296, 0.37995087])
+    lda = LinearDiscriminantAnalysis(solver='lsqr').fit(X, y)
+    # check that the empirical means and covariances are close enough to the
+    # one used to generate the data
+    assert_allclose(lda.means_, blob_centers, atol=1e-1)
+    assert_allclose(lda.covariance_, blob_stds[0], atol=1)
+
+    # implement the method to compute the probability given in The Elements
+    # of Statistical Learning (cf. p.127, Sect. 4.4.5 "Logistic Regression
+    # or LDA?")
+    precision = np.linalg.inv(blob_stds[0])
+    alpha_k = []
+    alpha_k_0 = []
+    for clazz in range(len(blob_centers) - 1):
+        alpha_k.append(
+            np.dot(precision,
+                   (blob_centers[clazz] - blob_centers[-1])[:, np.newaxis]))
+        alpha_k_0.append(
+            np.dot(- 0.5 * (blob_centers[clazz] +
+                            blob_centers[-1])[np.newaxis, :], alpha_k[-1]))
+
+    sample = np.array([[-22, 22]])
+
+    def discriminant_func(sample, coef, intercept, clazz):
+        return np.exp(intercept[clazz] + np.dot(sample, coef[clazz]))
+
+    prob = np.array([float(
+        discriminant_func(sample, alpha_k, alpha_k_0, clazz) /
+        (1 + sum([discriminant_func(sample, alpha_k, alpha_k_0, clazz)
+                  for clazz in range(n_classes - 1)]))) for clazz in range(
+                      n_classes - 1)])
+
+    prob_ref = 1 - np.sum(prob)
+
+    # check the consistency of the computed probability
+    # all probabilities should sum to one
+    prob_ref_2 = float(
+        1 / (1 + sum([discriminant_func(sample, alpha_k, alpha_k_0, clazz)
+                      for clazz in range(n_classes - 1)]))
     )
+
+    assert prob_ref == pytest.approx(prob_ref_2)
+    # check that the probability of LDA are close to the theoretical
+    # probabilties
+    assert_allclose(lda.predict_proba(sample),
+                    np.hstack([prob, prob_ref])[np.newaxis],
+                    atol=1e-2)
 
 
 def test_lda_priors():
