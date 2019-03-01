@@ -190,6 +190,40 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
         return self._fit_predict
 
+    @property
+    def fit_resample(self):
+        """Performs fit on X and returns new X and y consisting of only the
+        inliers.
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Input data X.
+
+        y : ndarray, shape (n_samples,)
+            Input data y.
+
+        Returns
+        -------
+        X : ndarray, shape (n_samples, n_features)
+            The input X with outlier samples removed.
+
+        y : ndarray, shape (n_samples,)
+            The input y with outlier samples removed.
+        """
+        # fit_resample requires fit_predict
+        if self.novelty:
+            msg = ('fit_resample is not available when novelty=True. Use '
+                   'novelty=False if you want to use outlier rejection')
+            raise AttributeError(msg)
+
+        return self._fit_resample
+
+    def _fit_resample(self, X, y=None):
+        # XXX this is not very clean, is there a better way?
+        inliers = self.fit_predict(X) == 1
+
+        return X[inliers], y[inliers]
     def _fit_predict(self, X, y=None):
         """"Fits the model to the training set X and returns the labels.
 
