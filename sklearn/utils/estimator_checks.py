@@ -2364,10 +2364,9 @@ def check_classifiers_regression_target(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimator_sparse_dense(name, estimator_orig):
     rng = np.random.RandomState(52)
-    X = rng.rand(40, 10)
+    X, y = make_blobs(random_state=rng, n_samples=40, center_box=(-1, 1))
     X[X < .8] = 0
     X_csr = sparse.csr_matrix(X)
-    y = (4 * rng.rand(40)).astype(np.int)
     estimator = clone(estimator_orig)
     estimator_sp = clone(estimator_orig)
     tags = _safe_tags(estimator_orig)
@@ -2429,7 +2428,7 @@ def check_estimator_sparse_dense(name, estimator_orig):
                     # XXX : hack for dummy classifier
                     probs = probs[0]
 
-                assert_equal(probs.shape, (X.shape[0], 4))
+                assert_equal(probs.shape, (X.shape[0], 3))
         except TypeError as e:
             if 'sparse' not in str.lower(repr(e)):
                 print("Estimator %s doesn't seem to fail gracefully on "
