@@ -692,17 +692,13 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
     nominal_attributes = {k: v for k, v in arff['attributes']
                           if isinstance(v, list) and
                           k in data_columns + target_column}
-    for feature in features_list:
-        if 'true' in (feature['is_row_identifier'],
-                      feature['is_ignore']) and (feature['name'] not in
-                                                 target_column):
-            del nominal_attributes[feature['name']]
+
     if return_frame:
         X, y = _convert_arff_data_dataframe(
             arff_data, col_slice_x, col_slice_y, data_columns, target_column,
             features_dict, nominal_attributes)
     else:
-        X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y)
+        X, y = _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape)
 
     is_classification = {col_name in nominal_attributes
                          for col_name in target_column}

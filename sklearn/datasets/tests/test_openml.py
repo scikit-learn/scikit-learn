@@ -1,26 +1,25 @@
-"""Test the openml loader.
-"""
+"""Test the openml loader."""
+from functools import partial
 import gzip
 import json
-import numpy as np
 import os
 import re
-import scipy.sparse
-import sklearn
-import pytest
+from urllib.error import HTTPError
 
+import numpy as np
+import pytest
+import scipy.sparse
+
+import sklearn
 from sklearn.datasets import fetch_openml
 from sklearn.datasets.openml import (_open_openml_url,
                                      _get_data_description_by_id,
                                      _download_data_arff,
                                      _get_local_path,
                                      _retry_with_clean_cache)
-from sklearn.utils.testing import (assert_warns_message,
-                                   assert_raise_message)
-from sklearn.utils import is_scalar_nan
-from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
-from functools import partial
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils import is_scalar_nan
 
 
 currdir = os.path.dirname(os.path.abspath(__file__))
@@ -394,21 +393,20 @@ def test_fetch_openml_australian(monkeypatch, gzip_response):
     expected_features = 14
     expected_missing = 0
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    assert_warns_message(
-        UserWarning,
-        "Version 1 of dataset Australian is inactive,",
-        _fetch_dataset_from_openml,
-        **{'data_id': data_id, 'data_name': data_name,
-           'data_version': data_version,
-           'target_column': target_column,
-           'expected_observations': expected_observations,
-           'expected_features': expected_features,
-           'expected_missing': expected_missing,
-           'expect_sparse': True,
-           'expected_data_dtype': np.float64,
-           'expected_target_dtype': object,
-           'compare_default_target': False}  # numpy specific check
-    )
+    warn_msg = "Version 1 of dataset Australian is inactive,"
+    with pytest.warns(UserWarning, match=warn_msg):
+        _fetch_dataset_from_openml(
+            **{'data_id': data_id, 'data_name': data_name,
+               'data_version': data_version,
+               'target_column': target_column,
+               'expected_observations': expected_observations,
+               'expected_features': expected_features,
+               'expected_missing': expected_missing,
+               'expect_sparse': True,
+               'expected_data_dtype': np.float64,
+               'expected_target_dtype': object,
+               'compare_default_target': False}  # numpy specific check
+        )
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -618,8 +616,8 @@ def test_fetch_nonexiting(monkeypatch, gzip_response):
     data_id = 40675
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # Note that we only want to search by name (not data id)
-    assert_raise_message(ValueError, "No active dataset glass2 found",
-                         fetch_openml, name='glass2', cache=False)
+    with pytest.raises(ValueError, match='No active dataset glass2 found'):
+        fetch_openml(name='glass2', cache=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -628,10 +626,9 @@ def test_raises_illegal_multitarget(monkeypatch, gzip_response):
     targets = ['sepalwidth', 'class']
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # Note that we only want to search by name (not data id)
-    assert_raise_message(ValueError,
-                         "Can only handle homogeneous multi-target datasets,",
-                         fetch_openml, data_id=data_id,
-                         target_column=targets, cache=False)
+    err_msg = 'Can only handle homogeneous multi-target datasets'
+    with pytest.raises(ValueError, match=err_msg):
+        fetch_openml(data_id=data_id, target_column=targets, cache=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -665,9 +662,10 @@ def test_string_attribute(monkeypatch, gzip_response):
     data_id = 40945
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     # single column test
-    assert_raise_message(ValueError,
-                         'STRING attributes are not yet supported',
-                         fetch_openml, data_id=data_id, cache=False)
+    err_msg = ('STRING attributes are not supported for arrays as '
+               'return value. Try return_frame=True.')
+    with pytest.raises(ValueError, match=err_msg):
+        fetch_openml(data_id=data_id, cache=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -698,35 +696,31 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
 def test_illegal_column(monkeypatch, gzip_response):
     data_id = 61
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    assert_raise_message(KeyError, "Could not find target_column=",
-                         fetch_openml, data_id=data_id,
-                         target_column='undefined', cache=False)
+    with pytest.raises(KeyError, match="Could not find target_column="):
+        fetch_openml(data_id=data_id, target_column='undefined', cache=False)
 
-    assert_raise_message(KeyError, "Could not find target_column=",
-                         fetch_openml, data_id=data_id,
-                         target_column=['undefined', 'class'],
-                         cache=False)
+    with pytest.raises(KeyError, match="Could not find target_column="):
+        fetch_openml(data_id=data_id, target_column=['undefined', 'class'],
+                     cache=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 def test_fetch_openml_raises_missing_values_target(monkeypatch, gzip_response):
     data_id = 2
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    assert_raise_message(ValueError, "Target column ",
-                         fetch_openml, data_id=data_id, target_column='family')
+    with pytest.raises(ValueError, match="Target column "):
+        fetch_openml(data_id=data_id, target_column='family')
 
 
 def test_fetch_openml_raises_illegal_argument():
-    assert_raise_message(ValueError, "Dataset data_id=",
-                         fetch_openml, data_id=-1, name="name")
+    with pytest.raises(ValueError, match="Dataset data_id="):
+        fetch_openml(data_id=-1, name="name")
 
-    assert_raise_message(ValueError, "Dataset data_id=",
-                         fetch_openml, data_id=-1, name=None,
-                         version="version")
+    with pytest.raises(ValueError, match="Dataset data_id="):
+        fetch_openml(data_id=-1, name=None, version="version")
 
-    assert_raise_message(ValueError, "Dataset data_id=",
-                         fetch_openml, data_id=-1, name="name",
-                         version="version")
+    with pytest.raises(ValueError, match="Dataset data_id="):
+        fetch_openml(data_id=-1, name="name", version="version")
 
-    assert_raise_message(ValueError, "Neither name nor data_id are provided. "
-                         "Please provide name or data_id.", fetch_openml)
+    with pytest.raises(ValueError, match="Neither name nor data_id are"):
+        fetch_openml()
