@@ -7,10 +7,10 @@ import warnings
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
 from ..metrics import accuracy_score
-from ..base import OutlierMixin, OutlierResamplerMixin
+from ..base import OutlierMixin, OutlierRejectionMixin
 
 
-class EllipticEnvelope(MinCovDet, OutlierMixin, OutlierResamplerMixin):
+class EllipticEnvelope(MinCovDet, OutlierMixin, OutlierRejectionMixin):
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Read more in the :ref:`User Guide <outlier_detection>`.

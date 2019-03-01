@@ -12,7 +12,7 @@ from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
-from ..base import OutlierMixin, OutlierResamplerMixin
+from ..base import OutlierMixin, OutlierRejectionMixin
 
 from .bagging import BaseBagging
 
@@ -21,7 +21,7 @@ __all__ = ["IsolationForest"]
 INTEGER_TYPES = (numbers.Integral, np.integer)
 
 
-class IsolationForest(BaseBagging, OutlierMixin, OutlierResamplerMixin):
+class IsolationForest(BaseBagging, OutlierMixin, OutlierRejectionMixin):
     """Isolation Forest Algorithm
 
     Return the anomaly score of each sample using the IsolationForest algorithm

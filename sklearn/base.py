@@ -544,7 +544,7 @@ class OutlierMixin:
         return self.fit(X).predict(X)
 
 
-class OutlierResamplerMixin:
+class OutlierRejectionMixin:
     """Mixin class for all outlier detection resamplers in scikit-learn. Child
     classes remove outliers from the passed samples.
     """

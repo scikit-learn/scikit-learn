@@ -3,7 +3,7 @@ import numpy as np
 
 from .base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import (BaseEstimator, RegressorMixin, OutlierMixin,
-                    OutlierResamplerMixin)
+                    OutlierRejectionMixin)
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils import check_X_y
@@ -1040,7 +1040,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
             verbose=verbose, max_iter=max_iter, random_state=None)
 
 
-class OneClassSVM(BaseLibSVM, OutlierMixin, OutlierResamplerMixin):
+class OneClassSVM(BaseLibSVM, OutlierMixin, OutlierRejectionMixin):
     """Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution.

@@ -1261,7 +1261,7 @@ def test_pipeline_none_classifier(passthrough):
 
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
 def test_pipeline_none_resampler_classifier(passthrough):
-    # Test pipeline using None, an OutlierResampler and a classifier
+    # Test pipeline using None, an outlier rejector and a classifier
     X, y = make_classification(
         n_classes=2,
         class_sep=2,
@@ -1285,7 +1285,7 @@ def test_pipeline_none_resampler_classifier(passthrough):
 
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
 def test_pipeline_resampler_none_classifier(passthrough):
-    # Test pipeline using an OutlierResampler, None and a classifier
+    # Test pipeline using an outlier rejector, None and a classifier
     X, y = make_classification(
         n_classes=2,
         class_sep=2,
