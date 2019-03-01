@@ -612,7 +612,8 @@ def _get_sub_estimators(est):
     # Explicitly declare all fitted subestimators of existing meta-estimators
     sub_ests = []
     # OHE is not really needed
-    sub_names = ['estimator_', 'base_estimator_', 'one_hot_encoder_']
+    sub_names = ['estimator_', 'base_estimator_', 'one_hot_encoder_',
+                 'best_estimator_', 'init_']
     for name in sub_names:
         sub_est = getattr(est, name, None)
         if sub_est is not None:
