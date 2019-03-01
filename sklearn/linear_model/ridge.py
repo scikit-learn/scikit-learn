@@ -557,10 +557,10 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
             self.intercept_ += y_offset
         else:
             if sparse.issparse(X):
-                params = {'X_offset': X_offset,
-                          'X_scale': X_scale}
+                params = {'X_offset': X_offset, 'X_scale': X_scale}
             else:
                 params = {}
+                
             self.coef_, self.n_iter_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
