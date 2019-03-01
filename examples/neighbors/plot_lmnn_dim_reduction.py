@@ -25,6 +25,10 @@ Large Margin Nearest Neighbor (LMNN) tries to find a feature space such that
 the nearest neighbors classification accuracy is maximized. Like LDA, it is a
 supervised method.
 
+In this example, nearest neighbors classification is used for supervised
+prediction based on the embeddings learned from each of the three
+decompositions approaches, PCA, LDA and LMNN.
+
 One can see that LMNN enforces a clustering of the data that is visually
 meaningful even after the large dimensionality reduction.
 """

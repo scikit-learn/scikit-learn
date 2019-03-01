@@ -881,7 +881,7 @@ LMNN solves the following (nonconvex) minimization problem:
 .. math::
     \min_L \varepsilon(L) = (1 - \mu) \varepsilon_{\text{pull}} (L) +
     \mu \varepsilon_{\text{push}} (L) \text{, } \quad \mu \in [0,1].
-The parameter :math:`\mu` (``weight_push_loss``) is a trade-off between
+The parameter :math:`\mu` (``weight_push_loss``) calibrates the trade-off between
 penalizing large distances to target neighbors and penalizing margin
 violations by impostors. In practice, the two terms are usually weighted
 equally (:math:`\mu = 0.5`).

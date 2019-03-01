@@ -14,6 +14,7 @@ import time
 import numpy as np
 from scipy.optimize import minimize
 from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
+from six import integer_types, string_types
 
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors
@@ -25,7 +26,6 @@ from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import (check_is_fitted, check_array, check_X_y,
                                 check_scalar)
-from ..externals.six import integer_types, string_types
 from ..exceptions import ConvergenceWarning
 
 
@@ -46,7 +46,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     init : string or numpy array, optional (default='pca')
         Initialization of the linear transformation. Possible options are
         'pca', 'identity' and a numpy array of shape (n_features_a,
-        n_features_b).
+        n_features). Faster convergence can be achieved with 'pca'.
 
         pca:
             ``n_components`` many principal components of the inputs passed
@@ -58,7 +58,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             matrix will be truncated to the first ``n_components`` rows.
 
         numpy array:
-            n_features_b must match the dimensionality of the inputs passed to
+            n_features must match the dimensionality of the inputs passed to
             :meth:`fit` and n_features_a must be less than or equal to that.
             If ``n_components`` is not None, n_features_a must match it.
 
@@ -68,9 +68,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         transformation (``n_components`` and ``init`` will be ignored).
 
     max_impostors : int, optional (default=500000)
-        Maximum number of impostors to consider per iteration. In the worst
-        case this will allow ``max_impostors * n_neighbors`` constraints to be
-        active.
+        Maximum number of impostors to consider per iteration. Impostors are
+        the samples that are too close to a sample with different label,
+        thereby violating their margin. In the worst case this will allow
+        ``max_impostors * n_neighbors`` constraints to be active.
 
     neighbors_params : dict, optional (default=None)
         Parameters to pass to a :class:`neighbors.NearestNeighbors` instance -
@@ -126,6 +127,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     random_state : int or numpy.RandomState or None, optional (default=None)
         A pseudo random number generator object or a seed for it if int.
+        Used to sample the impostors if they exceed ``max_impostors`` and
+        during the initialization of the linear transformation if PCA is
+        used as initialization method (``init``='pca').
 
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
@@ -393,7 +397,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         classes_inverse_non_singleton : array, shape (n_classes_non_singleton,)
             The non-singleton classes, encoded as integers in [0, n_classes).
 
-        init : string or numpy array of shape (n_features_a, n_features_b)
+        init : string or numpy array of shape (n_features_a, n_features)
             The validated initialization of the linear transformation.
 
         Raises
@@ -413,7 +417,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         # Ignore classes that have less than 2 samples (singleton classes)
         class_sizes = np.bincount(y_inverse)
         mask_singleton_class = class_sizes == 1
-        singleton_classes, = np.where(mask_singleton_class)
+        singleton_classes = np.where(mask_singleton_class)[0]
         if len(singleton_classes):
             warn('There are {} singleton classes that will be ignored during '
                  'training. A copy of the inputs `X` and `y` will be made.'
@@ -434,8 +438,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Check the preferred embedding dimensionality
         if self.n_components is not None:
-            check_scalar(self.n_components, 'n_components',
-                         integer_types, 1)
+            check_scalar(self.n_components, 'n_components', integer_types, 1)
 
             if self.n_components > X.shape[1]:
                 raise ValueError('The preferred embedding dimensionality '
@@ -798,8 +801,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             # Initialize a sparse (indicator) matrix for impostors storage
             impostors_sp = csr_matrix((n_samples, n_samples), dtype=np.int8)
             for class_id in classes[:-1]:
-                ind_in, = np.where(y == class_id)
-                ind_out, = np.where(y > class_id)
+                ind_in = np.where(y == class_id)[0]
+                ind_out = np.where(y > class_id)[0]
 
                 # Split ind_out x ind_in into chunks of a size that fits
                 # in memory
@@ -841,8 +844,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             # Initialize lists for impostors storage
             imp_row, imp_col, imp_dist = [], [], []
             for class_id in classes[:-1]:
-                ind_in, = np.where(y == class_id)
-                ind_out, = np.where(y > class_id)
+                ind_in = np.where(y == class_id)[0]
+                ind_out = np.where(y > class_id)[0]
 
                 # Split ind_out x ind_in into chunks of a size that fits in
                 # memory
@@ -891,7 +894,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
 
 def _select_target_neighbors(X, y, n_neighbors, classes=None, **nn_kwargs):
-    """Find the target neighbors of each data sample.
+    """Find the target neighbors of each sample.
 
     Parameters
     ----------
@@ -926,7 +929,7 @@ def _select_target_neighbors(X, y, n_neighbors, classes=None, **nn_kwargs):
         classes = np.unique(y)
 
     for class_id in classes:
-        ind_class, = np.where(y == class_id)
+        ind_class = np.where(y == class_id)[0]
         nn.fit(X[ind_class])
         neigh_ind = nn.kneighbors(return_distance=False)
         target_neighbors[ind_class] = ind_class[neigh_ind]
@@ -988,8 +991,8 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
             X_a[chunk], X_b, squared=True, Y_norm_squared=X_b_norm_squared,
             clip=False)
 
-        ind_b, = np.where((distances_ab < radii_a[chunk, None]).ravel())
-        ind_a, = np.where((distances_ab < radii_b[None, :]).ravel())
+        ind_b = np.where((distances_ab < radii_a[chunk, None]).ravel())[0]
+        ind_a = np.where((distances_ab < radii_b[None, :]).ravel())[0]
         ind = np.unique(np.concatenate((ind_a, ind_b)))
 
         if len(ind):
@@ -1054,12 +1057,12 @@ def _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph):
     n_active_triplets = 0
     for k in range(n_neighbors - 1, -1, -1):
         loss1 = np.maximum(dist_tn[imp_row, k] - dist_impostors, 0)
-        ac, = np.where(loss1 > 0)
+        ac = np.where(loss1 > 0)[0]
         n_active_triplets += len(ac)
         A1 = csr_matrix((2 * loss1[ac], (imp_row[ac], imp_col[ac])), shape)
 
         loss2 = np.maximum(dist_tn[imp_col, k] - dist_impostors, 0)
-        ac, = np.where(loss2 > 0)
+        ac = np.where(loss2 > 0)[0]
         n_active_triplets += len(ac)
         A2 = csc_matrix((2 * loss2[ac], (imp_row[ac], imp_col[ac])), shape)
 
