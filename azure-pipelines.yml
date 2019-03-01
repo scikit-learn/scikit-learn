@@ -72,4 +72,3 @@ jobs:
       py35_32:
         PYTHON_VERSION: '3.5'
         PYTHON_ARCH: '32'
-        COVERAGE: 'true'
