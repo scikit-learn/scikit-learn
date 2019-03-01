@@ -520,7 +520,18 @@ class TransformerMixin:
         if hasattr(super(), 'get_feature_names'):
             return super().get_feature_names(input_features)
         # generate feature names from class name by default
-        if hasattr(self, 'n_components_'):
+        # would be much less guessing if we stored the number
+        # of output features.
+        # Ideally this would be done in each class.
+        if hasattr(self, 'n_clusters'):
+            # this is before n_components_
+            # because n_components_ means something else
+            # in agglomerative clustering
+            n_features = self.n_clusters
+        elif hasattr(self, '_max_components'):
+            # special case for LinearDiscriminantAnalysis
+            n_features = min(self._max_components, self.n_components)
+        elif hasattr(self, 'n_components_'):
             # n_components could be auto or None
             # this is more likely to be an int
             n_features = self.n_components_

@@ -991,6 +991,14 @@ def _check_transformer(name, transformer_orig, X, y):
     transformer_clone = clone(transformer)
     X_pred = transformer_clone.fit_transform(X, y=y_)
 
+    input_features = ['feature%d' % i for i in range(n_features)]
+    feature_names = transformer_clone.get_feature_names(input_features)
+    if feature_names is not None:
+        if isinstance(X_pred, tuple):
+            assert len(feature_names) == X_pred[0].shape[1]
+        else:
+            assert len(feature_names) == X_pred.shape[1]
+
     if isinstance(X_pred, tuple):
         for x_pred in X_pred:
             assert_equal(x_pred.shape[0], n_samples)
