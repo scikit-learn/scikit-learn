@@ -952,17 +952,18 @@ def test_ridge_regression_dtype_stability(solver):
     ALPHA = 1.0
     rtol = 1e-2 if os.name == 'nt' and _IS_32BIT else 1e-5
 
-    results = { current_dtype: ridge_regression(X.astype(current_dtype),
-                                                y.astype(current_dtype),
-                                                alpha=ALPHA,
-                                                solver=solver,
-                                                random_state=RANDOM_STATE,
-                                                sample_weight=None,
-                                                max_iter=500,
-                                                tol=1e-10,
-                                                return_n_iter=False,
-                                                return_intercept=False)
-                for current_dtype in (np.float32, np.float64)}
+    results = dict()
+    for current_dtype in (np.float32, np.float64):
+        results[current_dtype] = ridge_regression(X.astype(current_dtype),
+                                                  y.astype(current_dtype),
+                                                  alpha=ALPHA,
+                                                  solver=solver,
+                                                  random_state=RANDOM_STATE,
+                                                  sample_weight=None,
+                                                  max_iter=500,
+                                                  tol=1e-10,
+                                                  return_n_iter=False,
+                                                  return_intercept=False)
 
     assert results[np.float32].dtype == np.float32
     assert results[np.float64].dtype == np.float64
