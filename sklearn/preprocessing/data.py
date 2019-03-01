@@ -1540,44 +1540,40 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
                         columns.append(bias)
                 XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
             else:
-                # When the matrix is small, it is faster to transpose
-                # the matrix first to multiply contiguous memory segments.
-                n = X.shape[1]
-
                 XP = np.empty((n_samples, self.n_output_features_),
                               dtype=X.dtype, order=self.order)
 
                 if self.include_bias:
                     XP[:, 0] = 1
 
-                pos = 1 if self.include_bias else 0
+                current_col = 1 if self.include_bias else 0
                 for d in range(0, self.degree):
                     if d == 0:
-                        XP[:, pos:pos + n] = X
-                        index = list(range(pos, pos + n))
-                        pos += n
-                        index.append(pos)
+                        XP[:, current_col:current_col + n_features] = X
+                        index = list(range(current_col,
+                                           current_col + n_features))
+                        current_col += n_features
+                        index.append(current_col)
                     else:
                         new_index = []
                         end = index[-1]
-                        for i in range(0, n):
-                            a = index[i]
-                            new_index.append(pos)
+                        for feature_idx in range(0, n_features):
+                            a = index[feature_idx]
+                            new_index.append(current_col)
+                            start = a
                             if self.interaction_only:
-                                start = a + index[i+1] - index[i]
-                            else:
-                                start = a
-                            new_pos = pos + end - start
-                            if new_pos <= pos:
+                                start += index[feature_idx + 1] - \
+                                         index[feature_idx]
+                            next_col = current_col + end - start
+                            if next_col <= current_col:
                                 break
                             np.multiply(XP[:, start:end],
-                                        X[:, i:i + 1],
-                                        out=XP[:, pos:new_pos],
-                                        where=True,
-                                        casting='no')
-                            pos = new_pos
+                                        X[:, feature_idx:feature_idx + 1],
+                                        out=XP[:, current_col:next_col],
+                                        where=True, casting='no')
+                            current_col = next_col
 
-                        new_index.append(pos)
+                        new_index.append(current_col)
                         index = new_index
 
         return XP
