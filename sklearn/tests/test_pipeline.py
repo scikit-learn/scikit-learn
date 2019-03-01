@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.utils.testing import assert_no_warnings
@@ -701,6 +700,14 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
+    # TODO need to investigate this
+    # exp = 2 * 3
+    # pipeline = Pipeline(
+    #     [('m2', mult2), ('m3', mult3), ('last', passthrough)])
+    # assert_array_equal([[exp]], pipeline.fit_transform(X, y))
+    # assert_array_equal([exp], pipeline.fit(X).predict(X))
+    # assert_array_equal(X, pipeline.inverse_transform([[exp]]))
+
 
 def test_pipeline_ducktyping():
     pipeline = make_pipeline(Mult(5))
@@ -1216,8 +1223,8 @@ def test_pipeline_resample():
     # test transform and fit_transform:
     X_trans, y_trans = pipeline.fit_resample(X, y)
     X_trans2, y_trans2 = resampler.fit_resample(X, y)
-    assert_allclose(X_trans, X_trans2, rtol=R_TOL)
-    assert_allclose(y_trans, y_trans2, rtol=R_TOL)
+    assert_array_equal(X_trans, X_trans2)
+    assert_array_equal(y_trans, y_trans2)
 
     pca = PCA()
     pipeline = Pipeline([('pca', PCA()), ('resampler', resampler)])
@@ -1225,11 +1232,12 @@ def test_pipeline_resample():
     X_trans, y_trans = pipeline.fit_resample(X, y)
     X_pca = pca.fit_transform(X)
     X_trans2, y_trans2 = resampler.fit_resample(X_pca, y)
-    assert_allclose(X_trans, X_trans2, rtol=R_TOL)
-    assert_allclose(y_trans, y_trans2, rtol=R_TOL)
+    assert_array_equal(X_trans, X_trans2)
+    assert_array_equal(y_trans, y_trans2)
 
 
-def test_pipeline_none_classifier():
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipeline_none_classifier(passthrough):
     # Test pipeline using None as preprocessing step and a classifier
     X, y = make_classification(
         n_classes=2,
@@ -1243,7 +1251,7 @@ def test_pipeline_none_classifier():
         n_samples=500,
         random_state=0)
     clf = LogisticRegression(solver='lbfgs', random_state=0)
-    pipe = make_pipeline(None, clf)
+    pipe = make_pipeline(passthrough, clf)
     pipe.fit(X, y)
     pipe.predict(X)
     pipe.predict_proba(X)
@@ -1251,7 +1259,8 @@ def test_pipeline_none_classifier():
     pipe.score(X, y)
 
 
-def test_pipeline_none_resampler_classifier():
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipeline_none_resampler_classifier(passthrough):
     # Test pipeline using None, an OutlierResampler and a classifier
     X, y = make_classification(
         n_classes=2,
@@ -1266,7 +1275,7 @@ def test_pipeline_none_resampler_classifier():
         random_state=0)
     clf = LogisticRegression(solver='lbfgs', random_state=0)
     outlier = OneClassSVM(gamma='scale')
-    pipe = make_pipeline(None, outlier, clf)
+    pipe = make_pipeline(passthrough, outlier, clf)
     pipe.fit(X, y)
     pipe.predict(X)
     pipe.predict_proba(X)
@@ -1274,7 +1283,8 @@ def test_pipeline_none_resampler_classifier():
     pipe.score(X, y)
 
 
-def test_pipeline_resampler_none_classifier():
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipeline_resampler_none_classifier(passthrough):
     # Test pipeline using an OutlierResampler, None and a classifier
     X, y = make_classification(
         n_classes=2,
@@ -1289,7 +1299,7 @@ def test_pipeline_resampler_none_classifier():
         random_state=0)
     clf = LogisticRegression(solver='lbfgs', random_state=0)
     outlier = OneClassSVM(gamma='scale')
-    pipe = make_pipeline(outlier, None, clf)
+    pipe = make_pipeline(outlier, passthrough, clf)
     pipe.fit(X, y)
     pipe.predict(X)
     pipe.predict_proba(X)
@@ -1297,7 +1307,8 @@ def test_pipeline_resampler_none_classifier():
     pipe.score(X, y)
 
 
-def test_pipeline_none_resampler_resample():
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipeline_none_resampler_resample(passthrough):
     # Test pipeline using None step and a resampler
     X, y = make_classification(
         n_classes=2,
@@ -1312,11 +1323,12 @@ def test_pipeline_none_resampler_resample():
         random_state=0)
 
     outlier = OneClassSVM(gamma='scale')
-    pipe = make_pipeline(None, outlier)
+    pipe = make_pipeline(passthrough, outlier)
     pipe.fit_resample(X, y)
 
 
-def test_pipeline_none_transformer():
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipeline_none_transformer(passthrough):
     # Test pipeline using None and a transformer that implements transform and
     # inverse_transform
     X, y = make_classification(
@@ -1332,7 +1344,7 @@ def test_pipeline_none_transformer():
         random_state=0)
 
     pca = PCA(whiten=True)
-    pipe = make_pipeline(None, pca)
+    pipe = make_pipeline(passthrough, pca)
     pipe.fit(X, y)
     X_trans = pipe.transform(X)
     X_inversed = pipe.inverse_transform(X_trans)
@@ -1352,7 +1364,7 @@ def test_pipeline_methods_anova_outlier():
         n_clusters_per_class=1,
         n_samples=500,
         random_state=0)
-    # Test with RandomUnderSampling + Anova + LogisticRegression
+    # Test with outlierdetection + Anova + LogisticRegression
     clf = LogisticRegression(solver='lbfgs')
     outlier = OneClassSVM(gamma='scale')
     filter1 = SelectKBest(f_classif, k=2)
@@ -1381,7 +1393,7 @@ def test_pipeline_with_step_that_implements_both_sample_and_transform():
         random_state=0)
 
     clf = LogisticRegression(solver='lbfgs')
-    with raises(TypeError):
+    with raises(TypeError, match='should be estimators that implement'):
         Pipeline([('step', FitTransformResample()), ('logistic', clf)])
 
 
@@ -1449,44 +1461,29 @@ def test_make_pipeline_memory():
     shutil.rmtree(cachedir)
 
 
-def test_shape_correct_after_resample():
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=50,
-        random_state=0)
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_outlier_shape_correct_after_resample(passthrough):
+    X, y = make_classification()
 
     outlier = OneClassSVM(gamma='scale')
-    pipe = make_pipeline(outlier, None)
+    pca = PCA()
+    pipe = make_pipeline(outlier, passthrough)
+    pipe2 = make_pipeline(outlier, pca)
 
     outliers = outlier.fit_predict(X, y) == -1
     n_outliers = np.sum(outliers)
     assert n_outliers > 0  # we have some outliers in the dataset
 
     X_new, y_new = pipe.fit_resample(X, y)
+    X_new2 = pipe2.fit_transform(X, y)
 
     assert X_new.shape[0] == X.shape[0] - n_outliers
     assert y_new.shape[0] == y.shape[0] - n_outliers
+    assert X_new2.shape[0] == X.shape[0] - n_outliers
 
 
 def test_resamplers_not_called():
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=50,
-        random_state=0)
+    X, y = make_classification(n_samples=10)
 
     mul2 = Mult(2)
     dre = DummyResampler()
@@ -1499,6 +1496,7 @@ def test_resamplers_not_called():
     delattr(dre, "means_")
 
     pipe.predict(X)
+    pipe.score(X)
     assert not hasattr(dre, "means_")
 
     pipe.fit_transform(X, y)
@@ -1510,17 +1508,7 @@ def test_resamplers_not_called():
 
 
 def test_clusterer_and_resampler_error():
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=10,
-        random_state=0)
+    X, y = make_classification(n_samples=10)
 
     dre = DummyResampler()
     pipe = make_pipeline(dre, KMeans())
@@ -1528,3 +1516,20 @@ def test_clusterer_and_resampler_error():
     with pytest.raises(NotImplementedError,
                        match=msg):
         pipe.fit_predict(X, y)
+
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipe_exposes_resample_correctly(passthrough):
+    # this test will be handled by test_metaestimators later, it's just here
+    # now for simplicity
+    # TODO make this test pass (maybe something similar is also broken for
+    # fit_transform)
+    X, y = make_classification(n_samples=10)
+
+    dre = DummyResampler()
+    mul3 = Mult(3)
+    pipe = make_pipeline(dre, mul3)
+    pipe2 = make_pipeline(dre, passthrough)
+
+    #pipe2 should have fit_resample, pipe shouldn't
+    assert not hasattr(pipe, 'fit_resample')
+    assert hasattr(pipe2, 'fit_resample')

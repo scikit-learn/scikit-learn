@@ -197,10 +197,9 @@ class Pipeline(_BaseComposition):
             stop -= 1
 
         for idx, (name, trans) in enumerate(islice(self.steps, 0, stop)):
-            if trans is not None and ((trans != 'passthrough' and not
-                                       hasattr(trans, 'fit_resample')) or
-                                      (with_resamplers and
-                                       hasattr(trans, 'fit_resample'))):
+            if trans is not None and trans != 'passthrough' \
+                    and (not hasattr(trans, 'fit_resample') or \
+                         (with_resamplers and hasattr(trans, 'fit_resample'))):
                 yield idx, name, trans
 
     @property
@@ -341,7 +340,7 @@ class Pipeline(_BaseComposition):
             return last_step.fit(Xt, yt, **fit_params).transform(Xt)
 
     def fit_resample(self, X, y=None, **fit_params):
-        """Fit the model and sample with the final estimator
+        """Fit the model and resample with the final estimator
 
         Fits all the transformers/resamplers one after the other and
         transforms/resamples the data, then uses fit_resample on the
