@@ -69,24 +69,26 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
                                expected_observations, expected_features,
                                expected_missing,
                                expected_data_dtype, expected_target_dtype,
-                               expect_sparse, compare_default_target):
+                               expect_sparse, compare_default_target,
+                               return_frame):
     # fetches a dataset in three various ways from OpenML, using the
     # fetch_openml function, and does various checks on the validity of the
     # result. Note that this function can be mocked (by invoking
     # _monkey_patch_webbased_functions before invoking this function)
     data_by_name_id = fetch_openml(name=data_name, version=data_version,
-                                   cache=False)
+                                   cache=False, return_frame=return_frame)
     assert int(data_by_name_id.details['id']) == data_id
 
     # Please note that cache=False is crucial, as the monkey patched files are
     # not consistent with reality
-    fetch_openml(name=data_name, cache=False)
+    fetch_openml(name=data_name, cache=False, return_frame=return_frame)
     # without specifying the version, there is no guarantee that the data id
     # will be the same
 
     # fetch with dataset id
     data_by_id = fetch_openml(data_id=data_id, cache=False,
-                              target_column=target_column)
+                              target_column=target_column,
+                              return_frame=return_frame)
     assert data_by_id.details['name'] == data_name
     assert data_by_id.data.shape == (expected_observations, expected_features)
     if isinstance(target_column, str):
@@ -96,7 +98,10 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
         # multi target, so target is array
         assert data_by_id.target.shape == (expected_observations,
                                            len(target_column))
-    assert data_by_id.data.dtype == np.float64
+    if return_frame:
+        assert np.all(data_by_id.data.dtypes == np.float64)
+    else:
+        assert data_by_id.data.dtype == np.float64
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
     for feature in data_by_id.feature_names:
@@ -255,7 +260,8 @@ def _monkey_patch_webbased_functions(context,
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
-def test_fetch_openml_iris(monkeypatch, gzip_response):
+@pytest.mark.parametrize('return_frame', [True, False])
+def test_fetch_openml_iris(monkeypatch, gzip_response, return_frame):
     # classification dataset with numeric only columns
     data_id = 61
     data_name = 'iris'
@@ -266,23 +272,23 @@ def test_fetch_openml_iris(monkeypatch, gzip_response):
     expected_missing = 0
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
-    assert_warns_message(
-        UserWarning,
-        "Multiple active versions of the dataset matching the name"
-        " iris exist. Versions may be fundamentally different, "
-        "returning version 1.",
-        _fetch_dataset_from_openml,
-        **{'data_id': data_id, 'data_name': data_name,
-           'data_version': data_version,
-           'target_column': target_column,
-           'expected_observations': expected_observations,
-           'expected_features': expected_features,
-           'expected_missing': expected_missing,
-           'expect_sparse': False,
-           'expected_data_dtype': np.float64,
-           'expected_target_dtype': object,
-           'compare_default_target': True}
-    )
+    warn_msg = ("Multiple active versions of the dataset matching the name"
+                " iris exist. Versions may be fundamentally different, "
+                "returning version 1.")
+    with pytest.warns(UserWarning, match=warn_msg):
+        _fetch_dataset_from_openml(
+            **{'data_id': data_id, 'data_name': data_name,
+               'data_version': data_version,
+               'target_column': target_column,
+               'expected_observations': expected_observations,
+               'expected_features': expected_features,
+               'expected_missing': expected_missing,
+               'expect_sparse': False,
+               'expected_data_dtype': np.float64,
+               'expected_target_dtype': object,
+               'compare_default_target': True,
+               'return_frame': return_frame}
+        )
 
 
 def test_decode_iris(monkeypatch):
@@ -724,3 +730,13 @@ def test_fetch_openml_raises_illegal_argument():
 
     with pytest.raises(ValueError, match="Neither name nor data_id are"):
         fetch_openml()
+
+
+@pytest.mark.parametrize('gzip_response', [True, False])
+def test_fetch_openml_dataframe(monkeypatch, gzip_response):
+    data_id = 40945
+    _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
+    titanic_bunch = fetch_openml(data_id=data_id, cache=False,
+                                 return_frame=True)
+    X, y = fetch_openml(data_id=data_id, cache=False, return_frame=True,
+                        return_X_y=True)
