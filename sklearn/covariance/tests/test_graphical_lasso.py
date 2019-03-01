@@ -12,7 +12,7 @@ from sklearn.utils.testing import assert_array_less
 from sklearn.covariance import (graphical_lasso, GraphicalLasso,
                                 GraphicalLassoCV, empirical_covariance)
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
-from sklearn.externals.six.moves import StringIO
+from io import StringIO
 from sklearn.utils import check_random_state
 from sklearn import datasets
 
@@ -83,6 +83,23 @@ def test_graphical_lasso_iris():
                                     mode=method)
         assert_array_almost_equal(cov, cov_R)
         assert_array_almost_equal(icov, icov_R)
+
+
+def test_graph_lasso_2D():
+    # Hard-coded solution from Python skggm package
+    # obtained by calling `quic(emp_cov, lam=.1, tol=1e-8)`
+    cov_skggm = np.array([[3.09550269, 1.186972],
+                         [1.186972, 0.57713289]])
+
+    icov_skggm = np.array([[1.52836773, -3.14334831],
+                          [-3.14334831,  8.19753385]])
+    X = datasets.load_iris().data[:, 2:]
+    emp_cov = empirical_covariance(X)
+    for method in ('cd', 'lars'):
+        cov, icov = graphical_lasso(emp_cov, alpha=.1, return_costs=False,
+                                    mode=method)
+        assert_array_almost_equal(cov, cov_skggm)
+        assert_array_almost_equal(icov, icov_skggm)
 
 
 def test_graphical_lasso_iris_singular():

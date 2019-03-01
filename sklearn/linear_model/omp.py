@@ -13,10 +13,10 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel, _pre_fit
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
@@ -539,7 +539,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         return np.squeeze(coef)
 
 
-class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
+class OrthogonalMatchingPursuit(LinearModel, RegressorMixin, MultiOutputMixin):
     """Orthogonal Matching Pursuit model (OMP)
 
     Read more in the :ref:`User Guide <omp>`.
@@ -790,8 +790,8 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, :class:`KFold` is used.
 

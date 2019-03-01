@@ -291,13 +291,13 @@ to the prediction function.
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
-.. _random_trees_embedding:
-
 .. topic:: References
 
  .. [L2014] G. Louppe,
          "Understanding Random Forests: From Theory to Practice",
          PhD Thesis, U. of Liege, 2014.
+
+.. _random_trees_embedding:
 
 Totally Random Trees Embedding
 ------------------------------
@@ -594,21 +594,20 @@ learners. Decision trees have a number of abilities that make them
 valuable for boosting, namely the ability to handle data of mixed type
 and the ability to model complex functions.
 
-Similar to other boosting algorithms GBRT builds the additive model in
-a forward stagewise fashion:
+Similar to other boosting algorithms, GBRT builds the additive model in
+a greedy fashion:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x)
+    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x),
 
-At each stage the decision tree :math:`h_m(x)` is chosen to
-minimize the loss function :math:`L` given the current model
-:math:`F_{m-1}` and its fit :math:`F_{m-1}(x_i)`
+where the newly added tree :math:`h_m` tries to minimize the loss :math:`L`,
+given the previous ensemble :math:`F_{m-1}`:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) + h(x))
+    h_m =  \arg\min_{h} \sum_{i=1}^{n} L(y_i,
+    F_{m-1}(x_i) + h(x_i)).
 
 The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.
@@ -1054,10 +1053,10 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
     :align: center
     :scale: 75%
 
-Using the `VotingClassifier` with `GridSearch`
-----------------------------------------------
+Using the `VotingClassifier` with `GridSearchCV`
+------------------------------------------------
 
-The `VotingClassifier` can also be used together with `GridSearch` in order
+The `VotingClassifier` can also be used together with `GridSearchCV` in order
 to tune the hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV

@@ -13,7 +13,6 @@ from sklearn.utils.multiclass import type_of_target
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
@@ -53,7 +52,7 @@ def test_label_binarizer():
     # For sparse case:
     lb = LabelBinarizer(sparse_output=True)
     got = lb.fit_transform(inp)
-    assert_true(issparse(got))
+    assert issparse(got)
     assert_array_equal(lb.classes_, ["pos"])
     assert_array_equal(expected, got.toarray())
     assert_array_equal(lb.inverse_transform(got.toarray()), inp)
@@ -256,8 +255,8 @@ def test_sparse_output_multilabel_binarizer():
     # test input as iterable of iterables
     inputs = [
         lambda: [(2, 3), (1,), (1, 2)],
-        lambda: (set([2, 3]), set([1]), set([1, 2])),
-        lambda: iter([iter((2, 3)), iter((1,)), set([1, 2])]),
+        lambda: ({2, 3}, {1}, {1, 2}),
+        lambda: iter([iter((2, 3)), iter((1,)), {1, 2}]),
     ]
     indicator_mat = np.array([[0, 1, 1],
                               [1, 0, 0],
@@ -300,8 +299,8 @@ def test_multilabel_binarizer():
     # test input as iterable of iterables
     inputs = [
         lambda: [(2, 3), (1,), (1, 2)],
-        lambda: (set([2, 3]), set([1]), set([1, 2])),
-        lambda: iter([iter((2, 3)), iter((1,)), set([1, 2])]),
+        lambda: ({2, 3}, {1}, {1, 2}),
+        lambda: iter([iter((2, 3)), iter((1,)), {1, 2}]),
     ]
     indicator_mat = np.array([[0, 1, 1],
                               [1, 0, 0],

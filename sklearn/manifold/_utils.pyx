@@ -1,3 +1,5 @@
+# cython: language_level=3, boundscheck=False
+
 from libc cimport math
 cimport cython
 import numpy as np
@@ -10,7 +12,6 @@ cdef extern from "numpy/npy_math.h":
 cdef float EPSILON_DBL = 1e-8
 cdef float PERPLEXITY_TOLERANCE = 1e-5
 
-@cython.boundscheck(False)
 cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
         np.ndarray[np.float32_t, ndim=2] affinities,
         np.ndarray[np.int64_t, ndim=2] neighbors,

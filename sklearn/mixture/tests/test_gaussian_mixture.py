@@ -5,14 +5,14 @@
 import sys
 import copy
 import warnings
+import pytest
 
 import numpy as np
-
 from scipy import stats, linalg
 
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets.samples_generator import make_spd_matrix
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture.gaussian_mixture import GaussianMixture
 from sklearn.mixture.gaussian_mixture import (
@@ -32,7 +32,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
@@ -69,7 +68,7 @@ def generate_data(n_samples, n_features, weights, means, precisions,
     return X
 
 
-class RandomData(object):
+class RandomData:
     def __init__(self, rng, n_samples=500, n_components=2, n_features=2,
                  scale=50):
         self.n_samples = n_samples
@@ -571,8 +570,15 @@ def test_gaussian_mixture_predict_predict_proba():
         assert_greater(adjusted_rand_score(Y, Y_pred), .95)
 
 
-def test_gaussian_mixture_fit_predict():
-    rng = np.random.RandomState(0)
+@pytest.mark.filterwarnings("ignore:.*did not converge.*")
+@pytest.mark.parametrize('seed, max_iter, tol', [
+    (0, 2, 1e-7),    # strict non-convergence
+    (1, 2, 1e-1),    # loose non-convergence
+    (3, 300, 1e-7),  # strict convergence
+    (4, 300, 1e-1),  # loose convergence
+])
+def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
+    rng = np.random.RandomState(seed)
     rand_data = RandomData(rng)
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
@@ -581,7 +587,8 @@ def test_gaussian_mixture_fit_predict():
                             random_state=rng, weights_init=rand_data.weights,
                             means_init=rand_data.means,
                             precisions_init=rand_data.precisions[covar_type],
-                            covariance_type=covar_type)
+                            covariance_type=covar_type,
+                            max_iter=max_iter, tol=tol)
 
         # check if fit_predict(X) is equivalent to fit(X).predict(X)
         f = copy.deepcopy(g)
@@ -589,6 +596,15 @@ def test_gaussian_mixture_fit_predict():
         Y_pred2 = g.fit_predict(X)
         assert_array_equal(Y_pred1, Y_pred2)
         assert_greater(adjusted_rand_score(Y, Y_pred2), .95)
+
+
+def test_gaussian_mixture_fit_predict_n_init():
+    # Check that fit_predict is equivalent to fit.predict, when n_init > 1
+    X = np.random.RandomState(0).randn(1000, 5)
+    gm = GaussianMixture(n_components=5, n_init=5, random_state=0)
+    y_pred1 = gm.fit_predict(X)
+    y_pred2 = gm.predict(X)
+    assert_array_equal(y_pred1, y_pred2)
 
 
 def test_gaussian_mixture_fit():
@@ -739,8 +755,8 @@ def test_gaussian_mixture_aic_bic():
         bic = (2 * n_samples * sgh +
                np.log(n_samples) * g._n_parameters())
         bound = n_features / np.sqrt(n_samples)
-        assert_true((g.aic(X) - aic) / n_samples < bound)
-        assert_true((g.bic(X) - bic) / n_samples < bound)
+        assert (g.aic(X) - aic) / n_samples < bound
+        assert (g.bic(X) - bic) / n_samples < bound
 
 
 def test_gaussian_mixture_verbose():
@@ -764,8 +780,10 @@ def test_gaussian_mixture_verbose():
             sys.stdout = old_stdout
 
 
-def test_warm_start():
-    random_state = 0
+@pytest.mark.filterwarnings('ignore:.*did not converge.*')
+@pytest.mark.parametrize("seed", (0, 1, 2))
+def test_warm_start(seed):
+    random_state = seed
     rng = np.random.RandomState(random_state)
     n_samples, n_features, n_components = 500, 2, 2
     X = rng.rand(n_samples, n_features)
@@ -778,16 +796,14 @@ def test_warm_start():
                         reg_covar=0, random_state=random_state,
                         warm_start=True)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", ConvergenceWarning)
-        g.fit(X)
-        score1 = h.fit(X).score(X)
-        score2 = h.fit(X).score(X)
+    g.fit(X)
+    score1 = h.fit(X).score(X)
+    score2 = h.fit(X).score(X)
 
     assert_almost_equal(g.weights_, h.weights_)
     assert_almost_equal(g.means_, h.means_)
     assert_almost_equal(g.precisions_, h.precisions_)
-    assert_greater(score2, score1)
+    assert score2 > score1
 
     # Assert that by using warm_start we can converge to a good solution
     g = GaussianMixture(n_components=n_components, n_init=1,
@@ -797,13 +813,18 @@ def test_warm_start():
                         max_iter=5, reg_covar=0, random_state=random_state,
                         warm_start=True, tol=1e-6)
 
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", ConvergenceWarning)
-        g.fit(X)
-        h.fit(X).fit(X)
+    g.fit(X)
+    assert not g.converged_
 
-    assert_true(not g.converged_)
-    assert_true(h.converged_)
+    h.fit(X)
+    # depending on the data there is large variability in the number of
+    # refit necessary to converge due to the complete randomness of the
+    # data
+    for _ in range(1000):
+        h.fit(X)
+        if h.converged_:
+            break
+    assert h.converged_
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -905,7 +926,7 @@ def test_monotonic_likelihood():
                 if gmm.converged_:
                     break
 
-            assert_true(gmm.converged_)
+            assert gmm.converged_
 
 
 def test_regularisation():

@@ -183,6 +183,7 @@ Linear models: :math:`y = X\beta + \epsilon`
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
 
+
     >>> # The mean square error
     >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
     ...                                                   # doctest: +ELLIPSIS
@@ -256,7 +257,6 @@ This is an example of **bias/variance tradeoff**: the larger the ridge
 We can choose ``alpha`` to minimize left out error, this time using the
 diabetes dataset rather than our synthetic data::
 
-    >>> from __future__ import print_function
     >>> alphas = np.logspace(-4, -1, 6)
     >>> print([regr.set_params(alpha=alpha)
     ...            .fit(diabetes_X_train, diabetes_y_train)
@@ -333,6 +333,7 @@ application of Occam's razor: *prefer simpler models*.
     >>> best_alpha = alphas[scores.index(max(scores))]
     >>> regr.alpha = best_alpha
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
+    ... # doctest: +NORMALIZE_WHITESPACE
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
        max_iter=1000, normalize=False, positive=False, precompute=False,
        random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
@@ -378,7 +379,7 @@ function or **logistic** function:
     ...                                       multi_class='multinomial')
     >>> log.fit(iris_X_train, iris_y_train)  # doctest: +NORMALIZE_WHITESPACE
     LogisticRegression(C=100000.0, class_weight=None, dual=False,
-        fit_intercept=True, intercept_scaling=1, max_iter=100,
+        fit_intercept=True, intercept_scaling=1, l1_ratio=None, max_iter=100,
         multi_class='multinomial', n_jobs=None, penalty='l2', random_state=None,
         solver='lbfgs', tol=0.0001, verbose=0, warm_start=False)
 
@@ -450,7 +451,7 @@ the separating line (less regularization).
 
 .. topic:: Example:
 
- - :ref:`sphx_glr_auto_examples_svm_plot_iris.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in

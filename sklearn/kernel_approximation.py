@@ -52,14 +52,14 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     >>> y = [0, 0, 1, 1]
     >>> rbf_feature = RBFSampler(gamma=1, random_state=1)
     >>> X_features = rbf_feature.fit_transform(X)
-    >>> clf = SGDClassifier(max_iter=5)
+    >>> clf = SGDClassifier(max_iter=5, tol=1e-3)
     >>> clf.fit(X_features, y)
     ... # doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
            n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=None,
+           power_t=0.5, random_state=None, shuffle=True, tol=0.001,
            validation_fraction=0.1, verbose=0, warm_start=False)
     >>> clf.score(X_features, y)
     1.0
@@ -162,13 +162,13 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     ...                                  n_components=10,
     ...                                  random_state=0)
     >>> X_features = chi2_feature.fit_transform(X, y)
-    >>> clf = SGDClassifier(max_iter=10)
-    >>> clf.fit(X_features, y)
+    >>> clf = SGDClassifier(max_iter=10, tol=1e-3)
+    >>> clf.fit(X_features, y)  # doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=10,
            n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=None,
+           power_t=0.5, random_state=None, shuffle=True, tol=0.001,
            validation_fraction=0.1, verbose=0, warm_start=False)
     >>> clf.score(X_features, y)
     1.0
@@ -282,13 +282,13 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     >>> X, y = load_digits(return_X_y=True)
     >>> chi2sampler = AdditiveChi2Sampler(sample_steps=2)
     >>> X_transformed = chi2sampler.fit_transform(X, y)
-    >>> clf = SGDClassifier(max_iter=5, random_state=0)
-    >>> clf.fit(X_transformed, y)
+    >>> clf = SGDClassifier(max_iter=5, random_state=0, tol=1e-3)
+    >>> clf.fit(X_transformed, y)  # doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
            n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=0, shuffle=True, tol=None,
+           power_t=0.5, random_state=0, shuffle=True, tol=0.001,
            validation_fraction=0.1, verbose=0, warm_start=False)
     >>> clf.score(X_transformed, y) # doctest: +ELLIPSIS
     0.9543...
@@ -334,7 +334,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer.
         """
-        X = check_array(X, accept_sparse='csr')
+        check_array(X, accept_sparse='csr')
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
@@ -434,6 +434,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             X_new.append(X_step)
 
         return sp.hstack(X_new)
+
+    def _more_tags(self):
+        return {'stateless': True}
 
 
 class Nystroem(BaseEstimator, TransformerMixin):
