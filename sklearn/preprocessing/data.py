@@ -2230,10 +2230,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         if self.n_quantiles > n_samples:
             warnings.warn("n_quantiles (%s) is greater than the total number "
-                          "of samples (%s). n_quantiles will be set to "
-                          "n_samples as more quantiles do not lead to a "
-                          "better approximation of the used cumulative "
-                          "distribution function estimator."
+                          "of samples (%s). n_quantiles is set to "
+                          "n_samples."
                           % (self.n_quantiles, n_samples))
         self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
 
