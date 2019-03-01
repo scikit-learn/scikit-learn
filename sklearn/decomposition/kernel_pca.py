@@ -334,7 +334,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         # scale eigenvectors (properly account for null-space for dot product)
         nz = np.flatnonzero(self.lambdas_)
-        scaled_alphas = np.zeros(self.alphas_.shape)
+        scaled_alphas = np.zeros_like(self.alphas_)
         scaled_alphas[:, nz] = self.alphas_[:, nz] / np.sqrt(self.lambdas_[nz])
 
         # Project by doing a scalar product between K and the scaled eigenvects
