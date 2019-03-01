@@ -837,6 +837,28 @@ def test_ridge_fit_intercept_sparse():
         assert_array_almost_equal(dense.coef_, sparse.coef_)
 
 
+@pytest.mark.parametrize('return_intercept', [False, True])
+@pytest.mark.parametrize('sample_weight', [None, np.ones(1000)])
+@pytest.mark.parametrize('arr_type', [np.array, sp.csr_matrix])
+def test_ridge_check_auto_modes(return_intercept, sample_weight, arr_type):
+    X = np.random.rand(1000, 3)
+    true_coefs = [1, 2, 0.1]
+    y = np.dot(X, true_coefs)
+    X_testing = arr_type(X)
+
+    target = ridge_regression(X_testing, y, 1,
+                              solver='auto',
+                              sample_weight=sample_weight,
+                              return_intercept=return_intercept
+                              )
+    try:
+        coef, intercept = target
+        assert_array_almost_equal(coef, true_coefs, decimal=1)
+        assert_array_almost_equal(intercept, 0, decimal=1)
+    except ValueError:
+        assert_array_almost_equal(target, true_coefs, decimal=1)
+
+
 def test_errors_and_values_helper():
     ridgecv = _RidgeGCV()
     rng = check_random_state(42)

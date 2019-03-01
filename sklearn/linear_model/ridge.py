@@ -368,11 +368,26 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                       return_n_iter=False, return_intercept=False,
                       X_scale=None, X_offset=None):
 
+    has_sw = sample_weight is not None
+
+    def _select_auto_mode():
+        if return_intercept:
+            # only sag and saga support fitting intercept directly
+            return "sag"
+        if has_sw:
+            # this should be changed since all solvers support sample_weights
+            return "cholesky"
+        if sparse.issparse(X):
+            return "sparse_cg"
+        return "cholesky"
+
+    if solver == 'auto':
+        solver = _select_auto_mode()
+
     if return_intercept and sparse.issparse(X) and solver != 'sag':
-        if solver != 'auto':
-            warnings.warn("In Ridge, only 'sag' solver can currently fit the "
-                          "intercept when X is sparse. Solver has been "
-                          "automatically changed into 'sag'.")
+        warnings.warn("In Ridge, only 'sag' solver can currently fit the "
+                      "intercept. Solver has been "
+                      "automatically changed into 'sag'.")
         solver = 'sag'
 
     _dtype = [np.float64, np.float32]
@@ -404,14 +419,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         raise ValueError("Number of samples in X and y does not correspond:"
                          " %d != %d" % (n_samples, n_samples_))
 
-    has_sw = sample_weight is not None
 
-    if solver == 'auto':
-        # cholesky if it's a dense array and cg in any other case
-        if not sparse.issparse(X) or has_sw:
-            solver = 'cholesky'
-        else:
-            solver = 'sparse_cg'
 
     if has_sw:
         if np.atleast_1d(sample_weight).ndim > 1:
@@ -555,7 +563,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
             # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
         else:
-            if sparse.issparse(X):
+            if sparse.issparse(X) and self.solver == 'sparse_cg':
                 # required to fit intercept with sparse_cg solver
                 params = {'X_offset': X_offset, 'X_scale': X_scale}
             else:
