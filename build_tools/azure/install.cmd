@@ -17,7 +17,9 @@ IF "%PYTHON_ARCH%"=="64" (
 ) else (
     pip install numpy scipy cython pytest wheel pillow
 )
-python -m pip install -U pip
+if "%COVERAGE%" == "true" (
+    pip install coverage codecov pytest-cov
+)
 python --version
 pip --version
 
