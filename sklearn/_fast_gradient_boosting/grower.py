@@ -56,14 +56,6 @@ class TreeNode:
     value : float or None
         The value of the leaf, as computed in finalize_leaf(). None for
         non-leaf nodes
-    find_split_time : float
-        The total time spent computing the histogram and finding the best
-        split at the node.
-    apply_split_time : float
-        The total time spent actually splitting the node, e.g. splitting
-        sample_indices into left and right child.
-    hist_subtraction : bool
-        Wheter the subtraction method was used for computing the histograms.
     partition_start : int
         start position of the node's sample_indices in splitter.partition
     partition_stop : int
@@ -77,9 +69,6 @@ class TreeNode:
     histograms = None
     sibling = None
     parent = None
-    find_split_time = 0.
-    apply_split_time = 0.
-    hist_subtraction = False
 
     # start and stop indices of the node in the splitter.partition
     # array. Concretely,
@@ -208,6 +197,7 @@ class TreeGrower:
         self.splittable_nodes = []
         self.finalized_leaves = []
         self.total_find_split_time = 0.  # time spent finding the best splits
+        self.total_compute_hist_time = 0.  # time spent computing histograms
         self.total_apply_split_time = 0.  # time spent splitting nodes
         self._intilialize_root(gradients, hessians, hessians_are_constant)
         self.n_nodes = 1
@@ -324,9 +314,7 @@ class TreeGrower:
          sample_indices_right,
          right_child_pos) = self.splitter.split_indices(node.split_info,
                                                         node.sample_indices)
-        toc = time()
-        node.apply_split_time = toc - tic
-        self.total_apply_split_time += node.apply_split_time
+        self.total_apply_split_time += time() - tic
 
         depth = node.depth + 1
         n_leaf_nodes = len(self.finalized_leaves) + len(self.splittable_nodes)
@@ -393,17 +381,21 @@ class TreeGrower:
             # We use the brute O(n_samples) method on the child that has the
             # smallest number of samples, and the subtraction trick O(n_bins)
             # on the other one.
+            tic = time()
             smallest_child.histograms = \
                 self.histogram_builder.compute_histograms_brute(
                     smallest_child.sample_indices)
             largest_child.histograms = \
                 self.histogram_builder.compute_histograms_subtraction(
                     node.histograms, smallest_child.histograms)
+            self.total_compute_hist_time += time() - tic
 
+            tic = time()
             if should_split_left:
                 self._compute_best_split_and_push(left_child_node)
             if should_split_right:
                 self._compute_best_split_and_push(right_child_node)
+            self.total_find_split_time += time() - tic
 
         return left_child_node, right_child_node
 

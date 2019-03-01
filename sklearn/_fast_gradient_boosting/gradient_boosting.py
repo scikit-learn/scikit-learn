@@ -92,6 +92,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         fit_start_time = time()
         acc_find_split_time = 0.  # time spent finding the best splits
         acc_apply_split_time = 0.  # time spent splitting nodes
+        acc_compute_hist_time = 0.  # time spent computing histograms
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.
         X, y = check_X_y(X, y, dtype=[X_DTYPE])
@@ -235,6 +236,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 acc_apply_split_time += grower.total_apply_split_time
                 acc_find_split_time += grower.total_find_split_time
+                acc_compute_hist_time += grower.total_compute_hist_time
 
                 predictor = grower.make_predictor(
                     bin_thresholds=self.bin_mapper_.bin_thresholds_)
@@ -271,6 +273,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 for predictors_at_ith_iteration in self._predictors)
             print("Fit {} trees in {:.3f} s, ({} total leaves)".format(
                 n_predictors, duration, n_total_leaves))
+            print("{:<32} {:.3f}s".format('Time spent computing histograms:',
+                                          acc_compute_hist_time))
             print("{:<32} {:.3f}s".format('Time spent finding best splits:',
                                           acc_find_split_time))
             print("{:<32} {:.3f}s".format('Time spent applying splits:',

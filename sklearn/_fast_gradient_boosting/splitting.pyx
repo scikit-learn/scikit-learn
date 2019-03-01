@@ -21,7 +21,6 @@ from libc.string cimport memcpy
 
 from .types cimport X_BINNED_DTYPE_C
 from .types cimport Y_DTYPE_C
-from .types cimport G_H_DTYPE_C
 from .types cimport hist_struct
 from .types import HISTOGRAM_DTYPE
 
