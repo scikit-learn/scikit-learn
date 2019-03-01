@@ -54,7 +54,7 @@ from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.preprocessing.data import PowerTransformer
 from sklearn.preprocessing.data import power_transform
 from sklearn.preprocessing.data import BOUNDS_THRESHOLD
-from sklearn.exceptions import DataConversionWarning, NotFittedError
+from sklearn.exceptions import NotFittedError
 
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
@@ -205,7 +205,7 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     est = PolynomialFeatures(deg, include_bias=include_bias,
                              interaction_only=interaction_only)
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
-    Xt_dense = est.fit_transform(X.astype(dtype))
+    Xt_dense = est.fit_transform(X.astype(dtype, copy=False))
 
     assert isinstance(Xt_csr, sparse.csr_matrix)
     assert Xt_csr.dtype == Xt_dense.dtype
@@ -1260,6 +1260,13 @@ def test_quantile_transform_check_error():
     assert_raise_message(ValueError,
                          'Expected 2D array, got scalar array instead',
                          transformer.transform, 10)
+    # check that a warning is raised is n_quantiles > n_samples
+    transformer = QuantileTransformer(n_quantiles=100)
+    warn_msg = "n_quantiles is set to n_samples"
+    with pytest.warns(UserWarning, match=warn_msg) as record:
+        transformer.fit(X)
+    assert len(record) == 1
+    assert transformer.n_quantiles_ == X.shape[0]
 
 
 def test_quantile_transform_sparse_ignore_zeros():
@@ -1693,19 +1700,6 @@ def test_maxabs_scaler_transform_one_row_csr():
     assert_array_almost_equal(X_trans.toarray(), X_expected.toarray())
     X_scaled_back = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
-
-
-def test_warning_scaling_integers():
-    # Check warning when scaling integer data
-    X = np.array([[1, 2, 0],
-                  [0, 0, 0]], dtype=np.uint8)
-
-    w = "Data with input dtype uint8 was converted to float64"
-
-    clean_warning_registry()
-    assert_warns_message(DataConversionWarning, w, scale, X)
-    assert_warns_message(DataConversionWarning, w, StandardScaler().fit, X)
-    assert_warns_message(DataConversionWarning, w, MinMaxScaler().fit, X)
 
 
 def test_maxabs_scaler_1d():

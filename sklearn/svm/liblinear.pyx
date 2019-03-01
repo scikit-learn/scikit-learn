@@ -1,3 +1,4 @@
+# cython: language_level=3
 """
 Wrapper for liblinear
 
@@ -8,7 +9,6 @@ import  numpy as np
 cimport numpy as np
 
 from ..utils._cython_blas cimport _dot, _axpy, _scal, _nrm2
-
 
 np.import_array()
 

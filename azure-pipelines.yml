@@ -64,8 +64,11 @@ jobs:
     name: Windows
     vmImage: vs2017-win2016
     matrix:
-      py37:
-        CONDA_PY: '3.7'
+      py37_64:
+        PYTHON_VERSION: '3.7'
         CHECK_WARNINGS: 'true'
-      py35:
-        CONDA_PY: '3.5'
+        PYTHON_ARCH: '64'
+        COVERAGE: 'true'
+      py35_32:
+        PYTHON_VERSION: '3.5'
+        PYTHON_ARCH: '32'
