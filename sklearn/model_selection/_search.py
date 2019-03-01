@@ -42,7 +42,7 @@ __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
 
 
-class ParameterGrid(object):
+class ParameterGrid:
     """Grid of parameters with a discrete number of values for each.
 
     Can be used to iterate over parameter value combinations with the
@@ -178,7 +178,7 @@ class ParameterGrid(object):
         raise IndexError('ParameterGrid index out of range')
 
 
-class ParameterSampler(object):
+class ParameterSampler:
     """Generator on parameters sampled from given distributions.
 
     Non-deterministic iterable over random candidate combinations for hyper-
@@ -643,7 +643,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                                     return_parameters=False,
                                     error_score=self.error_score,
                                     verbose=self.verbose)
-        results_container = [{}]
+        results = {}
         with parallel:
             all_candidate_params = []
             all_out = []
@@ -680,15 +680,12 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
 
-                # XXX: When we drop Python 2 support, we can use nonlocal
-                # instead of results_container
-                results_container[0] = self._format_results(
+                nonlocal results
+                results = self._format_results(
                     all_candidate_params, scorers, n_splits, all_out)
-                return results_container[0]
+                return results
 
             self._run_search(evaluate_candidates)
-
-        results = results_container[0]
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
@@ -1132,6 +1129,7 @@ class GridSearchCV(BaseSearchCV):
         Make a scorer from a performance metric or loss function.
 
     """
+    _required_parameters = ["estimator", "param_grid"]
 
     def __init__(self, estimator, param_grid, scoring=None,
                  n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
@@ -1447,6 +1445,7 @@ class RandomizedSearchCV(BaseSearchCV):
         param_distributions.
 
     """
+    _required_parameters = ["estimator", "param_distributions"]
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  n_jobs=None, iid='warn', refit=True,

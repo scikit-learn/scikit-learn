@@ -29,8 +29,8 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils.fixes import sp_version
 from ..utils import _IS_32BIT
+from ..utils.fixes import _astype_copy_false
 
 
 __all__ = ['HashingVectorizer',
@@ -113,7 +113,7 @@ def _check_stop_list(stop):
         return frozenset(stop)
 
 
-class VectorizerMixin(object):
+class VectorizerMixin:
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
@@ -652,6 +652,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                              alternate_sign=self.alternate_sign,
                              non_negative=self.non_negative)
 
+    def _more_tags(self):
+        return {'X_types': ['string']}
+
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
@@ -1125,6 +1128,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return [t for t, i in sorted(self.vocabulary_.items(),
                                      key=itemgetter(1))]
 
+    def _more_tags(self):
+        return {'X_types': ['string']}
+
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
@@ -1234,7 +1240,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
         if self.use_idf:
             n_samples, n_features = X.shape
-            df = _document_frequency(X).astype(dtype)
+            df = _document_frequency(X)
+            df = df.astype(dtype, **_astype_copy_false(df))
 
             # perform idf smoothing if required
             df += int(self.smooth_idf)
@@ -1304,6 +1311,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         n_features = value.shape[0]
         self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
                                     n=n_features, format='csr')
+
+    def _more_tags(self):
+        return {'X_types': 'sparse'}
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1638,3 +1648,6 @@ class TfidfVectorizer(CountVectorizer):
 
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
+
+    def _more_tags(self):
+        return {'X_types': ['string'], '_skip_test': True}
