@@ -1,7 +1,7 @@
 """
-==========================================================
-Explicit feature map approximation for Polynomial kernels
-==========================================================
+========================================================================
+Benchmark for explicit feature map approximation of polynomial kernels
+========================================================================
 
 An example illustrating the approximation of the feature map
 of an Homogeneoys Polynomial kernel.
@@ -37,7 +37,7 @@ Programming (pp. 693-703). Springer, Berlin, Heidelberg.
 (http://www.vldb.org/pvldb/1/1454225.pdf)
 
 """
-print(__doc__)
+# print(__doc__)
 
 # Author: Daniel Lopez-Sanchez <lope@usal.es>
 # License: BSD 3 clause

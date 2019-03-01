@@ -169,7 +169,11 @@ Conveniently, the training phase of TensorSketch simply consists of initializing
 some random variables, thus being a data-independent method. In addition, this
 method can transform samples in :math:`\mathcal{O}(n(d + k \text{log} k))`, where
 :math:`n` is the number of samples, :math:`d` the dimension of input samples
-and :math:`k` the desired output dimension, determined by (``n_components``). 
+and :math:`k` the desired output dimension, determined by (``n_components``).
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_plot_scalable_poly_kernels.py`
 
 .. _tensor_sketch_kernel_approx:
 
