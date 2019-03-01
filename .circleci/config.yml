@@ -110,7 +110,11 @@ workflows:
   build-doc-and-deploy:
     jobs:
       - doc
+          requires:
+            - lint
       - doc-min-dependencies
+          requires:
+            - lint
       - lint
       - pypy3:
           filters:
