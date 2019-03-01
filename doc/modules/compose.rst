@@ -447,7 +447,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> from sklearn.preprocessing import OneHotEncoder
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
+  ...     [('categories', OneHotEncoder(dtype='int'),['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder='drop')
 
@@ -458,11 +458,11 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
   >>> column_trans.get_feature_names()
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ['city_category__city_London', 'city_category__city_Paris', 'city_category__city_Sallisaw',
-   'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
-   'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
-   'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
-   'title_bow__wrath']
+  ['categories__city_London', 'categories__city_Paris',
+   'categories__city_Sallisaw', 'title_bow__bow', 'title_bow__feast',
+   'title_bow__grapes', 'title_bow__his', 'title_bow__how', 'title_bow__last',
+   'title_bow__learned', 'title_bow__moveable', 'title_bow__of', 'title_bow__the',
+   'title_bow__trick', 'title_bow__watson', 'title_bow__wrath']
 
   >>> column_trans.transform(X).toarray()
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
