@@ -23,11 +23,11 @@ from ..metrics import pairwise_distances
 class OPTICS(BaseEstimator, ClusterMixin):
     """Estimate clustering structure from vector array
 
-    OPTICS: Ordering Points To Identify the Clustering Structure
-    Closely related to DBSCAN, finds core sample of high density and expands
-    clusters from them [1]_. Unlike DBSCAN, keeps cluster hierarchy for a
-    variable neighborhood radius. Better suited for usage on large point
-    datasets than the current sklearn implementation of DBSCAN.
+    OPTICS: Ordering Points To Identify the Clustering Structure Closely
+    related to DBSCAN, finds core sample of high density and expands clusters
+    from them [1]_. Unlike DBSCAN, keeps cluster hierarchy for a variable
+    neighborhood radius. Better suited for usage on large datasets than the
+    current sklearn implementation of DBSCAN.
 
     Clusters are then extracted using a DBSCAN like method [1]_.
 
@@ -162,6 +162,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     .. [2] Schubert, Erich, Michael Gertz.
        "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
+
     """
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
@@ -231,7 +232,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 raise ValueError('Specify an epsilon smaller than %s. Got %s.'
                                  % (self.max_eps, self.eps))
 
-            if self.eps * 5.0 > (self.max_eps * 1.05):
+            if self.eps * 5.0 > self.max_eps * 1.05:
                 warnings.warn(
                     "Warning, max_eps (%s) is close to eps (%s): "
                     "Output may be unstable." % (self.max_eps, self.eps),
