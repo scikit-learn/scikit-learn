@@ -128,6 +128,13 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
   :issue:`13174` by :user:`Christos Aridas <chkoar>`.
 
+- |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor`, which didn't support
+  scikit-learn estimators as the initial estimator. Also added support of
+  initial estimator which does not support sample weights. :issue:`12436` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>` and :issue:`12983` by
+  :user:`Nicolas Hug<NicolasHug>`.
+
 - |Fix| Fixed the output of the average path length computed in
   :class:`ensemble.IsolationForest` when the input is either 0, 1 or 2.
   :issue:`13251` by :user:`Albert Thomas <albertcthomas>`
@@ -136,6 +143,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
   problems. :issue:`12715` by :user:`Nicolas Hug<NicolasHug>`.
+
+- |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
+  the default initial prediction of a multiclass classifier would predict the
+  classes priors instead of the log of the priors. :issue:`12983` by
+  :user:`Nicolas Hug<NicolasHug>`.
 
 - |Fix| Fixed a bug in :mod:`ensemble` where the ``predict`` method would
   error for multiclass multioutput forests models if any targets were strings.
