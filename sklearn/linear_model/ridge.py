@@ -557,8 +557,10 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
             self.intercept_ += y_offset
         else:
             if sparse.issparse(X):
+                # required to fit intercept with sparse_cg solver
                 params = {'X_offset': X_offset, 'X_scale': X_scale}
             else:
+                # for dense matrices or when intercept is set to 0
                 params = {}
 
             self.coef_, self.n_iter_ = _ridge_regression(
