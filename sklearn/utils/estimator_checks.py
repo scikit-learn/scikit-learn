@@ -839,8 +839,7 @@ def check_methods_subset_invariance(name, estimator_orig):
         msg = ("{method} of {name} is not invariant when applied "
                "to a subset.").format(method=method, name=name)
         # TODO remove cases when corrected
-        if (name, method) in [('SVC', 'decision_function'),
-                              ('NuSVC', 'decision_function'),
+        if (name, method) in [('NuSVC', 'decision_function'),
                               ('SparsePCA', 'transform'),
                               ('MiniBatchSparsePCA', 'transform'),
                               ('DummyClassifier', 'predict'),
