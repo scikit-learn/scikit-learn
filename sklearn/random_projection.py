@@ -590,7 +590,7 @@ class SparseRandomProjection(BaseRandomProjection):
     >>> from sklearn.random_projection import SparseRandomProjection
     >>> rng = np.random.RandomState(42)
     >>> X = rng.rand(100, 10000)
-    >>> transformer = SparseRandomProjection()
+    >>> transformer = SparseRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
