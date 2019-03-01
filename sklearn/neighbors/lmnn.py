@@ -16,7 +16,7 @@ from scipy.optimize import minimize
 from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
 
 from ..base import BaseEstimator, TransformerMixin
-from ..neighbors import NearestNeighbors, KNeighborsClassifier
+from ..neighbors import NearestNeighbors
 from ..decomposition import PCA
 from ..utils import gen_batches
 from ..utils.extmath import row_norms, safe_sparse_dot

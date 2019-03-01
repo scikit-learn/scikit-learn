@@ -55,7 +55,7 @@ def test_neighbors_iris():
     knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
     knn.fit(LX, iris_target)
 
-    assert(knn.score(LX, iris_target) > 0.95)
+    assert knn.score(LX, iris_target) > 0.95
 
 
 def test_neighbors_digits():
@@ -313,13 +313,12 @@ def test_warm_start_effectiveness():
     diff_cold = np.sum(np.abs(transformation_cold_plus_one -
                               transformation_cold))
 
-    assert(diff_warm < 2.0,
-           "Transformer changed significantly after one iteration even "
-           "though it was warm-started.")
+    assert diff_warm < 2.0, "Transformer changed significantly after one " \
+                            "iteration even though it was warm-started."
 
-    assert(diff_cold > diff_warm,
-           "Cold-started transformer changed less significantly than "
-           "warm-started transformer after one iteration.")
+    assert diff_cold > diff_warm, "Cold-started transformer changed less " \
+                                  "significantly than warm-started " \
+                                  "transformer after one iteration."
 
 
 def test_max_impostors():
@@ -344,7 +343,7 @@ def test_neighbors_params():
     lmnn.fit(iris_data, iris_target)
     components_euclidean = lmnn.components_
 
-    assert(not np.allclose(components_hamming, components_euclidean))
+    assert not np.allclose(components_hamming, components_euclidean)
 
 
 def test_impostor_store():
@@ -391,7 +390,7 @@ def test_callback():
         sys.stdout = old_stdout
 
     # check output
-    assert('{} iterations remaining...'.format(max_iter-1) in out)
+    assert '{} iterations remaining...'.format(max_iter-1) in out
 
 
 def test_store_opt_result():
@@ -420,12 +419,12 @@ def test_verbose():
         sys.stdout = old_stdout
 
     # check output
-    assert("[LargeMarginNearestNeighbor]" in out)
-    assert("Finding principal components" in out)
-    assert ("Finding the target neighbors" in out)
-    assert ("Computing static part of the gradient" in out)
-    assert ("Finding principal components" in out)
-    assert ("Training took" in out)
+    assert "[LargeMarginNearestNeighbor]" in out
+    assert "Finding principal components" in out
+    assert "Finding the target neighbors" in out
+    assert "Computing static part of the gradient" in out
+    assert "Finding principal components" in out
+    assert "Training took" in out
 
     # assert by default there is no output (verbose=0)
     old_stdout = sys.stdout
@@ -440,7 +439,7 @@ def test_verbose():
         sys.stdout = old_stdout
 
     # check output
-    assert(out == '')
+    assert out == ''
 
 
 def test_random_state():
@@ -472,7 +471,7 @@ def test_random_state():
     lmnn.fit(X, y)
     transformation_3 = lmnn.components_
 
-    assert(not np.allclose(transformation_2, transformation_3))
+    assert not np.allclose(transformation_2, transformation_3)
 
 
 def test_same_lmnn_parallel():
