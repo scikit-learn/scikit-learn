@@ -19,6 +19,7 @@ from sklearn.compose import ColumnTransformer, make_column_transformer
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
 from sklearn.feature_extraction import DictVectorizer
+from sklearn.pipeline import make_pipeline
 
 
 class Trans(BaseEstimator):
@@ -658,6 +659,18 @@ def test_column_transformer_get_feature_names():
     assert_raise_message(AttributeError,
                          "Transformer trans (type Trans) does not provide "
                          "get_feature_names", ct.get_feature_names)
+    
+    # if some transformers support and some don't
+    ct = ColumnTransformer([('trans', Trans(), [0, 1]),
+                            ('scale', StandardScaler(), [0])])
+    ct.fit(X_array)
+    assert_raise_message(AttributeError,
+                         "Transformer trans (type Trans) does not provide "
+                         "get_feature_names", ct.get_feature_names)
+                         
+    # inside a pipeline
+    make_pipeline(ct).fit(X_array)
+ 
 
     # working example
     X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],

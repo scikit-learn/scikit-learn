@@ -576,16 +576,14 @@ class Pipeline(_BaseComposition):
         feature_names = self.input_features_
         for _, name, transform in self._iter(with_final=True):
             transform.input_features_ = feature_names
-            if hasattr(transform, "get_feature_names"):
-                # doing hassattr instead of a try-except on everything
-                # b/c catching AttributeError makes recursive code
-                # impossible to debug
+            try:
                 try:
                     feature_names = transform.get_feature_names(
                         input_features=feature_names)
                 except TypeError:
                     feature_names = transform.get_feature_names()
-            else:
+            except AttributeError:
+                # this can come from inside a meta-estimator
                 feature_names = None
         return feature_names
 
