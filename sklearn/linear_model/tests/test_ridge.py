@@ -948,17 +948,17 @@ def test_ridge_regression_dtype_stability(solver):
     X = rng.randn(n_samples, n_features)
     coef = rng.randn(n_features)
     y = np.dot(X, coef) + 0.01 * rng.randn(n_samples)
-    RANDOM_STATE = np.random.RandomState(0)
-    ALPHA = 1.0
+    random_state = np.random.randomstate(0)
+    alpha = 1.0
     rtol = 1e-2 if os.name == 'nt' and _IS_32BIT else 1e-5
 
     results = dict()
     for current_dtype in (np.float32, np.float64):
         results[current_dtype] = ridge_regression(X.astype(current_dtype),
                                                   y.astype(current_dtype),
-                                                  alpha=ALPHA,
+                                                  alpha=alpha,
                                                   solver=solver,
-                                                  random_state=RANDOM_STATE,
+                                                  random_state=random_state,
                                                   sample_weight=None,
                                                   max_iter=500,
                                                   tol=1e-10,
