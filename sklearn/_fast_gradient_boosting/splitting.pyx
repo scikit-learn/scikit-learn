@@ -53,8 +53,7 @@ cdef struct split_info_struct:
     unsigned int n_samples_right
 
 
-@cython.final
-cdef class SplitInfo:
+class SplitInfo:
     """Pure data class to store information about a potential split.
 
     Parameters
@@ -78,22 +77,10 @@ cdef class SplitInfo:
     n_samples_right : int
         The number of samples in the right child
     """
-    cdef public:
-        Y_DTYPE_C gain
-        int feature_idx
-        unsigned int bin_idx
-        Y_DTYPE_C sum_gradient_left
-        Y_DTYPE_C sum_gradient_right
-        Y_DTYPE_C sum_hessian_left
-        Y_DTYPE_C sum_hessian_right
-        unsigned int n_samples_left
-        unsigned int n_samples_right
-
-    def __init__(self, Y_DTYPE_C gain=-1., int feature_idx=0, unsigned
-                 int bin_idx=0, Y_DTYPE_C sum_gradient_left=0., Y_DTYPE_C
-                 sum_hessian_left=0., Y_DTYPE_C sum_gradient_right=0.,
-                 Y_DTYPE_C sum_hessian_right=0., unsigned int
-                 n_samples_left=0, unsigned int n_samples_right=0):
+    def __init__(self, gain=-1., feature_idx=0, bin_idx=0,
+                 sum_gradient_left=0., sum_hessian_left=0.,
+                 sum_gradient_right=0., sum_hessian_right=0.,
+                 n_samples_left=0, n_samples_right=0):
         self.gain = gain
         self.feature_idx = feature_idx
         self.bin_idx = bin_idx
@@ -199,7 +186,7 @@ cdef class Splitter:
         self.left_indices_buffer = np.empty_like(self.partition)
         self.right_indices_buffer = np.empty_like(self.partition)
 
-    def split_indices(Splitter self, SplitInfo split_info, unsigned int [::1]
+    def split_indices(Splitter self, split_info, unsigned int [::1]
                       sample_indices):
         """Split samples into left and right arrays.
 
@@ -274,8 +261,10 @@ cdef class Splitter:
 
         cdef:
             int n_samples = sample_indices.shape[0]
+            X_BINNED_DTYPE_C bin_idx = split_info.bin_idx
+            int feature_idx = split_info.feature_idx
             const X_BINNED_DTYPE_C [::1] X_binned = \
-                self.X_binned[:, split_info.feature_idx]
+                self.X_binned[:, feature_idx]
             unsigned int [::1] left_indices_buffer = self.left_indices_buffer
             unsigned int [::1] right_indices_buffer = self.right_indices_buffer
             int n_threads = omp_get_max_threads()
@@ -312,7 +301,7 @@ cdef class Splitter:
                 stop = start + sizes[thread_idx]
                 for i in range(start, stop):
                     sample_idx = sample_indices[i]
-                    if X_binned[sample_idx] <= split_info.bin_idx:
+                    if X_binned[sample_idx] <= bin_idx:
                         left_indices_buffer[start + left_count] = sample_idx
                         left_count = left_count + 1
                     else:
