@@ -7,7 +7,7 @@
 Version 0.20.3
 ==============
 
-**??, 2019**
+**March 1, 2019**
 
 This is a bug-fix release with some minor documentation improvements and
 enhancements to features released in 0.20.0.
