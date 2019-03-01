@@ -859,6 +859,27 @@ def test_ridge_check_auto_modes(return_intercept, sample_weight, arr_type):
         assert_array_almost_equal(target, true_coefs, decimal=1)
 
 
+def test_ridge_regression_fail_with_return_intercept():
+    # return_itercept is only supported by sag/saga
+
+    X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
+                           bias=10., random_state=42)
+
+    for solver in ['sparse_cg', 'cholesky', 'svd', 'lsqr']:
+        with pytest.raises(ValueError, match="return_intercept=True is only"):
+            target = ridge_regression(X, y, 1,
+                                      solver=solver,
+                                      return_intercept=True
+                                      )
+
+    for solver in ['saga', 'sag']:
+        target = ridge_regression(X, y, 1,
+                                  solver=solver,
+                                  return_intercept=True
+                                 )
+        assert len(target) == 2
+        assert target[0].shape == (2,)
+
 def test_errors_and_values_helper():
     ridgecv = _RidgeGCV()
     rng = check_random_state(42)
