@@ -376,6 +376,12 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`preprocessing.StandardScaler`. :issue:`13007` by
   :user:`Raffaello Baluyot <baluyotraf>`
 
+- |Fix| Fixed a bug in :class:`preprocessing.QuantileTransformer` and
+  :func:`preprocessing.quantile_transform` to force n_quantiles to be at most
+  equal to n_samples. Values of n_quantiles larger than n_samples were either
+  useless or resulting in a wrong approximation of the cumulative distribution
+  function estimator. :issue:`13333` by :user:`Albert Thomas <albertcthomas>`.
+
 :mod:`sklearn.svm`
 ..................
 
@@ -422,6 +428,9 @@ Multiple modules
   but this can be altered with the ``print_changed_only`` option in
   :func:`sklearn.set_config`. :issue:`11705` by :user:`Nicolas Hug
   <NicolasHug>`.
+- |Efficiency| Memory copies are avoided when casting arrays to a different
+  dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak`_.
+
 
 Changes to estimator checks
 ---------------------------
