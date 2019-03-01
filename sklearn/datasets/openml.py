@@ -8,7 +8,7 @@ from contextlib import closing
 from functools import wraps
 import warnings
 import itertools
-from collections.abc import Generator
+import inspect
 
 try:
     # Python 3+
@@ -249,7 +249,7 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape=None):
     X : np.array or scipy.sparse.csr_matrix
     y : np.array
     """
-    if isinstance(arff_data, Generator):
+    if inspect.isgenerator(arff_data):
         if shape[0] == -1:
             count = -1
         else:
