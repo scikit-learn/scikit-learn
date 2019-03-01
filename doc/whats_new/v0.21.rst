@@ -86,7 +86,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug in :class:`discriminant_analysis.LinearDiscriminantAnalysis`
   where the predicted probabilities would be incorrectly computed in the
   multiclass case. :issue:`6848`, by :user:`Agamemnon Krasoulis
-  <agamemnonc>`.
+  <agamemnonc>` and `Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.ensemble`
 .......................
