@@ -817,7 +817,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                             imp_ind, self.max_impostors, replace=False)
 
                     dims = (len(ind_out), len(ind_in))
-                    ii, jj = np.unravel_index(imp_ind, dims=dims)
+                    ii, jj = np.unravel_index(imp_ind, dims)
                     # Convert indices to refer to the original data matrix
                     imp_row = ind_out[ii]
                     imp_col = ind_in[jj]
@@ -863,7 +863,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                         dist_batch = dist_batch[ind_sampled]
 
                     dims = (len(ind_out), len(ind_in))
-                    ii, jj = np.unravel_index(imp_ind, dims=dims)
+                    ii, jj = np.unravel_index(imp_ind, dims)
                     # Convert indices to refer to the original data matrix
                     imp_row.extend(ind_out[ii])
                     imp_col.extend(ind_in[jj])
@@ -971,7 +971,7 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
     imp_distances : array, shape (n_impostors,), optional
         imp_distances[i] is the squared distance between samples imp_row[i] and
         imp_col[i], where
-        imp_row, imp_col = np.unravel_index(imp_indices, dims=(n_samples_a,
+        imp_row, imp_col = np.unravel_index(imp_indices, (n_samples_a,
         n_samples_b))
     """
 
