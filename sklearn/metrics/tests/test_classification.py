@@ -18,7 +18,6 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_div0
 from sklearn.utils.testing import assert_no_warnings
