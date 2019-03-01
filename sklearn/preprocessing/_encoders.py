@@ -2,7 +2,6 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
-
 import numbers
 import warnings
 
@@ -46,11 +45,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             X = check_array(X, dtype=np.object)
         else:
             X = X_temp
-
-        if X.dtype == np.dtype('object'):
-            if not _get_config()['assume_finite']:
-                if _object_dtype_isnan(X).any():
-                    raise ValueError("Input contains NaN")
 
         return X
 
@@ -158,6 +152,18 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
+    drop : 'first' or a list/array of shape (n_features,), default=None.
+        Specifies a methodology to use to drop one of the categories per
+        feature. This is useful in situations where perfectly collinear
+        features cause problems, such as when feeding the resulting data
+        into a neural network or an unregularized regression.
+
+        - None : retain all features (the default).
+        - 'first' : drop the first category in each feature. If only one
+          category is present, the feature will be dropped entirely.
+        - array : ``drop[i]`` is the category in feature ``X[:, i]`` that
+          should be dropped.
+
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
 
@@ -205,7 +211,13 @@ class OneHotEncoder(_BaseEncoder):
     categories_ : list of arrays
         The categories of each feature determined during fitting
         (in order of the features in X and corresponding with the output
-        of ``transform``).
+        of ``transform``). This includes the category specified in ``drop``
+        (if any).
+
+    drop_idx_ : array of shape (n_features,)
+        ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category to
+        be dropped for each feature. None if all the transformed features will
+        be retained.
 
     active_features_ : array
         Indices for active features, meaning values that actually occur
@@ -243,9 +255,9 @@ class OneHotEncoder(_BaseEncoder):
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
     ... # doctest: +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features=None, categories=None,
-           dtype=<... 'numpy.float64'>, handle_unknown='ignore',
-           n_values=None, sparse=True)
+    OneHotEncoder(categorical_features=None, categories=None, drop=None,
+       dtype=<... 'numpy.float64'>, handle_unknown='ignore',
+       n_values=None, sparse=True)
 
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
@@ -257,6 +269,12 @@ class OneHotEncoder(_BaseEncoder):
            [None, 2]], dtype=object)
     >>> enc.get_feature_names()
     array(['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3'], dtype=object)
+    >>> drop_enc = OneHotEncoder(drop='first').fit(X)
+    >>> drop_enc.categories_
+    [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
+    >>> drop_enc.transform([['Female', 1], ['Male', 2]]).toarray()
+    array([[0., 0., 0.],
+           [1., 1., 0.]])
 
     See also
     --------
@@ -274,7 +292,7 @@ class OneHotEncoder(_BaseEncoder):
     """
 
     def __init__(self, n_values=None, categorical_features=None,
-                 categories=None, sparse=True, dtype=np.float64,
+                 categories=None, drop=None, sparse=True, dtype=np.float64,
                  handle_unknown='error'):
         self.categories = categories
         self.sparse = sparse
@@ -282,6 +300,7 @@ class OneHotEncoder(_BaseEncoder):
         self.handle_unknown = handle_unknown
         self.n_values = n_values
         self.categorical_features = categorical_features
+        self.drop = drop
 
     # Deprecated attributes
 
@@ -346,7 +365,6 @@ class OneHotEncoder(_BaseEncoder):
                     )
                     warnings.warn(msg, DeprecationWarning)
             else:
-
                 # check if we have integer or categorical input
                 try:
                     check_array(X, dtype=np.int)
@@ -354,20 +372,38 @@ class OneHotEncoder(_BaseEncoder):
                     self._legacy_mode = False
                     self._categories = 'auto'
                 else:
-                    msg = (
-                        "The handling of integer data will change in version "
-                        "0.22. Currently, the categories are determined "
-                        "based on the range [0, max(values)], while in the "
-                        "future they will be determined based on the unique "
-                        "values.\nIf you want the future behaviour and "
-                        "silence this warning, you can specify "
-                        "\"categories='auto'\".\n"
-                        "In case you used a LabelEncoder before this "
-                        "OneHotEncoder to convert the categories to integers, "
-                        "then you can now use the OneHotEncoder directly."
-                    )
-                    warnings.warn(msg, FutureWarning)
-                    self._legacy_mode = True
+                    if self.drop is None:
+                        msg = (
+                            "The handling of integer data will change in "
+                            "version 0.22. Currently, the categories are "
+                            "determined based on the range "
+                            "[0, max(values)], while in the future they "
+                            "will be determined based on the unique "
+                            "values.\nIf you want the future behaviour "
+                            "and silence this warning, you can specify "
+                            "\"categories='auto'\".\n"
+                            "In case you used a LabelEncoder before this "
+                            "OneHotEncoder to convert the categories to "
+                            "integers, then you can now use the "
+                            "OneHotEncoder directly."
+                        )
+                        warnings.warn(msg, FutureWarning)
+                        self._legacy_mode = True
+                    else:
+                        msg = (
+                            "The handling of integer data will change in "
+                            "version 0.22. Currently, the categories are "
+                            "determined based on the range "
+                            "[0, max(values)], while in the future they "
+                            "will be determined based on the unique "
+                            "values.\n The old behavior is not compatible "
+                            "with the `drop` parameter. Instead, you "
+                            "must manually specify \"categories='auto'\" "
+                            "if you wish to use the `drop` parameter on "
+                            "an array of entirely integer data. This will "
+                            "enable the future behavior."
+                        )
+                        raise ValueError(msg)
 
         # if user specified categorical_features -> always use legacy mode
         if self.categorical_features is not None:
@@ -399,6 +435,13 @@ class OneHotEncoder(_BaseEncoder):
         else:
             self._categorical_features = 'all'
 
+        # Prevents new drop functionality from being used in legacy mode
+        if self._legacy_mode and self.drop is not None:
+            raise ValueError(
+                "The `categorical_features` and `n_values` keywords "
+                "are deprecated, and cannot be used together "
+                "with 'drop'.")
+
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
 
@@ -411,10 +454,8 @@ class OneHotEncoder(_BaseEncoder):
         -------
         self
         """
-        if self.handle_unknown not in ('error', 'ignore'):
-            msg = ("handle_unknown should be either 'error' or 'ignore', "
-                   "got {0}.".format(self.handle_unknown))
-            raise ValueError(msg)
+
+        self._validate_keywords()
 
         self._handle_deprecations(X)
 
@@ -425,7 +466,58 @@ class OneHotEncoder(_BaseEncoder):
             return self
         else:
             self._fit(X, handle_unknown=self.handle_unknown)
+            self.drop_idx_ = self._compute_drop_idx()
             return self
+
+    def _compute_drop_idx(self):
+        if self.drop is None:
+            return None
+        elif (isinstance(self.drop, str) and self.drop == 'first'):
+            return np.zeros(len(self.categories_), dtype=np.int_)
+        elif not isinstance(self.drop, str):
+            try:
+                self.drop = np.asarray(self.drop, dtype=object)
+                droplen = len(self.drop)
+            except (ValueError, TypeError):
+                msg = ("Wrong input for parameter `drop`. Expected "
+                       "'first', None or array of objects, got {}")
+                raise ValueError(msg.format(type(self.drop)))
+            if droplen != len(self.categories_):
+                msg = ("`drop` should have length equal to the number "
+                       "of features ({}), got {}")
+                raise ValueError(msg.format(len(self.categories_),
+                                            len(self.drop)))
+            missing_drops = [(i, val) for i, val in enumerate(self.drop)
+                             if val not in self.categories_[i]]
+            if any(missing_drops):
+                msg = ("The following categories were supposed to be "
+                       "dropped, but were not found in the training "
+                       "data.\n{}".format(
+                           "\n".join(
+                                ["Category: {}, Feature: {}".format(c, v)
+                                    for c, v in missing_drops])))
+                raise ValueError(msg)
+            return np.array([np.where(cat_list == val)[0][0]
+                             for (val, cat_list) in
+                             zip(self.drop, self.categories_)], dtype=np.int_)
+        else:
+            msg = ("Wrong input for parameter `drop`. Expected "
+                   "'first', None or array of objects, got {}")
+            raise ValueError(msg.format(type(self.drop)))
+
+    def _validate_keywords(self):
+        if self.handle_unknown not in ('error', 'ignore'):
+            msg = ("handle_unknown should be either 'error' or 'ignore', "
+                   "got {0}.".format(self.handle_unknown))
+            raise ValueError(msg)
+        # If we have both dropped columns and ignored unknown
+        # values, there will be ambiguous cells. This creates difficulties
+        # in interpreting the model.
+        if self.drop is not None and self.handle_unknown != 'error':
+            raise ValueError(
+                "`handle_unknown` must be 'error' when the drop parameter is "
+                "specified, as both would create categories that are all "
+                "zero.")
 
     def _legacy_fit_transform(self, X):
         """Assumes X contains only categorical features."""
@@ -501,10 +593,8 @@ class OneHotEncoder(_BaseEncoder):
         X_out : sparse matrix if sparse=True else a 2-d array
             Transformed input.
         """
-        if self.handle_unknown not in ('error', 'ignore'):
-            msg = ("handle_unknown should be either 'error' or 'ignore', "
-                   "got {0}.".format(self.handle_unknown))
-            raise ValueError(msg)
+
+        self._validate_keywords()
 
         self._handle_deprecations(X)
 
@@ -571,11 +661,22 @@ class OneHotEncoder(_BaseEncoder):
 
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
+        if self.drop is not None:
+            to_drop = self.drop_idx_.reshape(1, -1)
+
+            # We remove all the dropped categories from mask, and decrement all
+            # categories that occur after them to avoid an empty column.
+
+            keep_cells = X_int != to_drop
+            X_mask &= keep_cells
+            X_int[X_int > to_drop] -= 1
+            n_values = [len(cats) - 1 for cats in self.categories_]
+        else:
+            n_values = [len(cats) for cats in self.categories_]
+
         mask = X_mask.ravel()
-        n_values = [cats.shape[0] for cats in self.categories_]
         n_values = np.array([0] + n_values)
         feature_indices = np.cumsum(n_values)
-
         indices = (X_int + feature_indices[:-1]).ravel()[mask]
         indptr = X_mask.sum(axis=1).cumsum()
         indptr = np.insert(indptr, 0, 0)
@@ -613,7 +714,7 @@ class OneHotEncoder(_BaseEncoder):
     def inverse_transform(self, X):
         """Convert the back data to the original representation.
 
-        In case unknown categories are encountered (all zero's in the
+        In case unknown categories are encountered (all zeros in the
         one-hot encoding), ``None`` is used to represent this category.
 
         Parameters
@@ -635,7 +736,12 @@ class OneHotEncoder(_BaseEncoder):
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
-        n_transformed_features = sum([len(cats) for cats in self.categories_])
+        if self.drop is None:
+            n_transformed_features = sum(len(cats)
+                                         for cats in self.categories_)
+        else:
+            n_transformed_features = sum(len(cats) - 1
+                                         for cats in self.categories_)
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
@@ -651,18 +757,35 @@ class OneHotEncoder(_BaseEncoder):
         found_unknown = {}
 
         for i in range(n_features):
-            n_categories = len(self.categories_[i])
-            sub = X[:, j:j + n_categories]
+            if self.drop is None:
+                cats = self.categories_[i]
+            else:
+                cats = np.delete(self.categories_[i], self.drop_idx_[i])
+            n_categories = len(cats)
 
+            # Only happens if there was a column with a unique
+            # category. In this case we just fill the column with this
+            # unique category value.
+            if n_categories == 0:
+                X_tr[:, i] = self.categories_[i][self.drop_idx_[i]]
+                j += n_categories
+                continue
+            sub = X[:, j:j + n_categories]
             # for sparse X argmax returns 2D matrix, ensure 1D array
             labels = np.asarray(_argmax(sub, axis=1)).flatten()
-            X_tr[:, i] = self.categories_[i][labels]
-
+            X_tr[:, i] = cats[labels]
             if self.handle_unknown == 'ignore':
-                # ignored unknown categories: we have a row of all zero's
                 unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
+                # ignored unknown categories: we have a row of all zero
                 if unknown.any():
                     found_unknown[i] = unknown
+            # drop will either be None or handle_unknown will be error. If
+            # self.drop is not None, then we can safely assume that all of
+            # the nulls in each column are the dropped value
+            elif self.drop is not None:
+                dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
+                if dropped.any():
+                    X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
 
             j += n_categories
 
@@ -847,3 +970,6 @@ class OrdinalEncoder(_BaseEncoder):
             X_tr[:, i] = self.categories_[i][labels]
 
         return X_tr
+
+    def _more_tags(self):
+        return {'X_types': ['categorical']}
