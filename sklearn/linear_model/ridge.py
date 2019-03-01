@@ -372,7 +372,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     def _select_auto_mode():
         if return_intercept:
-            # only sag and saga support fitting intercept directly
+            # only sag supports fitting intercept directly
             return "sag"
         if has_sw:
             # this should be changed since all solvers support sample_weights
