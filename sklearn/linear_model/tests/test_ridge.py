@@ -876,7 +876,7 @@ def test_ridge_regression_fail_with_return_intercept():
         target = ridge_regression(X, y, 1,
                                   solver=solver,
                                   return_intercept=True
-                                 )
+                                  )
         assert len(target) == 2
         assert target[0].shape == (2,)
 
