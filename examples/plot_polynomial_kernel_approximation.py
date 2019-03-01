@@ -81,7 +81,8 @@ n_test = 5
 for k in out_dims:
     score_avg = 0
     for _ in range(n_test):
-        ps_svm = Pipeline([("PS", PolynomialSampler(degree=2, n_components=k)),
+        ps_svm = Pipeline([("PS", PolynomialSampler(degree=2,
+                                                    n_components=k)),
                            ("SVM", LinearSVC())])
         score_avg += ps_svm.fit(X_train, Y_train).score(X_test, Y_test)
     ps_svm_scores.append(100*score_avg/n_test)
