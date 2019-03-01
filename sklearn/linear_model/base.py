@@ -467,21 +467,34 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
-            copy=self.copy_X, sample_weight=sample_weight)
+            copy=self.copy_X, sample_weight=sample_weight,
+            return_mean=True)
 
         if sample_weight is not None:
             # Sample weight can be implemented via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
         if sp.issparse(X):
+            X_offset_scale = X_offset / X_scale
+
+            def matvec(b):
+                return X.dot(b) - b.dot(X_offset_scale)
+
+            def rmatvec(b):
+                return X.T.dot(b) - X_offset_scale * np.sum(b)
+
+            X_centered = sparse.linalg.LinearOperator(shape=X.shape,
+                                                      matvec=matvec,
+                                                      rmatvec=rmatvec)
+
             if y.ndim < 2:
-                out = sparse_lsqr(X, y)
+                out = sparse_lsqr(X_centered, y)
                 self.coef_ = out[0]
                 self._residues = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(sparse_lsqr)(X, y[:, j].ravel())
+                    delayed(sparse_lsqr)(X_centered, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack([out[0] for out in outs])
                 self._residues = np.vstack([out[3] for out in outs])

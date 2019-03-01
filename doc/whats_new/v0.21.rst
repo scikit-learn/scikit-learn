@@ -24,6 +24,9 @@ random sampling procedures.
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
 - :class:`ensemble.GradientBoostingClassifier` for multiclass
   classification. |Fix|
+- :func:`svm.SVC.decision_function` and
+  :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
+
 
 Details are listed in the changelog below.
 
@@ -72,12 +75,9 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.decomposition`
 ............................
 
-- |API| The default value of the :code:`init` argument in
-  :func:`decomposition.non_negative_factorization` will change from
-  :code:`random` to :code:`None` in version 0.23 to make it consistent with
-  :class:`decomposition.NMF`. A FutureWarning is raised when
-  the default value is used.
-  :issue:`12988` by :user:`Zijie (ZJ) Poh <zjpoh>`.
+- |Enhancement| :class:`decomposition.KernelPCA` now has deterministic output
+  (resolved sign ambiguity in eigenvalue decomposition of the kernel matrix).
+  :issue:`13241` by :user:`Aurélien Bellet <bellet>`.
 
 - |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
   `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
@@ -86,9 +86,12 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`11650` by :user:`Hossein Pourbozorg <hossein-pourbozorg>` and
   :user:`Zijie (ZJ) Poh <zjpoh>`.
 
-- |Enhancement| :class:`decomposition.KernelPCA` now has deterministic output 
-  (resolved sign ambiguity in eigenvalue decomposition of the kernel matrix).
-  :issue:`13241` by :user:`Aurélien Bellet <bellet>`.
+- |API| The default value of the :code:`init` argument in
+  :func:`decomposition.non_negative_factorization` will change from
+  :code:`random` to :code:`None` in version 0.23 to make it consistent with
+  :class:`decomposition.NMF`. A FutureWarning is raised when
+  the default value is used.
+  :issue:`12988` by :user:`Zijie (ZJ) Poh <zjpoh>`.
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
@@ -103,7 +106,7 @@ Support for Python 3.4 and below has been officially dropped.
   ``n_components`` is changed to ``min(n_features, n_classes - 1)`` if so.
   Previously the change was made, but silently. :issue:`11526` by
   :user:`William de Vazelhes<wdevazelhes>`.
-  
+
 :mod:`sklearn.dummy`
 ....................
 
@@ -120,6 +123,10 @@ Support for Python 3.4 and below has been officially dropped.
   fit calls do release the GIL. This changes reduces memory usage and
   communication overhead. :issue:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
+
+- |Enhancement| Minimized the validation of X in
+  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  :issue:`13174` by :user:`Christos Aridas <chkoar>`.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor`, which didn't support
@@ -171,17 +178,23 @@ Support for Python 3.4 and below has been officially dropped.
   raising an exception if input is sparse add `missing_values` property
   is set to 0. :issue:`13240` by :user:`Bartosz Telenczuk <btel>`.
 
+:mod:`sklearn.isotonic`
+.......................
+
+- |Feature| Allow different dtypes (such as float32) in
+  :class:`isotonic.IsotonicRegression` :issue:`8769` by :user:`Vlad Niculae <vene>`
+
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Feature| :class:`linear_model.LogisticRegression` and
+  :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
+  with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
 
 - |Enhancement| :class:`linear_model.make_dataset` now preserves
   ``float32`` and ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
   :user:`Nelle Varoquaux`_, :user:`Arthur Imbert <Henley13>`,
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
-
-- |Feature| :class:`linear_model.LogisticRegression` and
-  :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
-  with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
 
 - |Enhancement| :class:`linear_model.LogisticRegression` now supports an
   unregularized objective by setting ``penalty`` to ``'none'``. This is
@@ -203,14 +216,19 @@ Support for Python 3.4 and below has been officially dropped.
   `compute_score=True`. :issue:`12174` by
   :user:`Albert Thomas <albertcthomas>`.
 
-- |API| :func:`linear_model.logistic_regression_path` is deprecated
-  in version 0.21 and will be removed in version 0.23.
-  :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
-
 - |Fix| Fixed a bug in :class:`linear_model.LassoLarsIC`, where user input
    ``copy_X=False`` at instance creation would be overridden by default
    parameter value ``copy_X=True`` in ``fit``.
    :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
+
+- |Fix| Fixed a bug in :class:`linear_model.LinearRegression` that
+  was not returning the same coeffecients and intercepts with
+  ``fit_intercept=True`` in sparse and dense case.
+  :issue:`13279` by `Alexandre Gramfort`_
+
+- |API| :func:`linear_model.logistic_regression_path` is deprecated
+  in version 0.21 and will be removed in version 0.23.
+  :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
 :mod:`sklearn.manifold`
 ............................
@@ -234,6 +252,15 @@ Support for Python 3.4 and below has been officially dropped.
   metrics such as recall, specificity, fall out and miss rate.
   :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
 
+- |Efficiency| Faster :func:`metrics.pairwise.pairwise_distances` with `n_jobs`
+  > 1 by using a thread-based backend, instead of process-based backends.
+  :issue:`8216` by :user:`Pierre Glaser <pierreglaser>` and
+  :user:`Romuald Menuet <zanospi>`
+
+- |Efficiency| The pairwise manhattan distances with sparse input now uses the
+  BLAS shipped with scipy instead of the bundled BLAS. :issue:`12732` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`
+
 - |Enhancement| Use label `accuracy` instead of `micro-average` on
   :func:`metrics.classification_report` to avoid confusion. `micro-average` is
   only shown for multi-label or multi-class with a subset of classes because
@@ -241,18 +268,23 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
 
+- |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
+  and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
+  :issue:`12855` by :user:`Pawel Sendyk <psendyk>.`
+
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
   Mitrovic <SandraMNE>`.
 
-- |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
-  and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
-  :issue:`12855` by :user:`Pawel Sendyk <psendyk>.`
+:mod:`sklearn.mixture`
+......................
 
-- |Efficiency| The pairwise manhattan distances with sparse input now uses the
-  BLAS shipped with scipy instead of the bundled BLAS. :issue:`12732` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`
+- |Fix| Fixed a bug in :class:`mixture.BaseMixture` and therefore on estimators
+  based on it, i.e. :class:`mixture.GaussianMixture` and
+  :class:`mixture.BayesianGaussianMixture`, where ``fit_predict`` and
+  ``fit.predict`` were not equivalent. :issue:`13142` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -274,8 +306,28 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`~model_selection.validation_curve` only the latter is required.
   :issue:`12613` and :issue:`12669` by :user:`Marc Torrellas <marctorrellas>`.
 
+- |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
+  shuffles each class's samples with the same ``random_state``,
+  making ``shuffle=True`` ineffective.
+  :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+:mod:`sklearn.multiclass`
+.........................
+
+- |Fix| Fixed an issue in :func:`multiclass.OneVsOneClassifier.decision_function`
+  where the decision_function value of a given sample was different depending on
+  whether the decision_function was evaluated on the sample alone or on a batch
+  containing this same sample due to the scaling used in decision_function.
+  :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
+
 :mod:`sklearn.neighbors`
 ........................
+
+- |MajorFeature| A metric learning algorithm:
+  :class:`neighbors.NeighborhoodComponentsAnalysis`, which implements the
+  Neighborhood Components Analysis algorithm described in Goldberger et al.
+  (2005). :issue:`10058` by :user:`William de Vazelhes
+  <wdevazelhes>` and :user:`John Chiotellis <johny-c>`.
 
 - |API| Methods in :class:`neighbors.NearestNeighbors` :
   :func:`~neighbors.NearestNeighbors.kneighbors`,
@@ -302,6 +354,10 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Feature| :class:`OneHotEncoder` now supports dropping one feature per category
+  with a new drop parameter. :issue:`12908` by
+  :user:`Drew Johnston <drewmjohnston>`.
+
 - |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class
   mappings instead of calculating it every time on the fly.
   :issue:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
@@ -320,13 +376,18 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`preprocessing.StandardScaler`. :issue:`13007` by
   :user:`Raffaello Baluyot <baluyotraf>`
 
-- |Feature| :class:`OneHotEncoder` now supports dropping one feature per category
-  with a new drop parameter. :issue:`12908` by
-  :user:`Drew Johnston <drewmjohnston>`.
+:mod:`sklearn.svm`
+..................
 
+- |Fix| Fixed an issue in :func:`svm.SVC.decision_function`
+  when ``decision_function_shape='ovr'``. The decision_function value of a given
+  sample was different depending on whether the decision_function was evaluated
+  on the sample alone or on a batch containing this same sample due to the scaling
+  used in decision_function. :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
 :mod:`sklearn.tree`
 ...................
+
 - |Feature| Decision Trees can now be plotted with matplotlib using
   :func:`tree.plot_tree` without relying on the ``dot`` library,
   removing a hard-to-install dependency. :issue:`8508` by `Andreas Müller`_.
@@ -352,27 +413,10 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
-:mod:`sklearn.mixture`
-......................
-
-- |Fix| Fixed a bug in :class:`mixture.BaseMixture` and therefore on estimators
-  based on it, i.e. :class:`mixture.GaussianMixture` and
-  :class:`mixture.BayesianGaussianMixture`, where ``fit_predict`` and
-  ``fit.predict`` were not equivalent. :issue:`13142` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-
-:mod:`sklearn.isotonic`
-.......................
-
-- |Feature| Allow different dtypes (such as float32) in
-  :class:`isotonic.IsotonicRegression` :issue:`8769` by :user:`Vlad Niculae <vene>`
-
-
 Multiple modules
 ................
 
-- The `__repr__()` method of all estimators (used when calling
+- |MajorFeature| The `__repr__()` method of all estimators (used when calling
   `print(estimator)`) has been entirely re-written, building on Python's
   pretty printing standard library. All parameters are printed by default,
   but this can be altered with the ``print_changed_only`` option in

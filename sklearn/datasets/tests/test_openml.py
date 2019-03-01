@@ -55,7 +55,7 @@ def _test_features_list(data_id):
                          'code relatively simple')
     data_arff = _download_data_arff(data_description['file_id'],
                                     sparse, None, False)
-    data_downloaded = np.array(data_arff['data'], dtype='O')
+    data_downloaded = np.array(list(data_arff['data']), dtype='O')
 
     for i in range(len(data_bunch.feature_names)):
         # XXX: Test per column, as this makes it easier to avoid problems with
