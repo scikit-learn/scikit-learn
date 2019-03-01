@@ -22,7 +22,7 @@ from numpy.math cimport INFINITY
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
-from sklearn.utils.weight_vector cimport WeightVector
+from sklearn.utils.weight_vector cimport WeightVector64 as WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 np.import_array()
