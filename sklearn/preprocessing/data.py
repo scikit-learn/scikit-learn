@@ -424,7 +424,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
         X_scaled = X_std * (max - min) + min
 
     where min, max = feature_range.
- 
+
     The transformation is calculated as (when ``axis=0``)::
 
        X_scaled = scale * X + min - X.min(axis=0) * scale
@@ -592,7 +592,7 @@ class StandardScaler(BaseEstimator, TransformerMixin, OneToOneMixin):
     -----
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
-    
+
     We use a biased estimator for the standard deviation, equivalent to
     `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
     affect model performance.
@@ -671,8 +671,8 @@ class StandardScaler(BaseEstimator, TransformerMixin, OneToOneMixin):
         # incr_mean_variance_axis and _incremental_variance_axis
         if (hasattr(self, 'n_samples_seen_') and
                 isinstance(self.n_samples_seen_, (int, np.integer))):
-            self.n_samples_seen_ = np.repeat(self.n_samples_seen_,
-                                             X.shape[1]).astype(np.int64)
+            self.n_samples_seen_ = np.repeat(
+                self.n_samples_seen_, X.shape[1]).astype(np.int64, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
@@ -687,8 +687,8 @@ class StandardScaler(BaseEstimator, TransformerMixin, OneToOneMixin):
                         shape=X.shape).sum(axis=0).A.ravel()
 
             if not hasattr(self, 'n_samples_seen_'):
-                self.n_samples_seen_ = (X.shape[0] -
-                                        counts_nan).astype(np.int64)
+                self.n_samples_seen_ = (
+                        X.shape[0] - counts_nan).astype(np.int64, copy=False)
 
             if self.with_std:
                 # First pass
@@ -2041,9 +2041,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin, OneToOneMixin):
 
     Parameters
     ----------
-    n_quantiles : int, optional (default=1000)
+    n_quantiles : int, optional (default=1000 or n_samples)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
+        If n_quantiles is larger than the number of samples, n_quantiles is set
+        to the number of samples as a larger number of quantiles does not give
+        a better approximation of the cumulative distribution function
+        estimator.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
@@ -2072,6 +2076,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin, OneToOneMixin):
 
     Attributes
     ----------
+    n_quantiles_ : integer
+        The actual number of quantiles used to discretize the cumulative
+        distribution function.
+
     quantiles_ : ndarray, shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
 
@@ -2218,10 +2226,19 @@ class QuantileTransformer(BaseEstimator, TransformerMixin, OneToOneMixin):
                                                        self.subsample))
 
         X = self._check_inputs(X)
+        n_samples = X.shape[0]
+
+        if self.n_quantiles > n_samples:
+            warnings.warn("n_quantiles (%s) is greater than the total number "
+                          "of samples (%s). n_quantiles is set to "
+                          "n_samples."
+                          % (self.n_quantiles, n_samples))
+        self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
+
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
-        self.references_ = np.linspace(0, 1, self.n_quantiles,
+        self.references_ = np.linspace(0, 1, self.n_quantiles_,
                                        endpoint=True)
         if sparse.issparse(X):
             self._sparse_fit(X, rng)
@@ -2443,9 +2460,13 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         Axis used to compute the means and standard deviations along. If 0,
         transform each feature, otherwise (if 1) transform each sample.
 
-    n_quantiles : int, optional (default=1000)
+    n_quantiles : int, optional (default=1000 or n_samples)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
+        If n_quantiles is larger than the number of samples, n_quantiles is set
+        to the number of samples as a larger number of quantiles does not give
+        a better approximation of the cumulative distribution function
+        estimator.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are

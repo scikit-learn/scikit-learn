@@ -178,7 +178,7 @@ def _check_sample_weight(X, sample_weight):
                              % (n_samples, len(sample_weight)))
         # normalize the weights to sum up to n_samples
         scale = n_samples / sample_weight.sum()
-        return (sample_weight * scale).astype(X.dtype)
+        return (sample_weight * scale).astype(X.dtype, copy=False)
 
 
 def k_means(X, n_clusters, sample_weight=None, init='k-means++',
@@ -618,7 +618,7 @@ def _labels_inertia_precompute_dense(X, sample_weight, x_squared_norms,
     labels, mindist = pairwise_distances_argmin_min(
         X=X, Y=centers, metric='euclidean', metric_kwargs={'squared': True})
     # cython k-means code assumes int32 inputs
-    labels = labels.astype(np.int32)
+    labels = labels.astype(np.int32, copy=False)
     if n_samples == distances.shape[0]:
         # distances will be changed in-place
         distances[:] = mindist
@@ -1194,9 +1194,10 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
                       % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
-                assign_rows_csr(X, new_centers.astype(np.intp),
-                                np.where(to_reassign)[0].astype(np.intp),
-                                centers)
+                assign_rows_csr(
+                        X, new_centers.astype(np.intp, copy=False),
+                        np.where(to_reassign)[0].astype(np.intp, copy=False),
+                        centers)
             else:
                 centers[to_reassign] = X[new_centers]
         # reset counts of reassigned centers, but don't reset them too small
