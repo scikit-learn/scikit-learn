@@ -318,7 +318,7 @@ Support for Python 3.4 and below has been officially dropped.
   where the decision_function value of a given sample was different depending on
   whether the decision_function was evaluated on the sample alone or on a batch
   containing this same sample due to the scaling used in decision_function.
-  :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
+  :issue:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -383,7 +383,7 @@ Support for Python 3.4 and below has been officially dropped.
   when ``decision_function_shape='ovr'``. The decision_function value of a given
   sample was different depending on whether the decision_function was evaluated
   on the sample alone or on a batch containing this same sample due to the scaling
-  used in decision_function. :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
+  used in decision_function. :issue:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
 :mod:`sklearn.tree`
 ...................
