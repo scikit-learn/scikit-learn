@@ -223,7 +223,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         return sample_weight
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
-                                intercept_init=None):
+                                intercept_init=None, dtype=np.float64):
         """Allocate mem for parameters; initialize if provided."""
         if n_classes > 2:
             # allocate coef_ for multi-class
@@ -235,7 +235,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros((n_classes, n_features),
-                                      dtype=np.float64, order="C")
+                                      dtype=dtype, order="C")
 
             # allocate intercept_ for multi-class
             if intercept_init is not None:
@@ -245,12 +245,12 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
                                      "does not match dataset.")
                 self.intercept_ = intercept_init
             else:
-                self.intercept_ = np.zeros(n_classes, dtype=np.float64,
+                self.intercept_ = np.zeros(n_classes, dtype=dtype,
                                            order="C")
         else:
             # allocate coef_ for binary problem
             if coef_init is not None:
-                coef_init = np.asarray(coef_init, dtype=np.float64,
+                coef_init = np.asarray(coef_init, dtype=dtype,
                                        order="C")
                 coef_init = coef_init.ravel()
                 if coef_init.shape != (n_features,):
@@ -259,28 +259,28 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
                 self.coef_ = coef_init
             else:
                 self.coef_ = np.zeros(n_features,
-                                      dtype=np.float64,
+                                      dtype=dtype,
                                       order="C")
 
             # allocate intercept_ for binary problem
             if intercept_init is not None:
-                intercept_init = np.asarray(intercept_init, dtype=np.float64)
+                intercept_init = np.asarray(intercept_init, dtype=dtype)
                 if intercept_init.shape != (1,) and intercept_init.shape != ():
                     raise ValueError("Provided intercept_init "
                                      "does not match dataset.")
                 self.intercept_ = intercept_init.reshape(1,)
             else:
-                self.intercept_ = np.zeros(1, dtype=np.float64, order="C")
+                self.intercept_ = np.zeros(1, dtype=dtype, order="C")
 
         # initialize average parameters
         if self.average > 0:
             self.standard_coef_ = self.coef_
             self.standard_intercept_ = self.intercept_
             self.average_coef_ = np.zeros(self.coef_.shape,
-                                          dtype=np.float64,
+                                          dtype=dtype,
                                           order="C")
             self.average_intercept_ = np.zeros(self.standard_intercept_.shape,
-                                               dtype=np.float64,
+                                               dtype=dtype,
                                                order="C")
 
     def _make_validation_split(self, y):
@@ -331,12 +331,12 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
             sample_weight[validation_mask], classes=classes)
 
 
-def _prepare_fit_binary(est, y, i):
+def _prepare_fit_binary(est, y, i, dtype=np.float64):
     """Initialization for fit_binary.
 
     Returns y, coef, intercept, average_coef, average_intercept.
     """
-    y_i = np.ones(y.shape, dtype=np.float64, order="C")
+    y_i = np.ones(y.shape, dtype=dtype, order="C")
     y_i[y != est.classes_[i]] = -1.0
     average_intercept = 0
     average_coef = None
@@ -412,7 +412,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     # if average is not true, average_coef, and average_intercept will be
     # unused
     y_i, coef, intercept, average_coef, average_intercept = \
-        _prepare_fit_binary(est, y, i)
+        _prepare_fit_binary(est, y, i, dtype=X.dtype)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
     dataset, intercept_decay = make_dataset(X, y_i, sample_weight)
 
@@ -515,7 +515,10 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
                      loss, learning_rate, max_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
+        X, y = check_X_y(X, y,
+                         accept_sparse='csr',
+                         dtype=[np.float64, np.float32],
+                         order="C",
                          accept_large_sparse=False)
 
         n_samples, n_features = X.shape
@@ -531,7 +534,8 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
-                                         coef_init, intercept_init)
+                                         coef_init, intercept_init,
+                                         dtype=X.dtype)
         elif n_features != self.coef_.shape[-1]:
             raise ValueError("Number of features %d does not match previous "
                              "data %d." % (n_features, self.coef_.shape[-1]))
@@ -564,7 +568,10 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         if hasattr(self, "classes_"):
             self.classes_ = None
 
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
+        X, y = check_X_y(X, y,
+                         accept_sparse='csr',
+                         dtype=[np.float64, np.float32],
+                         order="C",
                          accept_large_sparse=False)
 
         # labels can be encoded as float, int, or string literals
@@ -1136,9 +1143,10 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      max_iter, sample_weight, coef_init, intercept_init):
-        X, y = check_X_y(X, y, "csr", copy=False, order='C', dtype=np.float64,
+        X, y = check_X_y(X, y, "csr", copy=False, order='C',
+                         dtype=[np.float64, np.float32],
                          accept_large_sparse=False)
-        y = y.astype(np.float64, copy=False)
+        y = y.astype(X.dtype, copy=False)  # XXX: isn't this done in check_X_y already
 
         n_samples, n_features = X.shape
 
@@ -1153,9 +1161,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                              "data %d." % (n_features, self.coef_.shape[-1]))
         if self.average > 0 and getattr(self, "average_coef_", None) is None:
             self.average_coef_ = np.zeros(n_features,
-                                          dtype=np.float64,
+                                          dtype=X.dtype,
                                           order="C")
-            self.average_intercept_ = np.zeros(1, dtype=np.float64, order="C")
+            self.average_intercept_ = np.zeros(1, dtype=X.dtype, order="C")
 
         self._fit_regressor(X, y, alpha, C, loss, learning_rate,
                             sample_weight, max_iter)
