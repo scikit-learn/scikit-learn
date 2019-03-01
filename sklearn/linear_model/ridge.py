@@ -387,15 +387,11 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga'):
         raise ValueError('Solver %s not understood' % solver)
 
-    if return_intercept and sparse.issparse(X) and solver != 'sag':
+    if return_intercept and solver != 'sag':
         warnings.warn("In Ridge, only 'sag' solver can currently fit the "
                       "intercept. Solver has been "
                       "automatically changed into 'sag'.")
         solver = 'sag'
-
-    if return_intercept and solver not in ['sag', 'saga']:
-        raise ValueError("return_intercept=True is only supported with sag "
-                         "and saga solvers")
 
     _dtype = [np.float64, np.float32]
 

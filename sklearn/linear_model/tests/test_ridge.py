@@ -865,20 +865,28 @@ def test_ridge_regression_fail_with_return_intercept():
     X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
                            bias=10., random_state=42)
 
-    for solver in ['sparse_cg', 'cholesky', 'svd', 'lsqr']:
-        with pytest.raises(ValueError, match="return_intercept=True is only"):
+    for solver in ['sparse_cg', 'cholesky', 'svd', 'lsqr', 'saga']:
+        with pytest.warns(UserWarning) as record:
             target = ridge_regression(X, y, 1,
                                       solver=solver,
                                       return_intercept=True
                                       )
+            assert len(target) == 2
+            assert target[0].shape == (2,)
 
-    for solver in ['saga', 'sag']:
+        for r in record:
+            r.message.args[0].startswith("return_intercept=True is only")
+
+    with pytest.warns(None) as record:
         target = ridge_regression(X, y, 1,
-                                  solver=solver,
+                                  solver="sag",
                                   return_intercept=True
                                   )
         assert len(target) == 2
         assert target[0].shape == (2,)
+
+    # no warning should be raised
+    assert len(record) == 0
 
 def test_errors_and_values_helper():
     ridgecv = _RidgeGCV()
