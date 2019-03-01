@@ -187,6 +187,10 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Enhancement| :mod:`linear_model.stochastic_gradient` now preserves
+  ``float32`` and ``float64`` dtypes. :issues:`11000` by
+  :user:`Joan Massich <massich>`
+
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
   with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
