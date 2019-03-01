@@ -796,6 +796,7 @@ example using the two classes:
     KNeighborsClassifier(...)
     >>> print(knn.score(lmnn.transform(X_test), y_test)) # doctest: +ELLIPSIS
     0.971428...
+
 Alternatively, one can create a :class:`sklearn.pipeline.Pipeline` instance
 that automatically applies the transformation when fitting or predicting:
 
