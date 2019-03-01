@@ -224,6 +224,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
         inliers = self.fit_predict(X) == 1
 
         return X[inliers], y[inliers]
+
     def _fit_predict(self, X, y=None):
         """"Fits the model to the training set X and returns the labels.
 

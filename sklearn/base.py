@@ -519,7 +519,7 @@ class DensityMixin:
 
 
 class OutlierMixin:
-    """Mixin class for all outlier detection estimators in scikit-learn."""
+    """Mixin class for all outlier rejection estimators in scikit-learn."""
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
@@ -546,12 +546,12 @@ class OutlierMixin:
 
 class OutlierRejectionMixin:
     """Mixin class for all outlier detection resamplers in scikit-learn. Child
-    classes remove outliers from the passed samples.
+    classes remove outliers from the dataset.
     """
     _estimator_type = "outlier_resampler"
 
     def fit_resample(self, X, y):
-        """Performs fit on X and returns new X and y consisting of only the
+        """Performs fit on X and returns a new X and y consisting of only the
         inliers.
 
         Parameters
@@ -565,10 +565,10 @@ class OutlierRejectionMixin:
         Returns
         -------
         X : ndarray, shape (n_samples, n_features)
-            The input X with outlier samples removed.
+            The original X with outlier samples removed.
 
         y : ndarray, shape (n_samples,)
-            The input y with outlier samples removed.
+            The original y with outlier samples removed.
         """
 
         inliers = self.fit_predict(X) == 1

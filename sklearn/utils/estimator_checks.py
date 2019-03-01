@@ -56,7 +56,8 @@ from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
 from sklearn.utils import shuffle
 from sklearn.utils.validation import has_fit_parameter, _num_samples
 from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris, load_boston, make_blobs
+from sklearn.datasets import load_iris, load_boston
+from sklearn.datasets import make_blobs, make_classification
 
 
 BOSTON = None
@@ -217,7 +218,7 @@ def _yield_outliers_checks(name, estimator):
         yield check_outliers_fit_predict
 
     if hasattr(estimator, 'fit_resample'):
-        yield check_outlier_resamplers
+        yield check_outlier_rejectors
 
     # checks for estimators that can be used on a test set
     if hasattr(estimator, 'predict'):
@@ -2484,7 +2485,7 @@ def check_fit_idempotent(name, estimator_orig):
             assert_allclose_dense_sparse(result[method], new_result)
 
 
-def check_outlier_resamplers(name, estimator_orig):
+def check_outlier_rejectors(name, estimator_orig):
     X, y = make_blobs(random_state=0)
     outliers = estimator_orig.fit_predict(X, y) == -1
     n_outliers = np.sum(outliers)
@@ -2501,7 +2502,13 @@ def check_resampler_structure(name, estimator_orig):
 
 
 def check_resample_repeated(name, estimator_orig):
-    X, y = make_blobs(n_samples=10)
+    X, y = make_classification(
+        n_classes=2,
+        weights=[0.1, 0.9],
+        n_features=20,
+        n_clusters_per_class=1,
+        n_samples=50,
+        random_state=0)
 
     set_random_state(estimator_orig, random_state=0)
     X_new, y_new = estimator_orig.fit_resample(X, y)

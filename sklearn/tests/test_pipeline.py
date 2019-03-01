@@ -700,14 +700,6 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
-    # TODO need to investigate this
-    # exp = 2 * 3
-    # pipeline = Pipeline(
-    #     [('m2', mult2), ('m3', mult3), ('last', passthrough)])
-    # assert_array_equal([[exp]], pipeline.fit_transform(X, y))
-    # assert_array_equal([exp], pipeline.fit(X).predict(X))
-    # assert_array_equal(X, pipeline.inverse_transform([[exp]]))
-
 
 def test_pipeline_ducktyping():
     pipeline = make_pipeline(Mult(5))
@@ -1517,6 +1509,7 @@ def test_clusterer_and_resampler_error():
                        match=msg):
         pipe.fit_predict(X, y)
 
+
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
 def test_pipe_exposes_resample_correctly(passthrough):
     # this test will be handled by test_metaestimators later, it's just here
@@ -1530,6 +1523,5 @@ def test_pipe_exposes_resample_correctly(passthrough):
     pipe = make_pipeline(dre, mul3)
     pipe2 = make_pipeline(dre, passthrough)
 
-    #pipe2 should have fit_resample, pipe shouldn't
     assert not hasattr(pipe, 'fit_resample')
     assert hasattr(pipe2, 'fit_resample')
