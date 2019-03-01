@@ -48,7 +48,9 @@ def configuration(parent_package='', top_path=None):
 
     # generate files from a template
     pyx_templates = ['sklearn/utils/seq_dataset.pyx.tp',
-                     'sklearn/utils/seq_dataset.pxd.tp']
+                     'sklearn/utils/seq_dataset.pxd.tp',
+                     'sklearn/utils/weight_vector.pxd.tp',
+                     ]
 
     for pyxfiles in pyx_templates:
         outfile = pyxfiles.replace('.tp', '')
