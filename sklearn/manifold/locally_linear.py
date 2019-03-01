@@ -147,7 +147,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``solver`` == 'arpack'.
+        by ``np.random``. Used when ``solver`` == 'arpack'.
 
     """
     if eigen_solver == 'auto':
@@ -253,7 +253,7 @@ def locally_linear_embedding(
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``solver`` == 'arpack'.
+        by ``np.random``. Used when ``solver`` == 'arpack'.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
@@ -585,7 +585,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
+        by ``np.random``. Used when ``eigen_solver`` == 'arpack'.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.

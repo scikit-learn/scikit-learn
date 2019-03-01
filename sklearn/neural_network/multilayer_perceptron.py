@@ -730,7 +730,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
         If the solver is 'lbfgs', the classifier will not use minibatch.
-        When set to "auto", `batch_size=min(200, n_samples)`
+        When set to "auto", ``batch_size=min(200, n_samples)``
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
         Learning rate schedule for weight updates.
@@ -774,7 +774,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     tol : float, optional, default 1e-4
         Tolerance for the optimization. When the loss or score is not improving
@@ -929,8 +929,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         else:
             classes = unique_labels(y)
             if len(np.setdiff1d(classes, self.classes_, assume_unique=True)):
-                raise ValueError("`y` has classes not in `self.classes_`."
-                                 " `self.classes_` has %s. 'y' has %s." %
+                raise ValueError("`y` has classes not in ``self.classes_``."
+                                 " ``self.classes_`` has %s. 'y' has %s." %
                                  (self.classes_, classes))
 
         y = self._label_binarizer.transform(y)
@@ -990,11 +990,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         classes : array, shape (n_classes), default None
             Classes across all calls to partial_fit.
-            Can be obtained via `np.unique(y_all)`, where y_all is the
+            Can be obtained via ``np.unique(y_all)``, where y_all is the
             target vector of the entire dataset.
             This argument is required for the first call to partial_fit
             and can be omitted in the subsequent calls.
-            Note that y doesn't need to contain all labels in `classes`.
+            Note that y doesn't need to contain all labels in ``classes``.
 
         Returns
         -------
@@ -1031,7 +1031,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         log_y_prob : array-like, shape (n_samples, n_classes)
             The predicted log-probability of the sample for each class
             in the model, where classes are ordered as they are in
-            `self.classes_`. Equivalent to log(predict_proba(X))
+            ``self.classes_``. Equivalent to log(predict_proba(X))
         """
         y_prob = self.predict_proba(X)
         return np.log(y_prob, out=y_prob)
@@ -1048,7 +1048,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         -------
         y_prob : array-like, shape (n_samples, n_classes)
             The predicted probability of the sample for each class in the
-            model, where classes are ordered as they are in `self.classes_`.
+            model, where classes are ordered as they are in ``self.classes_``.
         """
         check_is_fitted(self, "coefs_")
         y_pred = self._predict(X)
@@ -1113,7 +1113,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     batch_size : int, optional, default 'auto'
         Size of minibatches for stochastic optimizers.
         If the solver is 'lbfgs', the classifier will not use minibatch.
-        When set to "auto", `batch_size=min(200, n_samples)`
+        When set to "auto", ``batch_size=min(200, n_samples)``
 
     learning_rate : {'constant', 'invscaling', 'adaptive'}, default 'constant'
         Learning rate schedule for weight updates.
@@ -1157,7 +1157,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     tol : float, optional, default 1e-4
         Tolerance for the optimization. When the loss or score is not improving

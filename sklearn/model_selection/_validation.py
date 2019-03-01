@@ -78,7 +78,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
         Possible inputs for cv are:
 
         - None, to use the default 3-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - integer, to specify the number of folds in a ``(Stratified)KFold``,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
@@ -288,7 +288,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
         Possible inputs for cv are:
 
         - None, to use the default 3-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - integer, to specify the number of folds in a ``(Stratified)KFold``,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
@@ -668,7 +668,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
         Possible inputs for cv are:
 
         - None, to use the default 3-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - integer, to specify the number of folds in a ``(Stratified)KFold``,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
@@ -959,7 +959,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
         Possible inputs for cv are:
 
         - None, to use the default 3-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - integer, to specify the number of folds in a ``(Stratified)KFold``,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
@@ -987,7 +987,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     verbose : integer, optional
         The verbosity level.
@@ -1111,7 +1111,7 @@ def learning_curve(estimator, X, y, groups=None,
         Possible inputs for cv are:
 
         - None, to use the default 3-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - integer, to specify the number of folds in a ``(Stratified)KFold``,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
@@ -1157,7 +1157,7 @@ def learning_curve(estimator, X, y, groups=None,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` is True.
+        by ``np.random``. Used when ``shuffle`` is True.
 
     error_score : 'raise' | 'raise-deprecating' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -1362,7 +1362,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         Possible inputs for cv are:
 
         - None, to use the default 3-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - integer, to specify the number of folds in a ``(Stratified)KFold``,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 

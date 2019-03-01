@@ -183,10 +183,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Attributes
     ----------
     X_min_ : float
-        Minimum value of input array `X_` for left bound.
+        Minimum value of input array ``X_`` for left bound.
 
     X_max_ : float
-        Maximum value of input array `X_` for right bound.
+        Maximum value of input array ``X_`` for right bound.
 
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.

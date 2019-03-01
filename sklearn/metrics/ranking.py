@@ -577,8 +577,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 
     thresholds : array, shape = [n_thresholds]
         Decreasing thresholds on the decision function used to compute
-        fpr and tpr. `thresholds[0]` represents no instances being predicted
-        and is arbitrarily set to `max(y_score) + 1`.
+        fpr and tpr. ``thresholds[0]`` represents no instances being predicted
+        and is arbitrarily set to ``max(y_score) + 1``.
 
     See also
     --------

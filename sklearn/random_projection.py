@@ -51,9 +51,9 @@ __all__ = ["SparseRandomProjection",
 def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     """Find a 'safe' number of components to randomly project to
 
-    The distortion introduced by a random projection `p` only changes the
+    The distortion introduced by a random projection ``p`` only changes the
     distance between two points by a factor (1 +- eps) in an euclidean space
-    with good probability. The projection `p` is an eps-embedding as defined
+    with good probability. The projection ``p`` is an eps-embedding as defined
     by:
 
       (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
@@ -173,7 +173,7 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
         at fit time.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        RandomState instance used by ``np.random``.
 
     Returns
     -------
@@ -232,7 +232,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         at fit time.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        RandomState instance used by ``np.random``.
 
     Returns
     -------
@@ -452,7 +452,7 @@ class GaussianRandomProjection(BaseRandomProjection):
         at fit time.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        RandomState instance used by ``np.random``.
 
     Attributes
     ----------
@@ -571,7 +571,7 @@ class SparseRandomProjection(BaseRandomProjection):
         at fit time.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        RandomState instance used by ``np.random``.
 
     Attributes
     ----------

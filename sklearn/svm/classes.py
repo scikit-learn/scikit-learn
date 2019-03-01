@@ -51,7 +51,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         two classes.
         ``"ovr"`` trains n_classes one-vs-rest classifiers, while
         ``"crammer_singer"`` optimizes a joint objective over all classes.
-        While `crammer_singer` is interesting from a theoretical perspective
+        While ``crammer_singer`` is interesting from a theoretical perspective
         as it is consistent, it is seldom used in practice as it rarely leads
         to better accuracy and is more expensive to compute.
         If ``"crammer_singer"`` is chosen, the options loss, penalty and dual
@@ -94,7 +94,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         int, random_state is the seed used by the random number generator; If
         RandomState instance, random_state is the random number generator; If
         None, the random number generator is the RandomState instance used by
-        `np.random`.
+        ``np.random``.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -306,7 +306,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -436,7 +436,7 @@ class SVC(BaseSVC):
     The multiclass support is handled according to a one-vs-one scheme.
 
     For details on the precise mathematical formulation of the provided
-    kernel functions and how `gamma`, `coef0` and `degree` affect each
+    kernel functions and how ``gamma``, ``coef0`` and ``degree`` affect each
     other, see the corresponding section in the narrative documentation:
     :ref:`svm_kernels`.
 
@@ -523,7 +523,7 @@ class SVC(BaseSVC):
         the data for probability estimates. If int, random_state is the
         seed used by the random number generator; If RandomState instance,
         random_state is the random number generator; If None, the random
-        number generator is the RandomState instance used by `np.random`.
+        number generator is the RandomState instance used by ``np.random``.
 
     Attributes
     ----------
@@ -547,8 +547,8 @@ class SVC(BaseSVC):
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is a readonly property derived from `dual_coef_` and
-        `support_vectors_`.
+        `coef_` is a readonly property derived from ``dual_coef_`` and
+        ``support_vectors_``.
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
@@ -709,7 +709,7 @@ class NuSVC(BaseSVC):
         the data for probability estimates. If int, random_state is the seed
         used by the random number generator; If RandomState instance,
         random_state is the random number generator; If None, the random
-        number generator is the RandomState instance used by `np.random`.
+        number generator is the RandomState instance used by ``np.random``.
 
     Attributes
     ----------
@@ -733,8 +733,8 @@ class NuSVC(BaseSVC):
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
-        `support_vectors_`.
+        `coef_` is readonly property derived from ``dual_coef_`` and
+        ``support_vectors_``.
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
@@ -863,8 +863,8 @@ class SVR(BaseLibSVM, RegressorMixin):
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
-        `support_vectors_`.
+        `coef_` is readonly property derived from ``dual_coef_`` and
+        ``support_vectors_``.
 
     intercept_ : array, shape = [1]
         Constants in decision function.
@@ -990,8 +990,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
-        `support_vectors_`.
+        `coef_` is readonly property derived from ``dual_coef_`` and
+        ``support_vectors_``.
 
     intercept_ : array, shape = [1]
         Constants in decision function.
@@ -1120,16 +1120,16 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
-        `coef_` is readonly property derived from `dual_coef_` and
-        `support_vectors_`
+        `coef_` is readonly property derived from ``dual_coef_`` and
+        ``support_vectors_``
 
     intercept_ : array, shape = [1,]
         Constant in the decision function.
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
-        We have the relation: decision_function = score_samples - `offset_`.
-        The offset is the opposite of `intercept_` and is provided for
+        We have the relation: decision_function = score_samples - ``offset_``.
+        The offset is the opposite of ``intercept_`` and is provided for
         consistency with other outlier detection algorithms.
 
     """

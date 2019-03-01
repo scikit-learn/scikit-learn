@@ -135,7 +135,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
 
     offset_ : float
         Offset used to obtain binary labels from the raw scores.
-        Observations having a negative_outlier_factor smaller than `offset_`
+        Observations having a negative_outlier_factor smaller than ``offset_``
         are detected as abnormal.
         The offset is set to -1.5 (inliers score around -1), except when a
         contamination parameter different than "auto" is provided. In that

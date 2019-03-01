@@ -84,8 +84,8 @@ class BayesianGaussianMixture(BaseMixture):
     ----------
     n_components : int, defaults to 1.
         The number of mixture components. Depending on the data and the value
-        of the `weight_concentration_prior` the model can decide to not use
-        all the components by setting some component `weights_` to values very
+        of the ``weight_concentration_prior`` the model can decide to not use
+        all the components by setting some component ``weights_`` to values very
         close to zero. The number of effective components is therefore smaller
         than n_components.
 
@@ -141,7 +141,7 @@ class BayesianGaussianMixture(BaseMixture):
     mean_precision_prior : float | None, optional.
         The precision prior on the mean distribution (Gaussian).
         Controls the extend to where means can be placed. Smaller
-        values concentrate the means of each clusters around `mean_prior`.
+        values concentrate the means of each clusters around ``mean_prior``.
         The value of the parameter must be greater than 0.
         If it is None, it's set to 1.
 
@@ -156,7 +156,7 @@ class BayesianGaussianMixture(BaseMixture):
     covariance_prior : float or array-like, optional
         The prior on the covariance distribution (Wishart).
         If it is None, the emiprical covariance prior is initialized using the
-        covariance of X. The shape depends on `covariance_type`::
+        covariance of X. The shape depends on ``covariance_type``::
 
                 (n_features, n_features) if 'full',
                 (n_features, n_features) if 'tied',
@@ -167,7 +167,7 @@ class BayesianGaussianMixture(BaseMixture):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
@@ -194,7 +194,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     covariances_ : array-like
         The covariance of each mixture component.
-        The shape depends on `covariance_type`::
+        The shape depends on ``covariance_type``::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
@@ -208,7 +208,7 @@ class BayesianGaussianMixture(BaseMixture):
         equivalently parameterized by the precision matrices. Storing the
         precision matrices instead of the covariance matrices makes it more
         efficient to compute the log-likelihood of new samples at test time.
-        The shape depends on ``covariance_type``::
+        The shape depends on ```covariance_type```::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
@@ -222,7 +222,7 @@ class BayesianGaussianMixture(BaseMixture):
         Gaussian can be equivalently parameterized by the precision matrices.
         Storing the precision matrices instead of the covariance matrices makes
         it more efficient to compute the log-likelihood of new samples at test
-        time. The shape depends on ``covariance_type``::
+        time. The shape depends on ```covariance_type```::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
@@ -261,7 +261,7 @@ class BayesianGaussianMixture(BaseMixture):
         The precision prior on the mean distribution (Gaussian).
         Controls the extend to where means can be placed.
         Smaller values concentrate the means of each clusters around
-        `mean_prior`.
+        ``mean_prior``.
 
     mean_precision_ : array-like, shape (n_components,)
         The precision of each components on the mean distribution (Gaussian).
@@ -278,7 +278,7 @@ class BayesianGaussianMixture(BaseMixture):
 
     covariance_prior_ : float or array-like
         The prior on the covariance distribution (Wishart).
-        The shape depends on `covariance_type`::
+        The shape depends on ``covariance_type``::
 
             (n_features, n_features) if 'full',
             (n_features, n_features) if 'tied',
@@ -509,7 +509,7 @@ class BayesianGaussianMixture(BaseMixture):
         xk : array-like, shape (n_components, n_features)
 
         sk : array-like
-            The shape depends of `covariance_type`:
+            The shape depends of ``covariance_type``:
             'full' : (n_components, n_features, n_features)
             'tied' : (n_features, n_features)
             'diag' : (n_components, n_features)

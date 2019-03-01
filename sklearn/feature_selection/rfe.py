@@ -56,7 +56,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         attribute or through a ``feature_importances_`` attribute.
 
     n_features_to_select : int or None (default=None)
-        The number of features to select. If `None`, half of the features
+        The number of features to select. If ``None``, half of the features
         are selected.
 
     step : int or float, optional (default=1)
@@ -77,7 +77,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         The mask of selected features.
 
     ranking_ : array of shape [n_features]
-        The feature ranking, such that ``ranking_[i]`` corresponds to the
+        The feature ranking, such that ```ranking_[i]``` corresponds to the
         ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
@@ -388,7 +388,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     n_jobs : int or None, optional (default=None)
         Number of cores to run in parallel while fitting across folds.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ```None``` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -401,7 +401,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         The mask of selected features.
 
     ranking_ : array of shape [n_features]
-        The feature ranking, such that `ranking_[i]`
+        The feature ranking, such that ``ranking_[i]``
         corresponds to the ranking
         position of the i-th feature.
         Selected (i.e., estimated best)

@@ -170,10 +170,10 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     children : 2D array, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
-        A node `i` greater than or equal to `n_samples` is a non-leaf
-        node and has children `children_[i - n_samples]`. Alternatively
+        A node ``i`` greater than or equal to `n_samples` is a non-leaf
+        node and has children ``children_[i - n_samples]``. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
-        are merged to form node `n_samples + i`
+        are merged to form node ``n_samples + i``
 
     n_components : int
         The number of connected components in the graph.
@@ -389,10 +389,10 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
     children : 2D array, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
-        A node `i` greater than or equal to `n_samples` is a non-leaf
-        node and has children `children_[i - n_samples]`. Alternatively
+        A node ``i`` greater than or equal to `n_samples` is a non-leaf
+        node and has children ``children_[i - n_samples]``. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
-        are merged to form node `n_samples + i`
+        are merged to form node ``n_samples + i``
 
     n_components : int
         The number of connected components in the graph.
@@ -605,10 +605,10 @@ def _hc_cut(n_clusters, children, n_leaves):
     children : 2D array, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
-        A node `i` greater than or equal to `n_samples` is a non-leaf
-        node and has children `children_[i - n_samples]`. Alternatively
+        A node ``i`` greater than or equal to `n_samples` is a non-leaf
+        node and has children ``children_[i - n_samples]``. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
-        are merged to form node `n_samples + i`
+        are merged to form node ``n_samples + i``
 
     n_leaves : int
         Number of leaves of the tree.
@@ -720,10 +720,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     children_ : array-like, shape (n_samples-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
-        A node `i` greater than or equal to `n_samples` is a non-leaf
-        node and has children `children_[i - n_samples]`. Alternatively
+        A node ``i`` greater than or equal to `n_samples` is a non-leaf
+        node and has children ``children_[i - n_samples]``. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
-        are merged to form node `n_samples + i`
+        are merged to form node ``n_samples + i``
 
     Examples
     --------
@@ -889,7 +889,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     pooling_func : callable, default np.mean
         This combines the values of agglomerated features into a single
         value, and should accept an array of shape [M, N] and the keyword
-        argument `axis=1`, and reduce it to an array of size [M].
+        argument ``axis=1``, and reduce it to an array of size [M].
 
     Attributes
     ----------
@@ -905,10 +905,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     children_ : array-like, shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_features`
         correspond to leaves of the tree which are the original samples.
-        A node `i` greater than or equal to `n_features` is a non-leaf
-        node and has children `children_[i - n_features]`. Alternatively
+        A node ``i`` greater than or equal to `n_features` is a non-leaf
+        node and has children ``children_[i - n_features]``. Alternatively
         at the i-th iteration, children[i][0] and children[i][1]
-        are merged to form node `n_features + i`
+        are merged to form node ``n_features + i``
 
     Examples
     --------

@@ -434,7 +434,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
 
     decode_error : {'strict', 'ignore', 'replace'}
         Instruction on what to do if a byte sequence is given to analyze that
-        contains characters not of the given `encoding`. By default, it is
+        contains characters not of the given ``encoding``. By default, it is
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
@@ -694,7 +694,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     decode_error : {'strict', 'ignore', 'replace'}
         Instruction on what to do if a byte sequence is given to analyze that
-        contains characters not of the given `encoding`. By default, it is
+        contains characters not of the given ``encoding``. By default, it is
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
@@ -798,9 +798,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     stop_words_ : set
         Terms that were ignored because they either:
 
-          - occurred in too many documents (`max_df`)
-          - occurred in too few documents (`min_df`)
-          - were cut off by feature selection (`max_features`).
+          - occurred in too many documents (``max_df``)
+          - occurred in too few documents (``min_df``)
+          - were cut off by feature selection (``max_features``).
 
         This is only available if no vocabulary was given.
 
@@ -1341,7 +1341,7 @@ class TfidfVectorizer(CountVectorizer):
 
     decode_error : {'strict', 'ignore', 'replace'} (default='strict')
         Instruction on what to do if a byte sequence is given to analyze that
-        contains characters not of the given `encoding`. By default, it is
+        contains characters not of the given ``encoding``. By default, it is
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
@@ -1468,9 +1468,9 @@ class TfidfVectorizer(CountVectorizer):
     stop_words_ : set
         Terms that were ignored because they either:
 
-          - occurred in too many documents (`max_df`)
-          - occurred in too few documents (`min_df`)
-          - were cut off by feature selection (`max_features`).
+          - occurred in too many documents (``max_df``)
+          - occurred in too few documents (``min_df``)
+          - were cut off by feature selection (``max_features``).
 
         This is only available if no vocabulary was given.
 

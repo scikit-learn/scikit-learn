@@ -79,7 +79,7 @@ class QuantileEstimator:
     """
     def __init__(self, alpha=0.9):
         if not 0 < alpha < 1.0:
-            raise ValueError("`alpha` must be in (0, 1.0) but was %r" % alpha)
+            raise ValueError("``alpha`` must be in (0, 1.0) but was %r" % alpha)
         self.alpha = alpha
 
     def fit(self, X, y, sample_weight=None):
@@ -408,7 +408,7 @@ class LossFunction(metaclass=ABCMeta):
             The sample mask to be used.
         learning_rate : float, default=0.1
             learning rate shrinks the contribution of each tree by
-             ``learning_rate``.
+             ```learning_rate```.
         k : int, default 0
             The index of the estimator being updated.
 
@@ -528,7 +528,7 @@ class LeastSquaresError(RegressionLossFunction):
             The sample mask to be used.
         learning_rate : float, default=0.1
             learning rate shrinks the contribution of each tree by
-             ``learning_rate``.
+             ```learning_rate```.
         k : int, default 0
             The index of the estimator being updated.
         """
@@ -1366,7 +1366,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             del self._rng
 
     def _resize_state(self):
-        """Add additional ``n_estimators`` entries to all attributes. """
+        """Add additional ```n_estimators``` entries to all attributes. """
         # self.n_estimators is the number of additional est to fit
         total_n_estimators = self.n_estimators
         if total_n_estimators < self.estimators_.shape[0]:
@@ -1555,7 +1555,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         For each stage it computes the progress (OOB, train score)
         and delegates to ``_fit_stage``.
-        Returns the number of stages fit; might differ from ``n_estimators``
+        Returns the number of stages fit; might differ from ```n_estimators```
         due to early stopping.
         """
         n_samples = X.shape[0]
@@ -1780,7 +1780,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         boosting recovers the AdaBoost algorithm.
 
     learning_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learning_rate`.
+        learning rate shrinks the contribution of each tree by ``learning_rate``.
         There is a trade-off between learning_rate and n_estimators.
 
     n_estimators : int (default=100)
@@ -1791,8 +1791,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_estimators`.
-        Choosing `subsample < 1.0` leads to a reduction of variance
+        Boosting. ``subsample`` interacts with the parameter ``n_estimators``.
+        Choosing ``subsample < 1.0`` leads to a reduction of variance
         and an increase in bias.
 
     criterion : string, optional (default="friedman_mse")
@@ -1808,8 +1808,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -1819,12 +1819,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least ```min_samples_leaf``` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
@@ -1880,26 +1880,26 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
-        - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a fraction and
+        - If int, then consider ``max_features`` features at each split.
+        - If float, then ``max_features`` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
-        - If "auto", then `max_features=sqrt(n_features)`.
-        - If "sqrt", then `max_features=sqrt(n_features)`.
-        - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
+        - If "auto", then ``max_features=sqrt(n_features)``.
+        - If "sqrt", then ``max_features=sqrt(n_features)``.
+        - If "log2", then ``max_features=log2(n_features)``.
+        - If None, then ``max_features=n_features``.
 
-        Choosing `max_features < n_features` leads to a reduction of variance
+        Choosing ``max_features < n_features`` leads to a reduction of variance
         and an increase in bias.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        effectively inspect more than ```max_features``` features.
 
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
@@ -1955,7 +1955,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
         ``n_iter_no_change`` is specified). Otherwise it is set to
-        ``n_estimators``.
+        ```n_estimators```.
 
         .. versionadded:: 0.20
 
@@ -1989,7 +1989,7 @@ shape (n_estimators, ``loss_.K``)
     -----
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data and
-    ``max_features=n_features``, if the improvement of the criterion is
+    ```max_features=n_features```, if the improvement of the criterion is
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
@@ -2240,10 +2240,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         regression. 'lad' (least absolute deviation) is a highly robust
         loss function solely based on order information of the input
         variables. 'huber' is a combination of the two. 'quantile'
-        allows quantile regression (use `alpha` to specify the quantile).
+        allows quantile regression (use ``alpha`` to specify the quantile).
 
     learning_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by `learning_rate`.
+        learning rate shrinks the contribution of each tree by ``learning_rate``.
         There is a trade-off between learning_rate and n_estimators.
 
     n_estimators : int (default=100)
@@ -2254,8 +2254,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
-        Boosting. `subsample` interacts with the parameter `n_estimators`.
-        Choosing `subsample < 1.0` leads to a reduction of variance
+        Boosting. ``subsample`` interacts with the parameter ``n_estimators``.
+        Choosing ``subsample < 1.0`` leads to a reduction of variance
         and an increase in bias.
 
     criterion : string, optional (default="friedman_mse")
@@ -2271,8 +2271,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -2282,12 +2282,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
-        least ``min_samples_leaf`` training samples in each of the left and
+        least ```min_samples_leaf``` training samples in each of the left and
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
@@ -2344,26 +2344,26 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
-        - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a fraction and
+        - If int, then consider ``max_features`` features at each split.
+        - If float, then ``max_features`` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
-        - If "sqrt", then `max_features=sqrt(n_features)`.
-        - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
+        - If "auto", then ``max_features=n_features``.
+        - If "sqrt", then ``max_features=sqrt(n_features)``.
+        - If "log2", then ``max_features=log2(n_features)``.
+        - If None, then ``max_features=n_features``.
 
-        Choosing `max_features < n_features` leads to a reduction of variance
+        Choosing ``max_features < n_features`` leads to a reduction of variance
         and an increase in bias.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
-        effectively inspect more than ``max_features`` features.
+        effectively inspect more than ```max_features``` features.
 
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile
@@ -2449,7 +2449,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     -----
     The features are always randomly permuted at each split. Therefore,
     the best found split may vary, even with the same training data and
-    ``max_features=n_features``, if the improvement of the criterion is
+    ```max_features=n_features```, if the improvement of the criterion is
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.

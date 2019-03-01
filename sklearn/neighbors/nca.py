@@ -74,7 +74,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         'random'
             The initial transformation will be a random array of shape
-            `(n_components, n_features)`. Each value is sampled from the
+            ``(n_components, n_features)``. Each value is sampled from the
             standard normal distribution.
 
         numpy array

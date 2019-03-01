@@ -82,7 +82,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         random_state is the seed used by the random number generator; If
         RandomState instance, random_state is the random number generator; If
         None, the random number generator is the RandomState instance used by
-        `np.random`. Used when ``sample_size is not None``.
+        ``np.random``. Used when ``sample_size is not None``.
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.

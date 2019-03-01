@@ -59,7 +59,7 @@ class Perceptron(BaseSGDClassifier):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation.

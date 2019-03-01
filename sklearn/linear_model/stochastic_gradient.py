@@ -184,7 +184,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         self._max_iter = max_iter
 
     def _get_loss_function(self, loss):
-        """Get concrete ``LossFunction`` object for str ``loss``. """
+        """Get concrete ``LossFunction`` object for str ```loss```. """
         try:
             loss_ = self.loss_functions[loss]
             loss_class, args = loss_[0], loss_[1:]
@@ -682,11 +682,11 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
 
         classes : array, shape (n_classes,)
             Classes across all calls to partial_fit.
-            Can be obtained by via `np.unique(y_all)`, where y_all is the
+            Can be obtained by via ``np.unique(y_all)``, where y_all is the
             target vector of the entire dataset.
             This argument is required for the first call to partial_fit
             and can be omitted in the subsequent calls.
-            Note that y doesn't need to contain all labels in `classes`.
+            Note that y doesn't need to contain all labels in ``classes``.
 
         sample_weight : array-like, shape (n_samples,), optional
             Weights applied to individual samples.
@@ -830,7 +830,7 @@ class SGDClassifier(BaseSGDClassifier):
         The verbosity level
 
     epsilon : float
-        Epsilon in the epsilon-insensitive loss functions; only if `loss` is
+        Epsilon in the epsilon-insensitive loss functions; only if ``loss`` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
         important to get the prediction exactly right.
@@ -849,7 +849,7 @@ class SGDClassifier(BaseSGDClassifier):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     learning_rate : string, optional
         The learning rate schedule:
@@ -1019,7 +1019,7 @@ class SGDClassifier(BaseSGDClassifier):
         -------
         array, shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
-            where classes are ordered as they are in `self.classes_`.
+            where classes are ordered as they are in ``self.classes_``.
 
         References
         ----------
@@ -1097,7 +1097,7 @@ class SGDClassifier(BaseSGDClassifier):
         T : array-like, shape (n_samples, n_classes)
             Returns the log-probability of the sample for each class in the
             model, where classes are ordered as they are in
-            `self.classes_`.
+            ``self.classes_``.
         """
         self._check_proba()
         return self._predict_log_proba
@@ -1451,7 +1451,7 @@ class SGDRegressor(BaseSGDRegressor):
         The verbosity level.
 
     epsilon : float
-        Epsilon in the epsilon-insensitive loss functions; only if `loss` is
+        Epsilon in the epsilon-insensitive loss functions; only if ``loss`` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
         For 'huber', determines the threshold at which it becomes less
         important to get the prediction exactly right.
@@ -1463,7 +1463,7 @@ class SGDRegressor(BaseSGDRegressor):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     learning_rate : string, optional
         The learning rate schedule:

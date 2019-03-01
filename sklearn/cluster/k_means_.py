@@ -902,8 +902,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     it can be useful to restart it several times.
 
     If the algorithm stops before fully converging (because of ``tol`` or
-    ``max_iter``), ``labels_`` and ``cluster_centers_`` will not be consistent,
-    i.e. the ``cluster_centers_`` will not be the means of the points in each
+    ``max_iter``), ``labels_`` and ```cluster_centers_``` will not be consistent,
+    i.e. the ```cluster_centers_``` will not be the means of the points in each
     cluster. Also, the estimator will reassign ``labels_`` after the last
     iteration to make ``labels_`` consistent with ``predict`` on the training
     set.
@@ -1051,7 +1051,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     def predict(self, X, sample_weight=None):
         """Predict the closest cluster each sample in X belongs to.
 
-        In the vector quantization literature, `cluster_centers_` is called
+        In the vector quantization literature, ``cluster_centers_`` is called
         the code book and each value returned by `predict` is the index of
         the closest code in the code book.
 
@@ -1719,7 +1719,7 @@ class MiniBatchKMeans(KMeans):
     def predict(self, X, sample_weight=None):
         """Predict the closest cluster each sample in X belongs to.
 
-        In the vector quantization literature, `cluster_centers_` is called
+        In the vector quantization literature, ``cluster_centers_`` is called
         the code book and each value returned by `predict` is the index of
         the closest code in the code book.
 

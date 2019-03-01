@@ -113,8 +113,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     program with memory exhaustion problems.
 
     Instead the caller is expected to either set explicitly
-    `with_mean=False` (in that case, only variance scaling will be
-    performed on the features of the CSC matrix) or to call `X.toarray()`
+    ``with_mean=False`` (in that case, only variance scaling will be
+    performed on the features of the CSC matrix) or to call ``X.toarray()``
     if he/she expects the materialized dense array to fit in memory.
 
     To avoid memory copy the caller should pass a CSC matrix.
@@ -123,7 +123,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     and maintained during the data transformation.
 
     We use a biased estimator for the standard deviation, equivalent to
-    `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
+    ``numpy.std(x, ddof=0)``. Note that the choice of ``ddof`` is unlikely to
     affect model performance.
 
     For a comparison of the different scalers, transformers, and normalizers,
@@ -142,7 +142,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
-                "Cannot center sparse matrices: pass `with_mean=False` instead"
+                "Cannot center sparse matrices: pass ``with_mean=False`` instead"
                 " See docstring for motivation and alternatives.")
         if axis != 0:
             raise ValueError("Can only scale sparse matrix on axis=0, "
@@ -494,9 +494,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
         z = (x - u) / s
 
-    where `u` is the mean of the training samples or zero if `with_mean=False`,
-    and `s` is the standard deviation of the training samples or one if
-    `with_std=False`.
+    where ``u`` is the mean of the training samples or zero if ``with_mean=False``,
+    and ``s`` is the standard deviation of the training samples or one if
+    ``with_std=False``.
 
     Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
@@ -517,7 +517,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     estimator unable to learn from other features correctly as expected.
 
     This scaler can also be applied to sparse CSR or CSC matrices by passing
-    `with_mean=False` to avoid breaking the sparsity structure of the data.
+    ``with_mean=False`` to avoid breaking the sparsity structure of the data.
 
     Read more in the :ref:`User Guide <preprocessing_scaler>`.
 
@@ -544,18 +544,18 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     ----------
     scale_ : ndarray or None, shape (n_features,)
         Per feature relative scaling of the data. This is calculated using
-        `np.sqrt(var_)`. Equal to ``None`` when ``with_std=False``.
+        ``np.sqrt(var_)``. Equal to ``None`` when ```with_std=False```.
 
         .. versionadded:: 0.17
            *scale_*
 
     mean_ : ndarray or None, shape (n_features,)
         The mean value for each feature in the training set.
-        Equal to ``None`` when ``with_mean=False``.
+        Equal to ``None`` when ```with_mean=False```.
 
     var_ : ndarray or None, shape (n_features,)
         The variance for each feature in the training set. Used to compute
-        `scale_`. Equal to ``None`` when ``with_std=False``.
+        ``scale_``. Equal to ``None`` when ```with_std=False```.
 
     n_samples_seen_ : int or array, shape (n_features,)
         The number of samples processed by the estimator for each feature.
@@ -594,7 +594,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     transform.
     
     We use a biased estimator for the standard deviation, equivalent to
-    `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
+    ``numpy.std(x, ddof=0)``. Note that the choice of ``ddof`` is unlikely to
     affect model performance.
 
     For a comparison of the different scalers, transformers, and normalizers,
@@ -662,7 +662,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                         warn_on_dtype=False, estimator=self,
                         dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
 
-        # Even in the case of `with_mean=False`, we update the mean anyway
+        # Even in the case of ``with_mean=False``, we update the mean anyway
         # This is needed for the incremental computation of the var
         # See incr_mean_variance_axis and _incremental_mean_variance_axis
 
@@ -677,7 +677,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
-                    "Cannot center sparse matrices: pass `with_mean=False` "
+                    "Cannot center sparse matrices: pass ``with_mean=False`` "
                     "instead. See docstring for motivation and alternatives.")
 
             sparse_constructor = (sparse.csr_matrix
@@ -760,7 +760,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
-                    "Cannot center sparse matrices: pass `with_mean=False` "
+                    "Cannot center sparse matrices: pass ``with_mean=False`` "
                     "instead. See docstring for motivation and alternatives.")
             if self.scale_ is not None:
                 inplace_column_scale(X, 1 / self.scale_)
@@ -792,7 +792,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
-                    "Cannot uncenter sparse matrices: pass `with_mean=False` "
+                    "Cannot uncenter sparse matrices: pass ``with_mean=False`` "
                     "instead See docstring for motivation and alternatives.")
             if not sparse.isspmatrix_csr(X):
                 X = X.tocsr()
@@ -1081,7 +1081,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
         Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
-        Quantile range used to calculate ``scale_``.
+        Quantile range used to calculate ```scale_```.
 
         .. versionadded:: 0.18
 
@@ -1271,7 +1271,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
     quantile_range : tuple (q_min, q_max), 0.0 < q_min < q_max < 100.0
         Default: (25.0, 75.0) = (1st quantile, 3rd quantile) = IQR
-        Quantile range used to calculate ``scale_``.
+        Quantile range used to calculate ```scale_```.
 
         .. versionadded:: 0.18
 
@@ -1288,7 +1288,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
     Instead the caller is expected to either set explicitly
     `with_centering=False` (in that case, only variance scaling will be
-    performed on the features of the CSR matrix) or to call `X.toarray()`
+    performed on the features of the CSR matrix) or to call ``X.toarray()``
     if he/she expects the materialized dense array to fit in memory.
 
     To avoid memory copy the caller should pass a CSR matrix.
@@ -2195,7 +2195,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
-            nonnegative if `ignore_implicit_zeros` is False.
+            nonnegative if ``ignore_implicit_zeros`` is False.
 
         Returns
         -------
@@ -2372,7 +2372,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
-            nonnegative if `ignore_implicit_zeros` is False.
+            nonnegative if ``ignore_implicit_zeros`` is False.
 
         Returns
         -------
@@ -2393,7 +2393,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
             ``csc_matrix``. Additionally, the sparse matrix needs to be
-            nonnegative if `ignore_implicit_zeros` is False.
+            nonnegative if ``ignore_implicit_zeros`` is False.
 
         Returns
         -------
@@ -2586,7 +2586,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     power_transform : Equivalent function without the estimator API.
 
     QuantileTransformer : Maps data to a standard normal distribution with
-        the parameter `output_distribution='normal'`.
+        the parameter ``output_distribution='normal'``.
 
     Notes
     -----
@@ -2938,7 +2938,7 @@ def power_transform(X, method='warn', standardize=True, copy=True):
         :class:`sklearn.pipeline.Pipeline`).
 
     quantile_transform : Maps data to a standard normal distribution with
-        the parameter `output_distribution='normal'`.
+        the parameter ``output_distribution='normal'``.
 
     Notes
     -----

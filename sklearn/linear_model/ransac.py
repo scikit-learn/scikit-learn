@@ -71,15 +71,15 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
     base_estimator : object, optional
         Base estimator object which implements the following methods:
 
-         * `fit(X, y)`: Fit model to given training data and target values.
-         * `score(X, y)`: Returns the mean accuracy on the given test data,
-           which is used for the stop criterion defined by `stop_score`.
+         * ``fit(X, y)``: Fit model to given training data and target values.
+         * ``score(X, y)``: Returns the mean accuracy on the given test data,
+           which is used for the stop criterion defined by ``stop_score``.
            Additionally, the score is used to decide which of two equally
            large consensus sets is chosen as the better one.
-         * `predict(X)`: Returns predicted values using the linear model,
+         * ``predict(X)``: Returns predicted values using the linear model,
            which is used to compute residual error using loss function.
 
-        If `base_estimator` is None, then
+        If ``base_estimator`` is None, then
         ``base_estimator=sklearn.linear_model.LinearRegression()`` is used for
         target values of dtype float.
 
@@ -88,12 +88,12 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
 
     min_samples : int (>= 1) or float ([0, 1]), optional
         Minimum number of samples chosen randomly from original data. Treated
-        as an absolute number of samples for `min_samples >= 1`, treated as a
+        as an absolute number of samples for ``min_samples >= 1``, treated as a
         relative number `ceil(min_samples * X.shape[0]`) for
-        `min_samples < 1`. This is typically chosen as the minimal number of
-        samples necessary to estimate the given `base_estimator`. By default a
+        ``min_samples < 1``. This is typically chosen as the minimal number of
+        samples necessary to estimate the given ``base_estimator``. By default a
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
-        `min_samples` is chosen as ``X.shape[1] + 1``.
+        ``min_samples`` is chosen as ``X.shape[1] + 1``.
 
     residual_threshold : float, optional
         Maximum residual for a data sample to be classified as an inlier.
@@ -102,15 +102,15 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
 
     is_data_valid : callable, optional
         This function is called with the randomly selected data before the
-        model is fitted to it: `is_data_valid(X, y)`. If its return value is
+        model is fitted to it: ``is_data_valid(X, y)``. If its return value is
         False the current randomly chosen sub-sample is skipped.
 
     is_model_valid : callable, optional
         This function is called with the estimated model and the randomly
-        selected data: `is_model_valid(model, X, y)`. If its return value is
+        selected data: ``is_model_valid(model, X, y)``. If its return value is
         False the current randomly chosen sub-sample is skipped.
         Rejecting samples with this function is computationally costlier than
-        with `is_data_valid`. `is_model_valid` should therefore only be used if
+        with ``is_data_valid``. ``is_model_valid`` should therefore only be used if
         the estimated model is needed for making the rejection decision.
 
     max_trials : int, optional
@@ -118,8 +118,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
 
     max_skips : int, optional
         Maximum number of iterations that can be skipped due to finding zero
-        inliers or invalid data defined by ``is_data_valid`` or invalid models
-        defined by ``is_model_valid``.
+        inliers or invalid data defined by ```is_data_valid``` or invalid models
+        defined by ```is_model_valid```.
 
         .. versionadded:: 0.19
 
@@ -157,12 +157,12 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         The generator used to initialize the centers.  If int, random_state is
         the seed used by the random number generator; If RandomState instance,
         random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+        generator is the RandomState instance used by ``np.random``.
 
     Attributes
     ----------
     estimator_ : object
-        Best fitted model (copy of the `base_estimator` object).
+        Best fitted model (copy of the ``base_estimator`` object).
 
     n_trials_ : int
         Number of random selection trials until one of the stop criteria is
@@ -178,13 +178,13 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
 
     n_skips_invalid_data_ : int
         Number of iterations skipped due to invalid data defined by
-        ``is_data_valid``.
+        ```is_data_valid```.
 
         .. versionadded:: 0.19
 
     n_skips_invalid_model_ : int
         Number of iterations skipped due to an invalid model defined by
-        ``is_model_valid``.
+        ```is_model_valid```.
 
         .. versionadded:: 0.19
 
@@ -247,8 +247,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         ------
         ValueError
             If no valid consensus set could be found. This occurs if
-            `is_data_valid` and `is_model_valid` return False for all
-            `max_trials` randomly chosen sub-samples.
+            ``is_data_valid`` and ``is_model_valid`` return False for all
+            ``max_trials`` randomly chosen sub-samples.
 
         """
         X = check_array(X, accept_sparse='csr')
@@ -271,10 +271,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
                                  "integer value.")
             min_samples = self.min_samples
         else:
-            raise ValueError("Value for `min_samples` must be scalar and "
+            raise ValueError("Value for ``min_samples`` must be scalar and "
                              "positive.")
         if min_samples > X.shape[0]:
-            raise ValueError("`min_samples` may not be larger than number "
+            raise ValueError("``min_samples`` may not be larger than number "
                              "of samples: n_samples = %d." % (X.shape[0]))
 
         if self.stop_probability < 0 or self.stop_probability > 1:
@@ -434,7 +434,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
             else:
                 raise ValueError(
                     "RANSAC could not find a valid consensus set. All"
-                    " `max_trials` iterations were skipped because each"
+                    " ``max_trials`` iterations were skipped because each"
                     " randomly chosen sub-sample failed the passing criteria."
                     " See estimator attributes for diagnostics (n_skips*).")
         else:
@@ -456,7 +456,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
     def predict(self, X):
         """Predict using the estimated model.
 
-        This is a wrapper for `estimator_.predict(X)`.
+        This is a wrapper for ``estimator_.predict(X)``.
 
         Parameters
         ----------
@@ -474,7 +474,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
     def score(self, X, y):
         """Returns the score of the prediction.
 
-        This is a wrapper for `estimator_.score(X, y)`.
+        This is a wrapper for ``estimator_.score(X, y)``.
 
         Parameters
         ----------

@@ -42,7 +42,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Examples
     --------
@@ -150,7 +150,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Examples
     --------
@@ -479,7 +479,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Attributes
     ----------

@@ -462,13 +462,13 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     max_samples : int or float, optional (default=1.0)
         The number of samples to draw from X to train each base estimator.
 
-        - If int, then draw `max_samples` samples.
+        - If int, then draw ``max_samples`` samples.
         - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
 
-        - If int, then draw `max_features` features.
+        - If int, then draw ``max_features`` features.
         - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
@@ -500,7 +500,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     verbose : int, optional (default=0)
         Controls the verbosity when fitting and predicting.
@@ -844,13 +844,13 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     max_samples : int or float, optional (default=1.0)
         The number of samples to draw from X to train each base estimator.
 
-        - If int, then draw `max_samples` samples.
+        - If int, then draw ``max_samples`` samples.
         - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
 
-        - If int, then draw `max_features` features.
+        - If int, then draw ``max_features`` features.
         - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
@@ -879,7 +879,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     verbose : int, optional (default=0)
         Controls the verbosity when fitting and predicting.
@@ -903,7 +903,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         Prediction computed with out-of-bag estimate on the training
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
-        `oob_prediction_` might contain NaN.
+        ``oob_prediction_`` might contain NaN.
 
     References
     ----------

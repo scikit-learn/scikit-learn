@@ -47,7 +47,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. Default value of "np.inf" will identify
-        clusters across all scales; reducing `max_eps` will result in
+        clusters across all scales; reducing ``max_eps`` will result in
         shorter run times.
 
     metric : string or callable, optional (default='minkowski')
@@ -214,7 +214,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """Perform OPTICS clustering
 
         Extracts an ordered list of points and reachability distances, and
-        performs initial clustering using `max_eps` distance specified at
+        performs initial clustering using ``max_eps`` distance specified at
         OPTICS object instantiation.
 
         Parameters
@@ -369,17 +369,17 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def extract_dbscan(self, eps):
         """Performs DBSCAN extraction for an arbitrary epsilon.
 
-        Extraction runs in linear time. Note that if the `max_eps` OPTICS
+        Extraction runs in linear time. Note that if the ``max_eps`` OPTICS
         parameter was set to < inf for extracting reachability and ordering
-        arrays, DBSCAN extractions will be unstable for `eps` values close to
-        `max_eps`. Setting `eps` < (`max_eps` / 5.0) will guarantee
+        arrays, DBSCAN extractions will be unstable for ``eps`` values close to
+        ``max_eps``. Setting ``eps`` < (``max_eps`` / 5.0) will guarantee
         extraction parity with DBSCAN.
 
         Parameters
         ----------
         eps : float or int, required
-            DBSCAN `eps` parameter. Must be set to < `max_eps`. Equivalence
-            with DBSCAN algorithm is achieved if `eps` is < (`max_eps` / 5)
+            DBSCAN ``eps`` parameter. Must be set to < ``max_eps``. Equivalence
+            with DBSCAN algorithm is achieved if ``eps`` is < (``max_eps`` / 5)
 
         Returns
         -------
@@ -407,7 +407,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
 
 def _extract_dbscan(ordering, core_distances, reachability, eps):
-    """Performs DBSCAN extraction for an arbitrary epsilon (`eps`).
+    """Performs DBSCAN extraction for an arbitrary epsilon (``eps``).
 
     Parameters
     ----------
@@ -418,7 +418,7 @@ def _extract_dbscan(ordering, core_distances, reachability, eps):
     reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
     eps : float or int
-        DBSCAN `eps` parameter
+        DBSCAN ``eps`` parameter
 
     Returns
     -------

@@ -136,7 +136,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
     per class. For each classifier, the class is fitted against all the other
-    classes. In addition to its computational efficiency (only `n_classes`
+    classes. In addition to its computational efficiency (only ``n_classes``
     classifiers are needed), one advantage of this approach is its
     interpretability. Since each class is represented by one and one classifier
     only, it is possible to gain knowledge about the class by inspecting its
@@ -166,10 +166,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
     Attributes
     ----------
-    estimators_ : list of `n_classes` estimators
+    estimators_ : list of ``n_classes`` estimators
         Estimators used for predictions.
 
-    classes_ : array, shape = [`n_classes`]
+    classes_ : array, shape = [``n_classes``]
         Class labels.
     label_binarizer_ : LabelBinarizer object
         Object used to transform multiclass labels to binary labels and
@@ -235,7 +235,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
 
         classes : array, shape (n_classes, )
             Classes across all calls to partial_fit.
-            Can be obtained via `np.unique(y_all)`, where y_all is the
+            Can be obtained via ``np.unique(y_all)``, where y_all is the
             target vector of the entire dataset.
             This argument is only required in the first call of partial_fit
             and can be omitted in the subsequent calls.
@@ -336,7 +336,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
         -------
         T : (sparse) array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in the model,
-            where classes are ordered as they are in `self.classes_`.
+            where classes are ordered as they are in ``self.classes_``.
         """
         check_is_fitted(self, 'estimators_')
         # Y[i, j] gives the probability that sample i has the label j.
@@ -447,7 +447,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     algorithms such as kernel algorithms which don't scale well with
     `n_samples`. This is because each individual learning problem only involves
     a small subset of the data whereas, with one-vs-the-rest, the complete
-    dataset is used `n_classes` times.
+    dataset is used ``n_classes`` times.
 
     Read more in the :ref:`User Guide <ovo_classification>`.
 
@@ -532,7 +532,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         classes : array, shape (n_classes, )
             Classes across all calls to partial_fit.
-            Can be obtained via `np.unique(y_all)`, where y_all is the
+            Can be obtained via ``np.unique(y_all)``, where y_all is the
             target vector of the entire dataset.
             This argument is only required in the first call of partial_fit
             and can be omitted in the subsequent calls.

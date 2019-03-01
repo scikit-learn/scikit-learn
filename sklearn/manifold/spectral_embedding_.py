@@ -172,7 +172,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         lobpcg eigenvectors decomposition.  If int, random_state is the seed
         used by the random number generator; If RandomState instance,
         random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`. Used when
+        generator is the RandomState instance used by ``np.random``. Used when
         ``solver`` == 'amg'.
 
     eigen_tol : float, optional, default=0.0
@@ -369,7 +369,7 @@ class SpectralEmbedding(BaseEstimator):
         lobpcg eigenvectors.  If int, random_state is the seed used by the
         random number generator; If RandomState instance, random_state is the
         random number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``solver`` ==
+        RandomState instance used by ``np.random``. Used when ``solver`` ==
         'amg'.
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}

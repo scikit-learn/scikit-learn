@@ -568,7 +568,7 @@ class TSNE(BaseEstimator):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.  Note that different initializations might result in
+        by ``np.random``.  Note that different initializations might result in
         different local minima of the cost function.
 
     method : string (default: 'barnes_hut')

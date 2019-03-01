@@ -62,10 +62,10 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     init : array of shape (n_samples, n_components)
         Initialization value of the sparse code. Only used if
-        `algorithm='lasso_cd'`.
+        ``algorithm='lasso_cd'``.
 
     max_iter : int, 1000 by default
-        Maximum number of iterations to perform if `algorithm='lasso_cd'`.
+        Maximum number of iterations to perform if ``algorithm='lasso_cd'``.
 
     copy_cov : boolean, optional
         Whether to copy the precomputed covariance matrix; if False, it may be
@@ -186,7 +186,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
-    The goal is to find a sparse array `code` such that::
+    The goal is to find a sparse array ``code`` such that::
 
         X ~= code * dictionary
 
@@ -220,17 +220,17 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     n_nonzero_coefs : int, 0.1 * n_features by default
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case.
+        solution. This is only used by ``algorithm='lars'`` and ``algorithm='omp'``
+        and is overridden by ``alpha`` in the `omp` case.
 
     alpha : float, 1. by default
-        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        If ``algorithm='lasso_lars'`` or ``algorithm='lasso_cd'``, ``alpha`` is the
         penalty applied to the L1 norm.
-        If `algorithm='threshold'`, `alpha` is the absolute value of the
+        If ``algorithm='threshold'``, ``alpha`` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        If ``algorithm='omp'``, ``alpha`` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
+        ``n_nonzero_coefs``.
 
     copy_cov : boolean, optional
         Whether to copy the precomputed covariance matrix; if False, it may be
@@ -238,10 +238,10 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     init : array of shape (n_samples, n_components)
         Initialization value of the sparse codes. Only used if
-        `algorithm='lasso_cd'`.
+        ``algorithm='lasso_cd'``.
 
     max_iter : int, 1000 by default
-        Maximum number of iterations to perform if `algorithm='lasso_cd'`.
+        Maximum number of iterations to perform if ``algorithm='lasso_cd'``.
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
@@ -357,7 +357,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     positive : boolean, optional
         Whether to enforce positivity when finding the dictionary.
@@ -478,7 +478,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
@@ -675,7 +675,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     return_inner_stats : boolean, optional
         Return the inner statistics A (dictionary covariance) and B
@@ -867,7 +867,7 @@ class SparseCodingMixin(TransformerMixin):
         """Encode the data as a sparse combination of the dictionary atoms.
 
         Coding method is determined by the object parameter
-        `transform_algorithm`.
+        ``transform_algorithm``.
 
         Parameters
         ----------
@@ -909,7 +909,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
     dictionary.
 
     Each row of the result is the solution to a sparse coding problem.
-    The goal is to find a sparse array `code` such that::
+    The goal is to find a sparse array ``code`` such that::
 
         X ~= code * dictionary
 
@@ -935,17 +935,17 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
     transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case.
+        solution. This is only used by ``algorithm='lars'`` and ``algorithm='omp'``
+        and is overridden by ``alpha`` in the `omp` case.
 
     transform_alpha : float, 1. by default
-        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        If ``algorithm='lasso_lars'`` or ``algorithm='lasso_cd'``, ``alpha`` is the
         penalty applied to the L1 norm.
-        If `algorithm='threshold'`, `alpha` is the absolute value of the
+        If ``algorithm='threshold'``, ``alpha`` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        If ``algorithm='omp'``, ``alpha`` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
+        ``n_nonzero_coefs``.
 
     split_sign : bool, False by default
         Whether to split the sparse feature vector into the concatenation of
@@ -1063,17 +1063,17 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case.
+        solution. This is only used by ``algorithm='lars'`` and ``algorithm='omp'``
+        and is overridden by ``alpha`` in the `omp` case.
 
     transform_alpha : float, 1. by default
-        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        If ``algorithm='lasso_lars'`` or ``algorithm='lasso_cd'``, ``alpha`` is the
         penalty applied to the L1 norm.
-        If `algorithm='threshold'`, `alpha` is the absolute value of the
+        If ``algorithm='threshold'``, ``alpha`` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        If ``algorithm='omp'``, ``alpha`` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
+        ``n_nonzero_coefs``.
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
@@ -1099,7 +1099,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     positive_code : bool
         Whether to enforce positivity when finding the code.
@@ -1258,17 +1258,17 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
         Number of nonzero coefficients to target in each column of the
-        solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
-        and is overridden by `alpha` in the `omp` case.
+        solution. This is only used by ``algorithm='lars'`` and ``algorithm='omp'``
+        and is overridden by ``alpha`` in the `omp` case.
 
     transform_alpha : float, 1. by default
-        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
+        If ``algorithm='lasso_lars'`` or ``algorithm='lasso_cd'``, ``alpha`` is the
         penalty applied to the L1 norm.
-        If `algorithm='threshold'`, `alpha` is the absolute value of the
+        If ``algorithm='threshold'``, ``alpha`` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, `alpha` is the tolerance parameter: the value of
+        If ``algorithm='omp'``, ``alpha`` is the tolerance parameter: the value of
         the reconstruction error targeted. In this case, it overrides
-        `n_nonzero_coefs`.
+        ``n_nonzero_coefs``.
 
     verbose : bool, optional (default: False)
         To control the verbosity of the procedure.
@@ -1282,7 +1282,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     positive_code : bool
         Whether to enforce positivity when finding the code.

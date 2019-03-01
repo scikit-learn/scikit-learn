@@ -160,7 +160,7 @@ class PCA(_BasePCA):
 
     svd_solver : string {'auto', 'full', 'arpack', 'randomized'}
         auto :
-            the solver is selected by a default policy based on `X.shape` and
+            the solver is selected by a default policy based on ``X.shape`` and
             `n_components`: if the input data is larger than 500x500 and the
             number of components to extract is lower than 80% of the smallest
             dimension of the data, then the more efficient 'randomized'
@@ -168,10 +168,10 @@ class PCA(_BasePCA):
             optionally truncated afterwards.
         full :
             run exact full SVD calling the standard LAPACK solver via
-            `scipy.linalg.svd` and select the components by postprocessing
+            ``scipy.linalg.svd`` and select the components by postprocessing
         arpack :
             run SVD truncated to n_components calling ARPACK solver via
-            `scipy.sparse.linalg.svds`. It requires strictly
+            ``scipy.sparse.linalg.svds``. It requires strictly
             0 < n_components < min(X.shape)
         randomized :
             run randomized SVD by the method of Halko et al.
@@ -193,7 +193,7 @@ class PCA(_BasePCA):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``svd_solver`` == 'arpack' or 'randomized'.
+        by ``np.random``. Used when ``svd_solver`` == 'arpack' or 'randomized'.
 
         .. versionadded:: 0.18.0
 
@@ -226,7 +226,7 @@ class PCA(_BasePCA):
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
-        Equal to `X.mean(axis=0)`.
+        Equal to ``X.mean(axis=0)``.
 
     n_components_ : int
         The estimated number of components. When n_components is set
@@ -257,7 +257,7 @@ class PCA(_BasePCA):
     via the score and score_samples methods.
     See http://www.miketipping.com/papers/met-mppca.pdf
 
-    For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
+    For svd_solver == 'arpack', refer to ``scipy.sparse.linalg.svds``.
 
     For svd_solver == 'randomized', see:
     *Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).

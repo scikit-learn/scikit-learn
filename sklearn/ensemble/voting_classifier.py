@@ -44,7 +44,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to `None` using
+        ``self.estimators_``. An estimator can be set to ``None`` using
         ``set_params``.
 
     voting : str, {'hard', 'soft'} (default='hard')
@@ -53,14 +53,14 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
-    weights : array-like, shape = [n_classifiers], optional (default=`None`)
-        Sequence of weights (`float` or `int`) to weight the occurrences of
-        predicted class labels (`hard` voting) or class probabilities
-        before averaging (`soft` voting). Uses uniform weights if `None`.
+    weights : array-like, shape = [n_classifiers], optional (default=``None``)
+        Sequence of weights (``float`` or ``int``) to weight the occurrences of
+        predicted class labels (``hard`` voting) or class probabilities
+        before averaging (``soft`` voting). Uses uniform weights if ``None``.
 
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for ``fit``.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ```None``` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
@@ -75,7 +75,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     ----------
     estimators_ : list of classifiers
         The collection of fitted sub-estimators as defined in ``estimators``
-        that are not `None`.
+        that are not ``None``.
 
     named_estimators_ : Bunch object, a dictionary with attribute access
         Attribute to access any fitted sub-estimators by name.
@@ -206,7 +206,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
     @property
     def _weights_not_none(self):
-        """Get the weights of not `None` estimators"""
+        """Get the weights of not ``None`` estimators"""
         if self.weights is None:
             return None
         return [w for est, w in zip(self.estimators,
@@ -283,13 +283,13 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         Returns
         -------
         probabilities_or_labels
-            If `voting='soft'` and `flatten_transform=True`:
+            If ``voting='soft'`` and ``flatten_transform=True``:
                 returns array-like of shape (n_classifiers, n_samples *
                 n_classes), being class probabilities calculated by each
                 classifier.
             If `voting='soft' and `flatten_transform=False`:
                 array-like of shape (n_classifiers, n_samples, n_classes)
-            If `voting='hard'`:
+            If ``voting='hard'``:
                 array-like of shape (n_samples, n_classifiers), being
                 class labels predicted by each classifier.
         """

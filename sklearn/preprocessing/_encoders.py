@@ -126,7 +126,7 @@ class OneHotEncoder(_BaseEncoder):
     returns a sparse matrix or dense array.
 
     By default, the encoder derives the categories based on the unique values
-    in each feature. Alternatively, you can also specify the `categories`
+    in each feature. Alternatively, you can also specify the ``categories``
     manually.
     The OneHotEncoder previously assumed that the input features take on
     values in the range [0, max(values)). This behaviour is deprecated.
@@ -189,8 +189,8 @@ class OneHotEncoder(_BaseEncoder):
                   in ``range(n_values[i])``
 
         .. deprecated:: 0.20
-            The `n_values` keyword was deprecated in version 0.20 and will
-            be removed in 0.22. Use `categories` instead.
+            The ``n_values`` keyword was deprecated in version 0.20 and will
+            be removed in 0.22. Use ``categories`` instead.
 
     categorical_features : 'all' or array of indices or mask, default='all'
         Specify what features are treated as categorical.
@@ -202,7 +202,7 @@ class OneHotEncoder(_BaseEncoder):
         Non-categorical features are always stacked to the right of the matrix.
 
         .. deprecated:: 0.20
-            The `categorical_features` keyword was deprecated in version
+            The ``categorical_features`` keyword was deprecated in version
             0.20 and will be removed in 0.22.
             You can use the ``ColumnTransformer`` instead.
 
@@ -438,7 +438,7 @@ class OneHotEncoder(_BaseEncoder):
         # Prevents new drop functionality from being used in legacy mode
         if self._legacy_mode and self.drop is not None:
             raise ValueError(
-                "The `categorical_features` and `n_values` keywords "
+                "The ``categorical_features`` and ``n_values`` keywords "
                 "are deprecated, and cannot be used together "
                 "with 'drop'.")
 
@@ -543,7 +543,7 @@ class OneHotEncoder(_BaseEncoder):
             try:
                 n_values = np.asarray(self._n_values, dtype=int)
             except (ValueError, TypeError):
-                raise TypeError("Wrong type for parameter `n_values`. Expected"
+                raise TypeError("Wrong type for parameter ``n_values``. Expected"
                                 " 'auto', int or array of ints, got %r"
                                 % type(self._n_values))
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:

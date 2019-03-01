@@ -80,7 +80,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -206,11 +206,11 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         classes : array, shape = [n_classes]
             Classes across all calls to partial_fit.
-            Can be obtained by via `np.unique(y_all)`, where y_all is the
+            Can be obtained by via ``np.unique(y_all)``, where y_all is the
             target vector of the entire dataset.
             This argument is required for the first call to partial_fit
             and can be omitted in the subsequent calls.
-            Note that y doesn't need to contain all labels in `classes`.
+            Note that y doesn't need to contain all labels in ``classes``.
 
         Returns
         -------
@@ -333,7 +333,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as

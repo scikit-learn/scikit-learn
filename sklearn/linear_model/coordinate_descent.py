@@ -581,7 +581,7 @@ class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
+        RandomState instance used by ``np.random``. Used when ``selection`` ==
         'random'.
 
     selection : str, default 'cyclic'
@@ -863,7 +863,7 @@ class Lasso(ElasticNet):
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
+        RandomState instance used by ``np.random``. Used when ``selection`` ==
         'random'.
 
     selection : str, default 'cyclic'
@@ -1325,7 +1325,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
+        RandomState instance used by ``np.random``. Used when ``selection`` ==
         'random'.
 
     selection : str, default 'cyclic'
@@ -1498,7 +1498,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
+        RandomState instance used by ``np.random``. Used when ``selection`` ==
         'random'.
 
     selection : str, default 'cyclic'
@@ -1677,7 +1677,7 @@ class MultiTaskElasticNet(Lasso):
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
+        RandomState instance used by ``np.random``. Used when ``selection`` ==
         'random'.
 
     selection : str, default 'cyclic'
@@ -1866,7 +1866,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
+        RandomState instance used by ``np.random``. Used when ``selection`` ==
         'random'.
 
     selection : str, default 'cyclic'
@@ -2033,7 +2033,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
+        RandomState instance used by ``np.random``. Used when ``selection`` ==
         'random'.
 
     selection : str, default 'cyclic'
@@ -2212,7 +2212,7 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``selection`` ==
+        RandomState instance used by ``np.random``. Used when ``selection`` ==
         'random'
 
     selection : str, default 'cyclic'

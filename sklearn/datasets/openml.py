@@ -488,7 +488,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
     return_X_y : boolean, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object. See
-        below for more information about the `data` and `target` objects.
+        below for more information about the ``data`` and `target` objects.
 
     Returns
     -------
@@ -517,7 +517,7 @@ def fetch_openml(name=None, version='active', data_id=None, data_home=None,
 
             This interface is **experimental** as at version 0.20 and
             subsequent releases may change attributes without notice
-            (although there should only be minor changes to ``data``
+            (although there should only be minor changes to ```data```
             and ``target``).
 
         Missing values in the 'data' are represented as NaN's. Missing values

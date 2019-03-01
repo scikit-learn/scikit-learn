@@ -52,9 +52,9 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
     max_samples : int or float, optional (default="auto")
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
+            - If int, then draw ``max_samples`` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
-            - If "auto", then `max_samples=min(256, n_samples)`.
+            - If "auto", then ``max_samples=min(256, n_samples)``.
 
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
@@ -72,7 +72,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
 
-            - If int, then draw `max_features` features.
+            - If int, then draw ``max_features`` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=False)
@@ -110,7 +110,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     verbose : int, optional (default=0)
         Controls the verbosity of the tree building process.

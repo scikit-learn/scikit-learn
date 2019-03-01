@@ -219,7 +219,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         for more details.
 
         When individual estimators are fast to train or predict
-        using `n_jobs>1` can result in slower performance due
+        using ``n_jobs>1`` can result in slower performance due
         to the overhead of spawning processes.
     """
 
@@ -265,7 +265,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         Notes
         -----
         R^2 is calculated by weighting all the targets equally using
-        `multioutput='uniform_average'`.
+        ``multioutput='uniform_average'``.
 
         Parameters
         ----------
@@ -526,7 +526,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
         The random number generator is used to generate random chain orders.
 
@@ -685,7 +685,7 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
         The random number generator is used to generate random chain orders.
 

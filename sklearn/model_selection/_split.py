@@ -371,7 +371,7 @@ class KFold(_BaseKFold):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by ``np.random``. Used when ``shuffle`` == True.
 
     Examples
     --------
@@ -582,7 +582,7 @@ class StratifiedKFold(_BaseKFold):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by ``np.random``. Used when ``shuffle`` == True.
 
     Examples
     --------
@@ -1077,7 +1077,7 @@ class _RepeatedSplits(metaclass=ABCMeta):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     **cvargs : additional params
         Constructor parameters for cv. Must not contain random_state
@@ -1179,7 +1179,7 @@ class RepeatedKFold(_RepeatedSplits):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Examples
     --------
@@ -1376,7 +1376,7 @@ class ShuffleSplit(BaseShuffleSplit):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Examples
     --------
@@ -1470,7 +1470,7 @@ class GroupShuffleSplit(ShuffleSplit):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     '''
 
@@ -1645,7 +1645,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Examples
     --------
@@ -2112,7 +2112,7 @@ def train_test_split(*arrays, **options):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     shuffle : boolean, optional (default=True)
         Whether or not to shuffle the data before splitting. If shuffle=False

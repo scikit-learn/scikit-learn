@@ -109,7 +109,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     ----------
     missing_values : number, string, np.nan (default) or None
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed.
+        ``missing_values`` will be imputed.
 
     strategy : string, optional (default="mean")
         The imputation strategy.
@@ -138,7 +138,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     copy : boolean, optional (default=True)
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
-        a new copy will always be made, even if `copy=False`:
+        a new copy will always be made, even if ``copy=False``:
 
         - If X is not an array of floating values;
         - If X is encoded as a CSR matrix.
@@ -443,7 +443,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     missing_values : int, np.nan, optional (default=np.nan)
         The placeholder for the missing values. All occurrences of
-        ``missing_values`` will be imputed.
+        ```missing_values``` will be imputed.
 
     sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
@@ -456,7 +456,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         imputations computed during the final round. A round is a single
         imputation of each feature with missing values. The stopping criterion
         is met once `abs(max(X_t - X_{t-1}))/abs(max(X[known_vals]))` < tol,
-        where `X_t` is `X` at iteration `t. Note that early stopping is only
+        where ``X_t`` is `X` at iteration `t. Note that early stopping is only
         applied if ``sample_posterior=False``.
 
     tol : float, optional (default=1e-3)
@@ -1054,7 +1054,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     ----------
     missing_values : number, string, np.nan (default) or None
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be indicated (True in the output array), the
+        ``missing_values`` will be indicated (True in the output array), the
         other values will be marked as False.
 
     features : str, optional
