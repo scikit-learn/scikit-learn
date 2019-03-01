@@ -47,3 +47,13 @@ def test_ko_check_convergence_params(solver):
     max_iter = 100
     with pytest.raises(ValueError):
         _check_convergence_params(solver, tol, max_iter)
+
+
+@pytest.mark.parametrize("internal_solver",
+        list(DEFAULT_CONV['liblinear'].keys()))
+def test_internal_solver_check_convergence_params(internal_solver):
+    solver = 'liblinear'
+    default_tol, default_max_iter = DEFAULT_CONV[solver][internal_solver]
+    assert((default_tol, default_max_iter),
+           _check_convergence_params('liblinear', 'auto', 'auto',
+                                     internal_solver))

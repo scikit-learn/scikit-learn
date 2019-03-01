@@ -1,7 +1,8 @@
 import warnings
 import numpy as np
 
-from .base import _fit_liblinear, BaseSVC, BaseLibSVM
+from .base import (_fit_liblinear, BaseSVC, BaseLibSVM, 
+                  _get_liblinear_solver_type)
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
@@ -221,9 +222,6 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
-        self.tol_, self.max_iter_ = _check_convergence_params('liblinear', 
-                self.tol, self.max_iter)
-
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
@@ -233,6 +231,14 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                          accept_large_sparse=False)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
+
+        # Since Linear SVM solver is liblinear, determine the subsolver to use
+        # according to estimator params to set the right default for max_iter
+        # and tol
+        internal_solver = _get_liblinear_solver_type(self.multi_class,
+                self.penalty, self.loss, self.dual)
+        self.tol_, self.max_iter_ = _check_convergence_params('liblinear', 
+                self.tol, self.max_iter, internal_solver)
 
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
@@ -412,9 +418,6 @@ class LinearSVR(LinearModel, RegressorMixin):
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
-        self.tol_, self.max_iter_ = _check_convergence_params('liblinear', 
-                self.tol, self.max_iter)
-
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
@@ -423,6 +426,16 @@ class LinearSVR(LinearModel, RegressorMixin):
                          dtype=np.float64, order="C",
                          accept_large_sparse=False)
         penalty = 'l2'  # SVR only accepts l2 penalty
+
+        # Since Linear SVM solver is liblinear, determine the subsolver to use
+        # according to estimator params to set the right default for max_iter
+        # and tol
+        multi_class = 'ovr' # _fit_liblinear default
+        internal_solver = _get_liblinear_solver_type(multi_class,
+                penalty, self.loss, self.dual)
+        self.tol_, self.max_iter_ = _check_convergence_params('liblinear', 
+                self.tol, self.max_iter, internal_solver)
+
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             None, penalty, self.dual, self.verbose,

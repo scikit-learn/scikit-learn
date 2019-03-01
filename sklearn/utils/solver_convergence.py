@@ -11,7 +11,7 @@ DEFAULT_CONV = {'liblinear': {0: (1e-2, 1000), 1: (1e-1, 1000), 2: (1e-2, 1000),
                 'svm': {0: (1e-4, 1e3)}}
 
 
-def _check_convergence_params(solver, tol, max_iter):
+def _check_convergence_params(solver, tol, max_iter, internal_solver=0):
     if ((tol == 'auto' and max_iter != 'auto') or 
             (tol != 'auto' and max_iter == 'auto')):
         raise ValueError("'auto' value on tol and max_iter can only be "
@@ -19,7 +19,6 @@ def _check_convergence_params(solver, tol, max_iter):
                             "for both values or set both to 'auto'")
     
     if tol == 'auto' and max_iter == 'auto':
-        tol = DEFAULT_CONV[solver][0][0]
-        max_iter = DEFAULT_CONV[solver][0][1]
+        tol, max_iter = DEFAULT_CONV[solver][internal_solver]
 
     return tol, max_iter

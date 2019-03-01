@@ -13,7 +13,7 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import make_classification, make_blobs
+from sklearn.datasets import make_classification, make_blobs, make_regression
 from sklearn.metrics import f1_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.utils import check_random_state
@@ -40,6 +40,18 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
+DEFAULT_CONV = {'liblinear': {0: (1e-2, 1000), 1: (1e-1, 1000),
+                                2: (1e-2, 1000), 3: (1e-1, 1000),
+                                4: (1e-1, 1000), 5: (1e-2, 1000),
+                                6: (1e-2, 1000), 7: (1e-1, 1000),
+                                11: (1e-3, 1000), 12: (1e-1, 1000),
+                                13: (1e-1, 1000)},
+                'lbfgs': {0: (1e-4, 15000)},
+                'sag': {0: (1e-3, 1000)},
+                'saga': {0: (1e-3, 1000)},
+                'newton-cg': {0: (1e-4, 100)},
+                'logistic': {0: (1e-4, 1e2)},
+                'svm': {0: (1e-4, 1e3)}}
 
 def test_libsvm_parameters():
     # Test parameters on classes that make use of libsvm.
@@ -1009,3 +1021,22 @@ def test_gamma_scale():
     # gamma is not explicitly set.
     X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
     assert_no_warnings(clf.fit, X, y)
+
+
+@pytest.mark.parametrize('dual,internal_solver', [(False, 2), (True, 1)])
+@pytest.mark.parametrize('estimator_class,make_data', [
+        (svm.LinearSVC, make_classification),
+        (svm.LinearSVR, make_regression)])
+def test_convergence_params_auto(dual, internal_solver, estimator_class,
+        make_data):
+    tol = 'auto'
+    max_iter = 'auto'
+    solver = 'liblinear'
+
+    X, y = make_data(n_samples=1000, random_state=0)
+    estimator = estimator_class(loss='squared_hinge')
+    estimator.set_params(**{'dual': dual, 'tol': tol, 'max_iter': max_iter})
+    estimator.fit(X, y)
+    assert((estimator.tol, estimator.max_iter) == ('auto', 'auto'))
+    assert((estimator.tol_, estimator.max_iter_) == \
+            DEFAULT_CONV[solver][internal_solver])
