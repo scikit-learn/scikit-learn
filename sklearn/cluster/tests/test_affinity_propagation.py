@@ -169,11 +169,7 @@ def test_equal_similarities_and_preferences():
 @pytest.mark.parametrize('centers', [csr_matrix(np.zeros((1, 10))),
                                      np.zeros((1, 10))])
 def test_affinity_propagation_convergence_warning_dense_sparse(centers):
-    """Assert that no convergence warning is printed for the sparse case and
-    the dense case if we have clusters, even if these clusters are zeros (non
-    regression test because of a bug that raised the warning for sparse
-    cluster centers if they were zero). Also check in this toy example that
-    the result is as expected."""
+    """Non-regression, see #13334"""
     rng = np.random.RandomState(42)
     X = rng.rand(40, 10)
     y = (4 * rng.rand(40)).astype(np.int)
