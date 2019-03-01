@@ -105,10 +105,14 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
             Returns the transformer.
         """
 
-        X = check_array(X)
+        X = check_array(X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
 
-        if self.coef0 != 0:
+        if sp.issparse(X) and self.coef0 != 0:
+            X = sp.hstack([X, np.sqrt(self.coef0)*np.ones((X.shape[0], 1))],
+                          format="csc")
+
+        elif not sp.issparse(X) and self.coef0 != 0:
             X = np.hstack([X, np.sqrt(self.coef0)*np.ones((X.shape[0], 1))])
 
         n_features = X.shape[1]
@@ -136,9 +140,13 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self, 'indexHash_')
-        X = check_array(X)
+        X = check_array(X, accept_sparse="csc")
 
-        if self.coef0 != 0:
+        if sp.issparse(X) and self.coef0 != 0:
+            X = sp.hstack([X, np.sqrt(self.coef0)*np.ones((X.shape[0], 1))],
+                          format="csc")
+
+        elif not sp.issparse(X) and self.coef0 != 0:
             X = np.hstack([X, np.sqrt(self.coef0)*np.ones((X.shape[0], 1))])
 
         if X.shape[1] != self.indexHash_.shape[1]:
@@ -146,11 +154,21 @@ class PolynomialSampler(BaseEstimator, TransformerMixin):
                              " match that of training samples.")
 
         Ps = np.zeros((X.shape[0], self.degree, self.n_components))
-        for j in range(X.shape[1]):
-            for d in range(self.degree):
-                iHashIndex = self.indexHash_[d, j]
-                iHashBit = self.bitHash_[d, j]
-                Ps[:, d, iHashIndex] += iHashBit * X[:, j]
+
+        if sp.issparse(X):
+            for j in range(X.shape[1]):
+                for d in range(self.degree):
+                    iHashIndex = self.indexHash_[d, j]
+                    iHashBit = self.bitHash_[d, j]
+                    Ps[:, d, iHashIndex] += \
+                        (iHashBit * X[:, j]).toarray().ravel()
+
+        else:
+            for j in range(X.shape[1]):
+                for d in range(self.degree):
+                    iHashIndex = self.indexHash_[d, j]
+                    iHashBit = self.bitHash_[d, j]
+                    Ps[:, d, iHashIndex] += iHashBit * X[:, j]
 
         Ps = fftpack.fft(Ps, axis=2, overwrite_x=True)
         temps = np.prod(Ps, axis=1)
