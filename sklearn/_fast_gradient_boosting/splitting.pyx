@@ -525,9 +525,8 @@ cdef class Splitter:
 
         Returns
         -------
-        histograms : array of HISTOGRAM_DTYPE of \
-                shape(n_features, max_bins)
-            The histograms of the current node
+        histograms : array of HISTOGRAM_DTYPE of shape(n_features, max_bins)
+            The computed histograms of the current node
         """
         cdef:
             int n_samples
@@ -616,8 +615,6 @@ cdef class Splitter:
 
         Parameters
         ----------
-        sample_indices : array of int
-            The indices of the samples at the node to split.
         parent_histograms : array of HISTOGRAM_DTYPE of \
                 shape(n_features, max_bins)
             The histograms of the parent
@@ -627,9 +624,8 @@ cdef class Splitter:
 
         Returns
         -------
-        histograms : array of HISTOGRAM_DTYPE of \
-                shape(n_features, max_bins)
-            The histograms of the current node
+        histograms : array of HISTOGRAM_DTYPE of shape(n_features, max_bins)
+            The computed histograms of the current node
         """
 
         cdef:

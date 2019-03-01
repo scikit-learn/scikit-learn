@@ -77,7 +77,7 @@ cdef void _update_gradients_hessians_binary_crossentropy_parallel(
 
     n_samples = raw_predictions.shape[0]
     for i in prange(n_samples, schedule='static', nogil=True):
-        p_i = cexpit(raw_predictions[i])
+        p_i = _cexpit(raw_predictions[i])
         gradients[i] = p_i - y_true[i]
         hessians[i] = p_i * (1. - p_i)
 
@@ -102,7 +102,7 @@ cdef void _update_gradients_hessians_categorical_crossentropy_parallel(
         # first compute softmaxes of sample i for each class
         for k in range(prediction_dim):
             p[i, k] = raw_predictions[k, i]  # prepare softmax
-        compute_softmax(p, i)
+        _compute_softmax(p, i)
         # then update gradients and hessians
         for k in range(prediction_dim):
             p_i_k = p[i, k]
@@ -110,7 +110,7 @@ cdef void _update_gradients_hessians_categorical_crossentropy_parallel(
             hessians[k, i] = p_i_k * (1. - p_i_k)
 
 
-cdef inline void compute_softmax(Y_DTYPE_C [:, ::1] p, const int i) nogil:
+cdef inline void _compute_softmax(Y_DTYPE_C [:, ::1] p, const int i) nogil:
     """Compute softmaxes of values in p[i, :]."""
     # i needs to be passed (and stays constant) because otherwise Cython does
     # not generate optimal code
@@ -134,6 +134,6 @@ cdef inline void compute_softmax(Y_DTYPE_C [:, ::1] p, const int i) nogil:
         p[i, k] /= sum_exps
 
 
-cdef inline Y_DTYPE_C cexpit(const Y_DTYPE_C x) nogil:
+cdef inline Y_DTYPE_C _cexpit(const Y_DTYPE_C x) nogil:
     """Custom expit (logistic sigmoid function)"""
     return 1. / (1. + exp(-x))
