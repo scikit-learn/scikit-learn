@@ -367,12 +367,11 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                       return_n_iter=False, return_intercept=False,
                       X_scale=None, X_offset=None):
 
-    if (return_intercept and sparse.issparse(X) and
-       solver not in ['sag', 'sparse_cg']):
+    if return_intercept and sparse.issparse(X) and solver != 'sag':
         if solver != 'auto':
-            warnings.warn("In Ridge, only 'sag' and 'sparse_cg' solvers "
-                          "can currently fit the intercept when X is sparse."
-                          " Solver has been automatically changed into 'sag'.")
+            warnings.warn("In Ridge, only 'sag' solver can currently fit the "
+                          "intercept when X is sparse. Solver has been "
+                          "automatically changed into 'sag'.")
         solver = 'sag'
 
     _dtype = [np.float64, np.float32]
