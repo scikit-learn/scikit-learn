@@ -487,7 +487,7 @@ def test_tag_inheritance():
     with pytest.raises(TypeError, match="Inconsistent values for tag"):
         diamond_tag_est._get_tags()
 
-
+@ignore_warnings(category=(FutureWarning, DeprecationWarning))
 def test_sub_estimator_consistency():
     # check that _get_sub_estimators finds all fitted sub estimators
     # if this breaks, you probably introduced a sub-estimator that's
