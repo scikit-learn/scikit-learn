@@ -11,7 +11,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 
 
@@ -24,7 +23,7 @@ def test_compute_class_weight():
     # total effect of samples is preserved
     class_counts = np.bincount(y)[2:]
     assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
-    assert_true(cw[0] < cw[1] < cw[2])
+    assert cw[0] < cw[1] < cw[2]
 
 
 def test_compute_class_weight_not_present():

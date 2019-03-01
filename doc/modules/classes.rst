@@ -114,7 +114,6 @@ Functions
 
    cluster.affinity_propagation
    cluster.dbscan
-   cluster.optics
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.mean_shift
@@ -274,7 +273,6 @@ Loaders
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.load_wine
-   datasets.mldata_filename
 
 Samples generator
 -----------------
@@ -656,8 +654,9 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
+   impute.IterativeImputer
    impute.MissingIndicator
-
+   
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -756,7 +755,6 @@ Kernels:
    linear_model.enet_path
    linear_model.lars_path
    linear_model.lasso_path
-   linear_model.logistic_regression_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
    linear_model.ridge_regression
@@ -846,6 +844,7 @@ details.
    metrics.jaccard_similarity_score
    metrics.log_loss
    metrics.matthews_corrcoef
+   metrics.multilabel_confusion_matrix
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -904,7 +903,7 @@ details.
 
    metrics.adjusted_mutual_info_score
    metrics.adjusted_rand_score
-   metrics.calinski_harabaz_score
+   metrics.calinski_harabasz_score
    metrics.davies_bouldin_score
    metrics.completeness_score
    metrics.cluster.contingency_matrix
@@ -1170,6 +1169,7 @@ Model validation
    neighbors.RadiusNeighborsRegressor
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
+   neighbors.NeighborhoodComponentsAnalysis
 
 .. autosummary::
    :toctree: generated/
@@ -1399,6 +1399,8 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
+   tree.plot_tree
+   tree.export_text
 
 
 .. _utils_ref:
@@ -1428,9 +1430,9 @@ Low-level methods
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
-   utils.bench.total_seconds
    utils.check_X_y
    utils.check_array
+   utils.check_scalar
    utils.check_consistent_length
    utils.check_random_state
    utils.class_weight.compute_class_weight
@@ -1447,6 +1449,7 @@ Low-level methods
    utils.graph.single_source_shortest_path_length
    utils.graph_shortest_path.graph_shortest_path
    utils.indexable
+   utils.metaestimators.if_delegate_has_method
    utils.multiclass.type_of_target
    utils.multiclass.is_multilabel
    utils.multiclass.unique_labels
@@ -1480,21 +1483,32 @@ Utilities from joblib:
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: function.rst
+
+   utils.parallel_backend
+   utils.register_parallel_backend
+
+Recently deprecated
+===================
+
+To be removed in 0.23
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
 
    utils.Memory
    utils.Parallel
 
 .. autosummary::
    :toctree: generated/
-   :template: function.rst
+   :template: deprecated_function.rst
 
    utils.cpu_count
    utils.delayed
-   utils.parallel_backend
-
-Recently deprecated
-===================
+   metrics.calinski_harabaz_score
+   linear_model.logistic_regression_path
 
 
 To be removed in 0.22
@@ -1514,3 +1528,4 @@ To be removed in 0.22
 
    covariance.graph_lasso
    datasets.fetch_mldata
+   datasets.mldata_filename

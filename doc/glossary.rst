@@ -226,7 +226,7 @@ General Concepts
 
         We try to adhere to `PEP257
         <https://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
-        conventions <numpydoc.readthedocs.io/en/latest/format.html>`_.
+        conventions <https://numpydoc.readthedocs.io/en/latest/format.html>`_.
 
     double underscore
     double underscore notation
@@ -1236,7 +1236,8 @@ Methods
         repeatedly calling ``partial_fit`` does not clear the model, but
         updates it with respect to the data provided. The portion of data
         provided to ``partial_fit`` may be called a mini-batch.
-        Each mini-batch must be of consistent shape, etc.
+        Each mini-batch must be of consistent shape, etc. In iterative
+        estimators, ``partial_fit`` often only performs a single iteration.
 
         ``partial_fit`` may also be used for :term:`out-of-core` learning,
         although usually limited to the case where learning can be performed
@@ -1595,7 +1596,7 @@ functions or non-estimator constructors.
         performance as in :ref:`grid search <grid_search>`), it may be possible
         to reuse aspects of the model learnt from the previous parameter value,
         saving time.  When ``warm_start`` is true, the existing :term:`fitted`
-        model :term:`attributes` an are used to initialise the new model
+        model :term:`attributes` are used to initialise the new model
         in a subsequent call to :term:`fit`.
 
         Note that this is only applicable for some models and some

@@ -29,10 +29,17 @@ as well.
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 #
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+from distutils.version import LooseVersion
 from scipy.stats import norm
 from sklearn.neighbors import KernelDensity
 
+# `normed` is being deprecated in favor of `density` in histograms
+if LooseVersion(matplotlib.__version__) >= '2.1':
+    density_param = {'density': True}
+else:
+    density_param = {'normed': True}
 
 #----------------------------------------------------------------------
 # Plot the progression of histograms to kernels
@@ -47,11 +54,11 @@ fig, ax = plt.subplots(2, 2, sharex=True, sharey=True)
 fig.subplots_adjust(hspace=0.05, wspace=0.05)
 
 # histogram 1
-ax[0, 0].hist(X[:, 0], bins=bins, fc='#AAAAFF', normed=True)
+ax[0, 0].hist(X[:, 0], bins=bins, fc='#AAAAFF', **density_param)
 ax[0, 0].text(-3.5, 0.31, "Histogram")
 
 # histogram 2
-ax[0, 1].hist(X[:, 0], bins=bins + 0.75, fc='#AAAAFF', normed=True)
+ax[0, 1].hist(X[:, 0], bins=bins + 0.75, fc='#AAAAFF', **density_param)
 ax[0, 1].text(-3.5, 0.31, "Histogram, bins shifted")
 
 # tophat KDE

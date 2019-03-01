@@ -30,6 +30,7 @@ from .classification import precision_score
 from .classification import recall_score
 from .classification import zero_one_loss
 from .classification import brier_score_loss
+from .classification import multilabel_confusion_matrix
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -43,6 +44,7 @@ from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 from .cluster import silhouette_samples
 from .cluster import silhouette_score
+from .cluster import calinski_harabasz_score
 from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
 from .cluster import davies_bouldin_score
@@ -76,6 +78,7 @@ __all__ = [
     'average_precision_score',
     'balanced_accuracy_score',
     'calinski_harabaz_score',
+    'calinski_harabasz_score',
     'check_scoring',
     'classification_report',
     'cluster',
@@ -106,11 +109,11 @@ __all__ = [
     'mean_squared_error',
     'mean_squared_log_error',
     'median_absolute_error',
+    'multilabel_confusion_matrix',
     'mutual_info_score',
     'normalized_mutual_info_score',
     'pairwise_distances',
     'pairwise_distances_argmin',
-    'pairwise_distances_argmin_min',
     'pairwise_distances_argmin_min',
     'pairwise_distances_chunked',
     'pairwise_kernels',

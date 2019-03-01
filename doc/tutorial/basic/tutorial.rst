@@ -238,13 +238,13 @@ joblib's replacement for pickle (``joblib.dump`` & ``joblib.load``),
 which is more efficient on big data but it can only pickle to the disk
 and not to a string::
 
-  >>> from sklearn.externals import joblib
-  >>> joblib.dump(clf, 'filename.joblib') # doctest: +SKIP
+  >>> from joblib import dump, load
+  >>> dump(clf, 'filename.joblib') # doctest: +SKIP
 
 Later, you can reload the pickled model (possibly in another Python process)
 with::
 
-  >>> clf = joblib.load('filename.joblib') # doctest:+SKIP
+  >>> clf = load('filename.joblib') # doctest:+SKIP
 
 .. note::
 
@@ -344,7 +344,7 @@ once will overwrite what was learned by any previous ``fit()``::
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False)
   >>> clf.predict(X_test)
-  array([1, 0, 1, 1, 0])
+  array([0, 0, 0, 1, 0])
 
 Here, the default kernel ``rbf`` is first changed to ``linear`` via
 :func:`SVC.set_params()<sklearn.svm.SVC.set_params>` after the estimator has

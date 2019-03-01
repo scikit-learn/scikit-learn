@@ -12,7 +12,6 @@ from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import SkipTest
 
 
@@ -27,8 +26,8 @@ def test_fetch_rcv1():
     cat_list, s1 = data1.target_names.tolist(), data1.sample_id
 
     # test sparsity
-    assert_true(sp.issparse(X1))
-    assert_true(sp.issparse(Y1))
+    assert sp.issparse(X1)
+    assert sp.issparse(Y1)
     assert_equal(60915113, X1.data.size)
     assert_equal(2606875, Y1.data.size)
 
@@ -39,7 +38,7 @@ def test_fetch_rcv1():
     assert_equal(103, len(cat_list))
 
     # test ordering of categories
-    first_categories = [u'C11', u'C12', u'C13', u'C14', u'C15', u'C151']
+    first_categories = ['C11', 'C12', 'C13', 'C14', 'C15', 'C151']
     assert_array_equal(first_categories, cat_list[:6])
 
     # test number of sample for some categories

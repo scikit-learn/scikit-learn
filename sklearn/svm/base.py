@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import numpy as np
 import scipy.sparse as sp
 import warnings
@@ -16,7 +14,6 @@ from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.multiclass import check_classification_targets
-from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
 
@@ -57,7 +54,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     return coef
 
 
-class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
+class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     """Base class for estimators that use libsvm as backing library
 
     This implements support vector machine classification and regression.
@@ -172,19 +169,19 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         if self.gamma in ('scale', 'auto_deprecated'):
             if sparse:
-                # std = sqrt(E[X^2] - E[X]^2)
-                X_std = np.sqrt((X.multiply(X)).mean() - (X.mean())**2)
+                # var = E[X^2] - E[X]^2
+                X_var = (X.multiply(X)).mean() - (X.mean()) ** 2
             else:
-                X_std = X.std()
+                X_var = X.var()
             if self.gamma == 'scale':
-                if X_std != 0:
-                    self._gamma = 1.0 / (X.shape[1] * X_std)
+                if X_var != 0:
+                    self._gamma = 1.0 / (X.shape[1] * X_var)
                 else:
                     self._gamma = 1.0
             else:
                 kernel_uses_gamma = (not callable(self.kernel) and self.kernel
                                      not in ('linear', 'precomputed'))
-                if kernel_uses_gamma and not np.isclose(X_std, 1.0):
+                if kernel_uses_gamma and not np.isclose(X_var, 1.0):
                     # NOTE: when deprecation ends we need to remove explicitly
                     # setting `gamma` in examples (also in tests). See
                     # https://github.com/scikit-learn/scikit-learn/pull/10331
@@ -233,7 +230,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # XXX this is ugly.
         # Regression models should not have a class_weight_ attribute.
         self.class_weight_ = np.empty(0)
-        return column_or_1d(y, warn=True).astype(np.float64)
+        return column_or_1d(y, warn=True).astype(np.float64, copy=False)
 
     def _warn_from_fit_status(self):
         assert self.fit_status_ in (0, 1)
@@ -327,7 +324,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return predict(X)
 
     def _dense_predict(self, X):
-        n_samples, n_features = X.shape
         X = self._compute_kernel(X)
         if X.ndim == 1:
             X = check_array(X, order='C', accept_large_sparse=False)
@@ -384,7 +380,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return X
 
     def _decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
+        """Evaluates the decision function for the samples in X.
 
         Parameters
         ----------
@@ -500,14 +496,14 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
 
-class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
+class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
                  shrinking, probability, cache_size, class_weight, verbose,
                  max_iter, decision_function_shape, random_state):
         self.decision_function_shape = decision_function_shape
-        super(BaseSVC, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
@@ -529,7 +525,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         return np.asarray(y, dtype=np.float64, order='C')
 
     def decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
+        """Evaluates the decision function for the samples in X.
 
         Parameters
         ----------
@@ -541,7 +537,18 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             Returns the decision function of the sample for each class
             in the model.
             If decision_function_shape='ovr', the shape is (n_samples,
-            n_classes)
+            n_classes).
+
+        Notes
+        ------
+        If decision_function_shape='ovo', the function values are proportional
+        to the distance of the samples X to the separating hyperplane. If the
+        exact distances are required, divide the function values by the norm of
+        the weight vector (``coef_``). See also `this question
+        <https://stats.stackexchange.com/questions/14876/
+        interpreting-distance-from-hyperplane-in-svm>`_ for further details.
+        If decision_function_shape='ovr', the decision function is a monotonic
+        transformation of ovo decision function.
         """
         dec = self._decision_function(X)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
@@ -564,7 +571,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        y = super(BaseSVC, self).predict(X)
+        y = super().predict(X)
         return self.classes_.take(np.asarray(y, dtype=np.intp))
 
     # Hacky way of getting predict_proba to raise an AttributeError when

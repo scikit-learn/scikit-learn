@@ -41,11 +41,11 @@ from .base import load_files
 from .base import _pkl_filepath
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
-from ..utils import check_random_state, Bunch
-from ..utils import deprecated
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
-from ..externals import joblib
+from ..utils import deprecated
+from ..utils import _joblib
+from ..utils import check_random_state, Bunch
 
 logger = logging.getLogger(__name__)
 
@@ -216,11 +216,13 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     Returns
     -------
-    bunch : Bunch object
-        bunch.data: list, length [n_samples]
-        bunch.target: array, shape [n_samples]
-        bunch.filenames: list, length [n_classes]
-        bunch.DESCR: a description of the dataset.
+    bunch : Bunch object with the following attribute:
+        - bunch.data: list, length [n_samples]
+        - bunch.target: array, shape [n_samples]
+        - bunch.filenames: list, length [n_samples]
+        - bunch.DESCR: a description of the dataset.
+        - bunch.target_names: a list of categories of the returned data,
+          length [n_classes]. This depends on the `categories` parameter.
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -369,11 +371,12 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     Returns
     -------
-    bunch : Bunch object
-        bunch.data: sparse matrix, shape [n_samples, n_features]
-        bunch.target: array, shape [n_samples]
-        bunch.target_names: list, length [n_classes]
-        bunch.DESCR: a description of the dataset.
+    bunch : Bunch object with the following attribute:
+        - bunch.data: sparse matrix, shape [n_samples, n_features]
+        - bunch.target: array, shape [n_samples]
+        - bunch.target_names: a list of categories of the returned data,
+          length [n_classes].
+        - bunch.DESCR: a description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -403,12 +406,12 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
                                    download_if_missing=download_if_missing)
 
     if os.path.exists(target_file):
-        X_train, X_test = joblib.load(target_file)
+        X_train, X_test = _joblib.load(target_file)
     else:
         vectorizer = CountVectorizer(dtype=np.int16)
         X_train = vectorizer.fit_transform(data_train.data).tocsr()
         X_test = vectorizer.transform(data_test.data).tocsr()
-        joblib.dump((X_train, X_test), target_file, compress=9)
+        _joblib.dump((X_train, X_test), target_file, compress=9)
 
     # the data is stored as int16 for compactness
     # but normalize needs floats

@@ -8,6 +8,7 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
+from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, check_array, \
     check_kernel_eigenvalues
 from ..exceptions import NotFittedError
@@ -213,6 +214,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         # make sure that there are no numerical or conditioning issues
         self.lambdas_ = check_kernel_eigenvalues(self.lambdas_)
+
+
+        # flip eigenvectors' sign to enforce deterministic output
+        self.alphas_, _ = svd_flip(self.alphas_,
+                                   np.empty_like(self.alphas_).T)
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]

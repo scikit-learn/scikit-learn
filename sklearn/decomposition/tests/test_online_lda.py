@@ -12,7 +12,6 @@ from sklearn.decomposition._online_lda import (_dirichlet_expectation_1d,
                                                _dirichlet_expectation_2d)
 
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -21,8 +20,7 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 from sklearn.exceptions import NotFittedError
-from sklearn.externals.six.moves import xrange
-from sklearn.externals.six import StringIO
+from io import StringIO
 
 
 def _build_sparse_mtx():
@@ -64,7 +62,7 @@ def test_lda_fit_batch():
     for component in lda.components_:
         # Find top 3 words in each LDA component
         top_idx = set(component.argsort()[-3:][::-1])
-        assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
+        assert tuple(sorted(top_idx)) in correct_idx_grps
 
 
 def test_lda_fit_online():
@@ -80,7 +78,7 @@ def test_lda_fit_online():
     for component in lda.components_:
         # Find top 3 words in each LDA component
         top_idx = set(component.argsort()[-3:][::-1])
-        assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
+        assert tuple(sorted(top_idx)) in correct_idx_grps
 
 
 def test_lda_partial_fit():
@@ -91,13 +89,13 @@ def test_lda_partial_fit():
     lda = LatentDirichletAllocation(n_components=n_components,
                                     learning_offset=10., total_samples=100,
                                     random_state=rng)
-    for i in xrange(3):
+    for i in range(3):
         lda.partial_fit(X)
 
     correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
     for c in lda.components_:
         top_idx = set(c.argsort()[-3:][::-1])
-        assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
+        assert tuple(sorted(top_idx)) in correct_idx_grps
 
 
 def test_lda_dense_input():
@@ -112,7 +110,7 @@ def test_lda_dense_input():
     for component in lda.components_:
         # Find top 3 words in each LDA component
         top_idx = set(component.argsort()[-3:][::-1])
-        assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
+        assert tuple(sorted(top_idx)) in correct_idx_grps
 
 
 def test_lda_transform():
@@ -124,7 +122,7 @@ def test_lda_transform():
     lda = LatentDirichletAllocation(n_components=n_components,
                                     random_state=rng)
     X_trans = lda.fit_transform(X)
-    assert_true((X_trans > 0.0).any())
+    assert (X_trans > 0.0).any()
     assert_array_almost_equal(np.sum(X_trans, axis=1),
                               np.ones(X_trans.shape[0]))
 
@@ -219,7 +217,7 @@ def test_lda_multi_jobs(method):
     correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
     for c in lda.components_:
         top_idx = set(c.argsort()[-3:][::-1])
-        assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
+        assert tuple(sorted(top_idx)) in correct_idx_grps
 
 
 @if_safe_multiprocessing_with_blas
@@ -236,7 +234,7 @@ def test_lda_partial_fit_multi_jobs():
     correct_idx_grps = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
     for c in lda.components_:
         top_idx = set(c.argsort()[-3:][::-1])
-        assert_true(tuple(sorted(top_idx)) in correct_idx_grps)
+        assert tuple(sorted(top_idx)) in correct_idx_grps
 
 
 def test_lda_preplexity_mismatch():

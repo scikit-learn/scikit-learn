@@ -430,24 +430,6 @@ and in this
 from Daniel Nouri which has some nice step by step install instructions for
 Debian / Ubuntu.
 
-.. warning::
-
-    Multithreaded BLAS libraries sometimes conflict with Python's
-    ``multiprocessing`` module, which is used by e.g. ``GridSearchCV`` and
-    most other estimators that take an ``n_jobs`` argument (with the exception
-    of ``SGDClassifier``, ``SGDRegressor``, ``Perceptron``,
-    ``PassiveAggressiveClassifier`` and tree-based methods such as random
-    forests). This is true of Apple's Accelerate and OpenBLAS when built with
-    OpenMP support.
-
-    Besides scikit-learn, NumPy and SciPy also use BLAS internally, as
-    explained earlier.
-
-    If you experience hanging subprocesses with ``n_jobs>1`` or ``n_jobs=-1``,
-    make sure you have a single-threaded BLAS library, or set ``n_jobs=1``,
-    or upgrade to Python 3.4 which has a new version of ``multiprocessing``
-    that should be immune to this problem.
-
 .. _working_memory:
 
 Limiting Working Memory
@@ -567,9 +549,9 @@ These environment variables should be set before importing scikit-learn.
     scikit-learn uses the site joblib rather than its vendored version.
     Consequently, joblib must be installed for scikit-learn to run.
     Note that using the site joblib is at your own risks: the versions of
-    scikt-learn and joblib need to be compatible. In addition, dumps from
-    joblib.Memory might be incompatible, and you might loose some caches
-    and have to redownload some datasets.
+    scikit-learn and joblib need to be compatible. Currently, joblib 0.11+
+    is supported. In addition, dumps from joblib.Memory might be incompatible,
+    and you might loose some caches and have to redownload some datasets.
 
 :SKLEARN_ASSUME_FINITE:
 

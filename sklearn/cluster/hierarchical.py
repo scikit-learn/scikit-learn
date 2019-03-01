@@ -15,7 +15,6 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
-from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
 from ..utils.validation import check_memory
@@ -23,8 +22,7 @@ from ..utils.validation import check_memory
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
-
-from ..externals.six.moves import xrange
+from ..utils.fixes import _astype_copy_false
 
 ###############################################################################
 # For non fully-connected graphs
@@ -64,10 +62,10 @@ def _fix_connectivity(X, connectivity, affinity):
                       "stopping the tree early." % n_components,
                       stacklevel=2)
         # XXX: Can we do without completing the matrix?
-        for i in xrange(n_components):
+        for i in range(n_components):
             idx_i = np.where(labels == i)[0]
             Xi = X[idx_i]
-            for j in xrange(i):
+            for j in range(i):
                 idx_j = np.where(labels == j)[0]
                 Xj = X[idx_j]
                 D = pairwise_distances(Xi, Xj, metric=affinity)
@@ -90,7 +88,8 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     from scipy.sparse.csgraph import minimum_spanning_tree
 
     # explicitly cast connectivity to ensure safety
-    connectivity = connectivity.astype('float64')
+    connectivity = connectivity.astype('float64',
+                                       **_astype_copy_false(connectivity))
 
     # Ensure zero distances aren't ignored by setting them to "epsilon"
     epsilon_value = np.finfo(dtype=connectivity.data.dtype).eps
@@ -230,6 +229,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
                           'retain the lower branches required '
                           'for the specified number of clusters',
                           stacklevel=2)
+        X = np.require(X, requirements="W")
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.intp)
 
@@ -273,7 +273,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     inertia = np.empty(len(coord_row), dtype=np.float64, order='C')
     _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
                                     inertia)
-    inertia = list(six.moves.zip(inertia, coord_row, coord_col))
+    inertia = list(zip(inertia, coord_row, coord_col))
     heapify(inertia)
 
     # prepare the main fields
@@ -460,7 +460,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
         out = hierarchy.linkage(X, method=linkage, metric=affinity)
-        children_ = out[:, :2].astype(np.int)
+        children_ = out[:, :2].astype(np.int, copy=False)
 
         if return_distance:
             distances = out[:, 2]
@@ -479,7 +479,8 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
     del diag_mask
 
     if affinity == 'precomputed':
-        distances = X[connectivity.row, connectivity.col].astype('float64')
+        distances = X[connectivity.row, connectivity.col].astype(
+            'float64', **_astype_copy_false(X))
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances
@@ -526,7 +527,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
     children = []
 
     # recursive merge loop
-    for k in xrange(n_samples, n_nodes):
+    for k in range(n_samples, n_nodes):
         # identify the merge
         while True:
             edge = heappop(inertia)
@@ -631,7 +632,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     # are interested in largest elements
     # children[-1] is the root of the tree
     nodes = [-(max(children[-1]) + 1)]
-    for i in xrange(n_clusters - 1):
+    for _ in range(n_clusters - 1):
         # As we have a heap, nodes[0] is the smallest element
         these_children = children[-nodes[0] - n_leaves]
         # Insert the 2 children and remove the largest node
@@ -661,8 +662,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or 'precomputed'.
+        "manhattan", "cosine", or "precomputed".
         If linkage is "ward", only "euclidean" is accepted.
+        If "precomputed", a distance matrix (instead of a similarity matrix)
+        is needed as input for the fit method.
 
     memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the output of the computation of the tree.
@@ -918,7 +921,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> images = digits.images
     >>> X = np.reshape(images, (len(images), -1))
     >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
-    >>> agglo.fit(X) # doctest: +ELLIPSIS
+    >>> agglo.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
                connectivity=None, linkage='ward', memory=None, n_clusters=32,
                pooling_func=...)
@@ -931,7 +934,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean):
-        super(FeatureAgglomeration, self).__init__(
+        super().__init__(
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
             affinity=affinity)
