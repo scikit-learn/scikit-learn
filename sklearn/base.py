@@ -503,6 +503,18 @@ class TransformerMixin:
             return self.fit(X, y, **fit_params).transform(X)
 
     def get_feature_names(self, input_features=None):
+        """Get output feature names.
+        
+        Parameters
+        ----------
+        input_features : list of string or None
+            String names of the input features.        
+
+        Returns
+        -------
+        output_feature_names : list of string
+            Feature names for transformer output.
+        """
         # OneToOneMixin is higher in the class hierarchy
         # because we put mixins on the wrong side
         if hasattr(super(), 'get_feature_names'):
