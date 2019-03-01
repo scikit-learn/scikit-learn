@@ -530,7 +530,8 @@ class TransformerMixin:
             n_features = self.n_clusters
         elif hasattr(self, '_max_components'):
             # special case for LinearDiscriminantAnalysis
-            n_features = min(self._max_components, self.n_components)
+            n_components = self.n_components or np.inf
+            n_features = min(self._max_components, n_components)
         elif hasattr(self, 'n_components_'):
             # n_components could be auto or None
             # this is more likely to be an int
