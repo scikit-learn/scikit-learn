@@ -101,14 +101,14 @@ class Pipeline(_BaseComposition):
     >>> # getting the selected features chosen by anova_filter
     >>> anova_svm['anova'].get_support()
     ... # doctest: +NORMALIZE_WHITESPACE
-    array([False, False,  True,  True, False, False, True,  True, False,
-           True,  False,  True,  True, False, True,  False, True, True,
+    array([False, False,  True,  True, False, False,  True,  True, False,
+           True, False,  True,  True, False,  True, False,  True,  True,
            False, False])
     >>> # Another way to get selected features chosen by anova_filter
     >>> anova_svm.named_steps.anova.get_support()
     ... # doctest: +NORMALIZE_WHITESPACE
-    array([False, False,  True,  True, False, False, True,  True, False,
-           True,  False,  True,  True, False, True,  False, True, True,
+    array([False, False,  True,  True, False, False,  True,  True, False,
+           True, False,  True,  True, False,  True, False,  True,  True,
            False, False])
     Indexing can also be used to extract a sub-pipeline.
     >>> sub_pipeline = anova_svm[:1]
