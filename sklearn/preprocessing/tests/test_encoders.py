@@ -381,7 +381,7 @@ def test_categorical_same_category_fit_transform():
 
     oh = OneHotEncoder()
     oh.fit(X_fit)
-    with pytest.raises(ValueError, match="Categories of the features"):
+    with pytest.raises(ValueError, match="Categories of"):
         oh.transform(X_transform)
 
 def test_one_hot_encoder_set_params():

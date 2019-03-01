@@ -60,33 +60,11 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         n_samples, n_features = X.shape
         X_columns = []
+
         if is_fit:
             self.features_dtype = []
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
-            if is_fit:
-                # save the dtype or exact categories if category dtype
-                if Xi.dtype.name == 'category':
-                    f_dtype = Xi.cat.categories
-                else:
-                    f_dtype = Xi.dtype
-                self.features_dtype.append(f_dtype)
-            else:
-                # transform, check if dtype is the same as it was passed by fit
-                print(self.features_dtype[i])
-                if not (Xi.dtype == self.features_dtype[i]):
-                    if Xi.dtype.name == 'category': 
-                        # check if categories are the same
-                        if not (Xi.cat.categories == 
-                                self.features_dtype[i]).all():
-                                    raise ValueError("""Categories of 
-                                                        the features were 
-                                                        different in fit() and 
-                                                        in the transform()""")
-                    else:
-                        # features not of the same type in fit and transform
-                        raise ValueError("""Feature has different dtype during
-                                        fit() and during transform()""")
 
             if Xi.dtype.name == 'category':
                 # categorical dtype; do not want to convert to an array,
@@ -97,6 +75,24 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                 Xi = check_array(Xi, ensure_2d=False, dtype=None,
                                  force_all_finite=needs_validation)
 
+            if is_fit:
+                # save the dtype or exact categories if category dtype
+                if Xi.dtype.name == 'category':
+                    f_dtype = Xi.cat.categories
+                else:
+                    f_dtype = Xi.dtype
+                self.features_dtype.append(f_dtype)
+            else:
+                # transform, check if dtype is the same as it was passed by fit
+                if not (Xi.dtype == self.features_dtype[i]):
+                    if Xi.dtype.name == 'category':
+                        # check if categories are the same
+                        if not (Xi.cat.categories ==
+                                self.features_dtype[i]).all():
+                                    raise ValueError("""Categories of
+                                                        the features were
+                                                        different in fit() and
+                                                        in the transform()""")
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
