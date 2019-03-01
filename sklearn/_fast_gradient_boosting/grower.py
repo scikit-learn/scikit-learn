@@ -270,7 +270,6 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
-        # self._compute_spittability(self.root)
         self.root.histograms = self.histogram_builder.compute_histograms_brute(
             self.root.sample_indices)
         self._compute_best_split_and_push(self.root)

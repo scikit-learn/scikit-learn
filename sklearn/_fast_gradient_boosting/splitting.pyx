@@ -25,16 +25,9 @@ from .types cimport hist_struct
 from .types import HISTOGRAM_DTYPE
 
 
-# Note: in a lot of functions here, we pass feature_idx and the whole 2d
-# histograms arrays instead a lot just histograms[feature_idx]. This is
-# because Cython generated C code will have strange Python interactions (likely
-# related to the GIL release and the custom histogram dtype) when using 1d
-# histogram arrays.
-
-
 cdef struct split_info_struct:
     # Same as the SplitInfo class, but we need a C struct to use it in the
-    # nogil sections
+    # nogil sections and to use in arrays.
     Y_DTYPE_C gain
     int feature_idx
     unsigned int bin_idx

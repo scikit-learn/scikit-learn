@@ -20,12 +20,18 @@ from .types cimport hist_struct
 
 # Note: IN views are read-only, OUT views are write-only
 
+# Note: in a lot of functions here, we pass feature_idx and the whole 2d
+# histograms arrays instead a lot just histograms[feature_idx]. This is
+# because Cython generated C code will have strange Python interactions (likely
+# related to the GIL release and the custom histogram dtype) when using 1d
+# histogram arrays.
+
 
 @cython.final
 cdef class HistogramBuilder:
     """A Histogram builder... used to build histograms.
 
-    A histogram is an array with n_bins entry of type HISTOGRAM_DTYPE. Each
+    A histogram is an array with n_bins entries of type HISTOGRAM_DTYPE. Each
     feature has its own histogram. A histogram contains the sum of gradients
     and hessians of all the samples belonging to each bin.
 

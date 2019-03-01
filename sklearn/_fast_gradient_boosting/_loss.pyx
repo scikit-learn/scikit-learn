@@ -9,11 +9,6 @@ cimport cython
 from cython.parallel import prange
 import numpy as np
 cimport numpy as np
-from scipy.special import expit
-try:
-    from scipy.special import logsumexp
-except ImportError:
-    from scipy.misc import logsumexp
 
 from libc.math cimport exp
 
