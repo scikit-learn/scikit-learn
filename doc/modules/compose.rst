@@ -5,14 +5,16 @@
 Pipelines and composite estimators
 ==================================
 
-Transformers are usually combined with classifiers, regressors or other
+Transformers and resamplers are usually combined with classifiers, regressors
+or other
 estimators to build a composite estimator.  The most common tool is a
 :ref:`Pipeline <pipeline>`. Pipeline is often used in combination with
 :ref:`FeatureUnion <feature_union>` which concatenates the output of
 transformers into a composite feature space.  :ref:`TransformedTargetRegressor
 <transformed_target_regressor>` deals with transforming the :term:`target`
 (i.e. log-transform :term:`y`). In contrast, Pipelines only transform the
-observed data (:term:`X`).
+observed data (:term:`X`). Additionally, pipelines support :term:`resamplers` to
+resample the dataset on fit (see :ref:`_pipeline_resamplers`).
 
 .. _pipeline:
 
@@ -138,6 +140,63 @@ The pipeline has all the methods that the last estimator in the pipeline has,
 i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.
+
+.. _pipeline_resamplers:
+
+Resamplers in pipelines
+-----------------------
+In addition to transformers, pipelines also support :ref:`resamplers` as
+intermediate steps. However, unlike for transformers, pipelines do not always
+call resamplers when data flows through the pipeline. In summary:
+
+===================== ================================
+Method                Resamplers applied               
+===================== ================================
+``fit``               Yes
+``fit_transform``     Yes
+``transform``         Yes
+``predict``           No
+``score``             No
+``fit_predict``       not supported (see note)
+===================== ================================
+  Note)
+
+To understand why, consider the example of :ref:`outlier rejectors`. These
+resamplers will remove samples from the dataset if they classified as outliers.
+Consider the following pipeline::
+
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.covariance import EllipticEnvelope
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> pipe = make_pipeline(EllipticEnvelope(), LogisticRegression()) # doctest: +NORMALIZE_WHITESPACE
+    >>> pipe.fit(X_train, y_train)
+
+In ``pipe``, we would remove outliers before fitting our `LogisticRegression`
+model, so that the samples passed to fit come from the same distribution. We do
+this to improve the quality of the fit (see :ref:`_outlier_detection`).
+Therefore, during ``fit``, we want our resampler to be applied.
+
+Now assume that we would like to make predictions on some new data ``X_test``::
+
+    >>> predictions = pipe.predict(X_test)
+
+If we applied our resampler, it would remove outliers from ``X_test``. This is
+nonsensical for two reasons:
+1. We would not get predictions for samples that were classified as outliers.
+2. Since resamplers are always fitted on the data they will predict on, the
+   notion of an outlier in the ``X_test`` is not consistent with the notion of
+   an outlier in ``X_train``. A sample could be an outlier in ``X_train``, but
+   an inlier in ``X_test``, depending on the other samples passed.
+
+Therefore, all methods in which predictions are made will skip resamplers in
+the pipeline.
+
+.. note::
+
+   If a pipeline contains resamplers, you may not call :term:`fit_predict` on
+   it. For reasons described above, it is not practical to apply resamplers
+   when predictions are being made. Therefore, we would not be able to apply
+   the resamplers in such a call.
 
 .. _pipeline_cache:
 
@@ -311,8 +370,7 @@ is fit to the data independently. The transformers are applied in parallel,
 and the feature matrices they output are concatenated side-by-side into a
 larger matrix.
 
-When you want to apply different transformations to each field of the data,
-see the related class :class:`sklearn.compose.ColumnTransformer`
+When you want to apply different transformations to each field of the data, see the related class :class:`sklearn.compose.ColumnTransformer`
 (see :ref:`user guide <column_transformer>`).
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -

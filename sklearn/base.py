@@ -13,6 +13,7 @@ import numpy as np
 
 from . import __version__
 from sklearn.utils import _IS_32BIT
+from sklearn.utils import safe_indexing
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -548,7 +549,7 @@ class OutlierRejectionMixin:
     """Mixin class for all outlier detection resamplers in scikit-learn. Child
     classes remove outliers from the dataset.
     """
-    _estimator_type = "outlier_resampler"
+    _estimator_type = "outlier_rejector"
 
     def fit_resample(self, X, y):
         """Performs fit on X and returns a new X and y consisting of only the
@@ -571,7 +572,7 @@ class OutlierRejectionMixin:
             The original y with outlier samples removed.
         """
 
-        inliers = self.fit_predict(X) == 1
+        inliers = safe_mask(X, self.fit_predict(X) == 1)
 
         return X[inliers], y[inliers]
 

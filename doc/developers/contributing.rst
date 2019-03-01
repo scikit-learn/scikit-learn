@@ -1061,7 +1061,7 @@ multiple interfaces):
 
 :Transformer:
 
-    For filtering or modifying the data, in a supervised or unsupervised
+    For modifying the data, in a supervised or unsupervised
     way, implements::
 
       new_data = transformer.transform(data)
@@ -1070,6 +1070,13 @@ multiple interfaces):
     together than separately, implements::
 
       new_data = transformer.fit_transform(data)
+
+:Resamplers:
+
+    For filtering or augmenting the data, in a supervised or unsupervised
+    way, implements::
+
+      new_X, new_y = transformer.fit_resample(data_X, data_y)
 
 :Model:
 
