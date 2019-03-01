@@ -1,7 +1,8 @@
 #cython: boundscheck=False
 #cython: cdivision=True
 #cython: wraparound=False
-
+# cython: language_level=3
+#
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Lars Buitinck
 #

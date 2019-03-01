@@ -29,16 +29,23 @@ def get_dispatch(dtypes):
 
 }}
 
-
-"""
-SAG and SAGA implementation
-WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
-"""
 #------------------------------------------------------------------------------
 
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
+#
+# Authors: Danny Sullivan <dbsullivan23@gmail.com>
+#          Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
+#          Arthur Mensch <arthur.mensch@m4x.org
+#
+# License: BSD 3 clause
+
+"""
+SAG and SAGA implementation
+WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
+"""
 
 cimport numpy as np
 import numpy as np

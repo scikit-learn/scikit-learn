@@ -18,6 +18,7 @@ from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
 
+from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
@@ -53,6 +54,9 @@ def _assert_all_finite(X, allow_nan=False):
                 not allow_nan and not np.isfinite(X).all()):
             type_err = 'infinity' if allow_nan else 'NaN, infinity'
             raise ValueError(msg_err.format(type_err, X.dtype))
+    elif X.dtype == np.dtype('object') and not allow_nan:
+        if _object_dtype_isnan(X).any():
+            raise ValueError("Input contains NaN")
 
 
 def assert_all_finite(X, allow_nan=False):
@@ -936,3 +940,45 @@ def check_non_negative(X, whom):
 
     if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def check_scalar(x, name, target_type, min_val=None, max_val=None):
+    """Validate scalar parameters type and value.
+
+    Parameters
+    ----------
+    x : object
+        The scalar parameter to validate.
+
+    name : str
+        The name of the parameter to be printed in error messages.
+
+    target_type : type or tuple
+        Acceptable data types for the parameter.
+
+    min_val : float or int, optional (default=None)
+        The minimum valid value the parameter can take. If None (default) it
+        is implied that the parameter does not have a lower bound.
+
+    max_val : float or int, optional (default=None)
+        The maximum valid value the parameter can take. If None (default) it
+        is implied that the parameter does not have an upper bound.
+
+    Raises
+    -------
+    TypeError
+        If the parameter's type does not match the desired type.
+
+    ValueError
+        If the parameter's value violates the given bounds.
+    """
+
+    if not isinstance(x, target_type):
+        raise TypeError('`{}` must be an instance of {}, not {}.'
+                        .format(name, target_type, type(x)))
+
+    if min_val is not None and x < min_val:
+        raise ValueError('`{}`= {}, must be >= {}.'.format(name, x, min_val))
+
+    if max_val is not None and x > max_val:
+        raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
