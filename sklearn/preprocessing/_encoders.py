@@ -32,7 +32,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
     """
 
-    def _check_X(self, X):
+    def _check_X(self, X, is_fit=False):
         """
         Perform custom check_array:
         - convert list of strings to object dtype
@@ -60,9 +60,34 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         n_samples, n_features = X.shape
         X_columns = []
-
+        if is_fit:
+            self.features_dtype = []
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
+            if is_fit:
+                # save the dtype or exact categories if category dtype
+                if Xi.dtype.name == 'category':
+                    f_dtype = Xi.cat.categories
+                else:
+                    f_dtype = Xi.dtype
+                self.features_dtype.append(f_dtype)
+            else:
+                # transform, check if dtype is the same as it was passed by fit
+                print(self.features_dtype[i])
+                if not (Xi.dtype == self.features_dtype[i]):
+                    if Xi.dtype.name == 'category': 
+                        # check if categories are the same
+                        if not (Xi.cat.categories == 
+                                self.features_dtype[i]).all():
+                                    raise ValueError("""Categories of 
+                                                        the features were 
+                                                        different in fit() and 
+                                                        in the transform()""")
+                    else:
+                        # features not of the same type in fit and transform
+                        raise ValueError("""Feature has different dtype during
+                                        fit() and during transform()""")
+
             if Xi.dtype.name == 'category':
                 # categorical dtype; do not want to convert to an array,
                 # check if there are no nans (otherwise done in check_array())
@@ -84,7 +109,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
         return X[:, feature_idx]
 
     def _fit(self, X, handle_unknown='error'):
-        X_list, n_samples, n_features = self._check_X(X)
+        X_list, n_samples, n_features = self._check_X(X, is_fit=True)
 
         if self._categories != 'auto':
             if len(self._categories) != n_features:

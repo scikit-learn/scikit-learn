@@ -371,16 +371,18 @@ def test_categorical_nans(method):
         getattr(oh, method)(X_df)
 
 
-@pytest.mark.parametrize("method", ['fit', 'fit_transform'])
-def test_categorical_undefined_categories(method):
+def test_categorical_same_category_fit_transform():
     # tests that all the categories are included within specified categories
     pd = pytest.importorskip('pandas')
-    cat = pd.Categorical(["a", "g", "c"], categories=["b", "a", "c", "d"])
-    X_df = pd.DataFrame({"A": cat, "B": ["a", "c", "c"]})
+    cat_fit = pd.Categorical(["a", "b"], categories=["b", "a", "c", "d"])
+    cat_transform = pd.Categorical(["b", "a"], categories=["a", "c", "d", "b"])
+    X_fit = pd.DataFrame({"A": cat_fit, "B": ["a", "c"]})
+    X_transform = pd.DataFrame({"A": cat_transform, "B": ["a", "c"]})
 
     oh = OneHotEncoder()
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        getattr(oh, method)(X_df)
+    oh.fit(X_fit)
+    with pytest.raises(ValueError, match="Categories of the features"):
+        oh.transform(X_transform)
 
 def test_one_hot_encoder_set_params():
     X = np.array([[1, 2]]).T
