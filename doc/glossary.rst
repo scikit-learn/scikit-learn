@@ -905,6 +905,15 @@ Class APIs and Estimator Types
         outliers have score below 0.  :term:`score_samples` may provide an
         unnormalized score per sample.
 
+    outlier rejector
+    outlier rejectors
+        An :term:`outlier detector` which is a resampler. It will remove
+        outliers from a passed dataset when :term:`fit_resample` is called.
+
+        Outlier detectors must implement:
+
+        * :term:`fit_resample`
+
     predictor
     predictors
         An :term:`estimator` supporting :term:`predict` and/or
@@ -1204,6 +1213,11 @@ Methods
         careful not to apply ``fit_transform`` to the entirety of a dataset
         (i.e. training and test data together) before further modelling, as
         this results in :term:`data leakage`.
+
+    ``fit_resample``
+        A method on :term:`resamplers` which fits the estimator on a passed
+        dataset, and returns a new dataset. In the new dataset, samples may be
+        removed or added.
 
     ``get_feature_names``
         Primarily for :term:`feature extractors`, but also used for other
