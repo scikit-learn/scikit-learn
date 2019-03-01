@@ -54,7 +54,7 @@ class BaseLoss(ABC):
             # if the hessians are constant, we consider they are equal to 1.
             # this is correct as long as we adjust the gradients. See e.g. LS
             # loss
-            hessians = np.ones(shape=shape, dtype=G_H_DTYPE)
+            hessians = np.ones(shape=(1, 1), dtype=G_H_DTYPE)
         else:
             hessians = np.empty(shape=shape, dtype=G_H_DTYPE)
 
