@@ -530,7 +530,7 @@ class TransformerMixin:
             n_features = self.components_.shape[0]
         else:
             return None
-        return ["{}{}".format(str(type(self)).lower(), i)
+        return ["{}{}".format(type(self).__name__.lower(), i)
                 for i in range(n_features)]
 
 

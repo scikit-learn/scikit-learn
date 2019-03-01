@@ -1080,6 +1080,18 @@ def test_set_input_features():
     assert_array_equal(pipe.input_features_, iris.feature_names)
     assert_array_equal(pipe.named_steps.clf.input_features_,
                        np.array(iris.feature_names)[mask])
+    pipe = Pipeline(steps=[
+        ('scaler', StandardScaler()),
+        ('pca', PCA(n_components=3)),
+        ('select', SelectKBest(k=2)),
+        ('clf', LogisticRegression())])
+    pipe.fit(iris.data, iris.target)
+    assert_array_equal(pipe.named_steps.clf.input_features_, ['pca0', 'pca1'])
+    # setting names doesn't change names after PCA
+    pipe.get_feature_names(iris.feature_names)
+    assert_array_equal(pipe.named_steps.select.input_features_,
+                       ['pca0', 'pca1', 'pca2'])
+
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
