@@ -87,7 +87,7 @@ cdef class WeightVector{{name}}(object):
 
         self.aw = aw
         if self.aw is not None:
-            self.aw_data_ptr = <double *>aw.data
+            self.aw_data_ptr = <{{c_type}} *>aw.data
             self.average_a = 0.0
             self.average_b = 1.0
 
@@ -208,13 +208,13 @@ cdef class WeightVector{{name}}(object):
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
         if self.aw is not None:
             _axpy(<int>self.aw.shape[0], self.average_a,
-                  <double *>self.w.data, 1, <double *>self.aw.data, 1)
+                  <{{c_type}} *>self.w.data, 1, <{{c_type}} *>self.aw.data, 1)
             _scal(<int>self.aw.shape[0], 1.0 / self.average_b,
-                  <double *>self.aw.data, 1)
+                  <{{c_type}} *>self.aw.data, 1)
             self.average_a = 0.0
             self.average_b = 1.0
 
-        _scal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
+        _scal(<int>self.w.shape[0], self.wscale, <{{c_type}} *>self.w.data, 1)
         self.wscale = 1.0
 
     cdef {{c_type}} norm(self) nogil:
