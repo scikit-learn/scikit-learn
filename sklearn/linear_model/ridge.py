@@ -34,7 +34,7 @@ from ..exceptions import ConvergenceWarning
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
-                     fit_intercept=False, X_offset=None, X_scale=None):
+                     X_offset=None, X_scale=None):
 
     def _get_rescaled_operator(X):
 
@@ -440,7 +440,6 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                                 max_iter=max_iter,
                                 tol=tol,
                                 verbose=verbose,
-                                fit_intercept=return_intercept,
                                 X_offset=X_offset,
                                 X_scale=X_scale)
 
