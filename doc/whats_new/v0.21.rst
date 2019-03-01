@@ -81,7 +81,7 @@ Support for Python 3.4 and below has been officially dropped.
   :user:`William de Vazelhes<wdevazelhes>`.
 
 :mod:`sklearn.discriminant_analysis`
-......................
+....................................
 
 - |Fix| Fixed a bug in :class:`discriminant_analysis.LinearDiscriminantAnalysis`
   where the predicted probabilities would be incorrectly computed in the
