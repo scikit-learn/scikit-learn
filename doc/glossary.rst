@@ -914,6 +914,8 @@ Class APIs and Estimator Types
 
         * :term:`fit_resample`
 
+        If the estimator implements `fit_predict
+
     predictor
     predictors
         An :term:`estimator` supporting :term:`predict` and/or

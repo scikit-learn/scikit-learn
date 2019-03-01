@@ -157,6 +157,10 @@ class Pipeline(_BaseComposition):
         # validate estimators
         transformers = estimators[:-1]
         estimator = estimators[-1]
+
+        # if we have a estimator with fit_predict at the end of the pipeline,
+        # we cannot have resamplers in the pipeline. This is used to check
+        # that.
         self._resamplers_exist = False
 
         for t in transformers:
@@ -164,21 +168,21 @@ class Pipeline(_BaseComposition):
                 continue
             if hasattr(t, "fit_resample"):
                 self._resamplers_exist = True
-            if (not (hasattr(t, "fit") or
-                     hasattr(t, "fit_transform") or
-                     hasattr(t, "fit_resample")) or
-                    not (hasattr(t, "transform") or
-                         hasattr(t, "fit_resample"))):
+            is_transformer = ((hasattr(t, "fit") and hasattr(t, "transform"))
+                              or hasattr(t, "fit_transform"))
+
+            if not is_transformer and not hasattr(t, "fit_resample"):
                 raise TypeError(
                     "All intermediate steps of Pipeline should be "
                     "estimators that implement fit and transform or resample "
-                    "(but not both) '%s' (type %s) doesn't)" % (t, type(t)))
-            if (hasattr(t, "fit_resample") and (hasattr(t, "fit_transform") or
-                                                hasattr(t, "transform"))):
+                    "(but not both) '%s' (type %s) doesn't." % (t, type(t)))
+
+            if (hasattr(t, "fit_transform") or hasattr(t, "transform")) and \
+                    hasattr(t, 'fit_resample'):
                 raise TypeError(
                     "All intermediate steps of the chain should be estimators"
                     " that implement fit and transform or fit_resample."
-                    " '%s' implements both)" % (t))
+                    " '%s' implements both." % (t))
 
         # We allow last estimator to be None as an identity transformation
         if (estimator is not None and estimator != 'passthrough'
@@ -197,9 +201,10 @@ class Pipeline(_BaseComposition):
             stop -= 1
 
         for idx, (name, trans) in enumerate(islice(self.steps, 0, stop)):
-            if trans is not None and trans != 'passthrough' \
-                    and (not hasattr(trans, 'fit_resample') or \
-                         (with_resamplers and hasattr(trans, 'fit_resample'))):
+            is_passthrough = trans is None or trans == 'passthrough'
+            if not is_passthrough and (not hasattr(trans, 'fit_resample') or
+                                       (with_resamplers and
+                                        hasattr(trans, 'fit_resample'))):
                 yield idx, name, trans
 
     @property
@@ -339,46 +344,6 @@ class Pipeline(_BaseComposition):
         else:
             return last_step.fit(Xt, yt, **fit_params).transform(Xt)
 
-    def fit_resample(self, X, y=None, **fit_params):
-        """Fit the model and resample with the final estimator
-
-        Fits all the transformers/resamplers one after the other and
-        transforms/resamples the data, then uses fit_resample on the
-        transformed/resampled data with the final estimator.
-
-        Parameters
-        ----------
-        X : iterable
-            Training data. Must fulfill input requirements of first step of the
-            pipeline.
-
-        y : iterable, default=None
-            Training targets. Must fulfill label requirements for all steps of
-            the pipeline.
-
-        **fit_params : dict of string -> object
-            Parameters passed to the ``fit`` method of each step, where
-            each parameter name is prefixed such that parameter ``p`` for step
-            ``s`` has key ``s__p``.
-
-        Returns
-        -------
-        Xt : array-like, shape = [n_resampled_samples, n_transformed_features]
-            Transformed samples
-
-        yt : array-like, shape = [n_resampled_samples, n_transformed_features]
-            Transformed target
-
-        """
-        last_step = self._final_estimator
-        Xt, yt, fit_params = self._fit(X, y, **fit_params)
-        if hasattr(last_step, 'fit_resample'):
-            return last_step.fit_resample(Xt, yt, **fit_params)
-        elif last_step == 'passthrough':
-            return Xt, yt
-        else:
-            return last_step.fit_resample(Xt, yt, **fit_params)
-
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
         """Apply transforms to the data, and predict with the final estimator.
@@ -494,6 +459,49 @@ class Pipeline(_BaseComposition):
         """
         Xt = self._transform(X, with_final=False, with_resamplers=False)
         return self.steps[-1][-1].predict_log_proba(Xt)
+
+    @property
+    def fit_resample(self, X, y, **fit_params):
+        """Fit the model and resample with the final estimator
+
+        Fits all the transformers/resamplers one after the other and
+        transforms/resamples the data, then uses fit_resample on the
+        transformed/resampled data with the final estimator.
+
+        Parameters
+        ----------
+        X : iterable
+            Training data. Must fulfill input requirements of first step of the
+            pipeline.
+
+        y : iterable
+            Training targets. Must fulfill label requirements for all steps of
+            the pipeline.
+
+        **fit_params : dict of string -> object
+            Parameters passed to the ``fit`` method of each step, where
+            each parameter name is prefixed such that parameter ``p`` for step
+            ``s`` has key ``s__p``.
+
+        Returns
+        -------
+        Xt : array-like, shape = [n_resampled_samples, n_transformed_features]
+            Transformed samples
+
+        yt : array-like, shape = [n_resampled_samples, n_transformed_features]
+            Transformed target
+
+        """
+        if self._final_estimator != 'passthrough':
+            self._final_estimator.fit_resample
+        return self._fit_resample
+
+    def _fit_resample(self, X, y, **fit_params):
+        last_step = self._final_estimator
+        Xt, yt, fit_params = self._fit(X, y, **fit_params)
+        if last_step == 'passthrough':
+            return Xt, yt
+        return last_step.fit_resample(Xt, yt, **fit_params)
 
     @property
     def transform(self):

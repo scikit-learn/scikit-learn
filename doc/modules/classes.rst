@@ -30,6 +30,8 @@ Base classes
    base.BiclusterMixin
    base.ClassifierMixin
    base.ClusterMixin
+   base.OutlierMixin
+   base.OutlierRejectorMixin
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin

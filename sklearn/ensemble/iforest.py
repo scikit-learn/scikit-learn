@@ -12,7 +12,8 @@ from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted
-from ..base import OutlierMixin, OutlierRejectionMixin
+from ..base import OutlierMixin
+from ..base import OutlierRejectionMixin
 
 from .bagging import BaseBagging
 

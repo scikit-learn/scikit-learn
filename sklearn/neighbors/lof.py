@@ -8,7 +8,8 @@ import warnings
 from .base import NeighborsBase
 from .base import KNeighborsMixin
 from .base import UnsupervisedMixin
-from ..base import OutlierMixin, OutlierRejectionMixin
+from ..base import OutlierMixin
+from ..base import OutlierRejectionMixin
 
 from ..utils.validation import check_is_fitted
 from ..utils import check_array

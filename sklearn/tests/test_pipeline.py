@@ -2,15 +2,12 @@
 Test the pipeline module.
 """
 
-# lots of resample tests were taken from imblearn
-
 from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
 
 import pytest
-from pytest import raises
 import numpy as np
 from scipy import sparse
 
@@ -164,7 +161,7 @@ class DummyEstimatorParams(BaseEstimator):
 
 
 class DummyResampler(NoTrans):
-    """Resampler which returns the same samples"""
+    """Resampler which returns the same samples."""
 
     def fit_resample(self, X, y):
         self.means_ = np.mean(X, axis=0)
@@ -175,8 +172,7 @@ class DummyResampler(NoTrans):
 
 
 class FitTransformResample(NoTrans):
-    """Estimator implementing both transform and sample
-    """
+    """Estimator implementing both transform and fit_resample."""
 
     def fit(self, X, y, should_succeed=False):
         pass
@@ -1073,6 +1069,7 @@ def test_pipeline_memory():
 
 
 def test_pipeline_memory_resampler():
+    # TODO
     X, y = make_classification(
         n_classes=2,
         class_sep=2,
@@ -1385,7 +1382,7 @@ def test_pipeline_with_step_that_implements_both_sample_and_transform():
         random_state=0)
 
     clf = LogisticRegression(solver='lbfgs')
-    with raises(TypeError, match='should be estimators that implement'):
+    with pytest.raises(TypeError, match='should be estimators that implement'):
         Pipeline([('step', FitTransformResample()), ('logistic', clf)])
 
 
@@ -1515,7 +1512,7 @@ def test_pipe_exposes_resample_correctly(passthrough):
     # this test will be handled by test_metaestimators later, it's just here
     # now for simplicity
     # TODO make this test pass (maybe something similar is also broken for
-    # fit_transform)
+    # fit_transform
     X, y = make_classification(n_samples=10)
 
     dre = DummyResampler()

@@ -7,7 +7,8 @@ import warnings
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
 from ..metrics import accuracy_score
-from ..base import OutlierMixin, OutlierRejectionMixin
+from ..base import OutlierMixin
+from ..base import OutlierRejectionMixin
 
 
 class EllipticEnvelope(MinCovDet, OutlierMixin, OutlierRejectionMixin):
