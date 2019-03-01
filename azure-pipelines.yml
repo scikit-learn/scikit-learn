@@ -68,7 +68,7 @@ jobs:
         PYTHON_VERSION: '3.7'
         CHECK_WARNINGS: 'true'
         PYTHON_ARCH: '64'
+        COVERAGE: 'true'
       py35_32:
         PYTHON_VERSION: '3.5'
         PYTHON_ARCH: '32'
-
