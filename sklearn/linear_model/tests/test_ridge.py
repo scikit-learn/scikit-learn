@@ -818,19 +818,22 @@ def test_ridge_fit_intercept_sparse():
 
     X_csr = sp.csr_matrix(X)
 
-    for solver in ['saga', 'sag', 'sparse_cg']:
+    for solver in ['sag', 'sparse_cg']:
         dense = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
         sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
         dense.fit(X, y)
-        sparse.fit(X_csr, y)
+        with pytest.warns(None) as record:
+            sparse.fit(X_csr, y)
+        assert len(record) == 0
         assert_almost_equal(dense.intercept_, sparse.intercept_)
         assert_array_almost_equal(dense.coef_, sparse.coef_)
 
     # test the solver switch and the corresponding warning
-    sparse = Ridge(alpha=1., tol=1.e-15, solver='lsqr', fit_intercept=True)
-    assert_warns(UserWarning, sparse.fit, X_csr, y)
-    assert_almost_equal(dense.intercept_, sparse.intercept_)
-    assert_array_almost_equal(dense.coef_, sparse.coef_)
+    for solver in ['saga', 'lsqr']:
+        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+        assert_warns(UserWarning, sparse.fit, X_csr, y)
+        assert_almost_equal(dense.intercept_, sparse.intercept_)
+        assert_array_almost_equal(dense.coef_, sparse.coef_)
 
 
 def test_errors_and_values_helper():
