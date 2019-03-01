@@ -2,21 +2,220 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: language_level=3
-"""This module contains routines for building histograms.
+"""This module contains routines for building histograms."""
 
-A histogram is an array with n_bins entry of type HISTOGRAM_DTYPE. Each
-feature has its own histogram. A histogram contains the sum of gradients and
-hessians of all the samples belonging to each bin.
-"""
 # Author: Nicolas Hug
 
 cimport cython
+from cython.parallel import prange
 
 import numpy as np
 cimport numpy as np
 
+from .types import HISTOGRAM_DTYPE
+from .types cimport hist_struct
+from .types cimport X_BINNED_DTYPE_C
+from .types cimport G_H_DTYPE_C
+from .types cimport hist_struct
+
 # Note: IN views are read-only, OUT views are write-only
-# See histogram.pxd for docstrings and details
+
+
+@cython.final
+cdef class HistogramBuilder:
+    """A Histogram builder... used to build histograms.
+
+    A histogram is an array with n_bins entry of type HISTOGRAM_DTYPE. Each
+    feature has its own histogram. A histogram contains the sum of gradients
+    and hessians of all the samples belonging to each bin.
+
+    There are different ways to build a histogram:
+    - by subtraction: hist(child) = hist(parent) - hist(sibling)
+    - from scratch. In this case we have rountines that update the hessians
+      or not (not useful when hessians are constant for some losses e.g.
+      least squares). Also, there's a special case for the root which
+      contains all the samples, leading to some possible optimizations.
+      Overall all the implementations look the same, and are optimized for
+      cache hit.
+
+    Parameters
+    ----------
+    X_binned : array of int
+        The binned input samples. Must be Fortran-aligned.
+    max_bins : int, optional(default=256)
+        The maximum number of bins. Used to define the shape of the
+        histograms.
+    gradients : array-like, shape=(n_samples,)
+        The gradients of each training sample. Those are the gradients of the
+        loss w.r.t the predictions, evaluated at iteration i - 1.
+    hessians : array-like, shape=(n_samples,)
+        The hessians of each training sample. Those are the hessians of the
+        loss w.r.t the predictions, evaluated at iteration i - 1.
+    """
+    cdef public:
+        const X_BINNED_DTYPE_C [::1, :] X_binned
+        unsigned int n_features
+        unsigned int max_bins
+        G_H_DTYPE_C [::1] gradients
+        G_H_DTYPE_C [::1] hessians
+        G_H_DTYPE_C [::1] ordered_gradients
+        G_H_DTYPE_C [::1] ordered_hessians
+        unsigned char hessians_are_constant
+
+    def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned, unsigned int
+                 max_bins, G_H_DTYPE_C [::1] gradients,
+                 G_H_DTYPE_C [::1] hessians,
+                 unsigned char hessians_are_constant):
+
+        self.X_binned = X_binned
+        self.n_features = X_binned.shape[1]
+        # Note: all histograms will have <max_bins> bins, but some of the
+        # last bins may be unused if n_bins_per_feature[f] < max_bins
+        self.max_bins = max_bins
+        self.gradients = gradients
+        self.hessians = hessians
+        # for root node, gradients and hessians are already ordered
+        self.ordered_gradients = gradients.copy()
+        self.ordered_hessians = hessians.copy()
+        self.hessians_are_constant = hessians_are_constant
+
+    def compute_histograms_brute(
+            HistogramBuilder self,
+            const unsigned int [::1] sample_indices):  # IN
+        """Compute the histograms of the node by scanning through all the data.
+
+        For a given feature, the complexity is O(n_samples)
+
+        Parameters
+        ----------
+        sample_indices : array of int
+            The indices of the samples at the node to split.
+
+        Returns
+        -------
+        histograms : array of HISTOGRAM_DTYPE of shape(n_features, max_bins)
+            The computed histograms of the current node
+        """
+        cdef:
+            int n_samples
+            int feature_idx
+            int i
+            # need local views to avoid python interactions
+            unsigned char hessians_are_constant = \
+                self.hessians_are_constant
+            int n_features = self.n_features
+            G_H_DTYPE_C [::1] ordered_gradients = self.ordered_gradients
+            G_H_DTYPE_C [::1] gradients = self.gradients
+            G_H_DTYPE_C [::1] ordered_hessians = self.ordered_hessians
+            G_H_DTYPE_C [::1] hessians = self.hessians
+            hist_struct [:, ::1] histograms = np.zeros(
+                shape=(self.n_features, self.max_bins),
+                dtype=HISTOGRAM_DTYPE
+            )
+
+        with nogil:
+            n_samples = sample_indices.shape[0]
+
+            # Populate ordered_gradients and ordered_hessians. (Already done
+            # for root) Ordering the gradients and hessians helps to improve
+            # cache hit.
+            if sample_indices.shape[0] != gradients.shape[0]:
+                if hessians_are_constant:
+                    for i in prange(n_samples, schedule='static'):
+                        ordered_gradients[i] = gradients[sample_indices[i]]
+                else:
+                    for i in prange(n_samples, schedule='static'):
+                        ordered_gradients[i] = gradients[sample_indices[i]]
+                        ordered_hessians[i] = hessians[sample_indices[i]]
+
+            for feature_idx in prange(n_features):
+                # Compute histogram of each feature
+                self._compute_histogram_brute_single_feature(
+                    feature_idx, sample_indices, histograms)
+
+        return histograms
+
+    cdef void _compute_histogram_brute_single_feature(
+            HistogramBuilder self,
+            const int feature_idx,
+            const unsigned int [::1] sample_indices,  # IN
+            hist_struct [:, ::1] histograms) nogil:  # OUT
+        """Compute the histogram for a given feature."""
+
+        cdef:
+            unsigned int n_samples = sample_indices.shape[0]
+            const X_BINNED_DTYPE_C [::1] X_binned = \
+                self.X_binned[:, feature_idx]
+            unsigned int root_node = X_binned.shape[0] == n_samples
+            G_H_DTYPE_C [::1] ordered_gradients = \
+                self.ordered_gradients[:n_samples]
+            G_H_DTYPE_C [::1] ordered_hessians = \
+                self.ordered_hessians[:n_samples]
+            unsigned char hessians_are_constant = \
+                self.hessians_are_constant
+
+        if root_node:
+            if hessians_are_constant:
+                _build_histogram_root_no_hessian(feature_idx, X_binned,
+                                                 ordered_gradients,
+                                                 histograms)
+            else:
+                _build_histogram_root(feature_idx, X_binned,
+                                      ordered_gradients, ordered_hessians,
+                                      histograms)
+        else:
+            if hessians_are_constant:
+                _build_histogram_no_hessian(feature_idx,
+                                            sample_indices, X_binned,
+                                            ordered_gradients, histograms)
+            else:
+                _build_histogram(feature_idx, sample_indices,
+                                 X_binned, ordered_gradients,
+                                 ordered_hessians, histograms)
+
+    def compute_histograms_subtraction(
+            HistogramBuilder self,
+            hist_struct [:, ::1] parent_histograms,  # IN
+            hist_struct [:, ::1] sibling_histograms):  # IN
+        """Compute the histograms of the node using the subtraction trick.
+
+        hist(parent) = hist(left_child) + hist(right_child)
+
+        For a given feature, the complexity is O(n_bins). This is much more
+        efficient than compute_histograms_brute, but it's only possible for one
+        of the siblings.
+
+        Parameters
+        ----------
+        parent_histograms : array of HISTOGRAM_DTYPE of \
+                shape(n_features, max_bins)
+            The histograms of the parent
+        sibling_histograms : array of HISTOGRAM_DTYPE of \
+                shape(n_features, max_bins)
+            The histograms of the sibling
+
+        Returns
+        -------
+        histograms : array of HISTOGRAM_DTYPE of shape(n_features, max_bins)
+            The computed histograms of the current node
+        """
+
+        cdef:
+            int feature_idx
+            int n_features = self.n_features
+            hist_struct [:, ::1] histograms = np.zeros(
+                shape=(self.n_features, self.max_bins),
+                dtype=HISTOGRAM_DTYPE
+            )
+
+        for feature_idx in prange(n_features, nogil=True):
+            # Compute histogram of each feature
+            _subtract_histograms(feature_idx,
+                                 self.max_bins,
+                                 parent_histograms,
+                                 sibling_histograms,
+                                 histograms)
+        return histograms
 
 
 cpdef void _build_histogram_naive(
@@ -49,6 +248,7 @@ cpdef void _subtract_histograms(
         hist_struct [:, ::1] hist_a,  # IN
         hist_struct [:, ::1] hist_b,  # IN
         hist_struct [:, ::1] out) nogil:  # OUT
+    """compute (hist_a - hist_b) in out"""
     cdef:
         unsigned int i = 0
     for i in range(n_bins):
@@ -73,6 +273,7 @@ cpdef void _build_histogram(
         const G_H_DTYPE_C [::1] ordered_gradients,  # IN
         const G_H_DTYPE_C [::1] ordered_hessians,  # IN
         hist_struct [:, ::1] out) nogil:  # OUT
+    """Return histogram for a given feature."""
     cdef:
         unsigned int i = 0
         unsigned int n_node_samples = sample_indices.shape[0]
@@ -118,6 +319,11 @@ cpdef void _build_histogram_no_hessian(
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] ordered_gradients,  # IN
         hist_struct [:, ::1] out) nogil:  # OUT
+    """Return histogram for a given feature, not updating hessians.
+
+    Used when the hessians of the loss are constant (typically LS loss).
+    """
+
     cdef:
         unsigned int i = 0
         unsigned int n_node_samples = sample_indices.shape[0]
@@ -157,6 +363,13 @@ cpdef void _build_histogram_root(
         const G_H_DTYPE_C [::1] all_gradients,  # IN
         const G_H_DTYPE_C [::1] all_hessians,  # IN
         hist_struct [:, ::1] out) nogil:  # OUT
+    """Compute histogram of the root node.
+
+    Unlike other nodes, the root node has to find the split among *all* the
+    samples from the training set. binned_feature and all_gradients /
+    all_hessians already have a consistent ordering.
+    """
+
     cdef:
         unsigned int i = 0
         unsigned int n_samples = binned_feature.shape[0]
@@ -202,6 +415,11 @@ cpdef void _build_histogram_root_no_hessian(
         const X_BINNED_DTYPE_C [::1] binned_feature,  # IN
         const G_H_DTYPE_C [::1] all_gradients,  # IN
         hist_struct [:, ::1] out) nogil:  # OUT
+    """Compute histogram of the root node, not updating hessians.
+
+    Used when the hessians of the loss are constant (typically LS loss).
+    """
+
     cdef:
         unsigned int i = 0
         unsigned int n_samples = binned_feature.shape[0]

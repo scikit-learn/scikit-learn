@@ -11,6 +11,7 @@ import numpy as np
 from timeit import default_timer as time
 
 from .splitting import Splitter
+from .histogram import HistogramBuilder
 from .predictor import TreePredictor, PREDICTOR_RECORD_DTYPE
 from .utils import sum_parallel
 
@@ -189,10 +190,13 @@ class TreeGrower:
                 [n_bins_per_feature] * X_binned.shape[1],
                 dtype=np.uint32)
 
+        hessians_are_constant = hessians.shape[0] == 1
+        self.histogram_builder = HistogramBuilder(
+            X_binned, max_bins, gradients, hessians, hessians_are_constant)
         self.splitter = Splitter(
-            X_binned, max_bins, n_bins_per_feature, gradients,
-            hessians, l2_regularization, min_hessian_to_split,
-            min_samples_leaf, min_gain_to_split)
+            X_binned, max_bins, n_bins_per_feature, l2_regularization,
+            min_hessian_to_split, min_samples_leaf, min_gain_to_split,
+            hessians_are_constant)
         self.max_leaf_nodes = max_leaf_nodes
         self.max_bins = max_bins
         self.n_features = X_binned.shape[1]
@@ -205,7 +209,7 @@ class TreeGrower:
         self.finalized_leaves = []
         self.total_find_split_time = 0.  # time spent finding the best splits
         self.total_apply_split_time = 0.  # time spent splitting nodes
-        self._intilialize_root()
+        self._intilialize_root(gradients, hessians, hessians_are_constant)
         self.n_nodes = 1
 
     def _validate_parameters(self, X_binned, max_leaf_nodes, max_depth,
@@ -246,16 +250,15 @@ class TreeGrower:
         while self.can_split_further():
             self.split_next()
 
-    def _intilialize_root(self):
+    def _intilialize_root(self, gradients, hessians, hessians_are_constant):
         """Initialize root node and finalize it if needed."""
         n_samples = self.X_binned.shape[0]
         depth = 0
-        # sum_gradients = np.sum(self.splitter.gradients)
-        sum_gradients = sum_parallel(self.splitter.gradients)
-        if self.splitter.hessians_are_constant:
-            sum_hessians = self.splitter.hessians[0] * n_samples
+        sum_gradients = sum_parallel(gradients)
+        if self.histogram_builder.hessians_are_constant:
+            sum_hessians = hessians[0] * n_samples
         else:
-            sum_hessians = np.sum(self.splitter.hessians)
+            sum_hessians = sum_parallel(hessians)
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,
@@ -278,7 +281,7 @@ class TreeGrower:
             return
 
         # self._compute_spittability(self.root)
-        self.root.histograms = self.splitter.compute_histograms_brute(
+        self.root.histograms = self.histogram_builder.compute_histograms_brute(
             self.root.sample_indices)
         self._compute_best_split_and_push(self.root)
 
@@ -391,10 +394,10 @@ class TreeGrower:
             # smallest number of samples, and the subtraction trick O(n_bins)
             # on the other one.
             smallest_child.histograms = \
-                self.splitter.compute_histograms_brute(
+                self.histogram_builder.compute_histograms_brute(
                     smallest_child.sample_indices)
             largest_child.histograms = \
-                self.splitter.compute_histograms_subtraction(
+                self.histogram_builder.compute_histograms_subtraction(
                     node.histograms, smallest_child.histograms)
 
             if should_split_left:
