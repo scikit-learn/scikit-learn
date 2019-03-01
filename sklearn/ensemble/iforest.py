@@ -145,7 +145,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
     Notes
     -----
     The implementation is based on an ensemble of ExtraTreeRegressor. The
-    maximum depth of each tree is set to :math:`\ceil{\log_2(n)}` where
+    maximum depth of each tree is set to ``ceil(log_2(n))`` where
     :math:`n` is the number of samples used to build the tree
     (see (Liu et al., 2008) for more details).
 
