@@ -840,14 +840,22 @@ def test_ridge_fit_intercept_sparse():
 @pytest.mark.parametrize('return_intercept', [False, True])
 @pytest.mark.parametrize('sample_weight', [None, np.ones(1000)])
 @pytest.mark.parametrize('arr_type', [np.array, sp.csr_matrix])
-def test_ridge_check_auto_modes(return_intercept, sample_weight, arr_type):
+@pytest.mark.parametrize('solver', ['auto', 'sparse_cg', 'cholesky', 'lsqr',
+                                    'sag', 'saga'])
+def test_ridge_regression_check_arguments_validity(return_intercept,
+                                                   sample_weight, arr_type,
+                                                   solver):
+    """check if all combinations of arguments give valid estimations"""
+
+    # test excludes 'svd' solver because it raises exception for sparse inputs
+
     X = np.random.rand(1000, 3)
     true_coefs = [1, 2, 0.1]
     y = np.dot(X, true_coefs)
     X_testing = arr_type(X)
 
     target = ridge_regression(X_testing, y, 1,
-                              solver='auto',
+                              solver=solver,
                               sample_weight=sample_weight,
                               return_intercept=return_intercept
                               )
