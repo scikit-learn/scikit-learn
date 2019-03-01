@@ -322,6 +322,9 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         """Probability estimates.
         Returns prediction probabilities for each class of each output.
 
+        This method will raise a ``ValueError`` if any of the
+        estimators do not have ``predict_proba``.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
