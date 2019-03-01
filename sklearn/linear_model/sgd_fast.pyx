@@ -16,6 +16,7 @@ import sys
 from time import time
 
 cimport cython
+from cython cimport floating
 from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
 from numpy.math cimport INFINITY
@@ -23,8 +24,8 @@ cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
+# from sklearn.utils.seq_dataset cimport SequentialDataset64 as SequentialDataset
 from sklearn.utils.seq_dataset cimport SequentialDataset32 as SequentialDataset
-# from sklearn.utils.seq_dataset cimport SequentialDataset32 as SequentialDataset
 
 np.import_array()
 
@@ -334,7 +335,7 @@ cdef class SquaredEpsilonInsensitive(Regression):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
 
-def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
+def plain_sgd(floating[::1] weights,
               double intercept,
               LossFunction loss,
               int penalty_type,
@@ -451,9 +452,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     return standard_weights, standard_intercept, n_iter_
 
 
-def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
+def average_sgd(floating[::1] weights,
                 double intercept,
-                np.ndarray[double, ndim=1, mode='c'] average_weights,
+                floating[::1] average_weights,
                 double average_intercept,
                 LossFunction loss,
                 int penalty_type,
@@ -580,9 +581,9 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       average)
 
 
-def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
+def _plain_sgd(floating[::1] weights,
                double intercept,
-               np.ndarray[double, ndim=1, mode='c'] average_weights,
+               floating[::1] average_weights,
                double average_intercept,
                LossFunction loss,
                int penalty_type,
@@ -606,8 +607,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef Py_ssize_t n_features = weights.shape[0]
 
     cdef WeightVector w = WeightVector(weights, average_weights)
-    cdef double* w_ptr = &weights[0]
-    cdef double *x_data_ptr = NULL
+    cdef floating* w_ptr = &weights[0]
+    cdef floating *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
     cdef double* ps_ptr = NULL
 
@@ -622,8 +623,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double score = 0.0
     cdef double best_loss = INFINITY
     cdef double best_score = -INFINITY
-    cdef double y = 0.0
-    cdef double sample_weight
+    cdef floating y = 0.0
+    cdef floating sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
@@ -639,11 +640,10 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned char [:] validation_mask_view = validation_mask
 
     # q vector is only used for L1 regularization
-    cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
-    cdef double * q_data_ptr = NULL
-    if penalty_type == L1 or penalty_type == ELASTICNET:
-        q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <double * > q.data
+    cdef floating[::1] q = np.zeros((n_features,), dtype=weights.dtype,
+                                    order="c")
+    cdef floating * q_data_ptr = &q[0]
+
     cdef double u = 0.0
 
     if penalty_type == L2:
@@ -758,7 +758,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
 
             # floating-point under-/overflow check.
             if (not skl_isfinite(intercept)
-                or any_nonfinite(<double *>weights.data, n_features)):
+                or any_nonfinite(&weights[0], n_features)):
                 infinity = True
                 break
 
@@ -803,7 +803,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     return weights, intercept, average_weights, average_intercept, epoch + 1
 
 
-cdef bint any_nonfinite(double *w, int n) nogil:
+cdef bint any_nonfinite(floating *w, int n) nogil:
+    cdef int i
     for i in range(n):
         if not skl_isfinite(w[i]):
             return True
@@ -820,18 +821,18 @@ cdef double sqnorm(double * x_data_ptr, int * x_ind_ptr, int xnnz) nogil:
     return x_norm
 
 
-cdef void l1penalty(WeightVector w, double * q_data_ptr,
-                    int *x_ind_ptr, int xnnz, double u) nogil:
+cdef void l1penalty(WeightVector w, floating * q_data_ptr,
+                    int *x_ind_ptr, int xnnz, floating u) nogil:
     """Apply the L1 penalty to each updated feature
 
     This implements the truncated gradient approach by
     [Tsuruoka, Y., Tsujii, J., and Ananiadou, S., 2009].
     """
-    cdef double z = 0.0
+    cdef floating z = 0.0
     cdef int j = 0
     cdef int idx = 0
-    cdef double wscale = w.wscale
-    cdef double *w_data_ptr = w.w_data_ptr
+    cdef floating wscale = w.wscale
+    cdef floating *w_data_ptr = w.w_data_ptr
     for j in range(xnnz):
         idx = x_ind_ptr[j]
         z = w_data_ptr[idx]
