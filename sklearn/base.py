@@ -504,11 +504,11 @@ class TransformerMixin:
 
     def get_feature_names(self, input_features=None):
         """Get output feature names.
-        
+
         Parameters
         ----------
         input_features : list of string or None
-            String names of the input features.        
+            String names of the input features.
 
         Returns
         -------
@@ -621,7 +621,7 @@ def _get_sub_estimators(est):
     if hasattr(est, "estimators_"):
         if hasattr(est.estimators_, 'shape'):
             sub_ests.extend(est.estimators_.ravel())
-        else:    
+        else:
             sub_ests.extend(est.estimators_)
     return sub_ests
 

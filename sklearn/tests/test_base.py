@@ -495,7 +495,7 @@ def test_sub_estimator_consistency():
     from sklearn.utils.testing import all_estimators
     from sklearn.base import (MetaEstimatorMixin, _get_sub_estimators,
                               ClassifierMixin, RegressorMixin)
-    
+
     from sklearn.model_selection._search import BaseSearchCV
     from sklearn.feature_selection.base import SelectorMixin
     from sklearn.datasets import make_blobs
@@ -503,10 +503,11 @@ def test_sub_estimator_consistency():
     from sklearn.utils.estimator_checks import \
         multioutput_estimator_convert_y_2d
     from collections.abc import Iterable
-    
+
     def has_fitted_attr(est):
         attrs = [(x, getattr(est, x, None))
-                 for x in dir(est) if x.endswith("_") and not x.startswith("__")]
+                 for x in dir(est) if x.endswith("_")
+                 and not x.startswith("__")]
         return len(attrs)
 
     def get_sub_estimators_brute(est):
@@ -529,7 +530,7 @@ def test_sub_estimator_consistency():
 
     al = all_estimators()
     mets = [x for x in al if issubclass(x[1], MetaEstimatorMixin)]
-    
+
     X, y = make_blobs()
     others = []
 
@@ -539,7 +540,8 @@ def test_sub_estimator_consistency():
             est = Est()
         except TypeError:
             if issubclass(Est, (ClassifierMixin, SelectorMixin)):
-                est = Est(LogisticRegression(solver='lbfgs', multi_class='auto'))
+                est = Est(LogisticRegression(solver='lbfgs',
+                                             multi_class='auto'))
             elif issubclass(Est, RegressorMixin):
                 est = Est(Ridge())
             else:
@@ -550,7 +552,7 @@ def test_sub_estimator_consistency():
         y = multioutput_estimator_convert_y_2d(est, y)
         est.fit(X, y)
         # test recursive sub estimators are the same as result of
-        #_get_sub_estimators which uses a hard-coded list
+        # _get_sub_estimators which uses a hard-coded list
         assert (set(_get_sub_estimators(est)) ==
                 get_sub_estimators_brute(est))
 
