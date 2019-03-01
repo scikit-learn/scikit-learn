@@ -1070,17 +1070,10 @@ def test_pipeline_memory():
 
 def test_pipeline_memory_resampler():
     # TODO
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
     cachedir = mkdtemp()
     try:
         memory = Memory(cachedir, verbose=10)
@@ -1141,17 +1134,10 @@ def test_pipeline_memory_resampler():
 
 def test_pipeline_methods_pca_outlier_svm():
     # Test the various methods of the pipeline (pca + svm).
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
 
     # Test with PCA + SVC
     clf = SVC(gamma='scale', probability=True, random_state=0)
@@ -1167,17 +1153,10 @@ def test_pipeline_methods_pca_outlier_svm():
 
 def test_pipeline_methods_outlier_pca_svm():
     # Test the various methods of the pipeline (pca + svm).
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
 
     # Test with PCA + SVC
     clf = SVC(gamma='scale', probability=True, random_state=0)
@@ -1194,17 +1173,10 @@ def test_pipeline_methods_outlier_pca_svm():
 def test_pipeline_resample():
     # Test whether pipeline works with a resampler at the end.
     # Also test pipeline.fit_resample
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
 
     resampler = OneClassSVM(gamma='scale')
     pipeline = Pipeline([('resampler', resampler)])
@@ -1228,17 +1200,10 @@ def test_pipeline_resample():
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
 def test_pipeline_none_classifier(passthrough):
     # Test pipeline using None as preprocessing step and a classifier
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
     clf = LogisticRegression(solver='lbfgs', random_state=0)
     pipe = make_pipeline(passthrough, clf)
     pipe.fit(X, y)
@@ -1251,17 +1216,10 @@ def test_pipeline_none_classifier(passthrough):
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
 def test_pipeline_none_resampler_classifier(passthrough):
     # Test pipeline using None, an outlier rejector and a classifier
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
     clf = LogisticRegression(solver='lbfgs', random_state=0)
     outlier = OneClassSVM(gamma='scale')
     pipe = make_pipeline(passthrough, outlier, clf)
@@ -1275,17 +1233,10 @@ def test_pipeline_none_resampler_classifier(passthrough):
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
 def test_pipeline_resampler_none_classifier(passthrough):
     # Test pipeline using an outlier rejector, None and a classifier
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
     clf = LogisticRegression(solver='lbfgs', random_state=0)
     outlier = OneClassSVM(gamma='scale')
     pipe = make_pipeline(outlier, passthrough, clf)
@@ -1299,17 +1250,10 @@ def test_pipeline_resampler_none_classifier(passthrough):
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
 def test_pipeline_none_resampler_resample(passthrough):
     # Test pipeline using None step and a resampler
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
 
     outlier = OneClassSVM(gamma='scale')
     pipe = make_pipeline(passthrough, outlier)
@@ -1320,17 +1264,10 @@ def test_pipeline_none_resampler_resample(passthrough):
 def test_pipeline_none_transformer(passthrough):
     # Test pipeline using None and a transformer that implements transform and
     # inverse_transform
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
 
     pca = PCA(whiten=True)
     pipe = make_pipeline(passthrough, pca)
@@ -1342,17 +1279,10 @@ def test_pipeline_none_transformer(passthrough):
 
 def test_pipeline_methods_anova_outlier():
     # Test the various methods of the pipeline (anova).
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
     # Test with outlierdetection + Anova + LogisticRegression
     clf = LogisticRegression(solver='lbfgs')
     outlier = OneClassSVM(gamma='scale')
@@ -1369,17 +1299,10 @@ def test_pipeline_methods_anova_outlier():
 
 def test_pipeline_with_step_that_implements_both_sample_and_transform():
     # Test the various methods of the pipeline (anova).
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
 
     clf = LogisticRegression(solver='lbfgs')
     with pytest.raises(TypeError, match='should be estimators that implement'):
@@ -1387,17 +1310,10 @@ def test_pipeline_with_step_that_implements_both_sample_and_transform():
 
 
 def test_pipeline_fit_then_sample_with_resampler_last_estimator():
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
 
     outlier1 = OneClassSVM(gamma='scale')
     outlier2 = LocalOutlierFactor(contamination=0.1)
@@ -1412,17 +1328,10 @@ def test_pipeline_fit_then_sample_with_resampler_last_estimator():
 
 
 def test_pipeline_fit_then_sample_3_resamplers_with_resampler_last_estimator():
-    X, y = make_classification(
-        n_classes=2,
-        class_sep=2,
-        weights=[0.1, 0.9],
-        n_informative=3,
-        n_redundant=1,
-        flip_y=0,
-        n_features=20,
-        n_clusters_per_class=1,
-        n_samples=500,
-        random_state=0)
+    X, y = make_classification( n_classes=2, class_sep=2, weights=[0.1, 0.9],
+                               n_informative=3, n_redundant=1, flip_y=0,
+                               n_features=20, n_clusters_per_class=1,
+                               n_samples=500, random_state=0)
 
     outlier1 = OneClassSVM(gamma='scale')
     outlier2 = LocalOutlierFactor(contamination=0.1)
