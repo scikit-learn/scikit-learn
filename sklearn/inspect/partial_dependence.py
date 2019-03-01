@@ -116,7 +116,7 @@ def _partial_dependence_recursion(est, grid, features):
     return averaged_predictions
 
 
-def _partial_dependence_brute(est, grid, features, X, response):
+def _partial_dependence_brute(est, grid, features, X, response_method):
     averaged_predictions = []
 
     # define the prediction_method (predict, predict_proba, decision_function).
@@ -125,19 +125,19 @@ def _partial_dependence_brute(est, grid, features, X, response):
     else:
         predict_proba = getattr(est, 'predict_proba', None)
         decision_function = getattr(est, 'decision_function', None)
-        if response == 'auto':
+        if response_method == 'auto':
             # try predict_proba, then decision_function if it doesn't exist
             prediction_method = predict_proba or decision_function
         else:
-            prediction_method = (predict_proba if response == 'predict'
-                                 else decision_function)
+            prediction_method = (predict_proba if response_method ==
+                                 'predict_proba' else decision_function)
         if prediction_method is None:
-            if response == 'auto':
+            if response_method == 'auto':
                 raise ValueError(
                     'The estimator has no predict_proba and no '
                     'decision_function method.'
                 )
-            elif response == 'proba':
+            elif response_method == 'predict_proba':
                 raise ValueError('The estimator has no predict_proba method.')
             else:
                 raise ValueError(
@@ -181,7 +181,7 @@ def _partial_dependence_brute(est, grid, features, X, response):
     return averaged_predictions
 
 
-def partial_dependence(est, features, X, response='auto',
+def partial_dependence(est, features, X, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
                        method='auto'):
     """Partial dependence of ``features``.
@@ -204,7 +204,8 @@ def partial_dependence(est, features, X, response='auto',
         ``X`` is used both to generate a grid of values for the
         ``features``, and to compute the averaged predictions when
         method is 'brute'.
-    response : 'auto', 'proba' or 'decision', optional (default='auto') :
+    response_method : 'auto', 'predict_proba' or 'decision_function', \
+            optional (default='auto') :
         Specifies whether to use ``est.predict_proba()`` or
         ``est.decision_function()`` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -288,15 +289,17 @@ def partial_dependence(est, features, X, response='auto',
 
     X = check_array(X)
 
-    accepted_responses = ('auto', 'proba', 'decision')
-    if response not in accepted_responses:
+    accepted_responses = ('auto', 'predict_proba', 'decision_function')
+    if response_method not in accepted_responses:
         raise ValueError(
-            'response {} is invalid. Accepted response names are {}.'.format(
-                response, ', '.join(accepted_responses)))
+            'response_method {} is invalid. Accepted response_method names '
+            'are {}.'.format(response_method, ', '.join(accepted_responses)))
 
-    if is_regressor(est) and response != 'auto':
-        warnings.warn("The response parameter is ignored for regressors.",
-                      UserWarning)
+    if is_regressor(est) and response_method != 'auto':
+        warnings.warn(
+            "The response_method parameter is ignored for regressors.",
+            UserWarning
+        )
     accepted_methods = ('brute', 'recursion', 'auto')
     if method not in accepted_methods:
         raise ValueError(
@@ -314,13 +317,13 @@ def partial_dependence(est, features, X, response='auto',
             raise ValueError(
                 'est must be an instance of BaseGradientBoosting '
                 'for the "recursion" method. Try using method="brute".')
-        if response == 'auto':
-            response = 'decision'
+        if response_method == 'auto':
+            response_method = 'decision_function'
 
-        if response != 'decision':
+        if response_method != 'decision_function':
             raise ValueError(
-                "With the 'recursion' method, the response must be 'decision'."
-                "Got {}.".format(response)
+                "With the 'recursion' method, the response_method must be "
+                "'decision_function'. Got {}.".format(response_method)
             )
         check_is_fitted(est, 'estimators_',
                         msg='est parameter must be a fitted estimator')
@@ -338,7 +341,8 @@ def partial_dependence(est, features, X, response='auto',
                                 grid_resolution)
     if method == 'brute':
         averaged_predictions = _partial_dependence_brute(est, grid,
-                                                         features, X, response)
+                                                         features, X,
+                                                         response_method)
     else:
         averaged_predictions = _partial_dependence_recursion(est, grid,
                                                              features)
@@ -352,7 +356,7 @@ def partial_dependence(est, features, X, response='auto',
 
 
 def plot_partial_dependence(est, X, features, feature_names=None,
-                            target=None, response='auto', n_cols=3,
+                            target=None, response_method='auto', n_cols=3,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=1, verbose=0, fig=None,
                             line_kw=None, contour_kw=None, **fig_kw):
@@ -388,7 +392,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         - In a multioutput setting, specifies the task for which the PDPs
           should be computed
         Ignored in binary classification or classical regression settings.
-    response : 'auto', 'proba' or 'decision', optional (default='auto') :
+    response_method : 'auto', 'predict_proba' or 'decision_function', \
+            optional (default='auto') :
         Specifies whether to use ``est.predict_proba()`` or
         ``est.decision_function()`` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -545,7 +550,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
 
     # compute averaged predictions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(partial_dependence)(est, fxs, X=X, response=response,
+        delayed(partial_dependence)(est, fxs, X=X,
+                                    response_method=response_method,
                                     method=method,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles)

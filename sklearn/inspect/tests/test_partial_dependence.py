@@ -174,7 +174,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
 
     if method == 'brute':
         pdp = _partial_dependence_brute(est, grid, features, X,
-                                        response='auto')
+                                        response_method='auto')
     else:
         pdp = _partial_dependence_recursion(est, grid, features)
 
@@ -191,7 +191,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
 @pytest.mark.parametrize('target_feature', (0, 1, 2, 3, 4, 5))
 def test_recursion_decision_function(target_feature):
     # Make sure the recursion method (implicitely uses decision_function) has
-    # the same result as using brute method with response=decision
+    # the same result as using brute method with response_method=decision
 
     X, y = make_classification(n_classes=2, n_clusters_per_class=1,
                                random_state=1)
@@ -201,9 +201,11 @@ def test_recursion_decision_function(target_feature):
     est.fit(X, y)
 
     preds_1, _ = partial_dependence(est, target_feature, X,
-                                    response='decision', method='recursion')
+                                    response_method='decision_function',
+                                    method='recursion')
     preds_2, _ = partial_dependence(est, target_feature, X,
-                                    response='decision', method='brute')
+                                    response_method='decision_function',
+                                    method='brute')
 
     assert_array_almost_equal(preds_1, preds_2, decimal=5)
 
@@ -281,17 +283,21 @@ def test_partial_dependence_input():
 
     assert_warns_message(
         UserWarning,
-        'The response parameter is ignored for regressors',
-        partial_dependence, lr, [0], X, response='proba')
+        'The response_method parameter is ignored for regressors',
+        partial_dependence, lr, [0], X, response_method='predict_proba')
 
     assert_raises_regex(
         ValueError,
-        "With the 'recursion' method, the response must be 'decision'.",
-        partial_dependence, gbc, [0], X, response='proba', method='recursion')
+        "With the 'recursion' method, the response_method must be "
+        "'decision_function'.",
+        partial_dependence, gbc, [0], X, response_method='predict_proba',
+        method='recursion')
 
     assert_raises_regex(ValueError,
-                        "response blahblah is invalid. Accepted response",
-                        partial_dependence, gbc, [0], X, response='blahblah')
+                        "response_method blahblah is invalid. "
+                        "Accepted response",
+                        partial_dependence, gbc, [0], X,
+                        response_method='blahblah')
 
     class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
         pass
@@ -300,17 +306,18 @@ def test_partial_dependence_input():
     assert_raises_regex(
         ValueError,
         'The estimator has no predict_proba and no decision_function method.',
-        partial_dependence, bad_clf, [0], X, response='auto')
+        partial_dependence, bad_clf, [0], X, response_method='auto')
 
     assert_raises_regex(
         ValueError,
         'The estimator has no predict_proba method.',
-        partial_dependence, bad_clf, [0], X, response='proba')
+        partial_dependence, bad_clf, [0], X, response_method='predict_proba')
 
     assert_raises_regex(
         ValueError,
         'The estimator has no decision_function method.',
-        partial_dependence, bad_clf, [0], X, response='decision')
+        partial_dependence, bad_clf, [0], X,
+        response_method='decision_function')
 
     assert_raises_regex(ValueError,
                         "method blahblah is invalid. Accepted method names "
