@@ -2320,11 +2320,10 @@ def check_set_params(name, estimator_orig):
             except (TypeError, ValueError) as e:
                 e_type = e.__class__.__name__
                 # Exception occurred, possibly parameter validation
-                if not name == 'SGDClassifier':
-                    warnings.warn(
-                        "{0} occurred during set_params of param {1} on {2}."
-                        "It is recommended to delay parameter validation until"
-                        " fit.".format(e_type, param_name, name))
+                warnings.warn(
+                    "{0} occurred during set_params of param {1} on {2}."
+                    "It is recommended to delay parameter validation until"
+                    " fit.".format(e_type, param_name, name))
 
                 change_warning_msg = "Estimator's parameters changed after " \
                                      "set_params raised {}".format(e_type)
@@ -2336,8 +2335,7 @@ def check_set_params(name, estimator_orig):
                     for k, v in curr_params.items():
                         assert params_before_exception[k] is v
                 except AssertionError:
-                    if not name == 'SGDClassifier':
-                        warnings.warn(change_warning_msg)
+                    warnings.warn(change_warning_msg)
             else:
                 curr_params = estimator.get_params(deep=False)
                 assert_equal(set(test_params.keys()),
