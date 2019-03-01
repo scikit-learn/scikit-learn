@@ -579,12 +579,19 @@ class OneToOneMixin(object):
 
 def _get_sub_estimators(est):
     # Explicitly declare all fitted subestimators of existing meta-estimators
-    if hasattr(est, "estimator_"):
-        return [est.estimator_]
-    if hasattr(est, "base_estimator_"):
-        return [est.base_estimator_]
+    sub_ests = []
+    # OHE is not really needed
+    sub_names = ['estimator_', 'base_estimator_', 'one_hot_encoder_']
+    for name in sub_names:
+        sub_est = getattr(est, name, None)
+        if sub_est is not None:
+            sub_ests.append(est.estimator_)
     if hasattr(est, "estimators_"):
-        return est.estimators_
+        if hasattr(est.estimators_, 'shape'):
+            sub_ests.extend(est.estimators_.ravel())
+        else:    
+            sub_ests.extend(est.estimators_)
+    return sub_ests
 
 
 class MetaEstimatorMixin:
@@ -600,9 +607,6 @@ class MetaEstimatorMixin:
             Input features to the meta-estimator.
         """
         sub_ests = _get_sub_estimators(self)
-        if hasattr(sub_ests, 'shape'):
-            # Gradient boosting has a 2d array of estimators
-            sub_ests = sub_ests.ravel()
         for est in sub_ests:
             est.input_features_ = input_features
             if hasattr(est, "get_feature_names"):
