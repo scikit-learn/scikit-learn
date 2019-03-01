@@ -502,6 +502,25 @@ class TransformerMixin:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
 
+    def get_feature_names(self, input_features=None):
+        # OneToOneMixin is higher in the class hierarchy
+        # because we put mixins on the wrong side
+        if hasattr(super(), 'get_feature_names'):
+            return super().get_feature_names(input_features)
+        # generate feature names from class name by default
+        if hasattr(self, 'n_components_'):
+            # n_components could be auto or None
+            # this is more likely to be an int
+            n_features = self.n_components_
+        elif hasattr(self, 'n_components') and self.n_components is not None:
+            n_features = self.n_components
+        elif hasattr(self, 'components_'):
+            n_features = self.components_.shape[0]
+        else:
+            return None
+        return ["{}{}".format(str(type(self)).lower(), i)
+                for i in range(n_features)]
+
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
