@@ -346,6 +346,42 @@ def test_one_hot_encoder_dtype_pandas(output_dtype):
     assert_array_equal(oh.fit(X_df).transform(X_df), X_expected)
 
 
+@pytest.mark.parametrize("method", ['fit', 'fit_transform'])
+def test_one_hot_encoder_categorical_dtype(method):
+    pd = pytest.importorskip('pandas')
+    cat = pd.Categorical(["a", "b", "c"], categories=["b", "a", "c", "d"])
+    X_df = pd.DataFrame({"A": cat, "B": ["a", "c", "c"]})
+
+    oh = OneHotEncoder()
+    getattr(oh, method)(X_df)
+    cats = oh.categories_
+    assert_array_equal(cats[0], X_df['A'].cat.categories)
+    assert_array_equal(cats[1], X_df['B'].unique())
+
+
+@pytest.mark.parametrize("method", ['fit', 'fit_transform'])
+def test_categorical_nans(method):
+    # ensures error if categorical datatype contains Nones
+    pd = pytest.importorskip('pandas')
+    cat = pd.Categorical(["a", None, "c"], categories=["b", "a", "c", "d"])
+    X_df = pd.DataFrame({"A": cat, "B": ["a", "c", "c"]})
+
+    oh = OneHotEncoder()
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        getattr(oh, method)(X_df)
+
+
+@pytest.mark.parametrize("method", ['fit', 'fit_transform'])
+def test_categorical_undefined_categories(method):
+    # tests that all the categories are included within specified categories
+    pd = pytest.importorskip('pandas')
+    cat = pd.Categorical(["a", "g", "c"], categories=["b", "a", "c", "d"])
+    X_df = pd.DataFrame({"A": cat, "B": ["a", "c", "c"]})
+
+    oh = OneHotEncoder()
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        getattr(oh, method)(X_df)
+
 def test_one_hot_encoder_set_params():
     X = np.array([[1, 2]]).T
     oh = OneHotEncoder()

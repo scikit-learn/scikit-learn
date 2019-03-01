@@ -70,6 +70,17 @@ def _encode_python(values, uniques=None, encode=False):
         return uniques
 
 
+def _encode_categorical(values, uniques=None, encode=False):
+    # only used in _encode below, see docstring there for details
+    cat_values = values.array
+    if uniques is None:
+        uniques = cat_values.categories
+    if encode:
+        # check if all values.categories are included in uniques
+        return uniques, cat_values.codes
+    else:
+        return uniques
+
 def _encode(values, uniques=None, encode=False):
     """Helper function to factorize (find uniques) and encode values.
 
@@ -104,8 +115,11 @@ def _encode(values, uniques=None, encode=False):
         try:
             res = _encode_python(values, uniques, encode)
         except TypeError:
-            raise TypeError("argument must be a string or number")
+            raise TypeError("argument must be a string or a number")
         return res
+    elif values.dtype.name == "category":
+        # pandas dtype category
+        return _encode_categorical(values, uniques, encode)
     else:
         return _encode_numpy(values, uniques, encode)
 
@@ -144,6 +158,16 @@ def _encode_check_unknown(values, uniques, return_mask=False):
                 valid_mask = np.array([val in uniques_set for val in values])
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
+            return diff, valid_mask
+        else:
+            return diff
+    elif values.dtype.name == "category":
+        # if category Pandas datatype is used there should never been diff
+        cat_values = values.array
+        uniques_set = set(uniques)
+        diff = list(set(cat_values) - uniques_set)
+        if return_mask:
+            valid_mask = np.ones(len(values), dtype=bool)
             return diff, valid_mask
         else:
             return diff

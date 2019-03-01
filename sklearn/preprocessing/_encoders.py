@@ -63,8 +63,15 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
-            Xi = check_array(Xi, ensure_2d=False, dtype=None,
-                             force_all_finite=needs_validation)
+            if Xi.dtype.name == 'category':
+                # categorical dtype; do not want to convert to an array,
+                # check if there are no nans (otherwise done in check_array())
+                if Xi.isna().any():
+                    raise ValueError("Input contains NaN")
+            else:
+                Xi = check_array(Xi, ensure_2d=False, dtype=None,
+                                 force_all_finite=needs_validation)
+
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
@@ -114,7 +121,6 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             Xi = X_list[i]
             diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
-
             if not np.all(valid_mask):
                 if handle_unknown == 'error':
                     msg = ("Found unknown categories {0} in column {1}"
@@ -675,22 +681,14 @@ class OneHotEncoder(_BaseEncoder):
 
     def _transform_new(self, X):
         """New implementation assuming categorical input"""
-        X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
-            X = check_array(X, dtype=np.object)
-        else:
-            X = X_temp
-
-        n_samples, n_features = X.shape
-
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        n_samples, n_features = X_int.shape
 
         if self.drop is not None:
             to_drop = self.drop_idx_.reshape(1, -1)
 
             # We remove all the dropped categories from mask, and decrement all
             # categories that occur after them to avoid an empty column.
-
             keep_cells = X_int != to_drop
             X_mask &= keep_cells
             X_int[X_int > to_drop] -= 1
