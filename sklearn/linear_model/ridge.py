@@ -363,9 +363,9 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
 
 def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
-                     max_iter=None, tol=1e-3, verbose=0, random_state=None,
-                     return_n_iter=False, return_intercept=False,
-                     X_scale=None, X_offset=None):
+                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
+                      return_n_iter=False, return_intercept=False,
+                      X_scale=None, X_offset=None):
 
     if (return_intercept and sparse.issparse(X) and
        solver not in ['sag', 'sparse_cg']):
@@ -560,7 +560,7 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
                 params = {'X_offset': X_offset, 'X_scale': X_scale}
             else:
                 params = {}
-                
+
             self.coef_, self.n_iter_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
