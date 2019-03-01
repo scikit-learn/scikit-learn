@@ -914,7 +914,9 @@ Class APIs and Estimator Types
 
         * :term:`fit_resample`
 
-        If the estimator implements `fit_predict
+        If the estimator implements :term:`fit_predict` according to the
+        :class:`OutlierMixin` API, :class:`OutlierRejectorMixin` should be used
+        to automatically implement correct :term:`fit_resample` behavior.
 
     predictor
     predictors
@@ -946,6 +948,10 @@ Class APIs and Estimator Types
         An estimator supporting :term:`transform` and/or :term:`fit_transform`.
         A purely :term:`transductive` transformer, such as
         :class:`manifold.TSNE`, may not implement ``transform``.
+
+    resampler
+    resamplers
+        An estimator supporting :term:`fit_resample`.
 
     vectorizer
     vectorizers

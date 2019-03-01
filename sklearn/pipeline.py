@@ -461,7 +461,7 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][-1].predict_log_proba(Xt)
 
     @property
-    def fit_resample(self, X, y, **fit_params):
+    def fit_resample(self):
         """Fit the model and resample with the final estimator
 
         Fits all the transformers/resamplers one after the other and
