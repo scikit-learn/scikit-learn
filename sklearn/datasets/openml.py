@@ -266,7 +266,33 @@ def _convert_arff_data(arff_data, col_slice_x, col_slice_y, shape=None):
 def _convert_arff_data_dataframe(arff_data, col_slice_x, col_slice_y,
                                  data_columns, target_column, features_dict,
                                  nominal_attributes):
-    """
+    """Convert the ARFF object into a pandas DataFrame.
+
+    Parameters
+    ----------
+    arff_data : list or dict
+        Data instance obtained from liac-arff reader.
+    col_slice_x : list
+        The column indices that are sliced from the original array to return
+        as X data.
+    col_slice_y : list
+        The column indices that are sliced from the original array to return
+        as y data.
+    data_columns : list
+        Column names for the data.
+    target_column : list
+        Column name for the target.
+    features_dict : dict
+        xxx
+    nominal_attributes : dict
+        xxx
+
+    Returns
+    -------
+    X : pd.DataFrame, shape (n_samples, n_features)
+        The data in dataframe format.
+    y : ndarray, shape (n_samples,)
+        The targets.
     """
     try:
         import pandas as pd
