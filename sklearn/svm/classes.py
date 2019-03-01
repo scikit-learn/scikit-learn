@@ -221,8 +221,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
-        self.tol, self.max_iter = _check_convergence_params(self.tol,
-                self.max_iter)
+        self.tol_, self.max_iter_ = _check_convergence_params('liblinear', 
+                self.tol, self.max_iter)
 
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
@@ -237,7 +237,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             self.class_weight, self.penalty, self.dual, self.verbose,
-            self.max_iter, self.tol, self.random_state, self.multi_class,
+            self.max_iter_, self.tol_, self.random_state, self.multi_class,
             self.loss, sample_weight=sample_weight)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
@@ -412,8 +412,8 @@ class LinearSVR(LinearModel, RegressorMixin):
                           DeprecationWarning)
         # ---------------------------------------------------------------------
 
-        self.tol, self.max_iter = _check_convergence_params(self.tol,
-                self.max_iter)
+        self.tol_, self.max_iter_ = _check_convergence_params('liblinear', 
+                self.tol, self.max_iter)
 
         if self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
@@ -426,7 +426,7 @@ class LinearSVR(LinearModel, RegressorMixin):
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             None, penalty, self.dual, self.verbose,
-            self.max_iter, self.tol, self.random_state, loss=self.loss,
+            self.max_iter_, self.tol_, self.random_state, loss=self.loss,
             epsilon=self.epsilon, sample_weight=sample_weight)
         self.coef_ = self.coef_.ravel()
 
