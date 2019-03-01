@@ -1027,15 +1027,10 @@ class _RidgeGCV(LinearModel):
         with_sw = len(np.shape(sample_weight))
 
         if gcv_mode is None or gcv_mode == 'auto':
-            if sparse.issparse(X) or n_features > n_samples or with_sw:
+            if sparse.issparse(X) or n_features > n_samples:
                 gcv_mode = 'eigen'
             else:
                 gcv_mode = 'svd'
-        elif gcv_mode == "svd" and with_sw:
-            # FIXME non-uniform sample weights not yet supported
-            warnings.warn("non-uniform sample weights unsupported for svd, "
-                          "forcing usage of eigen")
-            gcv_mode = 'eigen'
 
         if gcv_mode == 'eigen':
             _pre_compute = self._pre_compute
