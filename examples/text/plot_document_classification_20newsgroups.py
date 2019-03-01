@@ -21,9 +21,6 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck
 # License: BSD 3 clause
-
-from __future__ import print_function
-
 import logging
 import numpy as np
 from optparse import OptionParser

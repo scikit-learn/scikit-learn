@@ -810,7 +810,7 @@ def test_set_oob_score_label_encoding():
 
 
 def replace(X):
-    X = X.copy().astype('float')
+    X = X.astype('float', copy=True)
     X[~np.isfinite(X)] = 0
     return X
 

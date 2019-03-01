@@ -11,7 +11,6 @@
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
-from __future__ import unicode_literals, division
 
 import array
 from collections import defaultdict
@@ -30,7 +29,8 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils.fixes import sp_version
+from ..utils import _IS_32BIT
+from ..utils.fixes import _astype_copy_false
 
 
 __all__ = ['HashingVectorizer',
@@ -113,7 +113,7 @@ def _check_stop_list(stop):
         return frozenset(stop)
 
 
-class VectorizerMixin(object):
+class VectorizerMixin:
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
@@ -652,6 +652,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                              alternate_sign=self.alternate_sign,
                              non_negative=self.non_negative)
 
+    def _more_tags(self):
+        return {'X_types': ['string']}
+
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
@@ -871,7 +874,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         Returns a reordered matrix and modifies the vocabulary in place
         """
         sorted_features = sorted(vocabulary.items())
-        map_index = np.empty(len(sorted_features), dtype=np.int32)
+        map_index = np.empty(len(sorted_features), dtype=X.indices.dtype)
         for new_val, (term, old_val) in enumerate(sorted_features):
             vocabulary[term] = new_val
             map_index[old_val] = new_val
@@ -961,14 +964,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                  " contain stop words")
 
         if indptr[-1] > 2147483648:  # = 2**31 - 1
-            if sp_version >= (0, 14):
-                indices_dtype = np.int64
-            else:
+            if _IS_32BIT:
                 raise ValueError(('sparse CSR array has {} non-zero '
                                   'elements and requires 64 bit indexing, '
-                                  ' which is unsupported with scipy {}. '
-                                  'Please upgrade to scipy >=0.14')
-                                 .format(indptr[-1], '.'.join(sp_version)))
+                                  'which is unsupported with 32 bit Python.')
+                                 .format(indptr[-1]))
+            indices_dtype = np.int64
 
         else:
             indices_dtype = np.int32
@@ -1127,6 +1128,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return [t for t, i in sorted(self.vocabulary_.items(),
                                      key=itemgetter(1))]
 
+    def _more_tags(self):
+        return {'X_types': ['string']}
+
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
@@ -1146,17 +1150,18 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     informative than features that occur in a small fraction of the training
     corpus.
 
-    The formula that is used to compute the tf-idf of term t is
-    tf-idf(d, t) = tf(t) * idf(d, t), and the idf is computed as
-    idf(d, t) = log [ n / df(d, t) ] + 1 (if ``smooth_idf=False``),
-    where n is the total number of documents and df(d, t) is the
-    document frequency; the document frequency is the number of documents d
-    that contain term t. The effect of adding "1" to the idf in the equation
-    above is that terms with zero idf, i.e., terms  that occur in all documents
-    in a training set, will not be entirely ignored.
-    (Note that the idf formula above differs from the standard
-    textbook notation that defines the idf as
-    idf(d, t) = log [ n / (df(d, t) + 1) ]).
+    The formula that is used to compute the tf-idf for a term t of a document d
+    in a document set is tf-idf(t, d) = tf(t, d) * idf(t), and the idf is
+    computed as idf(t) = log [ n / df(t) ] + 1 (if ``smooth_idf=False``), where
+    n is the total number of documents in the document set and df(t) is the
+    document frequency of t; the document frequency is the number of documents
+    in the document set that contain the term t. The effect of adding "1" to
+    the idf in the equation above is that terms with zero idf, i.e., terms
+    that occur in all documents in a training set, will not be entirely
+    ignored.
+    (Note that the idf formula above differs from the standard textbook
+    notation that defines the idf as
+    idf(t) = log [ n / (df(t) + 1) ]).
 
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen
@@ -1205,12 +1210,12 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     References
     ----------
 
-    .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
-                   Information Retrieval. Addison Wesley, pp. 68-74.`
+    .. [Yates2011] R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
+                   Information Retrieval. Addison Wesley, pp. 68-74.
 
-    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schütze  (2008).
+    .. [MRS2008] C.D. Manning, P. Raghavan and H. Schütze  (2008).
                    Introduction to Information Retrieval. Cambridge University
-                   Press, pp. 118-120.`
+                   Press, pp. 118-120.
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
@@ -1235,7 +1240,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
         if self.use_idf:
             n_samples, n_features = X.shape
-            df = _document_frequency(X).astype(dtype)
+            df = _document_frequency(X)
+            df = df.astype(dtype, **_astype_copy_false(df))
 
             # perform idf smoothing if required
             df += int(self.smooth_idf)
@@ -1305,6 +1311,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         n_features = value.shape[0]
         self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
                                     n=n_features, format='csr')
+
+    def _more_tags(self):
+        return {'X_types': 'sparse'}
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1639,3 +1648,6 @@ class TfidfVectorizer(CountVectorizer):
 
         X = super().transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
+
+    def _more_tags(self):
+        return {'X_types': ['string'], '_skip_test': True}

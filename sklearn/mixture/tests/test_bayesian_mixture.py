@@ -118,7 +118,7 @@ def test_bayesian_mixture_weights_prior_initialisation():
     assert_almost_equal(1. / n_components, bgmm.weight_concentration_prior_)
 
 
-def test_bayesian_mixture_means_prior_initialisation():
+def test_bayesian_mixture_mean_prior_initialisation():
     rng = np.random.RandomState(0)
     n_samples, n_components, n_features = 10, 3, 2
     X = rng.rand(n_samples, n_features)
@@ -449,6 +449,15 @@ def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
         Y_pred1 = bgmm1.fit(X).predict(X)
         Y_pred2 = bgmm2.fit_predict(X)
         assert_array_equal(Y_pred1, Y_pred2)
+
+
+def test_bayesian_mixture_fit_predict_n_init():
+    # Check that fit_predict is equivalent to fit.predict, when n_init > 1
+    X = np.random.RandomState(0).randn(1000, 5)
+    gm = BayesianGaussianMixture(n_components=5, n_init=10, random_state=0)
+    y_pred1 = gm.fit_predict(X)
+    y_pred2 = gm.predict(X)
+    assert_array_equal(y_pred1, y_pred2)
 
 
 def test_bayesian_mixture_predict_predict_proba():

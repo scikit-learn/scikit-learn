@@ -39,8 +39,8 @@ from sklearn.utils.validation import (
     assert_all_finite,
     check_memory,
     check_non_negative,
-    _num_samples
-)
+    _num_samples,
+    check_scalar)
 import sklearn
 
 from sklearn.exceptions import NotFittedError
@@ -185,6 +185,19 @@ def test_check_array_force_all_finiteinvalid(value, force_all_finite,
     with pytest.raises(ValueError, match=match_msg):
         check_array(X, force_all_finite=force_all_finite,
                     accept_sparse=True)
+
+
+def test_check_array_force_all_finite_object():
+    X = np.array([['a', 'b', np.nan]], dtype=object).T
+
+    X_checked = check_array(X, dtype=None, force_all_finite='allow-nan')
+    assert X is X_checked
+
+    X_checked = check_array(X, dtype=None, force_all_finite=False)
+    assert X is X_checked
+
+    with pytest.raises(ValueError, match='Input contains NaN'):
+        check_array(X, dtype=None, force_all_finite=True)
 
 
 @ignore_warnings
@@ -725,12 +738,12 @@ def test_check_dataframe_warns_on_dtype():
                        dtype='numeric', warn_on_dtype=True)
 
 
-class DummyMemory(object):
+class DummyMemory:
     def cache(self, func):
         return func
 
 
-class WrongDummyMemory(object):
+class WrongDummyMemory:
     pass
 
 
@@ -797,3 +810,34 @@ def test_retrieve_samples_from_non_standard_shape():
 
     X = TestNonNumericShape()
     assert _num_samples(X) == len(X)
+
+
+@pytest.mark.parametrize('x, target_type, min_val, max_val',
+                         [(3, int, 2, 5),
+                          (2.5, float, 2, 5)])
+def test_check_scalar_valid(x, target_type, min_val, max_val):
+    """Test that check_scalar returns no error/warning if valid inputs are
+    provided"""
+    with pytest.warns(None) as record:
+        check_scalar(x, "test_name", target_type, min_val, max_val)
+    assert len(record) == 0
+
+
+@pytest.mark.parametrize('x, target_name, target_type, min_val, max_val, '
+                         'err_msg',
+                         [(1, "test_name1", float, 2, 4,
+                           TypeError("`test_name1` must be an instance of "
+                                     "<class 'float'>, not <class 'int'>.")),
+                          (1, "test_name2", int, 2, 4,
+                           ValueError('`test_name2`= 1, must be >= 2.')),
+                          (5, "test_name3", int, 2, 4,
+                           ValueError('`test_name3`= 5, must be <= 4.'))])
+def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
+                              err_msg):
+    """Test that check_scalar returns the right error if a wrong input is
+    given"""
+    with pytest.raises(Exception) as raised_error:
+        check_scalar(x, target_name, target_type=target_type,
+                     min_val=min_val, max_val=max_val)
+    assert str(raised_error.value) == str(err_msg)
+    assert type(raised_error.value) == type(err_msg)
