@@ -247,9 +247,24 @@ class BaseEstimator:
         repr_ = pp.pformat(self)
 
         # Use bruteforce ellipsis if string is very long
+        # if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
+        #     lim = N_CHAR_MAX // 2
+        #     repr_ = repr_[:lim] + '...' + repr_[-lim:]
         if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
             lim = N_CHAR_MAX // 2
-            repr_ = repr_[:lim] + '...' + repr_[-lim:]
+            i = 0
+            j = 0
+            while i < len(repr_) and j < lim:
+                if repr_[i] not in (' ', '\n'):
+                    j += 1
+                i += 1
+            k = len(repr_) - 1
+            j = 0
+            while k >= 0 and j < lim:
+                if repr_[k] not in (' ', '\n'):
+                    j += 1
+                k -= 1
+            repr_ = repr_[:i] + '...' + repr_[k:]
         return repr_
 
     def __getstate__(self):
