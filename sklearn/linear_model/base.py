@@ -87,6 +87,8 @@ def make_dataset(X, y, sample_weight, random_state=None):
         CSRData = CSRDataset64
         ArrayData = ArrayDataset64
 
+    sample_weight = sample_weight.astype(X.dtype, copy=False)  # XXX: I don't think this should be here
+
     if sp.issparse(X):
         dataset = CSRData(X.data, X.indptr, X.indices, y, sample_weight,
                           seed=seed)
