@@ -422,6 +422,9 @@ Multiple modules
   but this can be altered with the ``print_changed_only`` option in
   :func:`sklearn.set_config`. :issue:`11705` by :user:`Nicolas Hug
   <NicolasHug>`.
+- |Efficiency| Memory copies are avoided when casting arrays to a different
+  dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak`_.
+
 
 Changes to estimator checks
 ---------------------------
