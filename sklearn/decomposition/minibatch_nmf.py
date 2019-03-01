@@ -1,15 +1,15 @@
-
 import numpy as np
 from scipy import sparse
 
 from sklearn.utils import check_random_state
-from sklearn.utils.extmath import row_norms, safe_sparse_dot
+from sklearn.utils.extmath import row_norms, safe_sparse_dot, randomized_svd
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import gen_batches
 # from sklearn.utils import check_array
 
 from sklearn.cluster.k_means_ import _k_init
 from sklearn.decomposition.nmf import _special_sparse_dot
+from sklearn.decomposition.nmf import norm
 
 
 class MiniBatchNMF(BaseEstimator, TransformerMixin):
@@ -68,11 +68,9 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         self.max_iter_e_step = max_iter_e_step
 
     def _rescale_W(self, W, A, B):
-        epsilon = 1E-10
         s = W.sum(axis=1, keepdims=True)
-        s[s == 0] = epsilon
-        W /= s
-        A /= s
+        np.divide(W, s, out=W, where=(s != 0))
+        np.divide(A, s, out=A, where=(s != 0))
         return W, A, B
 
     def _rescale_H(self, V, H):
@@ -87,7 +85,7 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
             W_WT1 = W
         else:
             WT1 = np.sum(W, axis=1)
-            W_WT1 = W / WT1.reshape(-1, 1)
+            W_WT1 = W / WT1[:, np.newaxis]
         squared_tol = tol**2
         squared_norm = 1
         for iter in range(max_iter):
@@ -108,12 +106,15 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         Ht_W = _special_sparse_dot(Ht, W, Vt)
         Ht_W_data = Ht_W.data
         np.divide(Vt.data, Ht_W_data, out=Ht_W_data, where=(Ht_W_data != 0))
-        self.rho = self.r ** (1 / (iter + 1))
-        A += W * safe_sparse_dot(Ht.T, Ht_W) * self.rho
-        B += Ht.sum(axis=0).reshape(-1, 1) * self.rho
-        np.divide(A, B, out=W, where=(B != 0))
+        self.rho_ = self.r ** (1 / iter)
+        # self.rho_ = .98
+        A *= self.rho_
+        A += W * safe_sparse_dot(Ht.T, Ht_W)
+        B *= self.rho_
+        B += Ht.sum(axis=0).reshape(-1, 1)
+        np.divide(A, B, out=W, where=(W != 0))
         if self.rescale_W:
-            W, A, B = self._rescale_W(A / B, A, B)
+            W, A, B = self._rescale_W(W, A, B)
         return W, A, B
 
     def _get_H(self, X):
@@ -122,23 +123,70 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
             h_out[:] = self.H_dict[x]
         return H_out
 
-    def _init_W(self, V):
+    def _init_vars(self, V):
         if self.init == 'k-means++':
             W = _k_init(
                 V, self.n_components, row_norms(V, squared=True),
                 random_state=self.random_state,
                 n_local_trials=None) + .1
+            W /= W.sum(axis=1, keepdims=True)
+            H = np.ones((V.shape[0], self.n_components))
+            H = self._rescale_H(V, H)
         elif self.init == 'random':
             W = self.random_state.gamma(
                 shape=1, scale=1,
                 size=(self.n_components, self.n_features_))
+            W /= W.sum(axis=1, keepdims=True)
+            H = np.ones((V.shape[0], self.n_components))
+            H = self._rescale_H(V, H)
+        elif self.init == 'nndsvd':
+            eps = 1e-6
+            U, S, V = randomized_svd(V, self.n_components,
+                                     random_state=self.random_state)
+            H, W = np.zeros(U.shape), np.zeros(V.shape)
+
+            # The leading singular triplet is non-negative
+            # so it can be used as is for initialization.
+            H[:, 0] = np.sqrt(S[0]) * np.abs(U[:, 0])
+            W[0, :] = np.sqrt(S[0]) * np.abs(V[0, :])
+
+            for j in range(1, self.n_components):
+                x, y = U[:, j], V[j, :]
+
+                # extract positive and negative parts of column vectors
+                x_p, y_p = np.maximum(x, 0), np.maximum(y, 0)
+                x_n, y_n = np.abs(np.minimum(x, 0)), np.abs(np.minimum(y, 0))
+
+                # and their norms
+                x_p_nrm, y_p_nrm = norm(x_p), norm(y_p)
+                x_n_nrm, y_n_nrm = norm(x_n), norm(y_n)
+
+                m_p, m_n = x_p_nrm * y_p_nrm, x_n_nrm * y_n_nrm
+
+                # choose update
+                if m_p > m_n:
+                    u = x_p / x_p_nrm
+                    v = y_p / y_p_nrm
+                    sigma = m_p
+                else:
+                    u = x_n / x_n_nrm
+                    v = y_n / y_n_nrm
+                    sigma = m_n
+
+                lbd = np.sqrt(S[j] * sigma)
+                H[:, j] = lbd * u
+                W[j, :] = lbd * v
+
+            W[W < eps] = 0
+            H[H < eps] = 0
+            H = np.ones((V.shape[0], self.n_components))
+            H = self._rescale_H(V, H)
         else:
             raise AttributeError(
                 'Initialization method %s does not exist.' % self.init)
-        W /= W.sum(axis=1, keepdims=True)
-        A = np.ones((self.n_components, self.n_features_)) * 1E-10
-        B = A.copy()
-        return W, A, B
+        A = W.copy()
+        B = np.ones((self.n_components, self.n_features_))
+        return H, W, A, B
 
     def fit(self, X, y=None):
         """Fit the NMF to X.
@@ -154,10 +202,8 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         n_samples, self.n_features_ = X.shape
 
         if sparse.issparse(X):
-            H = np.ones((n_samples, self.n_components))
-            H = self._rescale_H(X, H)
-            self.W_, self.A_, self.B_ = self._init_W(X)
-            # self.rho = self.r**(self.batch_size / n_samples)
+            H, self.W_, self.A_, self.B_ = self._init_vars(X)
+            # self.rho_ = self.r**(self.batch_size / n_samples)
         # else:
             # not implemented yet
 
@@ -165,14 +211,14 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         self.iter = 1
 
         for iter in range(self.max_iter):
-            for i, (Ht, Vt) in enumerate(mini_batch(H, X, n=self.batch_size)):
+            for i, slice in enumerate(gen_batches(n=n_samples,
+                                                  batch_size=self.batch_size)):
                 if i == n_batch-1:
                     W_last = self.W_
-                Ht[:] = self._e_step(Vt, self.W_, Ht,
-                                     max_iter=self.max_iter_e_step)
-                self.W_, self.A_, self.B_ = self._m_step(Vt, self.W_,
-                                                         self.A_, self.B_, Ht,
-                                                         self.iter)
+                H[slice] = self._e_step(X[slice], self.W_, H[slice],
+                                        max_iter=self.max_iter_e_step)
+                self.W_, self.A_, self.B_ = self._m_step(
+                    X[slice], self.W_, self.A_, self.B_, H[slice], self.iter)
                 self.iter += 1
                 if i == n_batch-1:
                     W_change = np.linalg.norm(
@@ -195,19 +241,19 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
             n_samples, self.n_features_ = X.shape
 
             if sparse.issparse(X):
-                H = np.ones((n_samples, self.n_components))
-                H = self._rescale_H(X, H)
-                self.W_, self.A_, self.B_ = self._init_W(X)
+                # H = np.ones((n_samples, self.n_components))
+                # H = self._rescale_H(X, H)
+                H, self.W_, self.A_, self.B_ = self._init_vars(X)
                 self.iter = 1
                 # self.rho = self.r**(self.batch_size / n_samples)
             # else:
                 # not implemented yet
 
-        for i, (Ht, Vt) in enumerate(mini_batch(H, X, n=self.batch_size)):
-            Ht[:] = self._e_step(Vt, self.W_, Ht,
-                                 max_iter=self.max_iter_e_step)
+        for slice in gen_batches(n=n_samples, batch_size=self.batch_size):
+            H[slice] = self._e_step(X[slice], self.W_, H[slice],
+                                    max_iter=self.max_iter_e_step)
             self.W_, self.A_, self.B_ = self._m_step(
-                Vt, self.W_, self.A, self.B_, Ht, self.iter)
+                X[slice], self.W_, self.A_, self.B_, H[slice], self.iter)
             self.iter += 1
 
     def transform(self, X):
@@ -229,14 +275,6 @@ class MiniBatchNMF(BaseEstimator, TransformerMixin):
         H = np.ones((n_samples, self.n_components))
         H = self._rescale_H(X, H)
 
-        for Ht, Vt in mini_batch(H, X, n=self.batch_size):
-            Ht[:] = self._e_step(Vt, self.W_, Ht, max_iter=50)
+        for slice in gen_batches(n=n_samples, batch_size=self.batch_size):
+            H[slice] = self._e_step(X[slice], self.W_, H[slice], max_iter=50)
         return H
-
-
-def mini_batch(iterable1, iterable2, n=1):
-    len_iter = len(iterable1)
-    for idx in range(0, len_iter, n):
-        this_slice = slice(idx, min(idx + n, len_iter))
-        yield (iterable1[this_slice],
-               iterable2[this_slice])

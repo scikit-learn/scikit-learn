@@ -14,13 +14,13 @@ import time
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_random_state, check_array
-from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.extmath import safe_min
-from ..utils.validation import check_is_fitted, check_non_negative
-from ..exceptions import ConvergenceWarning
-from .cdnmf_fast import _update_cdnmf_fast
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils import check_random_state, check_array, gen_batches
+from sklearn.utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
+from sklearn.utils.extmath import safe_min
+from sklearn.utils.validation import check_is_fitted, check_non_negative
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.decomposition.cdnmf_fast import _update_cdnmf_fast
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -384,8 +384,9 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         raise ValueError(
             'Invalid init parameter: got %r instead of one of %r' %
             (init, (None, 'random', 'nndsvd', 'nndsvda', 'nndsvdar')))
-
-    return W, H
+    A = H.copy()
+    B = np.ones((n_components, n_features))
+    return W, H, A, B
 
 
 def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
@@ -564,7 +565,8 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
             WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
 
         if beta_loss == 1:
-            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
+            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data,
+                      where=(WH_safe_X_data != 0))
         elif beta_loss == 0:
             # speeds up computation time
             # refer to /numpy/numpy/issues/9363
@@ -620,7 +622,9 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
     return delta_W, H_sum, HHt, XHt
 
 
-def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
+def _multiplicative_update_h(X, W, H, A, B,
+                             beta_loss, l1_reg_H, l2_reg_H, gamma,
+                             n_iter):
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
@@ -645,7 +649,8 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
             WH_safe_X_data[WH_safe_X_data == 0] = EPSILON
 
         if beta_loss == 1:
-            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
+            np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data,
+                      where=(WH_safe_X_data != 0))
         elif beta_loss == 0:
             # speeds up computation time
             # refer to /numpy/numpy/issues/9363
@@ -692,17 +697,24 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
         denominator = denominator + l2_reg_H * H
     denominator[denominator == 0] = EPSILON
 
-    numerator /= denominator
-    delta_H = numerator
+    # r = .1
+    # rho = r ** (1 / n_iter)
+    rho = .99
+    A *= rho
+    B *= rho
+    A += numerator * H
+    B += denominator
+    H = np.divide(A, B)
 
     # gamma is in ]0, 1]
     if gamma != 1:
         delta_H **= gamma
 
-    return delta_H
+    return H, A, B
 
 
-def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
+def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
+                               batch_size=1024,
                                max_iter=200, tol=1e-4,
                                l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
                                update_H=True, verbose=0):
@@ -783,49 +795,56 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         gamma = 1. / (beta_loss - 1.)
     else:
         gamma = 1.
-
+    n_samples = X.shape[0]
     # used for the convergence criterion
     error_at_init = _beta_divergence(X, W, H, beta_loss, square_root=True)
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
+    n_iter_update_h_ = 1
     for n_iter in range(1, max_iter + 1):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
-        delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
-            X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
-            H_sum, HHt, XHt, update_H)
-        W *= delta_W
-
-        # necessary for stability with beta_loss < 1
-        if beta_loss < 1:
-            W[W < np.finfo(np.float64).eps] = 0.
-
-        # update H
-        if update_H:
-            delta_H = _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H,
-                                               l2_reg_H, gamma)
-            H *= delta_H
-
-            # These values will be recomputed since H changed
-            H_sum, HHt, XHt = None, None, None
+        for i, slice in enumerate(gen_batches(n=n_samples,
+                                              batch_size=batch_size)):
+            delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
+                X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W, gamma,
+                H_sum, HHt, XHt, update_H)
+            W[slice] *= delta_W
 
             # necessary for stability with beta_loss < 1
-            if beta_loss <= 1:
-                H[H < np.finfo(np.float64).eps] = 0.
+            if beta_loss < 1:
+                W[slice][W[slice] < np.finfo(np.float64).eps] = 0.
 
-        # test convergence criterion every 10 iterations
-        if tol > 0 and n_iter % 10 == 0:
-            error = _beta_divergence(X, W, H, beta_loss, square_root=True)
+            # update H
+            if update_H:
+                H, A, B = _multiplicative_update_h(X[slice], W[slice], H,
+                                                   A, B,
+                                                   beta_loss, l1_reg_H,
+                                                   l2_reg_H, gamma,
+                                                   n_iter_update_h_)
+                n_iter_update_h_ += 1
 
-            if verbose:
-                iter_time = time.time()
-                print("Epoch %02d reached after %.3f seconds, error: %f" %
-                      (n_iter, iter_time - start_time, error))
+                # These values will be recomputed since H changed
+                H_sum, HHt, XHt = None, None, None
 
-            if (previous_error - error) / error_at_init < tol:
-                break
-            previous_error = error
+                # necessary for stability with beta_loss < 1
+                if beta_loss <= 1:
+                    H[H < np.finfo(np.float64).eps] = 0.
+
+            # test convergence criterion every 10 iterations
+            if tol > 0 and n_iter % 10 == 0:
+                error = _beta_divergence(X, W, H, beta_loss,
+                                         square_root=True)
+
+                if verbose:
+                    iter_time = time.time()
+                    print("Epoch %02d reached after %.3f seconds, error: %f" %
+                          (n_iter, iter_time - start_time, error))
+
+                if (previous_error - error) / error_at_init < tol:
+                    break
+                previous_error = error
 
     # do not print if we have already printed in the convergence test
     if verbose and (tol == 0 or n_iter % 10 != 0):
@@ -836,7 +855,9 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     return W, H, n_iter
 
 
-def non_negative_factorization(X, W=None, H=None, n_components=None,
+def non_negative_factorization(X, W=None, H=None, A=None, B=None,
+                               n_components=None,
+                               batch_size=1024,
                                init='warn', update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
@@ -1031,6 +1052,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     # check W and H, or initialize them
     if init == 'custom' and update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
+        _check_init(A, (n_components, n_features), "NMF (input A)")
+        _check_init(B, (n_components, n_features), "NMF (input B)")
         _check_init(W, (n_samples, n_components), "NMF (input W)")
     elif not update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
@@ -1040,9 +1063,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
             W = np.full((n_samples, n_components), avg)
         else:
             W = np.zeros((n_samples, n_components))
+        A = None
+        B = None
     else:
-        W, H = _initialize_nmf(X, n_components, init=init,
-                               random_state=random_state)
+        W, H, A, B = _initialize_nmf(X, n_components, init=init,
+                                     random_state=random_state)
 
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
         alpha, l1_ratio, regularization)
@@ -1056,7 +1081,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
                                                shuffle=shuffle,
                                                random_state=random_state)
     elif solver == 'mu':
-        W, H, n_iter = _fit_multiplicative_update(X, W, H, beta_loss, max_iter,
+        W, H, n_iter = _fit_multiplicative_update(X, W, H, A, B, beta_loss,
+                                                  batch_size, max_iter,
                                                   tol, l1_reg_W, l1_reg_H,
                                                   l2_reg_W, l2_reg_H, update_H,
                                                   verbose)
@@ -1068,7 +1094,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         warnings.warn("Maximum number of iteration %d reached. Increase it to"
                       " improve convergence." % max_iter, ConvergenceWarning)
 
-    return W, H, n_iter
+    return W, H, A, B, n_iter
 
 
 class NMF(BaseEstimator, TransformerMixin):
@@ -1223,12 +1249,14 @@ class NMF(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=None, init=None, solver='cd',
+                 batch_size=1024,
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  shuffle=False):
         self.n_components = n_components
         self.init = init
         self.solver = solver
+        self.batch_size = batch_size
         self.beta_loss = beta_loss
         self.tol = tol
         self.max_iter = max_iter
@@ -1263,19 +1291,22 @@ class NMF(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
 
-        W, H, n_iter_ = non_negative_factorization(
-            X=X, W=W, H=H, n_components=self.n_components, init=self.init,
+        W, H, A, B, n_iter_ = non_negative_factorization(
+            X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
+            batch_size=self.batch_size, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
-
+        # TODO internal iters for W; partial_fit with max_iter equal to what ?
         self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
                                                     square_root=True)
 
         self.n_components_ = H.shape[0]
         self.components_ = H
+        self.components_numerator_ = A
+        self.components_denominator_ = B
         self.n_iter_ = n_iter_
 
         return W
@@ -1297,6 +1328,37 @@ class NMF(BaseEstimator, TransformerMixin):
         self.fit_transform(X, **params)
         return self
 
+    def partial_fit(self, X, y=None, **params):
+        if hasattr(self, 'components_'):
+            W = np.ones((X.shape[0], self.n_components))
+            W *= np.maximum(1e-6, X.sum(axis=1).A)
+            W /= W.sum(axis=1, keepdims=True)
+            W, H, A, B, n_iter_ = non_negative_factorization(
+                X=X, W=W, H=self.components_,
+                A=self.components_numerator_, B=self.components_denominator_,
+                n_components=self.n_components,
+                batch_size=self.batch_size, init='custom',
+                update_H=True, solver=self.solver, beta_loss=self.beta_loss,
+                tol=self.tol, max_iter=1, alpha=self.alpha,
+                l1_ratio=self.l1_ratio, regularization='both',
+                random_state=self.random_state, verbose=self.verbose,
+                shuffle=self.shuffle)
+
+            self.reconstruction_err_ = _beta_divergence(X, W, H,
+                                                        self.beta_loss,
+                                                        square_root=True)
+
+            self.n_components_ = H.shape[0]
+            self.components_ = H
+            self.components_numerator_ = A
+            self.components_denominator_ = B
+            self.n_iter_ = n_iter_
+
+        else:
+            self.fit_transform(X, **params)
+
+        return self
+
     def transform(self, X):
         """Transform the data X according to the fitted NMF model
 
@@ -1312,8 +1374,10 @@ class NMF(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'n_components_')
 
-        W, _, n_iter_ = non_negative_factorization(
-            X=X, W=None, H=self.components_, n_components=self.n_components_,
+        W, _, _, _, n_iter_ = non_negative_factorization(
+            X=X, W=None, H=self.components_, A=None, B=None,
+            n_components=self.n_components_,
+            batch_size=self.batch_size,
             init=self.init, update_H=False, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
             alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
