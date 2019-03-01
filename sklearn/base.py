@@ -585,7 +585,7 @@ def _get_sub_estimators(est):
     for name in sub_names:
         sub_est = getattr(est, name, None)
         if sub_est is not None:
-            sub_ests.append(est.estimator_)
+            sub_ests.append(sub_est)
     if hasattr(est, "estimators_"):
         if hasattr(est.estimators_, 'shape'):
             sub_ests.extend(est.estimators_.ravel())
