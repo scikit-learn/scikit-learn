@@ -7,6 +7,7 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -1673,3 +1674,23 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     with parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
+
+
+@pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
+                                   SGDRegressor, SparseSGDRegressor])
+@pytest.mark.parametrize(
+    'loss', ['hinge', 'squared_hinge', 'log', 'modified_huber'])
+def test_dtype_sgd_match_and_stability(klass, loss):
+    # rtol = 1e-2 if os.name == 'nt' and _IS_32BIT else 1e-5
+    rtol = 1e-5
+    clf_dict = dict()
+    for current_dtype in (np.float32, np.float64):
+        clf_dict[current_dtype] = (klass(alpha=0.01)
+                                   .fit(X=X.astype(current_dtype, copy=False),
+                                        y=np.array(Y, dtype=current_dtype)))
+
+    assert clf_dict[np.float32].coef_.dtype == np.float32
+    assert clf_dict[np.float64].coef_.dtype == np.float64
+    assert_allclose(clf_dict[np.float32].coef_,
+                    clf_dict[np.float64].coef_,
+                    rtol=rtol)
