@@ -9,8 +9,8 @@ from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
 from ..utils.extmath import svd_flip
-from ..utils.validation import check_is_fitted, check_array, \
-    check_kernel_eigenvalues
+from ..utils.validation import (check_is_fitted, check_array,
+                                check_kernel_eigenvalues)
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
