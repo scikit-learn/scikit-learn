@@ -22,8 +22,9 @@ matrix:
   include:
     # Latest dependencies on macOS with MKL
     - env: DISTRIB="conda" PYTHON_VERSION="*" INSTALL_MKL="true"
-           NUMPY_VERSION="*" SCIPY_VERSION="*" CYTHON_VERSION="*"
-           PILLOW_VERSION="*" JOBLIB_VERSION="*" COVERAGE=true
+           NUMPY_VERSION="*" SCIPY_VERSION="*" PANDAS_VERSION="*"
+           CYTHON_VERSION="*" PILLOW_VERSION="*" JOBLIB_VERSION="*"
+           COVERAGE=true
       language: generic
       if: type != cron
       os: osx
@@ -66,7 +67,7 @@ matrix:
        if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
 install: source build_tools/travis/install.sh
-script: 
+script:
   - bash build_tools/travis/test_script.sh
   - bash build_tools/travis/test_docs.sh
   - bash build_tools/travis/test_pytest_soft_dependency.sh
