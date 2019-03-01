@@ -111,7 +111,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
 
     # Convert edge list into standard hierarchical clustering format
     single_linkage_tree = _hierarchical._single_linkage_label(mst_array)
-    children_ = single_linkage_tree[:, :2].astype(np.int, copy=False)
+    children_ = single_linkage_tree[:, :2].astype(np.int, copy=True)
 
     # Compute parents
     parent = np.arange(n_nodes, dtype=np.intp)
