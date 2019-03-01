@@ -2419,8 +2419,8 @@ def check_estimator_sparse_dense(name, estimator_orig):
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
                 pred_sp = estimator_sp.predict(X_sp)
-                assert_array_almost_equal(pred, pred_sp, 2)
-                assert_equal(pred.shape, pred_sp.shape)
+                assert_allclose(pred, pred_sp)
+                assert pred.shape == pred_sp.shape
             if hasattr(estimator, 'predict_proba'):
                 probs = estimator.predict_proba(X)
 
@@ -2428,7 +2428,7 @@ def check_estimator_sparse_dense(name, estimator_orig):
                     # XXX : hack for dummy classifier
                     probs = probs[0]
 
-                assert_equal(probs.shape, (X.shape[0], 3))
+                assert probs.shape == (X.shape[0], 3)
         except TypeError as e:
             if 'sparse' not in str.lower(repr(e)):
                 print("Estimator %s doesn't seem to fail gracefully on "
