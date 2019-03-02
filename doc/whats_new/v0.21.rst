@@ -177,9 +177,9 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| Minimized the validation of X in
   :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
   :issue:`13174` by :user:`Christos Aridas <chkoar>`.
-  
+
 - |Enhancement| :class:`ensemble.IsolationForest` now exposes ``warm_start``
-  parameter, allowing iterative addition of trees to an isolation 
+  parameter, allowing iterative addition of trees to an isolation
   forest. :issue:`13496` by :user:`Peter Marko <petibear>`.
 
 - |Efficiency| Make :class:`ensemble.IsolationForest` more memory efficient
@@ -339,6 +339,11 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`linear_model.stochastic_gradient.BaseSGDClassifier` that was not
   deterministic when trained in a multi-class setting on several threads.
   :issue:`13422` by :user:`Clément Doumouro <ClemDoum>`.
+
+- |Fix| Fixed bug in :func:`linear_model.ridge.ridge_regression` that
+  caused unhandled exception for arguments ``return_intercept=True`` and
+  ``solver=auto`` (default) or any other solver different from ``sag``.
+  :issue:`13363` by :user:`Bartosz Telenczuk <btel>`
 
 :mod:`sklearn.manifold`
 ............................
