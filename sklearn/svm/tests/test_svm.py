@@ -992,19 +992,18 @@ def test_svc_ovr_tie_breaking(svc):
     """
     X, y = make_blobs(random_state=27)
 
-    np.random.seed(0)
     xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 1000)
     ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 1000)
     xx, yy = np.meshgrid(xs, ys)
 
     svm = svc(kernel="linear", decision_function_shape='ovr',
-              break_ties=False).fit(X, y)
+              break_ties=False, random_state=42).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert not np.all(pred == np.argmax(dv, axis=1))
 
     svm = svc(kernel="linear", decision_function_shape='ovr',
-              break_ties=True).fit(X, y)
+              break_ties=True, random_state=42).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert np.all(pred == np.argmax(dv, axis=1))
