@@ -8,7 +8,7 @@ from .nmf import NMF, non_negative_factorization
 from .pca import PCA
 from .incremental_pca import IncrementalPCA
 from .kernel_pca import KernelPCA
-from .sparse_pca import SparsePCA, MiniBatchSparsePCA
+from .sparse_pca import SparsePCA, MiniBatchSparsePCA, _get_explained_variance
 from .truncated_svd import TruncatedSVD
 from .fastica_ import FastICA, fastica
 from .dict_learning import (dict_learning, dict_learning_online, sparse_encode,
@@ -28,6 +28,7 @@ __all__ = ['DictionaryLearning',
            'PCA',
            'SparseCoder',
            'SparsePCA',
+           '_get_explained_variance',
            'dict_learning',
            'dict_learning_online',
            'fastica',

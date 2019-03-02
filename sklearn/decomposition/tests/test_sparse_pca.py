@@ -11,7 +11,8 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
-from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA, PCA
+from sklearn.decomposition import (SparsePCA, MiniBatchSparsePCA, PCA,
+                                   _get_explained_variance)
 from sklearn.utils import check_random_state
 
 
@@ -61,14 +62,50 @@ def test_fit_transform():
     spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
                           random_state=0)
     spca_lars.fit(Y)
+    # variance computed by default shape (n_components, )
+    assert (spca_lars.explained_variance_.shape == (3,))
 
     # Test that CD gives similar results
     spca_lasso = SparsePCA(n_components=3, method='cd', random_state=0,
                            alpha=alpha)
     spca_lasso.fit(Y)
+    # variance computed by default shape (n_components, )
+    assert (spca_lasso.explained_variance_.shape == (3, ))
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
 
+@pytest.mark.filterwarnings("ignore:normalize_components")
+@pytest.mark.parametrize("norm_comp", [False, True])
+def test_fit_transform_variance(norm_comp):
+    # This function asserts that the variance computed by SparsePCA is the
+    # same as the variance in PCA when the components are orthogonal.
+    alpha = 1
+    rng = np.random.RandomState(0)
+    X, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
+    # init spca and pca
+    spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
+                          random_state=0, normalize_components=norm_comp)
+    spca_lars.fit(X)
+    assert spca_lars.explained_variance_.shape == (3,)
+    pca = PCA(n_components=3, random_state=0)
+
+    # fit PCA
+    pca.fit(X)
+
+    explained_variance = pca.explained_variance_
+
+    # force the components in spca_lars to be the same as in pca
+    spca_lars.components_ = pca.components_
+    # compute using private method
+    X = X - X.mean(axis=0)
+    explained_variance_sparse = _get_explained_variance(
+        X, spca_lars.components_)
+
+    assert_array_almost_equal(explained_variance, explained_variance_sparse)
+
+
+@pytest.mark.filterwarnings("ignore:normalize_components")
+@pytest.mark.parametrize("norm_comp", [False, True])
 @if_safe_multiprocessing_with_blas
 def test_fit_transform_parallel():
     alpha = 1

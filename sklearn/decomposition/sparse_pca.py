@@ -29,6 +29,66 @@ def _check_normalize_components(normalize_components, estimator_name):
             )
 
 
+def _get_explained_variance(X, components):
+    '''Get the explained variance.
+
+    Get the explained variance from the principal components of the
+    data. This follows the method outlined in [1] section 3.4 (Adjusted Total
+    Variance). For an alternate approach (not implemented here), see [2].
+
+    Parameters
+    ----------
+    X : ndarray, shape (n_samples, n_features)
+        The feature vector. n_samples and n_features are the number of
+        samples and features, respectively.
+
+    components : array, shape (n_components, n_features)
+        The (un-normalized) principle components. [1]
+
+    Notes
+    -----
+    The variance ratio may not be computed. The main reason is that we
+    do not know what the total variance is since we did not compute all
+    the components.
+    Orthogonality is enforced in this case. Other variants exist that don't
+    enforce this [2].
+
+    References
+    ----------
+    .. [1] Journal of Computational and Graphical Statistics, Volume 15, Number
+        2, Pages 265–286. DOI: 10.1198/106186006X113430
+    .. [2] Rodolphe Jenatton, Guillaume Obozinski, Francis Bach ; Proceedings
+        of the Thirteenth International Conference on Artificial Intelligence
+        and Statistics, PMLR 9:366-373, 2010.
+    '''
+    # the number of samples
+    n_samples = X.shape[0]
+    n_components = components.shape[0]
+    unit_vecs = components.copy()
+    components_norm = np.linalg.norm(components, axis=1)[:, np.newaxis]
+    components_norm[components_norm == 0] = 1
+    unit_vecs /= components_norm
+
+    # Algorithm, as we compute the adjustd variance for each component, we
+    # subtract the variance from components in the direction of previous axes
+    proj_corrected_vecs = np.zeros_like(components)
+    for i in range(n_components):
+        vec = components[i].copy()
+        # subtract the previous projections
+        for j in range(i):
+            vec -= np.dot(unit_vecs[j], vec)*unit_vecs[j]
+
+        proj_corrected_vecs[i] = vec
+
+    # get estimated variance of Y which is matrix product of feature vector
+    # and the adjusted components
+    Y = np.tensordot(X, proj_corrected_vecs.T, axes=(1, 0))
+    YYT = np.tensordot(Y.T, Y, axes=(1, 0))
+    explained_variance = np.diag(YYT)/(n_samples-1)
+
+    return explained_variance
+
+
 class SparsePCA(BaseEstimator, TransformerMixin):
     """Sparse Principal Components Analysis (SparsePCA)
 
@@ -97,7 +157,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : array, shape (n_components, n_features)
         Sparse components extracted from the data.
 
     error_ : array
@@ -106,9 +166,13 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features,)
+    mean_ : array, shape (n_features, )
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
+
+    explained_variance_ : array, shape (n_components, )
+        The explained variance versus component.
+        Only computed if variance is set to True.
 
     Examples
     --------
@@ -126,11 +190,25 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     >>> np.mean(transformer.components_ == 0)
     0.9666...
 
+    Notes
+    -----
+    In computing the explained variance, an orthogonality-enforcing method was
+    chosen [1]. However, there exist other approaches, such as in [2] (which
+    are not implemented here).
+
     See also
     --------
     PCA
     MiniBatchSparsePCA
     DictionaryLearning
+
+    References
+    ----------
+    .. [1] Journal of Computational and Graphical Statistics, Volume 15, Number
+        2, Pages 265–286. DOI: 10.1198/106186006X113430
+    .. [2] Rodolphe Jenatton, Guillaume Obozinski, Francis Bach ; Proceedings
+        of the Thirteenth International Conference on Artificial Intelligence
+        and Statistics, PMLR 9:366-373, 2010.
     """
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
@@ -192,10 +270,24 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                                                dict_init=dict_init,
                                                return_n_iter=True)
         self.components_ = Vt.T
-        components_norm = np.linalg.norm(
-            self.components_, axis=1)[:, np.newaxis]
-        components_norm[components_norm == 0] = 1
-        self.components_ /= components_norm
+
+        # compute variance before normalizing components (if both are desired)
+        # requires the mean to be subtracted
+        if not self.normalize_components:
+            # should be removed in version 0.22
+            # (replace Xp with X)
+            Xp = X - np.mean(X, axis=0)
+        else:
+            Xp = X
+
+        self.explained_variance_ = _get_explained_variance(Xp,
+                                                           self.components_)
+
+        if self.normalize_components:
+            components_norm = \
+                    np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
+            components_norm[components_norm == 0] = 1
+            self.components_ /= components_norm
 
         self.error_ = E
         return self
@@ -212,7 +304,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array of shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
@@ -307,15 +399,19 @@ class MiniBatchSparsePCA(SparsePCA):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : array, shape (n_components, n_features)
         Sparse components extracted from the data.
 
     n_iter_ : int
         Number of iterations run.
 
-    mean_ : array, shape (n_features,)
+    mean_ : array, shape (n_features, )
         Per-feature empirical mean, estimated from the training set.
         Equal to ``X.mean(axis=0)``.
+
+    explained_variance_ : array, shape (n_components, )
+        The explained variance versus component.
+        Only computed if variance is set to True
 
     Examples
     --------
@@ -396,9 +492,20 @@ class MiniBatchSparsePCA(SparsePCA):
             return_n_iter=True)
         self.components_ = Vt.T
 
-        components_norm = np.linalg.norm(
-            self.components_, axis=1)[:, np.newaxis]
-        components_norm[components_norm == 0] = 1
-        self.components_ /= components_norm
+        # requires the mean to be subtracted
+        if not self.normalize_components:
+            # should be removed in version 0.22
+            # (replace Xp with X)
+            Xp = X - np.mean(X, axis=0)
+        else:
+            Xp = X
+        self.explained_variance_ = _get_explained_variance(Xp,
+                                                           self.components_)
+
+        if self.normalize_components:
+            components_norm = np.linalg.norm(self.components_,
+                                             axis=1)[:, np.newaxis]
+            components_norm[components_norm == 0] = 1
+            self.components_ /= components_norm
 
         return self
