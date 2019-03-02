@@ -27,7 +27,7 @@ supervised method.
 
 In this example, nearest neighbors classification is used for supervised
 prediction based on the embeddings learned from each of the three
-decompositions approaches, PCA, LDA and LMNN.
+decomposition approaches, PCA, LDA and LMNN.
 
 One can see that LMNN enforces a clustering of the data that is visually
 meaningful even after the large dimensionality reduction.

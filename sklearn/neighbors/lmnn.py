@@ -87,12 +87,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     impostor_store : str ['auto'|'list'|'sparse'], optional
         list :
             Three lists will be used to store the indices of reference
-            samples, the indices of their impostors and the (squared)
-            distances between the (sample, impostor) pairs.
+            samples, the indices of their impostors and the squared
+            distances between each (sample, impostor) pair.
 
         sparse :
             A sparse indicator matrix will be used to store the (sample,
-            impostor) pairs. The (squared) distances to the impostors will be
+            impostor) pairs. The squared distances to the impostors will be
             computed twice (once to determine the impostors and once to be
             stored), but this option tends to be faster than 'list' as the
             size of the data set increases.
@@ -736,7 +736,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         t_funcall = time.time()
         X_embedded = self._transform_without_checks(X)
 
-        # Compute (squared) distances to the target neighbors
+        # Compute squared distances to the target neighbors
         n_neighbors = target_neighbors.shape[1]
         dist_tn = np.zeros((n_samples, n_neighbors))
         for k in range(n_neighbors):
@@ -744,10 +744,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                       X_embedded[target_neighbors[:, k]],
                                       squared=True)
 
-        # Add the margin to all (squared) distances to target neighbors
+        # Add the margin to all squared distances to target neighbors
         dist_tn += 1
 
-        # Find the impostors and compute (squared) distances to them
+        # Find the impostors and compute squared distances to them
         impostors_graph = self._find_impostors(
             X_embedded, y, classes, dist_tn[:, -1], use_sparse)
 
@@ -788,8 +788,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             The non-singleton classes, encoded as integers in [0, n_classes).
 
         margin_radii : array, shape (n_samples,)
-            (Squared) distances of samples to their farthest target
-            neighbors plus margin.
+            Squared distances of samples to their farthest target neighbors
+            plus margin.
 
         use_sparse : bool, optional (default=True)
             Whether to use a sparse matrix to store the (sample, impostor)
@@ -798,8 +798,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         Returns
         -------
         impostors_graph : coo_matrix, shape (n_samples, n_samples)
-            Element (i, j) is the distance between samples i and j if j is an
-            impostor to i, otherwise zero.
+            If at least one of two violations is active (sample i is an
+            impostor to j or sample j is an impostor to i), then one of the
+            two entries (i, j) or (j, i) will hold the squared distance
+            between the two samples. Otherwise both entries will be zero.
 
         """
         n_samples = X_embedded.shape[0]
@@ -972,8 +974,10 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
     Returns
     -------
     imp_indices : array, shape (n_impostors,)
-        Unraveled indices of (sample, impostor) pairs referring to a matrix
-        of shape (n_samples_a, n_samples_b).
+        Unraveled indices referring to a matrix of shape
+        (n_samples_a, n_samples_b). Index pair (i, j) is returned (
+        unraveled) if either sample i is an impostor to sample j or sample j
+        is an impostor to sample i.
 
     imp_distances : array, shape (n_impostors,), optional
         imp_distances[i] is the squared distance between samples imp_row[i] and
@@ -1021,7 +1025,7 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
         return imp_indices
 
 
-def _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph):
+def _compute_push_loss(X, target_neighbors, inflated_dist_tn, impostors_graph):
     """
 
     Parameters
@@ -1032,12 +1036,14 @@ def _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph):
     target_neighbors : array, shape (n_samples, n_neighbors)
         Indices of target neighbors of each sample in X.
 
-    dist_tn : array, shape (n_samples, n_neighbors)
-        (Squared) distances of samples to their target neighbors.
+    inflated_dist_tn : array, shape (n_samples, n_neighbors)
+        Squared distances of each sample to their target neighbors plus margin.
 
     impostors_graph : coo_matrix, shape (n_samples, n_samples)
-        Element (i, j) is the distance between sample i and j if j is an
-        impostor to i, otherwise zero.
+        If at least one of two violations is active (sample i is an impostor
+        to j or sample j is an impostor to i), then one of the two entries
+        (i, j) or (j, i) will hold the squared distance between the two
+        samples. Otherwise both entries will be zero.
 
     Returns
     -------
@@ -1052,7 +1058,7 @@ def _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph):
 
     """
 
-    n_samples, n_neighbors = dist_tn.shape
+    n_samples, n_neighbors = inflated_dist_tn.shape
     imp_row = impostors_graph.row
     imp_col = impostors_graph.col
     dist_impostors = impostors_graph.data
@@ -1063,12 +1069,14 @@ def _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph):
     sample_range = range(n_samples)
     n_active_triplets = 0
     for k in range(n_neighbors - 1, -1, -1):
-        loss1 = np.maximum(dist_tn[imp_row, k] - dist_impostors, 0)
+        # Consider margin violations to the samples in imp_row
+        loss1 = np.maximum(inflated_dist_tn[imp_row, k] - dist_impostors, 0)
         ac = np.where(loss1 > 0)[0]
         n_active_triplets += len(ac)
         A1 = csr_matrix((2 * loss1[ac], (imp_row[ac], imp_col[ac])), shape)
 
-        loss2 = np.maximum(dist_tn[imp_col, k] - dist_impostors, 0)
+        # Consider margin violations to the samples in imp_col
+        loss2 = np.maximum(inflated_dist_tn[imp_col, k] - dist_impostors, 0)
         ac = np.where(loss2 > 0)[0]
         n_active_triplets += len(ac)
         A2 = csc_matrix((2 * loss2[ac], (imp_row[ac], imp_col[ac])), shape)
@@ -1106,7 +1114,7 @@ def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
 
     block_size : int, optional (default=8)
         The maximum number of mebibytes (MiB) of memory to use at a time for
-        calculating paired (squared) distances.
+        calculating paired squared distances.
 
     Returns
     -------

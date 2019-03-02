@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+from scipy.optimize import check_grad
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -12,11 +13,13 @@ from sklearn.utils.testing import assert_equal
 from sklearn import datasets
 from sklearn.neighbors import LargeMarginNearestNeighbor
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors.lmnn import _paired_distances_blockwise
-from sklearn.neighbors.lmnn import _euclidean_distances_without_checks
+from sklearn.neighbors.lmnn import (_paired_distances_blockwise,
+                                    _euclidean_distances_without_checks,
+                                    _compute_push_loss)
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.model_selection import train_test_split
+from sklearn.utils import check_random_state
 from sklearn.utils.extmath import row_norms
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.exceptions import ConvergenceWarning
@@ -557,3 +560,118 @@ def test_euclidean_distances_without_checks():
     distances2 = _euclidean_distances_without_checks(X, X_norm_squared=XX)
 
     assert_array_equal(distances1, distances2)
+
+
+def test_find_impostors():
+    """Test if the impostors found are correct
+
+    Create data points for class A as the 4 corners of the unit square. Create
+    data points for class B by shifting the points of class A, r = 4 units
+    along the x-axis. Using 1 nearest neighbor, all distances from samples to
+    their target neighbors are 2.
+    Impostors are in squared distance less than the squared target neighbor
+    distance (2**2 = 4) plus a margin of 1. Therefore, impostors are all
+    differently labeled samples in squared distance less than 5. In this test
+    only the inner most samples have one impostor each which lies on the
+    same y-coordinate and therefore have a squared distance of 4.
+
+    The difference of using a sparse or dense data structure for the impostors
+    storage is tested in test_impostor_store().
+    """
+
+    class_distance = 4.
+    X_a = np.array([[-1., 1], [-1., -1.], [1., 1.], [1., -1.]])
+    X_b = X_a + np.array([class_distance, 0])
+    X = np.concatenate((X_a, X_b))
+    y = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=1)
+    lmnn.random_state_ = check_random_state(0)
+    lmnn.n_neighbors_ = 1
+    n_samples = X.shape[0]
+    classes = np.unique(y)
+    target_neighbors = lmnn._select_target_neighbors_wrapper(X, y, classes)
+    dist_tn = row_norms(X - X[target_neighbors[:, 0]], squared=True)
+    dist_tn = dist_tn[:, None]
+    dist_tn += 1
+    margin_radii = dist_tn[:, -1]
+
+    # Groundtruth impostors
+    gt_impostors_mask = np.zeros((n_samples, n_samples), dtype=bool)
+    gt_impostors_mask[[4, 5], [2, 3]] = 1
+    gt_impostors_mask += gt_impostors_mask.T
+    squared_dist = (class_distance - 2)**2
+    gt_impostors_dist = gt_impostors_mask.astype(float) * squared_dist
+
+    impostors_graph = lmnn._find_impostors(X, y, classes, margin_radii)
+    impostors_mask = impostors_graph.A > 0
+    # Impostors are considered in one of two possible directions
+    impostors_mask += impostors_mask.T
+    impostors_dist = impostors_graph.A + impostors_graph.A.T
+
+    assert_array_equal(impostors_mask, gt_impostors_mask)
+    assert_array_equal(impostors_dist, gt_impostors_dist)
+
+
+def test_compute_push_loss():
+    """Test if the push loss is computed correctly
+
+    This test continues on the example from test_find_impostors. The push
+    loss is easy to compute, as we have only 4 violations and all of them
+    amount to 1 (squared distance to target neighbor + 1 - squared distance
+    to impostor = 4 + 1 - 4).
+    """
+
+    class_distance = 4.
+    X_a = np.array([[-1., 1], [-1., -1.], [1., 1.], [1., -1.]])
+    X_b = X_a + np.array([class_distance, 0])
+    X = np.concatenate((X_a, X_b))
+    y = np.array([0, 0, 0, 0, 1, 1, 1, 1])
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=1)
+    lmnn.random_state_ = check_random_state(0)
+    lmnn.n_neighbors_ = 1
+    classes = np.unique(y)
+    target_neighbors = lmnn._select_target_neighbors_wrapper(X, y, classes)
+    dist_tn = row_norms(X - X[target_neighbors[:, 0]], squared=True)
+    dist_tn = dist_tn[:, None]
+    dist_tn += 1
+    margin_radii = dist_tn[:, -1]
+    impostors_graph = lmnn._find_impostors(X, y, classes, margin_radii)
+    loss, grad, _ = _compute_push_loss(X, target_neighbors, dist_tn,
+                                       impostors_graph)
+
+    # The loss should be 4. (1. for each of the 4 violation)
+    assert loss == 4.
+
+
+def test_loss_grad_lbfgs():
+    """Test gradient of loss function
+
+    Assert that the gradient is almost equal to its finite differences
+    approximation.
+    """
+
+    X, y = datasets.make_classification()
+    classes = np.unique(y)
+    L = rng.randn(rng.randint(1, X.shape[1] + 1), X.shape[1])
+    lmnn = LargeMarginNearestNeighbor()
+    lmnn.n_neighbors_ = lmnn.n_neighbors
+    lmnn.n_iter_ = 0
+    target_neighbors = lmnn._select_target_neighbors_wrapper(X, y, classes)
+    grad_static = lmnn._compute_grad_static(X, target_neighbors)
+
+    kwargs = {
+        'classes':  classes,
+        'target_neighbors': target_neighbors,
+        'grad_static': grad_static,
+        'use_sparse': False
+    }
+
+    def fun(L):
+        return lmnn._loss_grad_lbfgs(L, X, y, **kwargs)[0]
+
+    def grad(L):
+        return lmnn._loss_grad_lbfgs(L, X, y, **kwargs)[1]
+
+    # compute relative error
+    rel_diff = check_grad(fun, grad, L.ravel()) / np.linalg.norm(grad(L))
+    np.testing.assert_almost_equal(rel_diff, 0., decimal=5)
