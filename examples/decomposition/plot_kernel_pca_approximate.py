@@ -103,7 +103,7 @@ for i, n_compo in enumerate(n_components_range):
         plt.scatter(X_kpca[blues, 0], X_kpca[blues, 1], c="blue",
                     s=20, edgecolor='k')
         plt.title("First 2PC (n=%i)" % n_compo)
-        plt.xlabel("1st PC in space induced by $\phi$")
+        plt.xlabel(r"1st PC in space induced by $\phi$")
         plt.ylabel("2nd component")
     except Exception as e:
         print(e)
