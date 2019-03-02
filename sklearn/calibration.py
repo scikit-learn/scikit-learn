@@ -511,10 +511,12 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
 
 
 def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
-                      sample_weight=None):
+                      strategy='uniform', sample_weight=None):
     """Compute true and predicted probabilities for a calibration curve.
 
-     Calibration curves may also be referred to as reliability diagrams.
+    The method assumes the inputs come from a binary classifier.
+
+    Calibration curves may also be referred to as reliability diagrams.
 
     Read more in the :ref:`User Guide <calibration>`.
 
@@ -532,17 +534,27 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
         onto 0 and the largest one onto 1.
 
     n_bins : int
-        Number of bins. A bigger number requires more data.
+        Number of bins. A bigger number requires more data. Bins with no data
+        points (i.e. without corresponding values in y_prob) will not be
+        returned, thus there may be fewer than n_bins in the return value.
+
+    strategy : {'uniform', 'quantile'}, (default='uniform')
+        Strategy used to define the widths of the bins.
+
+        uniform
+            All bins have identical widths.
+        quantile
+            All bins have the same number of points.
 
     sample_weight : array-like, shape=(n_samples,), optional, default: None
         Weights. If set to None, no sample weights will be applied.
 
     Returns
     -------
-    prob_true : array, shape (n_bins,)
+    prob_true : array, shape (n_bins,) or smaller
         The true probability in each bin (fraction of positives).
 
-    prob_pred : array, shape (n_bins,)
+    prob_pred : array, shape (n_bins,) or smaller
         The mean predicted probability in each bin.
 
     References
@@ -564,7 +576,16 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
 
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
 
-    bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+    if strategy == 'quantile':  # Determine bin edges by distribution of data
+        quantiles = np.linspace(0, 1, n_bins + 1)
+        bins = np.percentile(y_prob, quantiles * 100)
+        bins[-1] = bins[-1] + 1e-8
+    elif strategy == 'uniform':
+        bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+    else:
+        raise ValueError("Invalid entry to 'strategy' input. Strategy "
+                         "must be either 'quantile' or 'uniform'.")
+
     binids = np.digitize(y_prob, bins) - 1
 
     if sample_weight is None:
@@ -577,8 +598,7 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
         
         # Check that the sample weights sum is positive
         if sample_weight.sum() <= 0:
-            raise ValueError(
-                             "Attempting to calibrate predicted probabilities with a "
+            raise ValueError("Attempting to calibrate predicted probabilities with a "
                              "non-positive weighted number of samples.")
 
         weights_sums = sample_weight*y_prob
