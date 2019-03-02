@@ -37,7 +37,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_neighbors : int, optional (default=3)
-        Number of neighbors to use as target neighbors for each sample.
+        Number of neighbors to use as target neighbors for each of the samples.
 
     n_components : int, optional (default=None)
         Preferred dimensionality of the embedding.
@@ -69,7 +69,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     max_impostors : int, optional (default=500000)
         Maximum number of impostors to consider per iteration. Impostors are
-        the samples that are too close to a sample with different label,
+        samples that are too close to a sample with a different label,
         thereby violating their margin. In the worst case this will allow
         ``max_impostors * n_neighbors`` constraints to be active.
 
@@ -127,7 +127,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     random_state : int or numpy.RandomState or None, optional (default=None)
         A pseudo random number generator object or a seed for it if int.
-        Used to sample the impostors if they exceed ``max_impostors`` and
+        Used to subsample the impostors if they exceed ``max_impostors`` and
         during the initialization of the linear transformation if PCA is
         used as initialization method (``init``='pca').
 
@@ -351,6 +351,13 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         ------
         NotFittedError
             If :meth:`fit` has not been called before.
+
+        Notes
+        -----
+        A simple dot product is necessary and sufficient to project the
+        inputs onto the learned subspace. Orthogonality of the components is
+        only enforced upon initialization if PCA is used (``init``='pca').
+
         """
 
         check_is_fitted(self, ['components_'])
@@ -410,11 +417,11 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             combination of two or more given parameters is incompatible.
         """
 
-        # Find the appearing classes and the class index for each sample
+        # Find the appearing classes and the class index of each of the samples
         classes, y_inverse = np.unique(y, return_inverse=True)
         classes_inverse = np.arange(len(classes))
 
-        # Ignore classes that have less than 2 samples (singleton classes)
+        # Ignore classes that have less than two samples (singleton classes)
         class_sizes = np.bincount(y_inverse)
         mask_singleton_class = class_sizes == 1
         singleton_classes = np.where(mask_singleton_class)[0]
@@ -583,7 +590,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         return transformation
 
     def _select_target_neighbors_wrapper(self, X, y, classes=None):
-        """Find the target neighbors of each data sample.
+        """Find the target neighbors of each of the data samples.
 
         Parameters
         ----------
@@ -600,7 +607,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         Returns
         -------
         target_neighbors: array, shape (n_samples, n_neighbors)
-            An array of neighbors indices for each sample.
+            An array of neighbors indices for each of the samples.
         """
 
         t_start = time.time()
@@ -632,7 +639,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             The training samples.
 
         target_neighbors : array, shape (n_samples, n_neighbors)
-            The k nearest neighbors of each sample from the same class.
+            The k nearest neighbors of each of the samples from the same class.
 
         Returns
         -------
@@ -692,7 +699,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             The non-singleton classes, encoded as integers in [0, n_classes).
 
         target_neighbors : array, shape (n_samples, n_neighbors)
-            The target neighbors of each sample.
+            The target neighbors of each of the training samples.
 
         grad_static : array, shape (n_features, n_features)
             The (weighted) gradient component caused by target neighbors,
@@ -811,7 +818,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                     margin_radii[ind_out], margin_radii[ind_in])
 
                 if len(imp_ind):
-                    # sample impostors if they are too many
+                    # subsample impostors if they are too many
                     if len(imp_ind) > self.max_impostors:
                         imp_ind = self.random_state_.choice(
                             imp_ind, self.max_impostors, replace=False)
@@ -855,7 +862,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                     return_distance=True)
 
                 if len(imp_ind):
-                    # sample impostors if they are too many
+                    # subsample impostors if they are too many
                     if len(imp_ind) > self.max_impostors:
                         ind_sampled = self.random_state_.choice(
                             len(imp_ind), self.max_impostors, replace=False)
@@ -894,7 +901,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
 
 def _select_target_neighbors(X, y, n_neighbors, classes=None, **nn_kwargs):
-    """Find the target neighbors of each sample.
+    """Find the target neighbors of each of the training samples.
 
     Parameters
     ----------
@@ -918,7 +925,7 @@ def _select_target_neighbors(X, y, n_neighbors, classes=None, **nn_kwargs):
     Returns
     -------
     target_neighbors: array, shape (n_samples, n_neighbors)
-        The indices of the target neighbors of each sample.
+        The indices of the target neighbors of each training sample.
     """
 
     target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=np.intp)
@@ -1023,7 +1030,7 @@ def _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph):
         The training input samples.
 
     target_neighbors : array, shape (n_samples, n_neighbors)
-        Indices of target neighbors of each sample.
+        Indices of target neighbors of each sample in X.
 
     dist_tn : array, shape (n_samples, n_neighbors)
         (Squared) distances of samples to their target neighbors.
@@ -1089,10 +1096,10 @@ def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
         An array of data samples.
 
     ind_a : array, shape (n_indices,)
-        An array of sample indices.
+        An array of indices referring to samples in X.
 
     ind_b : array, shape (n_indices,)
-        Another array of sample indices.
+        Another array of indices referring to samples in X.
 
     squared : bool (default=True)
         Whether to return the squared distances.
