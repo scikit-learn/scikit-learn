@@ -9,9 +9,9 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
-from ..utils.extmath import randomized_svd
-from ..utils.validation import check_is_fitted, check_array, \
-    check_kernel_eigenvalues
+from ..utils.extmath import svd_flip, randomized_svd
+from ..utils.validation import (check_is_fitted, check_array,
+                                check_kernel_eigenvalues)
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
@@ -283,6 +283,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         # make sure that there are no numerical or conditioning issues
         self.lambdas_ = check_kernel_eigenvalues(self.lambdas_)
 
+
+        # flip eigenvectors' sign to enforce deterministic output
+        self.alphas_, _ = svd_flip(self.alphas_,
+                                   np.empty_like(self.alphas_).T)
+
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
         self.lambdas_ = self.lambdas_[indices]
@@ -397,7 +402,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         # scale eigenvectors (properly account for null-space for dot product)
         nz = np.flatnonzero(self.lambdas_)
-        scaled_alphas = np.zeros(self.alphas_.shape)
+        scaled_alphas = np.zeros_like(self.alphas_)
         scaled_alphas[:, nz] = self.alphas_[:, nz] / np.sqrt(self.lambdas_[nz])
 
         # Project by doing a scalar product between K and the scaled eigenvects

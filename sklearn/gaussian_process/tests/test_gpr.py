@@ -15,7 +15,7 @@ from sklearn.gaussian_process.kernels \
 from sklearn.gaussian_process.kernels import DotProduct
 
 from sklearn.utils.testing \
-    import (assert_true, assert_greater, assert_array_less,
+    import (assert_greater, assert_array_less,
             assert_almost_equal, assert_equal, assert_raise_message,
             assert_array_almost_equal, assert_array_equal)
 
@@ -77,9 +77,9 @@ def test_converged_to_local_maximum(kernel):
     lml, lml_gradient = \
         gpr.log_marginal_likelihood(gpr.kernel_.theta, True)
 
-    assert_true(np.all((np.abs(lml_gradient) < 1e-4) |
-                       (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0]) |
-                       (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1])))
+    assert np.all((np.abs(lml_gradient) < 1e-4) |
+                  (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0]) |
+                  (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1]))
 
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
@@ -349,12 +349,12 @@ def test_K_inv_reset(kernel):
 
     # Test that self._K_inv is reset after a new fit
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert_true(hasattr(gpr, '_K_inv'))
-    assert_true(gpr._K_inv is None)
+    assert hasattr(gpr, '_K_inv')
+    assert gpr._K_inv is None
     gpr.predict(X, return_std=True)
-    assert_true(gpr._K_inv is not None)
+    assert gpr._K_inv is not None
     gpr.fit(X2, y2)
-    assert_true(gpr._K_inv is None)
+    assert gpr._K_inv is None
     gpr.predict(X2, return_std=True)
     gpr2 = GaussianProcessRegressor(kernel=kernel).fit(X2, y2)
     gpr2.predict(X2, return_std=True)

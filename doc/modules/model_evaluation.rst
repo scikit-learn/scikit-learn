@@ -102,7 +102,7 @@ Usage examples:
     >>> clf = svm.SVC(gamma='scale', random_state=0)
     >>> cross_val_score(clf, X, y, scoring='recall_macro',
     ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
+    array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
@@ -215,6 +215,25 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
+.. note:: **Using custom scorers in functions where n_jobs > 1**
+
+    While defining the custom scoring function alongside the calling function 
+    should work out of the box with the default joblib backend (loky), 
+    importing it from another module will be a more robust approach and work
+    independently of the joblib backend. 
+
+    For example, to use, ``n_jobs`` greater than 1 in the example below, 
+    ``custom_scoring_function`` function is saved in a user-created module 
+    (``custom_scorer_module.py``) and imported::
+
+        >>> from custom_scorer_module import custom_scoring_function # doctest: +SKIP
+        >>> cross_val_score(model,
+        ...  X_train,
+        ...  y_train,
+        ...  scoring=make_scorer(custom_scoring_function, greater_is_better=False),
+        ...  cv=5,
+        ...  n_jobs=-1) # doctest: +SKIP
+
 .. _multimetric_scoring:
 
 Using multiple metric evaluation
@@ -309,6 +328,7 @@ Some also work in the multilabel case:
    hamming_loss
    jaccard_similarity_score
    log_loss
+   multilabel_confusion_matrix
    precision_recall_fscore_support
    precision_score
    recall_score
@@ -441,10 +461,10 @@ the total number of predictions).
 
 In contrast, if the conventional accuracy is above chance only because the
 classifier takes advantage of an imbalanced test set, then the balanced
-accuracy, as appropriate, will drop to :math:`\frac{1}{\text{n\_classes}}`.
+accuracy, as appropriate, will drop to :math:`\frac{1}{n\_classes}`.
 
 The score ranges from 0 to 1, or when ``adjusted=True`` is used, it rescaled to
-the range :math:`\frac{1}{1 - \text{n\_classes}}` to 1, inclusive, with
+the range :math:`\frac{1}{1 - n\_classes}` to 1, inclusive, with
 performance at random scoring 0.
 
 If :math:`y_i` is the true value of the :math:`i`-th sample, and :math:`w_i`
@@ -464,7 +484,7 @@ defined as:
 
 With ``adjusted=True``, balanced accuracy reports the relative increase from
 :math:`\texttt{balanced-accuracy}(y, \mathbf{0}, w) =
-\frac{1}{\text{n\_classes}}`.  In the binary case, this is also known as
+\frac{1}{n\_classes}`.  In the binary case, this is also known as
 `*Youden's J statistic* <https://en.wikipedia.org/wiki/Youden%27s_J_statistic>`_,
 or *informedness*.
 
@@ -598,7 +618,7 @@ and inferred labels::
         class 1       0.00      0.00      0.00         1
         class 2       1.00      0.50      0.67         2
    <BLANKLINE>
-      micro avg       0.60      0.60      0.60         5
+       accuracy                           0.60         5
       macro avg       0.56      0.50      0.49         5
    weighted avg       0.67      0.60      0.59         5
    <BLANKLINE>
@@ -886,7 +906,8 @@ To make this more explicit, consider the following notation:
 * :math:`y_l` the subset of :math:`y` with label :math:`l`
 * similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
   :math:`\hat{y}`
-* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
+* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}` for some
+  sets :math:`A` and :math:`B`
 * :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
   (Conventions vary on handling :math:`B = \emptyset`; this implementation uses
   :math:`R(A, B):=0`, and similar for :math:`P`.)
@@ -977,7 +998,7 @@ with a svm classifier in a binary class problem::
   >>> X = [[0], [1]]
   >>> y = [-1, 1]
   >>> est = svm.LinearSVC(random_state=0)
-  >>> est.fit(X, y)
+  >>> est.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
        intercept_scaling=1, loss='squared_hinge', max_iter=1000,
        multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
@@ -995,7 +1016,7 @@ with a svm classifier in a multiclass problem::
   >>> Y = np.array([0, 1, 2, 3])
   >>> labels = np.array([0, 1, 2, 3])
   >>> est = svm.LinearSVC()
-  >>> est.fit(X, Y)
+  >>> est.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
   LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
        intercept_scaling=1, loss='squared_hinge', max_iter=1000,
        multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
@@ -1119,6 +1140,112 @@ function:
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
     -0.33...
+
+.. _multilabel_confusion_matrix:
+
+Multi-label confusion matrix
+----------------------------
+
+The :func:`multilabel_confusion_matrix` function computes class-wise (default)
+or sample-wise (samplewise=True) multilabel confusion matrix to evaluate
+the accuracy of a classification. multilabel_confusion_matrix also treats
+multiclass data as if it were multilabel, as this is a transformation commonly
+applied to evaluate multiclass problems with binary classification metrics
+(such as precision, recall, etc.).
+
+When calculating class-wise multilabel confusion matrix :math:`C`, the
+count of true negatives for class :math:`i` is :math:`C_{i,0,0}`, false
+negatives is :math:`C_{i,1,0}`, true positives is :math:`C_{i,1,1}`
+and false positives is :math:`C_{i,0,1}`.
+
+Here is an example demonstrating the use of the
+:func:`multilabel_confusion_matrix` function with
+:term:`multilabel indicator matrix` input::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import multilabel_confusion_matrix
+    >>> y_true = np.array([[1, 0, 1],
+    ...                    [0, 1, 0]])
+    >>> y_pred = np.array([[1, 0, 0],
+    ...                    [0, 1, 1]])
+    >>> multilabel_confusion_matrix(y_true, y_pred)
+    array([[[1, 0],
+            [0, 1]],
+    <BLANKLINE>
+           [[1, 0],
+            [0, 1]],
+    <BLANKLINE>
+           [[0, 1],
+            [1, 0]]])
+
+Or a confusion matrix can be constructed for each sample's labels:
+
+    >>> multilabel_confusion_matrix(y_true, y_pred, samplewise=True)
+    array([[[1, 0],
+            [1, 1]],
+    <BLANKLINE>
+           [[1, 1],
+            [0, 1]]])
+
+Here is an example demonstrating the use of the
+:func:`multilabel_confusion_matrix` function with
+:term:`multiclass` input::
+
+    >>> y_true = ["cat", "ant", "cat", "cat", "ant", "bird"]
+    >>> y_pred = ["ant", "ant", "cat", "cat", "ant", "cat"]
+    >>> multilabel_confusion_matrix(y_true, y_pred,
+    ...                             labels=["ant", "bird", "cat"])
+    array([[[3, 1],
+            [0, 2]],
+    <BLANKLINE>
+           [[5, 0],
+            [1, 0]],
+    <BLANKLINE>
+           [[2, 1],
+            [1, 2]]])
+
+Here are some examples demonstrating the use of the
+:func:`multilabel_confusion_matrix` function to calculate recall
+(or sensitivity), specificity, fall out and miss rate for each class in a
+problem with multilabel indicator matrix input.
+
+Calculating
+`recall <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
+(also called the true positive rate or the sensitivity) for each class::
+
+    >>> y_true = np.array([[0, 0, 1],
+    ...                    [0, 1, 0],
+    ...                    [1, 1, 0]])
+    >>> y_pred = np.array([[0, 1, 0],
+    ...                    [0, 0, 1],
+    ...                    [1, 1, 0]])
+    >>> mcm = multilabel_confusion_matrix(y_true, y_pred)
+    >>> tn = mcm[:, 0, 0]
+    >>> tp = mcm[:, 1, 1]
+    >>> fn = mcm[:, 1, 0]
+    >>> fp = mcm[:, 0, 1]
+    >>> tp / (tp + fn)
+    array([1. , 0.5, 0. ])
+
+Calculating
+`specificity <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`__
+(also called the true negative rate) for each class::
+
+    >>> tn / (tn + fp)
+    array([1. , 0. , 0.5])
+
+Calculating `fall out <https://en.wikipedia.org/wiki/False_positive_rate>`__
+(also called the false positive rate) for each class::
+
+    >>> fp / (fp + tn)
+    array([0. , 1. , 0.5])
+
+Calculating `miss rate
+<https://en.wikipedia.org/wiki/False_positives_and_false_negatives>`__
+(also called the false negative rate) for each class::
+
+    >>> fn / (fn + tp)
+    array([0. , 0.5, 1. ])
 
 .. _roc_metrics:
 
@@ -1434,7 +1561,7 @@ score associated with each label
 the ranking loss is defined as
 
 .. math::
-  \text{ranking\_loss}(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
+  ranking\_loss(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
     \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0(n_\text{labels} - ||y_i||_0)}
     \left|\left\{(k, l): \hat{f}_{ik} \leq \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
 
@@ -1510,7 +1637,7 @@ then the explained variance is estimated as follow:
 
 .. math::
 
-  \texttt{explained\_{}variance}(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+  explained\_{}variance(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
 
 The best possible score is 1.0, lower values are worse.
 
@@ -1820,7 +1947,7 @@ change the kernel::
 
   >>> clf = SVC(gamma='scale', kernel='rbf', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
-  0.97...
+  0.94...
 
 We see that the accuracy was boosted to almost 100%.  A cross validation
 strategy is recommended for a better estimate of the accuracy, if it

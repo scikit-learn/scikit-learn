@@ -14,7 +14,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.covariance import (graph_lasso, GraphLasso, GraphLassoCV,
                                 empirical_covariance)
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
-from sklearn.externals.six.moves import StringIO
+from io import StringIO
 from sklearn.utils import check_random_state
 from sklearn import datasets
 
