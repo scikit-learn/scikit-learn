@@ -142,6 +142,13 @@ class IsolationForest(BaseBagging, OutlierMixin):
         ``offset_ = -0.5``, making the decision function independent from the
         contamination parameter.
 
+    Notes
+    -----
+    The implementation is based on an ensemble of ExtraTreeRegressor. The
+    maximum depth of each tree is set to ``ceil(log_2(n))`` where
+    :math:`n` is the number of samples used to build the tree
+    (see (Liu et al., 2008) for more details).
+
     References
     ----------
     .. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
