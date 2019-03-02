@@ -113,7 +113,7 @@ class Pipeline(_BaseComposition):
     >>> # Indexing can also be used to extract a sub-pipeline.
     >>> sub_pipeline = anova_svm[:1]
     >>> sub_pipeline  # doctest: +ELLIPSIS
-    Pipeline(steps=[('anova', ...)])
+    Pipeline(memory=None, steps=[('anova', ...)])
     >>> coef = anova_svm[-1].coef_
     >>> anova_svm['svc'] is anova_svm[-1]
     True
