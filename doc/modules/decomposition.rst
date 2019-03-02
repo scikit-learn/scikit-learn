@@ -194,7 +194,7 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 Similarly to :ref:`PCA`, the optional parameter ``eigen_solver='randomized'``
 can be used to drastically improve the computation time when the desired
 number of components ``n_components`` is much smaller than the number of
-training samples. See RandomizedPCA_ above.
+training samples. See :ref:`RandomizedPCA` above.
 
 .. topic:: Examples:
 
