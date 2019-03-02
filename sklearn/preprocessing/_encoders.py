@@ -675,6 +675,7 @@ class OneHotEncoder(_BaseEncoder):
 
     def _transform_new(self, X):
         """New implementation assuming categorical input"""
+        # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
         n_samples, n_features = X_int.shape
