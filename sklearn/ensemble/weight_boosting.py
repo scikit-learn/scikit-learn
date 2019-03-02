@@ -931,10 +931,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     AdaBoostRegressor(base_estimator=None, learning_rate=1.0, loss='linear',
             n_estimators=100, random_state=0)
-    >>> print(regr.feature_importances_)
-    [0.27885832 0.71092234 0.00654703 0.00367231]
+    >>> print(regr.feature_importances_) # doctest: +ELLIPSIS
+    [0.2788... 0.7109... 0.0065... 0.0036...]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [4.79722349]
+    [4.7972...]
 
     See also
     --------
