@@ -13,7 +13,7 @@ import numpy as np
 
 from . import __version__
 from sklearn.utils import _IS_32BIT
-from sklearn.utils import safe_indexing
+from sklearn.utils import safe_indexing, safe_mask
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
