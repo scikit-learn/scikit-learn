@@ -867,7 +867,7 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
         assert_array_almost_equal(target, true_coefs, decimal=1)
 
 
-def test_ridge_regression_fail_with_return_intercept():
+def test_ridge_regression_warns_with_return_intercept():
     # return_itercept is only supported by sag/saga
 
     X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
