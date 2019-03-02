@@ -985,8 +985,8 @@ def test_ovr_decision_function():
     assert np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1])
 
 
-@pytest.mark.parametrize("svc", [svm.SVC, svm.NuSVC])
-def test_svc_ovr_tie_breaking(svc):
+@pytest.mark.parametrize("SVCClass", [svm.SVC, svm.NuSVC])
+def test_svc_ovr_tie_breaking(SVCClass):
     """Test if predict breaks ties in OVR mode.
     Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
     """
@@ -996,14 +996,14 @@ def test_svc_ovr_tie_breaking(svc):
     ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 1000)
     xx, yy = np.meshgrid(xs, ys)
 
-    svm = svc(kernel="linear", decision_function_shape='ovr',
-              break_ties=False, random_state=42).fit(X, y)
+    svm = SVCClass(kernel="linear", decision_function_shape='ovr',
+                   break_ties=False, random_state=42).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert not np.all(pred == np.argmax(dv, axis=1))
 
-    svm = svc(kernel="linear", decision_function_shape='ovr',
-              break_ties=True, random_state=42).fit(X, y)
+    svm = SVCClass(kernel="linear", decision_function_shape='ovr',
+                   break_ties=True, random_state=42).fit(X, y)
     pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
     dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
     assert np.all(pred == np.argmax(dv, axis=1))
