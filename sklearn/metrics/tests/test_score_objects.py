@@ -108,7 +108,7 @@ def teardown_module():
     shutil.rmtree(TEMP_FOLDER)
 
 
-class EstimatorWithoutFit(object):
+class EstimatorWithoutFit:
     """Dummy estimator to test scoring validators"""
     pass
 
@@ -119,7 +119,7 @@ class EstimatorWithFit(BaseEstimator):
         return self
 
 
-class EstimatorWithFitAndScore(object):
+class EstimatorWithFitAndScore:
     """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
         return self
@@ -128,7 +128,7 @@ class EstimatorWithFitAndScore(object):
         return 1.0
 
 
-class EstimatorWithFitAndPredict(object):
+class EstimatorWithFitAndPredict:
     """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
         self.y = y
@@ -138,7 +138,7 @@ class EstimatorWithFitAndPredict(object):
         return self.y
 
 
-class DummyScorer(object):
+class DummyScorer:
     """Dummy scorer that always returns 1."""
     def __call__(self, est, X, y):
         return 1

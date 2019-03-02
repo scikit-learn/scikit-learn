@@ -29,10 +29,6 @@ def _parse_version(version_string):
     return tuple(version)
 
 
-# < numpy 1.8.0
-euler_gamma = getattr(np, 'euler_gamma',
-                      0.577215664901532860606512090082402431)
-
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
 
@@ -187,6 +183,18 @@ if np_version < (1, 13):
 else:
     def _object_dtype_isnan(X):
         return X != X
+
+
+# TODO: replace by copy=False, when only scipy > 1.1 is supported.
+def _astype_copy_false(X):
+    """Returns the copy=False parameter for
+    {ndarray, csr_matrix, csc_matrix}.astype when possible,
+    otherwise don't specify
+    """
+    if sp_version >= (1, 1) or not sp.issparse(X):
+        return {'copy': False}
+    else:
+        return {}
 
 
 def _joblib_parallel_args(**kwargs):

@@ -463,7 +463,7 @@ class SVC(BaseSVC):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
         as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
@@ -661,7 +661,7 @@ class NuSVC(BaseSVC):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
         as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
@@ -832,7 +832,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
         as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
@@ -894,9 +894,9 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> from sklearn.svm import SVR
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
     >>> clf = SVR(gamma='scale', C=1.0, epsilon=0.2)
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma='scale',
@@ -968,7 +968,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
         as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
@@ -1085,7 +1085,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
         as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma

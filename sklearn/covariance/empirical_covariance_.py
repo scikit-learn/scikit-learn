@@ -10,7 +10,6 @@ Maximum likelihood covariance estimator.
 # License: BSD 3 clause
 
 # avoid division truncation
-from __future__ import division
 import warnings
 import numpy as np
 from scipy import linalg
@@ -121,8 +120,8 @@ class EmpiricalCovariance(BaseEstimator):
     >>> from sklearn.datasets import make_gaussian_quantiles
     >>> real_cov = np.array([[.8, .3],
     ...                      [.3, .4]])
-    >>> np.random.seed(0)
-    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0],
     ...                                   cov=real_cov,
     ...                                   size=500)
     >>> cov = EmpiricalCovariance().fit(X)

@@ -44,7 +44,7 @@ DEFAULT_EPSILON = 0.1
 # Default value of ``epsilon`` parameter.
 
 
-class _ValidationScoreCallback(object):
+class _ValidationScoreCallback:
     """Callback for early stopping based on validation score"""
 
     def __init__(self, estimator, X_val, y_val, sample_weight_val,
@@ -665,7 +665,12 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
                 self.intercept_ = self.standard_intercept_
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
+        """Perform one epoch of stochastic gradient descent on given samples.
+
+        Internally, this method uses ``max_iter = 1``. Therefore, it is not
+        guaranteed that a minimum of the cost function is reached after calling
+        it once. Matters such as objective convergence and early stopping
+        should be handled by the user.
 
         Parameters
         ----------
@@ -1158,7 +1163,12 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         return self
 
     def partial_fit(self, X, y, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
+        """Perform one epoch of stochastic gradient descent on given samples.
+
+        Internally, this method uses ``max_iter = 1``. Therefore, it is not
+        guaranteed that a minimum of the cost function is reached after calling
+        it once. Matters such as objective convergence and early stopping
+        should be handled by the user.
 
         Parameters
         ----------
@@ -1549,9 +1559,9 @@ class SGDRegressor(BaseSGDRegressor):
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
     >>> clf = linear_model.SGDRegressor(max_iter=1000, tol=1e-3)
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE

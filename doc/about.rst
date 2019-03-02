@@ -33,6 +33,11 @@ in the FAQ.
 
 .. _citing-scikit-learn:
 
+Governance
+----------
+The decision making process and governance structure of scikit-learn is laid
+out in the `governance document <governance>`_.
+
 Citing scikit-learn
 -------------------
 
@@ -170,6 +175,8 @@ program.
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
 - 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
 - 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <https://yclin.me/>`_
+
+.. _Vlad Niculae: https://vene.ro/
 
 It also provided funding for sprints and events around scikit-learn. If
 you would like to participate in the next Google Summer of code

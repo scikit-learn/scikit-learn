@@ -22,8 +22,6 @@ MiniBatchKMeans. The document clusters derived from the biclusters
 achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
-from __future__ import print_function
-
 from collections import defaultdict
 import operator
 from time import time

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script is used in Travis to check that PRs do not add obvious
+# This script is used in CircleCI to check that PRs do not add obvious
 # flake8 violations. It relies on two things:
 #   - find common ancestor between branch and
 #     scikit-learn/scikit-learn remote
@@ -10,7 +10,7 @@
 # Additional features:
 #   - the line numbers in Travis match the local branch on the PR
 #     author machine.
-#   - ./build_tools/travis/flake8_diff.sh can be run locally for quick
+#   - ./build_tools/circle/flake8_diff.sh can be run locally for quick
 #     turn-around
 
 set -e
