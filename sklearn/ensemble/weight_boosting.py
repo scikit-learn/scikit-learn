@@ -362,8 +362,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     ...                            random_state=0, shuffle=False)
     >>> clf = AdaBoostClassifier(n_estimators=100, random_state=0)
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-        AdaBoostClassifier(algorithm='SAMME.R', base_estimator=None,
-                learning_rate=1.0, n_estimators=100, random_state=0)
+    AdaBoostClassifier(algorithm='SAMME.R', base_estimator=None,
+            learning_rate=1.0, n_estimators=100, random_state=0)
     >>> print(clf.feature_importances_)
     [[0.28, 0.42, 0.14, 0.16]]
     >>> print(clf.predict([[0, 0, 0, 0]]))
@@ -929,8 +929,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     ...                        random_state=0, shuffle=False)
     >>> regr = AdaBoostRegressor(random_state=0, n_estimators=100)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-        AdaBoostRegressor(base_estimator=None, learning_rate=1.0, loss='linear',
-                n_estimators=100, random_state=0)
+    AdaBoostRegressor(base_estimator=None, learning_rate=1.0, loss='linear',
+            n_estimators=100, random_state=0)
     >>> print(regr.feature_importances_)
     [0.27885832 0.71092234 0.00654703 0.00367231]
     >>> print(regr.predict([[0, 0, 0, 0]]))
