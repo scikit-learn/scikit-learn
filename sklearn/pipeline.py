@@ -110,7 +110,7 @@ class Pipeline(_BaseComposition):
     array([False, False,  True,  True, False, False,  True,  True, False,
            True, False,  True,  True, False,  True, False,  True,  True,
            False, False])
-    Indexing can also be used to extract a sub-pipeline.
+    >>> # Indexing can also be used to extract a sub-pipeline.
     >>> sub_pipeline = anova_svm[:1]
     >>> sub_pipeline  # doctest: +ELLIPSIS
     Pipeline(steps=[('anova', ...)])
