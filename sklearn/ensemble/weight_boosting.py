@@ -353,6 +353,24 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
 
+    Examples
+    --------
+    >>> from sklearn.ensemble import AdaBoostClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = AdaBoostClassifier(n_estimators=100, random_state=0)
+    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+        AdaBoostClassifier(algorithm='SAMME.R', base_estimator=None,
+                learning_rate=1.0, n_estimators=100, random_state=0)
+    >>> print(clf.feature_importances_)
+    [[0.28, 0.42, 0.14, 0.16]]
+    >>> print(clf.predict([[0, 0, 0, 0]]))
+    [1]
+    >>> print(clf.score(X,y))
+    0.983
+
     See also
     --------
     AdaBoostRegressor, GradientBoostingClassifier,
@@ -902,6 +920,22 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
+
+    Examples
+    --------
+    >>> from sklearn.ensemble import AdaBoostRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_features=4, n_informative=2,
+    ...                        random_state=0, shuffle=False)
+    >>> regr = AdaBoostRegressorr(max_depth=2, random_state=0,
+    ...                              n_estimators=100)
+    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+        AdaBoostRegressor(base_estimator=None, learning_rate=1.0, loss='linear',
+                n_estimators=100, random_state=0)
+    >>> print(regr.feature_importances_)
+    [0.27885832 0.71092234 0.00654703 0.00367231]
+    >>> print(regr.predict([[0, 0, 0, 0]]))
+    [4.79722349]
 
     See also
     --------
