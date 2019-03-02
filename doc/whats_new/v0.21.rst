@@ -315,6 +315,11 @@ Support for Python 3.4 and below has been officially dropped.
   making ``shuffle=True`` ineffective.
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+- |Fix| Fixed an issue in :func:`~model_selection.cross_val_predict` where
+  `method="predict_proba"` returned always `0.0` when one of the classes was
+  excluded in a cross-validation fold.
+  :issue:`13366` by :user:`Guillaume Fournier <gfournier>`
+
 :mod:`sklearn.multiclass`
 .........................
 
