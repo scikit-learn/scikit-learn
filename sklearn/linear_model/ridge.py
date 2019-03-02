@@ -370,19 +370,17 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     has_sw = sample_weight is not None
 
-    def _select_auto_mode():
+    if solver == 'auto':
         if return_intercept:
             # only sag supports fitting intercept directly
-            return "sag"
-        if has_sw:
+            solver = "sag"
+        elif has_sw:
             # this should be changed since all solvers support sample_weights
-            return "cholesky"
-        if sparse.issparse(X):
-            return "sparse_cg"
-        return "cholesky"
-
-    if solver == 'auto':
-        solver = _select_auto_mode()
+            solver = "cholesky"
+        elif sparse.issparse(X):
+            solver = "sparse_cg"
+        else:
+            solver = "cholesky"
 
     if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga'):
         raise ValueError('Solver %s not understood' % solver)
