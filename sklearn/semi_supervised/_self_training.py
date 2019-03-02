@@ -194,7 +194,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
 
             # Select samples where confidence is above the threshold
             confident_labels_mask = max_proba > self.threshold
-            new_labels_idx = np.flatnonzero(~has_label)[confident_labels_mask]
+            new_labels_idx = np.nonzero(~has_label)[0][confident_labels_mask]
 
             # Add newly labeled confident predictions to the dataset
             self.y_labels_[new_labels_idx] = pred[confident_labels_mask]
