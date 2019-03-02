@@ -196,11 +196,11 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     >>> import numpy as np
     >>> from sklearn.linear_model import HuberRegressor, LinearRegression
     >>> from sklearn.datasets import make_regression
-    >>> np.random.seed(0)
+    >>> rng = np.random.RandomState(0)
     >>> X, y, coef = make_regression(
     ...     n_samples=200, n_features=2, noise=4.0, coef=True, random_state=0)
-    >>> X[:4] = np.random.uniform(10, 20, (4, 2))
-    >>> y[:4] = np.random.uniform(10, 20, 4)
+    >>> X[:4] = rng.uniform(10, 20, (4, 2))
+    >>> y[:4] = rng.uniform(10, 20, 4)
     >>> huber = HuberRegressor().fit(X, y)
     >>> huber.score(X, y) # doctest: +ELLIPSIS
     -7.284608623514573
