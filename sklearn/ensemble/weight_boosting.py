@@ -365,7 +365,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     AdaBoostClassifier(algorithm='SAMME.R', base_estimator=None,
             learning_rate=1.0, n_estimators=100, random_state=0)
     >>> print(clf.feature_importances_)
-    [0.28, 0.42, 0.14, 0.16]
+    [0.28 0.42 0.14 0.16]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     >>> print(clf.score(X,y))
