@@ -1,15 +1,19 @@
 import pickle
+import itertools
+
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal
 from sklearn.neighbors.ball_tree import (BallTree, NeighborsHeap,
                                          simultaneous_sort, kernel_norm,
                                          nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
-from sklearn.utils.testing import SkipTest, assert_allclose
+from sklearn.utils import check_random_state
+from sklearn.utils.testing import assert_allclose
 
 rng = np.random.RandomState(10)
-V = rng.rand(3, 3)
-V = np.dot(V, V.T)
+V_mahalanobis = rng.rand(3, 3)
+V_mahalanobis = np.dot(V_mahalanobis, V_mahalanobis.T)
 
 DIMENSION = 3
 
@@ -17,9 +21,9 @@ METRICS = {'euclidean': {},
            'manhattan': {},
            'minkowski': dict(p=3),
            'chebyshev': {},
-           'seuclidean': dict(V=np.random.random(DIMENSION)),
-           'wminkowski': dict(p=3, w=np.random.random(DIMENSION)),
-           'mahalanobis': dict(V=V)}
+           'seuclidean': dict(V=rng.random_sample(DIMENSION)),
+           'wminkowski': dict(p=3, w=rng.random_sample(DIMENSION)),
+           'mahalanobis': dict(V=V_mahalanobis)}
 
 DISCRETE_METRICS = ['hamming',
                     'canberra',
@@ -41,65 +45,49 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     return dist, ind
 
 
-def test_ball_tree_query():
-    np.random.seed(0)
-    X = np.random.random((40, DIMENSION))
-    Y = np.random.random((10, DIMENSION))
+@pytest.mark.parametrize('metric', METRICS)
+@pytest.mark.parametrize('k', (1, 3, 5))
+@pytest.mark.parametrize('dualtree', (True, False))
+@pytest.mark.parametrize('breadth_first', (True, False))
+def test_ball_tree_query(metric, k, dualtree, breadth_first):
+    rng = check_random_state(0)
+    X = rng.random_sample((40, DIMENSION))
+    Y = rng.random_sample((10, DIMENSION))
 
-    def check_neighbors(dualtree, breadth_first, k, metric, kwargs):
-        bt = BallTree(X, leaf_size=1, metric=metric, **kwargs)
-        dist1, ind1 = bt.query(Y, k, dualtree=dualtree,
-                               breadth_first=breadth_first)
-        dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
+    kwargs = METRICS[metric]
 
-        # don't check indices here: if there are any duplicate distances,
-        # the indices may not match.  Distances should not have this problem.
-        assert_array_almost_equal(dist1, dist2)
+    bt = BallTree(X, leaf_size=1, metric=metric, **kwargs)
+    dist1, ind1 = bt.query(Y, k, dualtree=dualtree,
+                           breadth_first=breadth_first)
+    dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
 
-    for (metric, kwargs) in METRICS.items():
-        for k in (1, 3, 5):
-            for dualtree in (True, False):
-                for breadth_first in (True, False):
-                    yield (check_neighbors,
-                           dualtree, breadth_first,
-                           k, metric, kwargs)
+    # don't check indices here: if there are any duplicate distances,
+    # the indices may not match.  Distances should not have this problem.
+    assert_array_almost_equal(dist1, dist2)
 
 
-def test_ball_tree_query_boolean_metrics():
-    np.random.seed(0)
-    X = np.random.random((40, 10)).round(0)
-    Y = np.random.random((10, 10)).round(0)
+@pytest.mark.parametrize('metric',
+                         itertools.chain(BOOLEAN_METRICS, DISCRETE_METRICS))
+def test_ball_tree_query_metrics(metric):
+    rng = check_random_state(0)
+    if metric in BOOLEAN_METRICS:
+        X = rng.random_sample((40, 10)).round(0)
+        Y = rng.random_sample((10, 10)).round(0)
+    elif metric in DISCRETE_METRICS:
+        X = (4 * rng.random_sample((40, 10))).round(0)
+        Y = (4 * rng.random_sample((10, 10))).round(0)
+
     k = 5
 
-    def check_neighbors(metric):
-        bt = BallTree(X, leaf_size=1, metric=metric)
-        dist1, ind1 = bt.query(Y, k)
-        dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
-        assert_array_almost_equal(dist1, dist2)
-
-    for metric in BOOLEAN_METRICS:
-        yield check_neighbors, metric
-
-
-def test_ball_tree_query_discrete_metrics():
-    np.random.seed(0)
-    X = (4 * np.random.random((40, 10))).round(0)
-    Y = (4 * np.random.random((10, 10))).round(0)
-    k = 5
-
-    def check_neighbors(metric):
-        bt = BallTree(X, leaf_size=1, metric=metric)
-        dist1, ind1 = bt.query(Y, k)
-        dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
-        assert_array_almost_equal(dist1, dist2)
-
-    for metric in DISCRETE_METRICS:
-        yield check_neighbors, metric
+    bt = BallTree(X, leaf_size=1, metric=metric)
+    dist1, ind1 = bt.query(Y, k)
+    dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
+    assert_array_almost_equal(dist1, dist2)
 
 
 def test_ball_tree_query_radius(n_samples=100, n_features=10):
-    np.random.seed(0)
-    X = 2 * np.random.random(size=(n_samples, n_features)) - 1
+    rng = check_random_state(0)
+    X = 2 * rng.random_sample(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
 
     eps = 1E-15  # roundoff error can cause test to fail
@@ -117,8 +105,8 @@ def test_ball_tree_query_radius(n_samples=100, n_features=10):
 
 
 def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
-    np.random.seed(0)
-    X = 2 * np.random.random(size=(n_samples, n_features)) - 1
+    rng = check_random_state(0)
+    X = 2 * rng.random_sample(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
 
     eps = 1E-15  # roundoff error can cause test to fail
@@ -156,7 +144,21 @@ def compute_kernel_slow(Y, X, kernel, h):
         raise ValueError('kernel not recognized')
 
 
-def check_results(kernel, h, atol, rtol, breadth_first, bt, Y, dens_true):
+@pytest.mark.parametrize("kernel", ['gaussian', 'tophat', 'epanechnikov',
+                                    'exponential', 'linear', 'cosine'])
+@pytest.mark.parametrize("h", [0.01, 0.1, 1])
+@pytest.mark.parametrize("rtol", [0, 1E-5])
+@pytest.mark.parametrize("atol", [1E-6, 1E-2])
+@pytest.mark.parametrize("breadth_first", [True, False])
+def test_ball_tree_kde(kernel, h, rtol, atol, breadth_first, n_samples=100,
+                       n_features=3):
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((n_samples, n_features))
+    Y = rng.random_sample((n_samples, n_features))
+    bt = BallTree(X, leaf_size=10)
+
+    dens_true = compute_kernel_slow(Y, X, kernel, h)
+
     dens = bt.kernel_density(Y, h, atol=atol, rtol=rtol,
                              kernel=kernel,
                              breadth_first=breadth_first)
@@ -164,38 +166,16 @@ def check_results(kernel, h, atol, rtol, breadth_first, bt, Y, dens_true):
                     atol=atol, rtol=max(rtol, 1e-7))
 
 
-def test_ball_tree_kde(n_samples=100, n_features=3):
-    np.random.seed(0)
-    X = np.random.random((n_samples, n_features))
-    Y = np.random.random((n_samples, n_features))
-    bt = BallTree(X, leaf_size=10)
-
-    for kernel in ['gaussian', 'tophat', 'epanechnikov',
-                   'exponential', 'linear', 'cosine']:
-        for h in [0.01, 0.1, 1]:
-            dens_true = compute_kernel_slow(Y, X, kernel, h)
-
-            for rtol in [0, 1E-5]:
-                for atol in [1E-6, 1E-2]:
-                    for breadth_first in (True, False):
-                        yield (check_results, kernel, h, atol, rtol,
-                               breadth_first, bt, Y, dens_true)
-
-
 def test_gaussian_kde(n_samples=1000):
     # Compare gaussian KDE results to scipy.stats.gaussian_kde
     from scipy.stats import gaussian_kde
-    np.random.seed(0)
-    x_in = np.random.normal(0, 1, n_samples)
+    rng = check_random_state(0)
+    x_in = rng.normal(0, 1, n_samples)
     x_out = np.linspace(-5, 5, 30)
 
     for h in [0.01, 0.1, 1]:
         bt = BallTree(x_in[:, None])
-        try:
-            gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
-        except TypeError:
-            raise SkipTest("Old version of scipy, doesn't accept "
-                           "explicit bandwidth.")
+        gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
 
         dens_bt = bt.kernel_density(x_out[:, None], h) / n_samples
         dens_gkde = gkde.evaluate(x_out)
@@ -204,9 +184,9 @@ def test_gaussian_kde(n_samples=1000):
 
 
 def test_ball_tree_two_point(n_samples=100, n_features=3):
-    np.random.seed(0)
-    X = np.random.random((n_samples, n_features))
-    Y = np.random.random((n_samples, n_features))
+    rng = check_random_state(0)
+    X = rng.random_sample((n_samples, n_features))
+    Y = rng.random_sample((n_samples, n_features))
     r = np.linspace(0, 1, 10)
     bt = BallTree(X, leaf_size=10)
 
@@ -218,12 +198,12 @@ def test_ball_tree_two_point(n_samples=100, n_features=3):
         assert_array_almost_equal(counts, counts_true)
 
     for dualtree in (True, False):
-        yield check_two_point, r, dualtree
+        check_two_point(r, dualtree)
 
 
 def test_ball_tree_pickle():
-    np.random.seed(0)
-    X = np.random.random((10, 3))
+    rng = check_random_state(0)
+    X = rng.random_sample((10, 3))
 
     bt1 = BallTree(X, leaf_size=1)
     # Test if BallTree with callable metric is picklable
@@ -248,15 +228,17 @@ def test_ball_tree_pickle():
         assert_array_almost_equal(ind1_pyfunc, ind2_pyfunc)
         assert_array_almost_equal(dist1_pyfunc, dist2_pyfunc)
 
+        assert isinstance(bt2, BallTree)
+
     for protocol in (0, 1, 2):
-        yield check_pickle_protocol, protocol
+        check_pickle_protocol(protocol)
 
 
 def test_neighbors_heap(n_pts=5, n_nbrs=10):
     heap = NeighborsHeap(n_pts, n_nbrs)
 
     for row in range(n_pts):
-        d_in = np.random.random(2 * n_nbrs).astype(DTYPE)
+        d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE, copy=False)
         i_in = np.arange(2 * n_nbrs, dtype=ITYPE)
         for d, i in zip(d_in, i_in):
             heap.push(row, d, i)
@@ -272,7 +254,7 @@ def test_neighbors_heap(n_pts=5, n_nbrs=10):
 
 
 def test_node_heap(n_nodes=50):
-    vals = np.random.random(n_nodes).astype(DTYPE)
+    vals = rng.random_sample(n_nodes).astype(DTYPE, copy=False)
 
     i1 = np.argsort(vals)
     vals2, i2 = nodeheap_sort(vals)
@@ -282,8 +264,8 @@ def test_node_heap(n_nodes=50):
 
 
 def test_simultaneous_sort(n_rows=10, n_pts=201):
-    dist = np.random.random((n_rows, n_pts)).astype(DTYPE)
-    ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE)
+    dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE, copy=False)
+    ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE, copy=False)
 
     dist2 = dist.copy()
     ind2 = ind.copy()
@@ -302,8 +284,8 @@ def test_simultaneous_sort(n_rows=10, n_pts=201):
 
 
 def test_query_haversine():
-    np.random.seed(0)
-    X = 2 * np.pi * np.random.random((40, 2))
+    rng = check_random_state(0)
+    X = 2 * np.pi * rng.random_sample((40, 2))
     bt = BallTree(X, leaf_size=1, metric='haversine')
     dist1, ind1 = bt.query(X, k=5)
     dist2, ind2 = brute_force_neighbors(X, X, k=5, metric='haversine')

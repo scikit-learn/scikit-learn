@@ -41,10 +41,12 @@ for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
 
     plt.figure(fig_num)
     plt.clf()
-    plt.scatter(X[:, 0], X[:, 1], c=y, zorder=10, cmap=plt.cm.Paired)
+    plt.scatter(X[:, 0], X[:, 1], c=y, zorder=10, cmap=plt.cm.Paired,
+                edgecolor='k', s=20)
 
     # Circle out the test data
-    plt.scatter(X_test[:, 0], X_test[:, 1], s=80, facecolors='none', zorder=10)
+    plt.scatter(X_test[:, 0], X_test[:, 1], s=80, facecolors='none',
+                zorder=10, edgecolor='k')
 
     plt.axis('tight')
     x_min = X[:, 0].min()

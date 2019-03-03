@@ -32,9 +32,7 @@ from sklearn.neural_network import MLPClassifier
 h = .02  # step size in the mesh
 
 alphas = np.logspace(-5, 3, 5)
-names = []
-for i in alphas:
-    names.append('alpha ' + str(i))
+names = ['alpha ' + str(i) for i in alphas]
 
 classifiers = []
 for i in alphas:
@@ -95,10 +93,11 @@ for X, y in datasets:
         ax.contourf(xx, yy, Z, cmap=cm, alpha=.8)
 
         # Plot also the training points
-        ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright)
+        ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+                   edgecolors='black', s=25)
         # and testing points
         ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
-                   alpha=0.6)
+                   alpha=0.6, edgecolors='black', s=25)
 
         ax.set_xlim(xx.min(), xx.max())
         ax.set_ylim(yy.min(), yy.max())

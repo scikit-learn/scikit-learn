@@ -5,6 +5,16 @@ LocalOutlierFactor benchmark
 
 A test of LocalOutlierFactor on classical anomaly detection datasets.
 
+Note that LocalOutlierFactor is not meant to predict on a test set and its
+performance is assessed in an outlier detection context:
+1. The model is trained on the whole dataset which is assumed to contain
+outliers.
+2. The ROC curve is computed on the same dataset using the knowledge of the
+labels.
+In this context there is no need to shuffle the dataset because the model
+is trained and tested on the whole dataset. The randomness of this benchmark
+is only caused by the random selection of anomalies in the SA dataset.
+
 """
 
 from time import time
@@ -14,23 +24,21 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_mldata
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils import shuffle as sh
 
 print(__doc__)
 
-np.random.seed(2)
+random_state = 2  # to control the random selection of anomalies in SA
 
 # datasets available: ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-datasets = ['shuttle']
+datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
 
-novelty_detection = True  # if False, training set polluted by outliers
-
+plt.figure()
 for dataset_name in datasets:
     # loading and vectorization
     print('loading data')
     if dataset_name in ['http', 'smtp', 'SA', 'SF']:
-        dataset = fetch_kddcup99(subset=dataset_name, shuffle=True,
-                                 percent10=False)
+        dataset = fetch_kddcup99(subset=dataset_name, percent10=True,
+                                 random_state=random_state)
         X = dataset.data
         y = dataset.target
 
@@ -38,7 +46,6 @@ for dataset_name in datasets:
         dataset = fetch_mldata('shuttle')
         X = dataset.data
         y = dataset.target
-        X, y = sh(X, y)
         # we remove data with label 4
         # normal data are then those of class 1
         s = (y != 4)
@@ -47,7 +54,7 @@ for dataset_name in datasets:
         y = (y != 1).astype(int)
 
     if dataset_name == 'forestcover':
-        dataset = fetch_covtype(shuffle=True)
+        dataset = fetch_covtype()
         X = dataset.data
         y = dataset.target
         # normal data are those with attribute 2
@@ -61,54 +68,34 @@ for dataset_name in datasets:
 
     if dataset_name == 'SF':
         lb = LabelBinarizer()
-        lb.fit(X[:, 1])
-        x1 = lb.transform(X[:, 1])
+        x1 = lb.fit_transform(X[:, 1].astype(str))
         X = np.c_[X[:, :1], x1, X[:, 2:]]
-        y = (y != 'normal.').astype(int)
+        y = (y != b'normal.').astype(int)
 
     if dataset_name == 'SA':
         lb = LabelBinarizer()
-        lb.fit(X[:, 1])
-        x1 = lb.transform(X[:, 1])
-        lb.fit(X[:, 2])
-        x2 = lb.transform(X[:, 2])
-        lb.fit(X[:, 3])
-        x3 = lb.transform(X[:, 3])
+        x1 = lb.fit_transform(X[:, 1].astype(str))
+        x2 = lb.fit_transform(X[:, 2].astype(str))
+        x3 = lb.fit_transform(X[:, 3].astype(str))
         X = np.c_[X[:, :1], x1, x2, x3, X[:, 4:]]
-        y = (y != 'normal.').astype(int)
+        y = (y != b'normal.').astype(int)
 
     if dataset_name == 'http' or dataset_name == 'smtp':
-        y = (y != 'normal.').astype(int)
-
-    n_samples, n_features = np.shape(X)
-    n_samples_train = n_samples // 2
-    n_samples_test = n_samples - n_samples_train
+        y = (y != b'normal.').astype(int)
 
     X = X.astype(float)
-    X_train = X[:n_samples_train, :]
-    X_test = X[n_samples_train:, :]
-    y_train = y[:n_samples_train]
-    y_test = y[n_samples_train:]
-
-    if novelty_detection:
-        X_train = X_train[y_train == 0]
-        y_train = y_train[y_train == 0]
 
     print('LocalOutlierFactor processing...')
     model = LocalOutlierFactor(n_neighbors=20)
     tstart = time()
-    model.fit(X_train)
+    model.fit(X)
     fit_time = time() - tstart
-    tstart = time()
-
-    scoring = -model.decision_function(X_test)  # the lower, the more normal
-    predict_time = time() - tstart
-    fpr, tpr, thresholds = roc_curve(y_test, scoring)
+    scoring = -model.negative_outlier_factor_  # the lower, the more normal
+    fpr, tpr, thresholds = roc_curve(y, scoring)
     AUC = auc(fpr, tpr)
     plt.plot(fpr, tpr, lw=1,
-             label=('ROC for %s (area = %0.3f, train-time: %0.2fs,'
-                    'test-time: %0.2fs)' % (dataset_name, AUC, fit_time,
-                                            predict_time)))
+             label=('ROC for %s (area = %0.3f, train-time: %0.2fs)'
+                    % (dataset_name, AUC, fit_time)))
 
 plt.xlim([-0.05, 1.05])
 plt.ylim([-0.05, 1.05])

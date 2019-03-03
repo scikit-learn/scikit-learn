@@ -41,7 +41,7 @@ y = digits.target[indices[:330]]
 images = digits.images[indices[:330]]
 
 n_total_samples = len(y)
-n_labeled_points = 10
+n_labeled_points = 40
 max_iterations = 5
 
 unlabeled_indices = np.arange(n_total_samples)[n_labeled_points:]
@@ -54,7 +54,7 @@ for i in range(max_iterations):
     y_train = np.copy(y)
     y_train[unlabeled_indices] = -1
 
-    lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=5)
+    lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=20)
     lp_model.fit(X, y_train)
 
     predicted_labels = lp_model.transduction_[unlabeled_indices]
@@ -65,7 +65,8 @@ for i in range(max_iterations):
 
     print("Iteration %i %s" % (i, 70 * "_"))
     print("Label Spreading model: %d labeled & %d unlabeled (%d total)"
-          % (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples))
+          % (n_labeled_points, n_total_samples - n_labeled_points,
+             n_total_samples))
 
     print(classification_report(true_labels, predicted_labels))
 
@@ -82,7 +83,7 @@ for i in range(max_iterations):
         np.in1d(uncertainty_index, unlabeled_indices)][:5]
 
     # keep track of indices that we get labels for
-    delete_indices = np.array([])
+    delete_indices = np.array([], dtype=int)
 
     # for more than 5 iterations, visualize the gain only on the first 5
     if i < 5:
@@ -95,7 +96,7 @@ for i in range(max_iterations):
         # for more than 5 iterations, visualize the gain only on the first 5
         if i < 5:
             sub = f.add_subplot(5, 5, index + 1 + (5 * i))
-            sub.imshow(image, cmap=plt.cm.gray_r)
+            sub.imshow(image, cmap=plt.cm.gray_r, interpolation='none')
             sub.set_title("predict: %i\ntrue: %i" % (
                 lp_model.transduction_[image_index], y[image_index]), size=10)
             sub.axis('off')
@@ -108,6 +109,7 @@ for i in range(max_iterations):
     n_labeled_points += len(uncertainty_index)
 
 f.suptitle("Active learning with Label Propagation.\nRows show 5 most "
-           "uncertain labels to learn with the next model.")
-plt.subplots_adjust(0.12, 0.03, 0.9, 0.8, 0.2, 0.45)
+           "uncertain labels to learn with the next model.", y=1.15)
+plt.subplots_adjust(left=0.2, bottom=0.03, right=0.9, top=0.9, wspace=0.2,
+                    hspace=0.85)
 plt.show()

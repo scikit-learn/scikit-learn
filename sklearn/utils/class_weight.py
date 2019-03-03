@@ -3,10 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-from ..externals import six
-from ..utils.fixes import in1d
-
-from .fixes import bincount
 
 
 def compute_class_weight(class_weight, classes, y):
@@ -55,7 +51,7 @@ def compute_class_weight(class_weight, classes, y):
             raise ValueError("classes should have valid labels that are in y")
 
         recip_freq = len(y) / (len(le.classes_) *
-                               bincount(y_ind).astype(np.float64))
+                               np.bincount(y_ind).astype(np.float64))
         weight = recip_freq[le.transform(classes)]
     else:
         # user-defined dictionary
@@ -84,6 +80,12 @@ def compute_sample_weight(class_weight, y, indices=None):
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
 
+        Note that for multioutput (including multilabel) weights should be
+        defined for each class of every column in its own dict. For example,
+        for four-class multilabel classification weights should be
+        [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
+        [{1:1}, {2:5}, {3:1}, {4:1}].
+
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data:
         ``n_samples / (n_classes * np.bincount(y))``.
@@ -111,12 +113,12 @@ def compute_sample_weight(class_weight, y, indices=None):
         y = np.reshape(y, (-1, 1))
     n_outputs = y.shape[1]
 
-    if isinstance(class_weight, six.string_types):
+    if isinstance(class_weight, str):
         if class_weight not in ['balanced']:
             raise ValueError('The only valid preset for class_weight is '
                              '"balanced". Given "%s".' % class_weight)
     elif (indices is not None and
-          not isinstance(class_weight, six.string_types)):
+          not isinstance(class_weight, str)):
         raise ValueError('The only valid class_weight for subsampling is '
                          '"balanced". Given "%s".' % class_weight)
     elif n_outputs > 1:
@@ -147,12 +149,12 @@ def compute_sample_weight(class_weight, y, indices=None):
             y_subsample = y[indices, k]
             classes_subsample = np.unique(y_subsample)
 
-            weight_k = np.choose(np.searchsorted(classes_subsample,
-                                                 classes_full),
-                                 compute_class_weight(class_weight_k,
-                                                      classes_subsample,
-                                                      y_subsample),
-                                 mode='clip')
+            weight_k = np.take(compute_class_weight(class_weight_k,
+                                                    classes_subsample,
+                                                    y_subsample),
+                               np.searchsorted(classes_subsample,
+                                               classes_full),
+                               mode='clip')
 
             classes_missing = set(classes_full) - set(classes_subsample)
         else:
@@ -164,7 +166,7 @@ def compute_sample_weight(class_weight, y, indices=None):
 
         if classes_missing:
             # Make missing classes' weight zero
-            weight_k[in1d(y_full, list(classes_missing))] = 0.
+            weight_k[np.in1d(y_full, list(classes_missing))] = 0.
 
         expanded_class_weight.append(weight_k)
 

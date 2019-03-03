@@ -65,7 +65,8 @@ def bench_k_means(estimator, name, data):
              metrics.completeness_score(labels, estimator.labels_),
              metrics.v_measure_score(labels, estimator.labels_),
              metrics.adjusted_rand_score(labels, estimator.labels_),
-             metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
+             metrics.adjusted_mutual_info_score(labels,  estimator.labels_,
+                                                average_method='arithmetic'),
              metrics.silhouette_score(data, estimator.labels_,
                                       metric='euclidean',
                                       sample_size=sample_size)))
@@ -84,7 +85,7 @@ bench_k_means(KMeans(init=pca.components_, n_clusters=n_digits, n_init=1),
               data=data)
 print(82 * '_')
 
-###############################################################################
+# #############################################################################
 # Visualize the results on PCA-reduced data
 
 reduced_data = PCA(n_components=2).fit_transform(data)

@@ -15,8 +15,6 @@ Hungarian algorithm (also known as Munkres algorithm).
 
 import numpy as np
 
-from .fixes import astype
-
 
 def linear_assignment(X):
     """Solve the linear assignment problem using the Hungarian algorithm.
@@ -31,7 +29,7 @@ def linear_assignment(X):
 
     Returns
     -------
-    indices : array,
+    indices : array
         The pairs of (row, col) indices in the original array giving
         the original ordering.
 
@@ -62,7 +60,7 @@ def linear_assignment(X):
     return indices
 
 
-class _HungarianState(object):
+class _HungarianState:
     """State of one execution of the Hungarian algorithm.
 
     Parameters
@@ -93,16 +91,6 @@ class _HungarianState(object):
         self.Z0_c = 0
         self.path = np.zeros((n + m, 2), dtype=int)
         self.marked = np.zeros((n, m), dtype=int)
-
-    def _find_prime_in_row(self, row):
-        """
-        Find the first prime element in the specified row. Returns
-        the column index, or -1 if no starred element was found.
-        """
-        col = np.argmax(self.marked[row] == 2)
-        if self.marked[row, col] != 2:
-            col = -1
-        return col
 
     def _clear_covers(self):
         """Clear all covered matrix cells"""
@@ -193,7 +181,7 @@ def _step4(state):
     # We convert to int as numpy operations are faster on int
     C = (state.C == 0).astype(np.int)
     covered_C = C * state.row_uncovered[:, np.newaxis]
-    covered_C *= astype(state.col_uncovered, dtype=np.int, copy=False)
+    covered_C *= state.col_uncovered.astype(dtype=np.int, copy=False)
     n = state.C.shape[0]
     m = state.C.shape[1]
     while True:
@@ -215,7 +203,7 @@ def _step4(state):
                 state.row_uncovered[row] = False
                 state.col_uncovered[col] = True
                 covered_C[:, col] = C[:, col] * (
-                    astype(state.row_uncovered, dtype=np.int, copy=False))
+                    state.row_uncovered.astype(dtype=np.int, copy=False))
                 covered_C[row] = 0
 
 
