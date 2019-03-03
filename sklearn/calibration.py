@@ -603,19 +603,21 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
         weights_total = None
     else:
         sample_weight = check_array(sample_weight, ensure_2d=False)
-        check_consistent_length(y_true, sample_weight)        
+        check_consistent_length(y_true, sample_weight)
+
         # Check that the sample weights sum is positive
         if sample_weight.sum() <= 0:
             raise ValueError("Attempting to calibrate predicted probabilities "
                              "with a non-positive weighted number of samples.")
+
         weights_sums = sample_weight*y_prob
         weights_true = sample_weight*y_true
         weights_total = sample_weight
-    
+
     bin_sums = np.bincount(binids, weights=weights_sums, minlength=len(bins))
     bin_true = np.bincount(binids, weights=weights_true, minlength=len(bins))
     bin_total = np.bincount(binids, weights=weights_total, minlength=len(bins))
-    
+
     nonzero = bin_total != 0
     prob_true = (bin_true[nonzero] / bin_total[nonzero])
     prob_pred = (bin_sums[nonzero] / bin_total[nonzero])
