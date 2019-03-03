@@ -107,6 +107,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Number of iterations run.
 
+    mean_ : array, shape (n_features,)
+        Per-feature empirical mean, estimated from the training set.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits

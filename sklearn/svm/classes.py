@@ -111,6 +111,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
+
     Examples
     --------
     >>> from sklearn.svm import LinearSVC
@@ -555,6 +558,9 @@ class SVC(BaseSVC):
 
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
+    
+    classes_ : array of shape = [n_classes]
+        The classes labels.
 
     probA_ : array, shape = [n_class * (n_class-1) / 2]
     probB_ : array, shape = [n_class * (n_class-1) / 2]
@@ -738,6 +744,9 @@ class NuSVC(BaseSVC):
 
     intercept_ : array, shape = [n_class * (n_class-1) / 2]
         Constants in decision function.
+
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
 
     Examples
     --------

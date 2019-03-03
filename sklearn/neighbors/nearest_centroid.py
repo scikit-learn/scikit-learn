@@ -46,7 +46,10 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     Attributes
     ----------
     centroids_ : array-like, shape = [n_classes, n_features]
-        Centroid of each class
+        Centroid of each class.
+    
+    classes_ : array of shape = (n_classes,)
+        The unique classes labels.
 
     Examples
     --------

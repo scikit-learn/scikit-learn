@@ -441,6 +441,10 @@ class FastICA(BaseEstimator, TransformerMixin):
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge.
 
+    mean_ : array, shape (n_features,)
+        Per-feature empirical mean, estimated from the training set.
+
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
