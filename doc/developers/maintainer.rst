@@ -10,10 +10,35 @@ Before a release
 
    and commit.
 
+2. Confirm any blockers tagged for the milestone are resolved, and that other
+   issues tagged for the milestone can be postponed.
+
+3. Ensure the change log and commits correspond (within reason!), and that the
+   change log is reasonably well curated. Some tools for these tasks are at
+   https://github.com/scikit-learn/scikit-learn/pull/11800/files
+
+Preparing a bug-fix-release
+...........................
+
+Since any commits to a released branch (e.g. 0.999.X) will automatically update
+the web site documentation, it is best to develop a bug-fix release with a pull
+request in which 0.999.X is the base. It also allows you to keep track of any
+tasks towards release with a TO DO list.
+
+Most development of the bug fix release, and its documentation, should
+happen in master to avoid asynchrony. To select commits from master for use in
+the bug fix (version 0.999.3), you can use::
+
+    $ git checkout -b release-0.999.3 master
+    $ git rebase -i 0.999.X
+
+Then pick the commits for release and resolve any issues, and create a pull
+request with 0.999.X as base. Add a commit updating ``sklearn.__version__``.
+Additional commits can be cherry-picked into the ``release-0.999.3`` while
+preparing the release.
+
 Making a release
 ----------------
-For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-to-make-a-release
-
 
 1. Update docs:
 
@@ -22,18 +47,26 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
 
         $ git shortlog -ns 0.998..
 
+   - Update the release date in whats_new.rst
+
    - Edit the doc/index.rst to change the 'News' entry of the front page.
 
-2. Update the version number in sklearn/__init__.py, the __version__
-   variable
+   - Note that these changes should be made in master and cherry-picked into
+     the release branch.
+
+2. On the branch for releasing, update the version number in
+   sklearn/__init__.py, the ``__version__`` variable by removing ``dev*`` only
+   when ready to release.
+   On master, increment the verson in the same place (when branching for
+   release).
 
 3. Create the tag and push it::
 
-    $ git tag 0.999
+    $ git tag -a 0.999
 
-    $ git push origin --tags
+    $ git push https://github.com/scikit-learn/scikit-learn --tags
 
-4. create the source tarball:
+4. Create the source tarball:
 
    - Wipe clean your repo::
 
@@ -47,8 +80,8 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
    with the wheels. Check that you can install it in a new virtualenv and
    that the tests pass.
 
-5. Build binaries using dedicated CI servers by updating the git submodule
-   reference to the new scikit-learn tag of the release at:
+5. Update the dependency versions and set ``BUILD_COMMIT`` variable to the
+   release tag at:
 
    https://github.com/MacPython/scikit-learn-wheels
 
@@ -69,10 +102,28 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
 
        $ twine upload dist/
 
-6. Push the documentation to the website. Circle CI should do this
-   automatically for master and <N>.<N>.X branches.
+6. For major/minor (not bug-fix release), update the symlink for ``stable``
+   in https://github.com/scikit-learn/scikit-learn.github.io::
 
-7. FOR FINAL RELEASE: Update the release date in What's New
+       $ cd /tmp
+       $ git clone --depth 1 --no-checkout https://github.com/scikit-learn/scikit-learn.github.io
+       $ cd scikit-learn.github.io
+       $ echo stable > .git/info/sparse-checkout
+       $ git checkout master
+       $ ln -sf 0.999 stable
+       $ git push origin master
+
+The following GitHub checklist might be helpful in a release PR:
+
+    * [ ] update news and what's new date in master and release branch
+    * [ ] create tag
+    * [ ] update dependencies and release tag at https://github.com/MacPython/scikit-learn-wheels
+    * [ ] twine the wheels to PyPI when that's green
+    * [ ] https://github.com/scikit-learn/scikit-learn/releases draft
+    * [ ] confirm bot detected at https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
+    * [ ] https://github.com/scikit-learn/scikit-learn/releases publish
+    * [ ] announce on mailing list
+    * [ ] (regenerate Dash docs: https://github.com/Kapeli/Dash-User-Contributions/tree/master/docsets/Scikit)
 
 The scikit-learn.org web site
 -----------------------------
