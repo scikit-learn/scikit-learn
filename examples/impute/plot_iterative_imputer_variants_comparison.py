@@ -58,8 +58,8 @@ rng = np.random.RandomState(0)
 
 X_full, y_full = fetch_california_housing(return_X_y=True)
 # ~2k samples is enough for the purpose of the example.
-X_full = X_full[::10,]
-y_full = y_full[::10,]
+X_full = X_full[::10, ]
+y_full = y_full[::10, ]
 n_samples, n_features = X_full.shape
 
 # Estimate the score on the entire dataset, with no missing values
