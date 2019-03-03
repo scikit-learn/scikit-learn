@@ -6,16 +6,12 @@ implemented in 0.20.2 against implementation from PR #13290.
 """
 # Authors: Xavier Dupré (benchmark)
 # License: MIT
-from io import StringIO
 from time import perf_counter as time
 from itertools import combinations, chain
 from itertools import combinations_with_replacement as combinations_w_r
-import cProfile
-import pstats
 
 import numpy as np
 from numpy.random import rand
-from numpy.testing import assert_almost_equal
 import matplotlib.pyplot as plt
 import pandas
 from scipy import sparse
@@ -139,41 +135,50 @@ class CustomPolynomialFeatures(BaseEstimator, TransformerMixin):
             return XP
 
 
-def fcts_model(X, y):
-
-    model1 = SGDClassifier()
-    model2 = make_pipeline(PolynomialFeatures(), SGDClassifier())
-    model3 = make_pipeline(CustomPolynomialFeatures(kind='poly-fast'),
-                           SGDClassifier())
-    model4 = make_pipeline(CustomPolynomialFeatures(kind='poly-slow'),
-                           SGDClassifier())
-
-    model1.fit(PolynomialFeatures().fit_transform(X), y)
-    model2.fit(X, y)
-    model3.fit(X, y)
-    model4.fit(X, y)
-
-    def partial_fit_model1(X, y, model=model1):
+def measure_sgd_only(X_train, y_train, Xs, ys):
+    model = SGDClassifier()
+    model.fit(PolynomialFeatures().fit_transform(X_train), y_train)
+    Xs = [PolynomialFeatures().fit_transform(x) for x in Xs]
+    st = time()
+    for X, y in zip(Xs, ys):
         model.partial_fit(X, y)
-        return X
+    end = time()
+    return end - st
 
-    def partial_fit_model2(X, y, model=model2):
+
+def measure_sgd_poly_skl(X_train, y_train, Xs, ys):
+    model = make_pipeline(PolynomialFeatures(), SGDClassifier())
+    model.fit(X_train, y_train)
+    st = time()
+    for X, y in zip(Xs, ys):
         X2 = model.steps[0][1].transform(X)
         model.steps[1][1].partial_fit(X2, y)
-        return X2
+    end = time()
+    return end - st
 
-    def partial_fit_model3(X, y, model=model3):
+
+def measure_sgd_poly_fast(X_train, y_train, Xs, ys):
+    model = make_pipeline(CustomPolynomialFeatures(kind='poly-fast'),
+                          SGDClassifier())
+    model.fit(X_train, y_train)
+    st = time()
+    for X, y in zip(Xs, ys):
         X2 = model.steps[0][1].transform(X)
         model.steps[1][1].partial_fit(X2, y)
-        return X2
+    end = time()
+    return end - st
 
-    def partial_fit_model4(X, y, model=model4):
+
+def measure_sgd_poly_slow(X_train, y_train, Xs, ys):
+    model = make_pipeline(CustomPolynomialFeatures(kind='poly-slow'),
+                          SGDClassifier())
+    model.fit(X_train, y_train)
+    st = time()
+    for X, y in zip(Xs, ys):
         X2 = model.steps[0][1].transform(X)
         model.steps[1][1].partial_fit(X2, y)
-        return X2
-
-    return (partial_fit_model1, partial_fit_model2,
-            partial_fit_model3, partial_fit_model4)
+    end = time()
+    return end - st
 
 
 ##############################
@@ -193,19 +198,6 @@ def build_x_y(ntrain, nfeat):
     return X_train, y_train
 
 
-def doprofile(func, args):
-    "Profiles `func(*args)`."
-    pr = cProfile.Profile()
-    pr.enable()
-    func(*args)
-    pr.disable()
-    s = StringIO()
-    ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
-    ps.print_stats()
-    res = s.getvalue()
-    return res
-
-
 @ignore_warnings(category=FutureWarning)
 def bench(n_obs, n_features, repeat=1000, verbose=False, profiles=None):
     res = []
@@ -213,84 +205,26 @@ def bench(n_obs, n_features, repeat=1000, verbose=False, profiles=None):
         for nfeat in n_features:
 
             X_train, y_train = build_x_y(1000, nfeat)
-
             obs = dict(n_obs=n, nfeat=nfeat)
-
-            fct1, fct2, fct3, fct4 = fcts_model(X_train, y_train)
 
             # creates different inputs to avoid caching in any ways
             Xs = []
-            Xpolys = []
+            ys = []
             for r in range(repeat):
                 X, y = build_x_y(n, nfeat)
-                Xs.append((X, y))
-                Xpolys.append((PolynomialFeatures().fit_transform(X), y))
+                Xs.append(X)
+                ys.append(y)
 
-            # measure fct1
-            r = len(Xs)
-            st = time()
-            for X, y in Xpolys:
-                p1 = fct1(X, y)
-            end = time()
-            obs["time_sgd"] = (end - st) / r
+            t1 = measure_sgd_only(X_train, y_train, Xs, ys)
+            t2 = measure_sgd_poly_skl(X_train, y_train, Xs, ys)
+            t3 = measure_sgd_poly_fast(X_train, y_train, Xs, ys)
+            t4 = measure_sgd_poly_slow(X_train, y_train, Xs, ys)
+
+            obs["time_sgd"] = t1 / r
+            obs["time_pipe_skl"] = t2 / r
+            obs["time_pipe_fast"] = t3 / r
+            obs["time_pipe_slow"] = t4 / r
             res.append(obs)
-
-            # measures fct2
-            st = time()
-            for X, y in Xs:
-                p2 = fct2(X, y)
-            end = time()
-            obs["time_pipe_skl"] = (end - st) / r
-            res.append(obs)
-
-            # measures fct3
-            st = time()
-            for X, y in Xs:
-                p3 = fct3(X, y)
-            end = time()
-            obs["time_pipe_fast"] = (end - st) / r
-            res.append(obs)
-
-            # measures fct4
-            st = time()
-            for X, y in Xs:
-                p4 = fct4(X, y)
-            end = time()
-            obs["time_pipe_slow"] = (end - st) / r
-            res.append(obs)
-
-            # check for differences
-            assert_almost_equal(p1, p2)
-            assert_almost_equal(p1, p3)
-            assert_almost_equal(p1, p4)
-
-            if profiles and (n, nfeat) in profiles:
-                # next section prints the profiling of each function
-                # for a particular set (n, nfeat)
-                def repeat_fct(fct, X, y):
-                    for r in range(1000):
-                        fct(X, y)
-
-                sres = doprofile(lambda X, y: repeat_fct(fct1, X, y),
-                                 Xpolys[0])
-                if verbose:
-                    print("---- fct1_%d_%d.prof" % (n, nfeat))
-                    print(sres)
-
-                sres = doprofile(lambda X, y: repeat_fct(fct2, X, y), Xs[0])
-                if verbose:
-                    print("---- fct2_%d_%d.prof" % (n, nfeat))
-                    print(sres)
-
-                sres = doprofile(lambda X, y: repeat_fct(fct3, X, y), Xs[0])
-                if verbose:
-                    print("---- fct3_%d_%d.prof" % (n, nfeat))
-                    print(sres)
-
-                sres = doprofile(lambda X, y: repeat_fct(fct4, X, y), Xs[0])
-                if verbose:
-                    print("---- fct4_%d_%d.prof" % (n, nfeat))
-                    print(sres)
 
             if verbose and (len(res) % 1 == 0 or n >= 10000):
                 print("bench", len(res), ":", obs)
