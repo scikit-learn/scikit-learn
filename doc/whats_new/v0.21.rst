@@ -197,7 +197,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Enhancement| :class:`linear_model.make_dataset` now preserves
   ``float32`` and ``float64`` dtypes. :issue:`8769` and :issue:`11000` by
-  :user:`Nelle Varoquaux`, :user:`Arthur Imbert <Henley13>`,
+  :user:`Nelle Varoquaux <NelleV>`, :user:`Arthur Imbert <Henley13>`,
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Enhancement| :class:`linear_model.LogisticRegression` now supports an
@@ -437,7 +437,8 @@ Multiple modules
   :func:`sklearn.set_config`. :issue:`11705` by :user:`Nicolas Hug
   <NicolasHug>`.
 - |Efficiency| Memory copies are avoided when casting arrays to a different
-  dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak`.
+  dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
+  <rth>`.
 
 
 Changes to estimator checks
