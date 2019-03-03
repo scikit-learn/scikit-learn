@@ -1,4 +1,6 @@
 #!python
+# cython: language_level=3
+
 
 # KD Tree and Ball Tree
 # =====================
@@ -152,10 +154,10 @@ import numpy as np
 import warnings
 from ..utils import check_array
 
-from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from typedefs import DTYPE, ITYPE
+from .typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+from .typedefs import DTYPE, ITYPE
 
-from dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
+from .dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                            euclidean_dist_to_rdist, euclidean_rdist_to_dist)
 
 cdef extern from "numpy/arrayobject.h":
@@ -300,8 +302,8 @@ Examples
 Query for k-nearest neighbors
 
     >>> import numpy as np
-    >>> np.random.seed(0)
-    >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.random_sample((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP
     >>> dist, ind = tree.query(X[:1], k=3)                # doctest: +SKIP
     >>> print(ind)  # indices of 3 closest neighbors
@@ -314,8 +316,8 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
 
     >>> import numpy as np
     >>> import pickle
-    >>> np.random.seed(0)
-    >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.random_sample((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)        # doctest: +SKIP
     >>> s = pickle.dumps(tree)                     # doctest: +SKIP
     >>> tree_copy = pickle.loads(s)                # doctest: +SKIP
@@ -328,8 +330,8 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
 Query for neighbors within a given radius
 
     >>> import numpy as np
-    >>> np.random.seed(0)
-    >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.random_sample((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)     # doctest: +SKIP
     >>> print(tree.query_radius(X[:1], r=0.3, count_only=True))
     3
@@ -341,8 +343,8 @@ Query for neighbors within a given radius
 Compute a gaussian kernel density estimate:
 
     >>> import numpy as np
-    >>> np.random.seed(1)
-    >>> X = np.random.random((100, 3))
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.random_sample((100, 3))
     >>> tree = {BinaryTree}(X)                # doctest: +SKIP
     >>> tree.kernel_density(X[:3], h=0.1, kernel='gaussian')
     array([ 6.94114649,  7.83281226,  7.2071716 ])
@@ -350,8 +352,8 @@ Compute a gaussian kernel density estimate:
 Compute a two-point auto-correlation function
 
     >>> import numpy as np
-    >>> np.random.seed(0)
-    >>> X = np.random.random((30, 3))
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.random_sample((30, 3))
     >>> r = np.linspace(0, 1, 5)
     >>> tree = {BinaryTree}(X)                # doctest: +SKIP
     >>> tree.two_point_correlation(X, r)
@@ -999,7 +1001,7 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS
-from dist_metrics import get_valid_metric_ids
+from .dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 
