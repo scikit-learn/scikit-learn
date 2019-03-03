@@ -520,7 +520,7 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
 
 
 def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
-                      strategy='uniform'):
+                      strategy='uniform', sample_weight=None):
     """Compute true and predicted probabilities for a calibration curve.
 
     The method assumes the inputs come from a binary classifier.
@@ -554,6 +554,9 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
             All bins have identical widths.
         quantile
             All bins have the same number of points.
+
+    sample_weight : array-like, shape=(n_samples,), optional, default: None
+        Weights. If set to None, no sample weights will be applied.
 
     Returns
     -------
@@ -600,13 +603,11 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
         weights_total = None
     else:
         sample_weight = check_array(sample_weight, ensure_2d=False)
-        check_consistent_length(y_true, sample_weight)
-        
+        check_consistent_length(y_true, sample_weight)        
         # Check that the sample weights sum is positive
         if sample_weight.sum() <= 0:
-            raise ValueError("Attempting to calibrate predicted probabilities with a "
-                             "non-positive weighted number of samples.")
-
+            raise ValueError("Attempting to calibrate predicted probabilities "
+                             "with a non-positive weighted number of samples.")
         weights_sums = sample_weight*y_prob
         weights_true = sample_weight*y_true
         weights_total = sample_weight
