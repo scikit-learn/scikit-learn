@@ -658,7 +658,7 @@ def check_dtype_object(name, estimator_orig):
         # Refer to #11401 for full discussion.
         estimator.fit(X, y)
 
- 
+
 @ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
 def check_attribute_docstrings(name, estimator_orig):
     try:
@@ -673,7 +673,7 @@ def check_attribute_docstrings(name, estimator_orig):
     est = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(est, y)
     est.fit(X, y)
-    
+
     fitted_attrs = [(x, getattr(est, x, None))
                     for x in dir(est) if x.endswith("_")
                     and not x.startswith("_")]
@@ -692,12 +692,14 @@ def check_attribute_docstrings(name, estimator_orig):
                               'Remove the colon' % (att_name.lstrip())]
 
         if '*' not in att_name:
-            doc_attributes.append(name.split(':')[0].strip('` '))
+            doc_attributes.append(att_name.split(':')[0].strip('` '))
     assert incorrect == []
     fitted_attrs_names = [x[0] for x in fitted_attrs]
-            
+
     bad = sorted(list(set(fitted_attrs_names) ^ set(doc_attributes)))
-    assert bad == []
+    if len(bad) > 0:
+        msg = '{}\n'.format(name) + '\n'.join(bad)
+        raise AssertionError("Docstring Error: Attribute mismatch in " + msg)
 
 
 def check_complex_data(name, estimator_orig):
