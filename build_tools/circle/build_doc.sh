@@ -124,7 +124,11 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   joblib
 
 source activate testenv
-pip install scikit-image=="${SCIKIT_IMAGE_VERSION:-*}"
+if [[ -n "$SCIKIT_IMAGE_VERSION" ]]; then
+    pip install scikit-image=="$SCIKIT_IMAGE_VERSION"
+else
+    pip install scikit-image
+fi
 pip install sphinx-gallery
 pip install numpydoc==0.8
 
