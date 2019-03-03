@@ -107,6 +107,7 @@ def _yield_checks(name, estimator):
         yield check_sparsify_coefficients
 
     yield check_estimator_sparse_data
+    yield check_attribute_docstrings
 
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
@@ -656,6 +657,47 @@ def check_dtype_object(name, estimator_orig):
         # Checking for each element dtype in the input array will be costly.
         # Refer to #11401 for full discussion.
         estimator.fit(X, y)
+
+ 
+@ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
+def check_attribute_docstrings(name, estimator_orig):
+    try:
+        from numpydoc import docscrape
+    except ImportError:
+        raise SkipTest("numpydoc not installed, can't test docstrings")
+    # check that estimators treat dtype object as numeric if possible
+    rng = np.random.RandomState(0)
+    X = pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
+    X = X.astype(object)
+    y = (X[:, 0] * 4).astype(np.int)
+    est = clone(estimator_orig)
+    y = multioutput_estimator_convert_y_2d(est, y)
+    est.fit(X, y)
+    
+    fitted_attrs = [(x, getattr(est, x, None))
+                    for x in dir(est) if x.endswith("_")
+                    and not x.startswith("_")]
+    doc = docscrape.ClassDoc(type(est))
+    doc_attributes = []
+    incorrect = []
+    for att_name, type_definition, param_doc in doc['Attributes']:
+        if not type_definition.strip():
+            if ':' in att_name and att_name[:att_name.index(':')][-1:].strip():
+                incorrect += [name +
+                              ' There was no space between the param name and '
+                              'colon (%r)' % att_name]
+            elif name.rstrip().endswith(':'):
+                incorrect += [name +
+                              ' Parameter %r has an empty type spec. '
+                              'Remove the colon' % (att_name.lstrip())]
+
+        if '*' not in att_name:
+            doc_attributes.append(name.split(':')[0].strip('` '))
+    assert incorrect == []
+    fitted_attrs_names = [x[0] for x in fitted_attrs]
+            
+    bad = sorted(list(set(fitted_attrs_names) ^ set(doc_attributes)))
+    assert bad == []
 
 
 def check_complex_data(name, estimator_orig):
