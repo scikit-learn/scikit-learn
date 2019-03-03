@@ -119,6 +119,8 @@ Functions
    cluster.mean_shift
    cluster.spectral_clustering
    cluster.ward_tree
+   cluster.compute_optics_graph
+   cluster.cluster_optics_dbscan
 
 .. _bicluster_ref:
 
