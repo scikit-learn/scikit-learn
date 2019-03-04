@@ -364,11 +364,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     AdaBoostClassifier(algorithm='SAMME.R', base_estimator=None,
             learning_rate=1.0, n_estimators=100, random_state=0)
-    >>> print(clf.feature_importances_)
-    [0.28 0.42 0.14 0.16]
-    >>> print(clf.predict([[0, 0, 0, 0]]))
-    [1]
-    >>> print(clf.score(X,y))
+    >>> clf.feature_importances_
+    array([0.28 0.42 0.14 0.16])
+    >>> clf.predict([[0, 0, 0, 0]])
+    array([1])
+    >>> clf.score(X, y)
     0.983
 
     See also
@@ -931,10 +931,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     AdaBoostRegressor(base_estimator=None, learning_rate=1.0, loss='linear',
             n_estimators=100, random_state=0)
-    >>> print(regr.feature_importances_) # doctest: +ELLIPSIS
-    [0.2788... 0.7109... 0.0065... 0.0036...]
-    >>> print(regr.predict([[0, 0, 0, 0]]))
-    [4.7972...]
+    >>> regr.feature_importances_ # doctest: +ELLIPSIS
+    array([0.2788... 0.7109... 0.0065... 0.0036...])
+    >>> regr.predict([[0, 0, 0, 0]])
+    array([4.7972...])
 
     See also
     --------
