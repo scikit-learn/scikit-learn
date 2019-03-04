@@ -8,7 +8,7 @@ jobs:
   pool:
     vmImage: ${{ parameters.vmImage }}
   ${{ if eq(parameters.name, 'Linux32bit') }}:
-    container: quay.io/pypa/manylinux1_i686:latest
+    container: i386/ubuntu:18.04
   variables:
     # This if condition is only here to treat the 32-bit case separately, which
     # runs in its own docker container.
