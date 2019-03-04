@@ -97,12 +97,12 @@ estimators = [
     KNeighborsRegressor(n_neighbors=15)
 ]
 score_iterative_imputer = pd.DataFrame()
-for estimator in estimators:
+for impute_estimator in estimators:
     estimator = make_pipeline(
-        IterativeImputer(random_state=0, estimator=estimator),
+        IterativeImputer(random_state=0, estimator=impute_estimator),
         br_estimator
     )
-    score_iterative_imputer[estimator.__class__.__name__] = \
+    score_iterative_imputer[impute_estimator.__class__.__name__] = \
         cross_val_score(
             estimator, X_missing, y_missing, scoring='neg_mean_squared_error',
             cv=N_SPLITS
