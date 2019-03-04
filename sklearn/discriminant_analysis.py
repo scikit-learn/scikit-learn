@@ -339,7 +339,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.explained_variance_ratio_ = np.sort(evals / np.sum(evals)
                                                  )[::-1][:self._max_components]
         evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
-        evecs /= np.linalg.norm(evecs, axis=0)
 
         self.scalings_ = evecs
         self.coef_ = np.dot(self.means_, evecs).dot(evecs.T)
