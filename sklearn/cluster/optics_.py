@@ -567,9 +567,10 @@ def cluster_optics_xi(reachability, ordering, min_samples, min_cluster_size,
         to be at least 2).
 
     xi : float, between 0 and 1
-        The steepness threshold for the Xi method to detect Xi-steep
-        areas. Clusters are then hierarchically formed using these
-        areas.
+        Determines the minimum steepness on the reachability plot that
+        constitutes a cluster boundary. For example, an upwards point in the
+        reachability plot is defined by the ratio from one point to its
+        successor being at most 1-xi.
 
     Returns
     -------
@@ -776,7 +777,10 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
         the calculated ordering, all computed by OPTICS.
 
     xi : float, between 0 and 1
-        The main parameter in the Xi-steep method.
+        Determines the minimum steepness on the reachability plot that
+        constitutes a cluster boundary. For example, an upwards point in the
+        reachability plot is defined by the ratio from one point to its
+        successor being at most 1-xi.
 
     min_samples : integer
        The same as the min_samples given to OPTICS. Up and down steep
