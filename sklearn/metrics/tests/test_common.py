@@ -307,6 +307,7 @@ METRICS_WITH_POS_LABEL = {
     "brier_score_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+    "jaccard_score",
 
     "average_precision_score",
     "weighted_average_precision_score",
