@@ -1422,8 +1422,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
 
         X, Y = check_pairwise_arrays(X, Y)
 
-        # if distance metric to be calculated is from PAIRWISE BOOLEAN FUNCTIONS
-        # convert matrix type to boolean
+        # if distance metric to be calculated is from
+        # PAIRWISE BOOLEAN FUNCTIONS convert matrix type
+        # to boolean
         if metric in PAIRWISE_BOOLEAN_FUNCTIONS:
             X, Y = X.astype(bool), Y.astype(bool)
 
