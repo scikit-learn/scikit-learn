@@ -675,15 +675,10 @@ class OneHotEncoder(_BaseEncoder):
 
     def _transform_new(self, X):
         """New implementation assuming categorical input"""
-        X_temp = check_array(X, dtype=None)
-        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, np.str_):
-            X = check_array(X, dtype=np.object)
-        else:
-            X = X_temp
-
-        n_samples, n_features = X.shape
-
+        # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+
+        n_samples, n_features = X_int.shape
 
         if self.drop is not None:
             to_drop = self.drop_idx_.reshape(1, -1)
