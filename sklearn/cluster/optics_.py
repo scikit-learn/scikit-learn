@@ -260,7 +260,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
             labels_, _ = cluster_optics_xi(self.reachability_, self.ordering_,
                                            self.min_samples,
                                            self.min_cluster_size, self.xi)
-            indices_ = None
         elif self.cluster_method == 'dbscan':
             labels_ = cluster_optics_dbscan(self.reachability_,
                                             self.core_distances_,
@@ -548,7 +547,7 @@ def cluster_optics_xi(reachability, ordering, min_samples, min_cluster_size,
     """Automatically extract clusters according to the Xi-steep method.
 
     Parameters
-    ---------- 
+    ----------
     reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
 
