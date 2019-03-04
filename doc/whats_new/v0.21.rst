@@ -194,7 +194,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a performance issue of ``saga`` and ``sag`` solvers when called
   in a :class:`joblib.Parallel` setting with ``n_jobs > 1`` and
   ``backend="threading"``, causing them to perform worse than in the sequential
-  case. :issue:`13316` by :user:`Pierre Glaser <pierreglaser>`.
+  case. :issue:`13389` by :user:`Pierre Glaser <pierreglaser>`.
 
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
