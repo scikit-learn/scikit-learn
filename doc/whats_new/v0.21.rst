@@ -242,6 +242,15 @@ Support for Python 3.4 and below has been officially dropped.
   broken when X was of dtype bool.
   :issue:`13328` by `Alexandre Gramfort`_.
 
+- |Feature| Added :class:`linear_model.lars_path_gram`, which is
+  :class: `linear_model.lars_path` in the sufficient stats mode, allowing
+  users to compute :class:`linear_model.lars_path` without providing
+  ``X`` and ``y`` by :user:`Kuai Yu <yukuairoy>`.
+
+- |API|  The use of ``X`` is ``None`` in combination with ``Gram`` is not
+  ``None`` in :class:`linear_model.lars_path` is deprecated in version 0.21
+  and will be removed in version 0.23.
+  :user:`Kuai Yu <yukuairoy>`.
 
 :mod:`sklearn.manifold`
 ............................

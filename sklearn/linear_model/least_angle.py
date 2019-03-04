@@ -50,7 +50,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
         .. deprecated:: 0.21
 
            The use of ``X`` is ``None`` in combination with ``Gram`` is not
-           None will be removed in v0.23. Use :func:`lars_path_gram` instead.
+           ``None`` will be removed in v0.23. Use :func:`lars_path_gram` instead.
 
     y : None or array, shape (n_samples,)
         Input targets.
