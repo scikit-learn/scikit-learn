@@ -315,22 +315,37 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
                                 "the case step_size * alpha_scaled == 1")
 
     sag = sag64 if X.dtype == np.float64 else sag32
-    num_seen, n_iter_ = sag(dataset, coef_init,
-                            intercept_init, n_samples,
-                            n_features, n_classes, tol,
-                            max_iter,
-                            loss,
-                            step_size, alpha_scaled,
-                            beta_scaled,
-                            sum_gradient_init,
-                            gradient_memory_init,
-                            seen_init,
-                            num_seen_init,
-                            fit_intercept,
-                            intercept_sum_gradient,
-                            intercept_decay,
-                            is_saga,
-                            verbose)
+    status, num_seen, n_iter_ = sag(dataset, coef_init,
+                                    intercept_init, n_samples,
+                                    n_features, n_classes, tol,
+                                    max_iter,
+                                    loss,
+                                    step_size, alpha_scaled,
+                                    beta_scaled,
+                                    sum_gradient_init,
+                                    gradient_memory_init,
+                                    seen_init,
+                                    num_seen_init,
+                                    fit_intercept,
+                                    intercept_sum_gradient,
+                                    intercept_decay,
+                                    is_saga,
+                                    verbose)
+
+    # sag internally releases the GIL at the beginning of its execution. If a
+    # numerical error happens, do not raise an error from inside sag, as it
+    # implies re-aquiring the GIL, the consequence being that if multiple
+    # python threads are running sag - via a Parallel(backend="threading") call
+    # for example, Cython's branch prediction will make them unnecessarily race
+    # for the GIL at a high frequency (as numerical checks happen inside a for
+    # loop), which can considerably slow down the execution (see #13316).
+    # Instead numerical errors are propagated via the status return code, and
+    # handled after sag finishes.
+    if status == -1:
+        raise ValueError("Floating-point under-/overflow occurred at "
+                         "epoch #%d. Lowering the step_size or "
+                         "scaling the input data with StandardScaler "
+                         "or MinMaxScaler might help." % (n_iter_ + 1))
 
     if n_iter_ == max_iter:
         warnings.warn("The max_iter was reached which means "
