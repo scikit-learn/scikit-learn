@@ -677,9 +677,9 @@ def test_ordinal_all_nan_raises_error():
 
 @pytest.mark.parametrize("X, exp_cats", [
     (np.array([[1, 2, 1, 2, np.nan]]).T,
-    [np.array([1, 2])]),
+     [np.array([1, 2])]),
     (np.array([['a', 'b', 'a', 'b', np.nan]], dtype=object).T,
-    [np.array(['a', 'b'])]),
+     [np.array(['a', 'b'])]),
     ], ids=['numeric', 'object'])
 def test_ordinal_encoder_nan_not_in_categories(X, exp_cats):
     enc = OrdinalEncoder(encode_missing='retain')
@@ -690,9 +690,9 @@ def test_ordinal_encoder_nan_not_in_categories(X, exp_cats):
 
 @pytest.mark.parametrize("X, exp_cats", [
     (np.array([[1, 2, 1, 2, np.nan]]).T,
-    [np.array([1, 2, np.nan])]),
+     [np.array([1, 2, np.nan])]),
     (np.array([['a', 'b', 'a', 'b', np.nan]], dtype=object).T,
-    [np.array(['a', 'b', np.nan], dtype=object)]),
+     [np.array(['a', 'b', np.nan], dtype=object)]),
     ], ids=['numeric', 'object'])
 def test_ordinal_encoder_nan_in_categories(X, exp_cats):
     enc = OrdinalEncoder(encode_missing='encode')
@@ -702,7 +702,8 @@ def test_ordinal_encoder_nan_in_categories(X, exp_cats):
 
 
 @pytest.mark.parametrize("X", [np.array([[1, 2, np.nan, np.nan]]).T,
-                               np.array([['a', 'b', np.nan, np.nan]], dtype=object).T],
+                               np.array([['a', 'b', np.nan, np.nan]],
+                               dtype=object).T],
                          ids=['numeric', 'object'])
 def test_ordinal_encoder_retain_missing(X):
     enc = OrdinalEncoder(encode_missing='retain')
@@ -723,7 +724,8 @@ def test_ordinal_encoder_handle_multiple_nan_vals(X, exp_cats):
 
 
 @pytest.mark.parametrize("X", [np.array([[1, 2, np.nan, np.nan]]).T,
-                               np.array([['a', 'b', np.nan, np.nan]], dtype=object).T],
+                               np.array([['a', 'b', np.nan, np.nan]],
+                               dtype=object).T],
                          ids=['numeric', 'object'])
 def test_ordinal_encoder_encode_missing(X):
     enc = OrdinalEncoder(encode_missing="encode")

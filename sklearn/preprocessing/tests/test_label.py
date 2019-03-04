@@ -616,7 +616,8 @@ def test_encode_util(values, expected):
           np.array(['a', 'b', 'c', np.nan], dtype=object),
           np.array([1, 0, 2, 0, 2, 3]))],
         ids=['numeric', 'object'])
-def test_encode_util_with_encode_nan(values, expected_uniques, expected_encoded):
+def test_encode_util_with_encode_nan(values, expected_uniques,
+                                     expected_encoded):
     # object dtype fails, but appears that arrays are the same. passes on
     # last encoding computation
     uniques = _encode(values)

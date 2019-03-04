@@ -836,7 +836,6 @@ class OrdinalEncoder(_BaseEncoder):
             else:
                 new_cats.append(cats[~missing_mask])
 
-
         self.categories_ = new_cats
 
         return self
@@ -870,7 +869,8 @@ class OrdinalEncoder(_BaseEncoder):
                 X_new[:, i][missing_column] = self.categories_[i][0]
 
         # Replace masked NaN's
-        X_int, _ = self._transform(X_new, force_all_finite=self.force_all_finite)
+        X_int, _ = self._transform(X_new,
+                                   force_all_finite=self.force_all_finite)
         X_encoded = X_int.astype(self.dtype, copy=True)
         if np.any(missing_mask):
             for i in range(X_encoded.shape[1]):
@@ -883,7 +883,6 @@ class OrdinalEncoder(_BaseEncoder):
                         X_encoded[:, i][missing_column] = np.nan
 
         return X_encoded
-
 
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
