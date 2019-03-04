@@ -1,3 +1,4 @@
+
 from time import time
 
 from scipy import sparse
@@ -12,28 +13,35 @@ from nmf_original import NMFOriginal
 from nmf_original import non_negative_factorization
 
 import matplotlib.pyplot as plt
-from dirty_cat.datasets import fetch_traffic_violations
 
-dataset = 'wiki'
+limit = 1000000
+j = 0
+articles = []
+file = 'enwiki_1M_first_paragraphs.csv'
+for i, line in enumerate(open('enwiki_preprocessed_with_articles_markup.txt')):
+    if line.startswith('<article'):
+        article = ''
+        print(line)
+        continue
+    if line.startswith('</article>'):
+        articles.append(article)
+        continue
+    if article == '':
+        article = line
+    if len(articles) >= limit:
+        break
+df = pd.DataFrame(articles)
+df.to_csv('%d_first_paragraphs.csv' % len(articles))
 
-try:
-    X = sparse.load_npz('X.npz')
-except FileNotFoundError:
-    if dataset == 'wiki':
-        df = pd.read_csv('/home/pcerda/parietal/online_nmf/scikit-learn/' +
-                         'enwiki_1000000_first_paragraphs.csv')
-        cats = df['0'].sample(frac=1, random_state=5).astype(str)
-        counter = HashingVectorizer(analyzer='word', ngram_range=(1, 1),
-                                    n_features=2**12, norm=None,
-                                    alternate_sign=False)
-    elif dataset == 'traffic_violations':
-        data = fetch_traffic_violations()
-        df = pd.read_csv(data['path'])
-        cats = df['Model'].sample(frac=1, random_state=5).astype(str).values
-        counter = CountVectorizer(analyzer='char', ngram_range=(3, 3))
-    X = counter.fit_transform(cats)
-    # sparse.save_npz('X.npz', X)
-
+# Donload file from:
+# https://filesender.renater.fr/?s=download&token=88222d6d-5aee-c59b-4f34-c233b4d184e1
+df = pd.read_csv('/home/pcerda/parietal/online_nmf/scikit-learn/' +
+                 'enwiki_1000000_first_paragraphs.csv')
+cats = df['0'].sample(frac=1, random_state=5).astype(str)
+counter = HashingVectorizer(analyzer='word', ngram_range=(1, 1),
+                            n_features=2**12, norm=None,
+                            alternate_sign=False)
+X = counter.fit_transform(cats)
 n_components = 10
 beta_loss = 'kullback-leibler'
 n_train = 300000
@@ -122,14 +130,10 @@ plt.legend(labels=['NMF', 'Mini-batch NMF'], fontsize=fontsize)
 plt.tick_params(axis='both', which='major', labelsize=fontsize-2)
 plt.xlabel('Time (seconds)', fontsize=fontsize)
 plt.ylabel(beta_loss, fontsize=fontsize)
-
-if dataset == 'traffic_violations':
-    title = 'Traffic Violations; Column: Model'
-elif dataset == 'wiki':
-    title = 'Wikipedia articles (first paragraph)'
+title = 'Wikipedia articles (first paragraph)'
 ax.set_title(title, fontsize=fontsize+4)
 
-figname = 'benchmark_nmf_%s.pdf' % dataset
+figname = 'benchmark_nmf_wikipedia_articles.pdf'
 print('Saving: ' + figname)
 plt.savefig(figname,
             transparent=False, bbox_inches='tight', pad_inches=0)
