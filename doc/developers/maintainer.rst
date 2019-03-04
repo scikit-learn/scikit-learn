@@ -34,8 +34,8 @@ the bug fix (version 0.999.3), you can use::
 
 Then pick the commits for release and resolve any issues, and create a pull
 request with 0.999.X as base. Add a commit updating ``sklearn.__version__``.
-Additional commits can be cherry-picked into the ``release-0.999.3`` while
-preparing the release.
+Additional commits can be cherry-picked into the ``release-0.999.3`` branch
+while preparing the release.
 
 Making a release
 ----------------
@@ -64,7 +64,7 @@ Making a release
 
     $ git tag -a 0.999
 
-    $ git push https://github.com/scikit-learn/scikit-learn --tags
+    $ git push git@github.com:scikit-learn/scikit-learn.git --tags
 
 4. Create the source tarball:
 
@@ -92,7 +92,7 @@ Making a release
        $ pip install -U wheelhouse_uploader twine
        $ python setup.py fetch_artifacts
 
-   Check the content of the `dist/` folder: it should contain all the wheels
+6. Check the content of the `dist/` folder: it should contain all the wheels
    along with the source tarball ("scikit-learn-XXX.tar.gz").
 
    Make sure that you do not have developer versions or older versions of
@@ -102,18 +102,18 @@ Making a release
 
        $ twine upload dist/
 
-6. For major/minor (not bug-fix release), update the symlink for ``stable``
+7. For major/minor (not bug-fix release), update the symlink for ``stable``
    in https://github.com/scikit-learn/scikit-learn.github.io::
 
        $ cd /tmp
-       $ git clone --depth 1 --no-checkout https://github.com/scikit-learn/scikit-learn.github.io
+       $ git clone --depth 1 --no-checkout git@github.com:scikit-learn/scikit-learn.github.io.git
        $ cd scikit-learn.github.io
        $ echo stable > .git/info/sparse-checkout
        $ git checkout master
        $ ln -sf 0.999 stable
        $ git push origin master
 
-The following GitHub checklist might be helpful in a release PR:
+The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in master and release branch
     * [ ] create tag
