@@ -1,11 +1,9 @@
 
 from time import time
-
-from scipy import sparse
 import pandas as pd
 
 from sklearn.decomposition.nmf import _beta_divergence
-from sklearn.feature_extraction.text import CountVectorizer, HashingVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.utils import gen_batches
 
 from nmf import NMF
@@ -14,28 +12,9 @@ from nmf_original import non_negative_factorization
 
 import matplotlib.pyplot as plt
 
-limit = 1000000
-j = 0
-articles = []
-file = 'enwiki_1M_first_paragraphs.csv'
-for i, line in enumerate(open('enwiki_preprocessed_with_articles_markup.txt')):
-    if line.startswith('<article'):
-        article = ''
-        print(line)
-        continue
-    if line.startswith('</article>'):
-        articles.append(article)
-        continue
-    if article == '':
-        article = line
-    if len(articles) >= limit:
-        break
-df = pd.DataFrame(articles)
-df.to_csv('%d_first_paragraphs.csv' % len(articles))
-
 # Donload file from:
 # https://filesender.renater.fr/?s=download&token=88222d6d-5aee-c59b-4f34-c233b4d184e1
-df = pd.read_csv('enwiki_1000000_first_paragraphs.csv')
+df = pd.read_csv('enwiki_1M_first_paragraphs.csv')
 cats = df['0'].sample(frac=1, random_state=5).astype(str)
 counter = HashingVectorizer(analyzer='word', ngram_range=(1, 1),
                             n_features=2**12, norm=None,
