@@ -95,9 +95,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
         as in the same neighborhood. Used ony when `cluster_method='dbscan'`.
 
     xi : float, between 0 and 1
-        The steepness threshold for the Xi method to detect Xi-steep
-        areas. Clusters are then hierarchically formed using these
-        areas. It is used when ``cluster_method='xi'``.
+        For cluster_method='xi'. Determines the minimum steepness on the
+        reachability plot that constitutes a cluster boundary. For example, an
+        upwards point in the reachability plot is defined by the ratio from one
+        point to its successor being at most 1-xi.
 
     min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
         Minimum number of samples in an OPTICS cluster, expressed as an
@@ -167,6 +168,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     .. [2] Schubert, Erich, Michael Gertz.
        "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
+
     """
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
@@ -554,11 +556,6 @@ def cluster_optics_xi(reachability, ordering, min_samples, min_cluster_size,
     ordering : array, shape (n_samples,)
         OPTICS ordered point indices (`ordering_`)
 
-    xi : float, between 0 and 1
-        The steepness threshold for the Xi method to detect Xi-steep
-        areas. Clusters are then hierarchically formed using these
-        areas.
-
     min_samples : integer
        The same as the min_samples given to OPTICS. Up and down steep
        regions can't have more then `min_samples` consecutive non-steep
@@ -569,9 +566,10 @@ def cluster_optics_xi(reachability, ordering, min_samples, min_cluster_size,
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
 
-    return_clusters : bool
-        Return the clusters as well as the labels. If `False`, it will
-        only return the labels.
+    xi : float, between 0 and 1
+        The steepness threshold for the Xi method to detect Xi-steep
+        areas. Clusters are then hierarchically formed using these
+        areas.
 
     Returns
     -------
