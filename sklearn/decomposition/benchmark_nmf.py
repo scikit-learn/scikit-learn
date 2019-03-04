@@ -22,7 +22,7 @@ counter = HashingVectorizer(analyzer='word', ngram_range=(1, 1),
 X = counter.fit_transform(cats)
 n_components = 10
 beta_loss = 'kullback-leibler'
-n_train = 200000
+n_train = 500000
 n_test = 10000
 batch_size = 10000
 random_state = 12
@@ -31,7 +31,7 @@ X_test = X[:n_test, :]
 X = X[n_test:n_train + n_test, :]
 
 max_iter_nmf = [1, 5, 10, 30, 50, 100]
-n_iter_minibatch_nmf = 10
+n_iter_minibatch_nmf = 50
 
 
 def get_optimal_w(X, H):
@@ -64,18 +64,14 @@ for n_iter in range(n_iter_minibatch_nmf):
         minibatch_nmf.partial_fit(X[slice])
         tf = time() - t0
         total_time += tf
-        if ((j % 11 == 9) and (n_iter == 0)) or j == n_batch - 1:
+        if ((j % 11 == 9) and (n_iter <= 1)) or j == n_batch - 1:
             time_nmf.append(total_time)
             W = get_optimal_w(X_test, minibatch_nmf.components_)
             loss = _beta_divergence(X_test, W, minibatch_nmf.components_,
                                     minibatch_nmf.beta_loss) / n_test
             loss_nmf.append(loss)
-            if j == n_batch - 1:
-                plt.plot(time_nmf[-1], loss_nmf[-1],
-                         'b', marker='o')
-            else:
-                plt.plot(time_nmf[-1], loss_nmf[-1],
-                         'b', marker='+')
+            plt.plot(time_nmf, loss_nmf, 'b', marker='o',
+                     label='Mini-batch NMF')
             plt.pause(.01)
 
     print('Time MiniBatchNMF: %.1fs.' % total_time)
@@ -100,18 +96,20 @@ for i, max_iter in enumerate(max_iter_nmf):
                             nmf.beta_loss) / n_test
     loss_nmf.append(loss)
     print('KL-div NMF: %.2f' % loss)
-    plt.plot(time_nmf, loss_nmf, 'r', marker='o')
+    plt.plot(time_nmf, loss_nmf, 'r', marker='o', label='NMF')
     plt.pause(.01)
     del W
 
-plt.legend(labels=['NMF', 'Mini-batch NMF'], fontsize=fontsize)
+handles, labels = ax.get_legend_handles_labels()
+plt.legend(handles=(handles[-1], handles[0]),
+           labels=(labels[-1], labels[0]), fontsize=fontsize)
 plt.tick_params(axis='both', which='major', labelsize=fontsize-2)
 plt.xlabel('Time (seconds)', fontsize=fontsize)
 plt.ylabel(beta_loss, fontsize=fontsize)
 title = 'Wikipedia articles (first paragraph)'
 ax.set_title(title, fontsize=fontsize+4)
 
-figname = 'benchmark_nmf_wikipedia_articles.pdf'
+figname = 'benchmark_nmf_wikipedia_articles.png'
 print('Saving: ' + figname)
 plt.savefig(figname,
             transparent=False, bbox_inches='tight', pad_inches=0)
