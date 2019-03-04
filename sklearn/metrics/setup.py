@@ -14,7 +14,8 @@ def configuration(parent_package="", top_path=None):
 
     config.add_extension("pairwise_fast",
                          sources=["pairwise_fast.pyx"],
-                         libraries=libraries)
+                         libraries=libraries,
+                         extra_compile_args=['-Ofast', '-ftree-vectorize', '-fopt-info-vec-all'])
 
     config.add_subpackage('tests')
 

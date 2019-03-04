@@ -8,10 +8,11 @@
 #
 # License: BSD 3 clause
 
-from libc.string cimport memset
 import numpy as np
 cimport numpy as np
 from cython cimport floating
+from libc.string cimport memset
+from libc.math cimport sqrt
 
 from ..utils._cython_blas cimport _asum
 
@@ -67,3 +68,89 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
                     row[Y_indices[j]] -= Y_data[j]
 
                 D[ix, iy] = _asum(n_features, &row[0], 1)
+
+
+cpdef _euclidean_distances_exact(floating[:, ::1] X,
+                                 floating[:, ::1] Y,
+                                 floating[:, ::1] D,
+                                 bint squared):
+    cdef:
+        int n_samples_X = X.shape[0]
+        int n_samples_Y = Y.shape[0]
+        int n_features = X.shape[1]
+        int i, j, k
+
+    for i in range(n_samples_X):
+        for j in range(n_samples_Y):
+            D[i, j] = _euclidean_distance_dense_dense(
+                &X[i, 0], &Y[j, 0], n_features, squared) 
+
+
+cdef floating _euclidean_distance_dense_dense(floating *x,
+                                              floating *y,
+                                              int n_features,
+                                              bint squared) nogil:
+    """Euclidean distance between x dense and y dense"""
+    cdef:
+        int i
+        floating tmp
+        floating result = 0
+
+    # We manually unroll the loop for better cache optimization.
+    for i in range(n_features):
+        tmp = x[i] - y[i]
+        result += tmp * tmp
+
+    return result if squared else sqrt(result)
+
+
+cdef floating _euclidean_sparse_dense(floating *x_data,
+                                      int *x_indices,
+                                      floating *y,
+                                      floating y_squared_norm,
+                                      int nnz,
+                                      bint squared) nogil:
+    """Euclidean distance between x sparse and y dense"""
+    cdef:
+        int i
+        floating yi
+        floating tmp = 0.0
+        floating result = 0.0
+
+    for i in range(nnz):
+        yi = y[x_indices[i]]
+        tmp = x_data[i] - yi
+        result += (tmp * tmp) - (yi * yi)
+
+    result += y_squared_norm
+
+    if result < 0: result = 0.0
+
+    return result if squared else sqrt(result)
+
+
+cdef floating _euclidean_sparse_sparse(floating *x_data,
+                                       int *x_indices,
+                                       floating *y_data,
+                                       floating *y_indices,
+                                       int x_nnz,
+                                       int y_nnz,
+                                       bint squared) nogil:
+    """Euclidean distance between x sparse and y sparse"""
+    cdef:
+        int i
+        floating yi
+        floating tmp = 0.0
+        floating result = 0.0
+
+    for i in range(x_nnz):
+        # yi = y[x_indices[i]]
+        x_data[i] - y_data[j]          j = x_indices[i] if in y_indices
+        tmp = x_data[i] - yi
+        result += (tmp * tmp) - (yi * yi)
+
+    result += y_squared_norm
+
+    if result < 0: result = 0.0
+
+    return result if squared else sqrt(result)
