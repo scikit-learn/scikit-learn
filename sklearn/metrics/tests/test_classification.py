@@ -2019,7 +2019,7 @@ def test_balanced_accuracy_score(y_true, y_pred):
     assert adjusted == (balanced - chance) / (1 - chance)
 
 
-def test_multilabel_jaccard_similarity_score():
+def test_multilabel_jaccard_similarity_score_deprecation():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
     y2 = np.array([[0, 0, 1], [1, 0, 1]])
