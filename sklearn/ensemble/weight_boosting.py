@@ -367,8 +367,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     >>> clf.feature_importances_  # doctest: +ELLIPSIS
     array([0.28, 0.42, 0.14, 0.16])
     >>> clf.predict([[0, 0, 0, 0]])
-    array([1])  # doctest: +ELLIPSIS
-    >>> clf.score(X, y)
+    array([1])  
+    >>> clf.score(X, y)  # doctest: +ELLIPSIS
     0.983
 
     See also
