@@ -936,7 +936,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     >>> regr.predict([[0, 0, 0, 0]])  # doctest: +ELLIPSIS
     array([4.7972...])
     >>> regr.score(X, y)  # doctest: +ELLIPSIS
-    0.6889...
+    0.9771...
 
     See also
     --------
