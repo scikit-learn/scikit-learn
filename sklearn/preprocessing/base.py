@@ -4,8 +4,8 @@ import numpy as np
 from scipy import sparse
 
 from ..utils import check_array
+from ..utils.fixes import _astype_copy_false
 from ..utils.validation import FLOAT_DTYPES
-from ..externals import six
 
 
 def _transform_selected(X, transform, dtype, selected="all", copy=True,
@@ -48,7 +48,7 @@ def _transform_selected(X, transform, dtype, selected="all", copy=True,
         raise ValueError("The retain_order option can only be set to True "
                          "for dense matrices.")
 
-    if isinstance(selected, six.string_types) and selected == "all":
+    if isinstance(selected, str) and selected == "all":
         return transform(X)
 
     if len(selected) == 0:
@@ -72,7 +72,7 @@ def _transform_selected(X, transform, dtype, selected="all", copy=True,
         # The columns of X which are not transformed need
         # to be casted to the desire dtype before concatenation.
         # Otherwise, the stacking will cast to the higher-precision dtype.
-        X_not_sel = X[:, ind[not_sel]].astype(dtype)
+        X_not_sel = X[:, ind[not_sel]].astype(dtype, **_astype_copy_false(X))
 
     if retain_order:
         if X_sel.shape[1] + X_not_sel.shape[1] != n_features:

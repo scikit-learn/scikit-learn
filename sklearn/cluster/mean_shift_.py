@@ -18,7 +18,6 @@ import numpy as np
 import warnings
 
 from collections import defaultdict
-from ..externals import six
 from ..utils.validation import check_is_fitted
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
@@ -285,7 +284,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in six.iteritems(bin_sizes) if
+    bin_seeds = np.array([point for point, freq in bin_sizes.items() if
                           freq >= min_bin_freq], dtype=np.float32)
     if len(bin_seeds) == len(X):
         warnings.warn("Binning data failed with provided bin_size=%f,"

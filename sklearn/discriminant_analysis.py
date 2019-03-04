@@ -9,13 +9,11 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 
 # License: BSD 3-Clause
 
-from __future__ import print_function
 import warnings
 import numpy as np
 from .exceptions import ChangedBehaviorWarning
 from scipy import linalg
-from .externals.six import string_types
-from .externals.six.moves import xrange
+from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model.base import LinearClassifierMixin
@@ -50,7 +48,7 @@ def _cov(X, shrinkage=None):
         Estimated covariance matrix.
     """
     shrinkage = "empirical" if shrinkage is None else shrinkage
-    if isinstance(shrinkage, string_types):
+    if isinstance(shrinkage, str):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
@@ -242,7 +240,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LinearDiscriminantAnalysis()
-    >>> clf.fit(X, y)
+    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     LinearDiscriminantAnalysis(n_components=None, priors=None, shrinkage=None,
                   solver='svd', store_covariance=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -429,7 +427,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Target values.
         """
         # FIXME: Future warning to be removed in 0.23
-        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self)
+        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
+                         dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
         n_classes = len(self.classes_)
@@ -487,9 +486,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             raise ValueError("unknown solver {} (valid solvers are 'svd', "
                              "'lsqr', and 'eigen').".format(self.solver))
         if self.classes_.size == 2:  # treat binary case as a special case
-            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2)
+            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2,
+                                  dtype=X.dtype)
             self.intercept_ = np.array(self.intercept_[1] - self.intercept_[0],
-                                       ndmin=1)
+                                       ndmin=1, dtype=X.dtype)
         return self
 
     def transform(self, X):
@@ -532,10 +532,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Estimated probabilities.
         """
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
+        expit(prob, out=prob)
         if len(self.classes_) == 2:  # binary case
             return np.column_stack([1 - prob, prob])
         else:
@@ -681,7 +678,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         means = []
         scalings = []
         rotations = []
-        for ind in xrange(n_classes):
+        for ind in range(n_classes):
             Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)

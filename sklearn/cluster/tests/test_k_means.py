@@ -9,7 +9,6 @@ import pytest
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -30,7 +29,7 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
 
 
@@ -77,7 +76,7 @@ def test_kmeans_results(representation, algo, dtype):
 def test_elkan_results(distribution):
     # check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
-    if distribution is 'normal':
+    if distribution == 'normal':
         X = rnd.normal(size=(50, 10))
     else:
         X, _ = make_blobs(random_state=rnd)
