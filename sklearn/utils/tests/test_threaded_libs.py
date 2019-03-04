@@ -3,10 +3,12 @@ import os
 import pytest
 
 from sklearn.utils.testing import SkipTest
-from sklearn.utils._clibs import (get_thread_limits, _set_thread_limits,
-                                  get_openblas_version, thread_pool_limits,
-                                  _CLibsWrapper)
-from sklearn.utils._clibs_helpers import check_num_threads
+from sklearn.utils._threaded_libs import get_thread_limits
+from sklearn.utils._threaded_libs import _set_thread_limits
+from sklearn.utils._threaded_libs import get_openblas_version
+from sklearn.utils._threaded_libs import thread_pool_limits
+from sklearn.utils._threaded_libs import _CLibsWrapper
+from sklearn.utils._threaded_libs_helpers import check_num_threads
 
 
 SKIP_OPENBLAS = get_openblas_version() is None

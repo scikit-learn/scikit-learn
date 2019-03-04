@@ -13,7 +13,7 @@ import threading
 import ctypes
 from ctypes.util import find_library
 
-from ._clibs_helpers import openmp_num_threads
+from ._threaded_libs_helpers import openmp_num_threads
 
 
 # Structure to cast the info on dynamically loaded library. See

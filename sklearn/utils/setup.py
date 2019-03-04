@@ -83,8 +83,8 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension("_clibs_helpers",
-                         sources=["_clibs_helpers.pyx"],
+    config.add_extension("_threaded_libs_helpers",
+                         sources=["_threaded_libs_helpers.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
