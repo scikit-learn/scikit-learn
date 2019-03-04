@@ -12,7 +12,7 @@ from nmf_original import non_negative_factorization
 
 import matplotlib.pyplot as plt
 
-# Donload file from:
+# Download file from:
 # https://filesender.renater.fr/?s=download&token=88222d6d-5aee-c59b-4f34-c233b4d184e1
 df = pd.read_csv('enwiki_1M_first_paragraphs.csv')
 cats = df['0'].sample(frac=1, random_state=5).astype(str)
@@ -22,7 +22,7 @@ counter = HashingVectorizer(analyzer='word', ngram_range=(1, 1),
 X = counter.fit_transform(cats)
 n_components = 10
 beta_loss = 'kullback-leibler'
-n_train = 300000
+n_train = 200000
 n_test = 10000
 batch_size = 10000
 random_state = 12
