@@ -290,6 +290,7 @@ def test_precomputed_dists():
     assert_allclose(clust1.reachability_, clust2.reachability_)
     assert_array_equal(clust1.labels_, clust2.labels_)
 
+
 def test_extract_xi():
     # small and easy test (no clusters around other clusters)
     # but with a clear noise data.
