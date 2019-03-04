@@ -19,6 +19,8 @@ random sampling procedures.
 
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` for multiclass
   classification. |Fix|
+- :class:`discriminant_analysis.LinearDiscriminantAnalysis` with 'eigen'
+solver. |Fix|
 - :class:`linear_model.BayesianRidge` |Fix|
 - Decision trees and derived ensembles when both `max_depth` and
   `max_leaf_nodes` are set. |Fix|
@@ -113,6 +115,11 @@ Support for Python 3.4 and below has been officially dropped.
   where the predicted probabilities would be incorrectly computed in the
   multiclass case. :issue:`6848`, by :user:`Agamemnon Krasoulis
   <agamemnonc>` and `Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixed a bug in :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  where the predicted probabilities would be incorrectly computed with ``eigen``
+  solver. :issue:`11727`, by :user:`Agamemnon Krasoulis
+  <agamemnonc>`.
 
 :mod:`sklearn.dummy`
 ....................
