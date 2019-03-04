@@ -14,8 +14,13 @@ Before a release
    issues tagged for the milestone can be postponed.
 
 3. Ensure the change log and commits correspond (within reason!), and that the
-   change log is reasonably well curated. Some tools for these tasks are at
-   https://github.com/scikit-learn/scikit-learn/pull/11800/files
+   change log is reasonably well curated. Some tools for these tasks include:
+
+   - ``maint_tools/sort_whats_new.py`` can put what's new entries into
+     sections.
+
+   - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
+     requests that were merged but likely missing from What's New.
 
 Preparing a bug-fix-release
 ...........................
@@ -41,12 +46,6 @@ Making a release
 ----------------
 
 1. Update docs:
-
-   - ``maint_tools/sort_whats_new.py`` can put what's new entries into
-     sections.
-
-   - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
-     requests that were merged but likely missing from What's New.
 
    - Edit the doc/whats_new.rst file to add release title and commit
      statistics. You can retrieve commit statistics with::
