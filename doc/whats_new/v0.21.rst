@@ -97,8 +97,8 @@ Support for Python 3.4 and below has been officially dropped.
 ....................................
 
 - |Enhancement| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
-  preserves ``float32`` and ``float64`` dtypes. :issues:`8769` and
-  :issues:`11000` by :user:`Thibault Sejourne <thibsej>`
+  preserves ``float32`` and ``float64`` dtypes. :issue:`8769` and
+  :issue:`11000` by :user:`Thibault Sejourne <thibsej>`
 
 - |Fix| A ``ChangedBehaviourWarning`` is now raised when
   :class:`discriminant_analysis.LinearDiscriminantAnalysis` is given as
@@ -139,6 +139,10 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`ensemble.IsolationForest` when the input is either 0, 1 or 2.
   :issue:`13251` by :user:`Albert Thomas <albertcthomas>`
   and :user:`joshuakennethjones <joshuakennethjones>`.
+
+- |Efficiency| Make :class:`ensemble.IsolationForest` more memory efficient
+  by avoiding keeping in memory each tree prediction. :issue:`13260` by
+  `Nicolas Goix`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
@@ -192,8 +196,8 @@ Support for Python 3.4 and below has been officially dropped.
   with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
 
 - |Enhancement| :class:`linear_model.make_dataset` now preserves
-  ``float32`` and ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
-  :user:`Nelle Varoquaux`_, :user:`Arthur Imbert <Henley13>`,
+  ``float32`` and ``float64`` dtypes. :issue:`8769` and :issue:`11000` by
+  :user:`Nelle Varoquaux <NelleV>`, :user:`Arthur Imbert <Henley13>`,
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Enhancement| :class:`linear_model.LogisticRegression` now supports an
@@ -217,9 +221,9 @@ Support for Python 3.4 and below has been officially dropped.
   :user:`Albert Thomas <albertcthomas>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.LassoLarsIC`, where user input
-   ``copy_X=False`` at instance creation would be overridden by default
-   parameter value ``copy_X=True`` in ``fit``.
-   :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
+  ``copy_X=False`` at instance creation would be overridden by default
+  parameter value ``copy_X=True`` in ``fit``.
+  :issue:`12972` by :user:`Lucio Fernandez-Arjona <luk-f-a>`
 
 - |Fix| Fixed a bug in :class:`linear_model.LinearRegression` that
   was not returning the same coeffecients and intercepts with
@@ -233,6 +237,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| `sparse_cg` solver in :class:`linear_model.ridge.Ridge`
   now supports fitting the intercept (i.e. ``fit_intercept=True``) when
   inputs are sparse . :issue:`13336` by :user:`Bartosz Telenczuk <btel>`
+
+- |Fix| Fixed a bug in :class:`linear_model.HuberRegressor` that was
+  broken when X was of dtype bool.
+  :issue:`13328` by `Alexandre Gramfort`_.
+
 
 :mod:`sklearn.manifold`
 ............................
@@ -274,7 +283,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
-  :issue:`12855` by :user:`Pawel Sendyk <psendyk>.`
+  :issue:`12855` by :user:`Pawel Sendyk <psendyk>`.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
@@ -314,6 +323,11 @@ Support for Python 3.4 and below has been officially dropped.
   shuffles each class's samples with the same ``random_state``,
   making ``shuffle=True`` ineffective.
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- |Fix| Fixed an issue in :func:`~model_selection.cross_val_predict` where
+  `method="predict_proba"` returned always `0.0` when one of the classes was
+  excluded in a cross-validation fold.
+  :issue:`13366` by :user:`Guillaume Fournier <gfournier>`
 
 :mod:`sklearn.multiclass`
 .........................
@@ -439,7 +453,8 @@ Multiple modules
   :func:`sklearn.set_config`. :issue:`11705` by :user:`Nicolas Hug
   <NicolasHug>`.
 - |Efficiency| Memory copies are avoided when casting arrays to a different
-  dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak`_.
+  dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
+  <rth>`.
 
 
 Changes to estimator checks

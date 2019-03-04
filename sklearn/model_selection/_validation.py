@@ -876,10 +876,11 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
             float_min = np.finfo(predictions.dtype).min
             default_values = {'decision_function': float_min,
                               'predict_log_proba': float_min,
-                              'predict_proba': 0}
+                              'predict_proba': 0.0}
             predictions_for_all_classes = np.full((_num_samples(predictions),
                                                    n_classes),
-                                                  default_values[method])
+                                                  default_values[method],
+                                                  predictions.dtype)
             predictions_for_all_classes[:, estimator.classes_] = predictions
             predictions = predictions_for_all_classes
     return predictions, test
