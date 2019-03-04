@@ -114,12 +114,13 @@ Functions
 
    cluster.affinity_propagation
    cluster.dbscan
-   cluster.optics
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.mean_shift
    cluster.spectral_clustering
    cluster.ward_tree
+   cluster.compute_optics_graph
+   cluster.cluster_optics_dbscan
 
 .. _bicluster_ref:
 
@@ -1170,6 +1171,7 @@ Model validation
    neighbors.RadiusNeighborsRegressor
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
+   neighbors.NeighborhoodComponentsAnalysis
 
 .. autosummary::
    :toctree: generated/
@@ -1432,6 +1434,7 @@ Low-level methods
    utils.assert_all_finite
    utils.check_X_y
    utils.check_array
+   utils.check_scalar
    utils.check_consistent_length
    utils.check_random_state
    utils.class_weight.compute_class_weight

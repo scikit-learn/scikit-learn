@@ -5,6 +5,8 @@
 #         Manoj Kumar <manojkumarsivaraj334@gmail.com>
 #
 # License: BSD 3 clause
+#
+# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs
 cimport numpy as np
@@ -15,6 +17,7 @@ cimport cython
 from cpython cimport bool
 from cython cimport floating
 import warnings
+from ..exceptions import ConvergenceWarning
 
 from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2, 
                                    _copy, _scal)
@@ -99,9 +102,6 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
     return m
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def enet_coordinate_descent(floating[::1] w,
                             floating alpha, floating beta,
                             floating[::1, :] X,
@@ -211,9 +211,11 @@ def enet_coordinate_descent(floating[::1] w,
                 # stopping criterion
 
                 # XtA = np.dot(X.T, R) - beta * w
-                for i in range(n_features):
-                    XtA[i] = (_dot(n_samples, &X[0, i], 1, &R[0], 1)
-                              - beta * w[i])
+                _copy(n_features, &w[0], 1, &XtA[0], 1)
+                _gemv(ColMajor, Trans,
+                      n_samples, n_features, 1.0, &X[0, 0], n_samples,
+                      &R[0], 1,
+                      -beta, &XtA[0], 1)
 
                 if positive:
                     dual_norm_XtA = max(n_features, &XtA[0])
@@ -244,12 +246,17 @@ def enet_coordinate_descent(floating[::1] w,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+
+        else:
+            with gil:
+                warnings.warn("Objective did not converge."
+                " You might want to increase the number of iterations."
+                " Duality gap: {}, tolerance: {}".format(gap, tol),
+                ConvergenceWarning)
+
     return w, gap, tol, n_iter + 1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def sparse_enet_coordinate_descent(floating [::1] w,
                             floating alpha, floating beta,
                             np.ndarray[floating, ndim=1, mode='c'] X_data,
@@ -454,12 +461,16 @@ def sparse_enet_coordinate_descent(floating [::1] w,
                     # return if we reached desired tolerance
                     break
 
+        else:
+            with gil:
+                warnings.warn("Objective did not converge."
+                " You might want to increase the number of iterations."
+                " Duality gap: {}, tolerance: {}".format(gap, tol),
+                ConvergenceWarning)
+
     return w, gap, tol, n_iter + 1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def enet_coordinate_descent_gram(floating[::1] w,
                                  floating alpha, floating beta,
                                  np.ndarray[floating, ndim=2, mode='c'] Q,
@@ -602,12 +613,16 @@ def enet_coordinate_descent_gram(floating[::1] w,
                     # return if we reached desired tolerance
                     break
 
+
+        with gil:
+            warnings.warn("Objective did not converge."
+            " You might want to increase the number of iterations."
+            " Duality gap: {}, tolerance: {}".format(gap, tol),
+            ConvergenceWarning)
+
     return np.asarray(w), gap, tol, n_iter + 1
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                                        floating l2_reg,
                                        np.ndarray[floating, ndim=2, mode='fortran'] X,
@@ -792,5 +807,11 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
+                else:
+                    with gil:
+                        warnings.warn("Objective did not converge."
+                        " You might want to increase the number of iterations."
+                        " Duality gap: {}, tolerance: {}".format(gap, tol),
+                        ConvergenceWarning)
 
     return np.asarray(W), gap, tol, n_iter + 1

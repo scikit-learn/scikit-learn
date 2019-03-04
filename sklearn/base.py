@@ -6,12 +6,13 @@
 import copy
 import warnings
 from collections import defaultdict
-import struct
+import platform
 import inspect
 
 import numpy as np
 
 from . import __version__
+from sklearn.utils import _IS_32BIT
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -554,15 +555,11 @@ class MultiOutputMixin(object):
         return {'multioutput': True}
 
 
-def _is_32bit():
-    """Detect if process is 32bit Python."""
-    return struct.calcsize('P') * 8 == 32
-
-
-class _UnstableOn32BitMixin(object):
-    """Mark estimators that are non-determinstic on 32bit."""
+class _UnstableArchMixin(object):
+    """Mark estimators that are non-determinstic on 32bit or PowerPC"""
     def _more_tags(self):
-        return {'non_deterministic': _is_32bit()}
+        return {'non_deterministic': (
+            _IS_32BIT or platform.machine().startswith(('ppc', 'powerpc')))}
 
 
 def is_classifier(estimator):
