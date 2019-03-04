@@ -193,6 +193,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     Y_norm_squared : array-like, shape (n_samples_2, ), optional
         Pre-computed dot-products of vectors in Y (e.g.,
         ``(Y**2).sum(axis=1)``)
+        May be ignored in some cases, see the note below.
 
     squared : boolean, optional
         Return squared Euclidean distances.
@@ -200,10 +201,11 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     X_norm_squared : array-like, shape = [n_samples_1], optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
+        May be ignored in some cases, see the note below.
 
     Returns
     -------
-    distances : {array, sparse matrix}, shape (n_samples_1, n_samples_2)
+    distances : array, shape (n_samples_1, n_samples_2)
 
     Examples
     --------
@@ -231,10 +233,15 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         elif XX.shape != (X.shape[0], 1):
             raise ValueError(
                 "Incompatible dimensions for X and X_norm_squared")
+        if XX.dtype == np.float32:
+            XX = None
+    elif X.dtype == np.float32:
+        XX = None
     else:
         XX = row_norms(X, squared=True)[:, np.newaxis]
 
-    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
+    if X is Y and XX is not None: 
+        # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is not None:
         YY = np.atleast_2d(Y_norm_squared)
@@ -242,21 +249,100 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
+        if YY.dtype == np.float32:
+            YY = None
+    elif Y.dtype == np.float32:
+        YY = None
     else:
         YY = row_norms(Y, squared=True)[np.newaxis, :]
 
-    distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
+    if X.dtype == np.float32:
+        # To minimize precision issues with float32, we compute the distance
+        # matrix on chunks of X and Y upcast to float64
+        distances = _euclidean_distances_upcast_fast(X, XX, Y, YY)
+    else:
+        # if dtype is already float64, no need to chunk and upcast
+        distances = - 2 * safe_sparse_dot(X, Y.T, dense_output=True)
+        distances += XX
+        distances += YY
     np.maximum(distances, 0, out=distances)
 
+    # Ensure that distances between vectors and themselves are set to 0.0.
+    # This may not be the case due to floating point rounding errors.
     if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
+        np.fill_diagonal(distances, 0)
 
     return distances if squared else np.sqrt(distances, out=distances)
+
+
+def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
+    """Euclidean distances between X and Y
+
+    Assumes X and Y have float32 dtype.
+    Assumes XX and YY have float64 dtype or are None.
+
+    X and Y are upcast to float64 by chunks, which size is chosen to limit
+    memory increase by approximately 10%.
+    """
+    n_samples_X = X.shape[0]
+    n_samples_Y = Y.shape[0]
+    n_features = X.shape[1]
+
+    distances = np.empty((n_samples_X, n_samples_Y), dtype=np.float32)
+
+    x_density = X.getnnz() / np.prod(X.shape) if issparse(X) else 1
+    y_density = Y.getnnz() / np.prod(Y.shape) if issparse(Y) else 1
+
+    # Allow 10% more memory than X, Y and the distance matrix take.
+    maxmem = ((x_density * n_samples_X + y_density * n_samples_Y) * n_features
+              + (x_density * n_samples_X * y_density * n_samples_Y)) / 10
+
+    # The increase amount of memory is:
+    # - x_density * chunk_size * n_features (copy of chunk of X)
+    # - y_density * chunk_size * n_features (copy of chunk of Y)
+    # - chunk_size * chunk_size (chunk of distance matrix)
+    # Hence x² + (xd+yd)kx = M, where x=chunk_size, k=n_features, M=maxmem
+    #                                 xd=x_density and yd=y_density
+    tmp = (x_density + y_density) * n_features
+    chunk_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
+    chunk_size = max(int(chunk_size), 1)
+
+    n_chunks_X = n_samples_X // chunk_size + (n_samples_X % chunk_size != 0)
+    n_chunks_Y = n_samples_Y // chunk_size + (n_samples_Y % chunk_size != 0)
+
+    for i in range(n_chunks_X):
+        xs = i * chunk_size
+        xe = xs + chunk_size
+
+        X_chunk = X[xs:xe].astype(np.float64)
+        if XX is None:
+            XX_chunk = row_norms(X_chunk, squared=True)[:, np.newaxis]
+        else:
+            XX_chunk = XX[xs:xe]
+
+        for j in range(n_chunks_Y):
+            ys = j * chunk_size
+            ye = ys + chunk_size
+
+            if X is Y and j < i:
+                # when X is Y the distance matrix is symmetric so we only need
+                # to compute half of it.
+                d = distances[ys:ye, xs:xe].T
+
+            else:
+                Y_chunk = Y[ys:ye].astype(np.float64)
+                if YY is None:
+                    YY_chunk = row_norms(Y_chunk, squared=True)[np.newaxis, :]
+                else:
+                    YY_chunk = YY[:, ys:ye]
+
+                d = -2 * safe_sparse_dot(X_chunk, Y_chunk.T, dense_output=True)
+                d += XX_chunk
+                d += YY_chunk
+
+            distances[xs:xe, ys:ye] = d.astype(np.float32)
+
+    return distances
 
 
 def _argmin_min_reduce(dist, start):
