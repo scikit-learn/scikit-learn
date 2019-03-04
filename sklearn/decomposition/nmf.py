@@ -328,7 +328,9 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         # supported as a kwarg on ufuncs
         np.abs(H, H)
         np.abs(W, W)
-        return W, H
+        A = H.copy()
+        B = np.ones((n_components, n_features))
+        return W, H, A, B
 
     # NNDSVD initialization
     U, S, V = randomized_svd(X, n_components, random_state=random_state)
@@ -801,16 +803,21 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
+
     n_iter_update_h_ = 1
+    max_iter_update_w_ = 5
+
     for n_iter in range(1, max_iter + 1):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         for i, slice in enumerate(gen_batches(n=n_samples,
                                               batch_size=batch_size)):
-            delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
-                X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W, gamma,
-                H_sum, HHt, XHt, update_H)
-            W[slice] *= delta_W
+
+            for j in range(max_iter_update_w_):
+                delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
+                    X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
+                    gamma, H_sum, HHt, XHt, update_H)
+                W[slice] *= delta_W
 
             # necessary for stability with beta_loss < 1
             if beta_loss < 1:
@@ -1122,7 +1129,7 @@ class NMF(BaseEstimator, TransformerMixin):
     by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
-    and H.
+    andnon_negative_factorization H.
 
     Read more in the :ref:`User Guide <NMF>`.
 
@@ -1295,11 +1302,11 @@ class NMF(BaseEstimator, TransformerMixin):
             X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
             batch_size=self.batch_size, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
+            tol=0, max_iter=1, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
-        # TODO internal iters for W; partial_fit with max_iter equal to what ?
+        # TODO internal iters for W
         self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
                                                     square_root=True)
 
@@ -1339,14 +1346,15 @@ class NMF(BaseEstimator, TransformerMixin):
                 n_components=self.n_components,
                 batch_size=self.batch_size, init='custom',
                 update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-                tol=self.tol, max_iter=1, alpha=self.alpha,
+                tol=0, max_iter=1, alpha=self.alpha,
                 l1_ratio=self.l1_ratio, regularization='both',
                 random_state=self.random_state, verbose=self.verbose,
                 shuffle=self.shuffle)
 
-            self.reconstruction_err_ = _beta_divergence(X, W, H,
-                                                        self.beta_loss,
-                                                        square_root=True)
+            # probably not necessary to compute at each time
+            # self.reconstruction_err_ = _beta_divergence(X, W, H,
+            #                                             self.beta_loss,
+            #                                             square_root=True)
 
             self.n_components_ = H.shape[0]
             self.components_ = H
