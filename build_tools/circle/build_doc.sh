@@ -124,6 +124,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   joblib
 
 source activate testenv
+# Revert when scikit-image 0.14.2 is available through conda
 if [[ -n "$SCIKIT_IMAGE_VERSION" ]]; then
     pip install scikit-image=="$SCIKIT_IMAGE_VERSION"
 else
