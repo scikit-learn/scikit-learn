@@ -1129,7 +1129,7 @@ class NMF(BaseEstimator, TransformerMixin):
     by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
-    andnon_negative_factorization H.
+    and H.
 
     Read more in the :ref:`User Guide <NMF>`.
 
