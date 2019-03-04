@@ -605,7 +605,6 @@ cdef int lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
     1 (this is done at the end of each epoch).
     """
     cdef int feature_ind, class_ind, idx, f_idx, lagged_ind, last_update_ind
-    cdef int status = 0
     cdef {{c_type}} cum_sum, grad_step, prox_step, cum_sum_prox
     for feature_ind in range(xnnz):
         if not reset:
@@ -626,9 +625,9 @@ cdef int lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
                 if reset:
                     weights[idx] *= wscale
                     if not skl_isfinite{{name}}(weights[idx]):
-                        # do not return now because it requires the gil
-                        status = -1
-                        break
+                        # returning here does not require the gil as the return
+                        # type is a C integer
+                        return -1
         else:
             for class_ind in range(n_classes):
                 idx = f_idx + class_ind
@@ -662,19 +661,11 @@ cdef int lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
                     weights[idx] *= wscale
                     # check to see that the weight is not inf or NaN
                     if not skl_isfinite{{name}}(weights[idx]):
-                        status = -1
-                        break
-       # Break from the xnnz outer loop if an error happened in the n_classes
-       # inner loop
-        if status == -1:
-            break
+                        return -1
         if reset:
             feature_hist[feature_ind] = sample_itr % n_samples
         else:
             feature_hist[feature_ind] = sample_itr
-
-    if status == -1:
-        return -1
 
     if reset:
         cumulative_sums[sample_itr - 1] = 0.0
