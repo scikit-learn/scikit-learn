@@ -13,6 +13,9 @@ from numpy cimport npy_intp, uint32_t
 
 from sklearn.utils import check_random_state
 
+from ..utils._cython_blas cimport _dot, _scal, _ger, _gemv, _gemm
+from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
+
 
 np.import_array()
 
@@ -27,122 +30,6 @@ cdef struct bint_true_type:
 cdef extern from "numpy/arrayobject.h":
     bint PyArray_IS_C_CONTIGUOUS(ndarray)
     bint PyArray_IS_F_CONTIGUOUS(ndarray)
-
-
-cdef extern from "cblas.h":
-    enum CBLAS_ORDER:
-        CblasRowMajor=101
-        CblasColMajor=102
-    enum CBLAS_TRANSPOSE:
-        CblasNoTrans=111
-        CblasTrans=112
-        CblasConjTrans=113
-        AtlasConj=114
-
-    double ddot "cblas_ddot"(int N, double *X, int incX, double *Y,
-                             int incY) nogil
-    float sdot "cblas_sdot"(int N, float *X, int incX, float *Y,
-                            int incY) nogil
-    void dgemm "cblas_dgemm"(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
-                             CBLAS_TRANSPOSE TransB, int M, int N,
-                             int K, double alpha, double *A,
-                             int lda, double *B, int ldb,
-                             double beta, double *C, int ldc) nogil
-    void sgemm "cblas_sgemm"(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
-                             CBLAS_TRANSPOSE TransB, int M, int N,
-                             int K, float alpha, float *A,
-                             int lda, float *B, int ldb,
-                             float beta, float *C, int ldc) nogil
-    void dgemv "cblas_dgemv"(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
-                             int M, int N, double alpha, double *A, int lda,
-                             double *X, int incX, double beta,
-                             double *Y, int incY) nogil
-    void sgemv "cblas_sgemv"(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
-                             int M, int N, float alpha, float *A, int lda,
-                             float *X, int incX, float beta,
-                             float *Y, int incY) nogil
-    void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
-                           double *X, int incX, double *Y, int incY,
-                           double *A, int lda) nogil
-    void sger "cblas_sger"(CBLAS_ORDER Order, int M, int N, float alpha,
-                           float *X, int incX, float *Y, int incY,
-                           float *A, int lda) nogil
-    void dscal "cblas_dscal"(int N, double alpha, double *X, int incX) nogil
-    void sscal "cblas_sscal"(int N, float alpha, float *X, int incX) nogil
-
-
-cdef inline floating dot(int N,
-                         floating* X, int incX,
-                         floating* Y, int incY) nogil:
-    if floating is float:
-        return sdot(N, X, incX, Y, incY)
-    else:
-        return ddot(N, X, incX, Y, incY)
-
-
-cdef inline void gemm(CBLAS_ORDER Order,
-                      CBLAS_TRANSPOSE TransA, CBLAS_TRANSPOSE TransB,
-                      int M, int N, int K,
-                      floating alpha, floating* A, int lda,
-                      floating* B, int ldb,
-                      floating beta, floating* C, int ldc) nogil:
-    if floating is float:
-        sgemm(Order, TransA, TransB,
-              M, N, K,
-              alpha, A, lda,
-              B, ldb,
-              beta, C, ldc)
-    else:
-        dgemm(Order, TransA, TransB,
-              M, N, K,
-              alpha, A, lda,
-              B, ldb,
-              beta, C, ldc)
-
-
-cdef inline void gemv(CBLAS_ORDER Order, CBLAS_TRANSPOSE TransA,
-                      int M, int N,
-                      floating alpha, floating *A, int lda,
-                      floating *X, int incX,
-                      floating beta, floating *Y, int incY) nogil:
-    if floating is float:
-        sgemv(Order, TransA,
-              M, N,
-              alpha, A, lda,
-              X, incX,
-              beta, Y, incY)
-    else:
-        dgemv(Order, TransA,
-              M, N,
-              alpha, A, lda,
-              X, incX,
-              beta, Y, incY)
-
-
-cdef inline void ger(CBLAS_ORDER Order,
-                     int M, int N,
-                     floating alpha, floating *X, int incX,
-                     floating *Y, int incY,
-                     floating *A, int lda) nogil:
-    if floating is float:
-        sger(Order,
-             M, N,
-             alpha, X, incX,
-             Y, incY,
-             A, lda)
-    else:
-        dger(Order,
-             M, N,
-             alpha, X, incX,
-             Y, incY,
-             A, lda)
-
-
-cdef inline void scal(int N, floating alpha, floating* X, int incX) nogil:
-    if floating is float:
-        sscal(N, alpha, X, incX)
-    else:
-        dscal(N, alpha, X, incX)
 
 
 cdef inline np.ndarray ensure_c(np.ndarray arr, bint copy):
@@ -306,11 +193,11 @@ cdef bint compute_dict(npy_intp n_features,
     R_ptr = &R[0, 0]
 
     # R <- -1.0 * U * V^T + 1.0 * Y
-    gemm(CblasColMajor, CblasNoTrans, CblasTrans,
-         n_features, n_samples, n_components,
-         -1.0, dictionary_F_ptr, n_features,
-         code_C_ptr, n_samples,
-         1.0, R_ptr, n_features)
+    _gemm(ColMajor, NoTrans, Trans,
+          n_features, n_samples, n_components,
+          -1.0, dictionary_F_ptr, n_features,
+          code_C_ptr, n_samples,
+          1.0, R_ptr, n_features)
 
     for k in range(n_components):
         # Get pointers to current atom and code
@@ -318,17 +205,17 @@ cdef bint compute_dict(npy_intp n_features,
         kth_code_C_ptr = &code_C[k, 0]
 
         # R <- 1.0 * U_k * V_k^T + R
-        ger(CblasColMajor, n_features, n_samples,
-            1.0, kth_dictionary_F_ptr, 1,
-            kth_code_C_ptr, 1,
-            R_ptr, n_features)
+        _ger(ColMajor, n_features, n_samples,
+             1.0, kth_dictionary_F_ptr, 1,
+             kth_code_C_ptr, 1,
+             R_ptr, n_features)
 
         # U_k <- 1.0 * R * V_k^T
-        gemv(CblasColMajor, CblasNoTrans,
-             n_features, n_samples,
-             1.0, R_ptr, n_features,
-             kth_code_C_ptr, 1,
-             0.0, kth_dictionary_F_ptr, 1)
+        _gemv(ColMajor, NoTrans,
+              n_features, n_samples,
+              1.0, R_ptr, n_features,
+              kth_code_C_ptr, 1,
+              0.0, kth_dictionary_F_ptr, 1)
 
         # Clip negative values
         if positive_bint_type is bint_true_type:
@@ -336,9 +223,9 @@ cdef bint compute_dict(npy_intp n_features,
 
         # Scale k'th atom
         # U_k * U_k
-        atom_norm2 = dot(n_features,
-                         kth_dictionary_F_ptr, 1,
-                         kth_dictionary_F_ptr, 1)
+        atom_norm2 = _dot(n_features,
+                          kth_dictionary_F_ptr, 1,
+                          kth_dictionary_F_ptr, 1)
 
         # Generate random atom to replace inconsequential one
         if atom_norm2 < 1e-20:
@@ -355,29 +242,29 @@ cdef bint compute_dict(npy_intp n_features,
                 clip_negative(kth_dictionary_F_ptr, n_features)
 
             # Setting corresponding coefs to 0
-            scal(n_samples, 0.0, kth_code_C_ptr, 1)
+            _scal(n_samples, 0.0, kth_code_C_ptr, 1)
 
             # Compute new norm
             # U_k * U_k
-            atom_norm2 = dot(n_features,
-                             kth_dictionary_F_ptr, 1,
-                             kth_dictionary_F_ptr, 1)
+            atom_norm2 = _dot(n_features,
+                              kth_dictionary_F_ptr, 1,
+                              kth_dictionary_F_ptr, 1)
 
             # Normalize atom
-            scal(n_features, 1.0 / sqrt(atom_norm2), kth_dictionary_F_ptr, 1)
+            _scal(n_features, 1.0 / sqrt(atom_norm2), kth_dictionary_F_ptr, 1)
         else:
             # Normalize atom
-            scal(n_features, 1.0 / sqrt(atom_norm2), kth_dictionary_F_ptr, 1)
+            _scal(n_features, 1.0 / sqrt(atom_norm2), kth_dictionary_F_ptr, 1)
 
             # R <- -1.0 * U_k * V_k^T + R
-            ger(CblasColMajor, n_features, n_samples,
-                -1.0, kth_dictionary_F_ptr, 1,
-                kth_code_C_ptr, 1,
-                R_ptr, n_features)
+            _ger(ColMajor, n_features, n_samples,
+                 -1.0, kth_dictionary_F_ptr, 1,
+                 kth_code_C_ptr, 1,
+                 R_ptr, n_features)
 
     # Compute sum of squared residuals
     if return_r2:
-        R2_ptr[0] = dot(n_features * n_samples, R_ptr, 1, R_ptr, 1)
+        R2_ptr[0] = _dot(n_features * n_samples, R_ptr, 1, R_ptr, 1)
 
     return False
 
