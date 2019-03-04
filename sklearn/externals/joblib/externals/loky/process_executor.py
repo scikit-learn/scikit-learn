@@ -62,7 +62,6 @@ __author__ = 'Thomas Moreau (thomas.moreau.2010@gmail.com)'
 import os
 import gc
 import sys
-import types
 import struct
 import weakref
 import warnings
@@ -78,10 +77,11 @@ from . import _base
 from .backend import get_context
 from .backend.compat import queue
 from .backend.compat import wait
+from .backend.compat import set_cause
 from .backend.context import cpu_count
 from .backend.queues import Queue, SimpleQueue, Full
-from .backend.utils import recursive_terminate
-from .cloudpickle_wrapper import _wrap_non_picklable_objects
+from .backend.reduction import set_loky_pickler, get_loky_pickler_name
+from .backend.utils import recursive_terminate, get_exitcodes_terminated_worker
 
 try:
     from concurrent.futures.process import BrokenProcessPool as _BPPException
@@ -219,7 +219,8 @@ class _RemoteTraceback(Exception):
 
 class _ExceptionWithTraceback(BaseException):
 
-    def __init__(self, exc, tb=None):
+    def __init__(self, exc):
+        tb = getattr(exc, "__traceback__", None)
         if tb is None:
             _, _, tb = sys.exc_info()
         tb = traceback.format_exception(type(exc), exc, tb)
@@ -232,7 +233,7 @@ class _ExceptionWithTraceback(BaseException):
 
 
 def _rebuild_exc(exc, tb):
-    exc.__cause__ = _RemoteTraceback(tb)
+    exc = set_cause(exc, _RemoteTraceback(tb))
     return exc
 
 
@@ -263,20 +264,16 @@ class _CallItem(object):
         self.args = args
         self.kwargs = kwargs
 
+        # Store the current loky_pickler so it is correctly set in the worker
+        self.loky_pickler = get_loky_pickler_name()
+
+    def __call__(self):
+        set_loky_pickler(self.loky_pickler)
+        return self.fn(*self.args, **self.kwargs)
+
     def __repr__(self):
         return "CallItem({}, {}, {}, {})".format(
             self.work_id, self.fn, self.args, self.kwargs)
-
-    def __getstate__(self):
-        return (
-            self.work_id,
-            _wrap_non_picklable_objects(self.fn),
-            [_wrap_non_picklable_objects(a) for a in self.args],
-            {k: _wrap_non_picklable_objects(a) for k, a in self.kwargs.items()}
-        )
-
-    def __setstate__(self, state):
-        self.work_id, self.fn, self.args, self.kwargs = state
 
 
 class _SafeQueue(Queue):
@@ -300,8 +297,8 @@ class _SafeQueue(Queue):
                     "Could not pickle the task to send it to the workers.")
             tb = traceback.format_exception(
                 type(e), e, getattr(e, "__traceback__", None))
-            raised_error.__cause__ = _RemoteTraceback(
-                '\n"""\n{}"""'.format(''.join(tb)))
+            raised_error = set_cause(raised_error, _RemoteTraceback(
+                                     '\n"""\n{}"""'.format(''.join(tb))))
             work_item = self.pending_work_items.pop(obj.work_id, None)
             self.running_work_items.remove(obj.work_id)
             # work_item can be None if another process terminated. In this
@@ -312,11 +309,11 @@ class _SafeQueue(Queue):
                 del work_item
             self.thread_wakeup.wakeup()
         else:
-            super()._on_queue_feeder_error(e, obj)
+            super(_SafeQueue, self)._on_queue_feeder_error(e, obj)
 
 
 def _get_chunks(chunksize, *iterables):
-    """ Iterates over zip()ed iterables in chunks. """
+    """Iterates over zip()ed iterables in chunks. """
     if sys.version_info < (3, 3):
         it = itertools.izip(*iterables)
     else:
@@ -329,7 +326,7 @@ def _get_chunks(chunksize, *iterables):
 
 
 def _process_chunk(fn, chunk):
-    """ Processes a chunk of an iterable passed to map.
+    """Processes a chunk of an iterable passed to map.
 
     Runs the function passed to map() on a chunk of the
     iterable passed to map.
@@ -346,7 +343,7 @@ def _sendback_result(result_queue, work_id, result=None, exception=None):
         result_queue.put(_ResultItem(work_id, result=result,
                                      exception=exception))
     except BaseException as e:
-        exc = _ExceptionWithTraceback(e, getattr(e, "__traceback__", None))
+        exc = _ExceptionWithTraceback(e)
         result_queue.put(_ResultItem(work_id, exception=exc))
 
 
@@ -418,9 +415,9 @@ def _process_worker(call_queue, result_queue, initializer, initargs,
             with worker_exit_lock:
                 return
         try:
-            r = call_item.fn(*call_item.args, **call_item.kwargs)
+            r = call_item()
         except BaseException as e:
-            exc = _ExceptionWithTraceback(e, getattr(e, "__traceback__", None))
+            exc = _ExceptionWithTraceback(e)
             result_queue.put(_ResultItem(call_item.work_id, exception=exc))
         else:
             _sendback_result(result_queue, call_item.work_id, result=r)
@@ -438,7 +435,6 @@ def _process_worker(call_queue, result_queue, initializer, initargs,
                 continue
             if time() - _last_memory_leak_check > _MEMORY_LEAK_CHECK_DELAY:
                 mem_usage = _get_memory_usage(pid)
-                print(mem_usage)
                 _last_memory_leak_check = time()
                 if mem_usage - _process_reference_size < _MAX_MEMORY_LEAK_SIZE:
                     # Memory usage stays within bounds: everything is fine.
@@ -618,34 +614,49 @@ def _queue_management_worker(executor_reference,
         worker_sentinels = [p.sentinel for p in processes.values()]
         ready = wait(readers + worker_sentinels)
 
-        broken = ("A process in the executor was terminated abruptly", None)
+        broken = ("A worker process managed by the executor was unexpectedly "
+                  "terminated. This could be caused by a segmentation fault "
+                  "while calling the function or by an excessive memory usage "
+                  "causing the Operating System to kill the worker.", None,
+                  TerminatedWorkerError)
         if result_reader in ready:
             try:
                 result_item = result_reader.recv()
                 broken = None
                 if isinstance(result_item, _RemoteTraceback):
-                    cause = result_item.tb
-                    broken = ("A task has failed to un-serialize", cause)
+                    broken = ("A task has failed to un-serialize. Please "
+                              "ensure that the arguments of the function are "
+                              "all picklable.", result_item.tb,
+                              BrokenProcessPool)
             except BaseException as e:
                 tb = getattr(e, "__traceback__", None)
                 if tb is None:
                     _, _, tb = sys.exc_info()
-                broken = ("A result has failed to un-serialize",
-                          traceback.format_exception(type(e), e, tb))
+                broken = ("A result has failed to un-serialize. Please "
+                          "ensure that the objects returned by the function "
+                          "are always picklable.",
+                          traceback.format_exception(type(e), e, tb),
+                          BrokenProcessPool)
         elif wakeup_reader in ready:
             broken = None
             result_item = None
         thread_wakeup.clear()
-        if broken:
-            msg, cause = broken
+        if broken is not None:
+            msg, cause_tb, exc_type = broken
+            if (issubclass(exc_type, TerminatedWorkerError) and
+                    (sys.platform != "win32")):
+                # In Windows, introspecting terminated workers exitcodes seems
+                # unstable, therefore they are not appended in the exception
+                # message.
+                msg += " The exit codes of the workers are {}".format(
+                    get_exitcodes_terminated_worker(processes))
+
+            bpe = exc_type(msg)
+            if cause_tb is not None:
+                bpe = set_cause(bpe, _RemoteTraceback(
+                          "\n'''\n{}'''".format(''.join(cause_tb))))
             # Mark the process pool broken so that submits fail right now.
-            executor_flags.flag_as_broken(
-                msg + ", the pool is not usable anymore.")
-            bpe = BrokenProcessPool(
-                msg + " while the future was running or pending.")
-            if cause is not None:
-                bpe.__cause__ = _RemoteTraceback(
-                    "\n'''\n{}'''".format(''.join(cause)))
+            executor_flags.flag_as_broken(bpe)
 
             # All futures in flight must be marked failed
             for work_id, work_item in pending_work_items.items():
@@ -809,6 +820,15 @@ class LokyRecursionError(RuntimeError):
 
 class BrokenProcessPool(_BPPException):
     """
+    Raised when the executor is broken while a future was in the running state.
+    The cause can an error raised when unpickling the task in the worker
+    process or when unpickling the result value in the parent process. It can
+    also be caused by a worker process being terminated unexpectedly.
+    """
+
+
+class TerminatedWorkerError(BrokenProcessPool):
+    """
     Raised when a process in a ProcessPoolExecutor terminated abruptly
     while a future was in the running state.
     """
@@ -870,8 +890,8 @@ class ProcessPoolExecutor(_base.Executor):
 
         if initializer is not None and not callable(initializer):
             raise TypeError("initializer must be a callable")
-        self._initializer = _wrap_non_picklable_objects(initializer)
-        self._initargs = [_wrap_non_picklable_objects(a) for a in initargs]
+        self._initializer = initializer
+        self._initargs = initargs
 
         _check_max_depth(self._context)
 
@@ -998,8 +1018,8 @@ class ProcessPoolExecutor(_base.Executor):
 
     def submit(self, fn, *args, **kwargs):
         with self._flags.shutdown_lock:
-            if self._flags.broken:
-                raise BrokenProcessPool(self._flags.broken)
+            if self._flags.broken is not None:
+                raise self._flags.broken
             if self._flags.shutdown:
                 raise ShutdownExecutorError(
                     'cannot schedule new futures after shutdown')

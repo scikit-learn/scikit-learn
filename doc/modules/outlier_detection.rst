@@ -153,7 +153,7 @@ but regular, observation outside the frontier.
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
-      <http://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
+      <https://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
       Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
 
 .. topic:: Examples:
@@ -239,7 +239,13 @@ Random partitioning produces noticeably shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path
 lengths for particular samples, they are highly likely to be anomalies.
 
-This strategy is illustrated below.
+The implementation of :class:`ensemble.IsolationForest` is based on an ensemble
+of :class:`tree.ExtraTreeRegressor`. Following Isolation Forest original paper,
+the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
+:math:`n` is the number of samples used to build the tree (see (Liu et al.,
+2008) for more details).
+
+This algorithm is illustrated below.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_001.png
    :target: ../auto_examples/ensemble/plot_isolation_forest.html

@@ -33,6 +33,34 @@ the kernel:
     2. ``S = 1. / (D / np.max(D))``
 
 
+.. currentmodule:: sklearn.metrics
+
+The distances between the row vectors of ``X`` and the row vectors of ``Y``
+can be evaluated using :func:`pairwise_distances`. If ``Y`` is omitted the
+pairwise distances of the row vectors of ``X`` are calculated. Similarly,
+:func:`pairwise.pairwise_kernels` can be used to calculate the kernel between `X`
+and `Y` using different kernel functions. See the API reference for more
+details.
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import pairwise_distances
+    >>> from sklearn.metrics.pairwise import pairwise_kernels
+    >>> X = np.array([[2, 3], [3, 5], [5, 8]])
+    >>> Y = np.array([[1, 0], [2, 1]])
+    >>> pairwise_distances(X, Y, metric='manhattan')
+    array([[ 4.,  2.],
+           [ 7.,  5.],
+           [12., 10.]])
+    >>> pairwise_distances(X, metric='manhattan')
+    array([[0., 3., 8.],
+           [3., 0., 5.],
+           [8., 5., 0.]])
+    >>> pairwise_kernels(X, Y, metric='linear')
+    array([[ 2.,  7.],
+           [ 3., 11.],
+           [ 5., 18.]])
+
+
 .. currentmodule:: sklearn.metrics.pairwise
 
 .. _cosine_similarity:
@@ -63,7 +91,7 @@ is equivalent to :func:`linear_kernel`, only slower.)
 
     * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
       Information Retrieval. Cambridge University Press.
-      http://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
+      https://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
 
 .. _linear_kernel:
 
@@ -149,7 +177,7 @@ Manhattan distance between the input vectors.
 
 It has proven useful in ML applied to noiseless data.
 See e.g. `Machine learning for quantum mechanics in a nutshell
-<http://onlinelibrary.wiley.com/doi/10.1002/qua.24954/abstract/>`_.
+<https://onlinelibrary.wiley.com/doi/10.1002/qua.24954/abstract/>`_.
 
 .. _chi2_kernel:
 
@@ -200,5 +228,5 @@ The chi squared kernel is most commonly used on histograms (bags) of visual word
       Local features and kernels for classification of texture and object
       categories: A comprehensive study
       International Journal of Computer Vision 2007
-      http://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
+      https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 

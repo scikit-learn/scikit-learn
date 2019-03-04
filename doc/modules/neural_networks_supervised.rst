@@ -152,7 +152,7 @@ indices where the value is `1` represents the assigned classes of that sample::
     >>> clf.predict([[0., 0.]])
     array([[0, 1]])
 
-See the examples below and the doc string of
+See the examples below and the docstring of
 :meth:`MLPClassifier.fit` for further information.
 
 .. topic:: Examples:
@@ -196,7 +196,7 @@ Algorithms
 
 MLP trains using `Stochastic Gradient Descent
 <https://en.wikipedia.org/wiki/Stochastic_gradient_descent>`_,
-`Adam <http://arxiv.org/abs/1412.6980>`_, or
+`Adam <https://arxiv.org/abs/1412.6980>`_, or
 `L-BFGS <https://en.wikipedia.org/wiki/Limited-memory_BFGS>`__.
 Stochastic Gradient Descent (SGD) updates parameters using the gradient of the
 loss function with respect to a parameter that needs adaptation, i.e.
@@ -223,7 +223,7 @@ L-BFGS is a solver that approximates the Hessian matrix which represents the
 second-order partial derivative of a function. Further it approximates the
 inverse of the Hessian matrix to perform parameter updates. The implementation
 uses the Scipy version of `L-BFGS
-<http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`_.
+<https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`_.
 
 If the selected solver is 'L-BFGS', training does not support online nor
 mini-batch learning.
@@ -368,10 +368,10 @@ or want to do additional monitoring, using ``warm_start=True`` and
 .. topic:: References:
 
     * `"Learning representations by back-propagating errors."
-      <http://www.iro.umontreal.ca/~pift6266/A06/refs/backprop_old.pdf>`_
+      <https://www.iro.umontreal.ca/~pift6266/A06/refs/backprop_old.pdf>`_
       Rumelhart, David E., Geoffrey E. Hinton, and Ronald J. Williams.
 
-    * `"Stochastic Gradient Descent" <http://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
+    * `"Stochastic Gradient Descent" <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
     * `"Backpropagation" <http://ufldl.stanford.edu/wiki/index.php/Backpropagation_Algorithm>`_
       Andrew Ng, Jiquan Ngiam, Chuan Yu Foo, Yifan Mai, Caroline Suen - Website, 2011.
@@ -381,5 +381,5 @@ or want to do additional monitoring, using ``warm_start=True`` and
       of the Trade 1998.
 
     *  `"Adam: A method for stochastic optimization."
-       <http://arxiv.org/pdf/1412.6980v8.pdf>`_
+       <https://arxiv.org/pdf/1412.6980v8.pdf>`_
        Kingma, Diederik, and Jimmy Ba. arXiv preprint arXiv:1412.6980 (2014).

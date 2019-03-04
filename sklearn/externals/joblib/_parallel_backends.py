@@ -126,9 +126,9 @@ class ParallelBackendBase(with_metaclass(ABCMeta)):
         """
         nesting_level = getattr(self, 'nesting_level', 0) + 1
         if nesting_level > 1:
-            return SequentialBackend(nesting_level=nesting_level)
+            return SequentialBackend(nesting_level=nesting_level), None
         else:
-            return ThreadingBackend(nesting_level=nesting_level)
+            return ThreadingBackend(nesting_level=nesting_level), None
 
     @contextlib.contextmanager
     def retrieval_context(self):
@@ -185,8 +185,12 @@ class SequentialBackend(ParallelBackendBase):
         return result
 
     def get_nested_backend(self):
-        nested_level = getattr(self, 'nesting_level', 0) + 1
-        return SequentialBackend(nesting_level=nested_level)
+        # import is not top level to avoid cyclic import errors.
+        from .parallel import get_active_backend
+
+        # SequentialBackend should neither change the nesting level, the
+        # default backend or the number of jobs. Just return the current one.
+        return get_active_backend()
 
 
 class PoolManagerMixin(object):

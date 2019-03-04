@@ -5,7 +5,6 @@ from itertools import product
 
 import pytest
 
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -464,7 +463,7 @@ def _test_ridge_classifiers(filter_):
     reg = RidgeClassifierCV(cv=cv)
     reg.fit(filter_(X_iris), y_iris)
     y_pred = reg.predict(filter_(X_iris))
-    assert_true(np.mean(y_iris == y_pred) >= 0.8)
+    assert np.mean(y_iris == y_pred) >= 0.8
 
 
 def _test_tolerance(filter_):
@@ -476,7 +475,7 @@ def _test_tolerance(filter_):
     ridge2.fit(filter_(X_diabetes), y_diabetes)
     score2 = ridge2.score(filter_(X_diabetes), y_diabetes)
 
-    assert_true(score >= score2)
+    assert score >= score2
 
 
 def check_dense_sparse(test_func):
@@ -816,21 +815,25 @@ def test_n_iter():
 def test_ridge_fit_intercept_sparse():
     X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
                            bias=10., random_state=42)
+
     X_csr = sp.csr_matrix(X)
 
-    for solver in ['saga', 'sag']:
+    for solver in ['sag', 'sparse_cg']:
         dense = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
         sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
         dense.fit(X, y)
-        sparse.fit(X_csr, y)
+        with pytest.warns(None) as record:
+            sparse.fit(X_csr, y)
+        assert len(record) == 0
         assert_almost_equal(dense.intercept_, sparse.intercept_)
         assert_array_almost_equal(dense.coef_, sparse.coef_)
 
     # test the solver switch and the corresponding warning
-    sparse = Ridge(alpha=1., tol=1.e-15, solver='lsqr', fit_intercept=True)
-    assert_warns(UserWarning, sparse.fit, X_csr, y)
-    assert_almost_equal(dense.intercept_, sparse.intercept_)
-    assert_array_almost_equal(dense.coef_, sparse.coef_)
+    for solver in ['saga', 'lsqr']:
+        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+        assert_warns(UserWarning, sparse.fit, X_csr, y)
+        assert_almost_equal(dense.intercept_, sparse.intercept_)
+        assert_array_almost_equal(dense.coef_, sparse.coef_)
 
 
 def test_errors_and_values_helper():

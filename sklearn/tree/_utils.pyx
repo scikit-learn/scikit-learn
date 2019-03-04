@@ -1,6 +1,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -53,7 +54,7 @@ def _realloc_test():
 
 
 # rand_r replacement using a 32bit XorShift generator
-# See http://www.jstatsoft.org/v08/i14/paper for details
+# See https://www.jstatsoft.org/v08/i14/paper for details
 cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
     seed[0] ^= <UINT32_t>(seed[0] << 13)
     seed[0] ^= <UINT32_t>(seed[0] >> 17)

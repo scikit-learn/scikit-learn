@@ -54,14 +54,15 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=.2,
 
 # Fit an independent logistic regression model for each class using the
 # OneVsRestClassifier wrapper.
-ovr = OneVsRestClassifier(LogisticRegression())
+base_lr = LogisticRegression(solver='lbfgs')
+ovr = OneVsRestClassifier(base_lr)
 ovr.fit(X_train, Y_train)
 Y_pred_ovr = ovr.predict(X_test)
 ovr_jaccard_score = jaccard_similarity_score(Y_test, Y_pred_ovr)
 
 # Fit an ensemble of logistic regression classifier chains and take the
 # take the average prediction of all the chains.
-chains = [ClassifierChain(LogisticRegression(), order='random', random_state=i)
+chains = [ClassifierChain(base_lr, order='random', random_state=i)
           for i in range(10)]
 for chain in chains:
     chain.fit(X_train, Y_train)

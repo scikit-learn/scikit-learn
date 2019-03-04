@@ -178,3 +178,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         if self.non_negative:
             np.abs(X.data, X.data)
         return X
+
+    def _more_tags(self):
+        return {'X_types': [self.input_type]}
