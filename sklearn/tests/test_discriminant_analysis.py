@@ -98,7 +98,8 @@ def test_lda_predict():
 
 
 @pytest.mark.parametrize("n_classes", [2, 3])
-def test_lda_predict_proba(n_classes):
+@pytest.mark.parametrize("solver", ["svd", "lsqr", "eigen"])
+def test_lda_predict_proba(solver, n_classes):
     def generate_dataset(n_samples, centers, covariances, random_state=None):
         """Generate a multivariate normal data given some centers and
         covariances"""
@@ -116,7 +117,8 @@ def test_lda_predict_proba(n_classes):
         n_samples=90000, centers=blob_centers, covariances=blob_stds,
         random_state=42
     )
-    lda = LinearDiscriminantAnalysis(solver='lsqr').fit(X, y)
+    lda = LinearDiscriminantAnalysis(solver=solver, store_covariance=True,
+                                     shrinkage=None).fit(X, y)
     # check that the empirical means and covariances are close enough to the
     # one used to generate the data
     assert_allclose(lda.means_, blob_centers, atol=1e-1)
