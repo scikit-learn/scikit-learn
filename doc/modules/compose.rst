@@ -105,10 +105,10 @@ for Python Sequences such as lists or strings (although only a step of 1 is
 permitted). This is convenient for performing only some of the transformations
 (or their inverse):
 
-    >>> clf[:1] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    Pipeline(steps=[('reduce_dim', PCA(copy=True, ...))])
-    >>> clf[-1:] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    Pipeline(steps=[('svc', SVC(C=10, ...))])
+    >>> pipe[:1] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Pipeline(memory=None, steps=[('reduce_dim', PCA(copy=True, ...))])
+    >>> pipe[-1:] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Pipeline(memory=None, steps=[('clf', SVC(C=1.0, ...))])
 
 Nested parameters
 .................
@@ -139,13 +139,13 @@ ignored by setting them to ``'passthrough'``::
 
 The estimators of the pipeline can be retrieved by index:
 
-    >>> clf[0]
-    PCA(copy=True, n_components=None, whiten=False)
+    >>> pipe[0]  # doctest: +ELLIPSIS
+    PCA(copy=True, ...)
 
 or by name::
 
-    >>> clf['reduce_dim']
-    PCA(copy=True, n_components=None, whiten=False)
+    >>> pipe['reduce_dim']  # doctest: +ELLIPSIS
+    PCA(copy=True, ...)
 
 .. topic:: Examples:
 
