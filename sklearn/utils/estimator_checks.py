@@ -836,8 +836,7 @@ def check_methods_subset_invariance(name, estimator_orig):
         msg = ("{method} of {name} is not invariant when applied "
                "to a subset.").format(method=method, name=name)
         # TODO remove cases when corrected
-        if (name, method) in [('SVC', 'decision_function'),
-                              ('NuSVC', 'decision_function'),
+        if (name, method) in [('NuSVC', 'decision_function'),
                               ('SparsePCA', 'transform'),
                               ('MiniBatchSparsePCA', 'transform'),
                               ('DummyClassifier', 'predict'),
@@ -1992,7 +1991,10 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
     classifier.set_params(class_weight=class_weight)
     coef_manual = classifier.fit(X, y).coef_.copy()
 
-    assert_allclose(coef_balanced, coef_manual)
+    assert_allclose(coef_balanced, coef_manual,
+                    err_msg="Classifier %s is not computing"
+                    " class_weight=balanced properly."
+                    % name)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
