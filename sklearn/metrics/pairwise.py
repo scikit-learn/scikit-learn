@@ -1420,8 +1420,12 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
             raise TypeError("scipy distance metrics do not"
                             " support sparse matrices.")
 
-        dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
-        X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+        X, Y = check_pairwise_arrays(X, Y)
+
+        # if distance metric to be calculated is from PAIRWISE BOOLEAN FUNCTIONS
+        # convert matrix type to boolean
+        if metric in PAIRWISE_BOOLEAN_FUNCTIONS:
+            X, Y = X.astype(bool), Y.astype(bool)
 
         # precompute data-derived metric params
         params = _precompute_metric_params(X, Y, metric=metric, **kwds)
