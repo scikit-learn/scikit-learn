@@ -45,6 +45,32 @@ jobs:
 
 - template: build_tools/azure/posix.yml
   parameters:
+    # This name will trigger adding the container
+    # i386/python:3.7.2-stretch to the build
+    name: Linux32bit
+    vmImage: ubuntu-16.04
+    # Choose any version python as a tag.
+    matrix:
+      # Build any 32-bit version.
+      py32bit:
+        DISTRIB: '32bit'
+        #PYTHON_VERSION: '*'
+        INSTALL_MKL: 'true'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        PANDAS_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PYAMG_VERSION: '*'
+        PILLOW_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        COVERAGE: 'true'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'false'
+        TEST_DOCSTRINGS: 'false'
+        SKLEARN_SITE_JOBLIB: '1'
+        CHECK_WARNINGS: 'false'
+
+- template: build_tools/azure/posix.yml
+  parameters:
     name: macOS
     vmImage: xcode9-macos10.13
     matrix:

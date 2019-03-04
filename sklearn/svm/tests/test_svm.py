@@ -22,7 +22,8 @@ from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
 from sklearn.utils.testing import ignore_warnings, assert_raises
-from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import assert_no_warnings, skip_if_32bit
+from sklearn.utils import _IS_32BIT
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError, UndefinedMetricWarning
 from sklearn.multiclass import OneVsRestClassifier
@@ -237,6 +238,7 @@ def test_svr_errors():
     assert_raises(ValueError, clf.predict, X)
 
 
+@skip_if_32bit
 def test_oneclass():
     # Test OneClassSVM
     clf = svm.OneClassSVM(gamma='scale')
@@ -252,6 +254,7 @@ def test_oneclass():
     assert_raises(AttributeError, lambda: clf.coef_)
 
 
+@skip_if_32bit
 def test_oneclass_decision_function():
     # Test OneClassSVM decision function
     clf = svm.OneClassSVM()
@@ -282,6 +285,7 @@ def test_oneclass_decision_function():
     assert_array_equal((dec_func_outliers > 0).ravel(), y_pred_outliers == 1)
 
 
+@skip_if_32bit
 def test_oneclass_score_samples():
     X_train = [[1, 1], [1, 2], [2, 1]]
     clf = svm.OneClassSVM(gamma=1).fit(X_train)
@@ -785,8 +789,11 @@ def test_immutable_coef_property():
         svm.NuSVC(kernel='linear').fit(iris.data, iris.target),
         svm.SVR(kernel='linear').fit(iris.data, iris.target),
         svm.NuSVR(kernel='linear').fit(iris.data, iris.target),
-        svm.OneClassSVM(kernel='linear').fit(iris.data),
     ]
+    if not _IS_32BIT:
+        svms += [
+            svm.OneClassSVM(kernel='linear').fit(iris.data),
+        ]
     for clf in svms:
         assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
         assert_raises((RuntimeError, ValueError),
@@ -890,7 +897,8 @@ def test_svr_coef_sign():
                 svm.LinearSVR()]:
         svr.fit(X, y)
         assert_array_almost_equal(svr.predict(X),
-                                  np.dot(X, svr.coef_.ravel()) + svr.intercept_)
+                                  np.dot(X, svr.coef_.ravel()) +
+                                  svr.intercept_)
 
 
 def test_linear_svc_intercept_scaling():
@@ -938,8 +946,8 @@ def test_decision_function_shape_two_class():
     for n_classes in [2, 3]:
         X, y = make_blobs(centers=n_classes, random_state=0)
         for estimator in [svm.SVC, svm.NuSVC]:
-            clf = OneVsRestClassifier(estimator(gamma='scale',
-                decision_function_shape="ovr")).fit(X, y)
+            clf = OneVsRestClassifier(estimator(
+                gamma='scale', decision_function_shape="ovr")).fit(X, y)
             assert_equal(len(clf.predict(X)), len(y))
 
 

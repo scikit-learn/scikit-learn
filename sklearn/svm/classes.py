@@ -1,11 +1,12 @@
 import warnings
 import numpy as np
+from scipy.sparse import issparse
 
 from .base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
-from ..utils import check_X_y
+from ..utils import check_X_y, _IS_32BIT
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
 
@@ -101,7 +102,8 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
+    coef_ : array, shape = [n_features]
+        if n_classes == 2 else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
@@ -313,7 +315,8 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
+    coef_ : array, shape = [n_features]
+        if n_classes == 2 else [n_classes, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
@@ -1175,6 +1178,12 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         if self.random_state is not None:
             warnings.warn("The random_state parameter is deprecated and will"
                           " be removed in version 0.22.", DeprecationWarning)
+
+        if _IS_32BIT and not issparse(X):
+            msg = ("WARNING: this class is not supported for a 32-bit "
+                   "machine yet "
+                   "for non-sparse matrices.")
+            warnings.warn(msg, RuntimeWarning)
 
         super().fit(X, np.ones(_num_samples(X)),
                     sample_weight=sample_weight, **params)

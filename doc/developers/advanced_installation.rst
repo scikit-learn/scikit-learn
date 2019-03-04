@@ -307,3 +307,20 @@ You can also install a symlink named ``site-packages/scikit-learn.egg-link``
 to the development folder of scikit-learn with::
 
     pip install --editable .
+
+
+Testing scikit-learn in 32-bit
+------------------------------
+
+Testing on a 32-bit may be run by using docker. This may be done by running the
+following in the home folder::
+
+    docker run --rm -it -v`pwd`:/home/src nikolaik/python-nodejs:python3.7-nodejs11  /bin/bash
+    cd /home
+    virtualenv venv
+    source venv/bin/activate
+    cd /home/src
+    pip install numpy scipy cython pytest;
+    python setup.py develop;
+    sed -i '/--doctest-modules/d' setup.cfg;
+    pytest -l sklearn

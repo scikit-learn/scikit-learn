@@ -6,6 +6,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
     source activate $VIRTUALENV
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     source $VIRTUALENV/bin/activate
+elif [[ "$DISTRIB" == "32bit" ]]; then
+    source $VIRTUALENV/bin/activate
 fi
 
 python --version

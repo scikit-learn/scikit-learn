@@ -7,8 +7,15 @@ jobs:
 - job: ${{ parameters.name }}
   pool:
     vmImage: ${{ parameters.vmImage }}
+  ${{ if eq(parameters.name, 'Linux32bit') }}:
+    container: quay.io/pypa/manylinux1_i686
   variables:
-    TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
+    # This if condition is only here to treat the 32-bit case separately, which
+    # runs in its own docker container.
+    ${{ if eq(parameters.name, 'Linux32bit') }}:
+      TEST_DIR: '/tmp/test_folder'
+    ${{ if not(eq(parameters.name, 'Linux32bit')) }}:
+      TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     VIRTUALENV: 'testvenv'
     JUNITXML: 'test-data.xml'
     OMP_NUM_THREADS: '4'

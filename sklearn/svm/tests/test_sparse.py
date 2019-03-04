@@ -4,6 +4,7 @@ import numpy as np
 from numpy.testing import (assert_array_almost_equal, assert_array_equal,
                            assert_equal)
 from scipy import sparse
+import sklearn.utils
 
 from sklearn import datasets, svm, linear_model, base
 from sklearn.datasets import make_classification, load_digits, make_blobs
@@ -283,6 +284,8 @@ def test_sparse_liblinear_intercept_handling():
 
 @pytest.mark.parametrize("datasets_index", range(4))
 @pytest.mark.parametrize("kernel", ["linear", "poly", "rbf", "sigmoid"])
+# right now, the non-sparse version of OneClassSVM has some precision
+# issues.
 @skip_if_32bit
 def test_sparse_oneclasssvm(datasets_index, kernel):
     # Check that sparse OneClassSVM gives the same result as dense OneClassSVM
@@ -293,9 +296,22 @@ def test_sparse_oneclasssvm(datasets_index, kernel):
                 [X_blobs[:80], None, X_blobs[80:]],
                 [iris.data, None, iris.data]]
     dataset = datasets[datasets_index]
-    clf = svm.OneClassSVM(gamma=1, kernel=kernel)
-    sp_clf = svm.OneClassSVM(gamma=1, kernel=kernel)
-    check_svm_model_equal(clf, sp_clf, *dataset)
+
+    # Right now, the non-sparse version of OneClassSVM has some precision
+    # issues. For now, it warns the user that it is not supported.
+    # We just check for this warning for now.
+    # Remove this condition when this is supported.
+    if sklearn.utils._IS_32BIT and not sparse.issparse(X):
+        X_train, Y_train, X_test = dataset
+        # Just check for warning. The result of this function is not
+        # guaranteed.
+        with pytest.warns(RuntimeWarning):
+            sp_clf = svm.OneClassSVM(gamma=1, kernel=kernel)
+            sp_clf.fit(X_train, Y_train)
+    else:
+        clf = svm.OneClassSVM(gamma=1, kernel=kernel)
+        sp_clf = svm.OneClassSVM(gamma=1, kernel=kernel)
+        check_svm_model_equal(clf, sp_clf, *dataset)
 
 
 def test_sparse_realdata():

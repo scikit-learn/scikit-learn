@@ -58,7 +58,50 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     python3 -m virtualenv --system-site-packages --python=python3 $VIRTUALENV
     source $VIRTUALENV/bin/activate
     python -m pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
+
+elif [[ "$DISTRIB" == "32bit" ]]; then
+    # python and pip are already installed in virtualenv
+    # TODO: Also choose python version?
+    TO_INSTALL="pytest pytest-cov \
+                numpy scipy \
+                cython"
+
+    if [[ "$INSTALL_MKL" == "true" ]]; then
+        TO_INSTALL="$TO_INSTALL mkl"
+    else
+        TO_INSTALL="$TO_INSTALL nomkl"
+    fi
+
+    # Don't specify the versions for now for 32-bit
+    if [[ -n "$PANDAS_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pandas"
+    fi
+
+    if [[ -n "$PYAMG_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pyamg"
+    fi
+
+    if [[ -n "$PILLOW_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pillow"
+    fi
+
+    if [[ -n "$JOBLIB_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL joblib"
+    fi
+
+    echo "TO_INSTALL: $TO_INSTALL"
+
+    # update ubuntu
+    apt-get update && apt-get upgrade
+
+    # Start a lightweight virtualenv
+    # TODO: Do we want to specify python version?
+    virtualenv $VIRTUALENV
+    source $VIRTUALENV/bin/activate
+    python -m pip install --upgrade pip
+    python -m pip install $TO_INSTALL
 fi
+
 
 if [[ "$COVERAGE" == "true" ]]; then
     python -m pip install coverage codecov
@@ -78,5 +121,8 @@ try:
 except ImportError:
     print('pandas not installed')
 "
+export BITS=`python -c 'import struct; print(8 * struct.calcsize("P"))'`
+echo "Architecture: $BITS bits"
+
 pip list
 python setup.py develop
