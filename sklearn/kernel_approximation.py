@@ -435,6 +435,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         return sp.hstack(X_new)
 
+    def _more_tags(self):
+        return {'stateless': True}
+
 
 class Nystroem(BaseEstimator, TransformerMixin):
     """Approximate a kernel map using a subset of the training data.

@@ -1,6 +1,8 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
+#
 # Authors: Robert Layton <robertlayton@gmail.com>
 #           Corey Lynch <coreylynch9@gmail.com>
 # License: BSD 3 clause
@@ -15,8 +17,7 @@ from sklearn.utils.lgamma cimport lgamma
 np.import_array()
 ctypedef np.float64_t DOUBLE
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
+
 def expected_mutual_information(contingency, int n_samples):
     """Calculate the expected mutual information for two labelings."""
     cdef int R, C
@@ -28,8 +29,8 @@ def expected_mutual_information(contingency, int n_samples):
     #cdef np.ndarray[int, ndim=2] start, end
     R, C = contingency.shape
     N = <DOUBLE>n_samples
-    a = np.ravel(contingency.sum(axis=1).astype(np.int32))
-    b = np.ravel(contingency.sum(axis=0).astype(np.int32))
+    a = np.ravel(contingency.sum(axis=1).astype(np.int32, copy=False))
+    b = np.ravel(contingency.sum(axis=0).astype(np.int32, copy=False))
     # There are three major terms to the EMI equation, which are multiplied to
     # and then summed over varying nij values.
     # While nijs[0] will never be used, having it simplifies the indexing.
