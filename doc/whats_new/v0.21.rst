@@ -233,7 +233,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Feature| :func:`metrics.jaccard_score` has been added to calculate the
   Jaccard coefficient as an evaluation metric for binary, multilabel and
-  multiclass tasks, with an interface analogous to :func:`metrics.f_score`.
+  multiclass tasks, with an interface analogous to :func:`metrics.f1_score`.
   :issue:`13151` by :user:`Gaurav Dhingra <gxyd>` and `Joel Nothman`_.
 
 - |Enhancement| Use label `accuracy` instead of `micro-average` on
@@ -253,7 +253,8 @@ Support for Python 3.4 and below has been officially dropped.
   Mitrovic <SandraMNE>`.
 
 - |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
-  the more consistent :func:`metrics.jaccard_score`.
+  the more consistent :func:`metrics.jaccard_score`. The former behavior for
+  binary and multiclass targets is broken.
   :issue:`13151` by `Joel Nothman`_.
 
 - |Efficiency| The pairwise manhattan distances with sparse input now uses the

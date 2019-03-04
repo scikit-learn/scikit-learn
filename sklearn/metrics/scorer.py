@@ -481,7 +481,6 @@ neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
-jaccard_scorer = make_scorer(jaccard_score)
 
 # Score functions that need decision values
 roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
