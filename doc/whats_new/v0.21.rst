@@ -20,7 +20,7 @@ random sampling procedures.
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` for multiclass
   classification. |Fix|
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` with 'eigen'
-solver. |Fix|
+  solver. |Fix|
 - :class:`linear_model.BayesianRidge` |Fix|
 - Decision trees and derived ensembles when both `max_depth` and
   `max_leaf_nodes` are set. |Fix|
