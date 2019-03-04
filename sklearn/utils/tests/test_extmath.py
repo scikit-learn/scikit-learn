@@ -8,6 +8,7 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 from scipy import stats
+from scipy.special import expit
 
 import pytest
 
@@ -168,7 +169,7 @@ def test_row_norms(dtype):
     else:
         precision = 5
 
-    X = X.astype(dtype)
+    X = X.astype(dtype, copy=False)
     sq_norm = (X ** 2).sum(axis=1)
 
     assert_array_almost_equal(sq_norm, row_norms(X, squared=True),
@@ -180,8 +181,8 @@ def test_row_norms(dtype):
         # csr_matrix will use int32 indices by default,
         # up-casting those to int64 when necessary
         if csr_index_dtype is np.int64:
-            Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype)
-            Xcsr.indices = Xcsr.indices.astype(csr_index_dtype)
+            Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype, copy=False)
+            Xcsr.indices = Xcsr.indices.astype(csr_index_dtype, copy=False)
         assert Xcsr.indices.dtype == csr_index_dtype
         assert Xcsr.indptr.dtype == csr_index_dtype
         assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
@@ -442,7 +443,7 @@ def test_cartesian():
 def test_logistic_sigmoid():
     # Check correctness and robustness of logistic sigmoid implementation
     def naive_log_logistic(x):
-        return np.log(1 / (1 + np.exp(-x)))
+        return np.log(expit(x))
 
     x = np.linspace(-2, 2, 50)
     assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))

@@ -1236,7 +1236,8 @@ Methods
         repeatedly calling ``partial_fit`` does not clear the model, but
         updates it with respect to the data provided. The portion of data
         provided to ``partial_fit`` may be called a mini-batch.
-        Each mini-batch must be of consistent shape, etc.
+        Each mini-batch must be of consistent shape, etc. In iterative
+        estimators, ``partial_fit`` often only performs a single iteration.
 
         ``partial_fit`` may also be used for :term:`out-of-core` learning,
         although usually limited to the case where learning can be performed

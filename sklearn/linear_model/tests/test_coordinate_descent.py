@@ -828,3 +828,20 @@ def test_warm_start_multitask_lasso():
     clf2 = MultiTaskLasso(alpha=0.1, max_iter=10)
     ignore_warnings(clf2.fit)(X, Y)
     assert_array_almost_equal(clf2.coef_, clf.coef_)
+
+
+@pytest.mark.parametrize('klass, n_classes, kwargs',
+                         [(Lasso, 1, dict(precompute=True)),
+                          (Lasso, 1, dict(precompute=False)),
+                          (MultiTaskLasso, 2, dict()),
+                          (MultiTaskLasso, 2, dict())])
+def test_enet_coordinate_descent(klass, n_classes, kwargs):
+    """Test that a warning is issued if model does not converge"""
+    clf = klass(max_iter=2, **kwargs)
+    n_samples = 5
+    n_features = 2
+    X = np.ones((n_samples, n_features)) * 1e50
+    y = np.ones((n_samples, n_classes))
+    if klass == Lasso:
+        y = y.ravel()
+    assert_warns(ConvergenceWarning, clf.fit, X, y)

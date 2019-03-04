@@ -27,7 +27,6 @@ The main theoretical result behind the efficiency of random projection is the
 #          Arnaud Joly <a.joly@ulg.ac.be>
 # License: BSD 3 clause
 
-from __future__ import division
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -467,8 +466,9 @@ class GaussianRandomProjection(BaseRandomProjection):
     --------
     >>> import numpy as np
     >>> from sklearn.random_projection import GaussianRandomProjection
-    >>> X = np.random.rand(100, 10000)
-    >>> transformer = GaussianRandomProjection()
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.rand(100, 10000)
+    >>> transformer = GaussianRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
@@ -479,7 +479,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     """
     def __init__(self, n_components='auto', eps=0.1, random_state=None):
-        super(GaussianRandomProjection, self).__init__(
+        super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=True,
@@ -589,9 +589,9 @@ class SparseRandomProjection(BaseRandomProjection):
     --------
     >>> import numpy as np
     >>> from sklearn.random_projection import SparseRandomProjection
-    >>> np.random.seed(42)
-    >>> X = np.random.rand(100, 10000)
-    >>> transformer = SparseRandomProjection()
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.rand(100, 10000)
+    >>> transformer = SparseRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
@@ -616,7 +616,7 @@ class SparseRandomProjection(BaseRandomProjection):
     """
     def __init__(self, n_components='auto', density='auto', eps=0.1,
                  dense_output=False, random_state=None):
-        super(SparseRandomProjection, self).__init__(
+        super().__init__(
             n_components=n_components,
             eps=eps,
             dense_output=dense_output,

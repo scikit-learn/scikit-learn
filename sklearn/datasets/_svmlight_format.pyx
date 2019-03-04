@@ -4,6 +4,8 @@
 #          Lars Buitinck
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+#
+# cython: language_level=2, boundscheck=False, wraparound=False
 
 import array
 from cpython cimport array
@@ -21,8 +23,6 @@ cdef bytes COMMA = u','.encode('ascii')
 cdef bytes COLON = u':'.encode('ascii')
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
                         bint query_id, long long offset, long long length):
     cdef array.array data, indices, indptr
@@ -42,8 +42,9 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
     else:
         dtype = np.float64
         data = array.array("d")
-    indices = array.array("i")
-    indptr = array.array("i", [0])
+
+    indices = array.array("q")
+    indptr = array.array("q", [0])
     query = np.arange(0, dtype=np.int64)
 
     if multilabel:
@@ -108,6 +109,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
 
             prev_idx = idx
 
+        # increment index pointer array size
         array.resize_smart(indptr, len(indptr) + 1)
         indptr[len(indptr) - 1] = len(data)
 

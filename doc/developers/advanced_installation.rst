@@ -27,6 +27,18 @@ There are different ways to get scikit-learn installed:
     If you wish to contribute to the project, you need to
     :ref:`install the latest development version<install_bleeding_edge>`.
 
+.. _install_nightly_builds:
+
+Installing nightly builds
+=========================
+
+The continuous integration servers of the scikit-learn project build, test
+and upload wheel packages for the most recent Python version on a nightly
+basis to help users test bleeding edge features or bug fixes::
+
+  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+
+
 .. _install_bleeding_edge:
 
 Building from source
@@ -35,8 +47,8 @@ Building from source
 Scikit-learn requires:
 
 - Python (>= 3.5),
-- NumPy (>= 1.8.2),
-- SciPy (>= 0.13.3).
+- NumPy (>= 1.11),
+- SciPy (>= 0.17).
 
 .. note::
 
@@ -46,7 +58,8 @@ Scikit-learn requires:
 
 Building Scikit-learn also requires
 
-- Cython >=0.23 
+- Cython >=0.28.5
+- OpenMP
 
 Running tests requires
 
@@ -102,6 +115,31 @@ On Unix-like systems, you can simply type ``make`` in the top-level folder to
 build in-place and launch all the tests. Have a look at the ``Makefile`` for
 additional utilities.
 
+Mac OSX
+-------
+
+The default C compiler, Apple-clang, on Mac OSX does not directly support
+OpenMP. The first solution to build scikit-learn is to install another C
+compiler such as gcc or llvm-clang. Another solution is to enable OpenMP
+support on the default Apple-clang. In the following we present how to
+configure this second option.
+
+You first need to install the OpenMP library::
+
+    brew install libomp
+
+Then you need to set the following environment variables::
+
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+
+Finally you can build the package using the standard command.
+
 Installing build dependencies
 =============================
 
@@ -111,7 +149,7 @@ Linux
 Installing from source requires you to have installed the scikit-learn runtime
 dependencies, Python development headers and a working C/C++ compiler.
 Under Debian-based operating systems, which include Ubuntu::
-    
+
     sudo apt-get install build-essential python3-dev python3-setuptools \
                      python3-numpy python3-scipy \
                      libatlas-dev libatlas3-base
@@ -165,25 +203,16 @@ Windows
 To build scikit-learn on Windows you need a working C/C++ compiler in
 addition to numpy, scipy and setuptools.
 
-Picking the right compiler depends on the version of Python (2 or 3)
-and the architecture of the Python interpreter, 32-bit or 64-bit.
-You can check the Python version by running the following in ``cmd`` or
-``powershell`` console::
-
-    python --version
-
-and the architecture with::
+The building command depends on the architecture of the Python interpreter,
+32-bit or 64-bit. You can check the architecture by running the following in
+``cmd`` or ``powershell`` console::
 
     python -c "import struct; print(struct.calcsize('P') * 8)"
 
 The above commands assume that you have the Python installation folder in your
 PATH environment variable.
 
-
-Python >= 3.5
--------------
-
-For Python versions as of 3.5, you need `Build Tools for Visual Studio 2017
+You will need `Build Tools for Visual Studio 2017
 <https://visualstudio.microsoft.com/de/downloads/>`_.
 
 For 64-bit Python, configure the build environment with::
@@ -196,53 +225,6 @@ And build scikit-learn from this environment::
     python setup.py install
 
 Replace ``x64`` by ``x86`` to build for 32-bit Python.
-
-
-32-bit Python (<= 3.4)
-----------------------
-
-For 32-bit Python versions up to 3.4 use Microsoft Visual C++ Express 2010.
-
-Once installed you should be able to build scikit-learn without any
-particular configuration by running the following command in the scikit-learn
-folder::
-
-   python setup.py install
-
-
-64-bit Python (<= 3.4)
-----------------------
-
-For 64-bit Python versions up to 3.4, you either need the full Visual Studio or
-the free Windows SDKs that can be downloaded from the links below.
-
-The Windows SDKs include the MSVC compilers both for 32 and 64-bit
-architectures. They come as a ``GRMSDKX_EN_DVD.iso`` file that can be mounted
-as a new drive with a ``setup.exe`` installer in it.
-
-- For Python  you need SDK **v7.1**: `MS Windows SDK for Windows 7 and .NET
-  Framework 4
-  <https://www.microsoft.com/en-us/download/details.aspx?id=8442>`_
-
-Both SDKs can be installed in parallel on the same host. To use the Windows
-SDKs, you need to setup the environment of a ``cmd`` console launched with the
-following flags ::
-
-    cmd /E:ON /V:ON /K
-
-Then configure the build environment with::
-
-    SET DISTUTILS_USE_SDK=1
-    SET MSSdk=1
-    "C:\Program Files\Microsoft SDKs\Windows\v7.1\Setup\WindowsSdkVer.exe" -q -version:v7.1
-    "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 /release
-
-Finally you can build scikit-learn in the same ``cmd`` console::
-
-    python setup.py install
-
-Replace ``/x64`` by ``/x86`` to build for 32-bit Python instead of 64-bit
-Python.
 
 
 Building binary packages and installers

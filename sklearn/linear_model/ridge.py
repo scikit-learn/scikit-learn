@@ -19,7 +19,7 @@ from scipy.sparse import linalg as sp_linalg
 
 from .base import LinearClassifierMixin, LinearModel, _rescale_data
 from .sag import sag_solver
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
 from ..utils import check_X_y
@@ -33,9 +33,31 @@ from ..metrics.scorer import check_scoring
 from ..exceptions import ConvergenceWarning
 
 
-def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
+def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
+                     X_offset=None, X_scale=None):
+
+    def _get_rescaled_operator(X):
+
+        X_offset_scale = X_offset / X_scale
+
+        def matvec(b):
+            return X.dot(b) - b.dot(X_offset_scale)
+
+        def rmatvec(b):
+            return X.T.dot(b) - X_offset_scale * np.sum(b)
+
+        X1 = sparse.linalg.LinearOperator(shape=X.shape,
+                                          matvec=matvec,
+                                          rmatvec=rmatvec)
+        return X1
+
     n_samples, n_features = X.shape
-    X1 = sp_linalg.aslinearoperator(X)
+
+    if X_offset is None or X_scale is None:
+        X1 = sp_linalg.aslinearoperator(X)
+    else:
+        X1 = _get_rescaled_operator(X)
+
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
     if n_features > n_samples:
@@ -326,6 +348,25 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     -----
     This function won't compute the intercept.
     """
+
+    return _ridge_regression(X, y, alpha,
+                             sample_weight=sample_weight,
+                             solver=solver,
+                             max_iter=max_iter,
+                             tol=tol,
+                             verbose=verbose,
+                             random_state=random_state,
+                             return_n_iter=return_n_iter,
+                             return_intercept=return_intercept,
+                             X_scale=None,
+                             X_offset=None)
+
+
+def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
+                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
+                      return_n_iter=False, return_intercept=False,
+                      X_scale=None, X_offset=None):
+
     if return_intercept and sparse.issparse(X) and solver != 'sag':
         if solver != 'auto':
             warnings.warn("In Ridge, only 'sag' solver can currently fit the "
@@ -395,7 +436,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     n_iter = None
     if solver == 'sparse_cg':
-        coef = _solve_sparse_cg(X, y, alpha, max_iter, tol, verbose)
+        coef = _solve_sparse_cg(X, y, alpha,
+                                max_iter=max_iter,
+                                tol=tol,
+                                verbose=verbose,
+                                X_offset=X_offset,
+                                X_scale=X_scale)
 
     elif solver == 'lsqr':
         coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
@@ -463,8 +509,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         return coef
 
 
-class _BaseRidge(LinearModel, metaclass=ABCMeta):
-
+class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
@@ -493,24 +538,35 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 np.atleast_1d(sample_weight).ndim > 1):
             raise ValueError("Sample weights must be 1D array or scalar")
 
+        # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
-            sample_weight=sample_weight)
+            sample_weight=sample_weight, return_mean=True)
 
         # temporary fix for fitting the intercept with sparse data using 'sag'
-        if sparse.issparse(X) and self.fit_intercept:
-            self.coef_, self.n_iter_, self.intercept_ = ridge_regression(
+        if (sparse.issparse(X) and self.fit_intercept and
+           self.solver != 'sparse_cg'):
+            self.coef_, self.n_iter_, self.intercept_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=True)
+            # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
         else:
-            self.coef_, self.n_iter_ = ridge_regression(
+            if sparse.issparse(X):
+                # required to fit intercept with sparse_cg solver
+                params = {'X_offset': X_offset, 'X_scale': X_scale}
+            else:
+                # for dense matrices or when intercept is set to 0
+                params = {}
+
+            self.coef_, self.n_iter_ = _ridge_regression(
                 X, y, alpha=self.alpha, sample_weight=sample_weight,
                 max_iter=self.max_iter, tol=self.tol, solver=self.solver,
                 random_state=self.random_state, return_n_iter=True,
-                return_intercept=False)
+                return_intercept=False, **params)
+
             self._set_intercept(X_offset, y_offset, X_scale)
 
         return self
@@ -641,9 +697,9 @@ class Ridge(_BaseRidge, RegressorMixin):
     >>> from sklearn.linear_model import Ridge
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
@@ -653,10 +709,11 @@ class Ridge(_BaseRidge, RegressorMixin):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
-        super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
-                                    normalize=normalize, copy_X=copy_X,
-                                    max_iter=max_iter, tol=tol, solver=solver,
-                                    random_state=random_state)
+        super().__init__(
+            alpha=alpha, fit_intercept=fit_intercept,
+            normalize=normalize, copy_X=copy_X,
+            max_iter=max_iter, tol=tol, solver=solver,
+            random_state=random_state)
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
@@ -676,7 +733,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        return super(Ridge, self).fit(X, y, sample_weight=sample_weight)
+        return super().fit(X, y, sample_weight=sample_weight)
 
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
@@ -802,7 +859,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
-        super(RidgeClassifier, self).__init__(
+        super().__init__(
             alpha=alpha, fit_intercept=fit_intercept, normalize=normalize,
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver,
             random_state=random_state)
@@ -849,7 +906,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             sample_weight = (sample_weight *
                              compute_sample_weight(self.class_weight, y))
 
-        super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
+        super().fit(X, Y, sample_weight=sample_weight)
         return self
 
     @property
@@ -1106,7 +1163,7 @@ class _RidgeGCV(LinearModel):
         return self
 
 
-class _BaseRidgeCV(LinearModel):
+class _BaseRidgeCV(LinearModel, MultiOutputMixin):
     def __init__(self, alphas=(0.1, 1.0, 10.0),
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
@@ -1385,7 +1442,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None,
                  store_cv_values=False):
-        super(RidgeClassifierCV, self).__init__(
+        super().__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
             scoring=scoring, cv=cv, store_cv_values=store_cv_values)
         self.class_weight = class_weight

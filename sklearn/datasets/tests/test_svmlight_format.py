@@ -1,4 +1,3 @@
-from __future__ import division
 from bz2 import BZ2File
 import gzip
 from io import BytesIO
@@ -186,6 +185,19 @@ def test_load_with_qid():
         assert_array_equal(X.toarray(), [[.53, .12], [.13, .1], [.87, .12]])
 
 
+@pytest.mark.skip("testing the overflow of 32 bit sparse indexing requires a"
+                  " large amount of memory")
+def test_load_large_qid():
+    """
+    load large libsvm / svmlight file with qid attribute. Tests 64-bit query ID
+    """
+    data = b"\n".join(("3 qid:{0} 1:0.53 2:0.12\n2 qid:{0} 1:0.13 2:0.1"
+                      .format(i).encode() for i in range(1, 40*1000*1000)))
+    X, y, qid = load_svmlight_file(BytesIO(data), query_id=True)
+    assert_array_equal(y[-4:], [3, 2, 3, 2])
+    assert_array_equal(np.unique(qid), np.arange(1, 40*1000*1000))
+
+
 def test_load_invalid_file2():
     assert_raises(ValueError, load_svmlight_files,
                   [datafile, invalidfile, datafile])
@@ -214,7 +226,7 @@ def test_dump():
     for X in (X_sparse, X_dense, X_sliced):
         for y in (y_sparse, y_dense, y_sliced):
             for zero_based in (True, False):
-                for dtype in [np.float32, np.float64, np.int32]:
+                for dtype in [np.float32, np.float64, np.int32, np.int64]:
                     f = BytesIO()
                     # we need to pass a comment to get the version info in;
                     # LibSVM doesn't grok comments so they're not put in by
@@ -225,7 +237,13 @@ def test_dump():
                         # when it is sparse
                         y = y.T
 
-                    dump_svmlight_file(X.astype(dtype), y, f, comment="test",
+                    # Note: with dtype=np.int32 we are performing unsafe casts,
+                    # where X.astype(dtype) overflows. The result is
+                    # then platform dependent and X_dense.astype(dtype) may be
+                    # different from X_sparse.astype(dtype).asarray().
+                    X_input = X.astype(dtype)
+
+                    dump_svmlight_file(X_input, y, f, comment="test",
                                        zero_based=zero_based)
                     f.seek(0)
 
@@ -245,19 +263,23 @@ def test_dump():
                     assert_array_equal(X2.sorted_indices().indices, X2.indices)
 
                     X2_dense = X2.toarray()
+                    if sp.issparse(X_input):
+                        X_input_dense = X_input.toarray()
+                    else:
+                        X_input_dense = X_input
 
                     if dtype == np.float32:
                         # allow a rounding error at the last decimal place
                         assert_array_almost_equal(
-                            X_dense.astype(dtype), X2_dense, 4)
+                            X_input_dense, X2_dense, 4)
                         assert_array_almost_equal(
-                            y_dense.astype(dtype), y2, 4)
+                            y_dense.astype(dtype, copy=False), y2, 4)
                     else:
                         # allow a rounding error at the last decimal place
                         assert_array_almost_equal(
-                            X_dense.astype(dtype), X2_dense, 15)
+                            X_input_dense, X2_dense, 15)
                         assert_array_almost_equal(
-                            y_dense.astype(dtype), y2, 15)
+                            y_dense.astype(dtype, copy=False), y2, 15)
 
 
 def test_dump_multilabel():

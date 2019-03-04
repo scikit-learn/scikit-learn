@@ -1,5 +1,4 @@
 """Test the validation module"""
-from __future__ import division
 
 import sys
 import warnings
@@ -115,8 +114,7 @@ class MockImprovingEstimator(BaseEstimator):
 class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     """Dummy classifier that provides partial_fit"""
     def __init__(self, n_max_train_sizes):
-        super(MockIncrementalImprovingEstimator,
-              self).__init__(n_max_train_sizes)
+        super().__init__(n_max_train_sizes)
         self.x = None
 
     def _is_training_data(self, X):
@@ -155,13 +153,13 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
         assert not hasattr(self, 'fit_called_'), \
                    'fit is called the second time'
         self.fit_called_ = True
-        return super(type(self), self).fit(X_subset, y_subset)
+        return super().fit(X_subset, y_subset)
 
     def predict(self, X):
         raise NotImplementedError
 
 
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):
@@ -975,6 +973,26 @@ def test_cross_val_predict_pandas():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
         cross_val_predict(clf, X_df, y_ser)
+
+
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+def test_cross_val_predict_unbalanced():
+    X, y = make_classification(n_samples=100, n_features=2, n_redundant=0,
+                               n_informative=2, n_clusters_per_class=1,
+                               random_state=1)
+    # Change the first sample to a new class
+    y[0] = 2
+    clf = LogisticRegression(random_state=1)
+    cv = StratifiedKFold(n_splits=2, random_state=1)
+    train, test = list(cv.split(X, y))
+    yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
+    assert y[test[0]][0] == 2  # sanity check for further assertions
+    assert np.all(yhat_proba[test[0]][:, 2] == 0)
+    assert np.all(yhat_proba[test[0]][:, 0:1] > 0)
+    assert np.all(yhat_proba[test[1]] > 0)
+    assert_array_almost_equal(yhat_proba.sum(axis=1), np.ones(y.shape),
+                              decimal=12)
 
 
 @pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22

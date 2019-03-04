@@ -154,7 +154,7 @@ class Perceptron(BaseSGDClassifier):
                  n_jobs=None, random_state=0, early_stopping=False,
                  validation_fraction=0.1, n_iter_no_change=5,
                  class_weight=None, warm_start=False, n_iter=None):
-        super(Perceptron, self).__init__(
+        super().__init__(
             loss="perceptron", penalty=penalty, alpha=alpha, l1_ratio=0,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, random_state=random_state,
