@@ -26,7 +26,6 @@ proportional to (n_samples * iterations).
 #         Chyi-Kwei Yau <chyikwei.yau@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function
 from time import time
 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer

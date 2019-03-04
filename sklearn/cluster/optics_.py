@@ -23,11 +23,11 @@ from ..metrics import pairwise_distances
 class OPTICS(BaseEstimator, ClusterMixin):
     """Estimate clustering structure from vector array
 
-    OPTICS: Ordering Points To Identify the Clustering Structure
-    Closely related to DBSCAN, finds core sample of high density and expands
-    clusters from them [1]_. Unlike DBSCAN, keeps cluster hierarchy for a
-    variable neighborhood radius. Better suited for usage on large point
-    datasets than the current sklearn implementation of DBSCAN.
+    OPTICS: Ordering Points To Identify the Clustering Structure Closely
+    related to DBSCAN, finds core sample of high density and expands clusters
+    from them [1]_. Unlike DBSCAN, keeps cluster hierarchy for a variable
+    neighborhood radius. Better suited for usage on large datasets than the
+    current sklearn implementation of DBSCAN.
 
     Clusters are then extracted using a DBSCAN like method [1]_.
 
@@ -47,8 +47,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
-        as in the same neighborhood. Default value of "np.inf" will identify
-        clusters across all scales; reducing `max_eps` will result in
+        as in the same neighborhood. Default value of ``np.inf`` will identify
+        clusters across all scales; reducing ``max_eps`` will result in
         shorter run times.
 
     metric : string or callable, optional (default='minkowski')
@@ -97,13 +97,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
     xi : float, between 0 and 1
         The steepness threshold for the Xi method to detect Xi-steep
         areas. Clusters are then hierarchically formed using these
-        areas. It is used when `cluster_method='xi'`.
+        areas. It is used when ``cluster_method='xi'``.
 
     min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
-        Used only when `cluster_method='xi'`.
+        Used only when ``cluster_method='xi'``.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -191,7 +191,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """Perform OPTICS clustering
 
         Extracts an ordered list of points and reachability distances, and
-        performs initial clustering using `max_eps` distance specified at
+        performs initial clustering using ``max_eps`` distance specified at
         OPTICS object instantiation.
 
         Parameters
@@ -237,12 +237,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 raise ValueError('Specify an epsilon smaller than %s. Got %s.'
                                  % (self.max_eps, self.eps))
 
-            if self.eps * 5.0 > (self.max_eps * 1.05):
+            if self.eps * 5.0 > self.max_eps * 1.05:
                 warnings.warn(
                     "Warning, max_eps (%s) is close to eps (%s): "
                     "Output may be unstable." % (self.max_eps, self.eps),
                     RuntimeWarning, stacklevel=2)
-                # Stability warning is documented in _extract_dbscan method...
+                # Stability warning is documented in cluster_optics_dbscan
+                # method...
 
         (self.ordering_, self.core_distances_, self.reachability_,
          self.predecessor_) = compute_optics_graph(

@@ -5,7 +5,6 @@
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import functools
 
@@ -17,6 +16,7 @@ from ...utils import safe_indexing
 from ..pairwise import pairwise_distances_chunked
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
+from sklearn.utils import deprecated
 
 
 def check_number_of_labels(n_labels, n_samples):
@@ -100,7 +100,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     .. [1] `Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
        Interpretation and Validation of Cluster Analysis". Computational
        and Applied Mathematics 20: 53-65.
-       <http://www.sciencedirect.com/science/article/pii/0377042787901257>`_
+       <https://www.sciencedirect.com/science/article/pii/0377042787901257>`_
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
@@ -203,7 +203,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     .. [1] `Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
        Interpretation and Validation of Cluster Analysis". Computational
        and Applied Mathematics 20: 53-65.
-       <http://www.sciencedirect.com/science/article/pii/0377042787901257>`_
+       <https://www.sciencedirect.com/science/article/pii/0377042787901257>`_
 
     .. [2] `Wikipedia entry on the Silhouette Coefficient
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
@@ -236,15 +236,15 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     return np.nan_to_num(sil_samples)
 
 
-def calinski_harabaz_score(X, labels):
-    """Compute the Calinski and Harabaz score.
+def calinski_harabasz_score(X, labels):
+    """Compute the Calinski and Harabasz score.
 
     It is also known as the Variance Ratio Criterion.
 
     The score is defined as ratio between the within-cluster dispersion and
     the between-cluster dispersion.
 
-    Read more in the :ref:`User Guide <calinski_harabaz_index>`.
+    Read more in the :ref:`User Guide <calinski_harabasz_index>`.
 
     Parameters
     ----------
@@ -258,13 +258,13 @@ def calinski_harabaz_score(X, labels):
     Returns
     -------
     score : float
-        The resulting Calinski-Harabaz score.
+        The resulting Calinski-Harabasz score.
 
     References
     ----------
     .. [1] `T. Calinski and J. Harabasz, 1974. "A dendrite method for cluster
        analysis". Communications in Statistics
-       <http://www.tandfonline.com/doi/abs/10.1080/03610927408827101>`_
+       <https://www.tandfonline.com/doi/abs/10.1080/03610927408827101>`_
     """
     X, labels = check_X_y(X, labels)
     le = LabelEncoder()
@@ -288,11 +288,22 @@ def calinski_harabaz_score(X, labels):
             (intra_disp * (n_labels - 1.)))
 
 
+@deprecated("Function 'calinski_harabaz_score' has been renamed to "
+            "'calinski_harabasz_score' "
+            "and will be removed in version 0.23.")
+def calinski_harabaz_score(X, labels):
+    return calinski_harabasz_score(X, labels)
+
+
 def davies_bouldin_score(X, labels):
     """Computes the Davies-Bouldin score.
 
-    The score is defined as the ratio of within-cluster distances to
-    between-cluster distances.
+    The score is defined as the average similarity measure of each cluster with
+    its most similar cluster, where similarity is the ratio of within-cluster
+    distances to between-cluster distances. Thus, clusters which are farther
+    apart and less dispersed will result in a better score.
+
+    The minimum score is zero, with lower values indicating better clustering.
 
     Read more in the :ref:`User Guide <davies-bouldin_index>`.
 
@@ -314,7 +325,7 @@ def davies_bouldin_score(X, labels):
     ----------
     .. [1] Davies, David L.; Bouldin, Donald W. (1979).
        `"A Cluster Separation Measure"
-       <http://ieeexplore.ieee.org/document/4766909>`__.
+       <https://ieeexplore.ieee.org/document/4766909>`__.
        IEEE Transactions on Pattern Analysis and Machine Intelligence.
        PAMI-1 (2): 224-227
     """
@@ -339,6 +350,7 @@ def davies_bouldin_score(X, labels):
     if np.allclose(intra_dists, 0) or np.allclose(centroid_distances, 0):
         return 0.0
 
-    score = (intra_dists[:, None] + intra_dists) / centroid_distances
-    score[score == np.inf] = np.nan
-    return np.mean(np.nanmax(score, axis=1))
+    centroid_distances[centroid_distances == 0] = np.inf
+    combined_intra_dists = intra_dists[:, None] + intra_dists
+    scores = np.max(combined_intra_dists / centroid_distances, axis=1)
+    return np.mean(scores)

@@ -61,7 +61,6 @@ confident predictions until around 2015.
 #
 # License: BSD 3 clause
 
-from __future__ import division, print_function
 
 import numpy as np
 
@@ -70,11 +69,6 @@ from sklearn.datasets import fetch_openml
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, WhiteKernel, RationalQuadratic, ExpSineSquared
-try:
-    from urllib.request import urlopen
-except ImportError:
-    # Python 2
-    from urllib2 import urlopen
 
 print(__doc__)
 

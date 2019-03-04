@@ -18,14 +18,13 @@ import numpy as np
 import warnings
 
 from collections import defaultdict
-from ..externals import six
 from ..utils.validation import check_is_fitted
 from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
-from ..utils import Parallel
-from ..utils import delayed
+from ..utils._joblib import Parallel
+from ..utils._joblib import delayed
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
@@ -193,7 +192,11 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             seeds = X
     n_samples, n_features = X.shape
     center_intensity_dict = {}
-    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=n_jobs).fit(X)
+
+    # We use n_jobs=1 because this will be used in nested calls under
+    # parallel calls to _mean_shift_single_seed so there is no need for
+    # for further parallelism.
+    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=1).fit(X)
 
     # execute iterations on all seeds in parallel
     all_res = Parallel(n_jobs=n_jobs)(
@@ -281,7 +284,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in six.iteritems(bin_sizes) if
+    bin_seeds = np.array([point for point, freq in bin_sizes.items() if
                           freq >= min_bin_freq], dtype=np.float32)
     if len(bin_seeds) == len(X):
         warnings.warn("Binning data failed with provided bin_size=%f,"

@@ -62,9 +62,10 @@ y[first_quarter] = 3.
 y[np.logical_not(first_quarter)] = -1.
 
 # List the different sparse coding methods in the following format:
-# (title, transform_algorithm, transform_alpha, transform_n_nozero_coefs)
+# (title, transform_algorithm, transform_alpha,
+#  transform_n_nozero_coefs, color)
 estimators = [('OMP', 'omp', None, 15, 'navy'),
-              ('Lasso', 'lasso_cd', 2, None, 'turquoise'), ]
+              ('Lasso', 'lasso_lars', 2, None, 'turquoise'), ]
 lw = 2
 # Avoid FutureWarning about default value change when numpy >= 1.14
 lstsq_rcond = None if LooseVersion(np.__version__) >= '1.14' else -1

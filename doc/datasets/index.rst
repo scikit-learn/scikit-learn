@@ -81,18 +81,6 @@ These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in scikit-learn. They are however often too
 small to be representative of real world machine learning tasks.
 
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-
-    boston_house_prices
-    iris
-    diabetes
-    digits
-    linnerud
-    wine_data
-    breast_cancer
-
 .. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
 
 .. include:: ../../sklearn/datasets/descr/iris.rst
@@ -131,18 +119,6 @@ They can be loaded using the following functions:
    fetch_rcv1
    fetch_kddcup99
    fetch_california_housing
-
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-
-    olivetti_faces
-    twenty_newsgroups
-    labeled_faces
-    covtype
-    rcv1
-    kddcup99
-    california_housing
 
 .. include:: ../../sklearn/datasets/descr/olivetti_faces.rst
 
@@ -530,7 +506,7 @@ format usable by scikit-learn:
 For some miscellaneous data such as images, videos, and audio, you may wish to
 refer to:
 
-* `skimage.io <http://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
+* `skimage.io <https://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
   `Imageio <https://imageio.readthedocs.io/en/latest/userapi.html>`_ 
   for loading images and videos into numpy arrays
 * `scipy.io.wavfile.read 

@@ -2,12 +2,12 @@
 
 The original database was available from (now defunct)
 
-    http://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
+    https://www.cl.cam.ac.uk/research/dtg/attarchive/facedatabase.html
 
 The version retrieved here comes in MATLAB format from the personal
 web page of Sam Roweis:
 
-    http://www.cs.nyu.edu/~roweis/
+    https://cs.nyu.edu/~roweis/
 """
 
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
@@ -23,11 +23,11 @@ from .base import get_data_home
 from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from .base import _pkl_filepath
+from ..utils import _joblib
 from ..utils import check_random_state, Bunch
-from ..externals import joblib
 
 # The original data can be found at:
-# http://cs.nyu.edu/~roweis/data/olivettifaces.mat
+# https://cs.nyu.edu/~roweis/data/olivettifaces.mat
 FACES = RemoteFileMetadata(
     filename='olivettifaces.mat',
     url='https://ndownloader.figshare.com/files/5976027',
@@ -104,10 +104,10 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         remove(mat_path)
 
         faces = mfile['faces'].T.copy()
-        joblib.dump(faces, filepath, compress=6)
+        _joblib.dump(faces, filepath, compress=6)
         del mfile
     else:
-        faces = joblib.load(filepath)
+        faces = _joblib.load(filepath)
 
     # We want floating point data, but float32 is enough (there is only
     # one byte of precision in the original uint8s anyway)
@@ -124,7 +124,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         target = target[order]
 
     module_path = dirname(__file__)
-    with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
+    with open(join(module_path, 'descr', 'olivetti_faces.rst')) as rst_file:
         fdescr = rst_file.read()
 
     return Bunch(data=faces.reshape(len(faces), -1),
