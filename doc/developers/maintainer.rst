@@ -17,6 +17,12 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
 
 1. Update docs:
 
+   - ``maint_tools/sort_whats_new.py`` can put what's new entries into
+     sections.
+
+   - The ``maint_tools/whats_missing.sh`` script may be used to identify pull
+     requests that were merged but likely missing from What's New.
+
    - Edit the doc/whats_new.rst file to add release title and commit
      statistics. You can retrieve commit statistics with::
 
