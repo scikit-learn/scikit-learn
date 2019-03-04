@@ -91,12 +91,6 @@ Overview of clustering methods
      - Non-flat geometry, uneven cluster sizes
      - Distances between nearest points
 
-   * - :ref:`OPTICS <optics>`
-     - minimum cluster membership
-     - Very large ``n_samples``, large ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes, variable cluster density 
-     - Distances between points
-   
    * - :ref:`Gaussian mixtures <mixture>`
      - many
      - Not scalable
@@ -801,11 +795,6 @@ by black points below.
     a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
     be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
-
-    - Use :ref:`OPTICS <optics>` clustering in conjunction with the
-      `extract_dbscan` method. OPTICS clustering also calculates the full
-      pairwise matrix, but only keeps one row in memory at a time (memory
-      complexity n).
 
     - A sparse radius neighborhood graph (where missing entries are presumed to
       be out of eps) can be precomputed in a memory-efficient way and dbscan
