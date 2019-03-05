@@ -427,7 +427,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Target values.
         """
         # FIXME: Future warning to be removed in 0.23
-        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self)
+        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
+                         dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
         n_classes = len(self.classes_)
@@ -485,9 +486,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             raise ValueError("unknown solver {} (valid solvers are 'svd', "
                              "'lsqr', and 'eigen').".format(self.solver))
         if self.classes_.size == 2:  # treat binary case as a special case
-            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2)
+            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2,
+                                  dtype=X.dtype)
             self.intercept_ = np.array(self.intercept_[1] - self.intercept_[0],
-                                       ndmin=1)
+                                       ndmin=1, dtype=X.dtype)
         return self
 
     def transform(self, X):

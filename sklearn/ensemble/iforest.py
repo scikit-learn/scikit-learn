@@ -142,6 +142,13 @@ class IsolationForest(BaseBagging, OutlierMixin):
         ``offset_ = -0.5``, making the decision function independent from the
         contamination parameter.
 
+    Notes
+    -----
+    The implementation is based on an ensemble of ExtraTreeRegressor. The
+    maximum depth of each tree is set to ``ceil(log_2(n))`` where
+    :math:`n` is the number of samples used to build the tree
+    (see (Liu et al., 2008) for more details).
+
     References
     ----------
     .. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
@@ -330,9 +337,10 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples. Sparse matrices are accepted only if
-            they are supported by the base estimator.
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -361,9 +369,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples. Sparse matrices are accepted only if
-            they are supported by the base estimator.
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -383,30 +390,34 @@ class IsolationForest(BaseBagging, OutlierMixin):
                              "".format(self.n_features_, X.shape[1]))
         n_samples = X.shape[0]
 
-        n_samples_leaf = np.zeros((n_samples, self.n_estimators), order="f")
-        depths = np.zeros((n_samples, self.n_estimators), order="f")
+        n_samples_leaf = np.zeros(n_samples, order="f")
+        depths = np.zeros(n_samples, order="f")
 
         if self._max_features == X.shape[1]:
             subsample_features = False
         else:
             subsample_features = True
 
-        for i, (tree, features) in enumerate(zip(self.estimators_,
-                                                 self.estimators_features_)):
+        for tree, features in zip(self.estimators_, self.estimators_features_):
             if subsample_features:
                 X_subset = X[:, features]
             else:
                 X_subset = X
             leaves_index = tree.apply(X_subset)
             node_indicator = tree.decision_path(X_subset)
-            n_samples_leaf[:, i] = tree.tree_.n_node_samples[leaves_index]
-            depths[:, i] = np.ravel(node_indicator.sum(axis=1))
-            depths[:, i] -= 1
+            n_samples_leaf = tree.tree_.n_node_samples[leaves_index]
 
-        depths += _average_path_length(n_samples_leaf)
+            depths += (
+                np.ravel(node_indicator.sum(axis=1))
+                + _average_path_length(n_samples_leaf)
+                - 1.0
+            )
 
-        scores = 2 ** (-depths.mean(axis=1) / _average_path_length(
-            self.max_samples_))
+        scores = 2 ** (
+            -depths
+            / (len(self.estimators_)
+               * _average_path_length([self.max_samples_]))
+        )
 
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
@@ -423,12 +434,12 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
 
 def _average_path_length(n_samples_leaf):
-    """ The average path length in a n_samples iTree, which is equal to
+    """The average path length in a n_samples iTree, which is equal to
     the average path length of an unsuccessful BST search since the
     latter has the same structure as an isolation tree.
     Parameters
     ----------
-    n_samples_leaf : array-like, shape (n_samples, n_estimators), or int.
+    n_samples_leaf : array-like, shape (n_samples,).
         The number of training samples in each test sample leaf, for
         each estimators.
 
@@ -437,25 +448,22 @@ def _average_path_length(n_samples_leaf):
     average_path_length : array, same shape as n_samples_leaf
 
     """
-    if isinstance(n_samples_leaf, INTEGER_TYPES):
-        if n_samples_leaf <= 1:
-            return 1.
-        else:
-            return 2. * (np.log(n_samples_leaf - 1.) + np.euler_gamma) - 2. * (
-                n_samples_leaf - 1.) / n_samples_leaf
 
-    else:
+    n_samples_leaf = check_array(n_samples_leaf, ensure_2d=False)
 
-        n_samples_leaf_shape = n_samples_leaf.shape
-        n_samples_leaf = n_samples_leaf.reshape((1, -1))
-        average_path_length = np.zeros(n_samples_leaf.shape)
+    n_samples_leaf_shape = n_samples_leaf.shape
+    n_samples_leaf = n_samples_leaf.reshape((1, -1))
+    average_path_length = np.zeros(n_samples_leaf.shape)
 
-        mask = (n_samples_leaf <= 1)
-        not_mask = np.logical_not(mask)
+    mask_1 = n_samples_leaf <= 1
+    mask_2 = n_samples_leaf == 2
+    not_mask = ~np.logical_or(mask_1, mask_2)
 
-        average_path_length[mask] = 1.
-        average_path_length[not_mask] = 2. * (
-            np.log(n_samples_leaf[not_mask] - 1.) + np.euler_gamma) - 2. * (
-                n_samples_leaf[not_mask] - 1.) / n_samples_leaf[not_mask]
+    average_path_length[mask_1] = 0.
+    average_path_length[mask_2] = 1.
+    average_path_length[not_mask] = (
+        2.0 * (np.log(n_samples_leaf[not_mask] - 1.0) + np.euler_gamma)
+        - 2.0 * (n_samples_leaf[not_mask] - 1.0) / n_samples_leaf[not_mask]
+    )
 
-        return average_path_length.reshape(n_samples_leaf_shape)
+    return average_path_length.reshape(n_samples_leaf_shape)
