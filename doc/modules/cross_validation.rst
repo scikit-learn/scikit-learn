@@ -245,7 +245,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
 
     >>> from sklearn.metrics.scorer import make_scorer
     >>> scoring = {'prec_macro': 'precision_macro',
-    ...            'rec_micro': make_scorer(recall_score, average='macro')}
+    ...            'rec_micro': make_scorer(recall_score, average='micro')}
     >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
     ...                         cv=5, return_train_score=True)
     >>> sorted(scores.keys())                 # doctest: +NORMALIZE_WHITESPACE
