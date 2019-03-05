@@ -113,14 +113,14 @@ Functions
    :template: function.rst
 
    cluster.affinity_propagation
+   cluster.cluster_optics_dbscan
+   cluster.compute_optics_graph
    cluster.dbscan
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.mean_shift
    cluster.spectral_clustering
    cluster.ward_tree
-   cluster.compute_optics_graph
-   cluster.cluster_optics_dbscan
 
 .. _bicluster_ref:
 
