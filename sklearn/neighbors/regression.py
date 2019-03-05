@@ -89,6 +89,14 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         for more details.
         Doesn't affect :meth:`fit` method.
 
+    Attributes
+    ----------
+    effective_metric_ : string
+        Metric used to compute distances to neighbors.
+    
+    effective_metric_params_ : dict
+        Parameters for the metric used to compute distances to neighbors.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -245,6 +253,14 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
          ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    Attributes
+    ----------
+    effective_metric_ : string
+        Metric used to compute distances to neighbors.
+    
+    effective_metric_params_ : dict
+        Parameters for the metric used to compute distances to neighbors.
 
     Examples
     --------

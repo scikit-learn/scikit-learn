@@ -82,6 +82,22 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         for more details.
         Doesn't affect :meth:`fit` method.
 
+
+    Attributes
+    ----------
+
+    classes_ : array, shape (n_classes,)
+        The unique classes labels.
+
+    effective_metric_ : string
+        Metric used to compute distances to neighbors.
+    
+    effective_metric_params_ : dict
+        Parameters for the metric used to compute distances to neighbors.
+    
+    outputs_2d_ : boolean
+        True when fitted on a multiclass target.
+
     Examples
     --------
     >>> X = [[0], [1], [2], [3]]
@@ -298,8 +314,17 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     
     Attributes
     ----------
-    classes_ : array of shape = (n_classes,)
+    classes_ : array, shape (n_classes,)
         The unique classes labels.
+
+    effective_metric_ : string
+        Metric used to compute distances to neighbors.
+    
+    effective_metric_params_ : dict
+        Parameters for the metric used to compute distances to neighbors.
+    
+    outputs_2d_ : boolean
+        True when fitted on a multiclass target.
 
     Examples
     --------
