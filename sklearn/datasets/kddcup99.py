@@ -139,9 +139,9 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         data = np.c_[data[s, :11], data[s, 12:]]
         target = target[s]
 
-        data[:, 0] = np.log((data[:, 0] + 0.1).astype(float))
-        data[:, 4] = np.log((data[:, 4] + 0.1).astype(float))
-        data[:, 5] = np.log((data[:, 5] + 0.1).astype(float))
+        data[:, 0] = np.log((data[:, 0] + 0.1).astype(float, copy=False))
+        data[:, 4] = np.log((data[:, 4] + 0.1).astype(float, copy=False))
+        data[:, 5] = np.log((data[:, 5] + 0.1).astype(float, copy=False))
 
         if subset == 'http':
             s = data[:, 2] == b'http'

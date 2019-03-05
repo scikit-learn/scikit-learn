@@ -321,6 +321,9 @@ class GraphicalLasso(EmpiricalCovariance):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
@@ -329,6 +332,27 @@ class GraphicalLasso(EmpiricalCovariance):
 
     n_iter_ : int
         Number of iterations run.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import GraphicalLasso
+    >>> true_cov = np.array([[.8, 0., .2, 0.],
+    ...                      [0., .4, 0., 0.],
+    ...                      [.2, 0., .3, .1],
+    ...                      [0., 0., .1, .7]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0, 0, 0],
+    ...                                   cov=true_cov,
+    ...                                   size=200)
+    >>> cov = GraphicalLasso().fit(X)
+    >>> np.around(cov.covariance_, decimals=3)
+    array([[0.816, 0.049, 0.218, 0.019],
+           [0.049, 0.364, 0.017, 0.034],
+           [0.218, 0.017, 0.322, 0.093],
+           [0.019, 0.034, 0.093, 0.69 ]])
+    >>> np.around(cov.location_, decimals=3)
+    array([0.073, 0.04 , 0.038, 0.143])
 
     See Also
     --------
@@ -543,6 +567,9 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : numpy.ndarray, shape (n_features, n_features)
         Estimated covariance matrix.
 
@@ -560,6 +587,27 @@ class GraphicalLassoCV(GraphicalLasso):
 
     n_iter_ : int
         Number of iterations run for the optimal alpha.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import GraphicalLassoCV
+    >>> true_cov = np.array([[.8, 0., .2, 0.],
+    ...                      [0., .4, 0., 0.],
+    ...                      [.2, 0., .3, .1],
+    ...                      [0., 0., .1, .7]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0, 0, 0],
+    ...                                   cov=true_cov,
+    ...                                   size=200)
+    >>> cov = GraphicalLassoCV(cv=5).fit(X)
+    >>> np.around(cov.covariance_, decimals=3)
+    array([[0.816, 0.051, 0.22 , 0.017],
+           [0.051, 0.364, 0.018, 0.036],
+           [0.22 , 0.018, 0.322, 0.094],
+           [0.017, 0.036, 0.094, 0.69 ]])
+    >>> np.around(cov.location_, decimals=3)
+    array([0.073, 0.04 , 0.038, 0.143])
 
     See Also
     --------
