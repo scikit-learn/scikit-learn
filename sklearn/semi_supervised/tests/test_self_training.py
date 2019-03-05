@@ -1,9 +1,11 @@
 import numpy as np
 import pytest
+from io import StringIO
+import sys
+
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.exceptions import NotFittedError, ConvergenceWarning
-
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -262,3 +264,18 @@ def test_strings_no_unlabeled():
     y_strings = np.take(labels_multiclass, y)
 
     classifier_orig.fit(X, y_strings)
+
+
+@pytest.mark.parametrize("verbose", [True, False])
+def test_verbose(verbose):
+    old_stdout = sys.stdout
+    sys.stdout = output = StringIO()
+
+    clf = SelfTrainingClassifier(KNeighborsClassifier(), verbose=verbose)
+    clf.fit(X_train, y_train_missing_labels)
+
+    sys.stdout = old_stdout
+    if verbose:
+        assert 'iteration' in output.getvalue()
+    else:
+        assert 'iteration' not in output.getvalue()

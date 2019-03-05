@@ -56,6 +56,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
         no new labels are added to the training set for `n_iter_no_change`
         iterations, the classifier will stop fitting early.
 
+    verbose: bool, (default=False)
+        Enable verbose output.
+
     Attributes
     ----------
     base_classifier_ : estimator object
@@ -115,11 +118,13 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
                  base_classifier,
                  threshold=0.75,
                  max_iter=10,
+                 verbose=False,
                  n_iter_no_change=1):
         self.base_classifier = base_classifier
         self.threshold = threshold
         self.max_iter = max_iter
         self.n_iter_no_change = n_iter_no_change
+        self.verbose = verbose
 
     def fit(self, X, y):
         """
@@ -211,6 +216,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
             elif self.n_iter_no_change is not None:
                 # we changed some labels => reset patience
                 patience = self.n_iter_no_change
+
+            if self.verbose:
+                msg = "End of iteration {}, added {} new labels."
+                print(msg.format(self.n_iter_, new_labels_idx.shape[0]))
 
         if self.n_iter_ == self.max_iter:
             self.termination_condition_ = "max_iter"
