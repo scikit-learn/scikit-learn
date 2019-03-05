@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 
 from .base import make_dataset
-from .sag_fast import sag
+from .sag_fast import sag32, sag64
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
 from ..utils.extmath import row_norms
@@ -201,9 +201,9 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> X = np.random.randn(n_samples, n_features)
-    >>> y = np.random.randn(n_samples)
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.randn(n_samples, n_features)
+    >>> y = rng.randn(n_samples)
     >>> clf = linear_model.Ridge(solver='sag')
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
@@ -245,8 +245,9 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
         max_iter = 1000
 
     if check_input:
-        X = check_array(X, dtype=np.float64, accept_sparse='csr', order='C')
-        y = check_array(y, dtype=np.float64, ensure_2d=False, order='C')
+        _dtype = [np.float64, np.float32]
+        X = check_array(X, dtype=_dtype, accept_sparse='csr', order='C')
+        y = check_array(y, dtype=_dtype, ensure_2d=False, order='C')
 
     n_samples, n_features = X.shape[0], X.shape[1]
     # As in SGD, the alpha is scaled by n_samples.
@@ -258,13 +259,13 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
 
     # initialization
     if sample_weight is None:
-        sample_weight = np.ones(n_samples, dtype=np.float64, order='C')
+        sample_weight = np.ones(n_samples, dtype=X.dtype, order='C')
 
     if 'coef' in warm_start_mem.keys():
         coef_init = warm_start_mem['coef']
     else:
         # assume fit_intercept is False
-        coef_init = np.zeros((n_features, n_classes), dtype=np.float64,
+        coef_init = np.zeros((n_features, n_classes), dtype=X.dtype,
                              order='C')
 
     # coef_init contains possibly the intercept_init at the end.
@@ -274,23 +275,23 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
         intercept_init = coef_init[-1, :]
         coef_init = coef_init[:-1, :]
     else:
-        intercept_init = np.zeros(n_classes, dtype=np.float64)
+        intercept_init = np.zeros(n_classes, dtype=X.dtype)
 
     if 'intercept_sum_gradient' in warm_start_mem.keys():
         intercept_sum_gradient = warm_start_mem['intercept_sum_gradient']
     else:
-        intercept_sum_gradient = np.zeros(n_classes, dtype=np.float64)
+        intercept_sum_gradient = np.zeros(n_classes, dtype=X.dtype)
 
     if 'gradient_memory' in warm_start_mem.keys():
         gradient_memory_init = warm_start_mem['gradient_memory']
     else:
         gradient_memory_init = np.zeros((n_samples, n_classes),
-                                        dtype=np.float64, order='C')
+                                        dtype=X.dtype, order='C')
     if 'sum_gradient' in warm_start_mem.keys():
         sum_gradient_init = warm_start_mem['sum_gradient']
     else:
         sum_gradient_init = np.zeros((n_features, n_classes),
-                                     dtype=np.float64, order='C')
+                                     dtype=X.dtype, order='C')
 
     if 'seen' in warm_start_mem.keys():
         seen_init = warm_start_mem['seen']
@@ -313,6 +314,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
         raise ZeroDivisionError("Current sag implementation does not handle "
                                 "the case step_size * alpha_scaled == 1")
 
+    sag = sag64 if X.dtype == np.float64 else sag32
     num_seen, n_iter_ = sag(dataset, coef_init,
                             intercept_init, n_samples,
                             n_features, n_classes, tol,
@@ -329,6 +331,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
                             intercept_decay,
                             is_saga,
                             verbose)
+
     if n_iter_ == max_iter:
         warnings.warn("The max_iter was reached which means "
                       "the coef_ did not converge", ConvergenceWarning)
