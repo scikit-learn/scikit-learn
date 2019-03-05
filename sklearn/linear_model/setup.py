@@ -18,6 +18,46 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=numpy.get_include(),
                          libraries=libraries)
 
+    config.add_extension('coordescendant', sources=['coordescendant.pyx'],
+                         libraries=cblas_libs,
+                         include_dirs=[join('..', 'src', 'cblas'),
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=blas_info.pop('extra_compile_args',
+                                                          []), **blas_info)
+
+    config.add_extension('cd_fast2', sources=['cd_fast2.pyx'],
+                         libraries=cblas_libs,
+                         include_dirs=[join('..', 'src', 'cblas'),
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=blas_info.pop('extra_compile_args',
+                                                          []), **blas_info)
+
+    config.add_extension('blas_api', sources=['blas_api.pyx'],
+                         libraries=cblas_libs,
+                         include_dirs=[join('..', 'src', 'cblas'),
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=blas_info.pop('extra_compile_args',
+                                                          []), **blas_info)
+
+    config.add_extension('utils', sources=['utils.pyx'],
+                         libraries=cblas_libs,
+                         include_dirs=[join('..', 'src', 'cblas'),
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=blas_info.pop('extra_compile_args',
+                                                          []), **blas_info)
+
+    config.add_extension('prox_operators', sources=['prox_operators.pyx'],
+                         libraries=cblas_libs,
+                         include_dirs=[join('..', 'src', 'cblas'),
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=blas_info.pop('extra_compile_args',
+                                                          []), **blas_info)
+
     config.add_extension('sgd_fast',
                          sources=['sgd_fast.pyx'],
                          include_dirs=numpy.get_include(),
