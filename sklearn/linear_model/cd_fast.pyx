@@ -154,8 +154,8 @@ def enet_coordinate_descent(floating[::1] w,
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
     if alpha == 0 and beta == 0:
-        warnings.warn("Coordinate descent with no regularization may lead to unexpected"
-            " results and is discouraged.")
+        warnings.warn("Coordinate descent with no regularization may lead to "
+                      "unexpected results and is discouraged.")
 
     with nogil:
         # R = y - np.dot(X, w)
@@ -249,10 +249,10 @@ def enet_coordinate_descent(floating[::1] w,
 
         else:
             with gil:
-                warnings.warn("Objective did not converge."
-                " You might want to increase the number of iterations."
-                " Duality gap: {}, tolerance: {}".format(gap, tol),
-                ConvergenceWarning)
+                warnings.warn("Objective did not converge. You might want to "
+                              "increase the number of iterations. Duality "
+                              "gap: {}, tolerance: {}".format(gap, tol),
+                              ConvergenceWarning)
 
     return w, gap, tol, n_iter + 1
 
@@ -463,10 +463,10 @@ def sparse_enet_coordinate_descent(floating [::1] w,
 
         else:
             with gil:
-                warnings.warn("Objective did not converge."
-                " You might want to increase the number of iterations."
-                " Duality gap: {}, tolerance: {}".format(gap, tol),
-                ConvergenceWarning)
+                warnings.warn("Objective did not converge. You might want to "
+                              "increase the number of iterations. Duality "
+                              "gap: {}, tolerance: {}".format(gap, tol),
+                              ConvergenceWarning)
 
     return w, gap, tol, n_iter + 1
 
@@ -613,12 +613,12 @@ def enet_coordinate_descent_gram(floating[::1] w,
                     # return if we reached desired tolerance
                     break
 
-
-        with gil:
-            warnings.warn("Objective did not converge."
-            " You might want to increase the number of iterations."
-            " Duality gap: {}, tolerance: {}".format(gap, tol),
-            ConvergenceWarning)
+        else:
+            with gil:
+                warnings.warn("Objective did not converge. You might want to "
+                              "increase the number of iterations. Duality "
+                              "gap: {}, tolerance: {}".format(gap, tol),
+                              ConvergenceWarning)
 
     return np.asarray(w), gap, tol, n_iter + 1
 
@@ -807,11 +807,11 @@ def enet_coordinate_descent_multi_task(floating[::1, :] W, floating l1_reg,
                 if gap < tol:
                     # return if we reached desired tolerance
                     break
-                else:
-                    with gil:
-                        warnings.warn("Objective did not converge."
-                        " You might want to increase the number of iterations."
-                        " Duality gap: {}, tolerance: {}".format(gap, tol),
-                        ConvergenceWarning)
+        else:
+            with gil:
+                warnings.warn("Objective did not converge. You might want to "
+                              "increase the number of iterations. Duality "
+                              "gap: {}, tolerance: {}".format(gap, tol),
+                              ConvergenceWarning)
 
     return np.asarray(W), gap, tol, n_iter + 1
