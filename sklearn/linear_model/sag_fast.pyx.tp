@@ -535,14 +535,19 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
                 printf('Epoch %d, change: %.8f\n', n_iter + 1,
                                                   max_change / max_weight)
     n_iter += 1
+    # We do the error treatment here based on error code in status to avoid
+    # re-acquiring the GIL within the cython code, which slows the computation.
+    if status == -1:
+        raise ValueError(("Floating-point under-/overflow occurred at epoch"
+                          " #%d. Scaling input data with StandardScaler or"
+                          " MinMaxScaler might help.") % (n_iter + 1))
 
-    if status == 0:
-        if verbose and n_iter >= max_iter:
-            end_time = time(NULL)
-            print(("max_iter reached after %d seconds") %
-                  (end_time - start_time))
+    if verbose and n_iter >= max_iter:
+        end_time = time(NULL)
+        print(("max_iter reached after %d seconds") %
+              (end_time - start_time))
 
-    return status, num_seen, n_iter
+    return num_seen, n_iter
 
 {{endfor}}
 
