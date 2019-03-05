@@ -50,7 +50,7 @@ NSPLIT_WARNING = (
 
 CV_WARNING = (
     "The default value of cv will change from 3 to 5 "
-    "in version 0.22.i Specify it explicitly to silence this warning.")
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 
 class BaseCrossValidator(metaclass=ABCMeta):

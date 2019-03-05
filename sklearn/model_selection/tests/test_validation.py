@@ -275,7 +275,8 @@ def test_cross_val_score():
                   error_score='raise')
 
 
-@pytest.mark.filterwarnings('ignore:The default value of cv for')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_split')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of cv')  # 0.22
 def test_cross_validate_many_jobs():
     # regression test for #12154: cv='warn' with n_jobs>1 trigger a copy of
     # the parameters leading to a failure in check_cv due to cv is 'warn'
@@ -492,7 +493,7 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
             assert np.all(cv_results['score_time'] < 10)
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_cross_val_score_predict_groups():
     # Check if ValueError (when groups is None) propagates to cross_val_score
     # and cross_val_predict
@@ -774,6 +775,7 @@ def test_cross_val_score_multilabel():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict():
     boston = load_boston()
@@ -1354,12 +1356,14 @@ def check_cross_val_predict_with_method(est):
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_with_method():
     check_cross_val_predict_with_method(LogisticRegression())
 
 
 @pytest.mark.filterwarnings('ignore: max_iter and tol parameters')
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_method_checking():
     # Regression test for issue #9639. Tests that cross_val_predict does not
@@ -1371,6 +1375,7 @@ def test_cross_val_predict_method_checking():
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearchcv_cross_val_predict_with_method():
     est = GridSearchCV(LogisticRegression(random_state=42),
