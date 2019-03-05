@@ -1,21 +1,21 @@
 """
 =========================================
-Kernel PCA Solvers comparison benchmark 2
+Kernel PCA Solvers comparison benchmark 1
 =========================================
 
-This example shows that the approximate solvers provided in Kernel PCA can help
-drastically improve its execution speed when an approximate solution (small
-`n_components`) is acceptable. In many real-world datasets a few hundreds of
-principal components are indeed sufficient enough to capture the underlying
-distribution.
+This benchmark shows that the approximate solvers provided in Kernel PCA can
+help drastically improve its execution speed when an approximate solution
+(small `n_components`) is acceptable. In many real-world datasets a few
+hundreds of principal components are indeed sufficient enough to capture the
+underlying distribution.
 
 Description:
 ------------
 An increasing number of examples is used to train a KernelPCA, between
-`min_n_samples` (default: 101) and `max_n_samples` (default: 3000) with
-`n_samples_grid_size` positions (default: 3). For each training sample size,
+`min_n_samples` (default: 101) and `max_n_samples` (default: 4000) with
+`n_samples_grid_size` positions (default: 4). For each training sample size,
 KernelPCA models are trained for the various possible `eigen_solver` values.
-All of them are trained to obtain 100 principal components (default: 100).
+All of them are trained to obtain p principal components (default: 100).
 The execution times are displayed in a plot at the end of the experiment.
 
 What you can observe:
@@ -30,12 +30,15 @@ You can increase `max_n_samples` and `nb_n_samples_to_try` if you wish to
 explore a wider range of values for `n_samples`.
 
 You can also set `include_arpack=True` to add this other solver in the
-experiments.
+experiments (much slower).
+
+Finally you can have a look at the second example of this series,
+"Kernel PCA Solvers comparison benchmark 2", where this time the number of
+examples is fixed, and the desired number of components varies.
 """
 print(__doc__)
 
-# Authors: Sylvain MARIE
-# License: BSD 3 clause
+# Author: Sylvain MARIE
 
 from datetime import datetime
 
@@ -49,8 +52,8 @@ from sklearn.datasets import make_circles
 
 # 1- Design the Experiment
 # ------------------------
-min_n_samples, max_n_samples = 101, 3000  # min and max n_samples to try
-n_samples_grid_size = 3                   # nb of positions in the grid to try
+min_n_samples, max_n_samples = 101, 4000  # min and max n_samples to try
+n_samples_grid_size = 4                   # nb of positions in the grid to try
 # generate the grid
 n_samples_range = [min_n_samples + np.floor((x / (n_samples_grid_size - 1))
                                             * (max_n_samples - min_n_samples))
@@ -58,7 +61,7 @@ n_samples_range = [min_n_samples + np.floor((x / (n_samples_grid_size - 1))
 
 n_components = 100      # the number of principal components we want to use
 n_iter = 3              # the number of times each experiment will be repeated
-include_arpack = False  # set to True if you wish to run arpack too
+include_arpack = False  # set this to True to include arpack solver (slower)
 
 
 # 2- Generate random data

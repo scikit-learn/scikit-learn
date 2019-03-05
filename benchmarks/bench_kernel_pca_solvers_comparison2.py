@@ -1,13 +1,13 @@
 """
-=======================================
-Kernel PCA Solvers comparison benchmark
-=======================================
+=========================================
+Kernel PCA Solvers comparison benchmark 2
+=========================================
 
-This example shows that the approximate solvers provided in Kernel PCA can help
-drastically improve its execution speed when an approximate solution (small
-`n_components`) is acceptable. In many real-world datasets a few hundreds of
-principal components are indeed sufficient enough to capture the underlying
-distribution.
+This benchmark shows that the approximate solvers provided in Kernel PCA can
+help drastically improve its execution speed when an approximate solution
+(small `n_components`) is acceptable. In many real-world datasets a few
+hundreds of principal components are indeed sufficient enough to capture the
+underlying distribution.
 
 Description:
 ------------
@@ -34,14 +34,10 @@ different range of values for `n_components`.
 
 You can also set `arpack_all=True` to activate arpack solver for large number
 of components (this takes more time).
-
-Finally you can have a look at the second example of this series,
-"Kernel PCA Solvers comparison benchmark 2"
 """
 print(__doc__)
 
 # Authors: Sylvain MARIE
-# License: BSD 3 clause
 
 from datetime import datetime
 
@@ -57,7 +53,7 @@ from sklearn.datasets import make_circles
 # ------------------------
 n_train, n_test = 2000, 1000            # the sample sizes to use
 max_n_compo = 1999                      # max n_compo to try
-n_compo_grid_size = 5                   # nb of positions in the grid to try
+n_compo_grid_size = 10                  # nb of positions in the grid to try
 # generate the grid
 n_compo_range = [np.round(np.exp((x / (n_compo_grid_size - 1))
                                  * np.log(max_n_compo)))
@@ -95,7 +91,7 @@ for j, n_components in enumerate(n_compo_range):
             .fit(X_train).transform(X_test)
         ref_time[j, i] = (datetime.now() - start_time).total_seconds()
 
-    # B- arpack
+    # B- arpack (for small number of components only, too slow otherwise)
     if arpack_all or n_components < 100:
         print("  - arpack solver")
         for i in range(n_iter):
