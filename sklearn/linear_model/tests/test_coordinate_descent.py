@@ -854,11 +854,11 @@ def test_convergence_warnings():
 
     # check that the model fails to converge
     with pytest.warns(ConvergenceWarning):
-        model = MultiTaskElasticNet(max_iter=1, tol=0).fit(X, y)
+        MultiTaskElasticNet(max_iter=1, tol=0).fit(X, y)
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
-        model = MultiTaskElasticNet(max_iter=1000).fit(X, y)
+        MultiTaskElasticNet(max_iter=1000).fit(X, y)
 
     assert not record.list
 
@@ -867,12 +867,11 @@ def test_sparse_input_convergence_warning():
     X, y, _, _ = build_dataset(n_samples=1000, n_features=500)
 
     with pytest.warns(ConvergenceWarning):
-        clf = ElasticNet(max_iter=1, tol=0).fit(
+        ElasticNet(max_iter=1, tol=0).fit(
             sparse.csr_matrix(X, dtype=np.float32), y)
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
-        model = Lasso(max_iter=1000).fit(
-            sparse.csr_matrix(X, dtype=np.float32), y)
+        Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not record.list
