@@ -721,7 +721,9 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     Notes
     -----
     :func:`jaccard_score` may be a poor metric if there are no
-    positives for some samples or classes.
+    positives for some samples or classes. Jaccard is undefined if there are
+    no true or predicted labels, and our implementation will return a score
+    of 0 with a warning.
 
     References
     ----------
