@@ -830,10 +830,9 @@ def test_multinomial_loss_ground_truth():
 
 @pytest.mark.parametrize("solver", ["sag", "saga"])
 def test_sag_classifier_raises_error(solver):
-    # Following #13316, the sag cython function does not raise any error by
-    # itself if a numerical problem (under-/overflow, nans...) occurs. Instead,
-    # it notices its caller, sag_solver, with a return code of -1. The caller
-    # is responsible for raising an error correclty.
+    # Following #13316, the error handling behavior changed in cython sag. This
+    # is simply a non-regression test to make sure numerical errors are
+    # properly raised.
 
     # Train a classifier on a simple problem
     rng = np.random.RandomState(42)
