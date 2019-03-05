@@ -35,8 +35,6 @@ different range of values for `n_components`.
 You can also set `arpack_all=True` to activate arpack solver for large number
 of components (this takes more time).
 """
-print(__doc__)
-
 # Authors: Sylvain MARIE
 
 from datetime import datetime
@@ -47,6 +45,9 @@ import matplotlib.pyplot as plt
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.decomposition import KernelPCA
 from sklearn.datasets import make_circles
+
+
+print(__doc__)
 
 
 # 1- Design the Experiment

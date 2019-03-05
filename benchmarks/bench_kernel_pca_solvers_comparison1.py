@@ -36,8 +36,6 @@ Finally you can have a look at the second example of this series,
 "Kernel PCA Solvers comparison benchmark 2", where this time the number of
 examples is fixed, and the desired number of components varies.
 """
-print(__doc__)
-
 # Author: Sylvain MARIE
 
 from datetime import datetime
@@ -48,6 +46,9 @@ import matplotlib.pyplot as plt
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.decomposition import KernelPCA
 from sklearn.datasets import make_circles
+
+
+print(__doc__)
 
 
 # 1- Design the Experiment
