@@ -50,7 +50,7 @@ def clusterQR(vectors):
     k = vectors.shape[1]
     piv = qr(vectors.T.conj(), pivoting=True)[2]
     piv = piv[0:k]
-    UtSV = svd(vectors[piv,:].T.conj())
+    UtSV = svd(vectors[piv, :].T.conj())
     Ut = UtSV[0]
     Vt = UtSV[2].T.conj()
     vectors = abs(np.dot(vectors, np.dot(Ut, Vt.T.conj())))
