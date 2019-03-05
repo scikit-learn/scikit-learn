@@ -290,8 +290,7 @@ def test_classification_scores():
 
     for prefix, metric in [('f1', f1_score), ('precision', precision_score),
                            ('recall', recall_score),
-                           ('jaccard', partial(jaccard_score,
-                                               average='binary'))]:
+                           ('jaccard', jaccard_score)]:
 
         score1 = get_scorer('%s_weighted' % prefix)(clf, X_test, y_test)
         score2 = metric(y_test, clf.predict(X_test), pos_label=None,
