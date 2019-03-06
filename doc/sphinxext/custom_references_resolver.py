@@ -60,9 +60,8 @@ class CustomReferencesResolver(ReferencesResolver):
         if term_ref:
             # replace literal nodes with inline nodes
             if not isinstance(term_ref[0], nodes.inline):
-                inline_node = nodes.inline(
-                    rawsource=term_ref[0].rawsource,
-                    classes=term_ref[0].get('classes'))
+                inline_node = nodes.inline(rawsource=term_ref[0].rawsource,
+                                           classes=term_ref[0].get('classes'))
                 if term_ref[0]:
                     inline_node.append(term_ref[0][0])
                 term_ref[0] = inline_node
