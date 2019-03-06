@@ -195,7 +195,7 @@ def test_cross_validator_with_default_params():
                          lpo.get_n_splits, None, y, groups)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_2d_y():
     # smoke test for 2d y and multi-label
     n_samples = 30
@@ -1431,7 +1431,7 @@ def test_time_series_max_train_size():
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)

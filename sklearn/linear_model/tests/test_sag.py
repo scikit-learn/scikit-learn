@@ -24,7 +24,7 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils import compute_class_weight
 from sklearn.utils import check_random_state
 from sklearn.preprocessing import LabelEncoder, LabelBinarizer
-from sklearn.datasets import make_blobs, load_iris
+from sklearn.datasets import make_blobs, load_iris, make_classification
 from sklearn.base import clone
 
 iris = load_iris()
@@ -826,3 +826,24 @@ def test_multinomial_loss_ground_truth():
                         [-0.903942, +5.258745, -4.354803]])
     assert_almost_equal(loss_1, loss_gt)
     assert_array_almost_equal(grad_1, grad_gt)
+
+
+@pytest.mark.parametrize("solver", ["sag", "saga"])
+def test_sag_classifier_raises_error(solver):
+    # Following #13316, the error handling behavior changed in cython sag. This
+    # is simply a non-regression test to make sure numerical errors are
+    # properly raised.
+
+    # Train a classifier on a simple problem
+    rng = np.random.RandomState(42)
+    X, y = make_classification(random_state=rng)
+    clf = LogisticRegression(solver=solver, random_state=rng, warm_start=True)
+    clf.fit(X, y)
+
+    # Trigger a numerical error by:
+    # - corrupting the fitted coefficients of the classifier
+    # - fit it again starting from its current state thanks to warm_start
+    clf.coef_[:] = np.nan
+
+    with pytest.raises(ValueError, match="Floating-point under-/overflow"):
+        clf.fit(X, y)
