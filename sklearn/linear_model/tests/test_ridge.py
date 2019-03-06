@@ -778,7 +778,8 @@ def test_raises_value_error_if_solver_not_supported():
     wrong_solver = "This is not a solver (MagritteSolveCV QuantumBitcoin)"
 
     exception = ValueError
-    message = "Solver %s not understood" % wrong_solver
+    message = ("Known solver are 'sparse_cg', 'cholesky', 'svd'"
+               " 'lsqr', 'sag' or 'saga'. Got %s." % wrong_solver)
 
     def func():
         X = np.eye(3)
