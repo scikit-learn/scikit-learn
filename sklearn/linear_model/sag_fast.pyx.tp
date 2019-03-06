@@ -536,11 +536,12 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
                                                   max_change / max_weight)
     n_iter += 1
     # We do the error treatment here based on error code in status to avoid
-    # re-acquiring the GIL within the cython code, which slows the computation.
+    # re-acquiring the GIL within the cython code, which slows the computation
+    # when the sag/saga solver is used concurrently in multiple Python threads.
     if status == -1:
         raise ValueError(("Floating-point under-/overflow occurred at epoch"
                           " #%d. Scaling input data with StandardScaler or"
-                          " MinMaxScaler might help.") % (n_iter + 1))
+                          " MinMaxScaler might help.") % n_iter)
 
     if verbose and n_iter >= max_iter:
         end_time = time(NULL)
