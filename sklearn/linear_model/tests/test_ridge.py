@@ -859,11 +859,11 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
                               sample_weight=sample_weight,
                               return_intercept=return_intercept
                               )
-    try:
+    if return_intercept:
         coef, intercept = target
         assert_array_almost_equal(coef, true_coefs, decimal=1)
         assert_array_almost_equal(intercept, 0, decimal=1)
-    except ValueError:
+    else:
         assert_array_almost_equal(target, true_coefs, decimal=1)
 
 
