@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 
 from numpy.testing import assert_allclose
+from scipy import linalg
 
 from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils import check_random_state
@@ -127,7 +128,7 @@ def test_lda_predict_proba(solver, n_classes):
     # implement the method to compute the probability given in The Elements
     # of Statistical Learning (cf. p.127, Sect. 4.4.5 "Logistic Regression
     # or LDA?")
-    precision = np.linalg.inv(blob_stds[0])
+    precision = linalg.inv(blob_stds[0])
     alpha_k = []
     alpha_k_0 = []
     for clazz in range(len(blob_centers) - 1):
