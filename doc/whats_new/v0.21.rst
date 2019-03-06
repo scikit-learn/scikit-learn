@@ -195,6 +195,11 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
   with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
 
+- |Feature| Added :class:`linear_model.lars_path_gram`, which is
+  :class:`linear_model.lars_path` in the sufficient stats mode, allowing
+  users to compute :class:`linear_model.lars_path` without providing
+  ``X`` and ``y``. :issue:`11699` by :user:`Kuai Yu <yukuairoy>`.
+
 - |Enhancement| :class:`linear_model.make_dataset` now preserves
   ``float32`` and ``float64`` dtypes. :issue:`8769` and :issue:`11000` by
   :user:`Nelle Varoquaux <NelleV>`, :user:`Arthur Imbert <Henley13>`,
@@ -205,6 +210,10 @@ Support for Python 3.4 and below has been officially dropped.
   equivalent to setting ``C=np.inf`` with l2 regularization. Not supported
   by the liblinear solver. :issue:`12860` by :user:`Nicolas Hug
   <NicolasHug>`.
+
+- |Enhancement| `sparse_cg` solver in :class:`linear_model.ridge.Ridge`
+  now supports fitting the intercept (i.e. ``fit_intercept=True``) when
+  inputs are sparse. :issue:`13336` by :user:`Bartosz Telenczuk <btel>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver, where the
@@ -230,27 +239,18 @@ Support for Python 3.4 and below has been officially dropped.
   ``fit_intercept=True`` in sparse and dense case.
   :issue:`13279` by `Alexandre Gramfort`_
 
-- |API| :func:`linear_model.logistic_regression_path` is deprecated
-  in version 0.21 and will be removed in version 0.23.
-  :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
-
-- |Enhancement| `sparse_cg` solver in :class:`linear_model.ridge.Ridge`
-  now supports fitting the intercept (i.e. ``fit_intercept=True``) when
-  inputs are sparse . :issue:`13336` by :user:`Bartosz Telenczuk <btel>`
-
 - |Fix| Fixed a bug in :class:`linear_model.HuberRegressor` that was
   broken when X was of dtype bool.
   :issue:`13328` by `Alexandre Gramfort`_.
 
-- |Feature| Added :class:`linear_model.lars_path_gram`, which is
-  :class: `linear_model.lars_path` in the sufficient stats mode, allowing
-  users to compute :class:`linear_model.lars_path` without providing
-  ``X`` and ``y`` by :user:`Kuai Yu <yukuairoy>`.
+- |API|  The use of :class:`linear_model.lars_path` with ``X=None`` 
+  while passing ``Gram`` is deprecated in version 0.21 and will be removed
+  in version 0.23. Use :class:`linear_model.lars_path_gram` instead.
+  :issue:`11699` by :user:`Kuai Yu <yukuairoy>`.
 
-- |API|  The use of ``X`` is ``None`` in combination with ``Gram`` is not
-  ``None`` in :class:`linear_model.lars_path` is deprecated in version 0.21
-  and will be removed in version 0.23.
-  :user:`Kuai Yu <yukuairoy>`.
+- |API| :func:`linear_model.logistic_regression_path` is deprecated
+  in version 0.21 and will be removed in version 0.23.
+  :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
 :mod:`sklearn.manifold`
 ............................
