@@ -36,5 +36,5 @@ anova_svm.fit(X_train, y_train)
 y_pred = anova_svm.predict(X_test)
 print(classification_report(y_test, y_pred))
 
-coef = anova_svm[:-1].inverse_transform(anova_svm['svm'].coef_)
+coef = anova_svm[:-1].inverse_transform(anova_svm['linearsvc'].coef_)
 print(coef)
