@@ -116,6 +116,15 @@ improvements, if any, with benchmarks and/or plots. It is expected that the
 proposed algorithm should outperform the methods that are already implemented
 in scikit-learn at least in some areas.
 
+Inclusion of a new algorithm speeding up an existing model is easier if:
+
+- it does not introduce new hyper-parameters (as it makes the library
+  more future-proof),
+- it is easy to document clearly when the contribution improves the speed
+  and when it does not, for instance "when n_features >>
+  n_samples",
+- benchmarks clearly show a speed up.
+
 Also note that your implementation need not be in scikit-learn to be used
 together with scikit-learn tools. You can implement your favorite algorithm
 in a scikit-learn compatible way, upload it to GitHub and let us know. We

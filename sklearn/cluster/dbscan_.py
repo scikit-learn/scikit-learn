@@ -95,9 +95,9 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     --------
     DBSCAN
         An estimator interface for this clustering algorithm.
-    optics
-        A similar clustering at multiple values of eps. Our implementation
-        is optimized for memory usage.
+    OPTICS
+        A similar estimator interface clustering at multiple values of eps. Our
+        implementation is optimized for memory usage.
 
     Notes
     -----

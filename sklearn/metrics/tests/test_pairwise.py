@@ -203,7 +203,7 @@ def check_pairwise_parallel(func, metric, kwds):
         assert_array_almost_equal(S, S2)
 
 
-_wminkowski_kwds = {'w': np.arange(1, 5).astype('double'), 'p': 1}
+_wminkowski_kwds = {'w': np.arange(1, 5).astype('double', copy=False), 'p': 1}
 
 
 def callable_rbf_kernel(x, y, **kwds):

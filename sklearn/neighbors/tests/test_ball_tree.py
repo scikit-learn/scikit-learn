@@ -152,9 +152,9 @@ def compute_kernel_slow(Y, X, kernel, h):
 @pytest.mark.parametrize("breadth_first", [True, False])
 def test_ball_tree_kde(kernel, h, rtol, atol, breadth_first, n_samples=100,
                        n_features=3):
-    np.random.seed(0)
-    X = np.random.random((n_samples, n_features))
-    Y = np.random.random((n_samples, n_features))
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((n_samples, n_features))
+    Y = rng.random_sample((n_samples, n_features))
     bt = BallTree(X, leaf_size=10)
 
     dens_true = compute_kernel_slow(Y, X, kernel, h)
@@ -238,7 +238,7 @@ def test_neighbors_heap(n_pts=5, n_nbrs=10):
     heap = NeighborsHeap(n_pts, n_nbrs)
 
     for row in range(n_pts):
-        d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE)
+        d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE, copy=False)
         i_in = np.arange(2 * n_nbrs, dtype=ITYPE)
         for d, i in zip(d_in, i_in):
             heap.push(row, d, i)
@@ -254,7 +254,7 @@ def test_neighbors_heap(n_pts=5, n_nbrs=10):
 
 
 def test_node_heap(n_nodes=50):
-    vals = rng.random_sample(n_nodes).astype(DTYPE)
+    vals = rng.random_sample(n_nodes).astype(DTYPE, copy=False)
 
     i1 = np.argsort(vals)
     vals2, i2 = nodeheap_sort(vals)
@@ -264,8 +264,8 @@ def test_node_heap(n_nodes=50):
 
 
 def test_simultaneous_sort(n_rows=10, n_pts=201):
-    dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE)
-    ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE)
+    dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE, copy=False)
+    ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE, copy=False)
 
     dist2 = dist.copy()
     ind2 = ind.copy()

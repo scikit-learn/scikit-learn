@@ -169,19 +169,19 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         if self.gamma in ('scale', 'auto_deprecated'):
             if sparse:
-                # std = sqrt(E[X^2] - E[X]^2)
-                X_std = np.sqrt((X.multiply(X)).mean() - (X.mean())**2)
+                # var = E[X^2] - E[X]^2
+                X_var = (X.multiply(X)).mean() - (X.mean()) ** 2
             else:
-                X_std = X.std()
+                X_var = X.var()
             if self.gamma == 'scale':
-                if X_std != 0:
-                    self._gamma = 1.0 / (X.shape[1] * X_std)
+                if X_var != 0:
+                    self._gamma = 1.0 / (X.shape[1] * X_var)
                 else:
                     self._gamma = 1.0
             else:
                 kernel_uses_gamma = (not callable(self.kernel) and self.kernel
                                      not in ('linear', 'precomputed'))
-                if kernel_uses_gamma and not np.isclose(X_std, 1.0):
+                if kernel_uses_gamma and not np.isclose(X_var, 1.0):
                     # NOTE: when deprecation ends we need to remove explicitly
                     # setting `gamma` in examples (also in tests). See
                     # https://github.com/scikit-learn/scikit-learn/pull/10331
@@ -230,7 +230,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # XXX this is ugly.
         # Regression models should not have a class_weight_ attribute.
         self.class_weight_ = np.empty(0)
-        return column_or_1d(y, warn=True).astype(np.float64)
+        return column_or_1d(y, warn=True).astype(np.float64, copy=False)
 
     def _warn_from_fit_status(self):
         assert self.fit_status_ in (0, 1)
@@ -547,6 +547,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         the weight vector (``coef_``). See also `this question
         <https://stats.stackexchange.com/questions/14876/
         interpreting-distance-from-hyperplane-in-svm>`_ for further details.
+        If decision_function_shape='ovr', the decision function is a monotonic
+        transformation of ovo decision function.
         """
         dec = self._decision_function(X)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
