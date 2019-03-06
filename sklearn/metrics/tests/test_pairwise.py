@@ -299,8 +299,9 @@ def test_pairwise_kernels_filter_param():
     assert_raises(TypeError, pairwise_kernels, X, Y, "rbf", **params)
 
 
-@pytest.mark.parametrize('metric, func', PAIRED_DISTANCES.items())
-def test_paired_distances(metric, func):
+@pytest.mark.parametrize('metric', sorted(PAIRED_DISTANCES))
+def test_paired_distances(metric):
+    func = PAIRED_DISTANCES[metric]
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.

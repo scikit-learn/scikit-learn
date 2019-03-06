@@ -6,6 +6,7 @@ import pickle
 from functools import partial
 from itertools import product
 import struct
+from collections import OrderedDict
 
 import pytest
 import numpy as np
@@ -54,21 +55,19 @@ from sklearn.utils import compute_sample_weight
 CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("mse", "mae", "friedman_mse")
 
-CLF_TREES = {
-    "DecisionTreeClassifier": DecisionTreeClassifier,
-    "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
-                                              presort=True),
-    "ExtraTreeClassifier": ExtraTreeClassifier,
-}
+CLF_TREES = OrderedDict([("DecisionTreeClassifier", DecisionTreeClassifier),
+                         ("Presort-DecisionTreeClassifier",
+                          partial(DecisionTreeClassifier, presort=True)),
+                         ("ExtraTreeClassifier", ExtraTreeClassifier)])
 
-REG_TREES = {
-    "DecisionTreeRegressor": DecisionTreeRegressor,
-    "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
-                                             presort=True),
-    "ExtraTreeRegressor": ExtraTreeRegressor,
-}
+REG_TREES = OrderedDict([
+    ("DecisionTreeRegressor", DecisionTreeRegressor),
+    ("Presort-DecisionTreeRegressor",
+     partial(DecisionTreeRegressor, presort=True)),
+    ("ExtraTreeRegressor", ExtraTreeRegressor),
+])
 
-ALL_TREES = dict()
+ALL_TREES = OrderedDict()
 ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
 
@@ -1374,7 +1373,7 @@ def test_sparse_input(tree_type, dataset):
 
 
 @pytest.mark.parametrize("tree_type",
-                         set(SPARSE_TREES).intersection(REG_TREES))
+                         sorted(set(SPARSE_TREES).intersection(REG_TREES)))
 @pytest.mark.parametrize("dataset", ["boston", "reg_small"])
 def test_sparse_input_reg_trees(tree_type, dataset):
     # Due to numerical instability of MSE and too strict test, we limit the

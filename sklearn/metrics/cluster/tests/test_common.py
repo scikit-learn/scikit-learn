@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from functools import partial
 
 import pytest
@@ -123,11 +124,15 @@ def test_normalized_output(metric_name):
     assert not (score < 0).any()
 
 
+SUPERVISED_UNSUPERVISED_METRICS = OrderedDict()
+SUPERVISED_UNSUPERVISED_METRICS.update(SUPERVISED_METRICS)
+SUPERVISED_UNSUPERVISED_METRICS.update(UNSUPERVISED_METRICS)
+
+
 # 0.22 AMI and NMI changes
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
-    "metric_name",
-    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
+    "metric_name", sorted(SUPERVISED_UNSUPERVISED_METRICS)
 )
 def test_permute_labels(metric_name):
     # All clustering metrics do not change score due to permutations of labels
@@ -150,8 +155,7 @@ def test_permute_labels(metric_name):
 # 0.22 AMI and NMI changes
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize(
-    "metric_name",
-    dict(SUPERVISED_METRICS, **UNSUPERVISED_METRICS)
+    "metric_name", sorted(SUPERVISED_UNSUPERVISED_METRICS)
 )
 # For all clustering metrics Input parameters can be both
 # in the form of arrays lists, positive, negetive or string

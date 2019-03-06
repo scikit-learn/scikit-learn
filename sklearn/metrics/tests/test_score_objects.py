@@ -511,7 +511,7 @@ def check_scorer_memmap(scorer_name):
     assert isinstance(score, numbers.Number), scorer_name
 
 
-@pytest.mark.parametrize('name', SCORERS)
+@pytest.mark.parametrize('name', sorted(SCORERS))
 def test_scorer_memmap_input(name):
     # Non-regression test for #6147: some score functions would
     # return singleton memmap when computed on memmap data instead of scalar
