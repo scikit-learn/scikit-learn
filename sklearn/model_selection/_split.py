@@ -45,14 +45,12 @@ __all__ = ['BaseCrossValidator',
 
 
 NSPLIT_WARNING = (
-    "You should specify a value for 'n_splits' instead of relying on the "
-    "default value. The default value will change from 3 to 5 "
-    "in version 0.22.")
+    "The default value of n_split will change from 3 to 5 "
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 CV_WARNING = (
-    "You should specify a value for 'cv' instead of relying on the "
-    "default value. The default value will change from 3 to 5 "
-    "in version 0.22.")
+    "The default value of cv will change from 3 to 5 "
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 
 class BaseCrossValidator(metaclass=ABCMeta):
