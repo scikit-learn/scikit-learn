@@ -6,7 +6,8 @@ import numpy as np
 import pytest
 
 from sklearn.datasets.samples_generator import make_blobs
-from sklearn.cluster.optics_ import OPTICS
+from sklearn.cluster.optics_ import (OPTICS, _steep_downward, _steep_upward,
+                                     _extend_downward, _extend_upward)
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
@@ -27,6 +28,54 @@ C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
 C5 = [3, -2] + 1.6 * rng.randn(n_points_per_cluster, 2)
 C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
 X = np.vstack((C1, C2, C3, C4, C5, C6))
+
+
+def test_steep_points():
+    assert _steep_downward([10, 6], 0, .7)
+    assert not _steep_downward([10, 8], 0, .7)
+
+    assert _steep_upward([6, 10], 0, .7)
+    assert not _steep_upward([8, 10], 0, .7)
+
+    assert not _steep_upward([2, 1], 0, 0)
+    assert not _steep_upward([2, 1], 0, 1)
+
+    assert not _steep_downward([1, 2], 0, 0)
+    assert not _steep_downward([1, 2], 0, 1)
+
+    assert _steep_downward([np.inf, 1], 0, .1)
+    assert _steep_upward([1, np.inf], 0, .1)
+
+    assert not _steep_upward([np.inf, np.inf], 0, .1)
+    assert not _steep_downward([np.inf, np.inf], 0, .1)
+
+
+@pytest.mark.parametrize(
+    'data',
+    [[[10, 8.9, 8.8, 8.7, 7, 10], 3, 4, 6],
+     [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0, 4, 7],
+     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5, 6],
+     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5, 7],
+    ])
+def test_extend_downward(data):
+    r_plot, end, index, size = data
+    i, e = _extend_downward(r_plot, 0, .9, 2, size)
+    assert e == end
+    assert i == index
+
+
+@pytest.mark.parametrize(
+    'data',
+    [[[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6, 7, 7],
+     [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0, 4, 8],
+     [[1, 2, 2.1, 2, np.inf], 0, 2, 4],
+     [[1, 2, 2.1, np.inf], 2, 3, 3],
+    ])
+def test_extend_upward(data):
+    r_plot, end, index, size = data
+    i, e = _extend_upward(r_plot, 0, .9, 2, size)
+    assert e == end
+    assert i == index
 
 
 def test_correct_number_of_clusters():
