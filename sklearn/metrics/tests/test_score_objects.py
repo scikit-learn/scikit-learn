@@ -3,7 +3,6 @@ import tempfile
 import shutil
 import os
 import numbers
-from functools import partial
 
 import numpy as np
 import pytest
