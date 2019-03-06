@@ -13,6 +13,7 @@ from nmf_original import non_negative_factorization
 import matplotlib.pyplot as plt
 
 # Download file from:
+# https://www.dropbox.com/s/n8ynmz6jxkynvyy/enwiki_1M_first_paragraphs.csv.zip?dl=0
 # https://filesender.renater.fr/?s=download&token=88222d6d-5aee-c59b-4f34-c233b4d184e1
 df = pd.read_csv('enwiki_1M_first_paragraphs.csv')
 cats = df['0'].sample(frac=1, random_state=5).astype(str)
