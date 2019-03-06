@@ -72,6 +72,7 @@ N_REGIONS = 26
 #############################################################################
 # Compute and visualize the resulting regions
 
+# Any eigen_solver: 'arpack', 'lobpcg', 'amg' can be used. AMG is usually best
 # It often helps the spectral clustering to compute a few extra eigenvectors
 N_REGIONS_PLUS = 3
 
@@ -79,7 +80,8 @@ for assign_labels in ('kmeans', 'discretize', 'clusterQR'):
     t0 = time.time()
     labels = spectral_clustering(graph,
                                  n_clusters=(N_REGIONS + N_REGIONS_PLUS),
-                                 assign_labels=assign_labels, random_state=42)
+                                 assign_labels=assign_labels, random_state=42,
+                                 eigen_solver='amg')
     t1 = time.time()
     labels = labels.reshape(rescaled_coins.shape)
 
