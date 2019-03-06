@@ -825,8 +825,8 @@ def test_neighbors_digits():
 
     clf = neighbors.KNeighborsClassifier(n_neighbors=1, algorithm='brute')
     score_uint8 = clf.fit(X_train, Y_train).score(X_test, Y_test)
-    score_float = clf.fit(X_train.astype(float), Y_train).score(
-        X_test.astype(float), Y_test)
+    score_float = clf.fit(X_train.astype(float, copy=False), Y_train).score(
+        X_test.astype(float, copy=False), Y_test)
     assert_equal(score_uint8, score_float)
 
 
