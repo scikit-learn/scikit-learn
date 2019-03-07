@@ -22,6 +22,9 @@ jobs:
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
       condition: eq(variables['DISTRIB'], 'conda')
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: $(PYTHON_VERSION)
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'
