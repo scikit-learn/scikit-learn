@@ -21,7 +21,7 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 pip list
 
-TEST_CMD="python -m pytest --showlocals -n2 --durations=20 --junitxml=$JUNITXML --pyargs"
+TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML --pyargs"
 
 if [[ "$COVERAGE" == "true" ]]; then
     TEST_CMD="$TEST_CMD --cov sklearn"
@@ -29,6 +29,10 @@ fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+fi
+
+if [[ "$DISTRIB" == "ubuntu" ]]; then
+    TEST_CMD="$TEST_CMD -n2"
 fi
 
 mkdir -p $TEST_DIR
