@@ -34,5 +34,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD sklearn.utils
+$TEST_CMD sklearn
 set +x
