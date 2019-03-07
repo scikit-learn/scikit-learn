@@ -147,7 +147,7 @@ or by name::
     >>> pipe['reduce_dim']  # doctest: +ELLIPSIS
     PCA(copy=True, ...)
 
-To enable model inspection, `Pipeline` sets a ``input_features_`` attribute on
+To enable model inspection, `Pipeline` sets an ``input_features_`` attribute on
 all pipeline steps during fitting. This allows the user to understand how
 features are transformed during a pipeline::
 
@@ -165,7 +165,7 @@ features are transformed during a pipeline::
     array(['x2', 'x3'], dtype='<U2')
 
 You can also provide custom feature names for a more human readable format using
-get_feature_names::
+``get_feature_names``::
 
     >>> pipe.get_feature_names(iris.feature_names)
     >>> pipe.named_steps.select.input_features_
