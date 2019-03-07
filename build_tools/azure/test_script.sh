@@ -31,7 +31,7 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
 fi
 
-if [[ "$DISTRIB" == "ubuntu" ]]; then
+if [[ "$DISTRIB" != "ubuntu" ]]; then
     TEST_CMD="$TEST_CMD -n2"
 fi
 
