@@ -81,7 +81,7 @@ print("model score: %.3f" % pipeline.score(X_test, y_test))
 
 
 ###############################################################################
-# Introspecting the coefficients values of the classifier
+# Inspecting the coefficients values of the classifier
 ###############################################################################
 # The coefficients of the final classification step of the pipeline gives an
 # idea how each feature impacts the likelihood of survival assuming that the
