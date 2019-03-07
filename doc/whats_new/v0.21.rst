@@ -380,6 +380,12 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.pipeline`
 .......................
 
+- |Feature| :class:`pipeline.Pipeline` can now use indexing notation (e.g.
+  ``my_pipeline[0:-1]``) to extract a subsequence of steps as another Pipeline
+  instance.  A Pipeline can also be indexed directly to extract a particular
+  step (e.g. ``my_pipeline['svc']``), rather than accessing ``named_steps``.
+  :issue:`2568` by `Joel Nothman`_.
+
 - |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
   transformer. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
 
