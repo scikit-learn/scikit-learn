@@ -30,6 +30,10 @@ from ..utils._joblib import delayed
 from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from .pairwise_fast import _euclidean_dense_dense_exact
+from .pairwise_fast import _euclidean_dense_dense_fast_sym
+from .pairwise_fast import _euclidean_fast_add_norms
+from ._safe_euclidean_sparse import _euclidean_sparse_dense_exact
 
 
 # Utility Functions
@@ -168,19 +172,25 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
 
-    For efficiency reasons, the euclidean distance between a pair of row
+    When ``n_features > 32``, the euclidean distance between a pair of row
     vector x and y is computed as::
 
         dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
 
-    This formulation has two advantages over other ways of computing distances.
-    First, it is computationally efficient when dealing with sparse data.
-    Second, if one argument varies but the other remains unchanged, then
-    `dot(x, x)` and/or `dot(y, y)` can be pre-computed.
+    This formulation is computationaly more efficient than the usual one and
+    can benefit from pre-computed ``dot(x, x)`` and/or ``dot(y, y)``.
 
     However, this is not the most precise way of doing this computation, and
     the distance matrix returned by this function may not be exactly
-    symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
+    symmetric as required by, e.g., ``scipy.spatial.distance`` functions. For
+    this reason, computations are performed on upcasted (float64) chunks of X
+    and Y.
+
+    When ``n_features < 32``, the previous method is not as efficient and is
+    more likely to suffer from numerical unstabilities, so the euclidean
+    distance between a pair of row vector x and y is computed as::
+
+        dist(x, y) = sqrt(dot(x - y))
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -190,20 +200,20 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
     Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
 
-    Y_norm_squared : array-like, shape (n_samples_2, ), optional
+    Y_norm_squared : array-like, shape (n_samples_2,), optional
         Pre-computed dot-products of vectors in Y (e.g.,
         ``(Y**2).sum(axis=1)``)
 
-    squared : boolean, optional
+    squared : boolean (default=False)
         Return squared Euclidean distances.
 
-    X_norm_squared : array-like, shape = [n_samples_1], optional
+    X_norm_squared : array-like, shape = (n_samples_1,), optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
 
     Returns
     -------
-    distances : {array, sparse matrix}, shape (n_samples_1, n_samples_2)
+    distances : array, shape (n_samples_1, n_samples_2)
 
     Examples
     --------
@@ -245,16 +255,52 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     else:
         YY = row_norms(Y, squared=True)[np.newaxis, :]
 
-    distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
-    np.maximum(distances, 0, out=distances)
+    n_features = X.shape[1]
 
+    # XXX casting is necessary for now because row_norms output dtype is not
+    # always the same as input.
+    XX = XX.reshape(-1).astype(X.dtype, copy=False)
+    YY = YY.reshape(-1).astype(Y.dtype, copy=False)
+
+    # For n_features > 32 we use the 'fast 'method to compute the euclidean
+    # distance, i.e. d(x,y)² = ||x||² + ||y||² - 2 * x.y
+    # It's faster but less precise.
+    if n_features > 32:
+        if X is Y and not issparse(X):
+            # In this case the distance matrix is symmetric, so we only need to
+            # compute half of it. When X is dense, we can benefit from the BLAS
+            # triangular matrix matrix multiplication `syrk`.
+            distances = _euclidean_dense_dense_fast_sym(X, XX)
+        else:
+            distances = - 2 * safe_sparse_dot(X, Y.T, dense_output=True)
+            _euclidean_fast_add_norms(distances, XX, YY)
+
+    # For n_features <= 32, we use the 'exact' method, i.e. the usual method,
+    # i.e. d(x,y)² = ||x - y||².
+    else:
+        if issparse(X) and issparse(Y):
+            # Euclidean distance between 2 sparse vectors is very slow. It's
+            # much faster to densify one. We densify the smaller one for lower
+            # memory usage.
+            if X.shape[0] > Y.shape[0]:
+                distances = _euclidean_sparse_dense_exact(
+                    X.data, X.indices, X.indptr, Y.toarray(), YY)
+            else:
+                distances = _euclidean_sparse_dense_exact(
+                    Y.data, Y.indices, Y.indptr, X.toarray(), XX).T
+        elif issparse(X):
+            distances = _euclidean_sparse_dense_exact(
+                X.data, X.indices, X.indptr, Y, YY)
+        elif issparse(Y):
+            distances = _euclidean_sparse_dense_exact(
+                Y.data, Y.indices, Y.indptr, X, XX).T
+        else:
+            distances = _euclidean_dense_dense_exact(X, Y)
+
+    # Ensure that distances between vectors and themselves are set to 0.0.
+    # This may not be the case due to floating point rounding errors.
     if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
+        np.fill_diagonal(distances, 0)
 
     return distances if squared else np.sqrt(distances, out=distances)
 

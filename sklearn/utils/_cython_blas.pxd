@@ -1,6 +1,7 @@
 # cython: language_level=3
 
 from cython cimport floating
+cimport numpy as np
 
 
 cpdef enum BLAS_Order:
@@ -11,6 +12,11 @@ cpdef enum BLAS_Order:
 cpdef enum BLAS_Trans:
     NoTrans = 110  # correspond to 'n'
     Trans = 116    # correspond to 't'
+
+
+cpdef enum BLAS_UPLO:
+    Upper = 117  # correspond to 'u'
+    Lower = 108  # correspond to 'l'
 
 
 # BLAS Level 1 ################################################################
@@ -41,3 +47,9 @@ cdef void _ger(BLAS_Order, int, int, floating, floating*, int, floating*, int,
 cdef void _gemm(BLAS_Order, BLAS_Trans, BLAS_Trans, int, int, int, floating,
                 floating*, int, floating*, int, floating, floating*,
                 int) nogil
+
+cdef void _syrk(BLAS_Order, BLAS_UPLO, BLAS_Trans, int, int, floating,
+                floating*, int, floating, floating*, int) nogil
+
+cdef _syrk_helper(BLAS_UPLO, BLAS_Trans, floating,
+                  np.ndarray[floating, ndim=2], floating, floating[:, :])

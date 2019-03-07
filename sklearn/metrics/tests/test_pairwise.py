@@ -540,41 +540,112 @@ def test_pairwise_distances_chunked():
     assert_raises(StopIteration, next, gen)
 
 
-def test_euclidean_distances():
-    # Check the pairwise Euclidean distances computation
-    X = [[0]]
-    Y = [[1], [2]]
+@pytest.mark.parametrize("dim", [16, 64], ids=["dim<32", "dim>32"])
+@pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+def test_euclidean_distances_known_result(dim, x_array_constr, y_array_constr):
+    # Check the pairwise Euclidean distances computation on known result
+    X = x_array_constr([[0]*dim])
+    Y = y_array_constr([[1] + [0]*(dim - 1), [0]*(dim - 1) + [2]])
     D = euclidean_distances(X, Y)
-    assert_array_almost_equal(D, [[1., 2.]])
+    assert_allclose(D, [[1., 2.]])
 
-    X = csr_matrix(X)
-    Y = csr_matrix(Y)
-    D = euclidean_distances(X, Y)
-    assert_array_almost_equal(D, [[1., 2.]])
 
+@pytest.mark.parametrize("dim", [16, 64], ids=["dim<32", "dim>32"])
+@pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+def test_euclidean_distances_with_norms(dim, y_array_constr):
+    # check that we still get the right answers with {X,Y}_norm_squared
+    # and that we get a wrong answer with wrong {X,Y}_norm_squared
     rng = np.random.RandomState(0)
-    X = rng.random_sample((10, 4))
-    Y = rng.random_sample((20, 4))
+    X = rng.random_sample((10, dim))
+    Y = rng.random_sample((20, dim))
     X_norm_sq = (X ** 2).sum(axis=1).reshape(1, -1)
     Y_norm_sq = (Y ** 2).sum(axis=1).reshape(1, -1)
 
-    # check that we still get the right answers with {X,Y}_norm_squared
+    Y = y_array_constr(Y)
+
     D1 = euclidean_distances(X, Y)
     D2 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq)
     D3 = euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq)
     D4 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq,
                              Y_norm_squared=Y_norm_sq)
-    assert_array_almost_equal(D2, D1)
-    assert_array_almost_equal(D3, D1)
-    assert_array_almost_equal(D4, D1)
+    assert_allclose(D2, D1)
+    assert_allclose(D3, D1)
+    assert_allclose(D4, D1)
 
     # check we get the wrong answer with wrong {X,Y}_norm_squared
-    X_norm_sq *= 0.5
-    Y_norm_sq *= 0.5
+    # (note that if n_features <= 32 and both X and Y are dense, squared norms
+    # are not used)
     wrong_D = euclidean_distances(X, Y,
                                   X_norm_squared=np.zeros_like(X_norm_sq),
                                   Y_norm_squared=np.zeros_like(Y_norm_sq))
-    assert_greater(np.max(np.abs(wrong_D - D1)), .01)
+    if dim > 32 or issparse(Y):
+        with pytest.raises(AssertionError):
+            assert_allclose(wrong_D, D1)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("dim", [16, 64], ids=["dim<32", "dim>32"])
+@pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+def test_euclidean_distances(dtype, dim, x_array_constr, y_array_constr):
+    # check that euclidean distances gives same result as scipy cdist
+    # when X and Y != X are provided
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, dim)).astype(dtype, copy=False)
+    X[X < 0.8] = 0
+    Y = rng.random_sample((10, dim)).astype(dtype, copy=False)
+    Y[Y < 0.8] = 0
+
+    expected = cdist(X, Y)
+
+    X = x_array_constr(X)
+    Y = y_array_constr(Y)
+    distances = euclidean_distances(X, Y)
+
+    assert_allclose(distances, expected, rtol=1e-6)
+    assert distances.dtype == dtype
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("dim", [2, 64], ids=["dim<32", "dim>32"])
+@pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+def test_euclidean_distances_sym(dtype, dim, x_array_constr):
+    # check that euclidean distances gives same result as scipy pdist
+    # when only X is provided
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, dim)).astype(dtype, copy=False)
+    X[X < 0.8] = 0
+
+    expected = squareform(pdist(X))
+
+    X = x_array_constr(X)
+    distances = euclidean_distances(X)
+
+    assert_allclose(distances, expected, rtol=1e-6)
+    assert distances.dtype == dtype
+
+
+@pytest.mark.parametrize("dtype, x",
+                         [(np.float32, 10000), (np.float64, 100000000)],
+                         ids=["float32", "float64"])
+def test_euclidean_distances_extreme_values(dtype, x):
+    # check that euclidean distances is correct where 'fast' method wouldn't be
+    X = np.array([[x + 1], [x]], dtype=dtype)
+    Y = np.array([[x], [x + 1]], dtype=dtype)
+
+    expected = [[1, 0],
+                [0, 1]]
+
+    distances = euclidean_distances(X, Y)
+
+    assert_allclose(distances, expected)
 
 
 def test_cosine_distances():

@@ -15,7 +15,11 @@ def configuration(parent_package="", top_path=None):
     config.add_extension("pairwise_fast",
                          sources=["pairwise_fast.pyx"],
                          libraries=libraries,
-                         extra_compile_args=['-Ofast', '-ftree-vectorize', '-fopt-info-vec-all'])
+                         extra_compile_args=['-Ofast'])
+
+    config.add_extension("_safe_euclidean_sparse",
+                         sources=["_safe_euclidean_sparse.pyx"],
+                         libraries=libraries)
 
     config.add_subpackage('tests')
 

@@ -12,9 +12,11 @@ import numpy as np
 cimport numpy as np
 from cython cimport floating
 from libc.string cimport memset
-from libc.math cimport sqrt
+from libc.math cimport sqrt, fmax
 
+from ..utils._cython_blas cimport Trans, NoTrans, Upper, Lower
 from ..utils._cython_blas cimport _asum
+from ..utils._cython_blas cimport _syrk_helper
 
 
 np.import_array()
@@ -70,87 +72,76 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
                 D[ix, iy] = _asum(n_features, &row[0], 1)
 
 
-cpdef _euclidean_distances_exact(floating[:, ::1] X,
-                                 floating[:, ::1] Y,
-                                 floating[:, ::1] D,
-                                 bint squared):
+def _euclidean_dense_dense_exact(np.ndarray[floating, ndim=2] X,
+                                 np.ndarray[floating, ndim=2] Y):
     cdef:
         int n_samples_X = X.shape[0]
         int n_samples_Y = Y.shape[0]
         int n_features = X.shape[1]
-        int i, j, k
+    
+        int i, j 
 
+        floating[:, ::1] D = np.empty((n_samples_X, n_samples_Y), X.dtype)
+    
     for i in range(n_samples_X):
         for j in range(n_samples_Y):
-            D[i, j] = _euclidean_distance_dense_dense(
-                &X[i, 0], &Y[j, 0], n_features, squared) 
+            D[i, j] = _euclidean_dense_dense_exact_1d(
+                &X[i, 0], &Y[j, 0], n_features)
+        
+    return np.asarray(D)
 
 
-cdef floating _euclidean_distance_dense_dense(floating *x,
+cdef floating _euclidean_dense_dense_exact_1d(floating *x,
                                               floating *y,
-                                              int n_features,
-                                              bint squared) nogil:
+                                              int n_features) nogil:
     """Euclidean distance between x dense and y dense"""
     cdef:
         int i
-        floating tmp
-        floating result = 0
+        floating tmp = 0.0
+        floating result = 0.0
 
-    # We manually unroll the loop for better cache optimization.
     for i in range(n_features):
         tmp = x[i] - y[i]
         result += tmp * tmp
 
-    return result if squared else sqrt(result)
+    return result
 
 
-cdef floating _euclidean_sparse_dense(floating *x_data,
-                                      int *x_indices,
-                                      floating *y,
-                                      floating y_squared_norm,
-                                      int nnz,
-                                      bint squared) nogil:
-    """Euclidean distance between x sparse and y dense"""
+def _euclidean_dense_dense_fast_sym(np.ndarray[floating, ndim=2] X,
+                                    floating[::1] x_squared_norms):
     cdef:
-        int i
-        floating yi
-        floating tmp = 0.0
-        floating result = 0.0
+        int n_samples_X = X.shape[0]
+        int features = X.shape[1]
 
-    for i in range(nnz):
-        yi = y[x_indices[i]]
-        tmp = x_data[i] - yi
-        result += (tmp * tmp) - (yi * yi)
+        int i, j
+    
+        floating[:, :] D = np.empty(
+            (n_samples_X, n_samples_X), X.dtype,
+             order=('C' if X.flags['C_CONTIGUOUS'] else 'F'))
+    
+    _syrk_helper(Upper, NoTrans, -2, X, 0, D)
 
-    result += y_squared_norm
+    for i in range(n_samples_X):
+        for j in range(i):
+            D[i, j] = D[j, i]
+        D[i, i] = 0
+        for j in range(i + 1, n_samples_X):
+            D[i, j] += x_squared_norms[i] + x_squared_norms[j]
+            D[i, j] = fmax(D[i, j], 0)
+    
+    return np.asarray(D)
 
-    if result < 0: result = 0.0
 
-    return result if squared else sqrt(result)
-
-
-cdef floating _euclidean_sparse_sparse(floating *x_data,
-                                       int *x_indices,
-                                       floating *y_data,
-                                       floating *y_indices,
-                                       int x_nnz,
-                                       int y_nnz,
-                                       bint squared) nogil:
-    """Euclidean distance between x sparse and y sparse"""
+cpdef _euclidean_fast_add_norms(floating[:, :] D,
+                                floating[::1] x_squared_norms,
+                                floating[::1] y_squared_norms):
     cdef:
-        int i
-        floating yi
-        floating tmp = 0.0
-        floating result = 0.0
+        int n_samples_X = D.shape[0]
+        int n_samples_Y = D.shape[1]
 
-    for i in range(x_nnz):
-        # yi = y[x_indices[i]]
-        x_data[i] - y_data[j]          j = x_indices[i] if in y_indices
-        tmp = x_data[i] - yi
-        result += (tmp * tmp) - (yi * yi)
+        int i, j
 
-    result += y_squared_norm
-
-    if result < 0: result = 0.0
-
-    return result if squared else sqrt(result)
+    for i in range(n_samples_X):
+        for j in range(n_samples_Y):
+            D[i, j] += x_squared_norms[i] + y_squared_norms[j]
+            D[i, j] = fmax(D[i, j], 0)
