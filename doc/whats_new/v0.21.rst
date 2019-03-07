@@ -17,6 +17,10 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- :class:`discriminant_analysis.LinearDiscriminantAnalysis` for multiclass
+  classification. |Fix|
+- :class:`discriminant_analysis.LinearDiscriminantAnalysis` with 'eigen'
+  solver. |Fix|
 - :class:`linear_model.BayesianRidge` |Fix|
 - Decision trees and derived ensembles when both `max_depth` and
   `max_leaf_nodes` are set. |Fix|
@@ -106,6 +110,16 @@ Support for Python 3.4 and below has been officially dropped.
   ``n_components`` is changed to ``min(n_features, n_classes - 1)`` if so.
   Previously the change was made, but silently. :issue:`11526` by
   :user:`William de Vazelhes<wdevazelhes>`.
+
+- |Fix| Fixed a bug in :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  where the predicted probabilities would be incorrectly computed in the
+  multiclass case. :issue:`6848`, by :user:`Agamemnon Krasoulis
+  <agamemnonc>` and `Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixed a bug in :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  where the predicted probabilities would be incorrectly computed with ``eigen``
+  solver. :issue:`11727`, by :user:`Agamemnon Krasoulis
+  <agamemnonc>`.
 
 :mod:`sklearn.dummy`
 ....................
@@ -379,6 +393,12 @@ Support for Python 3.4 and below has been officially dropped.
 
 :mod:`sklearn.pipeline`
 .......................
+
+- |Feature| :class:`pipeline.Pipeline` can now use indexing notation (e.g.
+  ``my_pipeline[0:-1]``) to extract a subsequence of steps as another Pipeline
+  instance.  A Pipeline can also be indexed directly to extract a particular
+  step (e.g. ``my_pipeline['svc']``), rather than accessing ``named_steps``.
+  :issue:`2568` by `Joel Nothman`_.
 
 - |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
   transformer. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
