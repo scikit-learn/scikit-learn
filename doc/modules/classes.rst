@@ -113,6 +113,8 @@ Functions
    :template: function.rst
 
    cluster.affinity_propagation
+   cluster.cluster_optics_dbscan
+   cluster.compute_optics_graph
    cluster.dbscan
    cluster.estimate_bandwidth
    cluster.k_means
@@ -754,6 +756,7 @@ Kernels:
 
    linear_model.enet_path
    linear_model.lars_path
+   linear_model.lars_path_gram
    linear_model.lasso_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
