@@ -7,7 +7,8 @@ import pytest
 
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import (OPTICS, _steep_downward, _steep_upward,
-                                     _extend_downward, _extend_upward)
+                                     _extend_downward, _extend_upward,
+                                     _xi_cluster, _extract_xi_labels)
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
@@ -66,16 +67,51 @@ def test_extend_downward(data):
 
 @pytest.mark.parametrize(
     'data',
-    [[[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6, 7, 7],
+    [[[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6, 6, 7],
      [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0, 4, 8],
      [[1, 2, 2.1, 2, np.inf], 0, 2, 4],
-     [[1, 2, 2.1, np.inf], 2, 3, 3],
+     [[1, 2, 2.1, np.inf], 2, 2, 3],
     ])
 def test_extend_upward(data):
     r_plot, end, index, size = data
     i, e = _extend_upward(r_plot, 0, .9, 2, size)
     assert e == end
     assert i == index
+
+
+@pytest.mark.parametrize(
+    'data',
+    [[[0, 1, 2, 3], [[0, 1], [2, 3]], [0, 0, 1, 1]],
+     [[0, 1, 2, 3], [[0, 1], [3, 3]], [0, 0, -1, 1]],
+     [[0, 1, 2, 3], [[0, 1], [3, 3], [0, 3]], [0, 0, -1, 1]],
+    ])
+def test_the_extract_xi_labels(data):
+    ordering, clusters, labels = data
+    ls = _extract_xi_labels(ordering, clusters)
+
+    assert_array_equal(ls, labels)
+    
+
+def test_extract_xi():
+    # small and easy test (no clusters around other clusters)
+    # but with a clear noise data.
+    rng = np.random.RandomState(0)
+    n_points_per_cluster = 5
+
+    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
+    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
+    C5 = [3, -2] + .6 * rng.randn(n_points_per_cluster, 2)
+    C6 = [5, 6] + .2 * rng.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
+
+    clust = OPTICS(min_samples=3, min_cluster_size=2,
+                   max_eps=np.inf, cluster_method='xi',
+                   xi=0.1).fit(X)
+    expected_labels = np.r_[[0] * 5, [3] * 5, [2] * 5, [1] * 5, [2] * 5,
+                            -1, [4] * 5]
+    assert_array_equal(clust.labels_, expected_labels)
 
 
 def test_correct_number_of_clusters():
@@ -338,25 +374,3 @@ def test_precomputed_dists():
 
     assert_allclose(clust1.reachability_, clust2.reachability_)
     assert_array_equal(clust1.labels_, clust2.labels_)
-
-
-def test_extract_xi():
-    # small and easy test (no clusters around other clusters)
-    # but with a clear noise data.
-    rng = np.random.RandomState(0)
-    n_points_per_cluster = 5
-
-    C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
-    C2 = [4, -1] + .1 * rng.randn(n_points_per_cluster, 2)
-    C3 = [1, -2] + .2 * rng.randn(n_points_per_cluster, 2)
-    C4 = [-2, 3] + .3 * rng.randn(n_points_per_cluster, 2)
-    C5 = [3, -2] + .6 * rng.randn(n_points_per_cluster, 2)
-    C6 = [5, 6] + .2 * rng.randn(n_points_per_cluster, 2)
-    X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
-
-    clust = OPTICS(min_samples=3, min_cluster_size=2,
-                   max_eps=np.inf, cluster_method='xi',
-                   xi=0.05).fit(X)
-    expected_labels = np.r_[[0] * 5, [3] * 5, [2] * 5, [1] * 5, [2] * 5,
-                            -1, [4] * 5]
-    assert_array_equal(clust.labels_, expected_labels)

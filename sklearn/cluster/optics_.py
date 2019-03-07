@@ -766,11 +766,11 @@ def _extend_upward(reachability_plot, start, xi_complement, min_samples,
                 break
         else:
             # print("not going up")
-            return index, end
+            return min(index, n_samples - 1), end
 
         index += 1
     # print("extend end")
-    return min(index + 1, n_samples), end
+    return min(index + 1, n_samples - 1), end
 
 
 def _update_filter_sdas(sdas, mib, xi_complement):
@@ -818,6 +818,13 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
         larger clusters encompassing smaller clusters, come after those
         smaller clusters.
     """
+    
+    for i in range(len(reachability_plot) - 1):
+        print("%d\t%d %d %.6f\n" % (
+            i, _steep_downward(reachability_plot, i, 1 - xi),
+            _steep_upward(reachability_plot, i, 1 - xi),
+            reachability_plot[i]))
+    print(reachability_plot[-1])
 
     # all indices are inclusive (specially at the end)
     n_samples = len(reachability_plot)
@@ -834,7 +841,7 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
     clusters = []
     index = 0
     mib = 0.  # maximum in between
-    while index < n_samples:
+    while index < n_samples - 1:
         # print("index", index)
         # print("r", reachability_plot[index])
         mib = max(mib, reachability_plot[index])
@@ -842,7 +849,7 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
 
         # check if a steep downward area starts
         if _steep_downward(reachability_plot, index, xi_complement):
-            # print("steep downward")
+            print("steep downward")
             # print("sdas", sdas)
             # print("filter mib:", mib)
             sdas = _update_filter_sdas(sdas, mib, xi_complement)
@@ -859,7 +866,7 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
             mib = reachability_plot[index]
 
         elif _steep_upward(reachability_plot, index, xi_complement):
-            # print("steep upward")
+            print("steep upward")
             # print("sdas", sdas)
             # print("filter mib:", mib)
             sdas = _update_filter_sdas(sdas, mib, xi_complement)
@@ -882,12 +889,12 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
             U_clusters = []
             for D in sdas:
                 c_start = D.start
-                c_end = min(U.end + 1, n_samples)
-                # print("D", D, "U", U)
-                # print("start", c_start, "end", c_end)
+                c_end = min(U.end, n_samples - 1)
+                print("D", D, "U", U)
+                print("start", c_start, "end", c_end)
 
                 # line (**)
-                if c_end * xi_complement < D.mib:
+                if reachability_plot[c_end + 1] * xi_complement < D.mib:
                     continue
 
                 # 3.b
@@ -896,13 +903,14 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                 # print("3b pass")
 
                 # 4
-                if D.maximum * xi_complement >= reachability_plot[c_end]:
+                if D.maximum * xi_complement >= reachability_plot[c_end + 1]:
                     while (reachability_plot[c_start + 1] >
-                           reachability_plot[c_end]
+                           reachability_plot[c_end + 1]
                            and c_start < c_end):
                         c_start += 1
                 elif reachability_plot[c_end] * xi_complement >= D.maximum:
-                    while (reachability_plot[c_end - 1] > D.maximum
+                    print("d max: ", D.maximum)
+                    while (reachability_plot[c_end] > D.maximum
                            and c_end > c_start):
                         c_end -= 1
                 # print('after 4', c_start, c_end)
@@ -925,12 +933,12 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                     continue
 
                 U_clusters.append((c_start, c_end))
-                # print('U clusters', U_clusters)
+                print('U clusters', U_clusters)
 
             # add smaller clusters first.
             U_clusters.reverse()
             clusters.extend(U_clusters)
-            # print("set of clusters:", clusters)
+            print("set of clusters:", clusters)
 
         else:
             # print("just else", index)
