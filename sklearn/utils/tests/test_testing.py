@@ -446,6 +446,7 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_check_docstring_parameters():
     try:
         import numpydoc  # noqa
