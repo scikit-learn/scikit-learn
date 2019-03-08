@@ -12,8 +12,8 @@ np.import_array()
 
 
 ctypedef fused INT:
-    int
-    long
+    np.int32_t
+    np.int64_t
 
 
 def _euclidean_sparse_dense_exact(floating[::1] X_data,
