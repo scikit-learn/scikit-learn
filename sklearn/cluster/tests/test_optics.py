@@ -8,7 +8,7 @@ import pytest
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import (OPTICS, _steep_downward, _steep_upward,
                                      _extend_downward, _extend_upward,
-                                     _xi_cluster, _extract_xi_labels)
+                                     _extract_xi_labels)
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
@@ -57,7 +57,7 @@ def test_steep_points():
      [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0, 4, 7],
      [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5, 6],
      [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5, 7],
-    ])
+     ])
 def test_extend_downward(data):
     r_plot, end, index, size = data
     i, e = _extend_downward(r_plot, 0, .9, 2, size)
@@ -71,7 +71,7 @@ def test_extend_downward(data):
      [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0, 4, 8],
      [[1, 2, 2.1, 2, np.inf], 0, 2, 4],
      [[1, 2, 2.1, np.inf], 2, 2, 3],
-    ])
+     ])
 def test_extend_upward(data):
     r_plot, end, index, size = data
     i, e = _extend_upward(r_plot, 0, .9, 2, size)
@@ -85,13 +85,13 @@ def test_extend_upward(data):
      [[0, 1, 2, 3], [[0, 1], [3, 3]], [0, 0, -1, 1]],
      [[0, 1, 2, 3], [[0, 1], [3, 3], [0, 3]], [0, 0, -1, 1]],
      [[3, 1, 2, 0], [[0, 1], [3, 3], [0, 3]], [1, 0, -1, 0]],
-    ])
+     ])
 def test_the_extract_xi_labels(data):
     ordering, clusters, labels = data
     ls = _extract_xi_labels(ordering, clusters)
 
     assert_array_equal(ls, labels)
-    
+
 
 def test_extract_xi():
     # small and easy test (no clusters around other clusters)
@@ -122,9 +122,9 @@ def test_extract_xi():
                    xi=0.1).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
-    C1 = [[0, 0], [0, 0.1], [0,-.1], [0.1,0]]
-    C2 = [[10,10], [10,9], [10,11], [9,10]] 
-    C3 = [[100, 100], [100,90], [100,110],[90,100]]
+    C1 = [[0, 0], [0, 0.1], [0, -.1], [0.1, 0]]
+    C2 = [[10, 10], [10, 9], [10, 11], [9, 10]]
+    C3 = [[100, 100], [100, 90], [100, 110], [90, 100]]
     X = np.vstack((C1, C2, C3))
     expected_labels = np.r_[[0] * 4, [1] * 4, [2] * 4]
     clust = OPTICS(min_samples=2, min_cluster_size=2,

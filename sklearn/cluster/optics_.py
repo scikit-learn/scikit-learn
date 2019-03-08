@@ -658,7 +658,7 @@ def _extend_downward(reachability_plot, start, xi_complement, min_samples,
 
     start : integer
         The start of the downward region.
-    
+
     xi_complement : float, between 0 and 1
         The inverse xi, i.e. `1 - xi`
 
@@ -819,7 +819,7 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
         larger clusters encompassing smaller clusters, come after those
         smaller clusters.
     """
-    
+
     for i in range(len(reachability_plot) - 1):
         print("%d\t%d %d %.6f\n" % (
             i, _steep_downward(reachability_plot, i, 1 - xi),
@@ -838,7 +838,7 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
         min_cluster_size = max(2, min_cluster_size * n_samples)
 
     xi_complement = 1 - xi
-    sdas = [] # steep down areas, introduced in section 4.3.2 of the paper
+    sdas = []  # steep down areas, introduced in section 4.3.2 of the paper
     clusters = []
     index = 0
     mib = 0.  # maximum in between
@@ -867,7 +867,7 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                   "r.e %.4g" % reachability_plot[D.end])
             print("index: ", index)
             sdas.append(D)
-            mib = reachability_plot[index]
+            mib = reachability_plot[end + 1]
 
         elif _steep_upward(reachability_plot, index, xi_complement):
             print("steep upward")
@@ -900,7 +900,6 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                 print("** passed")
 
                 # 3.b
-                print(D.mib, mib, mib * xi_complement)
                 if D.mib > mib * xi_complement:
                     continue
                 print("3b pass")
@@ -917,10 +916,6 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                            and c_end > c_start):
                         c_end -= 1
                 print('after 4', c_start, c_end)
-
-                #if _steep_upward(reachability_plot, index - 1, xi_complement):
-                #    c_end -= 1
-                # print('check last point', c_end, 'index', index)
 
                 # 3.a
                 if c_end - c_start + 1 < min_cluster_size:
