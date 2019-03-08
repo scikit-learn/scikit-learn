@@ -193,7 +193,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
-    LabelEncoder()
+    LabelEncoder(impute_method=None)
     >>> le.classes_
     array([1, 2, 6])
     >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
@@ -206,7 +206,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder()
+    LabelEncoder(impute_method=None)
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
@@ -222,7 +222,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     def __init__(self, impute_method=None):
         self.impute_method = impute_method
-        self.impute_value = None
         return super().__init__()
 
     def fit(self, y):
@@ -278,8 +277,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         # transform of empty array is empty array
         if _num_samples(y) == 0:
             return np.array([])
+        impute_value = self.impute_value if self.impute_method else None
         _, y = _encode(y, uniques=self.classes_,
-                       encode=True, impute_value=self.impute_value)
+                       encode=True, impute_value=impute_value)
         return y
 
     def inverse_transform(self, y):
