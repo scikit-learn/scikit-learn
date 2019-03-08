@@ -494,44 +494,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     return alphas, coefs, dual_gaps
 
 
-class _LassoPathStaticMixin:
-    """Mixin to add lasso_path as a staticmethod named path"""
-
-    @staticmethod
-    def path(X, y, eps=1e-3, n_alphas=100, alphas=None,
-             precompute='auto', Xy=None, copy_X=True, coef_init=None,
-             verbose=False, return_n_iter=False, positive=False, **params):
-        return lasso_path(X, y, eps, n_alphas, alphas,
-                          precompute, Xy, copy_X, coef_init,
-                          verbose, return_n_iter, positive, **params)
-
-
-_LassoPathStaticMixin.path.__doc__ = lasso_path.__doc__
-
-
-class _EnetPathStaticMixin:
-    """Mixin to add enet_path as a staticmethod named path"""
-
-    @staticmethod
-    def path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-             precompute='auto', Xy=None, copy_X=True, coef_init=None,
-             verbose=False, return_n_iter=False, positive=False,
-             check_input=True, **params):
-        return enet_path(X, y, l1_ratio, eps, n_alphas, alphas,
-                         precompute, Xy, copy_X, coef_init,
-                         verbose, return_n_iter, positive,
-                         check_input, **params)
-
-
-_EnetPathStaticMixin.path.__doc__ = enet_path.__doc__
-
-
 ###############################################################################
 # ElasticNet model
 
 
-class ElasticNet(LinearModel, RegressorMixin,
-                 MultiOutputMixin, _EnetPathStaticMixin):
+class ElasticNet(LinearModel, RegressorMixin, MultiOutputMixin):
     """Linear regression with combined L1 and L2 priors as regularizer.
 
     Minimizes the objective function::
@@ -671,6 +638,8 @@ class ElasticNet(LinearModel, RegressorMixin,
     SGDClassifier: implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
     """
+    path = staticmethod(enet_path)
+
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
@@ -829,7 +798,7 @@ class ElasticNet(LinearModel, RegressorMixin,
 ###############################################################################
 # Lasso model
 
-class Lasso(ElasticNet, _EnetPathStaticMixin):
+class Lasso(ElasticNet):
     """Linear Model trained with L1 prior as regularizer (aka the Lasso)
 
     The optimization objective for Lasso is::
@@ -949,6 +918,8 @@ class Lasso(ElasticNet, _EnetPathStaticMixin):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
+    path = staticmethod(enet_path)
+
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
@@ -1263,7 +1234,7 @@ class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
         return self
 
 
-class LassoCV(LinearModelCV, RegressorMixin, _LassoPathStaticMixin):
+class LassoCV(LinearModelCV, RegressorMixin):
     """Lasso linear model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1416,6 +1387,8 @@ class LassoCV(LinearModelCV, RegressorMixin, _LassoPathStaticMixin):
     Lasso
     LassoLarsCV
     """
+    path = staticmethod(lasso_path)
+
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv='warn', verbose=False, n_jobs=None,
@@ -1428,7 +1401,7 @@ class LassoCV(LinearModelCV, RegressorMixin, _LassoPathStaticMixin):
             random_state=random_state, selection=selection)
 
 
-class ElasticNetCV(LinearModelCV, RegressorMixin, _EnetPathStaticMixin):
+class ElasticNetCV(LinearModelCV, RegressorMixin):
     """Elastic Net model with iterative fitting along a regularization path.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -1612,6 +1585,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin, _EnetPathStaticMixin):
     ElasticNet
 
     """
+    path = staticmethod(enet_path)
+
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
@@ -1956,8 +1931,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.selection = selection
 
 
-class MultiTaskElasticNetCV(
-        LinearModelCV, RegressorMixin, _EnetPathStaticMixin):
+class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     """Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2124,6 +2098,8 @@ class MultiTaskElasticNetCV(
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
+    path = staticmethod(enet_path)
+
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False,
                  max_iter=1000, tol=1e-4, cv='warn', copy_X=True,
@@ -2148,7 +2124,7 @@ class MultiTaskElasticNetCV(
         return {'multioutput_only': True}
 
 
-class MultiTaskLassoCV(LinearModelCV, RegressorMixin, _LassoPathStaticMixin):
+class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2293,6 +2269,8 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin, _LassoPathStaticMixin):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
+    path = staticmethod(lasso_path)
+
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
                  cv='warn', verbose=False, n_jobs=None, random_state=None,
