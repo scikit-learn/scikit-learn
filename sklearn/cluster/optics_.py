@@ -842,6 +842,8 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
     clusters = []
     index = 0
     mib = 0.  # maximum in between
+
+    # the following loop is is almost exactly as Figure 19 of the paper.
     while index < n_samples:
         print("index", index)
         # print("r", reachability_plot[index])
