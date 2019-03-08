@@ -96,6 +96,9 @@ def _encode(values, uniques=None, encode=False, impute_value=None):
         already have been determined in fit).
     encode : bool, default False
         If True, also encode the values into integer codes based on `uniques`.
+    impute_value: str, int or float, optional
+        If passed, never seen values will be replaced by this value during the
+        encoding process.
 
     Returns
     -------
@@ -170,6 +173,13 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     """Encode labels with value between 0 and n_classes-1.
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
+
+    Parameters
+    ----------
+    impute_method : str (default: None)
+        Method to use for imputation of unseen labels during transform. By
+        default no imputation is done and a ValueError will be raised if any
+        previously unseen labels are found.
 
     Attributes
     ----------
@@ -301,6 +311,17 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         return {'X_types': ['1dlabels']}
 
     def _calculate_impute_value(self, y):
+        """Calculates the value to be imputed to unseen labels.
+
+        Parameters
+        ----------
+        y : numpy array of shape [n_samples]
+            Target values.
+
+        Returns
+        -------
+        impute_value : str, int or float
+        """
         if self.impute_method == 'most_common':
             values, counts = np.unique(y, return_counts=True)
             impute_value = self.classes_[values[np.argmax(counts)]]
