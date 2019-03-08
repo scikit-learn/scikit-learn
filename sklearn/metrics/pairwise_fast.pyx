@@ -72,8 +72,8 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
                 D[ix, iy] = _asum(n_features, &row[0], 1)
 
 
-def _euclidean_dense_dense_exact(np.ndarray[floating, ndim=2] X,
-                                 np.ndarray[floating, ndim=2] Y):
+def _euclidean_dense_dense_exact(np.ndarray[floating, ndim=2, mode='c'] X,
+                                 np.ndarray[floating, ndim=2, mode='c'] Y):
     cdef:
         int n_samples_X = X.shape[0]
         int n_samples_Y = Y.shape[0]

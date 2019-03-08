@@ -19,7 +19,7 @@ ctypedef fused INT:
 def _euclidean_sparse_dense_exact(floating[::1] X_data,
                                   INT[::1] X_indices,
                                   INT[::1] X_indptr,
-                                  np.ndarray[floating, ndim=2] Y,
+                                  np.ndarray[floating, ndim=2, mode='c'] Y,
                                   floating[::1] y_squared_norms):
     cdef:
         int n_samples_X = X_indptr.shape[0] - 1
