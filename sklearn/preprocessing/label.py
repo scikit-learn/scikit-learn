@@ -222,6 +222,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     def __init__(self, impute_method=None):
         self.impute_method = impute_method
+        self.impute_value = None
         return super().__init__()
 
     def fit(self, y):
