@@ -1,6 +1,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel (partial_fit support)
@@ -22,7 +23,7 @@ cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
-from sklearn.utils.seq_dataset cimport SequentialDataset
+from sklearn.utils.seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 np.import_array()
 
@@ -508,6 +509,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The maximum number of iterations (epochs).
     tol: double
         The tolerance for the stopping criterion.
+    dataset : SequentialDataset
+        A concrete ``SequentialDataset`` object.
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int

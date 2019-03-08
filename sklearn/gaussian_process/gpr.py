@@ -12,13 +12,15 @@ from scipy.linalg import cholesky, cho_solve, solve_triangular
 from scipy.optimize import fmin_l_bfgs_b
 
 from sklearn.base import BaseEstimator, RegressorMixin, clone
+from sklearn.base import MultiOutputMixin
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
 from sklearn.exceptions import ConvergenceWarning
 
 
-class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
+class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
+                               MultiOutputMixin):
     """Gaussian process regression (GPR).
 
     The implementation is based on Algorithm 2.1 of Gaussian Processes

@@ -480,7 +480,6 @@ neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
-f1_scorer = make_scorer(f1_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 
 # Score functions that need decision values
@@ -488,8 +487,6 @@ roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
-precision_scorer = make_scorer(precision_score)
-recall_scorer = make_scorer(recall_score)
 roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_threshold=True,
                                  multiclass='ovo')
 roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_threshold=True,

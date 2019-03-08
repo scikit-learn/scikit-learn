@@ -466,8 +466,9 @@ class GaussianRandomProjection(BaseRandomProjection):
     --------
     >>> import numpy as np
     >>> from sklearn.random_projection import GaussianRandomProjection
-    >>> X = np.random.rand(100, 10000)
-    >>> transformer = GaussianRandomProjection()
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.rand(100, 10000)
+    >>> transformer = GaussianRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
@@ -588,9 +589,9 @@ class SparseRandomProjection(BaseRandomProjection):
     --------
     >>> import numpy as np
     >>> from sklearn.random_projection import SparseRandomProjection
-    >>> np.random.seed(42)
-    >>> X = np.random.rand(100, 10000)
-    >>> transformer = SparseRandomProjection()
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.rand(100, 10000)
+    >>> transformer = SparseRandomProjection(random_state=rng)
     >>> X_new = transformer.fit_transform(X)
     >>> X_new.shape
     (100, 3947)
