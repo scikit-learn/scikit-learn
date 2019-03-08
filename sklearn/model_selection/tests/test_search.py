@@ -651,7 +651,8 @@ def test_refit_callable_invalid_type():
         clf.fit(X, y)
 
 
-def test_refit_callable_out_bound():
+@pytest.mark.parametrize('out_bound_value', [-1, 2])
+def test_refit_callable_out_bound(out_bound_value):
     """
     Test implementation catches the errors when 'best_index_' returns an
     out of bound result.
@@ -660,7 +661,7 @@ def test_refit_callable_out_bound():
         """
         A dummy function tests when returned 'best_index_' is out of bounds.
         """
-        return -1
+        return out_bound_value
 
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
