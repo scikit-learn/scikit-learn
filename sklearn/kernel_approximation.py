@@ -291,7 +291,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
            power_t=0.5, random_state=0, shuffle=True, tol=0.001,
            validation_fraction=0.1, verbose=0, warm_start=False)
     >>> clf.score(X_transformed, y) # doctest: +ELLIPSIS
-    0.9543...
+    0.9499...
 
     Notes
     -----

@@ -148,9 +148,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                   random_state=0, shuffle=True, tol=0.001,
                   validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(clf.coef_)
-    [[-0.6543424   1.54603022  1.35361642  0.22199435]]
+    [[0.26642044 0.45070924 0.67251877 0.64185414]]
     >>> print(clf.intercept_)
-    [0.63310933]
+    [1.84127814]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 

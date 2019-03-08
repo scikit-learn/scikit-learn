@@ -1032,22 +1032,25 @@ def test_partial_fit_equal_fit_classif(klass, lr):
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier])
 def test_regression_losses(klass):
+    random_state = np.random.RandomState(1)
     clf = klass(alpha=0.01, learning_rate="constant",
-                eta0=0.1, loss="epsilon_insensitive")
+                eta0=0.1, loss="epsilon_insensitive",
+                random_state=random_state)
     clf.fit(X, Y)
     assert_equal(1.0, np.mean(clf.predict(X) == Y))
 
     clf = klass(alpha=0.01, learning_rate="constant",
-                eta0=0.1, loss="squared_epsilon_insensitive")
+                eta0=0.1, loss="squared_epsilon_insensitive",
+                random_state=random_state)
     clf.fit(X, Y)
     assert_equal(1.0, np.mean(clf.predict(X) == Y))
 
-    clf = klass(alpha=0.01, loss="huber")
+    clf = klass(alpha=0.01, loss="huber", random_state=random_state)
     clf.fit(X, Y)
     assert_equal(1.0, np.mean(clf.predict(X) == Y))
 
     clf = klass(alpha=0.01, learning_rate="constant", eta0=0.01,
-                loss="squared_loss")
+                loss="squared_loss", random_state=random_state)
     clf.fit(X, Y)
     assert_equal(1.0, np.mean(clf.predict(X) == Y))
 
