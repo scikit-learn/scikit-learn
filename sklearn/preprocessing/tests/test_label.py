@@ -196,6 +196,38 @@ def test_label_encoder(values, classes, unknown):
     with pytest.raises(ValueError, match="unseen labels"):
         le.transform(unknown)
 
+    with pytest.raises(ValueError, match="impute_method"):
+        LabelEncoder(impute_method='test').fit(values)
+
+    with pytest.raises(ValueError, match="impute_method"):
+        LabelEncoder(impute_method='test').fit_transform(values)
+
+
+@pytest.mark.parametrize(
+        "values, classes, unknown",
+        [(np.array([2, 1, 3, 1, 3, 3], dtype='int64'),
+          np.array([1, 2, 3], dtype='int64'),
+          np.array([4], dtype='int64')),
+         (np.array(['b', 'a', 'c', 'a', 'c', 'c'], dtype=object),
+          np.array(['a', 'b', 'c'], dtype=object),
+          np.array(['d'], dtype=object)),
+         (np.array(['b', 'a', 'c', 'a', 'c', 'c']),
+          np.array(['a', 'b', 'c']),
+          np.array(['d']))],
+        ids=['int64', 'object', 'str'])
+def test_label_encoder_impute_most_common(values, classes, unknown):
+    # Test LabelEncoder's transform, fit_transform and
+    # inverse_transform methods
+    le = LabelEncoder(impute_method='most_common')
+    le.fit(values)
+    assert_array_equal(le.classes_, classes)
+    assert_array_equal(le.transform(values), [1, 0, 2, 0, 2, 2])
+    assert_array_equal(le.inverse_transform([1, 0, 2, 0, 2, 2]), values)
+    assert_array_equal(le.transform(unknown), [2])
+    ret = le.fit_transform(values)
+    assert_array_equal(ret, [1, 0, 2, 0, 2, 2])
+    assert_array_equal(le.transform(unknown), [2])
+
 
 def test_label_encoder_negative_ints():
     le = LabelEncoder()
