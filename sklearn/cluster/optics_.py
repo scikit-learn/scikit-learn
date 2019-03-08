@@ -842,8 +842,8 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
     clusters = []
     index = 0
     mib = 0.  # maximum in between
-    while index < n_samples - 1:
-        # print("index", index)
+    while index < n_samples:
+        print("index", index)
         # print("r", reachability_plot[index])
         mib = max(mib, reachability_plot[index])
         # print("mib up there:", mib)
@@ -863,6 +863,7 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                       maximum=reachability_plot[D_start], mib=0.)
             print("D", D, "r.s %.4g" % reachability_plot[D.start],
                   "r.e %.4g" % reachability_plot[D.end])
+            print("index: ", index)
             sdas.append(D)
             mib = reachability_plot[index]
 
@@ -878,12 +879,9 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                                         min_samples, n_samples)
             U = _Area(start=U_start, end=end, maximum=reachability_plot[end],
                       mib=-1)
-            # if np.isinf(reachability_plot[index + 1]):
-            #     U.maximum = np.inf
-            #     index += 1
             # print("U", U, "r.s %.4g" % reachability_plot[U.start],
             #       "r.e %.4g" % reachability_plot[U.end])
-            mib = reachability_plot[index]
+            mib = reachability_plot[end + 1]
             # print('mib %.4g' % mib)
             # print(sdas)
 
@@ -897,11 +895,13 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                 # line (**)
                 if reachability_plot[c_end + 1] * xi_complement < D.mib:
                     continue
+                print("** passed")
 
                 # 3.b
+                print(D.mib, mib, mib * xi_complement)
                 if D.mib > mib * xi_complement:
                     continue
-                # print("3b pass")
+                print("3b pass")
 
                 # 4
                 if D.maximum * xi_complement >= reachability_plot[c_end + 1]:
@@ -923,7 +923,7 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                 # 3.a
                 if c_end - c_start + 1 < min_cluster_size:
                     continue
-                # print('min pts pass')
+                print('min pts pass')
 
                 # 1
                 if c_start > D.end:
@@ -940,6 +940,9 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
             U_clusters.reverse()
             clusters.extend(U_clusters)
             print("set of clusters:", clusters)
+
+            if U.end == n_samples - 1:
+                break
 
         else:
             # print("just else", index)
