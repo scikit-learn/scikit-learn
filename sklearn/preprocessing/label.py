@@ -33,7 +33,7 @@ __all__ = [
 ]
 
 
-def _encode_numpy(values, uniques=None, encode=False):
+def _encode_numpy(values, uniques=None, encode=False, impute_value=None):
     # only used in _encode below, see docstring there for details
     if uniques is None:
         if encode:
@@ -43,8 +43,10 @@ def _encode_numpy(values, uniques=None, encode=False):
             # unique sorts
             return np.unique(values)
     if encode:
-        diff = _encode_check_unknown(values, uniques)
-        if diff:
+        diff, mask = _encode_check_unknown(values, uniques, return_mask=True)
+        if impute_value:
+            values[~mask] = impute_value
+        elif diff:
             raise ValueError("y contains previously unseen labels: %s"
                              % str(diff))
         encoded = np.searchsorted(uniques, values)
@@ -53,24 +55,28 @@ def _encode_numpy(values, uniques=None, encode=False):
         return uniques
 
 
-def _encode_python(values, uniques=None, encode=False):
+def _encode_python(values, uniques=None, encode=False, impute_value=None):
     # only used in _encode below, see docstring there for details
     if uniques is None:
         uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
     if encode:
         table = {val: i for i, val in enumerate(uniques)}
-        try:
-            encoded = np.array([table[v] for v in values])
-        except KeyError as e:
-            raise ValueError("y contains previously unseen labels: %s"
-                             % str(e))
+        if impute_value:
+            encoded = np.array([table[v] if v in table else table[impute_value]
+                                for v in values])
+        else:
+            try:
+                encoded = np.array([table[v] for v in values])
+            except KeyError as e:
+                raise ValueError("y contains previously unseen labels: %s"
+                                 % str(e))
         return uniques, encoded
     else:
         return uniques
 
 
-def _encode(values, uniques=None, encode=False):
+def _encode(values, uniques=None, encode=False, impute_value=None):
     """Helper function to factorize (find uniques) and encode values.
 
     Uses pure python method for object dtype, and numpy method for
@@ -102,12 +108,12 @@ def _encode(values, uniques=None, encode=False):
     """
     if values.dtype == object:
         try:
-            res = _encode_python(values, uniques, encode)
+            res = _encode_python(values, uniques, encode, impute_value)
         except TypeError:
             raise TypeError("argument must be a string or number")
         return res
     else:
-        return _encode_numpy(values, uniques, encode)
+        return _encode_numpy(values, uniques, encode, impute_value)
 
 
 def _encode_check_unknown(values, uniques, return_mask=False):
@@ -204,6 +210,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         using a one-hot or ordinal encoding scheme.
     """
 
+    def __init__(self, impute_method=None):
+        self.impute_method = impute_method
+        return super().__init__()
+
     def fit(self, y):
         """Fit label encoder
 
@@ -217,7 +227,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        self.classes_ = _encode(y)
+        self.classes_, y = _encode(y, encode=True)
+        if self.impute_method:
+            self.impute_value = self._calculate_impute_value(y)
         return self
 
     def fit_transform(self, y):
@@ -234,6 +246,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         y = column_or_1d(y, warn=True)
         self.classes_, y = _encode(y, encode=True)
+        if self.impute_method:
+            self.impute_value = self._calculate_impute_value(y)
         return y
 
     def transform(self, y):
@@ -253,8 +267,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         # transform of empty array is empty array
         if _num_samples(y) == 0:
             return np.array([])
-
-        _, y = _encode(y, uniques=self.classes_, encode=True)
+        _, y = _encode(y, uniques=self.classes_,
+                       encode=True, impute_value=self.impute_value)
         return y
 
     def inverse_transform(self, y):
@@ -278,12 +292,21 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         diff = np.setdiff1d(y, np.arange(len(self.classes_)))
         if len(diff):
             raise ValueError(
-                    "y contains previously unseen labels: %s" % str(diff))
+                "y contains previously unseen labels: %s" % str(diff)
+            )
         y = np.asarray(y)
         return self.classes_[y]
 
     def _more_tags(self):
         return {'X_types': ['1dlabels']}
+
+    def _calculate_impute_value(self, y):
+        if self.impute_method == 'most_common':
+            values, counts = np.unique(y, return_counts=True)
+            impute_value = self.classes_[values[np.argmax(counts)]]
+        else:
+            raise ValueError('impute_method can only be "most_common" or None')
+        return impute_value
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
