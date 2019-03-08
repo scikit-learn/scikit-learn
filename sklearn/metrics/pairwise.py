@@ -276,19 +276,26 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
             _euclidean_fast_add_norms(distances, XX, YY)
 
     # For n_features <= 32, we use the 'exact' method, i.e. the usual method,
-    # i.e. d(x,y)² = ||x - y||².
+    # d(x,y)² = ||x - y||².
     else:
+
+        # distances being between rows of X and Y, it's more efficient to work
+        # on C-contiguous arrays
+        if not issparse(X):
+            X = np.asarray(X, order='C')
+        if not issparse(Y):
+            Y = np.asarray(Y, order='C')
+
+        # Euclidean distance between 2 sparse vectors is very slow. It's much
+        # faster to densify one. We densify the smaller one for lower memory
+        # usage.
         if issparse(X) and issparse(Y):
-            # Euclidean distance between 2 sparse vectors is very slow. It's
-            # much faster to densify one. We densify the smaller one for lower
-            # memory usage.
-            if X.shape[0] > Y.shape[0]:
-                distances = _euclidean_sparse_dense_exact(
-                    X.data, X.indices, X.indptr, Y.toarray(), YY)
+            if Y.shape[0] > X.shape[0]:
+                X = X.toarray()
             else:
-                distances = _euclidean_sparse_dense_exact(
-                    Y.data, Y.indices, Y.indptr, X.toarray(), XX).T
-        elif issparse(X):
+                Y = Y.toarray()
+
+        if issparse(X):
             distances = _euclidean_sparse_dense_exact(
                 X.data, X.indices, X.indptr, Y, YY)
         elif issparse(Y):

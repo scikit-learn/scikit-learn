@@ -82,7 +82,7 @@ def _euclidean_dense_dense_exact(np.ndarray[floating, ndim=2] X,
         int i, j 
 
         floating[:, ::1] D = np.empty((n_samples_X, n_samples_Y), X.dtype)
-    
+
     for i in range(n_samples_X):
         for j in range(n_samples_Y):
             D[i, j] = _euclidean_dense_dense_exact_1d(
