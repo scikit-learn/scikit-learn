@@ -13,7 +13,7 @@ import numpy as np
 
 from . import __version__
 from sklearn.utils import _IS_32BIT
-from sklearn.utils import safe_indexing, safe_mask
+from sklearn.utils import safe_mask
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -520,7 +520,7 @@ class DensityMixin:
 
 
 class OutlierMixin:
-    """Mixin class for all outlier rejection estimators in scikit-learn."""
+    """Mixin class for all outlier detection estimators in scikit-learn."""
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
