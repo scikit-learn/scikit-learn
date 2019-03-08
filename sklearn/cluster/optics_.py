@@ -587,6 +587,7 @@ def cluster_optics_xi(reachability, ordering, min_samples, min_cluster_size,
     clusters = _xi_cluster(reachability[ordering], xi, min_samples,
                            min_cluster_size)
     labels = _extract_xi_labels(ordering, clusters)
+    print("labels: ", labels[ordering])
     return labels, clusters
 
 
@@ -913,7 +914,7 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                     while (reachability_plot[c_end] > D.maximum
                            and c_end > c_start):
                         c_end -= 1
-                # print('after 4', c_start, c_end)
+                print('after 4', c_start, c_end)
 
                 #if _steep_upward(reachability_plot, index - 1, xi_complement):
                 #    c_end -= 1

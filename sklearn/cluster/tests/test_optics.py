@@ -121,7 +121,7 @@ def test_correct_number_of_clusters():
     X = generate_clustered_data(n_clusters=n_clusters)
     # Parameters chosen specifically for this task.
     # Compute OPTICS
-    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4)
+    clust = OPTICS(max_eps=5.0 * 6.0, min_samples=4, xi=.1)
     clust.fit(X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
