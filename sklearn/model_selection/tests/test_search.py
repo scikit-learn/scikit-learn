@@ -652,7 +652,8 @@ def test_refit_callable_invalid_type():
 
 
 @pytest.mark.parametrize('out_bound_value', [-1, 2])
-def test_refit_callable_out_bound(out_bound_value):
+@pytest.mark.parametrize('search_cv', [RandomizedSearchCV, GridSearchCV])
+def test_refit_callable_out_bound(out_bound_value, search_cv):
     """
     Test implementation catches the errors when 'best_index_' returns an
     out of bound result.
@@ -666,9 +667,8 @@ def test_refit_callable_out_bound(out_bound_value):
     X, y = make_classification(n_samples=100, n_features=4,
                                random_state=42)
 
-    clf = GridSearchCV(LinearSVC(random_state=42), {'C': [0.1, 1]},
-                       scoring='precision', refit=refit_callable_out_bound,
-                       cv=5)
+    clf = search_cv(LinearSVC(random_state=42), {'C': [0.1, 1]},
+                    scoring='precision', refit=refit_callable_out_bound, cv=5)
     with pytest.raises(IndexError, match='best_index_ index out of range'):
         clf.fit(X, y)
 
