@@ -1117,6 +1117,16 @@ def _centered_gram(X):
             - X_mX - X_mX[:, None], X_m)
 
 
+def _centered_covariance(X):
+    n = X.shape[0]
+    if sparse.issparse(X):
+        X_m, _ = mean_variance_axis(X, axis=0)
+    else:
+        X_m = X.mean(axis=0)
+    return safe_sparse_dot(
+        X.T, X, dense_output=True) - n * np.outer(X_m, X_m), X_m
+
+
 class _WIPNewRidgeGCV(_RidgeGCV):
 
     def _pre_compute(self, X, y, centered_kernel):
@@ -1151,14 +1161,41 @@ class _WIPNewRidgeGCV(_RidgeGCV):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
+    def _pre_compute_svd(self, X, y, centered_kernel):
+        if sparse.issparse(X):
+            return self._pre_compute_covariance(X, y)
+        return super()._pre_compute_svd(X, y, centered_kernel)
+
+    def _pre_compute_covariance(self, X, y):
+        n, p = X.shape
+        cov = np.empty((p + 1, p + 1))
+        cov[:-1, :-1], X_m = _centered_covariance(X)
+        cov[-1] = 0
+        cov[:, -1] = 0
+        cov[-1, -1] = n
+        s, V = linalg.eigh(cov)
+        self._X_offset = X_m
+        return s, V, X
+
+    def _errors_and_values_svd_helper(self, alpha, y, s, V, X):
+        n, p = X.shape
+        w = 1 / (s + alpha)
+        Xx = np.ones((n, p + 1))
+        Xx[:, :-1] = X.A - X.A.mean(axis=0)
+        X = Xx
+        hat = np.linalg.multi_dot((X, V * w, V.T, X.T))
+        hat_y = hat.dot(y)
+        hat_diag = np.diag(hat)
+        return (1 - hat_diag) / alpha, (y - hat_y) / alpha
+
     def fit(self, X, y, sample_weight=None):
-        if (sparse.issparse(X) and (X.shape[0] > X.shape[1])
-                and self.fit_intercept and self.gcv_mode != 'eigen'):
-            warnings.warn(
-                'Cannot use an SVD of X if X is sparse '
-                'and fit_intercept is true. will therefore set '
-                'gcv_mode to "eigen", which can cause performance issues '
-                'if n_samples is much larger than n_features')
+        # if (sparse.issparse(X) and (X.shape[0] > X.shape[1])
+        #         and self.fit_intercept and self.gcv_mode != 'eigen'):
+        #     warnings.warn(
+        #         'Cannot use an SVD of X if X is sparse '
+        #         'and fit_intercept is true. will therefore set '
+        #         'gcv_mode to "eigen", which can cause performance issues '
+        #         'if n_samples is much larger than n_features')
         super().fit(X, y, sample_weight=sample_weight)
 
 
