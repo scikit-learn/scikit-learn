@@ -1,7 +1,7 @@
 """
-============================================================================
-Comparing Nearest Neighbors and Large Margin Nearest Neighbor Classification
-============================================================================
+==========================================================================
+Comparing Nearest Neighbors with and without Large Margin Nearest Neighbor
+==========================================================================
 
 An example comparing nearest neighbors classification with and without
 Large Margin Nearest Neighbor.

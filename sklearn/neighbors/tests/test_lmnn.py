@@ -1,9 +1,7 @@
-import sys
 import numpy as np
 from scipy.optimize import check_grad
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
@@ -13,15 +11,12 @@ from sklearn.utils.testing import assert_equal
 from sklearn import datasets
 from sklearn.neighbors import LargeMarginNearestNeighbor
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors.lmnn import (_paired_distances_blockwise,
-                                    _euclidean_distances_without_checks,
-                                    _compute_push_loss)
+from sklearn.neighbors.lmnn import _paired_distances_blockwise
+from sklearn.neighbors.lmnn import _compute_push_loss
 from sklearn.metrics.pairwise import paired_euclidean_distances
-from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import row_norms
-from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.exceptions import ConvergenceWarning
 
 
@@ -140,7 +135,8 @@ def test_params_validation():
                          '`weight_push_loss` cannot be zero.',
                          LMNN(weight_push_loss=0.).fit, X, y)
 
-    init = np.random.rand(5, 3)
+    rng = np.random.RandomState(42)
+    init = rng.rand(5, 3)
     assert_raise_message(ValueError,
                          'The output dimensionality ({}) of the given linear '
                          'transformation `init` cannot be greater than its '
@@ -185,7 +181,8 @@ def test_n_components():
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
 
-    init = np.random.rand(X.shape[1] - 1, 3)
+    rng = np.random.RandomState(42)
+    init = rng.rand(X.shape[1] - 1, 3)
 
     # n_components = X.shape[1] != transformation.shape[0]
     n_components = X.shape[1]
@@ -214,6 +211,7 @@ def test_n_components():
 
 
 def test_init_transformation():
+    rng = np.random.RandomState(42)
     X, y = datasets.make_classification(n_samples=30, n_features=5,
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
@@ -227,12 +225,12 @@ def test_init_transformation():
     lmnn_pca.fit(X_train, y_train)
 
     # Initialize with a transformation given by the user
-    init = np.random.rand(X.shape[1], X.shape[1])
+    init = rng.rand(X.shape[1], X.shape[1])
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init=init)
     lmnn.fit(X_train, y_train)
 
     # init.shape[1] must match X.shape[1]
-    init = np.random.rand(X.shape[1], X.shape[1] + 1)
+    init = rng.rand(X.shape[1], X.shape[1] + 1)
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init=init)
     assert_raise_message(ValueError,
                          'The input dimensionality ({}) of the given '
@@ -242,7 +240,7 @@ def test_init_transformation():
                          lmnn.fit, X_train, y_train)
 
     # init.shape[0] must be <= init.shape[1]
-    init = np.random.rand(X.shape[1] + 1, X.shape[1])
+    init = rng.rand(X.shape[1] + 1, X.shape[1])
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init=init)
     assert_raise_message(ValueError,
                          'The output dimensionality ({}) of the given '
@@ -252,7 +250,7 @@ def test_init_transformation():
                          lmnn.fit, X_train, y_train)
 
     # init.shape[0] must match n_components
-    init = np.random.rand(X.shape[1], X.shape[1])
+    init = rng.rand(X.shape[1], X.shape[1])
     n_components = X.shape[1] - 2
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init=init,
                                       n_components=n_components)
@@ -361,13 +359,12 @@ def test_impostor_store():
     lmnn.fit(iris_data, iris_target)
     components_sparse = lmnn.components_
 
-    assert_array_almost_equal(components_list, components_sparse,
-                              err_msg='Toggling `impostor_store` results in '
-                                      'a different solution.')
+    assert_allclose(components_list, components_sparse,
+                    err_msg='Toggling `impostor_store` results in a '
+                            'different solution.')
 
 
-def test_callback():
-
+def test_callback(capsys):
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, callback='my_cb')
     assert_raise_message(ValueError,
                          '`callback` is not callable.',
@@ -376,24 +373,17 @@ def test_callback():
     max_iter = 10
 
     def my_cb(transformation, n_iter):
+        assert transformation.shape == (iris_data.shape[1] ** 2,)
         rem_iter = max_iter - n_iter
         print('{} iterations remaining...'.format(rem_iter))
 
     # assert that my_cb is called
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, callback=my_cb,
                                       max_iter=max_iter, verbose=1)
-    try:
-        lmnn.fit(iris_data, iris_target)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    lmnn.fit(iris_data, iris_target)
+    out, _ = capsys.readouterr()
 
-    # check output
-    assert '{} iterations remaining...'.format(max_iter-1) in out
+    assert '{} iterations remaining...'.format(max_iter - 1) in out
 
 
 def test_store_opt_result():
@@ -408,18 +398,11 @@ def test_store_opt_result():
     assert_equal(transformation.size, X.shape[1]**2)
 
 
-def test_verbose():
+def test_verbose(capsys):
     # assert there is proper output when verbose = 1
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, verbose=1)
-    try:
-        lmnn.fit(iris_data, iris_target)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    lmnn.fit(iris_data, iris_target)
+    out, _ = capsys.readouterr()
 
     # check output
     assert "[LargeMarginNearestNeighbor]" in out
@@ -430,16 +413,9 @@ def test_verbose():
     assert "Training took" in out
 
     # assert by default there is no output (verbose=0)
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3)
-    try:
-        lmnn.fit(iris_data, iris_target)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+    lmnn.fit(iris_data, iris_target)
+    out, _ = capsys.readouterr()
 
     # check output
     assert out == ''
@@ -490,7 +466,7 @@ def test_same_lmnn_parallel():
     lmnn.fit(X_train, y_train)
     components_parallel = lmnn.components_
 
-    assert_array_almost_equal(components, components_parallel)
+    assert_allclose(components, components_parallel)
 
 
 def test_singleton_class():
@@ -542,24 +518,6 @@ def test_paired_distances_blockwise():
     distances_blockwise = _paired_distances_blockwise(
         X, ind_a, ind_b, squared=False, block_size=1)
     assert_array_equal(distances, distances_blockwise)
-
-
-def test_euclidean_distances_without_checks():
-    X = rng.rand(100, 20)
-    Y = rng.rand(50, 20)
-
-    # 2 matrices with no precomputed norms
-    distances1 = euclidean_distances(X, Y)
-    distances2 = _euclidean_distances_without_checks(X, Y)
-
-    assert_array_equal(distances1, distances2)
-
-    # 1 matrix with itself with squared row_norms precomputed and transposed
-    XX = row_norms(X, squared=True)[np.newaxis, :]
-    distances1 = euclidean_distances(X, X_norm_squared=XX)
-    distances2 = _euclidean_distances_without_checks(X, X_norm_squared=XX)
-
-    assert_array_equal(distances1, distances2)
 
 
 def test_find_impostors():

@@ -33,6 +33,8 @@ from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
+from sklearn.utils.extmath import _euclidean_distances_without_checks
+from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -642,3 +644,22 @@ def test_stable_cumsum():
     assert_array_equal(stable_cumsum(A, axis=0), np.cumsum(A, axis=0))
     assert_array_equal(stable_cumsum(A, axis=1), np.cumsum(A, axis=1))
     assert_array_equal(stable_cumsum(A, axis=2), np.cumsum(A, axis=2))
+
+
+def test_euclidean_distances_without_checks():
+    rng = np.random.RandomState(0)
+    X = rng.rand(100, 20)
+    Y = rng.rand(50, 20)
+
+    # 2 matrices with no precomputed norms
+    distances1 = euclidean_distances(X, Y)
+    distances2 = _euclidean_distances_without_checks(X, Y)
+
+    assert_array_equal(distances1, distances2)
+
+    # 1 matrix with itself with squared row_norms precomputed and transposed
+    XX = row_norms(X, squared=True)[np.newaxis, :]
+    distances1 = euclidean_distances(X, X_norm_squared=XX)
+    distances2 = _euclidean_distances_without_checks(X, X_norm_squared=XX)
+
+    assert_array_equal(distances1, distances2)
