@@ -347,7 +347,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
-        t = []
+        _ = []
         for clf in self.estimators_:
-            t.append((np.ravel(clf.predict(X)).reshape(clf.predict(X).shape)))
-        return np.asarray(t).T
+            _.append((np.ravel(clf.predict(X)).reshape(clf.predict(X).shape)))
+        return np.asarray(_).T
