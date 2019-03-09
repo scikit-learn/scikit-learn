@@ -350,4 +350,4 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         t = []
         for clf in self.estimators_:
             t.append((np.ravel(clf.predict(X)).reshape(clf.predict(X).shape)))
-        return np.asarray(t).T #
+        return np.asarray(t).T
