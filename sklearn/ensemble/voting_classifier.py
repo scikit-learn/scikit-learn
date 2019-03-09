@@ -247,7 +247,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         for clf in self.estimators_:
             t3 = clf.predict_proba(X).shape
             t2 = np.ravel(clf.predict_proba(X)).reshape(t3)
-            t.append()
+            t.append(t2)
         return np.asarray(t)
 
     def _predict_proba(self, X):
