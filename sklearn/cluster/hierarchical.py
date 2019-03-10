@@ -494,7 +494,8 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
 
     if linkage == 'single':
         return _single_linkage_tree(connectivity, n_samples, n_nodes,
-                                    n_clusters, n_connected_components, return_distance)
+                                    n_clusters, n_connected_components,
+                                    return_distance)
 
     if return_distance:
         distances = np.empty(n_nodes - n_samples)
