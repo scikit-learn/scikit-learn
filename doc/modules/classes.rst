@@ -1421,12 +1421,6 @@ Low-level methods
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
-
-   utils.testing.mock_mldata_urlopen
-
-.. autosummary::
-   :toctree: generated/
    :template: function.rst
 
    utils.arrayfuncs.cholesky_delete
@@ -1524,6 +1518,7 @@ To be removed in 0.22
    covariance.GraphLasso
    covariance.GraphLassoCV
    preprocessing.Imputer
+   utils.testing.mock_mldata_urlopen
 
 .. autosummary::
    :toctree: generated/
