@@ -53,15 +53,15 @@ def _fix_connectivity(X, connectivity, affinity):
             connectivity = connectivity.tolil()
 
     # Compute the number of nodes
-    n_components, labels = connected_components(connectivity)
+    n_connected_components, labels = connected_components(connectivity)
 
-    if n_components > 1:
+    if n_connected_components > 1:
         warnings.warn("the number of connected components of the "
                       "connectivity matrix is %d > 1. Completing it to avoid "
-                      "stopping the tree early." % n_components,
+                      "stopping the tree early." % n_connected_components,
                       stacklevel=2)
         # XXX: Can we do without completing the matrix?
-        for i in range(n_components):
+        for i in range(n_connected_components):
             idx_i = np.where(labels == i)[0]
             Xi = X[idx_i]
             for j in range(i):
@@ -74,11 +74,11 @@ def _fix_connectivity(X, connectivity, affinity):
                 connectivity[idx_i[ii], idx_j[jj]] = True
                 connectivity[idx_j[jj], idx_i[ii]] = True
 
-    return connectivity, n_components
+    return connectivity, n_connected_components
 
 
 def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
-                         n_components, return_distance):
+                         n_connected_components, return_distance):
     """
     Perform single linkage clustering on sparse data via the minimum
     spanning tree from scipy.sparse.csgraph, then using union-find to label.
@@ -123,8 +123,8 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
 
     if return_distance:
         distances = single_linkage_tree[:, 2]
-        return children_, n_components, n_samples, parent, distances
-    return children_, n_components, n_samples, parent
+        return children_, n_connected_components, n_samples, parent, distances
+    return children_, n_connected_components, n_samples, parent
 
 
 ###############################################################################
@@ -175,7 +175,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_samples + i`
 
-    n_components : int
+    n_connected_components : int
         The number of connected components in the graph.
 
     n_leaves : int
@@ -237,7 +237,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         else:
             return children_, 1, n_samples, None
 
-    connectivity, n_components = _fix_connectivity(X, connectivity,
+    connectivity, n_connected_components = _fix_connectivity(X, connectivity,
                                                    affinity='euclidean')
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
@@ -331,9 +331,9 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     if return_distance:
         # 2 is scaling factor to compare w/ unstructured version
         distances = np.sqrt(2. * distances)
-        return children, n_components, n_leaves, parent, distances
+        return children, n_connected_components, n_leaves, parent, distances
     else:
-        return children, n_components, n_leaves, parent
+        return children, n_connected_components, n_leaves, parent
 
 
 # single average and complete linkage
@@ -394,7 +394,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_samples + i`
 
-    n_components : int
+    n_connected_components : int
         The number of connected components in the graph.
 
     n_leaves : int
@@ -465,7 +465,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             return children_, 1, n_samples, None, distances
         return children_, 1, n_samples, None
 
-    connectivity, n_components = _fix_connectivity(X, connectivity,
+    connectivity, n_connected_components = _fix_connectivity(X, connectivity,
                                                    affinity=affinity)
 
     connectivity = connectivity.tocoo()
@@ -494,7 +494,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
 
     if linkage == 'single':
         return _single_linkage_tree(connectivity, n_samples, n_nodes,
-                                    n_clusters, n_components, return_distance)
+                                    n_clusters, n_connected_components, return_distance)
 
     if return_distance:
         distances = np.empty(n_nodes - n_samples)
@@ -564,8 +564,8 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
     children = np.array(children)[:, ::-1]
 
     if return_distance:
-        return children, n_components, n_leaves, parent, distances
-    return children, n_components, n_leaves, parent
+        return children, n_connected_components, n_leaves, parent, distances
+    return children, n_connected_components, n_leaves, parent
 
 
 # Matching names to tree-building strategies
@@ -712,7 +712,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_leaves_ : int
         Number of leaves in the hierarchical tree.
 
-    n_components_ : int
+    n_connected_components_ : int
         The estimated number of connected components in the graph.
 
     children_ : array-like, shape (n_samples-1, 2)
@@ -814,7 +814,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.linkage != 'ward':
             kwargs['linkage'] = self.linkage
             kwargs['affinity'] = self.affinity
-        self.children_, self.n_components_, self.n_leaves_, parents = \
+        self.children_, self.n_connected_components_, self.n_leaves_, parents = \
             memory.cache(tree_builder)(X, connectivity,
                                        n_clusters=n_clusters,
                                        **kwargs)
@@ -897,7 +897,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     n_leaves_ : int
         Number of leaves in the hierarchical tree.
 
-    n_components_ : int
+    n_connected_components_ : int
         The estimated number of connected components in the graph.
 
     children_ : array-like, shape (n_nodes-1, 2)
