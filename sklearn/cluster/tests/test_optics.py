@@ -107,16 +107,26 @@ def test_extract_xi():
     C6 = [5, 6] + .2 * rng.randn(n_points_per_cluster, 2)
 
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
-    expected_labels = np.r_[[0] * 5, [3] * 5, [2] * 5, [1] * 5, [2] * 5,
+    expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5,
                             -1, [4] * 5]
+    order = np.array(list(range(len(X))))
+    rng.shuffle(order)
+    X = X[order]
+    expected_labels = expected_labels[order]
+
     clust = OPTICS(min_samples=3, min_cluster_size=2,
                    max_eps=np.inf, cluster_method='xi',
                    xi=0.1).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))
-    expected_labels = np.r_[[0] * 5, [3] * 5, [2] * 5, [1] * 5, [2] * 5,
+    expected_labels = np.r_[[1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5,
                             -1, -1, [4] * 5]
+    order = np.array(list(range(len(X))))
+    rng.shuffle(order)
+    X = X[order]
+    expected_labels = expected_labels[order]
+
     clust = OPTICS(min_samples=3, min_cluster_size=3,
                    max_eps=np.inf, cluster_method='xi',
                    xi=0.1).fit(X)
@@ -127,6 +137,11 @@ def test_extract_xi():
     C3 = [[100, 100], [100, 90], [100, 110], [90, 100]]
     X = np.vstack((C1, C2, C3))
     expected_labels = np.r_[[0] * 4, [1] * 4, [2] * 4]
+    order = np.array(list(range(len(X))))
+    rng.shuffle(order)
+    X = X[order]
+    expected_labels = expected_labels[order]
+
     clust = OPTICS(min_samples=2, min_cluster_size=2,
                    max_eps=np.inf, cluster_method='xi',
                    xi=0.04).fit(X)
