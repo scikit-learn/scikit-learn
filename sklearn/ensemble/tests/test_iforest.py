@@ -338,6 +338,7 @@ def test_behaviour_param():
 @pytest.mark.filterwarnings("ignore:threshold_ attribute")
 def test_iforest_chunks_works1(mocked_get_chunk, contamination):
     test_iforest_works(contamination)
+    assert mocked_get_chunk.call_count == 1
 
 
 # idem with chunk_size = 5 rows
@@ -349,3 +350,4 @@ def test_iforest_chunks_works1(mocked_get_chunk, contamination):
 @pytest.mark.filterwarnings("ignore:threshold_ attribute")
 def test_iforest_chunks_works2(mocked_get_chunk, contamination):
     test_iforest_works(contamination)
+    assert mocked_get_chunk.call_count == 1
