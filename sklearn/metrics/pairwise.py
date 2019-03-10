@@ -296,13 +296,6 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
                 Y = Y.toarray()
 
         if issparse(X):
-            print('#'*50)
-            print()
-            print(X.dtype)
-            print(Y.dtype, YY.dtype, Y.flags['C_CONTIGUOUS'], Y.flags['F_CONTIGUOUS'])
-            print(X.data.dtype, X.indices.dtype, X.indptr.dtype)
-            print()
-            print('#'*50)
             distances = _euclidean_sparse_dense_exact(
                 X.data, X.indices, X.indptr, Y, YY)
         elif issparse(Y):
