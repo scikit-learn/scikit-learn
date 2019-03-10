@@ -731,12 +731,10 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
             # equal to 1. The label ranking has no meaning.
             out += 1.
             
-            
             # If sample_weight are non default AND sample_weight[i] is 0 (False)
             # negative the score by the one that we added above.
             if sample_weight and not sample_weight[i]:
                 out -= 1
-            
             continue
 
         scores_i = y_score[i]
