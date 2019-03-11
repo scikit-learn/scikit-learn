@@ -95,15 +95,16 @@ class OPTICS(BaseEstimator, ClusterMixin):
         as in the same neighborhood. Used ony when `cluster_method='dbscan'`.
 
     xi : float, between 0 and 1, optional (default=0.05)
-        For ``cluster_method='xi'``. Determines the minimum steepness on the
-        reachability plot that constitutes a cluster boundary. For example, an
-        upwards point in the reachability plot is defined by the ratio from one
-        point to its successor being at most 1-xi.
+        Determines the minimum steepness on the reachability plot that
+        constitutes a cluster boundary. For example, an upwards point in the
+        reachability plot is defined by the ratio from one point to its
+        successor being at most 1-xi.
+        Used only when ``cluster_method='xi'``.
 
     predecessor_correction : bool, optional (default=True)
-        For ``cluster_method='xi'``. Correct clusters according to the
-        predecessors calculated by OPTICS [2]_. This parameter has minimal
-        effect on most datasets.
+        Correct clusters according to the predecessors calculated by OPTICS
+        [2]_. This parameter has minimal effect on most datasets.
+        Used only when ``cluster_method='xi'``.
 
     min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
         Minimum number of samples in an OPTICS cluster, expressed as an
@@ -942,11 +943,6 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
                 if reachability_plot[c_end + 1] * xi_complement < D.mib:
                     continue
                 print("** passed")
-
-                # 3.b
-                if D.mib > mib * xi_complement:
-                    continue
-                print("3b pass")
 
                 # 4
                 if D.maximum * xi_complement >= reachability_plot[c_end + 1]:
