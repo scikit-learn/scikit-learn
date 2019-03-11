@@ -552,8 +552,8 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     return labels
 
 
-def cluster_optics_xi(reachability, predecessor, ordering, min_samples, min_cluster_size,
-                      xi=0.05, predecessor_correction=False):
+def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
+                      min_cluster_size, xi=0.05, predecessor_correction=False):
     """Automatically extract clusters according to the Xi-steep method.
 
     Parameters
