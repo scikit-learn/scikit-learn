@@ -3,7 +3,6 @@ from functools import partial
 from itertools import product
 from itertools import chain
 from itertools import permutations
-from collections import OrderedDict
 
 import numpy as np
 import scipy.sparse as sp
@@ -696,9 +695,7 @@ invalids = [([0, 1], [np.inf, np.inf]),
             ([0, 1], [np.nan, np.inf])]
 
 
-THRESHOLDED_REGRESSION_METRICS = OrderedDict()
-THRESHOLDED_REGRESSION_METRICS.update(THRESHOLDED_METRICS)
-THRESHOLDED_REGRESSION_METRICS.update(REGRESSION_METRICS)
+THRESHOLDED_REGRESSION_METRICS = {**THRESHOLDED_METRICS, **REGRESSION_METRICS}
 
 
 @pytest.mark.parametrize(

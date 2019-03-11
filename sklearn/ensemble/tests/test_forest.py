@@ -10,7 +10,6 @@ Testing for the forest module (sklearn.ensemble.forest).
 
 import pickle
 from collections import defaultdict
-from collections import OrderedDict
 from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
@@ -90,27 +89,26 @@ hastie_X = hastie_X.astype(np.float32)
 # different backends
 DEFAULT_JOBLIB_BACKEND = joblib.parallel.get_active_backend()[0].__class__
 
-FOREST_CLASSIFIERS = OrderedDict([
-    ("ExtraTreesClassifier", ExtraTreesClassifier),
-    ("RandomForestClassifier", RandomForestClassifier)
-])
+FOREST_CLASSIFIERS = {
+    "ExtraTreesClassifier": ExtraTreesClassifier,
+    "RandomForestClassifier": RandomForestClassifier,
+}
 
-FOREST_REGRESSORS = OrderedDict([
-    ("ExtraTreesRegressor", ExtraTreesRegressor),
-    ("RandomForestRegressor", RandomForestRegressor)
-])
+FOREST_REGRESSORS = {
+    "ExtraTreesRegressor": ExtraTreesRegressor,
+    "RandomForestRegressor": RandomForestRegressor,
+}
 
-FOREST_TRANSFORMERS = OrderedDict([
-    ("RandomTreesEmbedding", RandomTreesEmbedding)
-])
+FOREST_TRANSFORMERS = {
+    "RandomTreesEmbedding": RandomTreesEmbedding,
+}
 
-FOREST_ESTIMATORS = OrderedDict()
+FOREST_ESTIMATORS = dict()
 FOREST_ESTIMATORS.update(FOREST_CLASSIFIERS)
 FOREST_ESTIMATORS.update(FOREST_REGRESSORS)
 FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 
-FOREST_CLASSIFIERS_REGRESSORS = OrderedDict()
-FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_CLASSIFIERS)
+FOREST_CLASSIFIERS_REGRESSORS = FOREST_CLASSIFIERS.copy()
 FOREST_CLASSIFIERS_REGRESSORS.update(FOREST_REGRESSORS)
 
 

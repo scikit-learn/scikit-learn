@@ -6,7 +6,6 @@ import pickle
 from functools import partial
 from itertools import product
 import struct
-from collections import OrderedDict
 
 import pytest
 import numpy as np
@@ -55,19 +54,21 @@ from sklearn.utils import compute_sample_weight
 CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("mse", "mae", "friedman_mse")
 
-CLF_TREES = OrderedDict([("DecisionTreeClassifier", DecisionTreeClassifier),
-                         ("Presort-DecisionTreeClassifier",
-                          partial(DecisionTreeClassifier, presort=True)),
-                         ("ExtraTreeClassifier", ExtraTreeClassifier)])
+CLF_TREES = {
+    "DecisionTreeClassifier": DecisionTreeClassifier,
+    "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
+                                              presort=True),
+    "ExtraTreeClassifier": ExtraTreeClassifier,
+}
 
-REG_TREES = OrderedDict([
-    ("DecisionTreeRegressor", DecisionTreeRegressor),
-    ("Presort-DecisionTreeRegressor",
-     partial(DecisionTreeRegressor, presort=True)),
-    ("ExtraTreeRegressor", ExtraTreeRegressor),
-])
+REG_TREES = {
+    "DecisionTreeRegressor": DecisionTreeRegressor,
+    "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
+                                             presort=True),
+    "ExtraTreeRegressor": ExtraTreeRegressor,
+}
 
-ALL_TREES = OrderedDict()
+ALL_TREES = dict()
 ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
 

@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from functools import partial
 
 import pytest
@@ -124,9 +123,8 @@ def test_normalized_output(metric_name):
     assert not (score < 0).any()
 
 
-SUPERVISED_UNSUPERVISED_METRICS = OrderedDict()
-SUPERVISED_UNSUPERVISED_METRICS.update(SUPERVISED_METRICS)
-SUPERVISED_UNSUPERVISED_METRICS.update(UNSUPERVISED_METRICS)
+SUPERVISED_UNSUPERVISED_METRICS = {**SUPERVISED_METRICS,
+                                   **UNSUPERVISED_METRICS}
 
 
 # 0.22 AMI and NMI changes

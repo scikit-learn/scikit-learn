@@ -1,6 +1,5 @@
 import itertools
 import pickle
-from collections import OrderedDict
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
@@ -38,18 +37,17 @@ BOOL_METRICS = ['matching', 'jaccard', 'dice',
                 'kulsinski', 'rogerstanimoto', 'russellrao',
                 'sokalmichener', 'sokalsneath']
 
-METRICS_DEFAULT_PARAMS = OrderedDict([('euclidean', {}), ('cityblock', {}),
-                                      ('minkowski', dict(p=(1, 1.5, 2, 3))),
-                                      ('chebyshev', {}),
-                                      ('seuclidean',
-                                       dict(V=(rng.random_sample(d), ))),
-                                      ('wminkowski',
-                                       dict(
-                                           p=(1, 1.5, 3),
-                                           w=(rng.random_sample(d), ))),
-                                      ('mahalanobis', dict(VI=(VI, ))),
-                                      ('hamming', {}), ('canberra', {}),
-                                      ('braycurtis', {})])
+METRICS_DEFAULT_PARAMS = {'euclidean': {},
+                          'cityblock': {},
+                          'minkowski': dict(p=(1, 1.5, 2, 3)),
+                          'chebyshev': {},
+                          'seuclidean': dict(V=(rng.random_sample(d),)),
+                          'wminkowski': dict(p=(1, 1.5, 3),
+                                             w=(rng.random_sample(d),)),
+                          'mahalanobis': dict(VI=(VI,)),
+                          'hamming': {},
+                          'canberra': {},
+                          'braycurtis': {}}
 
 
 @pytest.mark.parametrize('metric', METRICS_DEFAULT_PARAMS)

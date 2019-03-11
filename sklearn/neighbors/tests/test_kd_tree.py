@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
@@ -18,12 +16,10 @@ V = np.dot(V, V.T)
 
 DIMENSION = 3
 
-METRICS = OrderedDict([
-    ('euclidean', {}),
-    ('manhattan', {}),
-    ('chebyshev', {}),
-    ('minkowski', dict(p=3))
-])
+METRICS = {'euclidean': {},
+           'manhattan': {},
+           'chebyshev': {},
+           'minkowski': dict(p=3)}
 
 
 def brute_force_neighbors(X, Y, k, metric, **kwargs):
