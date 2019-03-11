@@ -531,8 +531,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             raise
         elif error_score == 'raise-deprecating':
             warnings.warn("From version 0.22, errors during fit will result "
-                          "in a cross validation score of NaN by default. Use "
-                          "error_score='raise' if you want an exception "
+                          "in a cross validation score of NaN by default. Use"
+                          " error_score='raise' if you want an exception "
                           "raised or error_score=np.nan to adopt the "
                           "behavior from version 0.22.",
                           FutureWarning)
@@ -549,14 +549,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                 if return_train_score:
                     train_scores = error_score
             warnings.warn("Estimator fit failed. The score on this train-test"
-                          " partition for these parameters will be set to %f. "
-                          "Details: \n%s" %
+                          " partition for these parameters will be set to %f."
+                          " Details: \n%s" %
                           (error_score, format_exception_only(type(e), e)[0]),
                           FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
-                             " make sure that it has been spelled correctly.)")
+                             " make sure that it has been spelled correctly.)"
+                             )
 
     else:
         fit_time = time.time() - start_time
@@ -601,7 +602,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-def _score(estimator, X_test, y_test, scorer, is_multimetric=False, sample_weight=None):
+def _score(estimator, X_test, y_test, scorer, is_multimetric=False,
+           sample_weight=None):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a single float if is_multimetric is False and a dict of floats,
@@ -612,7 +614,8 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False, sample_weigh
     # backward compatibility.
 
     if is_multimetric:
-        return _multimetric_score(estimator, X_test, y_test, scorer, sample_weight)
+        return _multimetric_score(estimator, X_test, y_test, scorer,
+                                  sample_weight)
     else:
         score = _apply_scorer(estimator, X_test, y_test, scorer, sample_weight)
 
@@ -712,7 +715,7 @@ def _apply_scorer(estimator, X, y, scorer, sample_weight):
                 raise TypeError(
                     (
                         "Attempted to use 'sample_weight' for training "
-                        "but supplied a scorer that doesn't accept a " 
+                        "but supplied a scorer that doesn't accept a "
                         "'sample_weight' parameter."
                     ), e)
             else:
