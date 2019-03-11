@@ -632,20 +632,49 @@ def test_euclidean_distances_sym(dtype, dim, x_array_constr):
     assert distances.dtype == dtype
 
 
+@pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+def test_euclidean_distances_upcast(x_array_constr, y_array_constr):
+    # check euclidean distances upcasted when dtype=float32 and dim > 32.
+    # dimensions choosed to have at least 2 chunks for X and Y.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((800, 2000)).astype(np.float32)
+    X[X < 0.2] = 0
+    Y = rng.random_sample((700, 2000)).astype(np.float32)
+    Y[Y < 0.2] = 0
+
+    expected = cdist(X, Y)
+
+    X = x_array_constr(X)
+    Y = y_array_constr(Y)
+    distances = euclidean_distances(X, Y)
+
+    assert_allclose(distances, expected, rtol=1e-6)
+    assert distances.dtype == np.float32
+
+
 @pytest.mark.parametrize("dtype, x",
                          [(np.float32, 10000), (np.float64, 100000000)],
                          ids=["float32", "float64"])
-def test_euclidean_distances_extreme_values(dtype, x):
+@pytest.mark.parametrize("dim", [1, 100])
+def test_euclidean_distances_extreme_values(dtype, x, dim):
     # check that euclidean distances is correct where 'fast' method wouldn't be
-    X = np.array([[x + 1], [x]], dtype=dtype)
-    Y = np.array([[x], [x + 1]], dtype=dtype)
+    X = np.array([[x + 1] + [0] * (dim - 1)], dtype=dtype)
+    Y = np.array([[x] + [0] * (dim - 1)], dtype=dtype)
 
-    expected = [[1, 0],
-                [0, 1]]
+    expected = [[1]]
 
     distances = euclidean_distances(X, Y)
 
-    assert_allclose(distances, expected)
+    if dtype == np.float64 and dim == 100:
+        # This is expected to fail for float64 and dimension > 32 due to lack
+        # of precision of the fast method of euclidean distances.
+        with pytest.raises(AssertionError, match='Not equal to tolerance'):
+            assert_allclose(distances, expected)
+    else:
+        assert_allclose(distances, expected)
 
 
 def test_cosine_distances():

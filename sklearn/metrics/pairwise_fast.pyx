@@ -132,9 +132,9 @@ def _euclidean_dense_dense_fast_sym(np.ndarray[floating, ndim=2] X,
     return np.asarray(D)
 
 
-cpdef _euclidean_fast_add_norms(floating[:, :] D,
-                                floating[::1] x_squared_norms,
-                                floating[::1] y_squared_norms):
+cpdef _add_norms(floating[:, :] D,
+                 floating[::1] x_squared_norms,
+                 floating[::1] y_squared_norms):
     cdef:
         int n_samples_X = D.shape[0]
         int n_samples_Y = D.shape[1]
