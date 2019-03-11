@@ -19,10 +19,26 @@ optimization.
 # Note: this module is strongly inspired by the kernel module of the george
 #       package.
 
+# Work In Progress:
+
+# John H Bauer <john.h.bauer@gmail.com>
+
+# Added support for all kernels in the "kernel cookbook"
+# https://www.cs.toronto.edu/~duvenaud/cookbook/
+# [except the low-rank projection (to be added soon)]
+
+# Note the use of ProjectionKernel with sets of indicator variables
+# to work with categorical data.
+
+# Extended CompoundKernel to include DirectSum and Tensor (DirectProduct)
+# CompoundKernel was not fully implemented
+# fixed a bug in set_param referencing undefined .k1
+# added .n_dims
+# added support for deep in get_param
+
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
-from inspect import signature
 
 import numpy as np
 from scipy.special import kv, gamma
@@ -397,11 +413,6 @@ class CompoundKernel(Kernel):
     """Kernel which is composed of a set of other kernels.
 
     .. versionadded:: 0.18
-
-    Parameters
-    ----------
-    kernels : list of Kernel objects
-        The other kernels
     """
 
     def __init__(self, kernels):
@@ -422,6 +433,13 @@ class CompoundKernel(Kernel):
             Parameter names mapped to their values.
         """
         return dict(kernels=self.kernels)
+
+    @property
+    def n_dims(self):
+        """Returns the number of non-fixed hyperparameters of the kernel."""
+        return sum(h.n_elements \
+                   for k in self.kernels \
+                   for h in k.hyperparameters)
 
     @property
     def theta(self):
@@ -448,9 +466,14 @@ class CompoundKernel(Kernel):
         theta : array, shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
-        k_dims = self.k1.n_dims
-        for i, kernel in enumerate(self.kernels):
-            kernel.theta = theta[i * k_dims:(i + 1) * k_dims]
+        # TODO: bug fix! minimal changes, should check len(self.kernels)
+        # there is no k1 in CompoundKernel
+        start = 0
+        for kernel in self.kernels:
+            end = start + kernel.n_dims
+            #end = start + sum(h.n_elements for h in kernel.hyperparameters)
+            kernel.theta = theta[start:end]
+            start = end
 
     @property
     def bounds(self):
@@ -510,6 +533,10 @@ class CompoundKernel(Kernel):
         return np.all([self.kernels[i] == b.kernels[i]
                        for i in range(len(self.kernels))])
 
+    def __repr__(self):
+        return "{0}[\n\t{1}\n\t]".format(self.__class__.__name__,
+                ",\n\t".join(repr(k) for k in self.kernels))
+
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
         return np.all([kernel.is_stationary() for kernel in self.kernels])
@@ -532,6 +559,246 @@ class CompoundKernel(Kernel):
             Diagonal of kernel k(X, X)
         """
         return np.vstack([kernel.diag(X) for kernel in self.kernels]).T
+
+
+class Tensor(CompoundKernel):
+    def __init__(self, kernels):
+        """Extends the product to a list of kernels.
+
+        Typically use Projection to define kernels restricted to different
+        subsets of the coordinates, and combine them with Sum, Product,
+        Tensor, or DirectSum.  Parameter names will be much shorter
+        than if the Sum kernel operator + is used repeatedly."""
+        super(Tensor, self).__init__(kernels)
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """Computes the product of a list of kernels (and their gradients)."""
+
+        if eval_gradient:
+            def _k_g_mul_(kg0, kg1):
+                k0, g0 = kg0
+                k1, g1 = kg1
+                return k0 * k1, \
+                       np.dstack((g0 * k1[:, :, np.newaxis],
+                                  g1 * k0[:, :, np.newaxis]))
+
+            return reduce(_k_g_mul_,
+                          (k(X, Y, eval_gradient=True) for k in self.kernels))
+        else:
+            return reduce(lambda k0, k1: k0 * k1,
+                          (k(X, Y, eval_gradient=False) for k in self.kernels))
+
+    def diag(self, X):
+        return reduce(lambda d0, d1: d0 * d1, (k.diag(X) for k in self.kernels))
+
+
+class DirectSum(CompoundKernel):
+    def __init__(self, kernels):
+        """Extends the sum to a list of kernels.
+
+        Typically use Projection to define kernels restricted to different
+        subsets of the coordinates, and combine them with Sum, Product,
+        Tensor, or DirectSum.  Parameter names will be much shorter
+        than if the Sum kernel operator + is used repeatedly."""
+        super(DirectSum, self).__init__(kernels)
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """Computes the sum of a list of kernels (and their gradients)."""
+
+        if eval_gradient:
+            def _k_g_add_(kg0, kg1):
+                k0, g0 = kg0
+                k1, g1 = kg1
+                return k0 + k1, np.dstack((g0, g1))
+
+            return reduce(_k_g_add_,
+                          (k(X, Y, eval_gradient=True) for k in self.kernels))
+        else:
+            return reduce(lambda k0, k1: k0 + k1,
+                          (k(X, Y, eval_gradient=False) for k in self.kernels))
+
+    def diag(self, X):
+        return reduce(lambda d0, d1: d0 + d1, (k.diag(X) for k in self.kernels))
+
+
+class Projection(Kernel):
+    """Coordinate Projection onto a subset of the columns.
+
+    .. versionadded:: ??
+
+    Typically used in combination with Product, Tensor, Sum, or DirectSum.
+    For categorical variables, construct dummy-coded indicator variables,
+    use Projection onto those columns, and use ExchangeableCorrelation,
+    MultiplicativeCorrelation, or UnrestrictiveCorrelation as the kernel.
+    The resulting Projection kernel may be used in a product or tensor
+    with other kernels, such aa the projection onto the continuous variables.
+
+    Parameters
+    ----------
+    columns:    integer or list of integer indices of columns to project onto
+    name:       string to be used in reporting parameters
+    kernel:     Kernel object, defaults to RBF() with one length-scale
+                parameter for each column.
+    """
+
+    def __init__(self, columns, name, kernel=None):
+        if kernel is None:
+            kernel = RBF([1.0] * len(columns))
+        assert isinstance(kernel, Kernel), "Kernel instance required"
+        self.kernel = kernel
+        self.name = name
+        self.columns = columns
+        # if this gets too tedious go back to using pandas,
+        # which handles int/list of ints transparently
+        assert isinstance(columns, (list, tuple, int, np.ndarray)), "must be int or list of ints"
+        self.columns = [columns] if isinstance(columns, int) else columns
+        assert all(isinstance(i, int) for i in self.columns), "must be integers"
+
+    def __call__(self, X, Y=None, eval_gradient=False):
+        """Return the kernel k(X, Y) and optionally its gradient.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+            X should be the dummy-coded representation of a categorical
+            variable.  Typically used with a Projection kernel.
+
+        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+            Right argument of the returned kernel k(X, Y). If None, k(X, X)
+            if evaluated instead.  Y should be the dummy-coded representation
+            of a categorical variable.
+
+        eval_gradient : bool (optional, default=False)
+            Determines whether the gradient with respect to the kernel
+            hyperparameters is determined.
+
+        Returns
+        -------
+        K : array, shape (n_samples_X, n_samples_Y)
+            Kernel k(X, Y)
+
+        K_gradient : array, shape (n_samples_X, n_samples_X, n_dims)
+            The gradient of the kernel k(X, X) with respect to the
+            hyperparameters of the kernel. Only returned when eval_gradient
+            is True.
+        """
+        X1 = np.atleast_2d(X)[:, self.columns]
+        Y1 = np.atleast_2d(Y)[:, self.columns] if Y is not None else None
+
+        return self.kernel(X1, Y1, eval_gradient=eval_gradient)
+
+    def get_params(self, deep=True):
+        """Get parameters of this kernel.
+
+        Parameters
+        ----------
+        deep : boolean, optional
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
+        """
+        name = self.name if self.name else "proj"
+        params = dict(kernel=self.kernel, columns=self.columns, name=name)
+        # params = dict(columns=self.columns)
+        # name_ = "{}{}__".format(self.name, self.columns)
+        if deep:
+            deep_items = self.kernel.get_params().items()
+            # params.update((name_ + k, val) for k, val in deep_items)
+            # params.update(("kernel__{}".format(k), val) for k, val in deep_items)
+            params.update(("{}__{}".format(self.name, k), val) for k, val in deep_items)
+        return params
+
+    @property
+    def hyperparameters(self):
+        """Returns a list of all hyperparameters for the kernel."""
+        r = []
+        for hyperparameter in self.kernel.hyperparameters:
+            name = "{}__{}".format(self.name, hyperparameter.name)
+            r.append(Hyperparameter(name,
+                                    hyperparameter.value_type,
+                                    hyperparameter.bounds,
+                                    hyperparameter.n_elements)
+        return r
+
+    @property
+    def theta(self):
+        """Returns the (flattened, log-transformed) non-fixed hyperparameters.
+
+        Note that theta are typically the log-transformed values of the
+        kernel's hyperparameters as this representation of the search space
+        is more amenable for hyperparameter search, as hyperparameters like
+        length-scales naturally live on a log-scale.
+
+        Returns
+        -------
+        theta : array, shape (n_dims,)
+            The non-fixed, log-transformed hyperparameters of the kernel
+        """
+        return self.kernel.theta
+
+    @theta.setter
+    def theta(self, theta):
+        """Sets the (flattened, log-transformed) non-fixed hyperparameters.
+
+        Parameters
+        ----------
+        theta : array, shape (n_dims,)
+            The non-fixed, log-transformed hyperparameters of the kernel
+        """
+        self.kernel.theta = theta
+
+    @property
+    def bounds(self):
+        """Returns the (log-transformed) bounds on the theta.
+
+        Returns
+        -------
+        bounds : array, shape (n_dims, 2)
+            The log-transformed bounds on the kernel's hyperparameters theta
+        """
+        return self.kernel.bounds
+
+    def __eq__(self, b):
+        if type(self) != type(b):
+            return False
+        return (self.kernel == b.kernel and
+                self.columns == b.columns and
+                self.name == b.name)
+
+    def diag(self, X):
+        """Returns the diagonal of the kernel k(X, X).
+
+        The result of this method is identical to np.diag(self(X)); however,
+        it can be evaluated more efficiently since only the diagonal is
+        evaluated.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y)
+
+        Returns
+        -------
+        K_diag : array, shape (n_samples_X,)
+            Diagonal of kernel k(X, X)
+        """
+        X1 = np.atleast_2d(X)[:, self.columns]
+        return self.kernel.diag(X1)
+
+    def __repr__(self):
+        if self.name:
+            return "{{Factor[{1}] -> {0}}}".format(self.kernel, self.name)
+        else:
+            return "{{Project{1} -> {0}}}".format(self.kernel, self.columns)
+
+    def is_stationary(self):
+        """Returns whether the kernel is stationary. """
+        return self.kernel.is_stationary()
 
 
 class KernelOperator(Kernel):
