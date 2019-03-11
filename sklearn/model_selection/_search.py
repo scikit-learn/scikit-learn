@@ -664,8 +664,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 return train_wt, test_wt
 
             def fit_and_score_and_sw_sum(est, X, y, train, test,
-                                          parameters,
-                                          **fit_and_score_kwargs):
+                                         parameters,
+                                         **fit_and_score_kwargs):
                 res = _fit_and_score(est, X, y, train=train, test=test,
                                      parameters=parameters,
                                      **fit_and_score_kwargs)
