@@ -94,11 +94,16 @@ class OPTICS(BaseEstimator, ClusterMixin):
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. Used ony when `cluster_method='dbscan'`.
 
-    xi : float, between 0 and 1
-        For cluster_method='xi'. Determines the minimum steepness on the
+    xi : float, between 0 and 1, optional (default=0.05)
+        For ``cluster_method='xi'``. Determines the minimum steepness on the
         reachability plot that constitutes a cluster boundary. For example, an
         upwards point in the reachability plot is defined by the ratio from one
         point to its successor being at most 1-xi.
+
+    predecessor_correction : bool, optional (default=True)
+        For ``cluster_method='xi'``. Correct clusters according to the
+        predecessors calculated by OPTICS [2]_. This parameter has minimal
+        effect on most datasets.
 
     min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
         Minimum number of samples in an OPTICS cluster, expressed as an
@@ -173,8 +178,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
                  metric_params=None, cluster_method='xi', eps=0.5, xi=0.05,
-                 min_cluster_size=.005, algorithm='auto', leaf_size=30,
-                 n_jobs=None):
+                 predecessor_correction=True, min_cluster_size=.005,
+                 algorithm='auto', leaf_size=30, n_jobs=None):
 
         self.max_eps = max_eps
         self.min_samples = min_samples
@@ -187,6 +192,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.cluster_method = cluster_method
         self.eps = eps
         self.xi = xi
+        self.predecessor_correction = predecessor_correction
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
@@ -259,9 +265,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Extract clusters from the calculated orders and reachability
         if self.cluster_method == 'xi':
             # TODO: _ is the to-be-cluster_
-            labels_, _ = cluster_optics_xi(self.reachability_, self.ordering_,
+            labels_, _ = cluster_optics_xi(self.reachability_,
+                                           self.predecessor_, self.ordering_,
                                            self.min_samples,
-                                           self.min_cluster_size, self.xi)
+                                           self.min_cluster_size, self.xi,
+                                           self.predecessor_correction)
         elif self.cluster_method == 'dbscan':
             labels_ = cluster_optics_dbscan(self.reachability_,
                                             self.core_distances_,
@@ -544,14 +552,17 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     return labels
 
 
-def cluster_optics_xi(reachability, ordering, min_samples, min_cluster_size,
-                      xi):
+def cluster_optics_xi(reachability, predecessor, ordering, min_samples, min_cluster_size,
+                      xi=0.05, predecessor_correction=False):
     """Automatically extract clusters according to the Xi-steep method.
 
     Parameters
     ----------
     reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
+
+    predecessor : array, shape (n_samples,)
+        Predecessors calculated by OPTICS.
 
     ordering : array, shape (n_samples,)
         OPTICS ordered point indices (`ordering_`)
@@ -566,11 +577,14 @@ def cluster_optics_xi(reachability, ordering, min_samples, min_cluster_size,
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
 
-    xi : float, between 0 and 1
+    xi : float, between 0 and 1, optional (default=0.05)
         Determines the minimum steepness on the reachability plot that
         constitutes a cluster boundary. For example, an upwards point in the
         reachability plot is defined by the ratio from one point to its
         successor being at most 1-xi.
+
+    predecessor_correction : bool, optional (default=True)
+        Correct clusters based on the calculated predecessors.
 
     Returns
     -------
@@ -584,8 +598,9 @@ def cluster_optics_xi(reachability, ordering, min_samples, min_cluster_size,
         larger clusters encompassing smaller clusters, come after those
         smaller clusters.
     """
-    clusters = _xi_cluster(reachability[ordering], xi, min_samples,
-                           min_cluster_size)
+    clusters = _xi_cluster(reachability[ordering], predecessor[ordering], xi,
+                           min_samples, min_cluster_size,
+                           predecessor_correction)
     labels = _extract_xi_labels(ordering, clusters)
     print("labels: ", labels[ordering])
     return labels, clusters
@@ -784,7 +799,30 @@ def _update_filter_sdas(sdas, mib, xi_complement):
     return res
 
 
-def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
+def _correct_predecessor(reachability_plot, predecessor, s, e):
+    """Correct for predecessors.
+
+    Applies Algorithm 2 of [1]_.
+
+    Input parameters are ordered by the computer OPTICS ordering.
+
+    .. [1] Schubert, Erich, Michael Gertz.
+       "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
+       the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
+    """
+
+    while s < e:
+        if reachability_plot[s] > reachability_plot[e]:
+            return s, e
+        for i in range(s, e):
+            if predecessor[e] == i:
+                return s, e
+        e -= 1
+    return None, None
+
+
+def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
+                min_cluster_size, predecessor_correction):
     """Automatically extract clusters according to the Xi-steep method.
 
     This is rouphly an implementation of Figure 19 of the OPTICS paper.
@@ -794,6 +832,9 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
     reachability_plot : array, shape (n_samples)
         The reachability plot, i.e. reachability ordered according to
         the calculated ordering, all computed by OPTICS.
+
+    predecessor : array, shape(n_samples)
+        Predecessors ordered according to the calculated ordering.
 
     xi : float, between 0 and 1
         Determines the minimum steepness on the reachability plot that
@@ -810,6 +851,9 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
+
+    predecessor_correction : bool
+        Correct clusters based on the calculated predecessors.
 
     Returns
     -------
@@ -916,6 +960,13 @@ def _xi_cluster(reachability_plot, xi, min_samples, min_cluster_size):
                            and c_end > c_start):
                         c_end -= 1
                 print('after 4', c_start, c_end)
+
+                # predecessor correction
+                c_start, c_end = _correct_predecessor(reachability_plot,
+                                                      predecessor, c_start,
+                                                      c_end)
+                if c_start is None:
+                    continue
 
                 # 3.a
                 if c_end - c_start + 1 < min_cluster_size:
