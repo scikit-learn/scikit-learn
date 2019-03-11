@@ -432,8 +432,8 @@ class SVC(BaseSVC):
     The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
     to scale to datasets with more than a couple of 10000 samples. For large
-    datasets consider using :class:`sklearn.linear_model.LinearSVR` or
-    :class:`sklearn.linear_model.SGDRegressor` instead, possibly after a
+    datasets consider using :class:`sklearn.linear_model.LinearSVC` or
+    :class:`sklearn.linear_model.SGDClassifier` instead, possibly after a
     :class:`sklearn.kernel_approximation.Nystroem` transformer.
 
     The multiclass support is handled according to a one-vs-one scheme.
