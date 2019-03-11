@@ -60,7 +60,6 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     python -m pip install pytest pytest-cov cython joblib==$JOBLIB_VERSION
 
 elif [[ "$DISTRIB" == "32bit" ]]; then
-    # python and pip are already installed in virtualenv
     # TODO: Also choose python version?
     TO_INSTALL="pytest pytest-cov \
                 numpy scipy \
@@ -93,12 +92,11 @@ elif [[ "$DISTRIB" == "32bit" ]]; then
 
     # update ubuntu
     apt-get update && apt-get upgrade
-    apt-get install python3.7
 
-    # Start a lightweight virtualenv
-    # TODO: Do we want to specify python version?
-    virtualenv $VIRTUALENV --python=python3.7
-    source $VIRTUALENV/bin/activate
+    # TODO: make python version a param
+    conda create -n python python=3.5 -y
+    echo "source activate python" >> ~/.bashrc
+
     python -m pip install --upgrade pip
     python -m pip install $TO_INSTALL
 fi

@@ -42,27 +42,19 @@ jobs:
         TEST_DOCSTRINGS: 'true'
         SKLEARN_SITE_JOBLIB: '1'
         CHECK_WARNINGS: 'true'
+      # 32-bit linux environment with latest libraries with python=3.5
 
+# NOTE: 32-bit has to be kept separate from the rest. templating uses parameter.name to decide whether or not to use an image
+# tried to use matrix params but no luck
 - template: build_tools/azure/posix.yml
   parameters:
-    # This name will trigger adding the container
-    # i386/python:3.7.2-stretch to the build
-    name: Linux32bit
+    name: Linux32
     vmImage: ubuntu-16.04
-    # Choose any version python as a tag.
     matrix:
-      # Build any 32-bit version.
-      py32bit:
+      py35_32bit:
         DISTRIB: '32bit'
-        #PYTHON_VERSION: '*'
+        PYTHON_VERSION: '3.5'
         INSTALL_MKL: 'true'
-        NUMPY_VERSION: '*'
-        SCIPY_VERSION: '*'
-        PANDAS_VERSION: '*'
-        CYTHON_VERSION: '*'
-        PYAMG_VERSION: '*'
-        PILLOW_VERSION: '*'
-        JOBLIB_VERSION: '*'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'false'
         TEST_DOCSTRINGS: 'false'

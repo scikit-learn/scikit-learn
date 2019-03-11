@@ -7,14 +7,12 @@ jobs:
 - job: ${{ parameters.name }}
   pool:
     vmImage: ${{ parameters.vmImage }}
-  ${{ if eq(parameters.name, 'Linux32bit') }}:
-    container: i386/ubuntu:18.04
+  ${{ if eq(parameters.name, 'Linux32') }}:
+    container: jrmlhermitte/test_docker_32:v1
   variables:
-    # This if condition is only here to treat the 32-bit case separately, which
-    # runs in its own docker container.
-    ${{ if eq(parameters.name, 'Linux32bit') }}:
+    ${{ if eq(parameters.name, 'Linux32') }}:
       TEST_DIR: '/tmp/test_folder'
-    ${{ if not(eq(parameters.name, 'Linux32bit')) }}:
+    ${{ if not(eq(parameters.name, 'Linux32')) }}:
       TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
     VIRTUALENV: 'testvenv'
     JUNITXML: 'test-data.xml'
@@ -29,6 +27,9 @@ jobs:
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
       condition: eq(variables['DISTRIB'], 'conda')
+    - bash: ls /tmp/test_folder
+      displayName: 32-bit test
+      condition: eq(variables['DISTRIB'], '32bit')
     - script: |
         build_tools/azure/install.sh
       displayName: 'Install'
