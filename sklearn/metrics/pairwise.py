@@ -367,20 +367,14 @@ def _euclidean_distances_upcast_fast(X, XX, Y, YY):
         xe = xs + (chunk_size if i < n_chunks_X - 1 else n_samples_X_rem)
 
         X_chunk = X[xs:xe].astype(np.float64)
-        if not XX:
-            XX_chunk = row_norms(X_chunk, squared=True)
-        else:
-            XX_chunk = XX[xs:xe].astype(np.float64)
+        XX_chunk = row_norms(X_chunk, squared=True)
 
         for j in range(n_chunks_Y):
             ys = j * chunk_size
             ye = ys + (chunk_size if j < n_chunks_Y - 1 else n_samples_Y_rem)
 
             Y_chunk = Y[ys:ye].astype(np.float64)
-            if not YY:
-                YY_chunk = row_norms(Y_chunk, squared=True)
-            else:
-                YY_chunk = YY[ys:ye].astype(np.float64)
+            YY_chunk = row_norms(Y_chunk, squared=True)
 
             d = - 2 * safe_sparse_dot(X_chunk, Y_chunk.T, dense_output=True)
             _add_norms(d, XX_chunk, YY_chunk)
