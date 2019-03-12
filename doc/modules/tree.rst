@@ -550,14 +550,14 @@ the terminal nodes. Alternatively, scikit-learn uses the total sample weighted
 impurity of the terminal nodes for :math:`R(T)`. As shown in the previous 
 section, the impurity of a node depends on the criterion. Minimal 
 cost-complexity pruning finds the subtree of :math:`T` that minimizes 
-:math:`R\alpha(T)`.
+:math:`R_\alpha(T)`.
 
 The cost complexity measure of a single node is 
 :math:`R_\alpha(t)=R(t)+\alpha`. The branch, :math:`T_t`, is defined to be a 
 tree where node :math:`t` is its root. In general, the impurity of a node
 is greater than the sum of impurities of its terminal nodes, 
 :math:`R(T_t)<R(t)`. However, the cost complexity measure of a node, 
-:math:`t` and its branch, :math:`T_t`, can be equal depending on 
+:math:`t`, and its branch, :math:`T_t`, can be equal depending on 
 :math:`\alpha`. We define the effective :math:`\alpha` of a node to be the 
 value where they are equal, :math:`R_\alpha(T_t)=R_\alpha(t)` or 
 :math:`\alpha_{eff}=(R(t)-R(T_t))/(|\tilde{T}|-1)`. A non-terminal node with 
