@@ -695,23 +695,19 @@ invalids = [([0, 1], [np.inf, np.inf]),
             ([0, 1], [np.nan, np.inf])]
 
 
-THRESHOLDED_REGRESSION_METRICS = {**THRESHOLDED_METRICS, **REGRESSION_METRICS}
-
-
 @pytest.mark.parametrize(
-        'name',
-        sorted(THRESHOLDED_REGRESSION_METRICS))
-def test_regression_thresholded_inf_nan_input(name):
-    metric = THRESHOLDED_REGRESSION_METRICS[name]
+        'metric',
+        chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values()))
+def test_regression_thresholded_inf_nan_input(metric):
+
     for y_true, y_score in invalids:
         assert_raise_message(ValueError,
                              "contains NaN, infinity",
                              metric, y_true, y_score)
 
 
-@pytest.mark.parametrize('name', sorted(CLASSIFICATION_METRICS))
-def test_classification_inf_nan_input(name):
-    metric = CLASSIFICATION_METRICS[name]
+@pytest.mark.parametrize('metric', CLASSIFICATION_METRICS.values())
+def test_classification_inf_nan_input(metric):
     # Classification metrics all raise a mixed input exception
     for y_true, y_score in invalids:
         assert_raise_message(ValueError,
