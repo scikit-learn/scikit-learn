@@ -654,7 +654,8 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         # to non-deterministic behavior
         random_state = check_random_state(self.random_state)
         seeds = random_state.randint(MAX_INT, size=(len(self.classes_)))
-
+        print("Platform max_int: %s" % MAX_INT)
+        print("multiclass seeds: %s" % seeds)
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                           **_joblib_parallel_args(require="sharedmem"))(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
