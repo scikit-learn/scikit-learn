@@ -719,7 +719,8 @@ def test_pca_deterministic_output():
 
 def check_pca_float_dtype_preservation(svd_solver):
     # Ensure that PCA does not upscale the dtype when input is float32
-    X_64 = np.random.RandomState(0).rand(1000, 4).astype(np.float64)
+    X_64 = np.random.RandomState(0).rand(1000, 4).astype(np.float64,
+                                                         copy=False)
     X_32 = X_64.astype(np.float32)
 
     pca_64 = PCA(n_components=3, svd_solver=svd_solver,
@@ -740,8 +741,8 @@ def check_pca_float_dtype_preservation(svd_solver):
 def check_pca_int_dtype_upcast_to_double(svd_solver):
     # Ensure that all int types will be upcast to float64
     X_i64 = np.random.RandomState(0).randint(0, 1000, (1000, 4))
-    X_i64 = X_i64.astype(np.int64)
-    X_i32 = X_i64.astype(np.int32)
+    X_i64 = X_i64.astype(np.int64, copy=False)
+    X_i32 = X_i64.astype(np.int32, copy=False)
 
     pca_64 = PCA(n_components=3, svd_solver=svd_solver,
                  random_state=0).fit(X_i64)
