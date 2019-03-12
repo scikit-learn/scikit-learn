@@ -849,8 +849,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self : FeatureUnion
             This estimator
         """
-        fit_params = {}  # XXX: this should probably be added to method
-        self._fit_transform(X, y, fit_params, is_transform=False)
+        self._fit_transform(X, y, {}, is_transform=False)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
