@@ -751,7 +751,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     >>> jaccard_score(y_true, y_pred, average='macro')
     0.6666...
     >>> jaccard_score(y_true, y_pred, average=None)
-    array([0.5, 0.5, 1.])
+    array([0.5, 0.5, 1. ])
 
     In the multiclass case:
 
