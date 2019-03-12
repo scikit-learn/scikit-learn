@@ -315,8 +315,15 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
-  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
-  Mitrovic <SandraMNE>`.
+  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and
+  `Sandra Mitrovic <SandraMNE>`.
+
+- |Fix| The function :func:`euclidean_distances`, and therefore the functions
+  :func:`pairwise_distances` and :func:`pairwise_distances_chunked` with
+  ``metric=euclidean``, suffered from numerical precision issues. Precision has
+  been increased at the cost of a small drop in performance in some cases.
+  :issue:`13410` by :user:` <Celelibi>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`
 
 :mod:`sklearn.mixture`
 ......................
