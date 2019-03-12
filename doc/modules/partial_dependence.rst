@@ -114,11 +114,9 @@ which the trees were trained.
 
 .. topic:: References
 
- .. [F2001] J. Friedman, "Greedy Function Approximation: A Gradient Boosting Machine",
-   The Annals of Statistics, Vol. 29, No. 5, 2001.
+ .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, `The Elements of
+    Statistical Learning <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
+    Second Edition, Section 10.13.2, Springer, 2009.
 
- .. [F1999] J. Friedman, "Stochastic Gradient Boosting", 1999
-
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
-
- .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm package", 2007
+ .. [Mol2019] C. Molnar, `Interpretable Machine Learning
+    <https://christophm.github.io/interpretable-ml-book/>`_, Section 5.1, 2019.
