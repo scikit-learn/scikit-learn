@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 
 from functools import partial
 from itertools import product
@@ -127,10 +126,7 @@ def test_classification_report_dictionary_output():
                                      'precision': 0.5260083136726211,
                                      'recall': 0.596146953405018,
                                      'support': 75},
-                       'micro avg': {'f1-score': 0.5333333333333333,
-                                     'precision': 0.5333333333333333,
-                                     'recall': 0.5333333333333333,
-                                     'support': 75},
+                       'accuracy': 0.5333333333333333,
                        'weighted avg': {'f1-score': 0.47310435663627154,
                                         'precision': 0.5137535108414785,
                                         'recall': 0.5333333333333333,
@@ -143,10 +139,14 @@ def test_classification_report_dictionary_output():
     # assert the 2 dicts are equal.
     assert(report.keys() == expected_report.keys())
     for key in expected_report:
-        assert report[key].keys() == expected_report[key].keys()
-        for metric in expected_report[key]:
-            assert_almost_equal(expected_report[key][metric],
-                                report[key][metric])
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
 
     assert type(expected_report['setosa']['precision']) == float
     assert type(expected_report['macro avg']['precision']) == float
@@ -198,6 +198,7 @@ def test_precision_recall_f1_score_binary():
                             (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
 
+@ignore_warnings
 def test_precision_recall_f_binary_single_class():
     # Test precision, recall and F1 score behave with a single positive or
     # negative class
@@ -528,8 +529,10 @@ def test_cohen_kappa():
     y1 = np.array([0] * 46 + [1] * 44 + [2] * 10)
     y2 = np.array([0] * 50 + [1] * 40 + [2] * 10)
     assert_almost_equal(cohen_kappa_score(y1, y2), .9315, decimal=4)
-    assert_almost_equal(cohen_kappa_score(y1, y2, weights="linear"), .9412, decimal=4)
-    assert_almost_equal(cohen_kappa_score(y1, y2, weights="quadratic"), .9541, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2,
+                        weights="linear"), 0.9412, decimal=4)
+    assert_almost_equal(cohen_kappa_score(y1, y2,
+                        weights="quadratic"), 0.9541, decimal=4)
 
 
 @ignore_warnings
@@ -853,10 +856,12 @@ def test_confusion_matrix_dtype():
     assert_equal(cm.dtype, np.int64)
     # The dtype of confusion_matrix is always 64 bit
     for dtype in [np.bool_, np.int32, np.uint64]:
-        cm = confusion_matrix(y, y, sample_weight=weight.astype(dtype))
+        cm = confusion_matrix(y, y,
+                              sample_weight=weight.astype(dtype, copy=False))
         assert_equal(cm.dtype, np.int64)
     for dtype in [np.float32, np.float64, None, object]:
-        cm = confusion_matrix(y, y, sample_weight=weight.astype(dtype))
+        cm = confusion_matrix(y, y,
+                              sample_weight=weight.astype(dtype, copy=False))
         assert_equal(cm.dtype, np.float64)
 
     # np.iinfo(np.uint32).max should be accumulated correctly
@@ -885,7 +890,7 @@ def test_classification_report_multiclass():
   versicolor       0.33      0.10      0.15        31
    virginica       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -905,7 +910,7 @@ def test_classification_report_multiclass_balanced():
            1       0.33      0.33      0.33         3
            2       0.33      0.33      0.33         3
 
-   micro avg       0.33      0.33      0.33         9
+    accuracy                           0.33         9
    macro avg       0.33      0.33      0.33         9
 weighted avg       0.33      0.33      0.33         9
 """
@@ -925,7 +930,7 @@ def test_classification_report_multiclass_with_label_detection():
            1       0.33      0.10      0.15        31
            2       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -946,7 +951,7 @@ def test_classification_report_multiclass_with_digits():
   versicolor    0.33333   0.09677   0.15000        31
    virginica    0.41860   0.90000   0.57143        20
 
-   micro avg    0.53333   0.53333   0.53333        75
+    accuracy                        0.53333        75
    macro avg    0.52601   0.59615   0.50998        75
 weighted avg    0.51375   0.53333   0.47310        75
 """
@@ -969,7 +974,7 @@ def test_classification_report_multiclass_with_string_label():
        green       0.33      0.10      0.15        31
          red       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -983,7 +988,7 @@ weighted avg       0.51      0.53      0.47        75
            b       0.33      0.10      0.15        31
            c       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -995,18 +1000,18 @@ weighted avg       0.51      0.53      0.47        75
 def test_classification_report_multiclass_with_unicode_label():
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    labels = np.array([u"blue\xa2", u"green\xa2", u"red\xa2"])
+    labels = np.array(["blue\xa2", "green\xa2", "red\xa2"])
     y_true = labels[y_true]
     y_pred = labels[y_pred]
 
-    expected_report = u"""\
+    expected_report = """\
               precision    recall  f1-score   support
 
        blue\xa2       0.83      0.79      0.81        24
       green\xa2       0.33      0.10      0.15        31
         red\xa2       0.42      0.90      0.57        20
 
-   micro avg       0.53      0.53      0.53        75
+    accuracy                           0.53        75
    macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
@@ -1028,7 +1033,7 @@ def test_classification_report_multiclass_with_long_string_label():
 greengreengreengreengreen       0.33      0.10      0.15        31
                       red       0.42      0.90      0.57        20
 
-                micro avg       0.53      0.53      0.53        75
+                 accuracy                           0.53        75
                 macro avg       0.53      0.60      0.51        75
              weighted avg       0.51      0.53      0.47        75
 """
@@ -1063,6 +1068,7 @@ def test_classification_report_no_labels_target_names_unequal_length():
                          y_true, y_pred, target_names=target_names)
 
 
+@ignore_warnings
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50
@@ -1127,6 +1133,11 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
     # sp_hamming only works with 1-D arrays
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
+    assert_warns_message(DeprecationWarning,
+                         "The labels parameter is unused. It was"
+                         " deprecated in version 0.21 and"
+                         " will be removed in version 0.23",
+                         hamming_loss, y1, y2, labels=[0, 1])
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -1439,6 +1450,17 @@ def test_prf_warnings():
            'being set to 0.0 due to no true samples.')
     my_assert(w, msg, f, [-1, -1], [1, 1], average='binary')
 
+    clean_warning_registry()
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        precision_recall_fscore_support([0, 0], [0, 0], average="binary")
+        msg = ('Recall and F-score are ill-defined and '
+               'being set to 0.0 due to no true samples.')
+        assert_equal(str(record.pop().message), msg)
+        msg = ('Precision and F-score are ill-defined and '
+               'being set to 0.0 due to no predicted samples.')
+        assert_equal(str(record.pop().message), msg)
+
 
 def test_recall_warnings():
     assert_no_warnings(recall_score,
@@ -1454,16 +1476,23 @@ def test_recall_warnings():
         assert_equal(str(record.pop().message),
                      'Recall is ill-defined and '
                      'being set to 0.0 due to no true samples.')
+        recall_score([0, 0], [0, 0])
+        assert_equal(str(record.pop().message),
+                     'Recall is ill-defined and '
+                     'being set to 0.0 due to no true samples.')
 
 
 def test_precision_warnings():
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
-
         precision_score(np.array([[1, 1], [1, 1]]),
                         np.array([[0, 0], [0, 0]]),
                         average='micro')
+        assert_equal(str(record.pop().message),
+                     'Precision is ill-defined and '
+                     'being set to 0.0 due to no predicted samples.')
+        precision_score([0, 0], [0, 0])
         assert_equal(str(record.pop().message),
                      'Precision is ill-defined and '
                      'being set to 0.0 due to no predicted samples.')
@@ -1492,6 +1521,13 @@ def test_fscore_warnings():
             assert_equal(str(record.pop().message),
                          'F-score is ill-defined and '
                          'being set to 0.0 due to no true samples.')
+            score([0, 0], [0, 0])
+            assert_equal(str(record.pop().message),
+                         'F-score is ill-defined and '
+                         'being set to 0.0 due to no true samples.')
+            assert_equal(str(record.pop().message),
+                         'F-score is ill-defined and '
+                         'being set to 0.0 due to no predicted samples.')
 
 
 def test_prf_average_binary_data_non_binary():
@@ -1602,7 +1638,8 @@ def test__check_targets():
     y2 = [(2,), (0, 2,)]
     msg = ('You appear to be using a legacy multi-label data representation. '
            'Sequence of sequences are no longer supported; use a binary array'
-           ' or sparse matrix instead.')
+           ' or sparse matrix instead - the MultiLabelBinarizer'
+           ' transformer can convert to this format.')
     assert_raise_message(ValueError, msg, _check_targets, y1, y2)
 
 

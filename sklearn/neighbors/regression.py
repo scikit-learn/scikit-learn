@@ -126,7 +126,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
-        super(KNeighborsRegressor, self).__init__(
+        super().__init__(
               n_neighbors=n_neighbors,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
@@ -276,7 +276,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
-        super(RadiusNeighborsRegressor, self).__init__(
+        super().__init__(
               radius=radius,
               algorithm=algorithm,
               leaf_size=leaf_size,

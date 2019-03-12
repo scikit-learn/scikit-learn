@@ -81,18 +81,6 @@ These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in scikit-learn. They are however often too
 small to be representative of real world machine learning tasks.
 
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-
-    boston_house_prices
-    iris
-    diabetes
-    digits
-    linnerud
-    wine_data
-    breast_cancer
-
 .. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
 
 .. include:: ../../sklearn/datasets/descr/iris.rst
@@ -131,18 +119,6 @@ They can be loaded using the following functions:
    fetch_rcv1
    fetch_kddcup99
    fetch_california_housing
-
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-
-    olivetti_faces
-    twenty_newsgroups
-    labeled_faces
-    covtype
-    rcv1
-    kddcup99
-    california_housing
 
 .. include:: ../../sklearn/datasets/descr/olivetti_faces.rst
 

@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |Python27|_ |Python35|_ |PyPi|_ |DOI|_
+|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |Python35|_ |PyPi|_ |DOI|_
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
@@ -13,9 +13,6 @@
 
 .. |CircleCI| image:: https://circleci.com/gh/scikit-learn/scikit-learn/tree/master.svg?style=shield&circle-token=:circle-token
 .. _CircleCI: https://circleci.com/gh/scikit-learn/scikit-learn
-
-.. |Python27| image:: https://img.shields.io/badge/python-2.7-blue.svg
-.. _Python27: https://badge.fury.io/py/scikit-learn
 
 .. |Python35| image:: https://img.shields.io/badge/python-3.5-blue.svg
 .. _Python35: https://badge.fury.io/py/scikit-learn
@@ -50,15 +47,16 @@ Dependencies
 
 scikit-learn requires:
 
-- Python (>= 2.7 or >= 3.4)
-- NumPy (>= 1.8.2)
-- SciPy (>= 0.13.3)
+- Python (>= 3.5)
+- NumPy (>= 1.11.0)
+- SciPy (>= 0.17.0)
 
-**Scikit-learn 0.20 is the last version to support Python2.7.**
-Scikit-learn 0.21 and later will require Python 3.5 or newer.
+**Scikit-learn 0.20 was the last version to support Python2.7.**
+Scikit-learn 0.21 and later require Python 3.5 or newer.
 
-For running the examples Matplotlib >= 1.4 is required. A few examples
-require scikit-image >= 0.11.3 and a few examples require pandas >= 0.17.1.
+For running the examples Matplotlib >= 1.5.1 is required. A few examples
+require scikit-image >= 0.12.3, a few examples require pandas >= 0.18.0
+and a few example require joblib >= 0.11.
 
 scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but

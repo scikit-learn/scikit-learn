@@ -1,5 +1,7 @@
+# cython: language_level=3
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 #
 # Author: Arnaud Joly
 #
@@ -13,8 +15,6 @@ The module contains:
     * Several algorithms to sample integers without replacement.
 
 """
-from __future__ import division
-
 cimport cython
 
 import numpy as np
@@ -149,12 +149,12 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     rng_randint = rng.randint
 
     # Initialize the pool
-    for i in xrange(n_population):
+    for i in range(n_population):
         pool[i] = i
 
     # The following line of code are heavily inspired from python core,
     # more precisely of random.sample.
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         j = rng_randint(n_population - i)  # invariant: non-selected at [0,n-i)
         out[i] = pool[j]
         pool[j] = pool[n_population - i - 1]  # move non-selected item into

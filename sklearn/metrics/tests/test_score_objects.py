@@ -13,8 +13,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 
@@ -39,7 +37,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.externals import joblib
+from sklearn.utils import _joblib
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
@@ -98,8 +96,8 @@ def setup_module():
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
                                              random_state=0)
     filename = os.path.join(TEMP_FOLDER, 'test_data.pkl')
-    joblib.dump((X, y, y_ml), filename)
-    X_mm, y_mm, y_ml_mm = joblib.load(filename, mmap_mode='r')
+    _joblib.dump((X, y, y_ml), filename)
+    X_mm, y_mm, y_ml_mm = _joblib.load(filename, mmap_mode='r')
     ESTIMATORS = _make_estimators(X_mm, y_mm, y_ml_mm)
 
 
@@ -110,7 +108,7 @@ def teardown_module():
     shutil.rmtree(TEMP_FOLDER)
 
 
-class EstimatorWithoutFit(object):
+class EstimatorWithoutFit:
     """Dummy estimator to test scoring validators"""
     pass
 
@@ -121,7 +119,7 @@ class EstimatorWithFit(BaseEstimator):
         return self
 
 
-class EstimatorWithFitAndScore(object):
+class EstimatorWithFitAndScore:
     """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
         return self
@@ -130,7 +128,7 @@ class EstimatorWithFitAndScore(object):
         return 1.0
 
 
-class EstimatorWithFitAndPredict(object):
+class EstimatorWithFitAndPredict:
     """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
         self.y = y
@@ -140,7 +138,7 @@ class EstimatorWithFitAndPredict(object):
         return self.y
 
 
-class DummyScorer(object):
+class DummyScorer:
     """Dummy scorer that always returns 1."""
     def __call__(self, est, X, y):
         return 1
@@ -186,13 +184,14 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
 
 
 def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
-    # This wraps the _check_multimetric_scoring to take in single metric
-    # scoring parameter so we can run the tests that we will run for
-    # check_scoring, for check_multimetric_scoring too for single-metric
-    # usecases
+    # This wraps the _check_multimetric_scoring to take in
+    # single metric scoring parameter so we can run the tests
+    # that we will run for check_scoring, for check_multimetric_scoring
+    # too for single-metric usecases
+
     scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
     # For all single metric use cases, it should register as not multimetric
-    assert_false(is_multi)
+    assert not is_multi
     if args[0] is not None:
         assert scorers is not None
         names, scorers = zip(*scorers.items())
@@ -250,7 +249,7 @@ def test_check_scoring_and_check_multimetric_scoring():
                              scoring=scoring)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
@@ -370,7 +369,21 @@ def test_thresholded_scorers():
     X, y = make_blobs(random_state=0, centers=3)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf.fit(X_train, y_train)
-    assert_raises(ValueError, get_scorer('roc_auc'), clf, X_test, y_test)
+    with pytest.raises(ValueError, match="multiclass format is not supported"):
+        get_scorer('roc_auc')(clf, X_test, y_test)
+
+    # test error is raised with a single class present in model
+    # (predict_proba shape is not suitable for binary auc)
+    X, y = make_blobs(random_state=0, centers=2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = DecisionTreeClassifier()
+    clf.fit(X_train, np.zeros_like(y_train))
+    with pytest.raises(ValueError, match="need classifier with two classes"):
+        get_scorer('roc_auc')(clf, X_test, y_test)
+
+    # for proba scorers
+    with pytest.raises(ValueError, match="need classifier with two classes"):
+        get_scorer('neg_log_loss')(clf, X_test, y_test)
 
 
 def test_thresholded_scorers_multilabel_indicator_data():
@@ -483,9 +496,9 @@ def test_scorer_sample_weight():
                                                         ignored))
 
         except TypeError as e:
-            assert_true("sample_weight" in str(e),
-                        "scorer {0} raises unhelpful exception when called "
-                        "with sample weights: {1}".format(name, str(e)))
+            assert "sample_weight" in str(e), (
+                "scorer {0} raises unhelpful exception when called "
+                "with sample weights: {1}".format(name, str(e)))
 
 
 @ignore_warnings  # UndefinedMetricWarning for P / R scores

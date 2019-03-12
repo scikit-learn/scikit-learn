@@ -9,7 +9,7 @@ import warnings
 
 from abc import ABCMeta, abstractmethod
 
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 
 from ..base import clone, is_classifier
 from .base import LinearClassifierMixin, SparseCoefMixin
@@ -20,7 +20,6 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
-from ..externals import six
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
 from .sgd_fast import plain_sgd, average_sgd
@@ -45,7 +44,7 @@ DEFAULT_EPSILON = 0.1
 # Default value of ``epsilon`` parameter.
 
 
-class _ValidationScoreCallback(object):
+class _ValidationScoreCallback:
     """Callback for early stopping based on validation score"""
 
     def __init__(self, estimator, X_val, y_val, sample_weight_val,
@@ -65,7 +64,7 @@ class _ValidationScoreCallback(object):
         return est.score(self.X_val, self.y_val, self.sample_weight_val)
 
 
-class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
+class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
@@ -101,7 +100,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self._validate_params(set_max_iter=False)
 
     def set_params(self, *args, **kwargs):
-        super(BaseSGD, self).set_params(*args, **kwargs)
+        super().set_params(*args, **kwargs)
         self._validate_params(set_max_iter=False)
         return self
 
@@ -469,8 +468,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     return result
 
 
-class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
-                                           LinearClassifierMixin)):
+class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
 
     loss_functions = {
         "hinge": (Hinge, 1.0),
@@ -495,7 +493,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  class_weight=None, warm_start=False, average=False,
                  n_iter=None):
 
-        super(BaseSGDClassifier, self).__init__(
+        super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon,
@@ -667,7 +665,12 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                 self.intercept_ = self.standard_intercept_
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
+        """Perform one epoch of stochastic gradient descent on given samples.
+
+        Internally, this method uses ``max_iter = 1``. Therefore, it is not
+        guaranteed that a minimum of the cost function is reached after calling
+        it once. Matters such as objective convergence and early stopping
+        should be handled by the user.
 
         Parameters
         ----------
@@ -977,7 +980,7 @@ class SGDClassifier(BaseSGDClassifier):
                  power_t=0.5, early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, class_weight=None, warm_start=False,
                  average=False, n_iter=None):
-        super(SGDClassifier, self).__init__(
+        super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
@@ -1121,7 +1124,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, warm_start=False, average=False,
                  n_iter=None):
-        super(BaseSGDRegressor, self).__init__(
+        super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon,
@@ -1160,7 +1163,12 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         return self
 
     def partial_fit(self, X, y, sample_weight=None):
-        """Fit linear model with Stochastic Gradient Descent.
+        """Perform one epoch of stochastic gradient descent on given samples.
+
+        Internally, this method uses ``max_iter = 1``. Therefore, it is not
+        guaranteed that a minimum of the cost function is reached after calling
+        it once. Matters such as objective convergence and early stopping
+        should be handled by the user.
 
         Parameters
         ----------
@@ -1551,9 +1559,9 @@ class SGDRegressor(BaseSGDRegressor):
     >>> import numpy as np
     >>> from sklearn import linear_model
     >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
     >>> clf = linear_model.SGDRegressor(max_iter=1000, tol=1e-3)
     >>> clf.fit(X, y)
     ... #doctest: +NORMALIZE_WHITESPACE
@@ -1576,7 +1584,7 @@ class SGDRegressor(BaseSGDRegressor):
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, warm_start=False, average=False,
                  n_iter=None):
-        super(SGDRegressor, self).__init__(
+        super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon,

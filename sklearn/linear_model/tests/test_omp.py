@@ -4,7 +4,6 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -45,10 +44,10 @@ def test_correct_shapes_gram():
 
 
 def test_n_nonzero_coefs():
-    assert_true(np.count_nonzero(orthogonal_mp(X, y[:, 0],
-                                 n_nonzero_coefs=5)) <= 5)
-    assert_true(np.count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5,
-                                               precompute=True)) <= 5)
+    assert np.count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5)) <= 5
+    assert np.count_nonzero(orthogonal_mp(X, y[:, 0],
+                                          n_nonzero_coefs=5,
+                                          precompute=True)) <= 5
 
 
 def test_tol():
