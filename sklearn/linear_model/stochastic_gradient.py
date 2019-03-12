@@ -43,7 +43,7 @@ PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 DEFAULT_EPSILON = 0.1
 # Default value of ``epsilon`` parameter.
 
-MAX_INT = np.iinfo(np.uint32).max
+MAX_INT = np.iinfo(np.int32).max
 
 
 class _ValidationScoreCallback:
