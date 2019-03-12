@@ -27,6 +27,7 @@ _DEFAULT_TAGS = {
     '_skip_test': False,
     'multioutput_only': False}
 
+
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
 
