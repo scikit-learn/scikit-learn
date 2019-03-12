@@ -18,7 +18,7 @@ from scipy import sparse
 from .base import clone, TransformerMixin
 from .utils._joblib import Parallel, delayed
 from .utils.metaestimators import if_delegate_has_method
-from .utils import Bunch, log_elapsed
+from .utils import Bunch, _log_elapsed
 from .utils.validation import check_memory
 
 from .utils.metaestimators import _BaseComposition
@@ -117,7 +117,7 @@ class Pipeline(_BaseComposition):
     >>> # Indexing can also be used to extract a sub-pipeline.
     >>> sub_pipeline = anova_svm[:1]
     >>> sub_pipeline  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    Pipeline(memory=None, steps=[('anova', ...)])
+    Pipeline(memory=None, steps=[('anova', ...)], verbose=False)
     >>> coef = anova_svm[-1].coef_
     >>> anova_svm['svc'] is anova_svm[-1]
     True
@@ -325,7 +325,7 @@ class Pipeline(_BaseComposition):
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator != 'passthrough':
-            with log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
+            with _log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
                 self._final_estimator.fit(Xt, y, **fit_params)
         return self
 
@@ -360,7 +360,7 @@ class Pipeline(_BaseComposition):
         Xt, fit_params = self._fit(X, y, **fit_params)
         if last_step == 'passthrough':
             return Xt
-        with log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
+        with _log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
             if hasattr(last_step, 'fit_transform'):
                 Xt = last_step.fit_transform(Xt, y, **fit_params)
             else:
@@ -422,7 +422,7 @@ class Pipeline(_BaseComposition):
         y_pred : array-like
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
-        with log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
+        with _log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
             y_pred = self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
         return y_pred
 
@@ -689,7 +689,7 @@ def _fit_transform_one(transformer,
     If ``return_transform`` is ``False``, then a tuple of
     (``None``, fitted_transformer) will be returned.
     """
-    with log_elapsed(message_clsname, message):
+    with _log_elapsed(message_clsname, message):
         if not return_transform:
             return None, transformer.fit(X, y, **fit_params)
         elif hasattr(transformer, 'fit_transform'):

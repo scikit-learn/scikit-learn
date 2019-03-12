@@ -20,7 +20,7 @@ import scipy.sparse as sp
 
 from ..base import is_classifier, clone
 from ..utils import (indexable, check_random_state, safe_indexing,
-                     message_with_time)
+                     _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..utils._joblib import Parallel, delayed
@@ -566,7 +566,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     if verbose > 1:
         total_time = score_time + fit_time
-        print(message_with_time('CV', msg, total_time))
+        print(_message_with_time('CV', msg, total_time))
 
     ret = [train_scores, test_scores] if return_train_score else [test_scores]
 

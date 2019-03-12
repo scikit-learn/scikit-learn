@@ -569,7 +569,7 @@ def indices_to_mask(indices, mask_length):
     return mask
 
 
-def message_with_time(source, message, time):
+def _message_with_time(source, message, time):
     """Create one line message for logging purposes
 
     Parameters
@@ -597,7 +597,7 @@ def message_with_time(source, message, time):
 
 
 @contextmanager
-def log_elapsed(source, message=None):
+def _log_elapsed(source, message=None):
     """Log elapsed time to stdout when the context is exited
 
     Parameters
@@ -619,8 +619,8 @@ def log_elapsed(source, message=None):
         start = timeit.default_timer()
         yield
         print(
-            message_with_time(source, message,
-                              timeit.default_timer() - start))
+            _message_with_time(source, message,
+                               timeit.default_timer() - start))
 
 
 def get_chunk_n_rows(row_bytes, max_n_rows=None,

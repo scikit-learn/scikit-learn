@@ -19,7 +19,7 @@ from sklearn.utils import column_or_1d
 from sklearn.utils import safe_indexing
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
-from sklearn.utils import message_with_time, log_elapsed
+from sklearn.utils import _message_with_time, _log_elapsed
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils.mocking import MockDataFrame
@@ -283,7 +283,7 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
         (20000, '333.3min'),
     ])
 def test_message_with_time(source, message, is_long, time, time_str):
-    out = message_with_time(source, message, time)
+    out = _message_with_time(source, message, time)
     if is_long:
         assert len(out) > 70
     else:
@@ -310,13 +310,13 @@ def test_message_with_time(source, message, is_long, time, time_str):
 @pytest.mark.parametrize(
     ['message', 'expected'],
     [
-        ('hello', message_with_time('ABC', 'hello', 0.1) + '\n'),
-        ('', message_with_time('ABC', '', 0.1) + '\n'),
+        ('hello', _message_with_time('ABC', 'hello', 0.1) + '\n'),
+        ('', _message_with_time('ABC', '', 0.1) + '\n'),
         (None, ''),
     ])
 def test_log_elapsed(message, expected, capsys, monkeypatch):
     monkeypatch.setattr(timeit, 'default_timer', lambda: 0)
-    with log_elapsed('ABC', message):
+    with _log_elapsed('ABC', message):
         monkeypatch.setattr(timeit, 'default_timer', lambda: 0.1)
     assert capsys.readouterr().out == expected
 
