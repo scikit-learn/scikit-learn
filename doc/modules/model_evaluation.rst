@@ -59,7 +59,7 @@ Scoring                           Function                                      
 ==============================    =============================================     ==================================
 **Classification**
 'accuracy'                        :func:`metrics.accuracy_score`
-'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`           for binary targets
+'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
 'average_precision'               :func:`metrics.average_precision_score`
 'brier_score_loss'                :func:`metrics.brier_score_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
@@ -102,7 +102,7 @@ Usage examples:
     >>> clf = svm.SVC(gamma='scale', random_state=0)
     >>> cross_val_score(clf, X, y, scoring='recall_macro',
     ...                 cv=5)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
+    array([0.96..., 0.96..., 0.96..., 0.93..., 1.        ])
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, cv=5, scoring='wrong_choice')
     Traceback (most recent call last):
@@ -1947,7 +1947,7 @@ change the kernel::
 
   >>> clf = SVC(gamma='scale', kernel='rbf', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
-  0.97...
+  0.94...
 
 We see that the accuracy was boosted to almost 100%.  A cross validation
 strategy is recommended for a better estimate of the accuracy, if it

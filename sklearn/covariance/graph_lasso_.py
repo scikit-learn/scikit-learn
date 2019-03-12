@@ -20,8 +20,8 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state, check_array
 from ..utils import deprecated
-from ..linear_model import lars_path
 from ..linear_model import cd_fast
+from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
 from ..utils._joblib import Parallel, delayed
 
@@ -204,7 +204,7 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         # https://github.com/scikit-learn/scikit-learn/issues/4134
         d_gap = np.inf
         # set a sub_covariance buffer
-        sub_covariance = np.ascontiguousarray(covariance_[1:, 1:])
+        sub_covariance = np.copy(covariance_[1:, 1:], order='C')
         for i in range(max_iter):
             for idx in range(n_features):
                 # To keep the contiguous matrix `sub_covariance` equal to
@@ -228,8 +228,8 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                             check_random_state(None), False)
                     else:
                         # Use LARS
-                        _, _, coefs = lars_path(
-                            sub_covariance, row, Xy=row, Gram=sub_covariance,
+                        _, _, coefs = lars_path_gram(
+                            Xy=row, Gram=sub_covariance, n_samples=row.size,
                             alpha_min=alpha / (n_features - 1), copy_Gram=True,
                             eps=eps, method='lars', return_path=False)
                 # Update the precision matrix
@@ -321,6 +321,9 @@ class GraphicalLasso(EmpiricalCovariance):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
@@ -329,6 +332,27 @@ class GraphicalLasso(EmpiricalCovariance):
 
     n_iter_ : int
         Number of iterations run.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import GraphicalLasso
+    >>> true_cov = np.array([[.8, 0., .2, 0.],
+    ...                      [0., .4, 0., 0.],
+    ...                      [.2, 0., .3, .1],
+    ...                      [0., 0., .1, .7]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0, 0, 0],
+    ...                                   cov=true_cov,
+    ...                                   size=200)
+    >>> cov = GraphicalLasso().fit(X)
+    >>> np.around(cov.covariance_, decimals=3)
+    array([[0.816, 0.049, 0.218, 0.019],
+           [0.049, 0.364, 0.017, 0.034],
+           [0.218, 0.017, 0.322, 0.093],
+           [0.019, 0.034, 0.093, 0.69 ]])
+    >>> np.around(cov.location_, decimals=3)
+    array([0.073, 0.04 , 0.038, 0.143])
 
     See Also
     --------
@@ -543,6 +567,9 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : numpy.ndarray, shape (n_features, n_features)
         Estimated covariance matrix.
 
@@ -560,6 +587,27 @@ class GraphicalLassoCV(GraphicalLasso):
 
     n_iter_ : int
         Number of iterations run for the optimal alpha.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import GraphicalLassoCV
+    >>> true_cov = np.array([[.8, 0., .2, 0.],
+    ...                      [0., .4, 0., 0.],
+    ...                      [.2, 0., .3, .1],
+    ...                      [0., 0., .1, .7]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0, 0, 0],
+    ...                                   cov=true_cov,
+    ...                                   size=200)
+    >>> cov = GraphicalLassoCV(cv=5).fit(X)
+    >>> np.around(cov.covariance_, decimals=3)
+    array([[0.816, 0.051, 0.22 , 0.017],
+           [0.051, 0.364, 0.018, 0.036],
+           [0.22 , 0.018, 0.322, 0.094],
+           [0.017, 0.036, 0.094, 0.69 ]])
+    >>> np.around(cov.location_, decimals=3)
+    array([0.073, 0.04 , 0.038, 0.143])
 
     See Also
     --------

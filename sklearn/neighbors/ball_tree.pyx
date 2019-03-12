@@ -2,6 +2,7 @@
 #cython: boundscheck=False
 #cython: wraparound=False
 #cython: cdivision=True
+# cython: language_level=3
 
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
 # License: BSD 3 clause
