@@ -424,6 +424,10 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
         _prepare_fit_binary(est, y, i)
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
 
+    print("Thread %s, X: %s" % (i, X))
+    print("Thread %s, y_i: %s" % (i, y_i))
+
+    print("Thread %s, random_state: %s" % random_state)
     random_state = check_random_state(random_state)
     dataset, intercept_decay = make_dataset(
         X, y_i, sample_weight, random_state=random_state)
@@ -440,6 +444,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     # numpy mtrand expects a C long which is a signed 32 bit integer under
     # Windows
     seed = random_state.randint(MAX_INT)
+
+
     print("Thread %s: i, seed: %s" % (i, seed))
 
     tol = est.tol if est.tol is not None else  -np.inf
@@ -475,7 +481,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
             est.average_intercept_[i] = average_intercept
 
         result = standard_coef, standard_intercept, n_iter_
-    print("result: %s" % str(result))
+    print("result %i: %s" % (i, str(result)))
     return result
 
 
