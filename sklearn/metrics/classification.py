@@ -1245,12 +1245,12 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
                                      "%r" % (pos_label, present_labels))
             labels = [pos_label]
         else:
-            applicable_options = list(average_options)
+            average_options = list(average_options)
             if y_type == 'multiclass':
-                applicable_options = applicable_options.remove('samples')
+                average_options.remove('samples')
             raise ValueError("Target is %s but average='binary'. Please "
                              "choose another average setting, one of %r."
-                             % (y_type, applicable_options))
+                             % (y_type, average_options))
     elif pos_label not in (None, 1):
         warnings.warn("Note that pos_label (set to %r) is ignored when "
                       "average != 'binary' (got %r). You may use "
