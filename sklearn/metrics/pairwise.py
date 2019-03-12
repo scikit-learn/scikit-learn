@@ -183,6 +183,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     Y_norm_squared : array-like, shape (n_samples_2, ), optional
         Pre-computed dot-products of vectors in Y (e.g.,
         ``(Y**2).sum(axis=1)``)
+        May be ignored in some cases, see the note below.
 
     squared : boolean, optional
         Return squared Euclidean distances.
@@ -190,6 +191,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     X_norm_squared : array-like, shape = [n_samples_1], optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
+        May be ignored in some cases, see the note below.
 
     Returns
     -------
@@ -203,13 +205,15 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
 
     This formulation is computationaly more efficient than the usual one and
-    can benefit from pre-computed ``dot(x, x)`` and/or ``dot(y, y)``.
+    can benefit from pre-computed ``dot(x, x)`` and/or ``dot(y, y)``. When the
+    input is stored in float32, computations are done by first upcasting ``X``
+    and ``Y`` to float64 (by chunks to limit memory usage). In that case,
+    ``X_norm_squared`` and ``Y_norm_squared`` are ignored and computed based on
+    upcast ``X`` and ``Y`` to keep good precision.
 
     However, this is not the most precise way of doing this computation, and
     the distance matrix returned by this function may not be exactly
-    symmetric as required by, e.g., ``scipy.spatial.distance`` functions. For
-    this reason, computations are performed on upcast (float64) chunks of X
-    and Y.
+    symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
 
     When ``n_features < 32``, the previous method is not as efficient and is
     more likely to suffer from numerical instabilities, so the euclidean
