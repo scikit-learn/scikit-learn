@@ -14,6 +14,8 @@ from sklearn.decomposition import PCA
 from sklearn.decomposition import NMF
 from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.compose import make_column_transformer
+from sklearn.preprocessing import OneHotEncoder
 from sklearn import set_config
 
 
@@ -303,7 +305,8 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
     assert  pp.pformat(gs) == expected
 
 
-def test_length_constraint():
+def test_bruteforce_ellipsis():
+
     # When repr is still too long, use bruteforce ellipsis
     # repr is a very long line so we don't check for equality here, just that
     # ellipsis has been done. It's not the ellipsis from before because the
@@ -312,6 +315,56 @@ def test_length_constraint():
     vectorizer = CountVectorizer(vocabulary=vocabulary)
     repr_ = vectorizer.__repr__()
     assert '...' in repr_
+
+    # Also, make sure that ellipsis is done without considering the blank
+    # characters (see issue 13372).
+
+    l = ['hello']
+
+    col_trans_of_pipeline = make_column_transformer(
+        (
+            make_pipeline(
+                SimpleImputer(strategy="constant", fill_value='missing'),
+                OneHotEncoder(handle_unknown='ignore')),
+            l.index
+        )
+    )
+
+    huge_pipe = make_pipeline(col_trans_of_pipeline, LogisticRegression())
+    expected="""
+Pipeline(memory=None,
+         steps=[('columntransformer',
+                 ColumnTransformer(n_jobs=None, remainder='drop',
+                                   sparse_threshold=0.3,
+                                   transformer_weights=None,
+                                   transformers=[('pipeline',
+                                                  Pipeline(memory=None,
+                                                           steps=[('simpleimputer',
+                                                                   SimpleImputer(copy=True,
+                                                                                 fill_value='missing',
+                                                                                 missing_values=nan,
+                                                                                 strategy='constant',
+                                                                                 verbose=0)),
+                                                                  ('onehotencoder',
+                                                                   OneHotEncoder(categoric...
+                                                                                 handle_unknown='ignore',
+                                                                                 n_values=None,
+                                                                                 sparse=True))]),
+                                                  <built-in method index of list object at some_address>)])),
+                ('logisticregression',
+                 LogisticRegression(C=1.0, class_weight=None, dual=False,
+                                    fit_intercept=True, intercept_scaling=1,
+                                    l1_ratio=None, max_iter=100,
+                                    multi_class='warn', n_jobs=None,
+                                    penalty='l2', random_state=None,
+                                    solver='warn', tol=0.0001, verbose=0,
+                                    warm_start=False))])"""
+    expected = expected[1:]  # remove first \n
+    repr_ = repr(huge_pipe)
+    # Remove address of '<method index of list...>' for reproducibility
+    repr_ = re.sub('method index of list object at 0x.*>',
+                   'method index of list object at some_address>', repr_)
+    assert expected == repr_
 
 
 def test_builtin_prettyprinter():

@@ -246,25 +246,29 @@ class BaseEstimator:
 
         repr_ = pp.pformat(self)
 
-        # Use bruteforce ellipsis if string is very long
-        # if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
-        #     lim = N_CHAR_MAX // 2
-        #     repr_ = repr_[:lim] + '...' + repr_[-lim:]
+        # Use bruteforce ellipsis if string is very long.
+        # We will keep (approximately) N_CHAR_MAX non-blank characters.
         if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
-            lim = N_CHAR_MAX // 2
-            i = 0
-            j = 0
-            while i < len(repr_) and j < lim:
-                if repr_[i] not in (' ', '\n'):
-                    j += 1
-                i += 1
-            k = len(repr_) - 1
-            j = 0
-            while k >= 0 and j < lim:
-                if repr_[k] not in (' ', '\n'):
-                    j += 1
-                k -= 1
-            repr_ = repr_[:i] + '...' + repr_[k:]
+            lim = N_CHAR_MAX // 2  # apprx number of chars to keep on both ends
+            repr_array = np.array(list(repr_))
+            non_blanks = (repr_array != ' ') & (repr_array != '\n')
+            # index of the lim'th non-blank character, from the left (start)
+            left_lim = np.where(np.cumsum(non_blanks) == lim)[0][0]
+            # index of the lim'th non-blank character, from the right (end)
+            right_lim = np.where(np.cumsum(non_blanks[::-1]) == lim)[0][0]
+            right_lim = len(repr_) - right_lim
+
+            # To avoid weird cuts, e.g.:
+            # categoric...ore',
+            # we still keep the whole line of the right_lim'th character so
+            # that it renders properly as:
+            # categoric...
+            # handle_unknown='ignore',
+            while repr_[right_lim] != '\n':
+                right_lim -= 1
+
+            repr_ = repr_[:left_lim] + '...' + repr_[right_lim:]
+
         return repr_
 
     def __getstate__(self):
