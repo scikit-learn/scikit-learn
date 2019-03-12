@@ -625,7 +625,8 @@ def test_encode_util_with_encode_nan(values, expected_uniques,
     nan_in_uniques = _object_dtype_isnan(uniques)
     exp_nan_in_uniques = _object_dtype_isnan(expected_uniques)
 
-    assert_array_equal(uniques[~nan_in_uniques], expected_uniques[~exp_nan_in_uniques])
+    assert_array_equal(uniques[~nan_in_uniques],
+                       expected_uniques[~exp_nan_in_uniques])
     assert_array_equal(nan_in_uniques, exp_nan_in_uniques)
 
     uniques, encoded = _encode(values, encode=True)
@@ -634,14 +635,17 @@ def test_encode_util_with_encode_nan(values, expected_uniques,
     nan_in_encoded = _object_dtype_isnan(encoded)
     exp_nan_in_encoded = _object_dtype_isnan(expected_encoded)
 
-    assert_array_equal(uniques[~nan_in_uniques], expected_uniques[~exp_nan_in_uniques])
+    assert_array_equal(uniques[~nan_in_uniques],
+                       expected_uniques[~exp_nan_in_uniques])
     assert_array_equal(nan_in_uniques, exp_nan_in_uniques)
-    assert_array_equal(encoded[~nan_in_encoded], expected_encoded[~exp_nan_in_encoded])
+    assert_array_equal(encoded[~nan_in_encoded],
+                       expected_encoded[~exp_nan_in_encoded])
     assert_array_equal(nan_in_encoded, exp_nan_in_encoded)
 
     _, encoded = _encode(values, expected_uniques, encode=True)
     nan_in_encoded = _object_dtype_isnan(encoded)
     exp_nan_in_encoded = _object_dtype_isnan(expected_encoded)
 
-    assert_array_equal(encoded[~nan_in_encoded], expected_encoded[~exp_nan_in_encoded])
+    assert_array_equal(encoded[~nan_in_encoded],
+                       expected_encoded[~exp_nan_in_encoded])
     assert_array_equal(nan_in_encoded, exp_nan_in_encoded)

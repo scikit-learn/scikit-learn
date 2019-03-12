@@ -53,7 +53,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             X = X_temp
 
         if X.dtype == np.dtype('object'):
-            if not _get_config()['assume_finite'] and force_all_finite==True:
+            if not _get_config()['assume_finite'] and force_all_finite:
                 if _object_dtype_isnan(X).any():
                     raise ValueError("Input contains NaN")
 
@@ -62,7 +62,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
     def _fit(self, X, handle_unknown='error', force_all_finite=True):
         X = self._check_X(X, force_all_finite=force_all_finite)
 
-        n_samples, n_features = X.shape
+        _, n_features = X.shape
 
         if self._categories != 'auto':
             if X.dtype != object:

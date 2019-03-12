@@ -705,7 +705,6 @@ def test_ordinal_encoder_nan_in_categories(X, exp_cats):
     assert_array_equal(exp_nan_in_cats, nan_in_cats)
 
 
-
 @pytest.mark.parametrize("X", [np.array([[1, 2, np.nan, np.nan]]).T,
                                np.array([['a', 'b', np.nan, np.nan]],
                                dtype=object).T],
