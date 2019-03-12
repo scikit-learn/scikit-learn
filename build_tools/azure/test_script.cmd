@@ -13,4 +13,4 @@ if "%COVERAGE%" == "true" (
     set PYTEST_ARGS=%PYTEST_ARGS% --cov sklearn
 )
 
-pytest sklearn/linear_model/tests/test_sgd.py::test_sgd_proba  -s --junitxml=%JUNITXML% --showlocals --durations=20
+pytest sklearn\linear_model\tests\test_sgd.py::test_sgd_proba  -s --junitxml=%JUNITXML% --showlocals --durations=20
