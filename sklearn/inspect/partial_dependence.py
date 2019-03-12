@@ -206,13 +206,13 @@ def partial_dependence(est, features, X, response_method='auto',
         method is 'brute'.
     response_method : 'auto', 'predict_proba' or 'decision_function', \
             optional (default='auto') :
-        Specifies whether to use ``est.predict_proba()`` or
-        ``est.decision_function()`` as the target response. For regressors
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
-        ``est.predict()``. By default, ``predict_proba()`` is tried first
-        and we revert to ``decision_function()`` if it doesn't exist. If
+        :term:`predict`. By default, :term:`predict_proba` is tried first
+        and we revert to :term:`decision_function` if it doesn't exist. If
         ``method`` is 'recursion', the response is always the output of
-        ``decision_function()`.
+        :term:`decision_function`.
     percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
@@ -225,7 +225,8 @@ def partial_dependence(est, features, X, response_method='auto',
         - 'recursion' is only supported for objects inheriting from
           `BaseGradientBoosting`, but is more efficient in terms of speed.
           With this method, ``X`` is only used to build the
-          grid. This method does not account for the ``init`` predicor of
+          grid and the partial dependences are computed using the training
+          data. This method does not account for the ``init`` predicor of
           the boosting process, which may lead to incorrect values (see
           :ref:`this warning<warning_recursion_init_plot>`). With this
           method, the target response of a classifier is always the decision
@@ -394,13 +395,13 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         Ignored in binary classification or classical regression settings.
     response_method : 'auto', 'predict_proba' or 'decision_function', \
             optional (default='auto') :
-        Specifies whether to use ``est.predict_proba()`` or
-        ``est.decision_function()`` as the target response. For regressors
+        Specifies whether to use :term:`predict_proba` or
+        :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
-        ``est.predict()``. By default, ``predict_proba()`` is tried first
-        and we revert to ``decision_function()`` if it doesn't exist. If
+        :term:`predict`. By default, :term:`predict_proba` is tried first
+        and we revert to :term:`decision_function` if it doesn't exist. If
         ``method`` is 'recursion', the response is always the output of
-        ``decision_function()`.
+        :term:`decision_function`.
     n_cols : int, optional (default=3)
         The maximum number of columns in the grid plot.
     grid_resolution : int, optional (default=100)
@@ -415,7 +416,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         - 'recursion' is only supported for objects inheriting from
           `BaseGradientBoosting`, but is more efficient in terms of speed.
           With this method, ``X`` is optional and is only used to build the
-          grid. This method does not account for the ``init`` predicor of
+          grid and the partial dependences are computed using the training
+          data. This method does not account for the ``init`` predicor of
           the boosting process, which may lead to incorrect values (see
           :ref:`this warning<warning_recursion_init_plot>`). With this
           method, the target response of a classifier is always the decision
