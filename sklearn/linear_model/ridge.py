@@ -383,7 +383,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             solver = "cholesky"
 
     if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga'):
-        raise ValueError("Known solver are 'sparse_cg', 'cholesky', 'svd'"
+        raise ValueError("Known solvers are 'sparse_cg', 'cholesky', 'svd'"
                          " 'lsqr', 'sag' or 'saga'. Got %s." % solver)
 
     if return_intercept and solver != 'sag':
