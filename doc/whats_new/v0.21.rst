@@ -177,6 +177,11 @@ Support for Python 3.4 and below has been officially dropped.
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
 
+- |Fix| :func:`ensemble._gradient_boosting._partial_dependence_tree` now takes
+  sample weights into account for the partial dependence computation when the
+  gradient boosting model has been trained with sample weights.
+  :issue:`13192` by :user:`Samuel O. Ronsin <samronsin>`.
+
 :mod:`sklearn.externals`
 ........................
 
