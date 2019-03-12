@@ -362,13 +362,13 @@ class RegressorMixin:
 
         Notes
         -----
-        The default value of ``multioutput`` in the ``score`` method of will
-        change from ``variance_weighted`` to ``uniform_average`` in 0.23 to
-        keep consistent with ``metrics.r2_score``. This will influence the
-        ``score`` method of all the multioutput regressors (except for
-        ``multioutput.MultiOutputRegressor``). To use the new default, please
-        either call ``metrics.r2_score`` directly or make a custom scorer with
-        ``metric.make_scorer``.
+        The R2 score used when calling ``score`` on a regressor will use
+        ``multioutput='uniform_average'`` from version 0.23 to keep consistent
+        with `metrics.r2_score`. This will influence the ``score`` method of
+        all the multioutput regressors (except for
+        `multioutput.MultiOutputRegressor`). To use the new default, please
+        either call `metrics.r2_score` directly or make a custom scorer with
+        `metric.make_scorer`.
         """
 
         from .metrics import r2_score
