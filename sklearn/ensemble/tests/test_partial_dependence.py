@@ -62,7 +62,7 @@ def test_partial_dependence_classifier():
 
     assert pdp_w2.shape == (1, 4)
     assert axes_w2[0].shape[0] == 4
-    assert np.sum(np.abs(pdp_w2 - pdp_w)) / np.sum(np.abs(pdp_w)) > 0.2
+    assert np.sum(np.abs(pdp_w2 - pdp_w)) / np.sum(np.abs(pdp_w)) > 0.05
 
 
 def test_partial_dependence_multiclass():
