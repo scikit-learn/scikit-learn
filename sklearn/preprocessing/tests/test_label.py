@@ -9,6 +9,8 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import dok_matrix
 from scipy.sparse import lil_matrix
 
+from sklearn.utils.fixes import _object_dtype_isnan
+
 from sklearn.utils.multiclass import type_of_target
 
 from sklearn.utils.testing import assert_array_equal
@@ -618,12 +620,28 @@ def test_encode_util(values, expected):
         ids=['numeric', 'object'])
 def test_encode_util_with_encode_nan(values, expected_uniques,
                                      expected_encoded):
-    # object dtype fails, but appears that arrays are the same. passes on
-    # last encoding computation
+    # Using missing mask to compare nan's without failure
     uniques = _encode(values)
-    assert_array_equal(uniques, expected_uniques)
+    nan_in_uniques = _object_dtype_isnan(uniques)
+    exp_nan_in_uniques = _object_dtype_isnan(expected_uniques)
+
+    assert_array_equal(uniques[~nan_in_uniques], expected_uniques[~exp_nan_in_uniques])
+    assert_array_equal(nan_in_uniques, exp_nan_in_uniques)
+
     uniques, encoded = _encode(values, encode=True)
-    assert_array_equal(uniques, expected_uniques)
-    assert_array_equal(encoded, expected_encoded)
+    nan_in_uniques = _object_dtype_isnan(uniques)
+    exp_nan_in_uniques = _object_dtype_isnan(expected_uniques)
+    nan_in_encoded = _object_dtype_isnan(encoded)
+    exp_nan_in_encoded = _object_dtype_isnan(expected_encoded)
+
+    assert_array_equal(uniques[~nan_in_uniques], expected_uniques[~exp_nan_in_uniques])
+    assert_array_equal(nan_in_uniques, exp_nan_in_uniques)
+    assert_array_equal(encoded[~nan_in_encoded], expected_encoded[~exp_nan_in_encoded])
+    assert_array_equal(nan_in_encoded, exp_nan_in_encoded)
+
     _, encoded = _encode(values, expected_uniques, encode=True)
-    assert_array_equal(encoded, expected_encoded)
+    nan_in_encoded = _object_dtype_isnan(encoded)
+    exp_nan_in_encoded = _object_dtype_isnan(expected_encoded)
+
+    assert_array_equal(encoded[~nan_in_encoded], expected_encoded[~exp_nan_in_encoded])
+    assert_array_equal(nan_in_encoded, exp_nan_in_encoded)
