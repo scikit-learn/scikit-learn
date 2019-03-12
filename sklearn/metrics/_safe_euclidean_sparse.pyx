@@ -32,21 +32,21 @@ def _euclidean_sparse_dense_exact(floating[::1] X_data,
 
     for i in range(n_samples_X):
         for j in range(n_samples_Y):
-            D[i, j] = _euclidean_dense_sparse_exact_1d(
-                &Y[j, 0],
-                y_squared_norms[j],
+            D[i, j] = _euclidean_sparse_dense_exact_1d(
                 &X_data[X_indptr[i]],
                 &X_indices[X_indptr[i]],
-                X_indptr[i + 1] - X_indptr[i])
+                X_indptr[i + 1] - X_indptr[i],
+                &Y[j, 0],
+                y_squared_norms[j])
 
     return np.asarray(D)
 
 
-cdef floating _euclidean_dense_sparse_exact_1d(floating *x,
-                                               floating x_squared_norm,
-                                               floating *y_data,
+cdef floating _euclidean_sparse_dense_exact_1d(floating *y_data,
                                                INT *y_indices,
-                                               int y_nnz) nogil:
+                                               int y_nnz,
+                                               floating *x,
+                                               floating x_squared_norm) nogil:
     """Euclidean distance between x dense and y sparse"""
     cdef:
         int i
