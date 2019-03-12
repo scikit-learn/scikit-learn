@@ -21,7 +21,7 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 pip list
 
-TEST_CMD="python -m pytest -s --showlocals --durations=20 --junitxml=$JUNITXML --pyargs"
+TEST_CMD="python -m pytest sklearn/linear_model/tests/test_sgd.py::test_sgd_proba  -s --junitxml=%JUNITXML% --showlocals --durations=20"
 
 if [[ "$COVERAGE" == "true" ]]; then
     TEST_CMD="$TEST_CMD --cov sklearn"
