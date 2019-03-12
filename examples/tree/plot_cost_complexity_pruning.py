@@ -15,7 +15,7 @@ print(__doc__)
 # Train decision tree classifiers
 # -------------------------------
 # Train 40 decision tree classifiers with :math:`\alpha` from 0.00 to
-# 0.40.
+# 0.04.
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split

@@ -1146,7 +1146,7 @@ cpdef build_pruned_tree_ccp(
     ccp_alpha : positive double
         Complexity parameter. The subtree with the largest cost complexity
         that is smaller than ``ccp_alpha`` will be chosen. By default,
-        no pruning is performed.no pruning is performed.
+        no pruning is performed.
     """
 
     cdef:
