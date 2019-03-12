@@ -93,8 +93,9 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     except NameError:
         n_connected_components = n_components
         warnings.warn("The `n_components` parameter changed to"
-                      "`n_connected_components` in version 0.20.3"
-                      "and will be deprecated in 0.24.",
+                      "`n_connected_components`. This will be"
+                      "deprecated in version 0.21 and removed"
+                      "in 0.23.",
                       DeprecationWarning)
 
     # explicitly cast connectivity to ensure safety
