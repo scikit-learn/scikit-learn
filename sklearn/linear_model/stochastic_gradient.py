@@ -440,8 +440,9 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     # numpy mtrand expects a C long which is a signed 32 bit integer under
     # Windows
     seed = random_state.randint(MAX_INT)
+    print("Thread %s: i, seed: %s" % (i, seed))
 
-    tol = est.tol if est.tol is not None else -np.inf
+    tol = est.tol if est.tol is not None else  -np.inf
 
     if not est.average:
         result = plain_sgd(coef, intercept, est.loss_function_,
@@ -474,7 +475,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
             est.average_intercept_[i] = average_intercept
 
         result = standard_coef, standard_intercept, n_iter_
-
+    print("result: %s" % str(result))
     return result
 
 
