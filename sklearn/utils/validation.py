@@ -54,6 +54,7 @@ def _assert_all_finite(X, allow_nan=False):
                 not allow_nan and not np.isfinite(X).all()):
             type_err = 'infinity' if allow_nan else 'NaN, infinity'
             raise ValueError(msg_err.format(type_err, X.dtype))
+    # for object dtype data, we only check for NaNs (GH-13254)
     elif X.dtype == np.dtype('object') and not allow_nan:
         if _object_dtype_isnan(X).any():
             raise ValueError("Input contains NaN")
@@ -388,6 +389,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         - False: accept both np.inf and np.nan in array.
         - 'allow-nan': accept only np.nan values in array. Values cannot
           be infinite.
+
+        For object dtyped data, only np.nan is checked and not np.inf.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
