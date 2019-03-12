@@ -92,6 +92,31 @@ def test_partial_dependence_regressor():
     assert pdp.shape == (1, grid_resolution)
     assert axes[0].shape[0] == grid_resolution
 
+    # Test near perfect correlation between pdp and diagonal when sample weights
+    # emphasize y = x predictions
+    N = 1000
+    rng = np.random.RandomState(123456)
+    X_ = np.vstack((rng.randint(2, size=(1, N)), rng.rand(N, 1).T)).T
+
+    mask_0 = np.where(X_[:, 0] == 0)
+    mask_1 = np.where(X_[:, 0] == 1)
+
+    y_ = np.zeros(N)
+    y_[mask_0] = X_[:, 1][mask_0]
+    y_[mask_1] = -X_[:, 1][mask_1]
+
+    sample_weight_ = np.zeros(N)
+    sample_weight_[mask_0] = 1000.
+    sample_weight_[mask_1] = 1.
+
+    gbt = GradientBoostingRegressor()
+    gbt.fit(X_, y_, sample_weight=sample_weight_)
+
+    grid = np.arange(0, 1, 0.01)
+    pdp = partial_dependence(gbt, [1], grid=grid)
+
+    assert np.corrcoef(np.ravel(pdp[0]), grid)[0, 1] > 0.999
+
 
 def test_partial_dependecy_input():
     # Test input validation of partial dependence.
