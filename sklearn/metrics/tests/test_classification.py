@@ -1151,14 +1151,16 @@ def test_jaccard_score_validation():
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
     msg1 = ("Target is multilabel-indicator but average='binary'. "
-            "Please choose another average setting.")
+            "Please choose another average setting, one of [None, "
+            "'micro', 'macro', 'weighted', 'samples'].")
     assert_raise_message(ValueError, msg1, jaccard_score, y_true,
                          y_pred, average='binary', pos_label=-1)
 
     y_true = np.array([0, 1, 1, 0, 2])
     y_pred = np.array([1, 1, 1, 1, 0])
     msg2 = ("Target is multiclass but average='binary'. Please choose "
-            "another average setting.")
+            "another average setting, one of [None, 'micro', 'macro', "
+            "'weighted'].")
     assert_raise_message(ValueError, msg2, jaccard_score, y_true,
                          y_pred, average='binary')
     msg3 = ("Samplewise metrics are not available outside of multilabel "
@@ -1680,18 +1682,22 @@ def test_prf_average_binary_data_non_binary():
     # Error if user does not explicitly set non-binary average mode
     y_true_mc = [1, 2, 3, 3]
     y_pred_mc = [1, 2, 3, 1]
+    msg_mc = ("Target is multiclass but average='binary'. Please "
+              "choose another average setting, one of ["
+              "None, 'micro', 'macro', 'weighted'].")
     y_true_ind = np.array([[0, 1, 1], [1, 0, 0], [0, 0, 1]])
     y_pred_ind = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+    msg_ind = ("Target is multilabel-indicator but average='binary'. Please "
+               "choose another average setting, one of ["
+               "None, 'micro', 'macro', 'weighted', 'samples'].")
 
-    for y_true, y_pred, y_type in [
-        (y_true_mc, y_pred_mc, 'multiclass'),
-        (y_true_ind, y_pred_ind, 'multilabel-indicator'),
+    for y_true, y_pred, msg in [
+        (y_true_mc, y_pred_mc, msg_mc),
+        (y_true_ind, y_pred_ind, msg_ind),
     ]:
         for metric in [precision_score, recall_score, f1_score,
                        partial(fbeta_score, beta=2)]:
-            assert_raise_message(ValueError,
-                                 "Target is %s but average='binary'. Please "
-                                 "choose another average setting." % y_type,
+            assert_raise_message(ValueError, msg,
                                  metric, y_true, y_pred)
 
 

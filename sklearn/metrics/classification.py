@@ -586,7 +586,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
         binary and multiclass inputs was broken. `jaccard_score` has an API
         that is consistent with precision_score, f_score, etc.
 
-    Read more in the :ref:`User Guide <jaccard_score>`.
+    Read more in the :ref:`User Guide <jaccard_similarity_score>`.
 
     Parameters
     ----------
@@ -734,25 +734,31 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import jaccard_score
+    >>> y_true = np.array([[0, 1, 1],
+    ...                    [1, 1, 0]])
+    >>> y_pred = np.array([[1, 1, 1],
+    ...                    [1, 0, 0]])
+
+    In the binary case:
+
+    >>> jaccard_score(y_true[0], y_pred[0])  # doctest: +ELLIPSIS
+    0.6666...
 
     In the multilabel case:
 
-    >>> y_true = np.array([[1, 0, 1], [0, 0, 1], [1, 1, 1]])
-    >>> y_pred = np.array([[0, 1, 1], [1, 1, 1], [0, 0, 1]])
-    >>> jaccard_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
-    0.33...
-    >>> jaccard_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.33...
-    >>> jaccard_score(y_true, y_pred, average='weighted')
-    0.5
+    >>> jaccard_score(y_true, y_pred, average='samples')
+    0.5833...
+    >>> jaccard_score(y_true, y_pred, average='macro')
+    0.6666...
     >>> jaccard_score(y_true, y_pred, average=None)
-    array([0., 0., 1.])
+    array([0.5, 0.5, 1.])
 
     In the multiclass case:
 
-    >>> jaccard_score(np.array([0, 1, 2, 3]),
-    ...               np.array([0, 2, 2, 3]), average='macro')
-    0.625
+    >>> y_pred = [0, 2, 1, 2]
+    >>> y_true = [0, 1, 2, 2]
+    >>> jaccard_score(y_true, y_pred, average=None)
+    array([1., 0., 0.33...])
     """
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
@@ -1239,8 +1245,12 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
                                      "%r" % (pos_label, present_labels))
             labels = [pos_label]
         else:
+            applicable_options = list(average_options)
+            if y_type == 'multiclass':
+                applicable_options = applicable_options.remove('samples')
             raise ValueError("Target is %s but average='binary'. Please "
-                             "choose another average setting." % y_type)
+                             "choose another average setting, one of %r."
+                             % (y_type, applicable_options))
     elif pos_label not in (None, 1):
         warnings.warn("Note that pos_label (set to %r) is ignored when "
                       "average != 'binary' (got %r). You may use "

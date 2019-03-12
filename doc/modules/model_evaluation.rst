@@ -921,7 +921,7 @@ Similarly, labels not present in the data sample may be accounted for in macro-a
   ... # doctest: +ELLIPSIS
   0.166...
 
-.. _jaccard_score:
+.. _jaccard_similarity_score:
 
 Jaccard similarity coefficient score
 -------------------------------------
@@ -943,7 +943,7 @@ naively set-wise measure applying natively to binary targets, and extended to
 apply to multilabel and multiclass through the use of `average` (see
 :ref:`above <average>`).
 
-In the multilabel case with binary label indicators: ::
+In the binary case: ::
 
   >>> import numpy as np
   >>> from sklearn.metrics import jaccard_score
@@ -953,22 +953,27 @@ In the multilabel case with binary label indicators: ::
   ...                    [1, 0, 0]])
   >>> jaccard_score(y_true[0], y_pred[0])  # doctest: +ELLIPSIS
   0.6666...
-  >>> jaccard_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-  0.6666...
+
+In the multilabel case with binary label indicators: ::
+
   >>> jaccard_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
   0.5833...
+  >>> jaccard_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  0.6666...
+  >>> jaccard_score(y_true, y_pred, average=None)
+  array([0.5, 0.5, 1.])
 
 Multiclass problems are binarized and treated like the corresponding
 multilabel problem: ::
 
-  >>> y_pred = [0, 2, 1, 3]
-  >>> y_true = [0, 1, 2, 3]
-  >>> jaccard_score(y_true, y_pred, average='macro')
-  0.5
-  >>> jaccard_score(y_true, y_pred, average='micro')
-  0.33...
+  >>> y_pred = [0, 2, 1, 2]
+  >>> y_true = [0, 1, 2, 2]
   >>> jaccard_score(y_true, y_pred, average=None)
-  array([1., 0., 0., 1.])
+  array([1., 0., 0.33...])
+  >>> jaccard_score(y_true, y_pred, average='macro')
+  0.44...
+  >>> jaccard_score(y_true, y_pred, average='micro')
+  0.5
 
 .. _hinge_loss:
 
