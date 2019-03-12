@@ -8,6 +8,7 @@ from scipy import sparse
 import pytest
 
 from sklearn.exceptions import NotFittedError
+from sklearn.utils.fixes import _object_dtype_isnan
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
@@ -690,15 +691,19 @@ def test_ordinal_encoder_nan_not_in_categories(X, exp_cats):
 
 @pytest.mark.parametrize("X, exp_cats", [
     (np.array([[1, 2, 1, 2, np.nan]]).T,
-     [np.array([1, 2, np.nan])]),
+     np.array([1, 2, np.nan])),
     (np.array([['a', 'b', 'a', 'b', np.nan]], dtype=object).T,
-     [np.array(['a', 'b', np.nan], dtype=object)]),
-    ], ids=['numeric', 'object'])
+     np.array(['a', 'b', np.nan], dtype=object))], ids=['numeric', 'object'])
 def test_ordinal_encoder_nan_in_categories(X, exp_cats):
-    enc = OrdinalEncoder(encode_missing='encode')
+    # Using missing mask to compare nan's without failure
+    enc = OrdinalEncoder(encode_missing="encode")
     enc.fit(X)
-    X_cats = enc.categories_
-    assert_array_equal(X_cats, exp_cats)
+    X_cats = enc.categories_[0]
+    nan_in_cats = _object_dtype_isnan(X_cats)
+    exp_nan_in_cats = _object_dtype_isnan(exp_cats)
+    assert_array_equal(exp_cats[~exp_nan_in_cats], X_cats[~nan_in_cats])
+    assert_array_equal(exp_nan_in_cats, nan_in_cats)
+
 
 
 @pytest.mark.parametrize("X", [np.array([[1, 2, np.nan, np.nan]]).T,
@@ -713,14 +718,17 @@ def test_ordinal_encoder_retain_missing(X):
 
 @pytest.mark.parametrize("X, exp_cats", [
     (np.array([[1, 2, np.nan, np.nan]]).T,
-     np.array([[1, 2, np.nan]])),
+     np.array([1, 2, np.nan])),
     (np.array([['a', 'b', np.nan, np.nan]], dtype=object).T,
-     np.array([['a', 'b', np.nan]], dtype=object))], ids=['numeric', 'object'])
+     np.array(['a', 'b', np.nan], dtype=object))], ids=['numeric', 'object'])
 def test_ordinal_encoder_handle_multiple_nan_vals(X, exp_cats):
     enc = OrdinalEncoder(encode_missing="encode")
     enc.fit(X)
-    X_cats = enc.categories_
-    assert_array_equal(exp_cats, X_cats)
+    X_cats = enc.categories_[0]
+    nan_in_cats = _object_dtype_isnan(X_cats)
+    exp_nan_in_cats = _object_dtype_isnan(exp_cats)
+    assert_array_equal(exp_cats[~exp_nan_in_cats], X_cats[~nan_in_cats])
+    assert_array_equal(exp_nan_in_cats, nan_in_cats)
 
 
 @pytest.mark.parametrize("X", [np.array([[1, 2, np.nan, np.nan]]).T,
