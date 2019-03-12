@@ -227,13 +227,13 @@ Now restart IPython and let us use this new toy::
      178                                               # values justified in the paper
      179        48          144      3.0      0.0      alpha = 1
      180        48          113      2.4      0.0      beta = 0.1
-     181       638         1880      2.9      0.1      for n_iter in xrange(1, max_iter + 1):
+     181       638         1880      2.9      0.1      for n_iter in range(1, max_iter + 1):
      182       638       195133    305.9     10.2          grad = np.dot(WtW, H) - WtV
      183       638       495761    777.1     25.9          proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
      184       638         2449      3.8      0.1          if proj_gradient < tol:
      185        48          130      2.7      0.0              break
      186
-     187      1474         4474      3.0      0.2          for inner_iter in xrange(1, 20):
+     187      1474         4474      3.0      0.2          for inner_iter in range(1, 20):
      188      1474        83833     56.9      4.4              Hn = H - alpha * grad
      189                                                       # Hn = np.where(Hn > 0, Hn, 0)
      190      1474       194239    131.8     10.1              Hn = _pos(Hn)
@@ -388,7 +388,7 @@ Checkout the official joblib documentation:
 
 .. _warm-restarts:
 
-A sample algorithmic trick: warm restarts
-==============================================================
+A simple algorithmic trick: warm restarts
+=========================================
 
 See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm-start>`_

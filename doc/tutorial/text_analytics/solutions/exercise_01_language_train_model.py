@@ -60,11 +60,11 @@ print(cm)
 
 # Predict the result on some short new sentences:
 sentences = [
-    u'This is a language detection test.',
-    u'Ceci est un test de d\xe9tection de la langue.',
-    u'Dies ist ein Test, um die Sprache zu erkennen.',
+    'This is a language detection test.',
+    'Ceci est un test de d\xe9tection de la langue.',
+    'Dies ist ein Test, um die Sprache zu erkennen.',
 ]
 predicted = clf.predict(sentences)
 
 for s, p in zip(sentences, predicted):
-    print(u'The language of "%s" is "%s"' % (s, dataset.target_names[p]))
+    print('The language of "%s" is "%s"' % (s, dataset.target_names[p]))

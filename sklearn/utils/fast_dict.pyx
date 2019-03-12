@@ -4,6 +4,8 @@ integers, and values float.
 """
 # Author: Gael Varoquaux
 # License: BSD
+#
+# cython: language_level=3
 
 cimport cython
 

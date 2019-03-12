@@ -1,8 +1,8 @@
-from __future__ import division, print_function
 
 from functools import partial
 from itertools import product
 from itertools import chain
+from itertools import permutations
 
 import numpy as np
 import scipy.sparse as sp
@@ -17,6 +17,7 @@ from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
@@ -458,7 +459,7 @@ def test_symmetry():
 
     assert_equal(
         SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS),
-        set([]))
+        set())
 
     # Symmetric metric
     for name in SYMMETRIC_METRICS:
@@ -710,8 +711,8 @@ def test_classification_inf_nan_input(metric):
     # Classification metrics all raise a mixed input exception
     for y_true, y_score in invalids:
         assert_raise_message(ValueError,
-                             "Classification metrics can't handle a mix "
-                             "of binary and continuous targets",
+                             "Input contains NaN, infinity or a "
+                             "value too large",
                              metric, y_true, y_score)
 
 
@@ -1201,3 +1202,47 @@ def test_no_averaging_labels():
             score_labels = metric(y_true, y_pred, labels=labels, average=None)
             score = metric(y_true, y_pred, average=None)
             assert_array_equal(score_labels, score[inverse_labels])
+
+
+@pytest.mark.parametrize(
+    'name', MULTILABELS_METRICS - {"unnormalized_multilabel_confusion_matrix"})
+def test_multilabel_label_permutations_invariance(name):
+    random_state = check_random_state(0)
+    n_samples, n_classes = 20, 4
+
+    y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
+    y_score = random_state.randint(0, 2, size=(n_samples, n_classes))
+
+    metric = ALL_METRICS[name]
+    score = metric(y_true, y_score)
+
+    for perm in permutations(range(n_classes), n_classes):
+        y_score_perm = y_score[:, perm]
+        y_true_perm = y_true[:, perm]
+
+        current_score = metric(y_true_perm, y_score_perm)
+        assert_almost_equal(score, current_score)
+
+
+@pytest.mark.parametrize(
+    'name', THRESHOLDED_MULTILABEL_METRICS | MULTIOUTPUT_METRICS)
+def test_thresholded_multilabel_multioutput_permutations_invariance(name):
+    random_state = check_random_state(0)
+    n_samples, n_classes = 20, 4
+    y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
+    y_score = random_state.normal(size=y_true.shape)
+
+    # Makes sure all samples have at least one label. This works around errors
+    # when running metrics where average="sample"
+    y_true[y_true.sum(1) == 4, 0] = 0
+    y_true[y_true.sum(1) == 0, 0] = 1
+
+    metric = ALL_METRICS[name]
+    score = metric(y_true, y_score)
+
+    for perm in permutations(range(n_classes), n_classes):
+        y_score_perm = y_score[:, perm]
+        y_true_perm = y_true[:, perm]
+
+        current_score = metric(y_true_perm, y_score_perm)
+        assert_almost_equal(score, current_score)

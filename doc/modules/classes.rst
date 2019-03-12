@@ -113,8 +113,9 @@ Functions
    :template: function.rst
 
    cluster.affinity_propagation
+   cluster.cluster_optics_dbscan
+   cluster.compute_optics_graph
    cluster.dbscan
-   cluster.optics
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.mean_shift
@@ -274,7 +275,6 @@ Loaders
    datasets.load_svmlight_file
    datasets.load_svmlight_files
    datasets.load_wine
-   datasets.mldata_filename
 
 Samples generator
 -----------------
@@ -656,8 +656,9 @@ Kernels:
    :template: class.rst
 
    impute.SimpleImputer
+   impute.IterativeImputer
    impute.MissingIndicator
-
+   
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -1170,6 +1171,7 @@ Model validation
    neighbors.RadiusNeighborsRegressor
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
+   neighbors.NeighborhoodComponentsAnalysis
 
 .. autosummary::
    :toctree: generated/
@@ -1400,6 +1402,7 @@ Low-level methods
 
    tree.export_graphviz
    tree.plot_tree
+   tree.export_text
 
 
 .. _utils_ref:
@@ -1429,9 +1432,9 @@ Low-level methods
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
-   utils.bench.total_seconds
    utils.check_X_y
    utils.check_array
+   utils.check_scalar
    utils.check_consistent_length
    utils.check_random_state
    utils.class_weight.compute_class_weight
@@ -1448,6 +1451,7 @@ Low-level methods
    utils.graph.single_source_shortest_path_length
    utils.graph_shortest_path.graph_shortest_path
    utils.indexable
+   utils.metaestimators.if_delegate_has_method
    utils.multiclass.type_of_target
    utils.multiclass.is_multilabel
    utils.multiclass.unique_labels
@@ -1526,3 +1530,4 @@ To be removed in 0.22
 
    covariance.graph_lasso
    datasets.fetch_mldata
+   datasets.mldata_filename

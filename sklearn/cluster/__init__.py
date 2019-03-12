@@ -11,7 +11,7 @@ from .hierarchical import (ward_tree, AgglomerativeClustering, linkage_tree,
                            FeatureAgglomeration)
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
-from .optics_ import OPTICS, optics
+from .optics_ import OPTICS, cluster_optics_dbscan, compute_optics_graph
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 from .birch import Birch
 
@@ -20,6 +20,8 @@ __all__ = ['AffinityPropagation',
            'Birch',
            'DBSCAN',
            'OPTICS',
+           'cluster_optics_dbscan',
+           'compute_optics_graph',
            'KMeans',
            'FeatureAgglomeration',
            'MeanShift',
@@ -32,7 +34,6 @@ __all__ = ['AffinityPropagation',
            'k_means',
            'linkage_tree',
            'mean_shift',
-           'optics',
            'spectral_clustering',
            'ward_tree',
            'SpectralBiclustering',

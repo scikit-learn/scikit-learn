@@ -7,7 +7,6 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 #
 # License: BSD 3 clause
 
-from __future__ import division, print_function, absolute_import
 
 import warnings
 from itertools import combinations
@@ -22,7 +21,6 @@ from ..base import RegressorMixin
 from ..utils import check_random_state
 from ..utils import check_X_y
 from ..utils._joblib import Parallel, delayed, effective_n_jobs
-from ..externals.six.moves import xrange as range
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
