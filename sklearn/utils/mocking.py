@@ -132,3 +132,6 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         else:
             score = 0.
         return score
+
+    def _more_tags(self):
+        return {'_skip_test': True, 'X_types': ['1dlabel']}

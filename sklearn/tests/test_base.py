@@ -3,6 +3,7 @@
 
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 import sklearn
 from sklearn.utils.testing import assert_array_equal
@@ -47,6 +48,25 @@ class T(BaseEstimator):
     def __init__(self, a=None, b=None):
         self.a = a
         self.b = b
+
+
+class NaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
+
+class NoNaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
+class OverrideTag(NaNTag):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
+class DiamondOverwriteTag(NaNTag, NoNaNTag):
+    pass
 
 
 class ModifyInitParams(BaseEstimator):
@@ -449,6 +469,23 @@ def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator_restored = pickle.loads(serialized)
     assert_equal(estimator_restored.attribute_pickled, 5)
     assert_equal(estimator_restored._attribute_not_pickled, None)
+
+
+def test_tag_inheritance():
+    # test that changing tags by inheritance is not allowed
+
+    nan_tag_est = NaNTag()
+    no_nan_tag_est = NoNaNTag()
+    assert nan_tag_est._get_tags()['allow_nan']
+    assert not no_nan_tag_est._get_tags()['allow_nan']
+
+    invalid_tags_est = OverrideTag()
+    with pytest.raises(TypeError, match="Inconsistent values for tag"):
+        invalid_tags_est._get_tags()
+
+    diamond_tag_est = DiamondOverwriteTag()
+    with pytest.raises(TypeError, match="Inconsistent values for tag"):
+        diamond_tag_est._get_tags()
 
 
 # XXX: Remove in 0.23

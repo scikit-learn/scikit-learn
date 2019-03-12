@@ -198,6 +198,7 @@ def test_precision_recall_f1_score_binary():
                             (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
 
+@ignore_warnings
 def test_precision_recall_f_binary_single_class():
     # Test precision, recall and F1 score behave with a single positive or
     # negative class
@@ -855,10 +856,12 @@ def test_confusion_matrix_dtype():
     assert_equal(cm.dtype, np.int64)
     # The dtype of confusion_matrix is always 64 bit
     for dtype in [np.bool_, np.int32, np.uint64]:
-        cm = confusion_matrix(y, y, sample_weight=weight.astype(dtype))
+        cm = confusion_matrix(y, y,
+                              sample_weight=weight.astype(dtype, copy=False))
         assert_equal(cm.dtype, np.int64)
     for dtype in [np.float32, np.float64, None, object]:
-        cm = confusion_matrix(y, y, sample_weight=weight.astype(dtype))
+        cm = confusion_matrix(y, y,
+                              sample_weight=weight.astype(dtype, copy=False))
         assert_equal(cm.dtype, np.float64)
 
     # np.iinfo(np.uint32).max should be accumulated correctly
@@ -1065,6 +1068,7 @@ def test_classification_report_no_labels_target_names_unequal_length():
                          y_true, y_pred, target_names=target_names)
 
 
+@ignore_warnings
 def test_multilabel_classification_report():
     n_classes = 4
     n_samples = 50
@@ -1446,6 +1450,17 @@ def test_prf_warnings():
            'being set to 0.0 due to no true samples.')
     my_assert(w, msg, f, [-1, -1], [1, 1], average='binary')
 
+    clean_warning_registry()
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        precision_recall_fscore_support([0, 0], [0, 0], average="binary")
+        msg = ('Recall and F-score are ill-defined and '
+               'being set to 0.0 due to no true samples.')
+        assert_equal(str(record.pop().message), msg)
+        msg = ('Precision and F-score are ill-defined and '
+               'being set to 0.0 due to no predicted samples.')
+        assert_equal(str(record.pop().message), msg)
+
 
 def test_recall_warnings():
     assert_no_warnings(recall_score,
@@ -1461,16 +1476,23 @@ def test_recall_warnings():
         assert_equal(str(record.pop().message),
                      'Recall is ill-defined and '
                      'being set to 0.0 due to no true samples.')
+        recall_score([0, 0], [0, 0])
+        assert_equal(str(record.pop().message),
+                     'Recall is ill-defined and '
+                     'being set to 0.0 due to no true samples.')
 
 
 def test_precision_warnings():
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
-
         precision_score(np.array([[1, 1], [1, 1]]),
                         np.array([[0, 0], [0, 0]]),
                         average='micro')
+        assert_equal(str(record.pop().message),
+                     'Precision is ill-defined and '
+                     'being set to 0.0 due to no predicted samples.')
+        precision_score([0, 0], [0, 0])
         assert_equal(str(record.pop().message),
                      'Precision is ill-defined and '
                      'being set to 0.0 due to no predicted samples.')
@@ -1499,6 +1521,13 @@ def test_fscore_warnings():
             assert_equal(str(record.pop().message),
                          'F-score is ill-defined and '
                          'being set to 0.0 due to no true samples.')
+            score([0, 0], [0, 0])
+            assert_equal(str(record.pop().message),
+                         'F-score is ill-defined and '
+                         'being set to 0.0 due to no true samples.')
+            assert_equal(str(record.pop().message),
+                         'F-score is ill-defined and '
+                         'being set to 0.0 due to no predicted samples.')
 
 
 def test_prf_average_binary_data_non_binary():
@@ -1609,7 +1638,8 @@ def test__check_targets():
     y2 = [(2,), (0, 2,)]
     msg = ('You appear to be using a legacy multi-label data representation. '
            'Sequence of sequences are no longer supported; use a binary array'
-           ' or sparse matrix instead.')
+           ' or sparse matrix instead - the MultiLabelBinarizer'
+           ' transformer can convert to this format.')
     assert_raise_message(ValueError, msg, _check_targets, y1, y2)
 
 
