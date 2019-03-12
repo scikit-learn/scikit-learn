@@ -758,7 +758,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     >>> y_pred = [0, 2, 1, 2]  # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     >>> y_true = [0, 1, 2, 2]
     >>> jaccard_score(y_true, y_pred, average=None)
-    array([1., 0., 0.33...])
+    array([1. , 0. , 0.33...])
     """
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
