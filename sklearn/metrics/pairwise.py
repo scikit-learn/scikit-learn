@@ -172,26 +172,6 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
 
-    When ``n_features > 32``, the euclidean distance between a pair of row
-    vector x and y is computed as::
-
-        dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
-
-    This formulation is computationaly more efficient than the usual one and
-    can benefit from pre-computed ``dot(x, x)`` and/or ``dot(y, y)``.
-
-    However, this is not the most precise way of doing this computation, and
-    the distance matrix returned by this function may not be exactly
-    symmetric as required by, e.g., ``scipy.spatial.distance`` functions. For
-    this reason, computations are performed on upcasted (float64) chunks of X
-    and Y.
-
-    When ``n_features < 32``, the previous method is not as efficient and is
-    more likely to suffer from numerical unstabilities, so the euclidean
-    distance between a pair of row vector x and y is computed as::
-
-        dist(x, y) = sqrt(dot(x - y))
-
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
@@ -214,6 +194,28 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     Returns
     -------
     distances : array, shape (n_samples_1, n_samples_2)
+
+    Note
+    ----
+    When ``n_features > 32``, the euclidean distance between a pair of row
+    vector x and y is computed as::
+
+        dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
+
+    This formulation is computationaly more efficient than the usual one and
+    can benefit from pre-computed ``dot(x, x)`` and/or ``dot(y, y)``.
+
+    However, this is not the most precise way of doing this computation, and
+    the distance matrix returned by this function may not be exactly
+    symmetric as required by, e.g., ``scipy.spatial.distance`` functions. For
+    this reason, computations are performed on upcast (float64) chunks of X
+    and Y.
+
+    When ``n_features < 32``, the previous method is not as efficient and is
+    more likely to suffer from numerical instabilities, so the euclidean
+    distance between a pair of row vector x and y is computed as::
+
+        dist(x, y) = sqrt(dot(x - y))
 
     Examples
     --------
@@ -244,7 +246,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     if n_features > 32:
 
         # To minimize precision issues with float32, we compute the distance
-        # matrix on chunks of X and Y upcasted to float64
+        # matrix on chunks of X and Y upcast to float64
         if X.dtype == np.float32:
             distances = _euclidean_distances_upcast_fast(X, XX, Y, YY)
 
@@ -301,8 +303,9 @@ def _check_norms(X, Y=None, X_norm_squared=None, Y_norm_squared=None):
 
     if n_features > 32 and X.dtype == np.float32:
         # In this case, we compute euclidean distances by upcasting to float64.
-        # It' necessary to compute the norms on upcasted X and not to upcast
-        # the norms computed on X to keep good precision.
+        # It' necessary to compute the norms on upcast X and not to upcast
+        # the norms computed on X to keep good precision, so we don't use
+        # provided norms.
         return None, None
     else:
         if X_norm_squared is not None:
@@ -333,7 +336,7 @@ def _euclidean_distances_upcast_fast(X, XX, Y, YY):
     """Euclidean distances between X and Y
 
     Assumes X and Y have float32 dtype.
-    X and Y are upcasted to float64 by chunks, which size is chosen to limit
+    X and Y are upcast to float64 by chunks, which size is chosen to limit
     memory increase by approximately 10MiB.
     """
     n_samples_X = X.shape[0]
