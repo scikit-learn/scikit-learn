@@ -43,7 +43,7 @@ PENALTY_TYPES = {"none": 0, "l2": 2, "l1": 1, "elasticnet": 3}
 DEFAULT_EPSILON = 0.1
 # Default value of ``epsilon`` parameter.
 
-MAX_INT = np.iinfo(np.int32).max
+MAX_INT = np.iinfo(np.uint32).max
 
 
 class _ValidationScoreCallback:
@@ -427,7 +427,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     print("Thread %s, X: %s" % (i, X))
     print("Thread %s, y_i: %s" % (i, y_i))
 
-    print("Thread %s, random_state: %s" % random_state)
+    print("Thread %s, random_state: %s" % (i, random_state))
     random_state = check_random_state(random_state)
     dataset, intercept_decay = make_dataset(
         X, y_i, sample_weight, random_state=random_state)
