@@ -677,6 +677,9 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     # do not learn on the validation set
                     continue
 
+                with gil:
+                    print("sample_index %s" % sample_index)
+
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
                 if learning_rate == OPTIMAL:
                     eta = 1.0 / (alpha * (optimal_init + t - 1))
