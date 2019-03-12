@@ -1,3 +1,4 @@
+# cython: language_level=3
 """Export fast murmurhash C/C++ routines + cython wrappers"""
 
 cimport numpy as np

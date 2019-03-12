@@ -115,7 +115,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         remove(archive_path)
 
         X = Xy[:, :-1]
-        y = Xy[:, -1].astype(np.int32)
+        y = Xy[:, -1].astype(np.int32, copy=False)
 
         _joblib.dump(X, samples_path, compress=9)
         _joblib.dump(y, targets_path, compress=9)
