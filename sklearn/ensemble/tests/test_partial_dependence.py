@@ -4,7 +4,7 @@ Testing for the partial dependence module.
 import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_allclose
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import if_matplotlib
@@ -18,9 +18,7 @@ from sklearn import datasets
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
-w = [1.5, 2, 3.5, 4, 3, 2.5]
-T = [[-1, -1], [2, 2], [3, 2]]
-true_result = [-1, 1, 1]
+sample_weight = [1.5, 2, 3.5, 4, 3, 2.5]
 
 # also load the boston dataset
 boston = datasets.load_boston()
@@ -55,16 +53,16 @@ def test_partial_dependence_classifier():
 
     assert pdp_w.shape == (1, 4)
     assert axes_w[0].shape[0] == 4
-    assert_array_equal(pdp_w, pdp)
+    assert_allclose(pdp_w, pdp)
 
     # with non-trivial sample weights
-    clf.fit(X, y, sample_weight=w)
+    clf.fit(X, y, sample_weight=sample_weight)
 
     pdp_w2, axes_w2 = partial_dependence(clf, [0], X=X, grid_resolution=5)
 
     assert pdp_w2.shape == (1, 4)
     assert axes_w2[0].shape[0] == 4
-    assert pdp_w2[0, 0] != pdp_w[0, 0]
+    assert np.sum(np.abs(pdp_w2 - pdp_w)) / np.sum(np.abs(pdp_w)) > 0.2
 
 
 def test_partial_dependence_multiclass():
