@@ -53,10 +53,11 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.base`
 ...................
 
-- |API| The default value of ``multioutput`` in the ``score`` method of
-  :class:`base.RegressorMixin` will change from ``variance_weighted`` to
-  ``uniform_average`` in 0.23 to keep consistent with :func:`metrics.r2_score`.
-  This will influence the ``score`` method of all the regressors.
+- |API| The R2 score used when calling ``score`` on a regressor will use
+  ``multioutput='uniform_average'`` from version 0.23 to keep consistent with
+  :func:`metrics.r2_score`. This will influence the ``score`` method of all
+  the multioutput regressors (except for
+  :class:`multioutput.MultiOutputRegressor`).
   :issue:`13157` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 :mod:`sklearn.calibration`
