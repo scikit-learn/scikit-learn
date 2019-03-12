@@ -92,8 +92,8 @@ def test_partial_dependence_regressor():
     assert pdp.shape == (1, grid_resolution)
     assert axes[0].shape[0] == grid_resolution
 
-    # Test near perfect correlation between pdp and diagonal when sample weights
-    # emphasize y = x predictions
+    # Test near perfect correlation between partial dependence and diagonal
+    # when sample weights emphasize y = x predictions
     N = 1000
     rng = np.random.RandomState(123456)
     X_ = np.vstack((rng.randint(2, size=(1, N)), rng.rand(N, 1).T)).T
