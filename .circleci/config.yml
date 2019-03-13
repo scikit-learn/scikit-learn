@@ -109,9 +109,13 @@ workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
-      - doc
-      - doc-min-dependencies
       - lint
+      - doc:
+          requires:
+            - lint
+      - doc-min-dependencies:
+          requires:
+            - lint
       - pypy3:
           filters:
             branches:

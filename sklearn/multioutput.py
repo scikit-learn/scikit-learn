@@ -26,7 +26,6 @@ from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
 from .utils._joblib import Parallel, delayed
-from .externals import six
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -60,8 +59,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
     return estimator
 
 
-class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
-                                              MetaEstimatorMixin)):
+class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
+                           metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, estimator, n_jobs=None):
         self.estimator = estimator
@@ -145,7 +144,8 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         """
 
         if not hasattr(self.estimator, "fit"):
-            raise ValueError("The base estimator should implement a fit method")
+            raise ValueError("The base estimator should implement"
+                             "  a fit method")
 
         X, y = check_X_y(X, y,
                          multi_output=True,
@@ -196,6 +196,9 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return np.asarray(y).T
 
+    def _more_tags(self):
+        return {'multioutput_only': True}
+
 
 class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     """Multi target regression
@@ -218,10 +221,15 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         When individual estimators are fast to train or predict
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
+
+    Attributes
+    ----------
+    estimators_ : list of ``n_output`` estimators
+        Estimators used for predictions.
     """
 
     def __init__(self, estimator, n_jobs=None):
-        super(MultiOutputRegressor, self).__init__(estimator, n_jobs)
+        super().__init__(estimator, n_jobs)
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
@@ -245,7 +253,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         -------
         self : object
         """
-        super(MultiOutputRegressor, self).partial_fit(
+        super().partial_fit(
             X, y, sample_weight=sample_weight)
 
     def score(self, X, y, sample_weight=None):
@@ -312,7 +320,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     """
 
     def __init__(self, estimator, n_jobs=None):
-        super(MultiOutputClassifier, self).__init__(estimator, n_jobs)
+        super().__init__(estimator, n_jobs)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -367,8 +375,12 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))
 
+    def _more_tags(self):
+        # FIXME
+        return {'_skip_test': True}
 
-class _BaseChain(six.with_metaclass(ABCMeta, BaseEstimator)):
+
+class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     def __init__(self, base_estimator, order=None, cv=None, random_state=None):
         self.base_estimator = base_estimator
         self.order = order
@@ -453,6 +465,7 @@ class _BaseChain(six.with_metaclass(ABCMeta, BaseEstimator)):
             The predicted values.
 
         """
+        check_is_fitted(self, 'estimators_')
         X = check_array(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
@@ -562,10 +575,10 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        super(ClassifierChain, self).fit(X, Y)
-        self.classes_ = []
-        for chain_idx, estimator in enumerate(self.estimators_):
-            self.classes_.append(estimator.classes_)
+        super().fit(X, Y)
+        self.classes_ = [estimator.classes_
+                         for chain_idx, estimator
+                         in enumerate(self.estimators_)]
         return self
 
     @if_delegate_has_method('base_estimator')
@@ -627,6 +640,10 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         Y_decision = Y_decision_chain[:, inv_order]
 
         return Y_decision
+
+    def _more_tags(self):
+        return {'_skip_test': True,
+                'multioutput_only': True}
 
 
 class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
@@ -708,5 +725,8 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         -------
         self : object
         """
-        super(RegressorChain, self).fit(X, Y)
+        super().fit(X, Y)
         return self
+
+    def _more_tags(self):
+        return {'multioutput_only': True}

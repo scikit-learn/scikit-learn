@@ -456,7 +456,7 @@ The disadvantages of the LARS method include:
     Statistics article.
 
 The LARS model can be used using estimator :class:`Lars`, or its
-low-level implementation :func:`lars_path`.
+low-level implementation :func:`lars_path` or :func:`lars_path_gram`.
 
 
 LARS Lasso
@@ -489,7 +489,8 @@ function of the norm of its coefficients.
 
 The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
-consist of retrieving the path with function :func:`lars_path`
+consist of retrieving the path with function :func:`lars_path` or 
+:func:`lars_path_gram`
 
 Mathematical formulation
 ------------------------
@@ -577,8 +578,8 @@ to be Gaussian distributed around :math:`X w`:
 
 .. math::  p(y|X,w,\alpha) = \mathcal{N}(y|X w,\alpha)
 
-Alpha is again treated as a random variable that is to be estimated from the
-data.
+where :math:`\alpha` is again treated as a random variable that is to be
+estimated from the data.
 
 The advantages of Bayesian Regression are:
 
@@ -614,17 +615,22 @@ The prior for the parameter :math:`w` is given by a spherical Gaussian:
 
 The priors over :math:`\alpha` and :math:`\lambda` are chosen to be `gamma
 distributions <https://en.wikipedia.org/wiki/Gamma_distribution>`__, the
-conjugate prior for the precision of the Gaussian.
+conjugate prior for the precision of the Gaussian. The resulting model is
+called *Bayesian Ridge Regression*, and is similar to the classical
+:class:`Ridge`.
 
-The resulting model is called *Bayesian Ridge Regression*, and is similar to the
-classical :class:`Ridge`.  The parameters :math:`w`, :math:`\alpha` and
-:math:`\lambda` are estimated jointly during the fit of the model.  The
-remaining hyperparameters are the parameters of the gamma priors over
-:math:`\alpha` and :math:`\lambda`.  These are usually chosen to be
-*non-informative*.  The parameters are estimated by maximizing the *marginal
-log likelihood*.
+The parameters :math:`w`, :math:`\alpha` and :math:`\lambda` are estimated
+jointly during the fit of the model, the regularization parameters
+:math:`\alpha` and :math:`\lambda` being estimated by maximizing the
+*log marginal likelihood*. The scikit-learn implementation
+is based on the algorithm described in Appendix A of (Tipping, 2001)
+where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
+as suggested in (MacKay, 1992).
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
+The remaining hyperparameters are the parameters :math:`\alpha_1`,
+:math:`\alpha_2`, :math:`\lambda_1` and :math:`\lambda_2` of the gamma priors
+over :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
+*non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_bayesian_ridge_001.png
@@ -663,12 +669,13 @@ is more robust to ill-posed problem.
 
  * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py`
 
-.. topic:: References
+.. topic:: References:
 
-  * More details can be found in the article `Bayesian Interpolation
-    <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_
-    by MacKay, David J. C.
+    * Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
 
+    * David J. C. MacKay, `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_, 1992.
+
+    * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
 
 Automatic Relevance Determination - ARD
@@ -731,7 +738,7 @@ or the log-linear classifier. In this model, the probabilities describing the po
 The implementation of logistic regression in scikit-learn can be accessed from
 class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
 Rest, or multinomial logistic regression with optional L2, L1 or Elastic-Net
-regularization.
+regularization. Note that regularization is applied by default.
 
 As an optimization problem, binary class L2 penalized logistic regression
 minimizes the following cost function:
@@ -771,11 +778,11 @@ classifiers. For L1 penalization :func:`sklearn.svm.l1_min_c` allows to
 calculate the lower bound for C in order to get a non "null" (all feature
 weights to zero) model.
 
-The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
-are found to converge faster for some high dimensional data. Setting
-`multi_class` to "multinomial" with these solvers learns a true multinomial
-logistic regression model [5]_, which means that its probability estimates
-should be better calibrated than the default "one-vs-rest" setting.
+The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization or no
+regularization, and are found to converge faster for some high dimensional
+data. Setting `multi_class` to "multinomial" with these solvers learns a true
+multinomial logistic regression model [5]_, which means that its probability
+estimates should be better calibrated than the default "one-vs-rest" setting.
 
 The "sag" solver uses a Stochastic Average Gradient descent [6]_. It is faster
 than other solvers for large datasets, when both the number of samples and the
@@ -807,6 +814,8 @@ The following table summarizes the penalties supported by each solver:
 | OVR + L1 penalty             |       yes       |     no      |       no        |    no     |    yes     |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 | Elastic-Net                  |       no        |     no      |       no        |    no     |    yes     |
++------------------------------+-----------------+-------------+-----------------+-----------+------------+
+| No penalty ('none')          |       no        |     yes     |       yes       |    yes    |    yes     |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+
 | **Behaviors**                |                                                                          |
 +------------------------------+-----------------+-------------+-----------------+-----------+------------+

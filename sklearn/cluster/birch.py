@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
-from __future__ import division
 
 import warnings
 import numpy as np
@@ -11,7 +10,6 @@ from math import sqrt
 
 from ..metrics.pairwise import euclidean_distances
 from ..base import TransformerMixin, ClusterMixin, BaseEstimator
-from ..externals.six.moves import xrange
 from ..utils import check_array
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.validation import check_is_fitted
@@ -29,7 +27,7 @@ def _iterate_sparse_X(X):
     X_data = X.data
     X_indptr = X.indptr
 
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         row = np.zeros(X.shape[1])
         startptr, endptr = X_indptr[i], X_indptr[i + 1]
         nonzero_indices = X_indices[startptr:endptr]
@@ -87,7 +85,7 @@ def _split_node(node, threshold, branching_factor):
     return new_subcluster1, new_subcluster2
 
 
-class _CFNode(object):
+class _CFNode:
     """Each node in a CFTree is called a CFNode.
 
     The CFNode can have a maximum of branching_factor
@@ -240,7 +238,7 @@ class _CFNode(object):
                 return True
 
 
-class _CFSubcluster(object):
+class _CFSubcluster:
     """Each subcluster in a CFNode is called a CFSubcluster.
 
     A CFSubcluster can have a CFNode has its child.

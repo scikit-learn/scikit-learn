@@ -1,5 +1,4 @@
 """Test the split module"""
-from __future__ import division
 import warnings
 import pytest
 import numpy as np
@@ -54,9 +53,6 @@ from sklearn.model_selection._split import NSPLIT_WARNING
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
 
-from sklearn.externals import six
-from sklearn.externals.six.moves import zip
-
 from sklearn.utils.fixes import comb
 
 from sklearn.svm import SVC
@@ -74,7 +70,7 @@ test_groups = (
 digits = load_digits()
 
 
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):
@@ -199,7 +195,7 @@ def test_cross_validator_with_default_params():
                          lpo.get_n_splits, None, y, groups)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_2d_y():
     # smoke test for 2d y and multi-label
     n_samples = 30
@@ -405,9 +401,7 @@ def test_kfold_balance():
     # Check that KFold returns folds with balanced sizes
     for i in range(11, 17):
         kf = KFold(5).split(X=np.ones(i))
-        sizes = []
-        for _, test in kf:
-            sizes.append(len(test))
+        sizes = [len(test) for _, test in kf]
 
         assert (np.max(sizes) - np.min(sizes)) <= 1
         assert_equal(np.sum(sizes), i)
@@ -424,9 +418,7 @@ def test_stratifiedkfold_balance():
         cv = StratifiedKFold(3, shuffle=shuffle)
         for i in range(11, 17):
             skf = cv.split(X[:i], y[:i])
-            sizes = []
-            for _, test in skf:
-                sizes.append(len(test))
+            sizes = [len(test) for _, test in skf]
 
             assert (np.max(sizes) - np.min(sizes)) <= 1
             assert_equal(np.sum(sizes), i)
@@ -483,9 +475,9 @@ def test_shuffle_kfold_stratifiedkfold_reproducibility():
                                                 cv.split(*data)):
                 # cv.split(...) returns an array of tuples, each tuple
                 # consisting of an array with train indices and test indices
-                with pytest.raises(AssertionError,
-                                   message="The splits for data, are same even"
-                                           " when random state is not set"):
+                # Ensure that the splits for data are not same
+                # when random state is not set
+                with pytest.raises(AssertionError):
                     np.testing.assert_array_equal(test_a, test_b)
 
 
@@ -500,6 +492,17 @@ def test_shuffle_stratifiedkfold():
                                       kf1.split(X_40, y)):
         assert_not_equal(set(test0), set(test1))
     check_cv_coverage(kf0, X_40, y, groups=None, expected_n_splits=5)
+
+    # Ensure that we shuffle each class's samples with different
+    # random_state in StratifiedKFold
+    # See https://github.com/scikit-learn/scikit-learn/pull/13124
+    X = np.arange(10)
+    y = [0] * 5 + [1] * 5
+    kf1 = StratifiedKFold(5, shuffle=True, random_state=0)
+    kf2 = StratifiedKFold(5, shuffle=True, random_state=1)
+    test_set1 = sorted([tuple(s[1]) for s in kf1.split(X, y)])
+    test_set2 = sorted([tuple(s[1]) for s in kf2.split(X, y)])
+    assert test_set1 != test_set2
 
 
 def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
@@ -550,8 +553,7 @@ def test_shuffle_split():
     ss1 = ShuffleSplit(test_size=0.2, random_state=0).split(X)
     ss2 = ShuffleSplit(test_size=2, random_state=0).split(X)
     ss3 = ShuffleSplit(test_size=np.int32(2), random_state=0).split(X)
-    for typ in six.integer_types:
-        ss4 = ShuffleSplit(test_size=typ(2), random_state=0).split(X)
+    ss4 = ShuffleSplit(test_size=int(2), random_state=0).split(X)
     for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
         assert_array_equal(t1[0], t2[0])
         assert_array_equal(t2[0], t3[0])
@@ -761,14 +763,10 @@ def test_predefinedsplit_with_kfold_split():
         kf_train.append(train_ind)
         kf_test.append(test_ind)
         folds[test_ind] = i
-    ps_train = []
-    ps_test = []
     ps = PredefinedSplit(folds)
     # n_splits is simply the no of unique folds
     assert_equal(len(np.unique(folds)), ps.get_n_splits())
-    for train_ind, test_ind in ps.split():
-        ps_train.append(train_ind)
-        ps_test.append(test_ind)
+    ps_train, ps_test = zip(*ps.split())
     assert_array_equal(ps_train, kf_train)
     assert_array_equal(ps_test, kf_test)
 
@@ -1110,7 +1108,7 @@ def test_train_test_split():
 
 
 @ignore_warnings
-def train_test_split_pandas():
+def test_train_test_split_pandas():
     # check train_test_split doesn't destroy pandas dataframe
     types = [MockDataFrame]
     try:
@@ -1126,7 +1124,7 @@ def train_test_split_pandas():
         assert isinstance(X_test, InputFeatureType)
 
 
-def train_test_split_sparse():
+def test_train_test_split_sparse():
     # check that train_test_split converts scipy sparse matrices
     # to csr, as stated in the documentation
     X = np.arange(100).reshape((10, 10))
@@ -1138,7 +1136,7 @@ def train_test_split_sparse():
         assert isinstance(X_test, csr_matrix)
 
 
-def train_test_split_mock_pandas():
+def test_train_test_split_mock_pandas():
     # X mock dataframe
     X_df = MockDataFrame(X)
     X_train, X_test = train_test_split(X_df)
@@ -1147,7 +1145,7 @@ def train_test_split_mock_pandas():
     X_train_arr, X_test_arr = train_test_split(X_df)
 
 
-def train_test_split_list_input():
+def test_train_test_split_list_input():
     # Check that when y is a list / list of string labels, it works.
     X = np.ones(7)
     y1 = ['1'] * 4 + ['0'] * 3
@@ -1433,7 +1431,7 @@ def test_time_series_max_train_size():
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)

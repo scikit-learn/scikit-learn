@@ -8,7 +8,6 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 
 """
 
-import sys
 import errno
 from gzip import GzipFile
 import logging
@@ -21,7 +20,6 @@ import numpy as np
 from .base import _fetch_remote
 from .base import get_data_home
 from .base import RemoteFileMetadata
-from ..externals import six
 from ..utils import Bunch
 from ..utils import _joblib
 from ..utils import check_random_state
@@ -141,9 +139,9 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         data = np.c_[data[s, :11], data[s, 12:]]
         target = target[s]
 
-        data[:, 0] = np.log((data[:, 0] + 0.1).astype(float))
-        data[:, 4] = np.log((data[:, 4] + 0.1).astype(float))
-        data[:, 5] = np.log((data[:, 5] + 0.1).astype(float))
+        data[:, 0] = np.log((data[:, 0] + 0.1).astype(float, copy=False))
+        data[:, 4] = np.log((data[:, 4] + 0.1).astype(float, copy=False))
+        data[:, 5] = np.log((data[:, 5] + 0.1).astype(float, copy=False))
 
         if subset == 'http':
             s = data[:, 2] == b'http'
@@ -270,8 +268,7 @@ def _fetch_brute_kddcup99(data_home=None,
         file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
         for line in file_.readlines():
-            if six.PY3:
-                line = line.decode()
+            line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
         logger.debug('extraction done')

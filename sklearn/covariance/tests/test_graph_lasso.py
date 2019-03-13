@@ -14,7 +14,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.covariance import (graph_lasso, GraphLasso, GraphLassoCV,
                                 empirical_covariance)
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
-from sklearn.externals.six.moves import StringIO
+from io import StringIO
 from sklearn.utils import check_random_state
 from sklearn import datasets
 
@@ -117,7 +117,7 @@ def test_graph_lasso_iris_singular():
 
 
 @ignore_warnings(category=DeprecationWarning)
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_graph_lasso_cv(random_state=1):
     # Sample data from a sparse multivariate normal
     dim = 5

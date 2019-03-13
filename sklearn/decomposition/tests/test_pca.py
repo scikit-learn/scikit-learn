@@ -6,6 +6,7 @@ import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
@@ -502,10 +503,7 @@ def test_infer_dim_1():
     pca = PCA(n_components=p, svd_solver='full')
     pca.fit(X)
     spect = pca.explained_variance_
-    ll = []
-    for k in range(p):
-        ll.append(_assess_dimension_(spect, k, n, p))
-    ll = np.array(ll)
+    ll = np.array([_assess_dimension_(spect, k, n, p) for k in range(p)])
     assert_greater(ll[1], ll.max() - .01 * n)
 
 
@@ -706,9 +704,23 @@ def test_pca_dtype_preservation(svd_solver):
     check_pca_int_dtype_upcast_to_double(svd_solver)
 
 
+def test_pca_deterministic_output():
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 10)
+
+    for solver in solver_list:
+        transformed_X = np.zeros((20, 2))
+        for i in range(20):
+            pca = PCA(n_components=2, svd_solver=solver, random_state=rng)
+            transformed_X[i, :] = pca.fit_transform(X)[0]
+        assert_allclose(
+            transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2))
+
+
 def check_pca_float_dtype_preservation(svd_solver):
     # Ensure that PCA does not upscale the dtype when input is float32
-    X_64 = np.random.RandomState(0).rand(1000, 4).astype(np.float64)
+    X_64 = np.random.RandomState(0).rand(1000, 4).astype(np.float64,
+                                                         copy=False)
     X_32 = X_64.astype(np.float32)
 
     pca_64 = PCA(n_components=3, svd_solver=svd_solver,
@@ -729,8 +741,8 @@ def check_pca_float_dtype_preservation(svd_solver):
 def check_pca_int_dtype_upcast_to_double(svd_solver):
     # Ensure that all int types will be upcast to float64
     X_i64 = np.random.RandomState(0).randint(0, 1000, (1000, 4))
-    X_i64 = X_i64.astype(np.int64)
-    X_i32 = X_i64.astype(np.int32)
+    X_i64 = X_i64.astype(np.int64, copy=False)
+    X_i32 = X_i64.astype(np.int32, copy=False)
 
     pca_64 = PCA(n_components=3, svd_solver=svd_solver,
                  random_state=0).fit(X_i64)
