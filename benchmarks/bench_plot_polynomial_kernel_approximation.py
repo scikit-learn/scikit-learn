@@ -4,7 +4,7 @@ Benchmark for explicit feature map approximation of polynomial kernels
 ========================================================================
 
 An example illustrating the approximation of the feature map
-of an Homogeneoys Polynomial kernel.
+of an Homogeneous Polynomial kernel.
 
 .. currentmodule:: sklearn.kernel_approximation
 
