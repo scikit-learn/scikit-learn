@@ -105,19 +105,20 @@ def test_classification(base_classifier):
     # Check consistency between y_labeled_iter, n_iter and max_iter
     labeled = y_train_missing_labels != -1
     # assert that labeled samples have labeled_iter = 0
-    assert_array_equal(st.y_labeled_iter_ == 0, labeled)
+    assert_array_equal(st.labeled_iter_ == 0, labeled)
     # assert that labeled samples do not change label during training
-    assert_array_equal(y_train_missing_labels[labeled], st.y_labels_[labeled])
+    assert_array_equal(y_train_missing_labels[labeled],
+                       st.transduction_[labeled])
 
     # assert that the max of the iterations is less than the total amount of
     # iterations
-    assert np.max(st.y_labeled_iter_) <= st.n_iter_ <= max_iter
-    assert np.max(st_string.y_labeled_iter_) <= st_string.n_iter_ <= max_iter
+    assert np.max(st.labeled_iter_) <= st.n_iter_ <= max_iter
+    assert np.max(st_string.labeled_iter_) <= st_string.n_iter_ <= max_iter
 
     # check shapes
-    assert_equal(st.y_labeled_iter_.shape, st.y_labels_.shape,
+    assert_equal(st.labeled_iter_.shape, st.transduction_.shape,
                  (n_labeled_samples,))
-    assert_equal(st_string.y_labeled_iter_.shape, st_string.y_labels_.shape,
+    assert_equal(st_string.labeled_iter_.shape, st_string.transduction_.shape,
                  (n_labeled_samples,))
 
 
@@ -207,11 +208,11 @@ def test_y_labeled_iter(max_iter):
     with pytest.warns(ConvergenceWarning, match="Maximum number of iterations"
                       " reached before early stopping"):
         st.fit(X_train, y_train_missing_labels)
-    amount_iter_0 = len(st.y_labeled_iter_[st.y_labeled_iter_ == 0])
+    amount_iter_0 = len(st.labeled_iter_[st.labeled_iter_ == 0])
     assert amount_iter_0 == n_labeled_samples
     # Check that the max of the iterations is less than the total amount of
     # iterations
-    assert np.max(st.y_labeled_iter_) <= st.n_iter_ <= max_iter
+    assert np.max(st.labeled_iter_) <= st.n_iter_ <= max_iter
     assert st.termination_condition_ == "max_iter"
 
 
@@ -226,7 +227,7 @@ def test_no_unlabeled():
     assert_array_equal(knn.predict(X_test), st.predict(X_test))
     # Assert that all samples were labeled in iteration 0 (since there were no
     # unlabeled samples).
-    assert np.all(st.y_labeled_iter_ == 0)
+    assert np.all(st.labeled_iter_ == 0)
     assert st.termination_condition_ == "all_labeled"
 
 
@@ -254,16 +255,16 @@ def test_early_stopping():
     assert st_no_stop.termination_condition_ == "max_iter" or "all_labeled"
 
 
-def test_strings_no_unlabeled():
-    # regression test
-    classifier_orig = SelfTrainingClassifier(KNeighborsClassifier())
+def test_strings_dtype():
+    clf = SelfTrainingClassifier(KNeighborsClassifier())
     X, y = make_blobs(n_samples=30, random_state=0,
                       cluster_std=0.1)
     labels_multiclass = ["one", "two", "three"]
 
     y_strings = np.take(labels_multiclass, y)
 
-    classifier_orig.fit(X, y_strings)
+    with pytest.raises(ValueError, match="dtype"):
+        clf.fit(X, y_strings)
 
 
 @pytest.mark.parametrize("verbose", [True, False])

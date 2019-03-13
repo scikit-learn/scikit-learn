@@ -1,11 +1,10 @@
 import numpy as np
 
-from ..base import MetaEstimatorMixin, clone
+from ..base import MetaEstimatorMixin, clone, BaseEstimator
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
 from ..exceptions import ConvergenceWarning
-from ..utils.metaestimators import _BaseComposition
 import warnings
 
 __all__ = ["SelfTrainingClassifier"]
@@ -22,12 +21,16 @@ def _validate_estimator(estimator):
         raise ValueError(msg.format(type(estimator).__name__))
 
 
-class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
+class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier
 
     This class allows a given supervised classifier to function as a
     semi-supervised classifier, allowing it to learn from unlabeled data. It
-    does this by iteratively predicting labels for the unlabeled data.
+    does this by iteratively predicting pseudo-labels for the unlabeled data
+    and adding them to the training set.
+
+    The classifier will continue iterating until either max_iter is reached, or
+    no pseudo-labels were added to the training set in the previous iteration.
 
     Read more in the :ref:`User Guide <self_training>`.
 
@@ -47,14 +50,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
     max_iter : int or ``None``, optional (default=10)
         Maximum number of iterations allowed. Should be greater than or equal
         to 0. If it is ``None``, the classifier will continue to predict labels
-        until all unlabeled samples have been labeled. In this case, be aware
-        that the fit may never terminate.
-
-    n_iter_no_change: int, optional (default=1)
-        If not `None`, early stopping will be applied. In this case, the
-        classifier will count the amount of new labels in each iteration. If
-        no new labels are added to the training set for `n_iter_no_change`
-        iterations, the classifier will stop fitting early.
+        until no new pseudo-labels are added, or all unlabeled samples have
+        been labeled.
 
     verbose: bool, (default=False)
         Enable verbose output.
@@ -64,27 +61,25 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
     base_classifier_ : estimator object
         The fitted estimator.
 
-    y_labels_ : array, shape=(n_samples,)
-        The labels used for the final fit of the classifier.
+    transduction_ : array, shape=(n_samples,)
+        The labels used for the final fit of the classifier, including
+        pseudo-labels added during fit.
 
-    y_labeled_iter_ : array, shape=(n_samples,)
+    labeled_iter_ : array, shape=(n_samples,)
         The iteration in which each sample was labeled. When a sample has
         iteration 0, the sample was already labeled in the original dataset.
         When a sample has iteration -1, the sample was not labeled in any
         iteration.
 
     n_iter_ : int
-        The number of round of self-training, that is the number of times the
+        The number of rounds of self-training, that is the number of times the
         base estimator is fitted on relabeled variants of the training set.
 
-    termination_condition_: string {'max_iter',
-                                    'early_stopping',
-                                    'all_labeled'}
+    termination_condition_ : {'max_iter', 'early_stopping', 'all_labeled'}
         The reason that fitting was stopped.
 
         - 'max_iter': `n_iter_` reached `max_iter`.
-        - 'early_stopping': no new labels were predicted for `n_iter_no_change`
-          iterations.
+        - 'no_change': no new labels were predicted.
         - 'all_labeled': all unlabeled samples were labeled before `max_iter`
           was reached.
 
@@ -169,14 +164,19 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
                 "early stopping is ineffective"
             warnings.warn(msg, UserWarning)
 
-        has_label = y.astype(object) != -1
+        if y.dtype.kind in ['U', 'S']:
+            raise ValueError("y has dtype string. If you wish to predict on "
+                             "string targets, use dtype " "object, and use -1"
+                             " as the label for unlabeled samples.")
+
+        has_label = y != -1
 
         if np.all(has_label):
             warnings.warn("y contains no unlabeled samples", UserWarning)
 
-        self.y_labels_ = np.copy(y)
-        self.y_labeled_iter_ = np.full_like(y, -1)
-        self.y_labeled_iter_[has_label] = 0
+        self.transduction_ = np.copy(y)
+        self.labeled_iter_ = np.full_like(y, -1)
+        self.labeled_iter_[has_label] = 0
 
         self.n_iter_ = 0
         patience = self.n_iter_no_change
@@ -186,7 +186,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
             self.n_iter_ += 1
             self.base_classifier_.fit(
                 X[safe_mask(X, has_label)],
-                self.y_labels_[safe_mask(self.y_labels_, has_label)])
+                self.transduction_[safe_mask(self.transduction_, has_label)])
 
             if self.n_iter_ == 1:
                 _validate_estimator(self.base_classifier)
@@ -202,9 +202,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
             new_labels_idx = np.nonzero(~has_label)[0][confident_labels_mask]
 
             # Add newly labeled confident predictions to the dataset
-            self.y_labels_[new_labels_idx] = pred[confident_labels_mask]
+            self.transduction_[new_labels_idx] = pred[confident_labels_mask]
             has_label[new_labels_idx] = True
-            self.y_labeled_iter_[new_labels_idx] = self.n_iter_
+            self.labeled_iter_[new_labels_idx] = self.n_iter_
 
             if self.n_iter_no_change is not None and (
                     new_labels_idx.shape[0] == 0):
@@ -233,7 +233,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
 
         self.base_classifier_.fit(
             X[safe_mask(X, has_label)],
-            self.y_labels_[safe_mask(self.y_labels_, has_label)])
+            self.transduction_[safe_mask(self.transduction_, has_label)])
         self.classes_ = self.base_classifier_.classes_
         return self
 
@@ -251,7 +251,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
         y : array-like, shape=(n_samples,)
             array with predicted labels
         """
-        check_is_fitted(self, 'y_labeled_iter_')
+        check_is_fitted(self, 'transduction_')
         X = check_array(X)
         return self.base_classifier_.predict(X)
 
@@ -268,7 +268,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
         y : array-like, shape=(n_samples, n_features)
             array with prediction probabilities
         """
-        check_is_fitted(self, 'y_labeled_iter_')
+        check_is_fitted(self, 'transduction_')
         return self.base_classifier_.predict_proba(X)
 
     @if_delegate_has_method(delegate='base_classifier')
@@ -285,7 +285,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
         y : array-like, shape=(n_samples, n_features)
             result of the decision function of the base_classifier
         """
-        check_is_fitted(self, 'y_labeled_iter_')
+        check_is_fitted(self, 'transduction_')
         return self.base_classifier_.decision_function(X)
 
     @if_delegate_has_method(delegate='base_classifier')
@@ -302,7 +302,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
         y : array-like, shape=(n_samples, n_features)
             array with log prediction probabilities
         """
-        check_is_fitted(self, 'y_labeled_iter_')
+        check_is_fitted(self, 'transduction_')
         return self.base_classifier_.predict_log_proba(X)
 
     @if_delegate_has_method(delegate='base_classifier')
@@ -322,5 +322,5 @@ class SelfTrainingClassifier(MetaEstimatorMixin, _BaseComposition):
         score : float
             result of calling score on the base_classifier
         """
-        check_is_fitted(self, 'y_labeled_iter_')
+        check_is_fitted(self, 'transduction_')
         return self.base_classifier_.score(X, y)
