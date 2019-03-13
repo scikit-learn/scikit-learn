@@ -322,7 +322,7 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`pairwise_distances` and :func:`pairwise_distances_chunked` with
   ``metric=euclidean``, suffered from numerical precision issues. Precision has
   been increased at the cost of a small drop in performance in some cases.
-  :issue:`13410` by :user:` <Celelibi>` and
+  :issue:`13410` by :user:`Celelibi <Celelibi>` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`
 
 :mod:`sklearn.mixture`
