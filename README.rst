@@ -2,11 +2,11 @@
 
 |Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |Python35|_ |PyPi|_ |DOI|_
 
-.. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
-.. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
-
 .. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=master
 .. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=master
+
+.. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
+.. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
 
 .. |Codecov| image:: https://codecov.io/github/scikit-learn/scikit-learn/badge.svg?branch=master&service=github
 .. _Codecov: https://codecov.io/github/scikit-learn/scikit-learn?branch=master
