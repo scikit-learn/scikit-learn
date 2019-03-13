@@ -72,8 +72,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=5, warm_start=False, average=False,
-                 n_iter=None):
+                 n_iter_no_change=5, warm_start=False, average=False):
         self.loss = loss
         self.penalty = penalty
         self.learning_rate = learning_rate
@@ -92,7 +91,6 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         self.n_iter_no_change = n_iter_no_change
         self.warm_start = warm_start
         self.average = average
-        self.n_iter = n_iter
         self.max_iter = max_iter
         self.tol = tol
         # current tests expect init to do parameter validation
@@ -145,15 +143,8 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
             return
         # n_iter deprecation, set self._max_iter, self._tol
         self._tol = self.tol
-        if self.n_iter is not None:
-            warnings.warn("n_iter parameter is deprecated in 0.19 and will be"
-                          " removed in 0.21. Use max_iter and tol instead.",
-                          DeprecationWarning)
-            # Same behavior as before 0.19
-            max_iter = self.n_iter
-            self._tol = None
 
-        elif self.tol is None and self.max_iter is None:
+        if self.tol is None and self.max_iter is None:
             if not for_partial_fit:
                 warnings.warn(
                     "max_iter and tol parameters have been "
@@ -490,8 +481,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False,
                  validation_fraction=0.1, n_iter_no_change=5,
-                 class_weight=None, warm_start=False, average=False,
-                 n_iter=None):
+                 class_weight=None, warm_start=False, average=False):
 
         super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
@@ -501,7 +491,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
             power_t=power_t, early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, warm_start=warm_start,
-            average=average, n_iter=n_iter)
+            average=average)
         self.class_weight = class_weight
         self.n_jobs = n_jobs
 
@@ -926,13 +916,6 @@ class SGDClassifier(BaseSGDClassifier):
         average. So ``average=10`` will begin averaging after seeing 10
         samples.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     Attributes
     ----------
     coef_ : array, shape (1, n_features) if n_classes == 2 else (n_classes,\
@@ -960,9 +943,9 @@ class SGDClassifier(BaseSGDClassifier):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=1000,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=0.001,
-           validation_fraction=0.1, verbose=0, warm_start=False)
+           n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
+           random_state=None, shuffle=True, tol=0.001, validation_fraction=0.1,
+           verbose=0, warm_start=False)
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -979,7 +962,7 @@ class SGDClassifier(BaseSGDClassifier):
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, class_weight=None, warm_start=False,
-                 average=False, n_iter=None):
+                 average=False):
         super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
@@ -988,7 +971,7 @@ class SGDClassifier(BaseSGDClassifier):
             power_t=power_t, early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, class_weight=class_weight,
-            warm_start=warm_start, average=average, n_iter=n_iter)
+            warm_start=warm_start, average=average)
 
     def _check_proba(self):
         if self.loss not in ("log", "modified_huber"):
@@ -1122,8 +1105,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=5, warm_start=False, average=False,
-                 n_iter=None):
+                 n_iter_no_change=5, warm_start=False, average=False):
         super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
@@ -1132,7 +1114,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             power_t=power_t, early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, warm_start=warm_start,
-            average=average, n_iter=n_iter)
+            average=average)
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      max_iter, sample_weight, coef_init, intercept_init):
@@ -1530,13 +1512,6 @@ class SGDRegressor(BaseSGDRegressor):
         average. So ``average=10`` will begin averaging after seeing 10
         samples.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     Attributes
     ----------
     coef_ : array, shape (n_features,)
@@ -1568,9 +1543,9 @@ class SGDRegressor(BaseSGDRegressor):
     SGDRegressor(alpha=0.0001, average=False, early_stopping=False,
            epsilon=0.1, eta0=0.01, fit_intercept=True, l1_ratio=0.15,
            learning_rate='invscaling', loss='squared_loss', max_iter=1000,
-           n_iter=None, n_iter_no_change=5, penalty='l2', power_t=0.25,
-           random_state=None, shuffle=True, tol=0.001, validation_fraction=0.1,
-           verbose=0, warm_start=False)
+           n_iter_no_change=5, penalty='l2', power_t=0.25, random_state=None,
+           shuffle=True, tol=0.001, validation_fraction=0.1, verbose=0,
+           warm_start=False)
 
     See also
     --------
@@ -1582,8 +1557,7 @@ class SGDRegressor(BaseSGDRegressor):
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=5, warm_start=False, average=False,
-                 n_iter=None):
+                 n_iter_no_change=5, warm_start=False, average=False):
         super().__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
@@ -1592,4 +1566,4 @@ class SGDRegressor(BaseSGDRegressor):
             power_t=power_t, early_stopping=early_stopping,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, warm_start=warm_start,
-            average=average, n_iter=n_iter)
+            average=average)

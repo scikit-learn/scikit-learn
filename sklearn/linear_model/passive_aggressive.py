@@ -113,13 +113,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         .. versionadded:: 0.19
            parameter *average* to use weights averaging in SGD
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -144,7 +137,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
                   early_stopping=False, fit_intercept=True, loss='hinge',
-                  max_iter=1000, n_iter=None, n_iter_no_change=5, n_jobs=None,
+                  max_iter=1000, n_iter_no_change=5, n_jobs=None,
                   random_state=0, shuffle=True, tol=0.001,
                   validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(clf.coef_)
@@ -171,7 +164,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                  early_stopping=False, validation_fraction=0.1,
                  n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
                  n_jobs=None, random_state=None, warm_start=False,
-                 class_weight=None, average=False, n_iter=None):
+                 class_weight=None, average=False):
         super().__init__(
             penalty=None,
             fit_intercept=fit_intercept,
@@ -187,8 +180,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             warm_start=warm_start,
             class_weight=class_weight,
             average=average,
-            n_jobs=n_jobs,
-            n_iter=n_iter)
+            n_jobs=n_jobs)
 
         self.C = C
         self.loss = loss
@@ -353,13 +345,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         .. versionadded:: 0.19
            parameter *average* to use weights averaging in SGD
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -383,9 +368,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     PassiveAggressiveRegressor(C=1.0, average=False, early_stopping=False,
                   epsilon=0.1, fit_intercept=True, loss='epsilon_insensitive',
-                  max_iter=100, n_iter=None, n_iter_no_change=5,
-                  random_state=0, shuffle=True, tol=0.001,
-                  validation_fraction=0.1, verbose=0, warm_start=False)
+                  max_iter=100, n_iter_no_change=5, random_state=0,
+                  shuffle=True, tol=0.001, validation_fraction=0.1,
+                  verbose=0, warm_start=False)
     >>> print(regr.coef_)
     [20.48736655 34.18818427 67.59122734 87.94731329]
     >>> print(regr.intercept_)
@@ -410,7 +395,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
                  n_iter_no_change=5, shuffle=True, verbose=0,
                  loss="epsilon_insensitive", epsilon=DEFAULT_EPSILON,
                  random_state=None, warm_start=False,
-                 average=False, n_iter=None):
+                 average=False):
         super().__init__(
             penalty=None,
             l1_ratio=0,
@@ -426,8 +411,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             verbose=verbose,
             random_state=random_state,
             warm_start=warm_start,
-            average=average,
-            n_iter=n_iter)
+            average=average)
         self.C = C
         self.loss = loss
 
