@@ -12,6 +12,7 @@ from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_iris, make_blobs
 from sklearn.metrics import accuracy_score
+from math import ceil
 
 # Author: Oliver Rausch <rauscho@ethz.ch>
 # License: BSD 3 clause
@@ -66,19 +67,23 @@ def test_invalid_params(max_iter, threshold):
                          [KNeighborsClassifier(),
                           SVC(gamma="scale", probability=True,
                               random_state=0)])
-def test_classification(base_classifier):
+@pytest.mark.parametrize("selection_crit",
+                         ['threshold', 'n_best'])
+def test_classification(base_classifier, selection_crit):
     # Check classification for various parameter settings.
     # Also assert that predictions for strings and numerical labels are equal.
     # Also test for multioutput classification
     threshold = 0.75
     max_iter = 10
     st = SelfTrainingClassifier(base_classifier, max_iter=max_iter,
-                                threshold=threshold)
+                                threshold=threshold,
+                                selection_criterion=selection_crit)
     st.fit(X_train, y_train_missing_labels)
     pred = st.predict(X_test)
     proba = st.predict_proba(X_test)
 
     st_string = SelfTrainingClassifier(base_classifier, max_iter=max_iter,
+                                       selection_criterion=selection_crit,
                                        threshold=threshold)
     st_string.fit(X_train, y_train_missing_strings)
     pred_string = st_string.predict(X_test)
@@ -106,6 +111,26 @@ def test_classification(base_classifier):
                  (n_labeled_samples,))
     assert_equal(st_string.labeled_iter_.shape, st_string.transduction_.shape,
                  (n_labeled_samples,))
+
+
+def test_n_best():
+    st = SelfTrainingClassifier(KNeighborsClassifier(n_neighbors=1),
+                                selection_criterion='n_best',
+                                n_best=10,
+                                max_iter=None)
+    y_train_only_one_label = np.copy(y_train)
+    y_train_only_one_label[1:] = -1
+    n_samples = y_train.shape[0]
+
+    n_expected_iter = ceil((n_samples - 1) / 10)
+    st.fit(X_train, y_train_only_one_label)
+    assert st.n_iter_ == n_expected_iter
+
+    # Check labeled_iter_
+    assert np.sum(st.labeled_iter_ == 0) == 1
+    for i in range(1, n_expected_iter):
+        assert np.sum(st.labeled_iter_ == i) == 10
+    assert np.sum(st.labeled_iter_ == n_expected_iter) == (n_samples - 1) % 10
 
 
 def test_sanity_classification():
@@ -208,6 +233,16 @@ def test_no_unlabeled():
     assert st.termination_condition_ == "all_labeled"
 
 
+def test_early_stopping():
+    knn = SVC(probability=True)
+    st = SelfTrainingClassifier(knn)
+    X_train_easy = [[1], [0], [1], [0.5]]
+    y_train_easy = [1, 0, -1, -1]
+    st.fit(X_train_easy, y_train_easy)
+    assert st.n_iter_ == 1
+    assert st.termination_condition_ == 'no_change'
+
+
 def test_strings_dtype():
     clf = SelfTrainingClassifier(KNeighborsClassifier())
     X, y = make_blobs(n_samples=30, random_state=0,
@@ -233,3 +268,26 @@ def test_verbose(verbose):
         assert 'iteration' in output.getvalue()
     else:
         assert 'iteration' not in output.getvalue()
+
+
+def test_verbose_n_best():
+    st = SelfTrainingClassifier(KNeighborsClassifier(n_neighbors=1),
+                                selection_criterion='n_best',
+                                n_best=10, verbose=True,
+                                max_iter=None)
+    old_stdout = sys.stdout
+    sys.stdout = output = StringIO()
+    y_train_only_one_label = np.copy(y_train)
+    y_train_only_one_label[1:] = -1
+    n_samples = y_train.shape[0]
+
+    n_expected_iter = ceil((n_samples - 1) / 10)
+    st.fit(X_train, y_train_only_one_label)
+
+    sys.stdout = old_stdout
+    msg = 'End of iteration {}, added {} new labels.'
+    for i in range(1, n_expected_iter):
+        assert msg.format(i, 10) in output.getvalue()
+
+    assert msg.format(n_expected_iter,
+                      (n_samples - 1) % 10) in output.getvalue()

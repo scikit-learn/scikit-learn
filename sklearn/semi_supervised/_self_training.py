@@ -4,7 +4,6 @@ from ..base import MetaEstimatorMixin, clone, BaseEstimator
 from ..utils.validation import check_X_y, check_array, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils import safe_mask
-from ..exceptions import ConvergenceWarning
 import warnings
 
 __all__ = ["SelfTrainingClassifier"]
@@ -41,11 +40,20 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Invoking the ``fit`` method will fit a clone of the passed estimator,
         which will be stored in the ``base_classifier_`` attribute.
 
+    selection_criterion : {'threshold', 'n_best'}, optional (default='threshold')
+        The selection criterion used to select which labels to add to the
+        training set. If 'threshold', labels with probabilities above
+        `threshold` are added to the dataset. If 'n_best', the `n_best`
+        pseudo-labels with highest prediction confidence are added to the
+        dataset.
+
     threshold : float, optional (default=0.75)
-        The decision threshold. If the ``base_classifier`` makes a prediction
-        with a ``predict_proba`` above this threshold, it will be added to the
-        labeled dataset.
+        The decision threshold for use with `selection_criterion`='threshold'.
         Should be in [0, 1).
+
+    n_best : int, optional (default=10)
+        The amount of samples to add in each iteration. Only used when
+        `selection_criterion`='n_best'.
 
     max_iter : int or ``None``, optional (default=10)
         Maximum number of iterations allowed. Should be greater than or equal
@@ -75,7 +83,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         The number of rounds of self-training, that is the number of times the
         base estimator is fitted on relabeled variants of the training set.
 
-    termination_condition_ : {'max_iter', 'early_stopping', 'all_labeled'}
+    termination_condition_ : {'max_iter', 'no_change', 'all_labeled'}
         The reason that fitting was stopped.
 
         - 'max_iter': `n_iter_` reached `max_iter`.
@@ -112,10 +120,14 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     def __init__(self,
                  base_classifier,
                  threshold=0.75,
+                 selection_criterion='threshold',
+                 n_best=10,
                  max_iter=10,
                  verbose=False):
         self.base_classifier = base_classifier
         self.threshold = threshold
+        self.selection_criterion = selection_criterion
+        self.n_best = n_best
         self.max_iter = max_iter
         self.verbose = verbose
 
@@ -152,6 +164,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             msg = "threshold must be in [0,1), got {}".format(self.threshold)
             raise ValueError(msg)
 
+        if self.selection_criterion not in ['threshold', 'n_best']:
+            raise ValueError("selection_criterion must be either 'threshold' "
+                             "or 'n_best', got "
+                             "{}".format(self.selection_criterion))
+
         if y.dtype.kind in ['U', 'S']:
             raise ValueError("y has dtype string. If you wish to predict on "
                              "string targets, use dtype " "object, and use -1"
@@ -161,6 +178,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         if np.all(has_label):
             warnings.warn("y contains no unlabeled samples", UserWarning)
+
+        if self.selection_criterion == 'n_best' and (self.n_best > X.shape[0] -
+                                                     np.sum(has_label)):
+            warnings.warn("n_best is larger than the amount of unlabeled "
+                          "samples. All unlabeled samples will be labeled in "
+                          "the first iteration", UserWarning)
 
         self.transduction_ = np.copy(y)
         self.labeled_iter_ = np.full_like(y, -1)
@@ -184,23 +207,35 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             pred = self.base_classifier_.classes_[np.argmax(prob, axis=1)]
             max_proba = np.max(prob, axis=1)
 
-            # Select samples where confidence is above the threshold
-            confident_labels_mask = max_proba > self.threshold
-            new_labels_idx = np.nonzero(~has_label)[0][confident_labels_mask]
+            # Select samples
+            if self.selection_criterion == 'threshold':
+                new_labels_unlabeled = max_proba > self.threshold
+            else:
+                n_to_select = min(self.n_best, max_proba.shape[0])
+                if n_to_select == max_proba.shape[0]:
+                    new_labels_unlabeled = np.ones_like(max_proba, dtype=bool)
+                else:
+                    # NB these are indicies, not a mask
+                    new_labels_unlabeled = \
+                        np.argpartition(max_proba, n_to_select)[:n_to_select]
+
+            # new_labels_unlabeled indexes into only the unlabeled samples
+            # new_labels_full indexes into the full X
+            new_labels_full = np.nonzero(~has_label)[0][new_labels_unlabeled]
 
             # Add newly labeled confident predictions to the dataset
-            self.transduction_[new_labels_idx] = pred[confident_labels_mask]
-            has_label[new_labels_idx] = True
-            self.labeled_iter_[new_labels_idx] = self.n_iter_
+            self.transduction_[new_labels_full] = pred[new_labels_unlabeled]
+            has_label[new_labels_full] = True
+            self.labeled_iter_[new_labels_full] = self.n_iter_
 
-            if new_labels_idx.shape[0] == 0:
+            if new_labels_full.shape[0] == 0:
                 # no changed labels
                 self.termination_condition_ = "no_change"
                 break
 
             if self.verbose:
                 msg = "End of iteration {}, added {} new labels."
-                print(msg.format(self.n_iter_, new_labels_idx.shape[0]))
+                print(msg.format(self.n_iter_, new_labels_full.shape[0]))
 
         if self.n_iter_ == self.max_iter:
             self.termination_condition_ = "max_iter"
