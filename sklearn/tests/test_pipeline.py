@@ -24,14 +24,13 @@ from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import SGDClassifier
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.utils._joblib import Memory
 from sklearn.utils._joblib import __version__ as joblib_version
 
@@ -1075,9 +1074,11 @@ def test_make_pipeline_memory():
 
 
 def test__len__():
+    scaler_for_pipeline = StandardScaler()
+    km_for_pipeline = KMeans(random_state=0)
+    
     pipeline = Pipeline([
-        ('vect', CountVectorizer()),
-        ('tfidf', TfidfTransformer()),
-        ('clf', SGDClassifier()),
+        ('scaler', scaler_for_pipeline),
+        ('Kmeans', km_for_pipeline)
     ])
-    assert_equal(pipeline.__len__(), 3)
+    assert pipeline.__len__() == 2
