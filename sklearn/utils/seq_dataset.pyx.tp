@@ -372,3 +372,8 @@ cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:
     seed[0] ^= <np.uint32_t>(seed[0] << 5)
 
     return seed[0] % (<np.uint32_t>RAND_R_MAX + 1)
+
+
+def our_rand_r_py(seed):
+    cdef np.uint32_t my_seed = <np.uint32_t>seed
+    return our_rand_r(&my_seed)

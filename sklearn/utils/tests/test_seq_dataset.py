@@ -3,18 +3,15 @@
 #
 # License: BSD 3 clause
 
-import pytest
 import numpy as np
-from numpy.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
+import pytest
 import scipy.sparse as sp
-
-from sklearn.utils.seq_dataset import ArrayDataset64
-from sklearn.utils.seq_dataset import ArrayDataset32
-from sklearn.utils.seq_dataset import CSRDataset64
-from sklearn.utils.seq_dataset import CSRDataset32
+from numpy.testing import assert_array_equal
+from sklearn.utils.seq_dataset import ArrayDataset32, ArrayDataset64, \
+    CSRDataset32, CSRDataset64, our_rand_r_py
 
 from sklearn.datasets import load_iris
+from sklearn.utils.testing import assert_allclose
 
 iris = load_iris()
 X64 = iris.data.astype(np.float64)
@@ -154,3 +151,10 @@ def test_buffer_dtype_mismatch_error():
     with pytest.raises(ValueError, match='Buffer dtype mismatch'):
         CSRDataset32(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
                      sample_weight64, seed=42),
+
+
+def test_our_rand_r():
+    seed = 1273642419
+    assert seed <= np.iinfo(np.int32).max
+    my_random_int = our_rand_r_py(seed)
+    assert my_random_int == 131541053

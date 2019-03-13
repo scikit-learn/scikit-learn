@@ -21,7 +21,7 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 pip list
 
-TEST_CMD="python -m pytest -s -k \"test_seq_dataset_shuffle or test_sgd_proba\" sklearn"
+TEST_CMD="python -m pytest  -s -k test_our_rand_r sklearn --pyargs"
 
 if [[ "$COVERAGE" == "true" ]]; then
     TEST_CMD="$TEST_CMD"
