@@ -1930,8 +1930,6 @@ def check_class_weight_classifiers(name, classifier_orig):
             classifier.set_params(max_iter=1000)
         if hasattr(classifier, "min_weight_fraction_leaf"):
             classifier.set_params(min_weight_fraction_leaf=0.01)
-        if hasattr(classifier, "tol"):
-            classifier.set_params(tol=None)
 
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
