@@ -266,9 +266,9 @@ class BaseEstimator:
             # character so that it renders properly as:
             # categoric...
             # handle_unknown='ignore',
-            # hence the addition of .*\n which matches until the next \n
-            right_side = \
-                re.match(r'^(\s*\S){%d}.*\n' % lim, repr_[::-1]).group()
+            # hence the addition of [^\n]*\n which matches until the next \n
+            right_side = (
+                re.match(r'^(\s*\S){%d}[^\n]*\n' % lim, repr_[::-1]).group())
             right_side = right_side[::-1]
 
             repr_ = left_side + '...' + right_side
