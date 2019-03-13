@@ -307,7 +307,7 @@ def _check_norms(X, Y=None, X_norm_squared=None, Y_norm_squared=None):
 
     if n_features > 32 and X.dtype == np.float32:
         # In this case, we compute euclidean distances by upcasting to float64.
-        # It' necessary to compute the norms on upcast X and not to upcast
+        # It's necessary to compute the norms on upcast X and not to upcast
         # the norms computed on X to keep good precision, so we don't use
         # provided norms.
         return None, None
