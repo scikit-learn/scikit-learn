@@ -23,18 +23,16 @@ class Perceptron(BaseSGDClassifier):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    max_iter : int, optional
+    max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         `partial_fit`.
-        Defaults to 5. Defaults to 1000 from 0.21, or if tol is not None.
 
         .. versionadded:: 0.19
 
-    tol : float or None, optional
+    tol : float or None, optional (default=1e-3)
         The stopping criterion. If it is not None, the iterations will stop
-        when (loss > previous_loss - tol). Defaults to None.
-        Defaults to 1e-3 from 0.21.
+        when (loss > previous_loss - tol).
 
         .. versionadded:: 0.19
 
@@ -126,7 +124,7 @@ class Perceptron(BaseSGDClassifier):
     >>> clf = Perceptron(tol=1e-3, random_state=0)
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     Perceptron(alpha=0.0001, class_weight=None, early_stopping=False, eta0=1.0,
-          fit_intercept=True, max_iter=None, n_iter_no_change=5, n_jobs=None,
+          fit_intercept=True, max_iter=1000, n_iter_no_change=5, n_jobs=None,
           penalty=None, random_state=0, shuffle=True, tol=0.001,
           validation_fraction=0.1, verbose=0, warm_start=False)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
@@ -143,7 +141,7 @@ class Perceptron(BaseSGDClassifier):
     https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
-                 max_iter=None, tol=None, shuffle=True, verbose=0, eta0=1.0,
+                 max_iter=1000, tol=1e-3, shuffle=True, verbose=0, eta0=1.0,
                  n_jobs=None, random_state=0, early_stopping=False,
                  validation_fraction=0.1, n_iter_no_change=5,
                  class_weight=None, warm_start=False):
