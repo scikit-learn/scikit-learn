@@ -62,7 +62,7 @@ def test_partial_dependence_classifier():
 
     assert pdp_w2.shape == (1, 4)
     assert axes_w2[0].shape[0] == 4
-    assert np.sum(np.abs(pdp_w2 - pdp_w)) / np.sum(np.abs(pdp_w)) > 0.05
+    assert np.min(np.abs(pdp_w2 - pdp_w)) / np.mean(np.abs(pdp_w)) > 0.25
 
 
 def test_partial_dependence_multiclass():
@@ -92,6 +92,8 @@ def test_partial_dependence_regressor():
     assert pdp.shape == (1, grid_resolution)
     assert axes[0].shape[0] == grid_resolution
 
+
+def test_partial_dependence_sample_weight():
     # Test near perfect correlation between partial dependence and diagonal
     # when sample weights emphasize y = x predictions
     N = 1000
@@ -107,6 +109,7 @@ def test_partial_dependence_regressor():
     sample_weight = np.ones(N)
     sample_weight[mask] = 1000.
 
+    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(X, y, sample_weight=sample_weight)
 
     grid = np.arange(0, 1, 0.01)
