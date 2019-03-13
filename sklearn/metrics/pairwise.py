@@ -315,12 +315,12 @@ def _check_norms(X, Y=None, X_norm_squared=None, Y_norm_squared=None):
     special_case = n_features > 32 and X.dtype == np.float32
 
     if X_norm_squared is not None:
-            XX = np.atleast_1d(X_norm_squared).reshape(-1)
-            if special_case and XX.dtype == np.float32:
-                XX = None
-            if XX.shape != (X.shape[0],):
-                raise ValueError(
-                    "Incompatible dimensions for X and X_norm_squared")
+        XX = np.atleast_1d(X_norm_squared).reshape(-1)
+        if special_case and XX.dtype == np.float32:
+            XX = None
+        if XX.shape != (X.shape[0],):
+            raise ValueError(
+                "Incompatible dimensions for X and X_norm_squared")
     elif special_case:
         XX = None
     else:
