@@ -105,12 +105,12 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
 
     if Y is X or Y is None:
         X = Y = check_array(X, accept_sparse='csr', dtype=dtype,
-                             estimator=estimator)
+                            estimator=estimator)
     else:
         X = check_array(X, accept_sparse='csr', dtype=dtype,
-                         estimator=estimator)
+                        estimator=estimator)
         Y = check_array(Y, accept_sparse='csr', dtype=dtype,
-                         estimator=estimator)
+                        estimator=estimator)
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
@@ -779,7 +779,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     K = safe_sparse_dot(X, Y.T, dense_output=True)
     K *= gamma
     K += coef0
-    np.tanh(K, K)   # compute tanh in-place
+    np.tanh(K, K)  # compute tanh in-place
     return K
 
 
@@ -812,7 +812,7 @@ def rbf_kernel(X, Y=None, gamma=None):
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
-    np.exp(K, K)    # exponentiate K in-place
+    np.exp(K, K)  # exponentiate K in-place
     return K
 
 
@@ -846,7 +846,7 @@ def laplacian_kernel(X, Y=None, gamma=None):
         gamma = 1.0 / X.shape[1]
 
     K = -gamma * manhattan_distances(X, Y)
-    np.exp(K, K)    # exponentiate K in-place
+    np.exp(K, K)  # exponentiate K in-place
     return K
 
 
@@ -1451,7 +1451,6 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     'sokalsneath',
     'yule',
 ]
-
 
 # Helper functions - distance
 PAIRWISE_KERNEL_FUNCTIONS = {
