@@ -154,12 +154,22 @@ def test_buffer_dtype_mismatch_error():
 
 
 def test_our_rand_r():
-    seed = 1273642419
-    unsigned_seed = np.uint32(seed)
-    assert seed <= np.iinfo(np.uint32).max
+    seed_0 = 1273642419
+    assert seed_0 <= np.iinfo(np.uint32).max
 
-    random_int = our_rand_r_py(unsigned_seed)
-    assert random_int == 131541053
+    my_random_int = our_rand_r_py(seed_0)
+    assert my_random_int == 131541053
 
-    my_random_int = our_rand_r_py(seed)
+
+    seed_1 = np.uint32(1273642419)
+    assert seed_1 <= np.iinfo(np.uint32).max
+
+    my_random_int = our_rand_r_py(seed_1)
+    assert my_random_int == 131541053
+
+
+    seed_2 = np.int32(1273642419)
+    assert seed_2 <= np.iinfo(np.uint32).max
+
+    my_random_int = our_rand_r_py(seed_2)
     assert my_random_int == 131541053
