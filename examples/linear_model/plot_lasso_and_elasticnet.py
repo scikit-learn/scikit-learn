@@ -22,9 +22,7 @@ np.random.seed(42)
 n_samples, n_features = 50, 200
 X = np.random.randn(n_samples, n_features)
 coef = 3 * np.random.randn(n_features)
-inds = np.arange(n_features)
-np.random.shuffle(inds)
-coef[inds[10:]] = 0  # sparsify coef
+coef[10:] = 0  # sparsify coef
 y = np.dot(X, coef)
 
 # add noise
@@ -58,12 +56,12 @@ r2_score_enet = r2_score(y_test, y_pred_enet)
 print(enet)
 print("r^2 on test data : %f" % r2_score_enet)
 
-plt.stem(np.where(enet.coef_)[0], enet.coef_[enet.coef_ != 0], 'C1--',
+plt.stem(np.where(enet.coef_)[0], enet.coef_[enet.coef_ != 0], 'C1-',
          markerfmt='C1x', label='Elastic net coefficients')
-plt.stem(np.where(lasso.coef_)[0], lasso.coef_[lasso.coef_ != 0], 'C2--',
+plt.stem(np.where(lasso.coef_)[0], lasso.coef_[lasso.coef_ != 0], 'C2-',
          markerfmt='C2x', label='Lasso coefficients')
 plt.stem(np.where(coef)[0], coef[coef != 0], label='original coefficients')
 plt.legend(loc='best')
 plt.title("Lasso $R^2$: %.3f, Elastic Net $R^2$: %.3f"
-        % (r2_score_lasso, r2_score_enet))
+          % (r2_score_lasso, r2_score_enet))
 plt.show()
