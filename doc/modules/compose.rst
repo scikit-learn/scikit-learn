@@ -107,9 +107,9 @@ permitted). This is convenient for performing only some of the transformations
 (or their inverse):
 
     >>> pipe[:1] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    Pipeline(memory=None, steps=[('reduce_dim', PCA(copy=True, ...))])
+    Pipeline(memory=None, steps=[('reduce_dim', PCA(copy=True, ...))],...)
     >>> pipe[-1:] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    Pipeline(memory=None, steps=[('clf', SVC(C=1.0, ...))])
+    Pipeline(memory=None, steps=[('clf', SVC(C=1.0, ...))],...)
 
 Nested parameters
 .................
@@ -221,7 +221,7 @@ object::
      >>> pipe.fit(digits.data, digits.target)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
      Pipeline(memory=None,
-              steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))],
+              steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))], 
               verbose=False)
      >>> # The pca instance can be inspected directly
      >>> print(pca1.components_) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
