@@ -12,7 +12,6 @@ import numpy as np
 cimport numpy as np
 from cython cimport floating
 from libc.string cimport memset
-from libc.math cimport sqrt, fmax
 
 from ..utils._cython_blas cimport Trans, NoTrans, Upper, Lower
 from ..utils._cython_blas cimport _asum
@@ -128,21 +127,6 @@ def _euclidean_dense_dense_fast_symmetric(np.ndarray[floating, ndim=2] X,
         D[i, i] = 0
         for j in range(i + 1, n_samples_X):
             D[i, j] += x_squared_norms[i] + x_squared_norms[j]
-            D[i, j] = fmax(D[i, j], 0)
+            D[i, j] = D[i, j], 0
     
     return np.asarray(D)
-
-
-cpdef _add_norms(floating[:, :] D,
-                 floating[::1] x_squared_norms,
-                 floating[::1] y_squared_norms):
-    cdef:
-        int n_samples_X = D.shape[0]
-        int n_samples_Y = D.shape[1]
-
-        int i, j
-
-    for i in range(n_samples_X):
-        for j in range(n_samples_Y):
-            D[i, j] += x_squared_norms[i] + y_squared_norms[j]
-            D[i, j] = fmax(D[i, j], 0)

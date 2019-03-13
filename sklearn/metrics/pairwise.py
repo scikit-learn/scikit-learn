@@ -32,7 +32,6 @@ from ..utils._joblib import effective_n_jobs
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from .pairwise_fast import _euclidean_dense_dense_exact
 from .pairwise_fast import _euclidean_dense_dense_fast_symmetric
-from .pairwise_fast import _add_norms
 from ._safe_euclidean_sparse import _euclidean_sparse_dense_exact
 
 
@@ -263,7 +262,11 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
                 distances = _euclidean_dense_dense_fast_symmetric(X, XX)
             else:
                 distances = - 2 * safe_sparse_dot(X, Y.T, dense_output=True)
-                _add_norms(distances, XX, YY)
+                distances += XX[:, np.newaxis]
+                distances += YY[np.newaxis, :]
+
+        # ensure no negative squared distance.
+        np.maximum(distances, 0, out=distances)
 
     # For n_features <= 32, we use the 'exact' method, i.e. the usual method,
     # d(x,y)² = ||x - y||².
@@ -384,7 +387,8 @@ def _euclidean_distances_upcast_fast(X, XX, Y, YY):
             YY_chunk = row_norms(Y_chunk, squared=True)
 
             d = - 2 * safe_sparse_dot(X_chunk, Y_chunk.T, dense_output=True)
-            _add_norms(d, XX_chunk, YY_chunk)
+            d += XX_chunk[:, np.newaxis]
+            d += YY_chunk[np.newaxis, :]
 
             distances[xs:xe, ys:ye] = d.astype(np.float32)
 
