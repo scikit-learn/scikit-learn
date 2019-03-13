@@ -102,7 +102,7 @@ def test_partial_dependence_regressor():
     # set y = x on mask and y = -x outside
     y = np.ravel(x.copy())
     y[~mask] = -y[~mask]
-    X = np.hstack((mask[:,np.newaxis], x))
+    X = np.hstack((mask[:, np.newaxis], x))
     # sample weights to emphasize data points where y = x
     sample_weight = np.ones(N)
     sample_weight[mask] = 1000.
