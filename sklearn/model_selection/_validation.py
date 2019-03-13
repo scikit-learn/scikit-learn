@@ -281,7 +281,13 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        ``scorer(estimator, X, y)`` which should return only
+        a single value.
+
+        Similar to :func:`cross_validate`
+        but only a single metric is permitted.
+
+        If None, the estimator's default scorer (if available) is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
