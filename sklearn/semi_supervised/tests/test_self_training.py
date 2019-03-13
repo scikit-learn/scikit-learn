@@ -131,6 +131,7 @@ def test_n_best():
     for i in range(1, n_expected_iter):
         assert np.sum(st.labeled_iter_ == i) == 10
     assert np.sum(st.labeled_iter_ == n_expected_iter) == (n_samples - 1) % 10
+    assert st.termination_condition_ == 'all_labeled'
 
 
 def test_sanity_classification():

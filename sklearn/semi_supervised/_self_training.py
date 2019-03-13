@@ -40,7 +40,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Invoking the ``fit`` method will fit a clone of the passed estimator,
         which will be stored in the ``base_classifier_`` attribute.
 
-    selection_criterion : {'threshold', 'n_best'}, optional (default='threshold')
+    selection_criterion : {'threshold', 'n_best'}, optional
+    (default='threshold')
         The selection criterion used to select which labels to add to the
         training set. If 'threshold', labels with probabilities above
         `threshold` are added to the dataset. If 'n_best', the `n_best`
