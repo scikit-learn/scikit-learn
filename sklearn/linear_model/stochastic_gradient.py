@@ -68,7 +68,7 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=None, tol=None,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  early_stopping=False, validation_fraction=0.1,
@@ -141,38 +141,9 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
 
         if not set_max_iter:
             return
-        # n_iter deprecation, set self._max_iter, self._tol
-        self._tol = self.tol
 
-        if self.tol is None and self.max_iter is None:
-            if not for_partial_fit:
-                warnings.warn(
-                    "max_iter and tol parameters have been "
-                    "added in %s in 0.19. If both are left unset, "
-                    "they default to max_iter=5 and tol=None. "
-                    "If tol is not None, max_iter defaults to max_iter=1000. "
-                    "From 0.21, default max_iter will be 1000, and"
-                    " default tol will be 1e-3." % type(self).__name__,
-                    FutureWarning)
-                # Before 0.19, default was n_iter=5
-            max_iter = 5
-        else:
-            if self.tol is None:
-                # max_iter was set, but tol wasn't. The docs / warning do not
-                # specify this case. In 0.20 tol would stay being None which
-                # is equivalent to -inf, but it will be changed to 1e-3 in
-                # 0.21. We warn users that the behaviour (and potentially
-                # their results) will change.
-                warnings.warn(
-                    "max_iter and tol parameters have been added in %s in "
-                    "0.19. If max_iter is set but tol is left unset, the "
-                    "default value for tol in 0.19 and 0.20 will be None "
-                    "(which is equivalent to -infinity, so it has no effect) "
-                    "but will change in 0.21 to 1e-3. Specify tol to "
-                    "silence this warning." % type(self).__name__,
-                    FutureWarning)
-            max_iter = self.max_iter if self.max_iter is not None else 1000
-        self._max_iter = max_iter
+        self._tol = self.tol
+        self._max_iter = self.max_iter
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
@@ -476,7 +447,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=None, tol=None,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False,
@@ -797,18 +768,16 @@ class SGDClassifier(BaseSGDClassifier):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    max_iter : int, optional
+    max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         `partial_fit`.
-        Defaults to 5. Defaults to 1000 from 0.21, or if tol is not None.
 
         .. versionadded:: 0.19
 
-    tol : float or None, optional
+    tol : float or None, optional (default=1e-3)
         The stopping criterion. If it is not None, the iterations will stop
-        when (loss > previous_loss - tol). Defaults to None.
-        Defaults to 1e-3 from 0.21.
+        when (loss > previous_loss - tol).
 
         .. versionadded:: 0.19
 
@@ -957,7 +926,7 @@ class SGDClassifier(BaseSGDClassifier):
     """
 
     def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
-                 fit_intercept=True, max_iter=None, tol=None, shuffle=True,
+                 fit_intercept=True, max_iter=1000, tol=1e-3, shuffle=True,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False, validation_fraction=0.1,
@@ -1101,7 +1070,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     @abstractmethod
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=None, tol=None,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
@@ -1410,18 +1379,16 @@ class SGDRegressor(BaseSGDRegressor):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    max_iter : int, optional
+    max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         `partial_fit`.
-        Defaults to 5. Defaults to 1000 from 0.21, or if tol is not None.
 
         .. versionadded:: 0.19
 
-    tol : float or None, optional
+    tol : float or None, optional (default=1e-3)
         The stopping criterion. If it is not None, the iterations will stop
-        when (loss > previous_loss - tol). Defaults to None.
-        Defaults to 1e-3 from 0.21.
+        when (loss > previous_loss - tol).
 
         .. versionadded:: 0.19
 
@@ -1553,7 +1520,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, max_iter=None, tol=None,
+                 l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
