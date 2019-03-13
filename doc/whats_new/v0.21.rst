@@ -403,6 +403,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
   transformer. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
 
+- |Enhancement| :class:`pipeline.Pipeline` now implements a func
+  :func:`__len__()`,
+  that will return the length of the pipeline :issue `13439`
+  by :user:`Lakshya KD <LakshKD>`
+
 :mod:`sklearn.preprocessing`
 ............................
 
