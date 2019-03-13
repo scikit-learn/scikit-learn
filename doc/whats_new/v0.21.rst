@@ -17,6 +17,10 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- :class:`discriminant_analysis.LinearDiscriminantAnalysis` for multiclass
+  classification. |Fix|
+- :class:`discriminant_analysis.LinearDiscriminantAnalysis` with 'eigen'
+  solver. |Fix|
 - :class:`linear_model.BayesianRidge` |Fix|
 - Decision trees and derived ensembles when both `max_depth` and
   `max_leaf_nodes` are set. |Fix|
@@ -107,6 +111,16 @@ Support for Python 3.4 and below has been officially dropped.
   Previously the change was made, but silently. :issue:`11526` by
   :user:`William de Vazelhes<wdevazelhes>`.
 
+- |Fix| Fixed a bug in :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  where the predicted probabilities would be incorrectly computed in the
+  multiclass case. :issue:`6848`, by :user:`Agamemnon Krasoulis
+  <agamemnonc>` and `Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixed a bug in :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  where the predicted probabilities would be incorrectly computed with ``eigen``
+  solver. :issue:`11727`, by :user:`Agamemnon Krasoulis
+  <agamemnonc>`.
+
 :mod:`sklearn.dummy`
 ....................
 
@@ -191,9 +205,19 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Fix| Fixed a performance issue of ``saga`` and ``sag`` solvers when called
+  in a :class:`joblib.Parallel` setting with ``n_jobs > 1`` and
+  ``backend="threading"``, causing them to perform worse than in the sequential
+  case. :issue:`13389` by :user:`Pierre Glaser <pierreglaser>`.
+
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
   with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
+
+- |Feature| Added :class:`linear_model.lars_path_gram`, which is
+  :class:`linear_model.lars_path` in the sufficient stats mode, allowing
+  users to compute :class:`linear_model.lars_path` without providing
+  ``X`` and ``y``. :issue:`11699` by :user:`Kuai Yu <yukuairoy>`.
 
 - |Enhancement| :class:`linear_model.make_dataset` now preserves
   ``float32`` and ``float64`` dtypes. :issue:`8769` and :issue:`11000` by
@@ -205,6 +229,10 @@ Support for Python 3.4 and below has been officially dropped.
   equivalent to setting ``C=np.inf`` with l2 regularization. Not supported
   by the liblinear solver. :issue:`12860` by :user:`Nicolas Hug
   <NicolasHug>`.
+
+- |Enhancement| `sparse_cg` solver in :class:`linear_model.ridge.Ridge`
+  now supports fitting the intercept (i.e. ``fit_intercept=True``) when
+  inputs are sparse. :issue:`13336` by :user:`Bartosz Telenczuk <btel>`.
 
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver, where the
@@ -230,18 +258,18 @@ Support for Python 3.4 and below has been officially dropped.
   ``fit_intercept=True`` in sparse and dense case.
   :issue:`13279` by `Alexandre Gramfort`_
 
-- |API| :func:`linear_model.logistic_regression_path` is deprecated
-  in version 0.21 and will be removed in version 0.23.
-  :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
-
-- |Enhancement| `sparse_cg` solver in :class:`linear_model.ridge.Ridge`
-  now supports fitting the intercept (i.e. ``fit_intercept=True``) when
-  inputs are sparse . :issue:`13336` by :user:`Bartosz Telenczuk <btel>`
-
 - |Fix| Fixed a bug in :class:`linear_model.HuberRegressor` that was
   broken when X was of dtype bool.
   :issue:`13328` by `Alexandre Gramfort`_.
 
+- |API|  The use of :class:`linear_model.lars_path` with ``X=None`` 
+  while passing ``Gram`` is deprecated in version 0.21 and will be removed
+  in version 0.23. Use :class:`linear_model.lars_path_gram` instead.
+  :issue:`11699` by :user:`Kuai Yu <yukuairoy>`.
+
+- |API| :func:`linear_model.logistic_regression_path` is deprecated
+  in version 0.21 and will be removed in version 0.23.
+  :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
 :mod:`sklearn.manifold`
 ............................
@@ -264,6 +292,11 @@ Support for Python 3.4 and below has been officially dropped.
   negative counts for each class. This facilitates the calculation of set-wise
   metrics such as recall, specificity, fall out and miss rate.
   :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
+
+- |Feature| :func:`metrics.jaccard_score` has been added to calculate the
+  Jaccard coefficient as an evaluation metric for binary, multilabel and
+  multiclass tasks, with an interface analogous to :func:`metrics.f1_score`.
+  :issue:`13151` by :user:`Gaurav Dhingra <gxyd>` and `Joel Nothman`_.
 
 - |Efficiency| Faster :func:`metrics.pairwise.pairwise_distances` with `n_jobs`
   > 1 by using a thread-based backend, instead of process-based backends.
@@ -289,6 +322,11 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23.
   :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
   Mitrovic <SandraMNE>`.
+
+- |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
+  the more consistent :func:`metrics.jaccard_score`. The former behavior for
+  binary and multiclass targets is broken.
+  :issue:`13151` by `Joel Nothman`_.
 
 :mod:`sklearn.mixture`
 ......................
@@ -365,6 +403,12 @@ Support for Python 3.4 and below has been officially dropped.
 
 :mod:`sklearn.pipeline`
 .......................
+
+- |Feature| :class:`pipeline.Pipeline` can now use indexing notation (e.g.
+  ``my_pipeline[0:-1]``) to extract a subsequence of steps as another Pipeline
+  instance.  A Pipeline can also be indexed directly to extract a particular
+  step (e.g. ``my_pipeline['svc']``), rather than accessing ``named_steps``.
+  :issue:`2568` by `Joel Nothman`_.
 
 - |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
   transformer. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
