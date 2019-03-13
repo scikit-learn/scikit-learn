@@ -368,9 +368,14 @@ cdef enum:
 # XXX copied over from sklearn/tree/_tree.pyx, should refactor
 cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:
     seed[0] ^= <np.uint32_t>(seed[0] << 13)
+    with gil:
+        print("0: %s" % seed[0])
     seed[0] ^= <np.uint32_t>(seed[0] >> 17)
+    with gil:
+        print("1: %s" % seed[0])
     seed[0] ^= <np.uint32_t>(seed[0] << 5)
-
+    with gil:
+        print("2: %s" % seed[0])
     return seed[0] % (<np.uint32_t>RAND_R_MAX + 1)
 
 
