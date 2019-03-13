@@ -113,12 +113,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                  base_classifier,
                  threshold=0.75,
                  max_iter=10,
-                 verbose=False,
-                 n_iter_no_change=1):
+                 verbose=False):
         self.base_classifier = base_classifier
         self.threshold = threshold
         self.max_iter = max_iter
-        self.n_iter_no_change = n_iter_no_change
         self.verbose = verbose
 
     def fit(self, X, y):
@@ -154,16 +152,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             msg = "threshold must be in [0,1), got {}".format(self.threshold)
             raise ValueError(msg)
 
-        if self.n_iter_no_change is not None and not 0 < self.n_iter_no_change:
-            msg = "n_iter_no_change must be > 0, got {}"
-            raise ValueError(msg.format(self.n_iter_no_change))
-
-        if self.max_iter is not None and self.n_iter_no_change is not None \
-                and self.n_iter_no_change >= self.max_iter:
-            msg = "n_iter_no_change >= max_iter means " \
-                "early stopping is ineffective"
-            warnings.warn(msg, UserWarning)
-
         if y.dtype.kind in ['U', 'S']:
             raise ValueError("y has dtype string. If you wish to predict on "
                              "string targets, use dtype " "object, and use -1"
@@ -179,7 +167,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         self.labeled_iter_[has_label] = 0
 
         self.n_iter_ = 0
-        patience = self.n_iter_no_change
 
         while not np.all(has_label) and (self.max_iter is None or
                                          self.n_iter_ < self.max_iter):
@@ -206,16 +193,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             has_label[new_labels_idx] = True
             self.labeled_iter_[new_labels_idx] = self.n_iter_
 
-            if self.n_iter_no_change is not None and (
-                    new_labels_idx.shape[0] == 0):
+            if new_labels_idx.shape[0] == 0:
                 # no changed labels
-                patience = patience - 1
-                if patience == 0:
-                    self.termination_condition_ = "early_stopping"
-                    break
-            elif self.n_iter_no_change is not None:
-                # we changed some labels => reset patience
-                patience = self.n_iter_no_change
+                self.termination_condition_ = "no_change"
+                break
 
             if self.verbose:
                 msg = "End of iteration {}, added {} new labels."
@@ -225,11 +206,6 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             self.termination_condition_ = "max_iter"
         if np.all(has_label):
             self.termination_condition_ = "all_labeled"
-        if self.n_iter_ == self.max_iter and self.n_iter_no_change:
-            warnings.warn("Maximum number of iterations reached before "
-                          "early stopping. Consider increasing max_iter to "
-                          "improve the fit.",
-                          ConvergenceWarning)
 
         self.base_classifier_.fit(
             X[safe_mask(X, has_label)],

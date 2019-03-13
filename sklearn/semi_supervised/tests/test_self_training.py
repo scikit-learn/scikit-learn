@@ -5,7 +5,7 @@ import sys
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.exceptions import NotFittedError, ConvergenceWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -62,20 +62,6 @@ def test_invalid_params(max_iter, threshold):
         st.fit(X_train, y_train)
 
 
-def test_invalid_early_stopping():
-    base_classifier = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(base_classifier,
-                                n_iter_no_change=-10)
-    with pytest.raises(ValueError, match="n_iter_no_change must be"):
-        st.fit(X_train, y_train)
-
-    st = SelfTrainingClassifier(base_classifier, max_iter=5,
-                                n_iter_no_change=10)
-
-    with pytest.warns(UserWarning, match="early stopping is ineffective"):
-        st.fit(X_train, y_train)
-
-
 @pytest.mark.parametrize("base_classifier",
                          [KNeighborsClassifier(),
                           SVC(gamma="scale", probability=True,
@@ -102,7 +88,7 @@ def test_classification(base_classifier):
     assert_array_equal(proba, proba_string)
 
     assert st.termination_condition_ == st_string.termination_condition_
-    # Check consistency between y_labeled_iter, n_iter and max_iter
+    # Check consistency between labeled_iter, n_iter and max_iter
     labeled = y_train_missing_labels != -1
     # assert that labeled samples have labeled_iter = 0
     assert_array_equal(st.labeled_iter_ == 0, labeled)
@@ -163,9 +149,7 @@ def test_zero_iterations(base_classifier, y):
 
     clf1 = SelfTrainingClassifier(base_classifier, max_iter=0)
 
-    with pytest.warns(ConvergenceWarning, match="Maximum number of iterations"
-                      " reached before early stopping"):
-        clf1.fit(X_train, y)
+    clf1.fit(X_train, y)
 
     clf2 = base_classifier.fit(X_train[:n_labeled_samples],
                                y[:n_labeled_samples])
@@ -196,24 +180,17 @@ def test_prefitted_throws_error():
 
 
 @pytest.mark.parametrize("max_iter", range(1, 5))
-def test_y_labeled_iter(max_iter):
+def test_labeled_iter(max_iter):
     # Check that the amount of datapoints labeled in iteration 0 is equal to
     # the amount of labeled datapoints we passed.
-    st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=max_iter,
-                                n_iter_no_change=3)
+    st = SelfTrainingClassifier(KNeighborsClassifier(), max_iter=max_iter)
 
-    # If we look at the output for self.n_iter_ we can see that samples are
-    # labeled only in iteration 1. Therefore early_stopping should only kick in
-    # in iteration 5. This implies we fail to converge for max_iter < 4.
-    with pytest.warns(ConvergenceWarning, match="Maximum number of iterations"
-                      " reached before early stopping"):
-        st.fit(X_train, y_train_missing_labels)
+    st.fit(X_train, y_train_missing_labels)
     amount_iter_0 = len(st.labeled_iter_[st.labeled_iter_ == 0])
     assert amount_iter_0 == n_labeled_samples
     # Check that the max of the iterations is less than the total amount of
     # iterations
     assert np.max(st.labeled_iter_) <= st.n_iter_ <= max_iter
-    assert st.termination_condition_ == "max_iter"
 
 
 def test_no_unlabeled():
@@ -229,30 +206,6 @@ def test_no_unlabeled():
     # unlabeled samples).
     assert np.all(st.labeled_iter_ == 0)
     assert st.termination_condition_ == "all_labeled"
-
-
-def test_early_stopping():
-    # if the base_classifier is deterministic, fitting with early_stopping and
-    # n_iter_no_change=1 should produce equivalent results to fitting without
-    # early_stopping
-    base_classifier = KNeighborsClassifier()
-    threshold = 0.75
-    max_iter = 10
-    st = SelfTrainingClassifier(base_classifier,
-                                max_iter=max_iter,
-                                threshold=threshold,
-                                n_iter_no_change=1)
-
-    st_no_stop = SelfTrainingClassifier(base_classifier,
-                                        max_iter=max_iter,
-                                        threshold=threshold,
-                                        n_iter_no_change=None)
-    st.fit(X_train, y_train_missing_labels)
-    st_no_stop.fit(X_train, y_train_missing_labels)
-    assert st.n_iter_ < 5
-    assert_array_equal(st_no_stop.predict(X_test), st.predict(X_test))
-    assert st.termination_condition_ == "early_stopping"
-    assert st_no_stop.termination_condition_ == "max_iter" or "all_labeled"
 
 
 def test_strings_dtype():
