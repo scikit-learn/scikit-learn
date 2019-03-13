@@ -252,23 +252,26 @@ class BaseEstimator:
         n_nonblank = len(''.join(repr_.split()))
         if n_nonblank > N_CHAR_MAX:
             lim = N_CHAR_MAX // 2  # apprx number of chars to keep on both ends
-            # The regex re.match(r'^(\s*\S){%d}' % n, repr_).end()
-            # returns the index of the nth non-blank character in s:
-            # - ^ matches the start of line
+            # The regex '^(\s*\S){%d}' % n
+            # matches from the start of the string until the nth non-blank
+            # character:
+            # - ^ matches the start of string
             # - (pattern){n} matches n repetitions of pattern
             # - \s*\S matches a non-blank char following zero or more blanks
-            left_lim = re.match(r'^(\s*\S){%d}' % lim, repr_).end()
+            left_side = re.match(r'^(\s*\S){%d}' % lim, repr_).group()
 
             # To avoid weird cuts, e.g.:
             # categoric...ore',
-            # we still keep the whole line of the right_lim'th character so
-            # that it renders properly as:
+            # we need to start the right side with an appropriate newline
+            # character so that it renders properly as:
             # categoric...
             # handle_unknown='ignore',
             # hence the addition of .*\n which matches until the next \n
-            right_lim = re.match(r'^(\s*\S){%d}.*\n' % lim, repr_[::-1]).end()
+            right_side = \
+                re.match(r'^(\s*\S){%d}.*\n' % lim, repr_[::-1]).group()
+            right_side = right_side[::-1]
 
-            repr_ = repr_[:left_lim] + '...' + repr_[-right_lim:]
+            repr_ = left_side + '...' + right_side
 
         return repr_
 
