@@ -367,21 +367,11 @@ cdef enum:
 # See https://www.jstatsoft.org/v08/i14/paper for details
 # XXX copied over from sklearn/tree/_tree.pyx, should refactor
 cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:
-    with gil:
-        print("seed 0: %s" % seed[0])
     seed[0] ^= <np.uint32_t>(seed[0] << 13)
-    with gil:
-        print("seed 1: %s" % seed[0])
     seed[0] ^= <np.uint32_t>(seed[0] >> 17)
-    with gil:
-        print("seed 2: %s" % seed[0])
     seed[0] ^= <np.uint32_t>(seed[0] << 5)
-    with gil:
-        print("seed 3: %s" % seed[0])
-    cdef np.uint32_t max = RAND_R_MAX + 1
-    with gil:
-        print("max: %s" % max)
-    return seed[0] % max
+
+    return seed[0] % (<np.uint32_t>RAND_R_MAX + 1)
 
 
 def our_rand_r_py(seed):
