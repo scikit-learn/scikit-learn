@@ -1080,4 +1080,4 @@ def test__len__():
         ('scaler', scaler_for_pipeline),
         ('Kmeans', km_for_pipeline)
     ])
-    assert pipeline.__len__() == 2
+    assert len(pipeline) == 2
