@@ -199,7 +199,7 @@ class Pipeline(_BaseComposition):
             if trans is not None and trans != 'passthrough':
                 yield idx, name, trans
 
-    def len(self):
+    def __len__(self):
         """
         Returns the length of the Pipeline
         """

@@ -24,13 +24,14 @@ from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import SGDClassifier
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.utils._joblib import Memory
 from sklearn.utils._joblib import __version__ as joblib_version
 
@@ -1071,3 +1072,11 @@ def test_make_pipeline_memory():
     assert pipeline.memory is None
 
     shutil.rmtree(cachedir)
+
+def test__len__():
+    pipeline = Pipeline([
+        ('vect', CountVectorizer()),
+        ('tfidf', TfidfTransformer()),
+        ('clf', SGDClassifier()),
+    ])
+    assert_equal(pipeline.__len__(),3)
