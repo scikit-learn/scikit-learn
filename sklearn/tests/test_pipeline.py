@@ -1076,7 +1076,6 @@ def test_make_pipeline_memory():
 def test__len__():
     scaler_for_pipeline = StandardScaler()
     km_for_pipeline = KMeans(random_state=0)
-    
     pipeline = Pipeline([
         ('scaler', scaler_for_pipeline),
         ('Kmeans', km_for_pipeline)
