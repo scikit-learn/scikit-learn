@@ -74,9 +74,9 @@ for (i, threshold) in enumerate(x_values):
 
         # The amount of labeled samples that at the end of fitting
         amount_labeled[i, fold] = total_samples - np.unique(
-            self_training_clf.y_labeled_iter_, return_counts=True)[1][0]
+            self_training_clf.labeled_iter_, return_counts=True)[1][0]
         # The last iteration the classifier labeled a sample in
-        amount_iterations[i, fold] = np.max(self_training_clf.y_labeled_iter_)
+        amount_iterations[i, fold] = np.max(self_training_clf.labeled_iter_)
 
         y_pred = self_training_clf.predict(X_test)
         scores[i, fold] = accuracy_score(y_test_true, y_pred)

@@ -63,6 +63,16 @@ def test_invalid_params(max_iter, threshold):
         st.fit(X_train, y_train)
 
 
+def test_warns_n_best():
+    st = SelfTrainingClassifier(KNeighborsClassifier(),
+                                selection_criterion='n_best',
+                                n_best=1000)
+    with pytest.warns(UserWarning, match="n_best is larger than"):
+        st.fit(X_train, y_train_missing_labels)
+
+    assert st.termination_condition_ == 'all_labeled'
+
+
 @pytest.mark.parametrize("base_classifier",
                          [KNeighborsClassifier(),
                           SVC(gamma="scale", probability=True,
@@ -235,7 +245,7 @@ def test_no_unlabeled():
 
 
 def test_early_stopping():
-    knn = SVC(probability=True)
+    knn = SVC(gamma='scale', probability=True)
     st = SelfTrainingClassifier(knn)
     X_train_easy = [[1], [0], [1], [0.5]]
     y_train_easy = [1, 0, -1, -1]
