@@ -198,7 +198,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
     Note
     ----
-    When ``n_features > 32``, the euclidean distance between a pair of row
+    When ``n_features > 16``, the euclidean distance between a pair of row
     vector x and y is computed as::
 
         dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
@@ -214,7 +214,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     the distance matrix returned by this function may not be exactly
     symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
 
-    When ``n_features < 32``, the previous method is not as efficient and is
+    When ``n_features <= 16``, the previous method is not as efficient and is
     more likely to suffer from numerical instabilities, so the euclidean
     distance between a pair of row vector x and y is computed as::
 
@@ -243,10 +243,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
     n_features = X.shape[1]
 
-    # For n_features > 32 we use the 'fast 'method to compute the euclidean
+    # For n_features > 16 we use the 'fast 'method to compute the euclidean
     # distance, i.e. d(x,y)² = ||x||² + ||y||² - 2 * x.y
     # It's faster but less precise.
-    if n_features > 32:
+    if n_features > 16:
 
         # To minimize precision issues with float32, we compute the distance
         # matrix on chunks of X and Y upcast to float64
@@ -312,7 +312,7 @@ def _check_norms(X, Y=None, X_norm_squared=None, Y_norm_squared=None):
     # Computing norms on float32 and then upcast to float64 loses precision.
     # We either accept float64 precomputed norms or delay their computation to
     # the moment X (resp. Y) is upcast to float64.
-    special_case = n_features > 32 and X.dtype == np.float32
+    special_case = n_features > 16 and X.dtype == np.float32
 
     if X_norm_squared is not None:
         XX = np.atleast_1d(X_norm_squared).reshape(-1)

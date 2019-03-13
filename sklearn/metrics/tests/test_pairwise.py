@@ -588,7 +588,7 @@ def test_euclidean_distances_with_norms(dim, y_array_constr):
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("dim", [16, 64], ids=["dim<32", "dim>32"])
+@pytest.mark.parametrize("dim", [2, 20], ids=["dim<32", "dim>32"])
 @pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
                          ids=["dense", "sparse"])
 @pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
@@ -613,7 +613,7 @@ def test_euclidean_distances(dtype, dim, x_array_constr, y_array_constr):
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("dim", [2, 64], ids=["dim<32", "dim>32"])
+@pytest.mark.parametrize("dim", [2, 20], ids=["dim<32", "dim>32"])
 @pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
                          ids=["dense", "sparse"])
 def test_euclidean_distances_sym(dtype, dim, x_array_constr):
