@@ -31,7 +31,7 @@ from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from .pairwise_fast import _euclidean_dense_dense_exact
-from .pairwise_fast import _euclidean_dense_dense_fast_sym
+from .pairwise_fast import _euclidean_dense_dense_fast_symmetric
 from .pairwise_fast import _add_norms
 from ._safe_euclidean_sparse import _euclidean_sparse_dense_exact
 
@@ -260,7 +260,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
                 # In this case the distance matrix is symmetric, so we only
                 # need to compute half of it. When X is dense, we can benefit
                 # from the BLAS triangular matrix matrix multiplication `syrk`.
-                distances = _euclidean_dense_dense_fast_sym(X, XX)
+                distances = _euclidean_dense_dense_fast_symmetric(X, XX)
             else:
                 distances = - 2 * safe_sparse_dot(X, Y.T, dense_output=True)
                 _add_norms(distances, XX, YY)

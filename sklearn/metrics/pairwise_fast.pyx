@@ -107,8 +107,8 @@ cdef floating _euclidean_dense_dense_exact_1d(floating *x,
     return result
 
 
-def _euclidean_dense_dense_fast_sym(np.ndarray[floating, ndim=2] X,
-                                    floating[::1] x_squared_norms):
+def _euclidean_dense_dense_fast_symmetric(np.ndarray[floating, ndim=2] X,
+                                          floating[::1] x_squared_norms):
     cdef:
         int n_samples_X = X.shape[0]
         int features = X.shape[1]
@@ -119,6 +119,7 @@ def _euclidean_dense_dense_fast_sym(np.ndarray[floating, ndim=2] X,
             (n_samples_X, n_samples_X), X.dtype,
              order=('C' if X.flags['C_CONTIGUOUS'] else 'F'))
     
+    # the distance matrix being symmetric, we only need to compute half of it.
     _syrk_helper(Upper, NoTrans, -2, X, 0, D)
 
     for i in range(n_samples_X):
