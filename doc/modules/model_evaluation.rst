@@ -973,7 +973,7 @@ multilabel problem: ::
   >>> jaccard_score(y_true, y_pred, average='macro')
   0.44...
   >>> jaccard_score(y_true, y_pred, average='micro')
-  0.5
+  0.33...
 
 .. _hinge_loss:
 
