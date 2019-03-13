@@ -107,7 +107,7 @@ def test_partial_dependence_regressor():
     sample_weight = np.ones(N)
     sample_weight[mask] = 1000.
 
-    clf.fit(X, y, sample_weight=None)
+    clf.fit(X, y, sample_weight=sample_weight)
 
     grid = np.arange(0, 1, 0.01)
     pdp = partial_dependence(clf, [1], grid=grid)
