@@ -961,7 +961,7 @@ In the multilabel case with binary label indicators: ::
   >>> jaccard_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
   0.6666...
   >>> jaccard_score(y_true, y_pred, average=None)
-  array([0.5, 0.5, 1.])
+  array([0.5, 0.5, 1. ])
 
 Multiclass problems are binarized and treated like the corresponding
 multilabel problem: ::
