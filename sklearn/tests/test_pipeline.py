@@ -1073,10 +1073,11 @@ def test_make_pipeline_memory():
 
     shutil.rmtree(cachedir)
 
+
 def test__len__():
     pipeline = Pipeline([
         ('vect', CountVectorizer()),
         ('tfidf', TfidfTransformer()),
         ('clf', SGDClassifier()),
     ])
-    assert_equal(pipeline.__len__(),3)
+    assert_equal(pipeline.__len__(), 3)
