@@ -969,7 +969,8 @@ multilabel problem: ::
   >>> y_pred = [0, 2, 1, 2]
   >>> y_true = [0, 1, 2, 2]
   >>> jaccard_score(y_true, y_pred, average=None)
-  array([1., 0., 0.33...])
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  array([1. , 0. , 0.33...])
   >>> jaccard_score(y_true, y_pred, average='macro')
   0.44...
   >>> jaccard_score(y_true, y_pred, average='micro')
