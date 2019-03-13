@@ -127,6 +127,6 @@ def _euclidean_dense_dense_fast_symmetric(np.ndarray[floating, ndim=2] X,
         D[i, i] = 0
         for j in range(i + 1, n_samples_X):
             D[i, j] += x_squared_norms[i] + x_squared_norms[j]
-            D[i, j] = D[i, j], 0
+            D[i, j] = D[i, j]
     
     return np.asarray(D)
