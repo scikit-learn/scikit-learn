@@ -308,41 +308,51 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 def _check_norms(X, Y=None, X_norm_squared=None, Y_norm_squared=None):
     n_features = X.shape[1]
 
-    if n_features > 32 and X.dtype == np.float32:
-        # In this case, we compute euclidean distances by upcasting to float64.
-        # It's necessary to compute the norms on upcast X and not to upcast
-        # the norms computed on X to keep good precision, so we don't use
-        # provided norms.
-        return None, None
-    else:
-        if X_norm_squared is not None:
+    # In this case, we compute euclidean distances by upcasting to float64.
+    # Computing norms on float32 and then upcast to float64 loses precision.
+    # We either accept float64 precomputed norms or delay their computation to
+    # the moment X (resp. Y) is upcast to float64.
+    special_case = n_features > 32 and X.dtype == np.float32
+
+    if X_norm_squared is not None:
             XX = np.atleast_1d(X_norm_squared).reshape(-1)
+            if special_case and XX.dtype == np.float32:
+                XX = None
             if XX.shape != (X.shape[0],):
                 raise ValueError(
                     "Incompatible dimensions for X and X_norm_squared")
-        else:
-            XX = row_norms(X, squared=True)
+    elif special_case:
+        XX = None
+    else:
+        XX = row_norms(X, squared=True)
 
-        if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-            YY = XX
-        elif Y_norm_squared is not None:
-            YY = np.atleast_1d(Y_norm_squared).reshape(-1)
-            if YY.shape != (Y.shape[0],):
-                raise ValueError(
-                    "Incompatible dimensions for Y and Y_norm_squared")
-        else:
-            YY = row_norms(Y, squared=True)
+    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
+        YY = XX
+    elif Y_norm_squared is not None:
+        YY = np.atleast_1d(Y_norm_squared).reshape(-1)
+        if special_case and YY.dtype == np.float32:
+            YY = None
+        if YY.shape != (Y.shape[0],):
+            raise ValueError(
+                "Incompatible dimensions for Y and Y_norm_squared")
+    elif special_case:
+        YY = None
+    else:
+        YY = row_norms(Y, squared=True)
 
+    if not special_case:
         XX = XX.astype(X.dtype, copy=False)
         YY = YY.astype(Y.dtype, copy=False)
 
-        return XX, YY
+    return XX, YY
 
 
-def _euclidean_distances_upcast_fast(X, XX, Y, YY):
+def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
     """Euclidean distances between X and Y
 
     Assumes X and Y have float32 dtype.
+    Assumes XX and YY have float64 dtype or are None.
+
     X and Y are upcast to float64 by chunks, which size is chosen to limit
     memory increase by approximately 10MiB.
     """
@@ -377,14 +387,20 @@ def _euclidean_distances_upcast_fast(X, XX, Y, YY):
         xe = xs + (chunk_size if i < n_chunks_X - 1 else n_samples_X_rem)
 
         X_chunk = X[xs:xe].astype(np.float64)
-        XX_chunk = row_norms(X_chunk, squared=True)
+        if XX is None:
+            XX_chunk = row_norms(X_chunk, squared=True)
+        else:
+            XX_chunk = XX[xs:xe]
 
         for j in range(n_chunks_Y):
             ys = j * chunk_size
             ye = ys + (chunk_size if j < n_chunks_Y - 1 else n_samples_Y_rem)
 
             Y_chunk = Y[ys:ye].astype(np.float64)
-            YY_chunk = row_norms(Y_chunk, squared=True)
+            if YY is None:
+                YY_chunk = row_norms(Y_chunk, squared=True)
+            else:
+                YY_chunk = YY[ys:ye]
 
             d = - 2 * safe_sparse_dot(X_chunk, Y_chunk.T, dense_output=True)
             d += XX_chunk[:, np.newaxis]
