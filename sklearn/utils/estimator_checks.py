@@ -43,7 +43,6 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
-from sklearn.linear_model.stochastic_gradient import BaseSGD
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
@@ -2194,11 +2193,6 @@ def check_parameters_default_constructible(name, Estimator):
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
                 assert init_param.default is None
-                continue
-
-            if (issubclass(Estimator, BaseSGD) and
-                    init_param.name in ['tol', 'max_iter']):
-                # To remove in 0.21, when they get their future default values
                 continue
 
             param_value = params[init_param.name]
