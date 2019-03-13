@@ -402,9 +402,14 @@ def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
             else:
                 YY_chunk = YY[ys:ye]
 
-            d = - 2 * safe_sparse_dot(X_chunk, Y_chunk.T, dense_output=True)
-            d += XX_chunk[:, np.newaxis]
-            d += YY_chunk[np.newaxis, :]
+            if X is Y and j < i:
+                # when X is Y the distance matrix is symmetric so we only need
+                # to compute half of it.
+                d = distances[ys:ye, xs:xe].T
+            else:
+                d = -2 * safe_sparse_dot(X_chunk, Y_chunk.T, dense_output=True)
+                d += XX_chunk[:, np.newaxis]
+                d += YY_chunk[np.newaxis, :]
 
             distances[xs:xe, ys:ye] = d.astype(np.float32)
 
