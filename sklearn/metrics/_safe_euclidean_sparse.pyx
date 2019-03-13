@@ -58,7 +58,7 @@ cdef floating _euclidean_sparse_dense_exact_1d(floating *x_data,
         yi = y[x_indices[i]]
         partial_y_squared_norm += yi * yi
 
-    for i in range(y_nnz):
+    for i in range(x_nnz):
         tmp = x_data[i] - y[x_indices[i]]
         result += tmp * tmp 
 
