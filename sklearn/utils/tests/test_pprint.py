@@ -346,7 +346,7 @@ Pipeline(memory=None,
                                                                                  strategy='constant',
                                                                                  verbose=0)),
                                                                   ('onehotencoder',
-                                                                   OneHotEncoder(categoric...
+                                                                   OneHotEncoder(categorica...
                                                                                  handle_unknown='ignore',
                                                                                  n_values=None,
                                                                                  sparse=True))]),

@@ -8,6 +8,7 @@ import warnings
 from collections import defaultdict
 import platform
 import inspect
+import re
 
 import numpy as np
 
@@ -248,15 +249,15 @@ class BaseEstimator:
 
         # Use bruteforce ellipsis if string is very long.
         # We will keep (approximately) N_CHAR_MAX non-blank characters.
-        if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
+        n_nonblank = len(''.join(repr_.split()))
+        if n_nonblank > N_CHAR_MAX:
             lim = N_CHAR_MAX // 2  # apprx number of chars to keep on both ends
-            repr_array = np.array(list(repr_))
-            non_blanks = (repr_array != ' ') & (repr_array != '\n')
-            # index of the lim'th non-blank character, from the left (start)
-            left_lim = np.where(np.cumsum(non_blanks) == lim)[0][0]
-            # index of the lim'th non-blank character, from the right (end)
-            right_lim = np.where(np.cumsum(non_blanks[::-1]) == lim)[0][0]
-            right_lim = len(repr_) - right_lim
+            # The regex re.match(r'^(\s*\S){%d}' % n, repr_).end()
+            # returns the index of the nth non-blank character in s:
+            # - ^ matches the start of line
+            # - (pattern){n} matches n repetitions of pattern
+            # - \s*\S matches a non-blank char following zero or more blanks
+            left_lim = re.match(r'^(\s*\S){%d}' % lim, repr_).end()
 
             # To avoid weird cuts, e.g.:
             # categoric...ore',
@@ -264,10 +265,10 @@ class BaseEstimator:
             # that it renders properly as:
             # categoric...
             # handle_unknown='ignore',
-            while repr_[right_lim] != '\n':
-                right_lim -= 1
+            # hence the addition of .*\n which matches until the next \n
+            right_lim = re.match(r'^(\s*\S){%d}.*\n' % lim, repr_[::-1]).end()
 
-            repr_ = repr_[:left_lim] + '...' + repr_[right_lim:]
+            repr_ = repr_[:left_lim] + '...' + repr_[-right_lim:]
 
         return repr_
 
