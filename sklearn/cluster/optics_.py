@@ -430,7 +430,7 @@ def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
     predecessor_ = np.empty(n_samples, dtype=int)
     predecessor_.fill(-1)
 
-    nbrs = NearestNeighbors(n_neighbors=min_samples - 1,
+    nbrs = NearestNeighbors(n_neighbors=min_samples,
                             algorithm=algorithm,
                             leaf_size=leaf_size,
                             metric=metric,
