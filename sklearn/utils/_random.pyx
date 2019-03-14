@@ -334,8 +334,8 @@ def _our_rand_r_py(seed):
 
 
 def _cast_py():
-    """Python utils to showcase the platform specific behavior of casting in _
-    our_the rand_r_py function"""
+    """Python utils to showcase the platform specific behavior of casting in
+    the our_rand_r function"""
     good_cast = <UINT32_t>(RAND_R_MAX + 1)
     cdef np.uint32_t another_good_cast = <UINT32_t>RAND_R_MAX + 1
     wrong_cast = <UINT32_t> RAND_R_MAX + 1
