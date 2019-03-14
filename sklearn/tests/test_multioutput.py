@@ -23,7 +23,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
-from sklearn.metrics import jaccard_similarity_score, mean_squared_error
+from sklearn.metrics import jaccard_score, mean_squared_error
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
@@ -431,8 +431,8 @@ def test_classifier_chain_vs_independent_models():
     chain.fit(X_train, Y_train)
     Y_pred_chain = chain.predict(X_test)
 
-    assert_greater(jaccard_similarity_score(Y_test, Y_pred_chain),
-                   jaccard_similarity_score(Y_test, Y_pred_ovr))
+    assert_greater(jaccard_score(Y_test, Y_pred_chain, average='samples'),
+                   jaccard_score(Y_test, Y_pred_ovr, average='samples'))
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
@@ -510,6 +510,6 @@ def test_base_chain_crossval_fit_and_predict():
         assert Y_pred_cv.shape == Y_pred.shape
         assert not np.all(Y_pred == Y_pred_cv)
         if isinstance(chain, ClassifierChain):
-            assert jaccard_similarity_score(Y, Y_pred_cv) > .4
+            assert jaccard_score(Y, Y_pred_cv, average='samples') > .4
         else:
             assert mean_squared_error(Y, Y_pred_cv) < .25
