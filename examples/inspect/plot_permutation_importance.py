@@ -1,75 +1,45 @@
 """
-==================================================
-Permutation Importance vs Random Forest Importance
-==================================================
+==========================================================
+Permutation Importance vs Random Forest Feature Importance
+==========================================================
 
-The random forest `feature_importances_`, are computed from train set
-statistics and are subject to bias with the cardinality of the feature. The
-permutation importance of a feature is calculated by measuring how much the
-model performance decreases when the feature is permutated.
-
-In this example, we add a column of random numbers to the diabetes dataset.
-Then we fit a :class:`sklearn.ensemble.RandomForestRegressor` to this modified
-dataset. The feature importance from the random forest is plotted. In this
-case, the ``RANDOM`` feature is considered more important than the ``age``
+The permutation importance of a feature is how much a model's score decreases
+when the feature's values are permuted. [1]_ In this context, the more
+important features will cause the model's score to decrease the most. If a
+feature's importance is negative, the model improved when the feature is
+permutated. This suggests that the model would benefit from removing the
 feature.
 
-Next, we use :func:`sklearn.inspect.permutation_importance` to calcuate the
-permutation importance for each feature.
-The `sklearn.inspect.permutation_importance` returns a numpy array where
-values in each row are the cross-validated scores for a feature. The
-permutation importance for the random forest is plotted. In this case,
-the ``RANDOM`` feature is less important than ``age``.
+.. topic:: References:
+
+   .. [1] Breiman, L. Machine Learning (2001) 45: 5.
+        https://doi.org/10.1023/A:1010933404324
+   .. [2] Strobl, C., Boulesteix, AL., Zeileis, A. et al. BMC Bioinformatics
+        (2007) 8: 25. https://doi.org/10.1186/1471-2105-8-25
 """
 print(__doc__)
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-from sklearn.datasets import load_diabetes
-from sklearn.ensemble import RandomForestRegressor
+##############################################################################
+# In this example, the :class:`sklearn.ensemble.RandomForestRegressor`'s feature
+# importance is compared with the permutation importance using the titantic
+# dataset. A combination of numerical features and categorical features were
+# used to train the initial model, ``rfr_init``:
 from sklearn.inspect import permutation_importance
+print("what is going on")
 
+##############################################################################
+# The tree based feature importance ranks the numerical features, age and BLAH,
+# to be the most important features:
 
-def plot_importances(importances, features, highlight=None, ax=None):
-    N = features.shape[0]
+##############################################################################
+# The corresponding test score for, ``rfr_init``, is:
 
-    if ax is None:
-        _, ax = plt.subplots()
-    y_ticks = range(1, N + 1)
-    arg_sorted = np.argsort(importances)
+##############################################################################
+# Next, a model, ``rfr_new``, is trained with the numerical features removed
+# and its test score is calcuated.
 
-    color = ["blue" for _ in range(N)]
-    labels = features[arg_sorted]
-
-    if highlight is not None:
-        for idx, label in enumerate(labels):
-            if label == highlight:
-                color[idx] = "red"
-
-    ax.barh(y_ticks, importances[arg_sorted], color=color)
-    ax.set_yticks(y_ticks)
-    ax.set_xlim(0, np.max(importances)*1.05)
-    ax.set_ylim(0, N + 1)
-    ax.set_yticklabels(features[arg_sorted])
-
-
-ds = load_diabetes()
-X, y = ds.data, ds.target
-features = np.array(ds.feature_names + ["RAND"])
-rng = np.random.RandomState(42)
-X = np.hstack([X, rng.normal(scale=1, size=(X.shape[0], 1))])
-
-rf = RandomForestRegressor(n_estimators=50, random_state=rng)
-rf.fit(X, y)
-
-fig, (ax1, ax2) = plt.subplots(1, 2)
-plot_importances(rf.feature_importances_, features, highlight="RAND", ax=ax1)
-ax1.set_title("Feature importance from random forest")
-
-perm_importances = permutation_importance(rf, X, y, random_state=rng)
-perm_importances_mean = perm_importances.mean(axis=-1)
-plot_importances(perm_importances_mean, features, highlight="RAND", ax=ax2)
-ax2.set_title("Permutation importance")
-fig.tight_layout()
-plt.show()
+##############################################################################
+# When the "important" numerical features are removed, the score increases! A
+# decision tree's feature importance is known to be inflated for continuous
+# variables. [2]_ As an alternatie, the permutation permutation of
+# ``rfr_init`` is computed, which shows that the categorical feature, ``sex```
+# is the most important feature:

@@ -3,7 +3,6 @@ import numpy as np
 
 from ..utils import check_random_state
 from ..metrics import check_scoring
-from ..compose._column_transformer import _get_column
 
 
 def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=30,

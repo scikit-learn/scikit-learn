@@ -659,6 +659,25 @@ Kernels:
    impute.IterativeImputer
    impute.MissingIndicator
    
+.. _model_inspection:
+
+:mod:`sklearn.inspect`: Model Inspection
+=========================================  
+
+.. automodule:: sklearn.inspect
+   :no-members:
+   :no-inherited-members:
+
+Hello world
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspect.permutation_importance
+
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
