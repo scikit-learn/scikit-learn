@@ -261,7 +261,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         # ensure no negative squared distance.
         np.maximum(distances, 0, out=distances)
 
-    # For n_features <= 32, we use the 'exact' method, i.e. the usual method,
+    # For n_features <= 16, we use the 'exact' method, i.e. the usual method,
     # d(x,y)² = ||x - y||².
     else:
 
