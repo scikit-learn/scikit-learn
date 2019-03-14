@@ -180,6 +180,7 @@ def test_random_choice_csc_errors():
 
 def test_our_rand_r():
     assert 131541053 == _our_rand_r_py(1273642419)
+    assert 270369 == _our_rand_r_py(0)
 
 
 @pytest.mark.xfail
