@@ -728,13 +728,13 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
         if (relevant.size == 0 or relevant.size == n_labels):
             # If all labels are relevant or unrelevant, the score is also
             # equal to 1. The label ranking has no meaning.
-            out += 1.
-            continue
+            aux = 1.
+        else:
+            scores_i = y_score[i]
+            rank = rankdata(scores_i, 'max')[relevant]
+            L = rankdata(scores_i[relevant], 'max')
+            aux = (L / rank).mean()
 
-        scores_i = y_score[i]
-        rank = rankdata(scores_i, 'max')[relevant]
-        L = rankdata(scores_i[relevant], 'max')
-        aux = (L / rank).mean()
         if sample_weight is not None:
             aux = aux * sample_weight[i]
         out += aux
