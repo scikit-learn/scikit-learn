@@ -954,7 +954,8 @@ def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
 
 def test_lrap_sample_weighting():
     # Per sample APs are 0.5, 0.75, and 1.0.
-    y_true = np.array([[1, 0, 0, 0], [1, 0, 0, 1], [1, 1, 0, 0]], dtype=np.bool)
+    y_true = np.array([[1, 0, 0, 0], [1, 0, 0, 1], [1, 1, 0, 0]],
+                      dtype=np.bool)
     y_score = np.array([[0.3, 0.4, 0.2, 0.1], [0.1, 0.2, 0.3, 0.4],
                         [0.4, 0.3, 0.2, 0.1]])
     samplewise_lraps = np.array([0.5, 0.75, 1.0])
@@ -968,8 +969,10 @@ def test_lrap_sample_weighting():
 
 def test_lrap_sample_weighting_zero_labels():
     # Per sample APs are 0.5, 0.75, and 1.0 (default for zero labels).
-    y_true = np.array([[1, 0, 0, 0], [1, 0, 0, 1], [0, 0, 0, 0]], dtype=np.bool)
-    y_score = np.array([[0.3, 0.4, 0.2, 0.1], [0.1, 0.2, 0.3, 0.4], [0.4, 0.3, 0.2, 0.1]])
+    y_true = np.array([[1, 0, 0, 0], [1, 0, 0, 1], [0, 0, 0, 0]],
+                      dtype=np.bool)
+    y_score = np.array([[0.3, 0.4, 0.2, 0.1], [0.1, 0.2, 0.3, 0.4],
+                        [0.4, 0.3, 0.2, 0.1]])
     samplewise_lraps = np.array([0.5, 0.75, 1.0])
     sample_weight = np.array([1.0, 1.0, 0.0])
 
