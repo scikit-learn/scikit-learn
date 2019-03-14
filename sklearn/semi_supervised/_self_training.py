@@ -43,10 +43,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     selection_criterion : {'threshold', 'n_best'}, optional
     (default='threshold')
         The selection criterion used to select which labels to add to the
-        training set. If 'threshold', labels with probabilities above
-        `threshold` are added to the dataset. If 'n_best', the `n_best`
-        pseudo-labels with highest prediction confidence are added to the
-        dataset.
+        training set. If 'threshold', pseudo-labels with prediction
+        probabilities above `threshold` are added to the dataset. If 'n_best',
+        the `n_best` pseudo-labels with highest prediction probabilities are
+        added to the dataset.
 
     threshold : float, optional (default=0.75)
         The decision threshold for use with `selection_criterion`='threshold'.
