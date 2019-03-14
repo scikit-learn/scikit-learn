@@ -387,13 +387,13 @@ Using the earlier example with the iris dataset::
   ...     output_distribution='normal', random_state=0)
   >>> X_trans = quantile_transformer.fit_transform(X)
   >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  array([[4.3...,   2...,     1...,     0.1...],
-         [4.31...,  2.02...,  1.01...,  0.1...],
-         [4.32...,  2.05...,  1.02...,  0.1...],
+  array([[4.3, 2. , 1. , 0.1],
+         [4.4, 2.2, 1.1, 0.1],
+         [4.4, 2.2, 1.2, 0.1],
          ...,
-         [7.84...,  4.34...,  6.84...,  2.5...],
-         [7.87...,  4.37...,  6.87...,  2.5...],
-         [7.9...,   4.4...,   6.9...,   2.5...]])
+         [7.7, 4.1, 6.7, 2.5],
+         [7.7, 4.2, 6.7, 2.5],
+         [7.9, 4.4, 6.9, 2.5]])
 
 Thus the median of the input becomes the mean of the output, centered at 0. The
 normal output is clipped so that the input's minimum and maximum ---
