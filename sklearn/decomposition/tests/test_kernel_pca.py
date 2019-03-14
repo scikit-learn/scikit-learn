@@ -156,7 +156,7 @@ def test_remove_zero_eig():
 
 
 def test_leave_zero_eig():
-    """This test checks that fit().transform() returns the same result than
+    """This test checks that fit().transform() returns the same result as
     fit_transform() in case of non-removed zero eigenvalue"""
     X_fit = np.array([[1, 1], [0, 0]])
 
