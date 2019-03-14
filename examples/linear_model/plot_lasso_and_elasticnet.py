@@ -19,9 +19,10 @@ from sklearn.metrics import r2_score
 # Generate some sparse data to play with
 np.random.seed(42)
 
-n_samples, n_features = 50, 200
+n_samples, n_features = 50, 100
 X = np.random.randn(n_samples, n_features)
-coef = 3 * np.random.randn(n_features)
+idx = np.arange(n_features)
+coef = (- 1) ** idx * np.exp(- idx / 10)
 coef[10:] = 0  # sparsify coef
 y = np.dot(X, coef)
 
