@@ -306,21 +306,22 @@ GridSearchCV(cv='warn', error_score='raise-deprecating',
 
 
 def test_bruteforce_ellipsis():
+    # Check that the bruteforce ellipsis (used when the number of non-blank
+    # characters exceeds N_CHAR_MAX) renders correctly.
 
-    # When repr is still too long, use bruteforce ellipsis
+    # Basic sanity check on very long strings.
     # repr is a very long line so we don't check for equality here, just that
-    # ellipsis has been done. It's not the ellipsis from before because the
-    # number of elements in the dict is only 1.
+    # ellipsis has been done. Note that this is a different ellipsis from
+    # N_MAX_ELEMENTS_TO_SHOW.
     vocabulary = {0: 'hello' * 1000}
     vectorizer = CountVectorizer(vocabulary=vocabulary)
     repr_ = vectorizer.__repr__()
     assert '...' in repr_
 
-    # Also, make sure that ellipsis is done without considering the blank
-    # characters (see issue 13372).
-
+    # make sure that ellipsis is done without considering the blank
+    # characters (see issue 13372). Also, this test covers the case when the
+    # left and right side of the ellipsis aren't on the same line.
     l = ['hello']
-
     col_trans_of_pipeline = make_column_transformer(
         (
             make_pipeline(
@@ -329,8 +330,8 @@ def test_bruteforce_ellipsis():
             l.index
         )
     )
-
     huge_pipe = make_pipeline(col_trans_of_pipeline, LogisticRegression())
+
     expected="""
 Pipeline(memory=None,
          steps=[('columntransformer',
@@ -365,6 +366,106 @@ Pipeline(memory=None,
     repr_ = re.sub('method index of list object at 0x.*>',
                    'method index of list object at some_address>', repr_)
     assert expected == repr_
+
+
+    # test with very small N_CHAR_MAX
+    # Note that N_CHAR_MAX is not strictly enforced, but it's normal: to avoid
+    # weird reprs we still keep the whole line of the right part (after the
+    # ellipsis).
+    expected = """
+Pi...
+                                    warm_start=False))])"""
+    expected = expected[1:]  # remove first \n
+    assert huge_pipe.__repr__(N_CHAR_MAX=4) == expected
+
+    # test with N_CHAR_MAX == number of non-blank characters: this should
+    # render the full repr.
+    full_repr = huge_pipe.__repr__(N_CHAR_MAX=float('inf'))
+    n_nonblank = len(''.join(full_repr.split()))
+    expected = """
+Pipeline(memory=None,
+         steps=[('columntransformer',
+                 ColumnTransformer(n_jobs=None, remainder='drop',
+                                   sparse_threshold=0.3,
+                                   transformer_weights=None,
+                                   transformers=[('pipeline',
+                                                  Pipeline(memory=None,
+                                                           steps=[('simpleimputer',
+                                                                   SimpleImputer(copy=True,
+                                                                                 fill_value='missing',
+                                                                                 missing_values=nan,
+                                                                                 strategy='constant',
+                                                                                 verbose=0)),
+                                                                  ('onehotencoder',
+                                                                   OneHotEncoder(categorical_features=None,
+                                                                                 categories=None,
+                                                                                 drop=None,
+                                                                                 dtype=<class 'numpy.float64'>,
+                                                                                 handle_unknown='ignore',
+                                                                                 n_values=None,
+                                                                                 sparse=True))]),
+                                                  <built-in method index of list object at some_address>)])),
+                ('logisticregression',
+                 LogisticRegression(C=1.0, class_weight=None, dual=False,
+                                    fit_intercept=True, intercept_scaling=1,
+                                    l1_ratio=None, max_iter=100,
+                                    multi_class='warn', n_jobs=None,
+                                    penalty='l2', random_state=None,
+                                    solver='warn', tol=0.0001, verbose=0,
+                                    warm_start=False))])"""
+    expected = expected[1:]  # remove first \n
+    # Remove address of '<method index of list...>' for reproducibility
+    repr_ = huge_pipe.__repr__(N_CHAR_MAX=n_nonblank)
+    repr_ = re.sub('method index of list object at 0x.*>',
+                   'method index of list object at some_address>', repr_)
+    assert repr_ == expected
+    assert '...' not in repr_
+
+
+    # test with N_CHAR_MAX == number of non-blank characters - 1: the left and
+    # right side of the ellispsis are on the same line. In this case we don't
+    # want to expend the whole line of the right side, just add the ellispsis
+    # between the 2 sides.
+    full_repr = huge_pipe.__repr__(N_CHAR_MAX=float('inf'))
+    n_nonblank = len(''.join(full_repr.split()))
+    expected = """
+Pipeline(memory=None,
+         steps=[('columntransformer',
+                 ColumnTransformer(n_jobs=None, remainder='drop',
+                                   sparse_threshold=0.3,
+                                   transformer_weights=None,
+                                   transformers=[('pipeline',
+                                                  Pipeline(memory=None,
+                                                           steps=[('simpleimputer',
+                                                                   SimpleImputer(copy=True,
+                                                                                 fill_value='missing',
+                                                                                 missing_values=nan,
+                                                                                 strategy='constant',
+                                                                                 verbose=0)),
+                                                                  ('onehotencoder',
+                                                                   OneHotEncoder(categorical_features=None,
+                                                                                 categories=None,
+                                                                                 drop=None,
+                                                                                 d...pe=<class 'numpy.float64'>,
+                                                                                 handle_unknown='ignore',
+                                                                                 n_values=None,
+                                                                                 sparse=True))]),
+                                                  <built-in method index of list object at some_address>)])),
+                ('logisticregression',
+                 LogisticRegression(C=1.0, class_weight=None, dual=False,
+                                    fit_intercept=True, intercept_scaling=1,
+                                    l1_ratio=None, max_iter=100,
+                                    multi_class='warn', n_jobs=None,
+                                    penalty='l2', random_state=None,
+                                    solver='warn', tol=0.0001, verbose=0,
+                                    warm_start=False))])"""
+    expected = expected[1:]  # remove first \n
+    # Remove address of '<method index of list...>' for reproducibility
+    repr_ = huge_pipe.__repr__(N_CHAR_MAX=n_nonblank - 1)
+    repr_ = re.sub('method index of list object at 0x.*>',
+                   'method index of list object at some_address>', repr_)
+    assert repr_ == expected
+    assert '...' in repr_
 
 
 def test_builtin_prettyprinter():

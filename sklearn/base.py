@@ -234,10 +234,13 @@ class BaseEstimator:
 
         return self
 
-    def __repr__(self):
+    def __repr__(self, N_CHAR_MAX=700):
+        # N_CHAR_MAX is the (approximate) maximum number of non-blank
+        # characters to render. We pass it as an optional parameter to ease
+        # the tests.
+
         from .utils._pprint import _EstimatorPrettyPrinter
 
-        N_CHAR_MAX = 700  # number of non-whitespace or newline chars
         N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
 
         # use ellipsis for sequences with a lot of elements
@@ -247,31 +250,33 @@ class BaseEstimator:
 
         repr_ = pp.pformat(self)
 
-        # Use bruteforce ellipsis if string is very long.
-        # We will keep (approximately) N_CHAR_MAX non-blank characters.
+        # Use bruteforce ellipsis when there are a lot of non-blank characters
         n_nonblank = len(''.join(repr_.split()))
         if n_nonblank > N_CHAR_MAX:
             lim = N_CHAR_MAX // 2  # apprx number of chars to keep on both ends
+            regex = r'^(\s*\S){%d}' % lim
             # The regex '^(\s*\S){%d}' % n
             # matches from the start of the string until the nth non-blank
             # character:
             # - ^ matches the start of string
             # - (pattern){n} matches n repetitions of pattern
             # - \s*\S matches a non-blank char following zero or more blanks
-            left_side = re.match(r'^(\s*\S){%d}' % lim, repr_).group()
+            left_lim = re.match(regex, repr_).end()
+            right_lim = re.match(regex, repr_[::-1]).end()
 
-            # To avoid weird cuts, e.g.:
-            # categoric...ore',
-            # we need to start the right side with an appropriate newline
-            # character so that it renders properly as:
-            # categoric...
-            # handle_unknown='ignore',
-            # hence the addition of [^\n]*\n which matches until the next \n
-            right_side = (
-                re.match(r'^(\s*\S){%d}[^\n]*\n' % lim, repr_[::-1]).group())
-            right_side = right_side[::-1]
+            if '\n' in repr_[left_lim:-right_lim]:
+                # The left side and right side aren't on the same line.
+                # To avoid weird cuts, e.g.:
+                # categoric...ore',
+                # we need to start the right side with an appropriate newline
+                # character so that it renders properly as:
+                # categoric...
+                # handle_unknown='ignore',
+                # so we add [^\n]*\n which matches until the next \n
+                regex += r'[^\n]*\n'
+                right_lim = re.match(regex, repr_[::-1]).end()
 
-            repr_ = left_side + '...' + right_side
+            repr_ = repr_[:left_lim] + '...' + repr_[-right_lim:]
 
         return repr_
 
