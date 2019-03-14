@@ -1317,6 +1317,9 @@ def check_clustering(name, clusterer_orig, readonly_memmap=False):
         clusterer.set_params(preference=-100)
         clusterer.set_params(max_iter=100)
 
+    if name == 'OPTICS':
+        clusterer.set_params(min_samples=5)
+
     # fit
     clusterer.fit(X)
     # with lists
