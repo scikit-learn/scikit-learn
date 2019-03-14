@@ -638,7 +638,7 @@ def test_euclidean_distances_sym(dtype, dim, x_array_constr):
                          ids=["dense", "sparse"])
 def test_euclidean_distances_upcast(x_array_constr, y_array_constr):
     # check euclidean distances upcasted when dtype=float32 and dim > 32.
-    # dimensions choosed to have at least 2 chunks for X and Y.
+    # dimensions chosen to have at least 2 chunks for X and Y.
     rng = np.random.RandomState(0)
     X = rng.random_sample((800, 2000)).astype(np.float32)
     X[X < 0.2] = 0
@@ -650,6 +650,24 @@ def test_euclidean_distances_upcast(x_array_constr, y_array_constr):
     X = x_array_constr(X)
     Y = y_array_constr(Y)
     distances = euclidean_distances(X, Y)
+
+    assert_allclose(distances, expected, rtol=1e-6)
+    assert distances.dtype == np.float32
+
+
+@pytest.mark.parametrize("array_constr", [np.array, csr_matrix],
+                         ids=["dense", "sparse"])
+def test_euclidean_distances_upcast_symmetric(array_constr):
+    # check euclidean distances upcasted when dtype=float32 and dim > 32, when
+    # only X is provided. Dimensions chosen to have at least 2 chunks for X.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((800, 2000)).astype(np.float32)
+    X[X < 0.2] = 0
+
+    expected = squareform(pdist(X))
+
+    X = array_constr(X)
+    distances = euclidean_distances(X)
 
     assert_allclose(distances, expected, rtol=1e-6)
     assert distances.dtype == np.float32

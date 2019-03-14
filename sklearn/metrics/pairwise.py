@@ -302,11 +302,11 @@ def _check_norms(X, Y=None, X_norm_squared=None, Y_norm_squared=None):
 
     if X_norm_squared is not None:
         XX = np.atleast_1d(X_norm_squared).reshape(-1)
-        if special_case and XX.dtype == np.float32:
-            XX = None
         if XX.shape != (X.shape[0],):
             raise ValueError(
                 "Incompatible dimensions for X and X_norm_squared")
+        if special_case and XX.dtype == np.float32:
+            XX = None
     elif special_case:
         XX = None
     else:
@@ -316,11 +316,11 @@ def _check_norms(X, Y=None, X_norm_squared=None, Y_norm_squared=None):
         YY = XX
     elif Y_norm_squared is not None:
         YY = np.atleast_1d(Y_norm_squared).reshape(-1)
-        if special_case and YY.dtype == np.float32:
-            YY = None
         if YY.shape != (Y.shape[0],):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
+        if special_case and YY.dtype == np.float32:
+            YY = None
     elif special_case:
         YY = None
     else:
@@ -382,17 +382,18 @@ def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
             ys = j * chunk_size
             ye = ys + (chunk_size if j < n_chunks_Y - 1 else n_samples_Y_rem)
 
-            Y_chunk = Y[ys:ye].astype(np.float64)
-            if YY is None:
-                YY_chunk = row_norms(Y_chunk, squared=True)
-            else:
-                YY_chunk = YY[ys:ye]
-
             if X is Y and j < i:
                 # when X is Y the distance matrix is symmetric so we only need
                 # to compute half of it.
                 d = distances[ys:ye, xs:xe].T
+
             else:
+                Y_chunk = Y[ys:ye].astype(np.float64)
+                if YY is None:
+                    YY_chunk = row_norms(Y_chunk, squared=True)
+                else:
+                    YY_chunk = YY[ys:ye]
+
                 d = -2 * safe_sparse_dot(X_chunk, Y_chunk.T, dense_output=True)
                 d += XX_chunk[:, np.newaxis]
                 d += YY_chunk[np.newaxis, :]
