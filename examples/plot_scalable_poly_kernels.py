@@ -53,10 +53,11 @@ Y[Y == 2] = 1
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size=0.8,
                                                     random_state=42)
 
-# Select 100,000 samples for training as done in the original
+# Select 30,000 samples for training.
+# To reproduce the results in the original paper, select 100,000.
 # Tensor Sketch paper (see chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
-X_train = X_train[:100000]
-Y_train = Y_train[:100000]
+X_train = X_train[:30000]
+Y_train = Y_train[:30000]
 
 # Scale features to the range [0, 1] to match the format of the dataset in the
 # LIBSVM webpage, and then normalize to unit lenght as done in the original
@@ -72,7 +73,7 @@ print("Linear SVM score on raw features: %.2f %%"
       % (100*lsvm.score(X_test, Y_test)))
 
 # Train linear SVMs on various numbers of PolynomialSampler features
-for n_components in [200, 500, 1000, 1500]:
+for n_components in [200, 500, 1000]:
 
     ps = PolynomialSampler(n_components=n_components,
                            degree=4).fit(X_train[0:1])
@@ -87,7 +88,8 @@ for n_components in [200, 500, 1000, 1500]:
 # Uncomment the following to train a kernelized SVM and see how well is
 # PolynomialSampler approximating the performance of the kernel
 # (may take a while, as SVC has a relatively poor scalability).
-# This should result in an accuracy of about 84%
+# This should result in an accuracy of about 84% if 100,000 training
+# samples are used.
 
 # from sklearn.svm import SVC
 # ksvm = SVC(C=500., kernel="poly", degree=4, coef0=0,
