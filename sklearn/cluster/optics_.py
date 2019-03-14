@@ -246,7 +246,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         self.effective_min_samples_ = self.min_samples
         if self.min_samples <= 1:
-            self.effective_min_samples_ = max(2, self.min_samples * n_samples)
+            self.effective_min_samples_ = int(max(2, self.min_samples *
+                                                  n_samples))
 
         (self.ordering_, self.core_distances_, self.reachability_,
          self.predecessor_) = compute_optics_graph(
