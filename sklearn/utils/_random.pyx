@@ -324,4 +324,19 @@ cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
     seed[0] ^= <UINT32_t>(seed[0] >> 17)
     seed[0] ^= <UINT32_t>(seed[0] << 5)
 
-    return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
+    return seed[0] % <UINT32_t>(RAND_R_MAX + 1)
+
+
+def _our_rand_r_py(seed):
+    """Python utils to test the our_rand_r function"""
+    cdef UINT32_t my_seed = seed
+    return our_rand_r(&my_seed)
+
+
+def _cast_py():
+    """Python utils to showcase the platform specific behavior of casting in _
+    our_the rand_r_py function"""
+    good_cast = <UINT32_t>(RAND_R_MAX + 1)
+    cdef np.uint32_t another_good_cast = <UINT32_t>RAND_R_MAX + 1
+    wrong_cast = <UINT32_t> RAND_R_MAX + 1
+    return good_cast, another_good_cast, wrong_cast

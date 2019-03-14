@@ -666,8 +666,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             if verbose > 0:
                 with gil:
                     print("-- Epoch %d" % (epoch + 1))
-            with gil:
-                print("epoch %s seed %s" % (epoch, seed))
             if shuffle:
                 dataset.shuffle(seed)
             for i in range(n_samples):
@@ -678,9 +676,6 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 if validation_mask_view[sample_index]:
                     # do not learn on the validation set
                     continue
-
-                with gil:
-                    print("epoch %s sample_index %s" % (epoch, sample_index))
 
                 p = w.dot(x_data_ptr, x_ind_ptr, xnnz) + intercept
                 if learning_rate == OPTIMAL:

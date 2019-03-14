@@ -13,4 +13,4 @@ if "%COVERAGE%" == "true" (
     set PYTEST_ARGS=%PYTEST_ARGS% --cov sklearn
 )
 
-pytest -s -k test_our_rand_r --pyargs sklearn
+pytest --junitxml=%JUNITXML% --showlocals --durations=20 %PYTEST_ARGS% --pyargs sklearn

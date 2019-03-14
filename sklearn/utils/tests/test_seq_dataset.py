@@ -7,8 +7,8 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 from numpy.testing import assert_array_equal
-from sklearn.utils.seq_dataset import ArrayDataset32, ArrayDataset64, \
-    CSRDataset32, CSRDataset64, our_rand_r_py
+from sklearn.utils.seq_dataset import (
+    ArrayDataset32, ArrayDataset64, CSRDataset32, CSRDataset64)
 
 from sklearn.datasets import load_iris
 from sklearn.utils.testing import assert_allclose
@@ -151,25 +151,3 @@ def test_buffer_dtype_mismatch_error():
     with pytest.raises(ValueError, match='Buffer dtype mismatch'):
         CSRDataset32(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
                      sample_weight64, seed=42),
-
-
-def test_our_rand_r():
-    seed_1 = np.uint32(1273642419)
-    assert seed_1 <= np.iinfo(np.uint32).max
-
-    my_random_int = our_rand_r_py(seed_1)
-    assert my_random_int == 131541053
-
-
-    seed_2 = np.int32(1273642419)
-    assert seed_2 <= np.iinfo(np.uint32).max
-
-    my_random_int = our_rand_r_py(seed_2)
-    assert my_random_int == 131541053
-
-    seed_0 = 1273642419
-    assert seed_0 <= np.iinfo(np.uint32).max
-
-    my_random_int = our_rand_r_py(seed_0)
-    assert my_random_int == 131541053
-

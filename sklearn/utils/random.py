@@ -6,9 +6,9 @@ import scipy.sparse as sp
 import array
 
 from sklearn.utils import check_random_state
-from ._random import sample_without_replacement
+from ._random import _cast_py, _our_rand_r_py, sample_without_replacement
 
-__all__ = ['sample_without_replacement']
+__all__ = ['sample_without_replacement', '_our_rand_r_py', '_cast_py']
 
 
 def random_choice_csc(n_samples, classes, class_probability=None,

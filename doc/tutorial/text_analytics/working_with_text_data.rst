@@ -367,7 +367,7 @@ classifier object into our pipeline::
   Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.9127...
+  0.9101...
 
 We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further
 utilities for more detailed performance analysis of the results::
