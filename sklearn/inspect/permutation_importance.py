@@ -3,6 +3,7 @@ import numpy as np
 
 from ..utils import check_random_state
 from ..metrics import check_scoring
+from ..compose._column_transformer import _get_column
 
 
 def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=30,
@@ -54,13 +55,22 @@ def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=30,
     scoring = check_scoring(estimator, scoring=scoring)
     scores = np.empty(shape=(X.shape[1], n_bootstrap), dtype=np.float)
 
+    if hasattr(X, 'iloc'):
+        X_iloc = X.iloc
+    else:
+        X_iloc = X
+
     baseline_score = scoring(estimator, X, y)
     for f_idx in range(X.shape[1]):
+        original_feature = X_iloc[:, f_idx].copy()
+
         for b_idx in range(n_bootstrap):
-            original_feature = X[:, f_idx].copy()
-            random_state.shuffle(X[:, f_idx])
+            X_perm = random_state.permutation(original_feature)
+            X_iloc[:, f_idx] = X_perm
+
             feature_score = scoring(estimator, X, y)
             scores[f_idx, b_idx] = baseline_score - feature_score
-            X[:, f_idx] = original_feature
+
+        X_iloc[:, f_idx] = original_feature
 
     return scores
