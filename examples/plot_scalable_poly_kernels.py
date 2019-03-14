@@ -50,11 +50,11 @@ X, Y = data["data"], data["target"]
 Y[Y != 2] = 0
 Y[Y == 2] = 1
 
-# Select 10,000 samples for training and 10,000 for testing.
+# Select 20,000 samples for training and 20,000 for testing.
 # To reproduce the results in the original paper, select 100,000.
 # Tensor Sketch paper (see chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size=10000,
-                                                    test_size=10000,
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size=20000,
+                                                    test_size=20000,
                                                     random_state=42)
 
 # Scale features to the range [0, 1] to match the format of the dataset in the
@@ -92,4 +92,5 @@ for n_components in [200, 500, 1000, 1500]:
 from sklearn.svm import SVC
 ksvm = SVC(C=500., kernel="poly", degree=4, coef0=0,
            gamma=1.).fit(X_train, Y_train)
-print(ksvm.score(X_test, Y_test))
+print("Kernel-SVM score on raw features: %.2f %%" %
+      (100*ksvm.score(X_test, Y_test)))
