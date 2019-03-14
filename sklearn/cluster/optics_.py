@@ -41,9 +41,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    min_samples : int (default=5)
-        The number of samples in a neighborhood for a point to be considered
-        as a core point.
+    min_samples : int > 1 or float between 0 and 1 (default=0.005)
+        Expressed as an absolute number or a fraction of the number of samples
+        (rounded to be at least 2). It's the number of samples in a
+        neighborhood for a point to be considered as a core point (inclusive of
+        the point itself). When ``cluster_method='xi'``, it's also the minimum
+        number of samples in an OPTICS cluster.
 
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
@@ -104,12 +107,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
     predecessor_correction : bool, optional (default=True)
         Correct clusters according to the predecessors calculated by OPTICS
         [2]_. This parameter has minimal effect on most datasets.
-        Used only when ``cluster_method='xi'``.
-
-    min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
-        Minimum number of samples in an OPTICS cluster, expressed as an
-        absolute number or a fraction of the number of samples (rounded
-        to be at least 2).
         Used only when ``cluster_method='xi'``.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
@@ -177,14 +174,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     """
 
-    def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
-                 metric_params=None, cluster_method='xi', eps=0.5, xi=0.05,
-                 predecessor_correction=True, min_cluster_size=.005,
-                 algorithm='auto', leaf_size=30, n_jobs=None):
+    def __init__(self, min_samples=0.005, max_eps=np.inf, metric='minkowski',
+                 p=2, metric_params=None, cluster_method='xi', eps=0.5,
+                 xi=0.05, predecessor_correction=True, algorithm='auto',
+                 leaf_size=30, n_jobs=None):
 
         self.max_eps = max_eps
         self.min_samples = min_samples
-        self.min_cluster_size = min_cluster_size
         self.algorithm = algorithm
         self.metric = metric
         self.metric_params = metric_params
@@ -219,21 +215,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         n_samples = len(X)
 
-        if self.min_cluster_size <= 0 or (self.min_cluster_size !=
-                                          int(self.min_cluster_size)
-                                          and self.min_cluster_size > 1):
-            raise ValueError('min_cluster_size must be a positive integer or '
+        if self.min_samples <= 0 or (self.min_samples !=
+                                     int(self.min_samples)
+                                     and self.min_samples > 1):
+            raise ValueError('min_samples must be a positive integer or '
                              'a float between 0 and 1. Got %r' %
-                             self.min_cluster_size)
-        elif self.min_cluster_size > n_samples:
-            raise ValueError('min_cluster_size must be no greater than the '
+                             self.min_samples)
+        elif self.min_samples > n_samples:
+            raise ValueError('min_samples must be no greater than the '
                              'number of samples (%d). Got %d' %
-                             (n_samples, self.min_cluster_size))
-
-        if self.min_samples > n_samples:
-            raise ValueError("Number of training samples (n_samples=%d) must "
-                             "be greater than min_samples (min_samples=%d) "
-                             "used for clustering." %
                              (n_samples, self.min_samples))
 
         if self.cluster_method not in ['dbscan', 'xi']:
@@ -254,9 +244,14 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 # Stability warning is documented in cluster_optics_dbscan
                 # method...
 
+        self.effective_min_samples_ = self.min_samples
+        if self.min_samples <= 1:
+            self.effective_min_samples_ = max(2, self.min_samples * n_samples)
+
         (self.ordering_, self.core_distances_, self.reachability_,
          self.predecessor_) = compute_optics_graph(
-             X=X, min_samples=self.min_samples, algorithm=self.algorithm,
+             X=X,
+             min_samples=self.effective_min_samples_, algorithm=self.algorithm,
              leaf_size=self.leaf_size, metric=self.metric,
              metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs,
              max_eps=self.max_eps)
@@ -268,8 +263,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
             # TODO: _ is the to-be-cluster_
             labels_, _ = cluster_optics_xi(self.reachability_,
                                            self.predecessor_, self.ordering_,
-                                           self.min_samples,
-                                           self.min_cluster_size, self.xi,
+                                           self.effective_min_samples_,
+                                           self.xi,
                                            self.predecessor_correction)
         elif self.cluster_method == 'dbscan':
             labels_ = cluster_optics_dbscan(self.reachability_,
@@ -330,7 +325,7 @@ def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
     X : array, shape (n_samples, n_features)
         The data.
 
-    min_samples : int (default=5)
+    min_samples : int > 1 or float between 0 and 1 (default=0.005)
         The number of samples in a neighborhood for a point to be considered
         as a core point.
 
@@ -554,7 +549,7 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
 
 
 def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
-                      min_cluster_size, xi=0.05, predecessor_correction=False):
+                      xi=0.05, predecessor_correction=False):
     """Automatically extract clusters according to the Xi-steep method.
 
     Parameters
@@ -568,15 +563,10 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
     ordering : array, shape (n_samples,)
         OPTICS ordered point indices (`ordering_`)
 
-    min_samples : integer
-       The same as the min_samples given to OPTICS. Up and down steep
-       regions can't have more then `min_samples` consecutive non-steep
-       points.
-
-    min_cluster_size : int > 1 or float between 0 and 1
-        Minimum number of samples in an OPTICS cluster, expressed as an
-        absolute number or a fraction of the number of samples (rounded
-        to be at least 2).
+    min_samples : int > 1 or float between 0 and 1 (default=0.005)
+       The same as the min_samples given to OPTICS. Up and down steep regions
+       cannot have more then ``min_samples`` consecutive non-steep points.
+       Also, clusters cannot be smaller than ``min_samples`` points.
 
     xi : float, between 0 and 1, optional (default=0.05)
         Determines the minimum steepness on the reachability plot that
@@ -600,8 +590,7 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
         smaller clusters.
     """
     clusters = _xi_cluster(reachability[ordering], predecessor[ordering], xi,
-                           min_samples, min_cluster_size,
-                           predecessor_correction)
+                           min_samples, predecessor_correction)
     labels = _extract_xi_labels(ordering, clusters)
     print("labels: ", labels[ordering])
     return labels, clusters
@@ -678,7 +667,7 @@ def _extend_downward(reachability_plot, start, xi_complement, min_samples,
     xi_complement : float, between 0 and 1
         The inverse xi, i.e. `1 - xi`
 
-    min_samples : integer
+    min_samples : int > 1 or float between 0 and 1 (default=0.005)
        The same as the min_samples given to OPTICS. Up and down steep
        regions can't have more then `min_samples` consecutive non-steep
        points.
@@ -743,7 +732,7 @@ def _extend_upward(reachability_plot, start, xi_complement, min_samples,
     xi_complement : float, between 0 and 1
         The inverse xi, i.e. `1 - xi`
 
-    min_samples : integer
+    min_samples : int > 1 or float between 0 and 1 (default=0.005)
        The same as the min_samples given to OPTICS. Up and down steep
        regions can't have more then `min_samples` consecutive non-steep
        points.
@@ -823,7 +812,7 @@ def _correct_predecessor(reachability_plot, predecessor, s, e):
 
 
 def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
-                min_cluster_size, predecessor_correction):
+                predecessor_correction):
     """Automatically extract clusters according to the Xi-steep method.
 
     This is rouphly an implementation of Figure 19 of the OPTICS paper.
@@ -843,15 +832,10 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
         reachability plot is defined by the ratio from one point to its
         successor being at most 1-xi.
 
-    min_samples : integer
+    min_samples : int > 1 or float between 0 and 1 (default=0.005)
        The same as the min_samples given to OPTICS. Up and down steep
        regions can't have more then `min_samples` consecutive non-steep
-       points.
-
-    min_cluster_size : int > 1 or float between 0 and 1
-        Minimum number of samples in an OPTICS cluster, expressed as an
-        absolute number or a fraction of the number of samples (rounded
-        to be at least 2).
+       points. Also, minimum number of samples in an OPTICS cluster.
 
     predecessor_correction : bool
         Correct clusters based on the calculated predecessors.
@@ -879,8 +863,8 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
     # this is fine since the last point is considered upward anyway
     reachability_plot = np.hstack((reachability_plot, np.inf))
 
-    if min_cluster_size <= 1:
-        min_cluster_size = max(2, min_cluster_size * n_samples)
+    if min_samples <= 1:
+        min_samples = max(2, min_samples * n_samples)
 
     xi_complement = 1 - xi
     sdas = []  # steep down areas, introduced in section 4.3.2 of the paper
@@ -965,7 +949,7 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
                     continue
 
                 # 3.a
-                if c_end - c_start + 1 < min_cluster_size:
+                if c_end - c_start < min_samples:
                     continue
                 print('min pts pass')
 
