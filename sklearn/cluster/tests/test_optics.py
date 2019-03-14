@@ -114,7 +114,8 @@ def test_extract_xi():
     X = X[order]
     expected_labels = expected_labels[order]
 
-    clust = OPTICS(min_samples=3, max_eps=np.inf, cluster_method='xi',
+    clust = OPTICS(min_samples=3, min_cluster_size=2,
+                   max_eps=np.inf, cluster_method='xi',
                    xi=0.1).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
@@ -126,7 +127,8 @@ def test_extract_xi():
     X = X[order]
     expected_labels = expected_labels[order]
 
-    clust = OPTICS(min_samples=3, max_eps=np.inf, cluster_method='xi',
+    clust = OPTICS(min_samples=3, min_cluster_size=3,
+                   max_eps=np.inf, cluster_method='xi',
                    xi=0.1).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
@@ -140,7 +142,8 @@ def test_extract_xi():
     X = X[order]
     expected_labels = expected_labels[order]
 
-    clust = OPTICS(min_samples=2, max_eps=np.inf, cluster_method='xi',
+    clust = OPTICS(min_samples=2, min_cluster_size=2,
+                   max_eps=np.inf, cluster_method='xi',
                    xi=0.04).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
@@ -175,7 +178,8 @@ def test_correct_number_of_clusters():
 
 def test_minimum_number_of_sample_check():
     # test that we check a minimum number of samples
-    msg = "min_samples must be no greater than the number of samples"
+    msg = ("Number of training samples (n_samples=1) must be greater than "
+           "min_samples (min_samples=10) used for clustering.")
 
     # Compute OPTICS
     X = [[1, 1]]
@@ -279,28 +283,29 @@ def test_min_samples_edge_case():
 
 
 # try arbitrary minimum sizes
-@pytest.mark.parametrize('min_samples', range(2, X.shape[0] // 10, 23))
-def test_min_cluster_size(min_samples):
+@pytest.mark.parametrize('min_cluster_size', range(2, X.shape[0] // 10, 23))
+def test_min_cluster_size(min_cluster_size):
     redX = X[::2]  # reduce for speed
-    clust = OPTICS(min_samples=min_samples,).fit(redX)
+    clust = OPTICS(min_samples=9, min_cluster_size=min_cluster_size).fit(redX)
     cluster_sizes = np.bincount(clust.labels_[clust.labels_ != -1])
     if cluster_sizes.size:
-        assert min(cluster_sizes) >= min_samples
-    # check behaviour is the same when min_samples is a fraction
-    clust_frac = OPTICS(min_samples=min_samples / redX.shape[0])
+        assert min(cluster_sizes) >= min_cluster_size
+    # check behaviour is the same when min_cluster_size is a fraction
+    clust_frac = OPTICS(min_samples=9,
+                        min_cluster_size=min_cluster_size / redX.shape[0])
     clust_frac.fit(redX)
     assert_array_equal(clust.labels_, clust_frac.labels_)
 
 
-@pytest.mark.parametrize('min_samples', [0, -1, 1.1, 2.2])
-def test_min_cluster_size_invalid(min_samples):
-    clust = OPTICS(min_samples=min_samples)
+@pytest.mark.parametrize('min_cluster_size', [0, -1, 1.1, 2.2])
+def test_min_cluster_size_invalid(min_cluster_size):
+    clust = OPTICS(min_cluster_size=min_cluster_size)
     with pytest.raises(ValueError, match="must be a positive integer or a "):
         clust.fit(X)
 
 
 def test_min_cluster_size_invalid2():
-    clust = OPTICS(min_samples=len(X) + 1)
+    clust = OPTICS(min_cluster_size=len(X) + 1)
     with pytest.raises(ValueError, match="must be no greater than the "):
         clust.fit(X)
 
