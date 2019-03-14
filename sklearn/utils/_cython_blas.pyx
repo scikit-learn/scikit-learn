@@ -11,7 +11,6 @@ from scipy.linalg.cython_blas cimport srot, drot
 from scipy.linalg.cython_blas cimport sgemv, dgemv
 from scipy.linalg.cython_blas cimport sger, dger
 from scipy.linalg.cython_blas cimport sgemm, dgemm
-from scipy.linalg.cython_blas cimport ssyrk, dsyrk
 
 
 ################

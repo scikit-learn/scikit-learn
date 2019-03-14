@@ -1,7 +1,6 @@
 # cython: language_level=3
 
 from cython cimport floating
-cimport numpy as np
 
 
 cpdef enum BLAS_Order:
