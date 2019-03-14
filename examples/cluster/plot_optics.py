@@ -38,7 +38,7 @@ C5 = [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)
 C6 = [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)
 X = np.vstack((C1, C2, C3, C4, C5, C6))
 
-clust = OPTICS(min_samples=.05, xi=.005)
+clust = OPTICS(min_samples=50, xi=.05, min_cluster_size=.05)
 
 # Run the fit
 clust.fit(X)
