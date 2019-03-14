@@ -50,14 +50,12 @@ X, Y = data["data"], data["target"]
 Y[Y != 2] = 0
 Y[Y == 2] = 1
 
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size=0.8,
-                                                    random_state=42)
-
-# Select 30,000 samples for training.
+# Select 10,000 samples for training and 10,000 for testing.
 # To reproduce the results in the original paper, select 100,000.
 # Tensor Sketch paper (see chbrown.github.io/kdd-2013-usb/kdd/p239.pdf)
-X_train = X_train[:30000]
-Y_train = Y_train[:30000]
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, train_size=10000,
+                                                    test_size=10000,
+                                                    random_state=42)
 
 # Scale features to the range [0, 1] to match the format of the dataset in the
 # LIBSVM webpage, and then normalize to unit lenght as done in the original
@@ -73,7 +71,7 @@ print("Linear SVM score on raw features: %.2f %%"
       % (100*lsvm.score(X_test, Y_test)))
 
 # Train linear SVMs on various numbers of PolynomialSampler features
-for n_components in [200, 500, 1000]:
+for n_components in [200, 500, 1000, 1500]:
 
     ps = PolynomialSampler(n_components=n_components,
                            degree=4).fit(X_train[0:1])
@@ -85,13 +83,13 @@ for n_components in [200, 500, 1000]:
     print("Linear SVM score on %d PolynomialSampler " % n_components +
           "features: %.2f %%" % (100*lsvm.score(X_test_ps, Y_test)))
 
-# Uncomment the following to train a kernelized SVM and see how well is
+# Train a kernelized SVM and see how well is
 # PolynomialSampler approximating the performance of the kernel
 # (may take a while, as SVC has a relatively poor scalability).
 # This should result in an accuracy of about 84% if 100,000 training
 # samples are used.
 
-# from sklearn.svm import SVC
-# ksvm = SVC(C=500., kernel="poly", degree=4, coef0=0,
-#            gamma=1.).fit(X_train, Y_train)
-# print(ksvm.score(X_test, Y_test))
+from sklearn.svm import SVC
+ksvm = SVC(C=500., kernel="poly", degree=4, coef0=0,
+           gamma=1.).fit(X_train, Y_train)
+print(ksvm.score(X_test, Y_test))
