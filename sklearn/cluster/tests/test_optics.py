@@ -253,6 +253,31 @@ def test_dbscan_optics_parity(eps, min_samples):
     assert percent_mismatch <= 0.05
 
 
+def test_min_samples_edge_case():
+    C1 = [[0, 0], [0, 0.1], [0,-.1]]
+    C2 = [[10,10], [10,9], [10,11]]
+    C3 = [[100, 100], [100,96], [100,106]]
+    X = np.vstack((C1, C2, C3))
+
+    expected_labels = np.r_[[0] * 3, [1] * 3, [2] * 3]
+    clust = OPTICS(min_samples=3,
+                   max_eps=7, cluster_method='xi',
+                   xi=0.04).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+    expected_labels = np.r_[[0] * 3, [1] * 3, [-1] * 3]
+    clust = OPTICS(min_samples=3,
+                   max_eps=3, cluster_method='xi',
+                   xi=0.04).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+    expected_labels = np.r_[[-1] * 9]
+    clust = OPTICS(min_samples=4,
+                   max_eps=3, cluster_method='xi',
+                   xi=0.04).fit(X)
+    assert_array_equal(clust.labels_, expected_labels)
+
+
 # try arbitrary minimum sizes
 @pytest.mark.parametrize('min_samples', range(2, X.shape[0] // 10, 23))
 def test_min_cluster_size(min_samples):

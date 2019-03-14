@@ -326,8 +326,8 @@ def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
         The data.
 
     min_samples : int > 1 or float between 0 and 1 (default=0.005)
-        The number of samples in a neighborhood for a point to be considered
-        as a core point.
+        The number of samples in a neighborhood (including the point itself)
+        for a point to be considered as a core point.
 
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
@@ -425,7 +425,7 @@ def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
     predecessor_ = np.empty(n_samples, dtype=int)
     predecessor_.fill(-1)
 
-    nbrs = NearestNeighbors(n_neighbors=min_samples,
+    nbrs = NearestNeighbors(n_neighbors=min_samples - 1,
                             algorithm=algorithm,
                             leaf_size=leaf_size,
                             metric=metric,
@@ -783,6 +783,8 @@ def _update_filter_sdas(sdas, mib, xi_complement):
     """Update steep down areas (SDAs) using the new
     maximum in between (mib) value, and the given inverse xi, i.e. `1 - xi`
     """
+    if np.isinf(mib):
+        return []
     res = [sda for sda in sdas if mib <= sda.maximum * xi_complement]
     for sda in res:
         sda.mib = max(sda.mib, mib)
@@ -877,6 +879,7 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
         print("index", index)
         # print("r", reachability_plot[index])
         mib = max(mib, reachability_plot[index])
+        print("mib:", mib)
         # print("mib up there:", mib)
 
         # check if a steep downward area starts
@@ -949,7 +952,7 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
                     continue
 
                 # 3.a
-                if c_end - c_start < min_samples:
+                if c_end - c_start + 1 < min_samples:
                     continue
                 print('min pts pass')
 
