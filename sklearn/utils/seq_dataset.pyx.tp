@@ -388,6 +388,7 @@ cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:
         max_2 = < np.uint32_t > RAND_R_MAX + 1
         print("max: %s" % max_0)
         print("max_1: %s" % max_1)
+        print("max_2: %s" % max_2)
         print("seed[0] modulo max %s" % (seed[0] % max_0))
         print("seed[0] modulo max_1 %s" % (seed[0] % max_1))
         print("seed[0] modulo max_2 %s" % (seed[0] % max_2))
