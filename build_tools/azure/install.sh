@@ -16,9 +16,6 @@ if [[ "$UNAMESTR" == "Darwin" ]]; then
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-
-    # avoid error due to multiple OpenMP libraries loaded simultaneously
-    # export KMP_DUPLICATE_LIB_OK=TRUE
 fi
 
 make_conda() {

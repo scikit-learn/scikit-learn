@@ -281,7 +281,13 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        ``scorer(estimator, X, y)`` which should return only
+        a single value.
+
+        Similar to :func:`cross_validate`
+        but only a single metric is permitted.
+
+        If None, the estimator's default scorer (if available) is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -876,10 +882,11 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
             float_min = np.finfo(predictions.dtype).min
             default_values = {'decision_function': float_min,
                               'predict_log_proba': float_min,
-                              'predict_proba': 0}
+                              'predict_proba': 0.0}
             predictions_for_all_classes = np.full((_num_samples(predictions),
                                                    n_classes),
-                                                  default_values[method])
+                                                  default_values[method],
+                                                  predictions.dtype)
             predictions_for_all_classes[:, estimator.classes_] = predictions
             predictions = predictions_for_all_classes
     return predictions, test

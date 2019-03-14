@@ -7,6 +7,8 @@
 #         Lars Buitinck
 #
 # License: BSD 3 clause
+#
+# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
 
 import numpy as np
 cimport numpy as np

@@ -11,12 +11,12 @@ from ..utils import check_random_state
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin, _UnstableOn32BitMixin
+from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(BaseEstimator, TransformerMixin, _UnstableOn32BitMixin):
+class KernelPCA(BaseEstimator, TransformerMixin):
     """Kernel Principal component analysis (KPCA)
 
     Non-linear dimensionality reduction through the use of kernels (see

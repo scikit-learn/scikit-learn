@@ -9,6 +9,7 @@ from ..metrics.cluster.supervised import mutual_info_score
 from ..neighbors import NearestNeighbors
 from ..preprocessing import scale
 from ..utils import check_random_state
+from ..utils.fixes import _astype_copy_false
 from ..utils.validation import check_X_y
 from ..utils.multiclass import check_classification_targets
 
@@ -274,7 +275,7 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
                                           with_mean=False, copy=False)
 
         # Add small noise to continuous features as advised in Kraskov et. al.
-        X = X.astype(float)
+        X = X.astype(float, **_astype_copy_false(X))
         means = np.maximum(1, np.mean(np.abs(X[:, continuous_mask]), axis=0))
         X[:, continuous_mask] += 1e-10 * means * rng.randn(
                 n_samples, np.sum(continuous_mask))

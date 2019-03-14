@@ -1,4 +1,4 @@
-# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True, initializedcheck=False
+# cython: profile=True, boundscheck=False, wraparound=False, cdivision=True
 # cython: language_level=3
 #
 # Author: Andreas Mueller
