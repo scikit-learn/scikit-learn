@@ -316,7 +316,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         The scorer callable object / function must have its signature as
         ``scorer(estimator, X, y)``.
 
-        If ``None`` the estimator's default scorer is used.
+        If ``None`` the estimator's score method is used.
 
     verbose : int
         Verbosity level.
@@ -870,7 +870,7 @@ class GridSearchCV(BaseSearchCV):
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None, the estimator's default scorer (if available) is used.
+        If None, the estimator's score method is used.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
@@ -1211,7 +1211,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None, the estimator's default scorer (if available) is used.
+        If None, the estimator's score method is used.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
