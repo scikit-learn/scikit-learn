@@ -63,6 +63,14 @@ def test_invalid_params(max_iter, threshold):
         st.fit(X_train, y_train)
 
 
+def test_invalid_params_selection_crit():
+    st = SelfTrainingClassifier(KNeighborsClassifier(),
+                                selection_criterion='foo')
+
+    with pytest.raises(ValueError, match="selection_criterion must be either"):
+        st.fit(X_train, y_train)
+
+
 def test_warns_n_best():
     st = SelfTrainingClassifier(KNeighborsClassifier(),
                                 selection_criterion='n_best',
