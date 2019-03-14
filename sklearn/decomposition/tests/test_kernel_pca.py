@@ -157,7 +157,8 @@ def test_remove_zero_eig():
 
 def test_leave_zero_eig():
     """This test checks that fit().transform() returns the same result as
-    fit_transform() in case of non-removed zero eigenvalue"""
+    fit_transform() in case of non-removed zero eigenvalue.
+    Non-regression test for issue #12141 (PR #12143)"""
     X_fit = np.array([[1, 1], [0, 0]])
 
     # Assert that even with all np warnings on, there is no div by zero warning
