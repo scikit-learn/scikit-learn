@@ -16,6 +16,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.compose import make_column_transformer
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.compose import ColumnTransformer
 from sklearn import set_config
 
 
@@ -321,52 +322,59 @@ def test_bruteforce_ellipsis():
     # make sure that ellipsis is done without considering the blank
     # characters (see issue 13372). Also, this test covers the case when the
     # left and right side of the ellipsis aren't on the same line.
-    l = ['hello']
-    col_trans_of_pipeline = make_column_transformer(
-        (
-            make_pipeline(
-                SimpleImputer(strategy="constant", fill_value='missing'),
-                OneHotEncoder(handle_unknown='ignore')),
-            l.index
-        )
-    )
-    huge_pipe = make_pipeline(col_trans_of_pipeline, LogisticRegression())
+    numeric_features = ['age', 'fare']
+    numeric_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler())])
 
-    expected="""
+    categorical_features = ['embarked', 'sex', 'pclass']
+    categorical_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
+        ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', numeric_transformer, numeric_features),
+            ('cat', categorical_transformer, categorical_features)])
+
+    clf = Pipeline(steps=[('preprocessor', preprocessor),
+                        ('classifier', LogisticRegression(solver='lbfgs'))])
+
+    expected = """
 Pipeline(memory=None,
-         steps=[('columntransformer',
+         steps=[('preprocessor',
                  ColumnTransformer(n_jobs=None, remainder='drop',
                                    sparse_threshold=0.3,
                                    transformer_weights=None,
-                                   transformers=[('pipeline',
+                                   transformers=[('num',
                                                   Pipeline(memory=None,
-                                                           steps=[('simpleimputer',
+                                                           steps=[('imputer',
                                                                    SimpleImputer(copy=True,
-                                                                                 fill_value='missing',
+                                                                                 fill_value=None,
                                                                                  missing_values=nan,
-                                                                                 strategy='constant',
+                                                                                 strategy='median',
                                                                                  verbose=0)),
-                                                                  ('onehotencoder',
-                                                                   OneHotEncoder(categorica...
+                                                                  ('scaler',
+                                                                   StandardScaler(copy=True,
+                                                                                  with_mean=True,
+                                                                                  with_std=True)...
+                                                                                 dtype=<class 'numpy.float64'>,
                                                                                  handle_unknown='ignore',
                                                                                  n_values=None,
                                                                                  sparse=True))]),
-                                                  <built-in method index of list object at some_address>)])),
-                ('logisticregression',
+                                                  ['embarked', 'sex',
+                                                   'pclass'])])),
+                ('classifier',
                  LogisticRegression(C=1.0, class_weight=None, dual=False,
                                     fit_intercept=True, intercept_scaling=1,
                                     l1_ratio=None, max_iter=100,
                                     multi_class='warn', n_jobs=None,
                                     penalty='l2', random_state=None,
-                                    solver='warn', tol=0.0001, verbose=0,
+                                    solver='lbfgs', tol=0.0001, verbose=0,
                                     warm_start=False))])"""
-    expected = expected[1:]  # remove first \n
-    repr_ = repr(huge_pipe)
-    # Remove address of '<method index of list...>' for reproducibility
-    repr_ = re.sub('method index of list object at 0x.*>',
-                   'method index of list object at some_address>', repr_)
-    assert expected == repr_
 
+    expected = expected[1:]  # remove first \n
+    assert expected == repr(clf)
 
     # test with very small N_CHAR_MAX
     # Note that N_CHAR_MAX is not strictly enforced, but it's normal: to avoid
@@ -376,27 +384,41 @@ Pipeline(memory=None,
 Pi...
                                     warm_start=False))])"""
     expected = expected[1:]  # remove first \n
-    assert huge_pipe.__repr__(N_CHAR_MAX=4) == expected
+    assert clf.__repr__(N_CHAR_MAX=4) == expected
 
     # test with N_CHAR_MAX == number of non-blank characters: this should
     # render the full repr.
-    full_repr = huge_pipe.__repr__(N_CHAR_MAX=float('inf'))
+    full_repr = clf.__repr__(N_CHAR_MAX=float('inf'))
     n_nonblank = len(''.join(full_repr.split()))
-    expected = """
+    repr_ = clf.__repr__(N_CHAR_MAX=n_nonblank)
+    expected="""
 Pipeline(memory=None,
-         steps=[('columntransformer',
+         steps=[('preprocessor',
                  ColumnTransformer(n_jobs=None, remainder='drop',
                                    sparse_threshold=0.3,
                                    transformer_weights=None,
-                                   transformers=[('pipeline',
+                                   transformers=[('num',
                                                   Pipeline(memory=None,
-                                                           steps=[('simpleimputer',
+                                                           steps=[('imputer',
+                                                                   SimpleImputer(copy=True,
+                                                                                 fill_value=None,
+                                                                                 missing_values=nan,
+                                                                                 strategy='median',
+                                                                                 verbose=0)),
+                                                                  ('scaler',
+                                                                   StandardScaler(copy=True,
+                                                                                  with_mean=True,
+                                                                                  with_std=True))]),
+                                                  ['age', 'fare']),
+                                                 ('cat',
+                                                  Pipeline(memory=None,
+                                                           steps=[('imputer',
                                                                    SimpleImputer(copy=True,
                                                                                  fill_value='missing',
                                                                                  missing_values=nan,
                                                                                  strategy='constant',
                                                                                  verbose=0)),
-                                                                  ('onehotencoder',
+                                                                  ('onehot',
                                                                    OneHotEncoder(categorical_features=None,
                                                                                  categories=None,
                                                                                  drop=None,
@@ -404,20 +426,17 @@ Pipeline(memory=None,
                                                                                  handle_unknown='ignore',
                                                                                  n_values=None,
                                                                                  sparse=True))]),
-                                                  <built-in method index of list object at some_address>)])),
-                ('logisticregression',
+                                                  ['embarked', 'sex',
+                                                   'pclass'])])),
+                ('classifier',
                  LogisticRegression(C=1.0, class_weight=None, dual=False,
                                     fit_intercept=True, intercept_scaling=1,
                                     l1_ratio=None, max_iter=100,
                                     multi_class='warn', n_jobs=None,
                                     penalty='l2', random_state=None,
-                                    solver='warn', tol=0.0001, verbose=0,
+                                    solver='lbfgs', tol=0.0001, verbose=0,
                                     warm_start=False))])"""
     expected = expected[1:]  # remove first \n
-    # Remove address of '<method index of list...>' for reproducibility
-    repr_ = huge_pipe.__repr__(N_CHAR_MAX=n_nonblank)
-    repr_ = re.sub('method index of list object at 0x.*>',
-                   'method index of list object at some_address>', repr_)
     assert repr_ == expected
     assert '...' not in repr_
 
@@ -426,44 +445,56 @@ Pipeline(memory=None,
     # right side of the ellispsis are on the same line. In this case we don't
     # want to expend the whole line of the right side, just add the ellispsis
     # between the 2 sides.
-    full_repr = huge_pipe.__repr__(N_CHAR_MAX=float('inf'))
+    full_repr = clf.__repr__(N_CHAR_MAX=float('inf'))
     n_nonblank = len(''.join(full_repr.split()))
+    repr_ = clf.__repr__(N_CHAR_MAX=n_nonblank - 1)
     expected = """
 Pipeline(memory=None,
-         steps=[('columntransformer',
+         steps=[('preprocessor',
                  ColumnTransformer(n_jobs=None, remainder='drop',
                                    sparse_threshold=0.3,
                                    transformer_weights=None,
-                                   transformers=[('pipeline',
+                                   transformers=[('num',
                                                   Pipeline(memory=None,
-                                                           steps=[('simpleimputer',
+                                                           steps=[('imputer',
+                                                                   SimpleImputer(copy=True,
+                                                                                 fill_value=None,
+                                                                                 missing_values=nan,
+                                                                                 strategy='median',
+                                                                                 verbose=0)),
+                                                                  ('scaler',
+                                                                   StandardScaler(copy=True,
+                                                                                  with_mean=True,
+                                                                                  with_std=True))]),
+                                                  ['age', 'fare']),
+                                                 ('cat',
+                                                  Pipeline(memory=None,
+                                                           steps=[('imputer',
                                                                    SimpleImputer(copy=True,
                                                                                  fill_value='missing',
-                                                                                 missing_values=nan,
+                                                                                 missing_values=n...n,
                                                                                  strategy='constant',
                                                                                  verbose=0)),
-                                                                  ('onehotencoder',
+                                                                  ('onehot',
                                                                    OneHotEncoder(categorical_features=None,
                                                                                  categories=None,
                                                                                  drop=None,
-                                                                                 d...pe=<class 'numpy.float64'>,
+                                                                                 dtype=<class 'numpy.float64'>,
                                                                                  handle_unknown='ignore',
                                                                                  n_values=None,
                                                                                  sparse=True))]),
-                                                  <built-in method index of list object at some_address>)])),
-                ('logisticregression',
+                                                  ['embarked', 'sex',
+                                                   'pclass'])])),
+                ('classifier',
                  LogisticRegression(C=1.0, class_weight=None, dual=False,
                                     fit_intercept=True, intercept_scaling=1,
                                     l1_ratio=None, max_iter=100,
                                     multi_class='warn', n_jobs=None,
                                     penalty='l2', random_state=None,
-                                    solver='warn', tol=0.0001, verbose=0,
+                                    solver='lbfgs', tol=0.0001, verbose=0,
                                     warm_start=False))])"""
+
     expected = expected[1:]  # remove first \n
-    # Remove address of '<method index of list...>' for reproducibility
-    repr_ = huge_pipe.__repr__(N_CHAR_MAX=n_nonblank - 1)
-    repr_ = re.sub('method index of list object at 0x.*>',
-                   'method index of list object at some_address>', repr_)
     assert repr_ == expected
     assert '...' in repr_
 
