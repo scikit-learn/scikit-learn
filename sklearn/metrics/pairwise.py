@@ -195,8 +195,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     -------
     distances : array, shape (n_samples_1, n_samples_2)
 
-    Note
-    ----
+    Notes
+    -----
     When ``n_features > 16``, the euclidean distance between a pair of row
     vector x and y is computed as::
 
