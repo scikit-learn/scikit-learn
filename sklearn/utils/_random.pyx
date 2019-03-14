@@ -13,7 +13,7 @@ This module complements missing features of ``numpy.random``.
 
 The module contains:
     * Several algorithms to sample integers without replacement.
-
+    * Fast rand_r alternative based on xor shifts
 """
 cimport cython
 
@@ -22,6 +22,8 @@ cimport numpy as np
 np.import_array()
 
 from sklearn.utils import check_random_state
+
+cdef UINT32_t DEFAULT_SEED = 1
 
 
 cpdef _sample_without_replacement_check_input(np.int_t n_population,
@@ -310,3 +312,16 @@ cpdef sample_without_replacement(np.int_t n_population,
     else:
         raise ValueError('Expected a method name in %s, got %s. '
                          % (all_methods, method))
+
+
+
+# rand_r replacement using a 32bit XorShift generator
+# See http://www.jstatsoft.org/v08/i14/paper for details
+cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
+    # seed shouldn't ever be 0.
+    if (seed[0] == 0): seed[0] = DEFAULT_SEED
+    seed[0] ^= <UINT32_t>(seed[0] << 13)
+    seed[0] ^= <UINT32_t>(seed[0] >> 17)
+    seed[0] ^= <UINT32_t>(seed[0] << 5)
+
+    return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
