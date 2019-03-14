@@ -74,14 +74,19 @@ default_base = {'quantile': .3,
                 'damping': .9,
                 'preference': -200,
                 'n_neighbors': 10,
-                'n_clusters': 3}
+                'n_clusters': 3,
+                'min_samples': .05,
+                'xi': 0.05}
 
 datasets = [
     (noisy_circles, {'damping': .77, 'preference': -240,
-                     'quantile': .2, 'n_clusters': 2}),
+                     'quantile': .2, 'n_clusters': 2,
+                     'min_samples': 0.01, 'xi': 0.25}),
     (noisy_moons, {'damping': .75, 'preference': -220, 'n_clusters': 2}),
-    (varied, {'eps': .18, 'n_neighbors': 2}),
-    (aniso, {'eps': .15, 'n_neighbors': 2}),
+    (varied, {'eps': .18, 'n_neighbors': 2,
+              'min_samples': 0.05, 'xi': 0.001}),
+    (aniso, {'eps': .15, 'n_neighbors': 2,
+             'min_samples': 0.1, 'xi': 0.001}),
     (blobs, {}),
     (no_structure, {})]
 
@@ -116,7 +121,8 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         n_clusters=params['n_clusters'], eigen_solver='arpack',
         affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=params['eps'])
-    optics = cluster.OPTICS(min_samples=30)
+    optics = cluster.OPTICS(min_samples=params['min_samples'],
+                            xi=params['xi'])
     affinity_propagation = cluster.AffinityPropagation(
         damping=params['damping'], preference=params['preference'])
     average_linkage = cluster.AgglomerativeClustering(
@@ -125,7 +131,6 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     birch = cluster.Birch(n_clusters=params['n_clusters'])
     gmm = mixture.GaussianMixture(
         n_components=params['n_clusters'], covariance_type='full')
-
     clustering_algorithms = (
         ('MiniBatchKMeans', two_means),
         ('AffinityPropagation', affinity_propagation),
