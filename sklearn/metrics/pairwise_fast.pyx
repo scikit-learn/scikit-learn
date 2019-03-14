@@ -101,8 +101,14 @@ cdef floating _euclidean_dense_dense_exact_1d(floating *x,
         floating tmp = 0.0
         floating result = 0.0
 
-    for i in range(n_features):
-        tmp = x[i * incx] - y[i * incy]
-        result += tmp * tmp
+    if incx == incy == 1:
+        # special case for c contiguous arrays for better vectorization.
+        for i in range(n_features):
+            tmp = x[i] - y[i]
+            result += tmp * tmp
+    else:
+        for i in range(n_features):
+            tmp = x[i * incx] - y[i * incy]
+            result += tmp * tmp
 
     return result
