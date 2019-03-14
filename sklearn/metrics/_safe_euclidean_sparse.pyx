@@ -16,13 +16,14 @@ ctypedef fused INT:
 def _euclidean_sparse_dense_exact(floating[::1] X_data,
                                   INT[::1] X_indices,
                                   INT[::1] X_indptr,
-                                  np.ndarray[floating, ndim=2, mode='c'] Y,
+                                  np.ndarray[floating, ndim=2] Y,
                                   floating[::1] y_squared_norms):
     """Euclidean distances between X (CSR matrix) and Y (dense)."""
     cdef:
         int n_samples_X = X_indptr.shape[0] - 1
         int n_samples_Y = Y.shape[0]
         int n_features = Y.shape[1]
+        int incy = Y.strides[1] / Y.itemsize
 
         int i, j
 
@@ -35,6 +36,7 @@ def _euclidean_sparse_dense_exact(floating[::1] X_data,
                 &X_indices[X_indptr[i]],
                 X_indptr[i + 1] - X_indptr[i],
                 &Y[j, 0],
+                incy,
                 y_squared_norms[j])
 
     return np.asarray(D)
@@ -44,6 +46,7 @@ cdef floating _euclidean_sparse_dense_exact_1d(floating *x_data,
                                                INT *x_indices,
                                                int x_nnz,
                                                floating *y,
+                                               int incy,
                                                floating y_squared_norm) nogil:
     """Euclidean distance between vectors x sparse and y dense"""
     cdef:
@@ -55,11 +58,11 @@ cdef floating _euclidean_sparse_dense_exact_1d(floating *x_data,
     
     # Split the loop to avoid unsafe compiler auto optimizations
     for i in range(x_nnz):
-        yi = y[x_indices[i]]
+        yi = y[x_indices[i] * incy]
         partial_y_squared_norm += yi * yi
 
     for i in range(x_nnz):
-        tmp = x_data[i] - y[x_indices[i]]
+        tmp = x_data[i] - y[x_indices[i] * incy]
         result += tmp * tmp 
 
     result += y_squared_norm - partial_y_squared_norm

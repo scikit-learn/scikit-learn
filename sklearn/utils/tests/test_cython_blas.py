@@ -14,10 +14,8 @@ from sklearn.utils._cython_blas import _rot_memview
 from sklearn.utils._cython_blas import _gemv_memview
 from sklearn.utils._cython_blas import _ger_memview
 from sklearn.utils._cython_blas import _gemm_memview
-from sklearn.utils._cython_blas import _syrk_memview
 from sklearn.utils._cython_blas import RowMajor, ColMajor
 from sklearn.utils._cython_blas import Trans, NoTrans
-from sklearn.utils._cython_blas import Upper, Lower
 
 cython = pytest.importorskip("cython")
 
@@ -224,29 +222,3 @@ def test_gemm(dtype, opA, transA, opB, transB, order):
     gemm(transA, transB, alpha, A, B, beta, C)
 
     assert_allclose(C, expected, rtol=RTOL[dtype])
-
-
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("idx, uplo",
-                         [(np.triu_indices, Upper), (np.tril_indices, Lower)],
-                         ids=["Upper", "Lower"])
-@pytest.mark.parametrize("op, trans",
-                         [(_no_op, NoTrans), (np.transpose, Trans)],
-                         ids=["NoTrans", "Trans"])
-@pytest.mark.parametrize("order", [RowMajor, ColMajor],
-                         ids=["RowMajor", "ColMajor"])
-def test_syrk(dtype, idx, uplo, op, trans, order):
-    syrk = _syrk_memview[NUMPY_TO_CYTHON[dtype]]
-
-    rng = np.random.RandomState(0)
-    A = np.asarray(op(rng.random_sample((20, 10)).astype(dtype, copy=False)),
-                   order=ORDER[order])
-    C = np.asarray(rng.random_sample((20, 20)).astype(dtype, copy=False),
-                   order=ORDER[order])
-    alpha, beta = 2.5, -0.5
-
-    expected = alpha * op(A).dot(op(A.T)) + beta * C
-    syrk(uplo, trans, alpha, A, beta, C)
-
-    indices = idx(20)
-    assert_allclose(C[indices], expected[indices], rtol=RTOL[dtype])

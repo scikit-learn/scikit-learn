@@ -13,9 +13,7 @@ cimport numpy as np
 from cython cimport floating
 from libc.string cimport memset
 
-from ..utils._cython_blas cimport Trans, NoTrans, Upper, Lower
 from ..utils._cython_blas cimport _asum
-from ..utils._cython_blas cimport _syrk_helper
 
 
 np.import_array()
@@ -71,13 +69,15 @@ def _sparse_manhattan(floating[::1] X_data, int[:] X_indices, int[:] X_indptr,
                 D[ix, iy] = _asum(n_features, &row[0], 1)
 
 
-def _euclidean_dense_dense_exact(np.ndarray[floating, ndim=2, mode='c'] X,
-                                 np.ndarray[floating, ndim=2, mode='c'] Y):
+def _euclidean_dense_dense_exact(np.ndarray[floating, ndim=2] X,
+                                 np.ndarray[floating, ndim=2] Y):
     cdef:
         int n_samples_X = X.shape[0]
         int n_samples_Y = Y.shape[0]
         int n_features = X.shape[1]
-    
+        int incx = X.strides[1] / X.itemsize
+        int incy = Y.strides[1] / Y.itemsize
+
         int i, j 
 
         floating[:, ::1] D = np.empty((n_samples_X, n_samples_Y), X.dtype)
@@ -85,13 +85,15 @@ def _euclidean_dense_dense_exact(np.ndarray[floating, ndim=2, mode='c'] X,
     for i in range(n_samples_X):
         for j in range(n_samples_Y):
             D[i, j] = _euclidean_dense_dense_exact_1d(
-                &X[i, 0], &Y[j, 0], n_features)
+                &X[i, 0], incx, &Y[j, 0], incy, n_features)
         
     return np.asarray(D)
 
 
 cdef floating _euclidean_dense_dense_exact_1d(floating *x,
+                                              int incx,
                                               floating *y,
+                                              int incy,
                                               int n_features) nogil:
     """Euclidean distance between x dense and y dense"""
     cdef:
@@ -100,33 +102,7 @@ cdef floating _euclidean_dense_dense_exact_1d(floating *x,
         floating result = 0.0
 
     for i in range(n_features):
-        tmp = x[i] - y[i]
+        tmp = x[i * incx] - y[i * incy]
         result += tmp * tmp
 
     return result
-
-
-def _euclidean_dense_dense_fast_symmetric(np.ndarray[floating, ndim=2] X,
-                                          floating[::1] x_squared_norms):
-    cdef:
-        int n_samples_X = X.shape[0]
-        int features = X.shape[1]
-
-        int i, j
-    
-        floating[:, :] D = np.empty(
-            (n_samples_X, n_samples_X), X.dtype,
-             order=('C' if X.flags['C_CONTIGUOUS'] else 'F'))
-    
-    # the distance matrix being symmetric, we only need to compute half of it.
-    _syrk_helper(Upper, NoTrans, -2, X, 0, D)
-
-    for i in range(n_samples_X):
-        for j in range(i):
-            D[i, j] = D[j, i]
-        D[i, i] = 0
-        for j in range(i + 1, n_samples_X):
-            D[i, j] += x_squared_norms[i] + x_squared_norms[j]
-            D[i, j] = D[i, j]
-    
-    return np.asarray(D)

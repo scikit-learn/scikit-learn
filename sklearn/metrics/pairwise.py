@@ -31,7 +31,6 @@ from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from .pairwise_fast import _euclidean_dense_dense_exact
-from .pairwise_fast import _euclidean_dense_dense_fast_symmetric
 from ._safe_euclidean_sparse import _euclidean_sparse_dense_exact
 
 
@@ -255,15 +254,9 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
         # if dtype is already float64, no need to chunk and upcast
         else:
-            if X is Y and not issparse(X):
-                # In this case the distance matrix is symmetric, so we only
-                # need to compute half of it. When X is dense, we can benefit
-                # from the BLAS triangular matrix matrix multiplication `syrk`.
-                distances = _euclidean_dense_dense_fast_symmetric(X, XX)
-            else:
-                distances = - 2 * safe_sparse_dot(X, Y.T, dense_output=True)
-                distances += XX[:, np.newaxis]
-                distances += YY[np.newaxis, :]
+            distances = - 2 * safe_sparse_dot(X, Y.T, dense_output=True)
+            distances += XX[:, np.newaxis]
+            distances += YY[np.newaxis, :]
 
         # ensure no negative squared distance.
         np.maximum(distances, 0, out=distances)
@@ -271,13 +264,6 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     # For n_features <= 32, we use the 'exact' method, i.e. the usual method,
     # d(x,y)² = ||x - y||².
     else:
-
-        # distances being between rows of X and Y, it's more efficient to work
-        # on C-contiguous arrays
-        if not issparse(X):
-            X = np.asarray(X, order='C')
-        if not issparse(Y):
-            Y = np.asarray(Y, order='C')
 
         # Euclidean distance between 2 sparse vectors is very slow. It's much
         # faster to densify one. We densify the smaller one for lower memory
