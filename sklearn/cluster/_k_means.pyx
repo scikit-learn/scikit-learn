@@ -69,7 +69,7 @@ cdef floating _euclidean_sparse_dense(floating[::1] a_data,
 
     if result < 0: result = 0.0
 
-    return result is squared else sqrt(result)
+    return result if squared else sqrt(result)
 
 
 cpdef floating _inertia_dense(np.ndarray[floating, ndim=2, mode='c'] X,
