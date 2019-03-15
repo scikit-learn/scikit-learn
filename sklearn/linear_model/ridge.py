@@ -1206,17 +1206,6 @@ class _WIPNewRidgeGCV(_RidgeGCV):
         hat_diag = _sparse_multidot_diag(X, A, Xm)
         return (1 - hat_diag) / alpha, (y - y_pred) / alpha
 
-    def fit(self, X, y, sample_weight=None):
-        # if (sparse.issparse(X) and (X.shape[0] > X.shape[1])
-        #         and self.fit_intercept and self.gcv_mode != 'eigen'):
-        #     warnings.warn(
-        #         'Cannot use an SVD of X if X is sparse '
-        #         'and fit_intercept is true. will therefore set '
-        #         'gcv_mode to "eigen", which can cause performance issues '
-        #         'if n_samples is much larger than n_features')
-        super().fit(X, y, sample_weight=sample_weight)
-        return self
-
 
 def _sparse_multidot_diag(X, A, Xm):
     batch_size = X.shape[1]
