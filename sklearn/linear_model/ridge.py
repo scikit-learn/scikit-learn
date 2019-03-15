@@ -1178,7 +1178,6 @@ class _WIPNewRidgeGCV(_RidgeGCV):
         return s, V, X
 
     def _errors_and_values_svd_helper(self, alpha, y, s, V, X):
-        print('sparse svd: ', alpha)
         n, p = X.shape
         w = 1 / (s + alpha)
         A = (V * w).dot(V.T)
