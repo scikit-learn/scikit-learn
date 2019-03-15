@@ -757,8 +757,7 @@ target neighbors than to any differently-labeled point by a large margin,
 thereby enclosing the target neighbors in a sphere around the reference
 sample. Data samples from different classes that violate this margin are
 called "impostors". The second goal is to minimize the distances of each
-sample to its target neighbors, which can be seen as some sort of
-regularization.
+sample to its target neighbors, which can be seen as a form of regularization.
 
 Classification
 --------------
@@ -829,17 +828,18 @@ Dimensionality reduction
 ------------------------
 
 :class:`LargeMarginNearestNeighbor` can be used to perform supervised
-dimensionality reduction. The input data are projected onto a linear subspace
+dimensionality reduction. The input data are mapped to a linear subspace
 consisting of the directions which minimize the LMNN objective. Unlike
-unsupervised methods like PCA and ICA, which aim to maximize the
-independence of components, LMNN aims to find components that maximize the
-nearest neighbors classification accuracy of the projected inputs.
-The desired dimensionality can be set using the parameter ``n_components``.
-For instance, the following shows a comparison of dimensionality reduction
-with Principal Component Analysis (:class:`sklearn.decomposition.PCA`),
-Linear Discriminant Analysis (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
-and Large Margin Nearest Neighbor (:class:`LargeMarginNearestNeighbor`) on the
-Olivetti dataset, a dataset with size :math:`n_{samples} = 400` and :math:`n_{features} = 64 \times 64 = 4096`.
+unsupervised methods which aim to maximize the uncorrelatedness (PCA) or even
+independence (ICA) of the components, LMNN aims to find components that
+maximize the nearest neighbors classification accuracy of the transformed
+inputs. The desired output dimensionality can be set using the parameter
+``n_components``. For instance, the following shows a comparison of
+dimensionality reduction with Principal Component Analysis (:class:`sklearn
+.decomposition.PCA`), Linear Discriminant Analysis (:class:`sklearn
+.discriminant_analysis.LinearDiscriminantAnalysis`) and Large Margin Nearest
+Neighbor (:class:`LargeMarginNearestNeighbor`) on the Olivetti dataset, a
+dataset with size :math:`n_{samples} = 400` and :math:`n_{features} = 64 \times 64 = 4096`.
 The data set is splitted in a training and test set of equal size. For
 evaluation the 3-nearest neighbor classification accuracy is computed on the
 2-dimensional embedding found by each method. Each data sample belongs to one

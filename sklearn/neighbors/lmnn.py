@@ -19,14 +19,14 @@ from six import integer_types, string_types
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors
 from ..decomposition import PCA
-from ..utils import gen_batches
+from ..exceptions import ConvergenceWarning
+from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.extmath import _euclidean_distances_without_checks
 from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import (check_is_fitted, check_array, check_X_y,
                                 check_scalar)
-from ..exceptions import ConvergenceWarning
 
 
 class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
@@ -45,7 +45,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         Number of neighbors to use as target neighbors for each of the samples.
 
     n_components : int, optional (default=None)
-        Preferred dimensionality of the embedding.
+        Preferred dimensionality of the transformed samples.
         If None it is inferred from ``init``.
 
     init : string or numpy array, optional (default='pca')
@@ -132,9 +132,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     random_state : int or numpy.RandomState or None, optional (default=None)
         A pseudo random number generator object or a seed for it if int.
-        Used to subsample the impostors if they exceed ``max_impostors`` and
-        during the initialization of the linear transformation if PCA is
-        used as initialization method (``init``='pca').
+        Randomness arises from subsampling the impostors if they exceed
+        ``max_impostors`` and from initializing the linear transformation
+        if PCA is used as initialization method (``init``='pca').
 
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
@@ -291,7 +291,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         elif self.impostor_store == 'list':
             use_sparse = False
         else:
-            # auto: Use a heuristic based on the data set size
+            # 'auto': Use a heuristic based on the data set size
             use_sparse = X.shape[0] > 6500
 
         # Create a dictionary of parameters to be passed to the optimizer
@@ -343,7 +343,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_embedded : array, shape (n_samples, n_components)
+        X_transformed : array, shape (n_samples, n_components)
             The data samples transformed.
 
         Raises
@@ -353,8 +353,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Notes
         -----
-        A simple dot product is necessary and sufficient to project the
-        inputs onto the learned subspace. Orthogonality of the components is
+        A simple dot product is necessary and sufficient to transform the
+        inputs into the learned subspace. Orthogonality of the components is
         only enforced upon initialization if PCA is used (``init``='pca').
 
         """
@@ -374,7 +374,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_embedded : array, shape (n_samples, n_components)
+        X_transformed : array, shape (n_samples, n_components)
             The data samples transformed.
 
         """
@@ -446,12 +446,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         classes_inverse_non_singleton = classes_inverse[~mask_singleton_class]
 
-        # Check the preferred embedding dimensionality
+        # Check the preferred dimensionality of the transformed samples
         if self.n_components is not None:
             check_scalar(self.n_components, 'n_components', integer_types, 1)
 
             if self.n_components > X.shape[1]:
-                raise ValueError('The preferred embedding dimensionality '
+                raise ValueError('The preferred output dimensionality '
                                  '`n_components` ({}) cannot be greater '
                                  'than the given data dimensionality ({})!'
                                  .format(self.n_components, X.shape[1]))
@@ -509,7 +509,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             if self.n_components is not None:
                 # Assert that self.n_components = init.shape[0]
                 if self.n_components != init.shape[0]:
-                    raise ValueError('The preferred embedding dimensionality '
+                    raise ValueError('The preferred output dimensionality '
                                      '`n_components` ({}) does not match '
                                      'the output dimensionality of the given '
                                      'linear transformation `init` ({})!'
@@ -651,7 +651,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             (sample, target_neighbor) pairs.
         """
 
-        t_grad_static = time.time()
+        start_time = time.time()
         if self.verbose:
             print('[{}] Computing static part of the gradient...'.format(
                 self.__class__.__name__))
@@ -664,9 +664,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         grad_target_neighbors = _sum_weighted_outer_differences(X, tn_graph)
 
         if self.verbose:
-            t_grad_static = time.time() - t_grad_static
+            duration = time.time() - start_time
             print('[{}] Computed static part of the gradient in {:5.2f}s.'
-                  .format(self.__class__.__name__, t_grad_static))
+                  .format(self.__class__.__name__, duration))
 
         return grad_target_neighbors
 
@@ -737,14 +737,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                                 cls_name, '-' * len(header)))
 
         t_funcall = time.time()
-        X_embedded = self._transform_without_checks(X)
+        X_transformed = self._transform_without_checks(X)
 
         # Compute squared distances to the target neighbors
         n_neighbors = target_neighbors.shape[1]
         dist_tn = np.zeros((n_samples, n_neighbors))
         for k in range(n_neighbors):
-            dist_tn[:, k] = row_norms(X_embedded -
-                                      X_embedded[target_neighbors[:, k]],
+            dist_tn[:, k] = row_norms(X_transformed -
+                                      X_transformed[target_neighbors[:, k]],
                                       squared=True)
 
         # Add the margin to all squared distances to target neighbors
@@ -752,7 +752,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Find the impostors and compute squared distances to them
         impostors_graph = self._find_impostors(
-            X_embedded, y, classes, dist_tn[:, -1], use_sparse)
+            X_transformed, y, classes, dist_tn[:, -1], use_sparse)
 
         # Compute the push loss and its gradient
         loss, grad_new, n_active_triplets = \
@@ -775,13 +775,13 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         return loss, grad.ravel()
 
-    def _find_impostors(self, X_embedded, y, classes, margin_radii,
+    def _find_impostors(self, X_transformed, y, classes, margin_radii,
                         use_sparse=True):
         """Compute the (sample, impostor) pairs exactly.
 
         Parameters
         ----------
-        X_embedded : array, shape (n_samples, n_components)
+        X_transformed : array, shape (n_samples, n_components)
             An array of transformed samples.
 
         y : array, shape (n_samples,)
@@ -807,7 +807,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             between the two samples. Otherwise both entries will be zero.
 
         """
-        n_samples = X_embedded.shape[0]
+        n_samples = X_transformed.shape[0]
 
         if use_sparse:
             # Initialize a sparse (indicator) matrix for impostors storage
@@ -816,14 +816,13 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 ind_in = np.where(y == class_id)[0]
                 ind_out = np.where(y > class_id)[0]
 
-                # Split ind_out x ind_in into chunks of a size that fits
-                # in memory
-                imp_ind = _find_impostors_blockwise(
-                    X_embedded[ind_out], X_embedded[ind_in],
-                    margin_radii[ind_out], margin_radii[ind_in])
+                # Split impostors computation into chunks that fit in memory
+                imp_ind = _find_impostors_chunked(
+                    X_transformed[ind_in], X_transformed[ind_out],
+                    margin_radii[ind_in], margin_radii[ind_out])
 
                 if len(imp_ind):
-                    # subsample impostors if they are too many
+                    # Subsample impostors if they are too many
                     if len(imp_ind) > self.max_impostors:
                         imp_ind = self.random_state_.choice(
                             imp_ind, self.max_impostors, replace=False)
@@ -850,8 +849,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 imp_row = imp_row[ind_sampled]
                 imp_col = imp_col[ind_sampled]
 
-            imp_dist = _paired_distances_blockwise(X_embedded, imp_row,
-                                                   imp_col)
+            imp_dist = _paired_distances_chunked(X_transformed, imp_row, imp_col)
         else:
             # Initialize lists for impostors storage
             imp_row, imp_col, imp_dist = [], [], []
@@ -859,15 +857,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 ind_in = np.where(y == class_id)[0]
                 ind_out = np.where(y > class_id)[0]
 
-                # Split ind_out x ind_in into chunks of a size that fits in
-                # memory
-                imp_ind, dist_batch = _find_impostors_blockwise(
-                    X_embedded[ind_out], X_embedded[ind_in],
-                    margin_radii[ind_out], margin_radii[ind_in],
+                # Split impostors computation into chunks that fit in memory
+                imp_ind, dist_batch = _find_impostors_chunked(
+                    X_transformed[ind_in], X_transformed[ind_out],
+                    margin_radii[ind_in], margin_radii[ind_out],
                     return_distance=True)
 
                 if len(imp_ind):
-                    # subsample impostors if they are too many
+                    # Subsample impostors if they are too many
                     if len(imp_ind) > self.max_impostors:
                         ind_sampled = self.random_state_.choice(
                             len(imp_ind), self.max_impostors, replace=False)
@@ -932,7 +929,6 @@ def _select_target_neighbors(X, y, n_neighbors, classes=None, **nn_kwargs):
     target_neighbors : array, shape (n_samples, n_neighbors)
         The indices of the target neighbors of each training sample.
     """
-
     target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=np.intp)
 
     nn = NearestNeighbors(n_neighbors=n_neighbors, **nn_kwargs)
@@ -949,27 +945,23 @@ def _select_target_neighbors(X, y, n_neighbors, classes=None, **nn_kwargs):
     return target_neighbors
 
 
-def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
-                              return_distance=False, block_size=8):
-    """Find (sample, impostor) pairs in blocks to avoid large memory usage.
+def _find_impostors_chunked(X_in, X_out, radii_in, radii_out,
+                            return_distance=False):
+    """Find (sample, impostor) pairs in chunks to avoid large memory usage.
 
     Parameters
     ----------
-    X_a : array, shape (n_samples_a, n_components)
-        Transformed data samples from class A.
+    X_in : array, shape (n_samples_a, n_components)
+        Transformed data samples that belong to class A.
 
-    X_b : array, shape (n_samples_b, n_components)
-        Transformed data samples from class B.
+    X_out : array, shape (n_samples_b, n_components)
+        Transformed data samples that belong to classes different from A.
 
-    radii_a : array, shape (n_samples_a,)
-        Squared distances of the samples in ``X_a`` to their margins.
+    radii_in : array, shape (n_samples_a,)
+        Squared distances of the samples in ``X_in`` to their margins.
 
-    radii_b : array, shape (n_samples_b,)
-        Squared distances of the samples in ``X_b`` to their margins.
-
-    block_size : int, optional (default=8)
-        The maximum number of mebibytes (MiB) of memory to use at a time for
-        calculating paired squared distances.
+    radii_out : array, shape (n_samples_b,)
+        Squared distances of the samples in ``X_out`` to their margins.
 
     return_distance : bool, optional (default=False)
         Whether to return the squared distances to the impostors.
@@ -978,44 +970,43 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
     -------
     imp_indices : array, shape (n_impostors,)
         Unraveled indices referring to a matrix of shape
-        (n_samples_a, n_samples_b). Index pair (i, j) is returned (
-        unraveled) if either sample i is an impostor to sample j or sample j
-        is an impostor to sample i.
+        (n_samples_b, n_samples_a). Index pair (i, j) is returned (unraveled)
+        if either sample i is an impostor to sample j or sample j is an
+        impostor to sample i.
 
     imp_distances : array, shape (n_impostors,), optional
         imp_distances[i] is the squared distance between samples imp_row[i] and
         imp_col[i], where
-        imp_row, imp_col = np.unravel_index(imp_indices, (n_samples_a,
-        n_samples_b))
+        imp_row, imp_col = np.unravel_index(imp_indices, (n_samples_b,
+        n_samples_a))
     """
-
-    n_samples_a = X_a.shape[0]
-    bytes_per_row = X_b.shape[0] * X_b.itemsize
-    block_n_rows = int(block_size * 1024 * 1024 // bytes_per_row)
-
+    n_samples_b = X_out.shape[0]
+    row_bytes = X_in.shape[0] * X_in.itemsize
+    chunk_n_rows = get_chunk_n_rows(row_bytes, max_n_rows=n_samples_b)
     imp_indices, imp_distances = [], []
 
-    # X_b squared norm stays constant, so pre-compute it to get a speed-up
-    X_b_norm_squared = row_norms(X_b, squared=True)[np.newaxis, :]
-    for chunk in gen_batches(n_samples_a, block_n_rows):
+    # X_in squared norm stays constant, so pre-compute it to get a speed-up
+    X_in_norm_squared = row_norms(X_in, squared=True)[np.newaxis, :]
+    for sl in gen_batches(n_samples_b, chunk_n_rows):
         # The function `sklearn.metrics.pairwise.euclidean_distances` would
         # add an extra ~8% time of computation due to input validation on
         # every chunk and another ~8% due to clipping of negative values.
-        distances_ab = _euclidean_distances_without_checks(
-            X_a[chunk], X_b, squared=True, Y_norm_squared=X_b_norm_squared,
+        distances_chunk = _euclidean_distances_without_checks(
+            X_out[sl], X_in, squared=True,
+            Y_norm_squared=X_in_norm_squared,
             clip=False)
 
-        ind_b = np.where((distances_ab < radii_a[chunk, None]).ravel())[0]
-        ind_a = np.where((distances_ab < radii_b[None, :]).ravel())[0]
-        ind = np.unique(np.concatenate((ind_a, ind_b)))
+        ind_out = np.where((distances_chunk < radii_in[None, :]).ravel())[0]
+        ind_in = np.where((distances_chunk < radii_out[sl, None]).ravel())[0]
+        ind = np.unique(np.concatenate((ind_out, ind_in)))
 
         if len(ind):
-            ind_plus_offset = ind + chunk.start * X_b.shape[0]
+            ind_plus_offset = ind + sl.start * X_in.shape[0]
             imp_indices.extend(ind_plus_offset)
 
             if return_distance:
                 # We only need to do clipping if we return the distances.
-                distances_chunk = distances_ab.ravel()[ind]
+                distances_chunk = distances_chunk.ravel()[ind]
                 # Clip only the indexed (unique) distances
                 np.maximum(distances_chunk, 0, out=distances_chunk)
                 imp_distances.extend(distances_chunk)
@@ -1071,7 +1062,7 @@ def _compute_push_loss(X, target_neighbors, inflated_dist_tn, impostors_graph):
     A0 = csr_matrix(shape)
     sample_range = range(n_samples)
     n_active_triplets = 0
-    for k in range(n_neighbors - 1, -1, -1):
+    for k in reversed(range(n_neighbors)):
         # Consider margin violations to the samples in imp_row
         loss1 = np.maximum(inflated_dist_tn[imp_row, k] - dist_impostors, 0)
         ac = np.where(loss1 > 0)[0]
@@ -1084,10 +1075,13 @@ def _compute_push_loss(X, target_neighbors, inflated_dist_tn, impostors_graph):
         n_active_triplets += len(ac)
         A2 = csc_matrix((2 * loss2[ac], (imp_row[ac], imp_col[ac])), shape)
 
+        # Update the loss
+        loss += np.dot(loss1, loss1) + np.dot(loss2, loss2)
+
+        # Update the weight matrix for gradient computation
         val = (A1.sum(1).ravel() + A2.sum(0)).getA1()
         A3 = csr_matrix((val, (sample_range, target_neighbors[:, k])), shape)
         A0 = A0 - A1 - A2 + A3
-        loss += np.dot(loss1, loss1) + np.dot(loss2, loss2)
 
     grad = _sum_weighted_outer_differences(X, A0)
 
@@ -1098,7 +1092,7 @@ def _compute_push_loss(X, target_neighbors, inflated_dist_tn, impostors_graph):
 # Some helper functions #
 #########################
 
-def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
+def _paired_distances_chunked(X, ind_a, ind_b, squared=True):
     """Equivalent to row_norms(X[ind_a] - X[ind_b], squared=squared).
 
     Parameters
@@ -1115,23 +1109,19 @@ def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
     squared : bool (default=True)
         Whether to return the squared distances.
 
-    block_size : int, optional (default=8)
-        The maximum number of mebibytes (MiB) of memory to use at a time for
-        calculating paired squared distances.
-
     Returns
     -------
     distances : array, shape (n_indices,)
         An array of pairwise, optionally squared, distances.
     """
 
-    bytes_per_row = X.shape[1] * X.itemsize
-    batch_size = int(block_size * 1024 * 1024 // bytes_per_row)
-
     n_pairs = len(ind_a)
+    row_bytes = X.shape[1] * X.itemsize
+    chunk_n_rows = get_chunk_n_rows(row_bytes, max_n_rows=n_pairs)
+
     distances = np.zeros(n_pairs)
-    for chunk in gen_batches(n_pairs, batch_size):
-        distances[chunk] = row_norms(X[ind_a[chunk]] - X[ind_b[chunk]], True)
+    for sl in gen_batches(n_pairs, chunk_n_rows):
+        distances[sl] = row_norms(X[ind_a[sl]] - X[ind_b[sl]], True)
 
     return distances if squared else np.sqrt(distances, out=distances)
 

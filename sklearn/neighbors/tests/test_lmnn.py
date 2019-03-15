@@ -11,7 +11,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn import datasets
 from sklearn.neighbors import LargeMarginNearestNeighbor
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors.lmnn import _paired_distances_blockwise
+from sklearn.neighbors.lmnn import _paired_distances_chunked
 from sklearn.neighbors.lmnn import _compute_push_loss
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.model_selection import train_test_split
@@ -146,7 +146,7 @@ def test_params_validation():
 
     n_components = 10
     assert_raise_message(ValueError,
-                         'The preferred embedding dimensionality '
+                         'The preferred output dimensionality '
                          '`n_components` ({}) cannot be greater '
                          'than the given data dimensionality ({})!'
                          .format(n_components, X.shape[1]),
@@ -188,7 +188,7 @@ def test_n_components():
     n_components = X.shape[1]
     lmnn = LargeMarginNearestNeighbor(init=init, n_components=n_components)
     assert_raise_message(ValueError,
-                         'The preferred embedding dimensionality '
+                         'The preferred output dimensionality '
                          '`n_components` ({}) does not match '
                          'the output dimensionality of the given '
                          'linear transformation `init` ({})!'
@@ -199,7 +199,7 @@ def test_n_components():
     n_components = X.shape[1] + 2
     lmnn = LargeMarginNearestNeighbor(init=init, n_components=n_components)
     assert_raise_message(ValueError,
-                         'The preferred embedding dimensionality '
+                         'The preferred output dimensionality '
                          '`n_components` ({}) cannot be greater '
                          'than the given data dimensionality ({})!'
                          .format(n_components, X.shape[1]),
@@ -255,7 +255,7 @@ def test_init_transformation():
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init=init,
                                       n_components=n_components)
     assert_raise_message(ValueError,
-                         'The preferred embedding dimensionality '
+                         'The preferred output dimensionality '
                          '`n_components` ({}) does not match '
                          'the output dimensionality of the given '
                          'linear transformation `init` ({})!'
@@ -508,16 +508,16 @@ def test_convergence_warning():
                          lmnn.fit, iris_data, iris_target)
 
 
-def test_paired_distances_blockwise():
+def test_paired_distances_chunked():
     n, d = 10000, 100  # 4 or 8 MiB
     X = rng.rand(n, d)
     ind_a = rng.permutation(n)
     ind_b = rng.permutation(n)
 
     distances = paired_euclidean_distances(X[ind_a], X[ind_b])
-    distances_blockwise = _paired_distances_blockwise(
-        X, ind_a, ind_b, squared=False, block_size=1)
-    assert_array_equal(distances, distances_blockwise)
+    distances_chunked = _paired_distances_chunked(X, ind_a, ind_b,
+                                                  squared=False)
+    assert_array_equal(distances, distances_chunked)
 
 
 def test_find_impostors():
