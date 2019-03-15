@@ -32,7 +32,7 @@ this technique naturally extends itself to being bootstrapped. The
 the permutation importance distributions for features in the
 titantic dataset are computed:
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_permutation_importance_002.png
+.. figure:: ../auto_examples/model_inspection/images/sphx_glr_plot_permutation_importance_002.png
    :target: ../auto_examples/model_inspection/plot_permutation_importance.html
    :align: center
    :scale: 50%
