@@ -39,10 +39,10 @@ titantic dataset are computed:
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_neighbors_plot_permutation_importance.py`: 
+  * :ref:`sphx_glr_auto_examples_model_inspection_plot_permutation_importance.py`: 
      Permutation Importance vs Random Forest Feature Importance
 
 .. topic:: References:
 
    .. [1] Breiman, L. Machine Learning (2001) 45: 5.
-        https://doi.org/10.1023/A:1010933404324
+     https://doi.org/10.1023/A:1010933404324

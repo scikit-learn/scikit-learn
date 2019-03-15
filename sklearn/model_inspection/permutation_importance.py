@@ -7,7 +7,7 @@ from ..metrics import check_scoring
 
 def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=1,
                            random_state=None):
-    """Permutation importance for feature evaluation.
+    """Permutation importance for feature evaluation. [BRE]_
 
     The permutation importance of a feature is calculated as follows. First,
     the estimator is trained on a training set. Then a baseline metric, defined
@@ -15,6 +15,8 @@ def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=1,
     from the validation set is permuted and the metric is evaluated again.
     The permutation importance is defined to be the difference between the
     baseline metric and metric from permutating the feature column.
+
+    Read more in the :ref:`User Guide <permutation_importance>`.
 
     Parameters
     ----------
@@ -45,9 +47,13 @@ def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=1,
 
     Returns
     -------
-
     scores : array, shape (n_features, bootstrap_samples)
         Permutation importance scores
+
+    References
+    ----------
+    .. [BRE] Breiman, L. Machine Learning (2001) 45: 5.
+        https://doi.org/10.1023/A:1010933404324
     """
 
     random_state = check_random_state(random_state)
