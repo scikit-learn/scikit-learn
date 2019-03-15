@@ -1141,7 +1141,7 @@ class _WIPNewRidgeGCV(_RidgeGCV):
 
     def _pre_compute_gram(self, X, y):
         K, X_m = _centered_gram(X)
-        K += np.ones_like(K)
+        K += 1.
         v, Q = linalg.eigh(K)
         QT_y = np.dot(Q.T, y)
         self._X_offset = X_m
@@ -1178,6 +1178,8 @@ class _WIPNewRidgeGCV(_RidgeGCV):
         return s, V, X
 
     def _errors_and_values_svd_helper(self, alpha, y, s, V, X):
+        if not sparse.issparse(X):
+            return super()._errors_and_values_svd_helper(alpha, y, s, V, X)
         n, p = X.shape
         w = 1 / (s + alpha)
         A = (V * w).dot(V.T)
