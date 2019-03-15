@@ -241,9 +241,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         # We COULD scale them here:
         #       self.alphas_ = self.alphas_ / np.sqrt(self.lambdas_)
         #
-        # But the original choice was to perform that LATER when needed, in
-        # fit() and in transform(). We keep it to preserve the meaning of
-        # self.alphas_ across sk-learn versions.
+        # But choose to perform that LATER when needed, in `fit()` and in
+        # `transform()`.
 
         return K
 
