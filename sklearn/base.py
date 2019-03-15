@@ -368,7 +368,7 @@ class RegressorMixin:
         all the multioutput regressors (except for
         `multioutput.MultiOutputRegressor`). To use the new default, please
         either call `metrics.r2_score` directly or make a custom scorer with
-        `metric.make_scorer`.
+        `metrics.make_scorer`.
         """
 
         from .metrics import r2_score
@@ -382,7 +382,7 @@ class RegressorMixin:
                           "to 'uniform_average' in 0.23 to keep consistent "
                           "with 'metrics.r2_score'. To use the new default, "
                           "please either call 'metrics.r2_score' directly or "
-                          "make a custom scorer with 'metric.make_scorer'.",
+                          "make a custom scorer with 'metrics.make_scorer'.",
                           FutureWarning)
         return r2_score(y, y_pred, sample_weight=sample_weight,
                         multioutput='variance_weighted')

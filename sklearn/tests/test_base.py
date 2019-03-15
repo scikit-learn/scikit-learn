@@ -504,5 +504,5 @@ def test_regressormixin_score_multioutput():
            "to 'uniform_average' in 0.23 to keep consistent "
            "with 'metrics.r2_score'. To use the new default, "
            "please either call 'metrics.r2_score' directly or "
-           "make a custom scorer with 'metric.make_scorer'.")
+           "make a custom scorer with 'metrics.make_scorer'.")
     assert_warns_message(FutureWarning, msg, reg.score, X, y)
