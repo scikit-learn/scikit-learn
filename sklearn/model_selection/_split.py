@@ -45,14 +45,12 @@ __all__ = ['BaseCrossValidator',
 
 
 NSPLIT_WARNING = (
-    "You should specify a value for 'n_splits' instead of relying on the "
-    "default value. The default value will change from 3 to 5 "
-    "in version 0.22.")
+    "The default value of n_split will change from 3 to 5 "
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 CV_WARNING = (
-    "You should specify a value for 'cv' instead of relying on the "
-    "default value. The default value will change from 3 to 5 "
-    "in version 0.22.")
+    "The default value of cv will change from 3 to 5 "
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 
 class BaseCrossValidator(metaclass=ABCMeta):
@@ -1454,7 +1452,7 @@ class GroupShuffleSplit(ShuffleSplit):
     test_size : float, int, None, optional
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, the value is set to the
+        absolute number of test groups. If None, the value is set to the
         complement of the train size. By default, the value is set to 0.2.
         The default will change in version 0.21. It will remain 0.2 only
         if ``train_size`` is unspecified, otherwise it will complement

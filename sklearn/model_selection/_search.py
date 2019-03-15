@@ -228,9 +228,10 @@ class ParameterSampler:
     >>> from sklearn.model_selection import ParameterSampler
     >>> from scipy.stats.distributions import expon
     >>> import numpy as np
-    >>> np.random.seed(0)
+    >>> rng = np.random.RandomState(0)
     >>> param_grid = {'a':[1, 2], 'b': expon()}
-    >>> param_list = list(ParameterSampler(param_grid, n_iter=4))
+    >>> param_list = list(ParameterSampler(param_grid, n_iter=4,
+    ...                                    random_state=rng))
     >>> rounded_list = [dict((k, round(v, 6)) for (k, v) in d.items())
     ...                 for d in param_list]
     >>> rounded_list == [{'b': 0.89856, 'a': 1},
@@ -697,7 +698,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 self.best_index_ = self.refit(results)
                 if not isinstance(self.best_index_, (int, np.integer)):
                     raise TypeError('best_index_ returned is not an integer')
-                if self.best_index_ < 0 or self.best_index_ >= len(results):
+                if (self.best_index_ < 0 or
+                   self.best_index_ >= len(results["params"])):
                     raise IndexError('best_index_ index out of range')
             else:
                 self.best_index_ = results["rank_test_%s"
