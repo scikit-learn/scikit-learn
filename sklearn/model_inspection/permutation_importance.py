@@ -1,7 +1,7 @@
 """Permutation importance for estimators"""
 import numpy as np
 
-from ..utils import check_random_state, check_array
+from ..utils import check_random_state
 from ..metrics import check_scoring
 
 

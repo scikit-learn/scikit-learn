@@ -3,12 +3,9 @@
 Permutation Importance vs Random Forest Feature Importance
 ==========================================================
 
-The permutation importance of a feature is how much a model's score decreases
-when the feature's values are permuted. [1]_ In this context, the more
-important features will cause the model's score to decrease the most. If a
-feature's importance is negative, the model improved when the feature is
-permutated. This suggests that the model would benefit from removing the
-feature.
+In this example, the :class:`sklearn.ensemble.RandomForestRegressor`'s feature
+importance is compared with the permutation importance using the titantic
+dataset.
 
 .. topic:: References:
 
@@ -17,19 +14,19 @@ feature.
    .. [2] Strobl, C., Boulesteix, AL., Zeileis, A. et al. BMC Bioinformatics
         (2007) 8: 25. https://doi.org/10.1186/1471-2105-8-25
 """
-print(__doc__)
 ##############################################################################
-# In this example, the :class:`sklearn.ensemble.RandomForestRegressor`'s feature
-# importance is compared with the permutation importance using the titantic
-# dataset. A combination of numerical features and categorical features were
-# used to train the initial model, ``rf_init``:
+# Training a Random Forest
+# ------------------------
+# A combination of numerical features and categorical features were used to
+# train the initial model, ``rf_init``:
+print(__doc__)
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
-from sklearn.inspect import permutation_importance
+from sklearn.model_inspection import permutation_importance
 from sklearn.compose import ColumnTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
@@ -68,6 +65,8 @@ rf_init = Pipeline([
 rf_init.fit(X_train, y_train)
 
 ##############################################################################
+# Tree Based Feature Importance
+# -----------------------------
 # The tree based feature importance ranks the numerical features, age and fare,
 # to be the most important features:
 ohe = (rf_init.named_steps['preprocess']
@@ -91,10 +90,14 @@ ax.set_yticks(y_ticks)
 ax.set_title("Random Forest Feature importance")
 
 ##############################################################################
+# Test Score of First Model
+# -------------------------
 # The corresponding test score for, ``rf_init``, is:
 print("rf_init test score is", rf_init.score(X_test, y_test))
 
 ##############################################################################
+# New Model Without Numerical Features
+# ------------------------------------
 # Next, a model, ``rf_new``, is trained with the numerical features removed
 # and its test score is calcuated.
 preprocessing_cat = ColumnTransformer(

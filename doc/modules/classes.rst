@@ -659,16 +659,16 @@ Kernels:
    impute.IterativeImputer
    impute.MissingIndicator
    
-.. _model_inspection:
+.. _model_inspection_ref:
 
-:mod:`sklearn.inspect`: Model Inspection
+:mod:`sklearn.model_inspection`: Model nspection
 =========================================  
 
-.. automodule:: sklearn.inspect
+.. automodule:: sklearn.model_inspection
    :no-members:
    :no-inherited-members:
 
-Hello world
+**User guide:** See the :ref:`model_inspection` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -676,7 +676,7 @@ Hello world
    :toctree: generated/
    :template: function.rst
 
-   inspect.permutation_importance
+   model_inspection.permutation_importance
 
 .. _kernel_approximation_ref:
 
