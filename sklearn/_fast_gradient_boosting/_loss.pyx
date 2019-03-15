@@ -17,37 +17,10 @@ from .types cimport G_H_DTYPE_C
 
 
 def _update_gradients_least_squares(
-        G_H_DTYPE_C [::1] gradients,
-        const Y_DTYPE_C [::1] y_true,
-        const Y_DTYPE_C [::1] raw_predictions):
+        G_H_DTYPE_C [::1] gradients,  # OUT
+        const Y_DTYPE_C [::1] y_true,  # IN
+        const Y_DTYPE_C [::1] raw_predictions):  # IN
 
-        _update_gradients_least_squares_parallel(
-            gradients, y_true, raw_predictions)
-
-
-def _update_gradients_hessians_binary_crossentropy(
-        G_H_DTYPE_C [::1] gradients,
-        G_H_DTYPE_C [::1] hessians,
-        const Y_DTYPE_C [::1] y_true,
-        const Y_DTYPE_C [::1] raw_predictions):
-
-        _update_gradients_hessians_binary_crossentropy_parallel(
-            gradients, hessians, y_true, raw_predictions)
-
-
-def _update_gradients_hessians_categorical_crossentropy(
-        G_H_DTYPE_C [:, ::1] gradients,
-        G_H_DTYPE_C [:, ::1] hessians,
-        const Y_DTYPE_C [::1] y_true,
-        const Y_DTYPE_C [:, ::1] raw_predictions):
-        _update_gradients_hessians_categorical_crossentropy_parallel(
-            gradients, hessians, y_true, raw_predictions)
-
-
-cdef void _update_gradients_least_squares_parallel(
-        G_H_DTYPE_C [::1] gradients,
-        const Y_DTYPE_C [::1] y_true,
-        const Y_DTYPE_C [::1] raw_predictions):
     cdef:
         int n_samples
         int i
@@ -60,11 +33,11 @@ cdef void _update_gradients_least_squares_parallel(
         gradients[i] = raw_predictions[i] - y_true[i]
 
 
-cdef void _update_gradients_hessians_binary_crossentropy_parallel(
-        G_H_DTYPE_C [::1] gradients,
-        G_H_DTYPE_C [::1] hessians,
-        const Y_DTYPE_C [::1] y_true,
-        const Y_DTYPE_C [::1] raw_predictions):
+def _update_gradients_hessians_binary_crossentropy(
+        G_H_DTYPE_C [::1] gradients,  # OUT
+        G_H_DTYPE_C [::1] hessians,  # OUT
+        const Y_DTYPE_C [::1] y_true,  # IN
+        const Y_DTYPE_C [::1] raw_predictions):  # IN
     cdef:
         int n_samples
         Y_DTYPE_C p_i  # proba that ith sample belongs to positive class
@@ -77,12 +50,11 @@ cdef void _update_gradients_hessians_binary_crossentropy_parallel(
         hessians[i] = p_i * (1. - p_i)
 
 
-cdef void _update_gradients_hessians_categorical_crossentropy_parallel(
-        G_H_DTYPE_C [:, ::1] gradients,  # shape (pred_dim, n_samples), OUT
-        G_H_DTYPE_C [:, ::1] hessians,  # shape (pred_dim, n_samples), OUT
-        const Y_DTYPE_C [::1] y_true,  # shape (n_samples,), IN
-        # shape (pred_dim, n_samples), IN
-        const Y_DTYPE_C [:, ::1] raw_predictions):
+def _update_gradients_hessians_categorical_crossentropy(
+        G_H_DTYPE_C [:, ::1] gradients,  # OUT
+        G_H_DTYPE_C [:, ::1] hessians,  # OUT
+        const Y_DTYPE_C [::1] y_true,  # IN
+        const Y_DTYPE_C [:, ::1] raw_predictions):  # IN
     cdef:
         int prediction_dim = raw_predictions.shape[0]
         int n_samples = raw_predictions.shape[1]
