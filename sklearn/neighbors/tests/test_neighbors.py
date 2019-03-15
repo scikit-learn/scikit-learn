@@ -266,8 +266,7 @@ def test_precomputed_sparse_invalid():
                         n_neighbors=1)
 
 
-
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_precomputed_cross_validation():
     # Ensure array is split correctly
     rng = np.random.RandomState(0)
@@ -899,8 +898,8 @@ def test_neighbors_digits():
 
     clf = neighbors.KNeighborsClassifier(n_neighbors=1, algorithm='brute')
     score_uint8 = clf.fit(X_train, Y_train).score(X_test, Y_test)
-    score_float = clf.fit(X_train.astype(float), Y_train).score(
-        X_test.astype(float), Y_test)
+    score_float = clf.fit(X_train.astype(float, copy=False), Y_train).score(
+        X_test.astype(float, copy=False), Y_test)
     assert_equal(score_uint8, score_float)
 
 

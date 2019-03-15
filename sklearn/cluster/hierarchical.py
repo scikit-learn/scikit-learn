@@ -22,6 +22,7 @@ from ..utils.validation import check_memory
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
+from ..utils.fixes import _astype_copy_false
 
 ###############################################################################
 # For non fully-connected graphs
@@ -87,7 +88,8 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
     from scipy.sparse.csgraph import minimum_spanning_tree
 
     # explicitly cast connectivity to ensure safety
-    connectivity = connectivity.astype('float64')
+    connectivity = connectivity.astype('float64',
+                                       **_astype_copy_false(connectivity))
 
     # Ensure zero distances aren't ignored by setting them to "epsilon"
     epsilon_value = np.finfo(dtype=connectivity.data.dtype).eps
@@ -458,7 +460,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
         out = hierarchy.linkage(X, method=linkage, metric=affinity)
-        children_ = out[:, :2].astype(np.int)
+        children_ = out[:, :2].astype(np.int, copy=False)
 
         if return_distance:
             distances = out[:, 2]
@@ -477,7 +479,8 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
     del diag_mask
 
     if affinity == 'precomputed':
-        distances = X[connectivity.row, connectivity.col].astype('float64')
+        distances = X[connectivity.row, connectivity.col].astype(
+            'float64', **_astype_copy_false(X))
     else:
         # FIXME We compute all the distances, while we could have only computed
         # the "interesting" distances

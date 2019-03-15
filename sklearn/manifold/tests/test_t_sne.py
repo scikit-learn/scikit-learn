@@ -129,7 +129,7 @@ def test_binary_search_neighbors():
     n_samples = 500
     desired_perplexity = 25.0
     random_state = check_random_state(0)
-    data = random_state.randn(n_samples, 2).astype(np.float32)
+    data = random_state.randn(n_samples, 2).astype(np.float32, copy=False)
     distances = pairwise_distances(data)
     P1 = _binary_search_perplexity(distances, desired_perplexity, verbose=0)
 
@@ -138,7 +138,7 @@ def test_binary_search_neighbors():
     nn = NearestNeighbors().fit(data)
     distance_graph = nn.kneighbors_graph(n_neighbors=n_neighbors,
                                          mode='distance')
-    distances_nn = distance_graph.data.astype(np.float32)
+    distances_nn = distance_graph.data.astype(np.float32, copy=False)
     distances_nn = distances_nn.reshape(n_samples, n_neighbors)
     P2 = _binary_search_perplexity(distances_nn, desired_perplexity, verbose=0)
 
@@ -152,7 +152,7 @@ def test_binary_search_neighbors():
         k = int(k)
         topn = k * 10  # check the top 10 * k entries out of k * k entries
         distance_graph = nn.kneighbors_graph(n_neighbors=k, mode='distance')
-        distances_nn = distance_graph.data.astype(np.float32)
+        distances_nn = distance_graph.data.astype(np.float32, copy=False)
         distances_nn = distances_nn.reshape(n_samples, k)
         P2k = _binary_search_perplexity(distances_nn, desired_perplexity,
                                         verbose=0)
@@ -175,7 +175,7 @@ def test_binary_perplexity_stability():
     nn = NearestNeighbors().fit(data)
     distance_graph = nn.kneighbors_graph(n_neighbors=n_neighbors,
                                          mode='distance')
-    distances = distance_graph.data.astype(np.float32)
+    distances = distance_graph.data.astype(np.float32, copy=False)
     distances = distances.reshape(n_samples, n_neighbors)
     last_P = None
     desired_perplexity = 3
@@ -571,7 +571,7 @@ def _run_answer_test(pos_input, pos_output, neighbors, grad_output,
     distances = pairwise_distances(pos_input).astype(np.float32)
     args = distances, perplexity, verbose
     pos_output = pos_output.astype(np.float32)
-    neighbors = neighbors.astype(np.int64)
+    neighbors = neighbors.astype(np.int64, copy=False)
     pij_input = _joint_probabilities(*args)
     pij_input = squareform(pij_input).astype(np.float32)
     grad_bh = np.zeros(pos_output.shape, dtype=np.float32)
@@ -632,7 +632,7 @@ def test_64bit(method, dt):
     # Ensure 64bit arrays are handled correctly.
     random_state = check_random_state(0)
 
-    X = random_state.randn(50, 2).astype(dt)
+    X = random_state.randn(50, 2).astype(dt, copy=False)
     tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
                 random_state=0, method=method, verbose=0)
     X_embedded = tsne.fit_transform(X)
