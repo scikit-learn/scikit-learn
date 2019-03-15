@@ -3,7 +3,8 @@ from numpy.testing import assert_array_equal, assert_allclose
 import pytest
 
 from sklearn._fast_gradient_boosting.binning import _BinMapper
-from sklearn._fast_gradient_boosting.binning import _find_binning_thresholds
+from sklearn._fast_gradient_boosting.binning import (
+    _find_binning_thresholds as _find_binning_thresholds_orig)
 from sklearn._fast_gradient_boosting.binning import _map_to_bins
 from sklearn._fast_gradient_boosting.types import X_DTYPE, X_BINNED_DTYPE
 
@@ -11,6 +12,14 @@ from sklearn._fast_gradient_boosting.types import X_DTYPE, X_BINNED_DTYPE
 DATA = np.random.RandomState(42).normal(
     loc=[0, 10], scale=[1, 0.01], size=(int(1e6), 2)
 ).astype(X_DTYPE)
+
+
+def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
+                             random_state=None):
+    # Just a redef to avoid having to pass arguments all the time (as the
+    # function is private we don't use default values for parameters)
+    return _find_binning_thresholds_orig(data, max_bins, subsample,
+                                         random_state)
 
 
 def test_find_binning_thresholds_regular_data():

@@ -16,9 +16,24 @@ from ._binning import _map_to_bins
 from .types import X_DTYPE, X_BINNED_DTYPE
 
 
-def _find_binning_thresholds(data, max_bins=256, subsample=int(2e5),
-                             random_state=None):
+def _find_binning_thresholds(data, max_bins, subsample, random_state):
     """Extract feature-wise quantiles from numerical data.
+
+    Parameters
+    ----------
+    data: array-like
+        The data to bin
+    max_bins : int
+        The maximum number of bins to use. If for a given feature the number of
+        unique values is less than ``max_bins``, then those unique values
+        will be used to compute the bin thresholds, instead of the quantiles.
+    subsample : int or None
+        If ``n_samples > subsample``, then ``sub_samples`` samples will be
+        randomly choosen to compute the quantiles. If ``None``, the whole data
+        is used.
+    random_state: int or numpy.random.RandomState or None
+        Pseudo-random number generator to control the random sub-sampling.
+        See :term:`random_state`.
 
     Return
     ------
@@ -76,17 +91,16 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         The maximum number of bins to use. If for a given feature the number of
         unique values is less than ``max_bins``, then those unique values
         will be used to compute the bin thresholds, instead of the quantiles.
-    subsample : int or None, optional (default=1e5)
+    subsample : int or None, optional (default=2e5)
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly choosen to compute the quantiles. If ``None``, the whole data
         is used.
     random_state: int or numpy.random.RandomState or None, \
         optional (default=None)
         Pseudo-random number generator to control the random sub-sampling.
-        See `scikit-learn glossary
-        <https://scikit-learn.org/stable/glossary.html#term-random-state>`_.
+        See :term:`random_state`.
     """
-    def __init__(self, max_bins=256, subsample=int(1e5), random_state=None):
+    def __init__(self, max_bins=256, subsample=int(2e5), random_state=None):
         self.max_bins = max_bins
         self.subsample = subsample
         self.random_state = random_state
@@ -98,6 +112,8 @@ class _BinMapper(BaseEstimator, TransformerMixin):
         ----------
         X: array-like
             The data to bin
+        y: None
+            Ignored
 
         Returns
         -------

@@ -40,7 +40,7 @@ def _update_raw_predictions(
                                    values)
 
 
-cdef void _update_raw_predictions_helper(
+cdef inline void _update_raw_predictions_helper(
         Y_DTYPE_C [::1] raw_predictions,  # OUT
         const unsigned int [::1] starts,
         const unsigned int [::1] stops,

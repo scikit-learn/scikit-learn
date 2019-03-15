@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from scipy.special import expit
-try:
+try:  # logsumexp was moved from mist to special in 0.19
     from scipy.special import logsumexp
 except ImportError:
     from scipy.misc import logsumexp
@@ -45,7 +45,7 @@ class BaseLoss(ABC):
         -------
         gradients : array-like, shape=(prediction_dim, n_samples)
         hessians : array-like, shape=(prediction_dim, n_samples).
-            If hessians are constant (e.g. for ``LeastSquares`` loss, the
+            If hessians are constant (e.g. for `LeastSquares` loss, the
             array is initialized to ``1``.
         """
         shape = (prediction_dim, n_samples)
@@ -146,7 +146,8 @@ class BinaryCrossEntropy(BaseLoss):
 
         loss(x_i) = log(1 + exp(raw_pred_i)) - y_true_i * raw_pred_i
 
-    See The Elements of Statistical Learning, by Hastie, Tibshirani, Friedman.
+    See The Elements of Statistical Learning, by Hastie, Tibshirani, Friedman,
+    section 4.4.1 (about logistic regression).
     """
 
     hessians_are_constant = False
