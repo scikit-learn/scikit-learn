@@ -330,9 +330,10 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         # scale eigenvectors (properly account for null-space for dot product)
         non_zeros = np.flatnonzero(self.lambdas_)
         scaled_alphas = np.zeros_like(self.alphas_)
-        scaled_alphas[:, non_zeros] = self.alphas_[:, non_zeros] / np.sqrt(self.lambdas_[non_zeros])
+        scaled_alphas[:, non_zeros] = (self.alphas_[:, non_zeros]
+                                       / np.sqrt(self.lambdas_[non_zeros]))
 
-        # Project by doing a scalar product between K and the scaled eigenvects
+        # Project with a scalar product between K and the scaled eigenvectors
         return np.dot(K, scaled_alphas)
 
     def inverse_transform(self, X):
