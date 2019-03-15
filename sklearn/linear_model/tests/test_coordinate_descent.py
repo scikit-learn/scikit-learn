@@ -232,6 +232,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
 
 
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_enet_path():
     # We use a large number of samples and of informative features so that
     # the l1_ratio selected is more toward ridge than lasso

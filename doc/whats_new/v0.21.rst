@@ -50,6 +50,16 @@ Support for Python 3.4 and below has been officially dropped.
     section should be ordered according to the label ordering above. Entries
     should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
 
+:mod:`sklearn.base`
+...................
+
+- |API| The R2 score used when calling ``score`` on a regressor will use
+  ``multioutput='uniform_average'`` from version 0.23 to keep consistent with
+  :func:`metrics.r2_score`. This will influence the ``score`` method of all
+  the multioutput regressors (except for
+  :class:`multioutput.MultiOutputRegressor`).
+  :issue:`13157` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
