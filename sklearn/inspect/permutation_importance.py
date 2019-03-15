@@ -1,11 +1,11 @@
 """Permutation importance for estimators"""
 import numpy as np
 
-from ..utils import check_random_state
+from ..utils import check_random_state, check_array
 from ..metrics import check_scoring
 
 
-def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=30,
+def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=1,
                            random_state=None):
     """Permutation importance for feature evaluation.
 
@@ -22,7 +22,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=30,
         A estimator that has already been `fit` and is compatible with
         ``scorer``.
 
-    X : array-like, shape = (n_samples, n_features)
+    X : array-like or DataFrame, shape = (n_samples, n_features)
         Training data.
 
     y : array-like, shape = (n_samples, ...)
@@ -33,7 +33,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=30,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    n_bootstrap : int, optional (default=30)
+    n_bootstrap : int, optional (default=1)
         Number of times to permute a feature
 
     random_state : int, RandomState instance or None, optional, default None
@@ -54,22 +54,25 @@ def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=30,
     scoring = check_scoring(estimator, scoring=scoring)
     scores = np.empty(shape=(X.shape[1], n_bootstrap), dtype=np.float)
 
+    # Makes copy since columns will be shuffled
+    X = X.copy()
+
     if hasattr(X, 'iloc'):
         X_iloc = X.iloc
     else:
         X_iloc = X
 
     baseline_score = scoring(estimator, X, y)
-    for f_idx in range(X.shape[1]):
-        original_feature = X_iloc[:, f_idx].copy()
+    for col in range(X.shape[1]):
+        original_feature = X_iloc[:, col].copy()
 
         for b_idx in range(n_bootstrap):
             X_perm = random_state.permutation(original_feature)
-            X_iloc[:, f_idx] = X_perm
+            X_iloc[:, col] = X_perm
 
             feature_score = scoring(estimator, X, y)
-            scores[f_idx, b_idx] = baseline_score - feature_score
+            scores[col, b_idx] = baseline_score - feature_score
 
-        X_iloc[:, f_idx] = original_feature
+        X_iloc[:, col] = original_feature
 
     return scores
