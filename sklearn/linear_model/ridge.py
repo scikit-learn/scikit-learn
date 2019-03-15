@@ -1178,15 +1178,34 @@ class _WIPNewRidgeGCV(_RidgeGCV):
         return s, V, X
 
     def _errors_and_values_svd_helper(self, alpha, y, s, V, X):
+        print('sparse svd: ', alpha)
         n, p = X.shape
         w = 1 / (s + alpha)
-        Xx = np.ones((n, p + 1))
-        Xx[:, :-1] = X.A - X.A.mean(axis=0)
-        X = Xx
-        hat = np.linalg.multi_dot((X, V * w, V.T, X.T))
-        hat_y = hat.dot(y)
-        hat_diag = np.diag(hat)
-        return (1 - hat_diag) / alpha, (y - hat_y) / alpha
+        A = (V * w).dot(V.T)
+        Xm = self._X_offset
+
+        def matvec(v):
+            return safe_sparse_dot(
+                X, v[:-1], dense_output=True) - Xm.dot(v[:-1]) + v[-1]
+
+        def matmat(v):
+            return safe_sparse_dot(
+                X, v[:-1], dense_output=True) - Xm.dot(v[:-1]) + v[-1]
+
+        def rmatvec(v):
+            res = np.empty(X.shape[1] + 1)
+            res[:-1] = safe_sparse_dot(
+                X.T, v, dense_output=True) - Xm * v.sum(axis=0)
+            res[-1] = v.sum(axis=0)
+            return res
+
+        Xop = sparse.linalg.LinearOperator(
+            matvec=matvec, matmat=matmat, rmatvec=rmatvec,
+            shape=(X.shape[0], X.shape[1] + 1))
+        AXy = A.dot(Xop.rmatvec(y))
+        y_pred = Xop.dot(AXy)
+        hat_diag = _sparse_multidot_diag(X, A, Xm)
+        return (1 - hat_diag) / alpha, (y - y_pred) / alpha
 
     def fit(self, X, y, sample_weight=None):
         # if (sparse.issparse(X) and (X.shape[0] > X.shape[1])
@@ -1197,6 +1216,33 @@ class _WIPNewRidgeGCV(_RidgeGCV):
         #         'gcv_mode to "eigen", which can cause performance issues '
         #         'if n_samples is much larger than n_features')
         super().fit(X, y, sample_weight=sample_weight)
+        return self
+
+
+def _sparse_multidot_diag(X, A, Xm):
+    batch_size = X.shape[1]
+    diag = np.empty(X.shape[0])
+    for start in range(0, X.shape[0], batch_size):
+        batch = slice(start, start + batch_size, 1)
+        X_batch = np.ones((X[batch].shape[0], X.shape[1] + 1))
+        X_batch[:, :-1] = X[batch].A - Xm
+        diag[batch] = (X_batch.dot(A) * X_batch).sum(axis=1)
+    return diag
+
+
+
+# def _sparse_multidot_diag(A, B, C):
+#     batch_size = A.shape[1]
+#     diag = np.empty(A.shape[0])
+#     for start in range(0, A.shape[0], batch_size):
+#         batch = slice(start, start + batch_size, 1)
+#         C_batch = C[:, batch]
+#         if sparse.issparse(C_batch):
+#             C_batch = C_batch.A
+#         diag[batch] = (
+#             safe_sparse_dot(A[batch], B, dense_output=True)
+#             * C_batch.T).sum(axis=1)
+#     return diag
 
 
 class _BaseRidgeCV(LinearModel, MultiOutputMixin):
