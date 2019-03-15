@@ -849,7 +849,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 imp_row = imp_row[ind_sampled]
                 imp_col = imp_col[ind_sampled]
 
-            imp_dist = _paired_distances_chunked(X_transformed, imp_row, imp_col)
+            imp_dist = _paired_distances_chunked(X_transformed, imp_row,
+                                                 imp_col)
         else:
             # Initialize lists for impostors storage
             imp_row, imp_col, imp_dist = [], [], []
