@@ -40,7 +40,7 @@ cpdef _map_to_bins(const X_DTYPE_C [:, :] data, list binning_thresholds,
 cpdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
                                 const X_DTYPE_C [:] binning_thresholds,
                                 X_BINNED_DTYPE_C [:] binned):
-    """Binary search to the find the bin index for each value in data."""
+    """Binary search to find the bin index for each value in the data."""
     cdef:
         int i
         int left
