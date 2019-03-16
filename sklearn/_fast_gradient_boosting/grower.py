@@ -32,7 +32,7 @@ class TreeNode:
         The sum of the gradients of the samples at the node
     sum_hessians : float
         The sum of the hessians of the samples at the node
-    parent : TreeNode or None, optional(default=None)
+    parent : TreeNode or None, optional (default=None)
         The parent of the node. None for root.
 
     Attributes
@@ -45,7 +45,7 @@ class TreeNode:
         The sum of the gradients of the samples at the node
     sum_hessians : float
         The sum of the hessians of the samples at the node
-    parent : TreeNode or None, optional(default=None)
+    parent : TreeNode or None, optional (default=None)
         The parent of the node. None for root.
     split_info : SplitInfo or None
         The result of the split evaluation
@@ -133,32 +133,32 @@ class TreeGrower:
     hessians : array-like, shape=(n_samples,)
         The hessians of each training sample. Those are the hessians of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
-    max_leaf_nodes : int or None, optional(default=None)
+    max_leaf_nodes : int or None, optional (default=None)
         The maximum number of leaves for each tree. If None, there is no
         maximum limit.
-    max_depth : int or None, optional(default=None)
+    max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
         nodes to go from the root to the deepest leaf.
-    min_samples_leaf : int, optional(default=20)
+    min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf.
-    min_gain_to_split : float, optional(default=0.)
+    min_gain_to_split : float, optional (default=0.)
         The minimum gain needed to split a node. Splits with lower gain will
         be ignored.
-    max_bins : int, optional(default=256)
+    max_bins : int, optional (default=256)
         The maximum number of bins. Used to define the shape of the
         histograms.
-    n_bins_per_feature : array-like of int or int, optional(default=None)
+    n_bins_per_feature : array-like of int or int, optional (default=None)
         The actual number of bins needed for each feature, which is lower or
         equal to ``max_bins``. If it's an int, all features are considered to
         have the same number of bins. If None, all features are considered to
         have ``max_bins`` bins.
-    l2_regularization : float, optional(default=0)
+    l2_regularization : float, optional (default=0)
         The L2 regularization parameter.
-    min_hessian_to_split : float, optional(default=1e-3)
+    min_hessian_to_split : float, optional (default=1e-3)
         The minimum sum of hessians needed in each node. Splits that result in
         at least one child having a sum of hessians less than
         min_hessian_to_split are discarded.
-    shrinkage : float, optional(default=1)
+    shrinkage : float, optional (default=1)
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
     """

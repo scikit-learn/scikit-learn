@@ -437,26 +437,26 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
     Parameters
     ----------
-    loss : {'least_squares'}, optional(default='least_squares')
+    loss : {'least_squares'}, optional (default='least_squares')
         The loss function to use in the boosting process.
-    learning_rate : float, optional(default=0.1)
+    learning_rate : float, optional (default=0.1)
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
         shrinkage.
-    max_iter : int, optional(default=100)
+    max_iter : int, optional (default=100)
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees.
-    max_leaf_nodes : int or None, optional(default=None)
+    max_leaf_nodes : int or None, optional (default=None)
         The maximum number of leaves for each tree. If None, there is no
         maximum limit.
-    max_depth : int or None, optional(default=None)
+    max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
         nodes to go from the root to the deepest leaf.
-    min_samples_leaf : int, optional(default=5)
+    min_samples_leaf : int, optional (default=5)
         The minimum number of samples per leaf.
-    l2_regularization : float, optional(default=0)
+    l2_regularization : float, optional (default=0)
         The L2 regularization parameter. Use 0 for no regularization.
-    max_bins : int, optional(default=256)
+    max_bins : int, optional (default=256)
         The maximum number of bins to use. Before training, each feature of
         the input array ``X`` is binned into at most ``max_bins`` bins, which
         allows for a much faster training stage. Features with a small
@@ -468,7 +468,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         :ref:`scoring`). If None, the estimator's default scorer is used. If
         ``scoring='loss'``, early stopping is checked w.r.t the loss value.
         Only used if ``n_iter_no_change`` is not None.
-    validation_fraction : int or float or None, optional(default=0.1)
+    validation_fraction : int or float or None, optional (default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data. Only used if ``n_iter_no_change`` is not None.
@@ -577,31 +577,31 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     Parameters
     ----------
     loss : {'auto', 'binary_crossentropy', 'categorical_crossentropy'}, \
-        optional(default='auto')
+        optional (default='auto')
         The loss function to use in the boosting process. 'binary_crossentropy'
         (also known as logistic loss) is used for binary classification and
         generalizes to 'categorical_crossentropy' for multiclass
         classification. 'auto' will automatically choose either loss depending
         on the nature of the problem.
-    learning_rate : float, optional(default=1)
+    learning_rate : float, optional (default=1)
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
         shrinkage.
-    max_iter : int, optional(default=100)
+    max_iter : int, optional (default=100)
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees for binary classification. For multiclass
         classification, `n_classes` trees per iteration are built.
-    max_leaf_nodes : int or None, optional(default=None)
+    max_leaf_nodes : int or None, optional (default=None)
         The maximum number of leaves for each tree. If None, there is no
         maximum limit.
-    max_depth : int or None, optional(default=None)
+    max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
         nodes to go from the root to the deepest leaf.
-    min_samples_leaf : int, optional(default=5)
+    min_samples_leaf : int, optional (default=5)
         The minimum number of samples per leaf.
-    l2_regularization : float, optional(default=0)
+    l2_regularization : float, optional (default=0)
         The L2 regularization parameter. Use 0 for no regularization.
-    max_bins : int, optional(default=256)
+    max_bins : int, optional (default=256)
         The maximum number of bins to use. Before training, each feature of
         the input array ``X`` is binned into at most ``max_bins`` bins, which
         allows for a much faster training stage. Features with a small
@@ -613,7 +613,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         :ref:`scoring`). If None, the estimator's default scorer
         is used. If ``scoring='loss'``, early stopping is checked
         w.r.t the loss value. Only used if ``n_iter_no_change`` is not None.
-    validation_fraction : int or float or None, optional(default=0.1)
+    validation_fraction : int or float or None, optional (default=0.1)
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data.
@@ -627,11 +627,11 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         tolerance, the more likely we are to early stop: higher tolerance
         means that it will be harder for subsequent iterations to be
         considered an improvement upon the reference score.
-    verbose: int, optional(default=0)
+    verbose: int, optional (default=0)
         The verbosity level. If not zero, print some information about the
         fitting process.
     random_state : int, np.random.RandomStateInstance or None, \
-        optional(default=None)
+        optional (default=None)
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled. See :term:`random_state`.
