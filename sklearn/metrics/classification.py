@@ -1068,8 +1068,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     The `beta` parameter determines the weight of precision in the combined
     score. ``beta < 1`` lends more weight to precision, while ``beta > 1``
-    favors recall (``beta -> 0`` considers only precision, ``beta -> inf``
-    only recall).
+    favors recall (``beta -> inf`` considers only recall).
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
@@ -1410,7 +1409,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     ``UndefinedMetricWarning`` will be raised.
     """
     if beta <= 0:
-        raise ValueError("beta should be >0 in the F-beta score")
+        raise ValueError("beta should be >0 in the F-beta score, use the precision_score function for precision only")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
 
