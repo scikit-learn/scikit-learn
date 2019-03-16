@@ -661,7 +661,7 @@ Kernels:
    
 .. _model_inspection_ref:
 
-:mod:`sklearn.model_inspection`: Model nspection
+:mod:`sklearn.model_inspection`: Model Inspection
 =========================================  
 
 .. automodule:: sklearn.model_inspection
