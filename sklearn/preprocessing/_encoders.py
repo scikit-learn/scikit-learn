@@ -81,7 +81,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         if self._categories != 'auto':
             if len(self._categories) != n_features:
-                raise ValueError("Shape mismatch: if n_values is an array,"
+                raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
 
         self.categories_ = []
@@ -571,7 +571,7 @@ class OneHotEncoder(_BaseEncoder):
                                 " 'auto', int or array of ints, got %r"
                                 % type(self._n_values))
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
-                raise ValueError("Shape mismatch: if n_values is an array,"
+                raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
 
         self._n_values_ = n_values
