@@ -2366,7 +2366,6 @@ def check_decision_proba_consistency(name, estimator_orig):
     # Check whether an estimator having both decision_function and
     # predict_proba methods has outputs with perfect rank correlation.
 
-    np.random.seed(0)
     centers = [(2, 2), (4, 4)]
     X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
                       centers=centers, cluster_std=1.0, shuffle=True)
@@ -2379,10 +2378,6 @@ def check_decision_proba_consistency(name, estimator_orig):
         estimator.fit(X, y)
         a = estimator.predict_proba(X_test)[:, 1]
         b = estimator.decision_function(X_test)
-        # truncate arrays to the 10th decimal to avoid rank discrepancies that
-        # would be caused by floating point precision issue
-        a = np.around(a, decimals=10)
-        b = np.around(b, decimals=10)
         assert_array_equal(rankdata(a), rankdata(b))
 
 
@@ -2446,7 +2441,7 @@ def check_fit_idempotent(name, estimator_orig):
     rng = np.random.RandomState(0)
 
     estimator = clone(estimator_orig)
-    set_random_state(estimator, random_state=0)
+    set_random_state(estimator)
     if 'warm_start' in estimator.get_params().keys():
         estimator.set_params(warm_start=False)
 
@@ -2471,7 +2466,7 @@ def check_fit_idempotent(name, estimator_orig):
               if hasattr(estimator, method)}
 
     # Fit again
-    set_random_state(estimator, random_state=0)
+    set_random_state(estimator)
     estimator.fit(X_train, y_train)
 
     for method in check_methods:
