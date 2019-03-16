@@ -1069,15 +1069,6 @@ def test_make_pipeline_memory():
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())
     assert pipeline.memory is None
+    assert len(pipeline) == 2
 
     shutil.rmtree(cachedir)
-
-
-def test__len__():
-    scaler_for_pipeline = StandardScaler()
-    km_for_pipeline = KMeans(random_state=0)
-    pipeline = Pipeline([
-        ('scaler', scaler_for_pipeline),
-        ('Kmeans', km_for_pipeline)
-    ])
-    assert len(pipeline) == 2
