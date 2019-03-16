@@ -3,11 +3,11 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 import pytest
 
-from sklearn._fast_gradient_boosting.types import HISTOGRAM_DTYPE
-from sklearn._fast_gradient_boosting.types import G_H_DTYPE
-from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
-from sklearn._fast_gradient_boosting.splitting import Splitter
-from sklearn._fast_gradient_boosting.histogram import HistogramBuilder
+from sklearn.ensemble._hist_gradient_boosting.types import HISTOGRAM_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.types import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.splitting import Splitter
+from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 
 
 @pytest.mark.parametrize('n_bins', [3, 32, 256])

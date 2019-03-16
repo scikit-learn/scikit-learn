@@ -5,9 +5,9 @@ from scipy.optimize import newton
 from sklearn.utils import assert_all_finite
 import pytest
 
-from sklearn._fast_gradient_boosting.loss import _LOSSES
-from sklearn._fast_gradient_boosting.types import Y_DTYPE
-from sklearn._fast_gradient_boosting.types import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
+from sklearn.ensemble._hist_gradient_boosting.types import Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
 
 
 def get_derivatives_helper(loss):

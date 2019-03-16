@@ -3,11 +3,11 @@ from numpy.testing import assert_array_almost_equal
 import pytest
 from pytest import approx
 
-from sklearn._fast_gradient_boosting.grower import TreeGrower
-from sklearn._fast_gradient_boosting.binning import _BinMapper
-from sklearn._fast_gradient_boosting.types import X_BINNED_DTYPE
-from sklearn._fast_gradient_boosting.types import Y_DTYPE
-from sklearn._fast_gradient_boosting.types import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.types import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.types import Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.types import G_H_DTYPE
 
 
 def _make_training_data(n_bins=256, constant_hessian=True):

@@ -59,7 +59,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('tree')
     config.add_subpackage('utils')
     config.add_subpackage('svm')
-    config.add_subpackage('_fast_gradient_boosting')
     config.add_subpackage('linear_model')
 
     # add cython extension module for isotonic regression

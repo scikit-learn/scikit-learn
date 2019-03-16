@@ -10,7 +10,8 @@ from joblib import Memory
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score
 from sklearn.experimental import HistGradientBoostingClassifier
-from sklearn._fast_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.ensemble._hist_gradient_boosting.utils import (
+    get_equivalent_estimator)
 
 
 parser = argparse.ArgumentParser()

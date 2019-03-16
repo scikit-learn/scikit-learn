@@ -6,8 +6,9 @@ import pytest
 
 from sklearn.experimental import HistGradientBoostingRegressor
 from sklearn.experimental import HistGradientBoostingClassifier
-from sklearn._fast_gradient_boosting.binning import _BinMapper
-from sklearn._fast_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.utils import (
+    get_equivalent_estimator)
 
 
 pytest.importorskip("lightgbm")

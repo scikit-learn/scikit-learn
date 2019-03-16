@@ -7,7 +7,8 @@ from sklearn.experimental import HistGradientBoostingClassifier
 from sklearn.experimental import HistGradientBoostingRegressor
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
-from sklearn._fast_gradient_boosting.utils import get_equivalent_estimator
+from sklearn.ensemble._hist_gradient_boosting.utils import (
+    get_equivalent_estimator)
 
 
 parser = argparse.ArgumentParser()
