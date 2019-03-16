@@ -45,6 +45,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('semi_supervised/tests')
     config.add_subpackage('experimental')
     config.add_subpackage('experimental/tests')
+    config.add_subpackage('ensemble/_hist_gradient_boosting')
+    config.add_subpackage('ensemble/_hist_gradient_boosting/tests')
 
     # submodules which have their own setup.py
     config.add_subpackage('cluster')
