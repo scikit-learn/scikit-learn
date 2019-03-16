@@ -265,7 +265,9 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
     """
     assert graph.format == 'csr'
 
-    if graph.data.max() <= radius:
+    no_filter_needed = graph.data.max() <= radius
+
+    if no_filter_needed:
         data, indices, indptr = graph.data, graph.indices, graph.indptr
     else:
         mask = graph.data <= radius
@@ -273,6 +275,8 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
             data = np.compress(mask, graph.data)
         indices = np.compress(mask, graph.indices)
         indptr = np.concatenate(([0], np.cumsum(mask)))[graph.indptr]
+
+    indices = indices.astype(int, copy=no_filter_needed)
 
     if return_distance:
         neigh_dist = np.array(np.split(data, indptr[1:-1]))

@@ -140,31 +140,20 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     # Calculate neighborhood for all samples. This leaves the original point
     # in, which needs to be considered later (i.e. point i is in the
     # neighborhood of point i. While True, its useless information)
-    if metric == 'precomputed' and sparse.issparse(X):
-        neighborhoods = np.empty(X.shape[0], dtype=object)
-        X.sum_duplicates()  # XXX: modifies X's internals in-place
 
+    if metric == 'precomputed' and sparse.issparse(X):
         # set the diagonal to explicit values, as a point is its own neighbor
         with ignore_warnings():
             X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
 
-        X_mask = X.data <= eps
-        masked_indices = X.indices.astype(np.intp, copy=False)[X_mask]
-        masked_indptr = np.concatenate(([0], np.cumsum(X_mask)))
-        masked_indptr = masked_indptr[X.indptr[1:-1]]
-
-        # split into rows
-        neighborhoods[:] = np.split(masked_indices, masked_indptr)
-    else:
-        neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
-                                           leaf_size=leaf_size,
-                                           metric=metric,
-                                           metric_params=metric_params, p=p,
-                                           n_jobs=n_jobs)
-        neighbors_model.fit(X)
-        # This has worst case O(n^2) memory complexity
-        neighborhoods = neighbors_model.radius_neighbors(X, eps,
-                                                         return_distance=False)
+    neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
+                                       leaf_size=leaf_size, metric=metric,
+                                       metric_params=metric_params, p=p,
+                                       n_jobs=n_jobs)
+    neighbors_model.fit(X)
+    # This has worst case O(n^2) memory complexity
+    neighborhoods = neighbors_model.radius_neighbors(
+        X, eps, return_distance=False)
 
     if sample_weight is None:
         n_neighbors = np.array([len(neighbors)
