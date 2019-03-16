@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.experimental` module includes estimator and tools whose API
+The :mod:`sklearn.experimental` module includes estimators and tools whose API
 and behaviour might change without a deprecation cycle.
 """
 
