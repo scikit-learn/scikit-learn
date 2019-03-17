@@ -501,12 +501,6 @@ class RFECV(RFE, MetaEstimatorMixin):
     estimator_ : object
         The external estimator fit on the reduced dataset.
 
-    Notes
-    -----
-    The size of ``grid_scores_`` is equal to
-    ``ceil((n_features - min_features_to_select) / step) + 1``,
-    where step is the number of features removed at each iteration.
-
     Examples
     --------
     The following example shows how to retrieve the a-priori not known 5
