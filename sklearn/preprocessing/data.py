@@ -2431,7 +2431,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                        ignore_implicit_zeros=False,
                        subsample=int(1e5),
                        random_state=None,
-                       copy=False):
+                       copy=True):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
