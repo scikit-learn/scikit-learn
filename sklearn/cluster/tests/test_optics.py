@@ -12,6 +12,7 @@ from sklearn.cluster.optics_ import (OPTICS, _steep_downward, _steep_upward,
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
+from sklearn.utils import shuffle
 from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
@@ -109,10 +110,7 @@ def test_extract_xi():
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
     expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5,
                             -1, [4] * 5]
-    order = np.array(list(range(len(X))))
-    rng.shuffle(order)
-    X = X[order]
-    expected_labels = expected_labels[order]
+    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
     clust = OPTICS(min_samples=3, min_cluster_size=2,
                    max_eps=np.inf, cluster_method='xi',
@@ -122,10 +120,7 @@ def test_extract_xi():
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))
     expected_labels = np.r_[[1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5,
                             -1, -1, [4] * 5]
-    order = np.array(list(range(len(X))))
-    rng.shuffle(order)
-    X = X[order]
-    expected_labels = expected_labels[order]
+    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
     clust = OPTICS(min_samples=3, min_cluster_size=3,
                    max_eps=np.inf, cluster_method='xi',
@@ -137,10 +132,7 @@ def test_extract_xi():
     C3 = [[100, 100], [100, 90], [100, 110], [90, 100]]
     X = np.vstack((C1, C2, C3))
     expected_labels = np.r_[[0] * 4, [1] * 4, [2] * 4]
-    order = np.array(list(range(len(X))))
-    rng.shuffle(order)
-    X = X[order]
-    expected_labels = expected_labels[order]
+    X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
     clust = OPTICS(min_samples=2, min_cluster_size=2,
                    max_eps=np.inf, cluster_method='xi',
