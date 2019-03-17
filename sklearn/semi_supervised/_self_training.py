@@ -172,7 +172,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
         if y.dtype.kind in ['U', 'S']:
             raise ValueError("y has dtype string. If you wish to predict on "
-                             "string targets, use dtype " "object, and use -1"
+                             "string targets, use dtype object, and use -1"
                              " as the label for unlabeled samples.")
 
         has_label = y != -1
@@ -218,7 +218,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
                 else:
                     # NB these are indicies, not a mask
                     new_labels_unlabeled = \
-                        np.argpartition(max_proba, n_to_select)[:n_to_select]
+                        np.argpartition(-max_proba, n_to_select)[:n_to_select]
 
             # new_labels_unlabeled indexes into only the unlabeled samples
             # new_labels_full indexes into the full X

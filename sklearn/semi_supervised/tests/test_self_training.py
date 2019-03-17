@@ -253,10 +253,12 @@ def test_no_unlabeled():
 
 
 def test_early_stopping():
-    knn = SVC(gamma='scale', probability=True)
-    st = SelfTrainingClassifier(knn)
+    svc = SVC(gamma='scale', probability=True)
+    st = SelfTrainingClassifier(svc)
     X_train_easy = [[1], [0], [1], [0.5]]
     y_train_easy = [1, 0, -1, -1]
+    # X = [[0.5]] cannot be predicted on with a high confidence, so training
+    # stops early
     st.fit(X_train_easy, y_train_easy)
     assert st.n_iter_ == 1
     assert st.termination_condition_ == 'no_change'
@@ -310,3 +312,25 @@ def test_verbose_n_best():
 
     assert msg.format(n_expected_iter,
                       (n_samples - 1) % 10) in output.getvalue()
+
+
+def test_n_best_selects_best():
+    # Tests that the labels added by st really are the 10 best labels.
+    svc = SVC(gamma='scale', probability=True, random_state=0)
+    st = SelfTrainingClassifier(svc,
+                                selection_criterion='n_best',
+                                max_iter=1, n_best=10)
+    has_label = y_train_missing_labels != -1
+    st.fit(X_train, y_train_missing_labels)
+
+    got_label = ~has_label & (st.transduction_ != -1)
+
+    svc.fit(X_train[has_label], y_train_missing_labels[has_label])
+    pred = svc.predict_proba(X_train[~has_label])
+    max_proba = np.max(pred, axis=1)
+
+    most_confident_svc = X_train[~has_label][np.argsort(max_proba)[-10:]]
+    added_by_st = X_train[np.where(got_label)].tolist()
+
+    for row in most_confident_svc.tolist():
+        assert row in added_by_st
