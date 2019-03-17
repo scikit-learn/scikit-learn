@@ -116,7 +116,7 @@ print("rf_new test score is",
 # ``rf_init`` is computed, which shows that the categorical feature, ``sex``
 # is the most important feature:
 permute_importance = permutation_importance(rf_init, X_train, y_train,
-                                            n_bootstrap=10)
+                                            n_rounds=10)
 permute_importance_mean = np.mean(permute_importance, axis=-1)
 sorted_idx = permute_importance_mean.argsort()
 

@@ -27,8 +27,8 @@ only needing to fit the model once.
 
 The :func:`permutation_importance` function calcuates the feature importance
 of estimators based on permutation. since the features are randomly shuffled,
-this technique naturally extends itself to being bootstrapped. The 
-``n_bootstrap`` paramter controls how many times a feature is permuted. Here
+this procedure can be repeated to obtain a distribution of importances. The 
+``n_rounds`` paramter controls how many times a feature is permuted. Here
 the permutation importance distributions for features in the
 titantic dataset are computed:
 

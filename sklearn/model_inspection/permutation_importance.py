@@ -5,7 +5,7 @@ from ..utils import check_random_state
 from ..metrics import check_scoring
 
 
-def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=1,
+def permutation_importance(estimator, X, y, scoring=None, n_rounds=1,
                            random_state=None):
     """Permutation importance for feature evaluation. [BRE]_
 
@@ -28,15 +28,15 @@ def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=1,
         Training data.
 
     y : array-like, shape = (n_samples, ...)
-        Target relative to ``X``.
+        Targets for supervised learning.
 
     scoring : string, callable or None, optional (default=None)
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    n_bootstrap : int, optional (default=1)
-        Number of times to permute a feature
+    n_rounds : int, optional (default=1)
+        Number of times to permute a feature.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
@@ -48,7 +48,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=1,
     Returns
     -------
     scores : array, shape (n_features, bootstrap_samples)
-        Permutation importance scores
+        Permutation importance scores.
 
     References
     ----------
@@ -58,7 +58,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=1,
 
     random_state = check_random_state(random_state)
     scoring = check_scoring(estimator, scoring=scoring)
-    scores = np.empty(shape=(X.shape[1], n_bootstrap), dtype=np.float)
+    scores = np.empty(shape=(X.shape[1], n_rounds), dtype=np.float)
 
     # Makes copy since columns will be shuffled
     X = X.copy()
@@ -72,7 +72,7 @@ def permutation_importance(estimator, X, y, scoring=None, n_bootstrap=1,
     for col in range(X.shape[1]):
         original_feature = X_iloc[:, col].copy()
 
-        for b_idx in range(n_bootstrap):
+        for b_idx in range(n_rounds):
             X_perm = random_state.permutation(original_feature)
             X_iloc[:, col] = X_perm
 
