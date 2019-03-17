@@ -158,6 +158,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Point that a sample was reached from, indexed by object order.
         Seed points have a predecessor of -1.
 
+    clusters_ : array, shape (n_clusters, 2)
+        The list of clusters in the form of [start, end] in each row, with all
+        indices inclusive. The clusters are ordered in a way that larger
+        clusters encompassing smaller clusters come after those smaller
+        clusters.
+        Only available when ``cluster_method='xi'``.
+
     See also
     --------
 
@@ -265,12 +272,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         # Extract clusters from the calculated orders and reachability
         if self.cluster_method == 'xi':
-            # TODO: _ is the to-be-cluster_
-            labels_, _ = cluster_optics_xi(self.reachability_,
-                                           self.predecessor_, self.ordering_,
-                                           self.min_samples,
-                                           self.min_cluster_size, self.xi,
-                                           self.predecessor_correction)
+            labels_, clusters_ = cluster_optics_xi(
+                self.reachability_,
+                self.predecessor_,
+                self.ordering_,
+                self.min_samples,
+                self.min_cluster_size,
+                self.xi,
+                self.predecessor_correction)
+            self.clusters_ = clusters_
         elif self.cluster_method == 'dbscan':
             labels_ = cluster_optics_dbscan(self.reachability_,
                                             self.core_distances_,
@@ -593,11 +603,11 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
         The labels assigned to samples. Points which are not included
         in any cluster are labeled as -1.
 
-    clusters : list
-        The list of clusters in the form of (start, end) tuples,
-        with all indices inclusive. The clusters are ordered in a way that
-        larger clusters encompassing smaller clusters, come after those
-        smaller clusters.
+    clusters : array, shape (n_clusters, 2)
+        The list of clusters in the form of [start, end] in each row, with all
+        indices inclusive. The clusters are ordered in a way that larger
+        clusters encompassing smaller clusters come after those smaller
+        clusters.
     """
     clusters = _xi_cluster(reachability[ordering], predecessor[ordering], xi,
                            min_samples, min_cluster_size,
@@ -860,11 +870,11 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
 
     Returns
     -------
-    clusters : list
-        The list of clusters in the form of (start, end) tuples,
-        with all indices inclusive. The clusters are ordered in a way that
-        larger clusters encompassing smaller clusters, come after those
-        smaller clusters.
+    clusters : array, shape (n_clusters, 2)
+        The list of clusters in the form of [start, end] in each row, with all
+        indices inclusive. The clusters are ordered in a way that larger
+        clusters encompassing smaller clusters come after those smaller
+        clusters.
     """
 
     # for i in range(len(reachability_plot) - 1):
@@ -994,7 +1004,7 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
             # print("just else", index)
             index += 1
 
-    return clusters
+    return np.array(clusters)
 
 
 def _extract_xi_labels(ordering, clusters):
@@ -1007,7 +1017,7 @@ def _extract_xi_labels(ordering, clusters):
     ordering : array, shape (n_samples)
         The ordering of points calculated by OPTICS
 
-    clusters : list
+    clusters : array, shape (n_clusters, 2)
         List of clusters i.e. (start, end) tuples,
         as returned by `_xi_cluster`.
 
