@@ -29,7 +29,7 @@ def test_permutation_importance_correlated_feature_regression(to_pd):
 
     rf = RandomForestRegressor(n_estimators=10, random_state=rng)
     rf.fit(X, y)
-    permute_scores = permutation_importance(rf, X, y, n_bootstrap=10,
+    permute_scores = permutation_importance(rf, X, y, n_rounds=10,
                                             random_state=rng,
                                             scoring="neg_mean_absolute_error")
 
@@ -63,7 +63,7 @@ def test_permutation_importance_correlated_feature_column_transframer():
                        LogisticRegression(multi_class='auto',
                                           solver='lbfgs'))])
     model.fit(df, y)
-    permute_scores = permutation_importance(model, df, y, n_bootstrap=10,
+    permute_scores = permutation_importance(model, df, y, n_rounds=10,
                                             random_state=rng)
     assert permute_scores.shape == (df.shape[1], 10)
 
