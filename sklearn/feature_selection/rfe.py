@@ -31,7 +31,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     X_test, y_test = _safe_split(estimator, X, y, test, train)
     return rfe._fit(
         X_train, y_train, lambda estimator, features:
-        _score(estimator, X_test[:, features], y_test, scorer)).scores_
+        _score(estimator, X_test[:, features], y_test, scorer))
 
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
@@ -600,13 +600,13 @@ class RFECV(RFE, MetaEstimatorMixin):
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_rfe_single_fit)
 
-        scores = parallel(
+        rfes = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
             for train, test in cv.split(X, y, groups))
 
-        scores = np.sum(scores, axis=0)
+        scores = np.sum([rfe.scores_ for rfe in rfes], axis=0)
         n_features_to_select = (
-            rfe.n_remaining_feature_steps_[np.argmax(scores)])
+            rfes[0].n_remaining_feature_steps_[np.argmax(scores)])
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
