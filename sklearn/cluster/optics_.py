@@ -617,26 +617,6 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
     return labels, clusters
 
 
-def _steep_upward(reachability_plot, p, xi_complement):
-    """Check if point p is a xi steep up area (definition 9).
-    xi_complement is the inverse xi, i.e. `1 - xi`"""
-
-    if np.isinf(reachability_plot[p]) and np.isinf(reachability_plot[p + 1]):
-        return False
-
-    return reachability_plot[p] <= reachability_plot[p + 1] * xi_complement
-
-
-def _steep_downward(reachability_plot, p, xi_complement):
-    """Check if point p is a xi steep down area (definition 9).
-    xi_complement is the inverse xi, i.e. `1 - xi`"""
-
-    if np.isinf(reachability_plot[p]) and np.isinf(reachability_plot[p + 1]):
-        return False
-
-    return reachability_plot[p] * xi_complement >= reachability_plot[p + 1]
-
-
 class _Area:
     """An (upward or downward) area.
 
@@ -672,87 +652,26 @@ class _Area:
                 (self.start, self.end, self.maximum, self.mib))
 
 
-def _extend_downward(reachability_plot, start, xi_complement, min_samples,
-                     n_samples):
-    """Extend the downward area until it's maximal.
+def _extend_region(steep_point, xward_point, start, min_samples, n_samples):
+    """Extend the area until it's maximal.
+
+    It's the same function for both upward and downward reagions, depending on
+    the given input parameters. To extend an upward reagion,
+    ``steep_point=steep_upward`` and ``other_mash=downward`` are expected, and
+    to extend a downward region, ``steep_point=steep_downward`` and
+    ``other_mash=upward``.
 
     Parameters
     ----------
-    reachability_plot : array, shape (n_samples)
-        The reachability plot, i.e. reachability ordered according to
-        the calculated ordering, all computed by OPTICS.
+    steep_point : array, shape (n_samples)
+        True if the point is a steep point.
 
-    start : integer
-        The start of the downward region.
-
-    xi_complement : float, between 0 and 1
-        The inverse xi, i.e. `1 - xi`
-
-    min_samples : integer
-       The same as the min_samples given to OPTICS. Up and down steep
-       regions can't have more then `min_samples` consecutive non-steep
-       points.
-
-    n_samples : integer
-        Total number of samples.
-
-    Returns
-    -------
-    index : integer
-        The current index iterating over all the samples.
-
-    end : integer
-        The end of the downward region, which can be behind the index.
-    """
-    # print("extend down start")
-    non_downward_points = 0
-    index = start
-    end = start
-    # find a maximal downward area assuming the first point is xi-downward
-    # and there's an inf attached to the end of the reachability plot.
-    while index < n_samples:
-        # print("index", index)
-        # print("r", reachability_plot[index], "r + 1",
-        #       reachability_plot[index + 1])
-        if _steep_downward(reachability_plot, index, xi_complement):
-            non_downward_points = 0
-            end = index
-            # print("steep, end:", end)
-        elif reachability_plot[index] >= reachability_plot[index + 1]:
-            # print("just down")
-            # it's not a steep downward point, but still goes down.
-            non_downward_points += 1
-            # region should include no more than min_samples consecutive
-            # non steep downward points.
-            if non_downward_points > min_samples:
-                # print("too many downward")
-                break
-        else:
-            # this is not a steep down area anymore
-            # print("not going down, index:", index)
-            return index, end
-
-        index += 1
-    # print("extend end")
-    return index + 1, end
-
-
-def _extend_upward(reachability_plot, start, xi_complement, min_samples,
-                   n_samples):
-    """Extend the upward area until it's maximal.
-
-    Parameters
-    ----------
-    reachability_plot : array, shape (n_samples)
-        The reachability plot, i.e. reachability ordered according to
-        the calculated ordering, all computed by OPTICS.
+    xward_point : array, shape (n_samples)
+        True if the point is upward or downward respectively.
 
     start : integer
         The start of the upward region.
 
-    xi_complement : float, between 0 and 1
-        The inverse xi, i.e. `1 - xi`
-
     min_samples : integer
        The same as the min_samples given to OPTICS. Up and down steep
        regions can't have more then `min_samples` consecutive non-steep
@@ -767,28 +686,28 @@ def _extend_upward(reachability_plot, start, xi_complement, min_samples,
         The current index iterating over all the samples.
 
     end : integer
-        The end of the upward region, which can be behind the index.
+        The end of the region, which can be behind the index.
     """
     # print("extend up start")
-    non_upward_points = 0
+    non_xward_points = 0
     index = start
     end = start
-    # find a maximal upward area
+    # find a maximal area
     while index < n_samples:
         # print("index", index)
         # print("r", reachability_plot[index], "r + 1",
         #       reachability_plot[index + 1])
-        if _steep_upward(reachability_plot, index, xi_complement):
-            non_upward_points = 0
+        if steep_point[index]:
+            non_xward_points = 0
             end = index
             # print("steep, end:", end)
-        elif reachability_plot[index] <= reachability_plot[index + 1]:
+        elif not xward_point[index]:
             # print("just up")
             # it's not a steep upward point, but still goes up.
-            non_upward_points += 1
+            non_xward_points += 1
             # region should include no more than min_samples consecutive
-            # non steep upward points.
-            if non_upward_points > min_samples:
+            # non steep xward points.
+            if non_xward_points > min_samples:
                 # print("non upward")
                 break
         else:
@@ -900,6 +819,12 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
     index = 0
     mib = 0.  # maximum in between
 
+    ratio = reachability_plot[:-1] / reachability_plot[1:]
+    steep_upward = ratio <= xi_complement
+    steep_downward = ratio >= 1 / xi_complement
+    downward = ratio > 1
+    upward = ratio < 1
+
     # the following loop is is almost exactly as Figure 19 of the paper.
     while index < n_samples:
         # print("index", index)
@@ -908,16 +833,15 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
         # print("mib:", mib)
 
         # check if a steep downward area starts
-        if _steep_downward(reachability_plot, index, xi_complement):
+        if steep_downward[index]:
             # print("steep downward")
             # print("sdas", sdas)
             # print("filter mib:", mib)
             sdas = _update_filter_sdas(sdas, mib, xi_complement)
             # print("sdas", sdas)
             D_start = index
-            index, end = _extend_downward(reachability_plot, D_start,
-                                          xi_complement,
-                                          min_samples, n_samples)
+            index, end = _extend_region(steep_downward, upward, D_start,
+                                        min_samples, n_samples)
             D = _Area(start=D_start, end=end,
                       maximum=reachability_plot[D_start], mib=0.)
             # print("D", D, "r.s %.4g" % reachability_plot[D.start],
@@ -926,15 +850,14 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
             sdas.append(D)
             mib = reachability_plot[end + 1]
 
-        elif _steep_upward(reachability_plot, index, xi_complement):
+        elif steep_upward[index]:
             # print("steep upward")
             # print("sdas", sdas)
             # print("filter mib:", mib)
             sdas = _update_filter_sdas(sdas, mib, xi_complement)
             # print("sdas", sdas)
             U_start = index
-            index, end = _extend_upward(reachability_plot, U_start,
-                                        xi_complement,
+            index, end = _extend_region(steep_upward, downward, U_start,
                                         min_samples, n_samples)
             U = _Area(start=U_start, end=end, maximum=reachability_plot[end],
                       mib=-1)
