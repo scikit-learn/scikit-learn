@@ -822,14 +822,22 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
     ratio = reachability_plot[:-1] / reachability_plot[1:]
     steep_upward = ratio <= xi_complement
     steep_downward = ratio >= 1 / xi_complement
+    steep = steep_downward.astype(int) - steep_upward.astype(int)
     downward = ratio > 1
     upward = ratio < 1
 
     # the following loop is is almost exactly as Figure 19 of the paper.
-    while index < n_samples:
+    # it jumps over the areas which are not either steep down or up areas
+    for steep_index in iter(np.flatnonzero(steep)):
+        # just continue if steep_index has been a part of a discovered xward
+        # area.
+        if steep_index < index:
+            continue
+
+        mib = max(mib, np.max(reachability_plot[index:steep_index + 1]))
+        index = steep_index
         # print("index", index)
         # print("r", reachability_plot[index])
-        mib = max(mib, reachability_plot[index])
         # print("mib:", mib)
 
         # check if a steep downward area starts
@@ -922,10 +930,6 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
 
             if U.end == n_samples - 1:
                 break
-
-        else:
-            # print("just else", index)
-            index += 1
 
     return np.array(clusters)
 
