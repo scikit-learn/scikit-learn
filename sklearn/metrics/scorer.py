@@ -323,9 +323,9 @@ def _check_multimetric_scoring(estimator, scoring=None):
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None the estimator's default scorer (if available) is used.
+        If None the estimator's score method is used.
         The return value in that case will be ``{'score': <default_scorer>}``.
-        If the estimator's default scorer is not available, a ``TypeError``
+        If the estimator's score method is not available, a ``TypeError``
         is raised.
 
     Returns

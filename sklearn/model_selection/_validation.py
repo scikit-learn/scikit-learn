@@ -71,7 +71,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None, the estimator's default scorer (if available) is used.
+        If None, the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -959,7 +959,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
-        If None the estimator's default scorer, if available, is used.
+        If None the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.

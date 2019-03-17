@@ -1069,5 +1069,6 @@ def test_make_pipeline_memory():
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())
     assert pipeline.memory is None
+    assert len(pipeline) == 2
 
     shutil.rmtree(cachedir)
