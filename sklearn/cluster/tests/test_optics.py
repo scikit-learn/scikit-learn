@@ -140,6 +140,19 @@ def test_extract_xi():
     assert_array_equal(clust.labels_, expected_labels)
 
 
+def test_clusters_():
+    n_points_per_cluster = 100
+    C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2)
+    C2 = [0, 0] + 10 * rng.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2))
+    X = shuffle(X, random_state=0)
+
+    clusters = OPTICS(min_samples=20, xi=.1).fit(X).clusters_
+    assert clusters.shape == (2, 2)
+    diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
+    assert diff / len(X) < 0.05
+
+
 def test_correct_number_of_clusters():
     # in 'auto' mode
 
