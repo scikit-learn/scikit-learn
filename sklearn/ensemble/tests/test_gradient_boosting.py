@@ -1377,8 +1377,9 @@ def test_gradient_boosting_with_init_pipeline():
     gb.fit(X, y)
 
     with pytest.raises(
-        ValueError,
-        match='The init estimator is a pipeline, pipelines do not support'):
+            ValueError,
+            match='The initial estimator Pipeline does not support sample '
+                  'weights'):
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
