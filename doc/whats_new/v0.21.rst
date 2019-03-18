@@ -321,6 +321,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| :func:`metrics.label_ranking_average_precision_score` was returning
   incorrect values where some samples had degenerate labels and `sample_weight`
   was used.
+  :issue:`13447` by :user:`Dan Ellis <dpwe>`.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
