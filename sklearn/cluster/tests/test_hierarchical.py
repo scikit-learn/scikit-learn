@@ -607,4 +607,4 @@ def test_n_components_deprecation():
 
     with pytest.warns(DeprecationWarning):
         n = test_agglomerative_clusterer.n_components_
-    assert n == my_agglomerative_clusterer.n_connected_components_
+    assert n == test_agglomerative_clusterer.n_connected_components_
