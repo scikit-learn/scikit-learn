@@ -2,12 +2,12 @@
 Solve the unique lowest-cost assignment problem using the
 Hungarian algorithm (also known as Munkres algorithm).
 
+This module is deprecated in 0.21 and will removed from 0.23
+as the algorithm incorporated in SciPy will be used instead.
+
 """
 # Based on original code by Brain Clapper, adapted to NumPy by Gael Varoquaux.
 # Heavily refactored by Lars Buitinck.
-#
-# TODO: a version of this algorithm has been incorporated in SciPy; use that
-# when SciPy 0.17 is released.
 
 # Copyright (c) 2008 Brian M. Clapper <bmc@clapper.org>, Gael Varoquaux
 # Author: Brian M. Clapper, Gael Varoquaux
