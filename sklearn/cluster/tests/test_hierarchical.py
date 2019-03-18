@@ -601,8 +601,8 @@ def test_affinity_passed_to_fix_connectivity():
 
 
 def test_n_components_deprecation():
-    # Test that checks if a Deprecation is thrown when n_components_
-    # is passed to the AgglomerativeClustering class
+    # Test that a Deprecation warning is thrown when n_components_
+    # attribute is called from AgglomerativeClustering.fit() method
 
     X = np.array([[1, 2], [1, 4], [1, 0], [4, 2]])
     agc = AgglomerativeClustering().fit(X)
