@@ -276,7 +276,7 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
         indices = np.compress(mask, graph.indices)
         indptr = np.concatenate(([0], np.cumsum(mask)))[graph.indptr]
 
-    indices = indices.astype(int, copy=no_filter_needed)
+    indices = indices.astype(np.intp, copy=no_filter_needed)
 
     if return_distance:
         neigh_dist = np.array(np.split(data, indptr[1:-1]))
