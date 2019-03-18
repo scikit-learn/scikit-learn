@@ -602,12 +602,8 @@ def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
         X = pd.DataFrame(X)
 
     ohe = OneHotEncoder(categories='auto', handle_unknown=handle_unknown)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit_transform(X)
+    ohe.fit(X)
+    ohe.fit_transform(X)
 
     if as_data_frame:
         X_partial = X.iloc[:1, :]
@@ -615,9 +611,7 @@ def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
         X_partial = X[:1, :]
 
     ohe.fit(X_partial)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.transform(X)
+    ohe.transform(X)
 
 
 @pytest.mark.parametrize("X", [
@@ -680,17 +674,10 @@ def test_ordinal_encoder_inverse():
                          ids=['numeric', 'object'])
 def test_ordinal_encoder_raise_missing(X):
     ohe = OrdinalEncoder()
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit_transform(X)
-
+    ohe.fit(X)
+    ohe.fit_transform(X)
     ohe.fit(X[:1, :])
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.transform(X)
+    ohe.transform(X)
 
 
 def test_encoder_dtypes():
