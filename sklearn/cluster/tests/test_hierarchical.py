@@ -604,8 +604,9 @@ def test_n_components_deprecation():
     # Test that checks if a Deprecation is thrown when n_components_
     # is passed to the AgglomerativeClustering class
 
-    test_agglomerative_clusterer = AgglomerativeClustering(n_clusters=3)
+    X = np.array([[1, 2], [1, 4], [1, 0], [4, 2]])
+    agc = AgglomerativeClustering().fit(X)
 
     with pytest.warns(DeprecationWarning):
-        n = test_agglomerative_clusterer.n_components_
-    assert n == test_agglomerative_clusterer.n_connected_components_
+        n = agc.n_components_
+    assert n == agc.n_connected_components_
