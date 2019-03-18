@@ -57,8 +57,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Whether transform should produce scipy.sparse matrices.
         True by default.
     sort : boolean, optional.
-        Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
-        True by default.
+        Whether ``feature_names_`` and ``vocabulary_`` should be
+        sorted when fitting. True by default.
 
     Attributes
     ----------
@@ -125,7 +125,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         if self.sort:
             feature_names.sort()
-            vocab = dict((f, i) for i, f in enumerate(feature_names))
+            vocab = {f: i for i, f in enumerate(feature_names)}
 
         self.feature_names_ = feature_names
         self.vocabulary_ = vocab
@@ -362,3 +362,6 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                                                     key=itemgetter(1))]
 
         return self
+
+    def _more_tags(self):
+        return {'X_types': ["dict"]}

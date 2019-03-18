@@ -23,12 +23,13 @@ scikit-learn, :class:`PCA` is implemented as a *transformer* object
 that learns :math:`n` components in its ``fit`` method, and can be used on new
 data to project it on these components.
 
-The optional parameter ``whiten=True`` makes it possible to
-project the data onto the singular space while scaling each component
-to unit variance. This is often useful if the models down-stream make
-strong assumptions on the isotropy of the signal: this is for example
-the case for Support Vector Machines with the RBF kernel and the K-Means
-clustering algorithm.
+PCA centers but does not scale the input data for each feature before
+applying the SVD. The optional parameter parameter ``whiten=True`` makes it
+possible to project the data onto the singular space while scaling each
+component to unit variance. This is often useful if the models down-stream make
+strong assumptions on the isotropy of the signal: this is for example the case
+for Support Vector Machines with the RBF kernel and the K-Means clustering
+algorithm.
 
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
@@ -79,6 +80,9 @@ out-of-core Principal Component Analysis either by:
 in order update ``explained_variance_ratio_`` incrementally. This is why
 memory usage depends on the number of samples per batch, rather than the
 number of samples to be processed in the dataset.
+
+As in :class:`PCA`, :class:`IncrementalPCA` centers but does not scale the
+input data for each feature before applying the SVD.
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_incremental_pca_001.png
     :target: ../auto_examples/decomposition/plot_incremental_pca.html
@@ -138,10 +142,6 @@ less than 1s:
    :scale: 60%
 
 .. centered:: |orig_img| |pca_img|
-
-Note: with the optional parameter ``svd_solver='randomized'``, we also
-need to give :class:`PCA` the size of the lower-dimensional space
-``n_components`` as a mandatory input parameter.
 
 If we note :math:`n_{\max} = \max(n_{\mathrm{samples}}, n_{\mathrm{features}})` and
 :math:`n_{\min} = \min(n_{\mathrm{samples}}, n_{\mathrm{features}})`, the time complexity
@@ -957,3 +957,7 @@ when data can be fetched sequentially.
     * `"Stochastic Variational Inference"
       <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
+
+
+See also :ref:`nca_dim_reduction` for dimensionality reduction with
+Neighborhood Components Analysis.

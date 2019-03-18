@@ -179,7 +179,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         # Training data is before testing data
         X = sp.vstack([Xy[8], Xy[0], Xy[2], Xy[4], Xy[6]]).tocsr()
         sample_id = np.hstack((Xy[9], Xy[1], Xy[3], Xy[5], Xy[7]))
-        sample_id = sample_id.astype(np.uint32)
+        sample_id = sample_id.astype(np.uint32, copy=False)
 
         _joblib.dump(X, samples_path, compress=9)
         _joblib.dump(sample_id, sample_id_path, compress=9)
@@ -208,7 +208,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         category_names = {}
         with GzipFile(filename=topics_archive_path, mode='rb') as f:
             for line in f:
-                line_components = line.decode("ascii").split(u" ")
+                line_components = line.decode("ascii").split(" ")
                 if len(line_components) == 3:
                     cat, doc, _ = line_components
                     if cat not in category_names:

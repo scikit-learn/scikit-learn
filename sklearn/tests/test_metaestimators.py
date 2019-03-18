@@ -16,7 +16,7 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
 
 
-class DelegatorData(object):
+class DelegatorData:
     def __init__(self, name, construct, skip_methods=(),
                  fit_args=make_classification()):
         self.name = name
@@ -46,7 +46,7 @@ DELEGATING_METAESTIMATORS = [
 ]
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_metaestimator_delegation():
     # Ensures specified metaestimators have methods iff subestimator does
     def hides(method):
