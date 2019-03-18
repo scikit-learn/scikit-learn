@@ -345,6 +345,7 @@ def test_check_array_dtype_stability():
     assert_equal(check_array(X).dtype.kind, "i")
     assert_equal(check_array(X, ensure_2d=False).dtype.kind, "i")
 
+
 @pytest.mark.skip(reason="warn_on_dtype is deprecated from 'check_array'")
 def test_check_array_dtype_warning():
     X_int_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
