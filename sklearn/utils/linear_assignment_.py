@@ -15,8 +15,9 @@ import warnings
 
 # Deprecation warning for module
 warnings.warn(
-   "This module is deprecated in 0.21 and will removed from 0.23 "
-   "as the algorithm incorporated in SciPy will be used instead.", ImportWarning)
+    "This module is deprecated in 0.21 and will removed from 0.23 "
+    "as the algorithm incorporated in SciPy will be used instead.",
+    ImportWarning)
 
 
 def linear_assignment(X):
