@@ -189,6 +189,16 @@ class OneHotEncoder(_BaseEncoder):
     dtype : number type, default=np.float
         Desired dtype of output.
 
+    missing_values: scalar, default=np.nan
+        Value to be encoded as missing
+
+    handle_missing: 'all-zero', 'category', 'all-missing', default='all-zero'
+        Defines how the missing value should be handled
+
+        - 'all-zero' : the missing value is encoded as all zeros
+        - 'category' : another category is appended to flag missing values
+        - 'all-missing' : the missing value is encoded as all nan
+
     handle_unknown : 'error' or 'ignore', default='error'.
         Whether to raise an error or ignore if an unknown categorical feature
         is present during transform (default is to raise). When this parameter
@@ -275,8 +285,9 @@ class OneHotEncoder(_BaseEncoder):
     ... # doctest: +ELLIPSIS
     ... # doctest: +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None, categories=None, drop=None,
-       dtype=<... 'numpy.float64'>, handle_unknown='ignore',
-       n_values=None, sparse=True)
+          dtype=<class 'numpy.float64'>, handle_missing='all-zero',
+          handle_unknown='ignore', missing_values=nan, n_values=None,
+          sparse=True)
 
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
