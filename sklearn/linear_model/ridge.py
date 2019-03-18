@@ -1159,7 +1159,10 @@ class _WIPNewRidgeGCV(_RidgeGCV):
         cov[-1] = 0
         cov[:, -1] = 0
         cov[-1, -1] = n
+        kernel_size = max(0, X.shape[1] - X.shape[0])
         s, V = linalg.eigh(cov)
+        s = s[kernel_size:]
+        V = V[:, kernel_size:]
         self._X_offset = X_m
         return s, V, X
 
