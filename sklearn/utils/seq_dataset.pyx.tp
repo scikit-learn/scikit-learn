@@ -1,3 +1,7 @@
+# cython: language_level=3
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
 {{py:
 
 """
@@ -26,7 +30,6 @@ def get_dispatch(dtypes):
         yield name, c_type, np_type
 
 }}
-# cython: language_level=3
 {{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 #------------------------------------------------------------------------------
@@ -35,11 +38,6 @@ def get_dispatch(dtypes):
 Dataset abstractions for sequential data access.
 WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
 """
-
-# cython: language_level=3
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
 
 cimport cython
 from libc.limits cimport INT_MAX
