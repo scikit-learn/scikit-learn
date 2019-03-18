@@ -719,7 +719,7 @@ def test_encoder_dtypes_pandas():
     assert_array_equal(enc.transform(X).toarray(), exp)
 
     X = pd.DataFrame({'A': [1, 2], 'B': ['a', 'b'], 'C': [3., 4.]})
-    X_type = [int, object, float]
+    X_type = [X[col].dtype for col in X.columns]
     enc.fit(X)
     assert all([enc.categories_[i].dtype == X_type[i] for i in range(3)])
     assert_array_equal(enc.transform(X).toarray(), exp)
