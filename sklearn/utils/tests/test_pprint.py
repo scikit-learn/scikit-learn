@@ -86,7 +86,14 @@ def test_deeply_nested():
     # Render a deeply nested estimator
     rfe = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected = """
-RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=LogisticRegression(C=1.0,
+RFE(changed_step=1,
+    estimator=RFE(changed_step=1,
+                  estimator=RFE(changed_step=1,
+                                estimator=RFE(changed_step=1,
+                                              estimator=RFE(changed_step=1,
+                                                            estimator=RFE(changed_step=1,
+                                                                          estimator=RFE(changed_step=1,
+                                                                                        estimator=LogisticRegression(C=1.0,
                                                                                                                      class_weight=None,
                                                                                                                      dual=False,
                                                                                                                      fit_intercept=True,
@@ -102,18 +109,29 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
                                                                                                                      verbose=0,
                                                                                                                      warm_start=False),
                                                                                         n_features_to_select=None,
+                                                                                        reducing_step=False,
                                                                                         step=1,
+                                                                                        step_change_at=None,
                                                                                         verbose=0),
                                                                           n_features_to_select=None,
+                                                                          reducing_step=False,
                                                                           step=1,
+                                                                          step_change_at=None,
                                                                           verbose=0),
                                                             n_features_to_select=None,
-                                                            step=1, verbose=0),
-                                              n_features_to_select=None, step=1,
-                                              verbose=0),
-                                n_features_to_select=None, step=1, verbose=0),
-                  n_features_to_select=None, step=1, verbose=0),
-    n_features_to_select=None, step=1, verbose=0)"""
+                                                            reducing_step=False,
+                                                            step=1,
+                                                            step_change_at=None,
+                                                            verbose=0),
+                                              n_features_to_select=None,
+                                              reducing_step=False, step=1,
+                                              step_change_at=None, verbose=0),
+                                n_features_to_select=None, reducing_step=False,
+                                step=1, step_change_at=None, verbose=0),
+                  n_features_to_select=None, reducing_step=False,
+                  step=1, step_change_at=None, verbose=0),
+    n_features_to_select=None, reducing_step=False,
+    step=1, step_change_at=None, verbose=0)"""
 
     expected = expected[1:]  # remove first \n
     assert rfe.__repr__() == expected
