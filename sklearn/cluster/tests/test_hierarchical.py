@@ -598,3 +598,13 @@ def test_affinity_passed_to_fix_connectivity():
     linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
 
     assert_equal(fa.counter, 3)
+
+def test_n_components_deprecation():
+    # Test that checks if a Deprecation is thrown when n_components_
+    # is passed to the AgglomerativeClustering class
+
+    test_agglomerative_clusterer = AgglomerativeClustering(n_clusters=3)
+
+    with pytest.warns(DeprecationWarning):
+        n = test_agglomerative_clusterer.n_components_
+    assert n == my_agglomerative_clusterer.n_connected_components_
