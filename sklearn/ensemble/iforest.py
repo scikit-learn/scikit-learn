@@ -407,7 +407,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
              " be removed in 0.22.", DeprecationWarning)
         return self._threshold_
 
-    def _compute_chunked_score_samples(self, X, working_memory=None):
+    def _compute_chunked_score_samples(self, X):
 
         n_samples = _num_samples(X)
 
@@ -416,8 +416,9 @@ class IsolationForest(BaseBagging, OutlierMixin):
         else:
             subsample_features = True
 
-        # We get as many rows as possible within our working_memory budget to
-        # store self._max_features in each row during computation.
+        # We get as many rows as possible within our working_memory budget
+        # (defined by sklearn.get_config()['working_memory']) to store
+        # self._max_features in each row during computation.
         #
         # Note:
         #  - this will get at least 1 row, even if 1 row of score will
@@ -427,8 +428,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         #    themselves are 1D.
 
         chunk_n_rows = get_chunk_n_rows(row_bytes=16 * self._max_features,
-                                        max_n_rows=n_samples,
-                                        working_memory=working_memory)
+                                        max_n_rows=n_samples)
         slices = gen_batches(n_samples, chunk_n_rows)
 
         scores = np.zeros(n_samples, order="f")
