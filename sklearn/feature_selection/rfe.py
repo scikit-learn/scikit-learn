@@ -29,9 +29,10 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     """
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
-    return rfe._fit(
+    rfe._fit(
         X_train, y_train, lambda estimator, features:
         _score(estimator, X_test[:, features], y_test, scorer))
+    return rfe.scores_, rfe.n_remaining_feature_steps_
 
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
@@ -594,13 +595,15 @@ class RFECV(RFE, MetaEstimatorMixin):
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_rfe_single_fit)
 
-        rfes = parallel(
+        cv_results = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
             for train, test in cv.split(X, y, groups))
 
-        scores = np.sum([rfe.scores_ for rfe in rfes], axis=0)
-        n_features_to_select = (
-            rfes[0].n_remaining_feature_steps_[np.argmax(scores)])
+        # Reverse scores and num feature steps to select argmax score with
+        # lowest num features in case of a score tie
+        scores = np.sum([s for s, _ in cv_results], axis=0)[::-1]
+        n_remaining_feature_steps = cv_results[0][1][::-1]
+        n_features_to_select = n_remaining_feature_steps[np.argmax(scores)]
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
@@ -620,5 +623,5 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
         # here, the scores are normalized by get_n_splits(X, y)
-        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y, groups)
+        self.grid_scores_ = scores / cv.get_n_splits(X, y, groups)
         return self
