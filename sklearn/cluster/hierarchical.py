@@ -967,10 +967,3 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         raise AttributeError
 
     @property
-    def n_components_(self):
-        warnings.warn("The `n_components` parameter changed to"
-                      "`n_connected_components`. This will be"
-                      "deprecated in version 0.21 and removed"
-                      "in 0.23.",
-                      DeprecationWarning)
-        return self.n_connected_components_
