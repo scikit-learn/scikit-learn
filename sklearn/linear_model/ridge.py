@@ -1148,6 +1148,7 @@ class _WIPNewRidgeGCV(_RidgeGCV):
         return v, Q, QT_y
 
     def _pre_compute_svd(self, X, y, centered_kernel):
+        # TODO: handle case of fit_intercept=False
         if sparse.issparse(X):
             return self._pre_compute_covariance(X, y)
         return super()._pre_compute_svd(X, y, centered_kernel)
