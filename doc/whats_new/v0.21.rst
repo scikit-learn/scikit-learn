@@ -168,6 +168,10 @@ Support for Python 3.4 and below has been officially dropped.
   by avoiding keeping in memory each tree prediction. :issue:`13260` by
   `Nicolas Goix`_.
 
+- |Efficiency| :class:`ensemble.IsolationForest` now uses chunks of data at
+  prediction step, thus capping the memory usage. :issue:`13283` by
+  `Nicolas Goix`_.
+
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
   problems. :issue:`12715` by :user:`Nicolas Hug<NicolasHug>`.
