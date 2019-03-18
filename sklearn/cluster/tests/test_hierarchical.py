@@ -599,6 +599,7 @@ def test_affinity_passed_to_fix_connectivity():
 
     assert_equal(fa.counter, 3)
 
+
 def test_n_components_deprecation():
     # Test that checks if a Deprecation is thrown when n_components_
     # is passed to the AgglomerativeClustering class
