@@ -39,6 +39,8 @@ from sklearn.utils.testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LinearRegression
 
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier,
@@ -1364,6 +1366,20 @@ def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
     with pytest.raises(ValueError,
                        match="estimator.*does not support sample weights"):
         gb(init=init_est).fit(X, y, sample_weight=sample_weight)
+
+
+def test_gradient_boosting_with_init_pipeline():
+    # Check that the init estimator can be a pipeline (see issue #13466)
+
+    X, y = make_regression(random_state=0)
+    init = make_pipeline(LinearRegression())
+    gb = GradientBoostingRegressor(init=init)
+    gb.fit(X, y)
+
+    with pytest.raises(
+        ValueError,
+        match='The init estimator is a pipeline, pipelines do not support'):
+        gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
 @pytest.mark.parametrize('estimator, missing_method', [

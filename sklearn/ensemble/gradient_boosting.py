@@ -1445,6 +1445,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if sample_weight_is_none:
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
+            from sklearn.pipeline import Pipeline
+            if isinstance(self.init, Pipeline):
+                raise ValueError(
+                    'The init estimator is a pipeline, '
+                    'pipelines do not support sample_weight.'
+                    )
             sample_weight = column_or_1d(sample_weight, warn=True)
             sample_weight_is_none = False
 
@@ -1484,7 +1490,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             else:
                 try:
                     self.init_.fit(X, y, sample_weight=sample_weight)
-                except TypeError:
+                except (TypeError, ValueError):
                     if sample_weight_is_none:
                         self.init_.fit(X, y)
                     else:
