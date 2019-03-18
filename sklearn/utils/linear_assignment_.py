@@ -17,7 +17,7 @@ import warnings
 warnings.warn(
     "This module is deprecated in 0.21 and will removed from 0.23 "
     "as the algorithm incorporated in SciPy will be used instead.",
-    ImportWarning)
+    DeprecationWarning)
 
 
 def linear_assignment(X):
@@ -119,6 +119,11 @@ def _hungarian(cost_matrix):
         The pairs of (row, col) indices in the original array giving
         the original ordering.
     """
+    warnings.warn(
+        "This method is deprecated in 0.21 and will removed from 0.23 "
+        "as the algorithm incorporated in SciPy will be used instead.",
+        DeprecationWarning)
+
     state = _HungarianState(cost_matrix)
 
     # No need to bother with assignments if one of the dimensions
