@@ -43,7 +43,8 @@ from sklearn.utils import _joblib
 REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'neg_mean_absolute_error', 'neg_mean_squared_error',
                       'neg_mean_squared_log_error',
-                      'neg_median_absolute_error', 'neg_root_mean_squared_error',
+                      'neg_median_absolute_error',
+                      'neg_root_mean_squared_error',
                       'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error',
                       'max_error']
