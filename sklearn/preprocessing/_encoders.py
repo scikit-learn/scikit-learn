@@ -98,7 +98,14 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                         raise ValueError("Unsorted categories are not "
                                          "supported for numerical categories")
                 if handle_unknown == 'error':
-                    _nanencode(Xi, cats, missing_values=missing_values)
+                    try:
+                        _nanencode(Xi, cats, encode=True,
+                                   missing_values=missing_values)
+                    except ValueError as e:
+                        diff = e.args[0]
+                        msg = ("Found unknown categories {0} in column {1}"
+                               " during fit".format(diff, i))
+                        raise ValueError(msg)
             self.categories_.append(cats)
 
     def _transform(self, X, missing_values, handle_unknown='error'):

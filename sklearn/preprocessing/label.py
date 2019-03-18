@@ -99,7 +99,7 @@ def _nanencode_numpy(values, uniques=None, encode=False,
             if not encode_unknown:
                 if len(unseen):
                     raise ValueError("y contains previously unseen labels: %s"
-                                     % str(unseen))
+                                     % str(unseen), unseen)
 
         encoded = np.searchsorted(uniques, values)
         from ..impute import _get_mask
@@ -219,8 +219,9 @@ def _nanencode_python(values, uniques=None, encode=False,
             encoded = np_mapper(values).astype(np.int)
             missing_mask = encoded == missing_index
         except KeyError as e:
+            unseen = e.args[0]
             raise ValueError("y contains previously unseen labels: %s"
-                             % str(e))
+                             % str(unseen), unseen)
 
         if encode_unknown:
             unknown_mask = encoded == unknown_index
