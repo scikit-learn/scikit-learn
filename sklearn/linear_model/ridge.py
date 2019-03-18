@@ -1129,15 +1129,15 @@ def _centered_covariance(X):
 
 class _WIPNewRidgeGCV(_RidgeGCV):
 
-    def _pre_compute(self, X, y, centered_kernel):
-        if sparse.issparse(X) and self.fit_intercept:
-            return self._pre_compute_gram(X, y)
-        return super()._pre_compute(X, y, centered_kernel)
-
     def _set_intercept(self, X_offset, y_offset, X_scale):
         if getattr(self, '_X_offset', None) is not None:
             X_offset = self._X_offset
         super()._set_intercept(X_offset, y_offset, X_scale)
+
+    def _pre_compute(self, X, y, centered_kernel):
+        if sparse.issparse(X) and self.fit_intercept:
+            return self._pre_compute_gram(X, y)
+        return super()._pre_compute(X, y, centered_kernel)
 
     def _pre_compute_gram(self, X, y):
         K, X_m = _centered_gram(X)
@@ -1146,20 +1146,6 @@ class _WIPNewRidgeGCV(_RidgeGCV):
         QT_y = np.dot(Q.T, y)
         self._X_offset = X_m
         return v, Q, QT_y
-
-    def _errors_and_values_helper(self, alpha, y, v, Q, QT_y):
-        w = 1. / (v + alpha)
-        constant_column = np.var(Q, 0) < 1.e-12
-        if not constant_column.any():
-            warnings.warn('intercept was not a singular vector of gram matrix')
-        w[constant_column] = 0
-
-        c = np.dot(Q, self._diag_dot(w, QT_y))
-        G_diag = self._decomp_diag(w, Q)
-        # handle case where y is 2-d
-        if len(y.shape) != 1:
-            G_diag = G_diag[:, np.newaxis]
-        return G_diag, c
 
     def _pre_compute_svd(self, X, y, centered_kernel):
         if sparse.issparse(X):
@@ -1181,7 +1167,10 @@ class _WIPNewRidgeGCV(_RidgeGCV):
         if not sparse.issparse(X):
             return super()._errors_and_values_svd_helper(alpha, y, s, V, X)
         n, p = X.shape
+        intercept_dim, *_ = np.where(s == n)
         w = 1 / (s + alpha)
+        if len(intercept_dim == 1):
+            w[intercept_dim[0]] = 1 / s[intercept_dim[0]]
         A = (V * w).dot(V.T)
         Xm = self._X_offset
 
@@ -1202,11 +1191,12 @@ class _WIPNewRidgeGCV(_RidgeGCV):
 
         Xop = sparse.linalg.LinearOperator(
             matvec=matvec, matmat=matmat, rmatvec=rmatvec,
-            shape=(X.shape[0], X.shape[1] + 1))
+            shape=(X.shape[0], X.shape[1] + 1), dtype=X.dtype)
         AXy = A.dot(Xop.rmatvec(y))
-        y_pred = Xop.dot(AXy)
+        y_hat = Xop.dot(AXy)
         hat_diag = _sparse_multidot_diag(X, A, Xm)
-        return (1 - hat_diag) / alpha, (y - y_pred) / alpha
+        # return (1 - hat_diag), (y - y_hat)
+        return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
 
 def _sparse_multidot_diag(X, A, Xm):
