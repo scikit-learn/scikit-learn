@@ -2,9 +2,6 @@
 Solve the unique lowest-cost assignment problem using the
 Hungarian algorithm (also known as Munkres algorithm).
 
-This module is deprecated in 0.21 and will removed from 0.23
-as the algorithm incorporated in SciPy will be used instead.
-
 """
 # Based on original code by Brain Clapper, adapted to NumPy by Gael Varoquaux.
 # Heavily refactored by Lars Buitinck.
@@ -14,6 +11,12 @@ as the algorithm incorporated in SciPy will be used instead.
 # LICENSE: BSD
 
 import numpy as np
+import warnings
+
+# Deprecation warning for module
+warnings.warn(
+   "This module is deprecated in 0.21 and will removed from 0.23 "
+   "as the algorithm incorporated in SciPy will be used instead.", ImportWarning)
 
 
 def linear_assignment(X):
