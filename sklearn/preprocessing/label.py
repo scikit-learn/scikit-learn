@@ -23,7 +23,6 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _num_samples
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
-from ..impute import _get_mask
 
 
 __all__ = [
@@ -103,6 +102,7 @@ def _nanencode_numpy(values, uniques=None, encode=False,
                                      % str(unseen))
 
         encoded = np.searchsorted(uniques, values)
+        from ..impute import _get_mask
         missing_mask = _get_mask(values, missing_values)
 
         if encode_unknown:
