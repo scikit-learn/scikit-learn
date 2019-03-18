@@ -12,6 +12,7 @@ from sklearn.manifold.spectral_embedding_ import _graph_connected_component
 from sklearn.manifold import spectral_embedding
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
+from sklearn.neighbors import NearestNeighbors
 from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
@@ -142,6 +143,23 @@ def test_spectral_embedding_precomputed_affinity(seed=36):
         assert_array_almost_equal(
             se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
         assert _check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.05)
+
+
+def test_precomputed_nearest_neighbors_filtering():
+    # Test precomputed graph filtering when containing too many neighbors
+    n_neighbors = 2
+    results = []
+    for additional_neighbors in [0, 10]:
+        nn = NearestNeighbors(
+            n_neighbors=n_neighbors + additional_neighbors).fit(S)
+        graph = nn.kneighbors_graph(S, mode='connectivity')
+        embedding = SpectralEmbedding(random_state=0, n_components=2,
+                                      affinity='precomputed_nearest_neighbors',
+                                      n_neighbors=n_neighbors
+                                      ).fit(graph).embedding_
+        results.append(embedding)
+
+    assert_array_equal(results[0], results[1])
 
 
 def test_spectral_embedding_callable_affinity(seed=36):

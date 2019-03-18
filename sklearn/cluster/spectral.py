@@ -13,7 +13,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
 from ..utils.validation import check_array
 from ..metrics.pairwise import pairwise_kernels
-from ..neighbors import kneighbors_graph
+from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
 from .k_means_ import k_means
 
@@ -325,12 +325,17 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     affinity : string, array-like or callable, default 'rbf'
         If a string, this may be one of 'nearest_neighbors', 'precomputed',
-        'rbf' or one of the kernels supported by
-        `sklearn.metrics.pairwise_kernels`.
+        'precomputed_nearest_neighbors', rbf', or one of the kernels supported
+        by `sklearn.metrics.pairwise_kernels`.
 
         Only kernels that produce similarity scores (non-negative values that
         increase with similarity) should be used. This property is not checked
         by the clustering algorithm.
+
+        Note that 'precomputed' uses directly ``X`` as the affinity matrix,
+        whereas 'precomputed_nearest_neighbors' filters the affinity matrix
+        corresponding to ``n_neighbors`` neighbors from a precomputed sparse
+        neighbors graph .
 
     n_neighbors : integer
         Number of neighbors to use when constructing the affinity matrix using
@@ -468,6 +473,12 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
             connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors,
                                             include_self=True,
                                             n_jobs=self.n_jobs)
+            self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
+        elif self.affinity == 'precomputed_nearest_neighbors':
+            estimator = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                         n_jobs=self.n_jobs,
+                                         metric="precomputed").fit(X)
+            connectivity = estimator.kneighbors_graph(X=X, mode='connectivity')
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == 'precomputed':
             self.affinity_matrix_ = X

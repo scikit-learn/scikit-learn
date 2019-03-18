@@ -18,7 +18,7 @@ from ..base import BaseEstimator
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..metrics.pairwise import rbf_kernel
-from ..neighbors import kneighbors_graph
+from ..neighbors import kneighbors_graph, NearestNeighbors
 
 
 def _graph_connected_component(graph, node_id):
@@ -460,6 +460,13 @@ class SpectralEmbedding(BaseEstimator):
         if self.affinity == 'precomputed':
             self.affinity_matrix_ = X
             return self.affinity_matrix_
+        if self.affinity == 'precomputed_nearest_neighbors':
+            estimator = NearestNeighbors(n_neighbors=self.n_neighbors,
+                                         n_jobs=self.n_jobs,
+                                         metric="precomputed").fit(X)
+            connectivity = estimator.kneighbors_graph(X=X, mode='connectivity')
+            self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
+            return self.affinity_matrix_
         if self.affinity == 'nearest_neighbors':
             if sparse.issparse(X):
                 warnings.warn("Nearest neighbors affinity currently does "
@@ -510,8 +517,8 @@ class SpectralEmbedding(BaseEstimator):
 
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, str):
-            if self.affinity not in {"nearest_neighbors", "rbf",
-                                     "precomputed"}:
+            if self.affinity not in {"nearest_neighbors", "rbf", "precomputed",
+                                     "precomputed_nearest_neighbors"}:
                 raise ValueError(("%s is not a valid affinity. Expected "
                                   "'precomputed', 'rbf', 'nearest_neighbors' "
                                   "or a callable.") % self.affinity)
