@@ -211,12 +211,12 @@ def _nanencode_python(values, uniques=None, encode=False,
                 except KeyError:
                     return unknown_index
 
-            np_mapper = np.frompyfunc(safe_mapper, 1, 1)
+            np_mapper = safe_mapper
         else:
-            np_mapper = np.frompyfunc(mapper, 1, 1)
+            np_mapper = mapper
 
         try:
-            encoded = np_mapper(values).astype(np.int)
+            encoded = np.array([np_mapper(v) for v in values], dtype=np.int)
             missing_mask = encoded == missing_index
         except KeyError as e:
             unseen = e.args[0]
