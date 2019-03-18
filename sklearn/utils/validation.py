@@ -416,6 +416,11 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
 
+        .. deprecated:: 0.20
+           warn_on_dtype' is deprecated from 'check_array' in
+           version 0.20 and will be removed in 0.22. Use
+           warn_on_dtype = False' instead.
+
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
 
@@ -425,6 +430,14 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         The converted and validated array.
 
     """
+    # warn_on_dtype deprecation check
+    if warn_on_dtype is not None:
+        warnings.warn(
+            "'warn_on_dtype' is deprecated from 'check_array' in "
+            "version 0.20 and will be removed in 0.22. Use "
+            "'warn_on_dtype = None' instead.", DeprecationWarning)
+        warn_on_dtype = None
+
     # accept_sparse 'None' deprecation check
     if accept_sparse is None:
         warnings.warn(

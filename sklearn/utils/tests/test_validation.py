@@ -345,7 +345,7 @@ def test_check_array_dtype_stability():
     assert_equal(check_array(X).dtype.kind, "i")
     assert_equal(check_array(X, ensure_2d=False).dtype.kind, "i")
 
-
+@pytest.mark.skip(reason="warn_on_dtype is deprecated from 'check_array'")
 def test_check_array_dtype_warning():
     X_int_list = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     X_float64 = np.asarray(X_int_list, dtype=np.float64)
@@ -415,6 +415,11 @@ def test_check_array_dtype_warning():
     assert_equal(X_checked.dtype, np.float32)
     assert X_checked is not X_csc_float32
     assert_equal(X_checked.format, 'csr')
+
+
+def test_check_array_warn_on_dtype_deprecation():
+    X = np.asarray([[0.0], [1.0]])
+    assert_warns(DeprecationWarning, check_array, X, warn_on_dtype=True)
 
 
 def test_check_array_accept_sparse_type_exception():
@@ -706,6 +711,7 @@ def test_check_array_series():
     assert_array_equal(res, np.array(['a', 'b', 'c'], dtype=object))
 
 
+@pytest.mark.skip(reason="warn_on_dtype is deprecated from 'check_array'")
 def test_check_dataframe_warns_on_dtype():
     # Check that warn_on_dtype also works for DataFrames.
     # https://github.com/scikit-learn/scikit-learn/issues/10948
