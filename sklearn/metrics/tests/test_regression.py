@@ -175,11 +175,13 @@ def test_regression_custom_weights():
     y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]
 
     msew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6])
+    rmsew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6], squared=True)
     maew = mean_absolute_error(y_true, y_pred, multioutput=[0.4, 0.6])
     rw = r2_score(y_true, y_pred, multioutput=[0.4, 0.6])
     evsw = explained_variance_score(y_true, y_pred, multioutput=[0.4, 0.6])
 
     assert_almost_equal(msew, 0.39, decimal=2)
+    assert_almost_equal(rmsew, 0.62, decimal=2)
     assert_almost_equal(maew, 0.475, decimal=3)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)

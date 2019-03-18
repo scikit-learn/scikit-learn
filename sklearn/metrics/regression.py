@@ -32,7 +32,6 @@ from ..exceptions import UndefinedMetricWarning
 
 
 __ALL__ = [
-    "max_error",
     "mean_absolute_error",
     "mean_squared_error",
     "mean_squared_log_error",
@@ -185,7 +184,7 @@ def mean_absolute_error(y_true, y_pred,
 
 def mean_squared_error(y_true, y_pred,
                        sample_weight=None,
-                       multioutput='uniform_average'):
+                       multioutput='uniform_average', squared=False):
     """Mean squared error regression loss
 
     Read more in the :ref:`User Guide <mean_squared_error>`.
@@ -212,6 +211,9 @@ def mean_squared_error(y_true, y_pred,
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
+    squared : boolean value, optional, Default False
+        RMSE value.
+
     Returns
     -------
     loss : float or ndarray of floats
@@ -235,6 +237,10 @@ def mean_squared_error(y_true, y_pred,
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
     0.825...
+    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
+    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+    >>> mean_squared_error(y_true, y_pred, squared=True)
+    0.612...
 
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
@@ -249,7 +255,10 @@ def mean_squared_error(y_true, y_pred,
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    return np.average(output_errors, weights=multioutput)
+    if squared:
+        return np.sqrt(np.average(output_errors, weights=multioutput))
+    else:
+        return np.average(output_errors, weights=multioutput)
 
 
 def mean_squared_log_error(y_true, y_pred,
