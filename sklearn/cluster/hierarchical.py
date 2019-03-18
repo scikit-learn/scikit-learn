@@ -965,5 +965,3 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     @property
     def fit_predict(self):
         raise AttributeError
-
-    @property
