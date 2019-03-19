@@ -178,7 +178,7 @@ def test_leave_zero_eig():
         # but there should not be warnings about division by zero.
         # (Numpy division by zero warning can have many message variants, but
         # at least we know that it is a RuntimeWarning so lets check only this)
-        assert w.category is not RuntimeWarning
+        assert not issubclass(w.category, RuntimeWarning)
 
 
 def test_kernel_pca_precomputed():
