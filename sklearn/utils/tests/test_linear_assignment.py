@@ -5,9 +5,6 @@
 # have been replaced by SciPy methods
 
 import numpy as np
-
-# XXX we should be testing the public API here
-
 import pytest
 
 
