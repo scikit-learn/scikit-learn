@@ -236,18 +236,22 @@ def test_discretenb_partial_fit(cls):
         # get indices for categories 0 and 1 for the first class, class 0
         ix0 = clf1.feature_cat_index_mapping_[0][0]
         ix1 = clf1.feature_cat_index_mapping_[0][1]
-        # assert category 0 occurs 1x in the first class and 0x in the 2nd class
+        # assert category 0 occurs 1x in the first class and 0x in the 2nd
+        # class
         assert_array_equal(clf1.category_count_[0][ix0], np.array([1, 0]))
-        # assert category 1 occurs 0x in the first class and 1x in the 2nd class
+        # assert category 1 occurs 0x in the first class and 1x in the 2nd
+        # class
         assert_array_equal(clf1.category_count_[0][ix1], np.array([0, 1]))
 
         # assert 2nd feature
         # get indices for categories 0 and 1 for the first class, class 0
         ix0 = clf1.feature_cat_index_mapping_[1][0]
         ix1 = clf1.feature_cat_index_mapping_[1][1]
-        # assert category 0 occurs 0x in the first class and 1x in the 2nd class
+        # assert category 0 occurs 0x in the first class and 1x in the 2nd
+        # class
         assert_array_equal(clf1.category_count_[1][ix0], np.array([0, 1]))
-        # assert category 1 occurs 1x in the first class and 0x in the 2nd class
+        # assert category 1 occurs 1x in the first class and 0x in the 2nd
+        # class
         assert_array_equal(clf1.category_count_[1][ix1], np.array([1, 0]))
 
     else:
@@ -706,8 +710,8 @@ def test_catnb():
                               bayes_nominator / bayes_denominator)
 
     # Check that unseen cats throw an error or warn accordingly
-    error_msg = (f"Category {0} not expected for feature {0} "
-                 f"of features 0 - {1}.")
+    error_msg = ("Category {} not expected for feature {} "
+                 "of features 0 - {}.".format(0, 0, 1))
     clf.handle_unknown = 'error'
     # assert_raises_message(KeyError, clf.predict, X3_test)
     assert_raise_message(KeyError, error_msg, clf.predict, X3_test)

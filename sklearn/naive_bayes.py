@@ -22,7 +22,6 @@ from pkg_resources import parse_version
 
 import numpy as np
 from scipy.sparse import issparse
-from collections import defaultdict
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
@@ -1047,7 +1046,8 @@ class CategoricalNB(BaseDiscreteNB):
         encountered for each class and category of the specific feature.
 
     feature_cat_index_mapping_ : list of dicts, len n_features
-        Holds a mapping from category to index for each feature and all categories in the training set.
+        Holds a mapping from category to index for each feature and all
+        categories in the training set.
 
     n_features_ : int
         Number of features of each sample.
@@ -1143,20 +1143,22 @@ class CategoricalNB(BaseDiscreteNB):
                              .format(self.handle_unknown))
 
     def _check_input(self, X, Y=None):
+        if _old_numpy:
+            # np.bincount takes only int dtype and needs all values to be
+            # non negative
+            if np.any(X < 0):
+                raise ValueError("All values of X have to be "
+                                 "non-negative.")
         if Y is None:
             if _old_numpy:
-                # np.bincount takes only int dtype and needs all values to be non negative
-                if np.any(X < 0):
-                    raise ValueError("All values of X have to be non-negative.")
-                return check_array(X, accept_sparse=False, dtype=[np.int64], warn_on_dtype=True)
+                return check_array(X, accept_sparse=False, dtype=[np.int64],
+                                   warn_on_dtype=True)
             else:
                 return check_array(X, accept_sparse=False)
         else:
             if _old_numpy:
-                # np.bincount takes only int dtype and needs all values to be non negative
-                if np.any(X < 0):
-                    raise ValueError("All values of X have to be non-negative.")
-                return check_X_y(X, Y, accept_sparse=False, dtype=[np.int64], warn_on_dtype=True)
+                return check_X_y(X, Y, accept_sparse=False, dtype=[np.int64],
+                                 warn_on_dtype=True)
             else:
                 return check_X_y(X, Y, accept_sparse=False)
 
