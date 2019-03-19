@@ -1907,7 +1907,7 @@ def check_class_weight_classifiers(name, classifier_orig):
     for n_centers in [2, 3]:
         # create a very noisy dataset
         X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20,
-                          n_samples=200)
+                          n_samples=300)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
                                                             random_state=0)
 
