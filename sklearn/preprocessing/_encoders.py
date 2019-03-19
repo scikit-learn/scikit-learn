@@ -972,10 +972,11 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', dtype=np.float64,
+                 missing_values=np.nan):
         self.categories = categories
         self.dtype = dtype
-        self.missing_values = np.nan
+        self.missing_values = missing_values
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
