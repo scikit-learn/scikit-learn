@@ -1,3 +1,4 @@
+import math
 
 import numpy as np
 import scipy.sparse as sp
@@ -188,12 +189,21 @@ def test_random_choice_csc_errors():
     (0, 2, np.exp(1)),
     (-1, 1, 2),
 ])
-def test_log_uniform(low, high, base):
+def test_loguniform(low, high, base):
     rv = loguniform(low, high, base=base)
-    rvs = rv.rvs(size=100)
-    assert (base**low <= rvs).all() and (rvs <= base**high).all()
-    assert len(rvs) == 100
+    rvs = rv.rvs(size=2000, random_state=0)
 
+    # Test the basics; right bounds, right size
+    assert (base**low <= rvs).all() and (rvs <= base**high).all()
+    assert len(rvs) == 2000
+
+    # Test that it's actually (fairly) uniform
+    log_rvs = np.array([math.log(x, base) for x in rvs])
+    counts, _ = np.histogram(log_rvs)
+    assert counts.mean() == 200
+    assert np.abs(counts - counts.mean()).max() <= 40
+
+    # Test that random_state works
     assert (loguniform(low, high, base=base).rvs(random_state=0) ==
             loguniform(low, high, base=base).rvs(random_state=0))
 
