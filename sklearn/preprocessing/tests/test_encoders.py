@@ -699,7 +699,7 @@ def test_ordinal_encoder_raise_categories_shape():
     cats = ['Low', 'Medium', 'High']
     enc = OrdinalEncoder(categories=cats)
     msg = ("Shape mismatch: if categories is an array,")
-    #       "Call 'fit' with appropriate arguments before using this method.")
+    
     with pytest.raises(ValueError, match=msg):
         enc.fit(X)
 
