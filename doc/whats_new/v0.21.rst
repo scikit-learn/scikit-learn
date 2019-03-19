@@ -272,7 +272,7 @@ Support for Python 3.4 and below has been officially dropped.
   broken when X was of dtype bool.
   :issue:`13328` by `Alexandre Gramfort`_.
 
-- |API|  The use of :class:`linear_model.lars_path` with ``X=None`` 
+- |API|  The use of :class:`linear_model.lars_path` with ``X=None``
   while passing ``Gram`` is deprecated in version 0.21 and will be removed
   in version 0.23. Use :class:`linear_model.lars_path_gram` instead.
   :issue:`11699` by :user:`Kuai Yu <yukuairoy>`.
@@ -457,6 +457,13 @@ Support for Python 3.4 and below has been officially dropped.
   equal to n_samples. Values of n_quantiles larger than n_samples were either
   useless or resulting in a wrong approximation of the cumulative distribution
   function estimator. :issue:`13333` by :user:`Albert Thomas <albertcthomas>`.
+
+- |API| Deprecate default `copy=False` value of
+  :func:`preprocessing.data.quantile_transform`. The default will be updated
+  to True to be more consistent with the default `copy` values of other functions
+  in :mod:`sklearn.preprocessing.data` and avoid unexpected side effects by
+  modifying the value of `X` inplace.
+  :issue:`13459` by :user:`Hunter McGushion <HunterMcGushion>`.
 
 :mod:`sklearn.svm`
 ..................
