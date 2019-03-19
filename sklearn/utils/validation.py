@@ -1002,9 +1002,9 @@ def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
       ValueError
 
     - that there are no significant negative eigenvalues (with absolute value
-      more than 1e-10 and more than 1e-5 times the largest positive eigenvalue).
-      If this check fails, it raises a KernelWarning. All negative eigenvalues
-      are set to zero in all cases.
+      more than 1e-10 and more than 1e-5 times the largest positive
+      eigenvalue). If this check fails, it raises a KernelWarning. All negative
+      eigenvalues are set to zero in all cases.
 
     - that the eigenvalues are well conditioned. That means, that the
       eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
