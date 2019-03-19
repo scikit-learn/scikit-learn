@@ -24,7 +24,6 @@ from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
 from .sgd_fast import plain_sgd, average_sgd
 from ..utils import compute_class_weight
-from ..utils import deprecated
 from .sgd_fast import Hinge
 from .sgd_fast import SquaredHinge
 from .sgd_fast import Log
@@ -465,12 +464,6 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
             average=average)
         self.class_weight = class_weight
         self.n_jobs = n_jobs
-
-    @property
-    @deprecated("Attribute loss_function was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use ``loss_function_`` instead")
-    def loss_function(self):
-        return self.loss_function_
 
     def _partial_fit(self, X, y, alpha, C,
                      loss, learning_rate, max_iter,
