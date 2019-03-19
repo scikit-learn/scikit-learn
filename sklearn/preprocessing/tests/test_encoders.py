@@ -692,12 +692,15 @@ def test_ordinal_encoder_raise_missing(X):
     with pytest.raises(ValueError, match="Input contains NaN"):
         ohe.transform(X)
 
+
 def test_ordinal_encoder_raise_categories_shape():
 
     X = np.array([['Low', 'Medium', 'High', 'Medium', 'Low']], dtype=object).T
-    cats = ['Low','Medium', 'High']
+    cats = ['Low', 'Medium', 'High']
     enc = OrdinalEncoder(categories=cats)
-    with pytest.raises(ValueError, match="Shape mismatch: if categories is an array,"):
+    msg = ("Shape mismatch: if categories is an array,")
+    #       "Call 'fit' with appropriate arguments before using this method.")
+    with pytest.raises(ValueError, match=msg):
         enc.fit(X)
 
 def test_encoder_dtypes():
