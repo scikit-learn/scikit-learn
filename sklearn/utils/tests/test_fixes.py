@@ -12,8 +12,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_allclose
 
 from sklearn.utils.fixes import MaskedArray
-from sklearn.utils.fixes import unique
-from sklearn.utils.fixes import nanpercentile
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.fixes import _object_dtype_isnan
 
@@ -26,43 +24,6 @@ def test_masked_array_obj_dtype_pickleable():
         marr_pickled = pickle.loads(pickle.dumps(marr))
         assert_array_equal(marr.data, marr_pickled.data)
         assert_array_equal(marr.mask, marr_pickled.mask)
-
-
-def test_unique():
-    ar = []
-
-    # 0-length array, no optional_returns
-    u_values = unique([])
-
-    # 0-length array, all optional_returns
-    u_values, ind, inv, counts = unique(
-        ar, return_index=True, return_inverse=True, return_counts=True)
-
-    ar = [4, 2, 5, 5, 3, 1, 4]
-
-    # Normal array, no optional_returns
-    u_values = unique(ar)
-    assert_array_equal(u_values, [1, 2, 3, 4, 5])
-
-    # Normal array, all optional_returns
-    u_values, ind, inv, counts = unique(
-        ar, return_index=True, return_inverse=True, return_counts=True)
-
-    assert_array_equal(u_values, [1, 2, 3, 4, 5])
-    assert_array_equal(ind, [5, 1, 4, 0, 2])
-    assert_array_equal(inv, [3, 1, 4, 4, 2, 0, 3])
-    assert_array_equal(counts, [1, 1, 1, 2, 2])
-
-
-@pytest.mark.parametrize(
-    "a, q, expected_percentile",
-    [(np.array([1, 2, 3, np.nan]), [0, 50, 100], np.array([1., 2., 3.])),
-     (np.array([1, 2, 3, np.nan]), 50, 2.),
-     (np.array([np.nan, np.nan]), [0, 50], np.array([np.nan, np.nan]))]
-)
-def test_nanpercentile(a, q, expected_percentile):
-    percentile = nanpercentile(a, q)
-    assert_allclose(percentile, expected_percentile)
 
 
 @pytest.mark.parametrize('joblib_version', ('0.11', '0.12.0'))
