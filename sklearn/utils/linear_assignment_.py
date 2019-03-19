@@ -14,8 +14,9 @@ Hungarian algorithm (also known as Munkres algorithm).
 # LICENSE: BSD
 
 import numpy as np
+from ..utils import deprecated
 
-
+@deprecated("will be removed in 0.23. Use linear_sum_assignment from scipy.optimize.")
 def linear_assignment(X):
     """Solve the linear assignment problem using the Hungarian algorithm.
 
