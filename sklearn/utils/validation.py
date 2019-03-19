@@ -985,31 +985,49 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
 
 
 def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
-    """Checks that the provided array of kernel eigenvalues for numerical or
+    """Checks kernel eigenvalues for conditioning issues.
+
+    Checks the provided array of kernel eigenvalues for numerical or
     conditioning issues and returns a fixed validated version.
 
     It checks:
 
-     - that there are no significant imaginary parts in eigenvalues (more than
-     1e-5 times the maximum real part). If this check fails, it raises a
-     ValueError. Otherwise all non-significant imaginary parts that may remain
-     are removed.
+    - that there are no significant imaginary parts in eigenvalues (more than
+      1e-5 times the maximum real part). If this check fails, it raises a
+      ValueError. Otherwise all non-significant imaginary parts that may remain
+      are removed.
 
-     - that eigenvalues are not all negative. If this check fails, it raises a
-     ValueError
+    - that eigenvalues are not all negative. If this check fails, it raises a
+      ValueError
 
-     - that there are no significant negative eigenvalues (with absolute value
-     more than 1e-10 and more than 1e-5 times the largest positive eigenvalue).
-     If this check fails, it raises a KernelWarning. All negative eigenvalues
-     are set to zero in all cases.
+    - that there are no significant negative eigenvalues (with absolute value
+      more than 1e-10 and more than 1e-5 times the largest positive eigenvalue).
+      If this check fails, it raises a KernelWarning. All negative eigenvalues
+      are set to zero in all cases.
 
-     - that the eigenvalues are well conditioned. That means, that the
-     eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
-     If this check fails and `warn_on_zeros=True`, it raises a KernelWarning.
-     All the eigenvalues that are too small are then set to zero.
+    - that the eigenvalues are well conditioned. That means, that the
+      eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
+      If this check fails and `warn_on_zeros=True`, it raises a KernelWarning.
+      All the eigenvalues that are too small are then set to zero.
 
-    Note: the returned array is converted to numpy array.
+    Parameters
+    ----------
+    lambdas : array-like
+        Array of eigenvalues to check / fix.
 
+    warn_on_zeros : boolean (default: False)
+        When this is set to `True`, a `KernelWarning` will be raised when there
+        are extremely small eigenvalues. Otherwise no warning will be raised.
+        Note that in both cases, extremely small eigenvalues will be set to
+        zero.
+
+    Returns
+    -------
+    lambdas_fixed : array-like
+        A fixed validated copy of the array of eigenvalues.
+
+    Examples
+    --------
     >>> check_kernel_eigenvalues((1, 2))      # nominal case
     ... # doctest: +NORMALIZE_WHITESPACE
     array([1, 2])
@@ -1038,21 +1056,6 @@ def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
 
-    Parameters
-    ----------
-    lambdas : array-like
-        Array of eigenvalues to check / fix.
-
-    warn_on_zeros : boolean (default: False)
-        When this is set to `True`, a `KernelWarning` will be raised when there
-        are extremely small eigenvalues. Otherwise no warning will be raised.
-        Note that in both cases, extremely small eigenvalues will be set to
-        zero.
-
-    Returns
-    -------
-    lambdas_fixed : array-like
-        The fixed validated array of eigenvalues.
     """
 
     # Check that there are no significant imaginary parts
