@@ -1448,7 +1448,7 @@ class GroupShuffleSplit(ShuffleSplit):
     test_size : float, int, None, optional (default=0.2)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, the value is set to the
+        absolute number of test groups. If None, the value is set to the
         complement of the train size.
 
     train_size : float, int, or None, default is None

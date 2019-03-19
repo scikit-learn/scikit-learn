@@ -2493,13 +2493,10 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         Set to False to perform inplace transformation and avoid a copy (if the
         input is already a numpy array).
 
-    Attributes
-    ----------
-    quantiles_ : ndarray, shape (n_quantiles, n_features)
-        The values corresponding the quantiles of reference.
-
-    references_ : ndarray, shape(n_quantiles, )
-        Quantiles of references.
+    Returns
+    -------
+    Xt : ndarray or sparse matrix, shape (n_samples, n_features)
+        The transformed data.
 
     Examples
     --------
