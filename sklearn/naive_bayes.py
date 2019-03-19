@@ -22,6 +22,7 @@ from pkg_resources import parse_version
 
 import numpy as np
 from scipy.sparse import issparse
+from collections import defaultdict
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
@@ -632,7 +633,6 @@ class BaseDiscreteNB(BaseNB):
         n_effective_classes = Y.shape[1]
 
         self._init_counters(n_effective_classes, n_features)
-
         self._count(X, Y)
         alpha = self._check_alpha()
         self._update_feature_log_prob(alpha)
@@ -1046,6 +1046,9 @@ class CategoricalNB(BaseDiscreteNB):
         for each feature. Each array provides the number of samples
         encountered for each class and category of the specific feature.
 
+    feature_cat_index_mapping_ : list of dicts, len n_features
+        Holds a mapping from category to index for each feature and all categories in the training set.
+
     n_features_ : int
         Number of features of each sample.
 
@@ -1073,10 +1076,6 @@ class CategoricalNB(BaseDiscreteNB):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
-        if handle_unknown not in ('ignore', 'warn', 'raise'):
-            raise ValueError("The attribute 'handle_unknown' is '{}' and "
-                             "should either be 'ignore', 'warn' or 'raise'"
-                             .format(handle_unknown))
         self.handle_unknown = handle_unknown
 
     def fit(self, X, y):
@@ -1096,6 +1095,7 @@ class CategoricalNB(BaseDiscreteNB):
         -------
         self : object
         """
+        self._check_settings()
         return super(CategoricalNB, self).fit(X, y, sample_weight=None)
 
     def partial_fit(self, X, y, classes=None):
@@ -1132,25 +1132,31 @@ class CategoricalNB(BaseDiscreteNB):
         -------
         self : object
         """
+        self._check_settings()
         return super(CategoricalNB, self).partial_fit(X, y, classes,
                                                       sample_weight=None)
+
+    def _check_settings(self):
+        if self.handle_unknown not in ('ignore', 'warn', 'raise'):
+            raise ValueError("The attribute 'handle_unknown' is '{}' and "
+                             "should either be 'ignore', 'warn' or 'raise'"
+                             .format(self.handle_unknown))
 
     def _check_input(self, X, Y=None):
         if Y is None:
             if _old_numpy:
-                X = check_array(X, accept_sparse=False)
-                if not np.isfinite(X).all():
-                    raise ValueError("Input contains NaN or infinity.")
-                return np.asarray(X, dtype=np.int64)
+                # np.bincount takes only int dtype and needs all values to be non negative
+                if np.any(X < 0):
+                    raise ValueError("All values of X have to be non-negative.")
+                return check_array(X, accept_sparse=False, dtype=[np.int64], warn_on_dtype=True)
             else:
                 return check_array(X, accept_sparse=False)
         else:
             if _old_numpy:
-                X, Y = check_X_y(X, Y, accept_sparse=False)
-                if not np.isfinite(X).all():
-                    raise ValueError("Input contains NaN or infinity.")
-                X = np.asarray(X, dtype=np.int64)
-                return X, Y
+                # np.bincount takes only int dtype and needs all values to be non negative
+                if np.any(X < 0):
+                    raise ValueError("All values of X have to be non-negative.")
+                return check_X_y(X, Y, accept_sparse=False, dtype=[np.int64], warn_on_dtype=True)
             else:
                 return check_X_y(X, Y, accept_sparse=False)
 
@@ -1169,7 +1175,8 @@ class CategoricalNB(BaseDiscreteNB):
             categories = np.unique(X_feature)
             self._update_mapping(self.feature_cat_index_mapping_[i],
                                  categories)
-            # update category_count_dimensions in case partial_fit is used
+            # update category_count_dimensions in case partial_fit is used, to
+            # to account for unseen categories
             self.category_count_[i] = self._update_category_count_dimensions(
                 self.category_count_[i], self.feature_cat_index_mapping_[i])
             self._update_category_count(X_feature, Y,
@@ -1228,22 +1235,22 @@ class CategoricalNB(BaseDiscreteNB):
         for i in range(self.n_features_):
             X_feature = X[:, i]
             indices = []
+            mapping = self.feature_cat_index_mapping_[i]
             for sample, category in enumerate(X_feature):
                 try:
-                    indices.append(
-                        self.feature_cat_index_mapping_[i][category])
+                    indices.append(mapping[category])
                 except KeyError:
                     if self.handle_unknown == 'warn':
                         warnings.warn(
                             "Category {} not expected for feature {} "
                             "of features 0 - {}."
-                            .format(category, i, self.n_features_)
+                            .format(category, i, self.n_features_-1)
                         )
                     elif self.handle_unknown == 'error':
                         raise KeyError(
                             "Category {} not expected for feature {} "
                             "of features 0 - {}."
-                            .format(category, i, self.n_features_)
+                            .format(category, i, self.n_features_-1)
                         )
             # indices length is 0, if all categories have not been seen in the
             # training set

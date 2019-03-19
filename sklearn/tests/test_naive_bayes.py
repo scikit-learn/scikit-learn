@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
@@ -221,15 +222,34 @@ def test_discretenb_partial_fit(cls):
     clf3.partial_fit([[0, 1]], [0], classes=[0, 1])
     clf3.partial_fit([[1, 0]], [1])
     assert_array_equal(clf1.class_count_, clf3.class_count_)
-    # an exact comparison as above for CategoricalNB does not make sense
-    # because the categories are not necessarily numerically ordered with
-    # subsequent calls of partial_fit
     if cls == CategoricalNB:
+        # the categories for each feature of CategoricalNB are mapped to an
+        # index chronologically with each call of partial fit and therefore
+        # the category_count matrices cannot be compared for equality
         for i in range(len(clf1.category_count_)):
             assert_array_equal(clf1.category_count_[i].shape,
                                clf3.category_count_[i].shape)
             assert_array_equal(np.sum(clf1.category_count_[i], axis=1),
                                np.sum(clf3.category_count_[i], axis=1))
+
+        # assert 1st feature
+        # get indices for categories 0 and 1 for the first class, class 0
+        ix0 = clf1.feature_cat_index_mapping_[0][0]
+        ix1 = clf1.feature_cat_index_mapping_[0][1]
+        # assert category 0 occurs 1x in the first class and 0x in the 2nd class
+        assert_array_equal(clf1.category_count_[0][ix0], np.array([1, 0]))
+        # assert category 1 occurs 0x in the first class and 1x in the 2nd class
+        assert_array_equal(clf1.category_count_[0][ix1], np.array([0, 1]))
+
+        # assert 2nd feature
+        # get indices for categories 0 and 1 for the first class, class 0
+        ix0 = clf1.feature_cat_index_mapping_[1][0]
+        ix1 = clf1.feature_cat_index_mapping_[1][1]
+        # assert category 0 occurs 0x in the first class and 1x in the 2nd class
+        assert_array_equal(clf1.category_count_[1][ix0], np.array([0, 1]))
+        # assert category 1 occurs 1x in the first class and 0x in the 2nd class
+        assert_array_equal(clf1.category_count_[1][ix1], np.array([1, 0]))
+
     else:
         assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
@@ -645,6 +665,13 @@ def test_catnb():
     X3 = np.array([[1, 4], [2, 5]])
     y3 = np.array([1, 2])
     clf = CategoricalNB(alpha=1, fit_prior=False)
+
+    # Check that unexpected parameters throw an error
+    clf.handle_unknown = 'asdf'
+    assert_raises(ValueError, clf.fit, X3, y3)
+    assert_raises(ValueError, clf.partial_fit, X3, y3)
+
+    clf.handle_unknown = 'warn'
     clf.fit(X3, y3)
 
     # Test alpha
@@ -656,20 +683,36 @@ def test_catnb():
     assert_array_almost_equal(clf.predict_proba(X3_test),
                               bayes_nominator / bayes_denominator)
 
+    # Assert category_count has counted all features
+    assert len(clf.feature_cat_index_mapping_) == X3.shape[1]
+    for feature_ix, mapping in enumerate(clf.feature_cat_index_mapping_):
+        assert len(mapping) == 2
+        if feature_ix == 0:
+            assert 1 in clf.feature_cat_index_mapping_[feature_ix]
+            assert 2 in clf.feature_cat_index_mapping_[feature_ix]
+            assert mapping[1] != mapping[2]
+        if feature_ix == 1:
+            assert 4 in clf.feature_cat_index_mapping_[feature_ix]
+            assert 5 in clf.feature_cat_index_mapping_[feature_ix]
+            assert mapping[4] != mapping[5]
+
     # Check that unseen categories in the test set count with probability 1
     X3_test = np.array([[0, 5]])
     assert_array_equal(clf.predict(X3_test), np.array([2]))
+    # as above, due to alpha the probability is 1/3 and 2/3 for category 5
+    bayes_nominator = np.array([[1/3, 2/3]])
+    bayes_denominator = bayes_nominator.sum()
     assert_array_almost_equal(clf.predict_proba(X3_test),
-                              np.array([[1/3, 2/3]]))
-
-    # Check that unexpected parameters throw an error
-    assert_raises(ValueError, CategoricalNB, handle_unknown='asdf')
+                              bayes_nominator / bayes_denominator)
 
     # Check that unseen cats throw an error or warn accordingly
+    error_msg = (f"Category {0} not expected for feature {0} "
+                 f"of features 0 - {1}.")
     clf.handle_unknown = 'error'
-    assert_raises(KeyError, clf.predict, X3_test)
+    # assert_raises_message(KeyError, clf.predict, X3_test)
+    assert_raise_message(KeyError, error_msg, clf.predict, X3_test)
     clf.handle_unknown = 'warn'
-    assert_warns(UserWarning, clf.predict, X3_test)
+    assert_warns_message(UserWarning, error_msg, clf.predict, X3_test)
 
 
 def test_alpha():
