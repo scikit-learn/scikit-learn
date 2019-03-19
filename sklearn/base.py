@@ -367,8 +367,9 @@ class RegressorMixin:
         with `metrics.r2_score`. This will influence the ``score`` method of
         all the multioutput regressors (except for
         `multioutput.MultiOutputRegressor`). To specify the default value
-        manually and avoid the warning,, please either call `metrics.r2_score`
-        directly or make a custom scorer with `metrics.make_scorer`.
+        manually and avoid the warning, please either call `metrics.r2_score`
+        directly or make a custom scorer with `metrics.make_scorer` (the
+        built-in scorer ``'r2'`` uses ``multioutput='uniform_average'``).
         """
 
         from .metrics import r2_score
@@ -383,8 +384,9 @@ class RegressorMixin:
                           "with 'metrics.r2_score'. To specify the default "
                           "value manually and avoid the warning, please "
                           "either call 'metrics.r2_score' directly or make a "
-                          "custom scorer with 'metrics.make_scorer'.",
-                          FutureWarning)
+                          "custom scorer with 'metrics.make_scorer' (the "
+                          "built-in scorer 'r2' uses "
+                          "multioutput='uniform_average').", FutureWarning)
         return r2_score(y, y_pred, sample_weight=sample_weight,
                         multioutput='variance_weighted')
 
