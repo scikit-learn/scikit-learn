@@ -161,7 +161,7 @@ def test_cross_validator_with_default_params():
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, "
-               "test_size='default',\n       train_size=None)")
+               "test_size=0.1, train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
@@ -1447,14 +1447,6 @@ def test_nested_cv():
                           cv=inner_cv, error_score='raise', iid=False)
         cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
                         fit_params={'groups': groups})
-
-
-def test_train_test_default_warning():
-    assert_warns(FutureWarning, ShuffleSplit, train_size=0.75)
-    assert_warns(FutureWarning, GroupShuffleSplit, train_size=0.75)
-    assert_warns(FutureWarning, StratifiedShuffleSplit, train_size=0.75)
-    assert_warns(FutureWarning, train_test_split, range(3),
-                 train_size=0.75)
 
 
 def test_nsplit_default_warn():
