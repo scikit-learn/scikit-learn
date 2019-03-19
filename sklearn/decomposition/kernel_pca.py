@@ -277,8 +277,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self._fit_transform(K)
 
         if self.fit_inverse_transform:
-            # Transform X
-            # (shortcut since we transform the same X that was used to fit)
+            # no need to use the kernel to transform X, use shortcut expression
             X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
 
             self._fit_inverse_transform(X_transformed, X)
@@ -301,8 +300,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         """
         self.fit(X, **params)
 
-        # Transform X
-        # (shortcut since we transform the same X that was used to fit)
+        # no need to use the kernel to transform X, use shortcut expression
         X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
 
         if self.fit_inverse_transform:
