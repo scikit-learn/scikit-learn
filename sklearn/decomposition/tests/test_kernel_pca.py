@@ -160,8 +160,9 @@ def test_remove_zero_eig():
 
 
 def test_leave_zero_eig():
-    """This test checks that fit().transform() returns the same result than
-    fit_transform() in case of non-removed zero eigenvalue"""
+    """This test checks that fit().transform() returns the same result as
+    fit_transform() in case of non-removed zero eigenvalue.
+    Non-regression test for issue #12141 (PR #12143)"""
     X_fit = np.array([[1, 1], [0, 0]])
 
     # Assert that even with all np warnings on, there is no div by zero warning
@@ -181,7 +182,7 @@ def test_leave_zero_eig():
         # but there should not be warnings about division by zero.
         # (Numpy division by zero warning can have many message variants, but
         # at least we know that it is a RuntimeWarning so lets check only this)
-        assert w.category is not RuntimeWarning
+        assert not issubclass(w.category, RuntimeWarning)
 
 
 def test_kernel_pca_precomputed():

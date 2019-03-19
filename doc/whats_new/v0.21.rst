@@ -88,11 +88,11 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`13241` by :user:`Aurélien Bellet <bellet>`.
 
 - |Fix| Fixed a bug in :class:`decomposition.KernelPCA`, `fit().transform()`
-  now produces the correct output (the same than `fit_transform()`) in case
+  now produces the correct output (the same as `fit_transform()`) in case
   of non-removed zero eigenvalues (`remove_zero_eig=False`).
-  `fit_inverse_transform` was also accelerated by using the same trick than
+  `fit_inverse_transform` was also accelerated by using the same trick as
   `fit_transform` to compute the transform of `X`.
-  :issue:`12141` by :user:`Sylvain Marié <smarie>`
+  :issue:`12143` by :user:`Sylvain Marié <smarie>`
 
 - |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
   `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
