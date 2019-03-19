@@ -5,7 +5,7 @@ import numpy as np
 
 # XXX we should be testing the public API here
 from sklearn.utils.linear_assignment_ import _hungarian
-
+from sklearn.utils.linear_assignment_ import linear_assignment
 
 def test_hungarian():
     matrices = [
@@ -58,3 +58,12 @@ def test_hungarian():
             x = cost_matrix[r, c]
             total_cost += x
         assert expected_total == total_cost
+
+def test_deprecation():
+    import warnings
+    warnings.filterwarnings('error')
+    try:
+        linear_assignment(np.array([[1, 2], [3, 4]]))
+        assert False
+    except Warning as e:
+        assert ("deprecated" in e.args[0])
