@@ -2495,12 +2495,13 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         leaving the original `X` unchanged
 
         .. deprecated:: 0.21
-            The default value of parameter `copy` will be changed from False to
-            True in 0.23. The current default of False is being changed to make
-            it more consistent with the default `copy` values of other functions
-            in :mod:`sklearn.preprocessing.data`. Furthermore, the current
-            default of False may have unexpected side effects by modifying the
-            value of `X` inplace. For more information see PR #13459
+            The default value of parameter `copy` will be changed from False
+            to True in 0.23. The current default of False is being changed to
+            make it more consistent with the default `copy` values of other
+            functions in :mod:`sklearn.preprocessing.data`. Furthermore, the
+            current default of False may have unexpected side effects by
+            modifying the value of `X` inplace. For more information see
+            PR #13459
 
     Attributes
     ----------
