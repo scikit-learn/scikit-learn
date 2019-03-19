@@ -171,8 +171,7 @@ near-equal-size classes separated by concentric hyperspheres.
 :func:`make_circles` and :func:`make_moons` generate 2d binary classification
 datasets that are challenging to certain algorithms (e.g. centroid-based
 clustering or linear classification), including optional Gaussian noise.
-They are useful for visualisation. Produces Gaussian
-data with a spherical decision boundary for binary classification.
+They are useful for visualisation. :func:`make_circles` produces Gaussian data with a spherical decision boundary for binary classification, while :func:`make_moons` produces two interleaving half circles.
 
 Multilabel
 ~~~~~~~~~~
