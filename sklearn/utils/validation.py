@@ -1066,7 +1066,7 @@ def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
                 "kernel." % (max_imag_abs / max_real_abs))
 
     # Remove the insignificant imaginary parts
-    lambdas = np.real(lambdas)
+    lambdas = np.real(np.copy(lambdas))
 
     # Check that there are no significant negative eigenvalues
     max_eig = lambdas.max()
