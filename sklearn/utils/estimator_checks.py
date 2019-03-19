@@ -1906,8 +1906,7 @@ def check_class_weight_classifiers(name, classifier_orig):
 
     for n_centers in [2, 3]:
         # create a very noisy dataset
-        X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20,
-                          n_samples=300)
+        X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
                                                             random_state=0)
 
@@ -1931,6 +1930,8 @@ def check_class_weight_classifiers(name, classifier_orig):
             classifier.set_params(max_iter=1000)
         if hasattr(classifier, "min_weight_fraction_leaf"):
             classifier.set_params(min_weight_fraction_leaf=0.01)
+        if hasattr(classifier, "n_iter_no_change"):
+            classifier.set_params(n_iter_no_change=20)
 
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
