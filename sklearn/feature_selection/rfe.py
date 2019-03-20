@@ -67,13 +67,15 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    step_change_at : int or None (default=None)
-        If specified ``step`` int or float equates to > 1 feature then the
+    step_change_at : int or float or None, optional (default=None)
+        If specified ``step`` int or float equates to > 1 feature, then the
         threshold number of remaining features when to change to
-        ``changed_step``
+        ``changed_step``. If ``step_change_at`` within (0.0, 1.0), then
+        threshold number of remaining features calculated as fraction of
+        original number of features.
 
     changed_step : int or float, optional (default=1)
-        Step to change to starting if ``step_change_at`` is specified. If
+        Step size to change to starting at ``step_change_at`` if specified. If
         greater than or equal to 1, then ``changed_step`` corresponds to the
         (integer) number of features to remove at each iteration. If within
         (0.0, 1.0), then ``changed_step`` corresponds to the percentage
@@ -189,15 +191,18 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             raise ValueError("step must be > 0")
 
         if self.step_change_at is not None:
-            if not n_features_to_select < self.step_change_at < n_features:
+            if self.step_change_at >= 1.0:
+                step_change_at = int(self.step_change_at)
+            elif 0.0 < self.step_change_at < 1.0:
+                step_change_at = int(max(1, self.step_change_at * n_features))
+            if not n_features_to_select < step_change_at < n_features:
                 raise ValueError("step_change_at must be greater than "
-                                 "n_features_to_select and less than "
-                                 "initial number of features")
+                                 "n_features_to_select and less than initial "
+                                 "number of features")
             if self.changed_step >= 1.0:
                 changed_step = int(self.changed_step)
             elif 0.0 < self.changed_step < 1.0 and not self.reducing_step:
-                changed_step = int(max(1, self.changed_step *
-                                       self.step_change_at))
+                changed_step = int(max(1, self.changed_step * step_change_at))
             elif self.changed_step <= 0:
                 raise ValueError("changed_step must be > 0")
 
@@ -243,15 +248,15 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
             # Adjust step using special parameters if specified
             if self.step_change_at is not None:
-                if n_remaining_features > self.step_change_at:
+                if n_remaining_features > step_change_at:
                     if 0.0 < self.step < 1.0 and self.reducing_step:
                         step = int(max(1, min(
-                            n_remaining_features - self.step_change_at,
+                            n_remaining_features - step_change_at,
                             self.step * n_remaining_features
                         )))
                     else:
                         step = min(
-                            n_remaining_features - self.step_change_at,
+                            n_remaining_features - step_change_at,
                             step
                         )
                 elif 0.0 < self.changed_step < 1.0 and self.reducing_step:
@@ -420,13 +425,15 @@ class RFECV(RFE, MetaEstimatorMixin):
         Note that the last iteration may remove fewer than ``step`` features in
         order to reach ``min_features_to_select``.
 
-    step_change_at : int or None (default=None)
-        If specified ``step`` int or float equates to > 1 feature then the
+    step_change_at : int or float or None, optional (default=None)
+        If specified ``step`` int or float equates to > 1 feature, then the
         threshold number of remaining features when to change to
-        ``changed_step``
+        ``changed_step``. If ``step_change_at`` within (0.0, 1.0), then
+        threshold number of remaining features calculated as fraction of
+        original number of features.
 
     changed_step : int or float, optional (default=1)
-        Step to change to starting if ``step_change_at`` is specified. If
+        Step size to change to starting at ``step_change_at`` if specified. If
         greater than or equal to 1, then ``changed_step`` corresponds to the
         (integer) number of features to remove at each iteration. If within
         (0.0, 1.0), then ``changed_step`` corresponds to the percentage
