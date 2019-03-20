@@ -161,7 +161,7 @@ def test_cross_validator_with_default_params():
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
     ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, "
-               "test_size=0.1, train_size=None)")
+               "test_size=None, train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
@@ -580,12 +580,6 @@ def test_stratified_shuffle_split_init():
 
     X = np.arange(9)
     y = np.asarray([0, 0, 0, 1, 1, 1, 2, 2, 2])
-    # Check that errors are raised if there is not enough samples
-    assert_raises(ValueError, StratifiedShuffleSplit, 3, 0.5, 0.6)
-    assert_raises(ValueError, next,
-                  StratifiedShuffleSplit(3, 8, 0.6).split(X, y))
-    assert_raises(ValueError, next,
-                  StratifiedShuffleSplit(3, 0.6, 8).split(X, y))
 
     # Train size or test size too small
     assert_raises(ValueError, next,
@@ -1025,12 +1019,8 @@ def test_train_test_split_errors():
     with pytest.raises(ValueError,
                        match=r'train_size=11 should be either positive and '
                              r'smaller than the number of samples 10 or a '
-                             r'float in the \(0,1\) range'):
+                             r'float in the \(0, 1\) range'):
         train_test_split(range(10), train_size=11, test_size=1)
-
-    with pytest.raises(ValueError, match="test_size and train_size "
-                                         "can not both be None"):
-        train_test_split(range(10), test_size=None, train_size=None)
 
 
 @pytest.mark.parametrize("train_size,test_size", [
@@ -1043,7 +1033,8 @@ def test_train_test_split_errors():
     (0.8, 0.),
     (0.8, -.2)])
 def test_train_test_split_invalid_sizes1(train_size, test_size):
-    with pytest.raises(ValueError, match=r'should be in the \(0, 1\) range'):
+    with pytest.raises(ValueError,
+                       match=r'should be .* in the \(0, 1\) range'):
         train_test_split(range(10), train_size=train_size, test_size=test_size)
 
 
@@ -1170,7 +1161,6 @@ def test_train_test_split_list_input():
 @ignore_warnings
 def test_shufflesplit_errors():
     # When the {test|train}_size is a float/invalid, error is raised at init
-    assert_raises(ValueError, ShuffleSplit, test_size=None, train_size=None)
     assert_raises(ValueError, ShuffleSplit, test_size=2.0)
     assert_raises(ValueError, ShuffleSplit, test_size=1.0)
     assert_raises(ValueError, ShuffleSplit, test_size=0.1, train_size=0.95)
