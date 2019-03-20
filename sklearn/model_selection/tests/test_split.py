@@ -1005,11 +1005,8 @@ def test_repeated_stratified_kfold_determinstic_split():
 
 def test_train_test_split_errors():
     pytest.raises(ValueError, train_test_split)
-    with warnings.catch_warnings():
-        # JvR: Currently, a future warning is raised if test_size is not
-        # given. As that is the point of this test, ignore the future warning
-        warnings.filterwarnings("ignore", category=FutureWarning)
-        pytest.raises(ValueError, train_test_split, range(3), train_size=1.1)
+
+    pytest.raises(ValueError, train_test_split, range(3), train_size=1.1)
 
     pytest.raises(ValueError, train_test_split, range(3), test_size=0.6,
                   train_size=0.6)
@@ -1030,6 +1027,10 @@ def test_train_test_split_errors():
                              r'smaller than the number of samples 10 or a '
                              r'float in the \(0,1\) range'):
         train_test_split(range(10), train_size=11, test_size=1)
+
+    with pytest.raises(ValueError, match="test_size and train_size "
+                                         "can not both be None"):
+        train_test_split(range(10), test_size=None, train_size=None)
 
 
 @pytest.mark.parametrize("train_size,test_size", [

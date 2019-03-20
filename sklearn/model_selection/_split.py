@@ -1797,6 +1797,9 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
     """
+    if test_size is None and train_size is None:
+        raise ValueError('test_size and train_size can not both be None')
+
     if (test_size is not None and
             (np.asarray(test_size).dtype.kind == 'i' and
                 (test_size >= n_samples or test_size <= 0)) or
