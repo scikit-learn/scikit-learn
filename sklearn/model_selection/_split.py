@@ -1267,7 +1267,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
 class BaseShuffleSplit(metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n_splits=10, test_size="default", train_size=None,
+    def __init__(self, n_splits=10, test_size=None, train_size=None,
                  random_state=None):
         _validate_shuffle_split_init(test_size, train_size)
         self.n_splits = n_splits
@@ -1354,15 +1354,12 @@ class ShuffleSplit(BaseShuffleSplit):
     n_splits : int, default 10
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, default=0.1
+    test_size : float, int, None, default=None
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
-        complement of the train size. By default (the parameter is
-        unspecified), the value is set to 0.1.
-        The default will change in version 0.21. It will remain 0.1 only
-        if ``train_size`` is unspecified, otherwise it will complement
-        the specified ``train_size``.
+        complement of the train size. If ``train_size`` is also None, it will
+        be set to 0.1.
 
     train_size : float, int, or None, default=None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1411,7 +1408,8 @@ class ShuffleSplit(BaseShuffleSplit):
         n_samples = _num_samples(X)
         n_train, n_test = _validate_shuffle_split(n_samples,
                                                   self.test_size,
-                                                  self.train_size)
+                                                  self.train_size,
+                                                  0.1)
         rng = check_random_state(self.random_state)
         for i in range(self.n_splits):
             # random partition
@@ -1449,14 +1447,12 @@ class GroupShuffleSplit(ShuffleSplit):
     n_splits : int (default 5)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, optional
+    test_size : float, int, None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test groups. If None, the value is set to the
-        complement of the train size. By default, the value is set to 0.2.
-        The default will change in version 0.21. It will remain 0.2 only
-        if ``train_size`` is unspecified, otherwise it will complement
-        the specified ``train_size``.
+        complement of the train size. If ``train_size`` is also None, it will
+        be set to 0.2.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1472,16 +1468,8 @@ class GroupShuffleSplit(ShuffleSplit):
 
     '''
 
-    def __init__(self, n_splits=5, test_size="default", train_size=None,
+    def __init__(self, n_splits=5, test_size=0.2, train_size=None,
                  random_state=None):
-        if test_size == "default":
-            if train_size is not None:
-                warnings.warn("From version 0.21, test_size will always "
-                              "complement train_size unless both "
-                              "are specified.",
-                              FutureWarning)
-            test_size = 0.2
-
         super().__init__(
             n_splits=n_splits,
             test_size=test_size,
@@ -1624,14 +1612,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     n_splits : int, default 10
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, None, optional
+    test_size : float, int, None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
-        complement of the train size. By default, the value is set to 0.1.
-        The default will change in version 0.21. It will remain 0.1 only
-        if ``train_size`` is unspecified, otherwise it will complement
-        the specified ``train_size``.
+        complement of the train size. If ``train_size`` is also None, it will
+        be set to 0.1.
 
     train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
@@ -1667,16 +1653,19 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [0 5 1] TEST: [3 4 2]
     """
 
-    def __init__(self, n_splits=10, test_size="default", train_size=None,
+    def __init__(self, n_splits=10, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
-            n_splits, test_size, train_size, random_state)
+            n_splits=n_splits,
+            test_size=test_size,
+            train_size=train_size,
+            random_state=random_state)
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
         y = check_array(y, ensure_2d=False, dtype=None)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
-                                                  self.train_size)
+                                                  self.train_size, 0.1)
 
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
@@ -1776,17 +1765,6 @@ def _validate_shuffle_split_init(test_size, train_size):
     NOTE This does not take into account the number of samples which is known
     only at split
     """
-    if test_size == "default":
-        if train_size is not None:
-            warnings.warn("From version 0.21, test_size will always "
-                          "complement train_size unless both "
-                          "are specified.",
-                          FutureWarning)
-        test_size = 0.1
-
-    if test_size is None and train_size is None:
-        raise ValueError('test_size and train_size can not both be None')
-
     if test_size is not None:
         if np.asarray(test_size).dtype.kind == 'f':
             if test_size >= 1. or test_size <= 0:
@@ -1802,58 +1780,68 @@ def _validate_shuffle_split_init(test_size, train_size):
             if train_size >= 1. or train_size <= 0:
                 raise ValueError('train_size=%f should be in the (0, 1) range '
                                  'or be an integer' % train_size)
-            elif (np.asarray(test_size).dtype.kind == 'f' and
-                    (
-                        (train_size + test_size) > 1. or
-                        (train_size + test_size) < 0)):
-                raise ValueError('The sum of test_size and train_size = %f, '
-                                 'should be in the (0, 1) range. Reduce '
-                                 'test_size and/or train_size.' %
-                                 (train_size + test_size))
         elif np.asarray(train_size).dtype.kind != 'i':
             # int values are checked during split based on the input
             raise ValueError("Invalid value for train_size: %r" % train_size)
 
+    if (np.asarray(test_size).dtype.kind == 'f' and
+       np.asarray(train_size).dtype.kind == 'f' and
+       train_size + test_size > 1):
+        raise ValueError(
+            'The sum of test_size and train_size = {}, should be in the (0, 1)'
+            ' range. Reduce test_size and/or train_size.'
+            .format(train_size + test_size))
 
-def _validate_shuffle_split(n_samples, test_size, train_size):
+
+def _validate_shuffle_split(n_samples, test_size, train_size,
+                            default_test_size=None):
     """
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
     """
-    if (test_size is not None and
-            (np.asarray(test_size).dtype.kind == 'i' and
-                (test_size >= n_samples or test_size <= 0)) or
-            (np.asarray(test_size).dtype.kind == 'f' and
-                (test_size <= 0 or test_size >= 1))):
-        raise ValueError('test_size=%d should be either positive and smaller '
-                         'than the number of samples %d or a float in the '
-                         '(0,1) range' % (test_size, n_samples))
+    if test_size is None and train_size is None:
+        test_size = default_test_size
 
-    if (train_size is not None and
-            (np.asarray(train_size).dtype.kind == 'i' and
-                (train_size >= n_samples or train_size <= 0)) or
-            (np.asarray(train_size).dtype.kind == 'f' and
-                (train_size <= 0 or train_size >= 1))):
-        raise ValueError('train_size=%d should be either positive and smaller '
-                         'than the number of samples %d or a float in the '
-                         '(0,1) range' % (train_size, n_samples))
+    test_size_type = np.asarray(test_size).dtype.kind
+    train_size_type = np.asarray(train_size).dtype.kind
 
-    if test_size == "default":
-        test_size = 0.1
+    if (test_size_type == 'i' and (test_size >= n_samples or test_size <= 0)
+       or test_size_type == 'f' and (test_size <= 0 or test_size >= 1)):
+        raise ValueError('test_size={0} should be either positive and smaller'
+                         ' than the number of samples {1} or a float in the '
+                         '(0, 1) range'.format(test_size, n_samples))
 
-    if np.asarray(test_size).dtype.kind == 'f':
+    if (train_size_type == 'i' and (train_size >= n_samples or train_size <= 0)
+       or train_size_type == 'f' and (train_size <= 0 or train_size >= 1)):
+        raise ValueError('train_size={0} should be either positive and smaller'
+                         ' than the number of samples {1} or a float in the '
+                         '(0, 1) range'.format(train_size, n_samples))
+
+    if train_size is not None and train_size_type not in ('i', 'f'):
+        raise ValueError("Invalid value for train_size: {}".format(train_size))
+    if test_size is not None and test_size_type not in ('i', 'f'):
+        raise ValueError("Invalid value for test_size: {}".format(test_size))
+
+    if (train_size_type == 'f' and test_size_type == 'f' and
+            train_size + test_size > 1):
+        raise ValueError(
+            'The sum of test_size and train_size = {}, should be in the (0, 1)'
+            ' range. Reduce test_size and/or train_size.'
+            .format(train_size + test_size))
+
+    if test_size_type == 'f':
         n_test = ceil(test_size * n_samples)
-    elif np.asarray(test_size).dtype.kind == 'i':
+    elif test_size_type == 'i':
         n_test = float(test_size)
+
+    if train_size_type == 'f':
+        n_train = floor(train_size * n_samples)
+    elif train_size_type == 'i':
+        n_train = float(train_size)
 
     if train_size is None:
         n_train = n_samples - n_test
-    elif np.asarray(train_size).dtype.kind == 'f':
-        n_train = floor(train_size * n_samples)
-    else:
-        n_train = float(train_size)
-
-    if test_size is None:
+    elif test_size is None:
         n_test = n_samples - n_train
 
     if n_train + n_test > n_samples:
@@ -2091,14 +2079,12 @@ def train_test_split(*arrays, **options):
         Allowed inputs are lists, numpy arrays, scipy-sparse
         matrices or pandas dataframes.
 
-    test_size : float, int or None, optional (default=0.25)
+    test_size : float, int or None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
-        complement of the train size. By default, the value is set to 0.25.
-        The default will change in version 0.21. It will remain 0.25 only
-        if ``train_size`` is unspecified, otherwise it will complement
-        the specified ``train_size``.
+        complement of the train size. If ``train_size`` is also None, it will
+        be set to 0.25.
 
     train_size : float, int, or None, (default=None)
         If float, should be between 0.0 and 1.0 and represent the
@@ -2166,7 +2152,7 @@ def train_test_split(*arrays, **options):
     n_arrays = len(arrays)
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
-    test_size = options.pop('test_size', 'default')
+    test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     stratify = options.pop('stratify', None)
@@ -2175,28 +2161,17 @@ def train_test_split(*arrays, **options):
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
 
-    if test_size == 'default':
-        test_size = None
-        if train_size is not None:
-            warnings.warn("From version 0.21, test_size will always "
-                          "complement train_size unless both "
-                          "are specified.",
-                          FutureWarning)
-
-    if test_size is None and train_size is None:
-        test_size = 0.25
-
     arrays = indexable(*arrays)
+
+    n_samples = _num_samples(arrays[0])
+    n_train, n_test = _validate_shuffle_split(n_samples, test_size,
+                                              train_size, 0.25)
 
     if shuffle is False:
         if stratify is not None:
             raise ValueError(
                 "Stratified train/test split is not implemented for "
                 "shuffle=False")
-
-        n_samples = _num_samples(arrays[0])
-        n_train, n_test = _validate_shuffle_split(n_samples, test_size,
-                                                  train_size)
 
         train = np.arange(n_train)
         test = np.arange(n_train, n_train + n_test)
@@ -2207,8 +2182,8 @@ def train_test_split(*arrays, **options):
         else:
             CVClass = ShuffleSplit
 
-        cv = CVClass(test_size=test_size,
-                     train_size=train_size,
+        cv = CVClass(test_size=n_test,
+                     train_size=n_train,
                      random_state=random_state)
 
         train, test = next(cv.split(X=arrays[0], y=stratify))
