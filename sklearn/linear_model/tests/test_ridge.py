@@ -875,16 +875,13 @@ def test_ridge_regression_warns_with_return_intercept():
                            bias=10., random_state=42)
 
     for solver in ['sparse_cg', 'cholesky', 'svd', 'lsqr', 'saga']:
-        with pytest.warns(UserWarning) as record:
+        with pytest.warns(UserWarning, match="In Ridge, only 'sag' solver"):
             target = ridge_regression(X, y, 1,
                                       solver=solver,
                                       return_intercept=True
                                       )
             assert len(target) == 2
             assert target[0].shape == (2,)
-
-        for r in record:
-            r.message.args[0].startswith("return_intercept=True is only")
 
     with pytest.warns(None) as record:
         target = ridge_regression(X, y, 1,
