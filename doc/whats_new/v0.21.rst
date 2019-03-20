@@ -473,6 +473,12 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23.
   :pr:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
+- |Enhancement| :class:`linear_model.RidgeCV` now supports finding an optimal
+  regularization value `alpha` for each target separately by setting
+  ``alpha_per_target=True``. This is only supported when using the default
+  efficient leave-one-out cross-validation scheme ``cv=None``. :issue:`6624` by
+  :user:`Marijn van Vliet <wmvanvliet>`.
+
 :mod:`sklearn.manifold`
 .......................
 
