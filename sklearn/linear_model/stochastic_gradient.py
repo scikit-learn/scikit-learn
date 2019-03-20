@@ -767,7 +767,8 @@ class SGDClassifier(BaseSGDClassifier):
 
     tol : float or None, optional (default=1e-3)
         The stopping criterion. If it is not None, the iterations will stop
-        when (loss > previous_loss - tol).
+        when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
+        epochs.
 
         .. versionadded:: 0.19
 
@@ -1378,7 +1379,8 @@ class SGDRegressor(BaseSGDRegressor):
 
     tol : float or None, optional (default=1e-3)
         The stopping criterion. If it is not None, the iterations will stop
-        when (loss > previous_loss - tol).
+        when (loss > best_loss - tol) for ``n_iter_no_change`` consecutive
+        epochs.
 
         .. versionadded:: 0.19
 
