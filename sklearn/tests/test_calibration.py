@@ -24,7 +24,7 @@ from sklearn.calibration import calibration_curve
 
 
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_calibration():
     """Test calibration objects with isotonic and sigmoid"""
     n_samples = 100
@@ -100,7 +100,7 @@ def test_calibration():
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_sample_weight():
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,
@@ -258,6 +258,21 @@ def test_calibration_curve():
     # is set to False
     assert_raises(ValueError, calibration_curve, [1.1], [-0.1],
                   normalize=False)
+
+    # test that quantiles work as expected
+    y_true2 = np.array([0, 0, 0, 0, 1, 1])
+    y_pred2 = np.array([0., 0.1, 0.2, 0.5, 0.9, 1.])
+    prob_true_quantile, prob_pred_quantile = calibration_curve(
+        y_true2, y_pred2, n_bins=2, strategy='quantile')
+
+    assert len(prob_true_quantile) == len(prob_pred_quantile)
+    assert len(prob_true_quantile) == 2
+    assert_almost_equal(prob_true_quantile, [0, 2 / 3])
+    assert_almost_equal(prob_pred_quantile, [0.1, 0.8])
+
+    # Check that error is raised when invalid strategy is selected
+    assert_raises(ValueError, calibration_curve, y_true2, y_pred2,
+                  strategy='percentile')
 
 
 def test_calibration_nan_imputer():

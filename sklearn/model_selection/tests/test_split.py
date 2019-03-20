@@ -70,7 +70,7 @@ test_groups = (
 digits = load_digits()
 
 
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):
@@ -195,7 +195,7 @@ def test_cross_validator_with_default_params():
                          lpo.get_n_splits, None, y, groups)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_2d_y():
     # smoke test for 2d y and multi-label
     n_samples = 30
@@ -492,6 +492,17 @@ def test_shuffle_stratifiedkfold():
                                       kf1.split(X_40, y)):
         assert_not_equal(set(test0), set(test1))
     check_cv_coverage(kf0, X_40, y, groups=None, expected_n_splits=5)
+
+    # Ensure that we shuffle each class's samples with different
+    # random_state in StratifiedKFold
+    # See https://github.com/scikit-learn/scikit-learn/pull/13124
+    X = np.arange(10)
+    y = [0] * 5 + [1] * 5
+    kf1 = StratifiedKFold(5, shuffle=True, random_state=0)
+    kf2 = StratifiedKFold(5, shuffle=True, random_state=1)
+    test_set1 = sorted([tuple(s[1]) for s in kf1.split(X, y)])
+    test_set2 = sorted([tuple(s[1]) for s in kf2.split(X, y)])
+    assert test_set1 != test_set2
 
 
 def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
@@ -1097,7 +1108,7 @@ def test_train_test_split():
 
 
 @ignore_warnings
-def train_test_split_pandas():
+def test_train_test_split_pandas():
     # check train_test_split doesn't destroy pandas dataframe
     types = [MockDataFrame]
     try:
@@ -1113,7 +1124,7 @@ def train_test_split_pandas():
         assert isinstance(X_test, InputFeatureType)
 
 
-def train_test_split_sparse():
+def test_train_test_split_sparse():
     # check that train_test_split converts scipy sparse matrices
     # to csr, as stated in the documentation
     X = np.arange(100).reshape((10, 10))
@@ -1125,7 +1136,7 @@ def train_test_split_sparse():
         assert isinstance(X_test, csr_matrix)
 
 
-def train_test_split_mock_pandas():
+def test_train_test_split_mock_pandas():
     # X mock dataframe
     X_df = MockDataFrame(X)
     X_train, X_test = train_test_split(X_df)
@@ -1134,7 +1145,7 @@ def train_test_split_mock_pandas():
     X_train_arr, X_test_arr = train_test_split(X_df)
 
 
-def train_test_split_list_input():
+def test_train_test_split_list_input():
     # Check that when y is a list / list of string labels, it works.
     X = np.ones(7)
     y1 = ['1'] * 4 + ['0'] * 3
@@ -1420,7 +1431,7 @@ def test_time_series_max_train_size():
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)

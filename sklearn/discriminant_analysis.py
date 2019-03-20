@@ -22,6 +22,7 @@ from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
+from .utils.extmath import softmax
 from .preprocessing import StandardScaler
 
 
@@ -338,7 +339,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.explained_variance_ratio_ = np.sort(evals / np.sum(evals)
                                                  )[::-1][:self._max_components]
         evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
-        evecs /= np.linalg.norm(evecs, axis=0)
 
         self.scalings_ = evecs
         self.coef_ = np.dot(self.means_, evecs).dot(evecs.T)
@@ -427,7 +427,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             Target values.
         """
         # FIXME: Future warning to be removed in 0.23
-        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self)
+        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
+                         dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
         n_classes = len(self.classes_)
@@ -485,9 +486,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             raise ValueError("unknown solver {} (valid solvers are 'svd', "
                              "'lsqr', and 'eigen').".format(self.solver))
         if self.classes_.size == 2:  # treat binary case as a special case
-            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2)
+            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2,
+                                  dtype=X.dtype)
             self.intercept_ = np.array(self.intercept_[1] - self.intercept_[0],
-                                       ndmin=1)
+                                       ndmin=1, dtype=X.dtype)
         return self
 
     def transform(self, X):
@@ -529,14 +531,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         C : array, shape (n_samples, n_classes)
             Estimated probabilities.
         """
-        prob = self.decision_function(X)
-        expit(prob, out=prob)
-        if len(self.classes_) == 2:  # binary case
-            return np.column_stack([1 - prob, prob])
+        check_is_fitted(self, 'classes_')
+
+        decision = self.decision_function(X)
+        if self.classes_.size == 2:
+            proba = expit(decision)
+            return np.vstack([1-proba, proba]).T
         else:
-            # OvR normalization, like LibLinear's predict_probability
-            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
-            return prob
+            return softmax(decision)
 
     def predict_log_proba(self, X):
         """Estimate log probability.

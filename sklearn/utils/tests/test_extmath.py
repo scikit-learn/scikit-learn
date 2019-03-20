@@ -169,7 +169,7 @@ def test_row_norms(dtype):
     else:
         precision = 5
 
-    X = X.astype(dtype)
+    X = X.astype(dtype, copy=False)
     sq_norm = (X ** 2).sum(axis=1)
 
     assert_array_almost_equal(sq_norm, row_norms(X, squared=True),
@@ -181,8 +181,8 @@ def test_row_norms(dtype):
         # csr_matrix will use int32 indices by default,
         # up-casting those to int64 when necessary
         if csr_index_dtype is np.int64:
-            Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype)
-            Xcsr.indices = Xcsr.indices.astype(csr_index_dtype)
+            Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype, copy=False)
+            Xcsr.indices = Xcsr.indices.astype(csr_index_dtype, copy=False)
         assert Xcsr.indices.dtype == csr_index_dtype
         assert Xcsr.indptr.dtype == csr_index_dtype
         assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),

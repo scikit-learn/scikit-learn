@@ -28,7 +28,7 @@ from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
                balanced_accuracy_score, explained_variance_score,
-               brier_score_loss)
+               brier_score_loss, jaccard_score)
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
@@ -43,7 +43,7 @@ from ..utils.multiclass import type_of_target
 from ..base import is_regressor
 
 
-class _BaseScorer(object, metaclass=ABCMeta):
+class _BaseScorer(metaclass=ABCMeta):
     def __init__(self, score_func, sign, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
@@ -323,9 +323,9 @@ def _check_multimetric_scoring(estimator, scoring=None):
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None the estimator's default scorer (if available) is used.
+        If None the estimator's score method is used.
         The return value in that case will be ``{'score': <default_scorer>}``.
-        If the estimator's default scorer is not available, a ``TypeError``
+        If the estimator's score method is not available, a ``TypeError``
         is raised.
 
     Returns
@@ -480,7 +480,6 @@ neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
-f1_scorer = make_scorer(f1_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 
 # Score functions that need decision values
@@ -488,8 +487,6 @@ roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
-precision_scorer = make_scorer(precision_score)
-recall_scorer = make_scorer(recall_score)
 
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
@@ -534,8 +531,9 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
 
 
 for name, metric in [('precision', precision_score),
-                     ('recall', recall_score), ('f1', f1_score)]:
-    SCORERS[name] = make_scorer(metric)
+                     ('recall', recall_score), ('f1', f1_score),
+                     ('jaccard', jaccard_score)]:
+    SCORERS[name] = make_scorer(metric, average='binary')
     for average in ['macro', 'micro', 'samples', 'weighted']:
         qualified_name = '{0}_{1}'.format(name, average)
         SCORERS[qualified_name] = make_scorer(metric, pos_label=None,

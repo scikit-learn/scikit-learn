@@ -45,14 +45,12 @@ __all__ = ['BaseCrossValidator',
 
 
 NSPLIT_WARNING = (
-    "You should specify a value for 'n_splits' instead of relying on the "
-    "default value. The default value will change from 3 to 5 "
-    "in version 0.22.")
+    "The default value of n_split will change from 3 to 5 "
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 CV_WARNING = (
-    "You should specify a value for 'cv' instead of relying on the "
-    "default value. The default value will change from 3 to 5 "
-    "in version 0.22.")
+    "The default value of cv will change from 3 to 5 "
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 
 class BaseCrossValidator(metaclass=ABCMeta):
@@ -576,8 +574,7 @@ class StratifiedKFold(_BaseKFold):
             ``n_splits`` default value will change from 3 to 5 in v0.22.
 
     shuffle : boolean, optional
-        Whether to shuffle each stratification of the data before splitting
-        into batches.
+        Whether to shuffle each class's samples before splitting into batches.
 
     random_state : int, RandomState instance or None, optional, default=None
         If int, random_state is the seed used by the random number generator;
@@ -620,7 +617,7 @@ class StratifiedKFold(_BaseKFold):
         super().__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None):
-        rng = self.random_state
+        rng = check_random_state(self.random_state)
         y = np.asarray(y)
         type_of_target_y = type_of_target(y)
         allowed_target_types = ('binary', 'multiclass')
@@ -1455,7 +1452,7 @@ class GroupShuffleSplit(ShuffleSplit):
     test_size : float, int, None, optional
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, the value is set to the
+        absolute number of test groups. If None, the value is set to the
         complement of the train size. By default, the value is set to 0.2.
         The default will change in version 0.21. It will remain 0.2 only
         if ``train_size`` is unspecified, otherwise it will complement
@@ -1496,8 +1493,7 @@ class GroupShuffleSplit(ShuffleSplit):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
-        for group_train, group_test in super(
-                GroupShuffleSplit, self)._iter_indices(X=classes):
+        for group_train, group_test in super()._iter_indices(X=classes):
             # these are the indices of classes in the partition
             # invert them into data indices
 

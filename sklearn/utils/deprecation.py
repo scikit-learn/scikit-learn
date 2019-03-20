@@ -4,7 +4,7 @@ import functools
 __all__ = ["deprecated"]
 
 
-class deprecated(object):
+class deprecated:
     """Decorator to mark a function or class as deprecated.
 
     Issue a warning when the function is called/the class is instantiated and

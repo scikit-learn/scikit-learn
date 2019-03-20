@@ -283,7 +283,7 @@ def test_scikit_vs_scipy():
 
             out = hierarchy.linkage(X, method=linkage)
 
-            children_ = out[:, :2].astype(np.int)
+            children_ = out[:, :2].astype(np.int, copy=False)
             children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X, connectivity)
 
             # Sort the order of child nodes per row for consistency
@@ -482,14 +482,14 @@ def test_connectivity_fixing_non_lil():
 
 def test_int_float_dict():
     rng = np.random.RandomState(0)
-    keys = np.unique(rng.randint(100, size=10).astype(np.intp))
+    keys = np.unique(rng.randint(100, size=10).astype(np.intp, copy=False))
     values = rng.rand(len(keys))
 
     d = IntFloatDict(keys, values)
     for key, value in zip(keys, values):
         assert d[key] == value
 
-    other_keys = np.arange(50).astype(np.intp)[::2]
+    other_keys = np.arange(50, dtype=np.intp)[::2]
     other_values = np.full(50, 0.5)[::2]
     other = IntFloatDict(other_keys, other_values)
     # Complete smoke test

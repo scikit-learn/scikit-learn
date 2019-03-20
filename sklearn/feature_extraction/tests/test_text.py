@@ -67,7 +67,7 @@ def uppercase(s):
 
 
 def strip_eacute(s):
-    return s.replace(u'é', 'e')
+    return s.replace('é', 'e')
 
 
 def split_tokenize(s):
@@ -80,11 +80,11 @@ def lazy_analyze(s):
 
 def test_strip_accents():
     # check some classical latin accentuated symbols
-    a = u'àáâãäåçèéêë'
+    a = 'àáâãäåçèéêë'
     expected = 'aaaaaaceeee'
     assert_equal(strip_accents_unicode(a), expected)
 
-    a = u'ìíîïñòóôõöùúûüý'
+    a = 'ìíîïñòóôõöùúûüý'
     expected = 'iiiinooooouuuuy'
     assert_equal(strip_accents_unicode(a), expected)
 
@@ -94,18 +94,18 @@ def test_strip_accents():
     assert_equal(strip_accents_unicode(a), expected)
 
     # mix letters accentuated and not
-    a = u"this is à test"
+    a = "this is à test"
     expected = 'this is a test'
     assert_equal(strip_accents_unicode(a), expected)
 
 
 def test_to_ascii():
     # check some classical latin accentuated symbols
-    a = u'àáâãäåçèéêë'
+    a = 'àáâãäåçèéêë'
     expected = 'aaaaaaceeee'
     assert_equal(strip_accents_ascii(a), expected)
 
-    a = u"ìíîïñòóôõöùúûüý"
+    a = "ìíîïñòóôõöùúûüý"
     expected = 'iiiinooooouuuuy'
     assert_equal(strip_accents_ascii(a), expected)
 
@@ -115,7 +115,7 @@ def test_to_ascii():
     assert_equal(strip_accents_ascii(a), expected)
 
     # mix letters accentuated and not
-    a = u"this is à test"
+    a = "this is à test"
     expected = 'this is a test'
     assert_equal(strip_accents_ascii(a), expected)
 
@@ -123,8 +123,8 @@ def test_to_ascii():
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, HashingVectorizer))
 def test_word_analyzer_unigrams(Vectorizer):
     wa = Vectorizer(strip_accents='ascii').build_analyzer()
-    text = (u"J'ai mangé du kangourou  ce midi, "
-            u"c'était pas très bon.")
+    text = ("J'ai mangé du kangourou  ce midi, "
+            "c'était pas très bon.")
     expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
                 'etait', 'pas', 'tres', 'bon']
     assert_equal(wa(text), expected)
@@ -142,8 +142,8 @@ def test_word_analyzer_unigrams(Vectorizer):
 
     # with custom preprocessor
     wa = Vectorizer(preprocessor=uppercase).build_analyzer()
-    text = (u"J'ai mangé du kangourou  ce midi, "
-            u" c'était pas très bon.")
+    text = ("J'ai mangé du kangourou  ce midi, "
+            " c'était pas très bon.")
     expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
                 'ETAIT', 'PAS', 'TRES', 'BON']
     assert_equal(wa(text), expected)
@@ -151,8 +151,8 @@ def test_word_analyzer_unigrams(Vectorizer):
     # with custom tokenizer
     wa = Vectorizer(tokenizer=split_tokenize,
                     strip_accents='ascii').build_analyzer()
-    text = (u"J'ai mangé du kangourou  ce midi, "
-            u"c'était pas très bon.")
+    text = ("J'ai mangé du kangourou  ce midi, "
+            "c'était pas très bon.")
     expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
                 "c'etait", 'pas', 'tres', 'bon.']
     assert_equal(wa(text), expected)
@@ -162,7 +162,7 @@ def test_word_analyzer_unigrams_and_bigrams():
     wa = CountVectorizer(analyzer="word", strip_accents='unicode',
                          ngram_range=(1, 2)).build_analyzer()
 
-    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon."
+    text = "J'ai mangé du kangourou  ce midi, c'était pas très bon."
     expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
                 'etait', 'pas', 'tres', 'bon', 'ai mange', 'mange du',
                 'du kangourou', 'kangourou ce', 'ce midi', 'midi etait',
@@ -173,7 +173,7 @@ def test_word_analyzer_unigrams_and_bigrams():
 def test_unicode_decode_error():
     # decode_error default to strict, so this should fail
     # First, encode (as bytes) a unicode string.
-    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon."
+    text = "J'ai mangé du kangourou  ce midi, c'était pas très bon."
     text_bytes = text.encode('utf-8')
 
     # Then let the Analyzer try to decode it as ascii. It should fail,
@@ -190,7 +190,7 @@ def test_char_ngram_analyzer():
     cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
                            ngram_range=(3, 6)).build_analyzer()
 
-    text = u"J'ai mangé du kangourou  ce midi, c'était pas très bon"
+    text = "J'ai mangé du kangourou  ce midi, c'était pas très bon"
     expected = ["j'a", "'ai", 'ai ', 'i m', ' ma']
     assert_equal(cnga(text)[:5], expected)
     expected = ['s tres', ' tres ', 'tres b', 'res bo', 'es bon']
@@ -583,8 +583,8 @@ def test_feature_names():
 @pytest.mark.parametrize('Vectorizer', (CountVectorizer, TfidfVectorizer))
 def test_vectorizer_max_features(Vectorizer):
     expected_vocabulary = {'burger', 'beer', 'salad', 'pizza'}
-    expected_stop_words = {u'celeri', u'tomato', u'copyright', u'coke',
-                           u'sparkling', u'water', u'the'}
+    expected_stop_words = {'celeri', 'tomato', 'copyright', 'coke',
+                           'sparkling', 'water', 'the'}
 
     # test bounded number of extracted features
     vectorizer = Vectorizer(max_df=0.6, max_features=4)
@@ -736,7 +736,7 @@ def test_vectorizer_inverse_transform(Vectorizer):
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -774,7 +774,7 @@ def test_count_vectorizer_pipeline_grid_selection():
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
@@ -833,9 +833,9 @@ def test_vectorizer_pipeline_cross_validation():
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (
-        u"Машинное обучение — обширный подраздел искусственного "
-        u"интеллекта, изучающий методы построения алгоритмов, "
-        u"способных обучаться."
+        "Машинное обучение — обширный подраздел искусственного "
+        "интеллекта, изучающий методы построения алгоритмов, "
+        "способных обучаться."
         )
 
     vect = CountVectorizer()
