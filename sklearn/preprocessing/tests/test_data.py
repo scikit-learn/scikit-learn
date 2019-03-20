@@ -1527,12 +1527,13 @@ def test_quantile_transform_nan():
 
 
 def test_deprecated_quantile_transform_copy():
-    future_message = ("The default value of the `copy` parameter has "
-                      "been scheduled to be changed in 0.21. In 0.23, "
-                      "its default value will be updated from False "
-                      "to True. To avoid unexpected inplace modifications "
-                      "of `X` and to prepare for the change in 0.23, it "
-                      "is recommended to explicitly set `copy=True`")
+    future_message = ("The default value of `copy` will change from False to "
+                      "True in 0.23 in order to make it more consistent with "
+                      "the default `copy` values of other functions in "
+                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      "unexpected side effects by modifying the value of `X` "
+                      "inplace. To avoid inplace modifications of `X`, it is "
+                      "recommended to explicitly set `copy=True`")
     assert_warns_message(FutureWarning, future_message, quantile_transform,
                          np.array([[0, 1], [0, 0.5], [1, 0]]))
 

@@ -2543,12 +2543,13 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
     if copy == "warn":
-        warnings.warn("The default value of the `copy` parameter has "
-                      "been scheduled to be changed in 0.21. In 0.23, "
-                      "its default value will be updated from False "
-                      "to True. To avoid unexpected inplace modifications "
-                      "of `X` and to prepare for the change in 0.23, it "
-                      "is recommended to explicitly set `copy=True`",
+        warnings.warn("The default value of `copy` will change from False to "
+                      "True in 0.23 in order to make it more consistent with "
+                      "the default `copy` values of other functions in "
+                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      "unexpected side effects by modifying the value of `X` "
+                      "inplace. To avoid inplace modifications of `X`, it is "
+                      "recommended to explicitly set `copy=True`",
                       FutureWarning)
         copy = False
 
