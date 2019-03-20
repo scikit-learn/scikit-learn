@@ -26,6 +26,9 @@ random sampling procedures.
   classification. |Fix|
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
+- :class:`linear_model.stochastic_gradient.BaseSGD` and any derived
+  classifiers. |Fix|
+- Any model using the `sag_solver` function with a `0` seed
 
 
 Details are listed in the changelog below.
@@ -257,6 +260,11 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23.
   :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
+- |Fix| Fixed a bug in
+  :class:`linear_model.stochastic_gradient.BaseSGDClassifier` that was not
+  deterministic when trained in a multi-class setting on several threads.
+  :issue:`13422` by :user:`Clément Doumouro <ClemDoum>`.
+
 :mod:`sklearn.manifold`
 ............................
 
@@ -469,7 +477,14 @@ Multiple modules
 - |Efficiency| Memory copies are avoided when casting arrays to a different
   dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
   <rth>`.
-
+- |Fix| refactored the `our_rand_r` function that was implemented in several
+  places (`_tree.pyx`, `cd_fast.pyx` and `seq_dataset.pyx.tb`) and returned `0`
+  when called with a `0` seed.
+  :issue:`11291` by :user:`Madhura Parikh <jdnc>`
+- |Fix| Fixed a bug the various in Cython implementation of the
+  :func:`our_rand_r` function that was not behaving consistently across
+  platforms.
+  :issue:`13422` by :user:`Clément Doumouro <ClemDoum>`.
 
 Changes to estimator checks
 ---------------------------
