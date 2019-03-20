@@ -310,194 +310,51 @@ def test_bruteforce_ellipsis():
     # Check that the bruteforce ellipsis (used when the number of non-blank
     # characters exceeds N_CHAR_MAX) renders correctly.
 
-    # Basic sanity check on very long strings.
-    # repr is a very long line so we don't check for equality here, just that
-    # ellipsis has been done. Note that this is a different ellipsis from
-    # N_MAX_ELEMENTS_TO_SHOW.
-    vocabulary = {0: 'hello' * 1000}
-    vectorizer = CountVectorizer(vocabulary=vocabulary)
-    repr_ = vectorizer.__repr__()
-    assert '...' in repr_
+    lr = LogisticRegression()
 
-    # make sure that ellipsis is done without considering the blank
-    # characters (see issue 13372). Also, this test covers the case when the
-    # left and right side of the ellipsis aren't on the same line.
-    numeric_features = ['age', 'fare']
-    numeric_transformer = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='median')),
-        ('scaler', StandardScaler())])
-
-    categorical_features = ['embarked', 'sex', 'pclass']
-    categorical_transformer = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-        ('onehot', OneHotEncoder(handle_unknown='ignore'))])
-
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ('num', numeric_transformer, numeric_features),
-            ('cat', categorical_transformer, categorical_features)])
-
-    clf = Pipeline(steps=[('preprocessor', preprocessor),
-                        ('classifier', LogisticRegression(solver='lbfgs'))])
-
+    # test when the left and right side of the ellipsis aren't on the same
+    # line.
     expected = """
-Pipeline(memory=None,
-         steps=[('preprocessor',
-                 ColumnTransformer(n_jobs=None, remainder='drop',
-                                   sparse_threshold=0.3,
-                                   transformer_weights=None,
-                                   transformers=[('num',
-                                                  Pipeline(memory=None,
-                                                           steps=[('imputer',
-                                                                   SimpleImputer(copy=True,
-                                                                                 fill_value=None,
-                                                                                 missing_values=nan,
-                                                                                 strategy='median',
-                                                                                 verbose=0)),
-                                                                  ('scaler',
-                                                                   StandardScaler(copy=True,
-                                                                                  with_mean=True,
-                                                                                  with_std=True)...
-                                                                                 dtype=<class 'numpy.float64'>,
-                                                                                 handle_unknown='ignore',
-                                                                                 n_values=None,
-                                                                                 sparse=True))]),
-                                                  ['embarked', 'sex',
-                                                   'pclass'])])),
-                ('classifier',
-                 LogisticRegression(C=1.0, class_weight=None, dual=False,
-                                    fit_intercept=True, intercept_scaling=1,
-                                    l1_ratio=None, max_iter=100,
-                                    multi_class='warn', n_jobs=None,
-                                    penalty='l2', random_state=None,
-                                    solver='lbfgs', tol=0.0001, verbose=0,
-                                    warm_start=False))])"""
+LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+                   in...
+                   multi_class='warn', n_jobs=None, penalty='l2',
+                   random_state=None, solver='warn', tol=0.0001, verbose=0,
+                   warm_start=False)"""
 
     expected = expected[1:]  # remove first \n
-    assert expected == repr(clf)
+    assert expected == lr.__repr__(N_CHAR_MAX=150)
 
     # test with very small N_CHAR_MAX
     # Note that N_CHAR_MAX is not strictly enforced, but it's normal: to avoid
     # weird reprs we still keep the whole line of the right part (after the
     # ellipsis).
     expected = """
-Pi...
-                                    warm_start=False))])"""
-    expected = expected[1:]  # remove first \n
-    assert clf.__repr__(N_CHAR_MAX=4) == expected
+Lo...
+                   warm_start=False)"""
 
-    # test with N_CHAR_MAX == number of non-blank characters: this should
-    # render the full repr.
-    full_repr = clf.__repr__(N_CHAR_MAX=float('inf'))
+    expected = expected[1:]  # remove first \n
+    assert expected == lr.__repr__(N_CHAR_MAX=4)
+
+    # test with N_CHAR_MAX == number of non-blank characters: In this case we
+    # don't want ellipsis
+    full_repr = lr.__repr__(N_CHAR_MAX=float('inf'))
     n_nonblank = len(''.join(full_repr.split()))
-    repr_ = clf.__repr__(N_CHAR_MAX=n_nonblank)
-    expected="""
-Pipeline(memory=None,
-         steps=[('preprocessor',
-                 ColumnTransformer(n_jobs=None, remainder='drop',
-                                   sparse_threshold=0.3,
-                                   transformer_weights=None,
-                                   transformers=[('num',
-                                                  Pipeline(memory=None,
-                                                           steps=[('imputer',
-                                                                   SimpleImputer(copy=True,
-                                                                                 fill_value=None,
-                                                                                 missing_values=nan,
-                                                                                 strategy='median',
-                                                                                 verbose=0)),
-                                                                  ('scaler',
-                                                                   StandardScaler(copy=True,
-                                                                                  with_mean=True,
-                                                                                  with_std=True))]),
-                                                  ['age', 'fare']),
-                                                 ('cat',
-                                                  Pipeline(memory=None,
-                                                           steps=[('imputer',
-                                                                   SimpleImputer(copy=True,
-                                                                                 fill_value='missing',
-                                                                                 missing_values=nan,
-                                                                                 strategy='constant',
-                                                                                 verbose=0)),
-                                                                  ('onehot',
-                                                                   OneHotEncoder(categorical_features=None,
-                                                                                 categories=None,
-                                                                                 drop=None,
-                                                                                 dtype=<class 'numpy.float64'>,
-                                                                                 handle_unknown='ignore',
-                                                                                 n_values=None,
-                                                                                 sparse=True))]),
-                                                  ['embarked', 'sex',
-                                                   'pclass'])])),
-                ('classifier',
-                 LogisticRegression(C=1.0, class_weight=None, dual=False,
-                                    fit_intercept=True, intercept_scaling=1,
-                                    l1_ratio=None, max_iter=100,
-                                    multi_class='warn', n_jobs=None,
-                                    penalty='l2', random_state=None,
-                                    solver='lbfgs', tol=0.0001, verbose=0,
-                                    warm_start=False))])"""
-    expected = expected[1:]  # remove first \n
-    assert repr_ == expected
-    assert '...' not in repr_
-
+    assert lr.__repr__(N_CHAR_MAX=n_nonblank) == full_repr
+    assert '...' not in full_repr
 
     # test with N_CHAR_MAX == number of non-blank characters - 1: the left and
     # right side of the ellispsis are on the same line. In this case we don't
     # want to expend the whole line of the right side, just add the ellispsis
     # between the 2 sides.
-    full_repr = clf.__repr__(N_CHAR_MAX=float('inf'))
-    n_nonblank = len(''.join(full_repr.split()))
-    repr_ = clf.__repr__(N_CHAR_MAX=n_nonblank - 1)
+
     expected = """
-Pipeline(memory=None,
-         steps=[('preprocessor',
-                 ColumnTransformer(n_jobs=None, remainder='drop',
-                                   sparse_threshold=0.3,
-                                   transformer_weights=None,
-                                   transformers=[('num',
-                                                  Pipeline(memory=None,
-                                                           steps=[('imputer',
-                                                                   SimpleImputer(copy=True,
-                                                                                 fill_value=None,
-                                                                                 missing_values=nan,
-                                                                                 strategy='median',
-                                                                                 verbose=0)),
-                                                                  ('scaler',
-                                                                   StandardScaler(copy=True,
-                                                                                  with_mean=True,
-                                                                                  with_std=True))]),
-                                                  ['age', 'fare']),
-                                                 ('cat',
-                                                  Pipeline(memory=None,
-                                                           steps=[('imputer',
-                                                                   SimpleImputer(copy=True,
-                                                                                 fill_value='missing',
-                                                                                 missing_values=n...n,
-                                                                                 strategy='constant',
-                                                                                 verbose=0)),
-                                                                  ('onehot',
-                                                                   OneHotEncoder(categorical_features=None,
-                                                                                 categories=None,
-                                                                                 drop=None,
-                                                                                 dtype=<class 'numpy.float64'>,
-                                                                                 handle_unknown='ignore',
-                                                                                 n_values=None,
-                                                                                 sparse=True))]),
-                                                  ['embarked', 'sex',
-                                                   'pclass'])])),
-                ('classifier',
-                 LogisticRegression(C=1.0, class_weight=None, dual=False,
-                                    fit_intercept=True, intercept_scaling=1,
-                                    l1_ratio=None, max_iter=100,
-                                    multi_class='warn', n_jobs=None,
-                                    penalty='l2', random_state=None,
-                                    solver='lbfgs', tol=0.0001, verbose=0,
-                                    warm_start=False))])"""
-
+LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
+                   intercept_scaling=1, l1_ratio=None, max_iter=...0,
+                   multi_class='warn', n_jobs=None, penalty='l2',
+                   random_state=None, solver='warn', tol=0.0001, verbose=0,
+                   warm_start=False)"""
     expected = expected[1:]  # remove first \n
-    assert repr_ == expected
-    assert '...' in repr_
-
+    assert expected == lr.__repr__(N_CHAR_MAX=n_nonblank - 1)
 
 def test_builtin_prettyprinter():
     # non regression test than ensures we can still use the builtin
