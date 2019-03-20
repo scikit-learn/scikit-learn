@@ -22,6 +22,7 @@ from ..utils.validation import check_memory
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
+from ..utils import deprecated
 
 ###############################################################################
 # For non fully-connected graphs
@@ -752,12 +753,11 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.pooling_func = pooling_func
 
     @property
+    @deprecated("The `n_components` parameter changed to "
+                "`n_connected_components`. This will be "
+                "deprecated in version 0.21 and removed "
+                "in 0.23.")
     def n_components_(self):
-        warnings.warn("The `n_components` parameter changed to"
-                      "`n_connected_components`. This will be"
-                      "deprecated in version 0.21 and removed"
-                      "in 0.23.",
-                      DeprecationWarning)
         return self.n_connected_components_
 
     def fit(self, X, y=None):
