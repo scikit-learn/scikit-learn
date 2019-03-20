@@ -2431,7 +2431,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                        ignore_implicit_zeros=False,
                        subsample=int(1e5),
                        random_state=None,
-                       copy=False):
+                       copy="warn"):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2489,9 +2489,18 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         by np.random. Note that this is used by subsampling and smoothing
         noise.
 
-    copy : boolean, optional, (default=True)
+    copy : boolean, optional, (default="warn")
         Set to False to perform inplace transformation and avoid a copy (if the
-        input is already a numpy array).
+        input is already a numpy array). If True, a copy of `X` is transformed,
+        leaving the original `X` unchanged
+
+        .. deprecated:: 0.21
+            The default value of parameter `copy` will be changed from False
+            to True in 0.23. The current default of False is being changed to
+            make it more consistent with the default `copy` values of other
+            functions in :mod:`sklearn.preprocessing.data`. Furthermore, the
+            current default of False may have unexpected side effects by
+            modifying the value of `X` inplace
 
     Returns
     -------
@@ -2504,7 +2513,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     >>> from sklearn.preprocessing import quantile_transform
     >>> rng = np.random.RandomState(0)
     >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> quantile_transform(X, n_quantiles=10, random_state=0)
+    >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
     ... # doctest: +ELLIPSIS
     array([...])
 
@@ -2529,6 +2538,17 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
+    if copy == "warn":
+        warnings.warn("The default value of `copy` will change from False to "
+                      "True in 0.23 in order to make it more consistent with "
+                      "the default `copy` values of other functions in "
+                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      "unexpected side effects by modifying the value of `X` "
+                      "inplace. To avoid inplace modifications of `X`, it is "
+                      "recommended to explicitly set `copy=True`",
+                      FutureWarning)
+        copy = False
+
     n = QuantileTransformer(n_quantiles=n_quantiles,
                             output_distribution=output_distribution,
                             subsample=subsample,
