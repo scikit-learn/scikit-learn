@@ -57,6 +57,13 @@ installation from the command line.
    For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
    are required.
 
+   For installing scikit-learn in python version-3 using 'pip' its preferable that you use pip3 version
+   instead of just pip:
+	
+	pip3 install -U scikit-learn
+
+The -U forces in installing the latest packages.But while doing so it might break other dependencies.
+Hence in Ubuntu its advised that it is done in a virtual environment 
 
 For installation instructions for more distributions see
 :ref:`other distributions <install_by_distribution>`.
