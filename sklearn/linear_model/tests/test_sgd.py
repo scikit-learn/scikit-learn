@@ -1429,29 +1429,6 @@ def test_tol_parameter():
     assert_equal(model_3.n_iter_, 3)
 
 
-def test_tol_and_max_iter_default_values():
-    # Test that the default values are correctly changed
-    est = linear_model.SGDClassifier()
-    est._validate_params()
-    assert_equal(est._tol, 1e-3)
-    assert_equal(est._max_iter, 1000)
-
-    est = linear_model.SGDClassifier(tol=1e-2)
-    est._validate_params()
-    assert_equal(est._tol, 1e-2)
-    assert_equal(est._max_iter, 1000)
-
-    est = linear_model.SGDClassifier(max_iter=42)
-    est._validate_params()
-    assert_equal(est._tol, 1e-3)
-    assert_equal(est._max_iter, 42)
-
-    est = linear_model.SGDClassifier(max_iter=42, tol=1e-2)
-    est._validate_params()
-    assert_equal(est._tol, 1e-2)
-    assert_equal(est._max_iter, 42)
-
-
 def _test_gradient_common(loss_function, cases):
     # Test gradient of different loss functions
     # cases is a list of (p, y, expected)

@@ -141,9 +141,6 @@ class BaseSGD(BaseEstimator, SparseCoefMixin, metaclass=ABCMeta):
         if not set_max_iter:
             return
 
-        self._tol = self.tol
-        self._max_iter = self.max_iter
-
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
         try:
@@ -543,11 +540,11 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         # Clear iteration count for multiple call to fit.
         self.t_ = 1.0
 
-        self._partial_fit(X, y, alpha, C, loss, learning_rate, self._max_iter,
+        self._partial_fit(X, y, alpha, C, loss, learning_rate, self.max_iter,
                           classes, sample_weight, coef_init, intercept_init)
 
-        if (self._tol is not None and self._tol > -np.inf
-                and self.n_iter_ == self._max_iter):
+        if (self.tol is not None and self.tol > -np.inf
+                and self.n_iter_ == self.max_iter):
             warnings.warn("Maximum number of iteration reached before "
                           "convergence. Consider increasing max_iter to "
                           "improve the fit.",
@@ -1159,11 +1156,11 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self.t_ = 1.0
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate,
-                          self._max_iter, sample_weight, coef_init,
+                          self.max_iter, sample_weight, coef_init,
                           intercept_init)
 
-        if (self._tol is not None and self._tol > -np.inf
-                and self.n_iter_ == self._max_iter):
+        if (self.tol is not None and self.tol > -np.inf
+                and self.n_iter_ == self.max_iter):
             warnings.warn("Maximum number of iteration reached before "
                           "convergence. Consider increasing max_iter to "
                           "improve the fit.",
@@ -1256,7 +1253,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-        tol = self._tol if self._tol is not None else -np.inf
+        tol = self.tol if self.tol is not None else -np.inf
 
         if self.average > 0:
             self.standard_coef_, self.standard_intercept_, \
