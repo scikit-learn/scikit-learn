@@ -1409,7 +1409,7 @@ class ShuffleSplit(BaseShuffleSplit):
         n_train, n_test = _validate_shuffle_split(n_samples,
                                                   self.test_size,
                                                   self.train_size,
-                                                  0.1)
+                                                  default_test_size=0.1)
         rng = check_random_state(self.random_state)
         for i in range(self.n_splits):
             # random partition
@@ -1665,7 +1665,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         n_samples = _num_samples(X)
         y = check_array(y, ensure_2d=False, dtype=None)
         n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
-                                                  self.train_size, 0.1)
+                                                  self.train_size,
+                                                  default_test_size=0.1)
 
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
@@ -2165,7 +2166,8 @@ def train_test_split(*arrays, **options):
 
     n_samples = _num_samples(arrays[0])
     n_train, n_test = _validate_shuffle_split(n_samples, test_size,
-                                              train_size, 0.25)
+                                              train_size,
+                                              default_test_size=0.25)
 
     if shuffle is False:
         if stratify is not None:
