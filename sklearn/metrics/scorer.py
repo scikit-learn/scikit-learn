@@ -478,8 +478,8 @@ neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
 neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
 neg_root_mean_sqr_error_scorer = make_scorer(mean_squared_error,
-                                                 greater_is_better=False,
-                                                 squared=True)
+                                             greater_is_better=False,
+                                             squared=True)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
