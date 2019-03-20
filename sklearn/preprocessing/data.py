@@ -2517,7 +2517,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     >>> from sklearn.preprocessing import quantile_transform
     >>> rng = np.random.RandomState(0)
     >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> quantile_transform(X, n_quantiles=10, random_state=0)
+    >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=False)
     ... # doctest: +ELLIPSIS
     array([...])
 
