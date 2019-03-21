@@ -32,6 +32,14 @@ w = [1, 1, 1, 0.5, 0.5, 0.5]
 y_degraded = [1, 1, 1, 1, 1, 1]
 
 
+def test_color_to_rgb():
+    pytest.importorskip("matplotlib")
+    from sklearn.tree._export import _to_rgb
+
+    assert _to_rgb("red") == [255, 0, 0]
+    assert _to_rgb((0, 1.0, 0)) == [0, 255, 0]
+
+
 def test_rgb_to_hexstring():
     """
     Test that _rgb_to_hexstring correctly converts an RGB tuple to a hex color string.

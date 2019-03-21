@@ -28,6 +28,15 @@ from sklearn.utils._param_validation import (
 from sklearn.utils.validation import check_array, check_is_fitted
 
 
+def _to_rgb(color):
+    """Convert any valid maptlotlib color to rgb in range [0, 255]"""
+    try:
+        from matplotlib.colors import to_rgb
+    except ImportError:
+        raise ImportError("matplotlib is needed if you want to provide your own colors")
+    return [int(channel * 255) for channel in to_rgb(color)]
+
+
 def _rgb_to_hexstring(rgb):
     """Convert 8bit integer rgb color to html hexstring"""
     return "#%02x%02x%02x" % tuple(rgb)
@@ -98,6 +107,7 @@ SENTINEL = Sentinel()
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "ax": "no_validation",  # delegate validation to matplotlib
         "fontsize": [Interval(Integral, 0, None, closed="left"), None],
+        "fill_colors": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -116,6 +126,7 @@ def plot_tree(
     precision=3,
     ax=None,
     fontsize=None,
+    fill_colors=None,
 ):
     """Plot a decision tree.
 
@@ -183,6 +194,10 @@ def plot_tree(
     fontsize : int, default=None
         Size of text font. If None, determined automatically to fit figure.
 
+    fill_colors: list, optional (default=None)
+        A list length ``decision_tree.n_classes[0] to be used
+        as colors to fill the tree nodes
+
     Returns
     -------
     annotations : list of artists
@@ -216,6 +231,7 @@ def plot_tree(
         rounded=rounded,
         precision=precision,
         fontsize=fontsize,
+        fill_colors=fill_colors,
     )
     return exporter.export(decision_tree, ax=ax)
 
@@ -234,6 +250,7 @@ class _BaseTreeExporter:
         rounded=False,
         precision=3,
         fontsize=None,
+        fill_colors=None,
     ):
         self.max_depth = max_depth
         self.feature_names = feature_names
@@ -246,6 +263,8 @@ class _BaseTreeExporter:
         self.rounded = rounded
         self.precision = precision
         self.fontsize = fontsize
+        self.colors = {"bounds": None}
+        self.fill_colors = fill_colors
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -272,7 +291,13 @@ class _BaseTreeExporter:
         # Fetch appropriate color for node
         if "rgb" not in self.colors:
             # Initialize colors and bounds if required
-            self.colors["rgb"] = _color_brew(tree.n_classes[0])
+            if self.fill_colors is not None:
+                if len(self.fill_colors) != tree.n_classes[0]:
+                    raise ValueError("len(fill_colors) must be tree.n_classes[0]")
+                self.colors["rgb"] = [_to_rgb(c) for c in self.fill_colors]
+            else:
+                self.colors["rgb"] = _color_brew(tree.n_classes[0])
+
             if tree.n_outputs != 1:
                 # Find max and min impurities for multi-output
                 # The next line uses -max(impurity) instead of min(-impurity)
@@ -434,6 +459,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
         special_characters=False,
         precision=3,
         fontname="helvetica",
+        fill_colors=None,
     ):
         super().__init__(
             max_depth=max_depth,
@@ -446,6 +472,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
             proportion=proportion,
             rounded=rounded,
             precision=precision,
+            fill_colors=fill_colors,
         )
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
@@ -608,6 +635,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         rounded=False,
         precision=3,
         fontsize=None,
+        fill_colors=None,
     ):
         super().__init__(
             max_depth=max_depth,
@@ -620,6 +648,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             proportion=proportion,
             rounded=rounded,
             precision=precision,
+            fill_colors=fill_colors,
         )
         self.fontsize = fontsize
 
@@ -789,6 +818,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         "special_characters": ["boolean"],
         "precision": [Interval(Integral, 0, None, closed="left"), None],
         "fontname": [str],
+        "fill_colors": ["array-like", None],
     },
     prefer_skip_nested_validation=True,
 )
@@ -810,6 +840,7 @@ def export_graphviz(
     special_characters=False,
     precision=3,
     fontname="helvetica",
+    fill_colors=None,
 ):
     """Export a decision tree in DOT format.
 
@@ -890,6 +921,10 @@ def export_graphviz(
     fontname : str, default='helvetica'
         Name of font used to render text.
 
+    fill_colors: list, optional (default=None)
+        A list length ``decision_tree.n_classes[0] to be used
+        as colors to fill the tree nodes
+
     Returns
     -------
     dot_data : str
@@ -949,6 +984,7 @@ def export_graphviz(
             special_characters=special_characters,
             precision=precision,
             fontname=fontname,
+            fill_colors=fill_colors,
         )
         exporter.export(decision_tree)
 
