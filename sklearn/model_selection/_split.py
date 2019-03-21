@@ -2130,8 +2130,7 @@ def train_test_split(*arrays, **options):
     arrays = indexable(*arrays)
 
     n_samples = _num_samples(arrays[0])
-    n_train, n_test = _validate_shuffle_split(n_samples, test_size,
-                                              train_size,
+    n_train, n_test = _validate_shuffle_split(n_samples, test_size, train_size,
                                               default_test_size=0.25)
 
     if shuffle is False:
