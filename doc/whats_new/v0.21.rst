@@ -71,6 +71,11 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.cluster`
 ......................
 
+- |API| Deprecate ``n_components_`` attribute of :class:`AgglomerativeClustering`
+  and :class:`FeatureAgglomeration`. The ``n_components_`` attribute can be
+  accessed using the ``n_connected_components_`` attribute.
+  :issue:`13427` by `Stephane Couvreur`_.
+
 - |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
