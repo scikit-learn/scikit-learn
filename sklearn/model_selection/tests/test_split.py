@@ -1050,6 +1050,19 @@ def test_train_test_split_invalid_sizes2(train_size, test_size):
         train_test_split(range(10), train_size=train_size, test_size=test_size)
 
 
+@pytest.mark.parametrize("train_size, exp_train, exp_test",
+                         [(None, 7, 3),
+                          (8, 8, 2),
+                          (0.8, 8, 2)])
+def test_train_test_split_default_test_size(train_size, exp_train, exp_test):
+    # Check that the default value has the expected behavior, i.e. complement
+    # train_size unless both are specified.
+    X_train, X_test = train_test_split(X, train_size=train_size)
+
+    assert len(X_train) == exp_train
+    assert len(X_test) == exp_test
+
+
 def test_train_test_split():
     X = np.arange(100).reshape((10, 10))
     X_s = coo_matrix(X)
