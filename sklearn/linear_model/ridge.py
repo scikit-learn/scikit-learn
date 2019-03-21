@@ -374,13 +374,10 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         if return_intercept:
             # only sag supports fitting intercept directly
             solver = "sag"
-        elif has_sw:
-            # this should be changed since all solvers support sample_weights
+        elif not sparse.issparse(X):
             solver = "cholesky"
-        elif sparse.issparse(X):
-            solver = "sparse_cg"
         else:
-            solver = "cholesky"
+            solver = "sparse_cg"
 
     if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr', 'sag', 'saga'):
         raise ValueError("Known solvers are 'sparse_cg', 'cholesky', 'svd'"
