@@ -63,7 +63,7 @@ installation from the command line.
 	pip3 install -U scikit-learn
 
 The -U forces in installing the latest packages.But while doing so it might break other dependencies.
-Hence in Ubuntu its advised that it is done in a virtual environment 
+Hence in Ubuntu its advised that it is done in a virtual environment. 
 
 For installation instructions for more distributions see
 :ref:`other distributions <install_by_distribution>`.
