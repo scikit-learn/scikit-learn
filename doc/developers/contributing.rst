@@ -276,7 +276,7 @@ rules before submitting a pull request:
 
 * Follow the `coding-guidelines`_ (see below). To make sure that
   your PR does not add PEP8 violations you can run
-  `./build_tools/circle/flake8_diff.sh` or `make flake8-diff` on a
+  `./build_tools/flake8_diff.sh` or `make flake8-diff` on a
   Unix-like system.
 
 * When applicable, use the validation tools and scripts in the

@@ -1,9 +1,14 @@
 # Adapted from https://github.com/pandas-dev/pandas/blob/master/azure-pipelines.yml
 jobs:
+- template: build_tools/azure/lint.yml
+  parameters:
+    name: lint
+
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux
     vmImage: ubuntu-16.04
+    dependsOn: lint
     matrix:
       # Linux environment to test that scikit-learn can be built against
       # versions of numpy, scipy with ATLAS that comes with Ubuntu Xenial 16.04
@@ -47,6 +52,7 @@ jobs:
   parameters:
     name: macOS
     vmImage: xcode9-macos10.13
+    dependsOn: lint
     matrix:
       pylatest_conda:
         DISTRIB: 'conda'
@@ -63,6 +69,7 @@ jobs:
   parameters:
     name: Windows
     vmImage: vs2017-win2016
+    dependsOn: lint
     matrix:
       py37_64:
         PYTHON_VERSION: '3.7'

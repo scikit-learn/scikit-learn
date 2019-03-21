@@ -1,0 +1,20 @@
+parameters:
+  name: ''
+
+jobs:
+- job: ${{ parameters.name }}
+  displayName: Linting
+  pool:
+    vmImage: ubuntu-16.04
+  steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+        addToPath: true
+      displayName: 'Add Python to Path'
+    - script: |
+        pip install flake8
+      displayName: 'Installl flake8'
+    - script: |
+        build_tools/flake8_diff.sh
+      displayName: 'Run linting'
