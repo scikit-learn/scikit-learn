@@ -8,7 +8,6 @@ Several basic tests for hierarchical clustering procedures
 from tempfile import mkdtemp
 import shutil
 import pytest
-import warnings
 from functools import partial
 
 import numpy as np
@@ -608,7 +607,7 @@ def test_n_components_deprecation():
     X = np.array([[1, 2], [1, 4], [1, 0], [4, 2]])
     agc = AgglomerativeClustering().fit(X)
 
-    with pytest.warns(DeprecationWarning, match='parameter changed'):
-        warnings.warn("No warning", DeprecationWarning)
+    match = "`n_components` parameter changed to `n_connected_components`"
+    with pytest.warns(DeprecationWarning, match=match):
         n = agc.n_components_
     assert n == agc.n_connected_components_
