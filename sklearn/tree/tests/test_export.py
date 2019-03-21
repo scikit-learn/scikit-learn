@@ -26,6 +26,11 @@ w = [1, 1, 1, .5, .5, .5]
 y_degraded = [1, 1, 1, 1, 1, 1]
 
 
+def test_rgb_to_hexstring():
+    pytest.importorskip('matplotlib')
+    from sklearn.tree.export import _rgb_to_hexstring
+    assert _rgb_to_hexstring((0, 255, 0)) == '#00ff00'
+
 def test_graphviz_toy():
     # Check correctness of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3,
