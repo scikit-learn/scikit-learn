@@ -425,6 +425,15 @@ def test_auc():
     x = [0, 0.5, 1]
     y = [0, 0.5, 1]
     assert_array_almost_equal(auc(x, y), 0.5)
+    x = [0, 1, 0]
+    y = [0, 0.5, 1]
+    assert_array_almost_equal(auc(x, y), -0.5)
+    x = [0, 1, 0]
+    y = [1, 0.5, 0]
+    assert_array_almost_equal(auc(x, y), 0.5)
+    x = [2, 1, 3, 4]
+    y = [5, 6, 7, 8]
+    assert_array_almost_equal(auc(x, y), 15.0)
 
 
 @pytest.mark.filterwarnings("ignore: The 'reorder' parameter")  # 0.22
@@ -453,19 +462,12 @@ def test_auc_errors():
     # Too few x values
     assert_raises(ValueError, auc, [0.0], [0.1])
 
-    # x is not in order
-    x = [2, 1, 3, 4]
-    y = [5, 6, 7, 8]
-    error_message = ("x is neither increasing nor decreasing : "
-                     "{}".format(np.array(x)))
-    assert_raise_message(ValueError, error_message, auc, x, y)
-
 
 def test_deprecated_auc_reorder():
     depr_message = ("The 'reorder' parameter has been deprecated in version "
                     "0.20 and will be removed in 0.22. It is recommended not "
-                    "to set 'reorder' and ensure that x is monotonic "
-                    "increasing or monotonic decreasing.")
+                    "to set 'reorder' and rest assured that x direction "
+                    "is internally taken into consideration.")
     assert_warns_message(DeprecationWarning, depr_message, auc,
                          [1, 2], [2, 3], reorder=True)
 

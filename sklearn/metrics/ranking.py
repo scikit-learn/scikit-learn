@@ -98,26 +98,43 @@ def auc(x, y, reorder='deprecated'):
     if reorder != 'deprecated':
         warnings.warn("The 'reorder' parameter has been deprecated in "
                       "version 0.20 and will be removed in 0.22. It is "
-                      "recommended not to set 'reorder' and ensure that x "
-                      "is monotonic increasing or monotonic decreasing.",
+                      "recommended not to set 'reorder' and rest assured "
+                      "that x direction is internally taken into "
+                      "consideration.",
                       DeprecationWarning)
 
-    direction = 1
     if reorder is True:
         # reorder the data points according to the x axis and using y to
         # break ties
         order = np.lexsort((y, x))
         x, y = x[order], y[order]
-    else:
-        dx = np.diff(x)
-        if np.any(dx < 0):
-            if np.all(dx <= 0):
-                direction = -1
-            else:
-                raise ValueError("x is neither increasing nor decreasing "
-                                 ": {}.".format(x))
 
-    area = direction * np.trapz(y, x)
+    # Adaptive direction detection
+    direction = (np.diff(x) > 0).astype(np.int)
+    if np.all(direction == 0):
+        x, y = x[::-1], y[::-1]
+
+    # Estimate the segments boundaries of each direction
+    boundaries, = np.nonzero(np.diff(direction) != 0)
+
+    # Split the data into either monotonic increasing or monotonic decreasing
+    # then compute the area for each segment
+    area = 0.0
+    for i, (seg_dir, x_seg, y_seg) in enumerate(zip(
+        map(lambda dirs: dirs[0], np.hsplit(direction, 1 + boundaries)),
+        np.hsplit(np.array(x), 2 + boundaries),
+        np.hsplit(np.array(y), 2 + boundaries)
+    )):
+        if i > 0:
+            # Start current segment with the last element of previous segment
+            x_seg = np.hstack((x[1 + boundaries[i - 1]], x_seg))
+            y_seg = np.hstack((y[1 + boundaries[i - 1]], y_seg))
+
+        if seg_dir > 0:
+            area += np.trapz(y_seg, x_seg)
+        else:
+            area -= np.trapz(y_seg[::-1], x_seg[::-1])
+
     if isinstance(area, np.memmap):
         # Reductions such as .sum used internally in np.trapz do not return a
         # scalar by default for numpy.memmap instances contrary to
