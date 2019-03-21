@@ -570,12 +570,31 @@ def test_shuffle_split():
                           (0.8, 8, 2)])
 def test_shuffle_split_default_test_size(split_class, train_size, exp_train,
                                          exp_test):
-    # Check that the default value has the expected behavior, i.e. complement
-    # train_size unless both are specified.
+    # Check that the default value has the expected behavior, i.e. 0.1 if both
+    # unspecified or complement train_size unless both are specified.
     X = np.ones(10)
     y = np.ones(10)
 
     X_train, X_test = next(split_class(train_size=train_size).split(X, y))
+
+    assert len(X_train) == exp_train
+    assert len(X_test) == exp_test
+
+
+@pytest.mark.parametrize("train_size, exp_train, exp_test",
+                         [(None, 8, 2),
+                          (8, 8, 2),
+                          (0.8, 8, 2)])
+def test_group_shuffle_split_default_test_size(train_size, exp_train,
+                                               exp_test):
+    # Check that the default value has the expected behavior, i.e. 0.2 if both
+    # unspecified or complement train_size unless both are specified.
+    X = np.ones(10)
+    y = np.ones(10)
+    groups = range(10)
+
+    X_train, X_test = next(GroupShuffleSplit(train_size=train_size)
+                           .split(X, y, groups))
 
     assert len(X_train) == exp_train
     assert len(X_test) == exp_test
