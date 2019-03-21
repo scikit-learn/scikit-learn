@@ -721,6 +721,14 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_connected_components_ : int
         The estimated number of connected components in the graph.
 
+    n_components_ : int
+        The estimated number of connected components in the graph.
+
+        .. deprecated:: 0.21
+            The ``n_components_`` attribute was deprecated in 0.21 and
+            will be removed in 0.23. Use ``n_connected_components_``
+            instead.
+
     children_ : array-like, shape (n_samples-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
