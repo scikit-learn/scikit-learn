@@ -863,10 +863,10 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
                               )
     if return_intercept:
         coef, intercept = target
-        assert_allclose(coef, true_coefs, atol=0.1)
-        assert_allclose(intercept, 0, atol=0.1)
+        assert_allclose(coef, true_coefs, atol=0.03)
+        assert_allclose(intercept, 0, atol=0.03)
     else:
-        assert_allclose(target, true_coefs, atol=0.1)
+        assert_allclose(target, true_coefs, atol=0.03)
 
 
 def test_ridge_regression_warns_with_return_intercept():
