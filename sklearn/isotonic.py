@@ -259,7 +259,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             sample_weight = np.ones(len(y), dtype=X.dtype)
 
         order = np.lexsort((y, X))
-        X, y, sample_weight = [array[order] for array in [X, y, sample_weight]]
+
+        # make sure everything is set to the same dtype to avoid errors in _make_unique()
+        X_dtype = X.dtype
+        X, y, sample_weight = [array[order].astype(X_dtype, copy=False)
+                               for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(
             X, y, sample_weight)
 
