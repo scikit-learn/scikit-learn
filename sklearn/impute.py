@@ -1057,16 +1057,15 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         `missing_values` will be indicated (True in the output array), the
         other values will be marked as False.
 
-    features : str, optional
+    features : {"missing-only", "all", "not-constant"}, optional
         Whether the imputer mask should represent all or a subset of
         features.
 
         - If "missing-only" (default), the imputer mask will only represent
           features containing missing values during fit time.
-        - If "not-constant", the imputer mask will only represent features
-          containing missing values, but not containing only missing values,
-          during fit time.
         - If "all", the imputer mask will represent all features.
+        - If "not-constant", the imputer mask will represent features
+          containing missing values but not containing only missing values.
 
     sparse : boolean or "auto", optional
         Whether the imputer mask format should be sparse or dense.
@@ -1147,13 +1146,14 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             imputer_mask = sparse_constructor(
                 (mask, X.indices.copy(), X.indptr.copy()),
                 shape=X.shape, dtype=bool)
+            imputer_mask.eliminate_zeros()
 
-            missing_values_mask = imputer_mask.copy()
-            missing_values_mask.eliminate_zeros()
-            features_with_missing = (
-                np.flatnonzero(np.diff(missing_values_mask.indptr))
-                if missing_values_mask.format == 'csc'
-                else np.unique(missing_values_mask.indices))
+            if self.features in ('missing-only', 'not-constant'):
+                if imputer_mask.format == 'csc':
+                    n_missing = np.diff(imputer_mask.indptr)
+                else:
+                    n_missing = np.bincount(imputer_mask.indices,
+                                            minlength=X.shape[1])
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()
@@ -1161,17 +1161,22 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 imputer_mask = imputer_mask.tocsc()
         else:
             imputer_mask = _get_mask(X, self.missing_values)
-            n_missing = imputer_mask.sum(axis=0)
-            features_with_missing = np.flatnonzero(n_missing)
 
-            if self.features == 'not-constant':
-                features_with_missing = np.intersect1d(
-                    features_with_missing, np.flatnonzero(n_missing - X.shape[0]))
+            if self.features in ('missing-only', 'not-constant'):
+                n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is True:
                 imputer_mask = sparse.csc_matrix(imputer_mask)
 
-        return imputer_mask, features_with_missing
+        if self.features == 'all':
+            features_indices = np.arange(X.shape[1])
+        else:
+            features_indices = np.flatnonzero(n_missing)
+            if self.features == 'not-constant':
+                features_indices = np.intersect1d(
+                    features_indices, np.flatnonzero(n_missing - X.shape[0]))
+
+        return imputer_mask, features_indices
 
     def _validate_input(self, X):
         if not is_scalar_nan(self.missing_values):
@@ -1217,7 +1222,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         if self.features not in ('missing-only', 'all', 'not-constant'):
             raise ValueError("'features' has to be either 'missing-only', "
-                             "'not-constant' or 'all'. Got {} instead."
+                             "'all' or 'not-constant'. Got {} instead."
                              .format(self.features))
 
         if not ((isinstance(self.sparse, str) and
@@ -1225,9 +1230,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
-        self.features_ = (self._get_missing_features_info(X)[1]
-                          if self.features in ('missing-only', 'not-constant')
-                          else np.arange(self._n_features))
+        self.features_ = self._get_missing_features_info(X)[1]
 
         return self
 
@@ -1262,9 +1265,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                                  "in transform but have no missing values "
                                  "in fit.".format(features_diff_fit_trans))
 
-            if (self.features_.size > 0 and
-                    self.features_.size < self._n_features):
-                imputer_mask = imputer_mask[:, self.features_]
+        imputer_mask = imputer_mask[:, self.features_]
 
         return imputer_mask
 

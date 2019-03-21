@@ -919,7 +919,7 @@ def test_iterative_imputer_early_stopping():
       'have missing values in transform but have no missing values in fit'),
      (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
       {'features': 'random', 'sparse': 'auto'},
-      "'features' has to be either 'missing-only' or 'all'"),
+      "'features' has to be either 'missing-only', 'all' or 'not-constant'"),
      (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
       {'features': 'all', 'sparse': 'random'},
       "'sparse' has to be a boolean or 'auto'"),
@@ -1121,8 +1121,9 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
         imputer.fit_transform(X)
 
 
-@pytest.mark.parametrize("array_constr", [np.array, sparse.csr_matrix],
-                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("array_constr",
+                         [np.array, sparse.csr_matrix, sparse.csc_matrix],
+                         ids=["dense", "sparse_csr", "sparse_csc"])
 def test_missing_indicator_drop_full_missing(array_constr):
     # Check that missing indicator with features="not-constant" drops columns
     # with no missing values as well as columns full of missing values.
@@ -1135,4 +1136,4 @@ def test_missing_indicator_drop_full_missing(array_constr):
     mi = MissingIndicator(features="not-constant")
     Xt = mi.fit_transform(X)
 
-    assert_allclose(Xt, expected_Xt)
+    assert_allclose_dense_sparse(Xt, expected_Xt)
