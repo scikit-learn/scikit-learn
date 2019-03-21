@@ -1,11 +1,10 @@
 import numpy as np
-import pytest
 import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal
 
 from sklearn.utils.fixes import comb
 from sklearn.utils.random import random_choice_csc, sample_without_replacement
-from sklearn.utils._random import _cast_py, _our_rand_r_py
+from sklearn.utils._random import _our_rand_r_py
 from sklearn.utils.testing import (assert_equal, assert_raises)
 
 
@@ -181,8 +180,3 @@ def test_random_choice_csc_errors():
 def test_our_rand_r():
     assert 131541053 == _our_rand_r_py(1273642419)
     assert 270369 == _our_rand_r_py(0)
-
-
-@pytest.mark.xfail
-def test_cython_cast():
-    assert (2147483648, 2147483648, 2147483648) == _cast_py()

@@ -318,12 +318,23 @@ cpdef sample_without_replacement(np.int_t n_population,
 # rand_r replacement using a 32bit XorShift generator
 # See http://www.jstatsoft.org/v08/i14/paper for details
 cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
+    """Generate a pseudo-random np.uint32 from a np.uint32 seed"""
     # seed shouldn't ever be 0.
     if (seed[0] == 0): seed[0] = DEFAULT_SEED
     seed[0] ^= <UINT32_t>(seed[0] << 13)
     seed[0] ^= <UINT32_t>(seed[0] >> 17)
     seed[0] ^= <UINT32_t>(seed[0] << 5)
 
+    # Note: we must be careful with the final line cast to np.uint32 so that
+    # the function behaves consistently across platforms.
+    #
+    # The following cast might yield different results on different platforms:
+    # wrong_cast = <UINT32_t> RAND_R_MAX + 1
+    #
+    # We can use:
+    # good_cast = <UINT32_t>(RAND_R_MAX + 1)
+    # or:
+    # cdef np.uint32_t another_good_cast = <UINT32_t>RAND_R_MAX + 1
     return seed[0] % <UINT32_t>(RAND_R_MAX + 1)
 
 
@@ -331,12 +342,3 @@ def _our_rand_r_py(seed):
     """Python utils to test the our_rand_r function"""
     cdef UINT32_t my_seed = seed
     return our_rand_r(&my_seed)
-
-
-def _cast_py():
-    """Python utils to showcase the platform specific behavior of casting in
-    the our_rand_r function"""
-    good_cast = <UINT32_t>(RAND_R_MAX + 1)
-    cdef np.uint32_t another_good_cast = <UINT32_t>RAND_R_MAX + 1
-    wrong_cast = <UINT32_t> RAND_R_MAX + 1
-    return good_cast, another_good_cast, wrong_cast
