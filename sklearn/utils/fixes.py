@@ -12,18 +12,10 @@ at which the fixe is no longer needed.
 
 from distutils.version import LooseVersion
 
-from collections.abc import Sequence as _Sequence  # noqa
-from collections.abc import Iterable as _Iterable  # noqa
-from collections.abc import Mapping as _Mapping  # noqa
-from collections.abc import Sized as _Sized  # noqa
-
 import numpy as np
 import scipy.sparse as sp
 import scipy
-from scipy.special import boxcox  # noqa
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
-from numpy import nanpercentile  # noqa
-from numpy import nanmedian  # noqa
 
 
 def _parse_version(version_string):
@@ -36,10 +28,6 @@ def _parse_version(version_string):
             version.append(x)
     return tuple(version)
 
-
-# < numpy 1.8.0
-euler_gamma = getattr(np, 'euler_gamma',
-                      0.577215664901532860606512090082402431)
 
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
@@ -195,6 +183,18 @@ if np_version < (1, 13):
 else:
     def _object_dtype_isnan(X):
         return X != X
+
+
+# TODO: replace by copy=False, when only scipy > 1.1 is supported.
+def _astype_copy_false(X):
+    """Returns the copy=False parameter for
+    {ndarray, csr_matrix, csc_matrix}.astype when possible,
+    otherwise don't specify
+    """
+    if sp_version >= (1, 1) or not sp.issparse(X):
+        return {'copy': False}
+    else:
+        return {}
 
 
 def _joblib_parallel_args(**kwargs):

@@ -9,8 +9,6 @@ functions to validate the model.
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function
-from __future__ import division
 
 import warnings
 import numbers
@@ -26,7 +24,6 @@ from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..utils._joblib import Parallel, delayed
 from ..utils._joblib import logger
-from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
@@ -74,7 +71,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None, the estimator's default scorer (if available) is used.
+        If None, the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -284,7 +281,13 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv='warn',
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+        ``scorer(estimator, X, y)`` which should return only
+        a single value.
+
+        Similar to :func:`cross_validate`
+        but only a single metric is permitted.
+
+        If None, the estimator's default scorer (if available) is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -490,8 +493,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, _index_param_value(X, v, train))
-                      for k, v in fit_params.items()])
+    fit_params = {k: _index_param_value(X, v, train)
+                  for k, v in fit_params.items()}
 
     train_scores = {}
     if parameters is not None:
@@ -828,8 +831,8 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     """
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, _index_param_value(X, v, train))
-                      for k, v in fit_params.items()])
+    fit_params = {k: _index_param_value(X, v, train)
+                  for k, v in fit_params.items()}
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, _ = _safe_split(estimator, X, y, test, train)
@@ -879,10 +882,11 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
             float_min = np.finfo(predictions.dtype).min
             default_values = {'decision_function': float_min,
                               'predict_log_proba': float_min,
-                              'predict_proba': 0}
+                              'predict_proba': 0.0}
             predictions_for_all_classes = np.full((_num_samples(predictions),
                                                    n_classes),
-                                                  default_values[method])
+                                                  default_values[method],
+                                                  predictions.dtype)
             predictions_for_all_classes[:, estimator.classes_] = predictions
             predictions = predictions_for_all_classes
     return predictions, test
@@ -955,7 +959,7 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
-        If None the estimator's default scorer, if available, is used.
+        If None the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -1466,7 +1470,5 @@ def _aggregate_score_dicts(scores):
     {'a': array([1, 2, 3, 10]),
      'b': array([10, 2, 3, 10])}
     """
-    out = {}
-    for key in scores[0]:
-        out[key] = np.asarray([score[key] for score in scores])
-    return out
+    return {key: np.asarray([score[key] for score in scores])
+            for key in scores[0]}

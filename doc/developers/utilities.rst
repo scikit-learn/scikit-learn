@@ -173,12 +173,6 @@ Graph Routines
   connectivity matrix is a ``scipy.sparse.csr_matrix``.
 
 
-Benchmarking
-------------
-
-- :func:`bench.total_seconds`:  Used in ``benchmarks/bench_glm.py``.
-
-
 Testing Functions
 =================
 

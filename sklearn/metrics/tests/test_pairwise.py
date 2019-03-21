@@ -22,8 +22,6 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
 
-from sklearn.externals.six import iteritems
-
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
@@ -205,7 +203,7 @@ def check_pairwise_parallel(func, metric, kwds):
         assert_array_almost_equal(S, S2)
 
 
-_wminkowski_kwds = {'w': np.arange(1, 5).astype('double'), 'p': 1}
+_wminkowski_kwds = {'w': np.arange(1, 5).astype('double', copy=False), 'p': 1}
 
 
 def callable_rbf_kernel(x, y, **kwds):
@@ -301,7 +299,7 @@ def test_pairwise_kernels_filter_param():
     assert_raises(TypeError, pairwise_kernels, X, Y, "rbf", **params)
 
 
-@pytest.mark.parametrize('metric, func', iteritems(PAIRED_DISTANCES))
+@pytest.mark.parametrize('metric, func', PAIRED_DISTANCES.items())
 def test_paired_distances(metric, func):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
@@ -907,7 +905,7 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
                                                 y_is_x):
     # check that pairwise_distances give the same result in sequential and
     # parallel, when metric has data-derived parameters.
-    with config_context(working_memory=0.1):  # to have more than 1 chunk
+    with config_context(working_memory=1):  # to have more than 1 chunk
         rng = np.random.RandomState(0)
         X = rng.random_sample((1000, 10))
 
