@@ -276,7 +276,10 @@ class BaseEstimator:
                 regex += r'[^\n]*\n'
                 right_lim = re.match(regex, repr_[::-1]).end()
 
-            repr_ = repr_[:left_lim] + '...' + repr_[-right_lim:]
+            ellipsis = '...'
+            if left_lim + len(ellipsis) < len(repr_) - right_lim:
+                # Only add ellipsis if it results in a shorter repr
+                repr_ = repr_[:left_lim] + '...' + repr_[-right_lim:]
 
         return repr_
 
