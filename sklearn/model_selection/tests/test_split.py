@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_no_warnings
@@ -1158,20 +1157,17 @@ def test_train_test_split_list_input():
         np.testing.assert_equal(y_test3, y_test2)
 
 
-@ignore_warnings
-def test_shufflesplit_errors():
-    # When the {test|train}_size is a float/invalid, error is raised at init
-    assert_raises(ValueError, ShuffleSplit, test_size=2.0)
-    assert_raises(ValueError, ShuffleSplit, test_size=1.0)
-    assert_raises(ValueError, ShuffleSplit, test_size=0.1, train_size=0.95)
-    assert_raises(ValueError, ShuffleSplit, train_size=1j)
-
-    # When the {test|train}_size is an int, validation is based on the input X
-    # and happens at split(...)
-    assert_raises(ValueError, next, ShuffleSplit(test_size=11).split(X))
-    assert_raises(ValueError, next, ShuffleSplit(test_size=10).split(X))
-    assert_raises(ValueError, next, ShuffleSplit(test_size=8,
-                                                 train_size=3).split(X))
+@pytest.mark.parametrize("test_size, train_size",
+                         [(2.0, None),
+                          (1.0, None),
+                          (0.1, 0.95),
+                          (None, 1j),
+                          (11, None),
+                          (10, None),
+                          (8, 3)])
+def test_shufflesplit_errors(test_size, train_size):
+    with pytest.raises(ValueError):
+        next(ShuffleSplit(test_size=test_size, train_size=train_size).split(X))
 
 
 def test_shufflesplit_reproducible():

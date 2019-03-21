@@ -1269,7 +1269,6 @@ class BaseShuffleSplit(metaclass=ABCMeta):
 
     def __init__(self, n_splits=10, test_size=None, train_size=None,
                  random_state=None):
-        _validate_shuffle_split_init(test_size, train_size)
         self.n_splits = n_splits
         self.test_size = test_size
         self.train_size = train_size
@@ -1758,40 +1757,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         """
         y = check_array(y, ensure_2d=False, dtype=None)
         return super().split(X, y, groups)
-
-
-def _validate_shuffle_split_init(test_size, train_size):
-    """Validation helper to check the test_size and train_size at init
-
-    NOTE This does not take into account the number of samples which is known
-    only at split
-    """
-    if test_size is not None:
-        if np.asarray(test_size).dtype.kind == 'f':
-            if test_size >= 1. or test_size <= 0:
-                raise ValueError(
-                    'test_size=%f should be in the (0, 1) range '
-                    'or be an integer' % test_size)
-        elif np.asarray(test_size).dtype.kind != 'i':
-            # int values are checked during split based on the input
-            raise ValueError("Invalid value for test_size: %r" % test_size)
-
-    if train_size is not None:
-        if np.asarray(train_size).dtype.kind == 'f':
-            if train_size >= 1. or train_size <= 0:
-                raise ValueError('train_size=%f should be in the (0, 1) range '
-                                 'or be an integer' % train_size)
-        elif np.asarray(train_size).dtype.kind != 'i':
-            # int values are checked during split based on the input
-            raise ValueError("Invalid value for train_size: %r" % train_size)
-
-    if (np.asarray(test_size).dtype.kind == 'f' and
-       np.asarray(train_size).dtype.kind == 'f' and
-       train_size + test_size > 1):
-        raise ValueError(
-            'The sum of test_size and train_size = {}, should be in the (0, 1)'
-            ' range. Reduce test_size and/or train_size.'
-            .format(train_size + test_size))
 
 
 def _validate_shuffle_split(n_samples, test_size, train_size,
