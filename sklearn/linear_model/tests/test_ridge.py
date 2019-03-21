@@ -7,6 +7,7 @@ import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
@@ -862,10 +863,10 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
                               )
     if return_intercept:
         coef, intercept = target
-        assert_array_almost_equal(coef, true_coefs, decimal=1)
-        assert_array_almost_equal(intercept, 0, decimal=1)
+        assert_allclose(coef, true_coefs, atol=0.1)
+        assert_allclose(intercept, 0, atol=0.1)
     else:
-        assert_array_almost_equal(target, true_coefs, decimal=1)
+        assert_allclose(target, true_coefs, atol=0.1)
 
 
 def test_ridge_regression_warns_with_return_intercept():
