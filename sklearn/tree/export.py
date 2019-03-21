@@ -26,6 +26,17 @@ from ._reingold_tilford import buchheim, Tree
 from . import DecisionTreeClassifier
 
 
+def _to_rgb(color):
+    '''Convert any valid maptlotlib color to rgb in range [0, 255]'''
+    try:
+        from matplotlib.colors import to_rgb
+    except ImportError:
+        raise ImportError(
+            'matplotlib is needed if you want to provide your own colors'
+        )
+    return [int(channel * 255) for channel in to_rgb(color)]
+
+
 def _rgb_to_hexstring(rgb):
     '''Convert 8bit integer rgb color to html hexstring'''
     return '#%02x%02x%02x' % tuple(rgb)
@@ -85,7 +96,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False,
               impurity=True, node_ids=False,
               proportion=False, rotate=False, rounded=False,
-              precision=3, ax=None, fontsize=None):
+              precision=3, ax=None, fontsize=None, fill_colors=None):
     """Plot a decision tree.
 
     The sample counts that are shown are weighted with any sample_weights that
@@ -155,6 +166,10 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     fontsize : int, optional (default=None)
         Size of text font. If None, determined automatically to fit figure.
 
+    fill_colors: list, optional (default=None)
+        A list length ``decision_tree.n_classes[0] to be used
+        as colors to fill the tree nodes
+
     Returns
     -------
     annotations : list of artists
@@ -179,7 +194,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         class_names=class_names, label=label, filled=filled,
         impurity=impurity, node_ids=node_ids,
         proportion=proportion, rotate=rotate, rounded=rounded,
-        precision=precision, fontsize=fontsize)
+        precision=precision, fontsize=fontsize, fill_colors=fill_colors)
     return exporter.export(decision_tree, ax=ax)
 
 
@@ -188,7 +203,7 @@ class _BaseTreeExporter(object):
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 precision=3, fontsize=None):
+                 precision=3, fontsize=None, fill_colors=None):
         self.max_depth = max_depth
         self.feature_names = feature_names
         self.class_names = class_names
@@ -201,6 +216,8 @@ class _BaseTreeExporter(object):
         self.rounded = rounded
         self.precision = precision
         self.fontsize = fontsize
+        self.colors = {'bounds': None}
+        self.fill_colors = fill_colors
 
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
@@ -229,7 +246,15 @@ class _BaseTreeExporter(object):
         # Fetch appropriate color for node
         if 'rgb' not in self.colors:
             # Initialize colors and bounds if required
-            self.colors['rgb'] = _color_brew(tree.n_classes[0])
+            if self.fill_colors is not None:
+                if len(self.fill_colors) != tree.n_classes[0]:
+                    raise ValueError(
+                        'len(fill_colors) must be tree.n_classes[0]'
+                    )
+                self.colors['rgb'] = [_to_rgb(c) for c in self.fill_colors]
+            else:
+                self.colors['rgb'] = _color_brew(tree.n_classes[0])
+
             if tree.n_outputs != 1:
                 # Find max and min impurities for multi-output
                 self.colors['bounds'] = (np.min(-tree.impurity),
@@ -360,7 +385,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
                  feature_names=None, class_names=None, label='all',
                  filled=False, leaves_parallel=False, impurity=True,
                  node_ids=False, proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3):
+                 special_characters=False, precision=3, fill_colors=None):
 
         super().__init__(
             max_depth=max_depth, feature_names=feature_names,
@@ -368,7 +393,7 @@ class _DOTTreeExporter(_BaseTreeExporter):
             impurity=impurity,
             node_ids=node_ids, proportion=proportion, rotate=rotate,
             rounded=rounded,
-            precision=precision)
+            precision=precision, fill_colors=fill_colors)
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
         self.special_characters = special_characters
@@ -391,8 +416,6 @@ class _DOTTreeExporter(_BaseTreeExporter):
 
         # The depth of each node for plotting with 'leaf' option
         self.ranks = {'leaves': []}
-        # The colors to render each node with
-        self.colors = {'bounds': None}
 
     def export(self, decision_tree):
         # Check length of feature_names before getting into the tree node
@@ -518,13 +541,14 @@ class _MPLTreeExporter(_BaseTreeExporter):
                  class_names=None, label='all', filled=False,
                  impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 precision=3, fontsize=None):
+                 precision=3, fontsize=None, fill_colors=None):
 
         super().__init__(
             max_depth=max_depth, feature_names=feature_names,
             class_names=class_names, label=label, filled=filled,
             impurity=impurity, node_ids=node_ids, proportion=proportion,
-            rotate=rotate, rounded=rounded, precision=precision)
+            rotate=rotate, rounded=rounded, precision=precision,
+            fill_colors=fill_colors)
         self.fontsize = fontsize
 
         # validate
@@ -538,8 +562,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         # The depth of each node for plotting with 'leaf' option
         self.ranks = {'leaves': []}
-        # The colors to render each node with
-        self.colors = {'bounds': None}
 
         self.characters = ['#', '[', ']', '<=', '\n', '', '']
 
@@ -660,7 +682,8 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
                     node_ids=False, proportion=False, rotate=False,
-                    rounded=False, special_characters=False, precision=3):
+                    rounded=False, special_characters=False, precision=3,
+                    fill_colors=None):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -737,6 +760,10 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
         Number of digits of precision for floating point in the values of
         impurity, threshold and value attributes of each node.
 
+    fill_colors: list, optional (default=None)
+        A list length ``decision_tree.n_classes[0] to be used
+        as colors to fill the tree nodes
+
     Returns
     -------
     dot_data : string
@@ -776,7 +803,7 @@ def export_graphviz(decision_tree, out_file=None, max_depth=None,
             filled=filled, leaves_parallel=leaves_parallel, impurity=impurity,
             node_ids=node_ids, proportion=proportion, rotate=rotate,
             rounded=rounded, special_characters=special_characters,
-            precision=precision)
+            precision=precision, fill_colors=fill_colors)
         exporter.export(decision_tree)
 
         if return_string:
