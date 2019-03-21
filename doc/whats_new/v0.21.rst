@@ -210,6 +210,11 @@ Support for Python 3.4 and below has been officially dropped.
   raising an exception if input is sparse add `missing_values` property
   is set to 0. :issue:`13240` by :user:`Bartosz Telenczuk <btel>`.
 
+- |ENH| Add another possible value for the `features` parameter of
+  :class:`MissingIndicator` to drop features with no missing values as well as
+  features with only missing values. :issue:`13491` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
