@@ -91,7 +91,7 @@ Support for Python 3.4 and below has been officially dropped.
 
   :issue:`13427` by :user:`Stephane Couvreur <scouvreur>`.
 - |Fix| Fixed a bug in :class:`KMeans` where empty clusters weren't correctly
-  relocated when using sample weights. :issue:``
+  relocated when using sample weights. :issue:`13486`
   by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.datasets`
