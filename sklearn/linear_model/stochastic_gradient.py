@@ -653,7 +653,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         # sharing the estimator random state between threads which could lead
         # to non-deterministic behavior
         random_state = check_random_state(self.random_state)
-        seeds = random_state.randint(MAX_INT, size=(len(self.classes_)))
+        seeds = random_state.randint(MAX_INT, size=len(self.classes_))
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                           **_joblib_parallel_args(require="sharedmem"))(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
