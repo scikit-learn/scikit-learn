@@ -562,6 +562,25 @@ def test_shuffle_split():
         assert_array_equal(t3[1], t4[1])
 
 
+@pytest.mark.parametrize("split_class", [ShuffleSplit,
+                                         StratifiedShuffleSplit])
+@pytest.mark.parametrize("train_size, exp_train, exp_test",
+                         [(None, 9, 1),
+                          (8, 8, 2),
+                          (0.8, 8, 2)])
+def test_shuffle_split_default_test_size(split_class, train_size, exp_train,
+                                         exp_test):
+    # Check that the default value has the expected behavior, i.e. complement
+    # train_size unless both are specified.
+    X = np.ones(10)
+    y = np.ones(10)
+
+    X_train, X_test = next(split_class(train_size=train_size).split(X, y))
+
+    assert len(X_train) == exp_train
+    assert len(X_test) == exp_test
+
+
 @ignore_warnings
 def test_stratified_shuffle_split_init():
     X = np.arange(7)
