@@ -88,7 +88,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| The ``n_components_`` attribute in :class:`cluster.AgglomerativeClustering`
   and :class:`cluster.FeatureAgglomeration` has been renamed to
   ``n_connected_components_``.
+
   :issue:`13427` by :user:`Stephane Couvreur <scouvreur>`.
+- |Fix| Fixed a bug in :class:`KMeans` where empty clusters weren't correctly
+  relocated when using sample weights. :issue:``
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.datasets`
 .......................
