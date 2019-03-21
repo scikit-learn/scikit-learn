@@ -1119,3 +1119,20 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
 
     with pytest.raises(ValueError, match=err_msg):
         imputer.fit_transform(X)
+
+
+@pytest.mark.parametrize("array_constr", [np.array, sparse.csr_matrix],
+                         ids=["dense", "sparse"])
+def test_missing_indicator_drop_full_missing(array_constr):
+    # Check that missing indicator with features="not-constant" drops columns
+    # with no missing values as well as columns full of missing values.
+    X = array_constr([[0, np.nan, 0],
+                      [0, np.nan, np.nan]])
+
+    expected_Xt = array_constr([[False],
+                                [True]])
+
+    mi = MissingIndicator(features="not-constant")
+    Xt = mi.fit_transform(X)
+
+    assert_allclose(Xt, expected_Xt)
