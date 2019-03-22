@@ -22,8 +22,6 @@ cpdef sample_without_replacement(np.int_t n_population,
                                  method=*,
                                  random_state=*)
 
-cdef UINT32_t our_rand_r(UINT32_t* seed) nogil
-
 # rand_r replacement using a 32bit XorShift generator
 # See http://www.jstatsoft.org/v08/i14/paper for details
 cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
