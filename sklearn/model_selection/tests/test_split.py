@@ -1510,6 +1510,13 @@ def test_train_test_split_empty_trainset():
             'the resulting train set will be empty'):
         train_test_split(X, test_size=.99)
 
+    X = [[1], [1], [1]]  # 3 samples, ask for more than 2 thirds
+    with pytest.raises(
+            ValueError,
+            match='With n_samples=3, test_size=0.67 and train_size=None, '
+            'the resulting train set will be empty'):
+        train_test_split(X, test_size=.67)
+
 
 def test_leave_one_out_empty_trainset():
     # LeaveOneGroup out expect at least 2 groups so no need to check
