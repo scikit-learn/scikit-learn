@@ -1482,19 +1482,23 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 raw_predictions = np.zeros(shape=(X.shape[0], self.loss_.K),
                                            dtype=np.float64)
             else:
-                try:
-                    self.init_.fit(X, y, sample_weight=sample_weight)
-                except (TypeError, ValueError):
-                    if sample_weight_is_none:
-                        self.init_.fit(X, y)
-                    else:
-                        raise ValueError(
-                            "The initial estimator {} does not support sample "
-                            "weights.".format(self.init_.__class__.__name__))
+                if sample_weight_is_none:
+                    self.init_.fit(X, y)
+                else:
+                    msg = ("The initial estimator {} does not support sample "
+                           "weights.".format(self.init_.__class__.__name__))
+                    try:
+                        self.init_.fit(X, y, sample_weight=sample_weight)
+                    except TypeError:  # regular estimator without SW support
+                        raise ValueError(msg)
+                    except ValueError as e:
+                        if 'not enough values to unpack':  # pipeline
+                            raise ValueError(msg)
+                        else:  # regular estimator whose input checking failed
+                            raise e
 
                 raw_predictions = \
                     self.loss_.get_init_raw_predictions(X, self.init_)
-
 
             begin_at_stage = 0
 

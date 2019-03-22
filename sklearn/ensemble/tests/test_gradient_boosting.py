@@ -41,6 +41,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LinearRegression
+from sklearn.svm import NuSVR
 
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier,
@@ -1381,6 +1382,17 @@ def test_gradient_boosting_with_init_pipeline():
             match='The initial estimator Pipeline does not support sample '
                   'weights'):
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
+
+    # Passing sample_weight to a pipeline raises a ValueError. This test makes
+    # sure we make the distinction between ValueError raised by a pipeline that
+    # was passes sample_weight, or by a regular estimator whose input checking
+    # failed.
+    with pytest.raises(
+            ValueError,
+            match='nu <= 0 or nu > 1'):
+        # Note that NuSVR properly supports sample_weight
+        est = NuSVR(gamma='auto', nu=1.5)
+        est.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
 @pytest.mark.parametrize('estimator, missing_method', [
