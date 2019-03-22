@@ -23,6 +23,8 @@ np.import_array()
 
 from sklearn.utils import check_random_state
 
+cdef UINT32_t DEFAULT_SEED = 1
+
 
 cpdef _sample_without_replacement_check_input(np.int_t n_population,
                                               np.int_t n_samples):
