@@ -1493,9 +1493,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         raise ValueError(msg)
                     except ValueError as e:
                         if 'not enough values to unpack' in str(e):  # pipeline
-                            raise ValueError(msg)
+                            raise ValueError(msg) from e
                         else:  # regular estimator whose input checking failed
-                            raise e
+                            raise
 
                 raw_predictions = \
                     self.loss_.get_init_raw_predictions(X, self.init_)
