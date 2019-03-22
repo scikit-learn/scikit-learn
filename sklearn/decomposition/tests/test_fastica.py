@@ -54,7 +54,6 @@ def test_fastica_simple(add_noise=False):
     # Test the FastICA algorithm on very simple data.
     rng = np.random.RandomState(0)
     # scipy.stats uses the global RNG:
-    np.random.seed(0)
     n_samples = 1000
     # Generate two sources:
     s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1

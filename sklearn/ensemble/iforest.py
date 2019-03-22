@@ -9,9 +9,14 @@ from scipy.sparse import issparse
 from warnings import warn
 
 from ..tree import ExtraTreeRegressor
-from ..utils import check_random_state, check_array
+from ..utils import (
+    check_random_state,
+    check_array,
+    gen_batches,
+    get_chunk_n_rows,
+)
 from ..utils.fixes import _joblib_parallel_args
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
 from .bagging import BaseBagging
@@ -141,6 +146,13 @@ class IsolationForest(BaseBagging, OutlierMixin):
         Assuming the behaviour parameter is set to 'old', we always have
         ``offset_ = -0.5``, making the decision function independent from the
         contamination parameter.
+
+    Notes
+    -----
+    The implementation is based on an ensemble of ExtraTreeRegressor. The
+    maximum depth of each tree is set to ``ceil(log_2(n))`` where
+    :math:`n` is the number of samples used to build the tree
+    (see (Liu et al., 2008) for more details).
 
     References
     ----------
@@ -330,9 +342,10 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples. Sparse matrices are accepted only if
-            they are supported by the base estimator.
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -361,9 +374,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The training input samples. Sparse matrices are accepted only if
-            they are supported by the base estimator.
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input samples.
 
         Returns
         -------
@@ -381,36 +393,10 @@ class IsolationForest(BaseBagging, OutlierMixin):
                              "match the input. Model n_features is {0} and "
                              "input n_features is {1}."
                              "".format(self.n_features_, X.shape[1]))
-        n_samples = X.shape[0]
-
-        n_samples_leaf = np.zeros((n_samples, self.n_estimators), order="f")
-        depths = np.zeros((n_samples, self.n_estimators), order="f")
-
-        if self._max_features == X.shape[1]:
-            subsample_features = False
-        else:
-            subsample_features = True
-
-        for i, (tree, features) in enumerate(zip(self.estimators_,
-                                                 self.estimators_features_)):
-            if subsample_features:
-                X_subset = X[:, features]
-            else:
-                X_subset = X
-            leaves_index = tree.apply(X_subset)
-            node_indicator = tree.decision_path(X_subset)
-            n_samples_leaf[:, i] = tree.tree_.n_node_samples[leaves_index]
-            depths[:, i] = np.ravel(node_indicator.sum(axis=1))
-            depths[:, i] -= 1
-
-        depths += _average_path_length(n_samples_leaf)
-
-        scores = 2 ** (-depths.mean(axis=1) / _average_path_length(
-            self.max_samples_))
 
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
-        return -scores
+        return -self._compute_chunked_score_samples(X)
 
     @property
     def threshold_(self):
@@ -421,14 +407,80 @@ class IsolationForest(BaseBagging, OutlierMixin):
              " be removed in 0.22.", DeprecationWarning)
         return self._threshold_
 
+    def _compute_chunked_score_samples(self, X):
+
+        n_samples = _num_samples(X)
+
+        if self._max_features == X.shape[1]:
+            subsample_features = False
+        else:
+            subsample_features = True
+
+        # We get as many rows as possible within our working_memory budget
+        # (defined by sklearn.get_config()['working_memory']) to store
+        # self._max_features in each row during computation.
+        #
+        # Note:
+        #  - this will get at least 1 row, even if 1 row of score will
+        #    exceed working_memory.
+        #  - this does only account for temporary memory usage while loading
+        #    the data needed to compute the scores -- the returned scores
+        #    themselves are 1D.
+
+        chunk_n_rows = get_chunk_n_rows(row_bytes=16 * self._max_features,
+                                        max_n_rows=n_samples)
+        slices = gen_batches(n_samples, chunk_n_rows)
+
+        scores = np.zeros(n_samples, order="f")
+
+        for sl in slices:
+            # compute score on the slices of test samples:
+            scores[sl] = self._compute_score_samples(X[sl], subsample_features)
+
+        return scores
+
+    def _compute_score_samples(self, X, subsample_features):
+        """Compute the score of each samples in X going through the extra trees.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix
+
+        subsample_features : bool,
+            whether features should be subsampled
+        """
+        n_samples = X.shape[0]
+
+        depths = np.zeros(n_samples, order="f")
+
+        for tree, features in zip(self.estimators_, self.estimators_features_):
+            X_subset = X[:, features] if subsample_features else X
+
+            leaves_index = tree.apply(X_subset)
+            node_indicator = tree.decision_path(X_subset)
+            n_samples_leaf = tree.tree_.n_node_samples[leaves_index]
+
+            depths += (
+                np.ravel(node_indicator.sum(axis=1))
+                + _average_path_length(n_samples_leaf)
+                - 1.0
+            )
+
+        scores = 2 ** (
+            -depths
+            / (len(self.estimators_)
+               * _average_path_length([self.max_samples_]))
+        )
+        return scores
+
 
 def _average_path_length(n_samples_leaf):
-    """ The average path length in a n_samples iTree, which is equal to
+    """The average path length in a n_samples iTree, which is equal to
     the average path length of an unsuccessful BST search since the
     latter has the same structure as an isolation tree.
     Parameters
     ----------
-    n_samples_leaf : array-like, shape (n_samples, n_estimators), or int.
+    n_samples_leaf : array-like, shape (n_samples,).
         The number of training samples in each test sample leaf, for
         each estimators.
 
@@ -437,29 +489,22 @@ def _average_path_length(n_samples_leaf):
     average_path_length : array, same shape as n_samples_leaf
 
     """
-    if isinstance(n_samples_leaf, INTEGER_TYPES):
-        if n_samples_leaf <= 1:
-            return 0.
-        elif n_samples_leaf <= 2:
-            return 1.
-        else:
-            return 2. * (np.log(n_samples_leaf - 1.) + np.euler_gamma) - 2. * (
-                n_samples_leaf - 1.) / n_samples_leaf
 
-    else:
+    n_samples_leaf = check_array(n_samples_leaf, ensure_2d=False)
 
-        n_samples_leaf_shape = n_samples_leaf.shape
-        n_samples_leaf = n_samples_leaf.reshape((1, -1))
-        average_path_length = np.zeros(n_samples_leaf.shape)
+    n_samples_leaf_shape = n_samples_leaf.shape
+    n_samples_leaf = n_samples_leaf.reshape((1, -1))
+    average_path_length = np.zeros(n_samples_leaf.shape)
 
-        mask_1 = n_samples_leaf <= 1
-        mask_2 = n_samples_leaf == 2
-        not_mask = ~np.logical_or(mask_1, mask_2)
+    mask_1 = n_samples_leaf <= 1
+    mask_2 = n_samples_leaf == 2
+    not_mask = ~np.logical_or(mask_1, mask_2)
 
-        average_path_length[mask_1] = 0.
-        average_path_length[mask_2] = 1.
-        average_path_length[not_mask] = 2. * (
-            np.log(n_samples_leaf[not_mask] - 1.) + np.euler_gamma) - 2. * (
-                n_samples_leaf[not_mask] - 1.) / n_samples_leaf[not_mask]
+    average_path_length[mask_1] = 0.
+    average_path_length[mask_2] = 1.
+    average_path_length[not_mask] = (
+        2.0 * (np.log(n_samples_leaf[not_mask] - 1.0) + np.euler_gamma)
+        - 2.0 * (n_samples_leaf[not_mask] - 1.0) / n_samples_leaf[not_mask]
+    )
 
-        return average_path_length.reshape(n_samples_leaf_shape)
+    return average_path_length.reshape(n_samples_leaf_shape)
