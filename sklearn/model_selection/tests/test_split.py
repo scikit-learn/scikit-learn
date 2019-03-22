@@ -583,8 +583,8 @@ def test_shuffle_split_default_test_size(split_class, train_size, exp_train,
 
 @pytest.mark.parametrize("train_size, exp_train, exp_test",
                          [(None, 8, 2),
-                          (8, 8, 2),
-                          (0.8, 8, 2)])
+                          (7, 7, 3),
+                          (0.7, 7, 3)])
 def test_group_shuffle_split_default_test_size(train_size, exp_train,
                                                exp_test):
     # Check that the default value has the expected behavior, i.e. 0.2 if both

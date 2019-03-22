@@ -1273,6 +1273,7 @@ class BaseShuffleSplit(metaclass=ABCMeta):
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
+        self._default_test_size = 0.1
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -1402,13 +1403,21 @@ class ShuffleSplit(BaseShuffleSplit):
     TRAIN: [3 4 1] TEST: [5 2]
     TRAIN: [3 5 1] TEST: [2 4]
     """
+    def __init__(self, n_splits=10, test_size=None, train_size=None,
+                 random_state=None):
+        super().__init__(
+            n_splits=n_splits,
+            test_size=test_size,
+            train_size=train_size,
+            random_state=random_state)
+        self._default_test_size = 0.1
 
     def _iter_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
-        n_train, n_test = _validate_shuffle_split(n_samples,
-                                                  self.test_size,
-                                                  self.train_size,
-                                                  default_test_size=0.1)
+        n_train, n_test = _validate_shuffle_split(
+            n_samples, self.test_size, self.train_size,
+            default_test_size=self._default_test_size)
+
         rng = check_random_state(self.random_state)
         for i in range(self.n_splits):
             # random partition
@@ -1467,13 +1476,14 @@ class GroupShuffleSplit(ShuffleSplit):
 
     '''
 
-    def __init__(self, n_splits=5, test_size=0.2, train_size=None,
+    def __init__(self, n_splits=5, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
             n_splits=n_splits,
             test_size=test_size,
             train_size=train_size,
             random_state=random_state)
+        self._default_test_size = 0.2
 
     def _iter_indices(self, X, y, groups):
         if groups is None:
@@ -1659,13 +1669,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             test_size=test_size,
             train_size=train_size,
             random_state=random_state)
+        self._default_test_size = 0.1
 
     def _iter_indices(self, X, y, groups=None):
         n_samples = _num_samples(X)
         y = check_array(y, ensure_2d=False, dtype=None)
-        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
-                                                  self.train_size,
-                                                  default_test_size=0.1)
+        n_train, n_test = _validate_shuffle_split(
+            n_samples, self.test_size, self.train_size,
+            default_test_size=self._default_test_size)
 
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
