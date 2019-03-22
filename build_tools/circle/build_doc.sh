@@ -130,7 +130,7 @@ if [[ -n "$SCIKIT_IMAGE_VERSION" ]]; then
 else
     pip install scikit-image
 fi
-pip install sphinx-gallery
+pip install "sphinx-gallery>=0.2,<0.3"
 pip install numpydoc==0.8
 
 # Build and install scikit-learn in dev mode
