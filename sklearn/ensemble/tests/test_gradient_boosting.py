@@ -1385,8 +1385,8 @@ def test_gradient_boosting_with_init_pipeline():
 
     # Passing sample_weight to a pipeline raises a ValueError. This test makes
     # sure we make the distinction between ValueError raised by a pipeline that
-    # was passes sample_weight, or by a regular estimator whose input checking
-    # failed.
+    # was passed sample_weight, and a ValueError raised by a regular estimator
+    # whose input checking failed.
     with pytest.raises(
             ValueError,
             match='nu <= 0 or nu > 1'):
