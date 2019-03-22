@@ -926,6 +926,8 @@ def test_iter_attribute():
 
 
 def test_k_means_empty_cluster_relocated():
+    # check that empty clusters are correctly relocated when using sample
+    # weights (#13486)
     X = np.array([[-1], [1]])
     sample_weight = [1.9, 0.1]
     init = np.array([[-1], [10]])
