@@ -317,7 +317,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         The scorer callable object / function must have its signature as
         ``scorer(estimator, X, y)``.
 
-        If ``None`` the estimator's default scorer is used.
+        If ``None`` the estimator's score method is used.
 
     verbose : int
         Verbosity level.
@@ -698,7 +698,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
                 self.best_index_ = self.refit(results)
                 if not isinstance(self.best_index_, (int, np.integer)):
                     raise TypeError('best_index_ returned is not an integer')
-                if self.best_index_ < 0 or self.best_index_ >= len(results):
+                if (self.best_index_ < 0 or
+                   self.best_index_ >= len(results["params"])):
                     raise IndexError('best_index_ index out of range')
             else:
                 self.best_index_ = results["rank_test_%s"
@@ -868,7 +869,7 @@ class GridSearchCV(BaseSearchCV):
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None, the estimator's default scorer (if available) is used.
+        If None, the estimator's score method is used.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.
@@ -1210,7 +1211,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
         See :ref:`multimetric_grid_search` for an example.
 
-        If None, the estimator's default scorer (if available) is used.
+        If None, the estimator's score method is used.
 
     n_jobs : int or None, optional (default=None)
         Number of jobs to run in parallel.

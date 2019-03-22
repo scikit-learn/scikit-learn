@@ -17,6 +17,10 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- :class:`discriminant_analysis.LinearDiscriminantAnalysis` for multiclass
+  classification. |Fix|
+- :class:`discriminant_analysis.LinearDiscriminantAnalysis` with 'eigen'
+  solver. |Fix|
 - :class:`linear_model.BayesianRidge` |Fix|
 - Decision trees and derived ensembles when both `max_depth` and
   `max_leaf_nodes` are set. |Fix|
@@ -51,6 +55,16 @@ Support for Python 3.4 and below has been officially dropped.
     section should be ordered according to the label ordering above. Entries
     should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
 
+:mod:`sklearn.base`
+...................
+
+- |API| The R2 score used when calling ``score`` on a regressor will use
+  ``multioutput='uniform_average'`` from version 0.23 to keep consistent with
+  :func:`metrics.r2_score`. This will influence the ``score`` method of all
+  the multioutput regressors (except for
+  :class:`multioutput.MultiOutputRegressor`).
+  :issue:`13157` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -84,6 +98,13 @@ Support for Python 3.4 and below has been officially dropped.
   (resolved sign ambiguity in eigenvalue decomposition of the kernel matrix).
   :issue:`13241` by :user:`Aurélien Bellet <bellet>`.
 
+- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`, `fit().transform()`
+  now produces the correct output (the same as `fit_transform()`) in case
+  of non-removed zero eigenvalues (`remove_zero_eig=False`).
+  `fit_inverse_transform` was also accelerated by using the same trick as
+  `fit_transform` to compute the transform of `X`.
+  :issue:`12143` by :user:`Sylvain Marié <smarie>`
+
 - |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
   `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
   `n_components < n_features` instead of
@@ -111,6 +132,16 @@ Support for Python 3.4 and below has been officially dropped.
   ``n_components`` is changed to ``min(n_features, n_classes - 1)`` if so.
   Previously the change was made, but silently. :issue:`11526` by
   :user:`William de Vazelhes<wdevazelhes>`.
+
+- |Fix| Fixed a bug in :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  where the predicted probabilities would be incorrectly computed in the
+  multiclass case. :issue:`6848`, by :user:`Agamemnon Krasoulis
+  <agamemnonc>` and `Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| Fixed a bug in :class:`discriminant_analysis.LinearDiscriminantAnalysis`
+  where the predicted probabilities would be incorrectly computed with ``eigen``
+  solver. :issue:`11727`, by :user:`Agamemnon Krasoulis
+  <agamemnonc>`.
 
 :mod:`sklearn.dummy`
 ....................
@@ -147,6 +178,10 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Efficiency| Make :class:`ensemble.IsolationForest` more memory efficient
   by avoiding keeping in memory each tree prediction. :issue:`13260` by
+  `Nicolas Goix`_.
+
+- |Efficiency| :class:`ensemble.IsolationForest` now uses chunks of data at
+  prediction step, thus capping the memory usage. :issue:`13283` by
   `Nicolas Goix`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
@@ -253,7 +288,7 @@ Support for Python 3.4 and below has been officially dropped.
   broken when X was of dtype bool.
   :issue:`13328` by `Alexandre Gramfort`_.
 
-- |API|  The use of :class:`linear_model.lars_path` with ``X=None`` 
+- |API|  The use of :class:`linear_model.lars_path` with ``X=None``
   while passing ``Gram`` is deprecated in version 0.21 and will be removed
   in version 0.23. Use :class:`linear_model.lars_path_gram` instead.
   :issue:`11699` by :user:`Kuai Yu <yukuairoy>`.
@@ -289,6 +324,11 @@ Support for Python 3.4 and below has been officially dropped.
   metrics such as recall, specificity, fall out and miss rate.
   :issue:`11179` by :user:`Shangwu Yao <ShangwuYao>` and `Joel Nothman`_.
 
+- |Feature| :func:`metrics.jaccard_score` has been added to calculate the
+  Jaccard coefficient as an evaluation metric for binary, multilabel and
+  multiclass tasks, with an interface analogous to :func:`metrics.f1_score`.
+  :issue:`13151` by :user:`Gaurav Dhingra <gxyd>` and `Joel Nothman`_.
+
 - |Efficiency| Faster :func:`metrics.pairwise.pairwise_distances` with `n_jobs`
   > 1 by using a thread-based backend, instead of process-based backends.
   :issue:`8216` by :user:`Pierre Glaser <pierreglaser>` and
@@ -313,6 +353,11 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23.
   :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
   Mitrovic <SandraMNE>`.
+
+- |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
+  the more consistent :func:`metrics.jaccard_score`. The former behavior for
+  binary and multiclass targets is broken.
+  :issue:`13151` by `Joel Nothman`_.
 
 :mod:`sklearn.mixture`
 ......................
@@ -399,6 +444,10 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
   transformer. :issue:`11144` by :user:`Thomas Fan <thomasjpfan>`.
 
+- |Enhancement| :class:`pipeline.Pipeline`  implements ``__len__`` and
+  therefore ``len(pipeline)`` returns the number of steps in the pipeline.
+  :issue:`13439` by :user:`Lakshya KD <LakshKD>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -429,6 +478,13 @@ Support for Python 3.4 and below has been officially dropped.
   equal to n_samples. Values of n_quantiles larger than n_samples were either
   useless or resulting in a wrong approximation of the cumulative distribution
   function estimator. :issue:`13333` by :user:`Albert Thomas <albertcthomas>`.
+
+- |API| The default value of `copy` in :func:`preprocessing.quantile_transform`
+  will change from False to True in 0.23 in order to make it more consistent
+  with the default `copy` values of other functions in
+  :mod:`preprocessing.data` and prevent unexpected side effects by modifying
+  the value of `X` inplace.
+  :issue:`13459` by :user:`Hunter McGushion <HunterMcGushion>`.
 
 :mod:`sklearn.svm`
 ..................
