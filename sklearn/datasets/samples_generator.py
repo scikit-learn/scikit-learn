@@ -190,7 +190,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     # Build the polytope whose vertices become cluster centroids
     centroids = _generate_hypercube(n_clusters, n_informative,
-                                    generator).astype(float)
+                                    generator).astype(float, copy=False)
     centroids *= 2 * class_sep
     centroids -= class_sep
     if not hypercube:
@@ -446,7 +446,7 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
 
     shape = (n_samples, 10)
     X = rs.normal(size=shape).reshape(shape)
-    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
+    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)
     y[y == 0.0] = -1.0
 
     return X, y
