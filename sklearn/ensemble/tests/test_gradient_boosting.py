@@ -1375,7 +1375,7 @@ def test_gradient_boosting_with_init_pipeline():
     X, y = make_regression(random_state=0)
     init = make_pipeline(LinearRegression())
     gb = GradientBoostingRegressor(init=init)
-    gb.fit(X, y)
+    gb.fit(X, y)  # pipeline without sample_weight works fine
 
     with pytest.raises(
             ValueError,
@@ -1391,8 +1391,9 @@ def test_gradient_boosting_with_init_pipeline():
             ValueError,
             match='nu <= 0 or nu > 1'):
         # Note that NuSVR properly supports sample_weight
-        est = NuSVR(gamma='auto', nu=1.5)
-        est.fit(X, y, sample_weight=np.ones(X.shape[0]))
+        init = NuSVR(gamma='auto', nu=1.5)
+        gb = GradientBoostingRegressor(init=init)
+        gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
 @pytest.mark.parametrize('estimator, missing_method', [
