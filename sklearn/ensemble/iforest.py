@@ -125,6 +125,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier

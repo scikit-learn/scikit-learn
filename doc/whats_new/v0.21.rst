@@ -179,6 +179,10 @@ Support for Python 3.4 and below has been officially dropped.
   prediction step, thus capping the memory usage. :issue:`13283` by
   `Nicolas Goix`_.
 
+- |Enhancement| :class:`ensemble.IsolationForest` now exposes ``warm_start``
+  parameter, allowing iterative addition of trees to an isolation 
+  forest. :issue:`13451` by :user:`Peter Marko <petibear>`.
+
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
   problems. :issue:`12715` by :user:`Nicolas Hug<NicolasHug>`.
