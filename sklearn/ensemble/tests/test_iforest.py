@@ -301,7 +301,7 @@ def test_iforest_warmstart():
     """Test iterative addition of iTrees to an iForest """
 
     rng = check_random_state(0)
-    X = iris.data
+    X = rng.randn(20, 2)
 
     # fit first 10 trees
     clf = IsolationForest(n_estimators=10, max_samples=20,
