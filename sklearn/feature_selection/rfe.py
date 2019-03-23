@@ -75,7 +75,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         original number of features.
 
     fine_tuning_step : int or float, optional (default=1)
-        Step size to change to starting at ``step_change_at``, if specified. If
+        Step to change to starting at ``step_change_at`` if it is specified. If
         greater than or equal to 1, then ``fine_tuning_step`` corresponds to
         the (integer) number of features to remove at each iteration. If within
         (0.0, 1.0), then ``fine_tuning_step`` corresponds to the percentage
@@ -434,7 +434,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         original number of features.
 
     fine_tuning_step : int or float, optional (default=1)
-        Step size to change to starting at ``step_change_at``, if specified. If
+        Step to change to starting at ``step_change_at`` if it is specified. If
         greater than or equal to 1, then ``fine_tuning_step`` corresponds to
         the (integer) number of features to remove at each iteration. If within
         (0.0, 1.0), then ``fine_tuning_step`` corresponds to the percentage
