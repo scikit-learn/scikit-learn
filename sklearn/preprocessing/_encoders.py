@@ -702,13 +702,23 @@ class OneHotEncoder(_BaseEncoder):
                                 dtype=self.dtype)
         return out
 
+    def _make_nan_sparse_matrix(self, Xi_missing, n_categories):
+        n_missing = np.sum(Xi_missing)
+        indptr = np.cumsum(Xi_missing) * n_categories
+        indptr = np.insert(indptr, 0, 0)
+        indices = np.full((n_missing, n_categories), np.arange(n_categories))
+        indices = indices.ravel()
+        data = np.full(len(indices), np.nan)
+        na_matrix = sparse.csr_matrix((data, indices, indptr),
+                                      (len(Xi_missing), n_categories))
+        return na_matrix
+
     def _transform_new(self, X):
         """New implementation assuming categorical input"""
         # validation of X happens in _check_X called by _transform
         X_int, X_missing, X_unknown = (
             self._transform(X, missing_values=self.missing_values,
                             handle_unknown=self.handle_unknown))
-        n_samples, n_features = X_int.shape
 
         if self.drop is not None:
             to_drop = self.drop_idx_.reshape(1, -1)
@@ -723,11 +733,7 @@ class OneHotEncoder(_BaseEncoder):
         else:
             cats_ns = [len(cats) for cats in self.categories_]
 
-        if self.handle_missing == 'all-zero':
-            X_valid = ~(X_missing | X_unknown)
-            out = self._make_onehot_sparse_matrix(X_int, X_valid, cats_ns)
-
-        elif self.handle_missing == 'category':
+        if self.handle_missing == 'category':
             for i, c in enumerate(cats_ns):
                 Xi_missing = X_missing[:, i]
                 Xi_int = X_int[:, i]
@@ -735,37 +741,14 @@ class OneHotEncoder(_BaseEncoder):
             cats_ns = [c+1 for c in cats_ns]
             X_valid = ~X_unknown
             out = self._make_onehot_sparse_matrix(X_int, X_valid, cats_ns)
-
-        elif self.handle_missing == 'all-missing':
-            n_data = len(X_int)
-            n_features = np.sum(cats_ns)
-            m_shape = (n_data, n_features)
-
-            out_na = []
-
-            c_start = 0
-            for i, c in enumerate(cats_ns):
-                c_end = c_start + c
-
-                Xi_missing = X_missing[:, i]
-                n_missing = np.sum(Xi_missing)
-
-                indptr = np.cumsum(Xi_missing) * c
-                indptr = np.insert(indptr, 0, 0)
-                indices = np.full((n_missing, c),
-                                  np.arange(c_start, c_end, dtype=np.int))
-                indices = indices.ravel()
-                data = np.full(len(indices), np.nan)
-                out_na.append(sparse.csr_matrix((data, indices, indptr),
-                                                m_shape))
-                c_start = c_end
-
+        else:
             X_valid = ~(X_missing | X_unknown)
             out = self._make_onehot_sparse_matrix(X_int, X_valid, cats_ns)
-            for na in out_na:
-                out += na
-        else:
-            raise ValueError()
+            if self.handle_missing == 'all-missing':
+                na_mat = [self._make_nan_sparse_matrix(X_missing[:, i], c)
+                          for i, c in enumerate(cats_ns)]
+                na_mat = sparse.hstack(na_mat)
+                out += na_mat
 
         if not self.sparse:
             return out.toarray()
