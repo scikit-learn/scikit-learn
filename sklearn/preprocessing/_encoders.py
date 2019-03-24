@@ -544,6 +544,10 @@ class OneHotEncoder(_BaseEncoder):
             msg = ("handle_unknown should be either 'error' or 'ignore', "
                    "got {0}.".format(self.handle_unknown))
             raise ValueError(msg)
+        if self.handle_missing not in ('all-zero', 'category', 'all-missing'):
+            msg = ("handle_unknown should be either 'all-zero', 'category', "
+                   "or 'all-missing', got {0}.".format(self.handle_missing))
+            raise ValueError(msg)
         # If we have both dropped columns and ignored unknown
         # values, there will be ambiguous cells. This creates difficulties
         # in interpreting the model.
