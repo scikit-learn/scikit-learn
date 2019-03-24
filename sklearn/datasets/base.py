@@ -545,7 +545,7 @@ def load_digits(n_class=10, return_X_y=False):
                       delimiter=',')
     with open(join(module_path, 'descr', 'digits.rst')) as f:
         descr = f.read()
-    target = data[:, -1].astype(np.int)
+    target = data[:, -1].astype(np.int, copy=False)
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
@@ -794,7 +794,7 @@ def load_sample_images():
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
     filenames = [join(module_path, filename)
-                 for filename in os.listdir(module_path)
+                 for filename in sorted(os.listdir(module_path))
                  if filename.endswith(".jpg")]
     # Load image data for each image in the source folder.
     images = [imread(filename) for filename in filenames]

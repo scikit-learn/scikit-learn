@@ -45,14 +45,12 @@ __all__ = ['BaseCrossValidator',
 
 
 NSPLIT_WARNING = (
-    "You should specify a value for 'n_splits' instead of relying on the "
-    "default value. The default value will change from 3 to 5 "
-    "in version 0.22.")
+    "The default value of n_split will change from 3 to 5 "
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 CV_WARNING = (
-    "You should specify a value for 'cv' instead of relying on the "
-    "default value. The default value will change from 3 to 5 "
-    "in version 0.22.")
+    "The default value of cv will change from 3 to 5 "
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 
 class BaseCrossValidator(metaclass=ABCMeta):
@@ -164,7 +162,13 @@ class LeaveOneOut(BaseCrossValidator):
     """
 
     def _iter_test_indices(self, X, y=None, groups=None):
-        return range(_num_samples(X))
+        n_samples = _num_samples(X)
+        if n_samples <= 1:
+            raise ValueError(
+                'Cannot perform LeaveOneOut with n_samples={}.'.format(
+                    n_samples)
+            )
+        return range(n_samples)
 
     def get_n_splits(self, X, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
@@ -211,7 +215,8 @@ class LeavePOut(BaseCrossValidator):
     Parameters
     ----------
     p : int
-        Size of the test sets.
+        Size of the test sets. Must be strictly greater than the number of
+        samples.
 
     Examples
     --------
@@ -240,7 +245,13 @@ class LeavePOut(BaseCrossValidator):
         self.p = p
 
     def _iter_test_indices(self, X, y=None, groups=None):
-        for combination in combinations(range(_num_samples(X)), self.p):
+        n_samples = _num_samples(X)
+        if n_samples <= self.p:
+            raise ValueError(
+                'p={} must be strictly less than the number of '
+                'samples={}'.format(self.p, n_samples)
+            )
+        for combination in combinations(range(n_samples), self.p):
             yield np.array(combination)
 
     def get_n_splits(self, X, y=None, groups=None):
@@ -576,8 +587,7 @@ class StratifiedKFold(_BaseKFold):
             ``n_splits`` default value will change from 3 to 5 in v0.22.
 
     shuffle : boolean, optional
-        Whether to shuffle each stratification of the data before splitting
-        into batches.
+        Whether to shuffle each class's samples before splitting into batches.
 
     random_state : int, RandomState instance or None, optional, default=None
         If int, random_state is the seed used by the random number generator;
@@ -620,7 +630,7 @@ class StratifiedKFold(_BaseKFold):
         super().__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None):
-        rng = self.random_state
+        rng = check_random_state(self.random_state)
         y = np.asarray(y)
         type_of_target_y = type_of_target(y)
         allowed_target_types = ('binary', 'multiclass')
@@ -1455,7 +1465,7 @@ class GroupShuffleSplit(ShuffleSplit):
     test_size : float, int, None, optional
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, the value is set to the
+        absolute number of test groups. If None, the value is set to the
         complement of the train size. By default, the value is set to 0.2.
         The default will change in version 0.21. It will remain 0.2 only
         if ``train_size`` is unspecified, otherwise it will complement
@@ -1865,7 +1875,17 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
                          'samples %d. Reduce test_size and/or '
                          'train_size.' % (n_train + n_test, n_samples))
 
-    return int(n_train), int(n_test)
+    n_train, n_test = int(n_train), int(n_test)
+
+    if n_train == 0:
+        raise ValueError(
+            'With n_samples={}, test_size={} and train_size={}, the '
+            'resulting train set will be empty. Adjust any of the '
+            'aforementioned parameters.'.format(n_samples, test_size,
+                                                train_size)
+        )
+
+    return n_train, n_test
 
 
 class PredefinedSplit(BaseCrossValidator):

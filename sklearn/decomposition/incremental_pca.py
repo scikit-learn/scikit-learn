@@ -16,8 +16,9 @@ class IncrementalPCA(_BasePCA):
     """Incremental principal components analysis (IPCA).
 
     Linear dimensionality reduction using Singular Value Decomposition of
-    centered data, keeping only the most significant singular vectors to
-    project the data to a lower dimensional space.
+    the data, keeping only the most significant singular vectors to
+    project the data to a lower dimensional space. The input data is centered
+    but not scaled for each feature before applying the SVD.
 
     Depending on the size of the input data, this algorithm can be much more
     memory efficient than a PCA.

@@ -2244,7 +2244,7 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
 	free(data_label);
 }
 
-static int train_one(const problem *prob, const parameter *param, double *w, double Cp, double Cn)
+static int train_one(const problem *prob, const parameter *param, double *w, double Cp, double Cn, BlasFunctions *blas_functions)
 {
 	double eps=param->eps;
 	double* sample_weight=prob->sample_weight;
@@ -2274,7 +2274,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 			}
 
 			fun_obj=new l2r_lr_fun(prob, C);
-			TRON tron_obj(fun_obj, primal_solver_tol, max_iter);
+			TRON tron_obj(fun_obj, primal_solver_tol, max_iter, blas_functions);
 			tron_obj.set_print_string(liblinear_print_string);
 			n_iter=tron_obj.tron(w);
 			delete fun_obj;
@@ -2292,7 +2292,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 					C[i] = Cn;
 			}
 			fun_obj=new l2r_l2_svc_fun(prob, C);
-			TRON tron_obj(fun_obj, primal_solver_tol, max_iter);
+			TRON tron_obj(fun_obj, primal_solver_tol, max_iter, blas_functions);
 			tron_obj.set_print_string(liblinear_print_string);
 			n_iter=tron_obj.tron(w);
 			delete fun_obj;
@@ -2337,7 +2337,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 				C[i] = param->C;
 
 			fun_obj=new l2r_l2_svr_fun(prob, C, param->p);
-			TRON tron_obj(fun_obj, param->eps, max_iter);
+			TRON tron_obj(fun_obj, param->eps, max_iter, blas_functions);
 			tron_obj.set_print_string(liblinear_print_string);
 			n_iter=tron_obj.tron(w);
 			delete fun_obj;
@@ -2361,7 +2361,7 @@ static int train_one(const problem *prob, const parameter *param, double *w, dou
 //
 // Interface functions
 //
-model* train(const problem *prob, const parameter *param)
+model* train(const problem *prob, const parameter *param, BlasFunctions *blas_functions)
 {
 	int i,j;
 	int l = prob->l;
@@ -2383,7 +2383,7 @@ model* train(const problem *prob, const parameter *param)
 		model_->n_iter = Malloc(int, 1);
 		model_->nr_class = 2;
 		model_->label = NULL;
-		model_->n_iter[0] =train_one(prob, param, &model_->w[0], 0, 0);
+		model_->n_iter[0] =train_one(prob, param, &model_->w[0], 0, 0, blas_functions);
 	}
 	else
 	{
@@ -2460,7 +2460,7 @@ model* train(const problem *prob, const parameter *param)
 				for(; k<sub_prob.l; k++)
 					sub_prob.y[k] = +1;
 
-				model_->n_iter[0]=train_one(&sub_prob, param, &model_->w[0], weighted_C[1], weighted_C[0]);
+				model_->n_iter[0]=train_one(&sub_prob, param, &model_->w[0], weighted_C[1], weighted_C[0], blas_functions);
 			}
 			else
 			{
@@ -2480,7 +2480,7 @@ model* train(const problem *prob, const parameter *param)
 					for(; k<sub_prob.l; k++)
 						sub_prob.y[k] = -1;
 
-					model_->n_iter[i]=train_one(&sub_prob, param, w, weighted_C[i], param->C);
+					model_->n_iter[i]=train_one(&sub_prob, param, w, weighted_C[i], param->C, blas_functions);
 
 					for(int j=0;j<w_size;j++)
 						model_->w[j*nr_class+i] = w[j];
