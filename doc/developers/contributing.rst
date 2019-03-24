@@ -251,11 +251,19 @@ If any of the above seems like magic to you, then look up the `Git documentation
 web, or ask a friend or another contributor for help.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
-to merge ``master``. The command will be::
+to merge ``master``. For that, you first need to fetch the ``upstream``'s
+``master``, and then merge it into your branch::
 
-  $ git merge master
+  $ git fetch upstream
+  $ git merge upstream/master
 
-with ``master`` being synchronized with the ``upstream``.
+In order to synchronize your ``master`` with the ``upstream``'s (assuming you
+usually work on branches other than your local's ``master``), you can::
+
+  $ git fetch upstream
+  $ git rebase upstream/master
+
+while being in your ``master`` branch.
 
 Subsequently, you need to solve the conflicts. You can refer to the `Git
 documentation related to resolving merge conflict using the command line
