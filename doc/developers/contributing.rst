@@ -257,8 +257,10 @@ to merge ``master``. For that, you first need to fetch the ``upstream``'s
   $ git fetch upstream
   $ git merge upstream/master
 
-In order to synchronize your ``master`` with the ``upstream``'s (assuming you
-usually work on branches other than your local's ``master``), you can::
+It is recommended to work on temporary branches rather than directly on
+``master``. Since these temporary branches are branched off ``master``, it is
+helpful to keep your local ``master`` up to date with the upstream's
+``master``. Do do this, you can::
 
   $ git fetch upstream
   $ git rebase upstream/master
