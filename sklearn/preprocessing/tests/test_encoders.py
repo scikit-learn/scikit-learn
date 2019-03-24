@@ -596,7 +596,7 @@ def test_one_hot_encoder_feature_names_unicode():
 @pytest.mark.parametrize("as_data_frame", [False, True],
                          ids=['array', 'dataframe'])
 @pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
-def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
+def test_one_hot_encoder_accept_missing(X, as_data_frame, handle_unknown):
     if as_data_frame:
         pd = pytest.importorskip('pandas')
         X = pd.DataFrame(X)
@@ -672,7 +672,7 @@ def test_ordinal_encoder_inverse():
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
-def test_ordinal_encoder_raise_missing(X):
+def test_ordinal_encoder_accept_missing(X):
     ohe = OrdinalEncoder()
     ohe.fit(X)
     ohe.fit_transform(X)
