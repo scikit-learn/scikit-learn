@@ -181,7 +181,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Enhancement| :class:`ensemble.IsolationForest` now exposes ``warm_start``
   parameter, allowing iterative addition of trees to an isolation 
-  forest. :issue:`13451` by :user:`Peter Marko <petibear>`.
+  forest. :issue:`13496` by :user:`Peter Marko <petibear>`.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
