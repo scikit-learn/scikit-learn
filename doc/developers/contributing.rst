@@ -260,7 +260,7 @@ to merge ``master``. For that, you first need to fetch the ``upstream``'s
 It is recommended to work on temporary branches rather than directly on
 ``master``. Since these temporary branches are branched off ``master``, it is
 helpful to keep your local ``master`` up to date with the upstream's
-``master``. Do do this, you can::
+``master``. To do this, you can::
 
   $ git fetch upstream
   $ git rebase upstream/master
