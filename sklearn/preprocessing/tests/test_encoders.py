@@ -605,15 +605,24 @@ def test_one_hot_encoder_feature_names_unicode():
                            [0, 0, 0, 1], [0, 0, 1, 0]])),
     ('all-missing', np.array([[1, 0, 0], [0, 1, 0], [np.nan] * 3, [0, 0, 1]]))
 ])
+@pytest.mark.parametrize('sp', [True, False])
 def test_one_hot_encoder_handle_missing(values, missing_values,
-                                        handle_missing, expected):
+                                        handle_missing, expected, sp):
+    values = values.reshape(-1, 1)
     enc = OneHotEncoder(categories='auto',
                         handle_missing=handle_missing,
                         missing_values=missing_values,
-                        sparse=False)
-    result = enc.fit_transform(values.reshape(-1, 1))
-    assert_array_equal(expected, result)
+                        sparse=sp)
+    result = enc.fit_transform(values)
+    cmp_result = result.toarray() if sp else result
+    assert_array_equal(expected, cmp_result)
+    nan_mask = np.array([0, 0, 1, 0], dtype=np.bool)
 
+    # There is a bug with assert_array_equal when comparing object arrays with
+    # nans. Thus, the nans are compared separately.
+    reverse = enc.inverse_transform(result)
+    assert_array_equal(values[~nan_mask], reverse[~nan_mask])
+    np.testing.assert_equal(values[~nan_mask], reverse[~nan_mask])
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
