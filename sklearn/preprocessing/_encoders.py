@@ -19,7 +19,6 @@ from .base import _transform_selected
 from .label import _encode, _encode_check_unknown
 from .label import _nanencode
 
-
 __all__ = [
     'OneHotEncoder',
     'OrdinalEncoder'
@@ -797,16 +796,22 @@ class OneHotEncoder(_BaseEncoder):
         #     raise ValueError("only supported for categorical features")
 
         check_is_fitted(self, 'categories_')
-        X = check_array(X, accept_sparse='csr')
+        if self.handle_missing == 'all-missing':
+            force_finite = 'allow-nan'
+        else:
+            force_finite = True
+        X = check_array(X, accept_sparse='csr', force_all_finite=force_finite)
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
-        if self.drop is None:
-            n_transformed_features = sum(len(cats)
-                                         for cats in self.categories_)
-        else:
-            n_transformed_features = sum(len(cats) - 1
-                                         for cats in self.categories_)
+
+        n_transformed_features = sum(len(cats) for cats in self.categories_)
+
+        if self.handle_missing == 'category':
+            n_transformed_features += len(self.categories_)
+
+        if self.drop is not None:
+            n_transformed_features -= len(self.categories_)
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
@@ -815,18 +820,26 @@ class OneHotEncoder(_BaseEncoder):
             raise ValueError(msg.format(n_transformed_features, X.shape[1]))
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
+        dt = np.find_common_type([cat.dtype for cat in self.categories_],
+                                 [type(self.missing_values)])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         j = 0
         found_unknown = {}
 
         for i in range(n_features):
-            if self.drop is None:
-                cats = self.categories_[i]
-            else:
-                cats = np.delete(self.categories_[i], self.drop_idx_[i])
+            cats = self.categories_[i]
+            if self.drop is not None:
+                cats = np.delete(cats, self.drop_idx_[i])
+            if self.handle_missing == 'category':
+                cdt = np.find_common_type([cats.dtype],
+                                          [type(self.missing_values)])
+                if cdt != cats.dtype:
+                    cats = cats.astype(cdt)
+                cats = np.append(cats, self.missing_values)
+
             n_categories = len(cats)
+            print('cats', cats)
 
             # Only happens if there was a column with a unique
             # category. In this case we just fill the column with this
@@ -851,6 +864,19 @@ class OneHotEncoder(_BaseEncoder):
                 dropped = np.asarray(sub.sum(axis=1) == 0).flatten()
                 if dropped.any():
                     X_tr[dropped, i] = self.categories_[i][self.drop_idx_[i]]
+            elif self.handle_missing == 'all-zeroes':
+                missing = np.asarray(sub.sum(axis=1) == 0).flatten()
+                X_tr[:, i][missing] = self.missing_values
+
+            if self.handle_missing == 'all-missing':
+                if sparse.isspmatrix_csr(sub):
+                    missing = sub.copy()
+                    missing.data = np.isnan(missing.data)
+                else:
+                    missing = np.isnan(sub)
+                missing = np.asarray(missing.sum(axis=1) == n_categories)
+                missing = missing.flatten()
+                X_tr[:, i][missing] = self.missing_values
 
             j += n_categories
 
