@@ -239,8 +239,9 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         else:
             return children_, 1, n_samples, None
 
-    connectivity, n_connected_components = _fix_connectivity(X, connectivity,
-                                                   affinity='euclidean')
+    connectivity, n_connected_components = _fix_connectivity(
+                                                X, connectivity,
+                                                affinity='euclidean')
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
     else:
@@ -467,9 +468,9 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             return children_, 1, n_samples, None, distances
         return children_, 1, n_samples, None
 
-    connectivity, n_connected_components = _fix_connectivity(X, connectivity,
-                                                   affinity=affinity)
-
+    connectivity, n_connected_components = _fix_connectivity(
+                                                X, connectivity,
+                                                affinity=affinity)
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
     diag_mask = (connectivity.row != connectivity.col)
