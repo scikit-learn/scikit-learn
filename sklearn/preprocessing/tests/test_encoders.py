@@ -590,6 +590,32 @@ def test_one_hot_encoder_feature_names_unicode():
     assert_array_equal(['n👍me_c❤t1', 'n👍me_dat2'], feature_names)
 
 
+@pytest.mark.parametrize('values, missing_values', [
+    (np.array([0.0, 1.0, np.nan, 2.0]), np.nan),
+    (np.array([0.0, 1.0, -1.0, 2.0]), -1.0),
+    (np.array([0, 1, -1, 2]), -1),
+    (np.array(list('abdc'), dtype='str'), 'd'),
+    (np.array(['a', 'b', None, 'c'], dtype=object), None),
+    (np.array(['a', 'b', np.nan, 'c'], dtype=object), np.nan),
+    (np.array(['a', 'b', 'd', 'c'], dtype=object), 'd'),
+])
+@pytest.mark.parametrize('handle_missing, expected', [
+    ('all-zero', np.array([[1, 0, 0], [0, 1, 0], [0, 0, 0], [0, 0, 1]])),
+    ('category', np.array([[1, 0, 0, 0], [0, 1, 0, 0],
+                           [0, 0, 0, 1], [0, 0, 1, 0]])),
+    ('all-missing', np.array([[1, 0, 0], [0, 1, 0], [np.nan] * 3, [0, 0, 1]]))
+])
+def test_one_hot_encoder_handle_missing(values, missing_values,
+                                        handle_missing, expected):
+    enc = OneHotEncoder(categories='auto',
+                        handle_missing=handle_missing,
+                        missing_values=missing_values,
+                        sparse=False)
+    result = enc.fit_transform(values.reshape(-1, 1))
+    assert_array_equal(expected, result)
+
+
+
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
                          ids=['numeric', 'object'])
