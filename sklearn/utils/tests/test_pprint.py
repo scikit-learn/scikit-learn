@@ -96,9 +96,6 @@ RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estima
     tuning_step=1, verbose=0)"""
 
     expected = expected[1:]  # remove first \n
-
-    print(rfe)
-
     assert rfe.__repr__() == expected
 
 
