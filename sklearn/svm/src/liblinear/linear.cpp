@@ -1,8 +1,8 @@
-/* 
+/*
    Modified 2011:
 
    - Make labels sorted in group_classes, Dan Yamins.
-   
+
    Modified 2012:
 
    - Changes roles of +1 and -1 to match scikit API, Andreas Mueller
@@ -87,11 +87,11 @@ int myrand() {
 	// so in MS Visual Studio we need to call rand() several times to always ensure the same random number range than in Linux GCC
 	if (std::numeric_limits<int>::max() == 0x7FFFFFFF) {
 		// make a 31bit random number by using several 15bit rand()
-		return ((rand() << 16) + (rand() << 1) + (rand() >> 14));
+		return ( ( (__int32)rand() << 16) + ( (__int32)rand() << 1) + ( (__int32)rand() >> 14) );
 	}
 	else if (std::numeric_limits<int>::max() == 0x7FFFFFFFFFFFFFFF) {
 		// make a 63bit random number by using several 15bit rand()
-		return ((rand() << 48) + (rand() << 33) + (rand() << 18) + (rand() << 3) + (rand() >> 12));
+		return ( ( (__int64)rand() << 48) + ( (__int64)rand() << 33) + ( (__int64)rand() << 18) + ( (__int64)rand() << 3) + ( (__int64)rand() >> 12) );
 	}
 	else {
 		//fallback - should never happen on 32 or 64 bits systems
@@ -491,19 +491,19 @@ void l2r_l2_svr_fun::grad(double *w, double *g)
 		g[i] = w[i] + 2*g[i];
 }
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // multi-class support vector machines by Crammer and Singer
 //
 //  min_{\alpha}  0.5 \sum_m ||w_m(\alpha)||^2 + \sum_i \sum_m e^m_i alpha^m_i
 //    s.t.     \alpha^m_i <= C^m_i \forall m,i , \sum_m \alpha^m_i=0 \forall i
-// 
+//
 //  where e^m_i = 0 if y_i  = m,
 //        e^m_i = 1 if y_i != m,
-//  C^m_i = C if m  = y_i, 
-//  C^m_i = 0 if m != y_i, 
-//  and w_m(\alpha) = \sum_i \alpha^m_i x_i 
+//  C^m_i = C if m  = y_i,
+//  C^m_i = 0 if m != y_i,
+//  and w_m(\alpha) = \sum_i \alpha^m_i x_i
 //
-// Given: 
+// Given:
 // x, y, C
 // eps is the stopping tolerance
 //
@@ -611,7 +611,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 	double eps_shrink = max(10.0*eps, 1.0); // stopping tolerance for shrinking
 	bool start_from_all = true;
 
-	// Initial alpha can be set here. Note that 
+	// Initial alpha can be set here. Note that
 	// sum_m alpha[i*nr_class+m] = 0, for all i=1,...,l-1
 	// alpha[i*nr_class+m] <= C[GETI(i)] if prob->y[i] == m
 	// alpha[i*nr_class+m] <= 0 if prob->y[i] != m
@@ -807,14 +807,14 @@ int Solver_MCSVM_CS::Solve(double *w)
 	return iter;
 }
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // L1-loss and L2-loss SVM dual problems
 //
 //  min_\alpha  0.5(\alpha^T (Q + D)\alpha) - e^T \alpha,
 //    s.t.      0 <= \alpha_i <= upper_bound_i,
-// 
+//
 //  where Qij = yi yj xi^T xj and
-//  D is a diagonal matrix 
+//  D is a diagonal matrix
 //
 // In L1-SVM case:
 // 		upper_bound_i = Cp if y_i = 1
@@ -825,12 +825,12 @@ int Solver_MCSVM_CS::Solve(double *w)
 // 		D_ii = 1/(2*Cp)	if y_i = 1
 // 		D_ii = 1/(2*Cn)	if y_i = -1
 //
-// Given: 
+// Given:
 // x, y, Cp, Cn
 // eps is the stopping tolerance
 //
 // solution will be put in w
-// 
+//
 // See Algorithm 3 of Hsieh et al., ICML 2008
 
 #undef GETI
@@ -1027,14 +1027,14 @@ static int solve_l2r_l1l2_svc(
 }
 
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // L1-loss and L2-loss epsilon-SVR dual problem
 //
 //  min_\beta  0.5\beta^T (Q + diag(lambda)) \beta - p \sum_{i=1}^l|\beta_i| + \sum_{i=1}^l yi\beta_i,
 //    s.t.      -upper_bound_i <= \beta_i <= upper_bound_i,
-// 
+//
 //  where Qij = xi^T xj and
-//  D is a diagonal matrix 
+//  D is a diagonal matrix
 //
 // In L1-SVM case:
 // 		upper_bound_i = C
@@ -1043,13 +1043,13 @@ static int solve_l2r_l1l2_svc(
 // 		upper_bound_i = INF
 // 		lambda_i = 1/(2*C)
 //
-// Given: 
+// Given:
 // x, y, p, C
 // eps is the stopping tolerance
 //
 // solution will be put in w
 //
-// See Algorithm 4 of Ho and Lin, 2012   
+// See Algorithm 4 of Ho and Lin, 2012
 
 #undef GETI
 #define GETI(i) (0)
@@ -1260,17 +1260,17 @@ static int solve_l2r_l1l2_svr(
 }
 
 
-// A coordinate descent algorithm for 
+// A coordinate descent algorithm for
 // the dual of L2-regularized logistic regression problems
 //
 //  min_\alpha  0.5(\alpha^T Q \alpha) + \sum \alpha_i log (\alpha_i) + (upper_bound_i - \alpha_i) log (upper_bound_i - \alpha_i),
 //    s.t.      0 <= \alpha_i <= upper_bound_i,
-// 
-//  where Qij = yi yj xi^T xj and 
+//
+//  where Qij = yi yj xi^T xj and
 //  upper_bound_i = Cp if y_i = 1
 //  upper_bound_i = Cn if y_i = -1
 //
-// Given: 
+// Given:
 // x, y, Cp, Cn
 // eps is the stopping tolerance
 //
@@ -2224,14 +2224,14 @@ static void group_classes(const problem *prob, int *nr_class_ret, int **label_re
                 label[i+1] = this_label;
                 count[i+1] = this_count;
         }
-        
+
         for (i=0; i <l; i++)
         {
                 j = 0;
                 int this_label = (int)prob->y[i];
                 while(this_label != label[j])
                 {
-                        j++;      
+                        j++;
                 }
                 data_label[i] = j;
 
