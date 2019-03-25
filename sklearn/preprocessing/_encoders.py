@@ -81,7 +81,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
 
         if self._categories != 'auto':
             if len(self._categories) != n_features:
-                raise ValueError("Shape mismatch: if n_values is an array,"
+                raise ValueError("Shape mismatch: if categories is an array,"
                                  " it has to be of shape (n_features,).")
 
         self.categories_ = []
