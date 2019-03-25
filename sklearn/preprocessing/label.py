@@ -60,7 +60,11 @@ def _nanin1d(ar1, ar2, assume_unique=False):
         ar1, rev = _nanunique(ar1, return_inverse=True)
         ar2 = _nanunique(ar2)
 
-    in1d = np.in1d(ar1, ar2, True)
+    # The FutureWarning is usually triggered by a nan comparison so it might be
+    # better to just suppress the warning here
+    with warnings.catch_warnings():
+        warnings.simplefilter(action='ignore', category=FutureWarning)
+        in1d = np.in1d(ar1, ar2, True)
     try:
         in1d[-1] = (in1d[-1] or
                     (is_scalar_nan(ar1[-1]) and is_scalar_nan(ar2[-1])))
