@@ -839,7 +839,6 @@ class OneHotEncoder(_BaseEncoder):
                 cats = np.append(cats, self.missing_values)
 
             n_categories = len(cats)
-            print('cats', cats)
 
             # Only happens if there was a column with a unique
             # category. In this case we just fill the column with this
