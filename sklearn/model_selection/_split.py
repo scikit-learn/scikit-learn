@@ -162,7 +162,13 @@ class LeaveOneOut(BaseCrossValidator):
     """
 
     def _iter_test_indices(self, X, y=None, groups=None):
-        return range(_num_samples(X))
+        n_samples = _num_samples(X)
+        if n_samples <= 1:
+            raise ValueError(
+                'Cannot perform LeaveOneOut with n_samples={}.'.format(
+                    n_samples)
+            )
+        return range(n_samples)
 
     def get_n_splits(self, X, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
@@ -209,7 +215,8 @@ class LeavePOut(BaseCrossValidator):
     Parameters
     ----------
     p : int
-        Size of the test sets.
+        Size of the test sets. Must be strictly greater than the number of
+        samples.
 
     Examples
     --------
@@ -238,7 +245,13 @@ class LeavePOut(BaseCrossValidator):
         self.p = p
 
     def _iter_test_indices(self, X, y=None, groups=None):
-        for combination in combinations(range(_num_samples(X)), self.p):
+        n_samples = _num_samples(X)
+        if n_samples <= self.p:
+            raise ValueError(
+                'p={} must be strictly less than the number of '
+                'samples={}'.format(self.p, n_samples)
+            )
+        for combination in combinations(range(n_samples), self.p):
             yield np.array(combination)
 
     def get_n_splits(self, X, y=None, groups=None):
@@ -1862,7 +1875,17 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
                          'samples %d. Reduce test_size and/or '
                          'train_size.' % (n_train + n_test, n_samples))
 
-    return int(n_train), int(n_test)
+    n_train, n_test = int(n_train), int(n_test)
+
+    if n_train == 0:
+        raise ValueError(
+            'With n_samples={}, test_size={} and train_size={}, the '
+            'resulting train set will be empty. Adjust any of the '
+            'aforementioned parameters.'.format(n_samples, test_size,
+                                                train_size)
+        )
+
+    return n_train, n_test
 
 
 class PredefinedSplit(BaseCrossValidator):
