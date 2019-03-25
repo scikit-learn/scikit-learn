@@ -213,6 +213,22 @@ then submit a "pull request" (PR):
     and start making changes. Always use a ``feature`` branch. It's good practice to
     never work on the ``master`` branch!
 
+.. note::
+
+  In the above setup, your ``origin`` remote repository points to
+  ``YourLogin/scikit-learn.git``. If you wish to fetch/merge from the main
+  repository instead of your forked one, you will need to add another remote
+  to use instead of ``origin``. If we choose the name ``upstream`` for it, the
+  command will be::
+
+        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+
+  And in order to fetch the new remote and base your work on the latest changes
+  of it you can::
+
+        $ git fetch upstream
+        $ git checkout -b mybranchname upstream/master
+
  6. Develop the feature on your feature branch on your computer, using Git to do the
     version control. When you're done editing, add changed files using ``git add``
     and then ``git commit`` files::
@@ -235,15 +251,6 @@ then submit a "pull request" (PR):
   If you are modifying a Cython module, you have to re-run step 4 after modifications
   and before testing them.
 
-.. note::
-
-  In the above setup, your ``origin`` remote repository points to
-  YourLogin/scikit-learn.git. If you wish to fetch/merge from the main
-  repository instead of your forked one, you will need to add another remote
-  to use instead of ``origin``. If we choose the name ``upstream`` for it, the
-  command will be::
-
-        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
@@ -256,13 +263,6 @@ then merge its ``master`` into your branch::
 
   $ git fetch upstream
   $ git merge upstream/master
-
-It is recommended to work on temporary branches rather than directly on
-``master``. In order to create a branch from the latest ``upstream/master``,
-you can::
-
-  $ git fetch upstream
-  $ git checkout -b mybranchname upstream/master
 
 Subsequently, you need to solve the conflicts. You can refer to the `Git
 documentation related to resolving merge conflict using the command line
