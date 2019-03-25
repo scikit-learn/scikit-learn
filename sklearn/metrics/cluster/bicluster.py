@@ -79,7 +79,7 @@ def consensus_score(a, b, similarity="jaccard"):
     if similarity == "jaccard":
         similarity = _jaccard
     matrix = _pairwise_similarity(a, b, similarity)
-    row, col = linear_sum_assignment(1. - matrix)
+    row_indices, col_indices = linear_sum_assignment(1. - matrix)
     n_a = len(a[0])
     n_b = len(b[0])
-    return matrix[row, col].sum() / max(n_a, n_b)
+    return matrix[row_indices, col_indices].sum() / max(n_a, n_b)
