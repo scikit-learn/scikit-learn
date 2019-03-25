@@ -226,7 +226,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 grower = TreeGrower(
                     X_binned_train, gradients[k, :], hessians[k, :],
                     max_bins=self.max_bins,
-                    n_bins_per_feature=self.bin_mapper_.n_bins_per_feature_,
+                    actual_n_bins=self.bin_mapper_.actual_n_bins_,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,

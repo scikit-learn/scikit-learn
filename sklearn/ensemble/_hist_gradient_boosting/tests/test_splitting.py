@@ -35,8 +35,8 @@ def test_histogram_split(n_bins):
             all_gradients = ordered_gradients
             sum_gradients = all_gradients.sum()
 
-            n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
-                                          dtype=np.uint32)
+            actual_n_bins = np.array([n_bins] * X_binned.shape[1],
+                                     dtype=np.uint32)
             builder = HistogramBuilder(X_binned,
                                        n_bins,
                                        all_gradients,
@@ -44,7 +44,7 @@ def test_histogram_split(n_bins):
                                        hessians_are_constant)
             splitter = Splitter(X_binned,
                                 n_bins,
-                                n_bins_per_feature,
+                                actual_n_bins,
                                 l2_regularization,
                                 min_hessian_to_split,
                                 min_samples_leaf, min_gain_to_split,
@@ -97,11 +97,11 @@ def test_gradient_and_hessian_sanity(constant_hessian):
         all_hessians = rng.lognormal(size=n_samples).astype(G_H_DTYPE)
         sum_hessians = all_hessians.sum()
 
-    n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
-                                  dtype=np.uint32)
+    actual_n_bins = np.array([n_bins] * X_binned.shape[1],
+                             dtype=np.uint32)
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, constant_hessian)
-    splitter = Splitter(X_binned, n_bins, n_bins_per_feature,
+    splitter = Splitter(X_binned, n_bins, actual_n_bins,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split, constant_hessian)
 
@@ -193,12 +193,12 @@ def test_split_indices():
     sum_hessians = 1 * n_samples
     hessians_are_constant = True
 
-    n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
-                                  dtype=np.uint32)
+    actual_n_bins = np.array([n_bins] * X_binned.shape[1],
+                             dtype=np.uint32)
     builder = HistogramBuilder(X_binned, n_bins,
                                all_gradients, all_hessians,
                                hessians_are_constant)
-    splitter = Splitter(X_binned, n_bins, n_bins_per_feature,
+    splitter = Splitter(X_binned, n_bins, actual_n_bins,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)
@@ -251,11 +251,11 @@ def test_min_gain_to_split():
     sum_hessians = all_hessians.sum()
     hessians_are_constant = False
 
-    n_bins_per_feature = np.array([n_bins] * X_binned.shape[1],
-                                  dtype=np.uint32)
+    actual_n_bins = np.array([n_bins] * X_binned.shape[1],
+                             dtype=np.uint32)
     builder = HistogramBuilder(X_binned, n_bins, all_gradients,
                                all_hessians, hessians_are_constant)
-    splitter = Splitter(X_binned, n_bins, n_bins_per_feature,
+    splitter = Splitter(X_binned, n_bins, actual_n_bins,
                         l2_regularization, min_hessian_to_split,
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)

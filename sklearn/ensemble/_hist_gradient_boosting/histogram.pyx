@@ -91,7 +91,7 @@ cdef class HistogramBuilder:
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
         # Note: all histograms will have <max_bins> bins, but some of the
-        # last bins may be unused if n_bins_per_feature[f] < max_bins
+        # last bins may be unused if actual_n_bins[f] < max_bins
         self.max_bins = max_bins
         self.gradients = gradients
         self.hessians = hessians

@@ -94,7 +94,7 @@ cdef class Splitter:
     max_bins : int, optional(default=256)
         The maximum number of bins. Used to define the shape of the
         histograms.
-    n_bins_per_feature : array-like of int
+    actual_n_bins : array-like of int
         The actual number of bins needed for each feature, which is lower or
         equal to max_bins.
     l2_regularization : float
@@ -113,7 +113,7 @@ cdef class Splitter:
         const X_BINNED_DTYPE_C [::1, :] X_binned
         unsigned int n_features
         unsigned int max_bins
-        unsigned int [::1] n_bins_per_feature
+        unsigned int [::1] actual_n_bins
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
@@ -125,7 +125,7 @@ cdef class Splitter:
         unsigned int [::1] right_indices_buffer
 
     def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned, unsigned int
-                 max_bins, np.ndarray[np.uint32_t] n_bins_per_feature,
+                 max_bins, np.ndarray[np.uint32_t] actual_n_bins,
                  Y_DTYPE_C l2_regularization, Y_DTYPE_C
                  min_hessian_to_split=1e-3, unsigned int
                  min_samples_leaf=20, Y_DTYPE_C min_gain_to_split=0.,
@@ -134,9 +134,9 @@ cdef class Splitter:
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
         # Note: all histograms will have <max_bins> bins, but some of the
-        # last bins may be unused if n_bins_per_feature[f] < max_bins
+        # last bins may be unused if actual_n_bins[f] < max_bins
         self.max_bins = max_bins
-        self.n_bins_per_feature = n_bins_per_feature
+        self.actual_n_bins = actual_n_bins
         self.l2_regularization = l2_regularization
         self.min_hessian_to_split = min_hessian_to_split
         self.min_samples_leaf = min_samples_leaf
@@ -427,7 +427,7 @@ cdef class Splitter:
         sum_gradient_left, sum_hessian_left = 0., 0.
         n_samples_left = 0
 
-        for bin_idx in range(self.n_bins_per_feature[feature_idx]):
+        for bin_idx in range(self.actual_n_bins[feature_idx]):
             n_samples_left += histograms[feature_idx, bin_idx].count
             n_samples_right = n_samples_ - n_samples_left
 

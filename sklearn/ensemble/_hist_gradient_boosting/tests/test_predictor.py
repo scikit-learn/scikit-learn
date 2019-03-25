@@ -27,7 +27,7 @@ def test_boston_dataset(max_bins):
     grower = TreeGrower(X_train_binned, gradients, hessians,
                         min_samples_leaf=min_samples_leaf,
                         max_leaf_nodes=max_leaf_nodes, max_bins=max_bins,
-                        n_bins_per_feature=mapper.n_bins_per_feature_)
+                        actual_n_bins=mapper.actual_n_bins_)
     grower.grow()
 
     predictor = grower.make_predictor(bin_thresholds=mapper.bin_thresholds_)

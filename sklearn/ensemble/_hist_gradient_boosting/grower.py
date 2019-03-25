@@ -140,7 +140,7 @@ class TreeGrower:
     max_bins : int, optional (default=256)
         The maximum number of bins. Used to define the shape of the
         histograms.
-    n_bins_per_feature : array-like of int or int, optional (default=None)
+    actual_n_bins : array-like of int or int, optional (default=None)
         The actual number of bins needed for each feature, which is lower or
         equal to ``max_bins``. If it's an int, all features are considered to
         have the same number of bins. If None, all features are considered to
@@ -157,26 +157,26 @@ class TreeGrower:
     """
     def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
                  max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
-                 max_bins=256, n_bins_per_feature=None, l2_regularization=0.,
+                 max_bins=256, actual_n_bins=None, l2_regularization=0.,
                  min_hessian_to_split=1e-3, shrinkage=1.):
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
                                   l2_regularization, min_hessian_to_split)
 
-        if n_bins_per_feature is None:
-            n_bins_per_feature = max_bins
+        if actual_n_bins is None:
+            actual_n_bins = max_bins
 
-        if isinstance(n_bins_per_feature, int):
-            n_bins_per_feature = np.array(
-                [n_bins_per_feature] * X_binned.shape[1],
+        if isinstance(actual_n_bins, int):
+            actual_n_bins = np.array(
+                [actual_n_bins] * X_binned.shape[1],
                 dtype=np.uint32)
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
             X_binned, max_bins, gradients, hessians, hessians_are_constant)
         self.splitter = Splitter(
-            X_binned, max_bins, n_bins_per_feature, l2_regularization,
+            X_binned, max_bins, actual_n_bins, l2_regularization,
             min_hessian_to_split, min_samples_leaf, min_gain_to_split,
             hessians_are_constant)
         self.max_leaf_nodes = max_leaf_nodes
