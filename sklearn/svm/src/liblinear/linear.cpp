@@ -24,7 +24,7 @@
      See https://github.com/scikit-learn/scikit-learn/pull/5274
 
    Modified 2019:
-   - Patched liblinear for random number generator - Sylvain Marie
+   - Fixed random number generator on windows targets - Sylvain Marie
      See https://github.com/scikit-learn/scikit-learn/pull/13511
 
  */

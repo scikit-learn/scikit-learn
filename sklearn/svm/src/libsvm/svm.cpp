@@ -50,7 +50,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
    Modified 2019:
 
-   - Patched libsvm for random number generator - Sylvain Marie
+   - Fixed random number generator on windows targets - Sylvain Marie
      See https://github.com/scikit-learn/scikit-learn/pull/13511
 
  */
