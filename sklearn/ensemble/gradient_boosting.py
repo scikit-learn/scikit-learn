@@ -1935,7 +1935,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         number, it will set aside ``validation_fraction`` size of the training
         data as validation and terminate training when validation score is not
         improving in all of the previous ``n_iter_no_change`` numbers of
-        iterations.
+        iterations. The split is stratified.
 
         .. versionadded:: 0.20
 

@@ -807,7 +807,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
         validation score is not improving by at least tol for
-        ``n_iter_no_change`` consecutive epochs.
+        ``n_iter_no_change`` consecutive epochs. The split is stratified,
+        except in a multilabel setting.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1
