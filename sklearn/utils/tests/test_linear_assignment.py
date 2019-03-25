@@ -1,7 +1,7 @@
 # Author: Brian M. Clapper, G Varoquaux
 # License: BSD
 
-# TODO v0.23: Remove this test module as the methods being tested
+# TODO #0.23: Remove this test module as the methods being tested
 # have been replaced by SciPy methods
 
 import numpy as np
