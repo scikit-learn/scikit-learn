@@ -857,14 +857,16 @@ points are ordered such that nearby points are adjacent. 'Cutting' the
 reachability plot at a single value produces DBSCAN like results; all points
 above the 'cut' are classified as noise, and each time that there is a break
 when reading from left to right signifies a new cluster. The default cluster
-extraction with OPTICS looks at changes in slope within the graph to guess at
-natural clusters. There are also other possibilities for analysis on the graph
+extraction with OPTICS looks at the steep slopes within the graph to find
+clsuters, and the user can define what counts as a steep slope using the
+parameter ``xi``. There are also other possibilities for analysis on the graph
 itself, such as generating hierarchical representations of the data through
-reachability-plot dendrograms. The plot above has been color-coded so that
-cluster colors in planar space match the linear segment clusters of the
-reachability plot-- note that the blue and red clusters are adjacent in the
-reachability plot, and can be hierarchically represented as children of a
-larger parent cluster.
+reachability-plot dendrograms, and the hierarchy of clusters detected by the
+algorithm can be accessed through the ``cluster_hierarchy_`` parameter. The
+plot above has been color-coded so that cluster colors in planar space match
+the linear segment clusters of the reachability plot. Note that the blue and
+red clusters are adjacent in the reachability plot, and can be hierarchically
+represented as children of a larger parent cluster.
 
 .. topic:: Examples:
 
@@ -874,28 +876,18 @@ larger parent cluster.
 .. topic:: Comparison with DBSCAN
 
     The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are not
-    quite identical. Specifically, while *core_samples* returned from both
-    OPTICS and DBSCAN are guaranteed to be identical, labeling of periphery and
-    noise points is not. This is in part because the first sample processed by
-    OPTICS will always have a reachability distance that is set to ``inf``, and
-    will thus generally be marked as noise rather than periphery. This affects
-    adjacent points when they are considered as candidates for being marked as
-    either periphery or noise. While this effect is quite local to the starting
-    point of the dataset and is unlikely to be noticed on even moderately large
-    datasets, it is worth also noting that non-core boundry points may switch
-    cluster labels on the rare occasion that they are equidistant to a
-    competeing cluster due to how the graph is read from left to right when
-    assigning labels.
+    quite identical; specifically, labeling of periphery and noise points. This
+    is in part because the first samples of each dense area processed by OPTICS
+    have a large reachability value while being close to other points in their
+    area, and will thus sometimes be marked as noise rather than periphery.
+    This affects adjacent points when they are considered as candidates for
+    being marked as either periphery or noise.
 
     Note that for any single value of ``eps``, DBSCAN will tend to have a
     shorter run time than OPTICS; however, for repeated runs at varying ``eps``
     values, a single run of OPTICS may require less cumulative runtime than
-    DBSCAN. It is also important to note that OPTICS output can be unstable at
-    ``eps`` values very close to the initial ``max_eps`` value. OPTICS seems to
-    produce near identical results to DBSCAN provided that ``eps`` passed to
-    ``cluster_optics_dbscan`` is a half order of magnitude less than the inital
-    ``max_eps`` that was used to fit; using a value close to ``max_eps`` will
-    throw a warning, and using a value larger will result in an exception.
+    DBSCAN. It is also important to note that OPTICS' output is close to
+    DBSCAN's only if ``eps`` and ``max_eps`` are close.
 
 .. topic:: Computational Complexity
 
@@ -905,10 +897,10 @@ larger parent cluster.
 
     For large datasets, similar (but not identical) results can be obtained via
     `HDBSCAN <https://hdbscan.readthedocs.io>`_. The HDBSCAN implementation is
-    multithreaded, and has better algorithmic runtime complexity than OPTICS--
+    multithreaded, and has better algorithmic runtime complexity than OPTICS,
     at the cost of worse memory scaling. For extremely large datasets that
     exhaust system memory using HDBSCAN, OPTICS will maintain *n* (as opposed
-    to *n^2* memory scaling); however, tuning of the ``max_eps`` parameter
+    to *n^2*) memory scaling; however, tuning of the ``max_eps`` parameter
     will likely need to be used to give a solution in a reasonable amount of
     wall time.
 
@@ -917,12 +909,6 @@ larger parent cluster.
  *  "OPTICS: ordering points to identify the clustering structure."
     Ankerst, Mihael, Markus M. Breunig, Hans-Peter Kriegel, and Jörg Sander.
     In ACM Sigmod Record, vol. 28, no. 2, pp. 49-60. ACM, 1999.
-
- *  "Automatic extraction of clusters from hierarchical clustering
-    representations."
-    Sander, Jörg, Xuejie Qin, Zhiyong Lu, Nan Niu, and Alex Kovarsky.
-    In Advances in knowledge discovery and data mining,
-    pp. 75-87. Springer Berlin Heidelberg, 2003. 
 
 .. _birch:
 

@@ -92,7 +92,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     eps : float, optional (default=0.5)
         The maximum distance between two samples for them to be considered
-        as in the same neighborhood. Used ony when `cluster_method='dbscan'`.
+        as in the same neighborhood. Used ony when ``cluster_method='dbscan'``.
 
     xi : float, between 0 and 1, optional (default=0.05)
         Determines the minimum steepness on the reachability plot that
@@ -254,14 +254,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
             if self.eps > self.max_eps:
                 raise ValueError('Specify an epsilon smaller than %s. Got %s.'
                                  % (self.max_eps, self.eps))
-
-            if self.eps * 5.0 > self.max_eps * 1.05:
-                warnings.warn(
-                    "Warning, max_eps (%s) is close to eps (%s): "
-                    "Output may be unstable." % (self.max_eps, self.eps),
-                    RuntimeWarning, stacklevel=2)
-                # Stability warning is documented in cluster_optics_dbscan
-                # method...
 
         (self.ordering_, self.core_distances_, self.reachability_,
          self.predecessor_) = compute_optics_graph(
@@ -528,11 +520,9 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
 def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     """Performs DBSCAN extraction for an arbitrary epsilon.
 
-    Extracting the clusters runs in linear time. Note that if the `max_eps`
-    OPTICS parameter was set to < inf for extracting reachability and ordering
-    arrays, DBSCAN extractions will be unstable for `eps` values close to
-    `max_eps`. Setting `eps` < (`max_eps` / 5.0) will guarantee extraction
-    parity with DBSCAN.
+    Extracting the clusters runs in linear time. Note that this results in
+    ``labels_`` which are close to a `DBSCAN` with similar settings and 
+    ``eps``, only if ``eps`` is close to ``max_eps``.
 
     Parameters
     ----------
@@ -547,7 +537,8 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
 
     eps : float, optional (default=0.5)
         DBSCAN `eps` parameter. Must be set to < `max_eps`. Results
-        will be close to DBSCAN algorithm if `eps` is < (`max_eps` / 5)
+        will be close to DBSCAN algorithm if ``eps`` and ``max_eps`` are close
+        to one another.
 
     Returns
     -------
