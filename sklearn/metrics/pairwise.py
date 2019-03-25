@@ -30,6 +30,7 @@ from ..utils._joblib import delayed
 from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from ..exceptions import DataConversionWarning
 
 
 # Utility Functions
@@ -1421,6 +1422,13 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
         X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+
+        if metric in PAIRWISE_BOOLEAN_FUNCTIONS \
+                and X.dtype is not bool and Y.dtype is not bool:
+            X, Y = X.astype(np.bool), Y.astype(np.bool)
+            msg = ("Data was converted to boolean "
+                   "for metric %s" % (metric))
+            warnings.warn(msg, DataConversionWarning)
 
         # precompute data-derived metric params
         params = _precompute_metric_params(X, Y, metric=metric, **kwds)

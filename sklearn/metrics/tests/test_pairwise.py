@@ -122,6 +122,10 @@ def test_pairwise_distances():
     # Test that a value error is raised if the metric is unknown
     assert_raises(ValueError, pairwise_distances, X, Y, metric="blah")
 
+    # Test boolean metric raises dataconversion warning
+    assert_warns_message(DataConversionWarning, 'boolean', pairwise_distances,
+                         X, Y, metric='jaccard')
+
 
 @pytest.mark.parametrize('metric', PAIRWISE_BOOLEAN_FUNCTIONS)
 def test_pairwise_boolean_distance(metric):
