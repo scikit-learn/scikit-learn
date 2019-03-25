@@ -73,9 +73,11 @@ class TreeNode:
     # start and stop indices of the node in the splitter.partition
     # array. Concretely,
     # self.sample_indices = view(self.splitter.partition[start:stop])
-    # Only used in _update_raw_prediction, because we need to iterate over the
-    # leaves and I don't know how to efficiently store the sample_indices
-    # views because they're all of different sizes.
+    # Please see the comments about splitter.partition and
+    # splitter.split_indices for more info about this design.
+    # These 2 attributes are only used in _update_raw_prediction, because we
+    # need to iterate over the leaves and I don't know how to efficiently
+    # store the sample_indices views because they're all of different sizes.
     partition_start = 0
     partition_stop = 0
 
@@ -87,15 +89,6 @@ class TreeNode:
         self.sum_gradients = sum_gradients
         self.sum_hessians = sum_hessians
         self.parent = parent
-
-    def __repr__(self):
-        # To help with debugging
-        out = "TreeNode: depth={}, ".format(self.depth)
-        out += "samples={}".format(len(self.sample_indices))
-        if self.split_info is not None:
-            out += ", feature_idx={}".format(self.split_info.feature_idx)
-            out += ", bin_idx={}".format(self.split_info.bin_idx)
-        return out
 
     def __lt__(self, other_node):
         """Comparison for priority queue.
@@ -112,7 +105,7 @@ class TreeNode:
             The node to compare with.
         """
         if self.split_info is None or other_node.split_info is None:
-            raise ValueError("Cannot compare nodes with split_info")
+            raise ValueError("Cannot compare nodes without split_info")
         return self.split_info.gain > other_node.split_info.gain
 
 
@@ -157,7 +150,7 @@ class TreeGrower:
     min_hessian_to_split : float, optional (default=1e-3)
         The minimum sum of hessians needed in each node. Splits that result in
         at least one child having a sum of hessians less than
-        min_hessian_to_split are discarded.
+        ``min_hessian_to_split`` are discarded.
     shrinkage : float, optional (default=1)
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
@@ -277,17 +270,17 @@ class TreeGrower:
     def _compute_best_split_and_push(self, node):
         """Compute the best possible split (SplitInfo) of a given node.
 
-        Also push it in the heap of splittable nodes if gain isn't zero."""
+        Also push it in the heap of splittable nodes if gain isn't zero.
+        The gain of a node is 0 if either all the leaves are pure
+        (best gain = 0), or if no split would satisfy the constraints,
+        (min_hessians_to_split, min_gain_to_split, min_samples_leaf)
+        """
 
         node.split_info = self.splitter.find_node_split(
             node.sample_indices, node.histograms, node.sum_gradients,
             node.sum_hessians)
 
         if node.split_info.gain <= 0:  # no valid split
-            # Note: this condition is reached if either all the leaves are
-            # pure (best gain = 0), or if no split would satisfy the
-            # constraints, (min_hessians_to_split, min_gain_to_split,
-            # min_samples_leaf)
             self._finalize_leaf(node)
         else:
             heappush(self.splittable_nodes, node)
@@ -444,7 +437,7 @@ class TreeGrower:
 
 
 def _fill_predictor_node_array(predictor_nodes, grower_node,
-                               bin_thresholds=None, next_free_idx=0):
+                               bin_thresholds, next_free_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields."""
     node = predictor_nodes[next_free_idx]
     node['count'] = grower_node.n_samples

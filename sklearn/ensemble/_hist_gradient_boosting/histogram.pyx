@@ -68,8 +68,8 @@ cdef class HistogramBuilder:
         G_H_DTYPE_C [::1] ordered_hessians
         unsigned char hessians_are_constant
 
-    def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned, unsigned int
-                 max_bins, G_H_DTYPE_C [::1] gradients,
+    def __init__(self, const X_BINNED_DTYPE_C [::1, :] X_binned,
+                 unsigned int max_bins, G_H_DTYPE_C [::1] gradients,
                  G_H_DTYPE_C [::1] hessians,
                  unsigned char hessians_are_constant):
 
