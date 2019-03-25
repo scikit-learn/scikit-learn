@@ -269,6 +269,20 @@ This algorithm is illustrated below.
     * Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
       Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
 
+.. _iforest_warm_start:
+
+Fitting additional trees
+~~~~~~~~~~~~~~~~~~~~~~~~
+The :class:`ensemble.IsolationForest` supports ``warm_start=True`` which
+allows you to add more trees to an already fitted model.
+
+::
+
+  >>> clf = IsolationForest(n_estimators=100, warm_start=True)
+  >>> clf.fit(X)
+  >>> clf.set_params(n_estimators=200)  # set warm_start and new nr of trees
+  >>> clf.fit(X) # fit additional 100 trees
+
 
 Local Outlier Factor
 --------------------

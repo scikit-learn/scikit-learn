@@ -297,7 +297,7 @@ def test_score_samples():
 
 @pytest.mark.filterwarnings('ignore:default contamination')
 @pytest.mark.filterwarnings('ignore:behaviour="old"')
-def test_iforest_warmstart():
+def test_iforest_warm_start():
     """Test iterative addition of iTrees to an iForest """
 
     rng = check_random_state(0)
