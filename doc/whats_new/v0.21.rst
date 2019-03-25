@@ -183,8 +183,8 @@ Support for Python 3.4 and below has been officially dropped.
   the gradients would be incorrectly computed in multiclass classification
   problems. :issue:`12715` by :user:`Nicolas Hug<NicolasHug>`.
 
-- |Fix| Early stopping is now checked on a stratified split for
-  :class:`ensemble.GradientBoostingClassifier`.
+- |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
+  validation sets for early stopping were not sampled with stratification.
   :issue:`13164` by :user:`Nicolas Hug<NicolasHug>`.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
@@ -426,8 +426,9 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`neural_network.MLPRegressor` where the option :code:`shuffle=False`
   was being ignored. :issue:`12582` by :user:`Sam Waterbury <samwaterbury>`.
 
-- |Fix| Early stopping is now checked on a stratified split for
-  :class:`neural_network.MLPClassifier` (except in the multilabel case).
+- |Fix| Fixed a bug in :class:`neural_network.MLPClassifier` where
+  validation sets for early stopping were not sampled with stratification. In
+  multilabel case however, splits are still not stratified.
   :issue:`13164` by :user:`Nicolas Hug<NicolasHug>`.
 
 :mod:`sklearn.pipeline`
