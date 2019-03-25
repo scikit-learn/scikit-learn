@@ -18,13 +18,28 @@ from .types cimport X_BINNED_DTYPE_C
 from .types cimport G_H_DTYPE_C
 from .types cimport hist_struct
 
-# Note: IN views are read-only, OUT views are write-only
-
-# Note: in a lot of functions here, we pass feature_idx and the whole 2d
-# histograms arrays instead of just histograms[feature_idx]. This is because
-# Cython generated C code will have strange Python interactions (likely
-# related to the GIL release and the custom histogram dtype) when using 1d
-# histogram arrays that come from 2d arrays.
+# Notes:
+# - IN views are read-only, OUT views are write-only
+# - In a lot of functions here, we pass feature_idx and the whole 2d
+#   histograms arrays instead of just histograms[feature_idx]. This is because
+#   Cython generated C code will have strange Python interactions (likely
+#   related to the GIL release and the custom histogram dtype) when using 1d
+#   histogram arrays that come from 2d arrays.
+# - The for loops are un-wrapped, for example:
+#
+#   for i in range(n):
+#       array[i] = i
+#
+#   will become
+#
+#   for i in range(n // 4):
+#       array[i] = i
+#       array[i + 1] = i + 1
+#       array[i + 2] = i + 2
+#       array[i + 3] = i + 3
+#
+#   This is to hint gcc that it can auto-vectorize these 4 operations and
+#   perform them all at once.
 
 
 @cython.final
