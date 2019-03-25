@@ -1482,6 +1482,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 raw_predictions = np.zeros(shape=(X.shape[0], self.loss_.K),
                                            dtype=np.float64)
             else:
+                # XXX clean this once we have a support_sample_weight tag
                 if sample_weight_is_none:
                     self.init_.fit(X, y)
                 else:
