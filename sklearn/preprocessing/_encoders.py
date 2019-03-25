@@ -16,7 +16,6 @@ from ..utils.fixes import _argmax, _object_dtype_isnan
 from ..utils.validation import check_is_fitted
 
 from .base import _transform_selected
-from .label import _encode, _encode_check_unknown
 from .label import _nanencode
 
 __all__ = [
