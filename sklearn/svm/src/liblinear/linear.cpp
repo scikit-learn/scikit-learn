@@ -25,7 +25,7 @@
 
    Modified 2019:
    - Patched liblinear for random number generator - Sylvain Marie
-     See https://github.com/scikit-learn/scikit-learn/pull/xxxx
+     See https://github.com/scikit-learn/scikit-learn/pull/13511
 
  */
 
