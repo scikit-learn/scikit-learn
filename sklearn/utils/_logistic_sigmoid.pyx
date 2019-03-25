@@ -19,7 +19,8 @@ cdef inline DTYPE_t _inner_log_logistic_sigmoid(const DTYPE_t x):
         return x - log(1. + exp(x))
 
 
-def _log_logistic_sigmoid(int n_samples, int n_features,
+def _log_logistic_sigmoid(unsigned int n_samples,
+                          unsigned int n_features,
                           DTYPE_t[:, :] X,
                           DTYPE_t[:, :] out):
     cdef:
