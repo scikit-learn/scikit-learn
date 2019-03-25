@@ -158,11 +158,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Point that a sample was reached from, indexed by object order.
         Seed points have a predecessor of -1.
 
-    clusters_ : array, shape (n_clusters, 2)
-        The list of clusters in the form of [start, end] in each row, with all
-        indices inclusive. The clusters are ordered in a way that larger
-        clusters encompassing smaller clusters come after those smaller
-        clusters.
+    cluster_hierarchy_ : array, shape (n_clusters, 2)
+        The list of clusters in the form of ``[start, end]`` in each row, with
+        all indices inclusive. The clusters are ordered according to
+        ``(end, -start)`` (ascending) so that larger clusters encompassing
+        smaller clusters come after those smaller ones. Since ``labels_`` does
+        not reflect the hierarchy, usually
+        ``len(cluster_hierarchy_) > np.unique(optics.labels_)``.
         Only available when ``cluster_method='xi'``.
 
     See also
@@ -280,7 +282,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 self.min_cluster_size,
                 self.xi,
                 self.predecessor_correction)
-            self.clusters_ = clusters_
+            self.cluster_hierarchy_ = clusters_
         elif self.cluster_method == 'dbscan':
             labels_ = cluster_optics_dbscan(self.reachability_,
                                             self.core_distances_,
@@ -604,10 +606,12 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
         in any cluster are labeled as -1.
 
     clusters : array, shape (n_clusters, 2)
-        The list of clusters in the form of [start, end] in each row, with all
-        indices inclusive. The clusters are ordered in a way that larger
-        clusters encompassing smaller clusters come after those smaller
-        clusters.
+        The list of clusters in the form of ``[start, end]`` in each row, with
+        all indices inclusive. The clusters are ordered according to
+        ``(end, -start)`` (ascending) so that larger clusters encompassing
+        smaller clusters come after those smaller ones. Since ``labels`` does
+        not reflect the hierarchy, usually
+        ``len(clusters) > np.unique(labels)``.
     """
     clusters = _xi_cluster(reachability[ordering], predecessor[ordering], xi,
                            min_samples, min_cluster_size,
