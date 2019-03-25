@@ -121,8 +121,9 @@ def _hungarian(cost_matrix):
         the original ordering.
     """
     warnings.warn(
-        "This method is deprecated in 0.21 and will removed from 0.23 "
-        "as the algorithm incorporated in SciPy will be used instead.",
+        "The _hungarian function is deprecated in 0.21 "
+        "and will be removed from 0.23. Use "
+        "scipy.optimize.linear_sum_assignment instead.",
         DeprecationWarning)
 
     state = _HungarianState(cost_matrix)
