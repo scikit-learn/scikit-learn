@@ -427,7 +427,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
     This estimator is much faster than
     :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`
-    for big datasets (n_samples >= 10 000). The input data `X` is pre-binned
+    for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
     into integer-valued bins, which considerably reduces the number of
     splitting points to consider, and allows the algorithm to leverage
     integer-based data structures. For small sample sizes,
@@ -477,7 +477,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1``th-to-last one, up to some
         tolerance. If None or 0, no early-stopping is done.
-    tol : float or None optional (default=1e-7)
+    tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores during early
         stopping. The higher the tolerance, the more likely we are to early
         stop: higher tolerance means that it will be harder for subsequent
@@ -566,7 +566,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     This estimator is much faster than
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
-    for big datasets (n_samples >= 10 000). The input data `X` is pre-binned
+    for big datasets (n_samples >= 10 000). The input data ``X`` is pre-binned
     into integer-valued bins, which considerably reduces the number of
     splitting points to consider, and allows the algorithm to leverage
     integer-based data structures. For small sample sizes,
@@ -622,7 +622,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1``th-to-last one, up to some
         tolerance. If None or 0, no early-stopping is done.
-    tol : float or None optional (default=1e-7)
+    tol : float or None, optional (default=1e-7)
         The absolute tolerance to use when comparing scores. The higher the
         tolerance, the more likely we are to early stop: higher tolerance
         means that it will be harder for subsequent iterations to be
