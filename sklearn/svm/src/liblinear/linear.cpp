@@ -22,6 +22,11 @@
    Modified 2015:
    - Patched liblinear for sample_weights - Manoj Kumar
      See https://github.com/scikit-learn/scikit-learn/pull/5274
+
+   Modified 2019:
+   - Patched liblinear for random number generator - Sylvain Marie
+     See https://github.com/scikit-learn/scikit-learn/pull/xxxx
+
  */
 
 #include <math.h>
@@ -32,6 +37,9 @@
 #include <locale.h>
 #include "linear.h"
 #include "tron.h"
+#ifdef _WIN32
+#include <limits>
+#endif
 typedef signed char schar;
 template <class T> static inline void swap(T& x, T& y) { T t=x; x=y; y=t; }
 #ifndef min
@@ -69,6 +77,33 @@ static void info(const char *fmt,...)
 #else
 static void info(const char *fmt,...) {}
 #endif
+
+// New function to ensure the same behaviour for random number generation on windows and linux
+int myrand() {
+#ifdef _WIN32
+	// In MS Visual Studio (2012) RAND_MAX = 0x7FFF (15bit) = 32767
+	// In Linux GCC (4.6) 32bits RAND_MAX = 0x7FFFFFFF (31bit) = 2147483647
+	// In Linux GCC (4.6) 64bits RAND_MAX = 0x7FFFFFFFFFFFFFFF (63 bits) = 9223372036854775807
+	// so in MS Visual Studio we need to call rand() several times to always ensure the same random number range than in Linux GCC
+	if (std::numeric_limits<int>::max() == 0x7FFFFFFF) {
+		// make a 31bit random number by using several 15bit rand()
+		return ((rand() << 16) + (rand() << 1) + (rand() >> 14));
+	}
+	else if (std::numeric_limits<int>::max() == 0x7FFFFFFFFFFFFFFF) {
+		// make a 63bit random number by using several 15bit rand()
+		return ((rand() << 48) + (rand() << 33) + (rand() << 18) + (rand() << 3) + (rand() >> 12));
+	}
+	else {
+		//fallback - should never happen on 32 or 64 bits systems
+		return rand();
+	}
+#else
+	// In Linux GCC (4.6) 32bits RAND_MAX = 0x7FFFFFFF (31bit) or 64bits RAND_MAX = 0x7FFFFFFFFFFFFFFF (63 bits)
+	// nothing special to do
+	return rand();
+#endif
+}
+
 
 class l2r_lr_fun: public function
 {
@@ -612,7 +647,7 @@ int Solver_MCSVM_CS::Solve(double *w)
 		double stopping = -INF;
 		for(i=0;i<active_size;i++)
 		{
-			int j = i+rand()%(active_size-i);
+			int j = i+myrand()%(active_size-i);
 			swap(index[i], index[j]);
 		}
 		for(s=0;s<active_size;s++)
@@ -874,7 +909,7 @@ static int solve_l2r_l1l2_svc(
 
 		for (i=0; i<active_size; i++)
 		{
-			int j = i+rand()%(active_size-i);
+			int j = i+myrand()%(active_size-i);
 			swap(index[i], index[j]);
 		}
 
@@ -1082,7 +1117,7 @@ static int solve_l2r_l1l2_svr(
 
 		for(i=0; i<active_size; i++)
 		{
-			int j = i+rand()%(active_size-i);
+			int j = i+myrand()%(active_size-i);
 			swap(index[i], index[j]);
 		}
 
@@ -1305,7 +1340,7 @@ int solve_l2r_lr_dual(const problem *prob, double *w, double eps, double Cp, dou
 	{
 		for (i=0; i<l; i++)
 		{
-			int j = i+rand()%(l-i);
+			int j = i+myrand()%(l-i);
 			swap(index[i], index[j]);
 		}
 		int newton_iter = 0;
@@ -1486,7 +1521,7 @@ static int solve_l1r_l2_svc(
 
 		for(j=0; j<active_size; j++)
 		{
-			int i = j+rand()%(active_size-j);
+			int i = j+myrand()%(active_size-j);
 			swap(index[i], index[j]);
 		}
 
@@ -1862,7 +1897,7 @@ static int solve_l1r_lr(
 
 			for(j=0; j<QP_active_size; j++)
 			{
-				int i = j+rand()%(QP_active_size-j);
+				int i = j+myrand()%(QP_active_size-j);
 				swap(index[i], index[j]);
 			}
 
@@ -2519,7 +2554,7 @@ void cross_validation(const problem *prob, const parameter *param, int nr_fold, 
 	for(i=0;i<l;i++) perm[i]=i;
 	for(i=0;i<l;i++)
 	{
-		int j = i+rand()%(l-i);
+		int j = i+myrand()%(l-i);
 		swap(perm[i],perm[j]);
 	}
 	for(i=0;i<=nr_fold;i++)
