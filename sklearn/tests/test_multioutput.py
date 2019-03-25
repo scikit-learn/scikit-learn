@@ -1,4 +1,3 @@
-from __future__ import division
 
 import pytest
 import numpy as np
@@ -6,7 +5,6 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
@@ -19,13 +17,13 @@ from sklearn.base import clone
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
-from sklearn.utils import cpu_count
+from sklearn.utils._joblib import cpu_count
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
-from sklearn.metrics import jaccard_similarity_score, mean_squared_error
+from sklearn.metrics import jaccard_score, mean_squared_error
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
@@ -75,7 +73,7 @@ def test_multi_target_regression_partial_fit():
 
     y_pred = sgr.predict(X_test)
     assert_almost_equal(references, y_pred)
-    assert_false(hasattr(MultiOutputRegressor(Lasso), 'partial_fit'))
+    assert not hasattr(MultiOutputRegressor(Lasso), 'partial_fit')
 
 
 def test_multi_target_regression_one_target():
@@ -175,7 +173,7 @@ def test_multi_output_classification_partial_fit_parallelism():
     est2 = mor.estimators_[0]
     if cpu_count() > 1:
         # parallelism requires this to be the case for a sane implementation
-        assert_false(est1 is est2)
+        assert est1 is not est2
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -433,8 +431,8 @@ def test_classifier_chain_vs_independent_models():
     chain.fit(X_train, Y_train)
     Y_pred_chain = chain.predict(X_test)
 
-    assert_greater(jaccard_similarity_score(Y_test, Y_pred_chain),
-                   jaccard_similarity_score(Y_test, Y_pred_ovr))
+    assert_greater(jaccard_score(Y_test, Y_pred_chain, average='samples'),
+                   jaccard_score(Y_test, Y_pred_ovr, average='samples'))
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
@@ -512,6 +510,6 @@ def test_base_chain_crossval_fit_and_predict():
         assert Y_pred_cv.shape == Y_pred.shape
         assert not np.all(Y_pred == Y_pred_cv)
         if isinstance(chain, ClassifierChain):
-            assert jaccard_similarity_score(Y, Y_pred_cv) > .4
+            assert jaccard_score(Y, Y_pred_cv, average='samples') > .4
         else:
             assert mean_squared_error(Y, Y_pred_cv) < .25

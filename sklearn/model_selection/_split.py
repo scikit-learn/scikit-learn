@@ -9,15 +9,13 @@ functions to split the data based on a preset strategy.
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-
-from __future__ import print_function
-from __future__ import division
-
+from collections.abc import Iterable
 import warnings
 from itertools import chain, combinations
 from math import ceil, floor
 import numbers
 from abc import ABCMeta, abstractmethod
+from inspect import signature
 
 import numpy as np
 
@@ -25,10 +23,7 @@ from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
-from ..externals.six import with_metaclass
-from ..externals.six.moves import zip
-from ..utils.fixes import signature, comb
-from ..utils.fixes import _Iterable as Iterable
+from ..utils.fixes import comb
 from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
@@ -50,26 +45,19 @@ __all__ = ['BaseCrossValidator',
 
 
 NSPLIT_WARNING = (
-    "You should specify a value for 'n_splits' instead of relying on the "
-    "default value. The default value will change from 3 to 5 "
-    "in version 0.22.")
+    "The default value of n_split will change from 3 to 5 "
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 CV_WARNING = (
-    "You should specify a value for 'cv' instead of relying on the "
-    "default value. The default value will change from 3 to 5 "
-    "in version 0.22.")
+    "The default value of cv will change from 3 to 5 "
+    "in version 0.22. Specify it explicitly to silence this warning.")
 
 
-class BaseCrossValidator(with_metaclass(ABCMeta)):
+class BaseCrossValidator(metaclass=ABCMeta):
     """Base class for all cross-validators
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
-
-    def __init__(self):
-        # We need this for the build_repr to work properly in py2.7
-        # see #6304
-        pass
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -145,6 +133,7 @@ class LeaveOneOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeaveOneOut
     >>> X = np.array([[1, 2], [3, 4]])
     >>> y = np.array([1, 2])
@@ -173,7 +162,13 @@ class LeaveOneOut(BaseCrossValidator):
     """
 
     def _iter_test_indices(self, X, y=None, groups=None):
-        return range(_num_samples(X))
+        n_samples = _num_samples(X)
+        if n_samples <= 1:
+            raise ValueError(
+                'Cannot perform LeaveOneOut with n_samples={}.'.format(
+                    n_samples)
+            )
+        return range(n_samples)
 
     def get_n_splits(self, X, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
@@ -220,10 +215,12 @@ class LeavePOut(BaseCrossValidator):
     Parameters
     ----------
     p : int
-        Size of the test sets.
+        Size of the test sets. Must be strictly greater than the number of
+        samples.
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeavePOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
@@ -248,7 +245,13 @@ class LeavePOut(BaseCrossValidator):
         self.p = p
 
     def _iter_test_indices(self, X, y=None, groups=None):
-        for combination in combinations(range(_num_samples(X)), self.p):
+        n_samples = _num_samples(X)
+        if n_samples <= self.p:
+            raise ValueError(
+                'p={} must be strictly less than the number of '
+                'samples={}'.format(self.p, n_samples)
+            )
+        for combination in combinations(range(n_samples), self.p):
             yield np.array(combination)
 
     def get_n_splits(self, X, y=None, groups=None):
@@ -271,7 +274,7 @@ class LeavePOut(BaseCrossValidator):
         return int(comb(_num_samples(X), self.p, exact=True))
 
 
-class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
+class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
     """Base class for KFold, GroupKFold, and StratifiedKFold"""
 
     @abstractmethod
@@ -328,7 +331,7 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
                  " than the number of samples: n_samples={1}.")
                 .format(self.n_splits, n_samples))
 
-        for train, test in super(_BaseKFold, self).split(X, y, groups):
+        for train, test in super().split(X, y, groups):
             yield train, test
 
     def get_n_splits(self, X=None, y=None, groups=None):
@@ -383,6 +386,7 @@ class KFold(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import KFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4])
@@ -425,7 +429,7 @@ class KFold(_BaseKFold):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
-        super(KFold, self).__init__(n_splits, shuffle, random_state)
+        super().__init__(n_splits, shuffle, random_state)
 
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
@@ -462,6 +466,7 @@ class GroupKFold(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import GroupKFold
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 3, 4])
@@ -496,8 +501,7 @@ class GroupKFold(_BaseKFold):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
-        super(GroupKFold, self).__init__(n_splits, shuffle=False,
-                                         random_state=None)
+        super().__init__(n_splits, shuffle=False, random_state=None)
 
     def _iter_test_indices(self, X, y, groups):
         if groups is None:
@@ -536,6 +540,32 @@ class GroupKFold(_BaseKFold):
         for f in range(self.n_splits):
             yield np.where(indices == f)[0]
 
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,), optional
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super().split(X, y, groups)
+
 
 class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross-validator
@@ -557,8 +587,7 @@ class StratifiedKFold(_BaseKFold):
             ``n_splits`` default value will change from 3 to 5 in v0.22.
 
     shuffle : boolean, optional
-        Whether to shuffle each stratification of the data before splitting
-        into batches.
+        Whether to shuffle each class's samples before splitting into batches.
 
     random_state : int, RandomState instance or None, optional, default=None
         If int, random_state is the seed used by the random number generator;
@@ -568,6 +597,7 @@ class StratifiedKFold(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import StratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -597,10 +627,10 @@ class StratifiedKFold(_BaseKFold):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
-        super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
+        super().__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None):
-        rng = self.random_state
+        rng = check_random_state(self.random_state)
         y = np.asarray(y)
         type_of_target_y = type_of_target(y)
         allowed_target_types = ('binary', 'multiclass')
@@ -691,7 +721,7 @@ class StratifiedKFold(_BaseKFold):
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
-        return super(StratifiedKFold, self).split(X, y, groups)
+        return super().split(X, y, groups)
 
 
 class TimeSeriesSplit(_BaseKFold):
@@ -724,6 +754,7 @@ class TimeSeriesSplit(_BaseKFold):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import TimeSeriesSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([1, 2, 3, 4, 5, 6])
@@ -751,9 +782,7 @@ class TimeSeriesSplit(_BaseKFold):
         if n_splits == 'warn':
             warnings.warn(NSPLIT_WARNING, FutureWarning)
             n_splits = 3
-        super(TimeSeriesSplit, self).__init__(n_splits,
-                                              shuffle=False,
-                                              random_state=None)
+        super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
 
     def split(self, X, y=None, groups=None):
@@ -768,7 +797,7 @@ class TimeSeriesSplit(_BaseKFold):
         y : array-like, shape (n_samples,)
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,)
             Always ignored, exists for compatibility.
 
         Yields
@@ -815,6 +844,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeaveOneGroupOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     >>> y = np.array([1, 2, 1, 2])
@@ -860,13 +890,13 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object, optional
+        X : object
             Always ignored, exists for compatibility.
 
-        y : object, optional
+        y : object
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -881,6 +911,32 @@ class LeaveOneGroupOut(BaseCrossValidator):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         return len(np.unique(groups))
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, of length n_samples, optional
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super().split(X, y, groups)
 
 
 class LeavePGroupsOut(BaseCrossValidator):
@@ -907,6 +963,7 @@ class LeavePGroupsOut(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import LeavePGroupsOut
     >>> X = np.array([[1, 2], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1])
@@ -964,13 +1021,13 @@ class LeavePGroupsOut(BaseCrossValidator):
 
         Parameters
         ----------
-        X : object, optional
+        X : object
             Always ignored, exists for compatibility.
 
-        y : object, optional
+        y : object
             Always ignored, exists for compatibility.
 
-        groups : array-like, with shape (n_samples,), optional
+        groups : array-like, with shape (n_samples,)
             Group labels for the samples used while splitting the dataset into
             train/test set. This 'groups' parameter must always be specified to
             calculate the number of splits, though the other parameters can be
@@ -986,8 +1043,34 @@ class LeavePGroupsOut(BaseCrossValidator):
         groups = check_array(groups, ensure_2d=False, dtype=None)
         return int(comb(len(np.unique(groups)), self.n_groups, exact=True))
 
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
 
-class _RepeatedSplits(with_metaclass(ABCMeta)):
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, of length n_samples, optional
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+        """
+        return super().split(X, y, groups)
+
+
+class _RepeatedSplits(metaclass=ABCMeta):
     """Repeated splits for an arbitrary randomized CV splitter.
 
     Repeats splits for cross-validators n times with different randomization
@@ -1111,6 +1194,7 @@ class RepeatedKFold(_RepeatedSplits):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import RepeatedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -1136,7 +1220,7 @@ class RepeatedKFold(_RepeatedSplits):
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
     def __init__(self, n_splits=5, n_repeats=10, random_state=None):
-        super(RepeatedKFold, self).__init__(
+        super().__init__(
             KFold, n_repeats, random_state, n_splits=n_splits)
 
 
@@ -1162,6 +1246,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import RepeatedStratifiedKFold
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -1188,11 +1273,11 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     RepeatedKFold: Repeats K-Fold n times.
     """
     def __init__(self, n_splits=5, n_repeats=10, random_state=None):
-        super(RepeatedStratifiedKFold, self).__init__(
+        super().__init__(
             StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
 
 
-class BaseShuffleSplit(with_metaclass(ABCMeta)):
+class BaseShuffleSplit(metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n_splits=10, test_size="default", train_size=None,
@@ -1306,6 +1391,7 @@ class ShuffleSplit(BaseShuffleSplit):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import ShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [3, 4], [5, 6]])
     >>> y = np.array([1, 2, 1, 2, 1, 2])
@@ -1379,7 +1465,7 @@ class GroupShuffleSplit(ShuffleSplit):
     test_size : float, int, None, optional
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, the value is set to the
+        absolute number of test groups. If None, the value is set to the
         complement of the train size. By default, the value is set to 0.2.
         The default will change in version 0.21. It will remain 0.2 only
         if ``train_size`` is unspecified, otherwise it will complement
@@ -1409,7 +1495,7 @@ class GroupShuffleSplit(ShuffleSplit):
                               FutureWarning)
             test_size = 0.2
 
-        super(GroupShuffleSplit, self).__init__(
+        super().__init__(
             n_splits=n_splits,
             test_size=test_size,
             train_size=train_size,
@@ -1420,8 +1506,7 @@ class GroupShuffleSplit(ShuffleSplit):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, ensure_2d=False, dtype=None)
         classes, group_indices = np.unique(groups, return_inverse=True)
-        for group_train, group_test in super(
-                GroupShuffleSplit, self)._iter_indices(X=classes):
+        for group_train, group_test in super()._iter_indices(X=classes):
             # these are the indices of classes in the partition
             # invert them into data indices
 
@@ -1429,6 +1514,38 @@ class GroupShuffleSplit(ShuffleSplit):
             test = np.flatnonzero(np.in1d(group_indices, group_test))
 
             yield train, test
+
+    def split(self, X, y=None, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape (n_samples,), optional
+            The target variable for supervised learning problems.
+
+        groups : array-like, with shape (n_samples,)
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
+
+        Yields
+        ------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
+        """
+        return super().split(X, y, groups)
 
 
 def _approximate_mode(class_counts, n_draws, rng):
@@ -1458,6 +1575,7 @@ def _approximate_mode(class_counts, n_draws, rng):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection._split import _approximate_mode
     >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
     array([2, 1])
@@ -1542,6 +1660,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import StratifiedShuffleSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 0, 1, 1, 1])
@@ -1563,7 +1682,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     def __init__(self, n_splits=10, test_size="default", train_size=None,
                  random_state=None):
-        super(StratifiedShuffleSplit, self).__init__(
+        super().__init__(
             n_splits, test_size, train_size, random_state)
 
     def _iter_indices(self, X, y, groups=None):
@@ -1661,7 +1780,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
-        return super(StratifiedShuffleSplit, self).split(X, y, groups)
+        return super().split(X, y, groups)
 
 
 def _validate_shuffle_split_init(test_size, train_size):
@@ -1683,23 +1802,25 @@ def _validate_shuffle_split_init(test_size, train_size):
 
     if test_size is not None:
         if np.asarray(test_size).dtype.kind == 'f':
-            if test_size >= 1.:
+            if test_size >= 1. or test_size <= 0:
                 raise ValueError(
-                    'test_size=%f should be smaller '
-                    'than 1.0 or be an integer' % test_size)
+                    'test_size=%f should be in the (0, 1) range '
+                    'or be an integer' % test_size)
         elif np.asarray(test_size).dtype.kind != 'i':
             # int values are checked during split based on the input
             raise ValueError("Invalid value for test_size: %r" % test_size)
 
     if train_size is not None:
         if np.asarray(train_size).dtype.kind == 'f':
-            if train_size >= 1.:
-                raise ValueError("train_size=%f should be smaller "
-                                 "than 1.0 or be an integer" % train_size)
+            if train_size >= 1. or train_size <= 0:
+                raise ValueError('train_size=%f should be in the (0, 1) range '
+                                 'or be an integer' % train_size)
             elif (np.asarray(test_size).dtype.kind == 'f' and
-                    (train_size + test_size) > 1.):
+                    (
+                        (train_size + test_size) > 1. or
+                        (train_size + test_size) < 0)):
                 raise ValueError('The sum of test_size and train_size = %f, '
-                                 'should be smaller than 1.0. Reduce '
+                                 'should be in the (0, 1) range. Reduce '
                                  'test_size and/or train_size.' %
                                  (train_size + test_size))
         elif np.asarray(train_size).dtype.kind != 'i':
@@ -1713,16 +1834,22 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     size of the data (n_samples)
     """
     if (test_size is not None and
-            np.asarray(test_size).dtype.kind == 'i' and
-            test_size >= n_samples):
-        raise ValueError('test_size=%d should be smaller than the number of '
-                         'samples %d' % (test_size, n_samples))
+            (np.asarray(test_size).dtype.kind == 'i' and
+                (test_size >= n_samples or test_size <= 0)) or
+            (np.asarray(test_size).dtype.kind == 'f' and
+                (test_size <= 0 or test_size >= 1))):
+        raise ValueError('test_size=%d should be either positive and smaller '
+                         'than the number of samples %d or a float in the '
+                         '(0,1) range' % (test_size, n_samples))
 
     if (train_size is not None and
-            np.asarray(train_size).dtype.kind == 'i' and
-            train_size >= n_samples):
-        raise ValueError("train_size=%d should be smaller than the number of"
-                         " samples %d" % (train_size, n_samples))
+            (np.asarray(train_size).dtype.kind == 'i' and
+                (train_size >= n_samples or train_size <= 0)) or
+            (np.asarray(train_size).dtype.kind == 'f' and
+                (train_size <= 0 or train_size >= 1))):
+        raise ValueError('train_size=%d should be either positive and smaller '
+                         'than the number of samples %d or a float in the '
+                         '(0,1) range' % (train_size, n_samples))
 
     if test_size == "default":
         test_size = 0.1
@@ -1748,7 +1875,17 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
                          'samples %d. Reduce test_size and/or '
                          'train_size.' % (n_train + n_test, n_samples))
 
-    return int(n_train), int(n_test)
+    n_train, n_test = int(n_train), int(n_test)
+
+    if n_train == 0:
+        raise ValueError(
+            'With n_samples={}, test_size={} and train_size={}, the '
+            'resulting train set will be empty. Adjust any of the '
+            'aforementioned parameters.'.format(n_samples, test_size,
+                                                train_size)
+        )
+
+    return n_train, n_test
 
 
 class PredefinedSplit(BaseCrossValidator):
@@ -1769,6 +1906,7 @@ class PredefinedSplit(BaseCrossValidator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.model_selection import PredefinedSplit
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
@@ -2100,10 +2238,6 @@ def train_test_split(*arrays, **options):
 
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
-
-
-# Tell nose that train_test_split is not a test
-train_test_split.__test__ = False
 
 
 def _build_repr(self):

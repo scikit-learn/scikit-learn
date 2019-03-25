@@ -5,6 +5,7 @@ Testing for Multi-layer Perceptron module (sklearn.neural_network)
 # Author: Issam H. Laradji
 # License: BSD 3 clause
 
+import pytest
 import sys
 import warnings
 
@@ -15,15 +16,15 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 from sklearn.datasets import load_digits, load_boston, load_iris
 from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from scipy.sparse import csr_matrix
-from sklearn.utils.testing import (assert_raises, assert_greater, assert_equal,
-                                   assert_false, ignore_warnings)
+from sklearn.utils.testing import (assert_raises, assert_greater,
+                                   assert_equal, ignore_warnings)
 from sklearn.utils.testing import assert_raise_message
 
 
@@ -297,7 +298,7 @@ def test_multilabel_classification():
                         max_iter=150, random_state=0, activation='logistic',
                         learning_rate_init=0.2)
     mlp.fit(X, y)
-    assert_equal(mlp.score(X, y), 1)
+    assert_greater(mlp.score(X, y), 0.97)
 
     # test partial fit method
     mlp = MLPClassifier(solver='sgd', hidden_layer_sizes=50, max_iter=150,
@@ -308,6 +309,7 @@ def test_multilabel_classification():
     assert_greater(mlp.score(X, y), 0.9)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_multioutput_regression():
     # Test that multi-output regression works as expected
     X, y = make_regression(n_samples=200, n_targets=5)
@@ -395,7 +397,7 @@ def test_partial_fit_errors():
                   MLPClassifier(solver='sgd').partial_fit, X, y, classes=[2])
 
     # lbfgs doesn't support partial_fit
-    assert_false(hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit'))
+    assert not hasattr(MLPClassifier(solver='lbfgs'), 'partial_fit')
 
 
 def test_params_errors():
@@ -432,7 +434,8 @@ def test_predict_proba_binary():
     X = X_digits_binary[:50]
     y = y_digits_binary[:50]
 
-    clf = MLPClassifier(hidden_layer_sizes=5)
+    clf = MLPClassifier(hidden_layer_sizes=5, activation='logistic',
+                        random_state=1)
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)
     y_proba = clf.predict_proba(X)
@@ -493,6 +496,33 @@ def test_predict_proba_multilabel():
     assert_greater((y_proba.sum(1) - 1).dot(y_proba.sum(1) - 1), 1e-10)
     assert_array_equal(proba_max, proba_log_max)
     assert_array_equal(y_log_proba, np.log(y_proba))
+
+
+def test_shuffle():
+    # Test that the shuffle parameter affects the training process (it should)
+    X, y = make_regression(n_samples=50, n_features=5, n_targets=1,
+                           random_state=0)
+
+    # The coefficients will be identical if both do or do not shuffle
+    for shuffle in [True, False]:
+        mlp1 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                            random_state=0, shuffle=shuffle)
+        mlp2 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                            random_state=0, shuffle=shuffle)
+        mlp1.fit(X, y)
+        mlp2.fit(X, y)
+
+        assert np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
+
+    # The coefficients will be slightly different if shuffle=True
+    mlp1 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                        random_state=0, shuffle=True)
+    mlp2 = MLPRegressor(hidden_layer_sizes=1, max_iter=1, batch_size=1,
+                        random_state=0, shuffle=False)
+    mlp1.fit(X, y)
+    mlp2.fit(X, y)
+
+    assert not np.array_equal(mlp1.coefs_[0], mlp2.coefs_[0])
 
 
 def test_sparse_matrices():

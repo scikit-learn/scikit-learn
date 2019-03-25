@@ -5,10 +5,9 @@ import functools
 import numpy as np
 
 from sklearn.base import BaseEstimator
-from sklearn.externals.six import iterkeys
 from sklearn.datasets import make_classification
 
-from sklearn.utils.testing import assert_true, assert_false, assert_raises
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.validation import check_is_fitted
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
@@ -17,7 +16,7 @@ from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
 
 
-class DelegatorData(object):
+class DelegatorData:
     def __init__(self, name, construct, skip_methods=(),
                  fit_args=make_classification()):
         self.name = name
@@ -47,7 +46,7 @@ DELEGATING_METAESTIMATORS = [
 ]
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_metaestimator_delegation():
     # Ensures specified metaestimators have methods iff subestimator does
     def hides(method):
@@ -105,7 +104,7 @@ def test_metaestimator_delegation():
             self._check_fit()
             return 1.0
 
-    methods = [k for k in iterkeys(SubEstimator.__dict__)
+    methods = [k for k in SubEstimator.__dict__.keys()
                if not k.startswith('_') and not k.startswith('fit')]
     methods.sort()
 
@@ -116,9 +115,9 @@ def test_metaestimator_delegation():
             if method in delegator_data.skip_methods:
                 continue
             assert hasattr(delegate, method)
-            assert_true(hasattr(delegator, method),
-                        msg="%s does not have method %r when its delegate does"
-                            % (delegator_data.name, method))
+            assert hasattr(delegator, method), (
+                    "%s does not have method %r when its delegate does"
+                    % (delegator_data.name, method))
             # delegation before fit raises a NotFittedError
             if method == 'score':
                 assert_raises(NotFittedError, getattr(delegator, method),
@@ -144,7 +143,7 @@ def test_metaestimator_delegation():
                 continue
             delegate = SubEstimator(hidden_method=method)
             delegator = delegator_data.construct(delegate)
-            assert_false(hasattr(delegate, method))
-            assert_false(hasattr(delegator, method),
-                         msg="%s has method %r when its delegate does not"
-                             % (delegator_data.name, method))
+            assert not hasattr(delegate, method)
+            assert not hasattr(delegator, method), (
+                    "%s has method %r when its delegate does not"
+                    % (delegator_data.name, method))

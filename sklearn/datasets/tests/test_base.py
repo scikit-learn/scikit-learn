@@ -9,6 +9,7 @@ from functools import partial
 
 import pytest
 
+import numpy as np
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
 from sklearn.datasets import load_files
@@ -24,10 +25,8 @@ from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
 from sklearn.datasets.tests.test_common import check_return_X_y
 
-from sklearn.externals.six import b, u
 from sklearn.externals._pilutil import pillow_installed
 
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 
@@ -56,7 +55,7 @@ def test_category_dir_1(load_files_root):
     test_category_dir1 = tempfile.mkdtemp(dir=load_files_root)
     sample_file = tempfile.NamedTemporaryFile(dir=test_category_dir1,
                                               delete=False)
-    sample_file.write(b("Hello World!\n"))
+    sample_file.write(b"Hello World!\n")
     sample_file.close()
     yield str(test_category_dir1)
     _remove_dir(test_category_dir1)
@@ -77,7 +76,7 @@ def test_data_home(data_home):
 
     # clear_data_home will delete both the content and the folder it-self
     clear_data_home(data_home=data_home)
-    assert_false(os.path.exists(data_home))
+    assert not os.path.exists(data_home)
 
     # if the folder is missing it will be created again
     data_home = get_data_home(data_home=data_home)
@@ -97,7 +96,7 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2,
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 2)
     assert_equal(res.DESCR, None)
-    assert_equal(res.data, [b("Hello World!\n")])
+    assert_equal(res.data, [b"Hello World!\n"])
 
 
 def test_load_files_w_categories_desc_and_encoding(
@@ -108,7 +107,7 @@ def test_load_files_w_categories_desc_and_encoding(
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 1)
     assert_equal(res.DESCR, "test")
-    assert_equal(res.data, [u("Hello World!\n")])
+    assert_equal(res.data, ["Hello World!\n"])
 
 
 def test_load_files_wo_load_content(
@@ -125,6 +124,14 @@ def test_load_sample_images():
         res = load_sample_images()
         assert_equal(len(res.images), 2)
         assert_equal(len(res.filenames), 2)
+        images = res.images
+
+        # assert is china image
+        assert np.all(images[0][0, 0, :] ==
+                      np.array([174, 201, 231], dtype=np.uint8))
+        # assert is flower image
+        assert np.all(images[1][0, 0, :] ==
+                      np.array([2, 19, 13], dtype=np.uint8))
         assert res.DESCR
     except ImportError:
         warnings.warn("Could not load sample images, PIL is not available.")

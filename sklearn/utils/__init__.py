@@ -1,35 +1,66 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+from collections.abc import Sequence
 import numbers
 import platform
 import struct
 
+import warnings
 import numpy as np
 from scipy.sparse import issparse
-import warnings
 
 from .murmurhash import murmurhash3_32
+from .class_weight import compute_class_weight, compute_sample_weight
+from . import _joblib
+from ..exceptions import DataConversionWarning
+from .deprecation import deprecated
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric)
-from .class_weight import compute_class_weight, compute_sample_weight
-from ._joblib import cpu_count, Parallel, Memory, delayed, hash
-from ._joblib import parallel_backend, register_parallel_backend
-from ._joblib import effective_n_jobs
-from ..exceptions import DataConversionWarning
-from ..utils.fixes import _Sequence as Sequence
-from .deprecation import deprecated
+                         check_symmetric, check_scalar)
 from .. import get_config
+
+
+# Do not deprecate parallel_backend and register_parallel_backend as they are
+# needed to tune `scikit-learn` behavior and have different effect if called
+# from the vendored version or or the site-package version. The other are
+# utilities that are independent of scikit-learn so they are not part of
+# scikit-learn public API.
+parallel_backend = _joblib.parallel_backend
+register_parallel_backend = _joblib.register_parallel_backend
+
+# deprecate the joblib API in sklearn in favor of using directly joblib
+msg = ("deprecated in version 0.20.1 to be removed in version 0.23. "
+       "Please import this functionality directly from joblib, which can "
+       "be installed with: pip install joblib.")
+deprecate = deprecated(msg)
+
+delayed = deprecate(_joblib.delayed)
+cpu_count = deprecate(_joblib.cpu_count)
+hash = deprecate(_joblib.hash)
+effective_n_jobs = deprecate(_joblib.effective_n_jobs)
+
+
+# for classes, deprecated will change the object in _joblib module so we need
+# to subclass them.
+@deprecate
+class Memory(_joblib.Memory):
+    pass
+
+
+@deprecate
+class Parallel(_joblib.Parallel):
+    pass
+
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
            "check_random_state",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
-           "check_consistent_length", "check_X_y", 'indexable',
+           "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
            "register_parallel_backend", "hash", "effective_n_jobs",
@@ -59,7 +90,7 @@ class Bunch(dict):
     """
 
     def __init__(self, **kwargs):
-        super(Bunch, self).__init__(kwargs)
+        super().__init__(kwargs)
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -602,9 +633,6 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-
     # convert from numpy.bool_ to python bool to ensure that testing
     # is_scalar_nan(x) is True does not fail.
-    # Redondant np.floating is needed because numbers can't match np.float32
-    # in python 2.
-    return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))
+    return bool(isinstance(x, numbers.Real) and np.isnan(x))

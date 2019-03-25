@@ -9,7 +9,6 @@ import numpy as np
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
@@ -105,7 +104,7 @@ def test_transform_nan(norm_comp):
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
     Y[:, 0] = 0
     estimator = SparsePCA(n_components=8, normalize_components=norm_comp)
-    assert_false(np.any(np.isnan(estimator.fit_transform(Y))))
+    assert not np.any(np.isnan(estimator.fit_transform(Y)))
 
 
 @pytest.mark.filterwarnings("ignore:normalize_components")

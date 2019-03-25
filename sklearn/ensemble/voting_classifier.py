@@ -17,7 +17,7 @@ from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
-from ..utils import Parallel, delayed
+from ..utils._joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
@@ -121,6 +121,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>> print(eclf3.transform(X).shape)
     (6, 6)
     """
+    _required_parameters = ['estimators']
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
                  flatten_transform=True):
@@ -194,9 +195,9 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         transformed_y = self.le_.transform(y)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
-                                                 sample_weight=sample_weight)
-                for clf in clfs if clf is not None)
+            delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
+                                             sample_weight=sample_weight)
+            for clf in clfs if clf is not None)
 
         self.named_estimators_ = Bunch(**dict())
         for k, e in zip(self.estimators, self.estimators_):
@@ -217,8 +218,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            The input samples.
 
         Returns
         ----------
@@ -262,8 +262,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of features.
+            The input samples.
 
         Returns
         ----------
@@ -327,7 +326,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         eclf.set_params(rf=None)
 
         """
-        super(VotingClassifier, self)._set_params('estimators', **params)
+        super()._set_params('estimators', **params)
         return self
 
     def get_params(self, deep=True):
@@ -339,8 +338,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             Setting it to True gets the various classifiers and the parameters
             of the classifiers as well
         """
-        return super(VotingClassifier,
-                     self)._get_params('estimators', deep=deep)
+        return super()._get_params('estimators', deep=deep)
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """

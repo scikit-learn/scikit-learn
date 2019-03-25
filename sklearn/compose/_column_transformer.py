@@ -6,16 +6,15 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
-from __future__ import division
 
 from itertools import chain
 
 import numpy as np
+import warnings
 from scipy import sparse
 
 from ..base import clone, TransformerMixin
-from ..utils import Parallel, delayed
-from ..externals import six
+from ..utils._joblib import Parallel, delayed
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
@@ -82,10 +81,10 @@ boolean mask array or callable
         the transformers.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support :term:`fit` and :term:`transform`.
 
     sparse_threshold : float, default = 0.3
-        If the output of the different transfromers contains sparse matrices,
+        If the output of the different transformers contains sparse matrices,
         these will be stacked as a sparse matrix if the overall density is
         lower than this value. Use ``sparse_threshold=0`` to always return
         dense.  When the transformed output consists of all dense data, the
@@ -143,6 +142,7 @@ boolean mask array or callable
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.compose import ColumnTransformer
     >>> from sklearn.preprocessing import Normalizer
     >>> ct = ColumnTransformer(
@@ -158,6 +158,7 @@ boolean mask array or callable
            [0.5, 0.5, 0. , 1. ]])
 
     """
+    _required_parameters = ['transformers']
 
     def __init__(self, transformers, remainder='drop', sparse_threshold=0.3,
                  n_jobs=None, transformer_weights=None):
@@ -312,8 +313,8 @@ boolean mask array or callable
 
         """
         # Use Bunch object to improve autocomplete
-        return Bunch(**dict([(name, trans) for name, trans, _
-                             in self.transformers_]))
+        return Bunch(**{name: trans for name, trans, _
+                        in self.transformers_})
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -545,7 +546,7 @@ def _check_key_type(key, superclass):
     ----------
     key : scalar, list, slice, array-like
         The column specification to check
-    superclass : int or six.string_types
+    superclass : int or str
         The type for which to check the `key`
 
     """
@@ -560,7 +561,7 @@ def _check_key_type(key, superclass):
         if superclass is int:
             return key.dtype.kind == 'i'
         else:
-            # superclass = six.string_types
+            # superclass = str
             return key.dtype.kind in ('O', 'U', 'S')
     return False
 
@@ -589,7 +590,7 @@ def _get_column(X, key):
     # check whether we have string column names or integers
     if _check_key_type(key, int):
         column_names = False
-    elif _check_key_type(key, six.string_types):
+    elif _check_key_type(key, str):
         column_names = True
     elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
@@ -627,21 +628,18 @@ def _get_column_indices(X, key):
     """
     n_columns = X.shape[1]
 
-    if _check_key_type(key, int):
-        if isinstance(key, int):
-            return [key]
-        elif isinstance(key, slice):
-            return list(range(n_columns)[key])
-        else:
-            return list(key)
-
-    elif _check_key_type(key, six.string_types):
+    if (_check_key_type(key, int)
+            or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
+        # Convert key into positive indexes
+        idx = np.arange(n_columns)[key]
+        return np.atleast_1d(idx).tolist()
+    elif _check_key_type(key, str):
         try:
             all_columns = list(X.columns)
         except AttributeError:
             raise ValueError("Specifying the columns using strings is only "
                              "supported for pandas DataFrames")
-        if isinstance(key, six.string_types):
+        if isinstance(key, str):
             columns = [key]
         elif isinstance(key, slice):
             start, stop = key.start, key.stop
@@ -657,10 +655,6 @@ def _get_column_indices(X, key):
             columns = list(key)
 
         return [all_columns.index(col) for col in columns]
-
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
-        # boolean mask
-        return list(np.arange(n_columns)[key])
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
@@ -681,14 +675,63 @@ def _is_empty_column_selection(column):
         return False
 
 
+def _validate_transformers(transformers):
+    """Checks if given transformers are valid.
+
+    This is a helper function to support the deprecated tuple order.
+    XXX Remove in v0.22
+    """
+    if not transformers:
+        return True
+
+    for t in transformers:
+        if isinstance(t, str) and t in ('drop', 'passthrough'):
+            continue
+        if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                hasattr(t, "transform")):
+            return False
+
+    return True
+
+
+def _is_deprecated_tuple_order(tuples):
+    """Checks if the input follows the deprecated tuple order.
+
+    Returns
+    -------
+    Returns true if (transformer, columns) is not a valid assumption for the
+    input, but (columns, transformer) is valid. The latter is deprecated and
+    its support will stop in v0.22.
+
+    XXX Remove in v0.22
+    """
+    transformers, columns = zip(*tuples)
+    if (not _validate_transformers(transformers)
+            and _validate_transformers(columns)):
+        return True
+
+    return False
+
+
 def _get_transformer_list(estimators):
     """
     Construct (name, trans, column) tuples from list
 
     """
-    transformers = [trans[1] for trans in estimators]
-    columns = [trans[0] for trans in estimators]
-    names = [trans[0] for trans in _name_estimators(transformers)]
+    message = ('`make_column_transformer` now expects (transformer, columns) '
+               'as input tuples instead of (columns, transformer). This '
+               'has been introduced in v0.20.1. `make_column_transformer` '
+               'will stop accepting the deprecated (columns, transformer) '
+               'order in v0.22.')
+
+    transformers, columns = zip(*estimators)
+
+    # XXX Remove in v0.22
+    if _is_deprecated_tuple_order(estimators):
+        transformers, columns = columns, transformers
+        warnings.warn(message, DeprecationWarning)
+
+    names, _ = zip(*_name_estimators(transformers))
 
     transformer_list = list(zip(names, transformers, columns))
     return transformer_list
@@ -704,7 +747,7 @@ def make_column_transformer(*transformers, **kwargs):
 
     Parameters
     ----------
-    *transformers : tuples of column selections and transformers
+    *transformers : tuples of transformers and column selections
 
     remainder : {'drop', 'passthrough'} or estimator, default 'drop'
         By default, only the specified columns in `transformers` are
@@ -716,7 +759,7 @@ def make_column_transformer(*transformers, **kwargs):
         the transformers.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support :term:`fit` and :term:`transform`.
 
     sparse_threshold : float, default = 0.3
         If the transformed output consists of a mix of sparse and dense data,
@@ -747,8 +790,8 @@ def make_column_transformer(*transformers, **kwargs):
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
     >>> from sklearn.compose import make_column_transformer
     >>> make_column_transformer(
-    ...     (['numerical_column'], StandardScaler()),
-    ...     (['categorical_column'], OneHotEncoder()))
+    ...     (StandardScaler(), ['numerical_column']),
+    ...     (OneHotEncoder(), ['categorical_column']))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=None, remainder='drop', sparse_threshold=0.3,
              transformer_weights=None,
