@@ -67,22 +67,22 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    step_change_at : int or float or None, optional (default=None)
+    tune_step_at : int or float or None, optional (default=None)
         If specified ``step`` int or float equates to > 1 feature, then the
         threshold number of remaining features when to change to
-        ``fine_tuning_step``. If ``step_change_at`` within (0.0, 1.0), then
+        ``tuning_step``. If ``tune_step_at`` within (0.0, 1.0), then
         threshold number of remaining features calculated as fraction of
         original number of features.
 
-    fine_tuning_step : int or float, optional (default=1)
-        Step to change to starting at ``step_change_at`` if it is specified. If
-        greater than or equal to 1, then ``fine_tuning_step`` corresponds to
-        the (integer) number of features to remove at each iteration. If within
-        (0.0, 1.0), then ``fine_tuning_step`` corresponds to the percentage
+    tuning_step : int or float, optional (default=1)
+        Step to change to starting at ``tune_step_at`` if it is specified. If
+        greater than or equal to 1, then ``tuning_step`` corresponds to the
+        (integer) number of features to remove at each iteration. If within
+        (0.0, 1.0), then ``tuning_step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
     reducing_step : boolean, optional (default=False)
-        If true and ``step`` or ``fine_tuning_step`` is a float, the number of
+        If true and ``step`` or ``tuning_step`` is a float, the number of
         features removed is calculated as a fraction of the remaining features
         in that iteration. If false, the number of features removed is constant
         (a fraction of the original number of features) across iterations.
@@ -137,13 +137,13 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, n_features_to_select=None, step=1,
-                 step_change_at=None, fine_tuning_step=1, reducing_step=False,
+                 tune_step_at=None, tuning_step=1, reducing_step=False,
                  verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
-        self.step_change_at = step_change_at
-        self.fine_tuning_step = fine_tuning_step
+        self.tune_step_at = tune_step_at
+        self.tuning_step = tuning_step
         self.reducing_step = reducing_step
         self.verbose = verbose
 
@@ -190,22 +190,21 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         elif self.step <= 0:
             raise ValueError("step must be > 0")
 
-        if self.step_change_at is not None:
-            if self.step_change_at >= 1.0:
-                step_change_at = int(self.step_change_at)
-            elif 0.0 < self.step_change_at < 1.0:
-                step_change_at = int(max(1, self.step_change_at * n_features))
-            if not n_features_to_select < step_change_at < n_features:
-                raise ValueError("step_change_at must be greater than "
+        if self.tune_step_at is not None:
+            if self.tune_step_at >= 1.0:
+                tune_step_at = int(self.tune_step_at)
+            elif 0.0 < self.tune_step_at < 1.0:
+                tune_step_at = int(max(1, self.tune_step_at * n_features))
+            if not n_features_to_select < tune_step_at < n_features:
+                raise ValueError("tune_step_at must be greater than "
                                  "n_features_to_select and less than initial "
                                  "number of features")
-            if self.fine_tuning_step >= 1.0:
-                fine_tuning_step = int(self.fine_tuning_step)
-            elif 0.0 < self.fine_tuning_step < 1.0 and not self.reducing_step:
-                fine_tuning_step = int(max(1, self.fine_tuning_step *
-                                           step_change_at))
-            elif self.fine_tuning_step <= 0:
-                raise ValueError("fine_tuning_step must be > 0")
+            if self.tuning_step >= 1.0:
+                tuning_step = int(self.tuning_step)
+            elif 0.0 < self.tuning_step < 1.0 and not self.reducing_step:
+                tuning_step = int(max(1, self.tuning_step * tune_step_at))
+            elif self.tuning_step <= 0:
+                raise ValueError("tuning_step must be > 0")
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
@@ -248,25 +247,25 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             ranks = np.ravel(ranks)
 
             # Adjust step using special parameters if specified
-            if self.step_change_at is not None:
-                if n_remaining_features > step_change_at:
+            if self.tune_step_at is not None:
+                if n_remaining_features > tune_step_at:
                     if 0.0 < self.step < 1.0 and self.reducing_step:
                         step = int(max(1, min(
-                            n_remaining_features - step_change_at,
+                            n_remaining_features - tune_step_at,
                             self.step * n_remaining_features
                         )))
                     else:
                         step = min(
-                            n_remaining_features - step_change_at,
+                            n_remaining_features - tune_step_at,
                             step
                         )
-                elif 0.0 < self.fine_tuning_step < 1.0 and self.reducing_step:
+                elif 0.0 < self.tuning_step < 1.0 and self.reducing_step:
                     step = int(max(1, min(
                         n_remaining_features - n_features_to_select,
-                        self.fine_tuning_step * n_remaining_features
+                        self.tuning_step * n_remaining_features
                     )))
                 else:
-                    step = fine_tuning_step
+                    step = tuning_step
             elif 0.0 < self.step < 1.0 and self.reducing_step:
                 step = int(max(1, min(
                     n_remaining_features - n_features_to_select,
@@ -426,22 +425,22 @@ class RFECV(RFE, MetaEstimatorMixin):
         Note that the last iteration may remove fewer than ``step`` features in
         order to reach ``min_features_to_select``.
 
-    step_change_at : int or float or None, optional (default=None)
+    tune_step_at : int or float or None, optional (default=None)
         If specified ``step`` int or float equates to > 1 feature, then the
         threshold number of remaining features when to change to
-        ``fine_tuning_step``. If ``step_change_at`` within (0.0, 1.0), then
+        ``tuning_step``. If ``tune_step_at`` within (0.0, 1.0), then
         threshold number of remaining features calculated as fraction of
         original number of features.
 
-    fine_tuning_step : int or float, optional (default=1)
-        Step to change to starting at ``step_change_at`` if it is specified. If
-        greater than or equal to 1, then ``fine_tuning_step`` corresponds to
-        the (integer) number of features to remove at each iteration. If within
-        (0.0, 1.0), then ``fine_tuning_step`` corresponds to the percentage
+    tuning_step : int or float, optional (default=1)
+        Step to change to starting at ``tune_step_at`` if it is specified. If
+        greater than or equal to 1, then ``tuning_step`` corresponds to the
+        (integer) number of features to remove at each iteration. If within
+        (0.0, 1.0), then ``tuning_step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
     reducing_step : boolean, optional (default=False)
-        If true and ``step`` or ``fine_tuning_step`` is a float, the number of
+        If true and ``step`` or ``tuning_step`` is a float, the number of
         features removed is calculated as a fraction of the remaining features
         in that iteration. If false, the number of features removed is constant
         (a fraction of the original number of features) across iterations.
@@ -539,14 +538,14 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, step_change_at=None,
-                 fine_tuning_step=1, reducing_step=False,
+    def __init__(self, estimator, step=1, tune_step_at=None,
+                 tuning_step=1, reducing_step=False,
                  min_features_to_select=1, cv='warn', scoring=None, verbose=0,
                  n_jobs=None):
         self.estimator = estimator
         self.step = step
-        self.step_change_at = step_change_at
-        self.fine_tuning_step = fine_tuning_step
+        self.tune_step_at = tune_step_at
+        self.tuning_step = tuning_step
         self.reducing_step = reducing_step
         self.cv = cv
         self.scoring = scoring
@@ -582,8 +581,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         # feature count, down to self.min_features_to_select
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=self.min_features_to_select,
-                  step=self.step, step_change_at=self.step_change_at,
-                  fine_tuning_step=self.fine_tuning_step,
+                  step=self.step, tune_step_at=self.tune_step_at,
+                  tuning_step=self.tuning_step,
                   reducing_step=self.reducing_step, verbose=self.verbose)
 
         # Determine the number of subsets of features by fitting across
@@ -617,8 +616,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select, step=self.step,
-                  step_change_at=self.step_change_at,
-                  fine_tuning_step=self.fine_tuning_step,
+                  tune_step_at=self.tune_step_at,
+                  tuning_step=self.tuning_step,
                   reducing_step=self.reducing_step, verbose=self.verbose)
 
         rfe.fit(X, y)
