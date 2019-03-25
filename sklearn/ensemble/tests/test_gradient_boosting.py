@@ -1393,19 +1393,20 @@ def test_gradient_boosting_init_wrong_methods(estimator, missing_method):
 
 
 def test_early_stopping_n_classes():
-    # when doing early stopping (_, y_train, _, _ = train_test_split(X, y))
+    # when doing early stopping (_, , y_train, _ = train_test_split(X, y))
     # there might be classes in y that are missing in y_train. As the init
     # estimator will be trained on y_train, we need to raise an error if this
     # happens.
 
-    X = [[1, 2], [2, 3], [3, 4], [4, 5]]
-    y = [0, 1, 1, 1]
-    gb = GradientBoostingClassifier(n_iter_no_change=5, random_state=4)
+    X = [[1]] * 10
+    y = [0, 0] + [1] * 8  # only 2 negative class over 10 samples
+    gb = GradientBoostingClassifier(n_iter_no_change=5, random_state=0,
+                                    validation_fraction=8)
     with pytest.raises(
                 ValueError,
                 match='The training data after the early stopping split'):
         gb.fit(X, y)
 
-    # No error with another random seed
-    gb = GradientBoostingClassifier(n_iter_no_change=5, random_state=0)
-    gb.fit(X, y)
+    # No error if we let training data be big enough
+    gb = GradientBoostingClassifier(n_iter_no_change=5, random_state=0,
+                                    validation_fraction=4)
