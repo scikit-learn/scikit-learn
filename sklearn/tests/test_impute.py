@@ -1153,3 +1153,29 @@ def test_missing_indicator_sparse_no_explicit_zeros():
     nnz = Xt.getnnz()
 
     assert nnz == expected_nnz
+
+
+@pytest.mark.parametrize("features, expected_Xt",
+                         [("all", [[False, True, False],
+                                   [False, True, True]]),
+                          ("missing-only", [[True, False],
+                                            [True, True]]),
+                          ("not-constant", [[False],
+                                            [True]])])
+@pytest.mark.parametrize("array_constr", [np.array, sparse.csc_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("sparse_output", [True, False])
+def test_missing_indicator_precomputed_mask(features, expected_Xt,
+                                            array_constr, sparse_output):
+    # Test missing indicator with precomputed mask.
+    X_mask = array_constr([[False, True, False],
+                           [False, True, True]])
+
+    mi = MissingIndicator(features=features, sparse=sparse_output,
+                          missing_values=MissingIndicator.precomputed)
+    Xt = mi.fit_transform(X_mask)
+
+    if sparse.issparse(Xt):
+        Xt = Xt.toarray()
+
+    assert_array_equal(Xt, expected_Xt)

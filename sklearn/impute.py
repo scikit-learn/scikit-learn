@@ -1052,10 +1052,14 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : number, string, np.nan (default) or None
+    missing_values : number, string, np.nan, None or \
+MissingIndicator.precomputed (default=np.nan)
         The placeholder for the missing values. All occurrences of
         `missing_values` will be indicated (True in the output array), the
         other values will be marked as False.
+        If MissingIndicator.precomputed, then ``X`` must be a boolean array or
+        sparse matrix and will be interpreted as a precomputed mask of the
+        missing values.
 
     features : {"missing-only", "all", "not-constant"}, optional
         Whether the imputer mask should represent all or a subset of
@@ -1108,6 +1112,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
            [False, False]])
 
     """
+    precomputed = object()
 
     def __init__(self, missing_values=np.nan, features="missing-only",
                  sparse="auto", error_on_new=True):
@@ -1137,8 +1142,17 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         """
         if sparse.issparse(X):
-            mask = _get_mask(X.data, self.missing_values)
+            if self.missing_values is self.precomputed:
+                mask = X.data
+            else:
+                mask = _get_mask(X.data, self.missing_values)
+        else:
+            if self.missing_values is self.precomputed:
+                mask = X
+            else:
+                mask = _get_mask(X, self.missing_values)
 
+        if sparse.issparse(X):
             # The imputer mask will be constructed with the same sparse format
             # as X.
             sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
@@ -1160,7 +1174,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             elif imputer_mask.format == 'csr':
                 imputer_mask = imputer_mask.tocsc()
         else:
-            imputer_mask = _get_mask(X, self.missing_values)
+            imputer_mask = mask
 
             if self.features in ('missing-only', 'not-constant'):
                 n_missing = imputer_mask.sum(axis=0)
@@ -1179,6 +1193,13 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         return imputer_mask, features_indices
 
     def _validate_input(self, X):
+        if self.missing_values is self.precomputed:
+            if X.dtype.kind != "b":
+                raise ValueError("Expected a boolean mask.")
+
+            return check_array(X, accept_sparse=('csc'), dtype=np.bool,
+                               force_all_finite=True)
+
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:

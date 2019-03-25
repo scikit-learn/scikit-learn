@@ -219,6 +219,11 @@ Support for Python 3.4 and below has been officially dropped.
   non-zero missing values used to become explicit False is the transformed data.
   :issue:`13491` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |ENH| Add another possible value (`MissingIndicator.precomputed`) for the
+  `missing_values` parameter of the :class:`MissingIndicator` which allows to
+  pass ``X`` as a precomputed mask of the missing values. :issue:`` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
