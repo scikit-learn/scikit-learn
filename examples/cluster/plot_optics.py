@@ -62,11 +62,11 @@ ax3 = plt.subplot(G[1, 1])
 ax4 = plt.subplot(G[1, 2])
 
 # Reachability plot
-color = ['g.', 'r.', 'b.', 'y.', 'c.']
-for k, c in zip(range(0, 5), color):
-    Xk = space[labels == k]
-    Rk = reachability[labels == k]
-    ax1.plot(Xk, Rk, c, alpha=0.3)
+colors = ['g.', 'r.', 'b.', 'y.', 'c.']
+for klass, color in zip(range(0, 5), colors):
+    Xk = space[labels == klass]
+    Rk = reachability[labels == klass]
+    ax1.plot(Xk, Rk, color, alpha=0.3)
 ax1.plot(space[labels == -1], reachability[labels == -1], 'k.', alpha=0.3)
 ax1.plot(space, np.full_like(space, 2., dtype=float), 'k-', alpha=0.5)
 ax1.plot(space, np.full_like(space, 0.5, dtype=float), 'k-.', alpha=0.5)
@@ -74,26 +74,26 @@ ax1.set_ylabel('Reachability (epsilon distance)')
 ax1.set_title('Reachability Plot')
 
 # OPTICS
-color = ['g.', 'r.', 'b.', 'y.', 'c.']
-for k, c in zip(range(0, 5), color):
-    Xk = X[clust.labels_ == k]
-    ax2.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3)
+colors = ['g.', 'r.', 'b.', 'y.', 'c.']
+for klass, color in zip(range(0, 5), colors):
+    Xk = X[clust.labels_ == klass]
+    ax2.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3)
 ax2.plot(X[clust.labels_ == -1, 0], X[clust.labels_ == -1, 1], 'k+', alpha=0.1)
 ax2.set_title('Automatic Clustering\nOPTICS')
 
 # DBSCAN at 0.5
-color = ['g', 'greenyellow', 'olive', 'r', 'b', 'c']
-for k, c in zip(range(0, 6), color):
-    Xk = X[labels_050 == k]
-    ax3.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3, marker='.')
+colors = ['g', 'greenyellow', 'olive', 'r', 'b', 'c']
+for klass, color in zip(range(0, 6), colors):
+    Xk = X[labels_050 == klass]
+    ax3.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3, marker='.')
 ax3.plot(X[labels_050 == -1, 0], X[labels_050 == -1, 1], 'k+', alpha=0.1)
 ax3.set_title('Clustering at 0.5 epsilon cut\nDBSCAN')
 
 # DBSCAN at 2.
-color = ['g.', 'm.', 'y.', 'c.']
-for k, c in zip(range(0, 4), color):
-    Xk = X[labels_200 == k]
-    ax4.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3)
+colors = ['g.', 'm.', 'y.', 'c.']
+for klass, color in zip(range(0, 4), colors):
+    Xk = X[labels_200 == klass]
+    ax4.plot(Xk[:, 0], Xk[:, 1], color, alpha=0.3)
 ax4.plot(X[labels_200 == -1, 0], X[labels_200 == -1, 1], 'k+', alpha=0.1)
 ax4.set_title('Clustering at 2.0 epsilon cut\nDBSCAN')
 

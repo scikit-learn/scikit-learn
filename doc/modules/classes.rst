@@ -114,6 +114,7 @@ Functions
 
    cluster.affinity_propagation
    cluster.cluster_optics_dbscan
+   cluster.cluster_optics_xi
    cluster.compute_optics_graph
    cluster.dbscan
    cluster.estimate_bandwidth
