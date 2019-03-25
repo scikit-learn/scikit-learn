@@ -520,7 +520,7 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     """Performs DBSCAN extraction for an arbitrary epsilon.
 
     Extracting the clusters runs in linear time. Note that this results in
-    ``labels_`` which are close to a `DBSCAN` with similar settings and 
+    ``labels_`` which are close to a `DBSCAN` with similar settings and
     ``eps``, only if ``eps`` is close to ``max_eps``.
 
     Parameters
