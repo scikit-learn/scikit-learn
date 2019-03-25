@@ -332,7 +332,7 @@ def _ensure_no_complex_data(array):
 def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 dtype="numeric", order=None, copy=False, force_all_finite=True,
                 ensure_2d=True, allow_nd=False, ensure_min_samples=1,
-                ensure_min_features=1, warn_on_dtype=False, estimator=None):
+                ensure_min_features=1, warn_on_dtype=None, estimator=None):
 
     """Input validation on an array, list, sparse matrix or similar.
 
@@ -407,7 +407,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
         disables this check.
 
-    warn_on_dtype : boolean (default=False)
+    warn_on_dtype : boolean (default=None)
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
 
@@ -430,6 +430,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             "'warn_on_dtype' is deprecated in "
             "version 0.21 has no effect and will be removed in 0.23.",
             DeprecationWarning)
+        warn_on_dtype = None
 
     # store reference to original array to check if copy is needed when
     # function returns
