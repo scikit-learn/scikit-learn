@@ -227,7 +227,7 @@ then submit a "pull request" (PR):
   of it you can::
 
         $ git fetch upstream
-        $ git checkout -b mybranchname upstream/master
+        $ git checkout -b my-feature upstream/master
 
  6. Develop the feature on your feature branch on your computer, using Git to do the
     version control. When you're done editing, add changed files using ``git add``
