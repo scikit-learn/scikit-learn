@@ -106,11 +106,11 @@ int myrand() {
 	// so in MS Visual Studio we need to call rand() several times to always ensure the same random number range than in Linux GCC
 	if (std::numeric_limits<int>::max() == 0x7FFFFFFF) {
 		// make a 31bit random number by using several 15bit rand()
-		return ((rand() << 16) + (rand() << 1) + (rand() >> 14));
+		return ( ( (__int32)rand() << 16) + ( (__int32)rand() << 1) + ( (__int32)rand() >> 14) );
 	}
 	else if (std::numeric_limits<int>::max() == 0x7FFFFFFFFFFFFFFF) {
 		// make a 63bit random number by using several 15bit rand()
-		return ((rand() << 48) + (rand() << 33) + (rand() << 18) + (rand() << 3) + (rand() >> 12));
+		return ( ( (__int64)rand() << 48) + ( (__int64)rand() << 33) + ( (__int64)rand() << 18) + ( (__int64)rand() << 3) + ( (__int64)rand() >> 12) );
 	}
 	else {
 		//fallback - should never happen on 32 or 64 bits systems
