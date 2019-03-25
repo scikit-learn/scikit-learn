@@ -215,6 +215,10 @@ Support for Python 3.4 and below has been officially dropped.
   features with only missing values. :issue:`13491` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Fixed a bug in :class:`MissingIndicator` when ``X`` is sparse. All the
+  non-zero missing values used to become explicit False is the transformed data.
+  :issue:`13491` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
