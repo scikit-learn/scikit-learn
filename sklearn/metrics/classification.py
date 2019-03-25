@@ -2143,6 +2143,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
 
     # If y_pred is of single dimension, assume y_true to be binary
     # and then check.
+    y_pred = np.array(y_pred) 
     if y_pred.ndim == 1:
         y_pred = y_pred[:, np.newaxis]
     if y_pred.shape[1] == 1:
@@ -2165,7 +2166,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
                              'labels: {0}'.format(lb.classes_))
 
     # Renormalize
-    y_pred /= y_pred.sum(axis=1)[:, np.newaxis]
+    y_pred = y_pred / y_pred.sum(axis=1)[:, np.newaxis]
 
     # Clipping
     y_pred = np.clip(y_pred, eps, 1 - eps)

@@ -260,7 +260,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         order = np.lexsort((y, X))
 
-        # make sure everything is set to the same dtype to avoid errors in _make_unique()
+        # set everything to the same dtype to avoid errors in _make_unique()
         X_dtype = X.dtype
         X, y, sample_weight = [array[order].astype(X_dtype, copy=False)
                                for array in [X, y, sample_weight]]

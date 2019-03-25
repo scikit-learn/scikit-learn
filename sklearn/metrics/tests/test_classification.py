@@ -1924,8 +1924,8 @@ def test_log_loss():
 
     # check eps and handling of absolute zero and one probabilities
     y_pred = np.asarray(y_pred) > .5
-    loss = log_loss(y_true, y_pred, normalize=True, eps=.1)
-    assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, .1, .9)))
+    loss = log_loss(y_true, y_pred, normalize=True, eps=1e-10)
+    assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, (0+1e-10), (1-1e-10))))
 
     # raise error if number of classes are not equal.
     y_true = [1, 0, 2]
