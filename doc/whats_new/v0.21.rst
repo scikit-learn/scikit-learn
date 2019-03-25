@@ -93,6 +93,13 @@ Support for Python 3.4 and below has been officially dropped.
   (resolved sign ambiguity in eigenvalue decomposition of the kernel matrix).
   :issue:`13241` by :user:`Aurélien Bellet <bellet>`.
 
+- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`, `fit().transform()`
+  now produces the correct output (the same as `fit_transform()`) in case
+  of non-removed zero eigenvalues (`remove_zero_eig=False`).
+  `fit_inverse_transform` was also accelerated by using the same trick as
+  `fit_transform` to compute the transform of `X`.
+  :issue:`12143` by :user:`Sylvain Marié <smarie>`
+
 - |Fix| Fixed a bug in :class:`decomposition.NMF` where `init = 'nndsvd'`,
   `init = 'nndsvda'`, and `init = 'nndsvdar'` are allowed when
   `n_components < n_features` instead of
@@ -370,6 +377,11 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`~model_selection.learning_curve`, and
   :func:`~model_selection.validation_curve` only the latter is required.
   :issue:`12613` and :issue:`12669` by :user:`Marc Torrellas <marctorrellas>`.
+
+- |Enhancement| Some :term:`CV splitter` classes and
+  `model_selection.train_test_split` now raise ``ValueError`` when the
+  resulting train set is empty. :issue:`12861` by :user:`Nicolas Hug
+  <NicolasHug>`.
 
 - |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
   shuffles each class's samples with the same ``random_state``,
