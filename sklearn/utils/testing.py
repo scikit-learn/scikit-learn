@@ -147,10 +147,6 @@ def assert_warns(warning_class, func, *args, **kw):
             w = [e for e in w
                  if e.category is not np.VisibleDeprecationWarning]
 
-        # Filter out Deprecation warnings
-        w = [e for e in w
-             if e.category is not DeprecationWarning]
-
         # Verify some things
         if not len(w) > 0:
             raise AssertionError("No warning raised when calling %s"
@@ -274,10 +270,6 @@ def assert_no_warnings(func, *args, **kw):
             # Filter out numpy-specific warnings in numpy >= 1.9
             w = [e for e in w
                  if e.category is not np.VisibleDeprecationWarning]
-
-        # Filter out Deprecation warnings
-        w = [e for e in w
-             if e.category is not DeprecationWarning]
 
         if len(w) > 0:
             raise AssertionError("Got warnings when calling %s: [%s]"
