@@ -86,14 +86,19 @@ def test_deeply_nested():
     # Render a deeply nested estimator
     rfe = RFE(RFE(RFE(RFE(RFE(RFE(RFE(LogisticRegression())))))))
     expected = """
-RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=LogisticRegression(C=1.0, class_weight=None, dual=False, fit_intercept=True,
-          intercept_scaling=1, max_iter=100, multi_class='warn',
-          n_jobs=None, penalty='l2', random_state=None, solver='...features_to_select=None, reducing_step=False, step=1,
-  tune_step_at=None, tuning_step=1, verbose=0),
-  n_features_to_select=None, reducing_step=False, step=1,
-  tune_step_at=None, tuning_step=1, verbose=0)"""
+RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=LogisticRegression(C=1.0,
+                                                                                                                     class_weight=None,
+                                                                                          ...                  step=1, tune_step_at=None, tuning_step=1,
+                                verbose=0),
+                  n_features_to_select=None, reducing_step=False, step=1,
+                  tune_step_at=None, tuning_step=1, verbose=0),
+    n_features_to_select=None, reducing_step=False, step=1, tune_step_at=None,
+    tuning_step=1, verbose=0)"""
 
     expected = expected[1:]  # remove first \n
+
+    print(rfe)
+
     assert rfe.__repr__() == expected
 
 
