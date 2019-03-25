@@ -252,6 +252,21 @@ This algorithm is illustrated below.
    :align: center
    :scale: 75%
 
+.. _iforest_warm_start:
+
+The :class:`ensemble.IsolationForest` supports ``warm_start=True`` which
+allows you to add more trees to an already fitted model::
+
+  >>> from sklearn.ensemble import IsolationForest
+  >>> import numpy as np
+  >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [0, 0], [-20, 50], [3, 5]])
+  >>> # fit 10 trees
+  >>> clf = IsolationForest(n_estimators=10, warm_start=True)
+  >>> clf.fit(X)  # doctest: +SKIP
+  >>> # add & fit 10 more trees
+  >>> clf.set_params(n_estimators=20)  # doctest: +SKIP
+  >>> clf.fit(X)  # doctest: +SKIP
+
 .. topic:: Examples:
 
    * See :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py` for
@@ -268,20 +283,6 @@ This algorithm is illustrated below.
 
     * Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
       Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
-
-.. _iforest_warm_start:
-
-Fitting additional trees
-~~~~~~~~~~~~~~~~~~~~~~~~
-The :class:`ensemble.IsolationForest` supports ``warm_start=True`` which
-allows you to add more trees to an already fitted model.
-
-::
-
-  >>> clf = IsolationForest(n_estimators=100, warm_start=True)
-  >>> clf.fit(X)
-  >>> clf.set_params(n_estimators=200)  # set warm_start and new nr of trees
-  >>> clf.fit(X) # fit additional 100 trees
 
 
 Local Outlier Factor
