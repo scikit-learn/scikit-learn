@@ -452,13 +452,12 @@ def test_get_auto_step_size():
                          max_squared_sum_, alpha, "wrong", fit_intercept)
 
 
-@pytest.mark.filterwarnings('ignore:The max_iter was reached')
 def test_sag_regressor():
     """tests if the sag regressor performs well"""
     xmin, xmax = -5, 5
     n_samples = 20
     tol = .001
-    max_iter = 20
+    max_iter = 50
     alpha = 0.1
     rng = np.random.RandomState(0)
     X = np.linspace(xmin, xmax, n_samples).reshape(n_samples, 1)
@@ -467,7 +466,7 @@ def test_sag_regressor():
     y = 0.5 * X.ravel()
 
     clf1 = Ridge(tol=tol, solver='sag', max_iter=max_iter,
-                 alpha=alpha * n_samples)
+                 alpha=alpha * n_samples, random_state=rng)
     clf2 = clone(clf1)
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)

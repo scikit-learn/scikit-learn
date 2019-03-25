@@ -23,6 +23,7 @@ from .classification import fbeta_score
 from .classification import hamming_loss
 from .classification import hinge_loss
 from .classification import jaccard_similarity_score
+from .classification import jaccard_score
 from .classification import log_loss
 from .classification import matthews_corrcoef
 from .classification import precision_recall_fscore_support
@@ -98,6 +99,7 @@ __all__ = [
     'hinge_loss',
     'homogeneity_completeness_v_measure',
     'homogeneity_score',
+    'jaccard_score',
     'jaccard_similarity_score',
     'label_ranking_average_precision_score',
     'label_ranking_loss',
