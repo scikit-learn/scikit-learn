@@ -492,8 +492,7 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
                                     return_distance=False)[0]
 
     # Getting indices of neighbors that have not been processed
-    unproc = np.compress((~np.take(processed, indices)).ravel(),
-                         indices, axis=0)
+    unproc = np.compress(~np.take(processed, indices), indices)
     # Neighbors of current point are already processed.
     if not unproc.size:
         return

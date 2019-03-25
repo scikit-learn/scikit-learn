@@ -1392,12 +1392,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self, 'estimators_')
 
-    @property
-    @deprecated("Attribute n_features was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def n_features(self):
-        return self.n_features_
-
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
