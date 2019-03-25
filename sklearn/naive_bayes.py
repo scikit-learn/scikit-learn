@@ -1169,8 +1169,6 @@ class CategoricalNB(BaseDiscreteNB):
         self.feature_cat_index_mapping_ = [{} for _ in range(n_features)]
 
     def _count(self, X, Y):
-        if np.any((X.data if issparse(X) else X) < 0):
-            raise ValueError("Input X must be non-negative")
         self.class_count_ += Y.sum(axis=0)
         for i in range(self.n_features_):
             X_feature = X[:, i]
