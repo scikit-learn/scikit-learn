@@ -430,7 +430,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             "'warn_on_dtype' is deprecated in "
             "version 0.21 has no effect and will be removed in 0.23.",
             DeprecationWarning)
-        warn_on_dtype = None
 
     # store reference to original array to check if copy is needed when
     # function returns
