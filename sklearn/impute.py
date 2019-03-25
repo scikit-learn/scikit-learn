@@ -1146,7 +1146,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             imputer_mask = sparse_constructor(
                 (mask, X.indices.copy(), X.indptr.copy()),
                 shape=X.shape, dtype=bool)
-            imputer_mask.eliminate_zeros()
+            # imputer_mask.eliminate_zeros()
 
             if self.features in ('missing-only', 'not-constant'):
                 if imputer_mask.format == 'csc':
@@ -1155,7 +1155,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                     n_missing = np.bincount(imputer_mask.indices,
                                             minlength=X.shape[1])
 
-            if self.sparse is False:
+            if not self.sparse:
                 imputer_mask = imputer_mask.toarray()
             elif imputer_mask.format == 'csr':
                 imputer_mask = imputer_mask.tocsc()
@@ -1165,7 +1165,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             if self.features in ('missing-only', 'not-constant'):
                 n_missing = imputer_mask.sum(axis=0)
 
-            if self.sparse is True:
+            if self.sparse:
                 imputer_mask = sparse.csc_matrix(imputer_mask)
 
         if self.features == 'all':
