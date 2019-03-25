@@ -251,21 +251,18 @@ If any of the above seems like magic to you, then look up the `Git documentation
 web, or ask a friend or another contributor for help.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
-to merge ``master``. For that, you first need to fetch the ``upstream``'s
-``master``, and then merge it into your branch::
+to merge ``master``. For that, you first need to fetch the ``upstream``, and
+then merge its ``master`` into your branch::
 
   $ git fetch upstream
   $ git merge upstream/master
 
 It is recommended to work on temporary branches rather than directly on
-``master``. Since these temporary branches are branched off ``master``, it is
-helpful to keep your local ``master`` up to date with the upstream's
-``master``. To do this, you can::
+``master``. In order to create a branch from the latest ``upstream/master``,
+you can::
 
   $ git fetch upstream
-  $ git rebase upstream/master
-
-while being in your ``master`` branch.
+  $ git checkout -b mybranchname upstream/master
 
 Subsequently, you need to solve the conflicts. You can refer to the `Git
 documentation related to resolving merge conflict using the command line
