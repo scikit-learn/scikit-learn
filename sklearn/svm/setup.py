@@ -43,15 +43,9 @@ def configuration(parent_package='', top_path=None):
     if os.name == 'posix':
         libraries.append('m')
 
-    liblinear_sources = ['liblinear.pyx',
-                         join('src', 'liblinear', '*.cpp')]
-
-    liblinear_depends = [join('src', 'liblinear', '*.h'),
-                         join('src', 'liblinear', 'liblinear_helper.c')]
-
     # precompile liblinear to use C++11 flag
     config.add_library('liblinear-skl',
-                       sources=[join('src', 'liblinear', 'linear.cpp')],
+                       sources=[join('src', 'liblinear', '*.cpp')],
                        depends=[join('src', 'liblinear', 'linear.h')],
                        # Force C++ linking in case gcc is picked up instead
                        # of g++ under windows with some versions of MinGW
@@ -60,12 +54,16 @@ def configuration(parent_package='', top_path=None):
                        extra_compiler_args=['-std=c++11'],
                        )
 
+    liblinear_sources = ['liblinear.pyx']
+    liblinear_depends = [join('src', 'liblinear', '*.h'),
+                         join('src', 'liblinear', 'liblinear_helper.c')]
+
     config.add_extension('liblinear',
                          sources=liblinear_sources,
-                         libraries=['liblinear-skl'] + libraries,
                          include_dirs=[join('.', 'src', 'liblinear'),
                                        join('..', 'utils'),
                                        numpy.get_include()],
+                         libraries=['liblinear-skl'] + libraries,
                          depends=liblinear_depends,
                          # extra_compile_args=['-O0 -fno-inline'],
                          )
