@@ -464,7 +464,6 @@ def test_lars_cv_max_iter():
     assert len(w) == 0
 
 
-
 def test_lasso_lars_ic():
     # Test the LassoLarsIC object by checking that
     # - some good features are selected.

@@ -64,6 +64,7 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
     X_test[:, 0] = np.nan  # make sure this boundary case is tested
 
     with pytest.warns(None) as records:
+        warnings.simplefilter('ignore', DeprecationWarning)  # 0.23
         Xt = est.fit(X_train).transform(X_test)
     # ensure no warnings are raised
     assert len(records) == 0
@@ -72,6 +73,7 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
 
     # check that the function leads to the same results as the class
     with pytest.warns(None) as records:
+        warnings.simplefilter('ignore', DeprecationWarning)  # 0.23
         Xt_class = est.transform(X_train)
     assert len(records) == 0
     Xt_func = func(X_train, **est.get_params())
@@ -90,6 +92,7 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
         est.fit(_get_valid_samples_by_column(X_train, i))
         # check transforming with NaN works even when training without NaN
         with pytest.warns(None) as records:
+            warnings.simplefilter('ignore', DeprecationWarning)  # 0.23
             Xt_col = est.transform(X_test[:, [i]])
         assert len(records) == 0
         assert_allclose(Xt_col, Xt[:, [i]])
@@ -105,6 +108,7 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
         est_sparse = clone(est)
 
         with pytest.warns(None) as records:
+            warnings.simplefilter('ignore', DeprecationWarning)  # 0.23
             Xt_dense = est_dense.fit(X_train).transform(X_test)
             Xt_inv_dense = est_dense.inverse_transform(Xt_dense)
         assert len(records) == 0
@@ -118,6 +122,7 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
             X_test_sp = sparse_constructor(X_test)
             with pytest.warns(None) as records:
                 warnings.simplefilter('ignore', PendingDeprecationWarning)
+                warnings.simplefilter('ignore', DeprecationWarning)  # 0.23
                 Xt_sp = est_sparse.fit(X_train_sp).transform(X_test_sp)
             assert len(records) == 0
             assert_allclose(Xt_sp.A, Xt_dense)

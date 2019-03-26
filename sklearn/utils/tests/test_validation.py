@@ -391,16 +391,15 @@ def test_check_array_dtype_warning():
         assert_equal(X_checked.dtype, np.float64)
 
     for X in float64_data:
-        with pytest.warns(None) as record:
+        with pytest.warns(DeprecationWarning,
+                          match="'warn_on_dtype' is deprecated") as w:
             X_checked = check_array(X, dtype=np.float64,
                                     accept_sparse=True, warn_on_dtype=True)
             assert_equal(X_checked.dtype, np.float64)
             X_checked = check_array(X, dtype=np.float64,
                                     accept_sparse=True, warn_on_dtype=False)
             assert_equal(X_checked.dtype, np.float64)
-        assert len(record) == 2
-        assert record.pop(DeprecationWarning)  # 0.23
-        assert record.pop(DeprecationWarning)  # 0.23
+        assert len(w) == 2  # 0.23
 
     for X in float32_data:
         X_checked = assert_no_warnings(check_array, X,
@@ -428,7 +427,7 @@ def test_check_array_dtype_warning():
 def test_check_array_warn_on_dtype_deprecation():
     X = np.asarray([[0.0], [1.0]])
     with pytest.warns(DeprecationWarning,
-                      match="'warn_on_dtype' is deprecated in version 0.21"):
+                      match="'warn_on_dtype' is deprecated"):
         check_array(X, warn_on_dtype=True)
 
 
@@ -727,10 +726,11 @@ def test_check_dataframe_warns_on_dtype():
                          check_array, df, dtype=np.float64, warn_on_dtype=True)
     assert_warns(DataConversionWarning, check_array, df,
                  dtype='numeric', warn_on_dtype=True)
-    with pytest.warns(None) as record:
+    with pytest.warns(DeprecationWarning,
+                      match="'warn_on_dtype' is deprecated") as w:
         check_array(df, dtype='object', warn_on_dtype=True)
-    assert len(record) == 1
-    assert record.pop(DeprecationWarning)  # 0.23
+    assert len(w) == 1  # 0.23
+
     # Also check that it raises a warning for mixed dtypes in a DataFrame.
     df_mixed = pd.DataFrame([['1', 2, 3], ['4', 5, 6]])
     assert_warns(DataConversionWarning, check_array, df_mixed,
@@ -745,11 +745,11 @@ def test_check_dataframe_warns_on_dtype():
     df_mixed_numeric = pd.DataFrame([[1., 2, 3], [4., 5, 6]])
     assert_warns(DataConversionWarning, check_array, df_mixed_numeric,
                  dtype='numeric', warn_on_dtype=True)
-    with pytest.warns(None) as record:
+    with pytest.warns(DeprecationWarning,
+                      match="'warn_on_dtype' is deprecated") as w:
         check_array(df_mixed_numeric.astype(int),
                     dtype='numeric', warn_on_dtype=True)
-    assert len(record) == 1
-    assert record.pop(DeprecationWarning)  # 0.23
+    assert len(w) == 1  # 0.23
 
 class DummyMemory:
     def cache(self, func):

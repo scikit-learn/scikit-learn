@@ -347,7 +347,10 @@ def test_lda_dimension_warning(n_classes, n_features):
     for n_components in [max_components - 1, None, max_components]:
         # if n_components <= min(n_classes - 1, n_features), no warning
         lda = LinearDiscriminantAnalysis(n_components=n_components)
-        assert_no_warnings(lda.fit, X, y)
+        with pytest.warns(DeprecationWarning,
+                          match="'warn_on_dtype' is deprecated") as w:
+            lda.fit(X, y)
+        assert len(w) == 1  # 0.23
 
     for n_components in [max_components + 1,
                          max(n_features, n_classes - 1) + 1]:
