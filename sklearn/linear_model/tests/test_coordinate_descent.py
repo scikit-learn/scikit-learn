@@ -874,5 +874,5 @@ def test_sparse_input_convergence_warning():
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:
         Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
-
+    assert record.pop(DeprecationWarning)  # 0.23
     assert not record.list

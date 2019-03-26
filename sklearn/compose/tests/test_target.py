@@ -58,7 +58,10 @@ def test_transform_target_regressor_invertible():
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       func=np.sqrt, inverse_func=np.log)
     regr.set_params(check_inverse=False)
-    assert_no_warnings(regr.fit, X, y)
+    with pytest.warns(None) as record:
+        regr.fit(X, y)
+    assert len(record) == 1  # 0.23
+    assert record.pop(DeprecationWarning)  # 0.23
 
 
 def _check_standard_scaled(y, y_pred):

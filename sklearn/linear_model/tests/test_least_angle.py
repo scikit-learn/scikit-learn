@@ -454,6 +454,7 @@ def test_lars_cv():
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 def test_lars_cv_max_iter():
     with warnings.catch_warnings(record=True) as w:
+        warnings.filterwarnings("ignore", category=DeprecationWarning)  # 0.23
         rng = np.random.RandomState(42)
         x = rng.randn(len(y))
         X = diabetes.data
@@ -461,6 +462,7 @@ def test_lars_cv_max_iter():
         lars_cv = linear_model.LassoLarsCV(max_iter=5)
         lars_cv.fit(X, y)
     assert len(w) == 0
+
 
 
 def test_lasso_lars_ic():

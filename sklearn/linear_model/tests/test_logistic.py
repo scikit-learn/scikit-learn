@@ -274,14 +274,20 @@ def test_logistic_regression_warnings(model, params, warn_solver):
         assert_warns_message(FutureWarning, solver_warning_msg,
                              clf_solver_warning.fit, iris.data, iris.target)
     else:
-        assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
+        with pytest.warns(None) as record:
+            clf_no_warnings.fit(iris.data, iris.target)
+        assert len(record) == 1
+        assert record.pop(DeprecationWarning)  # 0.23
 
     assert_warns_message(FutureWarning, multi_class_warning_msg,
                          clf_multi_class_warning.fit, iris.data, iris.target)
     # But no warning when binary target:
-    assert_no_warnings(clf_multi_class_warning.fit,
-                       iris.data, iris.target == 0)
-    assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
+    with pytest.warns(None) as record:
+        clf_multi_class_warning.fit(iris.data, iris.target == 0)
+        clf_no_warnings.fit(iris.data, iris.target)
+    assert len(record) == 2
+    assert record.pop(DeprecationWarning)  # 0.23
+    assert record.pop(DeprecationWarning)  # 0.23
 
 
 @pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
