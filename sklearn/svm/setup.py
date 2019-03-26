@@ -62,7 +62,7 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('liblinear',
                          sources=liblinear_sources,
-                         libraries=libraries,
+                         libraries=['liblinear-skl'] + libraries,
                          include_dirs=[join('.', 'src', 'liblinear'),
                                        join('..', 'utils'),
                                        numpy.get_include()],
