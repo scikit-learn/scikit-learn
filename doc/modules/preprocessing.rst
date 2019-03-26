@@ -481,7 +481,7 @@ new feature of integers (0 to n_categories - 1)::
 
     >>> enc = preprocessing.OrdinalEncoder()
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X)  # doctest: +ELLIPSIS
+    >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
         missing_values=nan)
     >>> enc.transform([['female', 'from US', 'uses Safari']])

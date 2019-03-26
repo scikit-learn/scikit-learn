@@ -964,6 +964,7 @@ class OrdinalEncoder(_BaseEncoder):
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
     ... # doctest: +ELLIPSIS
+    ... # doctest: +NORMALIZE_WHITESPACE
     OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
         missing_values=nan)
 
