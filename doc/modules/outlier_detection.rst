@@ -260,12 +260,10 @@ allows you to add more trees to an already fitted model::
   >>> from sklearn.ensemble import IsolationForest
   >>> import numpy as np
   >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [0, 0], [-20, 50], [3, 5]])
-  >>> # fit 10 trees
   >>> clf = IsolationForest(n_estimators=10, warm_start=True)
-  >>> clf.fit(X)  # doctest: +SKIP
-  >>> # add & fit 10 more trees
-  >>> clf.set_params(n_estimators=20)  # doctest: +SKIP
-  >>> clf.fit(X)  # doctest: +SKIP
+  >>> clf.fit(X)  # fit 10 trees  # doctest: +SKIP
+  >>> clf.set_params(n_estimators=20)  # add 10 more trees  # doctest: +SKIP
+  >>> clf.fit(X)  # fit the added trees  # doctest: +SKIP
 
 .. topic:: Examples:
 
