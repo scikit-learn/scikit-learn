@@ -7,8 +7,6 @@ jobs:
   pool:
     vmImage: ubuntu-16.04
   steps:
-    - checkout: self
-      fetchDepth: 1
     - task: UsePythonVersion@0
       inputs:
         versionSpec: '3.7'
