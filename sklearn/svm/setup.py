@@ -56,6 +56,7 @@ def configuration(parent_package='', top_path=None):
                                        numpy.get_include()],
                          depends=liblinear_depends,
                          # extra_compile_args=['-O0 -fno-inline'],
+                         extra_compile_args=['-std=c++11'],
                          )
 
     # end liblinear module
