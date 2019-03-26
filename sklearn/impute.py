@@ -280,7 +280,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                fill_value)
 
         if self.add_indicator:
-            self.indicator_ = MissingIndicator(missing_values=self.missing_values)
+            self.indicator_ = MissingIndicator(
+                missing_values=self.missing_values
+            )
             self.indicator_.fit(X)
 
         return self
@@ -1239,7 +1241,10 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         X = np.delete(X, self.fully_missing_indices_, axis=1)
 
         if is_sparse:
-            X = sparse.csr_matrix(X) if sparse_format is 'csr' else sparse.csc_matrix(X)
+            if sparse_format == 'csr':
+                X = sparse.csr_matrix(X)
+            else:
+                X = sparse.csc_matrix(X)
 
         return X
 
