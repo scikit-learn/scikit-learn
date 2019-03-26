@@ -825,9 +825,9 @@ def test_ridge_fit_intercept_sparse():
         dense.fit(X, y)
         with pytest.warns(None) as record:
             sparse.fit(X_csr, y)
-            assert record[0].message.args[0] == ("'warn_on_dtype' is deprecated in "
-                                                 "version 0.21 has no effect and will be "
-                                                 "removed in 0.23.")  # 0.23
+            assert record[0].message.args[0] == ("'warn_on_dtype' is deprecated "
+                                                 "in version 0.21 has no effect "
+                                                 "and will be removed in 0.23.")
             assert record.pop(DeprecationWarning)  # 0.23
         assert len(record) == 0
         assert_almost_equal(dense.intercept_, sparse.intercept_)

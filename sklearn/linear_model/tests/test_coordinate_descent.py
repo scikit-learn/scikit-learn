@@ -875,7 +875,7 @@ def test_sparse_input_convergence_warning():
     with pytest.warns(None) as record:
         Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
     assert record[0].message.args[0] == ("'warn_on_dtype' is deprecated in "
-                                         "version 0.21 has no effect and will be "
-                                         "removed in 0.23.")  # 0.23
+                                         "version 0.21 has no effect and "
+                                         "will be removed in 0.23.")  # 0.23
     assert record.pop(DeprecationWarning)  # 0.23
     assert not record.list
