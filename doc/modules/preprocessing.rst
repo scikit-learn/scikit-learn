@@ -482,7 +482,8 @@ new feature of integers (0 to n_categories - 1)::
     >>> enc = preprocessing.OrdinalEncoder()
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X)  # doctest: +ELLIPSIS
-    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>)
+    OrdinalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+        missing_values=nan)
     >>> enc.transform([['female', 'from US', 'uses Safari']])
     array([[0., 1., 1.]])
 
@@ -505,8 +506,9 @@ Continuing the example above::
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
   >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
   OneHotEncoder(categorical_features=None, categories=None, drop=None,
-         dtype=<... 'numpy.float64'>, handle_unknown='error',
-         n_values=None, sparse=True)
+         dtype=<... 'numpy.float64'>, handle_missing='all-zero',
+         handle_unknown='error', missing_values=nan, n_values=None,
+         sparse=True)
   >>> enc.transform([['female', 'from US', 'uses Safari'],
   ...                ['male', 'from Europe', 'uses Safari']]).toarray()
   array([[1., 0., 0., 1., 0., 1.],
@@ -530,10 +532,10 @@ dataset::
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    OneHotEncoder(categorical_features=None,
-           categories=[...], drop=None,
-           dtype=<... 'numpy.float64'>, handle_unknown='error',
-           n_values=None, sparse=True)
+    OneHotEncoder(categorical_features=None, categories=[...], drop=None,
+           dtype=<... 'numpy.float64'>, handle_missing='all-zero',
+           handle_unknown='error', missing_values=nan, n_values=None,
+           sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
@@ -549,8 +551,9 @@ columns for this feature will be all zeros
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None, categories=None, drop=None,
-           dtype=<... 'numpy.float64'>, handle_unknown='ignore',
-           n_values=None, sparse=True)
+           dtype=<... 'numpy.float64'>, handle_missing='all-zero',
+           handle_unknown='ignore', missing_values=nan, n_values=None,
+           sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
