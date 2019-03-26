@@ -1444,6 +1444,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         check_consistent_length(X, y, sample_weight)
 
+        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+        y = column_or_1d(y, warn=True)
         y = self._validate_y(y, sample_weight)
 
         if self.n_iter_no_change is not None:
@@ -1713,8 +1715,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _validate_y(self, y, sample_weight):
         # 'sample_weight' is not utilised but is used for
         # consistency with similar method _validate_y of GBC
-        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
-        y = column_or_1d(y, warn=True)
         self.n_classes_ = 1
         if y.dtype.kind == 'O':
             y = y.astype(DOUBLE)
@@ -2036,7 +2036,6 @@ shape (n_estimators, ``loss_.K``)
             n_iter_no_change=n_iter_no_change, tol=tol)
 
     def _validate_y(self, y, sample_weight):
-        y = super()._validate_y(y, sample_weight)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         n_trim_classes = np.count_nonzero(np.bincount(y, sample_weight))
