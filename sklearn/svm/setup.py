@@ -20,6 +20,7 @@ def configuration(parent_package='', top_path=None):
                        # Force C++ linking in case gcc is picked up instead
                        # of g++ under windows with some versions of MinGW
                        extra_link_args=['-lstdc++'],
+                       # Use C++11 to use the random number generator fix
                        extra_compiler_args=['-std=c++11'],
                        )
 
@@ -48,6 +49,17 @@ def configuration(parent_package='', top_path=None):
     liblinear_depends = [join('src', 'liblinear', '*.h'),
                          join('src', 'liblinear', 'liblinear_helper.c')]
 
+    # precompile liblinear to use C++11 flag
+    config.add_library('liblinear-skl',
+                       sources=[join('src', 'liblinear', 'linear.cpp')],
+                       depends=[join('src', 'liblinear', 'linear.h')],
+                       # Force C++ linking in case gcc is picked up instead
+                       # of g++ under windows with some versions of MinGW
+                       extra_link_args=['-lstdc++'],
+                       # Use C++11 to use the random number generator fix
+                       extra_compiler_args=['-std=c++11'],
+                       )
+
     config.add_extension('liblinear',
                          sources=liblinear_sources,
                          libraries=libraries,
@@ -56,7 +68,6 @@ def configuration(parent_package='', top_path=None):
                                        numpy.get_include()],
                          depends=liblinear_depends,
                          # extra_compile_args=['-O0 -fno-inline'],
-                         extra_compile_args=['-std=c++11'],
                          )
 
     # end liblinear module
