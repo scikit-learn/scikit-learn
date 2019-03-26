@@ -20,6 +20,7 @@ def configuration(parent_package='', top_path=None):
                        # Force C++ linking in case gcc is picked up instead
                        # of g++ under windows with some versions of MinGW
                        extra_link_args=['-lstdc++'],
+                       extra_compiler_args=['-std=c++11'],
                        )
 
     libsvm_sources = ['libsvm.pyx']
