@@ -466,8 +466,8 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = {
 def test_symmetry():
     # Test the symmetry of score and loss functions
     random_state = check_random_state(0)
-    y_true = random_state.randint(0, 2, size=(20, ))
-    y_pred = random_state.randint(0, 2, size=(20, ))
+    y_true = random_state.randint(0, 100, size=(20, )) / 100
+    y_pred = random_state.randint(0, 100, size=(20, )) / 100
 
     y_true_bin = random_state.randint(0, 2, size=(20, 25))
     y_pred_bin = random_state.randint(0, 2, size=(20, 25))
