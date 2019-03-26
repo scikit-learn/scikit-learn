@@ -248,10 +248,11 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
     n_samples, n_features = X.shape
 
     if isinstance(discrete_features, (str, bool)):
-        if discrete_features == 'auto':
-            discrete_features = issparse(X)
-        else:
-            raise ValueError("Invalid string value for discrete_features.")
+        if isinstance(discrete_features, str):
+            if discrete_features == 'auto':
+                discrete_features = issparse(X)
+            else:
+                raise ValueError("Invalid string value for discrete_features.")
         discrete_mask = np.empty(n_features, dtype=bool)
         discrete_mask.fill(discrete_features)
     else:
