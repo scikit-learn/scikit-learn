@@ -366,7 +366,8 @@ def test_check_array_dtype_warning():
         assert_equal(X_checked.dtype, np.float64)
 
         with pytest.warns(None) as record:
-            X_checked = check_array(X, dtype=np.float64, accept_sparse=True, warn_on_dtype=True)
+            X_checked = check_array(X, dtype=np.float64, accept_sparse=True,
+                                    warn_on_dtype=True)
         assert len(record) == 2
         assert record.pop(DataConversionWarning)
         assert record.pop(DeprecationWarning)  # 0.23
@@ -392,10 +393,10 @@ def test_check_array_dtype_warning():
     for X in float64_data:
         with pytest.warns(None) as record:
             X_checked = check_array(X, dtype=np.float64,
-                                           accept_sparse=True, warn_on_dtype=True)
+                                    accept_sparse=True, warn_on_dtype=True)
             assert_equal(X_checked.dtype, np.float64)
             X_checked = check_array(X, dtype=np.float64,
-                                       accept_sparse=True, warn_on_dtype=False)
+                                    accept_sparse=True, warn_on_dtype=False)
             assert_equal(X_checked.dtype, np.float64)
         assert len(record) == 2
         assert record.pop(DeprecationWarning)  # 0.23
@@ -745,7 +746,8 @@ def test_check_dataframe_warns_on_dtype():
     assert_warns(DataConversionWarning, check_array, df_mixed_numeric,
                  dtype='numeric', warn_on_dtype=True)
     with pytest.warns(None) as record:
-        check_array(df_mixed_numeric.astype(int), dtype='numeric', warn_on_dtype=True)
+        check_array(df_mixed_numeric.astype(int),
+                    dtype='numeric', warn_on_dtype=True)
     assert len(record) == 1
     assert record.pop(DeprecationWarning)  # 0.23
 
