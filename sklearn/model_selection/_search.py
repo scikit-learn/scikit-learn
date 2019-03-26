@@ -548,7 +548,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         self._check_is_fitted("classes_")
         return self.best_estimator_.classes_
 
-    def _run_search(self, evaluate_candidates, X, y):
+    def _run_search(self, evaluate_candidates, X, y, groups):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         This method, implemented in sub-classes, makes it possible to
@@ -650,7 +650,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
             all_out = []
             all_more_results = defaultdict(list)
 
-            def evaluate_candidates(candidate_params, X, y, more_results=None):
+            def evaluate_candidates(candidate_params, X, y, groups,
+                                    more_results=None):
                 candidate_params = list(candidate_params)
                 n_candidates = len(candidate_params)
 
@@ -692,7 +693,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
 
                 return results
 
-            self._run_search(evaluate_candidates, X, y)
+            self._run_search(evaluate_candidates, X, y, groups)
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
@@ -1152,9 +1153,9 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def _run_search(self, evaluate_candidates, X, y):
+    def _run_search(self, evaluate_candidates, X, y, groups):
         """Search all candidates in param_grid"""
-        evaluate_candidates(ParameterGrid(self.param_grid), X, y)
+        evaluate_candidates(ParameterGrid(self.param_grid), X, y, groups)
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -1470,8 +1471,8 @@ class RandomizedSearchCV(BaseSearchCV):
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
 
-    def _run_search(self, evaluate_candidates, X, y):
+    def _run_search(self, evaluate_candidates, X, y, groups):
         """Search n_iter candidates from param_distributions"""
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
-            random_state=self.random_state), X, y)
+            random_state=self.random_state), X, y, groups)
