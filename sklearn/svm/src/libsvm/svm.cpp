@@ -102,7 +102,7 @@ inline int myrand() {
 // In MS Visual Studio (2012) RAND_MAX = 0x7FFF (15bit) = 32767
 // In Linux GCC (4.6) 32bits RAND_MAX = 0x7FFFFFFF (31bit) = 2147483647
 // In Linux GCC (4.6) 64bits RAND_MAX = 0x7FFFFFFFFFFFFFFF (63 bits) = 9223372036854775807
-// so in MS Visual Studio we need to call rand() several times to always ensure the same random number range than in Linux GCC
+// so in MS Visual Studio we need to call rand() several times to always ensure the same random number range than in LinuxGCC
 #if RAND_MAX != INT_MAX
     #if INT_MAX == 0x7FFFFFFF
     // make a 31bit random number by using several 15bit rand()
