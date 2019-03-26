@@ -20,6 +20,8 @@ import warnings
 from abc import ABCMeta, abstractmethod
 from pkg_resources import parse_version
 
+from collections import defaultdict
+
 import numpy as np
 from scipy.sparse import issparse
 
@@ -1166,7 +1168,8 @@ class CategoricalNB(BaseDiscreteNB):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
         self.category_count_ = [np.zeros((self.class_count_.shape[0], 0))
                                 for _ in range(n_features)]
-        self.feature_cat_index_mapping_ = [{} for _ in range(n_features)]
+        self.feature_cat_index_mapping_ = [defaultdict(None) for _ in
+                                           range(n_features)]
 
     def _count(self, X, Y):
         self.class_count_ += Y.sum(axis=0)
@@ -1192,10 +1195,10 @@ class CategoricalNB(BaseDiscreteNB):
             return np.unique(X_feature, return_counts=True)
 
     def _update_mapping(self, cat_mapping, categories):
+        cat_mapping.default_factory = cat_mapping.__len__
         for category in categories:
-            category = category
-            if category not in cat_mapping:
-                cat_mapping[category] = len(cat_mapping)
+            _ = cat_mapping[category]
+        cat_mapping.default_factory = None
 
     def _update_category_count_dimensions(self, cat_count, cat_mapping):
         diff = len(cat_mapping) - cat_count.shape[1]
