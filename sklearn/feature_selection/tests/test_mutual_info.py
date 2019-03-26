@@ -185,6 +185,8 @@ def test_mutual_info_options():
     for mutual_info in (mutual_info_regression, mutual_info_classif):
         assert_raises(ValueError, mutual_info_regression, X_csr, y,
                       discrete_features=False)
+        assert_raises(ValueError, mutual_info, X, y,
+                      discrete_features='manual')
 
         mi_1 = mutual_info(X, y, discrete_features='auto', random_state=0)
         mi_2 = mutual_info(X, y, discrete_features=False, random_state=0)
