@@ -79,24 +79,25 @@ static void info(const char *fmt,...) {}
 #endif
 
 // New function to ensure the same behaviour for random number generation on windows and linux
-int myrand() {
-#ifdef _WIN32
-	// In MS Visual Studio (2012) RAND_MAX = 0x7FFF (15bit) = 32767
-	// In Linux GCC (4.6) 32bits RAND_MAX = 0x7FFFFFFF (31bit) = 2147483647
-	// In Linux GCC (4.6) 64bits RAND_MAX = 0x7FFFFFFFFFFFFFFF (63 bits) = 9223372036854775807
-	// so in MS Visual Studio we need to call rand() several times to always ensure the same random number range than in Linux GCC
-	if (std::numeric_limits<int>::max() == 0x7FFFFFFF) {
-		// make a 31bit random number by using several 15bit rand()
-		return ( ( (__int32)rand() << 16) + ( (__int32)rand() << 1) + ( (__int32)rand() >> 14) );
-	}
-	else if (std::numeric_limits<int>::max() == 0x7FFFFFFFFFFFFFFF) {
-		// make a 63bit random number by using several 15bit rand()
-		return ( ( (__int64)rand() << 48) + ( (__int64)rand() << 33) + ( (__int64)rand() << 18) + ( (__int64)rand() << 3) + ( (__int64)rand() >> 12) );
-	}
-	else {
-		//fallback - should never happen on 32 or 64 bits systems
-		return rand();
-	}
+inline int myrand() {
+// In MS Visual Studio (2012) RAND_MAX = 0x7FFF (15bit) = 32767
+// In Linux GCC (4.6) 32bits RAND_MAX = 0x7FFFFFFF (31bit) = 2147483647
+// In Linux GCC (4.6) 64bits RAND_MAX = 0x7FFFFFFFFFFFFFFF (63 bits) = 9223372036854775807
+// so in MS Visual Studio we need to call rand() several times to always ensure the same random number range than in Linux GCC
+#if RAND_MAX != INT_MAX
+    #if INT_MAX == 0x7FFFFFFF
+    // make a 31bit random number by using several 15bit rand()
+    // info("Fixing random number generator for 32 bits ints. RAND_MAX=%d INT_MAX=%d\n", RAND_MAX, INT_MAX);
+	return ( (__int32)rand() << 16) + ( (__int32)rand() << 1) + ( (__int32)rand() >> 14);
+    #elif INT_MAX == 0x7FFFFFFFFFFFFFFF
+    // make a 63bit random number by using several 15bit rand()
+    // info("Fixing random number generator for 64 bits ints. RAND_MAX=%d INT_MAX=%d\n", RAND_MAX, INT_MAX);
+    return ( ( (__int64)rand() << 48) + ( (__int64)rand() << 33) + ( (__int64)rand() << 18) + ( (__int64)rand() << 3) + ( (__int64)rand() >> 12) );
+	#else
+    //fallback - should never happen on 32 or 64 bits windows systems
+    info("Random number generator is not fixed for this system. Please report issue. RAND_MAX=%d INT_MAX=%d\n", RAND_MAX, INT_MAX);
+    exit(1);
+	#endif
 #else
 	// In Linux GCC (4.6) 32bits RAND_MAX = 0x7FFFFFFF (31bit) or 64bits RAND_MAX = 0x7FFFFFFFFFFFFFFF (63 bits)
 	// nothing special to do
