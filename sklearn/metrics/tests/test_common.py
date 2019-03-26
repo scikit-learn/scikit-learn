@@ -425,7 +425,8 @@ SYMMETRIC_METRICS = {
     # P = R = F = accuracy in multiclass case
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
-
+    # log loss is near symmetric with binary predictions
+    "log_loss",
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error", "max_error",
 
@@ -451,7 +452,7 @@ NOT_SYMMETRIC_METRICS = {
     "unnormalized_multilabel_confusion_matrix",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
-    "macro_recall_score", "log_loss", "hinge_loss"
+    "macro_recall_score", "hinge_loss"
 }
 
 
@@ -500,11 +501,6 @@ def test_symmetry():
     # Not symmetric metrics
     for name in NOT_SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
-
-        if name == 'log_loss':
-            # need floats in this case since is near symmetric close to 0/1
-            y_true = random_state.randint(0, 100, size=(20,)) / 100
-            y_pred = random_state.randint(0, 100, size=(20,)) / 100
 
         # use context manager to supply custom error message
         with assert_raises(AssertionError) as cm:
