@@ -38,6 +38,7 @@
 #include "linear.h"
 #include "tron.h"
 #include <climits>
+#include <random>
 typedef signed char schar;
 template <class T> static inline void swap(T& x, T& y) { T t=x; x=y; y=t; }
 #ifndef min
@@ -77,30 +78,18 @@ static void info(const char *fmt,...) {}
 #endif
 
 // New function to ensure the same behaviour for random number generation on windows and linux
-inline int myrand() {
-// In MS Visual Studio (2012) RAND_MAX = 0x7FFF (15bit) = 32767
-// In Linux GCC (4.6) 32bits RAND_MAX = 0x7FFFFFFF (31bit) = 2147483647
-// In Linux GCC (4.6) 64bits RAND_MAX = 0x7FFFFFFFFFFFFFFF (63 bits) = 9223372036854775807
-// so in MS Visual Studio we need to call rand() several times to always ensure the same random number range than in Linux GCC
-#if RAND_MAX != INT_MAX
-    #if INT_MAX == 0x7FFFFFFF
-    // make a 31bit random number by using several 15bit rand()
-    // info("Fixing random number generator for 32 bits ints. RAND_MAX=%d INT_MAX=%d\n", RAND_MAX, INT_MAX);
-	return ( (__int32)rand() << 16) + ( (__int32)rand() << 1) + ( (__int32)rand() >> 14);
-    #elif INT_MAX == 0x7FFFFFFFFFFFFFFF
-    // make a 63bit random number by using several 15bit rand()
-    // info("Fixing random number generator for 64 bits ints. RAND_MAX=%d INT_MAX=%d\n", RAND_MAX, INT_MAX);
-    return ( ( (__int64)rand() << 48) + ( (__int64)rand() << 33) + ( (__int64)rand() << 18) + ( (__int64)rand() << 3) + ( (__int64)rand() >> 12) );
-	#else
-    //fallback - should never happen on 32 or 64 bits windows systems
-    info("Random number generator is not fixed for this system. Please report issue. RAND_MAX=%d INT_MAX=%d\n", RAND_MAX, INT_MAX);
-    exit(1);
-	#endif
+// note that we always use the same seed (12574 here, why not) to get reproducible results
+#if INT_MAX == 0x7FFFFFFF
+std::mt19937 mt_rand(12574);
+#elif INT_MAX == 0x7FFFFFFFFFFFFFFF
+std::mt19937_64 mt_rand(12574);
 #else
-	// In Linux GCC (4.6) 32bits RAND_MAX = 0x7FFFFFFF (31bit) or 64bits RAND_MAX = 0x7FFFFFFFFFFFFFFF (63 bits)
-	// nothing special to do
-	return rand();
+info("Random number generator is not fixed for this system. Please report issue. INT_MAX=%d\n", INT_MAX);
+exit(1);
 #endif
+inline int myrand() {
+    // make a 31bit or 63bit positive random number
+    return abs( (int)mt_rand());
 }
 
 
