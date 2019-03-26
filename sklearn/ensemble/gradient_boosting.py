@@ -44,7 +44,7 @@ from scipy.special import expit
 from time import time
 from ..model_selection import train_test_split
 from ..tree.tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE
+from ..tree._tree import DTYPE, DOUBLE
 from ..tree._tree import TREE_LEAF
 from . import _gb_losses
 
@@ -1432,7 +1432,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self._clear_state()
 
         # Check input
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
+        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+
         n_samples, self.n_features_ = X.shape
 
         sample_weight_is_none = sample_weight is None
