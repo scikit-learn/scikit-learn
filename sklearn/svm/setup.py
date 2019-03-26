@@ -45,8 +45,10 @@ def configuration(parent_package='', top_path=None):
 
     # precompile liblinear to use C++11 flag
     config.add_library('liblinear-skl',
-                       sources=[join('src', 'liblinear', '*.cpp')],
-                       depends=[join('src', 'liblinear', 'linear.h')],
+                       sources=[join('src', 'liblinear', 'linear.cpp'),
+                                join('src', 'liblinear', 'tron.cpp')],
+                       depends=[join('src', 'liblinear', 'linear.h'),
+                                join('src', 'liblinear', 'tron.h')],
                        # Force C++ linking in case gcc is picked up instead
                        # of g++ under windows with some versions of MinGW
                        extra_link_args=['-lstdc++'],
