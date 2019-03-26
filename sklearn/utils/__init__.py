@@ -298,6 +298,7 @@ def resample(*arrays, **options):
     random_state = check_random_state(options.pop('random_state', None))
     replace = options.pop('replace', True)
     max_n_samples = options.pop('n_samples', None)
+    stratify = options.pop('stratify', None)
     if options:
         raise ValueError("Unexpected kw arguments: %r" % options.keys())
 
@@ -322,6 +323,13 @@ def resample(*arrays, **options):
         indices = np.arange(n_samples)
         random_state.shuffle(indices)
         indices = indices[:max_n_samples]
+
+    if stratify is not None:
+        from sklearn.model_selection import StratifiedShuffleSplit
+        sss = StratifiedShuffleSplit(random_state=random_state,
+                                     train_size=max_n_samples)
+        indices = np.arange(n_samples)
+        indices, _ = next(sss.split(indices, stratify))
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
