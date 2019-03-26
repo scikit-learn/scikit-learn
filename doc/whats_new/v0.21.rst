@@ -159,6 +159,14 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
   :issue:`13174` by :user:`Christos Aridas <chkoar>`.
 
+- |Efficiency| Make :class:`ensemble.IsolationForest` more memory efficient
+  by avoiding keeping in memory each tree prediction. :issue:`13260` by
+  `Nicolas Goix`_.
+
+- |Efficiency| :class:`ensemble.IsolationForest` now uses chunks of data at
+  prediction step, thus capping the memory usage. :issue:`13283` by
+  `Nicolas Goix`_.
+
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor`, which didn't support
   scikit-learn estimators as the initial estimator. Also added support of
@@ -170,14 +178,6 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`ensemble.IsolationForest` when the input is either 0, 1 or 2.
   :issue:`13251` by :user:`Albert Thomas <albertcthomas>`
   and :user:`joshuakennethjones <joshuakennethjones>`.
-
-- |Efficiency| Make :class:`ensemble.IsolationForest` more memory efficient
-  by avoiding keeping in memory each tree prediction. :issue:`13260` by
-  `Nicolas Goix`_.
-
-- |Efficiency| :class:`ensemble.IsolationForest` now uses chunks of data at
-  prediction step, thus capping the memory usage. :issue:`13283` by
-  `Nicolas Goix`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
@@ -226,11 +226,6 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Fix| Fixed a performance issue of ``saga`` and ``sag`` solvers when called
-  in a :class:`joblib.Parallel` setting with ``n_jobs > 1`` and
-  ``backend="threading"``, causing them to perform worse than in the sequential
-  case. :issue:`13389` by :user:`Pierre Glaser <pierreglaser>`.
-
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
   with the 'saga' solver. :issue:`11646` by :user:`Nicolas Hug <NicolasHug>`.
@@ -240,7 +235,7 @@ Support for Python 3.4 and below has been officially dropped.
   users to compute :class:`linear_model.lars_path` without providing
   ``X`` and ``y``. :issue:`11699` by :user:`Kuai Yu <yukuairoy>`.
 
-- |Enhancement| :class:`linear_model.make_dataset` now preserves
+- |Enhancement| :func:`linear_model.make_dataset` now preserves
   ``float32`` and ``float64`` dtypes. :issue:`8769` and :issue:`11000` by
   :user:`Nelle Varoquaux <NelleV>`, :user:`Arthur Imbert <Henley13>`,
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
@@ -251,7 +246,7 @@ Support for Python 3.4 and below has been officially dropped.
   by the liblinear solver. :issue:`12860` by :user:`Nicolas Hug
   <NicolasHug>`.
 
-- |Enhancement| `sparse_cg` solver in :class:`linear_model.ridge.Ridge`
+- |Enhancement| `sparse_cg` solver in :class:`linear_model.Ridge`
   now supports fitting the intercept (i.e. ``fit_intercept=True``) when
   inputs are sparse. :issue:`13336` by :user:`Bartosz Telenczuk <btel>`.
 
@@ -280,8 +275,12 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`13279` by `Alexandre Gramfort`_
 
 - |Fix| Fixed a bug in :class:`linear_model.HuberRegressor` that was
-  broken when X was of dtype bool.
-  :issue:`13328` by `Alexandre Gramfort`_.
+  broken when ``X`` was of dtype bool. :issue:`13328` by `Alexandre Gramfort`_.
+
+- |Fix| Fixed a performance issue of ``saga`` and ``sag`` solvers when called
+  in a :class:`joblib.Parallel` setting with ``n_jobs > 1`` and
+  ``backend="threading"``, causing them to perform worse than in the sequential
+  case. :issue:`13389` by :user:`Pierre Glaser <pierreglaser>`.
 
 - |API|  The use of :class:`linear_model.lars_path` with ``X=None``
   while passing ``Gram`` is deprecated in version 0.21 and will be removed
@@ -319,7 +318,7 @@ Support for Python 3.4 and below has been officially dropped.
   multiclass tasks, with an interface analogous to :func:`metrics.f1_score`.
   :issue:`13151` by :user:`Gaurav Dhingra <gxyd>` and `Joel Nothman`_.
 
-- |Efficiency| Faster :func:`metrics.pairwise.pairwise_distances` with `n_jobs`
+- |Efficiency| Faster :func:`metrics.pairwise_distances` with `n_jobs`
   > 1 by using a thread-based backend, instead of process-based backends.
   :issue:`8216` by :user:`Pierre Glaser <pierreglaser>` and
   :user:`Romuald Menuet <zanospi>`
@@ -341,7 +340,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
-  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and `Sandra
+  :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and :user:`Sandra
   Mitrovic <SandraMNE>`.
 
 - |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
@@ -446,8 +445,8 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.preprocessing`
 ............................
 
-- |Feature| :class:`OneHotEncoder` now supports dropping one feature per category
-  with a new drop parameter. :issue:`12908` by
+- |Feature| :class:`preprocessing.OneHotEncoder` now supports dropping one
+  feature per category with a new drop parameter. :issue:`12908` by
   :user:`Drew Johnston <drewmjohnston>`.
 
 - |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class
@@ -530,7 +529,6 @@ Multiple modules
 - |Efficiency| Memory copies are avoided when casting arrays to a different
   dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
   <rth>`.
-
 
 Changes to estimator checks
 ---------------------------
