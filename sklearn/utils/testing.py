@@ -140,6 +140,9 @@ def assert_warns(warning_class, func, *args, **kw):
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
+        warnings.filterwarnings(action='ignore',
+                                message="'warn_on_dtype' is "
+                                        "deprecated")  # 0.23
         # Trigger a warning.
         result = func(*args, **kw)
         if hasattr(np, 'VisibleDeprecationWarning'):
@@ -264,6 +267,9 @@ def assert_no_warnings(func, *args, **kw):
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
+        warnings.filterwarnings(action='ignore',
+                                message="'warn_on_dtype' is "
+                                        "deprecated")  # 0.23
 
         result = func(*args, **kw)
         if hasattr(np, 'VisibleDeprecationWarning'):
