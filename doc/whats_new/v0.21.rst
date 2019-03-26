@@ -26,8 +26,8 @@ random sampling procedures.
   `max_leaf_nodes` are set. |Fix|
 - :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
-- :class:`ensemble.GradientBoostingClassifier` for multiclass
-  classification. |Fix|
+- :class:`ensemble.GradientBoostingClassifier` |Fix|
+- :class:`neural_network.MLPClassifier` |Fix|
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
 
@@ -182,6 +182,10 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the gradients would be incorrectly computed in multiclass classification
   problems. :issue:`12715` by :user:`Nicolas Hug<NicolasHug>`.
+
+- |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
+  validation sets for early stopping were not sampled with stratification.
+  :issue:`13164` by :user:`Nicolas Hug<NicolasHug>`.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` where
   the default initial prediction of a multiclass classifier would predict the
@@ -425,6 +429,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug in :class:`neural_network.MLPClassifier` and
   :class:`neural_network.MLPRegressor` where the option :code:`shuffle=False`
   was being ignored. :issue:`12582` by :user:`Sam Waterbury <samwaterbury>`.
+
+- |Fix| Fixed a bug in :class:`neural_network.MLPClassifier` where
+  validation sets for early stopping were not sampled with stratification. In
+  multilabel case however, splits are still not stratified.
+  :issue:`13164` by :user:`Nicolas Hug<NicolasHug>`.
 
 :mod:`sklearn.pipeline`
 .......................
