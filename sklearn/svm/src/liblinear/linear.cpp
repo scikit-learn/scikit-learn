@@ -37,9 +37,7 @@
 #include <locale.h>
 #include "linear.h"
 #include "tron.h"
-#ifdef _WIN32
-#include <limits>
-#endif
+#include <climits>
 typedef signed char schar;
 template <class T> static inline void swap(T& x, T& y) { T t=x; x=y; y=t; }
 #ifndef min
