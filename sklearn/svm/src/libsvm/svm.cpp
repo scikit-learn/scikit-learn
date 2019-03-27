@@ -97,11 +97,11 @@ static inline double powi(double base, int times)
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
 // New function to ensure the same behaviour for random number generation on windows and linux
-// note that we always use the same seed (12574 here, why not) to get reproducible results
+// note that we always use the same seed to get reproducible results
 #if INT_MAX == 0x7FFFFFFF
-std::mt19937 mt_rand(12574);
+std::mt19937 mt_rand(std::mt19937::default_seed);
 #elif INT_MAX == 0x7FFFFFFFFFFFFFFF
-std::mt19937_64 mt_rand(12574);
+std::mt19937_64 mt_rand(std::mt19937::default_seed);
 #else
 info("Random number generator is not fixed for this system. Please report issue. INT_MAX=%d\n", INT_MAX);
 exit(1);
@@ -2370,7 +2370,8 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 
     if(param->random_seed >= 0)
     {
-        srand(param->random_seed);
+        // srand(param->random_seed);
+        mt_rand.seed(param->random_seed);
     }
 
 	if(param->svm_type == ONE_CLASS ||
@@ -2650,7 +2651,8 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 	int nr_class;
     if(param->random_seed >= 0)
     {
-        srand(param->random_seed);
+        // srand(param->random_seed);
+        mt_rand.seed(param->random_seed);
     }
 
 	// stratified cv may not give leave-one-out rate
