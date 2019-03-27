@@ -3,7 +3,7 @@ version: 2
 jobs:
   python3:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     environment:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
@@ -33,10 +33,7 @@ jobs:
 
   python2:
     docker:
-      # We use the python 3 docker image for simplicity. Python is installed
-      # through conda and the python version actually used is set via the
-      # PYTHON_VERSION environment variable.
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     environment:
       # Test examples run with minimal dependencies
       - MINICONDA_PATH: ~/miniconda
@@ -66,7 +63,7 @@ jobs:
 
   lint:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -95,7 +92,7 @@ jobs:
 
   deploy:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
