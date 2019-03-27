@@ -34,38 +34,38 @@ X = np.vstack((C1, C2, C3, C4, C5, C6))
 
 @pytest.mark.parametrize(
     'data',
-    [[[10, 8.9, 8.8, 8.7, 7, 10], 3, 4, 6],
-     [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0, 4, 7],
-     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5, 6],
-     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5, 7],
+    [[[10, 8.9, 8.8, 8.7, 7, 10], 3, 4],
+     [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0, 4],
+     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5],
+     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5],
      ])
 def test_extend_downward(data):
-    r_plot, end, index, size = data
+    r_plot, end, index = data
     r_plot = np.array(r_plot)
     ratio = r_plot[:-1] / r_plot[1:]
     steep_downward = ratio >= 1 / .9
     upward = ratio < 1
 
-    i, e = _extend_region(steep_downward, upward, 0, 2, size)
+    i, e = _extend_region(steep_downward, upward, 0, 2)
     assert e == end
     assert i == index
 
 
 @pytest.mark.parametrize(
     'data',
-    [[[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6, 6, 7],
-     [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0, 4, 8],
-     [[1, 2, 2.1, 2, np.inf], 0, 2, 4],
-     [[1, 2, 2.1, np.inf], 2, 2, 3],
+    [[[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6, 6],
+     [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0, 4],
+     [[1, 2, 2.1, 2, np.inf], 0, 2],
+     [[1, 2, 2.1, np.inf], 2, 2],
      ])
 def test_extend_upward(data):
-    r_plot, end, index, size = data
+    r_plot, end, index = data
     r_plot = np.array(r_plot)
     ratio = r_plot[:-1] / r_plot[1:]
     steep_upward = ratio <= .9
     downward = ratio > 1
 
-    i, e = _extend_region(steep_upward, downward, 0, 2, size)
+    i, e = _extend_region(steep_upward, downward, 0, 2)
     assert e == end
     assert i == index
 
@@ -78,10 +78,10 @@ def test_extend_upward(data):
      [[3, 1, 2, 0], [[0, 1], [3, 3], [0, 3]], [1, 0, -1, 0]],
      ])
 def test_the_extract_xi_labels(data):
-    ordering, clusters, labels = data
-    ls = _extract_xi_labels(ordering, clusters)
+    ordering, clusters, expected = data
+    labels = _extract_xi_labels(ordering, clusters)
 
-    assert_array_equal(ls, labels)
+    assert_array_equal(labels, expected)
 
 
 def test_extract_xi():
@@ -130,14 +130,14 @@ def test_extract_xi():
     assert_array_equal(clust.labels_, expected_labels)
 
 
-def test_clusters_():
+def test_cluster_hierarchy_():
     n_points_per_cluster = 100
     C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2)
     C2 = [0, 0] + 10 * rng.randn(n_points_per_cluster, 2)
     X = np.vstack((C1, C2))
     X = shuffle(X, random_state=0)
 
-    clusters = OPTICS(min_samples=20, xi=.1).fit(X).clusters_
+    clusters = OPTICS(min_samples=20, xi=.1).fit(X).cluster_hierarchy_
     assert clusters.shape == (2, 2)
     diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
     assert diff / len(X) < 0.05
@@ -210,7 +210,7 @@ def test_bad_reachability():
 
 
 def test_close_extract():
-    # Test extract where extraction eps is close to scaled epsPrime
+    # Test extract where extraction eps is close to scaled max_eps
 
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
@@ -218,9 +218,7 @@ def test_close_extract():
 
     # Compute OPTICS
     clust = OPTICS(max_eps=1.0, cluster_method='dbscan',
-                   eps=0.3, min_samples=10)
-    # check warning when centers are passed
-    assert_warns(RuntimeWarning, clust.fit, X)
+                   eps=0.3, min_samples=10).fit(X)
     # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
     assert_equal(max(clust.labels_), 2)
 

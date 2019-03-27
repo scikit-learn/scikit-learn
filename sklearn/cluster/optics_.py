@@ -646,7 +646,7 @@ class _Area:
                 (self.start, self.end, self.maximum, self.mib))
 
 
-def _extend_region(steep_point, xward_point, start, min_samples, n_samples):
+def _extend_region(steep_point, xward_point, start, min_samples):
     """Extend the area until it's maximal.
 
     It's the same function for both upward and downward reagions, depending on
@@ -671,9 +671,6 @@ def _extend_region(steep_point, xward_point, start, min_samples, n_samples):
        regions can't have more then ``min_samples`` consecutive non-steep
        points.
 
-    n_samples : integer
-        Total number of samples.
-
     Returns
     -------
     index : integer
@@ -684,6 +681,7 @@ def _extend_region(steep_point, xward_point, start, min_samples, n_samples):
         The end of the region, which can be behind the index. The region
         includes the ``end`` index.
     """
+    n_samples = len(steep_point)
     non_xward_points = 0
     index = start
     end = start
@@ -833,8 +831,7 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
             sdas = _update_filter_sdas(sdas, mib, xi_complement)
             D_start = index
             index, end = _extend_downward_region(steep_downward, upward,
-                                                 D_start, min_samples,
-                                                 n_samples)
+                                                 D_start, min_samples)
             D = _Area(start=D_start, end=end,
                       maximum=reachability_plot[D_start], mib=0.)
             sdas.append(D)
@@ -844,7 +841,7 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
             sdas = _update_filter_sdas(sdas, mib, xi_complement)
             U_start = index
             index, end = _extend_upward_region(steep_upward, downward, U_start,
-                                               min_samples, n_samples)
+                                               min_samples)
             U = _Area(start=U_start, end=end, maximum=reachability_plot[end],
                       mib=-1)
             mib = reachability_plot[end + 1]
@@ -922,7 +919,7 @@ def _extract_xi_labels(ordering, clusters):
     labels = np.zeros(len(ordering), dtype=np.int)
     label = 1
     for c in clusters:
-        if not np.any(labels[c[0]:(c[1] + 1)] == 0):
+        if not np.any(labels[c[0]:(c[1] + 1)] != 0):
             labels[c[0]:(c[1] + 1)] = label
             label += 1
     labels[ordering] = labels - 1
