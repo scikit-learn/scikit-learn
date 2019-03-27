@@ -407,11 +407,11 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
         disables this check.
 
-    warn_on_dtype : boolean (default=None)
+    warn_on_dtype : boolean or None (default=None)
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
 
-        .. deprecated:: 0.21
+        ..deprecated:: 0.21
             "'warn_on_dtype' is deprecated in "
             "version 0.21 has no effect and will be removed in 0.23."
 
@@ -686,11 +686,11 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         it is converted to float64. Should only be used for regression
         algorithms.
 
-    warn_on_dtype : boolean (default=None)
+    warn_on_dtype : boolean or None (default=None)
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
 
-        .. deprecated:: 0.21
+        ..deprecated:: 0.21
             "'warn_on_dtype' is deprecated in "
             "version 0.21 has no effect and will be removed in 0.23."
 
