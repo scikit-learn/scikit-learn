@@ -425,9 +425,11 @@ def test_check_array_dtype_warning():
 
 def test_check_array_warn_on_dtype_deprecation():
     X = np.asarray([[0.0], [1.0]])
+    Y = np.asarray([[2.0], [3.0]])
     with pytest.warns(DeprecationWarning,
                       match="'warn_on_dtype' is deprecated"):
         check_array(X, warn_on_dtype=True)
+        check_X_y(X, Y, warn_on_dtype=True)
 
 
 def test_check_array_accept_sparse_type_exception():
