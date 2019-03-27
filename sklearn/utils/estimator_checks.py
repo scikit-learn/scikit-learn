@@ -193,7 +193,7 @@ def _yield_transformer_checks(name, transformer):
     # Dependent on external solvers and hence accessing the iter
     # param is non-trivial.
     external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
-                       'RandomizedLasso', 'LogisticRegressionCV']
+                       'LogisticRegressionCV']
     if name not in external_solver:
         yield check_transformer_n_iter
 
@@ -892,9 +892,6 @@ def check_fit2d_1feature(name, estimator_orig):
         estimator.n_components = 1
     if hasattr(estimator, "n_clusters"):
         estimator.n_clusters = 1
-    # ensure two labels in subsample for RandomizedLogisticRegression
-    if name == 'RandomizedLogisticRegression':
-        estimator.sample_fraction = 1
     # ensure non skipped trials for RANSACRegressor
     if name == 'RANSACRegressor':
         estimator.residual_threshold = 0.5
@@ -2224,7 +2221,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # These models are dependent on external solvers like
     # libsvm and accessing the iter parameter is non-trivial.
     not_run_check_n_iter = ['Ridge', 'SVR', 'NuSVR', 'NuSVC',
-                            'RidgeClassifier', 'SVC', 'RandomizedLasso',
+                            'RidgeClassifier', 'SVC',
                             'LogisticRegressionCV', 'LinearSVC',
                             'LogisticRegression']
 

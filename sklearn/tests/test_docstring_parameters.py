@@ -26,7 +26,6 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
-    'sklearn.utils.deprecation.load_mlcomp',
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
