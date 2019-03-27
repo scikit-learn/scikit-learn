@@ -919,7 +919,7 @@ def test_iterative_imputer_early_stopping():
       'have missing values in transform but have no missing values in fit'),
      (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
       {'features': 'random', 'sparse': 'auto'},
-      "'features' has to be either 'missing-only', 'all' or 'not-constant'"),
+      "'features' has to be one of 'missing-only', 'all' or 'some-missing'"),
      (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
       {'features': 'all', 'sparse': 'random'},
       "'sparse' has to be a boolean or 'auto'"),
@@ -1125,7 +1125,7 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
                          [np.array, sparse.csr_matrix, sparse.csc_matrix],
                          ids=["dense", "sparse_csr", "sparse_csc"])
 def test_missing_indicator_drop_full_missing(array_constr):
-    # Check that missing indicator with features="not-constant" drops columns
+    # Check that missing indicator with features="some-missing" drops columns
     # with no missing values as well as columns full of missing values.
     X = array_constr([[0, np.nan, 0],
                       [0, np.nan, np.nan]])
@@ -1133,7 +1133,7 @@ def test_missing_indicator_drop_full_missing(array_constr):
     expected_Xt = array_constr([[False],
                                 [True]])
 
-    mi = MissingIndicator(features="not-constant")
+    mi = MissingIndicator(features="some-missing")
     Xt = mi.fit_transform(X)
 
     assert_allclose_dense_sparse(Xt, expected_Xt)
@@ -1145,11 +1145,8 @@ def test_missing_indicator_sparse_no_explicit_zeros():
     X = sparse.csr_matrix([[0, 1, 2],
                            [1, 2, 0],
                            [2, 0, 1]])
-    expected_nnz = 3  # 3 missing values
 
     mi = MissingIndicator(features='all', missing_values=1)
     Xt = mi.fit_transform(X)
 
-    nnz = Xt.getnnz()
-
-    assert nnz == expected_nnz
+    assert Xt.getnnz() == Xt.sum()
