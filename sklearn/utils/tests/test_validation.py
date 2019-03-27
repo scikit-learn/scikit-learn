@@ -360,9 +360,8 @@ def test_check_array_dtype_warning():
     float64_data = [X_float64, X_csr_float64]
     float32_data = [X_float32, X_csr_float32, X_csc_float32]
     for X in integer_data:
-        with pytest.warns(None) as record:
-            X_checked = check_array(X, dtype=np.float64, accept_sparse=True)
-        assert len(record) == 0
+        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
+                                       accept_sparse=True)
         assert_equal(X_checked.dtype, np.float64)
 
         with pytest.warns(None) as record:
