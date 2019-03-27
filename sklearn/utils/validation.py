@@ -1088,7 +1088,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     # Finally check for conditioning
     max_conditioning = 1e12  # Max allowed conditioning (ratio big/small)
-    too_small_lambdas = lambdas < max_eig / max_conditioning
+    too_small_lambdas = (0 < lambdas) & (lambdas < max_eig / max_conditioning)
     if too_small_lambdas.any():
         if warn_on_zeros:
             warnings.warn("Badly conditioned PSD matrix spectrum: the largest "
