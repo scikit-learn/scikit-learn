@@ -3,8 +3,8 @@ import scipy.sparse as sp
 import pytest
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from sklearn.exceptions import KernelWarning
-from sklearn.utils.validation import check_kernel_eigenvalues
+from sklearn.exceptions import PSDSpectrumWarning
+from sklearn.utils.validation import check_psd_eigenvalues
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
                                    assert_raises, assert_allclose)
@@ -317,7 +317,7 @@ def test_errors_and_warnings():
     # For safety concerning future evolutions the corresponding code is left in
     # KernelPCA, and we test it directly by calling the inner method here:
     with pytest.raises(ValueError):
-        check_kernel_eigenvalues((K[0][0], K[1][1]))
+        check_psd_eigenvalues((K[0][0], K[1][1]))
 
     # All negative eigenvalues: error
     # -------------------------------
@@ -325,7 +325,7 @@ def test_errors_and_warnings():
          [0, -6e-5]]
     # check that the inner method works
     with pytest.raises(ValueError):
-        check_kernel_eigenvalues((K[0][0], K[1][1]))
+        check_psd_eigenvalues((K[0][0], K[1][1]))
 
     for solver in solvers:
         kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
@@ -342,8 +342,8 @@ def test_errors_and_warnings():
          [0, -6e-5]]
     # check that the inner method works
     w_msg = "There are significant negative eigenvalues"
-    with pytest.warns(KernelWarning, match=w_msg):
-        check_kernel_eigenvalues((K[0][0], K[1][1]))
+    with pytest.warns(PSDSpectrumWarning, match=w_msg):
+        check_psd_eigenvalues((K[0][0], K[1][1]))
 
     for solver in solvers_except_arpack:
         # Note: arpack detects this case and raises an error already
@@ -352,7 +352,7 @@ def test_errors_and_warnings():
         kpca._centerer = IdentityKernelTransformer()
         K = kpca._get_kernel(K)
         # note: we can not test 'fit' because _centerer would be replaced
-        with pytest.warns(KernelWarning, match=w_msg):
+        with pytest.warns(PSDSpectrumWarning, match=w_msg):
             kpca._fit_transform(K)
 
     # Bad conditioning
@@ -361,8 +361,8 @@ def test_errors_and_warnings():
          [0, 4e-12]]
     # check that the inner method works
     w_msg = "the largest eigenvalue is more than 1.00E\\+12 times the smallest"
-    with pytest.warns(KernelWarning, match=w_msg):
-        check_kernel_eigenvalues((K[0][0], K[1][1]), warn_on_zeros=True)
+    with pytest.warns(PSDSpectrumWarning, match=w_msg):
+        check_psd_eigenvalues((K[0][0], K[1][1]), warn_on_zeros=True)
 
     # This is actually a normal behaviour when the number of samples is big,
     # so no special warning should be raised in this case

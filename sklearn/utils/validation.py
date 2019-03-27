@@ -21,7 +21,7 @@ from numpy.core.numeric import ComplexWarning
 
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
-from ..exceptions import NonBLASDotWarning, KernelWarning
+from ..exceptions import NonBLASDotWarning, PSDSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 from ._joblib import Memory
@@ -969,31 +969,36 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
-def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
-    """Checks kernel eigenvalues for conditioning issues.
+def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
+    """Checks the eigenvalues of a positive semidefinite (PSD) matrix.
 
-    Checks the provided array of kernel eigenvalues for numerical or
-    conditioning issues and returns a fixed validated version.
+    Checks the provided array of PSD matrix eigenvalues for numerical or
+    conditioning issues and returns a fixed validated version. This method
+    should typically be used if the PSD matrix is user-provided (e.g. a
+    Gram matrix) or computed using a user-provided dissimilarity metric
+    (e.g. kernel function), or if the decomposition process uses approximation
+    methods (randomized SVD, etc.).
 
     It checks:
 
     - that there are no significant imaginary parts in eigenvalues (more than
       1e-5 times the maximum real part). If this check fails, it raises a
-      ValueError. Otherwise all non-significant imaginary parts that may remain
-      are removed.
+      `ValueError`. Otherwise all non-significant imaginary parts that may
+      remain are removed.
 
     - that eigenvalues are not all negative. If this check fails, it raises a
-      ValueError
+      `ValueError`
 
     - that there are no significant negative eigenvalues (with absolute value
       more than 1e-10 and more than 1e-5 times the largest positive
-      eigenvalue). If this check fails, it raises a KernelWarning. All negative
-      eigenvalues are set to zero in all cases.
+      eigenvalue). If this check fails, it raises a `PSDSpectrumWarning`. All
+      negative eigenvalues (even smaller ones) are set to zero in all cases.
 
     - that the eigenvalues are well conditioned. That means, that the
       eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
-      If this check fails and `warn_on_zeros=True`, it raises a KernelWarning.
-      All the eigenvalues that are too small are then set to zero.
+      If this check fails and `warn_on_zeros=True`, it raises a
+      `PSDSpectrumWarning`. All the eigenvalues that are too small are then set
+      to zero.
 
     Parameters
     ----------
@@ -1001,10 +1006,10 @@ def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
         Array of eigenvalues to check / fix.
 
     warn_on_zeros : boolean (default: False)
-        When this is set to `True`, a `KernelWarning` will be raised when there
-        are extremely small eigenvalues. Otherwise no warning will be raised.
-        Note that in both cases, extremely small eigenvalues will be set to
-        zero.
+        When this is set to `True`, a `PSDSpectrumWarning` will be raised when
+        there are extremely small eigenvalues. Otherwise no warning will be
+        raised. Note that in both cases, extremely small eigenvalues will be
+        set to zero.
 
     Returns
     -------
@@ -1013,31 +1018,32 @@ def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
 
     Examples
     --------
-    >>> check_kernel_eigenvalues((1, 2))      # nominal case
+    >>> check_psd_eigenvalues((1, 2))      # nominal case
     ... # doctest: +NORMALIZE_WHITESPACE
     array([1, 2])
-    >>> check_kernel_eigenvalues((5, 5j))     # significant imag part
+    >>> check_psd_eigenvalues((5, 5j))     # significant imag part
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
     ValueError: There are significant imaginary parts in eigenvalues (1.000000
-        of the max real part). Something may be wrong with the kernel.
-    >>> check_kernel_eigenvalues((5, 5e-5j))  # insignificant imag part
+        of the max real part). The matrix is maybe not PSD, or something went
+        wrong with the eigenvalues decomposition.
+    >>> check_psd_eigenvalues((5, 5e-5j))  # insignificant imag part
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
-    >>> check_kernel_eigenvalues((-5, -1))    # all negative
+    >>> check_psd_eigenvalues((-5, -1))    # all negative
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
-    ValueError: All eigenvalues are negative (max is -1.000000). Something may
-        be wrong with the kernel.
-    >>> check_kernel_eigenvalues((5, -1))     # significant negative
+    ValueError: All eigenvalues are negative (max is -1.000000). The matrix is
+        maybe not PSD, or something went wrong with the eigenvalues decomposition.
+    >>> check_psd_eigenvalues((5, -1))     # significant negative
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5, 0])
-    >>> check_kernel_eigenvalues((5, -5e-5))  # insignificant negative
+    >>> check_psd_eigenvalues((5, -5e-5))  # insignificant negative
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
-    >>> check_kernel_eigenvalues((5, 4e-12))  # bad conditioning (too small)
+    >>> check_psd_eigenvalues((5, 4e-12))  # bad conditioning (too small)
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
 
@@ -1050,8 +1056,9 @@ def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
         if max_imag_abs > 1e-5 * max_real_abs:
             raise ValueError(
                 "There are significant imaginary parts in eigenvalues (%f "
-                "of the max real part). Something may be wrong with the "
-                "kernel." % (max_imag_abs / max_real_abs))
+                "of the max real part). The matrix is maybe not PSD, or "
+                "something went wrong with the eigenvalues decomposition."
+                "" % (max_imag_abs / max_real_abs))
 
     # Remove the insignificant imaginary parts
     lambdas = np.real(np.copy(lambdas))
@@ -1059,8 +1066,9 @@ def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
     # Check that there are no significant negative eigenvalues
     max_eig = lambdas.max()
     if max_eig < 0:
-        raise ValueError("All eigenvalues are negative (max is %f). Something "
-                         "may be wrong with the kernel." % max_eig)
+        raise ValueError("All eigenvalues are negative (max is %f). The matrix"
+                         " is maybe not PSD, or something went wrong with the "
+                         "eigenvalues decomposition." % max_eig)
 
     else:
         min_eig = lambdas.min()
@@ -1069,9 +1077,10 @@ def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
             # probably need more tolerant thresholds such as:
             # (-min_eig > 5e-3 * max(max_eig, 0) and -min_eig > 1e-8)
             warnings.warn("There are significant negative eigenvalues "
-                          "(%f of the max positive). Something may be "
-                          "wrong with the kernel. Replacing them by "
-                          "zero." % (-min_eig / max_eig), KernelWarning)
+                          "(%f of the max positive). The matrix is maybe not "
+                          "PSD, or something went wrong with the eigenvalues "
+                          "decomposition. Replacing them with zero."
+                          "" % (-min_eig / max_eig), PSDSpectrumWarning)
 
     # Remove all negative values in all cases
     lambdas[lambdas < 0] = 0
@@ -1081,10 +1090,10 @@ def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
     too_small_lambdas = lambdas < max_eig / max_conditioning
     if too_small_lambdas.any():
         if warn_on_zeros:
-            warnings.warn("The kernel is badly conditioned: the largest "
+            warnings.warn("Badly conditioned PSD matrix spectrum: the largest "
                           "eigenvalue is more than %.2E times the smallest. "
-                          "Small eigenvalues will be replaced "
-                          "by 0" % max_conditioning, KernelWarning)
+                          "Small eigenvalues will be replaced with 0"
+                          "" % max_conditioning, PSDSpectrumWarning)
         lambdas[too_small_lambdas] = 0
 
     return lambdas
