@@ -68,6 +68,26 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import EllipticEnvelope
+    >>> true_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> X = np.random.RandomState(0).multivariate_normal(mean=[0, 0],
+    ...                                                  cov=true_cov,
+    ...                                                  size=500)
+    >>> cov = EllipticEnvelope(random_state=0).fit(X)
+    >>> # predict returns 1 for an inlier and -1 for an outlier
+    >>> cov.predict([[0, 0],
+    ...              [3, 3]])
+    array([ 1, -1])
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7411..., 0.2535...],
+           [0.2535..., 0.3053...]])
+    >>> cov.location_
+    array([0.0813... , 0.0427...])
+
     See Also
     --------
     EmpiricalCovariance, MinCovDet
