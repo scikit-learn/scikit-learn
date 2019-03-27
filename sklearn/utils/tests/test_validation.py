@@ -40,10 +40,11 @@ from sklearn.utils.validation import (
     check_memory,
     check_non_negative,
     _num_samples,
-    check_scalar)
+    check_scalar,
+    check_psd_eigenvalues)
 import sklearn
 
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, PSDSpectrumWarning
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
@@ -835,3 +836,63 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
                      min_val=min_val, max_val=max_val)
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
+
+
+psd_cases = [('nominal', (1., 2.), np.array([1., 2.]), None, ""),
+             ('insignificant_imag', (5., 5e-5j), np.array([5., 0.]), None, ""),
+             ('significant neg', (5., -1.), np.array([5., 0.]),
+              PSDSpectrumWarning, "There are significant negative eigenval"),
+             ('insignificant neg', (5, -5e-5), np.array([5., 0.]), None, ""),]
+
+
+@pytest.mark.parametrize("input, output, w_type, w_msg",
+                         [c[1:] for c in psd_cases],
+                         ids=[c[0] for c in psd_cases])
+@pytest.mark.parametrize("warn_on_zeros", [True, False])
+def test_check_psd_eigenvalues_valid(input, output, w_type, w_msg,
+                                     warn_on_zeros):
+    """Test that check_psd_eigenvalues returns the right output for valid
+    input, possibly raising the right warning"""
+
+    with pytest.warns(w_type, match=w_msg) as w:
+        assert_array_equal(
+            check_psd_eigenvalues(input, warn_on_zeros=warn_on_zeros), output)
+    if w_type is None:
+        assert not w
+
+
+def test_check_psd_eigenvalues_bad_conditioning_warning():
+    """Test that check_psd_eigenvalues raises a warning for bad conditioning
+    when warn_on_zeros is set to True, and does not when it is set to False"""
+
+    input = (5, 4e-12)
+    output = np.array([5., 0.])
+
+    with pytest.warns(None, ) as w:
+        assert_array_equal(check_psd_eigenvalues(input, warn_on_zeros=False),
+                           output)
+    assert not w
+
+    w_msg = "the largest eigenvalue is more than 1.00E\\+12 times the smallest"
+    with pytest.warns(PSDSpectrumWarning, match=w_msg) as w:
+        assert_array_equal(check_psd_eigenvalues(input, warn_on_zeros=True),
+                           output)
+
+
+psd_cases2 = [('significant_imag', (5., 5j),
+               ValueError, "There are significant imaginary parts in eigenv"),
+              ('all negative', (-5, -1),
+               ValueError, "All eigenvalues are negative (max is -1.000000)")]
+
+
+@pytest.mark.parametrize("input, err_type, err_msg",
+                         [c[1:] for c in psd_cases2],
+                         ids=[c[0] for c in psd_cases2])
+def test_check_psd_eigenvalues_invalid(input, err_type, err_msg):
+    """Test that check_psd_eigenvalues raises the right error for invalid
+    input"""
+
+    with pytest.raises(err_type) as err_info:
+        check_psd_eigenvalues(input)
+
+    assert err_msg in err_info.value.args[0]
