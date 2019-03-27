@@ -2,8 +2,6 @@ import os
 import pytest
 from sklearn.utils._joblib import Parallel, delayed, Memory, parallel_backend
 
-import pytest
-
 
 def test_old_pickle(tmpdir):
     joblib = pytest.import_or_skip("joblib")
