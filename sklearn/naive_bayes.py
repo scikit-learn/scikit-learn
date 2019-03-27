@@ -42,7 +42,14 @@ _old_numpy = parse_version(np.__version__) < parse_version('1.9.0')
 
 
 class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
-    """Abstract base class for naive Bayes estimators"""
+    """Abstract base class for naive Bayes estimators
+
+    Parameters
+    ----------
+
+    _check_kw : dict
+        argument configuration for input checks
+    """
 
     @abstractmethod
     def _joint_log_likelihood(self, X):
@@ -56,9 +63,10 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def _check_input(self, X, Y=None):
-        """Validate inputs X and Y
+    def _check_X(self, X):
+        """Validate input X
         """
+        return check_array(X)
 
     def predict(self, X):
         """
@@ -73,7 +81,8 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
         C : array, shape = [n_samples]
             Predicted target values for X
         """
-        X = self._check_input(X)
+        check_is_fitted(self, "classes_")
+        X = self._check_X(X)
         jll = self._joint_log_likelihood(X)
         return self.classes_[np.argmax(jll, axis=1)]
 
@@ -92,7 +101,8 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
         """
-        X = self._check_input(X)
+        check_is_fitted(self, "classes_")
+        X = self._check_X(X)
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
         log_prob_x = logsumexp(jll, axis=1)
@@ -177,12 +187,6 @@ class GaussianNB(BaseNB):
         self.priors = priors
         self.var_smoothing = var_smoothing
 
-    def _check_input(self, X, Y=None):
-        if Y is None:
-            return check_array(X)
-        else:
-            return check_X_y(X, Y)
-
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
 
@@ -205,9 +209,11 @@ class GaussianNB(BaseNB):
         -------
         self : object
         """
-        X, y = self._check_input(X, y)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
+
+    def _check_X(self, X):
+        return check_array(X)
 
     @staticmethod
     def _update_mean_variance(n_past, mu, var, X, sample_weight=None):
@@ -355,7 +361,7 @@ class GaussianNB(BaseNB):
         -------
         self : object
         """
-        X, y = self._check_input(X, y)
+        X, y = check_X_y(X, y)
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             check_consistent_length(y, sample_weight)
@@ -444,9 +450,6 @@ class GaussianNB(BaseNB):
         return self
 
     def _joint_log_likelihood(self, X):
-        check_is_fitted(self, "classes_")
-
-        X = self._check_input(X)
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
@@ -470,6 +473,12 @@ class BaseDiscreteNB(BaseNB):
     __init__
     _joint_log_likelihood(X) as per BaseNB
     """
+
+    def _check_X(self, X):
+        return check_array(X, accept_sparse='csr')
+
+    def _check_X_y(self, X, y):
+        return check_X_y(X, y, accept_sparse='csr')
 
     def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
@@ -504,12 +513,6 @@ class BaseDiscreteNB(BaseNB):
                           'setting alpha = %.1e' % _ALPHA_MIN)
             return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
-
-    def _check_input(self, X, Y=None):
-        if Y is None:
-            return check_array(X, accept_sparse='csr')
-        else:
-            return check_X_y(X, Y, 'csr')
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
@@ -547,7 +550,7 @@ class BaseDiscreteNB(BaseNB):
         -------
         self : object
         """
-        X = self._check_input(X)
+        X = self._check_X(X)
         _, n_features = X.shape
 
         if _check_partial_fit_first_call(self, classes):
@@ -609,7 +612,7 @@ class BaseDiscreteNB(BaseNB):
         -------
         self : object
         """
-        X, y = self._check_input(X, y)
+        X, y = self._check_X_y(X, y)
         _, n_features = X.shape
         self.n_features_ = n_features
 
@@ -763,8 +766,6 @@ class MultinomialNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        check_is_fitted(self, "classes_")
-
         return (safe_sparse_dot(X, self.feature_log_prob_.T) +
                 self.class_log_prior_)
 
@@ -868,8 +869,6 @@ class ComplementNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the class scores for the samples in X."""
-        check_is_fitted(self, "classes_")
-
         jll = safe_sparse_dot(X, self.feature_log_prob_.T)
         if len(self.classes_) == 1:
             jll += self.class_log_prior_
@@ -957,17 +956,17 @@ class BernoulliNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    def _check_input(self, X, Y=None):
-        if Y is None:
-            X = super(BernoulliNB, self)._check_input(X)
-            if self.binarize is not None:
-                X = binarize(X, threshold=self.binarize)
-            return X
-        else:
-            X, Y = super(BernoulliNB, self)._check_input(X, Y)
-            if self.binarize is not None:
-                X = binarize(X, threshold=self.binarize)
-            return X, Y
+    def _check_X(self, X):
+        X = super(BernoulliNB, self)._check_X(X)
+        if self.binarize is not None:
+            X = binarize(X, threshold=self.binarize)
+        return X
+
+    def _check_X_y(self, X, y):
+        X, y = super(BernoulliNB, self)._check_X_y(X, y)
+        if self.binarize is not None:
+            X = binarize(X, threshold=self.binarize)
+        return X, y
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -984,8 +983,6 @@ class BernoulliNB(BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
-        check_is_fitted(self, "classes_")
-
         n_classes, n_features = self.feature_log_prob_.shape
         n_samples, n_features_X = X.shape
 
@@ -1138,31 +1135,32 @@ class CategoricalNB(BaseDiscreteNB):
         return super(CategoricalNB, self).partial_fit(X, y, classes,
                                                       sample_weight=None)
 
+    def _check_X(self, X):
+        if _old_numpy:
+            self._check_old_numpy(X)
+            return check_array(X, accept_sparse=False, dtype=[np.int64],
+                               warn_on_dtype=True)
+        return check_array(X, accept_sparse=False)
+
+    def _check_X_y(self, X, y):
+        if _old_numpy:
+            self._check_old_numpy(X)
+            return check_X_y(X, y, accept_sparse=False, dtype=[np.int64],
+                             warn_on_dtype=False)
+        return check_X_y(X, y, accept_sparse=False)
+
     def _check_settings(self):
         if self.handle_unknown not in ('ignore', 'warn', 'raise'):
             raise ValueError("The attribute 'handle_unknown' is '{}' and "
                              "should either be 'ignore', 'warn' or 'raise'"
                              .format(self.handle_unknown))
 
-    def _check_input(self, X, Y=None):
-        if _old_numpy:
-            # np.bincount takes only int dtype and needs all values to be
-            # non negative
-            if np.any(X < 0):
-                raise ValueError("All values of X have to be "
-                                 "non-negative.")
-        if Y is None:
-            if _old_numpy:
-                return check_array(X, accept_sparse=False, dtype=[np.int64],
-                                   warn_on_dtype=True)
-            else:
-                return check_array(X, accept_sparse=False)
-        else:
-            if _old_numpy:
-                return check_X_y(X, Y, accept_sparse=False, dtype=[np.int64],
-                                 warn_on_dtype=True)
-            else:
-                return check_X_y(X, Y, accept_sparse=False)
+    def _check_old_numpy(self, X):
+        # np.bincount takes only int dtype and needs all values to be
+        # non negative
+        if np.any(X < 0):
+            raise ValueError("All values of X have to be "
+                             "non-negative.")
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
@@ -1229,7 +1227,6 @@ class CategoricalNB(BaseDiscreteNB):
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
-        check_is_fitted(self, "classes_")
 
         if not X.shape[1] == self.n_features_:
             raise ValueError("Expected input with %d features, got %d instead"
