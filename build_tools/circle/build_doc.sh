@@ -119,11 +119,13 @@ conda update --yes --quiet conda
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
-  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.8.5 pillow \
+  pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" pillow \
   scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
   joblib
 
 source activate testenv
+# conda thinks sphinx=1.8.5 doesn't support python3.5
+pip install sphinx==1.8.5
 pip install sphinx-gallery
 pip install numpydoc==0.8
 
