@@ -100,11 +100,11 @@ def test_partial_dependence_sample_weight():
     rng = np.random.RandomState(123456)
     mask = rng.randint(2, size=N, dtype=bool)
 
-    x = rng.rand(N, 1)
+    x = rng.rand(N)
     # set y = x on mask and y = -x outside
-    y = np.ravel(x.copy())
+    y = x.copy()
     y[~mask] = -y[~mask]
-    X = np.hstack((mask[:, np.newaxis], x))
+    X = np.c_[mask, x]
     # sample weights to emphasize data points where y = x
     sample_weight = np.ones(N)
     sample_weight[mask] = 1000.
