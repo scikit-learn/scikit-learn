@@ -18,7 +18,7 @@ from sklearn import datasets
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
-sample_weight = [1.5, 2, 3.5, 4, 3, 2.5]
+sample_weight = [1, 1, 1, 2, 2, 2]
 
 # also load the boston dataset
 boston = datasets.load_boston()
@@ -62,7 +62,7 @@ def test_partial_dependence_classifier():
 
     assert pdp_w2.shape == (1, 4)
     assert axes_w2[0].shape[0] == 4
-    assert np.all(np.abs(pdp_w2 - pdp_w) / np.abs(pdp_w)) > 0.2
+    assert np.all(np.abs(pdp_w2 - pdp_w) / np.abs(pdp_w) > 0.1)
 
 
 def test_partial_dependence_multiclass():
