@@ -556,7 +556,8 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
 
 
 def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
-                      min_cluster_size, xi=0.05, predecessor_correction=False):
+                      min_cluster_size=0.005, xi=0.05,
+                      predecessor_correction=False):
     """Automatically extract clusters according to the Xi-steep method.
 
     Parameters
@@ -575,7 +576,7 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
        regions can't have more then `min_samples` consecutive non-steep
        points.
 
-    min_cluster_size : int > 1 or float between 0 and 1
+    min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
         Minimum number of samples in an OPTICS cluster, expressed as an
         absolute number or a fraction of the number of samples (rounded
         to be at least 2).
@@ -650,24 +651,24 @@ def _extend_region(steep_point, xward_point, start, min_samples, n_samples):
 
     It's the same function for both upward and downward reagions, depending on
     the given input parameters. To extend an upward reagion,
-    ``steep_point=steep_upward`` and ``other_mash=downward`` are expected, and
+    ``steep_point=steep_upward`` and ``xward_point=downward`` are expected, and
     to extend a downward region, ``steep_point=steep_downward`` and
-    ``other_mash=upward``.
+    ``xward_point=upward``.
 
     Parameters
     ----------
-    steep_point : array, shape (n_samples)
+    steep_point : bool array, shape (n_samples)
         True if the point is a steep point.
 
-    xward_point : array, shape (n_samples)
+    xward_point : bool array, shape (n_samples)
         True if the point is upward or downward respectively.
 
     start : integer
-        The start of the upward region.
+        The start of the xward region.
 
     min_samples : integer
        The same as the min_samples given to OPTICS. Up and down steep
-       regions can't have more then `min_samples` consecutive non-steep
+       regions can't have more then ``min_samples`` consecutive non-steep
        points.
 
     n_samples : integer
@@ -676,10 +677,12 @@ def _extend_region(steep_point, xward_point, start, min_samples, n_samples):
     Returns
     -------
     index : integer
-        The current index iterating over all the samples.
+        The current index iterating over all the samples, i.e. where we are up
+        to in our search.
 
     end : integer
-        The end of the region, which can be behind the index.
+        The end of the region, which can be behind the index. The region
+        includes the ``end`` index.
     """
     non_xward_points = 0
     index = start
@@ -703,9 +706,21 @@ def _extend_region(steep_point, xward_point, start, min_samples, n_samples):
     return min(index + 1, n_samples - 1), end
 
 
+def _extend_upward_region(steep_upward_mask, downward_mask, start,
+                          min_samples):
+    return _extend_region(steep_upward_mask, downward_mask,
+                          start, min_samples)
+
+
+def _extend_downward_region(steep_downward_mask, upward_mask, start,
+                            min_samples):
+    return _extend_region(steep_downward_mask, upward_mask,
+                          start, min_samples)
+
+
 def _update_filter_sdas(sdas, mib, xi_complement):
-    """Update steep down areas (SDAs) using the new
-    maximum in between (mib) value, and the given inverse xi, i.e. `1 - xi`
+    """Update steep down areas (SDAs) using the new maximum in between (mib)
+    value, and the given complement of xi, i.e. ``1 - xi``.
     """
     if np.isinf(mib):
         return []
@@ -749,7 +764,7 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
         The reachability plot, i.e. reachability ordered according to
         the calculated ordering, all computed by OPTICS.
 
-    predecessor : array, shape(n_samples)
+    predecessor : array, shape (n_samples)
         Predecessors ordered according to the calculated ordering.
 
     xi : float, between 0 and 1
@@ -799,13 +814,12 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
     ratio = reachability_plot[:-1] / reachability_plot[1:]
     steep_upward = ratio <= xi_complement
     steep_downward = ratio >= 1 / xi_complement
-    steep = steep_downward.astype(int) - steep_upward.astype(int)
     downward = ratio > 1
     upward = ratio < 1
 
     # the following loop is is almost exactly as Figure 19 of the paper.
     # it jumps over the areas which are not either steep down or up areas
-    for steep_index in iter(np.flatnonzero(steep)):
+    for steep_index in iter(np.flatnonzero(steep_upward | steep_downward)):
         # just continue if steep_index has been a part of a discovered xward
         # area.
         if steep_index < index:
@@ -818,8 +832,9 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
         if steep_downward[index]:
             sdas = _update_filter_sdas(sdas, mib, xi_complement)
             D_start = index
-            index, end = _extend_region(steep_downward, upward, D_start,
-                                        min_samples, n_samples)
+            index, end = _extend_downward_region(steep_downward, upward,
+                                                 D_start, min_samples,
+                                                 n_samples)
             D = _Area(start=D_start, end=end,
                       maximum=reachability_plot[D_start], mib=0.)
             sdas.append(D)
@@ -828,8 +843,8 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
         elif steep_upward[index]:
             sdas = _update_filter_sdas(sdas, mib, xi_complement)
             U_start = index
-            index, end = _extend_region(steep_upward, downward, U_start,
-                                        min_samples, n_samples)
+            index, end = _extend_upward_region(steep_upward, downward, U_start,
+                                               min_samples, n_samples)
             U = _Area(start=U_start, end=end, maximum=reachability_plot[end],
                       mib=-1)
             mib = reachability_plot[end + 1]
@@ -907,7 +922,7 @@ def _extract_xi_labels(ordering, clusters):
     labels = np.zeros(len(ordering), dtype=np.int)
     label = 1
     for c in clusters:
-        if all(labels[c[0]:(c[1] + 1)] == 0):
+        if not np.any(labels[c[0]:(c[1] + 1)] == 0):
             labels[c[0]:(c[1] + 1)] = label
             label += 1
     labels[ordering] = labels - 1
