@@ -705,6 +705,13 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
     y_converted : object
         The converted and validated y.
     """
+    # warn_on_dtype deprecation
+    if warn_on_dtype is not None or warn_on_dtype is False:
+        warnings.warn(
+            "'warn_on_dtype' is deprecated in "
+            "version 0.21 has no effect and will be removed in 0.23.",
+            DeprecationWarning)
+
     if y is None:
         raise ValueError("y cannot be None")
 
