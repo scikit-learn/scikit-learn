@@ -1432,6 +1432,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self._clear_state()
 
         # Check input
+        # Since check_array converts both X and y to the same dtype, but the
+        # trees use different types for X and y, checking them separately.
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
         n_samples, self.n_features_ = X.shape
 
