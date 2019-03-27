@@ -3,7 +3,7 @@ version: 2
 jobs:
   doc-min-dependencies:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     environment:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
@@ -32,7 +32,7 @@ jobs:
 
   doc:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     environment:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
@@ -61,7 +61,7 @@ jobs:
 
   lint:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -90,7 +90,7 @@ jobs:
 
   deploy:
     docker:
-      - image: circleci/python:3.6.1
+      - image: circleci/python:3.6
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
