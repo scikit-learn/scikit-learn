@@ -90,6 +90,36 @@ def test_resample():
     assert_equal(len(resample([1, 2], n_samples=5)), 5)
 
 
+@pytest.mark.parametrize('p', [.1, .5, .9])
+def test_resample_stratified(p):
+
+    from numpy.testing import assert_allclose
+    import numpy as np
+
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 1))
+    y = rng.binomial(2, p, size=n_samples)
+    _, probas = np.unique(y, return_counts=True)
+    probas = probas / n_samples
+    print()
+    print(probas)
+
+    subsample_size = 10
+    X, y = resample(X, y, replace=False, n_samples=subsample_size, stratify=y)
+    _, probas_subsample = np.unique(y, return_counts=True)
+    probas_subsample = probas_subsample / subsample_size
+
+    assert_allclose(probas_subsample, probas, rtol=1e-2)
+
+    X, y = resample(X, y, replace=False, n_samples=subsample_size,
+                    stratify=None)
+    _, probas_subsample = np.unique(y, return_counts=True)
+    probas_subsample = probas_subsample / subsample_size
+    print(probas_subsample)
+    assert_allclose(probas_subsample, probas, rtol=1e-2)
+
+
 def test_safe_mask():
     random_state = check_random_state(0)
     X = random_state.rand(5, 4)

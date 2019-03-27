@@ -1684,7 +1684,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             random_state=random_state)
         self._default_test_size = 0.1
 
-    def _iter_indices(self, X, y, groups=None):
+    def _iter_indices(self, X, y, groups=None, check_sizes=True):
         n_samples = _num_samples(X)
         y = check_array(y, ensure_2d=False, dtype=None)
         n_train, n_test = _validate_shuffle_split(
@@ -1706,14 +1706,15 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              " number of groups for any class cannot"
                              " be less than 2.")
 
-        if n_train < n_classes:
-            raise ValueError('The train_size = %d should be greater or '
-                             'equal to the number of classes = %d' %
-                             (n_train, n_classes))
-        if n_test < n_classes:
-            raise ValueError('The test_size = %d should be greater or '
-                             'equal to the number of classes = %d' %
-                             (n_test, n_classes))
+        if check_sizes:
+            if n_train < n_classes:
+                raise ValueError('The train_size = %d should be greater or '
+                                'equal to the number of classes = %d' %
+                                (n_train, n_classes))
+            if n_test < n_classes:
+                raise ValueError('The test_size = %d should be greater or '
+                                'equal to the number of classes = %d' %
+                                (n_test, n_classes))
 
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)

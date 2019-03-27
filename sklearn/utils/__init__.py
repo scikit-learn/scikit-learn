@@ -325,11 +325,42 @@ def resample(*arrays, **options):
         indices = indices[:max_n_samples]
 
     if stratify is not None:
-        from sklearn.model_selection import StratifiedShuffleSplit
-        sss = StratifiedShuffleSplit(random_state=random_state,
-                                     train_size=max_n_samples)
-        indices = np.arange(n_samples)
-        indices, _ = next(sss.split(indices, stratify))
+        y = stratify
+        if y.ndim == 2:
+            # for multi-label y, map each distinct row to a string repr
+            # using join because str(row) uses an ellipsis if len(row) > 1000
+            y = np.array([' '.join(row.astype('str')) for row in y])
+
+        classes, y_indices = np.unique(y, return_inverse=True)
+        n_classes = classes.shape[0]
+
+        class_counts = np.bincount(y_indices)
+        # if np.min(class_counts) < 2:
+        #     raise ValueError("The least populated class in y has only 1"
+        #                      " member, which is too few. The minimum"
+        #                      " number of groups for any class cannot"
+        #                      " be less than 2.")
+
+        # Find the sorted list of instances for each class:
+        # (np.unique above performs a sort, so code is O(n logn) already)
+        class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
+                                 np.cumsum(class_counts)[:-1])
+
+        # if there are ties in the class-counts, we want
+        # to make sure to break them anew in each iteration
+        from sklearn.model_selection._split import _approximate_mode
+        n_i = _approximate_mode(class_counts, max_n_samples, random_state)
+
+        indices = []
+
+        for i in range(n_classes):
+            permutation = random_state.permutation(class_counts[i])
+            perm_indices_class_i = class_indices[i].take(permutation,
+                                                         mode='clip')
+
+            indices.extend(perm_indices_class_i[:n_i[i]])
+
+        indices = random_state.permutation(indices)
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
