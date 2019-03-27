@@ -35,16 +35,8 @@ mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
-# Collects tests 3 times and confirms that they match
-# This is to make sure the tests will continue to work with pytest-xdist.
 if [[ "$PYTHON_VERSION" == "*" ]]; then
-    pytest --collect-only -q --pyargs $1 | sed '$d' > collect_1.txt
-    pytest --collect-only -q --pyargs $1 | sed '$d' > collect_2.txt
-    diff collect_2.txt collect_1.txt
-
-    pytest --collect-only -q --pyargs $1 | sed '$d' > collect_3.txt
-    diff collect_3.txt collect_1.txt
-    diff collect_3.txt collect_2.txt
+    TEST_CMD="$TEST_CMD -n2"
 fi
 
 set -x
