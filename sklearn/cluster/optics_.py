@@ -859,11 +859,16 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
 
                 # Definition 11: criterion 4
                 if D.maximum * xi_complement >= reachability_plot[c_end + 1]:
+                    # Find the first index from the left side which is almost
+                    # at the same level as the end of the detected cluster.
                     while (reachability_plot[c_start + 1] >
                            reachability_plot[c_end + 1]
                            and c_start < c_end):
                         c_start += 1
                 elif reachability_plot[c_end] * xi_complement >= D.maximum:
+                    # Find the first index from the right side which is almost
+                    # at the same level as the beginning of the detected
+                    # cluster.
                     while (reachability_plot[c_end] > D.maximum
                            and c_end > c_start):
                         c_end -= 1
