@@ -1036,7 +1036,8 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     Traceback (most recent call last):
         ...
     ValueError: All eigenvalues are negative (max is -1.000000). The matrix is
-        maybe not PSD, or something went wrong with the eigenvalues decomposition.
+        maybe not PSD, or something went wrong with the eigenvalues
+        decomposition.
     >>> check_psd_eigenvalues((5, -1))     # significant negative
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5, 0])
