@@ -33,14 +33,13 @@ X = np.vstack((C1, C2, C3, C4, C5, C6))
 
 
 @pytest.mark.parametrize(
-    'data',
+    ('r_plot', 'end', 'index'),
     [[[10, 8.9, 8.8, 8.7, 7, 10], 3, 4],
      [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0, 4],
      [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5],
      [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5],
      ])
-def test_extend_downward(data):
-    r_plot, end, index = data
+def test_extend_downward(r_plot, end, index):
     r_plot = np.array(r_plot)
     ratio = r_plot[:-1] / r_plot[1:]
     steep_downward = ratio >= 1 / .9
@@ -52,14 +51,13 @@ def test_extend_downward(data):
 
 
 @pytest.mark.parametrize(
-    'data',
+    ('r_plot', 'end', 'index'),
     [[[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6, 6],
      [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0, 4],
      [[1, 2, 2.1, 2, np.inf], 0, 2],
      [[1, 2, 2.1, np.inf], 2, 2],
      ])
-def test_extend_upward(data):
-    r_plot, end, index = data
+def test_extend_upward(r_plot, end, index):
     r_plot = np.array(r_plot)
     ratio = r_plot[:-1] / r_plot[1:]
     steep_upward = ratio <= .9
@@ -71,14 +69,13 @@ def test_extend_upward(data):
 
 
 @pytest.mark.parametrize(
-    'data',
+    ('ordering', 'clusters', 'expected'),
     [[[0, 1, 2, 3], [[0, 1], [2, 3]], [0, 0, 1, 1]],
      [[0, 1, 2, 3], [[0, 1], [3, 3]], [0, 0, -1, 1]],
      [[0, 1, 2, 3], [[0, 1], [3, 3], [0, 3]], [0, 0, -1, 1]],
      [[3, 1, 2, 0], [[0, 1], [3, 3], [0, 3]], [1, 0, -1, 0]],
      ])
-def test_the_extract_xi_labels(data):
-    ordering, clusters, expected = data
+def test_the_extract_xi_labels(ordering, clusters, expected):
     labels = _extract_xi_labels(ordering, clusters)
 
     assert_array_equal(labels, expected)

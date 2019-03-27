@@ -164,7 +164,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
         ``(end, -start)`` (ascending) so that larger clusters encompassing
         smaller clusters come after those smaller ones. Since ``labels_`` does
         not reflect the hierarchy, usually
-        ``len(cluster_hierarchy_) > np.unique(optics.labels_)``.
+        ``len(cluster_hierarchy_) > np.unique(optics.labels_)``. Please also
+        note that these indices are of the ``ordering_``, i.e.
+        ``X[ordering_][start:end + 1]`` form a cluster.
         Only available when ``cluster_method='xi'``.
 
     See also
@@ -658,7 +660,7 @@ def _extend_region(steep_point, xward_point, start, min_samples):
     Parameters
     ----------
     steep_point : bool array, shape (n_samples)
-        True if the point is a steep point.
+        True if the point is an upward or downward steep point, respectively.
 
     xward_point : bool array, shape (n_samples)
         True if the point is upward or downward respectively.
@@ -851,11 +853,11 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
                 c_start = D.start
                 c_end = min(U.end, n_samples - 1)
 
-                # line (**)
+                # line (**), sc2*
                 if reachability_plot[c_end + 1] * xi_complement < D.mib:
                     continue
 
-                # 4
+                # Definition 11: criterion 4
                 if D.maximum * xi_complement >= reachability_plot[c_end + 1]:
                     while (reachability_plot[c_start + 1] >
                            reachability_plot[c_end + 1]
@@ -873,15 +875,15 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
                 if c_start is None:
                     continue
 
-                # 3.a
+                # Definition 11: criterion 3.a
                 if c_end - c_start + 1 < min_cluster_size:
                     continue
 
-                # 1
+                # Definition 11: criterion 1
                 if c_start > D.end:
                     continue
 
-                # 2
+                # Definition 11: criterion 2
                 if c_end < U.start:
                     continue
 
