@@ -425,7 +425,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
     """
     # warn_on_dtype deprecation
-    print(warn_on_dtype)
     if warn_on_dtype is not None or warn_on_dtype is False:
         warnings.warn(
             "'warn_on_dtype' is deprecated in "
