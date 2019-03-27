@@ -1178,11 +1178,11 @@ class CategoricalNB(BaseDiscreteNB):
                                  categories)
             # update category_count_dimensions in case partial_fit is used, to
             # to account for unseen categories
-            self.category_count_[i] = self._update_category_count_dimensions(
+            self.category_count_[i] = self._update_category_count_dims(
                 self.category_count_[i], self.feature_cat_index_mapping_[i])
             self._update_category_count(X_feature, Y,
-                                        self.feature_cat_index_mapping_[i],
-                                        self.category_count_[i])
+                                        self.category_count_[i],
+                                        self.feature_cat_index_mapping_[i])
 
     def _count_categories(self, X_feature):
         if _old_numpy:
@@ -1198,7 +1198,7 @@ class CategoricalNB(BaseDiscreteNB):
             cat_mapping[category]
         cat_mapping.default_factory = None
 
-    def _update_category_count_dimensions(self, cat_count, cat_mapping):
+    def _update_category_count_dims(self, cat_count, cat_mapping):
         diff = len(cat_mapping) - cat_count.shape[1]
         if diff > 0:
             b = np.zeros((self.class_count_.shape[0], len(cat_mapping)))
@@ -1206,7 +1206,7 @@ class CategoricalNB(BaseDiscreteNB):
             return b
         return cat_count
 
-    def _update_category_count(self, X_feature, Y, cat_mapping, cat_count):
+    def _update_category_count(self, X_feature, Y, cat_count, cat_mapping):
         for j in range(self.class_count_.shape[0]):
             X_feature_class = X_feature[Y[:, j] == 1]
             if len(X_feature_class) == 0:
