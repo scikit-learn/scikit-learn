@@ -364,12 +364,9 @@ def test_check_array_dtype_warning():
                                        accept_sparse=True)
         assert_equal(X_checked.dtype, np.float64)
 
-        with pytest.warns(None) as record:
-            X_checked = check_array(X, dtype=np.float64, accept_sparse=True,
-                                    warn_on_dtype=True)
-        assert len(record) == 2
-        assert record.pop(DataConversionWarning)
-        assert record.pop(DeprecationWarning)  # 0.23
+        X_checked = assert_warns(DataConversionWarning, check_array, X,
+                                 dtype=np.float64,
+                                 accept_sparse=True, warn_on_dtype=True)
         assert_equal(X_checked.dtype, np.float64)
 
         # Check that the warning message includes the name of the Estimator
@@ -702,6 +699,7 @@ def test_suppress_validation():
     assert_raises(ValueError, assert_all_finite, X)
 
 
+@pytest.mark.filterwarnings("ignore: 'warn_on_dtype' is deprecated")  # 0.23
 def test_check_array_series():
     # regression test that check_array works on pandas Series
     pd = importorskip("pandas")
