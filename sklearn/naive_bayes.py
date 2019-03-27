@@ -1195,7 +1195,7 @@ class CategoricalNB(BaseDiscreteNB):
     def _update_mapping(self, cat_mapping, categories):
         cat_mapping.default_factory = cat_mapping.__len__
         for category in categories:
-            _ = cat_mapping[category]
+            cat_mapping[category]
         cat_mapping.default_factory = None
 
     def _update_category_count_dimensions(self, cat_count, cat_mapping):
