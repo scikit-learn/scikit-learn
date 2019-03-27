@@ -31,13 +31,13 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
 fi
 
-mkdir -p $TEST_DIR
-cp setup.cfg $TEST_DIR
-cd $TEST_DIR
-
 if [[ "$PYTHON_VERSION" == "*" ]]; then
     TEST_CMD="$TEST_CMD -n2"
 fi
+
+mkdir -p $TEST_DIR
+cp setup.cfg $TEST_DIR
+cd $TEST_DIR
 
 set -x
 $TEST_CMD sklearn
