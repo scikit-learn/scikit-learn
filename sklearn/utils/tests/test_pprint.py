@@ -4,7 +4,7 @@ from pprint import PrettyPrinter
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
+# from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import RFE
 from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
@@ -19,6 +19,17 @@ from sklearn import set_config
 
 # Ignore flake8 (lots of line too long issues)
 # flake8: noqa
+
+class LogisticRegression(BaseEstimator):
+    """Logistic Regression (aka logit, MaxEnt) classifier.
+    """
+
+    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
+                 fit_intercept=True, intercept_scaling=1, class_weight=None,
+                 random_state=None, solver='warn', max_iter=100,
+                 multi_class='warn', verbose=0, warm_start=False, n_jobs=None,
+                 l1_ratio=None):
+        pass
 
 def test_basic():
     # Basic pprint test
