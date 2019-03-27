@@ -4,7 +4,7 @@ from sklearn.utils._joblib import Parallel, delayed, Memory, parallel_backend
 
 
 def test_old_pickle(tmpdir):
-    joblib = pytest.import_or_skip("joblib")
+    import joblib
 
     # Check that a pickle that references sklearn.external.joblib can load
     f = tmpdir.join('foo.pkl')
