@@ -78,15 +78,21 @@ static void info(const char *fmt,...) {}
 #endif
 
 // New function to ensure the same behaviour for random number generation on windows and linux
-// note that we always use the same seed (12574 here, why not) to get reproducible results
+// note that we always use the same seed to get reproducible results
 #if INT_MAX == 0x7FFFFFFF
-std::mt19937 mt_rand(12574);
+std::mt19937 mt_rand(std::mt19937::default_seed);
 #elif INT_MAX == 0x7FFFFFFFFFFFFFFF
-std::mt19937_64 mt_rand(12574);
+std::mt19937_64 mt_rand(std::mt19937::default_seed);
 #else
 info("Random number generator is not fixed for this system. Please report issue. INT_MAX=%d\n", INT_MAX);
 exit(1);
 #endif
+
+// Function to set a new seed - exposed in interface
+void set_seed(unsigned custom_seed) {
+    mt_rand.seed (custom_seed);
+}
+
 inline int myrand() {
     // make a 31bit or 63bit positive random number
     return abs( (int)mt_rand());
