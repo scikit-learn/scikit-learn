@@ -321,6 +321,7 @@ def test_column_transformer_sparse_array():
                                      X_res_both)
 
 
+@pytest.mark.filterwarnings("ignore: 'warn_on_dtype' is deprecated")
 def test_column_transformer_list():
     X_list = [
         [1, float('nan'), 'a'],
@@ -435,6 +436,7 @@ def test_column_transformer_sparse_threshold():
         assert not col_trans.sparse_output_
 
 
+@pytest.mark.filterwarnings("ignore: 'warn_on_dtype' is deprecated")
 def test_column_transformer_error_msg_1D():
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
 
@@ -618,6 +620,7 @@ def test_column_transformer_get_set_params():
     assert_dict_equal(ct.get_params(), exp)
 
 
+@pytest.mark.filterwarnings("ignore: 'warn_on_dtype' is deprecated")
 def test_column_transformer_named_estimators():
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
     ct = ColumnTransformer([('trans1', StandardScaler(), [0]),
@@ -634,6 +637,7 @@ def test_column_transformer_named_estimators():
     assert_equal(ct.named_transformers_.trans1.mean_, 1.)
 
 
+@pytest.mark.filterwarnings("ignore: 'warn_on_dtype' is deprecated")
 def test_column_transformer_cloning():
     X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
 
