@@ -205,7 +205,7 @@ def test_polynomial_features_csr_X(deg, include_bias, interaction_only, dtype):
     est = PolynomialFeatures(deg, include_bias=include_bias,
                              interaction_only=interaction_only)
     Xt_csr = est.fit_transform(X_csr.astype(dtype))
-    Xt_dense = est.fit_transform(X.astype(dtype))
+    Xt_dense = est.fit_transform(X.astype(dtype, copy=False))
 
     assert isinstance(Xt_csr, sparse.csr_matrix)
     assert Xt_csr.dtype == Xt_dense.dtype
@@ -1260,6 +1260,13 @@ def test_quantile_transform_check_error():
     assert_raise_message(ValueError,
                          'Expected 2D array, got scalar array instead',
                          transformer.transform, 10)
+    # check that a warning is raised is n_quantiles > n_samples
+    transformer = QuantileTransformer(n_quantiles=100)
+    warn_msg = "n_quantiles is set to n_samples"
+    with pytest.warns(UserWarning, match=warn_msg) as record:
+        transformer.fit(X)
+    assert len(record) == 1
+    assert transformer.n_quantiles_ == X.shape[0]
 
 
 def test_quantile_transform_sparse_ignore_zeros():
@@ -1440,6 +1447,7 @@ def test_quantile_transform_sparse_toy():
     assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
 
 
+@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_axis1():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],
@@ -1517,6 +1525,18 @@ def test_quantile_transform_nan():
     assert np.isnan(transformer.quantiles_[:, 0]).all()
     # all other column should not contain NaN
     assert not np.isnan(transformer.quantiles_[:, 1:]).any()
+
+
+def test_deprecated_quantile_transform_copy():
+    future_message = ("The default value of `copy` will change from False to "
+                      "True in 0.23 in order to make it more consistent with "
+                      "the default `copy` values of other functions in "
+                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      "unexpected side effects by modifying the value of `X` "
+                      "inplace. To avoid inplace modifications of `X`, it is "
+                      "recommended to explicitly set `copy=True`")
+    assert_warns_message(FutureWarning, future_message, quantile_transform,
+                         np.array([[0, 1], [0, 0.5], [1, 0]]))
 
 
 def test_robust_scaler_invalid_range():
@@ -2134,6 +2154,7 @@ def test_fit_cold_start():
         scaler.fit_transform(X_2d)
 
 
+@pytest.mark.filterwarnings("ignore: The default value of `copy`")  # 0.23
 def test_quantile_transform_valid_axis():
     X = np.array([[0, 25, 50, 75, 100],
                   [2, 4, 6, 8, 10],

@@ -43,7 +43,6 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
-from sklearn.linear_model.stochastic_gradient import BaseSGD
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
@@ -1931,6 +1930,8 @@ def check_class_weight_classifiers(name, classifier_orig):
             classifier.set_params(max_iter=1000)
         if hasattr(classifier, "min_weight_fraction_leaf"):
             classifier.set_params(min_weight_fraction_leaf=0.01)
+        if hasattr(classifier, "n_iter_no_change"):
+            classifier.set_params(n_iter_no_change=20)
 
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
@@ -1991,7 +1992,10 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
     classifier.set_params(class_weight=class_weight)
     coef_manual = classifier.fit(X, y).coef_.copy()
 
-    assert_allclose(coef_balanced, coef_manual)
+    assert_allclose(coef_balanced, coef_manual,
+                    err_msg="Classifier %s is not computing"
+                    " class_weight=balanced properly."
+                    % name)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -2191,11 +2195,6 @@ def check_parameters_default_constructible(name, Estimator):
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
                 assert init_param.default is None
-                continue
-
-            if (issubclass(Estimator, BaseSGD) and
-                    init_param.name in ['tol', 'max_iter']):
-                # To remove in 0.21, when they get their future default values
                 continue
 
             param_value = params[init_param.name]

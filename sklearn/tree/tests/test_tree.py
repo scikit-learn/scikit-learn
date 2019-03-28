@@ -1579,7 +1579,7 @@ def test_min_weight_leaf_split_level(name):
 
 
 def check_public_apply(name):
-    X_small32 = X_small.astype(tree._tree.DTYPE)
+    X_small32 = X_small.astype(tree._tree.DTYPE, copy=False)
 
     est = ALL_TREES[name]()
     est.fit(X_small, y_small)
@@ -1588,7 +1588,7 @@ def check_public_apply(name):
 
 
 def check_public_apply_sparse(name):
-    X_small32 = csr_matrix(X_small.astype(tree._tree.DTYPE))
+    X_small32 = csr_matrix(X_small.astype(tree._tree.DTYPE, copy=False))
 
     est = ALL_TREES[name]()
     est.fit(X_small, y_small)
