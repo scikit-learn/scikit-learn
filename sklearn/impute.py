@@ -1213,41 +1213,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         return X
 
-    def _drop_all_missing_columns(self, X):
-        """
-        In case we have a column with totally missing values, drop it,
-        because constant column is not informative.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The input data.
-
-        Returns
-        -------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The input data without a column with totally missing values.
-        """
-        is_sparse = sparse.issparse(X)
-
-        if is_sparse:
-            sparse_format = X.format
-            X = X.toarray()
-
-        if not self.fully_missing_indices_:
-            ix = _get_mask(X, self.missing_values)
-            self.fully_missing_indices_ = np.where(ix.all(axis=0))[0]
-
-        X = np.delete(X, self.fully_missing_indices_, axis=1)
-
-        if is_sparse:
-            if sparse_format == 'csr':
-                X = sparse.csr_matrix(X)
-            else:
-                X = sparse.csc_matrix(X)
-
-        return X
-
     def fit(self, X, y=None):
         """Fit the transformer on X.
 
@@ -1262,9 +1227,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        self.fully_missing_indices_ = None
         X = self._validate_input(X)
-        X = self._drop_all_missing_columns(X)
         self._n_features = X.shape[1]
 
         if self.features not in ('missing-only', 'all'):
@@ -1299,7 +1262,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, "features_")
         X = self._validate_input(X)
-        X = self._drop_all_missing_columns(X)
 
         if X.shape[1] != self._n_features:
             raise ValueError("X has a different number of features "
@@ -1316,7 +1278,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
             if (self.features_.size > 0 and
                     self.features_.size < self._n_features):
-
                 imputer_mask = imputer_mask[:, self.features_]
 
         return imputer_mask
