@@ -277,21 +277,22 @@ def test_partial_dependence_input():
     gbc = GradientBoostingClassifier(random_state=0)
     gbc.fit(X, y)
 
-    assert_raises_regex(ValueError,
-                        "est must be a fitted regressor or classifier",
-                        partial_dependence, KMeans(), [0], X)
+    with pytest.raises(
+            ValueError,
+            match="est must be a fitted regressor or classifier"):
+        partial_dependence(KMeans(), [0], X)
 
     with pytest.raises(
             ValueError,
             match='The response_method parameter is ignored for regressors'):
         partial_dependence(lr, [0], X, response_method='predict_proba')
 
-    assert_raises_regex(
-        ValueError,
-        "With the 'recursion' method, the response_method must be "
-        "'decision_function'.",
-        partial_dependence, gbc, [0], X, response_method='predict_proba',
-        method='recursion')
+    with pytest.raises(
+            ValueError,
+            match="With the 'recursion' method, the response_method must be "
+                  "'decision_function'."):
+        partial_dependence(gbc, [0], X, response_method='predict_proba',
+                           method='recursion')
 
     # for GBDTs, if users want to use predict_proba then they're forced to set
     # 'method' to brute.
