@@ -424,6 +424,14 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     array_converted : object
         The converted and validated array.
 
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_array
+    >>> X = [[0, 1], [1, 1]]
+    >>> Y = [[0, 1], [2, 1]]
+    >>> check_array(X, Y)
+    array([[0, 1],
+           [1, 1]])
     """
     # warn_on_dtype deprecation
     if warn_on_dtype is not None:
@@ -707,6 +715,16 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
 
     y_converted : object
         The converted and validated y.
+
+    Examples
+    --------
+    >>> from sklearn.utils.validation import check_X_y
+    >>> X = [[0, 1], [1, 1]]
+    >>> Y = [[2, 1], [3, 3]]
+    >>> check_X_y(X, Y, multi_output=True)
+    (array([[0, 1],
+           [1, 1]]), array([[2, 1],
+           [3, 3]]))
     """
     # warn_on_dtype deprecation
     if warn_on_dtype is not None:
