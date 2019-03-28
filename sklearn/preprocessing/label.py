@@ -787,7 +787,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     classes_ : array of labels
-        A copy of the `classes` parameter where provided,
+        A copy of the ``classes`` parameter where provided,
         or otherwise, the sorted set of classes found when fitting.
 
     Examples
@@ -823,7 +823,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         ----------
         y : iterable of iterables
             A set of labels (any orderable and hashable object) for each
-            sample. If the `classes` parameter is set, `y` will not be
+            sample. If the ``classes`` parameter is set, `y` will not be
             iterated.
 
         Returns
@@ -851,7 +851,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         ----------
         y : iterable of iterables
             A set of labels (any orderable and hashable object) for each
-            sample. If the `classes` parameter is set, `y` will not be
+            sample. If the ``classes`` parameter is set, `y` will not be
             iterated.
 
         Returns
@@ -894,7 +894,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         ----------
         y : iterable of iterables
             A set of labels (any orderable and hashable object) for each
-            sample. If the `classes` parameter is set, `y` will not be
+            sample. If the ``classes`` parameter is set, `y` will not be
             iterated.
 
         Returns

@@ -105,7 +105,7 @@ boolean mask array or callable
     ----------
     transformers_ : list
         The collection of fitted transformers as tuples of
-        (name, fitted_transformer, column). `fitted_transformer` can be an
+        (name, fitted_transformer, column). ``fitted_transformer`` can be an
         estimator, 'drop', or 'passthrough'. In case there were no columns
         selected, this will be the unfitted transformer.
         If there are remaining columns, the final element is a tuple of the
@@ -123,7 +123,7 @@ boolean mask array or callable
     sparse_output_ : boolean
         Boolean flag indicating wether the output of ``transform`` is a
         sparse matrix or a dense numpy array, which depends on the output
-        of the individual transformers and the `sparse_threshold` keyword.
+        of the individual transformers and the ``sparse_threshold`` keyword.
 
     Notes
     -----
@@ -131,7 +131,7 @@ boolean mask array or callable
     order of how the columns are specified in the `transformers` list.
     Columns of the original feature matrix that are not specified are
     dropped from the resulting transformed feature matrix, unless specified
-    in the `passthrough` keyword. Those columns specified with `passthrough`
+    in the ``passthrough`` keyword. Those columns specified with ``passthrough``
     are added at the right to the output of the transformers.
 
     See also

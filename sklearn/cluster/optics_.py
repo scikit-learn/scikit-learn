@@ -48,7 +48,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. Default value of "np.inf" will identify
-        clusters across all scales; reducing `max_eps` will result in
+        clusters across all scales; reducing ``max_eps`` will result in
         shorter run times.
 
     metric : string or callable, optional (default='minkowski')
@@ -186,7 +186,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """Perform OPTICS clustering
 
         Extracts an ordered list of points and reachability distances, and
-        performs initial clustering using `max_eps` distance specified at
+        performs initial clustering using ``max_eps`` distance specified at
         OPTICS object instantiation.
 
         Parameters
@@ -314,7 +314,7 @@ def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. Default value of "np.inf" will identify
-        clusters across all scales; reducing `max_eps` will result in
+        clusters across all scales; reducing ``max_eps`` will result in
         shorter run times.
 
     metric : string or callable, optional (default='minkowski')
@@ -492,26 +492,26 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
 def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     """Performs DBSCAN extraction for an arbitrary epsilon.
 
-    Extracting the clusters runs in linear time. Note that if the `max_eps`
+    Extracting the clusters runs in linear time. Note that if the ``max_eps``
     OPTICS parameter was set to < inf for extracting reachability and ordering
-    arrays, DBSCAN extractions will be unstable for `eps` values close to
-    `max_eps`. Setting `eps` < (`max_eps` / 5.0) will guarantee extraction
+    arrays, DBSCAN extractions will be unstable for ``eps`` values close to
+    ``max_eps``. Setting ``eps`` < (``max_eps`` / 5.0) will guarantee extraction
     parity with DBSCAN.
 
     Parameters
     ----------
     reachability : array, shape (n_samples,)
-        Reachability distances calculated by OPTICS (`reachability_`)
+        Reachability distances calculated by OPTICS (``reachability_``)
 
     core_distances : array, shape (n_samples,)
-        Distances at which points become core (`core_distances_`)
+        Distances at which points become core (``core_distances_``)
 
     ordering : array, shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
+        OPTICS ordered point indices (``ordering_``)
 
     eps : float, optional (default=0.5)
-        DBSCAN `eps` parameter. Must be set to < `max_eps`. Results
-        will be close to DBSCAN algorithm if `eps` is < (`max_eps` / 5)
+        DBSCAN ``eps`` parameter. Must be set to < ``max_eps``. Results
+        will be close to DBSCAN algorithm if ``eps`` is < (``max_eps`` / 5)
 
     Returns
     -------

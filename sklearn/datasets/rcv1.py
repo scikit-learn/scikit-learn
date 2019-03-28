@@ -120,8 +120,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
     return_X_y : boolean, default=False.
         If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
-        object. See below for more information about the `dataset.data` and
-        `dataset.target` object.
+        object. See below for more information about the ``dataset.data`` and
+        ``dataset.target`` object.
 
         .. versionadded:: 0.20
 

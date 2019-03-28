@@ -117,7 +117,7 @@ def is_multilabel(y):
     Returns
     -------
     out : bool,
-        Return ``True``, if ``y`` is in a multilabel format, else ```False``.
+        Return ``True``, if ``y`` is in a multilabel format, else ``False``.
 
     Examples
     --------

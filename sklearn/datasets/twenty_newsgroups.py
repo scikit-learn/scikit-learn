@@ -222,7 +222,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         - bunch.filenames: list, length [n_samples]
         - bunch.DESCR: a description of the dataset.
         - bunch.target_names: a list of categories of the returned data,
-          length [n_classes]. This depends on the `categories` parameter.
+          length [n_classes]. This depends on the ``categories`` parameter.
     """
 
     data_home = get_data_home(data_home=data_home)

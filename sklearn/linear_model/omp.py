@@ -274,7 +274,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     `n_nonzero_coefs`:
     argmin ||y - X\gamma||^2 subject to ||\gamma||_0 <= n_{nonzero coefs}
 
-    When parametrized by error using the parameter `tol`:
+    When parametrized by error using the parameter ``tol``:
     argmin ||\gamma||_0 subject to ||y - X\gamma||^2 <= tol
 
     Read more in the :ref:`User Guide <omp>`.
@@ -313,7 +313,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     Returns
     -------
     coef : array, shape (n_features,) or (n_features, n_targets)
-        Coefficients of the OMP solution. If `return_path=True`, this contains
+        Coefficients of the OMP solution. If ``return_path=True``, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
         iterating over the last axis yields coefficients in increasing order
@@ -321,7 +321,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
 
     n_iters : array-like or int
         Number of active features across every target. Returned only if
-        `return_n_iter` is set to True.
+        ``return_n_iter`` is set to True.
 
     See also
     --------
@@ -452,7 +452,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     Returns
     -------
     coef : array, shape (n_features,) or (n_features, n_targets)
-        Coefficients of the OMP solution. If `return_path=True`, this contains
+        Coefficients of the OMP solution. If ``return_path=True``, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
         iterating over the last axis yields coefficients in increasing order
@@ -460,7 +460,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
     n_iters : array-like or int
         Number of active features across every target. Returned only if
-        `return_n_iter` is set to True.
+        ``return_n_iter`` is set to True.
 
     See also
     --------

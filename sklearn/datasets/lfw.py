@@ -205,7 +205,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
     This operation is meant to be cached by a joblib wrapper.
     """
     # scan the data folder content to retain people with more that
-    # `min_faces_per_person` face pictures
+    # ``min_faces_per_person`` face pictures
     person_names, file_paths = [], []
     for person_name in sorted(listdir(data_folder_path)):
         folder_path = join(data_folder_path, person_name)
@@ -271,7 +271,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     min_faces_per_person : int, optional, default None
         The extracted dataset will only retain pictures of people that have at
-        least `min_faces_per_person` different pictures.
+        least ``min_faces_per_person`` different pictures.
 
     color : boolean, optional, default False
         Keep the 3 RGB channels instead of averaging them to a single
@@ -289,8 +289,8 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     return_X_y : boolean, default=False.
         If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
-        object. See below for more information about the `dataset.data` and
-        `dataset.target` object.
+        object. See below for more information about the ``dataset.data`` and
+        ``dataset.target`` object.
 
         .. versionadded:: 0.20
 

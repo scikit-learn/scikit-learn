@@ -206,7 +206,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     return_X_mean : bool, optional
         If True, X_mean is returned too.
@@ -242,7 +242,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         If the algorithm is "deflation", n_iter is the
         maximum number of iterations run across all components. Else
         they are just the number of iterations taken to converge. This is
-        returned only when return_n_iter is set to `True`.
+        returned only when return_n_iter is set to ``True``.
 
     Notes
     -----
@@ -426,7 +426,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Attributes
     ----------

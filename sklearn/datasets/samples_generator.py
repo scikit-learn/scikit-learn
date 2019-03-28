@@ -268,7 +268,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         - k times, choose a word: w ~ Multinomial(theta_c)
 
     In the above process, rejection sampling is used to make sure that
-    n is never zero or more than `n_classes`, and that the document length
+    n is never zero or more than ``n_classes``, and that the document length
     is never zero. Likewise, we reject classes which have already been chosen.
 
     Read more in the :ref:`User Guide <sample_generators>`.
@@ -500,7 +500,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
 
     tail_strength : float between 0.0 and 1.0, optional (default=0.5)
         The relative importance of the fat noisy tail of the singular values
-        profile if `effective_rank` is not None.
+        profile if ``effective_rank`` is not None.
 
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise applied to the output.
@@ -1540,7 +1540,7 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
 
     Returns
     -------
-    X : array of shape `shape`
+    X : array of shape ``shape``
         The generated array.
 
     rows : array of shape (n_clusters, X.shape[0],)
@@ -1631,7 +1631,7 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
 
     Returns
     -------
-    X : array of shape `shape`
+    X : array of shape ``shape``
         The generated array.
 
     rows : array of shape (n_clusters, X.shape[0],)

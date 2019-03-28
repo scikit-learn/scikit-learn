@@ -464,7 +464,7 @@ class BiclusterMixin:
         return tuple(len(i) for i in indices)
 
     def get_submatrix(self, i, data):
-        """Returns the submatrix corresponding to bicluster `i`.
+        """Returns the submatrix corresponding to bicluster ``i``.
 
         Parameters
         ----------

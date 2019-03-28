@@ -85,8 +85,8 @@ class Imputer(BaseEstimator, TransformerMixin):
     axis : integer, optional (default=0)
         The axis along which to impute.
 
-        - If `axis=0`, then impute along columns.
-        - If `axis=1`, then impute along rows.
+        - If ``axis=0``, then impute along columns.
+        - If ``axis=1``, then impute along rows.
 
     verbose : integer, optional (default=0)
         Controls the verbosity of the imputer.
@@ -94,12 +94,12 @@ class Imputer(BaseEstimator, TransformerMixin):
     copy : boolean, optional (default=True)
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, in the following cases,
-        a new copy will always be made, even if `copy=False`:
+        a new copy will always be made, even if ``copy=False``:
 
         - If X is not an array of floating values;
-        - If X is sparse and `missing_values=0`;
-        - If `axis=0` and X is encoded as a CSR matrix;
-        - If `axis=1` and X is encoded as a CSC matrix.
+        - If X is sparse and ``missing_values=0``;
+        - If ``axis=0`` and X is encoded as a CSR matrix;
+        - If ``axis=1`` and X is encoded as a CSC matrix.
 
     Attributes
     ----------

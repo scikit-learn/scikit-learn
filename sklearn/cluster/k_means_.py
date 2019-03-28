@@ -291,7 +291,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 
     best_n_iter : int
         Number of iterations corresponding to the best results.
-        Returned only if `return_n_iter` is set to True.
+        Returned only if ``return_n_iter`` is set to True.
 
     """
     if n_init <= 0:
@@ -1051,7 +1051,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     def predict(self, X, sample_weight=None):
         """Predict the closest cluster each sample in X belongs to.
 
-        In the vector quantization literature, `cluster_centers_` is called
+        In the vector quantization literature, ``cluster_centers_`` is called
         the code book and each value returned by `predict` is the index of
         the closest code in the code book.
 
@@ -1720,7 +1720,7 @@ class MiniBatchKMeans(KMeans):
     def predict(self, X, sample_weight=None):
         """Predict the closest cluster each sample in X belongs to.
 
-        In the vector quantization literature, `cluster_centers_` is called
+        In the vector quantization literature, ``cluster_centers_`` is called
         the code book and each value returned by `predict` is the index of
         the closest code in the code book.
 

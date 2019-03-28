@@ -67,7 +67,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     normalize_components : boolean, optional (default=False)
         - if False, use a version of Sparse PCA without components
@@ -202,7 +202,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
         To avoid instability issues in case the system is under-determined,
         regularization can be applied (Ridge regression) via the
-        `ridge_alpha` parameter.
+        ``ridge_alpha`` parameter.
 
         Note that Sparse PCA components orthogonality is not enforced as in PCA
         hence one cannot use a simple linear projection.
@@ -290,7 +290,7 @@ class MiniBatchSparsePCA(SparsePCA):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     normalize_components : boolean, optional (default=False)
         - if False, use a version of Sparse PCA without components

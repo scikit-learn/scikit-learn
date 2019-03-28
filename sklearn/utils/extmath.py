@@ -161,10 +161,10 @@ def randomized_range_finder(A, size, n_iter,
     power_iteration_normalizer : 'auto' (default), 'QR', 'LU', 'none'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
-        (the fastest but numerically unstable when `n_iter` is large, e.g.
+        (the fastest but numerically unstable when ``n_iter`` is large, e.g.
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
-        normalization if `n_iter` <= 2 and switches to LU otherwise.
+        normalization if ``n_iter`` <= 2 and switches to LU otherwise.
 
         .. versionadded:: 0.18
 
@@ -173,7 +173,7 @@ def randomized_range_finder(A, size, n_iter,
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     Returns
     -------
@@ -250,7 +250,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     n_iter : int or 'auto' (default is 'auto')
         Number of power iterations. It can be used to deal with very noisy
         problems. When 'auto', it is set to 4, unless `n_components` is small
-        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
+        (< .1 * min(X.shape)) ``n_iter`` in which case is set to 7.
         This improves precision with few components.
 
         .. versionchanged:: 0.18
@@ -258,10 +258,10 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     power_iteration_normalizer : 'auto' (default), 'QR', 'LU', 'none'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
-        (the fastest but numerically unstable when `n_iter` is large, e.g.
+        (the fastest but numerically unstable when ``n_iter`` is large, e.g.
         typically 5 or larger), or 'LU' factorization (numerically stable
         but can lose slightly in accuracy). The 'auto' mode applies no
-        normalization if `n_iter` <= 2 and switches to LU otherwise.
+        normalization if ``n_iter`` <= 2 and switches to LU otherwise.
 
         .. versionadded:: 0.18
 
@@ -276,8 +276,8 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     flip_sign : boolean, (True by default)
         The output of a singular value decomposition is only unique up to a
-        permutation of the signs of the singular vectors. If `flip_sign` is
-        set to `True`, the sign ambiguity is resolved by making the largest
+        permutation of the signs of the singular vectors. If ``flip_sign`` is
+        set to ``True``, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
     random_state : int, RandomState instance or None, optional (default=None)
@@ -285,7 +285,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     Notes
     -----
@@ -293,7 +293,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     singular value decomposition using randomization to speed up the
     computations. It is particularly fast on large matrices on which
     you wish to extract only a small number of components. In order to
-    obtain further speed up, `n_iter` can be set <=2 (at the cost of
+    obtain further speed up, ``n_iter`` can be set <=2 (at the cost of
     loss of precision).
 
     References

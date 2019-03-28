@@ -166,7 +166,7 @@ further information.
  - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` (See the ``Note``)
 
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
-by setting ```average=True```. ASGD works by averaging the coefficients
+by setting ``average=True``. ASGD works by averaging the coefficients
 of the plain SGD over each iteration over a sample. When using ASGD
 the learning rate can be larger and even constant leading on some
 datasets to a speed up in training time.
@@ -198,7 +198,7 @@ specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
 
 :class:`SGDRegressor` supports averaged SGD as :class:`SGDClassifier`.
-Averaging can be enabled by setting ```average=True```.
+Averaging can be enabled by setting ``average=True``.
 
 For regression with a squared loss and a l2 penalty, another variant of
 SGD with an averaging strategy is available with Stochastic Average

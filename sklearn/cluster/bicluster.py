@@ -181,7 +181,7 @@ class SpectralCoclustering(BaseSpectral):
 
     Clusters rows and columns of an array `X` to solve the relaxed
     normalized cut of the bipartite graph created from `X` as follows:
-    the edge between row vertex `i` and column vertex `j` has weight
+    the edge between row vertex ``i`` and column vertex `j` has weight
     `X[i, j]`.
 
     The resulting bicluster structure is block-diagonal, since each
@@ -201,13 +201,13 @@ class SpectralCoclustering(BaseSpectral):
         'randomized' or 'arpack'. If 'randomized', use
         :func:`sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', use
-        :func:`scipy.sparse.linalg.svds`, which is more accurate, but
+        :func:``scipy.sparse.linalg.svds``, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
         Number of vectors to use in calculating the SVD. Corresponds
-        to `ncv` when `svd_method=arpack` and `n_oversamples` when
-        `svd_method` is 'randomized`.
+        to ``ncv`` when ``svd_method=arpack`` and ``n_oversamples`` when
+        ``svd_method`` is ``'randomized'``.
 
     mini_batch : bool, optional, default: False
         Whether to use mini-batch k-means, which is faster but may get
@@ -243,10 +243,10 @@ class SpectralCoclustering(BaseSpectral):
     ----------
     rows_ : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
-        cluster `i` contains row `r`. Available only after calling ``fit``.
+        cluster ``i`` contains row ``r``. Available only after calling ``fit``.
 
     columns_ : array-like, shape (n_column_clusters, n_columns)
-        Results of the clustering, like `rows`.
+        Results of the clustering, like ``rows``.
 
     row_labels_ : array-like, shape (n_rows,)
         The bicluster label of each row.
@@ -347,13 +347,13 @@ class SpectralBiclustering(BaseSpectral):
         'randomized' or 'arpack'. If 'randomized', uses
         `sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', uses
-        `scipy.sparse.linalg.svds`, which is more accurate, but
+        ``scipy.sparse.linalg.svds``, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
         Number of vectors to use in calculating the SVD. Corresponds
-        to `ncv` when `svd_method=arpack` and `n_oversamples` when
-        `svd_method` is 'randomized`.
+        to ``ncv`` when ``svd_method=arpack`` and ``n_oversamples`` when
+        ``svd_method`` is ``'randomized'``.
 
     mini_batch : bool, optional, default: False
         Whether to use mini-batch k-means, which is faster but may get
@@ -389,10 +389,10 @@ class SpectralBiclustering(BaseSpectral):
     ----------
     rows_ : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if
-        cluster `i` contains row `r`. Available only after calling ``fit``.
+        cluster ``i`` contains row ``r``. Available only after calling ``fit``.
 
     columns_ : array-like, shape (n_column_clusters, n_columns)
-        Results of the clustering, like `rows`.
+        Results of the clustering, like ``rows``.
 
     row_labels_ : array-like, shape (n_rows,)
         Row partition labels.

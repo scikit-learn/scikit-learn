@@ -215,7 +215,7 @@ class ParameterSampler:
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Returns
     -------
@@ -910,7 +910,7 @@ class GridSearchCV(BaseSearchCV):
         Possible inputs for cv are:
 
         - None, to use the default 3-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - integer, to specify the number of folds in a ``(Stratified)KFold``,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
@@ -1107,12 +1107,12 @@ class GridSearchCV(BaseSearchCV):
     The parameters selected are those that maximize the score of the left out
     data, unless an explicit score is passed in which case it is used instead.
 
-    If `n_jobs` was set to a value higher than one, the data is copied for each
-    point in the grid (and not `n_jobs` times). This is done for efficiency
+    If ``2*n_jobs`` was set to a value higher than one, the data is copied for each
+    point in the grid (and not ``2*n_jobs`` times). This is done for efficiency
     reasons if individual jobs take very little time, but may raise errors if
     the dataset is large and not enough memory is available.  A workaround in
-    this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
+    this case is to set ``pre_dispatch``. Then, the memory is copied only
+    ``pre_dispatch`` many times. A reasonable value for ``pre_dispatch`` is `2 *
     n_jobs`.
 
     See Also
@@ -1252,7 +1252,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Possible inputs for cv are:
 
         - None, to use the default 3-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - integer, to specify the number of folds in a ``(Stratified)KFold``,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
@@ -1303,7 +1303,7 @@ class RandomizedSearchCV(BaseSearchCV):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -1427,12 +1427,12 @@ class RandomizedSearchCV(BaseSearchCV):
     The parameters selected are those that maximize the score of the held-out
     data, according to the scoring parameter.
 
-    If `n_jobs` was set to a value higher than one, the data is copied for each
-    parameter setting(and not `n_jobs` times). This is done for efficiency
+    If ``2*n_jobs`` was set to a value higher than one, the data is copied for each
+    parameter setting(and not ``2*n_jobs`` times). This is done for efficiency
     reasons if individual jobs take very little time, but may raise errors if
     the dataset is large and not enough memory is available.  A workaround in
-    this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
+    this case is to set ``pre_dispatch``. Then, the memory is copied only
+    ``pre_dispatch`` many times. A reasonable value for ``pre_dispatch`` is `2 *
     n_jobs`.
 
     See Also

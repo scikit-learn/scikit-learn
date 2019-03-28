@@ -229,7 +229,7 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
         random_state is the seed used by the random number generator; If
         RandomState instance, random_state is the random number generator; If
         None, the random number generator is the RandomState instance used by
-        `np.random`.
+        ``np.random``.
 
     Returns
     -------
@@ -336,7 +336,7 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Returns
     -------
@@ -415,7 +415,7 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
         random_state is the seed used by the random number generator; If
         RandomState instance, random_state is the random number generator; If
         None, the random number generator is the RandomState instance used by
-        `np.random`.
+        ``np.random``.
 
     Returns
     -------

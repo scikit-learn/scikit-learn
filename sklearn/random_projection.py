@@ -173,7 +173,7 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
         at fit time.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        RandomState instance used by ``np.random``.
 
     Returns
     -------
@@ -232,7 +232,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         at fit time.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        RandomState instance used by ``np.random``.
 
     Returns
     -------
@@ -452,7 +452,7 @@ class GaussianRandomProjection(BaseRandomProjection):
         at fit time.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        RandomState instance used by ``np.random``.
 
     Attributes
     ----------
@@ -572,7 +572,7 @@ class SparseRandomProjection(BaseRandomProjection):
         at fit time.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        RandomState instance used by ``np.random``.
 
     Attributes
     ----------

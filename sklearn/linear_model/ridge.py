@@ -274,7 +274,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
           more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          (possibility to set ``tol`` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
@@ -290,7 +290,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
 
         All last five solvers support both dense and sparse data. However, only
-        'sag' and 'sparse_cg' supports sparse input when`fit_intercept` is
+        'sag' and 'sparse_cg' supports sparse input when``fit_intercept`` is
         True.
 
         .. versionadded:: 0.17
@@ -316,10 +316,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        instance used by ``np.random``. Used when ``solver`` == 'sag'.
 
     return_n_iter : boolean, default False
-        If True, the method also returns `n_iter`, the actual number of
+        If True, the method also returns ``n_iter``, the actual number of
         iteration performed by the solver.
 
         .. versionadded:: 0.17
@@ -339,10 +339,10 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     n_iter : int, optional
         The actual number of iteration performed by the solver.
-        Only returned if `return_n_iter` is True.
+        Only returned if ``return_n_iter`` is True.
 
     intercept : float or array, shape = [n_targets]
-        The intercept of the model. Only returned if `return_intercept`
+        The intercept of the model. Only returned if ``return_intercept``
         is True and if X is a scipy sparse array.
 
     Notes
@@ -638,7 +638,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
           more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          (possibility to set ``tol`` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
@@ -653,7 +653,7 @@ class Ridge(_BaseRidge, RegressorMixin):
           scaler from sklearn.preprocessing.
 
         All last five solvers support both dense and sparse data. However, only
-        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
+        'sag' and 'sparse_cg' supports sparse input when ``fit_intercept`` is
         True.
 
         .. versionadded:: 0.17
@@ -666,7 +666,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        instance used by ``np.random``. Used when ``solver`` == 'sag'.
 
         .. versionadded:: 0.17
            *random_state* to support Stochastic Average Gradient.
@@ -797,7 +797,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
           more appropriate than 'cholesky' for large-scale data
-          (possibility to set `tol` and `max_iter`).
+          (possibility to set ``tol`` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
           scipy.sparse.linalg.lsqr. It is the fastest and uses an iterative
@@ -821,7 +821,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag'.
+        instance used by ``np.random``. Used when ``solver`` == 'sag'.
 
     Attributes
     ----------

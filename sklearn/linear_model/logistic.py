@@ -601,7 +601,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        instance used by ``np.random``. Used when ``solver`` == 'sag' or
         'liblinear'.
 
     check_input : bool, default True
@@ -767,7 +767,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        instance used by ``np.random``. Used when ``solver`` == 'sag' or
         'liblinear'.
 
     check_input : bool, default True
@@ -1106,7 +1106,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' and
+        instance used by ``np.random``. Used when ``solver`` == 'sag' and
         'liblinear'.
 
     max_squared_sum : float, default None
@@ -1284,7 +1284,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`. Used when ``solver`` == 'sag' or
+        instance used by ``np.random``. Used when ``solver`` == 'sag' or
         'liblinear'.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
@@ -1367,15 +1367,15 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         `coef_` is of shape (1, n_features) when the given problem is binary.
         In particular, when `multi_class='multinomial'`, `coef_` corresponds
-        to outcome 1 (True) and `-coef_` corresponds to outcome 0 (False).
+        to outcome 1 (True) and ``-coef_`` corresponds to outcome 0 (False).
 
     intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
 
-        If `fit_intercept` is set to False, the intercept is set to zero.
-        `intercept_` is of shape (1,) when the given problem is binary.
-        In particular, when `multi_class='multinomial'`, `intercept_`
-        corresponds to outcome 1 (True) and `-intercept_` corresponds to
+        If ``fit_intercept`` is set to False, the intercept is set to zero.
+        ``intercept_`` is of shape (1,) when the given problem is binary.
+        In particular, when `multi_class='multinomial'`, ``intercept_``
+        corresponds to outcome 1 (True) and ``-intercept_`` corresponds to
         outcome 0 (False).
 
     n_iter_ : array, shape (n_classes,) or (1, )
@@ -1832,7 +1832,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     l1_ratios : list of float or None, optional (default=None)
         The list of Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``.
@@ -1855,8 +1855,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
 
-        If `fit_intercept` is set to False, the intercept is set to zero.
-        `intercept_` is of shape(1,) when the problem is binary.
+        If ``fit_intercept`` is set to False, the intercept is set to zero.
+        ``intercept_`` is of shape(1,) when the problem is binary.
 
     Cs_ : array, shape (n_cs)
         Array of C i.e. inverse of regularization parameter values used
@@ -1892,13 +1892,13 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         Array of C that maps to the best scores across every class. If refit is
         set to False, then for each class, the best C is the average of the
         C's that correspond to the best scores for each fold.
-        `C_` is of shape(n_classes,) when the problem is binary.
+        ``C_`` is of shape(n_classes,) when the problem is binary.
 
     l1_ratio_ : array, shape (n_classes,) or (n_classes - 1,)
         Array of l1_ratio that maps to the best scores across every class. If
         refit is set to False, then for each class, the best l1_ratio is the
         average of the l1_ratio's that correspond to the best scores for each
-        fold.  `l1_ratio_` is of shape(n_classes,) when the problem is binary.
+        fold.  ``l1_ratio_`` is of shape(n_classes,) when the problem is binary.
 
     n_iter_ : array, shape (n_classes, n_folds, n_cs) or (1, n_folds, n_cs)
         Actual number of iterations for all classes, folds and Cs.

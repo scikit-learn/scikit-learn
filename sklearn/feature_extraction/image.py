@@ -311,7 +311,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     image : array, shape = (image_height, image_width) or
         (image_height, image_width, n_channels)
         The original image data. For color images, the last dimension specifies
-        the channel: a RGB image would have `n_channels=3`.
+        the channel: a RGB image would have ``n_channels=3``.
 
     patch_size : tuple of ints (patch_height, patch_width)
         the dimensions of one patch
@@ -323,17 +323,17 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
 
     random_state : int, RandomState instance or None, optional (default=None)
         Pseudo number generator state used for random sampling to use if
-        `max_patches` is not None.  If int, random_state is the seed used by
+        ``max_patches`` is not None.  If int, random_state is the seed used by
         the random number generator; If RandomState instance, random_state is
         the random number generator; If None, the random number generator is
-        the RandomState instance used by `np.random`.
+        the RandomState instance used by ``np.random``.
 
     Returns
     -------
     patches : array, shape = (n_patches, patch_height, patch_width) or
         (n_patches, patch_height, patch_width, n_channels)
-        The collection of patches extracted from the image, where `n_patches`
-        is either `max_patches` or the total number of patches that can be
+        The collection of patches extracted from the image, where ``n_patches``
+        is either ``max_patches`` or the total number of patches that can be
         extracted.
 
     Examples
@@ -410,7 +410,7 @@ def reconstruct_from_patches_2d(patches, image_size):
         (n_patches, patch_height, patch_width, n_channels)
         The complete set of patches. If the patches contain colour information,
         channels are indexed along the last dimension: RGB patches would
-        have `n_channels=3`.
+        have ``n_channels=3``.
 
     image_size : tuple of ints (image_height, image_width) or
         (image_height, image_width, n_channels)
@@ -458,7 +458,7 @@ class PatchExtractor(BaseEstimator):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Examples
     --------
@@ -502,14 +502,14 @@ class PatchExtractor(BaseEstimator):
             (n_samples, image_height, image_width, n_channels)
             Array of images from which to extract patches. For color images,
             the last dimension specifies the channel: a RGB image would have
-            `n_channels=3`.
+            ``n_channels=3``.
 
         Returns
         -------
         patches : array, shape = (n_patches, patch_height, patch_width) or
              (n_patches, patch_height, patch_width, n_channels)
              The collection of patches extracted from the images, where
-             `n_patches` is either `n_samples * max_patches` or the total
+             ``n_patches`` is either `n_samples * max_patches` or the total
              number of patches that can be extracted.
         """
         self.random_state = check_random_state(self.random_state)

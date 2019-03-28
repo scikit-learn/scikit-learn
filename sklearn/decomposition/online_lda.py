@@ -147,15 +147,15 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     doc_topic_prior : float, optional (default=None)
         Prior of document topic distribution `theta`. If the value is None,
         defaults to `1 / n_components`.
-        In [1]_, this is called `alpha`.
+        In [1]_, this is called ``alpha``.
 
     topic_word_prior : float, optional (default=None)
-        Prior of topic word distribution `beta`. If the value is None, defaults
+        Prior of topic word distribution ``beta``. If the value is None, defaults
         to `1 / n_components`.
-        In [1]_, this is called `eta`.
+        In [1]_, this is called ``eta``.
 
     learning_method : 'batch' | 'online', default='batch'
-        Method used to update `_component`. Only used in `fit` method.
+        Method used to update ``_component``. Only used in `fit` method.
         In general, if the data size is large, the online update will be much
         faster than the batch update.
 
@@ -226,7 +226,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Attributes
     ----------
@@ -234,7 +234,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Variational parameters for topic word distribution. Since the complete
         conditional for topic word distribution is a Dirichlet,
         ``components_[i, j]`` can be viewed as pseudocount that represents the
-        number of times word `j` was assigned to topic `i`.
+        number of times word ``j`` was assigned to topic ``i``.
         It can also be viewed as distribution over the words for each topic
         after normalization:
         ``model.components_ / model.components_.sum(axis=1)[:, np.newaxis]``.
@@ -408,7 +408,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     def _em_step(self, X, total_samples, batch_update, parallel=None):
         """EM update for 1 iteration.
 
-        update `_component` by batch VB or online VB.
+        update ``_component`` by batch VB or online VB.
 
         Parameters
         ----------
@@ -513,7 +513,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Learn model for the data X with variational Bayes method.
 
-        When `learning_method` is 'online', use mini-batch update.
+        When ``learning_method`` is 'online', use mini-batch update.
         Otherwise, use batch update.
 
         Parameters

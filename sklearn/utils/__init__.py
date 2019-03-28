@@ -250,7 +250,7 @@ def resample(*arrays, **options):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     Returns
     -------
@@ -352,7 +352,7 @@ def shuffle(*arrays, **options):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     n_samples : int, None by default
         Number of samples to generate. If left to None this is

@@ -112,7 +112,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         The generator used to initialize the centers. If int, random_state is
         the seed used by the random number generator; If RandomState instance,
         random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+        generator is the RandomState instance used by ``np.random``.
 
     Attributes
     ----------
@@ -521,7 +521,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     multi_class : string, default : "one_vs_rest"
         Specifies how multi-class classification problems are handled.

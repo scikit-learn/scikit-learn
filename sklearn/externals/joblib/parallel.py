@@ -64,7 +64,7 @@ def _register_dask():
         register_parallel_backend('dask', DaskDistributedBackend)
     except ImportError:
         msg = ("To use the dask.distributed backend you must install both "
-               "the `dask` and distributed modules.\n\n"
+               "the ``dask`` and distributed modules.\n\n"
                "See http://dask.pydata.org/en/latest/install.html for more "
                "information.")
         raise ImportError(msg)
@@ -137,7 +137,7 @@ class parallel_backend(object):
     CPU-bound code in a few calls to native code that explicitly releases the
     GIL.
 
-    In addition, if the `dask` and `distributed` Python packages are installed,
+    In addition, if the ``dask`` and ``distributed`` Python packages are installed,
     it is possible to use the 'dask' backend for better scheduling of nested
     parallel calls without over-subscription and potentially distribute
     parallel calls over a networked cluster of several hosts.

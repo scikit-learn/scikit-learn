@@ -56,7 +56,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         attribute or through a ``feature_importances_`` attribute.
 
     n_features_to_select : int or None (default=None)
-        The number of features to select. If `None`, half of the features
+        The number of features to select. If ``None``, half of the features
         are selected.
 
     step : int or float, optional (default=1)

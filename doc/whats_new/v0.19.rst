@@ -876,7 +876,7 @@ Preprocessing and feature selection
 
 - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
   parameter and sets the ``threshold_`` attribute during the call to
-  ``fit``, and no longer during the call to ``transform```. By `Andreas
+  ``fit``, and no longer during the call to ``transform``. By `Andreas
   Müller`_.
 
 - The ``non_negative`` parameter in :class:`feature_extraction.FeatureHasher`

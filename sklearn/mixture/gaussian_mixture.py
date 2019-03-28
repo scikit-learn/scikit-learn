@@ -484,11 +484,11 @@ class GaussianMixture(BaseMixture):
 
     weights_init : array-like, shape (n_components, ), optional
         The user-provided initial weights, defaults to None.
-        If it None, weights are initialized using the `init_params` method.
+        If it None, weights are initialized using the ``init_params`` method.
 
     means_init : array-like, shape (n_components, n_features), optional
         The user-provided initial means, defaults to None,
-        If it None, means are initialized using the `init_params` method.
+        If it None, means are initialized using the ``init_params`` method.
 
     precisions_init : array-like, optional.
         The user-provided initial precisions (inverse of the covariance
@@ -505,7 +505,7 @@ class GaussianMixture(BaseMixture):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
@@ -534,7 +534,7 @@ class GaussianMixture(BaseMixture):
 
     covariances_ : array-like
         The covariance of each mixture component.
-        The shape depends on `covariance_type`::
+        The shape depends on ``covariance_type``::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
@@ -548,7 +548,7 @@ class GaussianMixture(BaseMixture):
         equivalently parameterized by the precision matrices. Storing the
         precision matrices instead of the covariance matrices makes it more
         efficient to compute the log-likelihood of new samples at test time.
-        The shape depends on `covariance_type`::
+        The shape depends on ``covariance_type``::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
@@ -562,7 +562,7 @@ class GaussianMixture(BaseMixture):
         Gaussian can be equivalently parameterized by the precision matrices.
         Storing the precision matrices instead of the covariance matrices makes
         it more efficient to compute the log-likelihood of new samples at test
-        time. The shape depends on `covariance_type`::
+        time. The shape depends on ``covariance_type``::
 
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',

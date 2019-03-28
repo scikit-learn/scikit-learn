@@ -79,14 +79,14 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
+        by ``np.random``. Used when ``eigen_solver`` == 'arpack'.
 
         .. versionadded:: 0.18
 
     copy_X : boolean, default=True
-        If True, input X is copied and stored by the model in the `X_fit_`
+        If True, input X is copied and stored by the model in the ``X_fit_``
         attribute. If no further changes will be done to X, setting
-        `copy_X=False` saves memory by storing a reference.
+        ``copy_X=False`` saves memory by storing a reference.
 
         .. versionadded:: 0.18
 
@@ -102,12 +102,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     ----------
     lambdas_ : array, (n_components,)
         Eigenvalues of the centered kernel matrix in decreasing order.
-        If `n_components` and `remove_zero_eig` are not set,
+        If `n_components` and ``remove_zero_eig`` are not set,
         then all values are stored.
 
     alphas_ : array, (n_samples, n_components)
         Eigenvectors of the centered kernel matrix. If `n_components` and
-        `remove_zero_eig` are not set, then all components are stored.
+        ``remove_zero_eig`` are not set, then all components are stored.
 
     dual_coef_ : array, (n_samples, n_features)
         Inverse transform matrix. Only available when
@@ -118,7 +118,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         Only available when ``fit_inverse_transform`` is True.
 
     X_fit_ : (n_samples, n_features)
-        The data used to fit the model. If `copy_X=False`, then `X_fit_` is
+        The data used to fit the model. If ``copy_X=False``, then ``X_fit_`` is
         a reference. This attribute is used for the calls to transform.
 
     Examples

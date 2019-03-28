@@ -698,7 +698,7 @@ class MultinomialNB(BaseDiscreteNB):
 
     Notes
     -----
-    For the rationale behind the names `coef_` and `intercept_`, i.e.
+    For the rationale behind the names `coef_` and ``intercept_``, i.e.
     naive Bayes as a linear classifier, see J. Rennie et al. (2003),
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
 

@@ -64,10 +64,10 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
       2) alternatively, the first column stores target values, and the second
          data values
       3) the data array is stored as `n_features x n_samples` , and thus needs
-         to be transposed to match the `sklearn` standard
+         to be transposed to match the ``sklearn`` standard
 
     Keyword arguments allow to adapt these defaults to specific data sets
-    (see parameters `target_name`, `data_name`, `transpose_data`, and
+    (see parameters ``target_name``, ``data_name``, ``transpose_data``, and
     the examples below).
 
     mldata.org data sets may have multiple columns, which are stored in the
@@ -158,9 +158,9 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     # 1) there is only one array => it is "data"
     # 2) there are multiple arrays
     #    a) copy all columns in the bunch, using their column name
-    #    b) if there is a column called `target_name`, set "target" to it,
+    #    b) if there is a column called ``target_name``, set "target" to it,
     #        otherwise set "target" to first column
-    #    c) if there is a column called `data_name`, set "data" to it,
+    #    c) if there is a column called ``data_name``, set "data" to it,
     #        otherwise set "data" to second column
 
     dataset = {'DESCR': 'mldata.org dataset: %s' % dataname,

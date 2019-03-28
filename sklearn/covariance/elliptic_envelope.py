@@ -43,7 +43,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         the data.  If int, random_state is the seed used by the random number
         generator; If RandomState instance, random_state is the random number
         generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        instance used by ``np.random``.
 
     Attributes
     ----------

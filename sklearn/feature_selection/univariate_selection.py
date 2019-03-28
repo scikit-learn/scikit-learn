@@ -387,7 +387,7 @@ class SelectPercentile(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores, None if `score_func` returned only scores.
+        p-values of feature scores, None if ``score_func`` returned only scores.
 
     Examples
     --------
@@ -471,7 +471,7 @@ class SelectKBest(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores, None if `score_func` returned only scores.
+        p-values of feature scores, None if ``score_func`` returned only scores.
 
     Examples
     --------
@@ -751,7 +751,7 @@ class GenericUnivariateSelect(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores, None if `score_func` returned scores only.
+        p-values of feature scores, None if ``score_func`` returned scores only.
 
     Examples
     --------

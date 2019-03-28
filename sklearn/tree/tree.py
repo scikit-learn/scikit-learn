@@ -555,8 +555,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -570,8 +570,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
@@ -586,14 +586,14 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
-            - If int, then consider `max_features` features at each split.
-            - If float, then `max_features` is a fraction and
+            - If int, then consider ``max_features`` features at each split.
+            - If float, then ``max_features`` is a fraction and
               `int(max_features * n_features)` features are considered at each
               split.
-            - If "auto", then `max_features=sqrt(n_features)`.
-            - If "sqrt", then `max_features=sqrt(n_features)`.
-            - If "log2", then `max_features=log2(n_features)`.
-            - If None, then `max_features=n_features`.
+            - If "auto", then ``max_features=sqrt(n_features)``.
+            - If "sqrt", then ``max_features=sqrt(n_features)``.
+            - If "log2", then ``max_features=log2(n_features)``.
+            - If None, then ``max_features=n_features``.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -603,7 +603,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -928,8 +928,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -943,8 +943,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
@@ -959,14 +959,14 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
-        - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a fraction and
+        - If int, then consider ``max_features`` features at each split.
+        - If float, then ``max_features`` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
-        - If "sqrt", then `max_features=sqrt(n_features)`.
-        - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
+        - If "auto", then ``max_features=n_features``.
+        - If "sqrt", then ``max_features=sqrt(n_features)``.
+        - If "log2", then ``max_features=log2(n_features)``.
+        - If None, then ``max_features=n_features``.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -976,7 +976,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -1163,9 +1163,9 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Extra-trees differ from classic decision trees in the way they are built.
     When looking for the best split to separate the samples of a node into two
-    groups, random splits are drawn for each of the `max_features` randomly
+    groups, random splits are drawn for each of the ``max_features`` randomly
     selected features and the best split among those is chosen. When
-    `max_features` is set 1, this amounts to building a totally random
+    ``max_features`` is set 1, this amounts to building a totally random
     decision tree.
 
     Warning: Extra-trees should only be used within ensemble methods.
@@ -1191,8 +1191,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -1206,8 +1206,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
@@ -1222,14 +1222,14 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
-            - If int, then consider `max_features` features at each split.
-            - If float, then `max_features` is a fraction and
+            - If int, then consider ``max_features`` features at each split.
+            - If float, then ``max_features`` is a fraction and
               `int(max_features * n_features)` features are considered at each
               split.
-            - If "auto", then `max_features=sqrt(n_features)`.
-            - If "sqrt", then `max_features=sqrt(n_features)`.
-            - If "log2", then `max_features=log2(n_features)`.
-            - If None, then `max_features=n_features`.
+            - If "auto", then ``max_features=sqrt(n_features)``.
+            - If "sqrt", then ``max_features=sqrt(n_features)``.
+            - If "log2", then ``max_features=log2(n_features)``.
+            - If None, then ``max_features=n_features``.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1239,7 +1239,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
@@ -1347,9 +1347,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Extra-trees differ from classic decision trees in the way they are built.
     When looking for the best split to separate the samples of a node into two
-    groups, random splits are drawn for each of the `max_features` randomly
+    groups, random splits are drawn for each of the ``max_features`` randomly
     selected features and the best split among those is chosen. When
-    `max_features` is set 1, this amounts to building a totally random
+    ``max_features`` is set 1, this amounts to building a totally random
     decision tree.
 
     Warning: Extra-trees should only be used within ensemble methods.
@@ -1380,8 +1380,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     min_samples_split : int, float, optional (default=2)
         The minimum number of samples required to split an internal node:
 
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a fraction and
+        - If int, then consider ``min_samples_split`` as the minimum number.
+        - If float, then ``min_samples_split`` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
 
@@ -1395,8 +1395,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         right branches.  This may have the effect of smoothing the model,
         especially in regression.
 
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a fraction and
+        - If int, then consider ``min_samples_leaf`` as the minimum number.
+        - If float, then ``min_samples_leaf`` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
 
@@ -1411,14 +1411,14 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
 
-        - If int, then consider `max_features` features at each split.
-        - If float, then `max_features` is a fraction and
+        - If int, then consider ``max_features`` features at each split.
+        - If float, then ``max_features`` is a fraction and
           `int(max_features * n_features)` features are considered at each
           split.
-        - If "auto", then `max_features=n_features`.
-        - If "sqrt", then `max_features=sqrt(n_features)`.
-        - If "log2", then `max_features=log2(n_features)`.
-        - If None, then `max_features=n_features`.
+        - If "auto", then ``max_features=n_features``.
+        - If "sqrt", then ``max_features=sqrt(n_features)``.
+        - If "log2", then ``max_features=log2(n_features)``.
+        - If None, then ``max_features=n_features``.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1428,7 +1428,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     min_impurity_decrease : float, optional (default=0.)
         A node will be split if this split induces a decrease of the impurity

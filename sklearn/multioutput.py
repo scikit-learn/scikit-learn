@@ -86,7 +86,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             target matrix of the entire dataset.
             This argument is required for the first call to partial_fit
             and can be omitted in the subsequent calls.
-            Note that y doesn't need to contain all labels in `classes`.
+            Note that y doesn't need to contain all labels in ``classes``.
 
         sample_weight : array-like, shape = (n_samples) or None
             Sample weights. If None, then samples are equally weighted.
@@ -219,7 +219,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         for more details.
 
         When individual estimators are fast to train or predict
-        using `n_jobs>1` can result in slower performance due
+        using ``n_jobs>1`` can result in slower performance due
         to the overhead of spawning processes.
 
     Attributes
@@ -533,7 +533,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
         The random number generator is used to generate random chain orders.
 
@@ -693,7 +693,7 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
         The random number generator is used to generate random chain orders.
 

@@ -349,15 +349,15 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         Number of clusters after the final clustering step, which treats the
         subclusters from the leaves as new samples.
 
-        - `None` : the final clustering step is not performed and the
+        - ``None`` : the final clustering step is not performed and the
           subclusters are returned as they are.
 
         - `sklearn.cluster` Estimator : If a model is provided, the model is
           fit treating the subclusters as new samples and the initial data is
           mapped to the label of the closest subcluster.
 
-        - `int` : the model fit is :class:`AgglomerativeClustering` with
-          `n_clusters` set to be equal to the int.
+        - ``int`` : the model fit is :class:`AgglomerativeClustering` with
+          ``n_clusters`` set to be equal to the int.
 
     compute_labels : bool, default True
         Whether or not to compute labels for each fit.

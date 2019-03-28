@@ -82,7 +82,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         cluster labels for each point
 
     n_iter : int
-        number of iterations run. Returned only if `return_n_iter` is
+        number of iterations run. Returned only if ``return_n_iter`` is
         set to True.
 
     Notes

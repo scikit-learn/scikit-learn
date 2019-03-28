@@ -286,7 +286,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``random`` == 'nndsvdar' or 'random'.
+        by ``np.random``. Used when ``random`` == 'nndsvdar' or 'random'.
 
     Returns
     -------
@@ -471,7 +471,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     Returns
     -------
@@ -960,7 +960,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     verbose : integer, default: 0
         The verbosity level.
@@ -1160,7 +1160,7 @@ class NMF(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        by ``np.random``.
 
     alpha : double, default: 0.
         Constant that multiplies the regularization terms. Set it to zero to
