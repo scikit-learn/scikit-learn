@@ -7,8 +7,6 @@ from numpy.testing import assert_array_almost_equal
 import pytest
 
 import sklearn
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_matplotlib
 from sklearn.inspect import partial_dependence
 from sklearn.inspect import plot_partial_dependence
@@ -124,25 +122,32 @@ def test_grid_from_X():
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (grid_resolution,)
 
-    assert_raises_regex(ValueError, 'percentiles are too close',
-                        _grid_from_X, X, grid_resolution=2,
-                        percentiles=(0, 0.0001))
+    with pytest.raises(
+            ValueError,
+            match='percentiles are too close'):
+        _grid_from_X(X, grid_resolution=2, percentiles=(0, 0.0001))
 
     for percentiles in ((1, 2, 3, 4), 12345):
-        assert_raises_regex(ValueError, "percentiles must be a sequence",
-                            _grid_from_X, X, percentiles=percentiles)
+        with pytest.raises(
+                ValueError,
+                match="percentiles must be a sequence"):
+            _grid_from_X(X, percentiles=percentiles)
 
     for percentiles in ((-1, .95), (.05, 2)):
-        assert_raises_regex(ValueError, "percentiles values must be in",
-                            _grid_from_X, X, percentiles=percentiles)
+        with pytest.raises(
+                ValueError,
+                match="percentiles values must be in"):
+            _grid_from_X(X, percentiles=percentiles)
 
-    assert_raises_regex(ValueError,
-                        r"percentiles\[0\] must be strictly less than",
-                        _grid_from_X, X, percentiles=(.9, .1))
+    with pytest.raises(
+            ValueError,
+            match=r"percentiles\[0\] must be strictly less than"):
+        _grid_from_X(X, percentiles=(.9, .1))
 
-    assert_raises_regex(ValueError,
-                        'grid_resolution must be strictly greater than 1.',
-                        _grid_from_X, X, grid_resolution=1)
+    with pytest.raises(
+            ValueError,
+            match='grid_resolution must be strictly greater than 1.'):
+        _grid_from_X(X, grid_resolution=1)
 
 
 @pytest.mark.parametrize('target_feature', (0, 3))
@@ -262,9 +267,10 @@ def test_multiclass_multioutput(Estimator):
     est = Estimator()
     est.fit(X, y)
 
-    assert_raises_regex(ValueError,
-                        "Multiclass-multioutput estimators are not supported",
-                        partial_dependence, est, [0], X=X)
+    with pytest.raises(
+            ValueError,
+            match="Multiclass-multioutput estimators are not supported"):
+        partial_dependence(est, [0], X=X)
 
 
 def test_partial_dependence_input():
@@ -303,52 +309,56 @@ def test_partial_dependence_input():
         partial_dependence(gbc, [0], X, response_method='predict_proba',
                            method='auto')
 
-    assert_raises_regex(ValueError,
-                        "response_method blahblah is invalid. "
-                        "Accepted response",
-                        partial_dependence, gbc, [0], X,
-                        response_method='blahblah')
+    with pytest.raises(
+            ValueError,
+            match="response_method blahblah is invalid. Accepted response"):
+        partial_dependence(gbc, [0], X, response_method='blahblah')
 
     class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
         pass
     bad_clf = NoPredictProbaNoDecisionFunction()
 
-    assert_raises_regex(
-        ValueError,
-        'The estimator has no predict_proba and no decision_function method.',
-        partial_dependence, bad_clf, [0], X, response_method='auto')
+    with pytest.raises(
+            ValueError,
+            match='The estimator has no predict_proba and no '
+                  'decision_function method.'):
+        partial_dependence(bad_clf, [0], X, response_method='auto')
 
-    assert_raises_regex(
-        ValueError,
-        'The estimator has no predict_proba method.',
-        partial_dependence, bad_clf, [0], X, response_method='predict_proba')
+    with pytest.raises(
+            ValueError,
+            match='The estimator has no predict_proba method.'):
+        partial_dependence(bad_clf, [0], X, response_method='predict_proba')
 
-    assert_raises_regex(
-        ValueError,
-        'The estimator has no decision_function method.',
-        partial_dependence, bad_clf, [0], X,
-        response_method='decision_function')
+    with pytest.raises(
+            ValueError,
+            match='The estimator has no decision_function method.'):
+        partial_dependence(bad_clf, [0], X,
+                           response_method='decision_function')
 
-    assert_raises_regex(ValueError,
-                        "method blahblah is invalid. Accepted method names "
-                        "are brute, recursion, auto.",
-                        partial_dependence, lr, [0], X, method='blahblah')
+    with pytest.raises(
+            ValueError,
+            match="method blahblah is invalid. Accepted method names "
+                  "are brute, recursion, auto."):
+        partial_dependence(lr, [0], X, method='blahblah')
 
-    assert_raises_regex(ValueError,
-                        'est must be an instance of BaseGradientBoosting '
-                        'for the "recursion" method',
-                        partial_dependence, lr, [0], X, method='recursion')
+    with pytest.raises(
+            ValueError,
+            match='est must be an instance of BaseGradientBoosting '
+                  'for the "recursion" method'):
+        partial_dependence(lr, [0], X, method='recursion')
 
     for feature in (-1, 1000000):
         for est in (lr, gbc):
-            assert_raises_regex(ValueError,
-                                "all features must be in",
-                                partial_dependence, est, [feature], X=X)
+            with pytest.raises(
+                    ValueError,
+                    match="all features must be in"):
+                partial_dependence(est, [feature], X=X)
 
     for unfitted_est in (LinearRegression(), GradientBoostingRegressor()):
-        assert_raises_regex(ValueError,
-                            'est parameter must be a fitted estimator',
-                            partial_dependence, unfitted_est, [0], X=X)
+        with pytest.raises(
+                ValueError,
+                match='est parameter must be a fitted estimator'):
+            partial_dependence(unfitted_est, [0], X=X)
 
     # check that array-like objects are accepted
     for est in (lr, gbc):
@@ -451,54 +461,54 @@ def test_plot_partial_dependence_input():
     (X_m, y_m), _ = multiclass_classification_data
     lr_m = LogisticRegression()
     lr_m.fit(X_m, y_m)
-    assert_raises_regex(ValueError,
-                        'target must be specified for multi-class',
-                        plot_partial_dependence, lr_m, X_m, [0],
-                        target=None)
+    with pytest.raises(
+            ValueError,
+            match='target must be specified for multi-class'):
+        plot_partial_dependence(lr_m, X_m, [0], target=None)
     for target in (-1, 100):
-        assert_raises_regex(ValueError,
-                            'target not in est.classes_',
-                            plot_partial_dependence, lr_m, X_m, [0],
-                            target=target)
+        with pytest.raises(
+                ValueError,
+                match='target not in est.classes_'):
+            plot_partial_dependence(lr_m, X_m, [0], target=target)
 
     # check target param for multioutput
     (X_m, y_m), _ = multioutput_regression_data
     lr_m = LinearRegression()
     lr_m.fit(X_m, y_m)
-    assert_raises_regex(ValueError,
-                        'target must be specified for multi-output',
-                        plot_partial_dependence, lr_m, X_m, [0],
-                        target=None)
+    with pytest.raises(
+            ValueError,
+            match='target must be specified for multi-output'):
+        plot_partial_dependence(lr_m, X_m, [0], target=None)
     for target in (-1, 100):
-        assert_raises_regex(ValueError,
-                            r'target must be in \[0, n_tasks\]',
-                            plot_partial_dependence, lr_m, X_m, [0],
-                            target=target)
+        with pytest.raises(
+                ValueError,
+                match=r'target must be in \[0, n_tasks\]'):
+            plot_partial_dependence(lr_m, X_m, [0], target=target)
 
     for feature_names in (None, ['abcd', 'def']):
-        assert_raises_regex(ValueError,
-                            'Feature foobar not in feature_names',
-                            plot_partial_dependence, lr, X,
-                            features=['foobar'],
-                            feature_names=feature_names)
+        with pytest.raises(
+                ValueError,
+                match='Feature foobar not in feature_names'):
+            plot_partial_dependence(lr, X, features=['foobar'],
+                                    feature_names=feature_names)
 
     for features in([(1, 2, 3)], [1, {}], [tuple()]):
-        assert_raises_regex(ValueError,
-                            'Each entry in features must be either an int, ',
-                            plot_partial_dependence, lr, X,
-                            features=features)
+        with pytest.raises(
+                ValueError,
+                match='Each entry in features must be either an int, '):
+            plot_partial_dependence(lr, X, features=features)
 
-    assert_raises_regex(ValueError,
-                        'All entries of features must be less than ',
-                        plot_partial_dependence, lr, X,
-                        features=[123],
-                        feature_names=['blah'])
+    with pytest.raises(
+            ValueError,
+            match='All entries of features must be less than '):
+        plot_partial_dependence(lr, X, features=[123],
+                                feature_names=['blah'])
 
-    assert_raises_regex(ValueError,
-                        'feature_names should not contain duplicates',
-                        plot_partial_dependence, lr, X,
-                        features=[0, 1, 2],
-                        feature_names=['a', 'b', 'a'])
+    with pytest.raises(
+            ValueError,
+            match='feature_names should not contain duplicates'):
+        plot_partial_dependence(lr, X, features=[0, 1, 2],
+                                feature_names=['a', 'b', 'a'])
 
 
 @pytest.mark.skip('Passing non-constant init fails. Wait for PR #12436 '
@@ -510,19 +520,15 @@ def test_warning_recursion_non_constant_init():
     gbc = GradientBoostingClassifier(init=DummyClassifier(), random_state=0)
     gbc.fit(X, y)
 
-    assert_warns_message(
-        UserWarning,
-        'Using recursion method with a non-constant init predictor',
-        plot_partial_dependence,
-        gbc, X, [0], method='recursion'
-    )
+    with pytest.warns(
+            UserWarning,
+            match='Using recursion method with a non-constant init predictor'):
+        plot_partial_dependence(gbc, X, [0], method='recursion')
 
-    assert_warns_message(
-        UserWarning,
-        'Using recursion method with a non-constant init predictor',
-        partial_dependence,
-        gbc, [0], X=X, method='recursion'
-    )
+    with pytest.warns(
+            UserWarning,
+            match='Using recursion method with a non-constant init predictor'):
+        partial_dependence(gbc, [0], X=X, method='recursion')
 
 
 @if_matplotlib
