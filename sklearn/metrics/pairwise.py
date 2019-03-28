@@ -1421,14 +1421,13 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                             " support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
-        X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
 
-        if metric in PAIRWISE_BOOLEAN_FUNCTIONS \
-                and X.dtype is not bool and Y.dtype is not bool:
-            X, Y = X.astype(np.bool), Y.astype(np.bool)
+        if dtype == bool and (X.dtype != bool or Y.dtype != bool):
             msg = ("Data was converted to boolean "
                    "for metric %s" % (metric))
             warnings.warn(msg, DataConversionWarning)
+
+        X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
 
         # precompute data-derived metric params
         params = _precompute_metric_params(X, Y, metric=metric, **kwds)

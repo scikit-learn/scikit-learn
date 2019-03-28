@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
@@ -122,10 +123,6 @@ def test_pairwise_distances():
     # Test that a value error is raised if the metric is unknown
     assert_raises(ValueError, pairwise_distances, X, Y, metric="blah")
 
-    # Test boolean metric raises dataconversion warning
-    assert_warns_message(DataConversionWarning, 'boolean', pairwise_distances,
-                         X, Y, metric='jaccard')
-
 
 @pytest.mark.parametrize('metric', PAIRWISE_BOOLEAN_FUNCTIONS)
 def test_pairwise_boolean_distance(metric):
@@ -141,6 +138,20 @@ def test_pairwise_boolean_distance(metric):
             res = pairwise_distances(X, Z, metric=metric)
             res[np.isnan(res)] = 0
             assert np.sum(res != 0) == 0
+
+    # non-boolean arrays are converted to boolean for boolean
+    # distance metrics with a data conversion warning
+    msg = ("Data was converted to boolean "
+           "for metric %s" % (metric))
+    with pytest.warns(DataConversionWarning,
+                      match=msg) as w:
+        pairwise_distances(X, metric=metric)
+    assert len(w) == 1
+
+    # No warnings issued if metric is not a
+    # boolean distance function
+    assert_no_warnings(pairwise_distances, X,
+                       metric="minkowski")
 
 
 @pytest.mark.parametrize('func', [pairwise_distances, pairwise_kernels])
