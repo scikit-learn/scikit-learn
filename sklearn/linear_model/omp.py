@@ -313,11 +313,11 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     Returns
     -------
     coef : array, shape (n_features,) or (n_features, n_targets)
-        Coefficients of the OMP solution. If ``return_path=True``, this contains
-        the whole coefficient path. In this case its shape is
+        Coefficients of the OMP solution. If ``return_path=True``, this
+        contains the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
-        iterating over the last axis yields coefficients in increasing order
-        of active features.
+        iterating over the last axis yields coefficients in increasing order of
+        active features.
 
     n_iters : array-like or int
         Number of active features across every target. Returned only if
@@ -452,11 +452,11 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     Returns
     -------
     coef : array, shape (n_features,) or (n_features, n_targets)
-        Coefficients of the OMP solution. If ``return_path=True``, this contains
-        the whole coefficient path. In this case its shape is
+        Coefficients of the OMP solution. If ``return_path=True``, this
+        contains the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
-        iterating over the last axis yields coefficients in increasing order
-        of active features.
+        iterating over the last axis yields coefficients in increasing order of
+        active features.
 
     n_iters : array-like or int
         Number of active features across every target. Returned only if

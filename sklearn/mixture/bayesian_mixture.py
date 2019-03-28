@@ -85,9 +85,9 @@ class BayesianGaussianMixture(BaseMixture):
     n_components : int, defaults to 1.
         The number of mixture components. Depending on the data and the value
         of the ``weight_concentration_prior`` the model can decide to not use
-        all the components by setting some component ``weights_`` to values very
-        close to zero. The number of effective components is therefore smaller
-        than n_components.
+        all the components by setting some component ``weights_`` to values
+        very close to zero. The number of effective components is therefore
+        smaller than n_components.
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'}, defaults to 'full'
         String describing the type of covariance parameters to use.

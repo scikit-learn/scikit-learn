@@ -567,7 +567,7 @@ class OneHotEncoder(_BaseEncoder):
             try:
                 n_values = np.asarray(self._n_values, dtype=int)
             except (ValueError, TypeError):
-                raise TypeError("Wrong type for parameter ``n_values``. Expected"
+                raise TypeError("Wrong type for parameter `n_values`. Expected"
                                 " 'auto', int or array of ints, got %r"
                                 % type(self._n_values))
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:

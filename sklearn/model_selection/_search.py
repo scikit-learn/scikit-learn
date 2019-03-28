@@ -1107,13 +1107,13 @@ class GridSearchCV(BaseSearchCV):
     The parameters selected are those that maximize the score of the left out
     data, unless an explicit score is passed in which case it is used instead.
 
-    If ``2*n_jobs`` was set to a value higher than one, the data is copied for each
-    point in the grid (and not ``2*n_jobs`` times). This is done for efficiency
-    reasons if individual jobs take very little time, but may raise errors if
-    the dataset is large and not enough memory is available.  A workaround in
-    this case is to set ``pre_dispatch``. Then, the memory is copied only
-    ``pre_dispatch`` many times. A reasonable value for ``pre_dispatch`` is `2 *
-    n_jobs`.
+    If ``2*n_jobs`` was set to a value higher than one, the data is copied for
+    each point in the grid (and not ``2*n_jobs`` times). This is done for
+    efficiency reasons if individual jobs take very little time, but may raise
+    errors if the dataset is large and not enough memory is available. A
+    workaround in this case is to set ``pre_dispatch``. Then, the memory is
+    copied only ``pre_dispatch`` many times. A reasonable value for
+    ``pre_dispatch`` is `2 * n_jobs`.
 
     See Also
     ---------
@@ -1427,13 +1427,13 @@ class RandomizedSearchCV(BaseSearchCV):
     The parameters selected are those that maximize the score of the held-out
     data, according to the scoring parameter.
 
-    If ``2*n_jobs`` was set to a value higher than one, the data is copied for each
-    parameter setting(and not ``2*n_jobs`` times). This is done for efficiency
-    reasons if individual jobs take very little time, but may raise errors if
-    the dataset is large and not enough memory is available.  A workaround in
-    this case is to set ``pre_dispatch``. Then, the memory is copied only
-    ``pre_dispatch`` many times. A reasonable value for ``pre_dispatch`` is `2 *
-    n_jobs`.
+    If ``2*n_jobs`` was set to a value higher than one, the data is copied for
+    each parameter setting(and not ``2*n_jobs`` times). This is done for
+    efficiency reasons if individual jobs take very little time, but may raise
+    errors if the dataset is large and not enough memory is available. A
+    workaround in this case is to set ``pre_dispatch``. Then, the memory is
+    copied only ``pre_dispatch`` many times. A reasonable value for
+    ``pre_dispatch`` is `2 * n_jobs`.
 
     See Also
     --------

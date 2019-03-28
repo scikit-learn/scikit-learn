@@ -150,8 +150,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         In [1]_, this is called ``alpha``.
 
     topic_word_prior : float, optional (default=None)
-        Prior of topic word distribution ``beta``. If the value is None, defaults
-        to `1 / n_components`.
+        Prior of topic word distribution ``beta``. If the value is None,
+        defaults to `1 / n_components`.
         In [1]_, this is called ``eta``.
 
     learning_method : 'batch' | 'online', default='batch'

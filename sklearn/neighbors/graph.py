@@ -67,8 +67,9 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
 
     include_self : bool, default=False.
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. If ``None``, then True is used for mode='connectivity' and False
-        for mode='distance' as this will preserve backwards compatibility.
+        itself. If ``None``, then True is used for mode='connectivity' and
+        False for mode='distance' as this will preserve backwards
+        compatibility.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
@@ -145,8 +146,9 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
 
     include_self : bool, default=False
         Whether or not to mark each sample as the first nearest neighbor to
-        itself. If ``None``, then True is used for mode='connectivity' and False
-        for mode='distance' as this will preserve backwards compatibility.
+        itself. If ``None``, then True is used for mode='connectivity' and
+        False for mode='distance' as this will preserve backwards
+        compatibility.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.

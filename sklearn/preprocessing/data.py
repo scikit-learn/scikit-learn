@@ -142,7 +142,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
-                "Cannot center sparse matrices: pass ``with_mean=False`` instead"
+                "Cannot center sparse matrices: pass `with_mean=False` instead"
                 " See docstring for motivation and alternatives.")
         if axis != 0:
             raise ValueError("Can only scale sparse matrix on axis=0, "
@@ -792,7 +792,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
-                    "Cannot uncenter sparse matrices: pass ``with_mean=False`` "
+                    "Cannot uncenter sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
             if not sparse.isspmatrix_csr(X):
                 X = X.tocsr()
@@ -1164,7 +1164,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         if self.with_centering:
             if sparse.issparse(X):
                 raise ValueError(
-                    "Cannot center sparse matrices: use ``with_centering=False``"
+                    "Cannot center sparse matrices: use `with_centering=False`"
                     " instead. See docstring for motivation and alternatives.")
             self.center_ = np.nanmedian(X, axis=0)
         else:
@@ -2539,7 +2539,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
     if copy == "warn":
-        warnings.warn("The default value of ``copy`` will change from False to "
+        warnings.warn("The default value of `copy` will change from False to "
                       "True in 0.23 in order to make it more consistent with "
                       "the default ``copy`` values of other functions in "
                       ":mod:`sklearn.preprocessing.data` and prevent "

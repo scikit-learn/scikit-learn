@@ -145,7 +145,8 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         each iteration. Returned only if return_costs is True.
 
     n_iter : int
-        Number of iterations. Returned only if ``return_n_iter`` is set to True.
+        Number of iterations. Returned only if ``return_n_iter`` is set to
+        True.
 
     See Also
     --------
@@ -838,7 +839,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         each iteration. Returned only if return_costs is True.
 
     n_iter : int
-        Number of iterations. Returned only if ``return_n_iter`` is set to True.
+        Number of iterations. Returned only if ``return_n_iter`` is set to
+        True.
 
     See Also
     --------

@@ -128,11 +128,11 @@ boolean mask array or callable
     Notes
     -----
     The order of the columns in the transformed feature matrix follows the
-    order of how the columns are specified in the `transformers` list.
-    Columns of the original feature matrix that are not specified are
-    dropped from the resulting transformed feature matrix, unless specified
-    in the ``passthrough`` keyword. Those columns specified with ``passthrough``
-    are added at the right to the output of the transformers.
+    order of how the columns are specified in the `transformers` list. Columns
+    of the original feature matrix that are not specified are dropped from the
+    resulting transformed feature matrix, unless specified in the
+    ``passthrough`` keyword. Those columns specified with ``passthrough`` are
+    added at the right to the output of the transformers.
 
     See also
     --------

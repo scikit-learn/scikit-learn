@@ -79,7 +79,7 @@ class QuantileEstimator:
     """
     def __init__(self, alpha=0.9):
         if not 0 < alpha < 1.0:
-            raise ValueError("``alpha`` must be in (0, 1.0) but was %r" % alpha)
+            raise ValueError("`alpha` must be in (0, 1.0) but was %r" % alpha)
         self.alpha = alpha
 
     def fit(self, X, y, sample_weight=None):
@@ -1781,8 +1781,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         boosting recovers the AdaBoost algorithm.
 
     learning_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by ``learning_rate``.
-        There is a trade-off between learning_rate and n_estimators.
+        learning rate shrinks the contribution of each tree by
+        ``learning_rate``. There is a trade-off between learning_rate and
+        n_estimators.
 
     n_estimators : int (default=100)
         The number of boosting stages to perform. Gradient boosting
@@ -2244,8 +2245,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         allows quantile regression (use ``alpha`` to specify the quantile).
 
     learning_rate : float, optional (default=0.1)
-        learning rate shrinks the contribution of each tree by ``learning_rate``.
-        There is a trade-off between learning_rate and n_estimators.
+        learning rate shrinks the contribution of each tree by
+        ``learning_rate``. There is a trade-off between learning_rate and
+        n_estimators.
 
     n_estimators : int (default=100)
         The number of boosting stages to perform. Gradient boosting

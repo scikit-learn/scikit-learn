@@ -228,8 +228,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, ``alpha`` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, ``alpha`` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
+        If `algorithm='omp'`, ``alpha`` is the tolerance parameter: the value
+        of the reconstruction error targeted. In this case, it overrides
         ``n_nonzero_coefs``.
 
     copy_cov : boolean, optional
@@ -943,8 +943,8 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, ``alpha`` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, ``alpha`` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
+        If `algorithm='omp'`, ``alpha`` is the tolerance parameter: the value
+        of the reconstruction error targeted. In this case, it overrides
         ``n_nonzero_coefs``.
 
     split_sign : bool, False by default
@@ -1071,8 +1071,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, ``alpha`` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, ``alpha`` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
+        If `algorithm='omp'`, ``alpha`` is the tolerance parameter: the value
+        of the reconstruction error targeted. In this case, it overrides
         ``n_nonzero_coefs``.
 
     n_jobs : int or None, optional (default=None)
@@ -1266,8 +1266,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, ``alpha`` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
-        If `algorithm='omp'`, ``alpha`` is the tolerance parameter: the value of
-        the reconstruction error targeted. In this case, it overrides
+        If `algorithm='omp'`, ``alpha`` is the tolerance parameter: the value
+        of the reconstruction error targeted. In this case, it overrides
         ``n_nonzero_coefs``.
 
     verbose : bool, optional (default: False)

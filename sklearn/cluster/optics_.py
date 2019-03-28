@@ -495,8 +495,8 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     Extracting the clusters runs in linear time. Note that if the ``max_eps``
     OPTICS parameter was set to < inf for extracting reachability and ordering
     arrays, DBSCAN extractions will be unstable for ``eps`` values close to
-    ``max_eps``. Setting ``eps`` < (``max_eps`` / 5.0) will guarantee extraction
-    parity with DBSCAN.
+    ``max_eps``. Setting ``eps`` < (``max_eps`` / 5.0) will guarantee
+    extraction parity with DBSCAN.
 
     Parameters
     ----------

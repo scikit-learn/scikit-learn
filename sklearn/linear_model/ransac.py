@@ -89,9 +89,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
     min_samples : int (>= 1) or float ([0, 1]), optional
         Minimum number of samples chosen randomly from original data. Treated
         as an absolute number of samples for `min_samples >= 1`, treated as a
-        relative number `ceil(min_samples * X.shape[0]`) for
-        `min_samples < 1`. This is typically chosen as the minimal number of
-        samples necessary to estimate the given ``base_estimator``. By default a
+        relative number `ceil(min_samples * X.shape[0]`) for `min_samples < 1`.
+        This is typically chosen as the minimal number of samples necessary to
+        estimate the given ``base_estimator``. By default a
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         ``min_samples`` is chosen as ``X.shape[1] + 1``.
 
@@ -108,9 +108,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
     is_model_valid : callable, optional
         This function is called with the estimated model and the randomly
         selected data: `is_model_valid(model, X, y)`. If its return value is
-        False the current randomly chosen sub-sample is skipped.
-        Rejecting samples with this function is computationally costlier than
-        with ``is_data_valid``. ``is_model_valid`` should therefore only be used if
+        False the current randomly chosen sub-sample is skipped. Rejecting
+        samples with this function is computationally costlier than with
+        ``is_data_valid``. ``is_model_valid`` should therefore only be used if
         the estimated model is needed for making the rejection decision.
 
     max_trials : int, optional
