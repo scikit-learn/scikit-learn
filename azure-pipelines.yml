@@ -21,6 +21,7 @@ jobs:
         SCIPY_VERSION: '0.17.0'
         CYTHON_VERSION: '*'
         PILLOW_VERSION: '4.0.0'
+        JOBLIB_VERSION: '0.12.5'
         COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring pandas and PyAMG.
