@@ -838,10 +838,11 @@ graph, which assigns each sample both a ``reachability_`` distance, and a spot
 within the cluster ``ordering_`` attribute; these two attributes are assigned
 when the model is fitted, and are used to determine cluster membership. If
 OPTICS is run with the default value of *inf* set for ``max_eps``, then DBSCAN
-style cluster extraction can be performed in linear time for any given ``eps``
-value using the ``cluster_optics_dbscan`` method. Setting ``max_eps`` to a
-lower value will result in shorter run times, and can be thought of as the
-maximum cluster object size (in diameter) that OPTICS will be able to extract.
+style cluster extraction can be performed repeatedly in linear time for any
+given ``eps`` value using the ``cluster_optics_dbscan`` method. Setting
+``max_eps`` to a lower value will result in shorter run times, and can be
+thought of as the maximum neighborhood radius from each point to find other
+potential reachable points.
 
 .. |optics_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_optics_001.png
         :target: ../auto_examples/cluster/plot_optics.html
@@ -858,7 +859,7 @@ reachability plot at a single value produces DBSCAN like results; all points
 above the 'cut' are classified as noise, and each time that there is a break
 when reading from left to right signifies a new cluster. The default cluster
 extraction with OPTICS looks at the steep slopes within the graph to find
-clsuters, and the user can define what counts as a steep slope using the
+clusters, and the user can define what counts as a steep slope using the
 parameter ``xi``. There are also other possibilities for analysis on the graph
 itself, such as generating hierarchical representations of the data through
 reachability-plot dendrograms, and the hierarchy of clusters detected by the
@@ -875,13 +876,13 @@ represented as children of a larger parent cluster.
 
 .. topic:: Comparison with DBSCAN
 
-    The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are not
-    quite identical; specifically, labeling of periphery and noise points. This
-    is in part because the first samples of each dense area processed by OPTICS
-    have a large reachability value while being close to other points in their
-    area, and will thus sometimes be marked as noise rather than periphery.
-    This affects adjacent points when they are considered as candidates for
-    being marked as either periphery or noise.
+    The results from OPTICS ``cluster_optics_dbscan`` method and DBSCAN are
+    very similar, but not always identical; specifically, labeling of periphery
+    and noise points. This is in part because the first samples of each dense
+    area processed by OPTICS have a large reachability value while being close
+    to other points in their area, and will thus sometimes be marked as noise
+    rather than periphery. This affects adjacent points when they are
+    considered as candidates for being marked as either periphery or noise.
 
     Note that for any single value of ``eps``, DBSCAN will tend to have a
     shorter run time than OPTICS; however, for repeated runs at varying ``eps``

@@ -86,13 +86,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    cluster_method : string, optional (default='dbscan')
+    cluster_method : string, optional (default='xi')
         The extraction method used to extract clusters using the calculated
         reachability and ordering. Possible values are "xi" and "dbscan".
 
-    eps : float, optional (default=0.5)
+    eps : float, optional (default=None)
         The maximum distance between two samples for them to be considered
-        as in the same neighborhood. Used ony when ``cluster_method='dbscan'``.
+        as in the same neighborhood. By default it assumes the same value as
+        ``max_eps``.
+        Used only when ``cluster_method='dbscan'``.
 
     xi : float, between 0 and 1, optional (default=0.05)
         Determines the minimum steepness on the reachability plot that
@@ -189,7 +191,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
-                 metric_params=None, cluster_method='xi', eps=0.5, xi=0.05,
+                 metric_params=None, cluster_method='xi', eps=None, xi=0.05,
                  predecessor_correction=True, min_cluster_size=.005,
                  algorithm='auto', leaf_size=30, n_jobs=None):
 
@@ -230,6 +232,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         n_samples = len(X)
 
+        if self.eps is None:
+            eps = self.max_eps
+        else:
+            eps = self.eps
+
         if self.min_cluster_size <= 0 or (self.min_cluster_size !=
                                           int(self.min_cluster_size)
                                           and self.min_cluster_size > 1):
@@ -253,9 +260,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
                              self.cluster_method)
 
         if self.cluster_method == 'dbscan':
-            if self.eps > self.max_eps:
+            if eps > self.max_eps:
                 raise ValueError('Specify an epsilon smaller than %s. Got %s.'
-                                 % (self.max_eps, self.eps))
+                                 % (self.max_eps, eps))
 
         (self.ordering_, self.core_distances_, self.reachability_,
          self.predecessor_) = compute_optics_graph(
@@ -281,7 +288,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
             labels_ = cluster_optics_dbscan(self.reachability_,
                                             self.core_distances_,
                                             self.ordering_,
-                                            self.eps)
+                                            eps)
 
         self.labels_ = labels_
         return self
@@ -600,11 +607,11 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
 
     clusters : array, shape (n_clusters, 2)
         The list of clusters in the form of ``[start, end]`` in each row, with
-        all indices inclusive. The clusters are ordered according to
-        ``(end, -start)`` (ascending) so that larger clusters encompassing
-        smaller clusters come after those smaller ones. Since ``labels`` does
-        not reflect the hierarchy, usually
-        ``len(clusters) > np.unique(labels)``.
+        all indices inclusive. The clusters are ordered according to ``(end,
+        -start)`` (ascending) so that larger clusters encompassing smaller
+        clusters come after such nested smaller clusters. Since ``labels`` does
+        not reflect the hierarchy, usually ``len(clusters) >
+        np.unique(labels)``.
     """
     clusters = _xi_cluster(reachability[ordering], predecessor[ordering], xi,
                            min_samples, min_cluster_size,
@@ -660,10 +667,10 @@ def _extend_region(steep_point, xward_point, start, min_samples):
     Parameters
     ----------
     steep_point : bool array, shape (n_samples)
-        True if the point is an upward or downward steep point, respectively.
+        True if the point is steep downward (upward).
 
     xward_point : bool array, shape (n_samples)
-        True if the point is upward or downward respectively.
+        True if the point is an upward (respectively downward) point.
 
     start : integer
         The start of the xward region.

@@ -133,6 +133,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     birch = cluster.Birch(n_clusters=params['n_clusters'])
     gmm = mixture.GaussianMixture(
         n_components=params['n_clusters'], covariance_type='full')
+
     clustering_algorithms = (
         ('MiniBatchKMeans', two_means),
         ('AffinityPropagation', affinity_propagation),
