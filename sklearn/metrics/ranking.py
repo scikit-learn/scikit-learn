@@ -634,7 +634,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    # Add an extra threshold position if necessary
+    # Add an extra threshold position
     # to make sure that the curve starts at (0, 0)
     tps = np.r_[0, tps]
     fps = np.r_[0, fps]
