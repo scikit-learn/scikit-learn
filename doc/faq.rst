@@ -254,7 +254,7 @@ Several scikit-learn tools such as ``GridSearchCV`` and ``cross_val_score``
 rely internally on Python's `multiprocessing` module to parallelize execution
 onto several Python processes by passing ``n_jobs > 1`` as argument.
 
-The problem is that Python ``multiprocessing`` does a ``fork`` system call
+The problem is that Python ``multiprocessing`` does a ```fork``` system call
 without following it with an ``exec`` system call for performance reasons. Many
 libraries like (some versions of) Accelerate / vecLib under OSX, (some versions
 of) MKL, the OpenMP runtime of GCC, nvidia's Cuda (and probably many others),

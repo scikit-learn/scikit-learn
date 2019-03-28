@@ -154,7 +154,7 @@ Enhancements
   weight support will automatically benefit from it. By `Noel Dawe`_ and
   `Vlad Niculae`_.
 
-- Added ``newton-cg`` and `lbfgs` solver support in
+- Added ``newton-cg`` and ``lbfgs`` solver support in
   :class:`linear_model.LogisticRegression`. By `Manoj Kumar`_.
 
 - Add ``selection="random"`` parameter to implement stochastic coordinate
@@ -357,7 +357,7 @@ Bug fixes
   l2 regularization and large learning rate values).
   By `Olivier Grisel`_
 
-- When `compute_full_tree` is set to "auto", the full tree is
+- When ``compute_full_tree`` is set to "auto", the full tree is
   built when n_clusters is high and is early stopped when n_clusters is
   low, while the behavior should be vice-versa in
   :class:`cluster.AgglomerativeClustering` (and friends).
@@ -485,14 +485,14 @@ API changes summary
   set by the user. If set to True, then the sample itself is considered
   as the first nearest neighbor.
 
-- `thresh` parameter is deprecated in favor of new `tol` parameter in
+- ``thresh`` parameter is deprecated in favor of new ``tol`` parameter in
   :class:`GMM`, :class:`DPGMM` and :class:`VBGMM`. See `Enhancements`
   section for details. By `Hervé Bredin`_.
 
 - Estimators will treat input with dtype object as numeric when possible.
   By `Andreas Müller`_
 
-- Estimators now raise `ValueError` consistently when fitted on empty
+- Estimators now raise ``ValueError`` consistently when fitted on empty
   data (less than 1 sample or less than 1 feature for 2D input).
   By `Olivier Grisel`_.
 

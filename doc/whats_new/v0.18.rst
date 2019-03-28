@@ -584,7 +584,7 @@ Linear, kernelized and related models
 
 Decomposition, manifold learning and clustering
 
-- :class:`decomposition.RandomizedPCA` default number of `iterated_power` is 4 instead of 3.
+- :class:`decomposition.RandomizedPCA` default number of ``iterated_power`` is 4 instead of 3.
   :issue:`5141` by :user:`Giorgio Patrini <giorgiop>`.
 
 - :func:`utils.extmath.randomized_svd` performs 4 power iterations by default, instead or 0.

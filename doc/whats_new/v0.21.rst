@@ -22,7 +22,7 @@ random sampling procedures.
 - :class:`discriminant_analysis.LinearDiscriminantAnalysis` with 'eigen'
   solver. |Fix|
 - :class:`linear_model.BayesianRidge` |Fix|
-- Decision trees and derived ensembles when both `max_depth` and
+- Decision trees and derived ensembles when both ``max_depth`` and
   `max_leaf_nodes` are set. |Fix|
 - :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
@@ -93,7 +93,7 @@ Support for Python 3.4 and below has been officially dropped.
   (resolved sign ambiguity in eigenvalue decomposition of the kernel matrix).
   :issue:`13241` by :user:`Aurélien Bellet <bellet>`.
 
-- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`, `fit().transform()`
+- |Fix| Fixed a bug in :class:`decomposition.KernelPCA`, ``fit().transform()``
   now produces the correct output (the same as `fit_transform()`) in case
   of non-removed zero eigenvalues (`remove_zero_eig=False`).
   `fit_inverse_transform` was also accelerated by using the same trick as
@@ -254,7 +254,7 @@ Support for Python 3.4 and below has been officially dropped.
   by the liblinear solver. :issue:`12860` by :user:`Nicolas Hug
   <NicolasHug>`.
 
-- |Enhancement| `sparse_cg` solver in :class:`linear_model.Ridge`
+- |Enhancement| ``sparse_cg`` solver in :class:`linear_model.Ridge`
   now supports fitting the intercept (i.e. ``fit_intercept=True``) when
   inputs are sparse. :issue:`13336` by :user:`Bartosz Telenczuk <btel>`.
 
@@ -335,7 +335,7 @@ Support for Python 3.4 and below has been officially dropped.
   BLAS shipped with scipy instead of the bundled BLAS. :issue:`12732` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`
 
-- |Enhancement| Use label `accuracy` instead of `micro-average` on
+- |Enhancement| Use label ``accuracy`` instead of ```micro-average``` on
   :func:`metrics.classification_report` to avoid confusion. `micro-average` is
   only shown for multi-label or multi-class with a subset of classes because
   it is otherwise identical to accuracy.
@@ -486,7 +486,7 @@ Support for Python 3.4 and below has been officially dropped.
   useless or resulting in a wrong approximation of the cumulative distribution
   function estimator. :issue:`13333` by :user:`Albert Thomas <albertcthomas>`.
 
-- |API| The default value of `copy` in :func:`preprocessing.quantile_transform`
+- |API| The default value of ```copy``` in :func:`preprocessing.quantile_transform`
   will change from False to True in 0.23 in order to make it more consistent
   with the default `copy` values of other functions in
   :mod:`preprocessing.data` and prevent unexpected side effects by modifying
@@ -533,7 +533,7 @@ Support for Python 3.4 and below has been officially dropped.
 Multiple modules
 ................
 
-- |MajorFeature| The `__repr__()` method of all estimators (used when calling
+- |MajorFeature| The ``__repr__()`` method of all estimators (used when calling
   `print(estimator)`) has been entirely re-written, building on Python's
   pretty printing standard library. All parameters are printed by default,
   but this can be altered with the ``print_changed_only`` option in

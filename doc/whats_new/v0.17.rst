@@ -300,7 +300,7 @@ Bug fixes
 - Fixed bug where :class:`grid_search.RandomizedSearchCV` could consume a
   lot of memory for large discrete grids. By `Joel Nothman`_.
 
-- Fixed bug in :class:`linear_model.LogisticRegressionCV` where `penalty` was ignored
+- Fixed bug in :class:`linear_model.LogisticRegressionCV` where ``penalty`` was ignored
   in the final fit. By `Manoj Kumar`_.
 
 - Fixed bug in :class:`ensemble.forest.ForestClassifier` while computing
@@ -386,12 +386,12 @@ Bug fixes
 
 API changes summary
 -------------------
-- Attribute `data_min`, `data_max` and `data_range` in
+- Attribute ``data_min``, ``data_max`` and ``data_range`` in
   :class:`preprocessing.MinMaxScaler` are deprecated and won't be available
   from 0.19. Instead, the class now exposes `data_min_`, `data_max_`
   and `data_range_`. By :user:`Giorgio Patrini <giorgiop>`.
 
-- All Scaler classes now have an `scale_` attribute, the feature-wise
+- All Scaler classes now have an ```scale_``` attribute, the feature-wise
   rescaling applied by their `transform` methods. The old attribute `std_`
   in :class:`preprocessing.StandardScaler` is deprecated and superseded
   by `scale_`; it won't be available in 0.19. By :user:`Giorgio Patrini <giorgiop>`.

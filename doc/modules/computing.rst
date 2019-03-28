@@ -555,7 +555,7 @@ These environment variables should be set before importing scikit-learn.
 
 :SKLEARN_ASSUME_FINITE:
 
-    Sets the default value for the `assume_finite` argument of
+    Sets the default value for the ``assume_finite`` argument of
     :func:`sklearn.set_config`.
 
 :SKLEARN_WORKING_MEMORY:

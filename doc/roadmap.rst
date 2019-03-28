@@ -250,7 +250,7 @@ Subpackage-specific goals
 * perhaps we want to be able to get back more than multiple metrics
 * the handling of random states in CV splitters is a poor design and
   contradicts the validation of similar parameters in estimators.
-* exploit warm-starting and path algorithms so the benefits of `EstimatorCV`
+* exploit warm-starting and path algorithms so the benefits of ``EstimatorCV``
   objects can be accessed via `GridSearchCV` and used in Pipelines.
   :issue:`1626`
 * Cross-validation should be able to be replaced by OOB estimates whenever a
@@ -267,7 +267,7 @@ Subpackage-specific goals
 
 :mod:`sklearn.pipeline`
 
-* Performance issues with `Pipeline.memory`
+* Performance issues with ``Pipeline.memory``
 * see "Everything in Scikit-learn should conform to our API contract" above
 * Add a verbose option :issue:`10435`
 

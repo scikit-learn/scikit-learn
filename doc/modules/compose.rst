@@ -94,7 +94,7 @@ Pipeline::
     >>> pipe['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
     PCA(copy=True, ...)
 
-Pipeline's `named_steps` attribute allows accessing steps by name with tab
+Pipeline's ``named_steps`` attribute allows accessing steps by name with tab
 completion in interactive environments::
 
     >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']

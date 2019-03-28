@@ -93,7 +93,7 @@ When a unit test fails, the following tricks can make debugging easier:
 
          pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
 
-Other `pytest` options that may become useful include:
+Other ``pytest`` options that may become useful include:
 
   - ``-x`` which exits on the first failed test
   - ``--lf`` to rerun the tests that failed on the previous run

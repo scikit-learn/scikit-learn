@@ -344,7 +344,7 @@ Tips on Practical Use
     best done using :class:`GridSearchCV`, usually in the
     range ``10.0 ** -np.arange(1, 7)``.
 
-  * Empirically, we observed that `L-BFGS` converges faster and
+  * Empirically, we observed that ``L-BFGS`` converges faster and
     with better solutions on small datasets. For relatively large
     datasets, however, `Adam` is very robust. It usually converges
     quickly and gives pretty good performance. `SGD` with momentum or

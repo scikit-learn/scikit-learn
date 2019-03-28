@@ -1197,7 +1197,7 @@ It is advised to set the parameter ``epsilon`` to 1.35 to achieve 95% statistica
 
 Notes
 -----
-The :class:`HuberRegressor` differs from using :class:`SGDRegressor` with loss set to `huber`
+The :class:`HuberRegressor` differs from using :class:`SGDRegressor` with loss set to ``huber``
 in the following ways.
 
 - :class:`HuberRegressor` is scaling invariant. Once ``epsilon`` is set, scaling ``X`` and ``y``

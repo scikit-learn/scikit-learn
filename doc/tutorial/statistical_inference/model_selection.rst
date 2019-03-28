@@ -90,7 +90,7 @@ methods.
     >>> cross_val_score(svc, X_digits, y_digits, cv=k_fold, n_jobs=-1)
     array([0.96388889, 0.92222222, 0.9637883 , 0.9637883 , 0.93036212])
 
-`n_jobs=-1` means that the computation will be dispatched on all the CPUs
+``n_jobs=-1`` means that the computation will be dispatched on all the CPUs
 of the computer.
 
 Alternatively, the ``scoring`` argument can be provided to specify an alternative

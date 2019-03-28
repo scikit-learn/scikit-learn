@@ -163,7 +163,7 @@ further information.
  - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_iris.py`
  - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_weighted_samples.py`
  - :ref:`sphx_glr_auto_examples_linear_model_plot_sgd_comparison.py`
- - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
+ - :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py` (See the ``Note``)
 
 :class:`SGDClassifier` supports averaged SGD (ASGD). Averaging can be enabled
 by setting ```average=True```. ASGD works by averaging the coefficients

@@ -210,7 +210,7 @@ each job).
 
 .. warning::
 
-    The parallel version of K-Means is broken on OS X when `numpy` uses the
+    The parallel version of K-Means is broken on OS X when ``numpy`` uses the
     `Accelerate` Framework. This is expected behavior: `Accelerate` can be called
     after a fork but you need to execv the subprocess with the Python binary
     (which multiprocessing does not do under posix).

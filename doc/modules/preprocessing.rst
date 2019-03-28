@@ -364,7 +364,7 @@ samples drawn from a lognormal distribution to a normal distribution::
          [-0.05...,  0.58..., -0.57...],
          [ 0.69..., -0.84...,  0.10...]])
 
-While the above example sets the `standardize` option to `False`,
+While the above example sets the ``standardize`` option to ``False``,
 :class:`PowerTransformer` will apply zero-mean, unit-variance normalization
 to the transformed output by default.
 

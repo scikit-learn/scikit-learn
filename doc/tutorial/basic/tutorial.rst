@@ -74,7 +74,7 @@ Learning problems fall into a few categories:
 Loading an example dataset
 --------------------------
 
-`scikit-learn` comes with a few standard datasets, for instance the
+``scikit-learn`` comes with a few standard datasets, for instance the
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
 <https://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
 datasets for classification and the `boston house prices dataset
