@@ -9,6 +9,8 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 import warnings
 from scipy import sparse
@@ -20,9 +22,9 @@ from ..neighbors import NearestNeighbors
 from ._dbscan_inner import dbscan_inner
 
 
-def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None,
-           n_jobs=None):
+def dbscan(X, eps='warn', min_samples=5, metric='minkowski',
+           metric_params=None, algorithm='auto', leaf_size=30, p=2,
+           sample_weight=None, n_jobs=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
@@ -136,6 +138,11 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
+    if eps == 'warn':
+        warnings.warn("There is no good default value for the 'eps' "
+                      "parameter of DBSCAN. Because of legacy reasons, "
+                      "sklearn uses eps=0.5 as default.")
+        eps = 0.5      # use old default value
     if not eps > 0.0:
         raise ValueError("eps must be positive.")
 
@@ -316,7 +323,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
 
-    def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
+    def __init__(self, eps='warn', min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
                  n_jobs=None):
         self.eps = eps
