@@ -297,9 +297,9 @@ def partial_dependence(est, features, X, response_method='auto',
             'are {}.'.format(response_method, ', '.join(accepted_responses)))
 
     if is_regressor(est) and response_method != 'auto':
-        warnings.warn(
-            "The response_method parameter is ignored for regressors.",
-            UserWarning
+        raise ValueError(
+            "The response_method parameter is ignored for regressors and "
+            "must be 'auto'."
         )
     accepted_methods = ('brute', 'recursion', 'auto')
     if method not in accepted_methods:

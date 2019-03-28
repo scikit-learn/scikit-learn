@@ -281,10 +281,10 @@ def test_partial_dependence_input():
                         "est must be a fitted regressor or classifier",
                         partial_dependence, KMeans(), [0], X)
 
-    assert_warns_message(
-        UserWarning,
-        'The response_method parameter is ignored for regressors',
-        partial_dependence, lr, [0], X, response_method='predict_proba')
+    with pytest.raises(
+            ValueError,
+            match='The response_method parameter is ignored for regressors'):
+        partial_dependence(lr, [0], X, response_method='predict_proba')
 
     assert_raises_regex(
         ValueError,
@@ -292,6 +292,15 @@ def test_partial_dependence_input():
         "'decision_function'.",
         partial_dependence, gbc, [0], X, response_method='predict_proba',
         method='recursion')
+
+    # for GBDTs, if users want to use predict_proba then they're forced to set
+    # 'method' to brute.
+    with pytest.raises(
+            ValueError,
+            match="With the 'recursion' method, the response_method must be "
+                  "'decision_function"):
+        partial_dependence(gbc, [0], X, response_method='predict_proba',
+                           method='auto')
 
     assert_raises_regex(ValueError,
                         "response_method blahblah is invalid. "
