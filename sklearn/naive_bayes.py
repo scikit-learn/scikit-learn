@@ -1257,4 +1257,4 @@ class CategoricalNB(BaseDiscreteNB):
             if len(indices) > 0:
                 jll += self.feature_log_prob_[i][:, indices].T
         total_ll = jll + self.class_log_prior_
-        return total_ll
+        return total_ll  # trigger checks
