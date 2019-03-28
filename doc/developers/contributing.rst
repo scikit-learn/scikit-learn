@@ -643,6 +643,8 @@ We expect code coverage of new features to be at least around 90%.
 
    3. Loop.
 
+For guidelines on how to use ``pytest`` efficiently, see the
+:ref:`pytest_tips`.
 
 
 Developers web site
