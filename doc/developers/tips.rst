@@ -61,6 +61,9 @@ integration, consider `this browser extension
 <https://github.com/codecov/browser-extension>`_. The coverage of each line
 will be displayed as a color background behind the line number.
 
+
+.. _pytest_tips:
+
 Useful pytest aliases and flags
 -------------------------------
 
@@ -89,6 +92,19 @@ When a unit test fails, the following tricks can make debugging easier:
      shell alias to::
 
          pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
+
+Other `pytest` options that may become useful include:
+
+  - ``-x`` which exists on the first failed test
+  - ``--lf`` to rerun the tests that failed on the previous run
+  - ``-s`` so that pytest does not capture the output of ``print()``
+    statements
+  - ``--tb=short`` or ``--tb=line`` to control the length of the logs
+
+Since our continuous integration tests will error if ``DeprecationWarning``
+or ``FutureWarning`` aren't properly caught, it is also recommended to run
+``pytest`` along with the ``-Werror::DeprecationWarning`` and
+``-Werror::FutureWarning`` flags.
 
 .. _saved_replies:
 
