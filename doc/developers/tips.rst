@@ -97,7 +97,7 @@ Other `pytest` options that may become useful include:
 
   - ``-x`` which exits on the first failed test
   - ``--lf`` to rerun the tests that failed on the previous run
-  - ``--ff`` to rerun all previous tests, runnign the ones that failed first
+  - ``--ff`` to rerun all previous tests, running the ones that failed first
   - ``-s`` so that pytest does not capture the output of ``print()``
     statements
   - ``--tb=short`` or ``--tb=line`` to control the length of the logs
