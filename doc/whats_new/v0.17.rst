@@ -376,7 +376,7 @@ Bug fixes
 
 - Fixed a bug in :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` when using
-  ``class_weight='balanced'```or ``class_weight='auto'``.
+  ``class_weight='balanced'`` or ``class_weight='auto'``.
   By `Tom Dupre la Tour`_.
 
 - Fixed bug :issue:`5495` when
@@ -391,7 +391,7 @@ API changes summary
   from 0.19. Instead, the class now exposes `data_min_`, `data_max_`
   and `data_range_`. By :user:`Giorgio Patrini <giorgiop>`.
 
-- All Scaler classes now have an ```scale_``` attribute, the feature-wise
+- All Scaler classes now have an ``scale_`` attribute, the feature-wise
   rescaling applied by their `transform` methods. The old attribute `std_`
   in :class:`preprocessing.StandardScaler` is deprecated and superseded
   by `scale_`; it won't be available in 0.19. By :user:`Giorgio Patrini <giorgiop>`.
