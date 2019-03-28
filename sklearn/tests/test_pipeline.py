@@ -1073,6 +1073,7 @@ def test_make_pipeline_memory():
 
     shutil.rmtree(cachedir)
 
+
 def test_pipeline_param_error():
     clf = Pipeline(memory=None, steps=[('wrong_step_name',
                                         LogisticRegression())])
