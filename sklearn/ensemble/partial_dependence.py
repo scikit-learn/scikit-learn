@@ -182,7 +182,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
 
 @deprecated("The function ensemble.plot_partial_dependence has been "
             "deprecated in favour of "
-            "inspect.plot_partial_dependence in "
+            "plot.plot_partial_dependence in "
             " 0.21 and will be removed in 0.23.")
 def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             label=None, n_cols=3, grid_resolution=100,
@@ -199,7 +199,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
     .. deprecated:: 0.21
        This function was deprecated in version 0.21 in favor of
-       :func:`sklearn.inspect.plot_partial_dependence` and will be
+       :func:`sklearn.plot.plot_partial_dependence` and will be
        removed in 0.23.
 
     Parameters

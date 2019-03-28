@@ -5,7 +5,7 @@
 Partial dependence plots
 ========================
 
-.. currentmodule:: sklearn.inspect
+.. currentmodule:: sklearn.plot
 
 Partial dependence plots (PDP) show the dependence between the target
 response [1]_ and a set of 'target' features, marginalizing over the values
@@ -39,7 +39,7 @@ an average occupancy greater than two, the house price is nearly independent of
 the house age, whereas for values less than 2 there is a strong dependence
 on age.
 
-The :mod:`sklearn.inspect` module provides a convenience function
+The :mod:`sklearn.plot` module provides a convenience function
 :func:`plot_partial_dependence` to create one-way and two-way partial
 dependence plots. In the below example we show how to create a grid of
 partial dependence plots: two one-way PDPs for the features ``0`` and ``1``
@@ -47,7 +47,7 @@ and a two-way PDP between the two features::
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.inspect import plot_partial_dependence
+    >>> from sklearn.plot import plot_partial_dependence
 
     >>> X, y = make_hastie_10_2(random_state=0)
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
@@ -69,9 +69,10 @@ The same parameter ``target`` is used to specify the target in multi-output
 regression settings.
 
 If you need the raw values of the partial dependence function rather than
-the plots, you can use the :func:`partial_dependence` function::
+the plots, you can use the
+:func:`sklearn.model_inspection.partial_dependence` function::
 
-    >>> from sklearn.inspect import partial_dependence
+    >>> from sklearn.model_inspection import partial_dependence
 
     >>> pdp, axes = partial_dependence(clf, [0], X=X)
     >>> pdp  # doctest: +ELLIPSIS
@@ -81,9 +82,10 @@ the plots, you can use the :func:`partial_dependence` function::
 
 The values at which the partial dependence should be evaluated are directly
 generated from ``X``. For 2-way partial dependence, a 2D-grid of values is
-generated. The ``values`` field returned by :func:`partial_dependence` gives
-the actual values used in the grid for each target feature. They also
-correspond to the axis of the plots.
+generated. The ``values`` field returned by
+:func:`sklearn.model_inspection.partial_dependence` gives the actual values
+used in the grid for each target feature. They also correspond to the axis
+of the plots.
 
 For each value of the 'target' features in the ``grid`` the partial
 dependence function needs to marginalize the predictions of the estimator
@@ -110,7 +112,7 @@ which the trees were trained.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_inspect_plot_partial_dependence.py`
+ * :ref:`sphx_glr_auto_examples_plot_plot_partial_dependence.py`
 
 .. topic:: References
 

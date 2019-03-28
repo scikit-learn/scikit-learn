@@ -85,7 +85,7 @@ else:
                'kernel_ridge', 'linear_model', 'manifold', 'metrics',
                'mixture', 'model_selection', 'model_inspection',
                'multiclass', 'multioutput', 'naive_bayes', 'neighbors',
-               'neural_network', 'pipeline', 'preprocessing',
+               'neural_network', 'pipeline', 'plot', 'preprocessing',
                'random_projection', 'semi_supervised', 'svm', 'tree',
                'discriminant_analysis', 'impute', 'compose',
                # Non-modules:

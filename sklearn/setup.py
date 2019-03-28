@@ -41,6 +41,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('model_inspection/tests')
     config.add_subpackage('neural_network')
     config.add_subpackage('neural_network/tests')
+    config.add_subpackage('plot')
+    config.add_subpackage('plot/tests')
     config.add_subpackage('preprocessing')
     config.add_subpackage('preprocessing/tests')
     config.add_subpackage('semi_supervised')

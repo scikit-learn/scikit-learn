@@ -1,9 +1,9 @@
 .. include:: includes/big_toc_css.rst
 
-.. _model_inspection:
+.. _plot:
 
-Model inspection
-----------------
+Plotting
+--------
 
 .. toctree::
 

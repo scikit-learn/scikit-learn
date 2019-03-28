@@ -63,8 +63,8 @@ import matplotlib.pyplot as plt
 
 from mpl_toolkits.mplot3d import Axes3D
 
-from sklearn.inspect import partial_dependence
-from sklearn.inspect import plot_partial_dependence
+from sklearn.model_inspection import partial_dependence
+from sklearn.plot import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.neural_network import MLPRegressor
 from sklearn.datasets.california_housing import fetch_california_housing
