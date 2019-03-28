@@ -21,7 +21,8 @@ jobs:
         SCIPY_VERSION: '0.17.0'
         CYTHON_VERSION: '*'
         PILLOW_VERSION: '4.0.0'
-        JOBLIB_VERSION: '0.12.5'
+        # later version of joblib are not packaged in conda for Python 3.5
+        JOBLIB_VERSION: '0.12.3'
         COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring pandas and PyAMG.
