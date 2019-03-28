@@ -79,7 +79,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
 
 
 @deprecated("The function ensemble.partial_dependence has been deprecated "
-            "in favour of inspect.partial_dependence in 0.21 "
+            "in favour of model_inspection.partial_dependence in 0.21 "
             "and will be removed in 0.23.")
 def partial_dependence(gbrt, target_variables, grid=None, X=None,
                        percentiles=(0.05, 0.95), grid_resolution=100):
@@ -93,7 +93,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
 
     .. deprecated:: 0.21
        This function was deprecated in version 0.21 in favor of
-       :func:`sklearn.inspect.partial_dependence` and will be
+       :func:`sklearn.model_inspection.partial_dependence` and will be
        removed in 0.23.
 
     Parameters

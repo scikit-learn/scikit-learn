@@ -8,11 +8,11 @@ import pytest
 
 import sklearn
 from sklearn.utils.testing import if_matplotlib
-from sklearn.inspect import partial_dependence
-from sklearn.inspect import plot_partial_dependence
-from sklearn.inspect.partial_dependence import _grid_from_X
-from sklearn.inspect.partial_dependence import _partial_dependence_brute
-from sklearn.inspect.partial_dependence import _partial_dependence_recursion
+from sklearn.model_inspection import partial_dependence
+from sklearn.model_inspection import plot_partial_dependence
+from sklearn.model_inspection.partial_dependence import _grid_from_X
+from sklearn.model_inspection.partial_dependence import _partial_dependence_brute
+from sklearn.model_inspection.partial_dependence import _partial_dependence_recursion
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
@@ -511,8 +511,6 @@ def test_plot_partial_dependence_input():
                                 feature_names=['a', 'b', 'a'])
 
 
-@pytest.mark.skip('Passing non-constant init fails. Wait for PR #12436 '
-                  'to be merged to un-skip this test')
 def test_warning_recursion_non_constant_init():
     # make sure that passing a non-constant init parameter to a GBDT and using
     # recursion method yields a warning.

@@ -1212,10 +1212,10 @@ Model validation
 
 .. _partial_dependence_ref:
 
-:mod:`sklearn.inspect`: Model inspection
-========================================
+:mod:`sklearn.model_inspection`: Model inspection
+=================================================
 
-.. automodule:: sklearn.inspect
+.. automodule:: sklearn.model_inspection
    :no-members:
    :no-inherited-members:
 
@@ -1225,8 +1225,8 @@ Model validation
    :toctree: generated/
    :template: function.rst
 
-   inspect.partial_dependence
-   inspect.plot_partial_dependence
+   model_inspection.partial_dependence
+   model_inspection.plot_partial_dependence
 
 
 .. _preprocessing_ref:
