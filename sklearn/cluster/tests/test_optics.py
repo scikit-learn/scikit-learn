@@ -175,7 +175,7 @@ def test_minimum_number_of_sample_check():
 
     # Compute OPTICS
     X = [[1, 1]]
-    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10)
+    clust = OPTICS(max_eps=5.0 * 0.3, min_samples=10, min_cluster_size=1)
 
     # Run the fit
     assert_raise_message(ValueError, msg, clust.fit, X)

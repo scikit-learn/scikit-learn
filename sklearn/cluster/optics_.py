@@ -108,10 +108,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
         [2]_. This parameter has minimal effect on most datasets.
         Used only when ``cluster_method='xi'``.
 
-    min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
+    min_cluster_size : int > 1 or float between 0 and 1 (default=None)
         Minimum number of samples in an OPTICS cluster, expressed as an
-        absolute number or a fraction of the number of samples (rounded
-        to be at least 2).
+        absolute number or a fraction of the number of samples (rounded to be
+        at least 2). If ``None``, the value of ``min_samples`` is used instead.
         Used only when ``cluster_method='xi'``.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
@@ -142,7 +142,8 @@ class OPTICS(BaseEstimator, ClusterMixin):
     ----------
     labels_ : array, shape (n_samples,)
         Cluster labels for each point in the dataset given to fit().
-        Noisy samples are given the label -1.
+        Noisy samples and points which are not included in a leaf cluster
+        of ``cluster_hierarchy_`` are labeled as -1.
 
     reachability_ : array, shape (n_samples,)
         Reachability distances per sample, indexed by object order. Use
@@ -192,7 +193,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
                  metric_params=None, cluster_method='xi', eps=None, xi=0.05,
-                 predecessor_correction=True, min_cluster_size=.005,
+                 predecessor_correction=True, min_cluster_size=None,
                  algorithm='auto', leaf_size=30, n_jobs=None):
 
         self.max_eps = max_eps
@@ -237,16 +238,21 @@ class OPTICS(BaseEstimator, ClusterMixin):
         else:
             eps = self.eps
 
-        if self.min_cluster_size <= 0 or (self.min_cluster_size !=
-                                          int(self.min_cluster_size)
-                                          and self.min_cluster_size > 1):
+        if self.min_cluster_size is None:
+            min_cluster_size = self.min_samples
+        else:
+            min_cluster_size = self.min_cluster_size
+
+        if min_cluster_size <= 0 or (min_cluster_size !=
+                                     int(min_cluster_size)
+                                     and min_cluster_size > 1):
             raise ValueError('min_cluster_size must be a positive integer or '
                              'a float between 0 and 1. Got %r' %
-                             self.min_cluster_size)
-        elif self.min_cluster_size > n_samples:
+                             min_cluster_size)
+        elif min_cluster_size > n_samples:
             raise ValueError('min_cluster_size must be no greater than the '
                              'number of samples (%d). Got %d' %
-                             (n_samples, self.min_cluster_size))
+                             (n_samples, min_cluster_size))
 
         if self.min_samples > n_samples:
             raise ValueError("Number of training samples (n_samples=%d) must "
@@ -280,7 +286,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 self.predecessor_,
                 self.ordering_,
                 self.min_samples,
-                self.min_cluster_size,
+                min_cluster_size,
                 self.xi,
                 self.predecessor_correction)
             self.cluster_hierarchy_ = clusters_
@@ -525,7 +531,7 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
     predecessor_[unproc[improved]] = point_index
 
 
-def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
+def cluster_optics_dbscan(reachability, core_distances, ordering, eps):
     """Performs DBSCAN extraction for an arbitrary epsilon.
 
     Extracting the clusters runs in linear time. Note that this results in
@@ -535,16 +541,16 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
     Parameters
     ----------
     reachability : array, shape (n_samples,)
-        Reachability distances calculated by OPTICS (`reachability_`)
+        Reachability distances calculated by OPTICS (``reachability_``)
 
     core_distances : array, shape (n_samples,)
-        Distances at which points become core (`core_distances_`)
+        Distances at which points become core (``core_distances_``)
 
     ordering : array, shape (n_samples,)
-        OPTICS ordered point indices (`ordering_`)
+        OPTICS ordered point indices (``ordering_``)
 
-    eps : float, optional (default=0.5)
-        DBSCAN `eps` parameter. Must be set to < `max_eps`. Results
+    eps : float
+        DBSCAN ``eps`` parameter. Must be set to < ``max_eps``. Results
         will be close to DBSCAN algorithm if ``eps`` and ``max_eps`` are close
         to one another.
 
@@ -565,7 +571,7 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps=0.5):
 
 
 def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
-                      min_cluster_size=0.005, xi=0.05,
+                      min_cluster_size=None, xi=0.05,
                       predecessor_correction=False):
     """Automatically extract clusters according to the Xi-steep method.
 
@@ -585,10 +591,10 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
        regions can't have more then `min_samples` consecutive non-steep
        points.
 
-    min_cluster_size : int > 1 or float between 0 and 1 (default=0.005)
+    min_cluster_size : int > 1 or float between 0 and 1 (default=None)
         Minimum number of samples in an OPTICS cluster, expressed as an
-        absolute number or a fraction of the number of samples (rounded
-        to be at least 2).
+        absolute number or a fraction of the number of samples (rounded to be
+        at least 2). If ``None``, the value of ``min_samples`` is used instead.
 
     xi : float, between 0 and 1, optional (default=0.05)
         Determines the minimum steepness on the reachability plot that
@@ -613,6 +619,9 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
         not reflect the hierarchy, usually ``len(clusters) >
         np.unique(labels)``.
     """
+    if min_cluster_size is None:
+        min_cluster_size = min_samples
+
     clusters = _xi_cluster(reachability[ordering], predecessor[ordering], xi,
                            min_samples, min_cluster_size,
                            predecessor_correction)
@@ -930,11 +939,11 @@ def _extract_xi_labels(ordering, clusters):
     labels : array, shape (n_samples)
     """
 
-    labels = np.zeros(len(ordering), dtype=np.int)
-    label = 1
+    labels = np.full(len(ordering), -1, dtype=int)
+    label = 0
     for c in clusters:
-        if not np.any(labels[c[0]:(c[1] + 1)] != 0):
+        if not np.any(labels[c[0]:(c[1] + 1)] != -1):
             labels[c[0]:(c[1] + 1)] = label
             label += 1
-    labels[ordering] = labels - 1
+    labels[ordering] = labels.copy()
     return labels
