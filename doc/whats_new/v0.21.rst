@@ -335,7 +335,7 @@ Support for Python 3.4 and below has been officially dropped.
   BLAS shipped with scipy instead of the bundled BLAS. :issue:`12732` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`
 
-- |Enhancement| Use label ``accuracy`` instead of ```micro-average``` on
+- |Enhancement| Use label ``accuracy`` instead of ``micro-average`` on
   :func:`metrics.classification_report` to avoid confusion. `micro-average` is
   only shown for multi-label or multi-class with a subset of classes because
   it is otherwise identical to accuracy.
@@ -486,7 +486,7 @@ Support for Python 3.4 and below has been officially dropped.
   useless or resulting in a wrong approximation of the cumulative distribution
   function estimator. :issue:`13333` by :user:`Albert Thomas <albertcthomas>`.
 
-- |API| The default value of ```copy``` in :func:`preprocessing.quantile_transform`
+- |API| The default value of ``copy`` in :func:`preprocessing.quantile_transform`
   will change from False to True in 0.23 in order to make it more consistent
   with the default `copy` values of other functions in
   :mod:`preprocessing.data` and prevent unexpected side effects by modifying
