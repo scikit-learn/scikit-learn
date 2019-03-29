@@ -280,9 +280,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                fill_value)
 
         if self.add_indicator:
-            self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values, features="some-missing"
-            )
+            self.indicator_ = MissingIndicator(missing_values=self.missing_values,
+                                               features="some-missing",
+                                               error_on_new=False)
             self.indicator_.fit(X)
 
         return self
@@ -394,7 +394,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             raise ValueError("X has %d features per sample, expected %d"
                              % (X.shape[1], self.statistics_.shape[0]))
 
-        # MissingIndicator transform
         if self.add_indicator:
             X_trans = self.indicator_.transform(X)
 
@@ -436,12 +435,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
             X[coordinates] = values
 
-        # stacks a MissingIndicator transform into the output of the imputer
         if self.add_indicator:
-            if sparse.issparse(X):
-                X = sparse.hstack((X, X_trans))
-            else:
-                X = np.hstack((X, X_trans))
+            hstack = sparse.hstack if sparse.issparse(X) else np.hstack
+            X = hstack((X, X_trans))
 
         return X
 

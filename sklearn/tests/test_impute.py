@@ -1171,7 +1171,6 @@ def test_imputation_add_indicator(marker):
     X_trans = imputer.fit_transform(X)
 
     assert_allclose(X_trans, X_true)
-    assert_allclose(imputer.statistics_, np.array([3., 2., 5., np.nan, 2.5]))
     assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2]))
 
 
