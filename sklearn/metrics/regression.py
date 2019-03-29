@@ -212,8 +212,8 @@ def mean_squared_error(y_true, y_pred,
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    squared : boolean value, optional, Default False
-        RMSE value.
+    squared : boolean value, optional (default = False)
+        If False returns MSE value, if True returns RMSE value.
 
     Returns
     -------
@@ -228,8 +228,12 @@ def mean_squared_error(y_true, y_pred,
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_squared_error(y_true, y_pred)
     0.375
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_squared_error(y_true, y_pred, squared=True)
+    0.612...
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
-    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
     0.708...
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
@@ -238,10 +242,6 @@ def mean_squared_error(y_true, y_pred,
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
     0.825...
-    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
-    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
-    >>> mean_squared_error(y_true, y_pred, squared=True)
-    0.841...
 
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
@@ -256,10 +256,11 @@ def mean_squared_error(y_true, y_pred,
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
+    mse = np.average(output_errors, weights=multioutput)
     if squared:
-        return np.sqrt(np.average(output_errors, weights=multioutput))
+        return np.sqrt(mse)
     else:
-        return np.average(output_errors, weights=multioutput)
+        return mse
 
 
 def mean_squared_log_error(y_true, y_pred,

@@ -477,7 +477,7 @@ neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
 
 neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
-neg_root_mean_sqr_error_scorer = make_scorer(mean_squared_error,
+neg_root_mean_squared_error_scorer  = make_scorer(mean_squared_error,
                                              greater_is_better=False,
                                              squared=True)
 
@@ -517,7 +517,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,
                neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
-               neg_root_mean_sqr_error=neg_root_mean_sqr_error_scorer,
+               neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
