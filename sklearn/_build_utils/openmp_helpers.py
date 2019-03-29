@@ -27,7 +27,7 @@ CCODE = """
 
 
 def get_openmp_flag(compiler):
-    if os.getenv('SKLEARN_NO_OPENMP') == 'TRUE':
+    if os.getenv('SKLEARN_NO_OPENMP'):
         # Build explicitly without OpenMP support
         return
 
