@@ -530,6 +530,15 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.utils`
+...................
+
+- |API| Deprecated ``warn_on_dtype`` parameter from :func:`utils.check_array`
+  and :func:`utils.check_X_y`. Added explicit warning for dtype conversion
+  in :func:`check_pairwise_arrays` if the ``metric`` being passed is a
+  part of pairwise boolean functions.
+  :issue:`13382` by :user:`Prathmesh Savale <praths007>`.
+
 Multiple modules
 ................
 
@@ -542,12 +551,6 @@ Multiple modules
 - |Efficiency| Memory copies are avoided when casting arrays to a different
   dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
   <rth>`.
-- |API| Removed all mentions of ``warn_on_dtype=False`` and deprecated
-  ``warn_on_dtype`` parameter from :func:`utils.check_array` and
-  :func:`utils.check_X_y`. Added explicit warning for dtype conversion
-  in :func:`check_pairwise_arrays` if the ``metric`` being passed is a
-  part of pairwise boolean functions.
-  :issue:`13382` by :user:`Prathmesh Savale <praths007>`.
 
 Changes to estimator checks
 ---------------------------
