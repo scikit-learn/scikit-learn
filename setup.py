@@ -3,27 +3,31 @@
 # Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
-descr = """A set of python modules for machine learning and data mining"""
 
 import sys
 import os
+import platform
 import shutil
 from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
 import traceback
-
-if sys.version_info[0] < 3:
-    import __builtin__ as builtins
-else:
+try:
     import builtins
+    # This is a bit (!) hackish: we are setting a global variable so that the
+    # main sklearn __init__ can detect if it is being loaded by the setup
+    # routine, to avoid attempting to load components that aren't built yet:
+    # the numpy distutils extensions that are used by scikit-learn to
+    # recursively build the compiled extensions in sub-packages is based on the
+    # Python import machinery.
+    builtins.__SKLEARN_SETUP__ = True
+except ImportError:
+    # Python 2 is not support but we will raise an explicit error message next.
+    pass
 
-# This is a bit (!) hackish: we are setting a global variable so that the main
-# sklearn __init__ can detect if it is being loaded by the setup routine, to
-# avoid attempting to load components that aren't built yet:
-# the numpy distutils extensions that are used by scikit-learn to recursively
-# build the compiled extensions in sub-packages is based on the Python import
-# machinery.
-builtins.__SKLEARN_SETUP__ = True
+if sys.version_info < (3, 5):
+    raise RuntimeError("Scikit-learn requires Python 3.5 or later. The current"
+                       " Python version is %s installed in %s."
+                       % (platform.python_version(), sys.executable))
 
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
@@ -41,20 +45,24 @@ import sklearn
 
 VERSION = sklearn.__version__
 
-SCIPY_MIN_VERSION = '0.13.3'
-NUMPY_MIN_VERSION = '1.8.2'
+if platform.python_implementation() == 'PyPy':
+    SCIPY_MIN_VERSION = '1.1.0'
+    NUMPY_MIN_VERSION = '1.14.0'
+else:
+    SCIPY_MIN_VERSION = '0.17.0'
+    NUMPY_MIN_VERSION = '1.11.0'
 
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
 # as it monkey-patches the 'setup' function
 # For some commands, use setuptools
-SETUPTOOLS_COMMANDS = set([
+SETUPTOOLS_COMMANDS = {
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
     'bdist_wininst', 'install_egg_info', 'build_sphinx',
     'egg_info', 'easy_install', 'upload', 'bdist_wheel',
     '--single-version-externally-managed',
-])
+}
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     import setuptools
 
@@ -63,8 +71,8 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
         include_package_data=True,
         extras_require={
             'alldeps': (
-                'numpy >= {0}'.format(NUMPY_MIN_VERSION),
-                'scipy >= {0}'.format(SCIPY_MIN_VERSION),
+                'numpy >= {}'.format(NUMPY_MIN_VERSION),
+                'scipy >= {}'.format(SCIPY_MIN_VERSION),
             ),
         },
     )
@@ -102,7 +110,53 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'clean': CleanCommand}
+def get_openmp_flag(compiler):
+    if sys.platform == "win32" and ('icc' in compiler or 'icl' in compiler):
+        return ['/Qopenmp']
+    elif sys.platform == "win32":
+        return ['/openmp']
+    elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
+        return ['-openmp']
+    elif sys.platform == "darwin" and 'openmp' in os.getenv('CPPFLAGS', ''):
+        # -fopenmp can't be passed as compile flag when using Apple-clang.
+        # OpenMP support has to be enabled during preprocessing.
+        #
+        # For example, our macOS wheel build jobs use the following environment
+        # variables to build with Apple-clang and the brew installed "libomp":
+        #
+        # export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+        # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+        # export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+        # export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+        return ['']
+    # Default flag for GCC and clang:
+    return ['-fopenmp']
+
+
+# custom build_ext command to set OpenMP compile flags depending on os and
+# compiler
+# build_ext has to be imported after setuptools
+from numpy.distutils.command.build_ext import build_ext  # noqa
+
+
+class build_ext_subclass(build_ext):
+    def build_extensions(self):
+        if hasattr(self.compiler, 'compiler'):
+            compiler = self.compiler.compiler[0]
+        else:
+            compiler = self.compiler.__class__.__name__
+
+        openmp_flag = get_openmp_flag(compiler)
+
+        for e in self.extensions:
+            e.extra_compile_args += openmp_flag
+            e.extra_link_args += openmp_flag
+
+        build_ext.build_extensions(self)
+
+
+cmdclass = {'clean': CleanCommand, 'build_ext': build_ext_subclass}
+
 
 # Optional wheelhouse-uploader features
 # To automate release of binary packages for scikit-learn we need a tool
@@ -111,7 +165,7 @@ cmdclass = {'clean': CleanCommand}
 # to PyPI at release time.
 # The URL of the artifact repositories are configured in the setup.cfg file.
 
-WHEELHOUSE_UPLOADER_COMMANDS = set(['fetch_artifacts', 'upload_all'])
+WHEELHOUSE_UPLOADER_COMMANDS = {'fetch_artifacts', 'upload_all'}
 if WHEELHOUSE_UPLOADER_COMMANDS.intersection(sys.argv):
     import wheelhouse_uploader.cmd
 
@@ -179,17 +233,19 @@ def setup_package():
                                  'Operating System :: POSIX',
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
-                                 'Programming Language :: Python :: 2',
-                                 'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.4',
                                  'Programming Language :: Python :: 3.5',
                                  'Programming Language :: Python :: 3.6',
+                                 'Programming Language :: Python :: 3.7',
+                                 ('Programming Language :: Python :: '
+                                  'Implementation :: CPython'),
+                                 ('Programming Language :: Python :: '
+                                  'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
                     install_requires=[
-                        'numpy>={0}'.format(NUMPY_MIN_VERSION),
-                        'scipy>={0}'.format(SCIPY_MIN_VERSION)
+                        'numpy>={}'.format(NUMPY_MIN_VERSION),
+                        'scipy>={}'.format(SCIPY_MIN_VERSION)
                     ],
                     **extra_setuptools_args)
 
@@ -212,7 +268,7 @@ def setup_package():
         metadata['version'] = VERSION
     else:
         numpy_status = get_numpy_status()
-        numpy_req_str = "scikit-learn requires NumPy >= {0}.\n".format(
+        numpy_req_str = "scikit-learn requires NumPy >= {}.\n".format(
             NUMPY_MIN_VERSION)
 
         instructions = ("Installation instructions are available on the "
@@ -222,12 +278,12 @@ def setup_package():
         if numpy_status['up_to_date'] is False:
             if numpy_status['version']:
                 raise ImportError("Your installation of Numerical Python "
-                                  "(NumPy) {0} is out-of-date.\n{1}{2}"
+                                  "(NumPy) {} is out-of-date.\n{}{}"
                                   .format(numpy_status['version'],
                                           numpy_req_str, instructions))
             else:
                 raise ImportError("Numerical Python (NumPy) is not "
-                                  "installed.\n{0}{1}"
+                                  "installed.\n{}{}"
                                   .format(numpy_req_str, instructions))
 
         from numpy.distutils.core import setup

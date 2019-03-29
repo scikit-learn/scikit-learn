@@ -1,16 +1,15 @@
 # Author: Nikolay Mayorov <n59_ru@hotmail.com>
 # License: 3-clause BSD
-from __future__ import division
 
 import numpy as np
 from scipy.sparse import issparse
 from scipy.special import digamma
 
-from ..externals.six import moves
 from ..metrics.cluster.supervised import mutual_info_score
 from ..neighbors import NearestNeighbors
 from ..preprocessing import scale
 from ..utils import check_random_state
+from ..utils.fixes import _astype_copy_false
 from ..utils.validation import check_X_y
 from ..utils.multiclass import check_classification_targets
 
@@ -276,7 +275,7 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
                                           with_mean=False, copy=False)
 
         # Add small noise to continuous features as advised in Kraskov et. al.
-        X = X.astype(float)
+        X = X.astype(float, **_astype_copy_false(X))
         means = np.maximum(1, np.mean(np.abs(X[:, continuous_mask]), axis=0))
         X[:, continuous_mask] += 1e-10 * means * rng.randn(
                 n_samples, np.sum(continuous_mask))
@@ -286,7 +285,7 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
         y += 1e-10 * np.maximum(1, np.mean(np.abs(y))) * rng.randn(n_samples)
 
     mi = [_compute_mi(x, y, discrete_feature, discrete_target, n_neighbors) for
-          x, discrete_feature in moves.zip(_iterate_columns(X), discrete_mask)]
+          x, discrete_feature in zip(_iterate_columns(X), discrete_mask)]
 
     return np.array(mi)
 

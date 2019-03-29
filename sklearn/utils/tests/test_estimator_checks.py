@@ -2,20 +2,25 @@ import unittest
 import sys
 
 import numpy as np
-
 import scipy.sparse as sp
 
-from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.externals import joblib
+from io import StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import (assert_raises_regex, assert_true,
-                                   assert_equal, ignore_warnings)
+from sklearn.utils import deprecated
+from sklearn.utils import _joblib
+from sklearn.utils.testing import (assert_raises_regex,
+                                   assert_equal, ignore_warnings,
+                                   assert_warns, assert_raises)
 from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks \
+    import check_class_weight_balanced_linear_classifier
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
+from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
+from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -84,6 +89,59 @@ class ChangesUnderscoreAttribute(BaseEstimator):
         return self
 
 
+class RaisesErrorInSetParams(BaseEstimator):
+    def __init__(self, p=0):
+        self.p = p
+
+    def set_params(self, **kwargs):
+        if 'p' in kwargs:
+            p = kwargs.pop('p')
+            if p < 0:
+                raise ValueError("p can't be less than 0")
+            self.p = p
+        return super().set_params(**kwargs)
+
+    def fit(self, X, y=None):
+        X, y = check_X_y(X, y)
+        return self
+
+
+class ModifiesValueInsteadOfRaisingError(BaseEstimator):
+    def __init__(self, p=0):
+        self.p = p
+
+    def set_params(self, **kwargs):
+        if 'p' in kwargs:
+            p = kwargs.pop('p')
+            if p < 0:
+                p = 0
+            self.p = p
+        return super().set_params(**kwargs)
+
+    def fit(self, X, y=None):
+        X, y = check_X_y(X, y)
+        return self
+
+
+class ModifiesAnotherValue(BaseEstimator):
+    def __init__(self, a=0, b='method1'):
+        self.a = a
+        self.b = b
+
+    def set_params(self, **kwargs):
+        if 'a' in kwargs:
+            a = kwargs.pop('a')
+            self.a = a
+            if a is None:
+                kwargs.pop('b')
+                self.b = 'method2'
+        return super().set_params(**kwargs)
+
+    def fit(self, X, y=None):
+        X, y = check_X_y(X, y)
+        return self
+
+
 class NoCheckinPredict(BaseBadClassifier):
     def fit(self, X, y):
         X, y = check_X_y(X, y)
@@ -134,6 +192,28 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
         return np.ones(X.shape[0])
 
 
+class BadBalancedWeightsClassifier(BaseBadClassifier):
+    def __init__(self, class_weight=None):
+        self.class_weight = class_weight
+
+    def fit(self, X, y):
+        from sklearn.preprocessing import LabelEncoder
+        from sklearn.utils import compute_class_weight
+
+        label_encoder = LabelEncoder().fit(y)
+        classes = label_encoder.classes_
+        class_weight = compute_class_weight(self.class_weight, classes, y)
+
+        # Intentionally modify the balanced class_weight
+        # to simulate a bug and raise an exception
+        if self.class_weight == "balanced":
+            class_weight += 1.
+
+        # Simply assigning coef_ to the class_weight
+        self.coef_ = class_weight
+        return self
+
+
 class BadTransformerWithoutMixin(BaseEstimator):
     def fit(self, X, y=None):
         X = check_array(X)
@@ -161,6 +241,54 @@ class NotInvariantPredict(BaseEstimator):
         return np.zeros(X.shape[0])
 
 
+class LargeSparseNotSupportedClassifier(BaseEstimator):
+    def fit(self, X, y):
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc", "coo"),
+                         accept_large_sparse=True,
+                         multi_output=True,
+                         y_numeric=True)
+        if sp.issparse(X):
+            if X.getformat() == "coo":
+                if X.row.dtype == "int64" or X.col.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+            elif X.getformat() in ["csc", "csr"]:
+                if X.indices.dtype == "int64" or X.indptr.dtype == "int64":
+                    raise ValueError(
+                        "Estimator doesn't support 64-bit indices")
+
+        return self
+
+
+class SparseTransformer(BaseEstimator):
+    def fit(self, X, y=None):
+        self.X_shape_ = check_array(X).shape
+        return self
+
+    def fit_transform(self, X, y=None):
+        return self.fit(X, y).transform(X)
+
+    def transform(self, X):
+        X = check_array(X)
+        if X.shape[1] != self.X_shape_[1]:
+            raise ValueError('Bad number of features')
+        return sp.csr_matrix(X)
+
+
+def test_check_fit_score_takes_y_works_on_deprecated_fit():
+    # Tests that check_fit_score_takes_y works on a class with
+    # a deprecated fit method
+
+    class TestEstimatorWithDeprecatedFitMethod(BaseEstimator):
+        @deprecated("Deprecated for the purpose of testing "
+                    "check_fit_score_takes_y")
+        def fit(self, X, y):
+            return self
+
+    check_fit_score_takes_y("test", TestEstimatorWithDeprecatedFitMethod())
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -169,12 +297,19 @@ def test_check_estimator():
     msg = "it does not implement a 'get_params' methods"
     assert_raises_regex(TypeError, msg, check_estimator, object)
     assert_raises_regex(TypeError, msg, check_estimator, object())
+    # check that values returned by get_params match set_params
+    msg = "get_params result does not match what was passed to set_params"
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        ModifiesValueInsteadOfRaisingError())
+    assert_warns(UserWarning, check_estimator, RaisesErrorInSetParams())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        ModifiesAnotherValue())
     # check that we have a fit method
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
-    msg = "TypeError not raised"
+    msg = "ValueError not raised"
     assert_raises_regex(AssertionError, msg, check_estimator,
                         BaseBadClassifier)
     assert_raises_regex(AssertionError, msg, check_estimator,
@@ -233,13 +368,31 @@ def test_check_estimator():
         pass
     finally:
         sys.stdout = old_stdout
-    assert_true(msg in string_buffer.getvalue())
+    assert msg in string_buffer.getvalue()
+
+    # Large indices test on bad estimator
+    msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
+           r'support \S{3}_64 matrix, and is not failing gracefully.*')
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        LargeSparseNotSupportedClassifier)
+
+    # non-regression test for estimators transforming to sparse data
+    check_estimator(SparseTransformer())
 
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)
     check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
+
+
+def test_check_outlier_corruption():
+    # should raise AssertionError
+    decision = np.array([0., 1., 1.5, 2.])
+    assert_raises(AssertionError, check_outlier_corruption, 1, 2, decision)
+    # should pass
+    decision = np.array([0., 1., 1., 2.])
+    check_outlier_corruption(1, 2, decision)
 
 
 def test_check_estimator_transformer_no_mixin():
@@ -256,26 +409,26 @@ def test_check_estimator_clones():
     for Estimator in [GaussianMixture, LinearRegression,
                       RandomForestClassifier, NMF, SGDClassifier,
                       MiniBatchKMeans]:
-        with ignore_warnings(category=FutureWarning):
+        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
-        set_checking_parameters(est)
-        set_random_state(est)
-        # without fitting
-        old_hash = joblib.hash(est)
-        check_estimator(est)
-        assert_equal(old_hash, joblib.hash(est))
+            set_checking_parameters(est)
+            set_random_state(est)
+            # without fitting
+            old_hash = _joblib.hash(est)
+            check_estimator(est)
+        assert_equal(old_hash, _joblib.hash(est))
 
-        with ignore_warnings(category=FutureWarning):
+        with ignore_warnings(category=(FutureWarning, DeprecationWarning)):
             # when 'est = SGDClassifier()'
             est = Estimator()
-        set_checking_parameters(est)
-        set_random_state(est)
-        # with fitting
-        est.fit(iris.data + 10, iris.target)
-        old_hash = joblib.hash(est)
-        check_estimator(est)
-        assert_equal(old_hash, joblib.hash(est))
+            set_checking_parameters(est)
+            set_random_state(est)
+            # with fitting
+            est.fit(iris.data + 10, iris.target)
+            old_hash = _joblib.hash(est)
+            check_estimator(est)
+        assert_equal(old_hash, _joblib.hash(est))
 
 
 def test_check_estimators_unfitted():
@@ -291,11 +444,11 @@ def test_check_estimators_unfitted():
 
 
 def test_check_no_attributes_set_in_init():
-    class NonConformantEstimatorPrivateSet(object):
+    class NonConformantEstimatorPrivateSet:
         def __init__(self):
             self.you_should_not_set_this_ = None
 
-    class NonConformantEstimatorNoParamSet(object):
+    class NonConformantEstimatorNoParamSet:
         def __init__(self, you_should_set_this_=None):
             pass
 
@@ -340,6 +493,16 @@ def run_tests_without_pytest():
     suite.addTests(test_cases)
     runner = unittest.TextTestRunner()
     runner.run(suite)
+
+
+def test_check_class_weight_balanced_linear_classifier():
+    # check that ill-computed balanced weights raises an exception
+    assert_raises_regex(AssertionError,
+                        "Classifier estimator_name is not computing"
+                        " class_weight=balanced properly.",
+                        check_class_weight_balanced_linear_classifier,
+                        'estimator_name',
+                        BadBalancedWeightsClassifier)
 
 
 if __name__ == '__main__':

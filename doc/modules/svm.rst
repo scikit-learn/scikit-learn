@@ -52,8 +52,8 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_001.png
-   :target: ../auto_examples/svm/plot_iris.html
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_svc_001.png
+   :target: ../auto_examples/svm/plot_iris_svc.html
    :align: center
 
 
@@ -113,9 +113,9 @@ approach (Knerr et al., 1990) for multi- class classification. If
 ``n_class`` is the number of classes, then ``n_class * (n_class - 1) / 2``
 classifiers are constructed and each one trains data from two classes.
 To provide a consistent interface with other classifiers, the
-``decision_function_shape`` option allows to aggregate the results of the
+``decision_function_shape`` option allows to monotically transform the results of the
 "one-against-one" classifiers to a decision function of shape ``(n_samples,
-n_classes)``::
+n_classes)``.
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
@@ -164,11 +164,12 @@ Each row of the coefficients corresponds to one of the ``n_class`` many
 order of the "one" class.
 
 In the case of "one-vs-one" :class:`SVC`, the layout of the attributes
-is a little more involved. In the case of having a linear kernel,
-The layout of ``coef_`` and ``intercept_`` is similar to the one
-described for :class:`LinearSVC` described above, except that the shape of
-``coef_`` is ``[n_class * (n_class - 1) / 2, n_features]``, corresponding to as
-many binary classifiers. The order for classes
+is a little more involved. In the case of having a linear kernel, the
+attributes ``coef_`` and ``intercept_`` have the shape
+``[n_class * (n_class - 1) / 2, n_features]`` and
+``[n_class * (n_class - 1) / 2]`` respectively. This is similar to the
+layout for :class:`LinearSVC` described above, with each row now corresponding
+to a binary classifier. The order for classes
 0 to n is "0 vs 1", "0 vs 2" , ... "0 vs n", "1 vs 2", "1 vs 3", "1 vs n", . .
 . "n-1 vs n".
 
@@ -238,13 +239,13 @@ and use ``decision_function`` instead of ``predict_proba``.
 
  * Wu, Lin and Weng,
    `"Probability estimates for multi-class classification by pairwise coupling"
-   <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
+   <https://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
    JMLR 5:975-1005, 2004.
  
  
  * Platt
    `"Probabilistic outputs for SVMs and comparisons to regularized likelihood methods"
-   <http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
+   <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
 
 Unbalanced problems
 --------------------
@@ -278,7 +279,7 @@ set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_svm_plot_iris.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_iris_svc.py`,
  * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
  * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
@@ -336,27 +337,10 @@ floating point values instead of integer values::
 Density estimation, novelty detection
 =======================================
 
-One-class SVM is used for novelty detection, that is, given a set of
-samples, it will detect the soft boundary of that set so as to
-classify new points as belonging to that set or not. The class that
-implements this is called :class:`OneClassSVM`.
+The class :class:`OneClassSVM` implements a One-Class SVM which is used in
+outlier detection. 
 
-In this case, as it is a type of unsupervised learning, the fit method
-will only take as input an array X, as there are no class labels.
-
-See, section :ref:`outlier_detection` for more details on this usage.
-
-.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
-   :target: ../auto_examples/svm/plot_oneclass.html
-   :align: center
-   :scale: 75
-
-
-.. topic:: Examples:
-
- * :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py`
- * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
-
+See :ref:`outlier_detection` for the description and usage of OneClassSVM.
 
 Complexity
 ==========
@@ -408,6 +392,11 @@ Tips on Practical Use
   * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
     choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
+    
+    :class:`LinearSVC` and :class:`LinearSVR` are less sensitive to ``C`` when
+    it becomes large, and prediction results stop improving after a certain 
+    threshold. Meanwhile, larger ``C`` values will take more time to train, 
+    sometimes up to 10 times longer, as shown by Fan et al. (2008)
 
   * Support Vector Machine algorithms are not scale invariant, so **it
     is highly recommended to scale your data**. For example, scale each
@@ -449,6 +438,13 @@ Tips on Practical Use
     The ``C`` value that yields a "null" model (all weights equal to zero) can
     be calculated using :func:`l1_min_c`.
 
+
+.. topic:: References:
+
+ * Fan, Rong-En, et al.,
+   `"LIBLINEAR: A library for large linear classification."
+   <https://www.csie.ntu.edu.tw/~cjlin/papers/liblinear.pdf>`_,
+   Journal of machine learning research 9.Aug (2008): 1871-1874.
 
 .. _svm_kernels:
 
@@ -641,7 +637,7 @@ term :math:`\rho` :
 
 
  * `"Support-vector networks"
-   <http://link.springer.com/article/10.1007%2FBF00994018>`_,
+   <https://link.springer.com/article/10.1007%2FBF00994018>`_,
    C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
 
@@ -716,8 +712,8 @@ Implementation details
 Internally, we use `libsvm`_ and `liblinear`_ to handle all
 computations. These libraries are wrapped using C and Cython.
 
-.. _`libsvm`: http://www.csie.ntu.edu.tw/~cjlin/libsvm/
-.. _`liblinear`: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+.. _`libsvm`: https://www.csie.ntu.edu.tw/~cjlin/libsvm/
+.. _`liblinear`: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 .. topic:: References:
 
@@ -725,9 +721,9 @@ computations. These libraries are wrapped using C and Cython.
   used, please refer to
 
     - `LIBSVM: A Library for Support Vector Machines
-      <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
+      <https://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_.
 
     - `LIBLINEAR -- A Library for Large Linear Classification
-      <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
+      <https://www.csie.ntu.edu.tw/~cjlin/liblinear/>`_.
 
 

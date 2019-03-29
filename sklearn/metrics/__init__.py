@@ -23,6 +23,7 @@ from .classification import fbeta_score
 from .classification import hamming_loss
 from .classification import hinge_loss
 from .classification import jaccard_similarity_score
+from .classification import jaccard_score
 from .classification import log_loss
 from .classification import matthews_corrcoef
 from .classification import precision_recall_fscore_support
@@ -30,6 +31,7 @@ from .classification import precision_score
 from .classification import recall_score
 from .classification import zero_one_loss
 from .classification import brier_score_loss
+from .classification import multilabel_confusion_matrix
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -43,21 +45,26 @@ from .cluster import normalized_mutual_info_score
 from .cluster import fowlkes_mallows_score
 from .cluster import silhouette_samples
 from .cluster import silhouette_score
+from .cluster import calinski_harabasz_score
 from .cluster import calinski_harabaz_score
 from .cluster import v_measure_score
+from .cluster import davies_bouldin_score
 
 from .pairwise import euclidean_distances
 from .pairwise import pairwise_distances
 from .pairwise import pairwise_distances_argmin
 from .pairwise import pairwise_distances_argmin_min
 from .pairwise import pairwise_kernels
+from .pairwise import pairwise_distances_chunked
 
 from .regression import explained_variance_score
+from .regression import max_error
 from .regression import mean_absolute_error
 from .regression import mean_squared_error
 from .regression import mean_squared_log_error
 from .regression import median_absolute_error
 from .regression import r2_score
+
 
 from .scorer import check_scoring
 from .scorer import make_scorer
@@ -72,6 +79,7 @@ __all__ = [
     'average_precision_score',
     'balanced_accuracy_score',
     'calinski_harabaz_score',
+    'calinski_harabasz_score',
     'check_scoring',
     'classification_report',
     'cluster',
@@ -80,6 +88,7 @@ __all__ = [
     'confusion_matrix',
     'consensus_score',
     'coverage_error',
+    'davies_bouldin_score',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
@@ -90,22 +99,25 @@ __all__ = [
     'hinge_loss',
     'homogeneity_completeness_v_measure',
     'homogeneity_score',
+    'jaccard_score',
     'jaccard_similarity_score',
     'label_ranking_average_precision_score',
     'label_ranking_loss',
     'log_loss',
     'make_scorer',
     'matthews_corrcoef',
+    'max_error',
     'mean_absolute_error',
     'mean_squared_error',
     'mean_squared_log_error',
     'median_absolute_error',
+    'multilabel_confusion_matrix',
     'mutual_info_score',
     'normalized_mutual_info_score',
     'pairwise_distances',
     'pairwise_distances_argmin',
     'pairwise_distances_argmin_min',
-    'pairwise_distances_argmin_min',
+    'pairwise_distances_chunked',
     'pairwise_kernels',
     'precision_recall_curve',
     'precision_recall_fscore_support',

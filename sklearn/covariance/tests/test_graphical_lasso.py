@@ -4,19 +4,17 @@ import sys
 
 import numpy as np
 from scipy import linalg
+import pytest
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn.covariance import (graphical_lasso, GraphicalLasso,
                                 GraphicalLassoCV, empirical_covariance)
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
-from sklearn.externals.six.moves import StringIO
+from io import StringIO
 from sklearn.utils import check_random_state
 from sklearn import datasets
-
-from numpy.testing import assert_equal
 
 
 def test_graphical_lasso(random_state=0):
@@ -65,20 +63,19 @@ def test_graphical_lasso(random_state=0):
 
 def test_graphical_lasso_iris():
     # Hard-coded solution from R glasso package for alpha=1.0
-    # The iris datasets in R and scikit-learn do not match in a few places,
-    # these values are for the scikit-learn version.
+    # (need to set penalize.diagonal to FALSE)
     cov_R = np.array([
-        [0.68112222, 0.0, 0.2651911, 0.02467558],
-        [0.00, 0.1867507, 0.0, 0.00],
-        [0.26519111, 0.0, 3.0924249, 0.28774489],
-        [0.02467558, 0.0, 0.2877449, 0.57853156]
-    ])
+        [0.68112222, 0.0000000, 0.265820, 0.02464314],
+        [0.00000000, 0.1887129, 0.000000, 0.00000000],
+        [0.26582000, 0.0000000, 3.095503, 0.28697200],
+        [0.02464314, 0.0000000, 0.286972, 0.57713289]
+        ])
     icov_R = np.array([
-        [1.5188780, 0.0, -0.1302515, 0.0],
-        [0.0, 5.354733, 0.0, 0.0],
-        [-0.1302515, 0.0, 0.3502322, -0.1686399],
-        [0.0, 0.0, -0.1686399, 1.8123908]
-    ])
+        [1.5190747, 0.000000, -0.1304475, 0.0000000],
+        [0.0000000, 5.299055, 0.0000000, 0.0000000],
+        [-0.1304475, 0.000000, 0.3498624, -0.1683946],
+        [0.0000000, 0.000000, -0.1683946, 1.8164353]
+        ])
     X = datasets.load_iris().data
     emp_cov = empirical_covariance(X)
     for method in ('cd', 'lars'):
@@ -86,6 +83,23 @@ def test_graphical_lasso_iris():
                                     mode=method)
         assert_array_almost_equal(cov, cov_R)
         assert_array_almost_equal(icov, icov_R)
+
+
+def test_graph_lasso_2D():
+    # Hard-coded solution from Python skggm package
+    # obtained by calling `quic(emp_cov, lam=.1, tol=1e-8)`
+    cov_skggm = np.array([[3.09550269, 1.186972],
+                         [1.186972, 0.57713289]])
+
+    icov_skggm = np.array([[1.52836773, -3.14334831],
+                          [-3.14334831,  8.19753385]])
+    X = datasets.load_iris().data[:, 2:]
+    emp_cov = empirical_covariance(X)
+    for method in ('cd', 'lars'):
+        cov, icov = graphical_lasso(emp_cov, alpha=.1, return_costs=False,
+                                    mode=method)
+        assert_array_almost_equal(cov, cov_skggm)
+        assert_array_almost_equal(icov, icov_skggm)
 
 
 def test_graphical_lasso_iris_singular():
@@ -115,6 +129,7 @@ def test_graphical_lasso_iris_singular():
         assert_array_almost_equal(icov, icov_R, decimal=5)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_graphical_lasso_cv(random_state=1):
     # Sample data from a sparse multivariate normal
     dim = 5
@@ -135,23 +150,3 @@ def test_graphical_lasso_cv(random_state=1):
 
     # Smoke test with specified alphas
     GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
-
-
-def test_deprecated_grid_scores(random_state=1):
-    dim = 5
-    n_samples = 6
-    random_state = check_random_state(random_state)
-    prec = make_sparse_spd_matrix(dim, alpha=.96,
-                                  random_state=random_state)
-    cov = linalg.inv(prec)
-    X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
-    graphical_lasso = GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1)
-    graphical_lasso.fit(X)
-
-    depr_message = ("Attribute grid_scores was deprecated in version "
-                    "0.19 and will be removed in 0.21. Use "
-                    "``grid_scores_`` instead")
-
-    assert_warns_message(DeprecationWarning, depr_message,
-                         lambda: graphical_lasso.grid_scores)
-    assert_equal(graphical_lasso.grid_scores, graphical_lasso.grid_scores_)

@@ -17,7 +17,7 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_true, assert_equal, assert_raises
+from sklearn.utils.testing import assert_equal, assert_raises
 from sklearn.utils.testing import SkipTest
 
 
@@ -86,6 +86,8 @@ def test_sparse_graph_connected_component():
         assert_array_equal(component_1, component_2)
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
 def test_spectral_embedding_two_components(seed=36):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
@@ -100,11 +102,11 @@ def test_spectral_embedding_two_components(seed=36):
 
     # Test of internal _graph_connected_component before connection
     component = _graph_connected_component(affinity, 0)
-    assert_true(component[:n_sample].all())
-    assert_true(not component[n_sample:].any())
+    assert component[:n_sample].all()
+    assert not component[n_sample:].any()
     component = _graph_connected_component(affinity, -1)
-    assert_true(not component[:n_sample].any())
-    assert_true(component[n_sample:].all())
+    assert not component[:n_sample].any()
+    assert component[n_sample:].all()
 
     # connection
     affinity[0, n_sample + 1] = 1
@@ -138,7 +140,7 @@ def test_spectral_embedding_precomputed_affinity(seed=36):
     embed_rbf = se_rbf.fit_transform(S)
     assert_array_almost_equal(
         se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
-    assert_true(_check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.05))
+    assert _check_with_col_sign_flipping(embed_precomp, embed_rbf, 0.05)
 
 
 def test_spectral_embedding_callable_affinity(seed=36):
@@ -158,8 +160,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
     assert_array_almost_equal(
         se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
     assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
-    assert_true(
-        _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.05))
+    assert _check_with_col_sign_flipping(embed_rbf, embed_callable, 0.05)
 
 
 def test_spectral_embedding_amg_solver(seed=36):
@@ -177,9 +178,11 @@ def test_spectral_embedding_amg_solver(seed=36):
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
-    assert_true(_check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05))
+    assert _check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05)
 
 
+@pytest.mark.filterwarnings("ignore:the behavior of nmi will "
+                            "change in version 0.22")
 def test_pipeline_spectral_clustering(seed=36):
     # Test using pipeline to do spectral clustering
     random_state = np.random.RandomState(seed)

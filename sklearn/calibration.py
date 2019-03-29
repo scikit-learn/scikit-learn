@@ -7,12 +7,14 @@
 #
 # License: BSD 3 clause
 
-from __future__ import division
 import warnings
+from inspect import signature
 
 from math import log
 import numpy as np
 
+from scipy.special import expit
+from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
 from sklearn.preprocessing import LabelEncoder
 
@@ -20,7 +22,6 @@ from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.fixes import signature
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
@@ -29,6 +30,8 @@ from .metrics.classification import _check_binary_probabilistic_predictions
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     """Probability calibration with isotonic regression or sigmoid.
+
+    See glossary entry for :term:`cross-validation estimator`.
 
     With this class, the base_estimator is fit on the train set of the
     cross-validation generator and the test set is used for calibration.
@@ -61,8 +64,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
         - None, to use the default 3-fold cross-validation,
         - integer, to specify the number of folds.
-        - An object to be used as a cross-validation generator.
-        - An iterable yielding train/test splits.
+        - :term:`CV splitter`,
+        - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
         :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
@@ -74,6 +77,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
         If "prefit" is passed, it is assumed that base_estimator has been
         fitted already and all data is used for calibration.
+
+        .. versionchanged:: 0.20
+            ``cv`` default value if None will change from 3-fold to 5-fold
+            in v0.22.
 
     Attributes
     ----------
@@ -99,7 +106,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=None, method='sigmoid', cv=3):
+    def __init__(self, base_estimator=None, method='sigmoid', cv='warn'):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
@@ -240,7 +247,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
 
-class _CalibratedClassifier(object):
+class _CalibratedClassifier:
     """Probability calibration with isotonic regression or sigmoid.
 
     It assumes that base_estimator has already been fit, and trains the
@@ -424,7 +431,6 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     y = column_or_1d(y)
 
     F = df  # F follows Platt's notations
-    tiny = np.finfo(np.float).tiny  # to avoid division by 0 warning
 
     # Bayesian priors (see Platt end of section 2.2)
     prior0 = float(np.sum(y <= 0))
@@ -436,13 +442,12 @@ def _sigmoid_calibration(df, y, sample_weight=None):
 
     def objective(AB):
         # From Platt (beginning of Section 2.2)
-        E = np.exp(AB[0] * F + AB[1])
-        P = 1. / (1. + E)
-        l = -(T * np.log(P + tiny) + T1 * np.log(1. - P + tiny))
+        P = expit(-(AB[0] * F + AB[1]))
+        loss = -(xlogy(T, P) + xlogy(T1, 1. - P))
         if sample_weight is not None:
-            return (sample_weight * l).sum()
+            return (sample_weight * loss).sum()
         else:
-            return l.sum()
+            return loss.sum()
 
     def grad(AB):
         # gradient of the objective function
@@ -511,15 +516,16 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
             The predicted data.
         """
         T = column_or_1d(T)
-        return 1. / (1. + np.exp(self.a_ * T + self.b_))
+        return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
+def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
+                      strategy='uniform'):
     """Compute true and predicted probabilities for a calibration curve.
 
-     The method assumes the inputs come from a binary classifier.
+    The method assumes the inputs come from a binary classifier.
 
-     Calibration curves may also be referred to as reliability diagrams.
+    Calibration curves may also be referred to as reliability diagrams.
 
     Read more in the :ref:`User Guide <calibration>`.
 
@@ -537,14 +543,24 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
         onto 0 and the largest one onto 1.
 
     n_bins : int
-        Number of bins. A bigger number requires more data.
+        Number of bins. A bigger number requires more data. Bins with no data
+        points (i.e. without corresponding values in y_prob) will not be
+        returned, thus there may be fewer than n_bins in the return value.
+
+    strategy : {'uniform', 'quantile'}, (default='uniform')
+        Strategy used to define the widths of the bins.
+
+        uniform
+            All bins have identical widths.
+        quantile
+            All bins have the same number of points.
 
     Returns
     -------
-    prob_true : array, shape (n_bins,)
+    prob_true : array, shape (n_bins,) or smaller
         The true probability in each bin (fraction of positives).
 
-    prob_pred : array, shape (n_bins,)
+    prob_pred : array, shape (n_bins,) or smaller
         The mean predicted probability in each bin.
 
     References
@@ -565,7 +581,16 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
 
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
 
-    bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+    if strategy == 'quantile':  # Determine bin edges by distribution of data
+        quantiles = np.linspace(0, 1, n_bins + 1)
+        bins = np.percentile(y_prob, quantiles * 100)
+        bins[-1] = bins[-1] + 1e-8
+    elif strategy == 'uniform':
+        bins = np.linspace(0., 1. + 1e-8, n_bins + 1)
+    else:
+        raise ValueError("Invalid entry to 'strategy' input. Strategy "
+                         "must be either 'quantile' or 'uniform'.")
+
     binids = np.digitize(y_prob, bins) - 1
 
     bin_sums = np.bincount(binids, weights=y_prob, minlength=len(bins))

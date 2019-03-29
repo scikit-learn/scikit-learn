@@ -7,6 +7,7 @@ Here are implemented estimators that are resistant to outliers.
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
 # License: BSD 3 clause
+
 import warnings
 import numbers
 import numpy as np
@@ -55,15 +56,15 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     verbose : boolean, optional
         Verbose mode.
 
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    cov_computation_method : callable, default empirical_covariance
-        The function which will be used to compute the covariance.
-        Must return shape (n_features, n_features)
 
     Returns
     -------
@@ -161,8 +162,12 @@ def _c_step(X, n_support, random_state, remaining_iterations=30,
         results = location, covariance, det, support, dist
     elif det > previous_det:
         # determinant has increased (should not happen)
-        warnings.warn("Warning! det > previous_det (%.15f > %.15f)"
-                      % (det, previous_det), RuntimeWarning)
+        warnings.warn("Determinant has increased; this should not happen: "
+                      "log(det) > log(previous_det) (%.15f > %.15f). "
+                      "You may want to try with a higher value of "
+                      "support_fraction (current value: %.3f)."
+                      % (det, previous_det, n_support / n_samples),
+                      RuntimeWarning)
         results = previous_location, previous_covariance, \
             previous_det, previous_support, previous_dist
 
@@ -200,9 +205,6 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
     n_support : int, [(n + p + 1)/2] < n_support < n
         The number of samples the pure data set must contain.
 
-    select : int, int > 0
-        Number of best candidates results to return.
-
     n_trials : int, nb_trials > 0 or 2-tuple
         Number of different initial sets of observations from which to
         run the algorithm.
@@ -214,22 +216,25 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         - n_trials[1]: array-like, shape (n_trials, n_features, n_features)
           is the list of `n_trials` initial covariances estimates
 
+    select : int, int > 0
+        Number of best candidates results to return.
+
     n_iter : int, nb_iter > 0
         Maximum number of iterations for the c_step procedure.
         (2 is enough to be close to the final solution. "Never" exceeds 20).
+
+    verbose : boolean, default False
+        Control the output verbosity.
+
+    cov_computation_method : callable, default empirical_covariance
+        The function which will be used to compute the covariance.
+        Must return shape (n_features, n_features)
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    cov_computation_method : callable, default empirical_covariance
-        The function which will be used to compute the covariance.
-        Must return shape (n_features, n_features)
-
-    verbose : boolean, default False
-        Control the output verbosity.
 
     See Also
     ---------
@@ -256,7 +261,6 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     """
     random_state = check_random_state(random_state)
-    n_samples, n_features = X.shape
 
     if isinstance(n_trials, numbers.Integral):
         run_from_estimates = False
@@ -427,9 +431,9 @@ def fast_mcd(X, support_fraction=None,
         except MemoryError:
             # The above is too big. Let's try with something much small
             # (and less optimal)
+            n_best_tot = 10
             all_best_covariances = np.zeros((n_best_tot, n_features,
                                              n_features))
-            n_best_tot = 10
             n_best_sub = 2
         for i in range(n_subsets):
             low_bound = i * n_samples_subsets
@@ -575,17 +579,35 @@ class MinCovDet(EmpiricalCovariance):
         Mahalanobis distances of the training set (on which `fit` is called)
         observations.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import MinCovDet
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = MinCovDet(random_state=0).fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7411..., 0.2535...],
+           [0.2535..., 0.3053...]])
+    >>> cov.location_
+    array([0.0813... , 0.0427...])
+
     References
     ----------
 
-    .. [Rouseeuw1984] `P. J. Rousseeuw. Least median of squares regression.
-        J. Am Stat Ass, 79:871, 1984.`
-    .. [Rousseeuw] `A Fast Algorithm for the Minimum Covariance Determinant
+    .. [Rouseeuw1984] P. J. Rousseeuw. Least median of squares regression.
+        J. Am Stat Ass, 79:871, 1984.
+    .. [Rousseeuw] A Fast Algorithm for the Minimum Covariance Determinant
         Estimator, 1999, American Statistical Association and the American
-        Society for Quality, TECHNOMETRICS`
-    .. [ButlerDavies] `R. W. Butler, P. L. Davies and M. Jhun,
+        Society for Quality, TECHNOMETRICS
+    .. [ButlerDavies] R. W. Butler, P. L. Davies and M. Jhun,
         Asymptotics For The Minimum Covariance Determinant Estimator,
-        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400`
+        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
 
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
@@ -662,9 +684,9 @@ class MinCovDet(EmpiricalCovariance):
         References
         ----------
 
-        .. [RVD] `A Fast Algorithm for the Minimum Covariance
+        .. [RVD] A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
-            and the American Society for Quality, TECHNOMETRICS`
+            and the American Society for Quality, TECHNOMETRICS
 
         Returns
         -------
@@ -703,9 +725,9 @@ class MinCovDet(EmpiricalCovariance):
         References
         ----------
 
-        .. [RVDriessen] `A Fast Algorithm for the Minimum Covariance
+        .. [RVDriessen] A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
-            and the American Society for Quality, TECHNOMETRICS`
+            and the American Society for Quality, TECHNOMETRICS
 
         Returns
         -------

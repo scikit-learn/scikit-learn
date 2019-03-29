@@ -31,12 +31,11 @@ from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted
-from .externals import six
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB']
 
 
-class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
+class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators"""
 
     @abstractmethod
@@ -237,9 +236,9 @@ class GaussianNB(BaseNB):
         # Compute (potentially weighted) mean and variance of new datapoints
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
-            new_mu = np.average(X, axis=0, weights=sample_weight / n_new)
+            new_mu = np.average(X, axis=0, weights=sample_weight)
             new_var = np.average((X - new_mu) ** 2, axis=0,
-                                 weights=sample_weight / n_new)
+                                 weights=sample_weight)
         else:
             n_new = X.shape[0]
             new_var = np.var(X, axis=0)
@@ -260,8 +259,7 @@ class GaussianNB(BaseNB):
         old_ssd = n_past * var
         new_ssd = n_new * new_var
         total_ssd = (old_ssd + new_ssd +
-                     (n_past / float(n_new * n_total)) *
-                     (n_new * mu - n_new * new_mu) ** 2)
+                     (n_new * n_past / n_total) * (mu - new_mu) ** 2)
         total_var = total_ssd / n_total
 
         return total_mu, total_var
@@ -441,6 +439,7 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
+
 _ALPHA_MIN = 1e-10
 
 
@@ -461,11 +460,17 @@ class BaseDiscreteNB(BaseNB):
                                  " classes.")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
+            with warnings.catch_warnings():
+                # silence the warning when count is 0 because class was not yet
+                # observed
+                warnings.simplefilter("ignore", RuntimeWarning)
+                log_class_count = np.log(self.class_count_)
+
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (np.log(self.class_count_) -
+            self.class_log_prior_ = (log_class_count -
                                      np.log(self.class_count_.sum()))
         else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+            self.class_log_prior_ = np.full(n_classes, -np.log(n_classes))
 
     def _check_alpha(self):
         if np.min(self.alpha) < 0:
@@ -535,15 +540,13 @@ class BaseDiscreteNB(BaseNB):
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
-        n_samples, n_classes = Y.shape
-
         if X.shape[0] != Y.shape[0]:
             msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
             raise ValueError(msg % (X.shape[0], y.shape[0]))
 
         # label_binarize() returns arrays with dtype=np.int64.
         # We convert it to np.float64 to support sample_weight consistently
-        Y = Y.astype(np.float64)
+        Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
             sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
@@ -594,7 +597,7 @@ class BaseDiscreteNB(BaseNB):
         # LabelBinarizer().fit_transform() returns arrays with dtype=np.int64.
         # We convert it to np.float64 to support sample_weight consistently;
         # this means we also don't have to cast X to floating point
-        Y = Y.astype(np.float64)
+        Y = Y.astype(np.float64, copy=False)
         if sample_weight is not None:
             sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
@@ -625,6 +628,9 @@ class BaseDiscreteNB(BaseNB):
 
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
+
+    def _more_tags(self):
+        return {'poor_score': True}
 
 
 class MultinomialNB(BaseDiscreteNB):
@@ -700,7 +706,7 @@ class MultinomialNB(BaseDiscreteNB):
     ----------
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
-    http://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
+    https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
@@ -796,7 +802,7 @@ class ComplementNB(BaseDiscreteNB):
     Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
     Tackling the poor assumptions of naive bayes text classifiers. In ICML
     (Vol. 3, pp. 616-623).
-    http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
+    https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
@@ -819,10 +825,11 @@ class ComplementNB(BaseDiscreteNB):
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
         # BaseNB.predict uses argmax, but ComplementNB operates with argmin.
-        feature_log_prob = -logged
         if self.norm:
             summed = logged.sum(axis=1, keepdims=True)
-            feature_log_prob = -feature_log_prob / summed
+            feature_log_prob = logged / summed
+        else:
+            feature_log_prob = -logged
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
@@ -897,7 +904,7 @@ class BernoulliNB(BaseDiscreteNB):
 
     C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234-265.
-    http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
+    https://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     A. McCallum and K. Nigam (1998). A comparison of event models for naive
     Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for

@@ -34,7 +34,6 @@ Similarly, with ``n_classes > n_features``, it is much less likely that a
 feature distinguishes a particular class.
 """
 
-from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 

@@ -409,7 +409,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             # Line 10: Compute log marginal likelihood in loop and use as
             #          convergence criterion
             lml = -0.5 * a.T.dot(f) \
-                - np.log(1 + np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
+                - np.log1p(np.exp(-(self.y_train_ * 2 - 1) * f)).sum() \
                 - np.log(np.diag(L)).sum()
             # Check if we have converged (log marginal likelihood does
             # not decrease)
@@ -534,11 +534,11 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         Note that "one_vs_one" does not support predicting probability
         estimates.
 
-    n_jobs : int, optional, default: 1
-        The number of jobs to use for the computation. If -1 all CPUs are used.
-        If 1 is given, no parallel computing code is used at all, which is
-        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
-        used. Thus for n_jobs = -2, all CPUs but one are used.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use for the computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -558,12 +558,27 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     n_classes_ : int
         The number of classes in the training data
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import RBF
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = 1.0 * RBF(1.0)
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y) # doctest: +ELLIPSIS
+    0.9866...
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.83548752, 0.03228706, 0.13222543],
+           [0.79064206, 0.06525643, 0.14410151]])
+
     .. versionadded:: 0.18
     """
     def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None,
-                 multi_class="one_vs_rest", n_jobs=1):
+                 multi_class="one_vs_rest", n_jobs=None):
         self.kernel = kernel
         self.optimizer = optimizer
         self.n_restarts_optimizer = n_restarts_optimizer

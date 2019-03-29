@@ -1,11 +1,10 @@
-from __future__ import division
 
+import pytest
 import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
@@ -18,13 +17,13 @@ from sklearn.base import clone
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
-from sklearn.externals.joblib import cpu_count
+from sklearn.utils._joblib import cpu_count
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
-from sklearn.metrics import jaccard_similarity_score, mean_squared_error
+from sklearn.metrics import jaccard_score, mean_squared_error
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
@@ -52,6 +51,8 @@ def test_multi_target_regression():
     assert_almost_equal(references, y_pred)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_target_regression_partial_fit():
     X, y = datasets.make_regression(n_targets=3)
     X_train, y_train = X[:50], y[:50]
@@ -72,7 +73,7 @@ def test_multi_target_regression_partial_fit():
 
     y_pred = sgr.predict(X_test)
     assert_almost_equal(references, y_pred)
-    assert_false(hasattr(MultiOutputRegressor(Lasso), 'partial_fit'))
+    assert not hasattr(MultiOutputRegressor(Lasso), 'partial_fit')
 
 
 def test_multi_target_regression_one_target():
@@ -113,6 +114,8 @@ def test_multi_target_sample_weights_api():
     rgr.fit(X, y, w)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_target_sample_weight_partial_fit():
     # weighted regressor
     X = [[1, 2, 3], [4, 5, 6]]
@@ -170,9 +173,11 @@ def test_multi_output_classification_partial_fit_parallelism():
     est2 = mor.estimators_[0]
     if cpu_count() > 1:
         # parallelism requires this to be the case for a sane implementation
-        assert_false(est1 is est2)
+        assert est1 is not est2
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_output_classification_partial_fit():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict
@@ -204,6 +209,8 @@ def test_multi_output_classification_partial_fit():
         assert_array_equal(sgd_linear_clf.predict(X), second_predictions[:, i])
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_output_classification_partial_fit_no_first_classes_exception():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
@@ -277,7 +284,8 @@ def test_multiclass_multioutput_estimator_predict_proba():
 
     Y = np.concatenate([y1, y2], axis=1)
 
-    clf = MultiOutputClassifier(LogisticRegression(random_state=seed))
+    clf = MultiOutputClassifier(LogisticRegression(
+        multi_class='ovr', solver='liblinear', random_state=seed))
 
     clf.fit(X, Y)
 
@@ -317,6 +325,8 @@ def test_multi_output_classification_sample_weights():
     assert_almost_equal(clf.predict(X_test), clf_w.predict(X_test))
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_multi_output_classification_partial_fit_sample_weights():
     # weighted classifier
     Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
@@ -383,6 +393,8 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     assert not hasattr(classifier_chain, 'predict_proba')
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_chain_fit_and_predict_with_sparse_data():
     # Fit classifier chain with sparse data
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -399,6 +411,8 @@ def test_classifier_chain_fit_and_predict_with_sparse_data():
     assert_array_equal(Y_pred_sparse, Y_pred_dense)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_chain_vs_independent_models():
     # Verify that an ensemble of classifier chains (each of length
     # N) can achieve a higher Jaccard similarity score than N independent
@@ -417,10 +431,12 @@ def test_classifier_chain_vs_independent_models():
     chain.fit(X_train, Y_train)
     Y_pred_chain = chain.predict(X_test)
 
-    assert_greater(jaccard_similarity_score(Y_test, Y_pred_chain),
-                   jaccard_similarity_score(Y_test, Y_pred_ovr))
+    assert_greater(jaccard_score(Y_test, Y_pred_chain, average='samples'),
+                   jaccard_score(Y_test, Y_pred_ovr, average='samples'))
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_fit_and_predict():
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -440,6 +456,8 @@ def test_base_chain_fit_and_predict():
     assert isinstance(chains[1], ClassifierMixin)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
     # Fit base chain with sparse data cross_val_predict
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -452,6 +470,8 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
         assert_equal(Y_pred.shape, Y.shape)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_random_order():
     # Fit base chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -472,6 +492,8 @@ def test_base_chain_random_order():
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_crossval_fit_and_predict():
     # Fit chain with cross_val_predict and verify predict
     # performance
@@ -488,6 +510,6 @@ def test_base_chain_crossval_fit_and_predict():
         assert Y_pred_cv.shape == Y_pred.shape
         assert not np.all(Y_pred == Y_pred_cv)
         if isinstance(chain, ClassifierChain):
-            assert jaccard_similarity_score(Y, Y_pred_cv) > .4
+            assert jaccard_score(Y, Y_pred_cv, average='samples') > .4
         else:
             assert mean_squared_error(Y, Y_pred_cv) < .25
