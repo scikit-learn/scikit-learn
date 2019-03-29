@@ -411,9 +411,9 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
 
-        ..deprecated:: 0.21
-            "``warn_on_dtype`` is deprecated in "
-            "version 0.21 and will be removed in 0.23."
+        .. deprecated:: 0.21
+            ``warn_on_dtype`` is deprecated in
+            version 0.21 and will be removed in 0.23.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -427,7 +427,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     if warn_on_dtype is not None:
         warnings.warn(
             "'warn_on_dtype' is deprecated in "
-            "version 0.21 and will be removed in 0.23."
+            "version 0.21 and will be removed in 0.23. "
             "Use 'warn_on_dtype=None' to remove this warning.",
             DeprecationWarning)
 
@@ -690,9 +690,9 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
 
-        ..deprecated:: 0.21
-            "``warn_on_dtype`` is deprecated in "
-            "version 0.21 and will be removed in 0.23."
+        .. deprecated:: 0.21
+            ``warn_on_dtype`` is deprecated in
+            version 0.21 and will be removed in 0.23.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -705,14 +705,6 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
     y_converted : object
         The converted and validated y.
     """
-    # warn_on_dtype deprecation
-    if warn_on_dtype is not None:
-        warnings.warn(
-            "'warn_on_dtype' is deprecated in "
-            "version 0.21 and will be removed in 0.23."
-            "Use 'warn_on_dtype=None' to remove this warning.",
-            DeprecationWarning)
-
     if y is None:
         raise ValueError("y cannot be None")
 
