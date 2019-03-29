@@ -21,7 +21,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
@@ -143,15 +142,18 @@ def test_pairwise_boolean_distance(metric):
     # distance metrics with a data conversion warning
     msg = ("Data was converted to boolean "
            "for metric %s" % (metric))
-    with pytest.warns(DataConversionWarning,
-                      match=msg) as w:
+    with pytest.warns(DataConversionWarning, match=msg):
         pairwise_distances(X, metric=metric)
-    assert len(w) == 1
 
+
+def test_no_data_conversion_warning():
     # No warnings issued if metric is not a
     # boolean distance function
-    assert_no_warnings(pairwise_distances, X,
-                       metric="minkowski")
+    rng = np.random.RandomState(0)
+    X = rng.randn(5, 4)
+    with pytest.warns(None) as records:
+        pairwise_distances(X, metric="minkowski")
+    assert len(records) == 0
 
 
 @pytest.mark.parametrize('func', [pairwise_distances, pairwise_kernels])
