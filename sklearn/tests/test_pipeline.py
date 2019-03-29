@@ -1074,8 +1074,7 @@ def test_make_pipeline_memory():
     shutil.rmtree(cachedir)
 
 def test_pipeline_param_error():
-    clf = Pipeline(memory=None, steps=[('wrong_step_name',
-                                        LogisticRegression())])
+    clf = Pipeline(memory=None, steps=[('wrong_step_name', LogisticRegression())])
     assert_raise_message(TypeError,
                          "Use naming convention step__parameter.",
                          clf.fit, [[0], [0]], [0, 1],
