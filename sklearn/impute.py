@@ -147,7 +147,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     add_indicator : boolean, optional (default=False)
         If True, a `MissingIndicator` transform will stack into output
         of the imputer's transform. This allows a predictive estimator
-        to account for missingness despite imputation.
+        to account for missingness despite imputation. If a feature has no
+        missing values at fit/train time, the feature won't appear on
+        the missing indicator even if there are missing values at
+        transform/test time.
 
     Attributes
     ----------
@@ -1097,7 +1100,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     error_on_new : boolean, optional
         If True (default), transform will raise an error when there are
         features with missing values in transform that have no missing values
-        in fit. This is applicable only when ``features="missing-only"``.
+        in fit. This is applicable only when ``features="missing-only"`` or
+        ``features="some-missing"``.
 
     Attributes
     ----------
