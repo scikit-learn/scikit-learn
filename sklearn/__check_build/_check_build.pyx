@@ -3,7 +3,11 @@
 def check_build():
     return
 
-cimport openmp
+import os 
+
+if os.getenv('SKLEARN_OPENMP'):
+    cimport openmp
 
 def tst():
-    openmp.omp_get_max_threads()
+    if os.getenv('SKLEARN_OPENMP'):
+        openmp.omp_get_max_threads()
