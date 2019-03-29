@@ -9,8 +9,8 @@ Generating the table requires admin rights.
 import sys
 import requests
 import getpass
+import time
 
-# With authentication: up to 5000 requests per hour.
 print("user:", file=sys.stderr)
 user = input()
 passwd = getpass.getpass("Password or access token:\n")
@@ -18,6 +18,19 @@ auth = (user, passwd)
 
 ROW_SIZE = 7
 LOGO_URL = 'https://avatars2.githubusercontent.com/u/365630?v=4'
+
+
+def get(url):
+    for sleep_time in [10, 30, 60]:
+        reply = requests.get(url, auth=auth)
+        api_limit = ("message" in reply.json()
+                     and "API rate limit exceeded" in reply.json()["message"])
+        if not api_limit:
+            break
+        time.sleep(sleep_time)
+
+    reply.raise_for_status()
+    return reply
 
 
 def group_iterable(iterable, size):
@@ -34,75 +47,165 @@ def group_iterable(iterable, size):
 
 def get_contributors():
     """Get the list of contributor profiles. Require admin rights."""
-    # get members of scikit-learn teams on GitHub
-    members = []
+    # get members of scikit-learn core-dev on GitHub
+    core_devs = []
     team = 11523
     for page in [1, 2]:  # 30 per page
-        reply = requests.get(
-            "https://api.github.com/teams/%d/members?page=%d"
-            % (team, page), auth=auth)
-        reply.raise_for_status()
+        reply = get(
+            "https://api.github.com/teams/%d/members?page=%d" % (team, page))
+        core_devs.extend(reply.json())
+
+    # get members of scikit-learn on GitHub
+    members = []
+    for page in [1, 2]:  # 30 per page
+        reply = get("https://api.github.com/orgs/scikit-learn/members?page=%d"
+                    % (page, ))
         members.extend(reply.json())
 
     # keep only the logins
-    logins = [c['login'] for c in members]
+    core_devs = [c['login'] for c in core_devs]
+    members = [c['login'] for c in members]
+
     # add missing contributors with GitHub accounts
-    logins.extend(['jarrodmillman'])
-    # remove duplicate
-    logins = set(logins)
+    core_devs.extend(['jarrodmillman', ])
+    members.extend(['dubourg', 'mbrucher', 'thouis'])
+    # add missing contributors without GitHub accounts
+    members.extend(['Angel Soler Gollonet'])
+    # remove CI bots
+    members.remove('sklearn-ci')
+    members.remove('sklearn-lgtm')
+    members.remove('sklearn-wheels')
+
+    # remove duplicate, and get the difference of the two sets
+    core_devs = set(core_devs)
+    members = set(members)
+    emeritus = members.difference(core_devs)
 
     # get profiles from GitHub
-    profiles = [get_profile(login) for login in logins]
-    # sort by last name
-    profiles = sorted(profiles, key=key)
+    core_devs = [get_profile(login) for login in core_devs]
+    emeritus = [get_profile(login) for login in emeritus]
 
-    return profiles
+    # sort by dates and last name
+    core_devs = sorted(core_devs, key=key)
+    emeritus = sorted(emeritus, key=key)
+
+    return core_devs, emeritus
 
 
 def get_profile(login):
     """Get the GitHub profile from login"""
-    profile = requests.get("https://api.github.com/users/%s" % login,
-                           auth=auth).json()
-    if 'name' not in profile:
-        # default profile if the login does not exist
-        return dict(name=login, avatar_url=LOGO_URL, html_url="")
-    else:
-        if profile["name"] is None:
-            profile["name"] = profile["login"]
+    try:
+        profile = get("https://api.github.com/users/%s" % login).json()
+    except requests.exceptions.HTTPError:
+        return dict(name=login, avatar_url=LOGO_URL, html_url="",
+                    first_year="2010", last_year="2010")
 
-        # fix missing names
-        missing_names = {'bthirion': 'Bertrand Thirion',
-                         'Duchesnay': 'Edouard Duchesnay',
-                         'Lars': 'Lars Buitinck',
-                         'MechCoder': 'Manoj Kumar'}
-        if profile["name"] in missing_names:
-            profile["name"] = missing_names[profile["name"]]
-        return profile
+    if profile["name"] is None:
+        profile["name"] = profile["login"]
+
+    # fix missing names
+    missing_names = {
+        'bthirion': 'Bertrand Thirion',
+        'dubourg': 'Vincent Dubourg',
+        'Duchesnay': 'Edouard Duchesnay',
+        'Lars': 'Lars Buitinck',
+        'MechCoder': 'Manoj Kumar'
+    }
+    if profile["name"] in missing_names:
+        profile["name"] = missing_names[profile["name"]]
+
+    profile["first_year"], profile["last_year"] = get_dates(login)
+
+    return profile
+
+
+def get_dates(login):
+    # With authentication: up to 30 searchs per hour.
+    url = ("https://api.github.com/search/issues?q="
+           "repo:scikit-learn/scikit-learn+author:%s" % (login, ))
+
+    reply = get(url + "+sort:created-asc")
+    if reply.json()["total_count"] == 0:
+        return "2010", "2010"
+
+    # year of first pull request or issue
+    first_pull = reply.json()['items'][0]
+    first_year = first_pull["created_at"][:4]
+
+    # year of last pull request or issue
+    reply = get(url + "+sort:created-desc")
+    last_pull = reply.json()['items'][0]
+    last_year = last_pull["created_at"][:4]
+
+    return first_year, last_year
 
 
 def key(profile):
-    """Get the last name in lower case"""
-    return profile["name"].split(' ')[-1].lower()
+    """Sort profile"""
+    last_name = profile["name"].split(' ')[-1].lower()
+    return (int(profile["first_year"]), -int(profile["last_year"]), last_name)
 
 
-contributors = get_contributors()
+def generate_table(contributors):
+    print(".. raw :: html\n")
+    print("    <!-- Generated by generate_authors_table.py -->")
+    print("    <table>")
+    print("    <col style='width:%d%%' span='%d'>" % (int(100 / ROW_SIZE),
+                                                      ROW_SIZE))
+    print("    <style>")
+    print("      img.avatar {border-radius: 10px;}")
+    print("      td {vertical-align: top;}")
+    print("    </style>")
+    for row in group_iterable(contributors, size=ROW_SIZE):
+        print("    <tr>")
+        for contributor in row:
+            print("    <td>")
+            print("    <a href='%s'><img src='%s' class='avatar' /></a> <br />"
+                  % (contributor["html_url"], contributor["avatar_url"]))
+            print("    <p>%s (%s-%s)</p>" %
+                  (contributor["name"], contributor["first_year"],
+                   contributor["last_year"]))
+            print("    </td>")
+        print("    </tr>")
+    print("    </table>")
 
-print(".. raw :: html\n")
-print("    <!-- Generated by generate_authors_table.py -->")
-print("    <table>")
-print("    <col style='width:%d%%' span='%d'>"
-      % (int(100 / ROW_SIZE), ROW_SIZE))
-print("    <style>")
-print("      img.avatar {border-radius: 10px;}")
-print("      td {vertical-align: top;}")
-print("    </style>")
-for row in group_iterable(contributors, size=ROW_SIZE):
-    print("    <tr>")
-    for contributor in row:
-        print("    <td>")
-        print("    <a href='%s'><img src='%s' class='avatar' /></a> <br />"
-              % (contributor["html_url"], contributor["avatar_url"]))
-        print("    <p>%s</p>" % contributor["name"])
-        print("    </td>")
-    print("    </tr>")
-print("    </table>")
+
+def generate_list(contributors):
+    for contributor in contributors:
+        print("- %s (%s-%s)" % (contributor["name"], contributor["first_year"],
+                                contributor["last_year"]))
+
+
+core_devs, emeritus = get_contributors()
+
+print("""
+Authors
+-------
+
+The following people are currently core contributors to scikit-learn's
+development and maintenance:
+
+""")
+
+generate_table(core_devs)
+
+print("""
+
+Please do not email the authors directly to ask for assistance or report
+issues.
+Instead, please see `What's the best way to ask questions about scikit-learn
+<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+in the FAQ.
+
+.. seealso::
+
+   :ref:`How you can contribute to the project <contributing>`
+
+Emeritus Core Developers
+------------------------
+The following people have been active contributors in the past, but are no
+longer active in the project:
+
+""")
+
+generate_list(emeritus)

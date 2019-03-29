@@ -14,44 +14,7 @@ release, February the 1st 2010. Since then, several releases have appeared
 following a ~3 month cycle, and a thriving international community has
 been leading the development.
 
-Authors
--------
-
-The following people are currently core contributors to scikit-learn's development
-and maintenance:
-
 .. include:: authors.rst
-
-Please do not email the authors directly to ask for assistance or report issues.
-Instead, please see `What's the best way to ask questions about scikit-learn
-<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
-in the FAQ.
-
-.. seealso::
-
-   :ref:`How you can contribute to the project <contributing>`
-
-Emeritus Core Developers
-------------------------
-The following people have been active contributors in the past, but are no longer active in the project
-
-- Angel Soler Gollonet
-- Alexander Fabisch
-- Alexandre Passos
-- Chris Gorgolewski
-- David Cournapeau
-- David Warde-Farley
-- Jake Vanderplas
-- Kyle Kastner
-- Matthieu Brucher
-- Raghav Rajagopalan
-- Robert Layton
-- Ron Weiss
-- Shiqiao Du
-- Thouis (Ray) Jones
-- Vincent Dubourg
-- Vincent Michel
-- Virgile Fritsch
 
 Governance
 ----------
