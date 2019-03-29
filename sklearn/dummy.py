@@ -14,7 +14,6 @@ from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
-from .utils.validation import column_or_1d
 from .utils.random import random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
