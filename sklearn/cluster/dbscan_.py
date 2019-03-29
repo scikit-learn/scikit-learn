@@ -14,13 +14,15 @@ from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array, check_consistent_length
+from ..utils.testing import ignore_warnings
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
 
 
 def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1):
+           algorithm='auto', leaf_size=30, p=2, sample_weight=None,
+           n_jobs=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
@@ -75,9 +77,11 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         weight may inhibit its eps-neighbor from being core.
         Note that weights are absolute, and default to 1.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Returns
     -------
@@ -86,6 +90,14 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     labels : array [n_samples]
         Cluster labels for each point.  Noisy samples are given the label -1.
+
+    See also
+    --------
+    DBSCAN
+        An estimator interface for this clustering algorithm.
+    OPTICS
+        A similar estimator interface clustering at multiple values of eps. Our
+        implementation is optimized for memory usage.
 
     Notes
     -----
@@ -106,6 +118,9 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
+
+    :func:`cluster.optics <sklearn.cluster.optics>` provides a similar
+    clustering with lower memory usage.
 
     References
     ----------
@@ -128,15 +143,16 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     if metric == 'precomputed' and sparse.issparse(X):
         neighborhoods = np.empty(X.shape[0], dtype=object)
         X.sum_duplicates()  # XXX: modifies X's internals in-place
+
+        # set the diagonal to explicit values, as a point is its own neighbor
+        with ignore_warnings():
+            X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
+
         X_mask = X.data <= eps
         masked_indices = X.indices.astype(np.intp, copy=False)[X_mask]
-        masked_indptr = np.concatenate(([0], np.cumsum(X_mask)))[X.indptr[1:]]
+        masked_indptr = np.concatenate(([0], np.cumsum(X_mask)))
+        masked_indptr = masked_indptr[X.indptr[1:-1]]
 
-        # insert the diagonal: a point is its own neighbor, but 0 distance
-        # means absence from sparse matrix data
-        masked_indices = np.insert(masked_indices, masked_indptr,
-                                   np.arange(X.shape[0]))
-        masked_indptr = masked_indptr[:-1] + np.arange(1, X.shape[0])
         # split into rows
         neighborhoods[:] = np.split(masked_indices, masked_indptr)
     else:
@@ -158,7 +174,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
                                 for neighbors in neighborhoods])
 
     # Initially, all samples are noise.
-    labels = -np.ones(X.shape[0], dtype=np.intp)
+    labels = np.full(X.shape[0], -1, dtype=np.intp)
 
     # A list of all core samples found.
     core_samples = np.asarray(n_neighbors >= min_samples, dtype=np.uint8)
@@ -217,9 +233,11 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         The power of the Minkowski metric to be used to calculate distance
         between points.
 
-    n_jobs : int, optional (default = 1)
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -232,6 +250,25 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     labels_ : array, shape = [n_samples]
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
+
+    Examples
+    --------
+    >>> from sklearn.cluster import DBSCAN
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [2, 2], [2, 3],
+    ...               [8, 7], [8, 8], [25, 80]])
+    >>> clustering = DBSCAN(eps=3, min_samples=2).fit(X)
+    >>> clustering.labels_
+    array([ 0,  0,  0,  1,  1, -1])
+    >>> clustering # doctest: +NORMALIZE_WHITESPACE
+    DBSCAN(algorithm='auto', eps=3, leaf_size=30, metric='euclidean',
+        metric_params=None, min_samples=2, n_jobs=None, p=None)
+
+    See also
+    --------
+    OPTICS
+        A similar clustering at multiple values of eps. Our implementation
+        is optimized for memory usage.
 
     Notes
     -----
@@ -253,6 +290,9 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     Another way to reduce memory and computation time is to remove
     (near-)duplicate points and use ``sample_weight`` instead.
 
+    :class:`cluster.OPTICS` provides a similar clustering with lower memory
+    usage.
+
     References
     ----------
     Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
@@ -263,7 +303,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
                  metric_params=None, algorithm='auto', leaf_size=30, p=None,
-                 n_jobs=1):
+                 n_jobs=None):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric

@@ -9,9 +9,8 @@ from scipy.sparse import csc_matrix
 
 import pytest
 
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raise_message, assert_no_warnings
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -29,7 +28,7 @@ def test_initialize_nn_output():
     data = np.abs(rng.randn(10, 10))
     for init in ('random', 'nndsvd', 'nndsvda', 'nndsvdar'):
         W, H = nmf._initialize_nmf(data, 10, init=init, random_state=0)
-        assert_false((W < 0).any() or (H < 0).any())
+        assert not ((W < 0).any() or (H < 0).any())
 
 
 def test_parameter_checking():
@@ -54,6 +53,14 @@ def test_parameter_checking():
     clf = NMF(2, tol=0.1).fit(A)
     assert_raise_message(ValueError, msg, clf.transform, -A)
 
+    for init in ['nndsvd', 'nndsvda', 'nndsvdar']:
+        msg = ("init = '{}' can only be used when "
+               "n_components <= min(n_samples, n_features)"
+               .format(init))
+        assert_raise_message(ValueError, msg, NMF(3, init).fit, A)
+        assert_raise_message(ValueError, msg, nmf._initialize_nmf, A,
+                             3, init)
+
 
 def test_initialize_close():
     # Test NNDSVD error
@@ -64,7 +71,7 @@ def test_initialize_close():
     W, H = nmf._initialize_nmf(A, 10, init='nndsvd')
     error = linalg.norm(np.dot(W, H) - A)
     sdev = linalg.norm(A - A.mean())
-    assert_true(error <= sdev)
+    assert error <= sdev
 
 
 def test_initialize_variants():
@@ -86,15 +93,15 @@ def test_initialize_variants():
 @ignore_warnings(category=UserWarning)
 def test_nmf_fit_nn_output():
     # Test that the decomposition does not contain negative values
-    A = np.c_[5 * np.ones(5) - np.arange(1, 6),
-              5 * np.ones(5) + np.arange(1, 6)]
+    A = np.c_[5. - np.arange(1, 6),
+              5. + np.arange(1, 6)]
     for solver in ('cd', 'mu'):
         for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random'):
             model = NMF(n_components=2, solver=solver, init=init,
                         random_state=0)
             transf = model.fit_transform(A)
-            assert_false((model.components_ < 0).any() or
-                         (transf < 0).any())
+            assert not((model.components_ < 0).any() or
+                       (transf < 0).any())
 
 
 @pytest.mark.parametrize('solver', ('cd', 'mu'))
@@ -198,30 +205,37 @@ def test_non_negative_factorization_consistency():
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    for solver in ('cd', 'mu'):
-        W_nmf, H, _ = non_negative_factorization(
-            A, solver=solver, random_state=1, tol=1e-2)
-        W_nmf_2, _, _ = non_negative_factorization(
-            A, H=H, update_H=False, solver=solver, random_state=1, tol=1e-2)
+    for init in ['random', 'nndsvd']:
+        for solver in ('cd', 'mu'):
+            W_nmf, H, _ = non_negative_factorization(
+                A, init=init, solver=solver, random_state=1, tol=1e-2)
+            W_nmf_2, _, _ = non_negative_factorization(
+                A, H=H, update_H=False, init=init, solver=solver,
+                random_state=1, tol=1e-2)
 
-        model_class = NMF(solver=solver, random_state=1, tol=1e-2)
-        W_cls = model_class.fit_transform(A)
-        W_cls_2 = model_class.transform(A)
-        assert_array_almost_equal(W_nmf, W_cls, decimal=10)
-        assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
+            model_class = NMF(init=init, solver=solver, random_state=1,
+                              tol=1e-2)
+            W_cls = model_class.fit_transform(A)
+            W_cls_2 = model_class.transform(A)
+
+            assert_array_almost_equal(W_nmf, W_cls, decimal=10)
+            assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
 
 
 def test_non_negative_factorization_checking():
     A = np.ones((2, 2))
     # Test parameters checking is public function
     nnmf = non_negative_factorization
-    assert_no_warnings(nnmf, A, A, A, np.int64(1))
+    msg = ("The default value of init will change from "
+           "random to None in 0.23 to make it consistent "
+           "with decomposition.NMF.")
+    assert_warns_message(FutureWarning, msg, nnmf, A, A, A, np.int64(1))
     msg = ("Number of components must be a positive integer; "
            "got (n_components=1.5)")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5)
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, 'random')
     msg = ("Number of components must be a positive integer; "
            "got (n_components='2')")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2')
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2', 'random')
     msg = "Negative values in data passed to NMF (input H)"
     assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, 'custom')
     msg = "Negative values in data passed to NMF (input W)"
@@ -382,10 +396,10 @@ def test_nmf_negative_beta_loss():
 
     def _assert_nmf_no_nan(X, beta_loss):
         W, H, _ = non_negative_factorization(
-            X, n_components=n_components, solver='mu', beta_loss=beta_loss,
-            random_state=0, max_iter=1000)
-        assert_false(np.any(np.isnan(W)))
-        assert_false(np.any(np.isnan(H)))
+            X, init='random', n_components=n_components, solver='mu',
+            beta_loss=beta_loss, random_state=0, max_iter=1000)
+        assert not np.any(np.isnan(W))
+        assert not np.any(np.isnan(H))
 
     msg = "When beta_loss <= 0 and X contains zeros, the solver may diverge."
     for beta_loss in (-0.6, 0.):

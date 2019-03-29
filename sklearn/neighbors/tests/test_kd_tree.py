@@ -8,7 +8,7 @@ from sklearn.neighbors.kd_tree import (KDTree, NeighborsHeap,
                                        nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import SkipTest, assert_allclose
+from sklearn.utils.testing import assert_allclose
 
 rng = np.random.RandomState(42)
 V = rng.random_sample((3, 3))
@@ -187,6 +187,7 @@ def test_kd_tree_pickle(protocol):
         ind2, dist2 = kdt2.query(X)
         assert_array_almost_equal(ind1, ind2)
         assert_array_almost_equal(dist1, dist2)
+        assert isinstance(kdt2, KDTree)
 
     check_pickle_protocol(protocol)
 
@@ -195,7 +196,7 @@ def test_neighbors_heap(n_pts=5, n_nbrs=10):
     heap = NeighborsHeap(n_pts, n_nbrs)
 
     for row in range(n_pts):
-        d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE)
+        d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE, copy=False)
         i_in = np.arange(2 * n_nbrs, dtype=ITYPE)
         for d, i in zip(d_in, i_in):
             heap.push(row, d, i)
@@ -211,7 +212,7 @@ def test_neighbors_heap(n_pts=5, n_nbrs=10):
 
 
 def test_node_heap(n_nodes=50):
-    vals = rng.random_sample(n_nodes).astype(DTYPE)
+    vals = rng.random_sample(n_nodes).astype(DTYPE, copy=False)
 
     i1 = np.argsort(vals)
     vals2, i2 = nodeheap_sort(vals)
@@ -221,8 +222,8 @@ def test_node_heap(n_nodes=50):
 
 
 def test_simultaneous_sort(n_rows=10, n_pts=201):
-    dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE)
-    ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE)
+    dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE, copy=False)
+    ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE, copy=False)
 
     dist2 = dist.copy()
     ind2 = ind.copy()

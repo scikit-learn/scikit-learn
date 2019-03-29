@@ -23,12 +23,13 @@ scikit-learn, :class:`PCA` is implemented as a *transformer* object
 that learns :math:`n` components in its ``fit`` method, and can be used on new
 data to project it on these components.
 
-The optional parameter ``whiten=True`` makes it possible to
-project the data onto the singular space while scaling each component
-to unit variance. This is often useful if the models down-stream make
-strong assumptions on the isotropy of the signal: this is for example
-the case for Support Vector Machines with the RBF kernel and the K-Means
-clustering algorithm.
+PCA centers but does not scale the input data for each feature before
+applying the SVD. The optional parameter parameter ``whiten=True`` makes it
+possible to project the data onto the singular space while scaling each
+component to unit variance. This is often useful if the models down-stream make
+strong assumptions on the isotropy of the signal: this is for example the case
+for Support Vector Machines with the RBF kernel and the K-Means clustering
+algorithm.
 
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
@@ -79,6 +80,9 @@ out-of-core Principal Component Analysis either by:
 in order update ``explained_variance_ratio_`` incrementally. This is why
 memory usage depends on the number of samples per batch, rather than the
 number of samples to be processed in the dataset.
+
+As in :class:`PCA`, :class:`IncrementalPCA` centers but does not scale the
+input data for each feature before applying the SVD.
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_incremental_pca_001.png
     :target: ../auto_examples/decomposition/plot_incremental_pca.html
@@ -139,10 +143,6 @@ less than 1s:
 
 .. centered:: |orig_img| |pca_img|
 
-Note: with the optional parameter ``svd_solver='randomized'``, we also
-need to give :class:`PCA` the size of the lower-dimensional space
-``n_components`` as a mandatory input parameter.
-
 If we note :math:`n_{\max} = \max(n_{\mathrm{samples}}, n_{\mathrm{features}})` and
 :math:`n_{\min} = \min(n_{\mathrm{samples}}, n_{\mathrm{features}})`, the time complexity
 of the randomized :class:`PCA` is :math:`O(n_{\max}^2 \cdot n_{\mathrm{components}})`
@@ -167,7 +167,7 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
     * `"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
-      <http://arxiv.org/abs/0909.4061>`_
+      <https://arxiv.org/abs/0909.4061>`_
       Halko, et al., 2009
 
 
@@ -270,10 +270,10 @@ factorization, while larger values shrink many coefficients to zero.
 .. topic:: References:
 
   .. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
-     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+     <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
      J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
   .. [Jen09] `"Structured Sparse Principal Component Analysis"
-     <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
+     <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
 
@@ -289,7 +289,7 @@ where :math:`k` is a user-specified parameter.
 When truncated SVD is applied to term-document matrices
 (as returned by ``CountVectorizer`` or ``TfidfVectorizer``),
 this transformation is known as
-`latent semantic analysis <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+`latent semantic analysis <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 (LSA), because it transforms such matrices
 to a "semantic" space of low dimensionality.
 In particular, LSA is known to combat the effects of synonymy and polysemy
@@ -354,7 +354,7 @@ compensating for LSA's erroneous assumptions about textual data.
   * Christopher D. Manning, Prabhakar Raghavan and Hinrich Schütze (2008),
     *Introduction to Information Retrieval*, Cambridge University Press,
     chapter 18: `Matrix decompositions & latent semantic indexing
-    <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+    <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 
 
 .. _DictionaryLearning:
@@ -495,7 +495,7 @@ extracted from part of the image of a raccoon face looks like.
 .. topic:: References:
 
   * `"Online dictionary learning for sparse coding"
-    <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+    <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
 .. _MiniBatchDictionaryLearning:
@@ -859,22 +859,46 @@ Latent Dirichlet Allocation is a generative probabilistic model for collections 
 discrete dataset such as text corpora. It is also a topic model that is used for
 discovering abstract topics from a collection of documents.
 
-The graphical model of LDA is a three-level Bayesian model:
+The graphical model of LDA is a three-level generative model:
 
 .. image:: ../images/lda_model_graph.png
    :align: center
 
-When modeling text corpora, the model assumes the following generative process for
-a corpus with :math:`D` documents and :math:`K` topics:
+Note on notations presented in the graphical model above, which can be found in 
+Hoffman et al. (2013):
 
-  1. For each topic :math:`k`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta),\: k =1...K`
+  * The corpus is a collection of :math:`D` documents.
+  * A document is a sequence of :math:`N` words.
+  * There are :math:`K` topics in the corpus. 
+  * The boxes represent repeated sampling. 
 
-  2. For each document :math:`d`, draw :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha), \: d=1...D`
+In the graphical model, each node is a random variable and has a role in the 
+generative process. A shaded node indicates an observed variable and an unshaded 
+node indicates a hidden (latent) variable. In this case, words in the corpus are 
+the only data that we observe. The latent variables determine the random mixture 
+of topics in the corpus and the distribution of words in the documents. 
+The goal of LDA is to use the observed words to infer the hidden topic 
+structure. 
+
+When modeling text corpora, the model assumes the following generative process 
+for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K` 
+corresponding to :attr:`n_components` in the API:
+
+  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim 
+     \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words, 
+     i.e. the probability of a word appearing in topic :math:`k`. 
+     :math:`\eta` corresponds to :attr:`topic_word_prior`. 
+
+  2. For each document :math:`d \in D`, draw the topic proportions 
+     :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha` 
+     corresponds to :attr:`doc_topic_prior`. 
 
   3. For each word :math:`i` in document :math:`d`:
 
-    a. Draw a topic index :math:`z_{di} \sim \mathrm{Multinomial}(\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(\beta_{z_{di}})`
+    a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
+       (\theta_d)`
+    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
+       (\beta_{z_{di}})`
 
 For parameter estimation, the posterior distribution is:
 
@@ -884,8 +908,9 @@ For parameter estimation, the posterior distribution is:
 
 Since the posterior is intractable, variational Bayesian method
 uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
-to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi`,
-:math:`\gamma` are optimized to maximize the Evidence Lower Bound (ELBO):
+to approximate it, and those variational parameters :math:`\lambda`, 
+:math:`\phi`, :math:`\gamma` are optimized to maximize the Evidence 
+Lower Bound (ELBO):
 
 .. math::
   \log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
@@ -895,14 +920,15 @@ Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
 
-:class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
-both online and batch update method.
-While batch method updates variational variables after each full pass through the data,
-online method updates variational variables from mini-batch data points.
+:class:`LatentDirichletAllocation` implements the online variational Bayes 
+algorithm and supports both online and batch update methods.
+While the batch method updates variational variables after each full pass through 
+the data, the online method updates variational variables from mini-batch data 
+points.
 
 .. note::
 
-  Although online method is guaranteed to converge to a local optimum point, the quality of
+  Although the online method is guaranteed to converge to a local optimum point, the quality of
   the optimum point and the speed of convergence may depend on mini-batch size and
   attributes related to learning rate setting.
 
@@ -931,3 +957,7 @@ when data can be fetched sequentially.
     * `"Stochastic Variational Inference"
       <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
+
+
+See also :ref:`nca_dim_reduction` for dimensionality reduction with
+Neighborhood Components Analysis.

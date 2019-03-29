@@ -12,10 +12,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-from __future__ import print_function
 import sys
 import os
-from sklearn.externals.six import u
+import warnings
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -38,6 +37,7 @@ extensions = [
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
+    'custom_references_resolver'
 ]
 
 # this is needed for some reason...
@@ -74,8 +74,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u('scikit-learn')
-copyright = u('2007 - 2018, scikit-learn developers (BSD License)')
+project = 'scikit-learn'
+copyright = '2007 - 2019, scikit-learn developers (BSD License)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -103,7 +103,11 @@ exclude_patterns = ['_build', 'templates', 'includes', 'themes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-#default_role = None
+# sklearn uses a custom extension: `custom_references_resolver` to modify
+# the order of link resolution for the 'any' role. It resolves python class
+# links first before resolving 'std' domain links. Unresolved roles are
+# considered to be <code> blocks.
+default_role = 'any'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
 add_function_parentheses = False
@@ -214,8 +218,8 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
-latex_documents = [('index', 'user_guide.tex', u('scikit-learn user guide'),
-                    u('scikit-learn developers'), 'manual'), ]
+latex_documents = [('index', 'user_guide.tex', 'scikit-learn user guide',
+                    'scikit-learn developers', 'manual'), ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
@@ -237,6 +241,7 @@ intersphinx_mapping = {
     'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
     'matplotlib': ('https://matplotlib.org/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+    'joblib': ('https://joblib.readthedocs.io/en/latest/', None),
 }
 
 sphinx_gallery_conf = {
@@ -252,7 +257,7 @@ sphinx_gallery_conf = {
 # key: first image in set
 # values: (number of plot in set, height of thumbnail)
 carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
-                   'sphx_glr_plot_outlier_detection_003.png': 372,
+                   'sphx_glr_plot_anomaly_comparison_001.png': 372,
                    'sphx_glr_plot_gpr_co2_001.png': 350,
                    'sphx_glr_plot_adaboost_twoclass_001.png': 372,
                    'sphx_glr_plot_compare_methods_001.png': 349}
@@ -288,6 +293,11 @@ def setup(app):
 
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve('sklearn',
-                                         u'https://github.com/scikit-learn/'
+                                         'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
+
+warnings.filterwarnings("ignore", category=UserWarning,
+                        module="matplotlib",
+                        message='Matplotlib is currently using agg, which is a'
+                                ' non-GUI backend, so cannot show the figure.')

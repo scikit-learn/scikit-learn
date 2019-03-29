@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-import scipy as sp
 import warnings
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
@@ -69,6 +68,26 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import EllipticEnvelope
+    >>> true_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> X = np.random.RandomState(0).multivariate_normal(mean=[0, 0],
+    ...                                                  cov=true_cov,
+    ...                                                  size=500)
+    >>> cov = EllipticEnvelope(random_state=0).fit(X)
+    >>> # predict returns 1 for an inlier and -1 for an outlier
+    >>> cov.predict([[0, 0],
+    ...              [3, 3]])
+    array([ 1, -1])
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7411..., 0.2535...],
+           [0.2535..., 0.3053...]])
+    >>> cov.location_
+    array([0.0813... , 0.0427...])
+
     See Also
     --------
     EmpiricalCovariance, MinCovDet
@@ -89,7 +108,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
     def __init__(self, store_precision=True, assume_centered=False,
                  support_fraction=None, contamination=0.1,
                  random_state=None):
-        super(EllipticEnvelope, self).__init__(
+        super().__init__(
             store_precision=store_precision,
             assume_centered=assume_centered,
             support_fraction=support_fraction,
@@ -103,11 +122,13 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         ----------
         X : numpy array or sparse matrix, shape (n_samples, n_features).
             Training data
-        y : (ignored)
+
+        y : Ignored
+            not used, present for API consistency by convention.
+
         """
-        super(EllipticEnvelope, self).fit(X)
-        self.offset_ = sp.stats.scoreatpercentile(
-            -self.dist_, 100. * self.contamination)
+        super().fit(X)
+        self.offset_ = np.percentile(-self.dist_, 100. * self.contamination)
         return self
 
     def decision_function(self, X, raw_values=None):
@@ -179,7 +200,7 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
         X = check_array(X)
-        is_inlier = -np.ones(X.shape[0], dtype=int)
+        is_inlier = np.full(X.shape[0], -1, dtype=int)
         values = self.decision_function(X)
         is_inlier[values >= 0] = 1
 

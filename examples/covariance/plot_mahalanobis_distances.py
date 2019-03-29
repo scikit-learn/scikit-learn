@@ -119,9 +119,9 @@ plt.yticks(())
 emp_mahal = emp_cov.mahalanobis(X - np.mean(X, 0)) ** (0.33)
 subfig2 = plt.subplot(2, 2, 3)
 subfig2.boxplot([emp_mahal[:-n_outliers], emp_mahal[-n_outliers:]], widths=.25)
-subfig2.plot(1.26 * np.ones(n_samples - n_outliers),
+subfig2.plot(np.full(n_samples - n_outliers, 1.26),
              emp_mahal[:-n_outliers], '+k', markeredgewidth=1)
-subfig2.plot(2.26 * np.ones(n_outliers),
+subfig2.plot(np.full(n_outliers, 2.26),
              emp_mahal[-n_outliers:], '+k', markeredgewidth=1)
 subfig2.axes.set_xticklabels(('inliers', 'outliers'), size=15)
 subfig2.set_ylabel(r"$\sqrt[3]{\rm{(Mahal. dist.)}}$", size=16)
@@ -132,9 +132,9 @@ robust_mahal = robust_cov.mahalanobis(X - robust_cov.location_) ** (0.33)
 subfig3 = plt.subplot(2, 2, 4)
 subfig3.boxplot([robust_mahal[:-n_outliers], robust_mahal[-n_outliers:]],
                 widths=.25)
-subfig3.plot(1.26 * np.ones(n_samples - n_outliers),
+subfig3.plot(np.full(n_samples - n_outliers, 1.26),
              robust_mahal[:-n_outliers], '+k', markeredgewidth=1)
-subfig3.plot(2.26 * np.ones(n_outliers),
+subfig3.plot(np.full(n_outliers, 2.26),
              robust_mahal[-n_outliers:], '+k', markeredgewidth=1)
 subfig3.axes.set_xticklabels(('inliers', 'outliers'), size=15)
 subfig3.set_ylabel(r"$\sqrt[3]{\rm{(Mahal. dist.)}}$", size=16)

@@ -1,4 +1,5 @@
-from __future__ import division
+
+import pytest
 
 import numpy as np
 import scipy.sparse as sp
@@ -9,12 +10,12 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.stats import _weighted_percentile
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.exceptions import NotFittedError
 
 
 @ignore_warnings
@@ -200,12 +201,51 @@ def test_string_labels():
     assert_array_equal(clf.predict(X), ["paris"] * 5)
 
 
+@pytest.mark.parametrize("y,y_test", [
+    ([2, 1, 1, 1], [2, 2, 1, 1]),
+    (np.array([[2, 2],
+               [1, 1],
+               [1, 1],
+               [1, 1]]),
+     np.array([[2, 2],
+               [2, 2],
+               [1, 1],
+               [1, 1]]))
+])
+def test_classifier_score_with_None(y, y_test):
+    clf = DummyClassifier(strategy="most_frequent")
+    clf.fit(None, y)
+    assert_equal(clf.score(None, y_test), 0.5)
+
+
+@pytest.mark.parametrize("strategy", [
+    "stratified",
+    "most_frequent",
+    "prior",
+    "uniform",
+    "constant"
+])
+def test_classifier_prediction_independent_of_X(strategy):
+    y = [0, 2, 1, 1]
+    X1 = [[0]] * 4
+    clf1 = DummyClassifier(strategy=strategy, random_state=0, constant=0)
+    clf1.fit(X1, y)
+    predictions1 = clf1.predict(X1)
+
+    X2 = [[1]] * 4
+    clf2 = DummyClassifier(strategy=strategy, random_state=0, constant=0)
+    clf2.fit(X2, y)
+    predictions2 = clf2.predict(X2)
+
+    assert_array_equal(predictions1, predictions2)
+
+
 def test_classifier_exceptions():
     clf = DummyClassifier(strategy="unknown")
     assert_raises(ValueError, clf.fit, [], [])
 
-    assert_raises(ValueError, clf.predict, [])
-    assert_raises(ValueError, clf.predict_proba, [])
+    assert_raises(NotFittedError, clf.predict, [])
+    assert_raises(NotFittedError, clf.predict_proba, [])
 
 
 def test_mean_strategy_regressor():
@@ -244,7 +284,7 @@ def test_mean_strategy_multioutput_regressor():
 
 def test_regressor_exceptions():
     reg = DummyRegressor()
-    assert_raises(ValueError, reg.predict, [])
+    assert_raises(NotFittedError, reg.predict, [])
 
 
 def test_median_strategy_regressor():
@@ -511,7 +551,7 @@ def test_constant_strategy_sparse_target():
     clf = DummyClassifier(strategy="constant", random_state=0, constant=[1, 0])
     clf.fit(X, y)
     y_pred = clf.predict(X)
-    assert_true(sp.issparse(y_pred))
+    assert sp.issparse(y_pred)
     assert_array_equal(y_pred.toarray(), np.hstack([np.ones((n_samples, 1)),
                                                     np.zeros((n_samples, 1))]))
 
@@ -552,7 +592,7 @@ def test_stratified_strategy_sparse_target():
 
     X = [[0]] * 500
     y_pred = clf.predict(X)
-    assert_true(sp.issparse(y_pred))
+    assert sp.issparse(y_pred)
     y_pred = y_pred.toarray()
 
     for k in range(y.shape[1]):
@@ -577,7 +617,7 @@ def test_most_frequent_and_prior_strategy_sparse_target():
         clf.fit(X, y)
 
         y_pred = clf.predict(X)
-        assert_true(sp.issparse(y_pred))
+        assert sp.issparse(y_pred)
         assert_array_equal(y_pred.toarray(), y_expected)
 
 
@@ -633,3 +673,52 @@ def test_dummy_regressor_return_std():
     assert_equal(len(y_pred_list), 2)
     # the second element should be all zeros
     assert_array_equal(y_pred_list[1], y_std_expected)
+
+
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
+@pytest.mark.parametrize("y,y_test", [
+    ([1, 1, 1, 2], [1.25] * 4),
+    (np.array([[2, 2],
+               [1, 1],
+               [1, 1],
+               [1, 1]]),
+     [[1.25, 1.25]] * 4)
+
+])
+def test_regressor_score_with_None(y, y_test):
+    reg = DummyRegressor()
+    reg.fit(None, y)
+    assert_equal(reg.score(None, y_test), 1.0)
+
+
+@pytest.mark.parametrize("strategy", [
+    "mean",
+    "median",
+    "quantile",
+    "constant"
+])
+def test_regressor_prediction_independent_of_X(strategy):
+    y = [0, 2, 1, 1]
+    X1 = [[0]] * 4
+    reg1 = DummyRegressor(strategy=strategy, constant=0, quantile=0.7)
+    reg1.fit(X1, y)
+    predictions1 = reg1.predict(X1)
+
+    X2 = [[1]] * 4
+    reg2 = DummyRegressor(strategy=strategy, constant=0, quantile=0.7)
+    reg2.fit(X2, y)
+    predictions2 = reg2.predict(X2)
+
+    assert_array_equal(predictions1, predictions2)
+
+
+@pytest.mark.parametrize(
+    "strategy", ["stratified", "most_frequent", "prior", "uniform", "constant"]
+)
+def test_dtype_of_classifier_probas(strategy):
+    y = [0, 2, 1, 1]
+    X = np.zeros(4)
+    model = DummyClassifier(strategy=strategy, random_state=0, constant=0)
+    probas = model.fit(X, y).predict_proba(X)
+
+    assert probas.dtype == np.float64

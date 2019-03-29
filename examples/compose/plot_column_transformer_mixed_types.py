@@ -24,8 +24,6 @@ together with a simple classification model.
 #
 # License: BSD 3 clause
 
-from __future__ import print_function
-
 import pandas as pd
 import numpy as np
 
@@ -61,24 +59,22 @@ numeric_transformer = Pipeline(steps=[
 categorical_features = ['embarked', 'sex', 'pclass']
 categorical_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
-    ('onehot', OneHotEncoder(sparse=False, handle_unknown='ignore'))])
+    ('onehot', OneHotEncoder(handle_unknown='ignore'))])
 
 preprocessor = ColumnTransformer(
     transformers=[
         ('num', numeric_transformer, numeric_features),
-        ('cat', categorical_transformer, categorical_features)],
-    remainder='drop')
+        ('cat', categorical_transformer, categorical_features)])
 
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
 clf = Pipeline(steps=[('preprocessor', preprocessor),
-                      ('classifier', LogisticRegression())])
+                      ('classifier', LogisticRegression(solver='lbfgs'))])
 
 X = data.drop('survived', axis=1)
 y = data['survived']
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
-                                                    shuffle=True)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))

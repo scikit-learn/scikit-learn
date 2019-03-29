@@ -1,8 +1,8 @@
-from __future__ import division, print_function
 
 from functools import partial
 from itertools import product
 from itertools import chain
+from itertools import permutations
 
 import numpy as np
 import scipy.sparse as sp
@@ -17,6 +17,7 @@ from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
@@ -36,14 +37,16 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
 from sklearn.metrics import hamming_loss
 from sklearn.metrics import hinge_loss
-from sklearn.metrics import jaccard_similarity_score
+from sklearn.metrics import jaccard_score
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import log_loss
+from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import median_absolute_error
+from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
@@ -89,6 +92,7 @@ from sklearn.metrics.base import _average_binary_score
 #
 
 REGRESSION_METRICS = {
+    "max_error": max_error,
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
@@ -99,6 +103,8 @@ REGRESSION_METRICS = {
 CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
     "balanced_accuracy_score": balanced_accuracy_score,
+    "adjusted_balanced_accuracy_score": partial(balanced_accuracy_score,
+                                                adjusted=True),
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
     # `confusion_matrix` returns absolute values and hence behaves unnormalized
@@ -111,16 +117,16 @@ CLASSIFICATION_METRICS = {
             *args, **kwargs).sum(axis=1)[:, np.newaxis]
     ),
 
+    "unnormalized_multilabel_confusion_matrix": multilabel_confusion_matrix,
+    "unnormalized_multilabel_confusion_matrix_sample":
+        partial(multilabel_confusion_matrix, samplewise=True),
     "hamming_loss": hamming_loss,
-
-    "jaccard_similarity_score": jaccard_similarity_score,
-    "unnormalized_jaccard_similarity_score":
-    partial(jaccard_similarity_score, normalize=False),
 
     "zero_one_loss": zero_one_loss,
     "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
 
     # These are needed to test averaging
+    "jaccard_score": jaccard_score,
     "precision_score": precision_score,
     "recall_score": recall_score,
     "f1_score": f1_score,
@@ -133,24 +139,28 @@ CLASSIFICATION_METRICS = {
     "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
     "weighted_precision_score": partial(precision_score, average="weighted"),
     "weighted_recall_score": partial(recall_score, average="weighted"),
+    "weighted_jaccard_score": partial(jaccard_score, average="weighted"),
 
     "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
     "micro_f1_score": partial(f1_score, average="micro"),
     "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
     "micro_precision_score": partial(precision_score, average="micro"),
     "micro_recall_score": partial(recall_score, average="micro"),
+    "micro_jaccard_score": partial(jaccard_score, average="micro"),
 
     "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
     "macro_f1_score": partial(f1_score, average="macro"),
     "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
+    "macro_jaccard_score": partial(jaccard_score, average="macro"),
 
     "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
     "samples_f1_score": partial(f1_score, average="samples"),
     "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
     "samples_precision_score": partial(precision_score, average="samples"),
     "samples_recall_score": partial(recall_score, average="samples"),
+    "samples_jaccard_score": partial(jaccard_score, average="samples"),
 
     "cohen_kappa_score": cohen_kappa_score,
 }
@@ -238,7 +248,9 @@ METRIC_UNDEFINED_BINARY = {
     "samples_f2_score",
     "samples_precision_score",
     "samples_recall_score",
+    "samples_jaccard_score",
     "coverage_error",
+    "unnormalized_multilabel_confusion_matrix_sample",
     "label_ranking_loss",
     "label_ranking_average_precision_score",
 }
@@ -246,7 +258,6 @@ METRIC_UNDEFINED_BINARY = {
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
-    "balanced_accuracy_score",
 
     "roc_auc_score",
     "micro_roc_auc",
@@ -258,6 +269,8 @@ METRIC_UNDEFINED_MULTICLASS = {
     "weighted_average_precision_score",
     "micro_average_precision_score",
     "samples_average_precision_score",
+
+    "jaccard_score",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -277,7 +290,8 @@ METRIC_UNDEFINED_BINARY_MULTICLASS = METRIC_UNDEFINED_BINARY.union(
 
 # Metrics with an "average" argument
 METRICS_WITH_AVERAGING = {
-    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
+    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+    "jaccard_score"
 }
 
 # Threshold-based metrics with an "average" argument
@@ -293,6 +307,7 @@ METRICS_WITH_POS_LABEL = {
     "brier_score_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+    "jaccard_score",
 
     "average_precision_score",
     "weighted_average_precision_score",
@@ -322,15 +337,22 @@ METRICS_WITH_LABELS = {
     "hamming_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+    "jaccard_score",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
+    "weighted_jaccard_score",
 
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
+    "micro_jaccard_score",
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+    "macro_jaccard_score",
+
+    "unnormalized_multilabel_confusion_matrix",
+    "unnormalized_multilabel_confusion_matrix_sample",
 
     "cohen_kappa_score",
 }
@@ -338,7 +360,6 @@ METRICS_WITH_LABELS = {
 # Metrics with a "normalize" option
 METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score",
-    "jaccard_similarity_score",
     "zero_one_loss",
 }
 
@@ -361,20 +382,25 @@ THRESHOLDED_MULTILABEL_METRICS = {
 MULTILABELS_METRICS = {
     "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
-    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
+    "weighted_jaccard_score",
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+    "macro_jaccard_score",
 
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
+    "micro_jaccard_score",
+
+    "unnormalized_multilabel_confusion_matrix",
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
+    "samples_jaccard_score",
 }
 
 # Regression metrics with "multioutput-continuous" format support
@@ -388,8 +414,11 @@ MULTIOUTPUT_METRICS = {
 SYMMETRIC_METRICS = {
     "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
-    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
+
+    "micro_jaccard_score", "macro_jaccard_score",
+    "jaccard_score",
+    "samples_jaccard_score",
 
     "f1_score", "micro_f1_score", "macro_f1_score",
     "weighted_recall_score",
@@ -398,7 +427,7 @@ SYMMETRIC_METRICS = {
     "micro_precision_score", "micro_recall_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
-    "median_absolute_error",
+    "median_absolute_error", "max_error",
 
     "cohen_kappa_score",
 }
@@ -407,6 +436,7 @@ SYMMETRIC_METRICS = {
 # metric(y_true, y_pred) != metric(y_pred, y_true).
 NOT_SYMMETRIC_METRICS = {
     "balanced_accuracy_score",
+    "adjusted_balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
     "unnormalized_confusion_matrix",
@@ -417,7 +447,8 @@ NOT_SYMMETRIC_METRICS = {
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_precision_score",
+    "weighted_precision_score", "weighted_jaccard_score",
+    "unnormalized_multilabel_confusion_matrix",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss"
@@ -427,6 +458,7 @@ NOT_SYMMETRIC_METRICS = {
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
     "median_absolute_error",
+    "max_error"
 }
 
 
@@ -437,6 +469,9 @@ def test_symmetry():
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
 
+    y_true_bin = random_state.randint(0, 2, size=(20, 25))
+    y_pred_bin = random_state.randint(0, 2, size=(20, 25))
+
     # We shouldn't forget any metrics
     assert_equal(SYMMETRIC_METRICS.union(
         NOT_SYMMETRIC_METRICS, set(THRESHOLDED_METRICS),
@@ -445,13 +480,22 @@ def test_symmetry():
 
     assert_equal(
         SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS),
-        set([]))
+        set())
 
     # Symmetric metric
     for name in SYMMETRIC_METRICS:
         metric = ALL_METRICS[name]
-        assert_allclose(metric(y_true, y_pred), metric(y_pred, y_true),
-                        err_msg="%s is not symmetric" % name)
+        if name in METRIC_UNDEFINED_BINARY:
+            if name in MULTILABELS_METRICS:
+                assert_allclose(metric(y_true_bin, y_pred_bin),
+                                metric(y_pred_bin, y_true_bin),
+                                err_msg="%s is not symmetric" % name)
+            else:
+                assert False, "This case is currently unhandled"
+        else:
+            assert_allclose(metric(y_true, y_pred),
+                            metric(y_pred, y_true),
+                            err_msg="%s is not symmetric" % name)
 
     # Not symmetric metrics
     for name in NOT_SYMMETRIC_METRICS:
@@ -697,8 +741,8 @@ def test_classification_inf_nan_input(metric):
     # Classification metrics all raise a mixed input exception
     for y_true, y_score in invalids:
         assert_raise_message(ValueError,
-                             "Classification metrics can't handle a mix "
-                             "of binary and continuous targets",
+                             "Input contains NaN, infinity or a "
+                             "value too large",
                              metric, y_true, y_score)
 
 
@@ -1188,3 +1232,47 @@ def test_no_averaging_labels():
             score_labels = metric(y_true, y_pred, labels=labels, average=None)
             score = metric(y_true, y_pred, average=None)
             assert_array_equal(score_labels, score[inverse_labels])
+
+
+@pytest.mark.parametrize(
+    'name', MULTILABELS_METRICS - {"unnormalized_multilabel_confusion_matrix"})
+def test_multilabel_label_permutations_invariance(name):
+    random_state = check_random_state(0)
+    n_samples, n_classes = 20, 4
+
+    y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
+    y_score = random_state.randint(0, 2, size=(n_samples, n_classes))
+
+    metric = ALL_METRICS[name]
+    score = metric(y_true, y_score)
+
+    for perm in permutations(range(n_classes), n_classes):
+        y_score_perm = y_score[:, perm]
+        y_true_perm = y_true[:, perm]
+
+        current_score = metric(y_true_perm, y_score_perm)
+        assert_almost_equal(score, current_score)
+
+
+@pytest.mark.parametrize(
+    'name', THRESHOLDED_MULTILABEL_METRICS | MULTIOUTPUT_METRICS)
+def test_thresholded_multilabel_multioutput_permutations_invariance(name):
+    random_state = check_random_state(0)
+    n_samples, n_classes = 20, 4
+    y_true = random_state.randint(0, 2, size=(n_samples, n_classes))
+    y_score = random_state.normal(size=y_true.shape)
+
+    # Makes sure all samples have at least one label. This works around errors
+    # when running metrics where average="sample"
+    y_true[y_true.sum(1) == 4, 0] = 0
+    y_true[y_true.sum(1) == 0, 0] = 1
+
+    metric = ALL_METRICS[name]
+    score = metric(y_true, y_score)
+
+    for perm in permutations(range(n_classes), n_classes):
+        y_score_perm = y_score[:, perm]
+        y_true_perm = y_true[:, perm]
+
+        current_score = metric(y_true_perm, y_score_perm)
+        assert_almost_equal(score, current_score)

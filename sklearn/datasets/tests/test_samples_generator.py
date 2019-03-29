@@ -1,4 +1,3 @@
-from __future__ import division
 
 from collections import defaultdict
 from functools import partial
@@ -6,13 +5,11 @@ from functools import partial
 import numpy as np
 import pytest
 import scipy.sparse as sp
-from sklearn.externals.six.moves import zip
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
@@ -84,7 +81,8 @@ def test_make_classification_informative_features():
                                                          (2, [1/4] * 4, 1),
                                                          (2, [1/2] * 2, 2),
                                                          (2, [3/4, 1/4], 2),
-                                                         (10, [1/3] * 3, 10)
+                                                         (10, [1/3] * 3, 10),
+                                                         (np.int(64), [1], 1)
                                                          ]:
         n_classes = len(weights)
         n_clusters = n_classes * n_clusters_per_class
@@ -128,19 +126,19 @@ def test_make_classification_informative_features():
             for cluster in range(len(unique_signs)):
                 centroid = X[cluster_index == cluster].mean(axis=0)
                 if hypercube:
-                    assert_array_almost_equal(np.abs(centroid),
-                                              [class_sep] * n_informative,
-                                              decimal=0,
+                    assert_array_almost_equal(np.abs(centroid) / class_sep,
+                                              np.ones(n_informative),
+                                              decimal=5,
                                               err_msg="Clusters are not "
                                                       "centered on hypercube "
                                                       "vertices")
                 else:
                     assert_raises(AssertionError,
                                   assert_array_almost_equal,
-                                  np.abs(centroid),
-                                  [class_sep] * n_informative,
-                                  decimal=0,
-                                  err_msg="Clusters should not be cenetered "
+                                  np.abs(centroid) / class_sep,
+                                  np.ones(n_informative),
+                                  decimal=5,
+                                  err_msg="Clusters should not be centered "
                                           "on hypercube vertices")
 
     assert_raises(ValueError, make, n_features=2, n_informative=2, n_classes=5,
@@ -159,7 +157,7 @@ def test_make_multilabel_classification_return_sequences():
         if not allow_unlabeled:
             assert_equal(max([max(y) for y in Y]), 2)
         assert_equal(min([len(y) for y in Y]), min_length)
-        assert_true(max([len(y) for y in Y]) <= 3)
+        assert max([len(y) for y in Y]) <= 3
 
 
 def test_make_multilabel_classification_return_indicator():
@@ -169,7 +167,7 @@ def test_make_multilabel_classification_return_indicator():
                                               allow_unlabeled=allow_unlabeled)
         assert_equal(X.shape, (25, 20), "X shape mismatch")
         assert_equal(Y.shape, (25, 3), "Y shape mismatch")
-        assert_true(np.all(np.sum(Y, axis=0) > min_length))
+        assert np.all(np.sum(Y, axis=0) > min_length)
 
     # Also test return_distributions and return_indicator with True
     X2, Y2, p_c, p_w_c = make_multilabel_classification(
@@ -192,7 +190,7 @@ def test_make_multilabel_classification_return_indicator_sparse():
                                               allow_unlabeled=allow_unlabeled)
         assert_equal(X.shape, (25, 20), "X shape mismatch")
         assert_equal(Y.shape, (25, 3), "Y shape mismatch")
-        assert_true(sp.issparse(Y))
+        assert sp.issparse(Y)
 
 
 def test_make_hastie_10_2():

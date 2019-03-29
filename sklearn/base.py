@@ -6,25 +6,26 @@
 import copy
 import warnings
 from collections import defaultdict
+import platform
+import inspect
 
 import numpy as np
-from scipy import sparse
-from .externals import six
-from .utils.fixes import signature
+
 from . import __version__
+from sklearn.utils import _IS_32BIT
 
-
-##############################################################################
-def _first_and_last_element(arr):
-    """Returns first and last element of numpy array or sparse matrix."""
-    if isinstance(arr, np.ndarray) or hasattr(arr, 'data'):
-        # numpy array or sparse matrix with .data attribute
-        data = arr.data if sparse.issparse(arr) else arr
-        return data.flat[0], data.flat[-1]
-    else:
-        # Sparse matrices without .data attribute. Only dok_matrix at
-        # the time of writing, in this case indexing is fast
-        return arr[0, 0], arr[-1, -1]
+_DEFAULT_TAGS = {
+    'non_deterministic': False,
+    'requires_positive_data': False,
+    'X_types': ['2darray'],
+    'poor_score': False,
+    'no_validation': False,
+    'multioutput': False,
+    "allow_nan": False,
+    'stateless': False,
+    'multilabel': False,
+    '_skip_test': False,
+    'multioutput_only': False}
 
 
 def clone(estimator, safe=True):
@@ -48,7 +49,7 @@ def clone(estimator, safe=True):
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
-    elif not hasattr(estimator, 'get_params'):
+    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
         if not safe:
             return copy.deepcopy(estimator)
         else:
@@ -58,7 +59,7 @@ def clone(estimator, safe=True):
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
-    for name, param in six.iteritems(new_object_params):
+    for name, param in new_object_params.items():
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
@@ -74,7 +75,6 @@ def clone(estimator, safe=True):
     return new_object
 
 
-###############################################################################
 def _pprint(params, offset=0, printer=repr):
     """Pretty print the dictionary 'params'
 
@@ -97,7 +97,7 @@ def _pprint(params, offset=0, printer=repr):
     params_list = list()
     this_line_length = offset
     line_sep = ',\n' + (1 + offset // 2) * ' '
-    for i, (k, v) in enumerate(sorted(six.iteritems(params))):
+    for i, (k, v) in enumerate(sorted(params.items())):
         if type(v) is float:
             # use str for representing floating point numbers
             # this way we get consistent representation across
@@ -125,8 +125,18 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-###############################################################################
-class BaseEstimator(object):
+def _update_if_consistent(dict1, dict2):
+    common_keys = set(dict1.keys()).intersection(dict2.keys())
+    for key in common_keys:
+        if dict1[key] != dict2[key]:
+            raise TypeError("Inconsistent values for tag {}: {} != {}".format(
+                key, dict1[key], dict2[key]
+            ))
+    dict1.update(dict2)
+    return dict1
+
+
+class BaseEstimator:
     """Base class for all estimators in scikit-learn
 
     Notes
@@ -148,7 +158,7 @@ class BaseEstimator(object):
 
         # introspect the constructor arguments to find the model parameters
         # to represent
-        init_signature = signature(init)
+        init_signature = inspect.signature(init)
         # Consider the constructor parameters excluding 'self'
         parameters = [p for p in init_signature.parameters.values()
                       if p.name != 'self' and p.kind != p.VAR_KEYWORD]
@@ -224,13 +234,27 @@ class BaseEstimator(object):
         return self
 
     def __repr__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
-                                               offset=len(class_name),),)
+        from .utils._pprint import _EstimatorPrettyPrinter
+
+        N_CHAR_MAX = 700  # number of non-whitespace or newline chars
+        N_MAX_ELEMENTS_TO_SHOW = 30  # number of elements to show in sequences
+
+        # use ellipsis for sequences with a lot of elements
+        pp = _EstimatorPrettyPrinter(
+            compact=True, indent=1, indent_at_name=True,
+            n_max_elements_to_show=N_MAX_ELEMENTS_TO_SHOW)
+
+        repr_ = pp.pformat(self)
+
+        # Use bruteforce ellipsis if string is very long
+        if len(''.join(repr_.split())) > N_CHAR_MAX:  # check non-blank chars
+            lim = N_CHAR_MAX // 2
+            repr_ = repr_[:lim] + '...' + repr_[-lim:]
+        return repr_
 
     def __getstate__(self):
         try:
-            state = super(BaseEstimator, self).__getstate__()
+            state = super().__getstate__()
         except AttributeError:
             state = self.__dict__.copy()
 
@@ -250,13 +274,27 @@ class BaseEstimator(object):
                         self.__class__.__name__, pickle_version, __version__),
                     UserWarning)
         try:
-            super(BaseEstimator, self).__setstate__(state)
+            super().__setstate__(state)
         except AttributeError:
             self.__dict__.update(state)
 
+    def _get_tags(self):
+        collected_tags = {}
+        for base_class in inspect.getmro(self.__class__):
+            if (hasattr(base_class, '_more_tags')
+                    and base_class != self.__class__):
+                more_tags = base_class._more_tags(self)
+                collected_tags = _update_if_consistent(collected_tags,
+                                                       more_tags)
+        if hasattr(self, '_more_tags'):
+            more_tags = self._more_tags()
+            collected_tags = _update_if_consistent(collected_tags, more_tags)
+        tags = _DEFAULT_TAGS.copy()
+        tags.update(collected_tags)
+        return tags
 
-###############################################################################
-class ClassifierMixin(object):
+
+class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
     _estimator_type = "classifier"
 
@@ -288,8 +326,7 @@ class ClassifierMixin(object):
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
 
-###############################################################################
-class RegressorMixin(object):
+class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
     _estimator_type = "regressor"
 
@@ -322,15 +359,36 @@ class RegressorMixin(object):
         -------
         score : float
             R^2 of self.predict(X) wrt. y.
+
+        Notes
+        -----
+        The R2 score used when calling ``score`` on a regressor will use
+        ``multioutput='uniform_average'`` from version 0.23 to keep consistent
+        with `metrics.r2_score`. This will influence the ``score`` method of
+        all the multioutput regressors (except for
+        `multioutput.MultiOutputRegressor`). To use the new default, please
+        either call `metrics.r2_score` directly or make a custom scorer with
+        `metrics.make_scorer`.
         """
 
         from .metrics import r2_score
-        return r2_score(y, self.predict(X), sample_weight=sample_weight,
+        from .metrics.regression import _check_reg_targets
+        y_pred = self.predict(X)
+        # XXX: Remove the check in 0.23
+        y_type, _, _, _ = _check_reg_targets(y, y_pred, None)
+        if y_type == 'continuous-multioutput':
+            warnings.warn("The default value of multioutput (not exposed in "
+                          "score method) will change from 'variance_weighted' "
+                          "to 'uniform_average' in 0.23 to keep consistent "
+                          "with 'metrics.r2_score'. To use the new default, "
+                          "please either call 'metrics.r2_score' directly or "
+                          "make a custom scorer with 'metrics.make_scorer'.",
+                          FutureWarning)
+        return r2_score(y, y_pred, sample_weight=sample_weight,
                         multioutput='variance_weighted')
 
 
-###############################################################################
-class ClusterMixin(object):
+class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
     _estimator_type = "clusterer"
 
@@ -342,9 +400,12 @@ class ClusterMixin(object):
         X : ndarray, shape (n_samples, n_features)
             Input data.
 
+        y : Ignored
+            not used, present for API consistency by convention.
+
         Returns
         -------
-        y : ndarray, shape (n_samples,)
+        labels : ndarray, shape (n_samples,)
             cluster labels
         """
         # non-optimized default implementation; override when a better
@@ -353,7 +414,7 @@ class ClusterMixin(object):
         return self.labels_
 
 
-class BiclusterMixin(object):
+class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""
 
     @property
@@ -428,8 +489,7 @@ class BiclusterMixin(object):
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-###############################################################################
-class TransformerMixin(object):
+class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -462,7 +522,7 @@ class TransformerMixin(object):
             return self.fit(X, y, **fit_params).transform(X)
 
 
-class DensityMixin(object):
+class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
     _estimator_type = "DensityEstimator"
 
@@ -480,12 +540,12 @@ class DensityMixin(object):
         pass
 
 
-class OutlierMixin(object):
+class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
     _estimator_type = "outlier_detector"
 
     def fit_predict(self, X, y=None):
-        """Performs outlier detection on X.
+        """Performs fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
 
@@ -493,6 +553,9 @@ class OutlierMixin(object):
         ----------
         X : ndarray, shape (n_samples, n_features)
             Input data.
+
+        y : Ignored
+            not used, present for API consistency by convention.
 
         Returns
         -------
@@ -503,13 +566,23 @@ class OutlierMixin(object):
         return self.fit(X).predict(X)
 
 
-###############################################################################
-class MetaEstimatorMixin(object):
+class MetaEstimatorMixin:
+    _required_parameters = ["estimator"]
     """Mixin class for all meta estimators in scikit-learn."""
-    # this is just a tag for the moment
 
 
-###############################################################################
+class MultiOutputMixin(object):
+    """Mixin to mark estimators that support multioutput."""
+    def _more_tags(self):
+        return {'multioutput': True}
+
+
+class _UnstableArchMixin(object):
+    """Mark estimators that are non-determinstic on 32bit or PowerPC"""
+    def _more_tags(self):
+        return {'non_deterministic': (
+            _IS_32BIT or platform.machine().startswith(('ppc', 'powerpc')))}
+
 
 def is_classifier(estimator):
     """Returns True if the given estimator is (probably) a classifier.

@@ -6,8 +6,6 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-from __future__ import print_function
-
 import os
 import csv
 import sys
@@ -22,7 +20,7 @@ from ..utils import check_random_state
 
 import numpy as np
 
-from sklearn.externals.six.moves.urllib.request import urlretrieve
+from urllib.request import urlretrieve
 
 RemoteFileMetadata = namedtuple('RemoteFileMetadata',
                                 ['filename', 'url', 'checksum'])
@@ -211,6 +209,9 @@ def load_data(module_path, data_file_name):
 
     Parameters
     ----------
+    module_path : string
+        The module path.
+
     data_file_name : string
         Name of csv file to be loaded from
         module_path/data/data_file_name. For example 'wine_data.csv'.
@@ -261,7 +262,7 @@ def load_wine(return_X_y=False):
     Features            real, positive
     =================   ==============
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <wine_dataset>`.
 
     Parameters
     ----------
@@ -336,7 +337,7 @@ def load_iris(return_X_y=False):
     Features            real, positive
     =================   ==============
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <iris_dataset>`.
 
     Parameters
     ----------
@@ -410,6 +411,8 @@ def load_breast_cancer(return_X_y=False):
     Dimensionality                  30
     Features            real, positive
     =================   ==============
+
+    Read more in the :ref:`User Guide <breast_cancer_dataset>`.
 
     Parameters
     ----------
@@ -495,7 +498,7 @@ def load_digits(n_class=10, return_X_y=False):
     Features             integers 0-16
     =================   ==============
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <digits_dataset>`.
 
     Parameters
     ----------
@@ -522,7 +525,7 @@ def load_digits(n_class=10, return_X_y=False):
         .. versionadded:: 0.18
 
     This is a copy of the test set of the UCI ML hand-written digits datasets
-    http://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+    https://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
 
     Examples
     --------
@@ -542,7 +545,7 @@ def load_digits(n_class=10, return_X_y=False):
                       delimiter=',')
     with open(join(module_path, 'descr', 'digits.rst')) as f:
         descr = f.read()
-    target = data[:, -1].astype(np.int)
+    target = data[:, -1].astype(np.int, copy=False)
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
@@ -572,7 +575,7 @@ def load_diabetes(return_X_y=False):
     Targets             integer 25 - 346
     ==============      ==================
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Read more in the :ref:`User Guide <diabetes_dataset>`.
 
     Parameters
     ----------
@@ -624,6 +627,8 @@ def load_linnerud(return_X_y=False):
     Features          integer
     Targets           integer
     ==============    ============================
+
+    Read more in the :ref:`User Guide <linnerrud_dataset>`.
 
     Parameters
     ----------
@@ -686,6 +691,8 @@ def load_boston(return_X_y=False):
     Features           real, positive
     Targets             real 5. - 50.
     ==============     ==============
+
+    Read more in the :ref:`User Guide <boston_dataset>`.
 
     Parameters
     ----------
@@ -757,6 +764,8 @@ def load_sample_images():
 
     Loads both, ``china`` and ``flower``.
 
+    Read more in the :ref:`User Guide <sample_images>`.
+
     Returns
     -------
     data : Bunch
@@ -785,7 +794,7 @@ def load_sample_images():
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
     filenames = [join(module_path, filename)
-                 for filename in os.listdir(module_path)
+                 for filename in sorted(os.listdir(module_path))
                  if filename.endswith(".jpg")]
     # Load image data for each image in the source folder.
     images = [imread(filename) for filename in filenames]
@@ -797,6 +806,8 @@ def load_sample_images():
 
 def load_sample_image(image_name):
     """Load the numpy array of a single sample image
+
+    Read more in the :ref:`User Guide <sample_images>`.
 
     Parameters
     -----------

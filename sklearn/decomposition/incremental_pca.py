@@ -4,7 +4,6 @@
 #         Giorgio Patrini
 # License: BSD 3 clause
 
-from __future__ import division
 import numpy as np
 from scipy import linalg
 
@@ -17,8 +16,9 @@ class IncrementalPCA(_BasePCA):
     """Incremental principal components analysis (IPCA).
 
     Linear dimensionality reduction using Singular Value Decomposition of
-    centered data, keeping only the most significant singular vectors to
-    project the data to a lower dimensional space.
+    the data, keeping only the most significant singular vectors to
+    project the data to a lower dimensional space. The input data is centered
+    but not scaled for each feature before applying the SVD.
 
     Depending on the size of the input data, this algorithm can be much more
     memory efficient than a PCA.
@@ -100,25 +100,39 @@ class IncrementalPCA(_BasePCA):
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import IncrementalPCA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = IncrementalPCA(n_components=7, batch_size=200)
+    >>> # either partially fit on smaller batches of data
+    >>> transformer.partial_fit(X[:100, :])
+    IncrementalPCA(batch_size=200, copy=True, n_components=7, whiten=False)
+    >>> # or let the fit function itself divide the data into batches
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
+
     Notes
     -----
     Implements the incremental PCA model from:
-    `D. Ross, J. Lim, R. Lin, M. Yang, Incremental Learning for Robust Visual
+    *D. Ross, J. Lim, R. Lin, M. Yang, Incremental Learning for Robust Visual
     Tracking, International Journal of Computer Vision, Volume 77, Issue 1-3,
-    pp. 125-141, May 2008.`
-    See http://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
+    pp. 125-141, May 2008.*
+    See https://www.cs.toronto.edu/~dross/ivt/RossLimLinYang_ijcv.pdf
 
     This model is an extension of the Sequential Karhunen-Loeve Transform from:
-    `A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
+    *A. Levy and M. Lindenbaum, Sequential Karhunen-Loeve Basis Extraction and
     its Application to Images, IEEE Transactions on Image Processing, Volume 9,
-    Number 8, pp. 1371-1374, August 2000.`
-    See http://www.cs.technion.ac.il/~mic/doc/skl-ip.pdf
+    Number 8, pp. 1371-1374, August 2000.*
+    See https://www.cs.technion.ac.il/~mic/doc/skl-ip.pdf
 
     We have specifically abstained from an optimization used by authors of both
     papers, a QR decomposition used in specific situations to reduce the
     algorithmic complexity of the SVD. The source for this technique is
-    `Matrix Computations, Third Edition, G. Holub and C. Van Loan, Chapter 5,
-    section 5.4.4, pp 252-253.`. This technique has been omitted because it is
+    *Matrix Computations, Third Edition, G. Holub and C. Van Loan, Chapter 5,
+    section 5.4.4, pp 252-253.*. This technique has been omitted because it is
     advantageous only when decomposing a matrix with ``n_samples`` (rows)
     >= 5/3 * ``n_features`` (columns), and hurts the readability of the
     implemented algorithm. This would be a good opportunity for future
@@ -127,11 +141,11 @@ class IncrementalPCA(_BasePCA):
     References
     ----------
     D. Ross, J. Lim, R. Lin, M. Yang. Incremental Learning for Robust Visual
-        Tracking, International Journal of Computer Vision, Volume 77,
-        Issue 1-3, pp. 125-141, May 2008.
+    Tracking, International Journal of Computer Vision, Volume 77,
+    Issue 1-3, pp. 125-141, May 2008.
 
     G. Golub and C. Van Loan. Matrix Computations, Third Edition, Chapter 5,
-        Section 5.4.4, pp. 252-253.
+    Section 5.4.4, pp. 252-253.
 
     See also
     --------
@@ -182,7 +196,8 @@ class IncrementalPCA(_BasePCA):
         else:
             self.batch_size_ = self.batch_size
 
-        for batch in gen_batches(n_samples, self.batch_size_):
+        for batch in gen_batches(n_samples, self.batch_size_,
+                                 min_batch_size=self.n_components or 0):
             self.partial_fit(X[batch], check_input=False)
 
         return self

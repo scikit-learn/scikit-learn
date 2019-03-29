@@ -8,12 +8,11 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 
 """
 
-import sys
 import errno
 from gzip import GzipFile
 import logging
 import os
-from os.path import exists, join
+from os.path import dirname, exists, join
 
 import numpy as np
 
@@ -22,12 +21,12 @@ from .base import _fetch_remote
 from .base import get_data_home
 from .base import RemoteFileMetadata
 from ..utils import Bunch
-from ..externals import joblib, six
+from ..utils import _joblib
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
 # The original data can be found at:
-# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
+# https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
 ARCHIVE = RemoteFileMetadata(
     filename='kddcup99_data',
     url='https://ndownloader.figshare.com/files/5976045',
@@ -35,7 +34,7 @@ ARCHIVE = RemoteFileMetadata(
               '343652c9db428893e7494f837b274292'))
 
 # The original data can be found at:
-# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz
+# https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz
 ARCHIVE_10_PERCENT = RemoteFileMetadata(
     filename='kddcup99_10_data',
     url='https://ndownloader.figshare.com/files/5976042',
@@ -48,80 +47,18 @@ logger = logging.getLogger(__name__)
 def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
                    random_state=None,
                    percent10=True, download_if_missing=True, return_X_y=False):
-    """Load and return the kddcup 99 dataset (classification).
+    """Load the kddcup99 dataset (classification).
 
-    The KDD Cup '99 dataset was created by processing the tcpdump portions
-    of the 1998 DARPA Intrusion Detection System (IDS) Evaluation dataset,
-    created by MIT Lincoln Lab [1]. The artificial data was generated using
-    a closed network and hand-injected attacks to produce a large number of
-    different types of attack with normal activity in the background.
-    As the initial goal was to produce a large training set for supervised
-    learning algorithms, there is a large proportion (80.1%) of abnormal
-    data which is unrealistic in real world, and inappropriate for unsupervised
-    anomaly detection which aims at detecting 'abnormal' data, ie
+    Download it if necessary.
 
-    1) qualitatively different from normal data.
+    =================   ====================================
+    Classes                                               23
+    Samples total                                    4898431
+    Dimensionality                                        41
+    Features            discrete (int) or continuous (float)
+    =================   ====================================
 
-    2) in large minority among the observations.
-
-    We thus transform the KDD Data set into two different data sets: SA and SF.
-
-    - SA is obtained by simply selecting all the normal data, and a small
-      proportion of abnormal data to gives an anomaly proportion of 1%.
-
-    - SF is obtained as in [2]
-      by simply picking up the data whose attribute logged_in is positive, thus
-      focusing on the intrusion attack, which gives a proportion of 0.3% of
-      attack.
-
-    - http and smtp are two subsets of SF corresponding with third feature
-      equal to 'http' (resp. to 'smtp')
-
-
-    General KDD structure :
-
-    ================      ==========================================
-    Samples total         4898431
-    Dimensionality        41
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
-
-    SA structure :
-
-    ================      ==========================================
-    Samples total         976158
-    Dimensionality        41
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
-
-    SF structure :
-
-    ================      ==========================================
-    Samples total         699691
-    Dimensionality        4
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
-
-    http structure :
-
-    ================      ==========================================
-    Samples total         619052
-    Dimensionality        3
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
-
-    smtp structure :
-
-    ================      ==========================================
-    Samples total         95373
-    Dimensionality        3
-    Features              discrete (int) or continuous (float)
-    Targets               str, 'normal.' or name of the anomaly type
-    ================      ==========================================
+    Read more in the :ref:`User Guide <kddcup99_dataset>`.
 
     .. versionadded:: 0.18
 
@@ -162,25 +99,13 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
     -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn and 'target', the regression target for each
-        sample.
+         - 'data', the data to learn.
+         - 'target', the regression target for each sample.
+         - 'DESCR', a description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
-
-    References
-    ----------
-    .. [1] Analysis and Results of the 1999 DARPA Off-Line Intrusion
-           Detection Evaluation Richard Lippmann, Joshua W. Haines,
-           David J. Fried, Jonathan Korba, Kumar Das
-
-    .. [2] K. Yamanishi, J.-I. Takeuchi, G. Williams, and P. Milne. Online
-           unsupervised outlier detection using finite mixtures with
-           discounting learning algorithms. In Proceedings of the sixth
-           ACM SIGKDD international conference on Knowledge discovery
-           and data mining, pages 320-324. ACM Press, 2000.
-
     """
     data_home = get_data_home(data_home=data_home)
     kddcup99 = _fetch_brute_kddcup99(data_home=data_home,
@@ -214,9 +139,9 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         data = np.c_[data[s, :11], data[s, 12:]]
         target = target[s]
 
-        data[:, 0] = np.log((data[:, 0] + 0.1).astype(float))
-        data[:, 4] = np.log((data[:, 4] + 0.1).astype(float))
-        data[:, 5] = np.log((data[:, 5] + 0.1).astype(float))
+        data[:, 0] = np.log((data[:, 0] + 0.1).astype(float, copy=False))
+        data[:, 4] = np.log((data[:, 4] + 0.1).astype(float, copy=False))
+        data[:, 5] = np.log((data[:, 5] + 0.1).astype(float, copy=False))
 
         if subset == 'http':
             s = data[:, 2] == b'http'
@@ -236,10 +161,14 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'kddcup99.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target)
+    return Bunch(data=data, target=target, DESCR=fdescr)
 
 
 def _fetch_brute_kddcup99(data_home=None,
@@ -274,14 +203,7 @@ def _fetch_brute_kddcup99(data_home=None,
     """
 
     data_home = get_data_home(data_home=data_home)
-    if sys.version_info[0] == 3:
-        # The zlib compression format use by joblib is not compatible when
-        # switching from Python 2 to Python 3, let us use a separate folder
-        # under Python 3:
-        dir_suffix = "-py3"
-    else:
-        # Backward compat for Python 2 users
-        dir_suffix = ""
+    dir_suffix = "-py3"
 
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
@@ -346,8 +268,7 @@ def _fetch_brute_kddcup99(data_home=None,
         file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
         for line in file_.readlines():
-            if six.PY3:
-                line = line.decode()
+            line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
         logger.debug('extraction done')
@@ -363,8 +284,8 @@ def _fetch_brute_kddcup99(data_home=None,
         # (error: 'Incorrect data length while decompressing[...] the file
         #  could be corrupted.')
 
-        joblib.dump(X, samples_path, compress=0)
-        joblib.dump(y, targets_path, compress=0)
+        _joblib.dump(X, samples_path, compress=0)
+        _joblib.dump(y, targets_path, compress=0)
     elif not available:
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
@@ -372,10 +293,10 @@ def _fetch_brute_kddcup99(data_home=None,
     try:
         X, y
     except NameError:
-        X = joblib.load(samples_path)
-        y = joblib.load(targets_path)
+        X = _joblib.load(samples_path)
+        y = _joblib.load(targets_path)
 
-    return Bunch(data=X, target=y, DESCR=__doc__)
+    return Bunch(data=X, target=y)
 
 
 def _mkdirp(d):
