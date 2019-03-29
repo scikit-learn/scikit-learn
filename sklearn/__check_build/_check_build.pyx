@@ -3,7 +3,7 @@
 def check_build():
     return
 
-cimport ompenmp
+cimport openmp
 
 def tst():
     openmp.omp_get_max_threads()
