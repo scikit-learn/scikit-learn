@@ -727,6 +727,10 @@ def test_check_dataframe_warns_on_dtype():
                          check_array, df, dtype=np.float64, warn_on_dtype=True)
     assert_warns(DataConversionWarning, check_array, df,
                  dtype='numeric', warn_on_dtype=True)
+    with pytest.warns(None) as record:
+        warnings.simplefilter("ignore", DeprecationWarning)  # 0.23
+        check_array(df, dtype='object', warn_on_dtype=True)
+    assert len(record) == 0
 
     # Also check that it raises a warning for mixed dtypes in a DataFrame.
     df_mixed = pd.DataFrame([['1', 2, 3], ['4', 5, 6]])
@@ -742,20 +746,6 @@ def test_check_dataframe_warns_on_dtype():
     df_mixed_numeric = pd.DataFrame([[1., 2, 3], [4., 5, 6]])
     assert_warns(DataConversionWarning, check_array, df_mixed_numeric,
                  dtype='numeric', warn_on_dtype=True)
-
-
-def test_check_dataframe_no_warning_on_dtype():
-    pd = importorskip("pandas")
-    df = pd.DataFrame([[1, 2, 3], [4, 5, 6]], dtype=object)
-
-    with pytest.warns(None) as record:
-        warnings.simplefilter("ignore", DeprecationWarning)  # 0.23
-        check_array(df, dtype='object', warn_on_dtype=True)
-    assert len(record) == 0
-
-    # Even with numerical dtypes, a conversion can be made because dtypes are
-    # uniformized throughout the array.
-    df_mixed_numeric = pd.DataFrame([[1., 2, 3], [4., 5, 6]])
     with pytest.warns(None) as record:
         warnings.simplefilter("ignore", DeprecationWarning)  # 0.23
         check_array(df_mixed_numeric.astype(int),

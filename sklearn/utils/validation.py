@@ -413,8 +413,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
 
         ..deprecated:: 0.21
             "``warn_on_dtype`` is deprecated in "
-            "version 0.21 and will be removed in 0.23 "
-            "Use ``warn_on_dtype=None`` to remove this warning."
+            "version 0.21 and will be removed in 0.23."
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -693,8 +692,7 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
 
         ..deprecated:: 0.21
             "``warn_on_dtype`` is deprecated in "
-            "version 0.21 and will be removed in 0.23 "
-            "Use ``warn_on_dtype=None`` to remove this warning."
+            "version 0.21 and will be removed in 0.23."
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
