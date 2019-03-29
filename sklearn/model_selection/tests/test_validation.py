@@ -188,7 +188,7 @@ class MockClassifier:
             raise ValueError('X cannot be d')
         if sample_weight is not None:
             assert sample_weight.shape[0] == X.shape[0], (
-                'MockClassifier extra fit_param ' 
+                'MockClassifier extra fit_param '
                 'sample_weight.shape[0] is {0}, should be {1}'
                 .format(sample_weight.shape[0], X.shape[0]))
         if class_prior is not None:
@@ -287,15 +287,15 @@ def test_cross_validate_many_jobs():
     cross_validate(grid, X, y, n_jobs=2)
 
 
-<<<<<<< HEAD
-def test_cross_val_score_sparsetarget():
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+def test_cross_validate_sparsetarget():
     X_, y_ = make_multilabel_classification(n_samples=100,
                                             return_indicator=True,
                                             random_state=0)
     y_sparse = csr_matrix(y_)
     clf = MockClassifier(a=0)
-    scores = cross_val_score(clf, X_, y_sparse, cv=5)
-    assert_array_equal(scores, clf.score(X_, y_sparse))
+    cv_scores = cross_validate(clf, X_, y_sparse)
+    assert_array_equal(cv_scores['test_score'], clf.score(X_, y_sparse))
 
 
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
