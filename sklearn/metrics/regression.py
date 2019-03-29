@@ -233,7 +233,7 @@ def mean_squared_error(y_true, y_pred,
     >>> mean_squared_error(y_true, y_pred, squared=True)
     0.612...
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
-    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
     0.708...
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
