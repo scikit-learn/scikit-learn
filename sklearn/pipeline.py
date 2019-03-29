@@ -254,9 +254,6 @@ class Pipeline(_BaseComposition):
                             if step is not None}
         for pname, pval in fit_params.items():
             step, param = pname.split('__', 1)
-            if step not in fit_params_steps:
-                raise TypeError("Step '{}' not found for parameter '{}'. Use naming convention step__parameter."
-                                .format(step, param))
             fit_params_steps[step][param] = pval
         Xt = X
         for step_idx, name, transformer in self._iter(with_final=False):
