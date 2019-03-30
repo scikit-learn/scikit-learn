@@ -1072,3 +1072,11 @@ def test_make_pipeline_memory():
     assert len(pipeline) == 2
 
     shutil.rmtree(cachedir)
+
+
+def test_pipeline_fit_param_error():
+
+    Pipeline.fit(X=None, y=None, sample_weight=True)
+
+    assert_raise_message(TypeError,
+                         "sample_weight can only be passed to specific steps")
