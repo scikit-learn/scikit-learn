@@ -255,10 +255,10 @@ class Pipeline(_BaseComposition):
         for pname, pval in fit_params.items():
             if '__' not in pname:
                 raise TypeError(
-                    "Passing a parameter directly to a "
-                    "pipeline isn't supported. You can pass parameters "
-                    "to specific steps of your pipeline, e.g. `pipe.fit (X, "
-                    "y, logisticregression__sample_weight=sample_weight)`.")
+                    "Passing a parameter directly to a pipeline isn't "
+                    "supported. You can pass parameters to specific "
+                    "steps of your pipeline, e.g. `pipe.fit (X, y, "
+                    "logisticregression__sample_weight=sample_weight)`.",)
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
