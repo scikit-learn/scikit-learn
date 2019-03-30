@@ -1072,3 +1072,11 @@ def test_make_pipeline_memory():
     assert len(pipeline) == 2
 
     shutil.rmtree(cachedir)
+
+def test_pipeline_param_error():
+    clf = make_pipeline(LogisticRegression())
+    assert_raise_message(TypeError, "Passing a parameter directly to a "
+                "pipeline isn't supported. You can pass parameters "
+                "to specific steps of your pipeline, e.g. `pipe.fit (X, "
+                "y, logisticregression__sample_weight=sample_weight)`.",
+                clf.fit, [[0], [0]], [0, 1], sample_weight=[1, 1])
