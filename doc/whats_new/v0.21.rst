@@ -212,6 +212,15 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| Deprecated :mod:`externals.six` since we have dropped support for
   Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+:mod:`sklearn.feature_selection`
+.....................
+
+- |Fix| In :function:`feature_selection.mutual_info_classif` and
+  :function:`feature_selection.mutual_info_regression` fix logic handling
+  `discrete_features` property cases to prevent issues with future versions of
+  numpy. :issue:`13497` by :user:`Leandro Hermida <hermidalc>` and
+  :user:`Adrin Jalali <adrinjalali>`.
+
 :mod:`sklearn.impute`
 .....................
 
