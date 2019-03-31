@@ -103,7 +103,6 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
 
     # Calling split next applies the next split and computes the best split
     # for each of the two newly introduced children nodes.
-    assert grower.can_split_further()
     left_node, right_node = grower.split_next()
 
     # All training samples have ben splitted in the two nodes, approximately
@@ -126,7 +125,7 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     assert right_node.right_child is None
 
     # The right split has not been applied yet. Let's do it now:
-    assert grower.can_split_further()
+    assert len(grower.splittable_nodes) == 1
     right_left_node, right_right_node = grower.split_next()
     _check_children_consistency(right_node, right_left_node, right_right_node)
     assert len(right_left_node.sample_indices) > 0.1 * n_samples
@@ -136,7 +135,7 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     assert len(right_right_node.sample_indices) < 0.4 * n_samples
 
     # All the leafs are pure, it is not possible to split any further:
-    assert not grower.can_split_further()
+    assert not grower.splittable_nodes
 
     # Check the values of the leaves:
     assert grower.root.left_child.value == approx(shrinkage)

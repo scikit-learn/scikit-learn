@@ -230,7 +230,7 @@ class TreeGrower:
 
     def grow(self):
         """Grow the tree, from root to leaves."""
-        while self.can_split_further():
+        while self.splittable_nodes:
             self.split_next()
 
     def _intilialize_root(self, gradients, hessians, hessians_are_constant):
@@ -295,7 +295,7 @@ class TreeGrower:
         right : TreeNode
             The resulting right child.
         """
-        if len(self.splittable_nodes) == 0:
+        if not self.splittable_nodes:
             raise StopIteration("No more splittable nodes")
 
         # Consider the node with the highest loss reduction (a.k.a. gain)
@@ -390,10 +390,6 @@ class TreeGrower:
             self.total_find_split_time += time() - tic
 
         return left_child_node, right_child_node
-
-    def can_split_further(self):
-        """Return True if there are still nodes to split."""
-        return len(self.splittable_nodes) >= 1
 
     def _finalize_leaf(self, node):
         """Compute the prediction value that minimizes the objective function.
