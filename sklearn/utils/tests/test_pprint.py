@@ -47,6 +47,9 @@ class LogisticRegression(BaseEstimator):
         self.n_jobs = n_jobs
         self.l1_ratio = l1_ratio
 
+    def fit(self, X, y):
+        return self
+
 def test_basic():
     # Basic pprint test
     lr = LogisticRegression()
