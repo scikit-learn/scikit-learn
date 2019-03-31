@@ -1218,6 +1218,7 @@ def test_iterative_imputer_add_indicator(marker):
         [1, 3., 3., 1., 1., 0.],
     ])
 
-    imputer = IterativeImputer(missing_values=marker, max_iter=1, add_indicator=True)
+    imputer = IterativeImputer(missing_values=marker,
+                               max_iter=1, add_indicator=True)
     X_trans = imputer.fit_transform(X)
     assert_allclose(X_trans, X_true)
