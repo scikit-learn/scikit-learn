@@ -90,34 +90,52 @@ def test_resample():
     assert_equal(len(resample([1, 2], n_samples=5)), 5)
 
 
-@pytest.mark.parametrize('p', [.1, .5, .9])
-def test_resample_stratified(p):
+def test_resample_stratified():
+    # Make sure resample can stratify
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    p = .9
+    X = rng.normal(size=(n_samples, 1))
+    y = rng.binomial(1, p, size=n_samples)
 
-    from numpy.testing import assert_allclose
-    import numpy as np
+    _, y_not_stratified = resample(X, y, n_samples=10, random_state=0,
+                                   stratify=None)
+    assert np.all(y_not_stratified == 1)
 
+    _, y_stratified = resample(X, y, n_samples=10, random_state=0, stratify=y)
+    assert not np.all(y_stratified == 1)
+    np.sum(y_stratified) == 9  # all 1s, one 0
+
+
+def test_resample_stratified_replace():
+    # Make sure stratified resampling supports the replace parameter
     rng = np.random.RandomState(0)
     n_samples = 100
     X = rng.normal(size=(n_samples, 1))
-    y = rng.binomial(2, p, size=n_samples)
-    _, probas = np.unique(y, return_counts=True)
-    probas = probas / n_samples
-    print()
-    print(probas)
+    y = rng.randint(0, 2, size=n_samples)
 
-    subsample_size = 10
-    X, y = resample(X, y, replace=False, n_samples=subsample_size, stratify=y)
-    _, probas_subsample = np.unique(y, return_counts=True)
-    probas_subsample = probas_subsample / subsample_size
+    X_replace, _ = resample(X, y, replace=True, n_samples=50,
+                            random_state=rng, stratify=y)
+    X_no_replace, _ = resample(X, y, replace=False, n_samples=50,
+                               random_state=rng, stratify=y)
+    assert np.unique(X_replace).shape[0] < 50
+    assert np.unique(X_no_replace).shape[0] == 50
 
-    assert_allclose(probas_subsample, probas, rtol=1e-2)
+    # make sure n_samples can be greater than X.shape[0] if we sample with
+    # replacement
+    X_replace, _ = resample(X, y, replace=True, n_samples=1000,
+                            random_state=rng, stratify=y)
+    assert X_replace.shape[0] == 1000
+    assert np.unique(X_replace).shape[0] == 100
 
-    X, y = resample(X, y, replace=False, n_samples=subsample_size,
-                    stratify=None)
-    _, probas_subsample = np.unique(y, return_counts=True)
-    probas_subsample = probas_subsample / subsample_size
-    print(probas_subsample)
-    assert_allclose(probas_subsample, probas, rtol=1e-2)
+
+def test_resample_stratify_2dy():
+    # Make sure y can be 2d when stratifying
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 1))
+    y = rng.randint(0, 2, size=(n_samples, 2))
+    resample(X, y, n_samples=50, random_state=rng, stratify=y)
 
 
 def test_safe_mask():

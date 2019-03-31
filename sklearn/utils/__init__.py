@@ -252,6 +252,10 @@ def resample(*arrays, **options):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
+    stratify : array-like or None (default=None)
+        If not None, data is split in a stratified fashion, using this as
+        the class labels.
+
     Returns
     -------
     resampled_arrays : sequence of indexable data-structures
@@ -295,6 +299,9 @@ def resample(*arrays, **options):
     --------
     :func:`sklearn.utils.shuffle`
     """
+    # avoid circular import
+    from ..model_selection._split import _approximate_mode
+
     random_state = check_random_state(options.pop('random_state', None))
     replace = options.pop('replace', True)
     max_n_samples = options.pop('n_samples', None)
@@ -317,14 +324,15 @@ def resample(*arrays, **options):
 
     check_consistent_length(*arrays)
 
-    if replace:
-        indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+    if stratify is None:
+        if replace:
+            indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+        else:
+            indices = np.arange(n_samples)
+            random_state.shuffle(indices)
+            indices = indices[:max_n_samples]
     else:
-        indices = np.arange(n_samples)
-        random_state.shuffle(indices)
-        indices = indices[:max_n_samples]
-
-    if stratify is not None:
+        # Code adapted from StratifiedShuffleSplit()
         y = stratify
         if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
@@ -335,11 +343,6 @@ def resample(*arrays, **options):
         n_classes = classes.shape[0]
 
         class_counts = np.bincount(y_indices)
-        # if np.min(class_counts) < 2:
-        #     raise ValueError("The least populated class in y has only 1"
-        #                      " member, which is too few. The minimum"
-        #                      " number of groups for any class cannot"
-        #                      " be less than 2.")
 
         # Find the sorted list of instances for each class:
         # (np.unique above performs a sort, so code is O(n logn) already)
@@ -348,19 +351,17 @@ def resample(*arrays, **options):
 
         # if there are ties in the class-counts, we want
         # to make sure to break them anew in each iteration
-        from sklearn.model_selection._split import _approximate_mode
         n_i = _approximate_mode(class_counts, max_n_samples, random_state)
 
         indices = []
 
         for i in range(n_classes):
-            permutation = random_state.permutation(class_counts[i])
-            perm_indices_class_i = class_indices[i].take(permutation,
-                                                         mode='clip')
-
-            indices.extend(perm_indices_class_i[:n_i[i]])
+            indices_i = random_state.choice(class_indices[i], n_i[i],
+                                            replace=replace)
+            indices.extend(indices_i)
 
         indices = random_state.permutation(indices)
+
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
