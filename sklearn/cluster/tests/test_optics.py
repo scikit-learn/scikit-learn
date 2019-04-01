@@ -1,5 +1,5 @@
 # Authors: Shane Grigsby <refuge@rocktalus.com>
-#          Amy X. Zhang <axz@mit.edu>
+#          Adrin Jalali <adrin.jalali@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -170,8 +170,7 @@ def test_correct_number_of_clusters():
 
 def test_minimum_number_of_sample_check():
     # test that we check a minimum number of samples
-    msg = ("Number of training samples (n_samples=1) must be greater than "
-           "min_samples (min_samples=10) used for clustering.")
+    msg = "min_samples must be no greater than"
 
     # Compute OPTICS
     X = [[1, 1]]

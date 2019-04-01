@@ -233,42 +233,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         n_samples = len(X)
 
-        if self.eps is None:
-            eps = self.max_eps
-        else:
-            eps = self.eps
-
-        if self.min_cluster_size is None:
-            min_cluster_size = self.min_samples
-        else:
-            min_cluster_size = self.min_cluster_size
-
-        if min_cluster_size <= 0 or (min_cluster_size !=
-                                     int(min_cluster_size)
-                                     and min_cluster_size > 1):
-            raise ValueError('min_cluster_size must be a positive integer or '
-                             'a float between 0 and 1. Got %r' %
-                             min_cluster_size)
-        elif min_cluster_size > n_samples:
-            raise ValueError('min_cluster_size must be no greater than the '
-                             'number of samples (%d). Got %d' %
-                             (n_samples, min_cluster_size))
-
-        if self.min_samples > n_samples:
-            raise ValueError("Number of training samples (n_samples=%d) must "
-                             "be greater than min_samples (min_samples=%d) "
-                             "used for clustering." %
-                             (n_samples, self.min_samples))
-
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"
                              " 'dbscan' or 'xi' but is %s" %
                              self.cluster_method)
 
-        if self.cluster_method == 'dbscan':
-            if eps > self.max_eps:
-                raise ValueError('Specify an epsilon smaller than %s. Got %s.'
-                                 % (self.max_eps, eps))
+        _validate_size(self.min_samples, n_samples, 'min_samples')
 
         (self.ordering_, self.core_distances_, self.reachability_,
          self.predecessor_) = compute_optics_graph(
@@ -276,11 +246,16 @@ class OPTICS(BaseEstimator, ClusterMixin):
              leaf_size=self.leaf_size, metric=self.metric,
              metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs,
              max_eps=self.max_eps)
-        # Start all points as noise ##
-        self.labels_ = np.full(n_samples, -1, dtype=int)
 
         # Extract clusters from the calculated orders and reachability
         if self.cluster_method == 'xi':
+            if self.min_cluster_size is None:
+                min_cluster_size = self.min_samples
+            else:
+                min_cluster_size = self.min_cluster_size
+
+            _validate_size(min_cluster_size, n_samples, 'min_cluster_size')
+
             labels_, clusters_ = cluster_optics_xi(
                 self.reachability_,
                 self.predecessor_,
@@ -291,6 +266,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
                 self.predecessor_correction)
             self.cluster_hierarchy_ = clusters_
         elif self.cluster_method == 'dbscan':
+            if self.eps is None:
+                eps = self.max_eps
+            else:
+                eps = self.eps
+
+            if eps > self.max_eps:
+                raise ValueError('Specify an epsilon smaller than %s. Got %s.'
+                                 % (self.max_eps, eps))
+
             labels_ = cluster_optics_dbscan(self.reachability_,
                                             self.core_distances_,
                                             self.ordering_,
@@ -298,6 +282,19 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         self.labels_ = labels_
         return self
+
+
+def _validate_size(size, n_samples, param_name):
+    if size <= 0 or (size !=
+                     int(size)
+                     and size > 1):
+        raise ValueError('%s must be a positive integer '
+                         'or a float between 0 and 1. Got %r' %
+                         (param_name, size))
+    elif size > n_samples:
+        raise ValueError('%s must be no greater than the'
+                         ' number of samples (%d). Got %d' %
+                         (param_name, n_samples, size))
 
 
 # OPTICS helper functions
@@ -572,7 +569,7 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps):
 
 def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
                       min_cluster_size=None, xi=0.05,
-                      predecessor_correction=False):
+                      predecessor_correction=True):
     """Automatically extract clusters according to the Xi-steep method.
 
     Parameters
@@ -586,10 +583,11 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
     ordering : array, shape (n_samples,)
         OPTICS ordered point indices (`ordering_`)
 
-    min_samples : integer
-       The same as the min_samples given to OPTICS. Up and down steep
-       regions can't have more then `min_samples` consecutive non-steep
-       points.
+    min_samples : int > 1 or float between 0 and 1 (default=None)
+        The same as the min_samples given to OPTICS. Up and down steep regions
+        can't have more then ``min_samples`` consecutive non-steep points.
+        Expressed as an absolute number or a fraction of the number of samples
+        (rounded to be at least 2).
 
     min_cluster_size : int > 1 or float between 0 and 1 (default=None)
         Minimum number of samples in an OPTICS cluster, expressed as an
@@ -629,41 +627,6 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
     return labels, clusters
 
 
-class _Area:
-    """An (upward or downward) area.
-
-    Attributes
-    ----------
-    start : integer
-        The start of the region.
-
-    end : integer
-        The end of the region.
-
-    maximum : float
-        The maximum reachability in this region, which is the
-        start of the region for a downward area and the end of
-        the region for an upward area.
-
-    mib : float
-        Maximum in between value, i.e. the maximum value between
-        the end of a steep down area and the current index. It is
-        irrelevant for steep up areas.
-    """
-    def __init__(self, start, end, maximum, mib):
-        self.start = start
-        self.end = end
-        # maximum is the beginning of a downward area
-        # and the end of an upward area
-        self.maximum = maximum
-        # maximum in between (ref Sec. 4.3.2)
-        self.mib = mib
-
-    def __repr__(self):
-        return ("start: %s, end: %s, max: %4g, mib: %4g" %
-                (self.start, self.end, self.maximum, self.mib))
-
-
 def _extend_region(steep_point, xward_point, start, min_samples):
     """Extend the area until it's maximal.
 
@@ -671,7 +634,7 @@ def _extend_region(steep_point, xward_point, start, min_samples):
     the given input parameters. To extend an upward reagion,
     ``steep_point=steep_upward`` and ``xward_point=downward`` are expected, and
     to extend a downward region, ``steep_point=steep_downward`` and
-    ``xward_point=upward``.
+    ``xward_point=upward``. These variables are computed in ``_xi_cluster``.
 
     Parameters
     ----------
@@ -734,15 +697,16 @@ def _extend_downward_region(steep_downward_mask, upward_mask, start,
                           start, min_samples)
 
 
-def _update_filter_sdas(sdas, mib, xi_complement):
+def _update_filter_sdas(sdas, mib, xi_complement, reachability_plot):
     """Update steep down areas (SDAs) using the new maximum in between (mib)
     value, and the given complement of xi, i.e. ``1 - xi``.
     """
     if np.isinf(mib):
         return []
-    res = [sda for sda in sdas if mib <= sda.maximum * xi_complement]
+    res = [sda for sda in sdas
+           if mib <= reachability_plot[sda['start']] * xi_complement]
     for sda in res:
-        sda.mib = max(sda.mib, mib)
+        sda['mib'] = max(sda['mib'], mib)
     return res
 
 
@@ -789,10 +753,11 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
         reachability plot is defined by the ratio from one point to its
         successor being at most 1-xi.
 
-    min_samples : integer
-       The same as the min_samples given to OPTICS. Up and down steep
-       regions can't have more then `min_samples` consecutive non-steep
-       points.
+    min_samples : int > 1 or float between 0 and 1 (default=None)
+        The same as the min_samples given to OPTICS. Up and down steep regions
+        can't have more then ``min_samples`` consecutive non-steep points.
+        Expressed as an absolute number or a fraction of the number of samples
+        (rounded to be at least 2).
 
     min_cluster_size : int > 1 or float between 0 and 1
         Minimum number of samples in an OPTICS cluster, expressed as an
@@ -820,12 +785,14 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
 
     if min_cluster_size <= 1:
         min_cluster_size = max(2, min_cluster_size * n_samples)
+    if min_samples <= 1:
+        min_samples = max(2, min_samples * n_samples)
 
     xi_complement = 1 - xi
     sdas = []  # steep down areas, introduced in section 4.3.2 of the paper
     clusters = []
     index = 0
-    mib = 0.  # maximum in between
+    mib = 0.  # maximum in between, section 4.3.2
 
     ratio = reachability_plot[:-1] / reachability_plot[1:]
     steep_upward = ratio <= xi_complement
@@ -846,53 +813,56 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
 
         # check if a steep downward area starts
         if steep_downward[index]:
-            sdas = _update_filter_sdas(sdas, mib, xi_complement)
+            sdas = _update_filter_sdas(sdas, mib, xi_complement,
+                                       reachability_plot)
             D_start = index
             index, end = _extend_downward_region(steep_downward, upward,
                                                  D_start, min_samples)
-            D = _Area(start=D_start, end=end,
-                      maximum=reachability_plot[D_start], mib=0.)
+            D = {'start': D_start, 'end': end, 'mib': 0.}
             sdas.append(D)
             mib = reachability_plot[end + 1]
 
         elif steep_upward[index]:
-            sdas = _update_filter_sdas(sdas, mib, xi_complement)
+            sdas = _update_filter_sdas(sdas, mib, xi_complement,
+                                       reachability_plot)
             U_start = index
             index, end = _extend_upward_region(steep_upward, downward, U_start,
                                                min_samples)
-            U = _Area(start=U_start, end=end, maximum=reachability_plot[end],
-                      mib=-1)
+            U = {'start': U_start, 'end': end}
             mib = reachability_plot[end + 1]
 
             U_clusters = []
             for D in sdas:
-                c_start = D.start
-                c_end = min(U.end, n_samples - 1)
+                c_start = D['start']
+                c_end = min(U['end'], n_samples - 1)
+                D_max = reachability_plot[D['start']]
 
                 # line (**), sc2*
-                if reachability_plot[c_end + 1] * xi_complement < D.mib:
+                if reachability_plot[c_end + 1] * xi_complement < D['mib']:
                     continue
 
                 # Definition 11: criterion 4
-                if D.maximum * xi_complement >= reachability_plot[c_end + 1]:
+                if D_max * xi_complement >= reachability_plot[c_end + 1]:
                     # Find the first index from the left side which is almost
                     # at the same level as the end of the detected cluster.
                     while (reachability_plot[c_start + 1] >
                            reachability_plot[c_end + 1]
                            and c_start < c_end):
                         c_start += 1
-                elif reachability_plot[c_end] * xi_complement >= D.maximum:
+                elif reachability_plot[c_end + 1] * xi_complement >= D_max:
                     # Find the first index from the right side which is almost
                     # at the same level as the beginning of the detected
                     # cluster.
-                    while (reachability_plot[c_end] > D.maximum
+                    while (reachability_plot[c_end] > D_max
                            and c_end > c_start):
                         c_end -= 1
 
                 # predecessor correction
-                c_start, c_end = _correct_predecessor(reachability_plot,
-                                                      predecessor, c_start,
-                                                      c_end)
+                if predecessor_correction:
+                    c_start, c_end = _correct_predecessor(reachability_plot,
+                                                          predecessor,
+                                                          c_start,
+                                                          c_end)
                 if c_start is None:
                     continue
 
@@ -901,11 +871,11 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
                     continue
 
                 # Definition 11: criterion 1
-                if c_start > D.end:
+                if c_start > c_end:
                     continue
 
                 # Definition 11: criterion 2
-                if c_end < U.start:
+                if c_end < c_start:
                     continue
 
                 U_clusters.append((c_start, c_end))
@@ -914,7 +884,7 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
             U_clusters.reverse()
             clusters.extend(U_clusters)
 
-            if U.end == n_samples - 1:
+            if U['end'] == n_samples - 1:
                 break
 
     return np.array(clusters)
