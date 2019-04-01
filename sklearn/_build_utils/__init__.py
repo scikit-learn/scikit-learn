@@ -60,7 +60,7 @@ def build_from_c_and_cpp_files(extensions):
         extension.sources = sources
 
 
-def maybe_cythonize_extensions(top_path, config):
+def maybe_cythonize_extensions(top_path, config, with_openmp):
     """Tweaks for building extensions between release and development mode."""
     is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
 
@@ -81,4 +81,6 @@ def maybe_cythonize_extensions(top_path, config):
             exc.args += (message,)
             raise
 
-        config.ext_modules = cythonize(config.ext_modules)
+        config.ext_modules = cythonize(
+            config.ext_modules,
+            compile_time_env={'SKLEARN_OPENMP': with_openmp})
