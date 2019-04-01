@@ -307,6 +307,7 @@ def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
     tmp = (x_density + y_density) * n_features
     chunk_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
     chunk_size = max(int(chunk_size), 1)
+    chunk_size = min(chunk_size, max(X.shape[0], Y.shape[0]))
 
     n_chunks_X = n_samples_X // chunk_size + (n_samples_X % chunk_size != 0)
     n_chunks_Y = n_samples_Y // chunk_size + (n_samples_Y % chunk_size != 0)
