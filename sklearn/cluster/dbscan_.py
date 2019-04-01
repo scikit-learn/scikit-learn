@@ -10,11 +10,11 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 # License: BSD 3 clause
 
 import numpy as np
+import warnings
 from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array, check_consistent_length
-from ..utils.testing import ignore_warnings
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
@@ -139,7 +139,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         X.sum_duplicates()  # XXX: modifies X's internals in-place
 
         # set the diagonal to explicit values, as a point is its own neighbor
-        with ignore_warnings():
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', sparse.SparseEfficiencyWarning)
             X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
 
         X_mask = X.data <= eps
