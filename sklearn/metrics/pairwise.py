@@ -238,7 +238,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     else:
         XX = row_norms(X, squared=True)[:, np.newaxis]
 
-    if X is Y and XX is not None: 
+    if X is Y and XX is not None:
         # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is not None:
