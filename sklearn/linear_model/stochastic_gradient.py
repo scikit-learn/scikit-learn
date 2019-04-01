@@ -828,8 +828,8 @@ class SGDClassifier(BaseSGDClassifier):
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
-        a fraction of training data as validation and terminate training when
-        validation score is not improving by at least tol for
+        a stratified fraction of training data as validation and terminate
+        training when validation score is not improving by at least tol for
         n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
@@ -1433,8 +1433,8 @@ class SGDRegressor(BaseSGDRegressor):
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to True, it will automatically set aside
-        a fraction of training data as validation and terminate training when
-        validation score is not improving by at least tol for
+        a fraction of training data as validation and terminate
+        training when validation score is not improving by at least tol for
         n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
