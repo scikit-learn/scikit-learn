@@ -542,6 +542,12 @@ Multiple modules
 - |Efficiency| Memory copies are avoided when casting arrays to a different
   dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
   <rth>`.
+- Add estimators tags: these are annotations of estimators that allow
+  programmatic inspection of their capabilities, such as sparse matrix
+  support, supported output types and supported methods. The estimators checks
+  are now run selectively, depending on the estimator's tags. Read more in the
+  :ref:`User Guide <estimator_tags>`.
+  :issue:`8022` by :user:`Andreas Müller <amueller>`.
 
 Changes to estimator checks
 ---------------------------
@@ -553,8 +559,3 @@ These changes mostly affect library developers.
   when `fit` is called twice with the same data, the ouput of
   `predict`, `predict_proba`, `transform`, and `decision_function` does not
   change. :issue:`12328` by :user:`Nicolas Hug <NicolasHug>`
-
-- Add estimators tags: these are annotations of estimators that allow
-  programmatic inspection of their capabilities, such as sparse matrix
-  support, supported output types and supported methods.
-  :issue:`8022` by :user:`Andreas Müller <amueller>`.

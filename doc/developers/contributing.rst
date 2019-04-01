@@ -1458,6 +1458,8 @@ patterns.
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
 
+.. _estimator_tags:
+
 Estimator Tags
 --------------
 .. warning::
