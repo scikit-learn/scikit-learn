@@ -13,11 +13,15 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import make_classification, fetch_california_housing
+from sklearn.base import BaseEstimator
+from sklearn.datasets import (make_classification, fetch_california_housing,
+                              make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.ensemble._gradient_boosting import predict_stages
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.svm import LinearSVC
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
@@ -34,6 +38,11 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LinearRegression
+from sklearn.svm import NuSVR
+
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier,
                                 GradientBoostingRegressor]
@@ -1046,13 +1055,7 @@ def test_complete_regression():
 
 
 def test_zero_estimator_reg():
-    # Test if ZeroEstimator works for regression.
-    est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
-                                    random_state=1, init=ZeroEstimator())
-    est.fit(boston.data, boston.target)
-    y_pred = est.predict(boston.data)
-    mse = mean_squared_error(boston.target, y_pred)
-    assert_almost_equal(mse, 33.0, decimal=0)
+    # Test if init='zero' works for regression.
 
     est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
                                     random_state=1, init='zero')
@@ -1067,14 +1070,9 @@ def test_zero_estimator_reg():
 
 
 def test_zero_estimator_clf():
-    # Test if ZeroEstimator works for classification.
+    # Test if init='zero' works for classification.
     X = iris.data
     y = np.array(iris.target)
-    est = GradientBoostingClassifier(n_estimators=20, max_depth=1,
-                                     random_state=1, init=ZeroEstimator())
-    est.fit(X, y)
-
-    assert_greater(est.score(X, y), 0.96)
 
     est = GradientBoostingClassifier(n_estimators=20, max_depth=1,
                                      random_state=1, init='zero')
@@ -1270,8 +1268,8 @@ def test_gradient_boosting_early_stopping():
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         random_state=42)
     # Check if early_stopping works as expected
-    for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 24), (gbr, 1e-1, 13),
-                                              (gbc, 1e-3, 36),
+    for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 28), (gbr, 1e-1, 13),
+                                              (gbc, 1e-3, 70),
                                               (gbr, 1e-3, 28)):
         est.set_params(tol=tol)
         est.fit(X_train, y_train)
@@ -1324,3 +1322,121 @@ def test_gradient_boosting_validation_fraction():
     gbr3.fit(X_train, y_train)
     assert gbr.n_estimators_ < gbr3.n_estimators_
     assert gbc.n_estimators_ < gbc3.n_estimators_
+
+
+def test_early_stopping_stratified():
+    # Make sure data splitting for early stopping is stratified
+    X = [[1, 2], [2, 3], [3, 4], [4, 5]]
+    y = [0, 0, 0, 1]
+
+    gbc = GradientBoostingClassifier(n_iter_no_change=5)
+    with pytest.raises(
+            ValueError,
+            match='The least populated class in y has only 1 member'):
+        gbc.fit(X, y)
+
+
+class _NoSampleWeightWrapper(BaseEstimator):
+    def __init__(self, est):
+        self.est = est
+
+    def fit(self, X, y):
+        self.est.fit(X, y)
+
+    def predict(self, X):
+        return self.est.predict(X)
+
+    def predict_proba(self, X):
+        return self.est.predict_proba(X)
+
+
+def _make_multiclass():
+    return make_classification(n_classes=3, n_clusters_per_class=1)
+
+
+@pytest.mark.parametrize(
+    "gb, dataset_maker, init_estimator",
+    [(GradientBoostingClassifier, make_classification, DummyClassifier),
+     (GradientBoostingClassifier, _make_multiclass, DummyClassifier),
+     (GradientBoostingRegressor, make_regression, DummyRegressor)],
+    ids=["binary classification", "multiclass classification", "regression"])
+def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
+    # Check that GradientBoostingRegressor works when init is a sklearn
+    # estimator.
+    # Check that an error is raised if trying to fit with sample weight but
+    # inital estimator does not support sample weight
+
+    X, y = dataset_maker()
+    sample_weight = np.random.RandomState(42).rand(100)
+
+    # init supports sample weights
+    init_est = init_estimator()
+    gb(init=init_est).fit(X, y, sample_weight=sample_weight)
+
+    # init does not support sample weights
+    init_est = _NoSampleWeightWrapper(init_estimator())
+    gb(init=init_est).fit(X, y)  # ok no sample weights
+    with pytest.raises(ValueError,
+                       match="estimator.*does not support sample weights"):
+        gb(init=init_est).fit(X, y, sample_weight=sample_weight)
+
+
+def test_gradient_boosting_with_init_pipeline():
+    # Check that the init estimator can be a pipeline (see issue #13466)
+
+    X, y = make_regression(random_state=0)
+    init = make_pipeline(LinearRegression())
+    gb = GradientBoostingRegressor(init=init)
+    gb.fit(X, y)  # pipeline without sample_weight works fine
+
+    with pytest.raises(
+            ValueError,
+            match='The initial estimator Pipeline does not support sample '
+                  'weights'):
+        gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
+
+    # Passing sample_weight to a pipeline raises a ValueError. This test makes
+    # sure we make the distinction between ValueError raised by a pipeline that
+    # was passed sample_weight, and a ValueError raised by a regular estimator
+    # whose input checking failed.
+    with pytest.raises(
+            ValueError,
+            match='nu <= 0 or nu > 1'):
+        # Note that NuSVR properly supports sample_weight
+        init = NuSVR(gamma='auto', nu=1.5)
+        gb = GradientBoostingRegressor(init=init)
+        gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
+
+
+@pytest.mark.parametrize('estimator, missing_method', [
+    (GradientBoostingClassifier(init=LinearSVC()), 'predict_proba'),
+    (GradientBoostingRegressor(init=OneHotEncoder()), 'predict')
+])
+def test_gradient_boosting_init_wrong_methods(estimator, missing_method):
+    # Make sure error is raised if init estimators don't have the required
+    # methods (fit, predict, predict_proba)
+
+    message = ("The init parameter must be a valid estimator and support "
+               "both fit and " + missing_method)
+    with pytest.raises(ValueError, match=message):
+        estimator.fit(X, y)
+
+
+def test_early_stopping_n_classes():
+    # when doing early stopping (_, , y_train, _ = train_test_split(X, y))
+    # there might be classes in y that are missing in y_train. As the init
+    # estimator will be trained on y_train, we need to raise an error if this
+    # happens.
+
+    X = [[1]] * 10
+    y = [0, 0] + [1] * 8  # only 2 negative class over 10 samples
+    gb = GradientBoostingClassifier(n_iter_no_change=5, random_state=0,
+                                    validation_fraction=8)
+    with pytest.raises(
+                ValueError,
+                match='The training data after the early stopping split'):
+        gb.fit(X, y)
+
+    # No error if we let training data be big enough
+    gb = GradientBoostingClassifier(n_iter_no_change=5, random_state=0,
+                                    validation_fraction=4)

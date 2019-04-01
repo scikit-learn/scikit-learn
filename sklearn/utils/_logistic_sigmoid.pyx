@@ -1,6 +1,7 @@
 #cython: boundscheck=False
 #cython: cdivision=True
 #cython: wraparound=False
+#cython: language_level=3
 
 from libc.math cimport log, exp
 
@@ -10,17 +11,22 @@ cimport numpy as np
 ctypedef np.float64_t DTYPE_t
 
 
-cdef DTYPE_t _inner_log_logistic_sigmoid(DTYPE_t x):
+cdef inline DTYPE_t _inner_log_logistic_sigmoid(const DTYPE_t x):
     """Log of the logistic sigmoid function log(1 / (1 + e ** -x))"""
     if x > 0:
-        return -log(1 + exp(-x))
+        return -log(1. + exp(-x))
     else:
-        return x - log(1 + exp(x))
+        return x - log(1. + exp(x))
 
 
-def _log_logistic_sigmoid(int n_samples, int n_features, 
-                           np.ndarray[DTYPE_t, ndim=2] X,
-                           np.ndarray[DTYPE_t, ndim=2] out):
+def _log_logistic_sigmoid(unsigned int n_samples,
+                          unsigned int n_features,
+                          DTYPE_t[:, :] X,
+                          DTYPE_t[:, :] out):
+    cdef:
+        unsigned int i
+        unsigned int j
+
     for i in range(n_samples):
         for j in range(n_features):
             out[i, j] = _inner_log_logistic_sigmoid(X[i, j])

@@ -45,6 +45,9 @@ The last estimator may be any type (transformer, classifier, etc.).
 Usage
 -----
 
+Construction
+............
+
 The :class:`Pipeline` is built using a list of ``(key, value)`` pairs, where
 the ``key`` is a string containing the name you want to give this step and ``value``
 is an estimator object::
@@ -74,17 +77,41 @@ filling in the names automatically::
                                                     class_prior=None,
                                                     fit_prior=True))])
 
-The estimators of a pipeline are stored as a list in the ``steps`` attribute::
+Accessing steps
+...............
+
+The estimators of a pipeline are stored as a list in the ``steps`` attribute,
+but can be accessed by index or name by indexing (with ``[idx]``) the
+Pipeline::
 
     >>> pipe.steps[0]  # doctest: +NORMALIZE_WHITESPACE
-    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False))
-
-and as a ``dict`` in ``named_steps``::
-
-    >>> pipe.named_steps['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
+    ('reduce_dim', PCA(copy=True, iterated_power='auto', n_components=None,
+                       random_state=None, svd_solver='auto', tol=0.0,
+                       whiten=False))
+    >>> pipe[0]  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
-      svd_solver='auto', tol=0.0, whiten=False)
+        svd_solver='auto', tol=0.0, whiten=False)
+    >>> pipe['reduce_dim']  # doctest: +NORMALIZE_WHITESPACE
+    PCA(copy=True, ...)
+
+Pipeline's `named_steps` attribute allows accessing steps by name with tab
+completion in interactive environments::
+
+    >>> pipe.named_steps.reduce_dim is pipe['reduce_dim']
+    True
+
+A sub-pipeline can also be extracted using the slicing notation commonly used
+for Python Sequences such as lists or strings (although only a step of 1 is
+permitted). This is convenient for performing only some of the transformations
+(or their inverse):
+
+    >>> pipe[:1] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Pipeline(memory=None, steps=[('reduce_dim', PCA(copy=True, ...))])
+    >>> pipe[-1:] # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    Pipeline(memory=None, steps=[('clf', SVC(C=1.0, ...))])
+
+Nested parameters
+.................
 
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
@@ -93,11 +120,6 @@ Parameters of the estimators in the pipeline can be accessed using the
     Pipeline(memory=None,
              steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
                     ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
-
-Attributes of named_steps map to keys, enabling tab completion in interactive environments::
-
-    >>> pipe.named_steps.reduce_dim is pipe.named_steps['reduce_dim']
-    True
 
 This is particularly important for doing grid searches::
 
@@ -114,6 +136,16 @@ ignored by setting them to ``'passthrough'``::
     ...                   clf=[SVC(), LogisticRegression()],
     ...                   clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(pipe, param_grid=param_grid)
+
+The estimators of the pipeline can be retrieved by index:
+
+    >>> pipe[0]  # doctest: +ELLIPSIS
+    PCA(copy=True, ...)
+
+or by name::
+
+    >>> pipe['reduce_dim']  # doctest: +ELLIPSIS
+    PCA(copy=True, ...)
 
 .. topic:: Examples:
 
@@ -408,7 +440,9 @@ preprocessing or a specific feature extraction method::
   ...      'user_rating': [4, 5, 4, 3]})
 
 For this data, we might want to encode the ``'city'`` column as a categorical
-variable, but apply a :class:`feature_extraction.text.CountVectorizer
+variable using :class:`preprocessing.OneHotEncoder
+<sklearn.preprocessing.OneHotEncoder>` but apply a 
+:class:`feature_extraction.text.CountVectorizer
 <sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
 each transformer a unique name, say ``'city_category'`` and ``'title_bow'``.
@@ -416,8 +450,9 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
   >>> from sklearn.compose import ColumnTransformer
   >>> from sklearn.feature_extraction.text import CountVectorizer
+  >>> from sklearn.preprocessing import OneHotEncoder
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder='drop')
 
@@ -428,7 +463,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
   >>> column_trans.get_feature_names()
   ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  ['city_category__London', 'city_category__Paris', 'city_category__Sallisaw',
+  ['city_category__x0_London', 'city_category__x0_Paris', 'city_category__x0_Sallisaw',
   'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
   'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
   'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
@@ -443,8 +478,9 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 
 In the above example, the
 :class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
-input and therefore the columns were specified as a string (``'city'``).
-However, other transformers generally expect 2D data, and in that case you need
+input and therefore the columns were specified as a string (``'title'``).
+However, :class:`preprocessing.OneHotEncoder <sklearn.preprocessing.OneHotEncoder>`
+as most of other transformers expects 2D data, therefore in that case you need
 to specify the column as a list of strings (``['city']``).
 
 Apart from a scalar or a single item list, the column selection can be specified
@@ -457,7 +493,7 @@ We can keep the remaining rating columns by setting
 transformation::
 
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder='passthrough')
 
@@ -474,7 +510,7 @@ the transformation::
 
   >>> from sklearn.preprocessing import MinMaxScaler
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     [('city_category', OneHotEncoder(), ['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
   ...     remainder=MinMaxScaler())
 
@@ -492,14 +528,14 @@ above example would be::
 
   >>> from sklearn.compose import make_column_transformer
   >>> column_trans = make_column_transformer(
-  ...     (CountVectorizer(analyzer=lambda x: [x]), 'city'),
+  ...     (OneHotEncoder(), ['city']),
   ...     (CountVectorizer(), 'title'),
   ...     remainder=MinMaxScaler())
   >>> column_trans # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   ColumnTransformer(n_jobs=None, remainder=MinMaxScaler(copy=True, ...),
            sparse_threshold=0.3,
            transformer_weights=None,
-           transformers=[('countvectorizer-1', ...)
+           transformers=[('onehotencoder', ...)
 
 .. topic:: Examples:
 

@@ -9,12 +9,12 @@ import pytest
 
 from scipy import sparse
 
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raise_message
 
 from sklearn.cluster import MeanShift
+from sklearn.cluster import mean_shift
 from sklearn.cluster import estimate_bandwidth
 from sklearn.cluster import get_bin_seeds
 from sklearn.datasets.samples_generator import make_blobs
@@ -36,7 +36,7 @@ def test_estimate_bandwidth_1sample():
     # Test estimate_bandwidth when n_samples=1 and quantile<1, so that
     # n_neighbors is set to 1.
     bandwidth = estimate_bandwidth(X, n_samples=1, quantile=0.3)
-    assert_equal(bandwidth, 0.)
+    assert bandwidth == 0.
 
 
 @pytest.mark.parametrize("bandwidth, cluster_all, expected, "
@@ -51,13 +51,20 @@ def test_mean_shift(bandwidth, cluster_all, expected, first_cluster_label):
     assert n_clusters_ == expected
     assert labels_unique[0] == first_cluster_label
 
+    cluster_centers, labels_mean_shift = mean_shift(X, cluster_all=cluster_all)
+    labels_mean_shift_unique = np.unique(labels_mean_shift)
+    n_clusters_mean_shift = len(labels_mean_shift_unique)
+    assert n_clusters_mean_shift == expected
+    assert labels_mean_shift_unique[0] == first_cluster_label
+
 
 def test_mean_shift_negative_bandwidth():
     bandwidth = -1
     ms = MeanShift(bandwidth=bandwidth)
-    msg = ("bandwidth needs to be greater than zero or None,"
-           "            got -1.000000")
-    assert_raise_message(ValueError, msg, ms.fit, X)
+    msg = (r"bandwidth needs to be greater than zero or None,"
+           r" got -1\.000000")
+    with pytest.raises(ValueError, match=msg):
+        ms.fit(X)
 
 
 def test_estimate_bandwidth_with_sparse_matrix():

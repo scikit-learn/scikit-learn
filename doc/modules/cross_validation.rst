@@ -204,7 +204,8 @@ indices, for example::
 The cross_validate function and multiple metric evaluation
 ----------------------------------------------------------
 
-The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
+The :func:`cross_validate` function differs from :func:`cross_val_score` in
+two ways:
 
 - It allows specifying multiple metrics for evaluation.
 
@@ -244,13 +245,13 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
 
     >>> from sklearn.metrics.scorer import make_scorer
     >>> scoring = {'prec_macro': 'precision_macro',
-    ...            'rec_micro': make_scorer(recall_score, average='macro')}
+    ...            'rec_macro': make_scorer(recall_score, average='macro')}
     >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
     ...                         cv=5, return_train_score=True)
     >>> sorted(scores.keys())                 # doctest: +NORMALIZE_WHITESPACE
-    ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_micro',
-     'train_prec_macro', 'train_rec_micro']
-    >>> scores['train_rec_micro']                         # doctest: +ELLIPSIS
+    ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_macro',
+     'train_prec_macro', 'train_rec_macro']
+    >>> scores['train_rec_macro']                         # doctest: +ELLIPSIS
     array([0.97..., 0.97..., 0.99..., 0.98..., 0.98...])
 
 Here is an example of ``cross_validate`` using a single metric::
