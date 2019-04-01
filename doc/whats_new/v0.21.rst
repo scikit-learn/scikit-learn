@@ -542,12 +542,12 @@ Multiple modules
 - |Efficiency| Memory copies are avoided when casting arrays to a different
   dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
   <rth>`.
-- Add estimators tags: these are annotations of estimators that allow
-  programmatic inspection of their capabilities, such as sparse matrix
-  support, supported output types and supported methods. Estimator tags also
-  determine the tests that are run on an estimator when `check_estimator` is
-  called. Read more in the :ref:`User Guide <estimator_tags>`. :issue:`8022`
-  by :user:`Andreas Müller <amueller>`.
+- |MajorFeature| Add estimators tags: these are annotations of estimators
+  that allow programmatic inspection of their capabilities, such as sparse
+  matrix support, supported output types and supported methods. Estimator
+  tags also determine the tests that are run on an estimator when
+  `check_estimator` is called. Read more in the :ref:`User Guide
+  <estimator_tags>`. :issue:`8022` by :user:`Andreas Müller <amueller>`.
 
 Changes to estimator checks
 ---------------------------
