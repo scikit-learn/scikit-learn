@@ -1078,7 +1078,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     error_on_new : boolean, optional
         If True (default), transform will raise an error when there are
         features with missing values in transform that have no missing values
-        in fit. This is applicable only when ``features="missing-only"``.
+        in fit. This is applicable only when ``features!="all"``.
 
     Attributes
     ----------
