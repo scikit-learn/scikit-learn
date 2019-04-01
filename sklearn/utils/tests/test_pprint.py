@@ -30,7 +30,6 @@ class LogisticRegression(BaseEstimator):
                  random_state=None, solver='warn', max_iter=100,
                  multi_class='warn', verbose=0, warm_start=False, n_jobs=None,
                  l1_ratio=None):
-
         self.penalty = penalty
         self.dual = dual
         self.tol = tol
