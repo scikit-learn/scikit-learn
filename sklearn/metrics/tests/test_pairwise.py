@@ -540,30 +540,31 @@ def test_pairwise_distances_chunked():
     assert_raises(StopIteration, next, gen)
 
 
-@pytest.mark.parametrize("dim", [16, 64], ids=["dim<32", "dim>32"])
 @pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
                          ids=["dense", "sparse"])
 @pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
                          ids=["dense", "sparse"])
-def test_euclidean_distances_known_result(dim, x_array_constr, y_array_constr):
+def test_euclidean_distances_known_result(x_array_constr, y_array_constr):
     # Check the pairwise Euclidean distances computation on known result
-    X = x_array_constr([[0]*dim])
-    Y = y_array_constr([[1] + [0]*(dim - 1), [0]*(dim - 1) + [2]])
+    X = x_array_constr([[0]])
+    Y = y_array_constr([[1], [2]])
     D = euclidean_distances(X, Y)
     assert_allclose(D, [[1., 2.]])
 
 
-@pytest.mark.parametrize("dim", [16, 64], ids=["dim<32", "dim>32"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
                          ids=["dense", "sparse"])
-def test_euclidean_distances_with_norms(dim, y_array_constr):
+def test_euclidean_distances_with_norms(dtype, y_array_constr):
     # check that we still get the right answers with {X,Y}_norm_squared
     # and that we get a wrong answer with wrong {X,Y}_norm_squared
     rng = np.random.RandomState(0)
-    X = rng.random_sample((10, dim))
-    Y = rng.random_sample((20, dim))
-    X_norm_sq = (X ** 2).sum(axis=1).reshape(1, -1)
-    Y_norm_sq = (Y ** 2).sum(axis=1).reshape(1, -1)
+    X = rng.random_sample((10, 10)).astype(dtype, copy=False)
+    Y = rng.random_sample((20, 10)).astype(dtype, copy=False)
+
+    # norms will only be used if their dtype is float64
+    X_norm_sq = (X.astype(np.float64) ** 2).sum(axis=1).reshape(1, -1)
+    Y_norm_sq = (Y.astype(np.float64) ** 2).sum(axis=1).reshape(1, -1)
 
     Y = y_array_constr(Y)
 
@@ -577,14 +578,11 @@ def test_euclidean_distances_with_norms(dim, y_array_constr):
     assert_allclose(D4, D1)
 
     # check we get the wrong answer with wrong {X,Y}_norm_squared
-    # (note that if n_features <= 32 and both X and Y are dense, squared norms
-    # are not used)
     wrong_D = euclidean_distances(X, Y,
                                   X_norm_squared=np.zeros_like(X_norm_sq),
                                   Y_norm_squared=np.zeros_like(Y_norm_sq))
-    if dim > 32 or issparse(Y):
-        with pytest.raises(AssertionError):
-            assert_allclose(wrong_D, D1)
+    with pytest.raises(AssertionError):
+        assert_allclose(wrong_D, D1)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
