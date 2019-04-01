@@ -4,8 +4,8 @@ from pprint import PrettyPrinter
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.base import BaseEstimator
-from sklearn.feature_selection import RFE
+from sklearn.base import BaseEstimator, MetaEstimatorMixin
+from sklearn.feature_selection.base import SelectorMixin
 from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.svm import SVC
@@ -45,6 +45,19 @@ class LogisticRegression(BaseEstimator):
         self.warm_start = warm_start
         self.n_jobs = n_jobs
         self.l1_ratio = l1_ratio
+
+    def fit(self, X, y):
+        return self
+
+class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
+    """Feature ranking with recursive feature elimination.
+    """
+    def __init__(self, estimator, n_features_to_select=None, step=1,
+                 verbose=0):
+        self.estimator = estimator
+        self.n_features_to_select = n_features_to_select
+        self.step = step
+        self.verbose = verbose
 
     def fit(self, X, y):
         return self
