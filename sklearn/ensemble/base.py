@@ -147,6 +147,9 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         """Returns iterator over estimators in the ensemble."""
         return iter(self.estimators_)
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
+
 
 def _partition_estimators(n_estimators, n_jobs):
     """Private function used to partition estimators between jobs."""

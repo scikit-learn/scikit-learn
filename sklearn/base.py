@@ -25,7 +25,8 @@ _DEFAULT_TAGS = {
     'stateless': False,
     'multilabel': False,
     '_skip_test': False,
-    'multioutput_only': False}
+    'multioutput_only': False,
+    'supports_sample_weight': False}
 
 
 def clone(estimator, safe=True):

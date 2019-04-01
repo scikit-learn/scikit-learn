@@ -78,38 +78,40 @@ def _safe_tags(estimator, key=None):
 
 def _yield_checks(name, estimator):
     tags = _safe_tags(estimator)
-    yield check_estimators_dtypes
-    yield check_fit_score_takes_y
-    yield check_sample_weights_pandas_series
-    yield check_sample_weights_list
-    yield check_sample_weights_invariance
-    yield check_estimators_fit_returns_self
-    yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
+    # yield check_estimators_dtypes
+    # yield check_fit_score_takes_y
+    if tags['supports_sample_weight']:
+        print(name)
+        yield check_sample_weights_pandas_series
+        yield check_sample_weights_list
+        yield check_sample_weights_invariance
+    # yield check_estimators_fit_returns_self
+    # yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
-    # Check that all estimator yield informative messages when
-    # trained on empty datasets
-    if not tags["no_validation"]:
-        yield check_complex_data
-        yield check_dtype_object
-        yield check_estimators_empty_data_messages
+    # # Check that all estimator yield informative messages when
+    # # trained on empty datasets
+    # if not tags["no_validation"]:
+    #     yield check_complex_data
+    #     yield check_dtype_object
+    #     yield check_estimators_empty_data_messages
 
-    if name not in CROSS_DECOMPOSITION:
-        # cross-decomposition's "transform" returns X and Y
-        yield check_pipeline_consistency
+    # if name not in CROSS_DECOMPOSITION:
+    #     # cross-decomposition's "transform" returns X and Y
+    #     yield check_pipeline_consistency
 
-    if not tags["allow_nan"] and not tags["no_validation"]:
-        # Test that all estimators check their input for NaN's and infs
-        yield check_estimators_nan_inf
+    # if not tags["allow_nan"] and not tags["no_validation"]:
+    #     # Test that all estimators check their input for NaN's and infs
+    #     yield check_estimators_nan_inf
 
-    yield check_estimators_overwrite_params
-    if hasattr(estimator, 'sparsify'):
-        yield check_sparsify_coefficients
+    # yield check_estimators_overwrite_params
+    # if hasattr(estimator, 'sparsify'):
+    #     yield check_sparsify_coefficients
 
-    yield check_estimator_sparse_data
+    # yield check_estimator_sparse_data
 
-    # Test that estimators can be pickled, and once pickled
-    # give the same answer as before.
-    yield check_estimators_pickle
+    # # Test that estimators can be pickled, and once pickled
+    # # give the same answer as before.
+    # yield check_estimators_pickle
 
 
 def _yield_classifier_checks(name, classifier):
@@ -240,31 +242,31 @@ def _yield_all_checks(name, estimator):
 
     for check in _yield_checks(name, estimator):
         yield check
-    if is_classifier(estimator):
-        for check in _yield_classifier_checks(name, estimator):
-            yield check
-    if is_regressor(estimator):
-        for check in _yield_regressor_checks(name, estimator):
-            yield check
-    if hasattr(estimator, 'transform'):
-        for check in _yield_transformer_checks(name, estimator):
-            yield check
-    if isinstance(estimator, ClusterMixin):
-        for check in _yield_clustering_checks(name, estimator):
-            yield check
-    if is_outlier_detector(estimator):
-        for check in _yield_outliers_checks(name, estimator):
-            yield check
-    yield check_fit2d_predict1d
-    yield check_methods_subset_invariance
-    yield check_fit2d_1sample
-    yield check_fit2d_1feature
-    yield check_fit1d
-    yield check_get_params_invariance
-    yield check_set_params
-    yield check_dict_unchanged
-    yield check_dont_overwrite_parameters
-    yield check_fit_idempotent
+    # if is_classifier(estimator):
+    #     for check in _yield_classifier_checks(name, estimator):
+    #         yield check
+    # if is_regressor(estimator):
+    #     for check in _yield_regressor_checks(name, estimator):
+    #         yield check
+    # if hasattr(estimator, 'transform'):
+    #     for check in _yield_transformer_checks(name, estimator):
+    #         yield check
+    # if isinstance(estimator, ClusterMixin):
+    #     for check in _yield_clustering_checks(name, estimator):
+    #         yield check
+    # if is_outlier_detector(estimator):
+    #     for check in _yield_outliers_checks(name, estimator):
+    #         yield check
+    # yield check_fit2d_predict1d
+    # yield check_methods_subset_invariance
+    # yield check_fit2d_1sample
+    # yield check_fit2d_1feature
+    # yield check_fit1d
+    # yield check_get_params_invariance
+    # yield check_set_params
+    # yield check_dict_unchanged
+    # yield check_dont_overwrite_parameters
+    # yield check_fit_idempotent
 
 
 def check_estimator(Estimator):
@@ -546,50 +548,47 @@ def check_sample_weights_pandas_series(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
     estimator = clone(estimator_orig)
-    if has_fit_parameter(estimator, "sample_weight"):
+    try:
+        import pandas as pd
+        X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
+                        [2, 1], [2, 2], [2, 3], [2, 4]])
+        X = pd.DataFrame(pairwise_estimator_convert_X(X, estimator_orig))
+        y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2])
+        weights = pd.Series([1] * 8)
+        if _safe_tags(estimator, "multioutput_only"):
+            y = pd.DataFrame(y)
         try:
-            import pandas as pd
-            X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
-                          [2, 1], [2, 2], [2, 3], [2, 4]])
-            X = pd.DataFrame(pairwise_estimator_convert_X(X, estimator_orig))
-            y = pd.Series([1, 1, 1, 1, 2, 2, 2, 2])
-            weights = pd.Series([1] * 8)
-            if _safe_tags(estimator, "multioutput_only"):
-                y = pd.DataFrame(y)
-            try:
-                estimator.fit(X, y, sample_weight=weights)
-            except ValueError:
-                raise ValueError("Estimator {0} raises error if "
-                                 "'sample_weight' parameter is of "
-                                 "type pandas.Series".format(name))
-        except ImportError:
-            raise SkipTest("pandas is not installed: not testing for "
-                           "input of type pandas.Series to class weight.")
+            estimator.fit(X, y, sample_weight=weights)
+        except ValueError:
+            raise ValueError("Estimator {0} raises error if "
+                                "'sample_weight' parameter is of "
+                                "type pandas.Series".format(name))
+    except ImportError:
+        raise SkipTest("pandas is not installed: not testing for "
+                        "input of type pandas.Series to class weight.")
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_sample_weights_list(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type list in the 'fit' function.
-    if has_fit_parameter(estimator_orig, "sample_weight"):
-        estimator = clone(estimator_orig)
-        rnd = np.random.RandomState(0)
-        X = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
-                                         estimator_orig)
-        y = np.arange(10) % 3
-        y = multioutput_estimator_convert_y_2d(estimator, y)
-        sample_weight = [3] * 10
-        # Test that estimators don't raise any exception
-        estimator.fit(X, y, sample_weight=sample_weight)
+    estimator = clone(estimator_orig)
+    rnd = np.random.RandomState(0)
+    X = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
+                                        estimator_orig)
+    y = np.arange(10) % 3
+    y = multioutput_estimator_convert_y_2d(estimator, y)
+    sample_weight = [3] * 10
+    # Test that estimators don't raise any exception
+    estimator.fit(X, y, sample_weight=sample_weight)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_sample_weights_invariance(name, estimator_orig):
     # check that the estimators yield same results for
     # unit weights and no weights
-    if (has_fit_parameter(estimator_orig, "sample_weight") and
-            not (hasattr(estimator_orig, "_pairwise")
-                 and estimator_orig._pairwise)):
+    if not (hasattr(estimator_orig, "_pairwise")
+            and estimator_orig._pairwise):
         # We skip pairwise because the data is not pairwise
 
         estimator1 = clone(estimator_orig)
