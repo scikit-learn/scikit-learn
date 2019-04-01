@@ -120,7 +120,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         if not self.sparse_output_:
             y = np.atleast_1d(y)
 
-        self.output_2d_ = (y.ndim == 2) and (y.shape[1] > 1)
+        self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
 
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
@@ -426,7 +426,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
-        self.output_2d_ = (y.ndim == 2) and (y.shape[1] > 1)
+        self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
 
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
