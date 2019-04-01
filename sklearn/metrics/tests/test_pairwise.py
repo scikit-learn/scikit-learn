@@ -633,12 +633,12 @@ def test_euclidean_distances_sym(dtype, x_array_constr):
 @pytest.mark.parametrize("dtype, s",
                          [(np.float32, 1e-4),
                           (np.float64, 1e-8)])
-@pytest.mark.parametrize("dim", [1, 10000])
+@pytest.mark.parametrize("dim", [1, 1000000])
 def test_euclidean_distances_extreme_values(dtype, s, dim):
     # check that euclidean distances is correct where 'fast' method wouldn't be
     # on float32 thanks to upcasting and is not on float64.
     X = np.array([[1.] * dim], dtype=dtype)
-    Y = X + s
+    Y = np.array([[1. + s] * dim], dtype=dtype)
 
     distances = euclidean_distances(X, Y)
     expected = cdist(X, Y)
@@ -647,7 +647,6 @@ def test_euclidean_distances_extreme_values(dtype, s, dim):
         # This is expected to fail for float64 due to lack of precision of the
         # fast method of euclidean distances.
         with pytest.raises(AssertionError, match='Not equal to tolerance'):
-            print(distances, expected)
             assert_allclose(distances, expected, rtol=(1 - 0.001))
     else:
         assert_allclose(distances, expected, rtol=1e-5)
