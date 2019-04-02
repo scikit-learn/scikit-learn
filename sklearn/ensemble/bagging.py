@@ -66,8 +66,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
-    support_sample_weight = has_fit_parameter(ensemble.base_estimator_,
-                                              "sample_weight")
+    support_sample_weight = ensemble._get_tags()['supports_sample_weight']
     if not support_sample_weight and sample_weight is not None:
         raise ValueError("The base estimator doesn't support sample weight")
 
@@ -426,6 +425,17 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """
         return [sample_indices
                 for _, sample_indices in self._get_estimators_indices()]
+
+    def _more_tags(self):
+        if self.base_estimator is None:
+            # base_estimator can be None in which case we use a decision tree,
+            # which accepts sample_weight
+            supports_sample_weight = True
+        else:
+            supports_sample_weight = (
+                self.base_estimator._get_tags()['supports_sample_weight'])
+
+        return {'supports_sample_weight': supports_sample_weight}
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):

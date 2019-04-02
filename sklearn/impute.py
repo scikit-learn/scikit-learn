@@ -1139,11 +1139,15 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
             # The imputer mask will be constructed with the same sparse format
             # as X.
+            print(mask)
             sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
                                   else sparse.csc_matrix)
             imputer_mask = sparse_constructor(
                 (mask, X.indices.copy(), X.indptr.copy()),
                 shape=X.shape, dtype=bool)
+            print(imputer_mask.todense())
+            # imputer_mask.eliminate_zeros()
+            print(imputer_mask.todense())
 
             missing_values_mask = imputer_mask.copy()
             missing_values_mask.eliminate_zeros()

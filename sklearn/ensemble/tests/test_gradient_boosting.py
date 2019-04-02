@@ -1395,18 +1395,6 @@ def test_gradient_boosting_with_init_pipeline():
                   'weights'):
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
-    # Passing sample_weight to a pipeline raises a ValueError. This test makes
-    # sure we make the distinction between ValueError raised by a pipeline that
-    # was passed sample_weight, and a ValueError raised by a regular estimator
-    # whose input checking failed.
-    with pytest.raises(
-            ValueError,
-            match='nu <= 0 or nu > 1'):
-        # Note that NuSVR properly supports sample_weight
-        init = NuSVR(gamma='auto', nu=1.5)
-        gb = GradientBoostingRegressor(init=init)
-        gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
-
 
 @pytest.mark.parametrize('estimator, missing_method', [
     (GradientBoostingClassifier(init=LinearSVC()), 'predict_proba'),

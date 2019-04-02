@@ -244,6 +244,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
         return self
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
+
 
 class LinearSVR(LinearModel, RegressorMixin):
     """Linear Support Vector Regression.
@@ -424,6 +427,9 @@ class LinearSVR(LinearModel, RegressorMixin):
         self.coef_ = self.coef_.ravel()
 
         return self
+
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
 
 
 class SVC(BaseSVC):

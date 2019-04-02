@@ -495,6 +495,9 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     def _get_coef(self):
         return safe_sparse_dot(self._dual_coef_, self.support_vectors_)
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
+
 
 class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""

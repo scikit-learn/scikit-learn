@@ -526,6 +526,9 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
 
         return self.tree_.compute_feature_importances()
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
+
 
 # =============================================================================
 # Public estimators

@@ -440,7 +440,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                     "probabilities with a predict_proba method.\n"
                     "Please change the base estimator or set "
                     "algorithm='SAMME' instead.")
-        if not has_fit_parameter(self.base_estimator_, "sample_weight"):
+        if not self.base_estimator_._get_tags()['supports_sample_weight']:
             raise ValueError("%s doesn't support sample_weight."
                              % self.base_estimator_.__class__.__name__)
 
