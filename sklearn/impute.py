@@ -145,7 +145,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         - If add_indicator=True.
 
     add_indicator : boolean, optional (default=False)
-        If True, a `MissingIndicator` transform will stack into output
+        If True, a `MissingIndicator` transform will stack onto output
         of the imputer's transform. This allows a predictive estimator
         to account for missingness despite imputation. If a feature has no
         missing values at fit/train time, the feature won't appear on
