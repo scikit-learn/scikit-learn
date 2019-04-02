@@ -144,6 +144,12 @@ def test_configure():
         os.chdir(setup_path)
         old_argv = sys.argv
         sys.argv = ['setup.py', 'config']
+
+        # disable OpenMP checks for the tests since sklearn can be built and
+        # tested on different machines.
+        if not os.getenv('SKLEARN_NO_OPENMP'):
+            os.environ['SKLEARN_NO_OPENMP'] = "True"
+
         clean_warning_registry()
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
