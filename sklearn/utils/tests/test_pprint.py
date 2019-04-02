@@ -24,7 +24,6 @@ from sklearn import set_config
 class LogisticRegression(BaseEstimator):
     """Logistic Regression (aka logit, MaxEnt) classifier.
     """
-
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='warn', max_iter=100,
@@ -49,6 +48,7 @@ class LogisticRegression(BaseEstimator):
     def fit(self, X, y):
         return self
 
+
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
     """
@@ -63,6 +63,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         """Delegated from SelectorMixin.
         """
         self.SelectorMixin._get_support_mask()
+
 
 def test_basic():
     # Basic pprint test
