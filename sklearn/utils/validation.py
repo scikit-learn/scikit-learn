@@ -1073,7 +1073,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     else:
         min_eig = lambdas.min()
-        if -min_eig > 1e-5 * max(max_eig, 0) and -min_eig > 1e-10:
+        if min_eig < -1e-5 * max(max_eig, 0) and min_eig < -1e-10:
             # If kernel has been computed with single precision we would
             # probably need more tolerant thresholds such as:
             # (-min_eig > 5e-3 * max(max_eig, 0) and -min_eig > 1e-8)
