@@ -280,7 +280,8 @@ def test_kernel_conditioning():
     X = [[5, 1],
          [5+1e-8, 1e-8],
          [5+1e-8, 0]]
-    kpca = KernelPCA(kernel="linear", n_components=2, fit_inverse_transform=True)
+    kpca = KernelPCA(kernel="linear", n_components=2,
+                     fit_inverse_transform=True)
     kpca.fit(X)
 
     # check that the small non-zero eigenvalue was correctly set to zero
