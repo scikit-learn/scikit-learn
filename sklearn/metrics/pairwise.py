@@ -307,14 +307,14 @@ def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
     tmp = (x_density + y_density) * n_features
     chunk_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
     chunk_size = max(int(chunk_size), 1)
-    chunk_size = min(chunk_size, max(X.shape[0], Y.shape[0]))
 
     n_chunks_X = n_samples_X // chunk_size + (n_samples_X % chunk_size != 0)
     n_chunks_Y = n_samples_Y // chunk_size + (n_samples_Y % chunk_size != 0)
 
     for i in range(n_chunks_X):
         xs = i * chunk_size
-        xe = xs + chunk_size
+        # FIXME (scipy>1.0) slicing sparse matrix needs bounds in range
+        xe = min(xs + chunk_size, n_samples_X)
 
         X_chunk = X[xs:xe].astype(np.float64)
         if XX is None:
@@ -324,7 +324,8 @@ def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
 
         for j in range(n_chunks_Y):
             ys = j * chunk_size
-            ye = ys + chunk_size
+            # FIXME (scipy>1.0) slicing sparse matrix needs bounds in range
+            ye = min(ys + chunk_size, n_samples_Y)
 
             if X is Y and j < i:
                 # when X is Y the distance matrix is symmetric so we only need
