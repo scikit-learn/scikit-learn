@@ -898,7 +898,5 @@ def test_check_psd_eigenvalues_invalid(lambdas, err_type, err_msg):
     """Test that check_psd_eigenvalues raises the right error for invalid
     input"""
 
-    with pytest.raises(err_type) as err_info:
-        check_psd_eigenvalues(input)
-
-    assert err_msg in err_info.value.args[0]
+    with pytest.raises(err_type, match=err_msg):
+        check_psd_eigenvalues(lambdas)
