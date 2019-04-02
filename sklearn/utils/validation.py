@@ -983,22 +983,22 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     - that there are no significant imaginary parts in eigenvalues (more than
       1e-5 times the maximum real part). If this check fails, it raises a
-      `ValueError`. Otherwise all non-significant imaginary parts that may
+      ``ValueError``. Otherwise all non-significant imaginary parts that may
       remain are removed.
 
     - that eigenvalues are not all negative. If this check fails, it raises a
-      `ValueError`
+      ``ValueError``
 
     - that there are no significant negative eigenvalues (with absolute value
       more than 1e-10 and more than 1e-5 times the largest positive
-      eigenvalue). If this check fails, it raises a `PSDSpectrumWarning`. All
+      eigenvalue). If this check fails, it raises a ``PSDSpectrumWarning``. All
       negative eigenvalues (even smaller ones) are set to zero in all cases.
 
     - that the eigenvalues are well conditioned. That means, that the
       eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
-      If this check fails and `warn_on_zeros=True`, it raises a
-      `PSDSpectrumWarning`. All the eigenvalues that are too small are then set
-      to zero.
+      If this check fails and ``warn_on_zeros=True``, it raises a
+      ``PSDSpectrumWarning``. All the eigenvalues that are too small are then
+      set to zero.
 
     Parameters
     ----------
@@ -1006,9 +1006,9 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
         Array of eigenvalues to check / fix.
 
     warn_on_zeros : boolean (default: False)
-        When this is set to `True`, a `PSDSpectrumWarning` will be raised when
-        there are extremely small eigenvalues. Otherwise no warning will be
-        raised. Note that in both cases, extremely small eigenvalues will be
+        When this is set to ``True``, a ``PSDSpectrumWarning`` will be raised
+        when there are extremely small eigenvalues. Otherwise no warning will
+        be raised. Note that in both cases, extremely small eigenvalues will be
         set to zero.
 
     Returns
