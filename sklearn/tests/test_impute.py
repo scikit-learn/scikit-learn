@@ -1201,24 +1201,3 @@ def test_imputation_add_indicator_sparse_matrix(arr_type):
     assert sparse.issparse(X_trans)
     assert X_trans.shape == X_true.shape
     assert_allclose(X_trans.toarray(), X_true)
-
-
-@pytest.mark.parametrize("marker", [np.nan, -1, 0])
-def test_iterative_imputer_add_indicator(marker):
-    X = np.array([
-        [1,      marker, marker, 2],
-        [1,      3,      marker, 1],
-        [marker, marker, marker, marker],
-        [marker, marker, marker, 3],
-    ])
-    X_true = np.array([
-        [1., 3., 2., 0., 1., 0.],
-        [1., 3., 1., 0., 0., 0.],
-        [1., 3., 2., 1., 1., 1.],
-        [1, 3., 3., 1., 1., 0.],
-    ])
-
-    imputer = IterativeImputer(missing_values=marker,
-                               max_iter=1, add_indicator=True)
-    X_trans = imputer.fit_transform(X)
-    assert_allclose(X_trans, X_true)
