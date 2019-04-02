@@ -839,11 +839,11 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
 
 
 _psd_cases_valid = {
-    'nominal': ((1., 2.), np.array([1., 2.]), None, ""),
-    'insignificant_imag': ((5., 5e-5j), np.array([5., 0.]), None, ""),
-    'significant neg': ((5., -1.), np.array([5., 0.]), PSDSpectrumWarning,
+    'nominal': ((1, 2), np.array([1, 2]), None, ""),
+    'insignificant_imag': ((5, 5e-5j), np.array([5, 0]), None, ""),
+    'significant neg': ((5, -1), np.array([5, 0]), PSDSpectrumWarning,
                         "There are significant negative eigenvalues"),
-    'insignificant neg': ((5, -5e-5), np.array([5., 0.]), None, "")
+    'insignificant neg': ((5, -5e-5), np.array([5, 0]), None, "")
 }
 
 
@@ -870,7 +870,7 @@ def test_check_psd_eigenvalues_bad_conditioning_warning():
     when warn_on_zeros is set to True, and does not when it is set to False"""
 
     input = (5, 4e-12)
-    output = np.array([5., 0.])
+    output = np.array([5, 0])
 
     with pytest.warns(None, ) as w:
         assert_array_equal(check_psd_eigenvalues(input, warn_on_zeros=False),
@@ -884,7 +884,7 @@ def test_check_psd_eigenvalues_bad_conditioning_warning():
 
 
 _psd_cases_invalid = {
-    'significant_imag': ((5., 5j), ValueError,
+    'significant_imag': ((5, 5j), ValueError,
                          "There are significant imaginary parts in eigenv"),
     'all negative': ((-5, -1), ValueError,
                      "All eigenvalues are negative \\(maximum is -1.000")
