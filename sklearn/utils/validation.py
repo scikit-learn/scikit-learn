@@ -1005,7 +1005,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     lambdas : array-like
         Array of eigenvalues to check / fix.
 
-    warn_on_zeros : boolean (default: False)
+    warn_on_zeros : bool, optional (default=False)
         When this is set to ``True``, a ``PSDSpectrumWarning`` will be raised
         when there are extremely small eigenvalues. Otherwise no warning will
         be raised. Note that in both cases, extremely small eigenvalues will be
