@@ -1,10 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
-from sklearn.base import BaseEstimator, TransformerMixin
-
-from sklearn.exceptions import PSDSpectrumWarning
-from sklearn.utils.validation import check_psd_eigenvalues
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
                                    assert_raises, assert_allclose)
@@ -277,102 +273,15 @@ def test_nested_circles():
     assert_equal(train_score, 1.0)
 
 
-def test_errors_and_warnings():
-    """Tests that bad kernels raise error and warnings"""
+def test_kernel_conditioning():
+    """Test that ``check_psd_eigenvalues`` is correctly called."""
 
-    solvers = ['dense', 'arpack']
-    solvers_except_arpack = ['dense']
+    # create a pathological X leading to small non-zero eigenvalue
+    X = [[5, 1],
+         [5+1e-8, 1e-8],
+         [5+1e-8, 0]]
+    kpca = KernelPCA(kernel="linear", n_components=2, fit_inverse_transform=True)
+    kpca.fit(X)
 
-    # First create an identity transformer class
-    # ------------------------------------------
-    class IdentityKernelTransformer(BaseEstimator, TransformerMixin):
-        """We will use this transformer so that the passed kernel matrix is
-        not centered when kPCA is fit"""
-
-        def __init__(self):
-            pass
-
-        def fit(self, K, y=None):
-            return self
-
-        def transform(self, K, y=None, copy=True):
-            return K
-
-    # Significant imaginary parts: error
-    # ----------------------------------
-    # As of today it seems that the kernel matrix is always cast as a float
-    # whatever the method (precomputed or callable).
-    # The following test therefore fails ("did not raise").
-    K = [[5, 0],
-         [0, 6 * 1e-5j]]
-    # for solver in solvers:
-    #     kpca = KernelPCA(kernel=kernel_getter, eigen_solver=solver,
-    #                      fit_inverse_transform=False)
-    #     kpca._centerer = IdentityKernelTransformer()
-    #     K = kpca._get_kernel(K)
-    #     with pytest.raises(ValueError):
-    #         # note: we can not test 'fit' because _centerer would be replaced
-    #         kpca._fit_transform(K)
-    #
-    # For safety concerning future evolutions the corresponding code is left in
-    # KernelPCA, and we test it directly by calling the inner method here:
-    with pytest.raises(ValueError):
-        check_psd_eigenvalues((K[0][0], K[1][1]))
-
-    # All negative eigenvalues: error
-    # -------------------------------
-    K = [[-5, 0],
-         [0, -6e-5]]
-    # check that the inner method works
-    with pytest.raises(ValueError):
-        check_psd_eigenvalues((K[0][0], K[1][1]))
-
-    for solver in solvers:
-        kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
-                         fit_inverse_transform=False)
-        kpca._centerer = IdentityKernelTransformer()
-        K = kpca._get_kernel(K)
-        with pytest.raises(ValueError):
-            # note: we can not test 'fit' because _centerer would be replaced
-            kpca._fit_transform(K)
-
-    # Significant negative eigenvalue: warning
-    # ----------------------------------------
-    K = [[5, 0],
-         [0, -6e-5]]
-    # check that the inner method works
-    w_msg = "There are significant negative eigenvalues"
-    with pytest.warns(PSDSpectrumWarning, match=w_msg):
-        check_psd_eigenvalues((K[0][0], K[1][1]))
-
-    for solver in solvers_except_arpack:
-        # Note: arpack detects this case and raises an error already
-        kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
-                         fit_inverse_transform=False)
-        kpca._centerer = IdentityKernelTransformer()
-        K = kpca._get_kernel(K)
-        # note: we can not test 'fit' because _centerer would be replaced
-        with pytest.warns(PSDSpectrumWarning, match=w_msg):
-            kpca._fit_transform(K)
-
-    # Bad conditioning
-    # ----------------
-    K = [[5, 0],
-         [0, 4e-12]]
-    # check that the inner method works
-    w_msg = "the largest eigenvalue is more than 1.00E\\+12 times the smallest"
-    with pytest.warns(PSDSpectrumWarning, match=w_msg):
-        check_psd_eigenvalues((K[0][0], K[1][1]), warn_on_zeros=True)
-
-    # This is actually a normal behaviour when the number of samples is big,
-    # so no special warning should be raised in this case
-    for solver in solvers_except_arpack:
-        # Note: arpack detects this case and raises an error already
-        kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
-                         fit_inverse_transform=False)
-        kpca._centerer = IdentityKernelTransformer()
-        K = kpca._get_kernel(K)
-        # note: we can not test 'fit' because _centerer would be replaced
-        with pytest.warns(None) as w:
-            kpca._fit_transform(K)
-        assert not w
+    # check that the small non-zero eigenvalue was correctly set to zero
+    assert kpca.lambdas_.min() == 0
