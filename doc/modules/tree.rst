@@ -535,7 +535,9 @@ where :math:`X_m` is the training data in node :math:`m`
     * https://en.wikipedia.org/wiki/Decision_tree_learning
 
     * https://en.wikipedia.org/wiki/Predictive_analytics
-
+    
+    * `Understanding the decision tree structure`<https://scikit-learn.org/dev/auto_examples/tree/plot_unveil_tree_structure.html/>
+    
     * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
       Regression Trees. Wadsworth, Belmont, CA, 1984.
 
