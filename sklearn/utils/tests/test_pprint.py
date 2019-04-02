@@ -59,8 +59,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.step = step
         self.verbose = verbose
 
-    def fit(self, X, y):
-        return self
+    def _get_support_mask(self):
+        """Delegated from SelectorMixin.
+        """
+        self.SelectorMixin._get_support_mask()
 
 def test_basic():
     # Basic pprint test
