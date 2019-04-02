@@ -1093,7 +1093,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
         if warn_on_zeros:
             warnings.warn("Badly conditioned PSD matrix spectrum: the largest "
                           "eigenvalue is more than %.2E times the smallest. "
-                          "Small eigenvalues will be replaced with 0"
+                          "Small eigenvalues will be replaced with 0."
                           "" % max_conditioning, PSDSpectrumWarning)
         lambdas[too_small_lambdas] = 0
 
