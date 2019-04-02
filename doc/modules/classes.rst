@@ -1432,6 +1432,7 @@ Low-level methods
    utils.check_scalar
    utils.check_consistent_length
    utils.check_random_state
+   utils.check_psd_eigenvalues
    utils.class_weight.compute_class_weight
    utils.class_weight.compute_sample_weight
    utils.deprecated
