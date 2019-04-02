@@ -1057,7 +1057,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
         if max_imag_abs > 1e-5 * max_real_abs:
             raise ValueError(
                 "There are significant imaginary parts in eigenvalues (%f "
-                "of the max real part). The matrix is maybe not PSD, or "
+                "of the maximum real part). The matrix is maybe not PSD, or "
                 "something went wrong with the eigenvalues decomposition."
                 "" % (max_imag_abs / max_real_abs))
 
@@ -1067,9 +1067,9 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     # Check that there are no significant negative eigenvalues
     max_eig = lambdas.max()
     if max_eig < 0:
-        raise ValueError("All eigenvalues are negative (max is %f). The matrix"
-                         " is maybe not PSD, or something went wrong with the "
-                         "eigenvalues decomposition." % max_eig)
+        raise ValueError("All eigenvalues are negative (maximum is %f). The "
+                         "matrix is maybe not PSD, or something went wrong "
+                         "with the eigenvalues decomposition." % max_eig)
 
     else:
         min_eig = lambdas.min()
@@ -1078,10 +1078,10 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
             # probably need more tolerant thresholds such as:
             # (-min_eig > 5e-3 * max(max_eig, 0) and -min_eig > 1e-8)
             warnings.warn("There are significant negative eigenvalues "
-                          "(%f of the max positive). The matrix is maybe not "
-                          "PSD, or something went wrong with the eigenvalues "
-                          "decomposition. Replacing them with zero."
-                          "" % (-min_eig / max_eig), PSDSpectrumWarning)
+                          "(%f of the maximum positive). The matrix is maybe "
+                          "not PSD, or something went wrong with the "
+                          "eigenvalues decomposition. Replacing them with "
+                          "zero." % (-min_eig / max_eig), PSDSpectrumWarning)
 
     # Remove all negative values in all cases
     lambdas[lambdas < 0] = 0
