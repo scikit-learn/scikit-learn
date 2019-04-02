@@ -1098,10 +1098,12 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         - If False, the imputer mask will be a numpy array.
 
     error_on_new : boolean, optional
-        If True (default), transform will raise an error when there are
+        If True (default), transform will raise an error when there are either
         features with missing values in transform that have no missing values
-        in fit. This is applicable only when ``features="missing-only"`` or
-        ``features="some-missing"``.
+        in fit (only applicable if
+        ``features in ("missing-only", "some-missing")``), or features with non
+        missing values in transform that have only missing values in fit
+        (only applicable if ``features="some-missing"``).
 
     Attributes
     ----------
@@ -1280,9 +1282,11 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         if self.features in ("missing-only", "some-missing"):
             features_diff_fit_trans = np.setdiff1d(features, self.features_)
             if (self.error_on_new and features_diff_fit_trans.size > 0):
-                raise ValueError("The features {} have missing values "
+                raise ValueError("The features {} either have missing values "
                                  "in transform but have no missing values "
-                                 "in fit.".format(features_diff_fit_trans))
+                                 "in fit, or have non missing values in "
+                                 "transform but have only missing values in "
+                                 "fit".format(features_diff_fit_trans))
 
             if self.features_.size < self._n_features:
                 imputer_mask = imputer_mask[:, self.features_]
