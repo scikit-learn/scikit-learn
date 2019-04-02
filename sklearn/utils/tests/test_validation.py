@@ -838,25 +838,29 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
     assert type(raised_error.value) == type(err_msg)
 
 
-psd_cases = [('nominal', (1., 2.), np.array([1., 2.]), None, ""),
-             ('insignificant_imag', (5., 5e-5j), np.array([5., 0.]), None, ""),
-             ('significant neg', (5., -1.), np.array([5., 0.]),
-              PSDSpectrumWarning, "There are significant negative eigenval"),
-             ('insignificant neg', (5, -5e-5), np.array([5., 0.]), None, ""),]
+_psd_cases_valid = {
+    'nominal': ((1., 2.), np.array([1., 2.]), None, ""),
+    'insignificant_imag': ((5., 5e-5j), np.array([5., 0.]), None, ""),
+    'significant neg': ((5., -1.), np.array([5., 0.]), PSDSpectrumWarning,
+                        "There are significant negative eigenvalues"),
+    'insignificant neg': ((5, -5e-5), np.array([5., 0.]), None, "")
+}
 
 
-@pytest.mark.parametrize("input, output, w_type, w_msg",
-                         [c[1:] for c in psd_cases],
-                         ids=[c[0] for c in psd_cases])
+@pytest.mark.parametrize("lambdas, expected_lambdas, w_type, w_msg",
+                         list(_psd_cases_valid.values()),
+                         ids=list(_psd_cases_valid.keys()))
 @pytest.mark.parametrize("warn_on_zeros", [True, False])
-def test_check_psd_eigenvalues_valid(input, output, w_type, w_msg,
+def test_check_psd_eigenvalues_valid(lambdas, expected_lambdas, w_type, w_msg,
                                      warn_on_zeros):
     """Test that check_psd_eigenvalues returns the right output for valid
     input, possibly raising the right warning"""
 
     with pytest.warns(w_type, match=w_msg) as w:
         assert_array_equal(
-            check_psd_eigenvalues(input, warn_on_zeros=warn_on_zeros), output)
+            check_psd_eigenvalues(lambdas, warn_on_zeros=warn_on_zeros),
+            expected_lambdas
+        )
     if w_type is None:
         assert not w
 
@@ -879,16 +883,18 @@ def test_check_psd_eigenvalues_bad_conditioning_warning():
                            output)
 
 
-psd_cases2 = [('significant_imag', (5., 5j),
-               ValueError, "There are significant imaginary parts in eigenv"),
-              ('all negative', (-5, -1),
-               ValueError, "All eigenvalues are negative (max is -1.000000)")]
+_psd_cases_invalid = {
+    'significant_imag': ((5., 5j), ValueError,
+                         "There are significant imaginary parts in eigenv"),
+    'all negative': ((-5, -1), ValueError,
+                     "All eigenvalues are negative \\(maximum is -1.000")
+}
 
 
-@pytest.mark.parametrize("input, err_type, err_msg",
-                         [c[1:] for c in psd_cases2],
-                         ids=[c[0] for c in psd_cases2])
-def test_check_psd_eigenvalues_invalid(input, err_type, err_msg):
+@pytest.mark.parametrize("lambdas, err_type, err_msg",
+                         list(_psd_cases_invalid.values()),
+                         ids=list(_psd_cases_invalid.keys()))
+def test_check_psd_eigenvalues_invalid(lambdas, err_type, err_msg):
     """Test that check_psd_eigenvalues raises the right error for invalid
     input"""
 
