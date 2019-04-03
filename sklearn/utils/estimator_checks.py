@@ -78,39 +78,39 @@ def _safe_tags(estimator, key=None):
 
 def _yield_checks(name, estimator):
     tags = _safe_tags(estimator)
-    # yield check_estimators_dtypes
-    # yield check_fit_score_takes_y
+    yield check_estimators_dtypes
+    yield check_fit_score_takes_y
     if tags['supports_sample_weight']:
         yield check_sample_weights_pandas_series
         yield check_sample_weights_list
         yield check_sample_weights_invariance
-    # yield check_estimators_fit_returns_self
-    # yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
+    yield check_estimators_fit_returns_self
+    yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
-    # # Check that all estimator yield informative messages when
-    # # trained on empty datasets
-    # if not tags["no_validation"]:
-    #     yield check_complex_data
-    #     yield check_dtype_object
-    #     yield check_estimators_empty_data_messages
+    # Check that all estimator yield informative messages when
+    # trained on empty datasets
+    if not tags["no_validation"]:
+        yield check_complex_data
+        yield check_dtype_object
+        yield check_estimators_empty_data_messages
 
-    # if name not in CROSS_DECOMPOSITION:
-    #     # cross-decomposition's "transform" returns X and Y
-    #     yield check_pipeline_consistency
+    if name not in CROSS_DECOMPOSITION:
+        # cross-decomposition's "transform" returns X and Y
+        yield check_pipeline_consistency
 
-    # if not tags["allow_nan"] and not tags["no_validation"]:
-    #     # Test that all estimators check their input for NaN's and infs
-    #     yield check_estimators_nan_inf
+    if not tags["allow_nan"] and not tags["no_validation"]:
+        # Test that all estimators check their input for NaN's and infs
+        yield check_estimators_nan_inf
 
-    # yield check_estimators_overwrite_params
-    # if hasattr(estimator, 'sparsify'):
-    #     yield check_sparsify_coefficients
+    yield check_estimators_overwrite_params
+    if hasattr(estimator, 'sparsify'):
+        yield check_sparsify_coefficients
 
-    # yield check_estimator_sparse_data
+    yield check_estimator_sparse_data
 
-    # # Test that estimators can be pickled, and once pickled
-    # # give the same answer as before.
-    # yield check_estimators_pickle
+    # Test that estimators can be pickled, and once pickled
+    # give the same answer as before.
+    yield check_estimators_pickle
 
 
 def _yield_classifier_checks(name, classifier):
@@ -241,31 +241,31 @@ def _yield_all_checks(name, estimator):
 
     for check in _yield_checks(name, estimator):
         yield check
-    # if is_classifier(estimator):
-    #     for check in _yield_classifier_checks(name, estimator):
-    #         yield check
-    # if is_regressor(estimator):
-    #     for check in _yield_regressor_checks(name, estimator):
-    #         yield check
-    # if hasattr(estimator, 'transform'):
-    #     for check in _yield_transformer_checks(name, estimator):
-    #         yield check
-    # if isinstance(estimator, ClusterMixin):
-    #     for check in _yield_clustering_checks(name, estimator):
-    #         yield check
-    # if is_outlier_detector(estimator):
-    #     for check in _yield_outliers_checks(name, estimator):
-    #         yield check
-    # yield check_fit2d_predict1d
-    # yield check_methods_subset_invariance
-    # yield check_fit2d_1sample
-    # yield check_fit2d_1feature
-    # yield check_fit1d
-    # yield check_get_params_invariance
-    # yield check_set_params
-    # yield check_dict_unchanged
-    # yield check_dont_overwrite_parameters
-    # yield check_fit_idempotent
+    if is_classifier(estimator):
+        for check in _yield_classifier_checks(name, estimator):
+            yield check
+    if is_regressor(estimator):
+        for check in _yield_regressor_checks(name, estimator):
+            yield check
+    if hasattr(estimator, 'transform'):
+        for check in _yield_transformer_checks(name, estimator):
+            yield check
+    if isinstance(estimator, ClusterMixin):
+        for check in _yield_clustering_checks(name, estimator):
+            yield check
+    if is_outlier_detector(estimator):
+        for check in _yield_outliers_checks(name, estimator):
+            yield check
+    yield check_fit2d_predict1d
+    yield check_methods_subset_invariance
+    yield check_fit2d_1sample
+    yield check_fit2d_1feature
+    yield check_fit1d
+    yield check_get_params_invariance
+    yield check_set_params
+    yield check_dict_unchanged
+    yield check_dont_overwrite_parameters
+    yield check_fit_idempotent
     yield check_supports_sample_weight_tag
 
 
