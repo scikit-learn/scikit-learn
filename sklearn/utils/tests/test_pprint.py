@@ -1,6 +1,8 @@
 import re
 from pprint import PrettyPrinter
 
+import numpy as np
+
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -13,7 +15,7 @@ from sklearn.svm import LinearSVC
 from sklearn.decomposition import PCA
 from sklearn.decomposition import NMF
 from sklearn.impute import SimpleImputer
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import VectorizerMixin
 from sklearn import set_config
 
 
@@ -78,6 +80,43 @@ class GridSearchCV(BaseSearchCV):
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
         self.param_grid = param_grid
+
+
+class CountVectorizer(BaseEstimator, VectorizerMixin):
+    """Convert a collection of text documents to a matrix of token counts
+    """
+    def __init__(self, input='content', encoding='utf-8',
+                 decode_error='strict', strip_accents=None,
+                 lowercase=True, preprocessor=None, tokenizer=None,
+                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
+                 ngram_range=(1, 1), analyzer='word',
+                 max_df=1.0, min_df=1, max_features=None,
+                 vocabulary=None, binary=False, dtype=np.int64):
+        self.input = input
+        self.encoding = encoding
+        self.decode_error = decode_error
+        self.strip_accents = strip_accents
+        self.preprocessor = preprocessor
+        self.tokenizer = tokenizer
+        self.analyzer = analyzer
+        self.lowercase = lowercase
+        self.token_pattern = token_pattern
+        self.stop_words = stop_words
+        self.max_df = max_df
+        self.min_df = min_df
+        if max_df < 0 or min_df < 0:
+            raise ValueError("negative value for max_df or min_df")
+        self.max_features = max_features
+        if max_features is not None:
+            if (not isinstance(max_features, numbers.Integral) or
+                    max_features <= 0):
+                raise ValueError(
+                    "max_features=%r, neither a positive integer nor None"
+                    % max_features)
+        self.ngram_range = ngram_range
+        self.vocabulary = vocabulary
+        self.binary = binary
+        self.dtype = dtype
 
 
 def test_basic():
