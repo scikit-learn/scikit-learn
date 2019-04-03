@@ -6,8 +6,7 @@ import numpy as np
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.base import BaseEstimator, MetaEstimatorMixin
+from sklearn.base import BaseEstimator, MetaEstimatorMixin, TransformerMixin
 from sklearn.feature_selection.base import SelectorMixin
 from sklearn.model_selection._search import BaseSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
@@ -49,6 +48,18 @@ class LogisticRegression(BaseEstimator):
         self.l1_ratio = l1_ratio
 
     def fit(self, X, y):
+        return self
+
+
+class StandardScaler(BaseEstimator, TransformerMixin):
+    """Standardize features by removing the mean and scaling to unit variance
+    """
+    def __init__(self, copy=True, with_mean=True, with_std=True):
+        self.with_mean = with_mean
+        self.with_std = with_std
+        self.copy = copy
+
+    def transform(self, X, copy=None):
         return self
 
 
