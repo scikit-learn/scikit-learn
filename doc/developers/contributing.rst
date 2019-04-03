@@ -497,7 +497,7 @@ You can edit the documentation using any text editor, and then generate the
 HTML output by typing ``make html`` from the ``doc/`` directory. Alternatively,
 ``make`` can be used to quickly generate the documentation without the example
 gallery. The resulting HTML files will be placed in ``_build/html/stable`` and are viewable
-in a web browser. See the ``README``file in the ``doc/`` directory for more information.
+in a web browser. See the ``README`` file in the ``doc/`` directory for more information.
 
 
 Building the documentation
@@ -1458,6 +1458,8 @@ patterns.
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
 
+.. _estimator_tags:
+
 Estimator Tags
 --------------
 .. warning::
@@ -1473,7 +1475,8 @@ decide what tests to run and what input data is appropriate. Tags can depend on
 estimator parameters or even system architecture and can in general only be
 determined at runtime.
 
-The default value of all tags except for ``X_types`` is ``False``.
+The default value of all tags except for ``X_types`` is ``False``. These are
+defined in the ``BaseEstimator`` class.
 
 The current set of estimator tags are:
 
@@ -1523,6 +1526,15 @@ X_types
     ``'categorical'`` data.  For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
+
+To override the tags of a child class, one must define the `_more_tags()`
+method and return a dict with the desired tags, e.g::
+
+    class MyMultiOutputEstimator(BaseEstimator):
+
+        def _more_tags(self):
+            return {'multioutput_only': True,
+                    'non_deterministic': True}
 
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
