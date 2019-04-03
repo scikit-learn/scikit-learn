@@ -1026,8 +1026,8 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     Traceback (most recent call last):
         ...
     ValueError: There are significant imaginary parts in eigenvalues (1.000000
-        of the max real part). The matrix is maybe not PSD, or something went
-        wrong with the eigenvalues decomposition.
+        of the maximum real part). The matrix is maybe not PSD, or something
+        went wrong with the eigenvalues decomposition.
     >>> check_psd_eigenvalues((5, 5e-5j))  # insignificant imag part
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
@@ -1035,8 +1035,8 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
-    ValueError: All eigenvalues are negative (max is -1.000000). The matrix is
-        maybe not PSD, or something went wrong with the eigenvalues
+    ValueError: All eigenvalues are negative (maximum is -1.000000). The matrix
+        is maybe not PSD, or something went wrong with the eigenvalues
         decomposition.
     >>> check_psd_eigenvalues((5, -1))     # significant negative
     ... # doctest: +NORMALIZE_WHITESPACE
