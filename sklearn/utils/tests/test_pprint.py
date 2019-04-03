@@ -6,7 +6,7 @@ from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.base import BaseEstimator, MetaEstimatorMixin
 from sklearn.feature_selection.base import SelectorMixin
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection._search import BaseSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
@@ -63,6 +63,21 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         """Delegated from SelectorMixin.
         """
         self.SelectorMixin._get_support_mask()
+
+
+class GridSearchCV(BaseSearchCV):
+    """Exhaustive search over specified parameter values for an estimator.
+    """
+    def __init__(self, estimator, param_grid, scoring=None,
+                 n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
+                 pre_dispatch='2*n_jobs', error_score='raise-deprecating',
+                 return_train_score=False):
+        super().__init__(
+            estimator=estimator, scoring=scoring,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
+        self.param_grid = param_grid
 
 
 def test_basic():
