@@ -80,7 +80,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by ``np.random``. Used when ``eigen_solver`` == 'arpack'.
+        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
 
         .. versionadded:: 0.18
 
