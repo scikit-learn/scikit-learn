@@ -4,7 +4,8 @@ from pprint import PrettyPrinter
 import numpy as np
 
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
-from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.utils.metaestimators import _BaseComposition
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.base import BaseEstimator, MetaEstimatorMixin
 from sklearn.feature_selection.base import SelectorMixin
@@ -117,6 +118,18 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.vocabulary = vocabulary
         self.binary = binary
         self.dtype = dtype
+
+
+class Pipeline(_BaseComposition):
+    """Pipeline of transforms with a final estimator.
+    """
+    def __init__(self, steps, memory=None):
+        self.steps = steps
+        self._validate_steps()
+        self.memory = memory
+
+    def _validate_steps(self):
+        return self
 
 
 def test_basic():
