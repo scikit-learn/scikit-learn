@@ -434,7 +434,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         X -= self.x_mean_
         X /= self.x_std_
         Ypred = np.dot(X, self.coef_)
-        return Ypred + self.y_mean_
+        return Ypred / self.y_std_ + self.y_mean_
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
