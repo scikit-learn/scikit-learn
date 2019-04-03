@@ -157,6 +157,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature.
 
+    indicator_ : object of type :class:`sklearn.impute.MissingIndicator`
+        Indicator used to add binary indicators for missing values.
+
     See also
     --------
     IterativeImputer : Multivariate imputation of missing values.
