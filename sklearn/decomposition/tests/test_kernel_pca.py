@@ -1,7 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
-from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
+from sklearn.utils.testing import (assert_array_equal,
+                                   assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
                                    assert_raises, assert_allclose)
 
@@ -287,4 +288,4 @@ def test_kernel_conditioning():
 
     # check that the small non-zero eigenvalue was correctly set to zero
     assert kpca.lambdas_.min() == 0
-    assert kpca.lambdas_ == check_psd_eigenvalues(kpca.lambdas_)
+    assert_array_equal(kpca.lambdas_, check_psd_eigenvalues(kpca.lambdas_))
