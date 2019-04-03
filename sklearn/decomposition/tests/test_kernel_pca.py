@@ -11,6 +11,7 @@ from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.utils import check_psd_eigenvalues
 
 
 def test_kernel_pca():
@@ -286,3 +287,4 @@ def test_kernel_conditioning():
 
     # check that the small non-zero eigenvalue was correctly set to zero
     assert kpca.lambdas_.min() == 0
+    assert kpca.lambdas_ == check_psd_eigenvalues(kpca.lambdas_)
