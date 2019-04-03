@@ -102,6 +102,9 @@ class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
         """
         return np.exp(self.predict_log_proba(X))
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
+
 
 class GaussianNB(BaseNB):
     """

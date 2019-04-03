@@ -367,3 +367,6 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         """
         self.fit(X, sample_weight=sample_weight)
         return self.labels_
+
+    def _more_tags(self):
+        return {'supports_sample_weight': True}

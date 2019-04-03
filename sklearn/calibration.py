@@ -199,6 +199,17 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
 
         return self
 
+    def _more_tags(self):
+        if self.base_estimator is None:
+            # base_estimator can be None in which case we use LinearSVC
+            # which accepts sample_weight
+            supports_sample_weight = True
+        else:
+            supports_sample_weight = (
+                self.base_estimator._get_tags()['supports_sample_weight'])
+
+        return {'supports_sample_weight': supports_sample_weight}
+
     def predict_proba(self, X):
         """Posterior probabilities of classification
 

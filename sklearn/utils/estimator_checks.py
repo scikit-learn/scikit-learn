@@ -81,7 +81,6 @@ def _yield_checks(name, estimator):
     # yield check_estimators_dtypes
     # yield check_fit_score_takes_y
     if tags['supports_sample_weight']:
-        print(name)
         yield check_sample_weights_pandas_series
         yield check_sample_weights_list
         yield check_sample_weights_invariance
@@ -267,6 +266,7 @@ def _yield_all_checks(name, estimator):
     # yield check_dict_unchanged
     # yield check_dont_overwrite_parameters
     # yield check_fit_idempotent
+    yield check_supports_sample_weight_tag
 
 
 def check_estimator(Estimator):
@@ -2467,3 +2467,11 @@ def check_fit_idempotent(name, estimator_orig):
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(X_test)
             assert_allclose_dense_sparse(result[method], new_result)
+
+def check_supports_sample_weight_tag(name, estimator_orig):
+    # Make sure that the supports_sample_weight tag is correct
+
+    estimator = clone(estimator_orig)
+
+    assert (has_fit_parameter(estimator, 'sample_weight') ==
+            estimator._get_tags()['supports_sample_weight'])

@@ -1048,6 +1048,9 @@ class SGDClassifier(BaseSGDClassifier):
     def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
+
 
 class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
@@ -1526,3 +1529,6 @@ class SGDRegressor(BaseSGDRegressor):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, warm_start=warm_start,
             average=average)
+
+    def _more_tags(self):
+        return {'supports_sample_weight': True}

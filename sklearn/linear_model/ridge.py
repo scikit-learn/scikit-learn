@@ -572,6 +572,9 @@ class _BaseRidge(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
 
         return self
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
+
 
 class Ridge(_BaseRidge, RegressorMixin):
     """Linear least squares with l2 regularization.
@@ -1222,6 +1225,9 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
         self.intercept_ = estimator.intercept_
 
         return self
+
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
 
 
 class RidgeCV(_BaseRidgeCV, RegressorMixin):

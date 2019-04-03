@@ -1680,6 +1680,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         return np.log(self.predict_proba(X))
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
+
 
 class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                            LinearClassifierMixin):
@@ -2260,3 +2263,6 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {'supports_sample_weight': True}

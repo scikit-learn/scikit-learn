@@ -1103,6 +1103,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         return -_labels_inertia(X, sample_weight, x_squared_norms,
                                 self.cluster_centers_)[1]
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
 
 def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
                      old_center_buffer, compute_squared_diff,

@@ -192,3 +192,6 @@ class KernelRidge(BaseEstimator, RegressorMixin, MultiOutputMixin):
         check_is_fitted(self, ["X_fit_", "dual_coef_"])
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)
+
+    def _more_tags(self):
+        return {'supports_sample_weight': True}

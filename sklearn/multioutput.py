@@ -23,7 +23,7 @@ from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
-from .utils.validation import check_is_fitted, has_fit_parameter
+from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .utils._joblib import Parallel, delayed
 
@@ -106,7 +106,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                              "multi-output regression but has only one.")
 
         if (sample_weight is not None and
-                not has_fit_parameter(self.estimator, 'sample_weight')):
+                not self.estimator._get_tags()['supports_sample_weight']):
             raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
@@ -159,7 +159,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                              "multi-output regression but has only one.")
 
         if (sample_weight is not None and
-                not has_fit_parameter(self.estimator, 'sample_weight')):
+                not self.estimator._get_tags()['supports_sample_weight']):
             raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
@@ -197,7 +197,10 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         return np.asarray(y).T
 
     def _more_tags(self):
-        return {'multioutput_only': True}
+        supports_sample_weight = (
+            self.estimator._get_tags()['supports_sample_weight'])
+        return {'multioutput_only': True,
+                'supports_sample_weight': supports_sample_weight}
 
 
 class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):

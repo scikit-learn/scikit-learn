@@ -18,7 +18,7 @@ from ..base import TransformerMixin
 from ..base import clone
 from ..preprocessing import LabelEncoder
 from ..utils._joblib import Parallel, delayed
-from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.validation import check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
 
@@ -176,10 +176,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
                              % (len(self.weights), len(self.estimators)))
 
         if sample_weight is not None:
-            for name, step in self.estimators:
-                if not has_fit_parameter(step, 'sample_weight'):
+            for est in self.estimators:
+                if not est._get_tags()['supports_sample_weight']:
                     raise ValueError('Underlying estimator \'%s\' does not'
-                                     ' support sample weights.' % name)
+                                     ' support sample weights.' %
+                                     est.__class__.__name__)
         names, clfs = zip(*self.estimators)
         self._validate_names(names)
 
@@ -343,3 +344,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     def _predict(self, X):
         """Collect results from clf.predict calls. """
         return np.asarray([clf.predict(X) for clf in self.estimators_]).T
+
+    def _more_tags(self):
+        supports_sample_weight = all(
+            est._get_tags()['supports_sample_weight']
+            for est in self.estimators
+        )
+
+        return {'supports_sample_weight': supports_sample_weight}

@@ -153,3 +153,6 @@ class Perceptron(BaseSGDClassifier):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, power_t=0.5,
             warm_start=warm_start, class_weight=class_weight, n_jobs=n_jobs)
+
+    def _more_tags(self):
+        return {'supports_sample_weight': True}

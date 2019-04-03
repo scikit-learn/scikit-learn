@@ -305,3 +305,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             y - safe_sparse_dot(X, self.coef_) - self.intercept_)
         self.outliers_ = residual > self.scale_ * self.epsilon
         return self
+
+    def _more_tags(self):
+        return {'supports_sample_weight': True}

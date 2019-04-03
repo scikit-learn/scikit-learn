@@ -407,4 +407,5 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             self._build_f(self._necessary_X_, self._necessary_y_)
 
     def _more_tags(self):
-        return {'X_types': ['1darray']}
+        return {'X_types': ['1darray'],
+                'supports_sample_weight': True}

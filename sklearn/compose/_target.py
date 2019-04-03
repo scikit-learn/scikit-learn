@@ -235,4 +235,14 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         return pred_trans
 
     def _more_tags(self):
-        return {'poor_score': True, 'no_validation': True}
+        if self.regressor is None:
+            # base_estimator can be None in which case we use LinearRegression
+            # which accepts sample_weight
+            supports_sample_weight = True
+        else:
+            supports_sample_weight = (
+                self.base_estimator._get_tags()['supports_sample_weight'])
+
+        return {'poor_score': True, 'no_validation': True,
+                'supports_sample_weight': supports_sample_weight}
+

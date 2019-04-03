@@ -508,6 +508,9 @@ class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
         self._set_intercept(X_offset, y_offset, X_scale)
         return self
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
+
 
 def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
              check_input=True):

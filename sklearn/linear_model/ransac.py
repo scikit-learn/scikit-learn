@@ -13,7 +13,6 @@ from ..utils import check_random_state, check_array, check_consistent_length
 from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted
 from .base import LinearRegression
-from ..utils.validation import has_fit_parameter
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.spacing(1)
@@ -316,11 +315,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         except ValueError:
             pass
 
-        estimator_fit_has_sample_weight = has_fit_parameter(base_estimator,
-                                                            "sample_weight")
+        supports_sample_weight = self._get_tags()['supports_sample_weight']
         estimator_name = type(base_estimator).__name__
-        if (sample_weight is not None and not
-                estimator_fit_has_sample_weight):
+        if sample_weight is not None and not supports_sample_weight:
             raise ValueError("%s does not support sample_weight. Samples"
                              " weights are only used for the calibration"
                              " itself." % estimator_name)
@@ -492,3 +489,14 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin,
         check_is_fitted(self, 'estimator_')
 
         return self.estimator_.score(X, y)
+
+    def _more_tags(self):
+        if self.base_estimator is None:
+            # base_estimator can be None in which case we use LinearRegression
+            # which accepts sample_weight
+            supports_sample_weight = True
+        else:
+            supports_sample_weight = (
+                self.base_estimator._get_tags()['supports_sample_weight'])
+
+        return {'supports_sample_weight': supports_sample_weight}

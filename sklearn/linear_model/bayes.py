@@ -359,6 +359,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         return score
 
+    def _more_tags(self):
+        return {'supports_sample_weight': True}
+
 
 ###############################################################################
 # ARD (Automatic Relevance Determination) regression
