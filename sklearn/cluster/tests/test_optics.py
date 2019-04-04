@@ -33,39 +33,37 @@ X = np.vstack((C1, C2, C3, C4, C5, C6))
 
 
 @pytest.mark.parametrize(
-    ('r_plot', 'end', 'index'),
-    [[[10, 8.9, 8.8, 8.7, 7, 10], 3, 4],
-     [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0, 4],
-     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5],
-     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4, 5],
+    ('r_plot', 'end'),
+    [[[10, 8.9, 8.8, 8.7, 7, 10], 3],
+     [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0],
+     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4],
+     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4],
      ])
-def test_extend_downward(r_plot, end, index):
+def test_extend_downward(r_plot, end):
     r_plot = np.array(r_plot)
     ratio = r_plot[:-1] / r_plot[1:]
     steep_downward = ratio >= 1 / .9
     upward = ratio < 1
 
-    i, e = _extend_region(steep_downward, upward, 0, 2)
+    e = _extend_region(steep_downward, upward, 0, 2)
     assert e == end
-    assert i == index
 
 
 @pytest.mark.parametrize(
-    ('r_plot', 'end', 'index'),
-    [[[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6, 6],
-     [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0, 4],
-     [[1, 2, 2.1, 2, np.inf], 0, 2],
-     [[1, 2, 2.1, np.inf], 2, 2],
+    ('r_plot', 'end'),
+    [[[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6],
+     [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0],
+     [[1, 2, 2.1, 2, np.inf], 0],
+     [[1, 2, 2.1, np.inf], 2],
      ])
-def test_extend_upward(r_plot, end, index):
+def test_extend_upward(r_plot, end):
     r_plot = np.array(r_plot)
     ratio = r_plot[:-1] / r_plot[1:]
     steep_upward = ratio <= .9
     downward = ratio > 1
 
-    i, e = _extend_region(steep_upward, downward, 0, 2)
+    e = _extend_region(steep_upward, downward, 0, 2)
     assert e == end
-    assert i == index
 
 
 @pytest.mark.parametrize(

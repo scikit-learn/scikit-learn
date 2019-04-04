@@ -5,11 +5,11 @@ Demo of OPTICS clustering algorithm
 Finds core samples of high density and expands clusters from them.
 This example uses data that is generated so that the clusters have
 different densities.
-The clustering is first used in its automatic settings, which is the
-:class:`sklearn.cluster.OPTICS` algorithm, and then setting specific
-thresholds on the reachability, which corresponds to DBSCAN.
-We can see that the different clusters of OPTICS can be recovered with
-different choices of thresholds in DBSCAN.
+The :class:`sklearn.cluster.OPTICS` is first used with its Xi cluster detection
+method, and then setting specific thresholds on the reachability, which
+corresponds to :class:`sklearn.cluster.DBSCAN`. We can see that the different
+clusters of OPTICS's Xi method can be recovered with different choices of
+thresholds in DBSCAN.
 """
 
 # Authors: Shane Grigsby <refuge@rocktalus.com>
@@ -19,11 +19,8 @@ different choices of thresholds in DBSCAN.
 
 from sklearn.cluster import OPTICS, cluster_optics_dbscan
 import matplotlib.gridspec as gridspec
-
-
-import numpy as np
-
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Generate sample data
 

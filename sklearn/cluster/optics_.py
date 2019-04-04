@@ -631,10 +631,16 @@ def _extend_region(steep_point, xward_point, start, min_samples):
     """Extend the area until it's maximal.
 
     It's the same function for both upward and downward reagions, depending on
-    the given input parameters. To extend an upward reagion,
-    ``steep_point=steep_upward`` and ``xward_point=downward`` are expected, and
-    to extend a downward region, ``steep_point=steep_downward`` and
-    ``xward_point=upward``. These variables are computed in ``_xi_cluster``.
+    the given input parameters. Assuming:
+
+        - steep_{upward/downward}: bool array indicating whether a point is a
+          steep {upward/downward};
+        - upward/downward: bool array indicating whether a point is
+          upward/downward;
+
+    To extend an upward reagion, ``steep_point=steep_upward`` and
+    ``xward_point=downward`` are expected, and to extend a downward region,
+    ``steep_point=steep_downward`` and ``xward_point=upward``.
 
     Parameters
     ----------
@@ -679,22 +685,10 @@ def _extend_region(steep_point, xward_point, start, min_samples):
             if non_xward_points > min_samples:
                 break
         else:
-            return min(index, n_samples - 1), end
+            return end
 
         index += 1
-    return min(index + 1, n_samples - 1), end
-
-
-def _extend_upward_region(steep_upward_mask, downward_mask, start,
-                          min_samples):
-    return _extend_region(steep_upward_mask, downward_mask,
-                          start, min_samples)
-
-
-def _extend_downward_region(steep_downward_mask, upward_mask, start,
-                            min_samples):
-    return _extend_region(steep_downward_mask, upward_mask,
-                          start, min_samples)
+    return end
 
 
 def _update_filter_sdas(sdas, mib, xi_complement, reachability_plot):
@@ -725,8 +719,9 @@ def _correct_predecessor(reachability_plot, predecessor, s, e):
     while s < e:
         if reachability_plot[s] > reachability_plot[e]:
             return s, e
+        p_e = predecessor[e]
         for i in range(s, e):
-            if predecessor[e] == i:
+            if  p_e == reachability_plot[i]:
                 return s, e
         e -= 1
     return None, None
@@ -816,8 +811,9 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
             sdas = _update_filter_sdas(sdas, mib, xi_complement,
                                        reachability_plot)
             D_start = index
-            index, end = _extend_downward_region(steep_downward, upward,
-                                                 D_start, min_samples)
+            end = _extend_region(steep_downward, upward,
+                                 D_start, min_samples)
+            index = min(end + 1, n_samples - 1)
             D = {'start': D_start, 'end': end, 'mib': 0.}
             sdas.append(D)
             mib = reachability_plot[end + 1]
@@ -826,8 +822,9 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
             sdas = _update_filter_sdas(sdas, mib, xi_complement,
                                        reachability_plot)
             U_start = index
-            index, end = _extend_upward_region(steep_upward, downward, U_start,
-                                               min_samples)
+            end = _extend_region(steep_upward, downward, U_start,
+                                 min_samples)
+            index = min(end + 1, n_samples - 1)
             U = {'start': U_start, 'end': end}
             mib = reachability_plot[end + 1]
 
