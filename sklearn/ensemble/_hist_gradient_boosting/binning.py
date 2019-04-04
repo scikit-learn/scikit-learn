@@ -21,8 +21,8 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
 
     Parameters
     ----------
-    data: array-like
-        The data to bin
+    data : array-like, shape (n_samples, n_features)
+        The data to bin.
     max_bins : int
         The maximum number of bins to use. If for a given feature the number of
         unique values is less than ``max_bins``, then those unique values
@@ -37,9 +37,9 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
 
     Return
     ------
-    binning_thresholds: tuple of arrays
+    binning_thresholds: list of arrays
         For each feature, stores the increasing numeric values that can
-        be used to separate the bins. len(binning_thresholds) == n_features.
+        be used to separate the bins. Thus `len(binning_thresholds) == n_features`.
     """
     if not (2 <= max_bins <= 256):
         raise ValueError('max_bins={} should be no smaller than 2 '
@@ -47,7 +47,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
     rng = check_random_state(random_state)
     if subsample is not None and data.shape[0] > subsample:
         subset = rng.choice(np.arange(data.shape[0]), subsample)
-        data = data[subset]
+        data = data.take(subset, axis=0)
 
     percentiles = np.linspace(0, 100, num=max_bins + 1)
     end = percentiles.shape[0]  # no negative indexing!
@@ -58,7 +58,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         distinct_values = np.unique(col_data)
         if len(distinct_values) <= max_bins:
             end = distinct_values.shape[0]  # no negative indexing!
-            midpoints = (distinct_values[:end - 1] + distinct_values[1:])
+            midpoints = distinct_values[:end - 1] + distinct_values[1:]
             midpoints *= .5
         else:
             # We sort again the data in this case. We could compute
@@ -110,10 +110,10 @@ class _BinMapper(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like
-            The data to bin
+        X : array-like, shape (n_samples, n_features)
+            The data to bin.
         y: None
-            Ignored
+            Ignored.
 
         Returns
         -------
@@ -135,13 +135,13 @@ class _BinMapper(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like
-            The data to bin
+        X : array-like, shape (n_samples, n_features)
+            The data to bin.
 
         Returns
         -------
-        X_binned : array-like
-            The binned data
+        X_binned : array-like, shape (n_samples, n_features)
+            The binned data.
         """
         X = check_array(X, dtype=[X_DTYPE])
         check_is_fitted(self, ['bin_thresholds_', 'actual_n_bins_'])
