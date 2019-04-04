@@ -41,14 +41,14 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
         raise NotImplementedError('Early stopping should be deactivated.')
 
     # LGBM
-    lgbm_loss_mapping = {
+    lightgbm_loss_mapping = {
         'least_squares': 'regression_l2',
         'binary_crossentropy': 'binary',
         'categorical_crossentropy': 'multiclass'
     }
 
-    lgbm_params = {
-        'objective': lgbm_loss_mapping[sklearn_params['loss']],
+    lightgbm_params = {
+        'objective': lightgbm_loss_mapping[sklearn_params['loss']],
         'learning_rate': sklearn_params['learning_rate'],
         'n_estimators': sklearn_params['max_iter'],
         'num_leaves': sklearn_params['max_leaf_nodes'],
@@ -69,20 +69,20 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
 
     if sklearn_params['loss'] == 'categorical_crossentropy':
         # LGBM multiplies hessians by 2 in multiclass loss.
-        lgbm_params['min_sum_hessian_in_leaf'] *= 2
-        lgbm_params['learning_rate'] *= 2
+        lightgbm_params['min_sum_hessian_in_leaf'] *= 2
+        lightgbm_params['learning_rate'] *= 2
 
     # XGB
-    xgb_loss_mapping = {
+    xgboost_loss_mapping = {
         'least_squares': 'reg:linear',
         'binary_crossentropy': 'reg:logistic',
         'categorical_crossentropy': 'multi:softmax'
     }
 
-    xgb_params = {
+    xgboost_params = {
         'tree_method': 'hist',
         'grow_policy': 'lossguide',  # so that we can set max_leaves
-        'objective': xgb_loss_mapping[sklearn_params['loss']],
+        'objective': xgboost_loss_mapping[sklearn_params['loss']],
         'learning_rate': sklearn_params['learning_rate'],
         'n_estimators': sklearn_params['max_iter'],
         'max_leaves': sklearn_params['max_leaf_nodes'],
@@ -96,14 +96,14 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     }
 
     # Catboost
-    cat_loss_mapping = {
+    catboost_loss_mapping = {
         'least_squares': 'RMSE',
         'binary_crossentropy': 'Logloss',
         'categorical_crossentropy': 'MultiClass'
     }
 
-    cat_params = {
-        'loss_function': cat_loss_mapping[sklearn_params['loss']],
+    catboost_params = {
+        'loss_function': catboost_loss_mapping[sklearn_params['loss']],
         'learning_rate': sklearn_params['learning_rate'],
         'iterations': sklearn_params['max_iter'],
         'depth': sklearn_params['max_depth'],
@@ -118,25 +118,25 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
         from lightgbm import LGBMRegressor
         from lightgbm import LGBMClassifier
         if is_classifier(estimator):
-            return LGBMClassifier(**lgbm_params)
+            return LGBMClassifier(**lightgbm_params)
         else:
-            return LGBMRegressor(**lgbm_params)
+            return LGBMRegressor(**lightgbm_params)
 
     elif lib == 'xgboost':
         from xgboost import XGBRegressor
         from xgboost import XGBClassifier
         if is_classifier(estimator):
-            return XGBClassifier(**xgb_params)
+            return XGBClassifier(**xgboost_params)
         else:
-            return XGBRegressor(**xgb_params)
+            return XGBRegressor(**xgboost_params)
 
     else:
         from catboost import CatBoostRegressor
         from catboost import CatBoostClassifier
         if is_classifier(estimator):
-            return CatBoostClassifier(**cat_params)
+            return CatBoostClassifier(**catboost_params)
         else:
-            return CatBoostRegressor(**cat_params)
+            return CatBoostRegressor(**catboost_params)
 
 
 def sum_parallel(G_H_DTYPE_C [:] array):
