@@ -346,8 +346,8 @@ Tips on practical use
     give your tree a better chance of finding features that are discriminative.
 
   * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py` will help
-    in gaining more insights about the nodes which can have an influence over the
-    predictions.
+    in gaining more insights about how the decision tree makes predictions, which is
+    important for understanding the important features in the data.
 
   * Visualise your tree as you are training by using the ``export``
     function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
@@ -539,7 +539,7 @@ where :math:`X_m` is the training data in node :math:`m`
     * https://en.wikipedia.org/wiki/Decision_tree_learning
 
     * https://en.wikipedia.org/wiki/Predictive_analytics
-    
+
     * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
       Regression Trees. Wadsworth, Belmont, CA, 1984.
 
