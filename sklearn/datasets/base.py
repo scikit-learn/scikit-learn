@@ -642,8 +642,8 @@ def load_linnerud(return_X_y=False):
     -------
     data : Bunch
         Dictionary-like object, the interesting attributes are: 'data' and
-        'targets', the two multivariate datasets, with 'data' corresponding to
-        the exercise and 'targets' corresponding to the physiological
+        'target', the two multivariate datasets, with 'data' corresponding to
+        the exercise and 'target' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
         In addition, you will also have access to 'data_filename',
         the physical location of linnerud data csv dataset, and
