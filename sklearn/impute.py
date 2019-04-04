@@ -573,7 +573,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                  min_value=None,
                  max_value=None,
                  verbose=0,
-                 random_state=None):
+                 random_state=None,
+                 add_indicator=False):
 
         self.estimator = estimator
         self.missing_values = missing_values
@@ -587,6 +588,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.max_value = max_value
         self.verbose = verbose
         self.random_state = random_state
+        self.add_indicator = add_indicator
 
     def _impute_one_feature(self,
                             X_filled,
@@ -895,6 +897,13 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 .format(self.tol)
             )
 
+        if self.add_indicator:
+            self.indicator_ = MissingIndicator(
+                missing_values=self.missing_values, features="some-missing",
+                error_on_new=False)
+            self.indicator_.fit(X)
+            X_trans = self.indicator_.transform(X)
+
         if self.estimator is None:
             from .linear_model import BayesianRidge
             self._estimator = BayesianRidge()
@@ -968,6 +977,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 warnings.warn("[IterativeImputer] Early stopping criterion not"
                               " reached.", ConvergenceWarning)
         Xt[~mask_missing_values] = X[~mask_missing_values]
+
+        if self.add_indicator:
+            Xt = np.hstack((Xt, X_trans))
         return Xt
 
     def transform(self, X):
@@ -987,6 +999,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
              The imputed input data.
         """
         check_is_fitted(self, 'initial_imputer_')
+
+        if self.add_indicator:
+            X_trans = self.indicator_.transform(X)
 
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
@@ -1016,6 +1031,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 i_rnd += 1
 
         Xt[~mask_missing_values] = X[~mask_missing_values]
+
+        if self.add_indicator:
+            Xt = np.hstack((Xt, X_trans))
         return Xt
 
     def fit(self, X, y=None):
