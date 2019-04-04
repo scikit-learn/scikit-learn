@@ -18,7 +18,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
 
     This utility function takes care of renaming the sklearn parameters into
     their LightGBM, XGBoost or CatBoost equivalent parameters.
-    """
+
     # unmapped XGB parameters:
     # - min_samples_leaf
     # - min_data_in_bin
@@ -27,6 +27,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     # unmapped Catboost parameters:
     # max_leaves
     # min_*
+    """
 
     if lib not in ('lightgbm', 'xgboost', 'catboost'):
         raise ValueError('accepted libs are lightgbm, xgboost, and catboost. '

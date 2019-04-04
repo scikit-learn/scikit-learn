@@ -50,15 +50,13 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         data = data[subset]
 
     percentiles = np.linspace(0, 100, num=max_bins + 1)
-    end = percentiles.shape[0]  # no negative indexing!
-    percentiles = percentiles[1:end - 1]
+    percentiles = percentiles[1:-1]
     binning_thresholds = []
     for f_idx in range(data.shape[1]):
         col_data = np.ascontiguousarray(data[:, f_idx], dtype=X_DTYPE)
         distinct_values = np.unique(col_data)
         if len(distinct_values) <= max_bins:
-            end = distinct_values.shape[0]  # no negative indexing!
-            midpoints = (distinct_values[:end - 1] + distinct_values[1:])
+            midpoints = distinct_values[:-1] + distinct_values[1:]
             midpoints *= .5
         else:
             # We sort again the data in this case. We could compute
@@ -78,8 +76,8 @@ class _BinMapper(BaseEstimator, TransformerMixin):
     The bins are created in a feature-wise fashion, using quantiles so that
     each bins contains approximately the same number of samples.
 
-    Large datasets are subsampled, but the feature-wise quantiles should
-    remain stable.
+    For large datasets, quantiles are computed on a subset of the data to
+    speed-up the binning, but the quantiles should remain stable.
 
     If the number of unique values for a given feature is less than
     ``max_bins``, then the unique values of this feature are used instead of
