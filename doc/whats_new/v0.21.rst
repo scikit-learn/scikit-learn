@@ -68,6 +68,10 @@ Support for Python 3.4 and below has been officially dropped.
   between 0 and 1.
   :issue:`13086` by :user:`Scott Cole <srcole>`.
 
+- |Enhancement| Allow n-dimensional arrays as input for
+  `calibration.CalibratedClassifierCV`. :issue:`13485` by
+  :user:`William de Vazelhes <wdevazelhes>`.
+
 :mod:`sklearn.cluster`
 ......................
 
