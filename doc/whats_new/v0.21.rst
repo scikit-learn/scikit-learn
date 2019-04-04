@@ -545,6 +545,13 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.utils`
+...................
+
+- |Feature| :func:`utils.resample` now accepts a ``stratify`` parameter for
+  sampling according to class distributions. :issue:`13549` by :user:`Nicolas
+  Hug <NicolasHug>`.
+
 Multiple modules
 ................
 
