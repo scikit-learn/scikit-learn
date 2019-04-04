@@ -8,7 +8,7 @@ from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater, assert_almost_equal,
-                                   assert_greater_equal,
+                                   assert_greater_equal, assert_allclose,
                                    assert_array_equal,
                                    assert_raises)
 from sklearn.datasets import make_classification, make_blobs
@@ -320,3 +320,20 @@ def test_calibration_less_classes():
         assert_array_equal(proba[:, i], np.zeros(len(y)))
         assert_equal(np.all(np.hstack([proba[:, :i],
                                        proba[:, i + 1:]])), True)
+
+
+def test_oob():
+    n_samples = 100
+    X, y = make_classification(n_samples=n_samples, n_features=6,
+                               random_state=42)
+
+    for method in ['sigmoid', 'isotonic']:
+        base_estimator = RandomForestClassifier(
+            oob_score=True, n_estimators=150)
+        calibrated_clf = CalibratedClassifierCV(base_estimator, method=method)
+        calibrated_clf.fit(X, y)
+        assert hasattr(calibrated_clf, 'oob_decision_function_')
+        oob = calibrated_clf.oob_decision_function_
+        pred = calibrated_clf.predict_proba(X)
+        assert_array_equal(oob.shape, pred.shape)
+        assert_allclose(np.sum(oob, axis=1), 1)
