@@ -12,7 +12,7 @@ from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater, assert_almost_equal,
                                    assert_greater_equal,
                                    assert_array_equal,
-                                   assert_raises)
+                                   assert_raises, ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -324,6 +324,7 @@ def test_calibration_less_classes():
                                        proba[:, i + 1:]])), True)
 
 
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 @pytest.mark.parametrize('X', [np.random.RandomState(42).randn(15, 5, 2),
                                np.random.RandomState(42).randn(15, 5, 2, 6)])
 def test_calibration_accepts_ndarray(X):
