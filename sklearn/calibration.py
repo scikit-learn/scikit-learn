@@ -18,7 +18,8 @@ from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
 from sklearn.preprocessing import LabelEncoder
 
-from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
+from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
+                   MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
@@ -28,7 +29,8 @@ from .model_selection import check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
 
 
-class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
+class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
+                             MetaEstimatorMixin):
     """Probability calibration with isotonic regression or sigmoid.
 
     See glossary entry for :term:`cross-validation estimator`.
