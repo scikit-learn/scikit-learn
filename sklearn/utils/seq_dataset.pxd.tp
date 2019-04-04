@@ -1,3 +1,4 @@
+# cython: language_level=3
 {{py:
 
 """
@@ -21,7 +22,6 @@ def get_dispatch(dtypes):
         yield name, c_type
 
 }}
-
 {{for name, c_type in get_dispatch(dtypes)}}
 
 #------------------------------------------------------------------------------
