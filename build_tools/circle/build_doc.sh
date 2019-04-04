@@ -101,7 +101,7 @@ sudo -E apt-get -yq remove texlive-binaries --purge
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
     install dvipng texlive-latex-base texlive-latex-extra \
     texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
-    latexmk
+    latexmk gsfonts
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
@@ -124,7 +124,7 @@ conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   joblib
 
 source activate testenv
-pip install sphinx-gallery
+pip install "sphinx-gallery>=0.2,<0.3"
 pip install numpydoc==0.8
 
 # Build and install scikit-learn in dev mode

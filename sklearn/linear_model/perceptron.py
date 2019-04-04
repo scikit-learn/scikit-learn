@@ -62,8 +62,8 @@ class Perceptron(BaseSGDClassifier):
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation.
         score is not improving. If set to True, it will automatically set aside
-        a fraction of training data as validation and terminate training when
-        validation score is not improving by at least tol for
+        a stratified fraction of training data as validation and terminate
+        training when validation score is not improving by at least tol for
         n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
@@ -128,7 +128,7 @@ class Perceptron(BaseSGDClassifier):
           penalty=None, random_state=0, shuffle=True, tol=0.001,
           validation_fraction=0.1, verbose=0, warm_start=False)
     >>> clf.score(X, y) # doctest: +ELLIPSIS
-    0.946...
+    0.939...
 
     See also
     --------
