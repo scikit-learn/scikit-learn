@@ -35,6 +35,7 @@ Emeritus Core Developers
 ------------------------
 The following people have been active contributors in the past, but are no longer active in the project
 
+- Angel Soler Gollonet
 - Alexander Fabisch
 - Alexandre Passos
 - Chris Gorgolewski
