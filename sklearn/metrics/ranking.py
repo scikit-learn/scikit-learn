@@ -241,9 +241,8 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
                                  average, sample_weight=sample_weight)
 
 
-def roc_auc_score(y_true, y_score, labels=None,
-                  multiclass="ovr", average="macro",
-                  sample_weight=None, max_fpr=None):
+def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
+                  max_fpr=None, multiclass="ovr", labels=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
@@ -266,19 +265,6 @@ def roc_auc_score(y_true, y_score, labels=None,
         y_true, y_score is supposed to be the score of the class with greater
         label. The multiclass case expects shape = [n_samples, n_classes]
         where the scores correspond to probability estimates.
-
-    labels : array, shape = [n_classes] or None, optional (default=None)
-        List of labels to index ``y_score`` used for multiclass. If ``None``,
-        the lexicon order of ``y_true`` is used to index ``y_score``.
-
-    multiclass : string, 'ovr' or 'ovo', optional(default='ovr')
-        Determines the type of multiclass configuration to use.
-        ``'ovr'``:
-            Calculate metrics for the multiclass case using the one-vs-rest
-            approach.
-        ``'ovo'``:
-            Calculate metrics for the multiclass case using the one-vs-one
-            approach.
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -308,6 +294,19 @@ def roc_auc_score(y_true, y_score, labels=None,
         [0, max_fpr] is returned. For the multiclass case, ``max_fpr``,
         should be either equal to ``None`` or ``1.0`` as AUC ROC partial
         computation currently is not supported for multiclass.
+
+    multiclass : string, 'ovr' or 'ovo', optional(default='ovr')
+        Determines the type of multiclass configuration to use.
+        ``'ovr'``:
+            Calculate metrics for the multiclass case using the one-vs-rest
+            approach.
+        ``'ovo'``:
+            Calculate metrics for the multiclass case using the one-vs-one
+            approach.
+
+    labels : array, shape = [n_classes] or None, optional (default=None)
+        List of labels to index ``y_score`` used for multiclass. If ``None``,
+        the lexicon order of ``y_true`` is used to index ``y_score``.
 
     Returns
     -------

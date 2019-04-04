@@ -1347,7 +1347,7 @@ uniformly:
    \text{AUC}(k | j))
 
 where :math:`c` is the number of classes and :math:`\text{AUC}(j | k)` is the
-auc with class :math:`j` as the positive class and class :math:`k` as the
+AUC with class :math:`j` as the positive class and class :math:`k` as the
 negative class. In general,
 :math:`\text{AUC}(j | k) \neq \text{AUC}(k | j))` in the multiclass
 case. This algorithm is used by setting the keyword argument ``multiclass``
@@ -1399,6 +1399,11 @@ to the given limit.
        of the area under the ROC curve for multiple class classification problems.
        <http://link.springer.com/article/10.1023/A:1010920819831>`_
        Machine learning, 45(2), pp.171-186.
+
+    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009). 
+       An Experimental Comparison of Performance Measures for Classification. 
+       <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
+       Pattern Recognition Letters. 30. 27-38. 
 
 .. _zero_one_loss:
 
