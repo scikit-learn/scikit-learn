@@ -543,17 +543,13 @@ def test_multiclass_ovo_roc_auc_toydata_binary(labels, multiclass):
     ovo_score = (score_01 + score_10) / 2
 
     assert_almost_equal(
-        roc_auc_score(y_true, y_scores, labels, multiclass=multiclass),
+        roc_auc_score(y_true, y_scores, labels=labels, multiclass=multiclass),
         ovo_score)
 
     # Weighted, one-vs-one multiclass ROC AUC algorithm
     assert_almost_equal(
-        roc_auc_score(
-            y_true,
-            y_scores,
-            labels=labels,
-            multiclass=multiclass,
-            average="weighted"), ovo_score)
+        roc_auc_score(y_true, y_scores, labels=labels, multiclass=multiclass,
+                      average="weighted"), ovo_score)
 
 
 @pytest.mark.parametrize("y_true, y_true_encoded, labels", [
