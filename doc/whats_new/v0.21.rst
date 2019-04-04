@@ -515,8 +515,8 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.svm`
 ..................
 
-- |Fix| Fixed a convergence issue in `libsvm` and `liblinear` impacting all
-  related classifiers and regressors on Windows platforms. The random number
+- |Fix| Fixed a convergence issue in `libsvm` and `liblinear` on Windows
+  platforms impacting all related classifiers and regressors. The random number
   generator used to randomly choose coordinates in the coordinate descent
   algorithm was C `rand()`, that is only able to generate numbers up to `32767`
   on windows platform. It was replaced with C++11 `mt19937`, a Mersenne Twister
