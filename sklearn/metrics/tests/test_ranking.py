@@ -7,6 +7,7 @@ from scipy.sparse import csr_matrix
 from sklearn import datasets
 from sklearn import svm
 
+from sklearn.utils.extmath import softmax
 from sklearn.datasets import make_multilabel_classification
 from sklearn.random_projection import sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
@@ -568,10 +569,8 @@ def test_multiclass_ovo_roc_auc_toydata_binary(labels, multiclass):
      np.array([1, 2, 1, 2, 0]), ["c", "a", "b"]),
 ])
 def test_encode_y_true_multiclass_ovo(y_true, y_true_encoded, labels):
-    y_score = check_random_state(404).rand(5, 3)
-    y_score = y_score / y_score.sum(axis=1, keepdims=True)
     assert_almost_equal(
-        _encode_y_true_multiclass_ovo(y_true, y_score, labels),
+        _encode_y_true_multiclass_ovo(y_true, labels),
         y_true_encoded)
 
 
@@ -663,10 +662,10 @@ def test_roc_auc_score_multiclass_error(msg, kwargs):
     # is not defined.
     rng = check_random_state(404)
     y_score = rng.rand(20, 3)
-    y_score = y_score / y_score.sum(axis=1, keepdims=True)
+    y_prob = softmax(y_score)
     y_true = rng.randint(0, 3, size=20)
     with pytest.raises(ValueError, match=msg):
-        roc_auc_score(y_true, y_score, **kwargs)
+        roc_auc_score(y_true, y_prob, **kwargs)
 
 
 def test_auc_score_non_binary_class():
