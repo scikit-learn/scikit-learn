@@ -30,6 +30,11 @@ random sampling procedures.
 - :class:`neural_network.MLPClassifier` |Fix|
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
+- :class:`linear_model.SGDClassifier` and any derived classifiers. |Fix|
+- Any model using the :func:`linear_model.sag.sag_solver` function with a `0`
+  seed, including :class:`linear_model.LogisticRegression`,
+  :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge`,
+  and :class:`linear_model.RidgeCV` with 'sag' solver. |Fix|
 
 
 Details are listed in the changelog below.
@@ -304,6 +309,11 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23.
   :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
+- |Fix| Fixed a bug in
+  :class:`linear_model.stochastic_gradient.BaseSGDClassifier` that was not
+  deterministic when trained in a multi-class setting on several threads.
+  :issue:`13422` by :user:`Clément Doumouro <ClemDoum>`.
+
 :mod:`sklearn.manifold`
 ............................
 
@@ -544,15 +554,19 @@ Multiple modules
   but this can be altered with the ``print_changed_only`` option in
   :func:`sklearn.set_config`. :issue:`11705` by :user:`Nicolas Hug
   <NicolasHug>`.
-- |Efficiency| Memory copies are avoided when casting arrays to a different
-  dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
-  <rth>`.
 - |MajorFeature| Add estimators tags: these are annotations of estimators
   that allow programmatic inspection of their capabilities, such as sparse
   matrix support, supported output types and supported methods. Estimator
   tags also determine the tests that are run on an estimator when
   `check_estimator` is called. Read more in the :ref:`User Guide
   <estimator_tags>`. :issue:`8022` by :user:`Andreas Müller <amueller>`.
+- |Efficiency| Memory copies are avoided when casting arrays to a different
+  dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
+  <rth>`.
+- |Fix| Fixed a bug in the implementation of the :func:`our_rand_r`
+  helper function that was not behaving consistently across platforms.
+  :issue:`13422` by :user:`Madhura Parikh <jdnc>` and
+  :user:`Clément Doumouro <ClemDoum>`.
 
 Changes to estimator checks
 ---------------------------
