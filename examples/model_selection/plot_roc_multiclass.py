@@ -60,18 +60,16 @@ macro_roc_auc_ovo = roc_auc_score(y_test, y_prob, multiclass="ovo",
                                   average="macro")
 weighted_roc_auc_ovo = roc_auc_score(y_test, y_prob, multiclass="ovo",
                                      average="weighted")
-print("One-vs-One ROC AUC scores: {0} (uniform), {1} (weighted by prevalence)"
+print("One-vs-One ROC AUC scores:\n{:.6f} (uniform),\n{:.6f} "
+      "(weighted by prevalence)"
       .format(macro_roc_auc_ovo, weighted_roc_auc_ovo))
 
 ###############################################################################
-# Plot ROC curves for the multiclass problem using One-vs-One
-# ...........................................................
-# The ROC curve for every pair of classes are drawn together with the
-# average weighted uniformly and weighted by prevalence.
+# Manually calcuate the one-vs-one multiclass auc score
+# .....................................................
 import matplotlib.pyplot as plt
 from itertools import combinations, permutations
 from sklearn.metrics import roc_curve, auc
-from scipy import interp
 
 n_classes = len(np.unique(y))
 
@@ -94,46 +92,20 @@ for a, b in combinations(range(n_classes), 2):
     roc_auc[(b, a)] = auc(fpr[(b, a)], tpr[(b, a)])
     prevalence[(b, a)] = np.average(ab_mask)
 
-class_permutations = list(permutations(range(n_classes), 2))
-all_multiclass_fpr = np.unique(
-      np.concatenate([fpr[(a, b)] for a, b in class_permutations]))
+roc_auc_values = np.fromiter(roc_auc.values(), dtype=np.float32)
+prevalence_values = np.fromiter(prevalence.values(), dtype=np.float32)
 
-multiclass_interp_tpr = dict()
-for a, b in class_permutations:
-    multiclass_interp_tpr[(a, b)] = interp(
-          all_multiclass_fpr, fpr[(a, b)], tpr[(a, b)])
+macro_roc_auc_ovo_manual = np.average(roc_auc_values)
+weighted_roc_auc_ovo_manual = np.average(roc_auc_values,
+                                         weights=prevalence_values)
+print(("Manual One-vs-One ROC AUC scores: \n{:.6f} (uniform),\n{:.6f} "
+      "(weighted by prevalence)").format(macro_roc_auc_ovo_manual,
+                                         weighted_roc_auc_ovo_manual))
 
-all_multiclass_tpr = np.array(
-      [multiclass_interp_tpr[(a, b)] for a, b in class_permutations])
-all_prevalence = np.array([prevalence[(a, b)] for a, b in class_permutations])
-
-roc_auc_uniform_average_tpr = np.average(all_multiclass_tpr, axis=0)
-roc_auc_prevalence_average_tpr = np.average(
-      all_multiclass_tpr, axis=0, weights=all_prevalence)
-
-
+###############################################################################
+# Plot ROC curves for the multiclass problem using One-vs-One
+# ...........................................................
 fig, ax = plt.subplots()
-# plot roc curve as a macro average
-ax.plot(
-    all_multiclass_fpr,
-    roc_auc_uniform_average_tpr,
-    color='navy',
-    linestyle=':',
-    lw=4,
-    label='macro average (area = {0:0.2f})'.format(
-        macro_roc_auc_ovo),
-)
-# plot roc curve as a weighted average
-ax.plot(
-    all_multiclass_fpr,
-    roc_auc_prevalence_average_tpr,
-    color='deeppink',
-    linestyle=':',
-    lw=4,
-    label='weighted average (area = {0:0.2f})'.format(
-        weighted_roc_auc_ovo),
-)
-
 # plot roc curve for every of classes
 for a, b in permutations(range(n_classes), 2):
     ax.plot(
