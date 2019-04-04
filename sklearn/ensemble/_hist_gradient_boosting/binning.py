@@ -39,7 +39,8 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
     ------
     binning_thresholds: list of arrays
         For each feature, stores the increasing numeric values that can
-        be used to separate the bins. Thus `len(binning_thresholds) == n_features`.
+        be used to separate the bins. Thus ``len(binning_thresholds) ==
+        n_features``.
     """
     if not (2 <= max_bins <= 256):
         raise ValueError('max_bins={} should be no smaller than 2 '
