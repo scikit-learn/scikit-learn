@@ -930,8 +930,8 @@ class GridSearchCV(BaseSearchCV):
         dataset.
 
         For multiple metric evaluation, this needs to be a string denoting the
-        scorer is used to find the best parameters for refitting the estimator
-        at the end.
+        scorer that would be used to find the best parameters for refitting
+        the estimator at the end.
 
         Where there are considerations other than maximum score in
         choosing a best estimator, ``refit`` can be set to a function which
