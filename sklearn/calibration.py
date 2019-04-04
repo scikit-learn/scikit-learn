@@ -174,6 +174,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 warnings.warn("%s does not support sample_weight. Samples"
                               " weights are only used for the calibration"
                               " itself." % estimator_name)
+                sample_weight = check_array(sample_weight, ensure_2d=False)
                 base_estimator_sample_weight = None
             else:
                 if sample_weight is not None:
