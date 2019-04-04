@@ -1392,12 +1392,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """Check that the estimator is initialized, raising an error if not."""
         check_is_fitted(self, 'estimators_')
 
-    @property
-    @deprecated("Attribute n_features was deprecated in version 0.19 and "
-                "will be removed in 0.21.")
-    def n_features(self):
-        return self.n_features_
-
     def fit(self, X, y, sample_weight=None, monitor=None):
         """Fit the gradient boosting model.
 
@@ -1453,10 +1447,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         y = self._validate_y(y, sample_weight)
 
         if self.n_iter_no_change is not None:
+            stratify = y if is_classifier(self) else None
             X, X_val, y, y_val, sample_weight, sample_weight_val = (
                 train_test_split(X, y, sample_weight,
                                  random_state=self.random_state,
-                                 test_size=self.validation_fraction))
+                                 test_size=self.validation_fraction,
+                                 stratify=stratify))
             if is_classifier(self):
                 if self.n_classes_ != np.unique(y).shape[0]:
                     # We choose to error here. The problem is that the init
@@ -1482,19 +1478,24 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 raw_predictions = np.zeros(shape=(X.shape[0], self.loss_.K),
                                            dtype=np.float64)
             else:
-                try:
-                    self.init_.fit(X, y, sample_weight=sample_weight)
-                except TypeError:
-                    if sample_weight_is_none:
-                        self.init_.fit(X, y)
-                    else:
-                        raise ValueError(
-                            "The initial estimator {} does not support sample "
-                            "weights.".format(self.init_.__class__.__name__))
+                # XXX clean this once we have a support_sample_weight tag
+                if sample_weight_is_none:
+                    self.init_.fit(X, y)
+                else:
+                    msg = ("The initial estimator {} does not support sample "
+                           "weights.".format(self.init_.__class__.__name__))
+                    try:
+                        self.init_.fit(X, y, sample_weight=sample_weight)
+                    except TypeError:  # regular estimator without SW support
+                        raise ValueError(msg)
+                    except ValueError as e:
+                        if 'not enough values to unpack' in str(e):  # pipeline
+                            raise ValueError(msg) from e
+                        else:  # regular estimator whose input checking failed
+                            raise
 
                 raw_predictions = \
                     self.loss_.get_init_raw_predictions(X, self.init_)
-
 
             begin_at_stage = 0
 
@@ -1939,7 +1940,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         number, it will set aside ``validation_fraction`` size of the training
         data as validation and terminate training when validation score is not
         improving in all of the previous ``n_iter_no_change`` numbers of
-        iterations.
+        iterations. The split is stratified.
 
         .. versionadded:: 0.20
 

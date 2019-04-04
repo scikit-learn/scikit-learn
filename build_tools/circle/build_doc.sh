@@ -101,7 +101,7 @@ sudo -E apt-get -yq remove texlive-binaries --purge
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
     install dvipng texlive-latex-base texlive-latex-extra \
     texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
-    latexmk
+    latexmk gsfonts
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
@@ -120,17 +120,11 @@ conda update --yes --quiet conda
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
   pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow \
-  pandas="${PANDAS_VERSION:-*}" \
+  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
   joblib
 
 source activate testenv
-# Revert when scikit-image 0.14.2 is available through conda
-if [[ -n "$SCIKIT_IMAGE_VERSION" ]]; then
-    pip install scikit-image=="$SCIKIT_IMAGE_VERSION"
-else
-    pip install scikit-image
-fi
-pip install sphinx-gallery
+pip install "sphinx-gallery>=0.2,<0.3"
 pip install numpydoc==0.8
 
 # Build and install scikit-learn in dev mode
