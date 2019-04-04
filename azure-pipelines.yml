@@ -54,6 +54,7 @@ jobs:
         INSTALL_MKL: 'true'
         NUMPY_VERSION: '*'
         SCIPY_VERSION: '*'
+        PANDAS_VERSION: '*'
         CYTHON_VERSION: '*'
         PILLOW_VERSION: '*'
         JOBLIB_VERSION: '*'
