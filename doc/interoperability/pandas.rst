@@ -186,11 +186,11 @@ correct ordering.
 Handling Categorical data
 =========================
 
-Please see the following references to get started:
-
-- :term:`categorical feature`
-- :ref:`preprocessing_categorical_features`
-- https://github.com/scikit-learn-contrib/sklearn-pandas
+For a general guide on how to get started with categorical features please refer
+to :term:`categocrical feature` and :ref:`preprocessing_categorical_features`.
+It is worth noting that as of v0.20.3, both :ref:`onehotencoder` and
+:ref:`ordinalencoder` support string or Categorical columns coming straight from
+Pandas DataFrames.
 
 
 Dealing with heterogenous data
