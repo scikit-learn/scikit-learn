@@ -80,7 +80,8 @@ est = HistGradientBoostingClassifier(
 est.fit(data_train, target_train)
 toc = time()
 predicted_test = est.predict(data_test)
-roc_auc = roc_auc_score(target_test, predicted_test)
+predicted_proba_test = est.predict_proba(data_test)
+roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
 acc = accuracy_score(target_test, predicted_test)
 print(f"done in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
 
@@ -91,7 +92,8 @@ if args.lightgbm:
     lightgbm_est.fit(data_train, target_train)
     toc = time()
     predicted_test = lightgbm_est.predict(data_test)
-    roc_auc = roc_auc_score(target_test, predicted_test)
+    predicted_proba_test = lightgbm_est.predict_proba(data_test)
+    roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
     acc = accuracy_score(target_test, predicted_test)
     print(f"done in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
 
@@ -102,7 +104,8 @@ if args.xgboost:
     xgboost_est.fit(data_train, target_train)
     toc = time()
     predicted_test = xgboost_est.predict(data_test)
-    roc_auc = roc_auc_score(target_test, predicted_test)
+    predicted_proba_test = xgboost_est.predict_proba(data_test)
+    roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
     acc = accuracy_score(target_test, predicted_test)
     print(f"done in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
 
@@ -113,6 +116,7 @@ if args.catboost:
     catboost_est.fit(data_train, target_train)
     toc = time()
     predicted_test = catboost_est.predict(data_test)
-    roc_auc = roc_auc_score(target_test, predicted_test)
+    predicted_proba_test = catboost_est.predict_proba(data_test)
+    roc_auc = roc_auc_score(target_test, predicted_proba_test[:, 1])
     acc = accuracy_score(target_test, predicted_test)
     print(f"done in {toc - tic:.3f}s, ROC AUC: {roc_auc:.4f}, ACC: {acc :.4f}")
