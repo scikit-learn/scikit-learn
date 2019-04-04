@@ -159,13 +159,13 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 def spectral_clustering(affinity, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
                         eigen_tol=0.0, assign_labels='kmeans'):
-    """Apply clustering to a projection to the normalized laplacian.
+    """Apply clustering to a projection of the normalized Laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
     the individual clusters is highly non-convex or more generally when
     a measure of the center and spread of the cluster is not a suitable
-    description of the complete cluster. For instance when clusters are
-    nested circles on the 2D plan.
+    description of the complete cluster. For instance, when clusters are
+    nested circles on the 2D plane.
 
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
@@ -273,13 +273,13 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
 
 class SpectralClustering(BaseEstimator, ClusterMixin):
-    """Apply clustering to a projection to the normalized laplacian.
+    """Apply clustering to a projection of the normalized Laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
     the individual clusters is highly non-convex or more generally when
     a measure of the center and spread of the cluster is not a suitable
     description of the complete cluster. For instance when clusters are
-    nested circles on the 2D plan.
+    nested circles on the 2D plane.
 
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
@@ -305,11 +305,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities
+        but may also lead to instabilities.
 
     random_state : int, RandomState instance or None (default)
         A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
+        lobpcg eigen vectors decomposition when ``eigen_solver='amg'`` and by
         the K-Means initialization. Use an int to make the randomness
         deterministic.
         See :term:`Glossary <random_state>`.
@@ -338,7 +338,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     eigen_tol : float, optional, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eigen_solver.
+        when ``eigen_solver='arpack'``.
 
     assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
         The strategy to use to assign labels in the embedding

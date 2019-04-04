@@ -37,8 +37,8 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation.
         score is not improving. If set to True, it will automatically set aside
-        a fraction of training data as validation and terminate training when
-        validation score is not improving by at least tol for
+        a stratified fraction of training data as validation and terminate
+        training when validation score is not improving by at least tol for
         n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
@@ -139,9 +139,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                   random_state=0, shuffle=True, tol=0.001,
                   validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(clf.coef_)
-    [[-0.6543424   1.54603022  1.35361642  0.22199435]]
+    [[0.26642044 0.45070924 0.67251877 0.64185414]]
     >>> print(clf.intercept_)
-    [0.63310933]
+    [1.84127814]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -282,8 +282,8 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     early_stopping : bool, default=False
         Whether to use early stopping to terminate training when validation.
         score is not improving. If set to True, it will automatically set aside
-        a fraction of training data as validation and terminate training when
-        validation score is not improving by at least tol for
+        a fraction of training data as validation and terminate
+        training when validation score is not improving by at least tol for
         n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
