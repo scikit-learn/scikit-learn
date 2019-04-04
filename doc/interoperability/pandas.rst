@@ -28,7 +28,7 @@ Every Scikit-learn estimator/transformer/pipeline
 (for the rest of this section we shall call these primitives)
 supports the use of DataFrames as inputs which is achieved by obtaining a
 `NumPy array <https://docs.scipy.org/doc/numpy/user/>`__ using
-the :meth:`np.asarray()` on a DataFrame object. The only exception where a
+the :meth:`~numpy.asarray` on a DataFrame object. The only exception where a
 a DataFrame is being used explicitly is the
 :class:`~sklearn.compose.ColumnTransformer` which is briefly
 discussed below `Dealing with heterogenous data`_.
@@ -66,12 +66,12 @@ of the issues arising as a result are outlined below and sources
 (where available) of
 discussions and work-arounds (the latter is provided without guarantee that the
 workaround will still work) are provided. It should also be mentioned that if
-the DataFrame contains heterogenous data, the :meth:`np.asarray()` function will
+the DataFrame contains heterogenous data, the :meth:`~numpy.asarray()` function will
 create an in-memory copy of the DataFrame, thus using a NumPy array in the
 first place can be more memory efficient as well as avoiding some of the
 potential pitfalls when using DataFrames. If the DataFrame contains only
 homogenous data in the first place, no in-memory copy will be created using
-:meth:`np.asarray()`.
+:meth:`~numpy.asarray()`.
 
 Pandas in **not** Pandas out
 ============================
@@ -188,9 +188,10 @@ Handling Categorical data
 
 For a general guide on how to get started with categorical features please refer
 to :term:`categocrical feature` and :ref:`preprocessing_categorical_features`.
-It is worth noting that as of v0.20.3, both :ref:`onehotencoder` and
-:ref:`ordinalencoder` support string or Categorical columns coming straight from
-Pandas DataFrames.
+It is worth noting that as of :ref:`changes_0_20_3`, both
+:class:`~sklearn.preprocessing.OneHotEncoder` and
+:class:`~sklearn.preprocessing.OrdinalEncoder`
+support string or Categorical columns coming straight from pandas DataFrames.
 
 
 Dealing with heterogenous data
@@ -210,8 +211,8 @@ Dealing with missing values
 As per the glossary, most Scikit-learn primitives do not work with missing
 values. If they do, NaN is the preferred representation of missing values. For
 more details, see :term:`missing values`. Non-numeric data is now also supported
-via the ``'most_frequent'`` or ``'constant'`` of the :class:`SimpleImputer`
-class. For details see :ref:`impute`.
+via the ``'most_frequent'`` or ``'constant'`` of the
+:class:`~sklearn.impute.SimpleImputer` class. For details see :ref:`impute`.
 
 
 Sparse DataFrames Handling
@@ -234,10 +235,11 @@ In Pandas, the main sparse data structures is: :class:`~pandas.SparseArray`.
 However, Scikit-learn does not support sparse Pandas structures and by default
 they will be converted to dense numpy arrays. The best way to use sparse
 arrays in Scikit-learn is to convert them manually to sparce Scipy matrices.
-The methods: :meth:`.to_sparse(fill_value=0)` and :meth:`.to_dense()` can be
+The methods: :meth:`~pandas.DataFrame.to_sparse(fill_value=0)` and
+:meth:`~pandas.SparseDataFrame.to_dense()` can be
 used to convert between normal and sparse data structures.
-The `.density` property can be called on the sparse structures to report
-sparseness.
+The :meth:`~pandas.SparseDataFrame.density` property can be called on the
+sparse structures to report sparseness.
 
 In scipy.sparse we have a number of various sparse matrix classes, Scikit-learn
 mostly uses CSR and CSC formats.
@@ -272,16 +274,19 @@ The code above highlights the following three elements:
 
 1) If your sparse value is not NaN then it is important to specify
 *default_fill_value* property when creating your pandas DataFrame, otherwise no
-space saving will occur. Check this using the :meth:`.density` property, which
+space saving will occur. Check this using the
+:attr:`~pandas.SparseDataFrame.density()` property, which
 should be less than 100% if successful. When creating the scipy sparse matrix,
 this *default_fill_value* will be used for use as the sparse value (nnz).
 
-2) Either the :meth:`.to_coo()` method on the pandas dataframe, or
-:meth:`coo_matrix()` constructor are alternative ways you can convert to a
-scipy sparse datastructure.
+2) Either the :meth:`~pandas.SparseDataFrame.to_coo()` method on the pandas
+SparseDataFrame, or :class:`~scipy.sparse.coo_matrix` constructor are
+alternative ways you can convert to a scipy sparse datastructure.
 
 3) It is generally better to convert from your pandas Dataframe first to a
-:class:`coo_matrix`, as this is far quicker to construct, and from this to then
-convert to a Compressed Row :class:`csr_matrix`, or Compressed Column
-:class:`csc_matrix` sparse matrix using the :meth:`.tocsr()` or
-:meth:`.tocsc()` methods respectively.
+:class:`~scipy.sparse.coo_matrix`, as this is far quicker to construct,
+and from this to then convert to a Compressed Row
+:class:`~scipy.sparse.csr_matrix`, or Compressed Column
+:class:`~scipy.sparse.csc_matrix` sparse matrix using the
+:meth:`~scipy.sparse.csc_matrix.tocsr()` or
+:meth:`~scipy.sparse.csr_matrix.tocsc()` methods respectively.
