@@ -27,6 +27,18 @@ There are different ways to get scikit-learn installed:
     If you wish to contribute to the project, you need to
     :ref:`install the latest development version<install_bleeding_edge>`.
 
+.. _install_nightly_builds:
+
+Installing nightly builds
+=========================
+
+The continuous integration servers of the scikit-learn project build, test
+and upload wheel packages for the most recent Python version on a nightly
+basis to help users test bleeding edge features or bug fixes::
+
+  pip install --pre -f https://sklearn-nightly.scdn8.secure.raxcdn.com scikit-learn
+
+
 .. _install_bleeding_edge:
 
 Building from source
@@ -46,7 +58,8 @@ Scikit-learn requires:
 
 Building Scikit-learn also requires
 
-- Cython >=0.28.5 
+- Cython >=0.28.5
+- OpenMP
 
 Running tests requires
 
@@ -102,6 +115,31 @@ On Unix-like systems, you can simply type ``make`` in the top-level folder to
 build in-place and launch all the tests. Have a look at the ``Makefile`` for
 additional utilities.
 
+Mac OSX
+-------
+
+The default C compiler, Apple-clang, on Mac OSX does not directly support
+OpenMP. The first solution to build scikit-learn is to install another C
+compiler such as gcc or llvm-clang. Another solution is to enable OpenMP
+support on the default Apple-clang. In the following we present how to
+configure this second option.
+
+You first need to install the OpenMP library::
+
+    brew install libomp
+
+Then you need to set the following environment variables::
+
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+    export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
+    export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
+    export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
+    export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
+    export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+
+Finally you can build the package using the standard command.
+
 Installing build dependencies
 =============================
 
@@ -111,7 +149,7 @@ Linux
 Installing from source requires you to have installed the scikit-learn runtime
 dependencies, Python development headers and a working C/C++ compiler.
 Under Debian-based operating systems, which include Ubuntu::
-    
+
     sudo apt-get install build-essential python3-dev python3-setuptools \
                      python3-numpy python3-scipy \
                      libatlas-dev libatlas3-base

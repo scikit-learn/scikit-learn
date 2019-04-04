@@ -10,8 +10,6 @@ with matplotlib.
 This allows the scaling of the algorithm with the problem size to be
 visualized and understood.
 """
-from __future__ import print_function
-
 import numpy as np
 import gc
 from datetime import datetime

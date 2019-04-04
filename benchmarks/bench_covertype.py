@@ -40,7 +40,6 @@ The same task has been used in a number of papers including:
 [1] https://archive.ics.uci.edu/ml/datasets/Covertype
 
 """
-from __future__ import division, print_function
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Arnaud Joly <arnaud.v.joly@gmail.com>

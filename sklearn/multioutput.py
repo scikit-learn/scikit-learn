@@ -144,7 +144,8 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         """
 
         if not hasattr(self.estimator, "fit"):
-            raise ValueError("The base estimator should implement a fit method")
+            raise ValueError("The base estimator should implement"
+                             "  a fit method")
 
         X, y = check_X_y(X, y,
                          multi_output=True,
@@ -195,6 +196,9 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
 
         return np.asarray(y).T
 
+    def _more_tags(self):
+        return {'multioutput_only': True}
+
 
 class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     """Multi target regression
@@ -217,6 +221,11 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         When individual estimators are fast to train or predict
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
+
+    Attributes
+    ----------
+    estimators_ : list of ``n_output`` estimators
+        Estimators used for predictions.
     """
 
     def __init__(self, estimator, n_jobs=None):
@@ -247,6 +256,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         super().partial_fit(
             X, y, sample_weight=sample_weight)
 
+    # XXX Remove this method in 0.23
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
@@ -366,6 +376,10 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))
 
+    def _more_tags(self):
+        # FIXME
+        return {'_skip_test': True}
+
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     def __init__(self, base_estimator, order=None, cv=None, random_state=None):
@@ -452,6 +466,7 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The predicted values.
 
         """
+        check_is_fitted(self, 'estimators_')
         X = check_array(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
@@ -627,6 +642,10 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
         return Y_decision
 
+    def _more_tags(self):
+        return {'_skip_test': True,
+                'multioutput_only': True}
+
 
 class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
     """A multi-label model that arranges regressions into a chain.
@@ -709,3 +728,6 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         """
         super().fit(X, Y)
         return self
+
+    def _more_tags(self):
+        return {'multioutput_only': True}

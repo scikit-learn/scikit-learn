@@ -45,7 +45,7 @@ JUNK_FOOD_DOCS = (
 )
 
 
-class NoFit(object):
+class NoFit:
     """Small class to test parameter dispatching.
     """
 
@@ -529,6 +529,29 @@ def test_pipeline_fit_transform():
     assert_array_almost_equal(X_trans, X_trans2)
 
 
+def test_pipeline_slice():
+    pipe = Pipeline([('transf1', Transf()),
+                     ('transf2', Transf()),
+                     ('clf', FitParamT())])
+    pipe2 = pipe[:-1]
+    assert isinstance(pipe2, Pipeline)
+    assert pipe2.steps == pipe.steps[:-1]
+    assert 2 == len(pipe2.named_steps)
+    assert_raises(ValueError, lambda: pipe[::-1])
+
+
+def test_pipeline_index():
+    transf = Transf()
+    clf = FitParamT()
+    pipe = Pipeline([('transf', transf), ('clf', clf)])
+    assert pipe[0] == transf
+    assert pipe['transf'] == transf
+    assert pipe[-1] == clf
+    assert pipe['clf'] == clf
+    assert_raises(IndexError, lambda: pipe[3])
+    assert_raises(KeyError, lambda: pipe['foobar'])
+
+
 def test_set_pipeline_steps():
     transf1 = Transf()
     transf2 = Transf()
@@ -947,12 +970,12 @@ def test_pipeline_wrong_memory():
                         " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
-class DummyMemory(object):
+class DummyMemory:
     def cache(self, func):
         return func
 
 
-class WrongDummyMemory(object):
+class WrongDummyMemory:
     pass
 
 
@@ -1046,5 +1069,6 @@ def test_make_pipeline_memory():
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())
     assert pipeline.memory is None
+    assert len(pipeline) == 2
 
     shutil.rmtree(cachedir)

@@ -13,6 +13,7 @@ from scipy.linalg import pinv2, svd
 from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
+from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
@@ -116,7 +117,7 @@ def _center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class _PLS(BaseEstimator, TransformerMixin, RegressorMixin,
+class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
            metaclass=ABCMeta):
     """Partial Least Squares (PLS)
 
@@ -454,6 +455,9 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin,
         """
         return self.fit(X, y).transform(X, y)
 
+    def _more_tags(self):
+        return {'poor_score': True}
+
 
 class PLSRegression(_PLS):
     """PLS regression
@@ -526,7 +530,7 @@ class PLSRegression(_PLS):
         W: x_weights_
         C: y_weights_
         P: x_loadings_
-        Q: y_loadings__
+        Q: y_loadings_
 
     Are computed such that::
 
