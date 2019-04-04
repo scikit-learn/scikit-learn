@@ -47,7 +47,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
                          'and no larger than 256.'.format(max_bins))
     rng = check_random_state(random_state)
     if subsample is not None and data.shape[0] > subsample:
-        subset = rng.choice(np.arange(data.shape[0]), subsample)
+        subset = rng.choice(np.arange(data.shape[0]), subsample, replace=False)
         data = data.take(subset, axis=0)
 
     percentiles = np.linspace(0, 100, num=max_bins + 1)
