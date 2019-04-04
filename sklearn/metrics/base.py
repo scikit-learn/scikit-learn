@@ -126,8 +126,8 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         return score
 
 
-def _average_multiclass_ovo_score(
-        binary_metric, y_true, y_score, average='macro'):
+def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
+                                  average='macro'):
     """Average one-versus-one scores for multiclass classification.
 
     Uses the binary metric for one-vs-one multiclass classification,

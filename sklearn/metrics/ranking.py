@@ -479,8 +479,7 @@ def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
             raise ValueError("Parameter 'sample_weight' is not supported"
                              " for multiclass one-vs-one ROC AUC."
                              " 'sample_weight' must be None in this case.")
-        y_true_encoded = _encode_y_true_multiclass_ovo(
-            y_true, y_score, labels)
+        y_true_encoded = _encode_y_true_multiclass_ovo(y_true, labels)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(binary_metric, y_true_encoded,
                                              y_score, average=average)
@@ -493,22 +492,17 @@ def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
                                      average, sample_weight=sample_weight)
 
 
-def _encode_y_true_multiclass_ovo(y_true, y_score, labels):
-    """Encodes y_true for multiclass scoring where y_score is a probability
-    matrix
+def _encode_y_true_multiclass_ovo(y_true, labels):
+    """Encodes y_true for multiclass ovo scoring
 
     Parameters
     ----------
     y_true : numpy array, shape = (n_samples, )
         True multiclass labels
 
-    y_score : numpy array, shape = (n_samples, n_classes)
-        Target scores corresponding to probability estimates of a sample
-        belonging to a particular class
-
     labels : array-like, shape = (n_classes, ) or None
-        List of labels to index ``y_score`` used. If ``None``,
-        the lexicon order of ``y_true`` is used to index ``y_score``.
+        List of labels to index. If ``None``, the lexicon order of ``y_true``
+        is used.
 
     Returns
     -------
