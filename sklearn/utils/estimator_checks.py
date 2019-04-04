@@ -2363,11 +2363,9 @@ def check_classifiers_regression_target(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimator_sparse_dense(name, estimator_orig):
     rng = np.random.RandomState(52)
-    X, y = make_blobs(random_state=rng, n_samples=40)
+    X, y = make_blobs(random_state=rng, cluster_std=0.5)
     # for put some points to zero to have a little bit of sparsity
-    X = np.abs(X)  # we need positive data for ComplementNB for instance
-    X[rng.choice(X.shape[0], size=10, replace=False),
-      rng.randint(X.shape[1], size=10)] = 0.
+    X -= np.min(X) - 1.  # we need positive data for ComplementNB for instance
     X_csr = sparse.csr_matrix(X)
     estimator = clone(estimator_orig)
     estimator_sp = clone(estimator_orig)
@@ -2386,27 +2384,7 @@ def check_estimator_sparse_dense(name, estimator_orig):
                 # XXX naming is not consistent (with_mean vs with_centering) :(
                 estimator.set_params(with_centering=False)
                 estimator_sp.set_params(with_centering=False)
-            if name in ['TransformedTargetRegressor']:
-                estimator.set_params(regressor=LinearRegression(
-                    fit_intercept=False))
-                estimator_sp.set_params(regressor=LinearRegression(
-                    fit_intercept=False))
-        dense_vs_sparse_additional_params = defaultdict(dict,
-                {'Ridge': {'solver': 'cholesky'},
-                 })
-        params = dense_vs_sparse_additional_params[
-            estimator.__class__.__name__]
-        estimator.set_params(**params)
-        estimator_sp.set_params(**params)
-        for estimator_attr in ['base_estimator', 'estimator']:
-            if (hasattr(estimator, estimator_attr) and
-                    getattr(estimator, estimator_attr) is not None and
-                    'fit_intercept' in
-                    getattr(estimator, estimator_attr).get_params()):
-                getattr(estimator, estimator_attr).set_params(
-                    fit_intercept=False)
-                getattr(estimator_sp, estimator_attr).set_params(
-                    fit_intercept=False)
+
         set_random_state(estimator)
         set_random_state(estimator_sp)
         X = pairwise_estimator_convert_X(X, estimator)
