@@ -46,6 +46,7 @@ The following people have been active contributors in the past, but are no longe
 - Raghav Rajagopalan
 - Robert Layton
 - Ron Weiss
+- Shiqiao Du
 - Thouis (Ray) Jones
 - Vincent Dubourg
 - Vincent Michel
