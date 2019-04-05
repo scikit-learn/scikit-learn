@@ -515,14 +515,14 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.svm`
 ..................
 
-- |Fix| Fixed a convergence issue in `libsvm` and `liblinear` on Windows
+- |Fix| Fixed a convergence issue in ``libsvm`` and ``liblinear`` on Windows
   platforms impacting all related classifiers and regressors. The random number
   generator used to randomly choose coordinates in the coordinate descent
-  algorithm was C `rand()`, that is only able to generate numbers up to `32767`
-  on windows platform. It was replaced with C++11 `mt19937`, a Mersenne Twister
-  that correctly generates 31bits/63bits random numbers on all platforms. Note
-  that this also reduced execution time. :issue:`13511` by
-  :user:`Sylvain Marié <smarie>`.
+  algorithm was C ``rand()``, that is only able to generate numbers up to
+  ``32767`` on windows platform. It was replaced with C++11 ``mt19937``, a
+  Mersenne Twister that correctly generates 31bits/63bits random numbers on all
+  platforms. Note that this also reduced execution time.
+  :issue:`13511` by :user:`Sylvain Marié <smarie>`.
 
 - |Fix| Fixed an issue in :func:`svm.SVC.decision_function`
   when ``decision_function_shape='ovr'``. The decision_function value of a given
