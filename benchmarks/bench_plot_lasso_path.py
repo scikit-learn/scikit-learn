@@ -9,7 +9,7 @@ from time import time
 
 import numpy as np
 
-from sklearn.linear_model import lars_path
+from sklearn.linear_model import lars_path, lars_path_gram
 from sklearn.linear_model import lasso_path
 from sklearn.datasets.samples_generator import make_regression
 
@@ -45,7 +45,7 @@ def compute_bench(samples_range, features_range):
             tstart = time()
             G = np.dot(X.T, X)  # precomputed Gram matrix
             Xy = np.dot(X.T, y)
-            lars_path(X, y, Xy=Xy, Gram=G, method='lasso')
+            lars_path_gram(Xy=Xy, Gram=G, n_samples=y.size, method='lasso')
             delta = time() - tstart
             print("%0.3fs" % delta)
             results['lars_path (with Gram)'].append(delta)

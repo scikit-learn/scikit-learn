@@ -23,7 +23,7 @@ from scipy import sparse as sp
 
 from .expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array
-from ...utils.fixes import comb
+from ...utils.fixes import comb, _astype_copy_false
 
 
 def _comb2(n):
@@ -631,7 +631,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
-    outer = pi.take(nzx).astype(np.int64) * pj.take(nzy).astype(np.int64)
+    outer = (pi.take(nzx).astype(np.int64, copy=False)
+             * pj.take(nzy).astype(np.int64, copy=False))
     log_outer = -np.log(outer) + log(pi.sum()) + log(pj.sum())
     mi = (contingency_nm * (log_contingency_nm - log(contingency_sum)) +
           contingency_nm * log_outer)
@@ -740,7 +741,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
             classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64)
+    contingency = contingency.astype(np.float64,
+                                     **_astype_copy_false(contingency))
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
                            contingency=contingency)
@@ -851,7 +853,8 @@ def normalized_mutual_info_score(labels_true, labels_pred,
             classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64)
+    contingency = contingency.astype(np.float64,
+                                     **_astype_copy_false(contingency))
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred,
                            contingency=contingency)
@@ -934,7 +937,8 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     n_samples, = labels_true.shape
 
     c = contingency_matrix(labels_true, labels_pred,
-                           sparse=True).astype(np.int64)
+                           sparse=True)
+    c = c.astype(np.int64, **_astype_copy_false(c))
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples

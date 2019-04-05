@@ -232,6 +232,7 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
     --------
     VotingRegressor: Prediction voting regressor.
     """
+    _required_parameters = ['estimators']
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
                  flatten_transform=True):

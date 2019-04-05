@@ -131,7 +131,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
             Returns an instance of self.
         """
         X, y = check_X_y(X, y, accept_sparse=['csc', 'csr', 'coo'],
-                         force_all_finite=False)
+                         force_all_finite=False, allow_nd=True)
         X, y = indexable(X, y)
         le = LabelBinarizer().fit(y)
         self.classes_ = le.classes_

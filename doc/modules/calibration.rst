@@ -171,7 +171,7 @@ probability vectors predicted by the same classifier after sigmoid calibration
 on a hold-out validation set. Colors indicate the true class of an instance
 (red: class 1, green: class 2, blue: class 3).
 
-.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_000.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_001.png
    :target: ../auto_examples/calibration/plot_calibration_multiclass.html
    :align: center
 
@@ -183,7 +183,7 @@ method='sigmoid' on the remaining 200 datapoints reduces the confidence of the
 predictions, i.e., moves the probability vectors from the edges of the simplex
 towards the center:
 
-.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_001.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_002.png
    :target: ../auto_examples/calibration/plot_calibration_multiclass.html
    :align: center
 
