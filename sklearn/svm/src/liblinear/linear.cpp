@@ -90,7 +90,7 @@ exit(1);
 
 // - (2) New public `set_seed()` function that should be used instead of `srand()` to set a new seed.
 void set_seed(unsigned custom_seed) {
-    mt_rand.seed (custom_seed);
+    mt_rand.seed(custom_seed);
 }
 
 // - (3) New internal `myrand()` function, used instead of rand() everywhere.
