@@ -61,7 +61,8 @@ def one_run(n_samples):
     y_test = y_test_[:n_samples]
     assert X_train.shape[0] == n_samples
     assert X_test.shape[0] == n_samples
-
+    print("Data size: %d samples train, %d samples test."
+          % (n_samples, n_samples))
     print("Fitting a sklearn model...")
     tic = time()
     est = Estimator(learning_rate=lr,
@@ -205,9 +206,9 @@ axs[1].plot(n_samples_list, sklearn_fit_durations, label='sklearn')
 axs[2].plot(n_samples_list, sklearn_score_durations, label='sklearn')
 
 if args.lightgbm:
-    axs[0].plot(n_samples_list, lightgbm_scores, label='lgbm')
-    axs[1].plot(n_samples_list, lightgbm_fit_durations, label='lgbm')
-    axs[2].plot(n_samples_list, lightgbm_score_durations, label='lgbm')
+    axs[0].plot(n_samples_list, lightgbm_scores, label='lightgbm')
+    axs[1].plot(n_samples_list, lightgbm_fit_durations, label='lightgbm')
+    axs[2].plot(n_samples_list, lightgbm_score_durations, label='lightgbm')
 
 if args.xgboost:
     axs[0].plot(n_samples_list, xgb_scores, label='XGBoost')
