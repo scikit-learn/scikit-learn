@@ -4,23 +4,18 @@ Testing Recursive feature elimination
 
 import pytest
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
 from sklearn.feature_selection.rfe import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
-from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GroupKFold
-
+from sklearn.metrics import get_scorer, make_scorer, zero_one_loss
+from sklearn.model_selection import cross_val_score, GroupKFold
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_greater, assert_equal
-
-from sklearn.metrics import make_scorer
-from sklearn.metrics import get_scorer
+from sklearn.utils.testing import (assert_equal, assert_array_equal,
+                                   assert_array_almost_equal, assert_greater,
+                                   assert_raises, ignore_warnings)
 
 
 class MockClassifier:
@@ -325,7 +320,6 @@ def test_number_of_subsets_of_features():
     # RFECV, n_features_to_select = 1
     # Case 1, n_features - 1 is divisible by step
     # Case 2, n_features - 1 is not divisible by step
-
     n_features_to_select = 1
     n_features_list = [11, 10]
     step_list = [2, 2]
@@ -335,11 +329,62 @@ def test_number_of_subsets_of_features():
         y = generator.rand(100).round()
         rfecv = RFECV(estimator=SVC(kernel="linear"), step=step, cv=5)
         rfecv.fit(X, y)
-
         assert_equal(rfecv.grid_scores_.shape[0],
                      formula1(n_features, n_features_to_select, step))
         assert_equal(rfecv.grid_scores_.shape[0],
                      formula2(n_features, n_features_to_select, step))
+
+    # Advanced step options
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+    rfe = RFE(estimator=SVC(kernel="linear"), n_features_to_select=10,
+              tune_step_at=5)
+    assert_raises(ValueError, rfe.fit, X, y)
+
+    n_features_list = [300] * 14
+    n_features_to_select_list = [50] * 14
+    step_list = [100, 100, 100, 100, 100, 100,
+                 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
+    tune_step_at_list = [105, 105, 105, 0.325, 0.325, 0.325,
+                         105, 105, 105, 105, 0.325, 0.325, 0.325, 0.325]
+    tuning_step_list = [10, 0.125, 0.125, 10, 0.125, 0.125,
+                        10, 10, 0.125, 0.125, 10, 10, 0.125, 0.125]
+    reducing_step_list = [False, False, True, False, False, True,
+                          False, True, False, True, False, True, False, True]
+    n_remaining_feature_steps_list = [
+        [300, 200, 105, 95, 85, 75, 65, 55, 50],
+        [300, 200, 105, 92, 79, 66, 53, 50],
+        [300, 200, 105, 92, 81, 71, 63, 56, 50],
+        [300, 200, 100, 97, 87, 77, 67, 57, 50],
+        [300, 200, 100, 97, 85, 73, 61, 50],
+        [300, 200, 100, 97, 85, 75, 66, 58, 51, 50],
+        [300, 240, 180, 120, 105, 95, 85, 75, 65, 55, 50],
+        [300, 240, 192, 154, 124, 105, 95, 85, 75, 65, 55, 50],
+        [300, 240, 180, 120, 105, 92, 79, 66, 53, 50],
+        [300, 240, 192, 154, 124, 105, 92, 81, 71, 63, 56, 50],
+        [300, 240, 180, 120, 97, 87, 77, 67, 57, 50],
+        [300, 240, 192, 154, 124, 100, 97, 87, 77, 67, 57, 50],
+        [300, 240, 180, 120, 97, 85, 73, 61, 50],
+        [300, 240, 192, 154, 124, 100, 97, 85, 75, 66, 58, 51, 50],
+    ]
+    for (n_features, n_features_to_select, step,
+         tune_step_at, tuning_step, reducing_step,
+         n_remaining_feature_steps) in zip(
+             n_features_list, n_features_to_select_list, step_list,
+             tune_step_at_list, tuning_step_list, reducing_step_list,
+             n_remaining_feature_steps_list):
+        generator = check_random_state(43)
+        X = generator.normal(size=(100, n_features))
+        y = generator.rand(100).round()
+        rfe = RFE(estimator=SVC(kernel="linear"),
+                  n_features_to_select=n_features_to_select, step=step,
+                  tune_step_at=tune_step_at, tuning_step=tuning_step,
+                  reducing_step=reducing_step)
+        rfe.fit(X, y)
+        assert_array_equal(rfe.n_remaining_feature_steps_,
+                           n_remaining_feature_steps)
 
 
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
