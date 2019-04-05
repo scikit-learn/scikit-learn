@@ -288,8 +288,8 @@ def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
 
     distances = np.empty((n_samples_X, n_samples_Y), dtype=np.float32)
 
-    x_density = X.getnnz() / np.prod(X.shape) if issparse(X) else 1
-    y_density = Y.getnnz() / np.prod(Y.shape) if issparse(Y) else 1
+    x_density = X.nnz / np.prod(X.shape) if issparse(X) else 1
+    y_density = Y.nnz / np.prod(Y.shape) if issparse(Y) else 1
 
     # Allow 10% more memory than X, Y and the distance matrix take (at least
     # 10Mib)
@@ -307,6 +307,11 @@ def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
     tmp = (x_density + y_density) * n_features
     chunk_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
     chunk_size = max(int(chunk_size), 1)
+
+    x_batches = gen_batches(X.shape[0], chunk_size)
+    y_batches = gen_batches(Y.shape[0], chunk_size)
+
+    for x batch in gen_batches
 
     n_chunks_X = n_samples_X // chunk_size + (n_samples_X % chunk_size != 0)
     n_chunks_Y = n_samples_Y // chunk_size + (n_samples_Y % chunk_size != 0)
