@@ -51,7 +51,7 @@ def get_derivatives_helper(loss):
     ('binary_crossentropy', -12, 1),
     ('binary_crossentropy', 30, 1),
 ])
-@pytest.mark.skipif(scipy.__version__.split('.')[:2] == ['1', '2'],
+@pytest.mark.skipif(scipy.__version__.split('.')[:3] == ['1', '2', '0'],
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
 @pytest.mark.skipif(Y_DTYPE != np.float64,
                     reason='Newton internally uses float64 != Y_DTYPE')
