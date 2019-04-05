@@ -41,6 +41,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
+    min_samples : int > 1 or float between 0 and 1 (default=None)
+        The number of samples in a neighborhood for a point to be considered as
+        a core point. Also, up and down steep regions can't have more then
+        ``min_samples`` consecutive non-steep points. Expressed as an absolute
+        number or a fraction of the number of samples (rounded to be at least
+        2).
+
     min_samples : int (default=5)
         The number of samples in a neighborhood for a point to be considered
         as a core point.
