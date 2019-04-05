@@ -20,10 +20,6 @@ def get_derivatives_helper(loss):
         hessians = np.empty_like(raw_predictions, dtype=G_H_DTYPE)
         loss.update_gradients_and_hessians(gradients, hessians, y_true,
                                            raw_predictions)
-
-        if loss.__class__ is _LOSSES['least_squares']:
-            gradients *= 2  # ommitted a factor of 2 to be consistent with LGBM
-
         return gradients
 
     def get_hessians(y_true, raw_predictions):
@@ -34,8 +30,10 @@ def get_derivatives_helper(loss):
                                            raw_predictions)
 
         if loss.__class__ is _LOSSES['least_squares']:
-            # hessians aren't updated because they're constant
-            hessians = np.full_like(raw_predictions, fill_value=2)
+            # hessians aren't updated because they're constant:
+            # the value is 1 because the loss is actually an half
+            # least squares loss.
+            hessians = np.full_like(raw_predictions, fill_value=1)
 
         return hessians
 

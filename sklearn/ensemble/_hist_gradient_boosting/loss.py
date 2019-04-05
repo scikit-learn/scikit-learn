@@ -109,7 +109,11 @@ class LeastSquares(BaseLoss):
 
     For a given sample x_i, least squares loss is defined as::
 
-        loss(x_i) = (y_true_i - raw_pred_i)**2
+        loss(x_i) = 0.5 * (y_true_i - raw_pred_i)**2
+
+    This actually computes the half least squares loss to optimize simplify
+    the computation of the gradients and get a unit hessian (and be consistent
+    with what is done in LightGBM).
     """
 
     hessians_are_constant = True
@@ -118,7 +122,7 @@ class LeastSquares(BaseLoss):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
-        loss = np.power(y_true - raw_predictions, 2)
+        loss = 0.5 * np.power(y_true - raw_predictions, 2)
         return loss.mean() if average else loss
 
     def get_baseline_prediction(self, y_train, prediction_dim):
@@ -134,8 +138,7 @@ class LeastSquares(BaseLoss):
         # return a view.
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
-        _update_gradients_least_squares(gradients, y_true,
-                                        raw_predictions)
+        _update_gradients_least_squares(gradients, y_true, raw_predictions)
 
 
 class BinaryCrossEntropy(BaseLoss):
