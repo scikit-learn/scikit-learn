@@ -1151,7 +1151,7 @@ def test_partial_roc_auc_score():
             )
 
     # Alternate calculation
-    def _pauc(y_true, y_score, fpr_range=[0, 1], tpr_range=[0, 1]):
+    def _pauc(y_true, y_score, fpr_range=(0, 1), tpr_range=(0, 1)):
         """
         Alternative implementation of partial roc auc by integrating directly.
         """
@@ -1168,7 +1168,7 @@ def test_partial_roc_auc_score():
         if fpr_min == fpr_max:
             return 0
 
-        partial_auc, _ = quad(interp1d(fpr, tpr), fpr_min, fpr_max, limit=100)
+        partial_auc, _ = quad(interp1d(fpr, tpr), fpr_min, fpr_max, limit=1000)
 
         # Formula (5) from McClish 1989
         min_area = 0.5 * (fpr_max - fpr_min) * (fpr_max + fpr_min)
@@ -1178,6 +1178,10 @@ def test_partial_roc_auc_score():
     y_true, _, y_score = make_prediction(binary=True)
     for min_val in np.linspace(0, 1, 7):
         for max_val in np.linspace(min_val, 1, 7):
+            print(roc_auc_score(y_true, y_score, fpr_range=(min_val, max_val)),
+                _pauc(y_true, y_score, fpr_range=[min_val, max_val]),
+                roc_auc_score(y_true, y_score, tpr_range=(min_val, max_val)),
+                _pauc(y_true, y_score, tpr_range=[min_val, max_val]))
             assert_almost_equal(
                 roc_auc_score(y_true, y_score, fpr_range=(min_val, max_val)),
                 _pauc(y_true, y_score, fpr_range=[min_val, max_val])
