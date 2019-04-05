@@ -390,8 +390,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         """
         self._check_is_fitted()
         X = _check_X(X, None, self.means_.shape[1])
-        _, log_resp = self._estimate_log_prob_resp(X)
-        return np.exp(log_resp)
+        log_prob, _ = self._estimate_log_prob_resp(X)
+        return np.exp(log_prob)
 
     def sample(self, n_samples=1):
         """Generate random samples from the fitted Gaussian distribution.
