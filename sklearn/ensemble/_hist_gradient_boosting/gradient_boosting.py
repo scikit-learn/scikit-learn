@@ -176,10 +176,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # else 1.
         n_samples = X_binned_train.shape[0]
         self._baseline_prediction = self.loss_.get_baseline_prediction(
-            y_train, self._n_trees_per_iteration
+            y_train, self.n_trees_per_iteration_
         )
         raw_predictions = np.zeros(
-            shape=(self._n_trees_per_iteration, n_samples),
+            shape=(self.n_trees_per_iteration_, n_samples),
             dtype=self._baseline_prediction.dtype
         )
         raw_predictions += self._baseline_prediction
@@ -188,7 +188,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # shape = (n_trees_per_iteration, n_samples).
         gradients, hessians = self.loss_.init_gradients_and_hessians(
             n_samples=n_samples,
-            prediction_dim=self._n_trees_per_iteration
+            prediction_dim=self.n_trees_per_iteration_
         )
 
         # predictors is a matrix (list of lists) of TreePredictor objects
@@ -224,7 +224,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             predictors.append([])
 
             # Build `n_trees_per_iteration` trees.
-            for k in range(self._n_trees_per_iteration):
+            for k in range(self.n_trees_per_iteration_):
 
                 grower = TreeGrower(
                     X_binned_train, gradients[k, :], hessians[k, :],
@@ -407,7 +407,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         is_binned = getattr(self, '_in_fit', False)
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
-            shape=(self._n_trees_per_iteration, n_samples),
+            shape=(self.n_trees_per_iteration_, n_samples),
             dtype=self._baseline_prediction.dtype
         )
         raw_predictions += self._baseline_prediction
@@ -511,6 +511,9 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     n_iter_ : int
         The number of iterations as selected by early stopping (if
         n_iter_no_change is not None). Otherwise it corresponds to max_iter.
+    n_trees_per_iteration_ : int
+        The number of tree that are built at each iteration. For regressors,
+        this is always 1.
     train_score_ : ndarray, shape (max_iter + 1,)
         The scores at each iteration on the training data. The first entry is
         the score of the ensemble before the first iteration. Scores are
@@ -567,7 +570,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
     def _encode_y(self, y):
         # Just convert y to the expected dtype
-        self._n_trees_per_iteration = 1
+        self.n_trees_per_iteration_ = 1
         y = y.astype(Y_DTYPE, copy=False)
         return y
 
@@ -657,6 +660,10 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     n_iter_ : int
         The number of estimators as selected by early stopping (if
         n_iter_no_change is not None). Otherwise it corresponds to max_iter.
+    n_trees_per_iteration_ : int
+        The number of tree that are built at each iteration. This is equal to 1
+        for binary classification, and to ``n_classes`` for multiclass
+        classification.
     train_score_ : array, shape (max_iter + 1,)
         The scores at each iteration on the training data. The first entry is
         the score of the ensemble before the first iteration. Scores are
@@ -751,7 +758,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     def _encode_y(self, y):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
-        # and _n_trees_per_iteration
+        # and n_trees_per_iteration_
         check_classification_targets(y)
 
         label_encoder = LabelEncoder()
@@ -760,13 +767,13 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         n_classes = self.classes_.shape[0]
         # only 1 tree for binary classification. For multiclass classification,
         # we build 1 tree per class.
-        self._n_trees_per_iteration = 1 if n_classes <= 2 else n_classes
+        self.n_trees_per_iteration_ = 1 if n_classes <= 2 else n_classes
         encoded_y = encoded_y.astype(Y_DTYPE, copy=False)
         return encoded_y
 
     def _get_loss(self):
         if self.loss == 'auto':
-            if self._n_trees_per_iteration == 1:
+            if self.n_trees_per_iteration_ == 1:
                 return _LOSSES['binary_crossentropy']()
             else:
                 return _LOSSES['categorical_crossentropy']()
