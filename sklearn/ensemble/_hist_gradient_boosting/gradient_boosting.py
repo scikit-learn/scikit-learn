@@ -159,7 +159,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             subsample_size = 10000  # should we expose this parameter?
             indices = np.arange(X_binned_train.shape[0])
             if X_binned_train.shape[0] > subsample_size:
-                indices = rng.choice(indices, subsample_size)
+                # TODO: not critical but stratify using resample(stratify=y)
+                indices = rng.choice(indices, subsample_size, replace=False)
             X_binned_small_train = X_binned_train[indices]
             y_small_train = y_train[indices]
             # Predicting is faster on C-contiguous arrays.
@@ -219,6 +220,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self.loss_.update_gradients_and_hessians(gradients, hessians,
                                                      y_train, raw_predictions)
 
+            # Append a list since there may be more than 1 predictor per iter
             predictors.append([])
 
             # Build `n_trees_per_iteration` trees.
@@ -449,16 +451,18 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     max_iter : int, optional (default=100)
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees.
-    max_leaf_nodes : int or None, optional (default=None)
+    max_leaf_nodes : int or None, optional (default=31)
         The maximum number of leaves for each tree. If None, there is no
         maximum limit.
     max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
-        nodes to go from the root to the deepest leaf.
+        nodes to go from the root to the deepest leaf. Depth isn't constrained
+        by default.
     min_samples_leaf : int, optional (default=5)
         The minimum number of samples per leaf.
     l2_regularization : float, optional (default=0)
-        The L2 regularization parameter. Use ``0`` for no regularization (default).
+        The L2 regularization parameter. Use ``0`` for no regularization
+        (default).
     max_bins : int, optional (default=256)
         The maximum number of bins to use. Before training, each feature of
         the input array ``X`` is binned into at most ``max_bins`` bins, which
@@ -502,8 +506,8 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     train_score_ : ndarray, shape (max_iter + 1,)
         The scores at each iteration on the training data. The first entry is
         the score of the ensemble before the first iteration. Scores are
-        computed according to the ``scoring`` parameter. Empty if no early
-        stopping.
+        computed according to the ``scoring`` parameter. Scores are computed on
+        a subset of at most 10 000 samples. Empty if no early stopping.
     validation_score_ : ndarray, shape (max_iter + 1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
@@ -580,7 +584,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     Parameters
     ----------
     loss : {'auto', 'binary_crossentropy', 'categorical_crossentropy'}, \
-        optional (default='auto')
+            optional (default='auto')
         The loss function to use in the boosting process. 'binary_crossentropy'
         (also known as logistic loss) is used for binary classification and
         generalizes to 'categorical_crossentropy' for multiclass
@@ -594,12 +598,13 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees for binary classification. For multiclass
         classification, `n_classes` trees per iteration are built.
-    max_leaf_nodes : int or None, optional (default=None)
+    max_leaf_nodes : int or None, optional (default=31)
         The maximum number of leaves for each tree. If None, there is no
         maximum limit.
     max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
-        nodes to go from the root to the deepest leaf.
+        nodes to go from the root to the deepest leaf. Depth isn't constrained
+        by default.
     min_samples_leaf : int, optional (default=5)
         The minimum number of samples per leaf.
     l2_regularization : float, optional (default=0)
@@ -644,12 +649,12 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     n_iter_ : int
         The number of estimators as selected by early stopping (if
         n_iter_no_change is not None). Otherwise it corresponds to max_iter.
-    train_score_ : array, shape=(max_iter + 1)
+    train_score_ : array, shape (max_iter + 1,)
         The scores at each iteration on the training data. The first entry is
         the score of the ensemble before the first iteration. Scores are
-        computed according to the ``scoring`` parameter. Empty if no early
-        stopping.
-    validation_score_ : array, shape=(max_iter + 1)
+        computed according to the ``scoring`` parameter. Scores are computed on
+        a subset of at most 10 000 samples. Empty if no early stopping.
+    validation_score_ : array, shape (max_iter + 1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
