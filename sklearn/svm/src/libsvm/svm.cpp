@@ -96,8 +96,8 @@ static inline double powi(double base, int times)
 #define TAU 1e-12
 #define Malloc(type,n) (type *)malloc((n)*sizeof(type))
 
-// New function to ensure the same behaviour for random number generation on windows and linux
-// note that we always use the same seed to get reproducible results
+// New random number generator replacing `rand()`, to ensure the same behaviour on windows-linux, with increased speed
+// - (1) Init a `mt_rand` object
 #if INT_MAX == 0x7FFFFFFF
 std::mt19937 mt_rand(std::mt19937::default_seed);
 #elif INT_MAX == 0x7FFFFFFFFFFFFFFF
@@ -106,6 +106,14 @@ std::mt19937_64 mt_rand(std::mt19937::default_seed);
 info("Random number generator is not fixed for this system. Please report issue. INT_MAX=%d\n", INT_MAX);
 exit(1);
 #endif
+
+// - (2) New internal `set_seed()` function that should be used instead of `srand()` to set a new seed.
+// note that as opposed to `liblinear` it is not public since the seed can already be provided in `svm_parameter`
+void set_seed(unsigned custom_seed) {
+    mt_rand.seed(custom_seed);
+}
+
+// - (3) New internal `myrand()` function, used instead of rand() everywhere.
 inline int myrand() {
     // make a 31bit or 63bit positive random number
     return abs( (int)mt_rand());
@@ -2371,7 +2379,7 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
     if(param->random_seed >= 0)
     {
         // srand(param->random_seed);
-        mt_rand.seed(param->random_seed);
+        set_seed(param->random_seed);
     }
 
 	if(param->svm_type == ONE_CLASS ||
@@ -2652,7 +2660,7 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
     if(param->random_seed >= 0)
     {
         // srand(param->random_seed);
-        mt_rand.seed(param->random_seed);
+        set_seed(param->random_seed);
     }
 
 	// stratified cv may not give leave-one-out rate
