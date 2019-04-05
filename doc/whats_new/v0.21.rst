@@ -30,6 +30,11 @@ random sampling procedures.
 - :class:`neural_network.MLPClassifier` |Fix|
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
+- :class:`linear_model.SGDClassifier` and any derived classifiers. |Fix|
+- Any model using the :func:`linear_model.sag.sag_solver` function with a `0`
+  seed, including :class:`linear_model.LogisticRegression`,
+  :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge`,
+  and :class:`linear_model.RidgeCV` with 'sag' solver. |Fix|
 
 
 Details are listed in the changelog below.
@@ -68,6 +73,10 @@ Support for Python 3.4 and below has been officially dropped.
   between 0 and 1.
   :issue:`13086` by :user:`Scott Cole <srcole>`.
 
+- |Enhancement| Allow n-dimensional arrays as input for
+  `calibration.CalibratedClassifierCV`. :issue:`13485` by
+  :user:`William de Vazelhes <wdevazelhes>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -75,6 +84,11 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
+
+- |API| The ``n_components_`` attribute in :class:`cluster.AgglomerativeClustering`
+  and :class:`cluster.FeatureAgglomeration` has been renamed to
+  ``n_connected_components_``.
+  :issue:`13427` by :user:`Stephane Couvreur <scouvreur>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -302,6 +316,11 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| :func:`linear_model.logistic_regression_path` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
+
+- |Fix| Fixed a bug in
+  :class:`linear_model.stochastic_gradient.BaseSGDClassifier` that was not
+  deterministic when trained in a multi-class setting on several threads.
+  :issue:`13422` by :user:`Clément Doumouro <ClemDoum>`.
 
 :mod:`sklearn.manifold`
 ............................
@@ -543,9 +562,19 @@ Multiple modules
   but this can be altered with the ``print_changed_only`` option in
   :func:`sklearn.set_config`. :issue:`11705` by :user:`Nicolas Hug
   <NicolasHug>`.
+- |MajorFeature| Add estimators tags: these are annotations of estimators
+  that allow programmatic inspection of their capabilities, such as sparse
+  matrix support, supported output types and supported methods. Estimator
+  tags also determine the tests that are run on an estimator when
+  `check_estimator` is called. Read more in the :ref:`User Guide
+  <estimator_tags>`. :issue:`8022` by :user:`Andreas Müller <amueller>`.
 - |Efficiency| Memory copies are avoided when casting arrays to a different
   dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
   <rth>`.
+- |Fix| Fixed a bug in the implementation of the :func:`our_rand_r`
+  helper function that was not behaving consistently across platforms.
+  :issue:`13422` by :user:`Madhura Parikh <jdnc>` and
+  :user:`Clément Doumouro <ClemDoum>`.
 
 Changes to estimator checks
 ---------------------------

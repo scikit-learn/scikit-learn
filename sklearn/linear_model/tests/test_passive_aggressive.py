@@ -76,7 +76,7 @@ def test_classifier_accuracy():
             for average in (False, True):
                 clf = PassiveAggressiveClassifier(
                     C=1.0, max_iter=30, fit_intercept=fit_intercept,
-                    random_state=0, average=average, tol=None)
+                    random_state=1, average=average, tol=None)
                 clf.fit(data, y)
                 score = clf.score(data, y)
                 assert_greater(score, 0.79)
