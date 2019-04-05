@@ -174,11 +174,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         return self._fit(X, y)
 
     def _fit(self, X, y, step_score=None):
-        # step_score parameter controls the calculation of self.scores_and
-        # self.n_remaining_feature_steps_. step_score is not exposed to users
-        # and is only used when implementing RFECV self.scores_ and
-        # self.n_remaining_feature_steps_ and will not be calculated when
-        # calling regular fit() method
+        # step_score parameter controls the calculation of self.scores_.
+        # step_score is not exposed to users and is only used when implementing
+        # RFECV self.scores_ and will not be calculated when calling regular
+        # fit() method
 
         X, y = check_X_y(X, y, "csc", ensure_min_features=2)
         # Initialization
@@ -216,10 +215,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         if step_score:
             self.scores_ = []
-            self.n_remaining_feature_steps_ = []
 
         # Elimination
         n_remaining_features = n_features
+        self.n_remaining_feature_steps_ = [n_remaining_features]
         while n_remaining_features > n_features_to_select:
             # Remaining features
             features = np.arange(n_features)[support_]
@@ -278,11 +277,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             # 'estimator' must use features that have not been eliminated yet
             if step_score:
                 self.scores_.append(step_score(estimator, features))
-                self.n_remaining_feature_steps_.append(n_remaining_features)
             # Eliminate worst features
             support_[features[ranks][:step]] = False
             ranking_[np.logical_not(support_)] += 1
             n_remaining_features -= step
+            self.n_remaining_feature_steps_.append(n_remaining_features)
 
         # Set final attributes
         features = np.arange(n_features)[support_]
@@ -292,7 +291,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # Compute step score when only n_features_to_select features left
         if step_score:
             self.scores_.append(step_score(self.estimator_, features))
-            self.n_remaining_feature_steps_.append(n_remaining_features)
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
@@ -577,6 +575,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         X, y = check_X_y(X, y, "csr", ensure_min_features=2)
 
         # Initialization
+        n_features = X.shape[1]
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
 
@@ -588,17 +587,15 @@ class RFECV(RFE, MetaEstimatorMixin):
                   tuning_step=self.tuning_step,
                   reducing_step=self.reducing_step, verbose=self.verbose)
 
-        # Determine the number of subsets of features by fitting across
-        # the train folds and choosing the "features_to_select" parameter
-        # that gives the least averaged error across all folds.
+        # Determine the number of subsets of features by fitting across the
+        # train folds and choosing the "features_to_select" parameter that
+        # gives the least averaged error across all folds.
 
-        # Note that joblib raises a non-picklable error for bound methods
-        # even if n_jobs is set to 1 with the default multiprocessing
-        # backend.
-        # This branching is done so that to
-        # make sure that user code that sets n_jobs to 1
-        # and provides bound methods as scorers is not broken with the
-        # addition of n_jobs parameter in version 0.18.
+        # Note that joblib raises a non-picklable error for bound methods even
+        # if n_jobs is set to 1 with the default multiprocessing backend. This
+        # branching is done so that to make sure that user code that sets
+        # n_jobs to 1 and provides bound methods as scorers is not broken with
+        # the addition of n_jobs parameter in version 0.18.
 
         if effective_n_jobs(self.n_jobs) == 1:
             parallel, func = list, _rfe_single_fit
@@ -616,11 +613,20 @@ class RFECV(RFE, MetaEstimatorMixin):
         n_remaining_feature_steps = cv_results[0][1][::-1]
         n_features_to_select = n_remaining_feature_steps[np.argmax(scores)]
 
+        if self.tune_step_at is not None:
+            if self.tune_step_at >= 1.0:
+                tune_step_at = int(self.tune_step_at)
+            elif 0.0 < self.tune_step_at < 1.0:
+                tune_step_at = int(max(1, self.tune_step_at * n_features))
+            if tune_step_at <= n_features_to_select:
+                tune_step_at = None
+        else:
+            tune_step_at = None
+
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select, step=self.step,
-                  tune_step_at=self.tune_step_at,
-                  tuning_step=self.tuning_step,
+                  tune_step_at=tune_step_at, tuning_step=self.tuning_step,
                   reducing_step=self.reducing_step, verbose=self.verbose)
 
         rfe.fit(X, y)
