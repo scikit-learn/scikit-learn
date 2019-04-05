@@ -164,7 +164,6 @@ def test_configure():
         else:
             del os.environ['SKLEARN_NO_OPENMP']
         os.chdir(cwd)
-        assert False
 
 
 def _tested_linear_classifiers():
