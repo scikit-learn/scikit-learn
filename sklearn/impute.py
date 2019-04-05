@@ -1142,7 +1142,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
                                   else sparse.csc_matrix)
             imputer_mask = sparse_constructor(
-                (mask, X.indices, X.indptr), dtype=bool)
+                (mask, X.indices.copy(), X.indptr.copy()),
+                shape=X.shape, dtype=bool)
             imputer_mask.eliminate_zeros()
 
             if self.features == 'missing-only':
