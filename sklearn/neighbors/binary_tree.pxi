@@ -1,4 +1,6 @@
 #!python
+# cython: language_level=3
+
 
 # KD Tree and Ball Tree
 # =====================
@@ -152,10 +154,10 @@ import numpy as np
 import warnings
 from ..utils import check_array
 
-from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
-from typedefs import DTYPE, ITYPE
+from .typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+from .typedefs import DTYPE, ITYPE
 
-from dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
+from .dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
                            euclidean_dist_to_rdist, euclidean_rdist_to_dist)
 
 cdef extern from "numpy/arrayobject.h":
@@ -292,7 +294,7 @@ Additional keywords are passed to the distance metric class.
 
 Attributes
 ----------
-data : np.ndarray
+data : memory view
     The training data
 
 Examples
@@ -300,8 +302,8 @@ Examples
 Query for k-nearest neighbors
 
     >>> import numpy as np
-    >>> np.random.seed(0)
-    >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.random_sample((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP
     >>> dist, ind = tree.query(X[:1], k=3)                # doctest: +SKIP
     >>> print(ind)  # indices of 3 closest neighbors
@@ -314,8 +316,8 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
 
     >>> import numpy as np
     >>> import pickle
-    >>> np.random.seed(0)
-    >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.random_sample((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)        # doctest: +SKIP
     >>> s = pickle.dumps(tree)                     # doctest: +SKIP
     >>> tree_copy = pickle.loads(s)                # doctest: +SKIP
@@ -328,8 +330,8 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
 Query for neighbors within a given radius
 
     >>> import numpy as np
-    >>> np.random.seed(0)
-    >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.random_sample((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)     # doctest: +SKIP
     >>> print(tree.query_radius(X[:1], r=0.3, count_only=True))
     3
@@ -341,8 +343,8 @@ Query for neighbors within a given radius
 Compute a gaussian kernel density estimate:
 
     >>> import numpy as np
-    >>> np.random.seed(1)
-    >>> X = np.random.random((100, 3))
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.random_sample((100, 3))
     >>> tree = {BinaryTree}(X)                # doctest: +SKIP
     >>> tree.kernel_density(X[:3], h=0.1, kernel='gaussian')
     array([ 6.94114649,  7.83281226,  7.2071716 ])
@@ -350,8 +352,8 @@ Compute a gaussian kernel density estimate:
 Compute a two-point auto-correlation function
 
     >>> import numpy as np
-    >>> np.random.seed(0)
-    >>> X = np.random.random((30, 3))
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.random_sample((30, 3))
     >>> r = np.linspace(0, 1, 5)
     >>> tree = {BinaryTree}(X)                # doctest: +SKIP
     >>> tree.two_point_correlation(X, r)
@@ -486,7 +488,7 @@ cdef DTYPE_t _log_kernel_norm(DTYPE_t h, ITYPE_t d,
     elif kernel == EXPONENTIAL_KERNEL:
         factor = logSn(d - 1) + lgamma(d)
     elif kernel == LINEAR_KERNEL:
-        factor = logVn(d) - np.log1p(d)
+        factor = logVn(d) - log(d + 1.)
     elif kernel == COSINE_KERNEL:
         # this is derived from a chain rule integration
         factor = 0
@@ -591,8 +593,8 @@ cdef class NeighborsHeap:
         self.indices = get_memview_ITYPE_2D(self.indices_arr)
 
     def __init__(self, n_pts, n_nbrs):
-        self.distances_arr = np.inf + np.zeros((n_pts, n_nbrs), dtype=DTYPE,
-                                               order='C')
+        self.distances_arr = np.full((n_pts, n_nbrs), np.inf, dtype=DTYPE,
+                                     order='C')
         self.indices_arr = np.zeros((n_pts, n_nbrs), dtype=ITYPE, order='C')
         self.distances = get_memview_DTYPE_2D(self.distances_arr)
         self.indices = get_memview_ITYPE_2D(self.indices_arr)
@@ -999,7 +1001,7 @@ def newObj(obj):
 
 ######################################################################
 # define the reverse mapping of VALID_METRICS
-from dist_metrics import get_valid_metric_ids
+from .dist_metrics import get_valid_metric_ids
 VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 
@@ -1119,7 +1121,7 @@ cdef class BinaryTree:
         """
         reduce method used for pickling
         """
-        return (newObj, (BinaryTree,), self.__getstate__())
+        return (newObj, (type(self),), self.__getstate__())
 
     def __getstate__(self):
         """
@@ -1136,7 +1138,8 @@ cdef class BinaryTree:
                 int(self.n_leaves),
                 int(self.n_splits),
                 int(self.n_calls),
-                self.dist_metric)
+                self.dist_metric,
+                self.sample_weight)
 
     def __setstate__(self, state):
         """
@@ -1162,6 +1165,7 @@ cdef class BinaryTree:
         self.dist_metric = state[11]
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
+        self.sample_weight = state[12]
 
     def get_tree_stats(self):
         return (self.n_trims, self.n_leaves, self.n_splits)
@@ -1336,7 +1340,7 @@ cdef class BinaryTree:
                 self._query_dual_breadthfirst(other, heap, nodeheap)
             else:
                 reduced_dist_LB = min_rdist_dual(self, 0, other, 0)
-                bounds = np.inf + np.zeros(other.node_data.shape[0])
+                bounds = np.full(other.node_data.shape[0], np.inf)
                 self._query_dual_depthfirst(0, other, 0, bounds,
                                             heap, reduced_dist_LB)
 
@@ -1446,7 +1450,7 @@ cdef class BinaryTree:
         r = np.asarray(r, dtype=DTYPE, order='C')
         r = np.atleast_1d(r)
         if r.shape == (1,):
-            r = r[0] + np.zeros(X.shape[:X.ndim - 1], dtype=DTYPE)
+            r = np.full(X.shape[:X.ndim - 1], r[0], dtype=DTYPE)
         else:
             if r.shape != X.shape[:X.ndim - 1]:
                 raise ValueError("r must be broadcastable to X.shape")
@@ -1654,7 +1658,7 @@ cdef class BinaryTree:
         #       this is difficult because of the need to cache values
         #       computed between node pairs.
         if breadth_first:
-            node_log_min_bounds_arr = -np.inf + np.zeros(self.n_nodes)
+            node_log_min_bounds_arr = np.full(self.n_nodes, -np.inf)
             node_log_min_bounds = get_memview_DTYPE_1D(node_log_min_bounds_arr)
             node_bound_widths_arr = np.zeros(self.n_nodes)
             node_bound_widths = get_memview_DTYPE_1D(node_bound_widths_arr)
@@ -1970,7 +1974,7 @@ cdef class BinaryTree:
         """Non-recursive dual-tree k-neighbors query, breadth-first"""
         cdef ITYPE_t i, i1, i2, i_node1, i_node2, i_pt
         cdef DTYPE_t dist_pt, reduced_dist_LB
-        cdef DTYPE_t[::1] bounds = np.inf + np.zeros(other.node_data.shape[0])
+        cdef DTYPE_t[::1] bounds = np.full(other.node_data.shape[0], np.inf)
         cdef NodeData_t* node_data1 = &self.node_data[0]
         cdef NodeData_t* node_data2 = &other.node_data[0]
         cdef NodeData_t node_info1, node_info2

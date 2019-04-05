@@ -26,7 +26,6 @@ the technique.
 # Author: Matt Terry <matt.terry@gmail.com>
 #
 # License: BSD 3 clause
-from __future__ import print_function
 
 import numpy as np
 
@@ -89,7 +88,7 @@ pipeline = Pipeline([
     # Extract the subject & body
     ('subjectbody', SubjectBodyExtractor()),
 
-    # Use C toolumnTransformer to combine the features from subject and body
+    # Use ColumnTransformer to combine the features from subject and body
     ('union', ColumnTransformer(
         [
             # Pulling features from the post's subject line (first column)

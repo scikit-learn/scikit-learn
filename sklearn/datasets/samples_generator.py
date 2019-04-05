@@ -8,6 +8,8 @@ Generate samples of synthetic data sets.
 
 import numbers
 import array
+from collections.abc import Iterable
+
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
@@ -15,11 +17,7 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
-from ..utils.fixes import _Iterable as Iterable
 from ..utils.random import sample_without_replacement
-from ..externals import six
-map = six.moves.map
-zip = six.moves.zip
 
 
 def _generate_hypercube(samples, dimensions, rng):
@@ -160,7 +158,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         raise ValueError("Number of informative, redundant and repeated "
                          "features must sum to less than the number of total"
                          " features")
-    if 2 ** n_informative < n_classes * n_clusters_per_class:
+    # Use log2 to avoid overflow errors
+    if n_informative < np.log2(n_classes * n_clusters_per_class):
         raise ValueError("n_classes * n_clusters_per_class must"
                          " be smaller or equal 2 ** n_informative")
     if weights and len(weights) not in [n_classes, n_classes - 1]:
@@ -178,10 +177,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         weights[-1] = 1.0 - sum(weights[:-1])
 
     # Distribute samples among clusters by weight
-    n_samples_per_cluster = []
-    for k in range(n_clusters):
-        n_samples_per_cluster.append(int(n_samples * weights[k % n_classes]
-                                     / n_clusters_per_class))
+    n_samples_per_cluster = [
+        int(n_samples * weights[k % n_classes] / n_clusters_per_class)
+        for k in range(n_clusters)]
+
     for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 
@@ -191,7 +190,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     # Build the polytope whose vertices become cluster centroids
     centroids = _generate_hypercube(n_clusters, n_informative,
-                                    generator).astype(float)
+                                    generator).astype(float, copy=False)
     centroids *= 2 * class_sep
     centroids -= class_sep
     if not hypercube:
@@ -447,7 +446,7 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
 
     shape = (n_samples, 10)
     X = rs.normal(size=shape).reshape(shape)
-    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
+    y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64, copy=False)
     y[y == 0.0] = -1.0
 
     return X, y
@@ -628,8 +627,8 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     inner_circ_x = np.cos(linspace_in) * factor
     inner_circ_y = np.sin(linspace_in) * factor
 
-    X = np.vstack((np.append(outer_circ_x, inner_circ_x),
-                   np.append(outer_circ_y, inner_circ_y))).T
+    X = np.vstack([np.append(outer_circ_x, inner_circ_x),
+                   np.append(outer_circ_y, inner_circ_y)]).T
     y = np.hstack([np.zeros(n_samples_out, dtype=np.intp),
                    np.ones(n_samples_in, dtype=np.intp)])
     if shuffle:
@@ -682,8 +681,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     inner_circ_x = 1 - np.cos(np.linspace(0, np.pi, n_samples_in))
     inner_circ_y = 1 - np.sin(np.linspace(0, np.pi, n_samples_in)) - .5
 
-    X = np.vstack((np.append(outer_circ_x, inner_circ_x),
-                   np.append(outer_circ_y, inner_circ_y))).T
+    X = np.vstack([np.append(outer_circ_x, inner_circ_x),
+                   np.append(outer_circ_y, inner_circ_y)]).T
     y = np.hstack([np.zeros(n_samples_out, dtype=np.intp),
                    np.ones(n_samples_in, dtype=np.intp)])
 
@@ -807,7 +806,7 @@ def make_blobs(n_samples=100, n_features=2, centers=None, cluster_std=1.0,
                          "and cluster_std = {}".format(centers, cluster_std))
 
     if isinstance(cluster_std, numbers.Real):
-        cluster_std = np.ones(len(centers)) * cluster_std
+        cluster_std = np.full(len(centers), cluster_std)
 
     X = []
     y = []
@@ -1592,8 +1591,8 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
         row_labels = row_labels[row_idx]
         col_labels = col_labels[col_idx]
 
-    rows = np.vstack(row_labels == c for c in range(n_clusters))
-    cols = np.vstack(col_labels == c for c in range(n_clusters))
+    rows = np.vstack([row_labels == c for c in range(n_clusters)])
+    cols = np.vstack([col_labels == c for c in range(n_clusters)])
 
     return result, rows, cols
 
@@ -1688,11 +1687,11 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
         row_labels = row_labels[row_idx]
         col_labels = col_labels[col_idx]
 
-    rows = np.vstack(row_labels == label
-                     for label in range(n_row_clusters)
-                     for _ in range(n_col_clusters))
-    cols = np.vstack(col_labels == label
-                     for _ in range(n_row_clusters)
-                     for label in range(n_col_clusters))
+    rows = np.vstack([row_labels == label
+                      for label in range(n_row_clusters)
+                      for _ in range(n_col_clusters)])
+    cols = np.vstack([col_labels == label
+                      for _ in range(n_row_clusters)
+                      for label in range(n_col_clusters)])
 
     return result, rows, cols

@@ -38,7 +38,6 @@ is held out with the validation stopping criterion.
 # Authors: Tom Dupre la Tour
 #
 # License: BSD 3 clause
-from __future__ import print_function
 import time
 import sys
 
@@ -47,7 +46,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import linear_model
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -56,9 +55,10 @@ from sklearn.utils import shuffle
 print(__doc__)
 
 
-def load_mnist(n_samples=None, class_0=0, class_1=8):
+def load_mnist(n_samples=None, class_0='0', class_1='8'):
     """Load MNIST, select two classes, shuffle and return only n_samples."""
-    mnist = fetch_mldata('MNIST original')
+    # Load data from http://openml.org/d/554
+    mnist = fetch_openml('mnist_784', version=1)
 
     # take only two classes for binary classification
     mask = np.logical_or(mnist.target == class_0, mnist.target == class_1)
@@ -89,7 +89,7 @@ def fit_and_score(estimator, max_iter, X_train, X_test, y_train, y_test):
 # Define the estimators to compare
 estimator_dict = {
     'No stopping criterion':
-    linear_model.SGDClassifier(tol=None, n_iter_no_change=3),
+    linear_model.SGDClassifier(tol=1e-3, n_iter_no_change=3),
     'Training loss':
     linear_model.SGDClassifier(early_stopping=False, n_iter_no_change=3,
                                tol=0.1),

@@ -9,7 +9,6 @@ from scipy import stats
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_warns
@@ -18,7 +17,6 @@ from sklearn.utils.testing import assert_raises_regex
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition.fastica_ import _gs_decorrelation
-from sklearn.externals.six import moves
 from sklearn.exceptions import ConvergenceWarning
 
 
@@ -56,7 +54,6 @@ def test_fastica_simple(add_noise=False):
     # Test the FastICA algorithm on very simple data.
     rng = np.random.RandomState(0)
     # scipy.stats uses the global RNG:
-    np.random.seed(0)
     n_samples = 1000
     # Generate two sources:
     s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
@@ -131,7 +128,7 @@ def test_fastica_simple(add_noise=False):
         ica = FastICA(fun=fn, algorithm=algo, random_state=0)
         assert_raises(ValueError, ica.fit, m.T)
 
-    assert_raises(TypeError, FastICA(fun=moves.xrange(10)).fit, m.T)
+    assert_raises(TypeError, FastICA(fun=range(10)).fit, m.T)
 
 
 def test_fastica_nowhiten():
@@ -140,7 +137,7 @@ def test_fastica_nowhiten():
     # test for issue #697
     ica = FastICA(n_components=1, whiten=False, random_state=0)
     assert_warns(UserWarning, ica.fit, m)
-    assert_true(hasattr(ica, 'mixing_'))
+    assert hasattr(ica, 'mixing_')
 
 
 def test_fastica_convergence_fail():

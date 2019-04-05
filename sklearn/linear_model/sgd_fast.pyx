@@ -1,6 +1,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel (partial_fit support)
@@ -22,7 +23,7 @@ cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
-from sklearn.utils.seq_dataset cimport SequentialDataset
+from sklearn.utils.seq_dataset cimport SequentialDataset64 as SequentialDataset
 
 np.import_array()
 
@@ -340,7 +341,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double l1_ratio,
               SequentialDataset dataset,
               np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
-              bint early_stopping, estimator,
+              bint early_stopping, validation_score_cb,
               int n_iter_no_change,
               int max_iter, double tol, int fit_intercept,
               int verbose, bint shuffle, np.uint32_t seed,
@@ -374,8 +375,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Equal to True on the validation set.
     early_stopping : boolean
         Whether to use a stopping criterion based on the validation set.
-    estimator : BaseSGD
-        A concrete object inheriting from ``BaseSGD``.
+    validation_score_cb : callable
+        A callable to compute a validation score given the current
+        coefficients and intercept values.
         Used only if early_stopping is True.
     n_iter_no_change : int
         Number of iteration with no improvement to wait before stopping.
@@ -435,7 +437,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                                    dataset,
                                    validation_mask,
                                    early_stopping,
-                                   estimator,
+                                   validation_score_cb,
                                    n_iter_no_change,
                                    max_iter, tol, fit_intercept,
                                    verbose, shuffle, seed,
@@ -458,7 +460,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 double l1_ratio,
                 SequentialDataset dataset,
                 np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
-                bint early_stopping, estimator,
+                bint early_stopping, validation_score_cb,
                 int n_iter_no_change,
                 int max_iter, double tol, int fit_intercept,
                 int verbose, bint shuffle, np.uint32_t seed,
@@ -497,8 +499,9 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         Equal to True on the validation set.
     early_stopping : boolean
         Whether to use a stopping criterion based on the validation set.
-    estimator : BaseSGD
-        A concrete object inheriting from ``BaseSGD``.
+    validation_score_cb : callable
+        A callable to compute a validation score given the current
+        coefficients and intercept values.
         Used only if early_stopping is True.
     n_iter_no_change : int
         Number of iteration with no improvement to wait before stopping.
@@ -506,6 +509,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The maximum number of iterations (epochs).
     tol: double
         The tolerance for the stopping criterion.
+    dataset : SequentialDataset
+        A concrete ``SequentialDataset`` object.
     fit_intercept : int
         Whether or not to fit the intercept (1 or 0).
     verbose : int
@@ -562,7 +567,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       dataset,
                       validation_mask,
                       early_stopping,
-                      estimator,
+                      validation_score_cb,
                       n_iter_no_change,
                       max_iter, tol, fit_intercept,
                       verbose, shuffle, seed,
@@ -584,7 +589,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                double l1_ratio,
                SequentialDataset dataset,
                np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
-               bint early_stopping, estimator,
+               bint early_stopping, validation_score_cb,
                int n_iter_no_change,
                int max_iter, double tol, int fit_intercept,
                int verbose, bint shuffle, np.uint32_t seed,
@@ -759,7 +764,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             # evaluate the score on the validation set
             if early_stopping:
                 with gil:
-                    score = estimator._validation_score(weights, intercept)
+                    score = validation_score_cb(weights, intercept)
                 if tol > -INFINITY and score < best_score + tol:
                     no_improvement_count += 1
                 else:

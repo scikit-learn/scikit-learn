@@ -64,7 +64,7 @@ sig_clf_probs = sig_clf.predict_proba(X_test)
 sig_score = log_loss(y_test, sig_clf_probs)
 
 # Plot changes in predicted probabilities via arrows
-plt.figure(0)
+plt.figure()
 colors = ["r", "g", "b"]
 for i in range(clf_probs.shape[0]):
     plt.arrow(clf_probs[i, 0], clf_probs[i, 1],
@@ -111,7 +111,7 @@ plt.annotate(r'($0$, $1$, $0$)',
              arrowprops=dict(facecolor='black', shrink=0.05),
              horizontalalignment='center', verticalalignment='center')
 # Add grid
-plt.grid("off")
+plt.grid(False)
 for x in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
     plt.plot([0, x], [x, 0], 'k', alpha=0.2)
     plt.plot([0, 0 + (1-x)/2], [x, x + (1-x)/2], 'k', alpha=0.2)
@@ -131,7 +131,7 @@ print(" * classifier trained on 600 datapoints and calibrated on "
       "200 datapoint: %.3f" % sig_score)
 
 # Illustrate calibrator
-plt.figure(1)
+plt.figure()
 # generate grid over 2-simplex
 p1d = np.linspace(0, 1, 20)
 p0, p1 = np.meshgrid(p1d, p1d)
@@ -153,7 +153,7 @@ for i in range(prediction.shape[0]):
 # Plot boundaries of unit simplex
 plt.plot([0.0, 1.0, 0.0, 0.0], [0.0, 0.0, 1.0, 0.0], 'k', label="Simplex")
 
-plt.grid("off")
+plt.grid(False)
 for x in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]:
     plt.plot([0, x], [x, 0], 'k', alpha=0.2)
     plt.plot([0, 0 + (1-x)/2], [x, x + (1-x)/2], 'k', alpha=0.2)

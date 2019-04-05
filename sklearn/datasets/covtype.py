@@ -5,7 +5,7 @@ real-valued features.
 
 The dataset page is available from UCI Machine Learning Repository
 
-    http://archive.ics.uci.edu/ml/datasets/Covertype
+    https://archive.ics.uci.edu/ml/datasets/Covertype
 
 Courtesy of Jock A. Blackard and Colorado State University.
 """
@@ -16,8 +16,8 @@ Courtesy of Jock A. Blackard and Colorado State University.
 
 from gzip import GzipFile
 import logging
-from os.path import exists, join
-from os import remove
+from os.path import dirname, exists, join
+from os import remove, makedirs
 
 import numpy as np
 
@@ -26,12 +26,11 @@ from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
 from .base import _pkl_filepath
-from ..utils.fixes import makedirs
-from ..externals import joblib
+from ..utils import _joblib
 from ..utils import check_random_state
 
 # The original data can be found in:
-# http://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
+# https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
 ARCHIVE = RemoteFileMetadata(
     filename='covtype.data.gz',
     url='https://ndownloader.figshare.com/files/5976039',
@@ -43,9 +42,18 @@ logger = logging.getLogger(__name__)
 
 def fetch_covtype(data_home=None, download_if_missing=True,
                   random_state=None, shuffle=False, return_X_y=False):
-    """Load the covertype dataset, downloading it if necessary.
+    """Load the covertype dataset (classification).
 
-    Read more in the :ref:`User Guide <datasets>`.
+    Download it if necessary.
+
+    =================   ============
+    Classes                        7
+    Samples total             581012
+    Dimensionality                54
+    Features                     int
+    =================   ============
+
+    Read more in the :ref:`User Guide <covtype_dataset>`.
 
     Parameters
     ----------
@@ -107,18 +115,18 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         remove(archive_path)
 
         X = Xy[:, :-1]
-        y = Xy[:, -1].astype(np.int32)
+        y = Xy[:, -1].astype(np.int32, copy=False)
 
-        joblib.dump(X, samples_path, compress=9)
-        joblib.dump(y, targets_path, compress=9)
+        _joblib.dump(X, samples_path, compress=9)
+        _joblib.dump(y, targets_path, compress=9)
 
     elif not available and not download_if_missing:
         raise IOError("Data not found and `download_if_missing` is False")
     try:
         X, y
     except NameError:
-        X = joblib.load(samples_path)
-        y = joblib.load(targets_path)
+        X = _joblib.load(samples_path)
+        y = _joblib.load(targets_path)
 
     if shuffle:
         ind = np.arange(X.shape[0])
@@ -127,7 +135,11 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         X = X[ind]
         y = y[ind]
 
+    module_path = dirname(__file__)
+    with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
+        fdescr = rst_file.read()
+
     if return_X_y:
         return X, y
 
-    return Bunch(data=X, target=y, DESCR=__doc__)
+    return Bunch(data=X, target=y, DESCR=fdescr)

@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.datasets import make_blobs
@@ -10,7 +11,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 
 
@@ -23,7 +23,7 @@ def test_compute_class_weight():
     # total effect of samples is preserved
     class_counts = np.bincount(y)[2:]
     assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
-    assert_true(cw[0] < cw[1] < cw[2])
+    assert cw[0] < cw[1] < cw[2]
 
 
 def test_compute_class_weight_not_present():
@@ -65,6 +65,8 @@ def test_compute_class_weight_dict():
                          classes, y)
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_compute_class_weight_invariance():
     # Test that results with class_weight="balanced" is invariant wrt
     # class imbalance if the number of samples is identical.
@@ -248,3 +250,11 @@ def test_compute_sample_weight_errors():
 
     # Incorrect length list for multi-output
     assert_raises(ValueError, compute_sample_weight, [{1: 2, 2: 1}], y_)
+
+
+def test_compute_sample_weight_more_than_32():
+    # Non-regression smoke test for #12146
+    y = np.arange(50)  # more than 32 distinct classes
+    indices = np.arange(50)  # use subsampling
+    weight = compute_sample_weight('balanced', y, indices=indices)
+    assert_array_almost_equal(weight, np.ones(y.shape[0]))

@@ -1,3 +1,6 @@
+#
+# cython: language_level=3, boundscheck=False, wraparound=False
+
 cimport cython
 cimport numpy as np
 import numpy as np
@@ -8,8 +11,6 @@ from libc.math cimport exp, fabs, log
 from numpy.math cimport EULER
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def mean_change(np.ndarray[ndim=1, dtype=np.float64_t] arr_1,
                 np.ndarray[ndim=1, dtype=np.float64_t] arr_2):
     """Calculate the mean difference between two arrays.
@@ -29,8 +30,6 @@ def mean_change(np.ndarray[ndim=1, dtype=np.float64_t] arr_1,
     return total / size
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=np.float64_t] doc_topic,
                               double doc_topic_prior,
                               np.ndarray[ndim=1, dtype=np.float64_t] out):
@@ -59,8 +58,6 @@ def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=np.float64_t] doc_topic,
         out[i] = exp(psi(doc_topic[i]) - psi_total)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=np.float64_t] arr):
     """Dirichlet expectation for multiple samples:
     E[log(theta)] for theta ~ Dir(arr).
@@ -93,7 +90,7 @@ def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=np.float64_t] arr):
 # Psi function for positive arguments. Optimized for speed, not accuracy.
 #
 # After: J. Bernardo (1976). Algorithm AS 103: Psi (Digamma) Function.
-# http://www.uv.es/~bernardo/1976AppStatist.pdf
+# https://www.uv.es/~bernardo/1976AppStatist.pdf
 @cython.cdivision(True)
 cdef double psi(double x) nogil:
     if x <= 1e-6:

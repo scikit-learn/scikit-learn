@@ -1,7 +1,6 @@
 """
 Various bayesian regression
 """
-from __future__ import print_function
 
 # Authors: V. Michel, F. Pedregosa, A. Gramfort
 # License: BSD 3 clause
@@ -21,9 +20,10 @@ from ..utils import check_X_y
 # BayesianRidge regression
 
 class BayesianRidge(LinearModel, RegressorMixin):
-    """Bayesian ridge regression
+    """Bayesian ridge regression.
 
-    Fit a Bayesian ridge model and optimize the regularization parameters
+    Fit a Bayesian ridge model. See the Notes section for details on this
+    implementation and the optimization of the regularization parameters
     lambda (precision of the weights) and alpha (precision of the noise).
 
     Read more in the :ref:`User Guide <bayesian_regression>`.
@@ -31,7 +31,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
     Parameters
     ----------
     n_iter : int, optional
-        Maximum number of iterations.  Default is 300.
+        Maximum number of iterations.  Default is 300. Should be greater than
+        or equal to 1.
 
     tol : float, optional
         Stop the algorithm if w has converged. Default is 1.e-3.
@@ -55,14 +56,16 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Default is 1.e-6
 
     compute_score : boolean, optional
-        If True, compute the objective function at each step of the model.
-        Default is False
+        If True, compute the log marginal likelihood at each iteration of the
+        optimization. Default is False.
 
-    fit_intercept : boolean, optional
-        whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
+    fit_intercept : boolean, optional, default True
+        Whether to calculate the intercept for this model.
+        The intercept is not treated as a probabilistic parameter
+        and thus has no associated variance. If set
+        to False, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
-        Default is True.
+
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -81,20 +84,31 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    coef_ : array, shape = (n_features)
-        Coefficients of the regression model (mean of distribution)
+    coef_ : array, shape = (n_features,)
+        Coefficients of the regression model (mean of distribution).
+
+    intercept_ : float
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
 
     alpha_ : float
-       estimated precision of the noise.
+       Estimated precision of the noise.
 
     lambda_ : float
-       estimated precision of the weights.
+       Estimated precision of the weights.
 
     sigma_ : array, shape = (n_features, n_features)
-        estimated variance-covariance matrix of the weights
+        Estimated variance-covariance matrix of the weights.
 
-    scores_ : float
-        if computed, value of the objective function (to be maximized)
+    scores_ : array, shape = (n_iter_ + 1,)
+        If computed_score is True, value of the log marginal likelihood (to be
+        maximized) at each iteration of the optimization. The array starts
+        with the value of the log marginal likelihood obtained for the initial
+        values of alpha and lambda and ends with the value obtained for the
+        estimated alpha and lambda.
+
+    n_iter_ : int
+        The actual number of iterations to reach the stopping criterion.
 
     Examples
     --------
@@ -110,18 +124,21 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Notes
     -----
-    For an example, see :ref:`examples/linear_model/plot_bayesian_ridge.py
-    <sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py>`.
+    There exist several strategies to perform Bayesian ridge regression. This
+    implementation is based on the algorithm described in Appendix A of
+    (Tipping, 2001) where updates of the regularization parameters are done as
+    suggested in (MacKay, 1992). Note that according to A New
+    View of Automatic Relevance Determination (Wipf and Nagarajan, 2008) these
+    update rules do not guarantee that the marginal likelihood is increasing
+    between two consecutive iterations of the optimization.
 
     References
     ----------
     D. J. C. MacKay, Bayesian Interpolation, Computation and Neural Systems,
     Vol. 4, No. 3, 1992.
 
-    R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
-    http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
-    Their beta is our ``self.alpha_``
-    Their alpha is our ``self.lambda_``
+    M. E. Tipping, Sparse Bayesian Learning and the Relevance Vector Machine,
+    Journal of Machine Learning Research, Vol. 1, 2001.
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
@@ -160,6 +177,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+
+        if self.n_iter < 1:
+            raise ValueError('n_iter should be greater than or equal to 1.'
+                             ' Got {!r}.'.format(self.n_iter))
+
         X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
@@ -196,51 +218,26 @@ class BayesianRidge(LinearModel, RegressorMixin):
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
 
-            # Compute mu and sigma
-            # sigma_ = lambda_ / alpha_ * np.eye(n_features) + np.dot(X.T, X)
-            # coef_ = sigma_^-1 * XT * y
-            if n_samples > n_features:
-                coef_ = np.dot(Vh.T,
-                               Vh / (eigen_vals_ +
-                                     lambda_ / alpha_)[:, np.newaxis])
-                coef_ = np.dot(coef_, XT_y)
-                if self.compute_score:
-                    logdet_sigma_ = - np.sum(
-                        np.log(lambda_ + alpha_ * eigen_vals_))
-            else:
-                coef_ = np.dot(X.T, np.dot(
-                    U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
-                coef_ = np.dot(coef_, y)
-                if self.compute_score:
-                    logdet_sigma_ = lambda_ * np.ones(n_features)
-                    logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
-                    logdet_sigma_ = - np.sum(np.log(logdet_sigma_))
+            # update posterior mean coef_ based on alpha_ and lambda_ and
+            # compute corresponding rmse
+            coef_, rmse_ = self._update_coef_(X, y, n_samples, n_features,
+                                              XT_y, U, Vh, eigen_vals_,
+                                              alpha_, lambda_)
+            if self.compute_score:
+                # compute the log marginal likelihood
+                s = self._log_marginal_likelihood(n_samples, n_features,
+                                                  eigen_vals_,
+                                                  alpha_, lambda_,
+                                                  coef_, rmse_)
+                self.scores_.append(s)
 
-            # Preserve the alpha and lambda values that were used to
-            # calculate the final coefficients
-            self.alpha_ = alpha_
-            self.lambda_ = lambda_
-
-            # Update alpha and lambda
-            rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
-            gamma_ = (np.sum((alpha_ * eigen_vals_) /
-                      (lambda_ + alpha_ * eigen_vals_)))
+            # Update alpha and lambda according to (MacKay, 1992)
+            gamma_ = np.sum((alpha_ * eigen_vals_) /
+                            (lambda_ + alpha_ * eigen_vals_))
             lambda_ = ((gamma_ + 2 * lambda_1) /
                        (np.sum(coef_ ** 2) + 2 * lambda_2))
             alpha_ = ((n_samples - gamma_ + 2 * alpha_1) /
                       (rmse_ + 2 * alpha_2))
-
-            # Compute the objective function
-            if self.compute_score:
-                s = lambda_1 * log(lambda_) - lambda_2 * lambda_
-                s += alpha_1 * log(alpha_) - alpha_2 * alpha_
-                s += 0.5 * (n_features * log(lambda_) +
-                            n_samples * log(alpha_) -
-                            alpha_ * rmse_ -
-                            (lambda_ * np.sum(coef_ ** 2)) -
-                            logdet_sigma_ -
-                            n_samples * log(2 * np.pi))
-                self.scores_.append(s)
 
             # Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
@@ -249,12 +246,32 @@ class BayesianRidge(LinearModel, RegressorMixin):
                 break
             coef_old_ = np.copy(coef_)
 
-        self.coef_ = coef_
-        sigma_ = np.dot(Vh.T,
-                        Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis])
-        self.sigma_ = (1. / alpha_) * sigma_
+        self.n_iter_ = iter_ + 1
+
+        # return regularization parameters and corresponding posterior mean,
+        # log marginal likelihood and posterior covariance
+        self.alpha_ = alpha_
+        self.lambda_ = lambda_
+        self.coef_, rmse_ = self._update_coef_(X, y, n_samples, n_features,
+                                               XT_y, U, Vh, eigen_vals_,
+                                               alpha_, lambda_)
+        if self.compute_score:
+            # compute the log marginal likelihood
+            s = self._log_marginal_likelihood(n_samples, n_features,
+                                              eigen_vals_,
+                                              alpha_, lambda_,
+                                              coef_, rmse_)
+            self.scores_.append(s)
+            self.scores_ = np.array(self.scores_)
+
+        # posterior covariance is given by 1/alpha_ * scaled_sigma_
+        scaled_sigma_ = np.dot(Vh.T,
+                               Vh / (eigen_vals_ +
+                                     lambda_ / alpha_)[:, np.newaxis])
+        self.sigma_ = (1. / alpha_) * scaled_sigma_
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
+
         return self
 
     def predict(self, X, return_std=False):
@@ -288,6 +305,59 @@ class BayesianRidge(LinearModel, RegressorMixin):
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
             return y_mean, y_std
+
+    def _update_coef_(self, X, y, n_samples, n_features, XT_y, U, Vh,
+                      eigen_vals_, alpha_, lambda_):
+        """Update posterior mean and compute corresponding rmse.
+
+        Posterior mean is given by coef_ = scaled_sigma_ * X.T * y where
+        scaled_sigma_ = (lambda_/alpha_ * np.eye(n_features)
+                         + np.dot(X.T, X))^-1
+        """
+
+        if n_samples > n_features:
+            coef_ = np.dot(Vh.T,
+                           Vh / (eigen_vals_ +
+                                 lambda_ / alpha_)[:, np.newaxis])
+            coef_ = np.dot(coef_, XT_y)
+        else:
+            coef_ = np.dot(X.T, np.dot(
+                U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
+            coef_ = np.dot(coef_, y)
+
+        rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+
+        return coef_, rmse_
+
+    def _log_marginal_likelihood(self, n_samples, n_features, eigen_vals,
+                                 alpha_, lambda_, coef, rmse):
+        """Log marginal likelihood."""
+        alpha_1 = self.alpha_1
+        alpha_2 = self.alpha_2
+        lambda_1 = self.lambda_1
+        lambda_2 = self.lambda_2
+
+        # compute the log of the determinant of the posterior covariance.
+        # posterior covariance is given by
+        # sigma = (lambda_ * np.eye(n_features) + alpha_ * np.dot(X.T, X))^-1
+        if n_samples > n_features:
+            logdet_sigma = - np.sum(np.log(lambda_ + alpha_ * eigen_vals))
+        else:
+            logdet_sigma = np.full(n_features, lambda_,
+                                   dtype=np.array(lambda_).dtype)
+            logdet_sigma[:n_samples] += alpha_ * eigen_vals
+            logdet_sigma = - np.sum(np.log(logdet_sigma))
+
+        score = lambda_1 * log(lambda_) - lambda_2 * lambda_
+        score += alpha_1 * log(alpha_) - alpha_2 * alpha_
+        score += 0.5 * (n_features * log(lambda_) +
+                        n_samples * log(alpha_) -
+                        alpha_ * rmse -
+                        lambda_ * np.sum(coef ** 2) +
+                        logdet_sigma -
+                        n_samples * log(2 * np.pi))
+
+        return score
 
 
 ###############################################################################

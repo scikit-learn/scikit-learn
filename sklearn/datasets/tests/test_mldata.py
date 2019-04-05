@@ -13,6 +13,7 @@ from sklearn.utils.testing import mock_mldata_urlopen
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_warns
 
 import pytest
 
@@ -26,6 +27,7 @@ def tmpdata(tmpdir_factory):
     shutil.rmtree(str(tmpdir))
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_mldata_filename():
     cases = [('datasets-UCI iris', 'datasets-uci-iris'),
              ('news20.binary', 'news20binary'),
@@ -36,6 +38,7 @@ def test_mldata_filename():
         assert_equal(mldata_filename(name), desired)
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_download(tmpdata):
     """Test that fetch_mldata is able to download and cache a data set."""
     _urlopen_ref = datasets.mldata.urlopen
@@ -46,7 +49,8 @@ def test_download(tmpdata):
         },
     })
     try:
-        mock = fetch_mldata('mock', data_home=tmpdata)
+        mock = assert_warns(DeprecationWarning, fetch_mldata,
+                            'mock', data_home=tmpdata)
         for n in ["COL_NAMES", "DESCR", "target", "data"]:
             assert_in(n, mock)
 
@@ -54,11 +58,13 @@ def test_download(tmpdata):
         assert_equal(mock.data.shape, (150, 4))
 
         assert_raises(datasets.mldata.HTTPError,
+                      assert_warns, DeprecationWarning,
                       fetch_mldata, 'not_existing_name')
     finally:
         datasets.mldata.urlopen = _urlopen_ref
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_fetch_one_column(tmpdata):
     _urlopen_ref = datasets.mldata.urlopen
     try:
@@ -82,6 +88,7 @@ def test_fetch_one_column(tmpdata):
         datasets.mldata.urlopen = _urlopen_ref
 
 
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 def test_fetch_multiple_column(tmpdata):
     _urlopen_ref = datasets.mldata.urlopen
     try:

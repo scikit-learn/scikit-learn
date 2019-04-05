@@ -260,18 +260,33 @@ defined by :math:`phi` followed by removal of the mean in that space.
 Non-linear transformation
 =========================
 
+Two types of transformations are available: quantile transforms and power
+transforms. Both quantile and power transforms are based on monotonic
+transformations of the features and thus preserve the rank of the values
+along each feature.
+
+Quantile transforms put all features into the same desired distribution based
+on the formula :math:`G^{-1}(F(X))` where :math:`F` is the cumulative
+distribution function of the feature and :math:`G^{-1}` the
+`quantile function <https://en.wikipedia.org/wiki/Quantile_function>`_ of the
+desired output distribution :math:`G`. This formula is using the two following
+facts: (i) if :math:`X` is a random variable with a continuous cumulative
+distribution function :math:`F` then :math:`F(X)` is uniformly distributed on
+:math:`[0,1]`; (ii) if :math:`U` is a random variable with uniform distribution
+on :math:`[0,1]` then :math:`G^{-1}(U)` has distribution :math:`G`. By performing
+a rank transformation, a quantile transform smooths out unusual distributions
+and is less influenced by outliers than scaling methods. It does, however,
+distort correlations and distances within and across features.
+
+Power transforms are a family of parametric transformations that aim to map
+data from any distribution to as close to a Gaussian distribution.
+
 Mapping to a Uniform distribution
 ---------------------------------
 
-Like scalers, :class:`QuantileTransformer` puts all features into the same,
-known range or distribution. However, by performing a rank transformation, it
-smooths out unusual distributions and is less influenced by outliers than
-scaling methods. It does, however, distort correlations and distances within
-and across features.
-
 :class:`QuantileTransformer` and :func:`quantile_transform` provide a
-non-parametric transformation based on the quantile function to map the data to
-a uniform distribution with values between 0 and 1::
+non-parametric transformation to map the data to a uniform distribution
+with values between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
@@ -309,20 +324,34 @@ Power transforms are a family of parametric, monotonic transformations that aim
 to map data from any distribution to as close to a Gaussian distribution as
 possible in order to stabilize variance and minimize skewness.
 
-:class:`PowerTransformer` currently provides one such power transformation,
-the Box-Cox transform. The Box-Cox transform is given by:
+:class:`PowerTransformer` currently provides two such power transformations,
+the Yeo-Johnson transform and the Box-Cox transform.
+
+The Yeo-Johnson transform is given by:
 
 .. math::
-    y_i^{(\lambda)} =
+    x_i^{(\lambda)} =
     \begin{cases}
-    \dfrac{y_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
-    \ln{(y_i)} & \text{if } \lambda = 0,
+     [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
+    \ln{(x_i) + 1} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
+    -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
+     - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
     \end{cases}
 
-Box-Cox can only be applied to strictly positive data. The transformation is
-parameterized by :math:`\lambda`, which is determined through maximum likelihood
-estimation. Here is an example of using Box-Cox to map samples drawn from a
-lognormal distribution to a normal distribution::
+while the Box-Cox transform is given by:
+
+.. math::
+    x_i^{(\lambda)} =
+    \begin{cases}
+    \dfrac{x_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
+    \ln{(x_i)} & \text{if } \lambda = 0,
+    \end{cases}
+
+
+Box-Cox can only be applied to strictly positive data. In both methods, the
+transformation is parameterized by :math:`\lambda`, which is determined through
+maximum likelihood estimation. Here is an example of using Box-Cox to map
+samples drawn from a lognormal distribution to a normal distribution::
 
   >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
   >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
@@ -339,13 +368,14 @@ While the above example sets the `standardize` option to `False`,
 :class:`PowerTransformer` will apply zero-mean, unit-variance normalization
 to the transformed output by default.
 
-Below are examples of Box-Cox applied to various probability distributions.
-Note that when applied to certain distributions, Box-Cox achieves very
-Gaussian-like results, but with others, it is ineffective. This highlights
-the importance of visualizing the data before and after transformation.
+Below are examples of Box-Cox and Yeo-Johnson applied to various probability
+distributions.  Note that when applied to certain distributions, the power
+transforms achieve very Gaussian-like results, but with others, they are
+ineffective. This highlights the importance of visualizing the data before and
+after transformation.
 
-.. figure:: ../auto_examples/preprocessing/images/sphx_glr_plot_power_transformer_001.png
-   :target: ../auto_examples/preprocessing/plot_power_transformer.html
+.. figure:: ../auto_examples/preprocessing/images/sphx_glr_plot_map_data_to_normal_001.png
+   :target: ../auto_examples/preprocessing/plot_map_data_to_normal.html
    :align: center
    :scale: 100
 
@@ -357,13 +387,13 @@ Using the earlier example with the iris dataset::
   ...     output_distribution='normal', random_state=0)
   >>> X_trans = quantile_transformer.fit_transform(X)
   >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  array([[4.3...,   2...,     1...,     0.1...],
-         [4.31...,  2.02...,  1.01...,  0.1...],
-         [4.32...,  2.05...,  1.02...,  0.1...],
+  array([[4.3, 2. , 1. , 0.1],
+         [4.4, 2.2, 1.1, 0.1],
+         [4.4, 2.2, 1.2, 0.1],
          ...,
-         [7.84...,  4.34...,  6.84...,  2.5...],
-         [7.87...,  4.37...,  6.87...,  2.5...],
-         [7.9...,   4.4...,   6.9...,   2.5...]])
+         [7.7, 4.1, 6.7, 2.5],
+         [7.7, 4.2, 6.7, 2.5],
+         [7.9, 4.4, 6.9, 2.5]])
 
 Thus the median of the input becomes the mean of the output, centered at 0. The
 normal output is clipped so that the input's minimum and maximum ---
@@ -473,8 +503,8 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-  >>> enc.fit(X)  # doctest: +ELLIPSIS
-  OneHotEncoder(categorical_features=None, categories=None,
+  >>> enc.fit(X)  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+  OneHotEncoder(categorical_features=None, categories=None, drop=None,
          dtype=<... 'numpy.float64'>, handle_unknown='error',
          n_values=None, sparse=True)
   >>> enc.transform([['female', 'from US', 'uses Safari'],
@@ -499,9 +529,9 @@ dataset::
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X) # doctest: +ELLIPSIS
+    >>> enc.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     OneHotEncoder(categorical_features=None,
-           categories=[...],
+           categories=[...], drop=None,
            dtype=<... 'numpy.float64'>, handle_unknown='error',
            n_values=None, sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
@@ -517,13 +547,31 @@ columns for this feature will be all zeros
 
     >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
-    >>> enc.fit(X) # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features=None, categories=None,
+    >>> enc.fit(X) # doctest: +ELLIPSIS  +NORMALIZE_WHITESPACE
+    OneHotEncoder(categorical_features=None, categories=None, drop=None,
            dtype=<... 'numpy.float64'>, handle_unknown='ignore',
            n_values=None, sparse=True)
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
+
+It is also possible to encode each column into ``n_categories - 1`` columns
+instead of ``n_categories`` columns by using the ``drop`` parameter. This
+parameter allows the user to specify a category for each feature to be dropped.
+This is useful to avoid co-linearity in the input matrix in some classifiers.
+Such functionality is useful, for example, when using non-regularized
+regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
+since co-linearity would cause the covariance matrix to be non-invertible. 
+When this paramenter is not None, ``handle_unknown`` must be set to 
+``error``::
+
+    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
+    >>> drop_enc.categories_
+    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
+    >>> drop_enc.transform(X).toarray()
+    array([[1., 1., 1.],
+           [0., 0., 0.]])
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
@@ -539,10 +587,14 @@ features into discrete values. Certain datasets with continuous features
 may benefit from discretization, because discretization can transform the dataset
 of continuous attributes to one with only nominal attributes.
 
+One-hot encoded discretized features can make a model more expressive, while
+maintaining interpretability. For instance, pre-processing with a discretizer
+can introduce nonlinearity to linear models.
+
 K-bins discretization
 ---------------------
 
-:class:`KBinsDiscretizer` discretizers features into ``k`` equal width bins::
+:class:`KBinsDiscretizer` discretizes features into ``k`` bins::
 
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
@@ -560,7 +612,7 @@ example, these intervals are defined as:
  - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
  - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
 
- Based on these bin intervals, ``X`` is transformed as follows::
+Based on these bin intervals, ``X`` is transformed as follows::
 
   >>> est.transform(X)                      # doctest: +SKIP
   array([[ 0., 1., 1.],
