@@ -299,17 +299,17 @@ def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
         10 * 2**17)
 
     # The increase amount of memory is:
-    # - x_density * chunk_size * n_features (copy of chunk of X)
-    # - y_density * chunk_size * n_features (copy of chunk of Y)
-    # - chunk_size * chunk_size (chunk of distance matrix)
-    # Hence x² + (xd+yd)kx = M, where x=chunk_size, k=n_features, M=maxmem
+    # - x_density * batch_size * n_features (copy of chunk of X)
+    # - y_density * batch_size * n_features (copy of chunk of Y)
+    # - batch_size * batch_size (chunk of distance matrix)
+    # Hence x² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
     #                                 xd=x_density and yd=y_density
     tmp = (x_density + y_density) * n_features
-    chunk_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
-    chunk_size = max(int(chunk_size), 1)
+    batch_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
+    batch_size = max(int(batch_size), 1)
 
-    x_batches = gen_batches(X.shape[0], chunk_size)
-    y_batches = gen_batches(Y.shape[0], chunk_size)
+    x_batches = gen_batches(X.shape[0], batch_size)
+    y_batches = gen_batches(Y.shape[0], batch_size)
 
     for i, x_slice in enumerate(x_batches):
         X_chunk = X[x_slice].astype(np.float64)
