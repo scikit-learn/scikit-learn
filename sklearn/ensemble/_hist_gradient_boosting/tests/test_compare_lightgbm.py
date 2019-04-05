@@ -22,7 +22,7 @@ pytest.importorskip("lightgbm")
 ])
 def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
                                      max_leaf_nodes):
-    # Make sure sklearn has the same predictions as LGBM for easy targets.
+    # Make sure sklearn has the same predictions as lightgbm for easy targets.
     #
     # In particular when the size of the trees are bound and the number of
     # samples is large enough, the structure of the prediction trees found by
@@ -68,16 +68,16 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     # We need X to be treated an numerical data, not pre-binned data.
     X_train, X_test = X_train.astype(np.float32), X_test.astype(np.float32)
 
-    pred_lgbm = est_lightgbm.predict(X_train)
+    pred_lightgbm = est_lightgbm.predict(X_train)
     pred_sklearn = est_sklearn.predict(X_train)
     # less than 1% of the predictions are different up to the 3rd decimal
-    assert np.mean(abs(pred_lgbm - pred_sklearn) > 1e-3) < .011
+    assert np.mean(abs(pred_lightgbm - pred_sklearn) > 1e-3) < .011
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
-        pred_lgbm = est_lightgbm.predict(X_test)
+        pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
         # less than 1% of the predictions are different up to the 4th decimal
-        assert np.mean(abs(pred_lgbm - pred_sklearn) > 1e-4) < .01
+        assert np.mean(abs(pred_lightgbm - pred_sklearn) > 1e-4) < .01
 
 
 @pytest.mark.parametrize('seed', range(5))
@@ -125,9 +125,9 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
     pred_sklearn = est_sklearn.predict(X_train)
     assert np.mean(pred_sklearn == pred_lightgbm) > .89
 
-    acc_lgbm = accuracy_score(y_train, pred_lightgbm)
+    acc_lightgbm = accuracy_score(y_train, pred_lightgbm)
     acc_sklearn = accuracy_score(y_train, pred_sklearn)
-    np.testing.assert_almost_equal(acc_lgbm, acc_sklearn)
+    np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
 
@@ -135,9 +135,9 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
         pred_sklearn = est_sklearn.predict(X_test)
         assert np.mean(pred_sklearn == pred_lightgbm) > .89
 
-        acc_lgbm = accuracy_score(y_test, pred_lightgbm)
+        acc_lightgbm = accuracy_score(y_test, pred_lightgbm)
         acc_sklearn = accuracy_score(y_test, pred_sklearn)
-        np.testing.assert_almost_equal(acc_lgbm, acc_sklearn, decimal=2)
+        np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn, decimal=2)
 
 
 @pytest.mark.parametrize('seed', range(5))
@@ -193,9 +193,9 @@ def test_same_predictions_multiclass_classification(
     # the second decimal
     assert np.mean(np.abs(proba_lightgbm - proba_sklearn) < 1e-2) > .75
 
-    acc_lgbm = accuracy_score(y_train, pred_lightgbm)
+    acc_lightgbm = accuracy_score(y_train, pred_lightgbm)
     acc_sklearn = accuracy_score(y_train, pred_sklearn)
-    np.testing.assert_almost_equal(acc_lgbm, acc_sklearn, decimal=2)
+    np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn, decimal=2)
 
     if max_leaf_nodes < 10 and n_samples >= 1000:
 
@@ -209,6 +209,6 @@ def test_same_predictions_multiclass_classification(
         # to the second decimal
         assert np.mean(np.abs(proba_lightgbm - proba_sklearn) < 1e-2) > .75
 
-        acc_lgbm = accuracy_score(y_test, pred_lightgbm)
+        acc_lightgbm = accuracy_score(y_test, pred_lightgbm)
         acc_sklearn = accuracy_score(y_test, pred_sklearn)
-        np.testing.assert_almost_equal(acc_lgbm, acc_sklearn, decimal=2)
+        np.testing.assert_almost_equal(acc_lightgbm, acc_sklearn, decimal=2)

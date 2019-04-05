@@ -443,7 +443,9 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     Parameters
     ----------
     loss : {'least_squares'}, optional (default='least_squares')
-        The loss function to use in the boosting process.
+        The loss function to use in the boosting process. Note that the
+        "least squares" loss actually implements an "half least squares loss"
+        to simplify the computation of the gradient.
     learning_rate : float, optional (default=0.1)
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no

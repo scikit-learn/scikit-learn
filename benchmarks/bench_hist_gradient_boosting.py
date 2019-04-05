@@ -37,20 +37,21 @@ max_bins = args.max_bins
 
 def get_estimator_and_data():
     if args.problem == 'classification':
-        X, y = make_classification(args.n_samples_max,
+        X, y = make_classification(args.n_samples_max * 2,
                                    n_features=args.n_features,
                                    n_classes=args.n_classes,
                                    n_clusters_per_class=1,
                                    random_state=0)
         return X, y, HistGradientBoostingClassifier
     elif args.problem == 'regression':
-        X, y = make_regression(args.n_samples_max,
+        X, y = make_regression(args.n_samples_max * 2,
                                n_features=args.n_features, random_state=0)
         return X, y, HistGradientBoostingRegressor
 
 
 X, y, Estimator = get_estimator_and_data()
-X_train_, X_test_, y_train_, y_test_ = train_test_split(X, y, random_state=0)
+X_train_, X_test_, y_train_, y_test_ = train_test_split(
+    X, y, test_size=0.5, random_state=0)
 
 
 def one_run(n_samples):
@@ -58,7 +59,10 @@ def one_run(n_samples):
     X_test = X_test_[:n_samples]
     y_train = y_train_[:n_samples]
     y_test = y_test_[:n_samples]
-
+    assert X_train.shape[0] == n_samples
+    assert X_test.shape[0] == n_samples
+    print("Data size: %d samples train, %d samples test."
+          % (n_samples, n_samples))
     print("Fitting a sklearn model...")
     tic = time()
     est = Estimator(learning_rate=lr,
@@ -202,9 +206,9 @@ axs[1].plot(n_samples_list, sklearn_fit_durations, label='sklearn')
 axs[2].plot(n_samples_list, sklearn_score_durations, label='sklearn')
 
 if args.lightgbm:
-    axs[0].plot(n_samples_list, lightgbm_scores, label='lgbm')
-    axs[1].plot(n_samples_list, lightgbm_fit_durations, label='lgbm')
-    axs[2].plot(n_samples_list, lightgbm_score_durations, label='lgbm')
+    axs[0].plot(n_samples_list, lightgbm_scores, label='lightgbm')
+    axs[1].plot(n_samples_list, lightgbm_fit_durations, label='lightgbm')
+    axs[2].plot(n_samples_list, lightgbm_score_durations, label='lightgbm')
 
 if args.xgboost:
     axs[0].plot(n_samples_list, xgb_scores, label='XGBoost')
