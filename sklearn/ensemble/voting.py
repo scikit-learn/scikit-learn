@@ -36,12 +36,13 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     return estimator
 
 
-class BaseVoting(_BaseComposition, TransformerMixin):
+class _BaseVoting(_BaseComposition, TransformerMixin):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+    _required_parameters = ['estimators']
 
     @property
     def named_estimators(self):
@@ -134,7 +135,7 @@ class BaseVoting(_BaseComposition, TransformerMixin):
         return self._get_params('estimators', deep=deep)
 
 
-class VotingClassifier(BaseVoting, ClassifierMixin):
+class VotingClassifier(_BaseVoting, ClassifierMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     .. versionadded:: 0.17
@@ -227,7 +228,6 @@ class VotingClassifier(BaseVoting, ClassifierMixin):
     --------
     VotingRegressor: Prediction voting regressor.
     """
-    _required_parameters = ['estimators']
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=None,
                  flatten_transform=True):
@@ -365,7 +365,7 @@ class VotingClassifier(BaseVoting, ClassifierMixin):
             return self._predict(X)
 
 
-class VotingRegressor(BaseVoting, RegressorMixin):
+class VotingRegressor(_BaseVoting, RegressorMixin):
     """Prediction voting regressor for unfitted estimators.
 
     .. versionadded:: 0.21
