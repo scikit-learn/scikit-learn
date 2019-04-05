@@ -458,17 +458,21 @@ trees.
 
 
 .. note::
+
+  Scikit-learn 0.21 introduces two new experimental implementation of
+  gradient boosting trees, namely
   :class:`sklearn.experimental.HistGradientBoostingClassifier` and
-  :class:`sklearn.experimental.HistGradientBoostingRegressor` were introduced
-  in version 0.21 and are considerably faster than
-  :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
-  when the number of samples is bigger than ``10 000``. These fast estimators
-  first bin the input samples ``X`` into integer-valued bins (typically 256
-  bins) which tremendously reduces the number of splitting points to
-  consider, and allow the algorithm to leverage integer-based data
-  structures. The API of these new estimators is slightly different, and
-  some of the features from :class:`GradientBoostingClassifier` and
-  :class:`GradientBoostingRegressor` are not yet supported.
+  :class:`sklearn.experimental.HistGradientBoostingRegressor`. These fast
+  estimators first bin the input samples X into integer-valued bins
+  (typically 256 bins) which tremendously reduces the number of splitting
+  points to consider, and allow the algorithm to leverage integer-based data
+  structures (histograms) instead of relying on sorted continuous values.
+
+  The new histogram-based estimators can be orders of magnitude faster than
+  their continuous counterparts when the number of samples is larger than
+  tens of thousands of samples. The API of these new estimators is slightly
+  different, and some of the features from :class:`GradientBoostingClassifier`
+  and :class:`GradientBoostingRegressor` are not yet supported.
 
   The following doc focuses on :class:`GradientBoostingClassifier` and
   :class:`GradientBoostingRegressor` only, which might be preferred for small
