@@ -41,7 +41,6 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     if sklearn_params['n_iter_no_change'] is not None:
         raise NotImplementedError('Early stopping should be deactivated.')
 
-    # LGBM
     lightgbm_loss_mapping = {
         'least_squares': 'regression_l2',
         'binary_crossentropy': 'binary',
@@ -69,7 +68,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm'):
     }
 
     if sklearn_params['loss'] == 'categorical_crossentropy':
-        # LGBM multiplies hessians by 2 in multiclass loss.
+        # LightGBM multiplies hessians by 2 in multiclass loss.
         lightgbm_params['min_sum_hessian_in_leaf'] *= 2
         lightgbm_params['learning_rate'] *= 2
 
