@@ -1049,12 +1049,31 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     array([5., 0.])
 
     """
+    # is the provided array in double precision (float64) ?
+    is_double_precision = True
+    try:
+        is_double_precision = lambdas[0].dtype == np.dtype('f')
+    except AttributeError:  # not np array
+        pass
+    except IndexError:  # zero-length
+        pass
+    # note: the minimum value available is
+    #  - single-precision: np.finfo('float32').eps = 1.2e-07
+    #  - double-precision: np.finfo('float64').eps = 2.2e-16
+
+    # the various thresholds used for validation
+    # we may wish to change the value according to precision.
+    # currently we do it only for the 'absolute' threshold.
+    significant_imag_ratio = 1e-5
+    significant_neg_ratio = 1e-5  # if is_double_precision else 5e-3
+    significant_neg_value = 1e-10 if is_double_precision else 1e-6
+    small_pos_ratio = 1e-12
 
     # Check that there are no significant imaginary parts
     if not np.isreal(lambdas).all():
         max_imag_abs = abs(np.imag(lambdas)).max()
         max_real_abs = abs(np.real(lambdas)).max()
-        if max_imag_abs > 1e-5 * max_real_abs:
+        if max_imag_abs > significant_imag_ratio * max_real_abs:
             raise ValueError(
                 "There are significant imaginary parts in eigenvalues (%f "
                 "of the maximum real part). The matrix is maybe not PSD, or "
@@ -1073,10 +1092,8 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     else:
         min_eig = lambdas.min()
-        if min_eig < -1e-5 * max(max_eig, 0) and min_eig < -1e-10:
-            # If kernel has been computed with single precision we would
-            # probably need more tolerant thresholds such as:
-            # (min_eig < -5e-3 * max(max_eig, 0) and min_eig < -1e-8)
+        if (min_eig < -significant_neg_ratio * max(max_eig, 0)
+                and min_eig < -significant_neg_value):
             warnings.warn("There are significant negative eigenvalues "
                           "(%f of the maximum positive). The matrix is maybe "
                           "not PSD, or something went wrong with the "
@@ -1087,14 +1104,14 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     lambdas[lambdas < 0] = 0
 
     # Finally check for conditioning
-    max_conditioning = 1e12  # Max allowed conditioning (ratio big/small)
-    too_small_lambdas = (0 < lambdas) & (lambdas < max_eig / max_conditioning)
+    too_small_lambdas = (0 < lambdas) & (lambdas < small_pos_ratio * max_eig)
     if too_small_lambdas.any():
         if warn_on_zeros:
             warnings.warn("Badly conditioned PSD matrix spectrum: the largest "
                           "eigenvalue is more than %.2E times the smallest. "
                           "Small eigenvalues will be replaced with 0."
-                          "" % max_conditioning, PSDSpectrumWarning)
+                          "" % (1 / small_pos_ratio),
+                          PSDSpectrumWarning)
         lambdas[too_small_lambdas] = 0
 
     return lambdas
