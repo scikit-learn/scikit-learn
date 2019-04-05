@@ -1122,7 +1122,7 @@ def test_inconsistent_dtype_X_missing_values(imputer_constructor,
 
 
 def test_missing_indicator_no_missing():
-    # check that all features are drop if there are no missing values when
+    # check that all features are dropped if there are no missing values when
     # features='missing-only' (#13491)
     X = np.array([[1, 1],
                   [1, 1]])
