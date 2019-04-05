@@ -175,7 +175,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # else 1.
         n_samples = X_binned_train.shape[0]
         self._baseline_prediction = self.loss_.get_baseline_prediction(
-            y_train, self._n_trees_per_iteration)
+            y_train, self._n_trees_per_iteration
+        )
         raw_predictions = np.zeros(
             shape=(self._n_trees_per_iteration, n_samples),
             dtype=self._baseline_prediction.dtype
@@ -239,7 +240,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_compute_hist_time += grower.total_compute_hist_time
 
                 predictor = grower.make_predictor(
-                    bin_thresholds=self.bin_mapper_.bin_thresholds_)
+                    bin_thresholds=self.bin_mapper_.bin_thresholds_
+                )
                 predictors[-1].append(predictor)
 
                 # Update raw_predictions with the predictions of the newly
@@ -253,7 +255,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if self.do_early_stopping_:
                 should_early_stop = self._check_early_stopping(
                     X_binned_small_train, y_small_train,
-                    X_binned_val, y_val)
+                    X_binned_val, y_val
+                )
 
             if self.verbose:
                 self._print_iteration_stats(iteration_start_time)
@@ -455,7 +458,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     min_samples_leaf : int, optional (default=5)
         The minimum number of samples per leaf.
     l2_regularization : float, optional (default=0)
-        The L2 regularization parameter. Use 0 for no regularization.
+        The L2 regularization parameter. Use ``0`` for no regularization (default).
     max_bins : int, optional (default=256)
         The maximum number of bins to use. Before training, each feature of
         the input array ``X`` is binned into at most ``max_bins`` bins, which
@@ -496,12 +499,12 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     n_iter_ : int
         The number of iterations as selected by early stopping (if
         n_iter_no_change is not None). Otherwise it corresponds to max_iter.
-    train_score_ : array, shape=(max_iter + 1)
+    train_score_ : ndarray, shape (max_iter + 1,)
         The scores at each iteration on the training data. The first entry is
         the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. Empty if no early
         stopping.
-    validation_score_ : array, shape=(max_iter + 1)
+    validation_score_ : ndarray, shape (max_iter + 1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if

@@ -20,12 +20,12 @@ cpdef _map_to_bins(const X_DTYPE_C [:, :] data, list binning_thresholds,
 
     Parameters
     ----------
-    data : ndarray, shape=(n_samples, n_features)
+    data : ndarray, shape (n_samples, n_features)
         The numerical data to bin.
     binning_thresholds : list of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
-    binned : ndarray, shape=(n_samples, n_features)
+    binned : ndarray, shape (n_samples, n_features)
         Output array, must be fortran aligned.
     """
     cdef:
