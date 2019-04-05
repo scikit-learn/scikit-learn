@@ -254,7 +254,7 @@ class Pipeline(_BaseComposition):
                             if step is not None}
         for pname, pval in fit_params.items():
             if '__' not in pname:
-                raise TypeError(
+                raise ValueError(
                     "Pipeline.fit does not accept the {} parameter. "
                     "You can pass parameters to specific steps of your "
                     "pipeline using the stepname__parameter format, e.g. "
