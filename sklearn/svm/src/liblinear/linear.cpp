@@ -77,8 +77,8 @@ static void info(const char *fmt,...)
 static void info(const char *fmt,...) {}
 #endif
 
-// New function to ensure the same behaviour for random number generation on windows and linux
-// note that we always use the same seed to get reproducible results
+// New random number generator replacing `rand()`, to ensure the same behaviour on windows-linux, with increased speed
+// - (1) Init a `mt_rand` object
 #if INT_MAX == 0x7FFFFFFF
 std::mt19937 mt_rand(std::mt19937::default_seed);
 #elif INT_MAX == 0x7FFFFFFFFFFFFFFF
@@ -88,11 +88,12 @@ info("Random number generator is not fixed for this system. Please report issue.
 exit(1);
 #endif
 
-// Function to set a new seed - exposed in interface
+// - (2) New public `set_seed()` function that should be used instead of `srand()` to set a new seed.
 void set_seed(unsigned custom_seed) {
     mt_rand.seed (custom_seed);
 }
 
+// - (3) New internal `myrand()` function, used instead of rand() everywhere.
 inline int myrand() {
     // make a 31bit or 63bit positive random number
     return abs( (int)mt_rand());
