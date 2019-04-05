@@ -1178,10 +1178,6 @@ def test_partial_roc_auc_score():
     y_true, _, y_score = make_prediction(binary=True)
     for min_val in np.linspace(0, 1, 7):
         for max_val in np.linspace(min_val, 1, 7):
-            print(roc_auc_score(y_true, y_score, fpr_range=(min_val, max_val)),
-                _pauc(y_true, y_score, fpr_range=[min_val, max_val]),
-                roc_auc_score(y_true, y_score, tpr_range=(min_val, max_val)),
-                _pauc(y_true, y_score, tpr_range=[min_val, max_val]))
             assert_almost_equal(
                 roc_auc_score(y_true, y_score, fpr_range=(min_val, max_val)),
                 _pauc(y_true, y_score, fpr_range=[min_val, max_val])
