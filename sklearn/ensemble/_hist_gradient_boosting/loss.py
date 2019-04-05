@@ -162,6 +162,11 @@ class BinaryCrossEntropy(BaseLoss):
         return loss.mean() if average else loss
 
     def get_baseline_prediction(self, y_train, prediction_dim):
+        if prediction_dim > 2:
+            raise ValueError(
+                "loss='binary_crossentropy' is not defined for multiclass"
+                " classification with n_classes=%d, use"
+                " loss='categorical_crossentropy' instead" % prediction_dim)
         proba_positive_class = np.mean(y_train)
         eps = np.finfo(y_train.dtype).eps
         proba_positive_class = np.clip(proba_positive_class, eps, 1 - eps)

@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 from sklearn.datasets import make_classification, make_regression
 from sklearn.utils.estimator_checks import check_estimator
@@ -76,6 +77,16 @@ def test_init_parameters_validation(GradientBoosting, X, y):
             ValueError,
             match="tol=-1 must not be smaller than 0"):
         GradientBoosting(tol=-1).fit(X, y)
+
+
+def test_invalid_classification_loss():
+    binary_clf = HistGradientBoostingClassifier(loss="binary_crossentropy")
+    with pytest.raises(
+            ValueError,
+            match="loss='binary_crossentropy' is not defined for multiclass"
+                  " classification with n_classes=3, use"
+                  " loss='categorical_crossentropy' instead"):
+        binary_clf.fit(np.zeros(shape=(3, 2)), np.arange(3))
 
 
 @pytest.mark.parametrize(
