@@ -160,6 +160,11 @@ Support for Python 3.4 and below has been officially dropped.
   float64 for the ``stratified`` strategy. :issue:`13266` by
   :user:`Christos Aridas<chkoar>`.
 
+- |Fix| Fixed a bug in :class:`dummy.DummyClassifier` where it was throwing a
+  dimension mismatch error in prediction time if a column vector ``y`` with
+  ``shape=(n, 1)`` was given at ``fit`` time. :issue:`13545` by :user:`Nick
+  Sorros <nsorros>` and `Adrin Jalali`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
