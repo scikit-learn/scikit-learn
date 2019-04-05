@@ -14,22 +14,17 @@ This module contains:
 # License: BSD 3 clause
 
 import numpy as np
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
-from ..externals.six import with_metaclass
 from ..preprocessing import LabelEncoder
 from ..utils._joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
 from ..utils import Bunch
-
-
-__all__ = ["VotingClassifier",
-           "VotingRegressor"]
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
@@ -41,7 +36,7 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     return estimator
 
 
-class BaseVoting(with_metaclass(ABCMeta, _BaseComposition, TransformerMixin)):
+class BaseVoting(_BaseComposition, TransformerMixin):
     """Base class for voting.
 
     Warning: This class should not be used directly. Use derived classes
@@ -139,7 +134,7 @@ class BaseVoting(with_metaclass(ABCMeta, _BaseComposition, TransformerMixin)):
         return self._get_params('estimators', deep=deep)
 
 
-class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
+class VotingClassifier(BaseVoting, ClassifierMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
     .. versionadded:: 0.17
@@ -370,7 +365,7 @@ class VotingClassifier(BaseVoting, ClassifierMixin, TransformerMixin):
             return self._predict(X)
 
 
-class VotingRegressor(BaseVoting, RegressorMixin, TransformerMixin):
+class VotingRegressor(BaseVoting, RegressorMixin):
     """Prediction voting regressor for unfitted estimators.
 
     .. versionadded:: 0.21
