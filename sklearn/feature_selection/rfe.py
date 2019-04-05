@@ -68,7 +68,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         (rounded down) of features to remove at each iteration.
 
     tune_step_at : int or float or None, optional (default=None)
-        Once the remaining number of features reaches this value
+        Once the number of remaining features reaches this value
         ``tuning_step`` is used rather than ``step``. May be specified as an
         (integer) number of remaining features or, if within (0.0, 1.0), the
         percentage (rounded down) of the original number of features. If
@@ -426,7 +426,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         order to reach ``min_features_to_select``.
 
     tune_step_at : int or float or None, optional (default=None)
-        Once the remaining number of features reaches this value
+        Once the number of remaining features reaches this value
         ``tuning_step`` is used rather than ``step``. May be specified as an
         (integer) number of remaining features or, if within (0.0, 1.0), the
         percentage (rounded down) of the original number of features. If
