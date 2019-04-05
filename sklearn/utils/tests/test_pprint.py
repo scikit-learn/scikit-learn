@@ -61,7 +61,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.verbose = verbose
 
     def _get_support_mask(self):
-        return []
+        pass
 
 def test_basic():
     # Basic pprint test
