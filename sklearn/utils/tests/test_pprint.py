@@ -1,17 +1,15 @@
 import re
 from pprint import PrettyPrinter
 
+from sklearn.base import BaseEstimator, MetaEstimatorMixin
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.feature_selection import RFE
 from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.svm import SVC
-from sklearn.svm import LinearSVC
-from sklearn.decomposition import PCA
-from sklearn.decomposition import NMF
+from sklearn.feature_selection.base import SelectorMixin
+from sklearn.svm import LinearSVC, SVC
+from sklearn.decomposition import NMF, PCA
 from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn import set_config
@@ -19,6 +17,51 @@ from sklearn import set_config
 
 # Ignore flake8 (lots of line too long issues)
 # flake8: noqa
+
+# Constructors excerpted to test pprinting
+class LogisticRegression(BaseEstimator):
+    """Logistic Regression (aka logit, MaxEnt) classifier.
+    """
+    def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
+                 fit_intercept=True, intercept_scaling=1, class_weight=None,
+                 random_state=None, solver='warn', max_iter=100,
+                 multi_class='warn', verbose=0, warm_start=False, n_jobs=None,
+                 l1_ratio=None):
+        self.penalty = penalty
+        self.dual = dual
+        self.tol = tol
+        self.C = C
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.class_weight = class_weight
+        self.random_state = random_state
+        self.solver = solver
+        self.max_iter = max_iter
+        self.multi_class = multi_class
+        self.verbose = verbose
+        self.warm_start = warm_start
+        self.n_jobs = n_jobs
+        self.l1_ratio = l1_ratio
+
+    def fit(self, X, y):
+        return self
+
+class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
+    """Feature ranking with recursive feature elimination.
+    """
+    def __init__(self, estimator, n_features_to_select=None, step=1,
+                 tune_step_at=None, tuning_step=1, reducing_step=False,
+                 verbose=0):
+        self.estimator = estimator
+        self.n_features_to_select = n_features_to_select
+        self.step = step
+        self.tune_step_at = tune_step_at
+        self.tuning_step = tuning_step
+        self.reducing_step = reducing_step
+        self.verbose = verbose
+
+    def _get_support_mask(self):
+        return []
 
 def test_basic():
     # Basic pprint test
