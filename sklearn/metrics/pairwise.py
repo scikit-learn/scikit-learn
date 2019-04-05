@@ -311,44 +311,31 @@ def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
     x_batches = gen_batches(X.shape[0], chunk_size)
     y_batches = gen_batches(Y.shape[0], chunk_size)
 
-    for x batch in gen_batches
-
-    n_chunks_X = n_samples_X // chunk_size + (n_samples_X % chunk_size != 0)
-    n_chunks_Y = n_samples_Y // chunk_size + (n_samples_Y % chunk_size != 0)
-
-    for i in range(n_chunks_X):
-        xs = i * chunk_size
-        # FIXME (scipy>1.0) slicing sparse matrix needs bounds in range
-        xe = min(xs + chunk_size, n_samples_X)
-
-        X_chunk = X[xs:xe].astype(np.float64)
+    for i, x_slice in enumerate(x_batches):
+        X_chunk = X[x_slice].astype(np.float64)
         if XX is None:
             XX_chunk = row_norms(X_chunk, squared=True)[:, np.newaxis]
         else:
-            XX_chunk = XX[xs:xe]
+            XX_chunk = XX[x_slice]
 
-        for j in range(n_chunks_Y):
-            ys = j * chunk_size
-            # FIXME (scipy>1.0) slicing sparse matrix needs bounds in range
-            ye = min(ys + chunk_size, n_samples_Y)
-
+        for j, y_slice in enumerate(y_batches):
             if X is Y and j < i:
                 # when X is Y the distance matrix is symmetric so we only need
                 # to compute half of it.
-                d = distances[ys:ye, xs:xe].T
+                d = distances[y_slice, x_slice].T
 
             else:
-                Y_chunk = Y[ys:ye].astype(np.float64)
+                Y_chunk = Y[y_slice].astype(np.float64)
                 if YY is None:
                     YY_chunk = row_norms(Y_chunk, squared=True)[np.newaxis, :]
                 else:
-                    YY_chunk = YY[:, ys:ye]
+                    YY_chunk = YY[:, y_slice]
 
                 d = -2 * safe_sparse_dot(X_chunk, Y_chunk.T, dense_output=True)
                 d += XX_chunk
                 d += YY_chunk
 
-            distances[xs:xe, ys:ye] = d.astype(np.float32)
+            distances[x_slice, y_slice] = d.astype(np.float32)
 
     return distances
 
