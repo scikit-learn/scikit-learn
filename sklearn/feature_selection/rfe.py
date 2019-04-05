@@ -68,24 +68,29 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         (rounded down) of features to remove at each iteration.
 
     tune_step_at : int or float or None, optional (default=None)
-        If specified ``step`` int or float equates to > 1 feature, then the
-        threshold number of remaining features when to change to
-        ``tuning_step``. If ``tune_step_at`` within (0.0, 1.0), then
-        threshold number of remaining features calculated as fraction of
-        original number of features.
+        Once the remaining number of features reaches this value
+        ``tuning_step`` is used rather than ``step``. May be specified as an
+        (integer) number of remaining features or, if within (0.0, 1.0), the
+        percentage (rounded down) of the original number of features. If
+        number of features and step related settings would result in
+        stepping over ``tune_step_at``, then number of features to remove will
+        be adjusted for the iteration just before it to arrive at
+        ``tune_step_at``.
 
     tuning_step : int or float, optional (default=1)
-        Step to change to starting at ``tune_step_at``, if specified. If
-        greater than or equal to 1, then ``tuning_step`` corresponds to the
-        (integer) number of features to remove at each iteration. If within
-        (0.0, 1.0), then ``tuning_step`` corresponds to the percentage
-        (rounded down) of features to remove at each iteration.
+        Step to change to starting at ``tune_step_at`` number of remaining
+        features. If greater than or equal to 1, then ``tuning_step``
+        corresponds to the (integer) number of features to remove at each
+        iteration. If within (0.0, 1.0), then ``tuning_step`` corresponds to
+        the percentage (rounded down) of features to remove at each iteration.
 
     reducing_step : boolean, optional (default=False)
         If true and ``step`` or ``tuning_step`` is a float, the number of
         features removed is calculated as a fraction of the remaining features
         in that iteration. If false, the number of features removed is constant
-        (a fraction of the original number of features) across iterations.
+        across iterations and a fraction of the original number of features for
+        ``step`` and fraction of the ``tune_step_at`` number of remaining
+        features for ``tuning_step``.
 
     verbose : int, (default=0)
         Controls verbosity of output.
@@ -253,33 +258,22 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
                     if 0.0 < self.step < 1.0 and self.reducing_step:
                         step = int(max(1, min(
                             n_remaining_features - tune_step_at,
-                            self.step * n_remaining_features
-                        )))
+                            self.step * n_remaining_features)))
                     else:
-                        step = min(
-                            n_remaining_features - tune_step_at,
-                            step
-                        )
+                        step = min(n_remaining_features - tune_step_at, step)
                 elif 0.0 < self.tuning_step < 1.0 and self.reducing_step:
                     step = int(max(1, min(
                         n_remaining_features - n_features_to_select,
-                        self.tuning_step * n_remaining_features
-                    )))
+                        self.tuning_step * n_remaining_features)))
                 else:
-                    step = min(
-                        n_remaining_features - n_features_to_select,
-                        tuning_step
-                    )
+                    step = min(n_remaining_features - n_features_to_select,
+                               tuning_step)
             elif 0.0 < self.step < 1.0 and self.reducing_step:
                 step = int(max(1, min(
                     n_remaining_features - n_features_to_select,
-                    self.step * n_remaining_features
-                )))
+                    self.step * n_remaining_features)))
             else:
-                step = min(
-                    n_remaining_features - n_features_to_select,
-                    step
-                )
+                step = min(n_remaining_features - n_features_to_select, step)
 
             # Compute step score on the previous selection iteration because
             # 'estimator' must use features that have not been eliminated yet
@@ -432,24 +426,29 @@ class RFECV(RFE, MetaEstimatorMixin):
         order to reach ``min_features_to_select``.
 
     tune_step_at : int or float or None, optional (default=None)
-        If specified ``step`` int or float equates to > 1 feature, then the
-        threshold number of remaining features when to change to
-        ``tuning_step``. If ``tune_step_at`` within (0.0, 1.0), then
-        threshold number of remaining features calculated as fraction of
-        original number of features.
+        Once the remaining number of features reaches this value
+        ``tuning_step`` is used rather than ``step``. May be specified as an
+        (integer) number of remaining features or, if within (0.0, 1.0), the
+        percentage (rounded down) of the original number of features. If
+        number of features and step related settings would result in
+        stepping over ``tune_step_at``, then number of features to remove will
+        be adjusted for the iteration just before it to arrive at
+        ``tune_step_at``.
 
     tuning_step : int or float, optional (default=1)
-        Step to change to starting at ``tune_step_at``, if specified. If
-        greater than or equal to 1, then ``tuning_step`` corresponds to the
-        (integer) number of features to remove at each iteration. If within
-        (0.0, 1.0), then ``tuning_step`` corresponds to the percentage
-        (rounded down) of features to remove at each iteration.
+        Step to change to starting at ``tune_step_at`` number of remaining
+        features. If greater than or equal to 1, then ``tuning_step``
+        corresponds to the (integer) number of features to remove at each
+        iteration. If within (0.0, 1.0), then ``tuning_step`` corresponds to
+        the percentage (rounded down) of features to remove at each iteration.
 
     reducing_step : boolean, optional (default=False)
         If true and ``step`` or ``tuning_step`` is a float, the number of
         features removed is calculated as a fraction of the remaining features
         in that iteration. If false, the number of features removed is constant
-        (a fraction of the original number of features) across iterations.
+        across iterations and a fraction of the original number of features for
+        ``step`` and fraction of the ``tune_step_at`` number of remaining
+        features for ``tuning_step``.
 
     min_features_to_select : int, (default=1)
         The minimum number of features to be selected. This number of features
