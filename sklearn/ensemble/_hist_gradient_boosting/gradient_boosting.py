@@ -367,11 +367,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         log_msg += "max depth = {}, ".format(max_depth)
 
         if self.do_early_stopping_:
-            name = 'neg-loss' if self.scoring == 'loss' else 'score'
-            log_msg += "train {}: {:.5f}, ".format(name, self.train_score_[-1])
+            if self.scoring == 'loss':
+                factor = -1  # score_ arrays contain the negative loss
+                name = 'loss'
+            else:
+                factor = 1
+                name = 'score'
+            log_msg += "train {}: {:.5f}, ".format(name, factor *
+                                                   self.train_score_[-1])
             if self.validation_fraction is not None:
                 log_msg += "val {}: {:.5f}, ".format(
-                    name, self.validation_score_[-1])
+                    name, factor * self.validation_score_[-1])
 
         iteration_time = time() - iteration_start_time
         log_msg += "in {:0.3f}s".format(iteration_time)
