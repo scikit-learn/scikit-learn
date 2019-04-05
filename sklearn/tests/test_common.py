@@ -147,8 +147,8 @@ def test_configure():
 
         # disable OpenMP checks for the tests since sklearn can be built and
         # tested on different machines.
-        if not os.getenv('SKLEARN_NO_OPENMP'):
-            os.environ['SKLEARN_NO_OPENMP'] = "True"
+        old_env = os.getenv('SKLEARN_NO_OPENMP')
+        os.environ['SKLEARN_NO_OPENMP'] = "True"
 
         clean_warning_registry()
         with warnings.catch_warnings():
@@ -159,7 +159,12 @@ def test_configure():
                 exec(f.read(), dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
+        if old_env is not None:
+            os.environ['SKLEARN_NO_OPENMP'] = old_env
+        else:
+            del os.environ['SKLEARN_NO_OPENMP']
         os.chdir(cwd)
+        assert False
 
 
 def _tested_linear_classifiers():
