@@ -1,10 +1,13 @@
 import re
 from pprint import PrettyPrinter
 
+import numpy as np
+
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegressionCV
 from sklearn.feature_selection import RFE
 from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
@@ -58,6 +61,9 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     imputer = SimpleImputer(missing_values=float('NaN'))
     expected = """SimpleImputer()"""
     assert imputer.__repr__() == expected
+
+    # Array parameter dont throw error (see #13583)
+    LogisticRegressionCV(Cs=np.array([0.1, 1]))
 
     set_config(print_changed_only=False)
 
