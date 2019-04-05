@@ -1,6 +1,8 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 # cython: cdivision=True
+# cython: language_level=3
+#
 # Author: Christopher Moody <chrisemoody@gmail.com>
 # Author: Nick Travers <nickt@squareup.com>
 # Implementation by Chris Moody & Nick Travers
@@ -14,8 +16,7 @@ from libc.math cimport sqrt, log
 import numpy as np
 cimport numpy as np
 
-from sklearn.neighbors import quad_tree
-from sklearn.neighbors cimport quad_tree
+from sklearn.neighbors.quad_tree cimport _QuadTree
 
 cdef char* EMPTY_STRING = ""
 
@@ -48,7 +49,7 @@ cdef float compute_gradient(float[:] val_P,
                             np.int64_t[:] neighbors,
                             np.int64_t[:] indptr,
                             float[:, :] tot_force,
-                            quad_tree._QuadTree qt,
+                            _QuadTree qt,
                             float theta,
                             int dof,
                             long start,
@@ -162,7 +163,7 @@ cdef float compute_gradient_positive(float[:] val_P,
 
 cdef void compute_gradient_negative(float[:, :] pos_reference,
                                     float* neg_f,
-                                    quad_tree._QuadTree qt,
+                                    _QuadTree qt,
                                     double* sum_Q,
                                     int dof,
                                     float theta,
@@ -260,8 +261,7 @@ def gradient(float[:] val_P,
     assert n == indptr.shape[0] - 1, m
     if verbose > 10:
         printf("[t-SNE] Initializing tree of n_dimensions %i\n", n_dimensions)
-    cdef quad_tree._QuadTree qt = quad_tree._QuadTree(pos_output.shape[1],
-                                                      verbose)
+    cdef _QuadTree qt = _QuadTree(pos_output.shape[1], verbose)
     if verbose > 10:
         printf("[t-SNE] Inserting %li points\n", pos_output.shape[0])
     qt.build_tree(pos_output)

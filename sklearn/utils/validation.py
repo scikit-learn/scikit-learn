@@ -18,6 +18,7 @@ from inspect import signature
 
 from numpy.core.numeric import ComplexWarning
 
+from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
@@ -34,14 +35,18 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 
 def _assert_all_finite(X, allow_nan=False):
     """Like assert_all_finite, but only for ndarray."""
+    # validation is also imported in extmath
+    from .extmath import _safe_accumulator_op
+
     if _get_config()['assume_finite']:
         return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
-    # false positives from overflow in sum method.
+    # false positives from overflow in sum method. The sum is also calculated
+    # safely to reduce dtype induced overflows.
     is_float = X.dtype.kind in 'fc'
-    if is_float and np.isfinite(X.sum()):
+    if is_float and (np.isfinite(_safe_accumulator_op(np.sum, X))):
         pass
     elif is_float:
         msg_err = "Input contains {} or a value too large for {!r}."
@@ -49,6 +54,10 @@ def _assert_all_finite(X, allow_nan=False):
                 not allow_nan and not np.isfinite(X).all()):
             type_err = 'infinity' if allow_nan else 'NaN, infinity'
             raise ValueError(msg_err.format(type_err, X.dtype))
+    # for object dtype data, we only check for NaNs (GH-13254)
+    elif X.dtype == np.dtype('object') and not allow_nan:
+        if _object_dtype_isnan(X).any():
+            raise ValueError("Input contains NaN")
 
 
 def assert_all_finite(X, allow_nan=False):
@@ -143,40 +152,6 @@ def _num_samples(x):
             return len(x)
     else:
         return len(x)
-
-
-def _shape_repr(shape):
-    """Return a platform independent representation of an array shape
-
-    Under Python 2, the `long` type introduces an 'L' suffix when using the
-    default %r format for tuples of integers (typically used to store the shape
-    of an array).
-
-    Under Windows 64 bit (and Python 2), the `long` type is used by default
-    in numpy shapes even when the integer dimensions are well below 32 bit.
-    The platform specific type causes string messages or doctests to change
-    from one platform to another which is not desirable.
-
-    Under Python 3, there is no more `long` type so the `L` suffix is never
-    introduced in string representation.
-
-    >>> _shape_repr((1, 2))
-    '(1, 2)'
-    >>> one = 2 ** 64 / 2 ** 64  # force an upcast to `long` under Python 2
-    >>> _shape_repr((one, 2 * one))
-    '(1, 2)'
-    >>> _shape_repr((1,))
-    '(1,)'
-    >>> _shape_repr(())
-    '()'
-    """
-    if len(shape) == 0:
-        return "()"
-    joined = ", ".join("%d" % e for e in shape)
-    if len(shape) == 1:
-        # special notation for singleton tuples
-        joined += ','
-    return "(%s)" % joined
 
 
 def check_memory(memory):
@@ -377,11 +352,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         to be any format. False means that a sparse matrix input will
         raise an error.
 
-        .. deprecated:: 0.19
-           Passing 'None' to parameter ``accept_sparse`` in methods is
-           deprecated in version 0.19 "and will be removed in 0.21. Use
-           ``accept_sparse=False`` instead.
-
     accept_large_sparse : bool (default=True)
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse=False will cause it to be accepted
@@ -414,6 +384,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         - False: accept both np.inf and np.nan in array.
         - 'allow-nan': accept only np.nan values in array. Values cannot
           be infinite.
+
+        For object dtyped data, only np.nan is checked and not np.inf.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
@@ -448,15 +420,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         The converted and validated array.
 
     """
-    # accept_sparse 'None' deprecation check
-    if accept_sparse is None:
-        warnings.warn(
-            "Passing 'None' to parameter 'accept_sparse' in methods "
-            "check_array and check_X_y is deprecated in version 0.19 "
-            "and will be removed in 0.21. Use 'accept_sparse=False' "
-            " instead.", DeprecationWarning)
-        accept_sparse = False
-
     # store reference to original array to check if copy is needed when
     # function returns
     array_orig = array
@@ -567,13 +530,12 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             _assert_all_finite(array,
                                allow_nan=force_all_finite == 'allow-nan')
 
-    shape_repr = _shape_repr(array.shape)
     if ensure_min_samples > 0:
         n_samples = _num_samples(array)
         if n_samples < ensure_min_samples:
             raise ValueError("Found array with %d sample(s) (shape=%s) while a"
                              " minimum of %d is required%s."
-                             % (n_samples, shape_repr, ensure_min_samples,
+                             % (n_samples, array.shape, ensure_min_samples,
                                 context))
 
     if ensure_min_features > 0 and array.ndim == 2:
@@ -581,7 +543,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         if n_features < ensure_min_features:
             raise ValueError("Found array with %d feature(s) (shape=%s) while"
                              " a minimum of %d is required%s."
-                             % (n_features, shape_repr, ensure_min_features,
+                             % (n_features, array.shape, ensure_min_features,
                                 context))
 
     if warn_on_dtype and dtype_orig is not None and array.dtype != dtype_orig:
@@ -652,11 +614,6 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
-
-        .. deprecated:: 0.19
-           Passing 'None' to parameter ``accept_sparse`` in methods is
-           deprecated in version 0.19 "and will be removed in 0.21. Use
-           ``accept_sparse=False`` instead.
 
     accept_large_sparse : bool (default=True)
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
@@ -967,3 +924,45 @@ def check_non_negative(X, whom):
 
     if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def check_scalar(x, name, target_type, min_val=None, max_val=None):
+    """Validate scalar parameters type and value.
+
+    Parameters
+    ----------
+    x : object
+        The scalar parameter to validate.
+
+    name : str
+        The name of the parameter to be printed in error messages.
+
+    target_type : type or tuple
+        Acceptable data types for the parameter.
+
+    min_val : float or int, optional (default=None)
+        The minimum valid value the parameter can take. If None (default) it
+        is implied that the parameter does not have a lower bound.
+
+    max_val : float or int, optional (default=None)
+        The maximum valid value the parameter can take. If None (default) it
+        is implied that the parameter does not have an upper bound.
+
+    Raises
+    -------
+    TypeError
+        If the parameter's type does not match the desired type.
+
+    ValueError
+        If the parameter's value violates the given bounds.
+    """
+
+    if not isinstance(x, target_type):
+        raise TypeError('`{}` must be an instance of {}, not {}.'
+                        .format(name, target_type, type(x)))
+
+    if min_val is not None and x < min_val:
+        raise ValueError('`{}`= {}, must be >= {}.'.format(name, x, min_val))
+
+    if max_val is not None and x > max_val:
+        raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
