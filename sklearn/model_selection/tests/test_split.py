@@ -414,7 +414,7 @@ def test_stratified_kfold_sparsetarget():
     # (n_samples, n_labels) with n_labels > 1.
     y_sparse_multilabels = csr_matrix((n_samples, 3))
     assert_raises(ValueError, next,
-                  StratifiedKFold().split(_X, y_sparse_multilabels))
+                  StratifiedKFold(n_splits=2).split(_X, y_sparse_multilabels))
 
 
 def test_kfold_balance():
@@ -659,9 +659,9 @@ def test_stratified_shuffle_split_sparsetarget():
         assert_array_equal(tup_d[1], tup_s[1])
     # Ensure that StratifiedShuffleSplit raises an error when y has shape
     # (n_samples, n_labels) with n_labels > 1.
-    y_sparse_multilabels = csr_matrix((n_samples, 3))
+    y_sparse_multi = csr_matrix((n_samples, 3))
     assert_raises(ValueError, next,
-                  StratifiedShuffleSplit().split(_X, y_sparse_multilabels))
+                  StratifiedShuffleSplit(n_splits=2).split(_X, y_sparse_multi))
 
 
 def test_stratified_shuffle_split_respects_test_size():
