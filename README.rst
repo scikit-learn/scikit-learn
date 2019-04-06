@@ -1,12 +1,12 @@
 .. -*- mode: rst -*-
 
-|Travis|_ |AppVeyor|_ |Codecov|_ |CircleCI|_ |Python35|_ |PyPi|_ |DOI|_
+|Azure|_ |Travis|_ |Codecov|_ |CircleCI|_ |Python35|_ |PyPi|_ |DOI|_
+
+.. |Azure| image:: https://dev.azure.com/scikit-learn/scikit-learn/_apis/build/status/scikit-learn.scikit-learn?branchName=master
+.. _Azure: https://dev.azure.com/scikit-learn/scikit-learn/_build/latest?definitionId=1&branchName=master
 
 .. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.svg?branch=master
 .. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
-
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/github/scikit-learn/scikit-learn?branch=master&svg=true
-.. _AppVeyor: https://ci.appveyor.com/project/sklearn-ci/scikit-learn/history
 
 .. |Codecov| image:: https://codecov.io/github/scikit-learn/scikit-learn/badge.svg?branch=master&service=github
 .. _Codecov: https://codecov.io/github/scikit-learn/scikit-learn?branch=master
