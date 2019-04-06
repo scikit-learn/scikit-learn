@@ -608,10 +608,10 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Reverse scores and num remaining feature steps to select argmax score
         # with lowest number of features in case of a score tie
-        scores = np.sum([s for s, _ in cv_results], axis=0)[::-1]
+        scores = np.sum([s for s, _ in cv_results], axis=0)
         n_remaining_feature_steps = cv_results[0][1]
         n_features_to_select = (
-            n_remaining_feature_steps[::-1][np.argmax(scores)])
+            n_remaining_feature_steps[::-1][np.argmax(scores[::-1])])
 
         if self.tune_step_at is not None:
             if self.tune_step_at >= 1.0:
@@ -641,5 +641,5 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
         # here, the scores are normalized by get_n_splits(X, y)
-        self.grid_scores_ = scores / cv.get_n_splits(X, y, groups)
+        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y, groups)
         return self
