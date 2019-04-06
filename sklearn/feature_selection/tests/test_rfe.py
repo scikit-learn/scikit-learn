@@ -12,6 +12,7 @@ from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import get_scorer, make_scorer, zero_one_loss
 from sklearn.model_selection import cross_val_score, GroupKFold
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_equal, assert_array_equal,
                                    assert_array_almost_equal, assert_greater,
@@ -78,6 +79,10 @@ def test_rfe():
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     X_sparse = sparse.csr_matrix(X)
     y = iris.target
+
+    # bad estimator type
+    rfe = RFE(estimator=KNeighborsClassifier())
+    assert_raises(RuntimeError, rfe.fit, X, y)
 
     # dense model
     clf = SVC(kernel="linear")
@@ -340,7 +345,11 @@ def test_number_of_subsets_of_features():
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
     rfe = RFE(estimator=SVC(kernel="linear"), n_features_to_select=10,
-              tune_step_at=5)
+              tune_step_at=10)
+    assert_raises(ValueError, rfe.fit, X, y)
+    rfe = RFE(estimator=SVC(kernel="linear"), step=0)
+    assert_raises(ValueError, rfe.fit, X, y)
+    rfe = RFE(estimator=SVC(kernel="linear"), tune_step_at=10, tuning_step=0)
     assert_raises(ValueError, rfe.fit, X, y)
 
     n_features_list = [300] * 14
