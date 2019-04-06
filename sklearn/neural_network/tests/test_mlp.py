@@ -175,8 +175,9 @@ def test_gradient():
     # are correct. The numerical and analytical computation of the gradient
     # should be close.
     for n_labels in [2, 3]:
-        n_samples = 5
+        n_samples = 100
         n_features = 10
+        np.random.seed(42)
         X = np.random.random((n_samples, n_features))
         y = 1 + np.mod(np.arange(n_samples) + 1, n_labels)
         Y = LabelBinarizer().fit_transform(y)
