@@ -1,6 +1,5 @@
 import unittest
 import sys
-import pytest
 
 import numpy as np
 import scipy.sparse as sp
@@ -255,8 +254,9 @@ class SparseTransformer(BaseEstimator):
 
 class EstimatorInconsistentForPandas(BaseEstimator):
     def fit(self, X, y):
-        pd = pytest.importorskip('pandas')
-        if isinstance(X, pd.DataFrame):
+        # Function is only called after verifying that pandas is installed
+        from pandas import DataFrame
+        if isinstance(X, DataFrame):
             self.value_ = X.iloc[0, 0]
         else:
             X = check_array(X)
@@ -466,20 +466,27 @@ def test_check_estimator_pairwise():
 
 
 def test_check_classifier_data_not_an_array():
-    assert_raises_regex(AssertionError,
-                        'Not equal to tolerance',
-                        check_classifier_data_not_an_array,
-                        'estimator_name',
-                        EstimatorInconsistentForPandas())
+    try:
+        from pandas import DataFrame
+        assert_raises_regex(AssertionError,
+                            'Not equal to tolerance',
+                            check_classifier_data_not_an_array,
+                            'estimator_name',
+                            EstimatorInconsistentForPandas())
+    except ImportError:
+        pass
 
 
 def test_check_regressor_data_not_an_array():
-    assert_raises_regex(AssertionError,
-                        'Not equal to tolerance',
-                        check_regressor_data_not_an_array,
-                        'estimator_name',
-                        EstimatorInconsistentForPandas())
-
+    try:
+        from pandas import DataFrame
+        assert_raises_regex(AssertionError,
+                            'Not equal to tolerance',
+                            check_regressor_data_not_an_array,
+                            'estimator_name',
+                            EstimatorInconsistentForPandas())
+    except ImportError:
+        pass
 
 def run_tests_without_pytest():
     """Runs the tests in this file without using pytest.
