@@ -234,12 +234,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             # Get coefs
             if hasattr(estimator, 'coef_'):
                 coefs = estimator.coef_
+            elif hasattr(estimator, 'feature_importances_'):
+                coefs = estimator.feature_importances_
             else:
-                coefs = getattr(estimator, 'feature_importances_', None)
-            if coefs is None:
-                raise RuntimeError('The classifier does not expose '
-                                   '"coef_" or "feature_importances_" '
-                                   'attributes')
+                raise RuntimeError('The classifier does not expose "coef_" or '
+                                   '"feature_importances_" attributes.')
 
             # Get ranks
             if coefs.ndim > 1:
