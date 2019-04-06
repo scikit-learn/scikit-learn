@@ -606,11 +606,12 @@ class RFECV(RFE, MetaEstimatorMixin):
             func(rfe, self.estimator, X, y, train, test, scorer)
             for train, test in cv.split(X, y, groups))
 
-        # Reverse scores and num feature steps to select argmax score with
-        # lowest num features in case of a score tie
+        # Reverse scores and num remaining feature steps to select argmax score
+        # with lowest number of features in case of a score tie
         scores = np.sum([s for s, _ in cv_results], axis=0)[::-1]
-        n_remaining_feature_steps = cv_results[0][1][::-1]
-        n_features_to_select = n_remaining_feature_steps[np.argmax(scores)]
+        n_remaining_feature_steps = cv_results[0][1]
+        n_features_to_select = (
+            n_remaining_feature_steps[::-1][np.argmax(scores)])
 
         if self.tune_step_at is not None:
             if self.tune_step_at >= 1.0:
@@ -636,6 +637,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.ranking_ = rfe.ranking_
         self.estimator_ = clone(self.estimator)
         self.estimator_.fit(self.transform(X), y)
+        self.n_remaining_feature_steps_ = n_remaining_feature_steps
 
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
         # here, the scores are normalized by get_n_splits(X, y)
