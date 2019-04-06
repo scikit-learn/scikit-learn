@@ -1086,7 +1086,7 @@ Optionally, weights can be provided for the individual classifiers::
    ...                         voting='soft', weights=[2, 5, 1])
 
 
- .. _voting_regressor:
+.. _voting_regressor:
 
 Voting Regressor
 ================
