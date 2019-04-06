@@ -177,8 +177,8 @@ def test_gradient():
     for n_labels in [2, 3]:
         n_samples = 100
         n_features = 10
-        np.random.seed(42)
-        X = np.random.random((n_samples, n_features))
+        random_state = np.random.RandomState(seed = 42)
+        X = random_state.rand((n_samples, n_features))
         y = 1 + np.mod(np.arange(n_samples) + 1, n_labels)
         Y = LabelBinarizer().fit_transform(y)
 
