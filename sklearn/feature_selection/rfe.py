@@ -574,9 +574,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         X, y = check_X_y(X, y, "csr", ensure_min_features=2)
 
         # Initialization
-        n_features = X.shape[1]
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
+        n_features = X.shape[1]
 
         # Build an RFE object, which will evaluate and score each possible
         # feature count, down to self.min_features_to_select
