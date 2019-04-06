@@ -349,19 +349,21 @@ def test_number_of_subsets_of_features():
     assert_raises(ValueError, rfe.fit, X, y)
     rfe = RFE(estimator=SVC(kernel="linear"), step=0)
     assert_raises(ValueError, rfe.fit, X, y)
-    rfe = RFE(estimator=SVC(kernel="linear"), tune_step_at=10, tuning_step=0)
+    rfe = RFE(estimator=SVC(kernel="linear"), n_features_to_select=10,
+              tune_step_at=100, tuning_step=0)
     assert_raises(ValueError, rfe.fit, X, y)
 
-    n_features_list = [300] * 14
-    n_features_to_select_list = [50] * 14
+    n_features_list = [300] * 15
+    n_features_to_select_list = [50] * 15
     step_list = [100, 100, 100, 100, 100, 100,
-                 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
+                 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
     tune_step_at_list = [105, 105, 105, 0.325, 0.325, 0.325,
-                         105, 105, 105, 105, 0.325, 0.325, 0.325, 0.325]
+                         105, 105, 105, 105, 0.325, 0.325, 0.325, 0.325, None]
     tuning_step_list = [10, 0.125, 0.125, 10, 0.125, 0.125,
-                        10, 10, 0.125, 0.125, 10, 10, 0.125, 0.125]
+                        10, 10, 0.125, 0.125, 10, 10, 0.125, 0.125, None]
     reducing_step_list = [False, False, True, False, False, True,
-                          False, True, False, True, False, True, False, True]
+                          False, True, False, True, False, True, False, True,
+                          True]
     n_remaining_feature_steps_list = [
         [300, 200, 105, 95, 85, 75, 65, 55, 50],
         [300, 200, 105, 92, 79, 66, 53, 50],
@@ -377,6 +379,7 @@ def test_number_of_subsets_of_features():
         [300, 240, 192, 154, 124, 100, 97, 87, 77, 67, 57, 50],
         [300, 240, 180, 120, 97, 85, 73, 61, 50],
         [300, 240, 192, 154, 124, 100, 97, 85, 75, 66, 58, 51, 50],
+        [300, 240, 192, 154, 124, 100, 80, 64, 52, 50],
     ]
     for (n_features, n_features_to_select, step,
          tune_step_at, tuning_step, reducing_step,
@@ -393,6 +396,13 @@ def test_number_of_subsets_of_features():
                   reducing_step=reducing_step)
         rfe.fit(X, y)
         assert_array_equal(rfe.n_remaining_feature_steps_,
+                           n_remaining_feature_steps)
+        rfecv = RFECV(estimator=SVC(kernel="linear"), cv=5,
+                      min_features_to_select=n_features_to_select, step=step,
+                      tune_step_at=tune_step_at, tuning_step=tuning_step,
+                      reducing_step=reducing_step)
+        rfecv.fit(X, y)
+        assert_array_equal(rfecv.n_remaining_feature_steps_,
                            n_remaining_feature_steps)
 
 
