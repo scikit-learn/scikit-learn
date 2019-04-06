@@ -106,15 +106,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.stop_words = stop_words
         self.max_df = max_df
         self.min_df = min_df
-        if max_df < 0 or min_df < 0:
-            raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
-        if max_features is not None:
-            if (not isinstance(max_features, numbers.Integral) or
-                    max_features <= 0):
-                raise ValueError(
-                    "max_features=%r, neither a positive integer nor None"
-                    % max_features)
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary
