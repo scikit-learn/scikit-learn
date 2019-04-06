@@ -24,8 +24,6 @@ from sklearn import set_config
 
 # Constructors excerpted to test pprinting
 class LogisticRegression(BaseEstimator):
-    """Logistic Regression (aka logit, MaxEnt) classifier.
-    """
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='warn', max_iter=100,
@@ -52,8 +50,6 @@ class LogisticRegression(BaseEstimator):
 
 
 class StandardScaler(BaseEstimator, TransformerMixin):
-    """Standardize features by removing the mean and scaling to unit variance
-    """
     def __init__(self, copy=True, with_mean=True, with_std=True):
         self.with_mean = with_mean
         self.with_std = with_std
@@ -64,8 +60,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
-    """Feature ranking with recursive feature elimination.
-    """
     def __init__(self, estimator, n_features_to_select=None, step=1,
                  verbose=0):
         self.estimator = estimator
@@ -80,8 +74,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
 
 class GridSearchCV(BaseSearchCV):
-    """Exhaustive search over specified parameter values for an estimator.
-    """
     def __init__(self, estimator, param_grid, scoring=None,
                  n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
@@ -95,8 +87,6 @@ class GridSearchCV(BaseSearchCV):
 
 
 class CountVectorizer(BaseEstimator, VectorizerMixin):
-    """Convert a collection of text documents to a matrix of token counts
-    """
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
@@ -132,8 +122,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
 
 class Pipeline(_BaseComposition):
-    """Pipeline of transforms with a final estimator.
-    """
     def __init__(self, steps, memory=None):
         self.steps = steps
         self._validate_steps()
