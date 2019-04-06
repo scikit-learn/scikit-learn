@@ -435,6 +435,10 @@ Support for Python 3.4 and below has been officially dropped.
   making ``shuffle=True`` ineffective.
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+- |Fix| Added ability for :func:`model_selection.cross_val_predict` to handle
+  multi-label (and multioutput-multiclass) targets with ``predict_proba``-type
+  methods. :issue:`8773` by :user:`Stephen Hoover <stephen-hoover>`.
+
 - |Fix| Fixed an issue in :func:`~model_selection.cross_val_predict` where
   `method="predict_proba"` returned always `0.0` when one of the classes was
   excluded in a cross-validation fold.
