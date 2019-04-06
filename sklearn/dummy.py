@@ -120,7 +120,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
         if not self.sparse_output_:
             y = np.atleast_1d(y)
 
-        self.output_2d_ = y.ndim == 2
+        self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
+
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
 
@@ -277,6 +278,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
 
             elif self.strategy == "stratified":
                 out = rs.multinomial(1, class_prior_[k], size=n_samples)
+                out = out.astype(np.float64)
 
             elif self.strategy == "uniform":
                 out = np.ones((n_samples, n_classes_[k]), dtype=np.float64)
@@ -424,7 +426,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
         if len(y) == 0:
             raise ValueError("y must not be empty.")
 
-        self.output_2d_ = y.ndim == 2
+        self.output_2d_ = y.ndim == 2 and y.shape[1] > 1
+
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
         self.n_outputs_ = y.shape[1]
