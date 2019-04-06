@@ -1,13 +1,12 @@
 import re
 from pprint import PrettyPrinter
 
-from sklearn.base import BaseEstimator, MetaEstimatorMixin
+from sklearn.base import BaseEstimator
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import GridSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.feature_selection.base import SelectorMixin
 from sklearn.svm import LinearSVC, SVC
 from sklearn.decomposition import NMF, PCA
 from sklearn.impute import SimpleImputer
@@ -20,8 +19,6 @@ from sklearn import set_config
 
 # Constructors excerpted to test pprinting
 class LogisticRegression(BaseEstimator):
-    """Logistic Regression (aka logit, MaxEnt) classifier.
-    """
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='warn', max_iter=100,
@@ -46,9 +43,8 @@ class LogisticRegression(BaseEstimator):
     def fit(self, X, y):
         return self
 
-class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
-    """Feature ranking with recursive feature elimination.
-    """
+
+class RFE(BaseEstimator):
     def __init__(self, estimator, n_features_to_select=None, step=1,
                  tune_step_at=None, tuning_step=1, reducing_step=False,
                  verbose=0):
@@ -60,8 +56,6 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.reducing_step = reducing_step
         self.verbose = verbose
 
-    def _get_support_mask(self):
-        pass
 
 def test_basic():
     # Basic pprint test
