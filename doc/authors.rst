@@ -25,10 +25,6 @@
     <p>Noel Dawe</p>
     </td>
     <td>
-    <a href='https://github.com/lucidfrontier45'><img src='https://avatars2.githubusercontent.com/u/655305?v=4' class='avatar' /></a> <br />
-    <p>Shiqiao Du</p>
-    </td>
-    <td>
     <a href='https://github.com/duchesnay'><img src='https://avatars1.githubusercontent.com/u/344402?v=4' class='avatar' /></a> <br />
     <p>Edouard Duchesnay</p>
     </td>
@@ -36,15 +32,15 @@
     <a href='https://github.com/lesteve'><img src='https://avatars1.githubusercontent.com/u/1680079?v=4' class='avatar' /></a> <br />
     <p>Loïc Estève</p>
     </td>
+    <td>
+    <a href='https://github.com/thomasjpfan'><img src='https://avatars2.githubusercontent.com/u/5402633?v=4' class='avatar' /></a> <br />
+    <p>Thomas J Fan</p>
+    </td>
     </tr>
     <tr>
     <td>
     <a href='https://github.com/satra'><img src='https://avatars2.githubusercontent.com/u/184063?v=4' class='avatar' /></a> <br />
     <p>Satrajit Ghosh</p>
-    </td>
-    <td>
-    <a href=''><img src='https://avatars2.githubusercontent.com/u/365630?v=4' class='avatar' /></a> <br />
-    <p>Angel Soler Gollonet</p>
     </td>
     <td>
     <a href='https://github.com/agramfort'><img src='https://avatars2.githubusercontent.com/u/161052?v=4' class='avatar' /></a> <br />
@@ -63,6 +59,10 @@
     <p>Yaroslav Halchenko</p>
     </td>
     <td>
+    <a href='https://github.com/NicolasHug'><img src='https://avatars2.githubusercontent.com/u/1190450?v=4' class='avatar' /></a> <br />
+    <p>Nicolas Hug</p>
+    </td>
+    <td>
     <a href='https://github.com/adrinjalali'><img src='https://avatars3.githubusercontent.com/u/1663864?v=4' class='avatar' /></a> <br />
     <p>Adrin Jalali</p>
     </td>
@@ -71,10 +71,6 @@
     <td>
     <a href='https://github.com/arjoly'><img src='https://avatars0.githubusercontent.com/u/1274722?v=4' class='avatar' /></a> <br />
     <p>Arnaud Joly</p>
-    </td>
-    <td>
-    <a href='https://github.com/thouis'><img src='https://avatars1.githubusercontent.com/u/473043?v=4' class='avatar' /></a> <br />
-    <p>Thouis (Ray) Jones</p>
     </td>
     <td>
     <a href='https://github.com/MechCoder'><img src='https://avatars3.githubusercontent.com/u/1867024?v=4' class='avatar' /></a> <br />
@@ -96,12 +92,12 @@
     <a href='https://github.com/glouppe'><img src='https://avatars3.githubusercontent.com/u/477771?v=4' class='avatar' /></a> <br />
     <p>Gilles Louppe</p>
     </td>
-    </tr>
-    <tr>
     <td>
     <a href='https://github.com/jmetzen'><img src='https://avatars1.githubusercontent.com/u/1116263?v=4' class='avatar' /></a> <br />
     <p>Jan Hendrik Metzen</p>
     </td>
+    </tr>
+    <tr>
     <td>
     <a href='https://github.com/jarrodmillman'><img src='https://avatars1.githubusercontent.com/u/123428?v=4' class='avatar' /></a> <br />
     <p>Jarrod Millman</p>
@@ -126,12 +122,12 @@
     <a href='https://github.com/pprett'><img src='https://avatars0.githubusercontent.com/u/111730?v=4' class='avatar' /></a> <br />
     <p>Peter Prettenhofer</p>
     </td>
-    </tr>
-    <tr>
     <td>
     <a href='https://github.com/qinhanmin2014'><img src='https://avatars2.githubusercontent.com/u/12003569?v=4' class='avatar' /></a> <br />
     <p>Hanmin Qin</p>
     </td>
+    </tr>
+    <tr>
     <td>
     <a href='https://github.com/jmschrei'><img src='https://avatars2.githubusercontent.com/u/3916816?v=4' class='avatar' /></a> <br />
     <p>Jacob Schreiber</p>
@@ -145,12 +141,12 @@
     <p>Tom Dupré la Tour</p>
     </td>
     <td>
-    <a href='https://github.com/GaelVaroquaux'><img src='https://avatars3.githubusercontent.com/u/208217?v=4' class='avatar' /></a> <br />
-    <p>Gael Varoquaux</p>
-    </td>
-    <td>
     <a href='https://github.com/NelleV'><img src='https://avatars0.githubusercontent.com/u/184798?v=4' class='avatar' /></a> <br />
     <p>Nelle Varoquaux</p>
+    </td>
+    <td>
+    <a href='https://github.com/GaelVaroquaux'><img src='https://avatars3.githubusercontent.com/u/208217?v=4' class='avatar' /></a> <br />
+    <p>Gael Varoquaux</p>
     </td>
     <td>
     <a href='https://github.com/rth'><img src='https://avatars0.githubusercontent.com/u/630936?v=4' class='avatar' /></a> <br />
