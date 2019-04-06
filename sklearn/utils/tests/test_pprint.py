@@ -62,8 +62,8 @@ LogisticRegression(C=99, class_weight=0.4, fit_intercept=False, tol=1234,
     expected = """SimpleImputer()"""
     assert imputer.__repr__() == expected
 
-    # Array parameter dont throw error (see #13583)
-    LogisticRegressionCV(Cs=np.array([0.1, 1]))
+    # make sure array parameters don't throw error (see #13583)
+    repr(LogisticRegressionCV(Cs=np.array([0.1, 1])))
 
     set_config(print_changed_only=False)
 
