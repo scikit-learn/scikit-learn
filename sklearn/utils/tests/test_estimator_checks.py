@@ -1,5 +1,6 @@
 import unittest
 import sys
+import pytest
 
 import numpy as np
 import scipy.sparse as sp
@@ -17,6 +18,8 @@ from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
+from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
+from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -250,6 +253,21 @@ class SparseTransformer(BaseEstimator):
         return sp.csr_matrix(X)
 
 
+class EstimatorInconsistentForPandas(BaseEstimator):
+    def fit(self, X, y):
+        pd = pytest.importorskip('pandas')
+        if isinstance(X, pd.DataFrame):
+            self.value_ = X.iloc[0, 0]
+        else:
+            X = check_array(X)
+            self.value_ = X[1, 0]
+        return self
+
+    def predict(self, X):
+        X = check_array(X)
+        return np.array([self.value_] * X.shape[0])
+
+
 def test_check_fit_score_takes_y_works_on_deprecated_fit():
     # Tests that check_fit_score_takes_y works on a class with
     # a deprecated fit method
@@ -445,6 +463,22 @@ def test_check_estimator_pairwise():
     # test precomputed metric
     est = KNeighborsRegressor(metric='precomputed')
     check_estimator(est)
+
+
+def test_check_classifier_data_not_an_array():
+    assert_raises_regex(AssertionError,
+                        'Not equal to tolerance',
+                        check_classifier_data_not_an_array,
+                        'estimator_name',
+                        EstimatorInconsistentForPandas())
+
+
+def test_check_regressor_data_not_an_array():
+    assert_raises_regex(AssertionError,
+                        'Not equal to tolerance',
+                        check_regressor_data_not_an_array,
+                        'estimator_name',
+                        EstimatorInconsistentForPandas())
 
 
 def run_tests_without_pytest():
