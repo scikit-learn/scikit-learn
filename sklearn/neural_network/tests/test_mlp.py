@@ -175,7 +175,7 @@ def test_gradient():
     # are correct. The numerical and analytical computation of the gradient
     # should be close.
     for n_labels in [2, 3]:
-        n_samples = 100
+        n_samples = 5
         n_features = 10
         random_state = np.random.RandomState(seed=42)
         X = random_state.rand(n_samples, n_features)
