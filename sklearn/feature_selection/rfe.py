@@ -71,10 +71,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         Number of remaining features reached when ``tuning_step`` is used
         rather than ``step``. May be specified as an (integer) number of
         remaining features or, if within (0.0, 1.0), a percentage (rounded
-        down) of the original number of features. If number of features and
-        step-related settings would result in stepping over ``tune_step_at``,
-        then the number of features to remove will adjust for the iteration
-        just before it to arrive at this value.
+        down) of the original number of features. If original number of
+        features and parameter settings would result in stepping past
+        ``tune_step_at``, then the number of features removed in the iteration
+        prior to stepping over will adjust to arrive at this value.
 
     tuning_step : int or float, optional (default=1)
         Step to use starting at ``tune_step_at`` number of remaining features.
@@ -426,10 +426,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         Number of remaining features reached when ``tuning_step`` is used
         rather than ``step``. May be specified as an (integer) number of
         remaining features or, if within (0.0, 1.0), a percentage (rounded
-        down) of the original number of features. If number of features and
-        step-related settings would result in stepping over ``tune_step_at``,
-        then the number of features to remove will adjust for the iteration
-        just before it to arrive at this value.
+        down) of the original number of features. If original number of
+        features and parameter settings would result in stepping past
+        ``tune_step_at``, then the number of features removed in the iteration
+        prior to stepping over will adjust to arrive at this value.
 
     tuning_step : int or float, optional (default=1)
         Step to use starting at ``tune_step_at`` number of remaining features.
