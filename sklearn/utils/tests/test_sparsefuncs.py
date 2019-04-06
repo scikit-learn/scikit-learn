@@ -536,4 +536,4 @@ def test_sparse_unique():
     # Degenerate case where one uses CSR/CSC matrices to store dense data
     X_notsparse = sp.csr_matrix(np.array([1, 1, 1, 2, 3]))
     unique2 = sparse_unique(X_notsparse)
-    assert_equal(unique2, np.array([1, 2, 3]))
+    assert_array_equal(unique2, np.array([1, 2, 3]))

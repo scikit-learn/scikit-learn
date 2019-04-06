@@ -640,7 +640,10 @@ class StratifiedKFold(_BaseKFold):
         if sp.issparse(y):
             shape = y.shape
             if len(shape) > 2 or (len(shape) == 2 and shape[1] != 1):
-                raise ValueError("bad input shape {0}".format(shape))
+                raise ValueError("StratifiedKFold only supports sparse ``y`` "
+                                 "with shape ``(n_samples,1)`` or "
+                                 "``(n_samples,)``. Got invalid shape "
+                                 "{0}.".format(shape))
             else:
                 _y = y.toarray()
         else:
@@ -1702,11 +1705,16 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         y = check_array(y, accept_sparse=True, ensure_2d=False, dtype=None)
 
         # For compatibility with GridSearchCV (which accepts y to be a sparse
-        # matrix), if y is sparse we convert it to a dense matrix.
+        # matrix), if y is sparse we convert it to a dense matrix. An error is
+        # raised if y does not have the right shape, to avoid creating a large
+        # dense matrix (whose shape will raise an error in ``column_or_1d``).
         if sp.issparse(y):
             shape = y.shape
-            if len(shape) > 2:
-                raise ValueError("bad input shape {0}".format(shape))
+            if len(shape) > 2 or (len(shape) == 2 and shape[1] != 1):
+                raise ValueError("StratifiedShuffleSplit only supports sparse "
+                                 "``y`` with shape ``(n_samples,1)`` or "
+                                 "``(n_samples,)``. Got invalid shape "
+                                 "{0}.".format(shape))
             else:
                 _y = y.toarray()
         else:

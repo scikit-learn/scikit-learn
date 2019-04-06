@@ -277,7 +277,6 @@ def test_is_multilabel():
                     % (example, dense_exp))
 
 
-
 def test_check_classification_targets():
     for y_type in EXAMPLES.keys():
         if y_type in ["unknown", "continuous", 'continuous-multioutput']:

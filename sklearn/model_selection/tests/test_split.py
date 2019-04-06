@@ -410,11 +410,11 @@ def test_stratified_kfold_sparsetarget():
         for tup_d, tup_s in zip(splits_dense, splits_sparse):
             assert_array_equal(tup_d[0], tup_s[0])
             assert_array_equal(tup_d[1], tup_s[1])
-    # Ensure that StratifiedKFold raises an error when the sparse y does not
-    # have a shape of the form (n_samples,) or (n_samples,1).
-    y_sparse_large = csr_matrix((n_samples, 1000))
+    # Ensure that StratifiedShuffleSplit raises an error when y has shape
+    # (n_samples, n_labels) with n_labels > 1.
+    y_sparse_multilabels = csr_matrix((n_samples, 3))
     assert_raises(ValueError, next,
-                  StratifiedKFold(n_splits=2).split(_X, y_sparse_large))
+                  StratifiedKFold().split(_X, y_sparse_multilabels))
 
 
 def test_kfold_balance():
@@ -651,18 +651,17 @@ def test_stratified_shuffle_split_sparsetarget():
     n_samples = 30
     y_dense = rng.randint(2, size=n_samples)
     y_sparse = csr_matrix(y_dense).transpose()
-    X_ = np.ones(n_samples)
-    splits_dense = StratifiedShuffleSplit(3, random_state=42).split(X_,
-                                                                    y_dense)
-    splits_sparse = StratifiedShuffleSplit(3, random_state=42).split(X_,
-                                                                     y_sparse)
-    for tup_d, tup_s in zip(splits_dense, splits_sparse):
+    _X = np.ones(n_samples)
+    res_dense = StratifiedShuffleSplit(3, random_state=42).split(_X, y_dense)
+    res_sparse = StratifiedShuffleSplit(3, random_state=42).split(_X, y_sparse)
+    for tup_d, tup_s in zip(res_dense, res_sparse):
         assert_array_equal(tup_d[0], tup_s[0])
         assert_array_equal(tup_d[1], tup_s[1])
-    # Ensure that StratifiedKFold raises an error when len(y.shape) > 2.
-    y_sparse_large = csr_matrix((n_samples, 1000))
+    # Ensure that StratifiedShuffleSplit raises an error when y has shape
+    # (n_samples, n_labels) with n_labels > 1.
+    y_sparse_multilabels = csr_matrix((n_samples, 3))
     assert_raises(ValueError, next,
-                  StratifiedKFold(n_splits=2).split(X_, y_sparse_large))
+                  StratifiedShuffleSplit().split(_X, y_sparse_multilabels))
 
 
 def test_stratified_shuffle_split_respects_test_size():

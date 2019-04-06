@@ -490,6 +490,8 @@ def test_grid_search_sparse():
     assert_equal(C, C2)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_sparsetarget():
     # Multi-label with sparse target
     X_, y_ = make_multilabel_classification(n_samples=100,
@@ -497,9 +499,9 @@ def test_grid_search_sparsetarget():
                                             random_state=0)
     y_sparse = sp.csr_matrix(y_)
     clf = MockClassifier(foo_param=0)
-    gs = GridSearchCV(clf, {'foo_param': [0.1, 1.]}, cv=5)
+    gs = GridSearchCV(clf, {'foo_param': [0.1, 1.]})
     gs.fit(X_, y_sparse)
-    assert_equal(hasattr(gs, 'cv_results_'), True)
+    assert hasattr(gs, 'cv_results_')
 
     # Binary classification example with sparse target
     X_, y_ = make_classification(n_samples=100)
@@ -508,7 +510,7 @@ def test_grid_search_sparsetarget():
     for cv in _cv:
         gs = GridSearchCV(clf, {'foo_param': [0.1, 1.]}, cv=cv)
         gs.fit(X_, y_sparse)
-        assert_equal(hasattr(gs, 'cv_results_'), True)
+        assert hasattr(gs, 'cv_results_')
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22

@@ -251,11 +251,7 @@ def type_of_target(y):
         return 'multilabel-indicator'
 
     if not issparse(y):
-        try:
-            y = np.asarray(y)
-        except ValueError:
-            # Known to fail in numpy 1.3 for array of arrays
-            return 'unknown'
+        y = np.asarray(y)
 
     # The old sequence of sequences format
     try:
@@ -292,10 +288,10 @@ def type_of_target(y):
             return 'continuous' + suffix
 
     if issparse(y):
-        _unique = sparse_unique(y).size
+        n_unique = sparse_unique(y).size
     else:
-        _unique = np.unique(y).size
-    if (_unique > 2) or (y.ndim >= 2 and y.shape[1] > 1):
+        n_unique = np.unique(y).size
+    if n_unique > 2 or (y.ndim >= 2 and y.shape[1] > 1):
         return 'multiclass' + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
     else:
         return 'binary'  # [1, 2] or [["a"], ["b"]]

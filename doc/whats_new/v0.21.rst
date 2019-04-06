@@ -431,8 +431,9 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Enhancement| Both :class:`~model_selection.GridSearchCV` and
   :func:`~model_selection.cross_val_score`
-  (:func:`~model_selection.cross_validate` as well) now accept a sparse ``y``.
-  :issue:`4225` by :user:`Jean-Baptiste SCHIRATTI <jbschiratti>`.
+  (:func:`~model_selection.cross_validate` as well) now accept a sparse ``y``
+  (with shape ``(n_samples, 1)`` or ``(n_samples,)``). :issue:`4225` by
+  :user:`Jean-Baptiste SCHIRATTI <jbschiratti>`.
 
 :mod:`sklearn.multiclass`
 .........................
