@@ -342,15 +342,18 @@ def test_number_of_subsets_of_features():
     # Advanced step options
     generator = check_random_state(0)
     iris = load_iris()
-    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 20))]
     y = iris.target
+
+    rfe = RFE(estimator=SVC(kernel="linear"), n_features_to_select=0)
+    assert_raises(ValueError, rfe.fit, X, y)
     rfe = RFE(estimator=SVC(kernel="linear"), n_features_to_select=10,
               tune_step_at=10)
     assert_raises(ValueError, rfe.fit, X, y)
     rfe = RFE(estimator=SVC(kernel="linear"), step=0)
     assert_raises(ValueError, rfe.fit, X, y)
     rfe = RFE(estimator=SVC(kernel="linear"), n_features_to_select=10,
-              tune_step_at=100, tuning_step=0)
+              tune_step_at=15, tuning_step=0)
     assert_raises(ValueError, rfe.fit, X, y)
 
     n_features_list = [300] * 15
