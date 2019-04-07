@@ -604,14 +604,15 @@ class RFECV(RFE, MetaEstimatorMixin):
             parallel = Parallel(n_jobs=self.n_jobs)
             func = delayed(_rfe_single_fit)
 
-        cv_results = parallel(
+        scores, n_remaining_feature_steps = zip(*parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
-            for train, test in cv.split(X, y, groups))
+            for train, test in cv.split(X, y, groups)))
 
+        scores = np.sum(scores, axis=0)
+        # Each same so just get first
+        n_remaining_feature_steps = n_remaining_feature_steps[0]
         # Reverse scores and num remaining feature steps to select argmax score
         # with lowest number of features in case of a score tie
-        scores = np.sum([s for s, _ in cv_results], axis=0)
-        n_remaining_feature_steps = cv_results[0][1]
         n_features_to_select = (
             n_remaining_feature_steps[::-1][np.argmax(scores[::-1])])
 
