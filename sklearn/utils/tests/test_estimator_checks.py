@@ -288,7 +288,7 @@ class EstimatorInconsistentForPandas(BaseEstimator):
                 X = check_array(X)
                 self.value_ = X[1, 0]
             return self
-        
+
         except ImportError:
             X = check_array(X)
             self.value_ = X[1, 0]
@@ -519,6 +519,7 @@ def test_check_regressor_data_not_an_array():
                         check_regressor_data_not_an_array,
                         'estimator_name',
                         EstimatorInconsistentForPandas())
+
 
 def run_tests_without_pytest():
     """Runs the tests in this file without using pytest.
