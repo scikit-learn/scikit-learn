@@ -1035,7 +1035,8 @@ class _RidgeGCV(LinearModel):
             hat_diag = hat_diag[:, np.newaxis]
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
-    def _errors_and_values_svd_helper_sparse_intercept(self, alpha, y, s, V, X):
+    def _errors_and_values_svd_helper_sparse_intercept(
+            self, alpha, y, s, V, X):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
@@ -1107,7 +1108,6 @@ class _RidgeGCV(LinearModel):
             # handle case where y is 2-d
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
-
 
     def _errors_svd_sparse(self, alpha, y, v, U, UT_y):
         G_diag, c = self._errors_and_values_svd_helper_sparse(
