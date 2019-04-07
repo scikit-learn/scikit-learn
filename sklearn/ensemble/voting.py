@@ -439,7 +439,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
         y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like, shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
