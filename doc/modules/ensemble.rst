@@ -927,7 +927,7 @@ averaged.
 Voting Classifier
 ========================
 
-The idea behind the :class:`VotingClassifier` is to combine
+The idea behind the `VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
 Such a classifier can be useful for a set of equally well performing model
@@ -1091,7 +1091,7 @@ Optionally, weights can be provided for the individual classifiers::
 Voting Regressor
 ================
 
-The idea behind the :class:`VotingRegressor` is to combine conceptually
+The idea behind the `VotingRegressor` is to combine conceptually
 different machine learning regressors and return the average predicted values.
 Such a regressor can be useful for a set of equally well performing models
 in order to balance out their individual weaknesses.
