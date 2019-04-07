@@ -463,7 +463,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : array of shape (n_samples,)
             The predicted values.
         """
         check_is_fitted(self, "estimators_")
