@@ -138,16 +138,18 @@ def test_sample_weights_validation():
         glm.fit(X, y, weights)
 
 
-def test_glm_family_argument():
+@pytest.mark.parametrize('f, fam',
+                         [('normal', NormalDistribution()),
+                          ('poisson', PoissonDistribution()),
+                          ('gamma', GammaDistribution()),
+                          ('inverse.gaussian', InverseGaussianDistribution()),
+                          ('binomial', BinomialDistribution())])
+def test_glm_family_argument(f, fam):
     """Test GLM family argument set as string."""
-    y = np.array([1, 2])
+    y = np.array([0.1, 0.5])  # in range of all distributions
     X = np.array([[1], [2]])
-    for (f, fam) in [('normal', NormalDistribution()),
-                     ('poisson', PoissonDistribution()),
-                     ('gamma', GammaDistribution()),
-                     ('inverse.gaussian', InverseGaussianDistribution())]:
-        glm = GeneralizedLinearRegressor(family=f, alpha=0).fit(X, y)
-        assert_equal(type(glm._family_instance), type(fam))
+    glm = GeneralizedLinearRegressor(family=f, alpha=0).fit(X, y)
+    assert_equal(type(glm._family_instance), type(fam))
 
     glm = GeneralizedLinearRegressor(family='not a family',
                                      fit_intercept=False)
@@ -155,14 +157,16 @@ def test_glm_family_argument():
         glm.fit(X, y)
 
 
-def test_glm_link_argument():
+@pytest.mark.parametrize('l, link',
+                         [('identity', IdentityLink()),
+                          ('log', LogLink()),
+                          ('logit', LogitLink())])
+def test_glm_link_argument(l, link):
     """Test GLM link argument set as string."""
-    y = np.array([1, 2])
+    y = np.array([0.1, 0.5])  # in range of all distributions
     X = np.array([[1], [2]])
-    for (l, link) in [('identity', IdentityLink()),
-                      ('log', LogLink())]:
-        glm = GeneralizedLinearRegressor(family='normal', link=l).fit(X, y)
-        assert_equal(type(glm._link_instance), type(link))
+    glm = GeneralizedLinearRegressor(family='normal', link=l).fit(X, y)
+    assert_equal(type(glm._link_instance), type(link))
 
     glm = GeneralizedLinearRegressor(family='normal', link='not a link')
     with pytest.raises(ValueError):
@@ -317,6 +321,16 @@ def test_glm_random_state_argument(random_state):
         glm.fit(X, y)
 
 
+@pytest.mark.parametrize('diag_fisher', ['not bool', 1, 0, [True]])
+def test_glm_diag_fisher_argument(diag_fisher):
+    """Test GLM for invalid diag_fisher arguments."""
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    glm = GeneralizedLinearRegressor(diag_fisher=diag_fisher)
+    with pytest.raises(ValueError):
+        glm.fit(X, y)
+
+
 @pytest.mark.parametrize('copy_X', ['not bool', 1, 0, [True]])
 def test_glm_copy_X_argument(copy_X):
     """Test GLM for invalid copy_X arguments."""
@@ -453,7 +467,12 @@ def test_normal_ridge(solver):
     assert_array_almost_equal(glm.predict(T), ridge.predict(T))
 
 
-def test_poisson_ridge():
+@pytest.mark.parametrize('solver, decimal, tol',
+                         [('irls', 7, 1e-8),
+                          ('lbfgs', 5, 1e-7),
+                          ('newton-cg', 5, 1e-7),
+                          ('cd', 7, 1e-8)])
+def test_poisson_ridge(solver, decimal, tol):
     """Test ridge regression with poisson family and LogLink.
 
     Compare to R's glmnet"""
@@ -470,22 +489,20 @@ def test_poisson_ridge():
     # b            0.03741173122
     X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
     y = np.array([0, 1, 1, 2])
-    s_dec = {'irls': 7, 'lbfgs': 5, 'newton-cg': 5, 'cd': 7}
-    s_tol = {'irls': 1e-8, 'lbfgs': 1e-7, 'newton-cg': 1e-7, 'cd': 1e-8}
-    for solver in ['irls', 'lbfgs', 'newton-cg', 'cd']:
-        glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0,
-                                         fit_intercept=True, family='poisson',
-                                         link='log', tol=s_tol[solver],
-                                         solver=solver, max_iter=300,
-                                         random_state=42)
-        glm.fit(X, y)
-        assert_almost_equal(glm.intercept_, -0.12889386979,
-                            decimal=s_dec[solver])
-        assert_array_almost_equal(glm.coef_, [0.29019207995, 0.03741173122],
-                                  decimal=s_dec[solver])
+    glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0,
+                                     fit_intercept=True, family='poisson',
+                                     link='log', tol=tol,
+                                     solver=solver, max_iter=300,
+                                     random_state=42)
+    glm.fit(X, y)
+    assert_almost_equal(glm.intercept_, -0.12889386979,
+                        decimal=decimal)
+    assert_array_almost_equal(glm.coef_, [0.29019207995, 0.03741173122],
+                              decimal=decimal)
 
 
-def test_normal_enet():
+@pytest.mark.parametrize('diag_fisher', [False, True])
+def test_normal_enet(diag_fisher):
     """Test elastic net regression with normal/gaussian family."""
     rng = np.random.RandomState(0)
     alpha, l1_ratio = 0.3, 0.7
@@ -494,18 +511,26 @@ def test_normal_enet():
     beta = rng.randn(n_features)
     y = 2 + np.dot(X, beta) + rng.randn(n_samples)
 
+    # 1. test normal enet on dense data
     glm = GeneralizedLinearRegressor(alpha=alpha, l1_ratio=l1_ratio,
                                      family='normal', link='identity',
                                      fit_intercept=True, tol=1e-8,
                                      max_iter=100, selection='cyclic',
                                      solver='cd', start_params='zero',
-                                     check_input=False)
+                                     check_input=False,
+                                     diag_fisher=diag_fisher)
     glm.fit(X, y)
 
     enet = ElasticNet(alpha=alpha, l1_ratio=l1_ratio, fit_intercept=True,
                       normalize=False, tol=1e-8, copy_X=True)
     enet.fit(X, y)
 
+    assert_almost_equal(glm.intercept_, enet.intercept_, decimal=7)
+    assert_array_almost_equal(glm.coef_, enet.coef_, decimal=7)
+
+    # 2. test normal enet on sparse data
+    X = sparse.csc_matrix(X)
+    glm.fit(X, y)
     assert_almost_equal(glm.intercept_, enet.intercept_, decimal=7)
     assert_array_almost_equal(glm.coef_, enet.coef_, decimal=7)
 
