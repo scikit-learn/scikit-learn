@@ -278,7 +278,7 @@ documentation related to resolving merge conflict using the command line
 Contributing pull requests
 --------------------------
 
-We recommend that that your contribution complies with the following
+We recommend that your contribution complies with the following
 rules before submitting a pull request:
 
 * Follow the `coding-guidelines`_ (see below). To make sure that
