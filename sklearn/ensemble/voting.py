@@ -458,7 +458,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
 
         Returns
