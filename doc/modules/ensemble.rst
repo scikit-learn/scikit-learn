@@ -1119,7 +1119,7 @@ The following example shows how to fit the VotingRegressor::
    >>> ereg = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
    >>> ereg = ereg.fit(X, y)
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_averaging_regressor_001.png
-    :target: ../auto_examples/ensemble/plot_averaging_regressor.html
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_regressor_001.png
+    :target: ../auto_examples/ensemble/plot_voting_regressor.html
     :align: center
     :scale: 75%

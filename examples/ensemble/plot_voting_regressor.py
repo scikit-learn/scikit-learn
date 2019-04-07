@@ -44,6 +44,8 @@ plt.plot(reg1.predict(xt), 'gd', label='GradientBoostingRegressor')
 plt.plot(reg2.predict(xt), 'b^', label='RandomForestRegressor')
 plt.plot(reg3.predict(xt), 'ys', label='LinearRegression')
 plt.plot(ereg.predict(xt), 'r*', label='VotingRegressor')
+plt.tick_params(axis='x', which='both', bottom=False, top=False,
+                labelbottom=False)
 plt.ylabel('predicted')
 plt.xlabel('training samples')
 plt.legend(loc="best")
