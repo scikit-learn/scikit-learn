@@ -135,9 +135,10 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
         else:
             # Resort to voting
             predictions = estimator.predict(X[:, features])
-
-            for i in range(n_samples):
-                proba[i, predictions[i]] += 1
+            # Lookup for converting class labels to column numbers
+            to_index = dict(zip(estimator.classes_, itertools.count()))
+            # Increment label counts for this estimator
+            proba[range(n_samples), [to_index[i] for i in predictions]] += 1
 
     return proba
 

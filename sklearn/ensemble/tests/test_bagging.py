@@ -895,3 +895,39 @@ def test_bagging_small_max_features():
     bagging = BaggingClassifier(LogisticRegression(),
                                 max_features=0.3, random_state=1)
     bagging.fit(X, y)
+
+
+class DummyVoteClassifier:
+    '''Simple classifier intentionally not implementing predict_proba, so that
+    BaggingClassifier resorts to voting. It always predicts True.'''
+    def __init__(self):
+        self.classes_ = np.array([False, True])
+        pass
+
+    def fit(self, X, Y, W=None):
+        return self
+
+    def predict(self, X):
+        return np.full(X.shape[0], True)
+
+    def score(self, X, Y):
+        YH = self.predict(X)
+        return (Y == YH).mean()
+
+    def get_params(self, deep=True):
+        return {}
+
+    def set_params(self, **params):
+        for k, v in params:
+            setattr(self, k, v)
+        return self
+
+
+def test_bagging_classifier_voting():
+    # Test BaggingClassifier when base_estimator doesn't define predict_proba
+    A = np.random.rand(10, 4)
+    Y = np.random.randint(2, size=10, dtype=np.bool)
+    bagging_classifier = BaggingClassifier(DummyVoteClassifier())
+    bagging_classifier.fit(A, Y)
+    # All ensemble members predict True; BaggingClassifier should predict True
+    assert(bagging_classifier.predict(A).all())
