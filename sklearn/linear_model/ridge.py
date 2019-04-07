@@ -858,6 +858,46 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         return self._label_binarizer.classes_
 
 
+def _centered_gram(X, center=True):
+    if not center:
+        X_m = np.zeros(X.shape[1], dtype=X.dtype)
+        return safe_sparse_dot(X, X.T, dense_output=True), X_m
+    if sparse.issparse(X):
+        X_m, _ = mean_variance_axis(X, axis=0)
+    else:
+        X_m = X.mean(axis=0)
+    X_mX = safe_sparse_dot(X_m, X.T, dense_output=True)
+    return (safe_sparse_dot(X, X.T, dense_output=True) + np.dot(X_m, X_m)
+            - X_mX - X_mX[:, None], X_m)
+
+
+def _centered_covariance(X, center=True):
+    if not center:
+        X_m = np.zeros(X.shape[1], dtype=X.dtype)
+        return safe_sparse_dot(X.T, X, dense_output=True), X_m
+    n = X.shape[0]
+    if sparse.issparse(X):
+        X_m, _ = mean_variance_axis(X, axis=0)
+    else:
+        X_m = X.mean(axis=0)
+    return safe_sparse_dot(
+        X.T, X, dense_output=True) - n * np.outer(X_m, X_m), X_m
+
+
+def _sparse_multidot_diag(X, A, Xm, with_intercept=True):
+    batch_size = X.shape[1]
+    diag = np.empty(X.shape[0])
+    for start in range(0, X.shape[0], batch_size):
+        batch = slice(start, start + batch_size, 1)
+        X_batch = np.ones((X[batch].shape[0], X.shape[1] + with_intercept))
+        if with_intercept:
+            X_batch[:, :-1] = X[batch].A - Xm
+        else:
+            X_batch = X[batch].A
+        diag[batch] = (X_batch.dot(A) * X_batch).sum(axis=1)
+    return diag
+
+
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Generalized Cross-Validation
 
@@ -909,18 +949,6 @@ class _RidgeGCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def _pre_compute(self, X, y, centered_kernel=True):
-        # even if X is very sparse, K is usually very dense
-        K = safe_sparse_dot(X, X.T, dense_output=True)
-        # the following emulates an additional constant regressor
-        # corresponding to fit_intercept=True
-        # but this is done only when the features have been centered
-        if centered_kernel:
-            K += np.ones_like(K)
-        v, Q = linalg.eigh(K)
-        QT_y = np.dot(Q.T, y)
-        return v, Q, QT_y
-
     def _decomp_diag(self, v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
         return (v_prime * Q ** 2).sum(axis=-1)
@@ -932,6 +960,20 @@ class _RidgeGCV(LinearModel):
             D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
         return D * B
 
+    def _set_intercept(self, X_offset, y_offset, X_scale):
+        if getattr(self, '_X_offset', None) is not None:
+            X_offset = X_offset + self._X_offset
+        super()._set_intercept(X_offset, y_offset, X_scale)
+
+    def _pre_compute(self, X, y):
+        K, X_m = _centered_gram(X, self.fit_intercept)
+        if self.fit_intercept:
+            K += 1.
+        v, Q = linalg.eigh(K)
+        QT_y = np.dot(Q.T, y)
+        self._X_offset = X_m
+        return v, Q, QT_y
+
     def _errors_and_values_helper(self, alpha, y, v, Q, QT_y):
         """Helper function to avoid code duplication between self._errors and
         self._values.
@@ -941,9 +983,10 @@ class _RidgeGCV(LinearModel):
         We don't construct matrix G, instead compute action on y & diagonal.
         """
         w = 1. / (v + alpha)
-        constant_column = np.var(Q, 0) < 1.e-12
-        # detect constant columns
-        w[constant_column] = 0  # cancel the regularization for the intercept
+        if self.fit_intercept:
+            constant_column = np.var(Q, 0) < 1.e-12
+            # detect constant columns
+            w[constant_column] = 0  # cancel regularization for the intercept
 
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
@@ -960,10 +1003,87 @@ class _RidgeGCV(LinearModel):
         G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
         return y - (c / G_diag), c
 
-    def _pre_compute_svd(self, X, y, centered_kernel=True):
-        if sparse.issparse(X):
-            raise TypeError("SVD not supported for sparse matrices")
-        if centered_kernel:
+    def _pre_compute_svd_sparse(self, X, y):
+        n, p = X.shape
+        cov = np.empty((p + 1, p + 1))
+        cov[:-1, :-1], X_m = _centered_covariance(X, self.fit_intercept)
+        if not self.fit_intercept:
+            cov = cov[:-1, :-1]
+        else:
+            cov[-1] = 0
+            cov[:, -1] = 0
+            cov[-1, -1] = n
+        kernel_size = max(0, X.shape[1] - X.shape[0])
+        s, V = linalg.eigh(cov)
+        s = s[kernel_size:]
+        V = V[:, kernel_size:]
+        self._X_offset = X_m
+        return s, V, X
+
+    def _errors_and_values_svd_helper_sparse_no_intercept(
+            self, alpha, y, s, V, X):
+        n, p = X.shape
+        w = 1 / (s + alpha)
+        A = (V * w).dot(V.T)
+        Xm = self._X_offset
+        AXy = A.dot(safe_sparse_dot(X.T, y, dense_output=True))
+        y_hat = safe_sparse_dot(X, AXy, dense_output=True)
+        hat_diag = _sparse_multidot_diag(X, A, Xm, False)
+        # return (1 - hat_diag), (y - y_hat)
+        if len(y.shape) != 1:
+            # handle case where y is 2-d
+            hat_diag = hat_diag[:, np.newaxis]
+        return (1 - hat_diag) / alpha, (y - y_hat) / alpha
+
+    def _errors_and_values_svd_helper_sparse_intercept(self, alpha, y, s, V, X):
+        """Helper function to avoid code duplication between self._errors_svd
+        and self._values_svd.
+        """
+        n, p = X.shape
+        intercept_dim, *_ = np.where(s == n)
+        w = 1 / (s + alpha)
+        if len(intercept_dim) == 1:
+            w[intercept_dim[0]] = 1 / s[intercept_dim[0]]
+        A = (V * w).dot(V.T)
+        Xm = self._X_offset
+
+        def matvec(v):
+            return safe_sparse_dot(
+                X, v[:-1], dense_output=True) - Xm.dot(v[:-1]) + v[-1]
+
+        def matmat(v):
+            return safe_sparse_dot(
+                X, v[:-1], dense_output=True) - Xm.dot(v[:-1]) + v[-1]
+
+        def rmatvec(v):
+            v = v.ravel()
+            res = np.empty(X.shape[1] + 1)
+            res[:-1] = safe_sparse_dot(
+                X.T, v, dense_output=True) - Xm * v.sum(axis=0)
+            res[-1] = v.sum(axis=0)
+            return res
+
+        Xop = sparse.linalg.LinearOperator(
+            matvec=matvec, matmat=matmat, rmatvec=rmatvec,
+            shape=(X.shape[0], X.shape[1] + 1), dtype=X.dtype)
+        AXy = A.dot(Xop.adjoint().dot(y))
+        y_hat = Xop.dot(AXy)
+        hat_diag = _sparse_multidot_diag(X, A, Xm)
+        # return (1 - hat_diag), (y - y_hat)
+        if len(y.shape) != 1:
+            # handle case where y is 2-d
+            hat_diag = hat_diag[:, np.newaxis]
+        return (1 - hat_diag) / alpha, (y - y_hat) / alpha
+
+    def _errors_and_values_svd_helper_sparse(self, alpha, y, s, V, X):
+        if self.fit_intercept:
+            return self._errors_and_values_svd_helper_sparse_intercept(
+                alpha, y, s, V, X)
+        return self._errors_and_values_svd_helper_sparse_no_intercept(
+            alpha, y, s, V, X)
+
+    def _pre_compute_svd_dense(self, X, y):
+        if self.fit_intercept:
             X = np.hstack((X, np.ones((X.shape[0], 1))))
         # to emulate fit_intercept=True situation, add a column on ones
         # Note that by centering, the other columns are orthogonal to that one
@@ -972,7 +1092,7 @@ class _RidgeGCV(LinearModel):
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
 
-    def _errors_and_values_svd_helper(self, alpha, y, v, U, UT_y):
+    def _errors_and_values_svd_helper_dense(self, alpha, y, v, U, UT_y):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
@@ -988,12 +1108,25 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _errors_svd(self, alpha, y, v, U, UT_y):
-        G_diag, c = self._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
+
+    def _errors_svd_sparse(self, alpha, y, v, U, UT_y):
+        G_diag, c = self._errors_and_values_svd_helper_sparse(
+            alpha, y, v, U, UT_y)
         return (c / G_diag) ** 2, c
 
-    def _values_svd(self, alpha, y, v, U, UT_y):
-        G_diag, c = self._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
+    def _values_svd_sparse(self, alpha, y, v, U, UT_y):
+        G_diag, c = self._errors_and_values_svd_helper_sparse(
+            alpha, y, v, U, UT_y)
+        return y - (c / G_diag), c
+
+    def _errors_svd_dense(self, alpha, y, v, U, UT_y):
+        G_diag, c = self._errors_and_values_svd_helper_dense(
+            alpha, y, v, U, UT_y)
+        return (c / G_diag) ** 2, c
+
+    def _values_svd_dense(self, alpha, y, v, U, UT_y):
+        G_diag, c = self._errors_and_values_svd_helper_dense(
+            alpha, y, v, U, UT_y)
         return y - (c / G_diag), c
 
     def fit(self, X, y, sample_weight=None):
@@ -1028,7 +1161,7 @@ class _RidgeGCV(LinearModel):
         with_sw = len(np.shape(sample_weight))
 
         if gcv_mode is None or gcv_mode == 'auto':
-            if sparse.issparse(X) or n_features > n_samples or with_sw:
+            if n_features > n_samples:
                 gcv_mode = 'eigen'
             else:
                 gcv_mode = 'svd'
@@ -1044,18 +1177,21 @@ class _RidgeGCV(LinearModel):
             _values = self._values
         elif gcv_mode == 'svd':
             # assert n_samples >= n_features
-            _pre_compute = self._pre_compute_svd
-            _errors = self._errors_svd
-            _values = self._values_svd
+            if sparse.issparse(X):
+                _pre_compute = self._pre_compute_svd_sparse
+                _errors = self._errors_svd_sparse
+                _values = self._values_svd_sparse
+            else:
+                _pre_compute = self._pre_compute_svd_dense
+                _errors = self._errors_svd_dense
+                _values = self._values_svd_dense
         else:
             raise ValueError('bad gcv_mode "%s"' % gcv_mode)
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
 
-        centered_kernel = not sparse.issparse(X) and self.fit_intercept
-
-        v, Q, QT_y = _pre_compute(X, y, centered_kernel)
+        v, Q, QT_y = _pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
@@ -1105,128 +1241,6 @@ class _RidgeGCV(LinearModel):
             self.cv_values_ = cv_values.reshape(cv_values_shape)
 
         return self
-
-
-def _centered_gram(X):
-    if sparse.issparse(X):
-        X_m, _ = mean_variance_axis(X, axis=0)
-    else:
-        X_m = X.mean(axis=0)
-    X_mX = safe_sparse_dot(X_m, X.T, dense_output=True)
-    return (safe_sparse_dot(X, X.T, dense_output=True) + np.dot(X_m, X_m)
-            - X_mX - X_mX[:, None], X_m)
-
-
-def _centered_covariance(X):
-    n = X.shape[0]
-    if sparse.issparse(X):
-        X_m, _ = mean_variance_axis(X, axis=0)
-    else:
-        X_m = X.mean(axis=0)
-    return safe_sparse_dot(
-        X.T, X, dense_output=True) - n * np.outer(X_m, X_m), X_m
-
-
-class _WIPNewRidgeGCV(_RidgeGCV):
-
-    def _set_intercept(self, X_offset, y_offset, X_scale):
-        if getattr(self, '_X_offset', None) is not None:
-            X_offset = self._X_offset
-        super()._set_intercept(X_offset, y_offset, X_scale)
-
-    def _pre_compute(self, X, y, centered_kernel):
-        if sparse.issparse(X) and self.fit_intercept:
-            return self._pre_compute_gram(X, y)
-        return super()._pre_compute(X, y, centered_kernel)
-
-    def _pre_compute_gram(self, X, y):
-        K, X_m = _centered_gram(X)
-        K += 1.
-        v, Q = linalg.eigh(K)
-        QT_y = np.dot(Q.T, y)
-        self._X_offset = X_m
-        return v, Q, QT_y
-
-    def _pre_compute_svd(self, X, y, centered_kernel):
-        # TODO: handle case of fit_intercept=False
-        if sparse.issparse(X):
-            return self._pre_compute_covariance(X, y)
-        return super()._pre_compute_svd(X, y, centered_kernel)
-
-    def _pre_compute_covariance(self, X, y):
-        n, p = X.shape
-        cov = np.empty((p + 1, p + 1))
-        cov[:-1, :-1], X_m = _centered_covariance(X)
-        cov[-1] = 0
-        cov[:, -1] = 0
-        cov[-1, -1] = n
-        kernel_size = max(0, X.shape[1] - X.shape[0])
-        s, V = linalg.eigh(cov)
-        s = s[kernel_size:]
-        V = V[:, kernel_size:]
-        self._X_offset = X_m
-        return s, V, X
-
-    def _errors_and_values_svd_helper(self, alpha, y, s, V, X):
-        if not sparse.issparse(X):
-            return super()._errors_and_values_svd_helper(alpha, y, s, V, X)
-        n, p = X.shape
-        intercept_dim, *_ = np.where(s == n)
-        w = 1 / (s + alpha)
-        if len(intercept_dim == 1):
-            w[intercept_dim[0]] = 1 / s[intercept_dim[0]]
-        A = (V * w).dot(V.T)
-        Xm = self._X_offset
-
-        def matvec(v):
-            return safe_sparse_dot(
-                X, v[:-1], dense_output=True) - Xm.dot(v[:-1]) + v[-1]
-
-        def matmat(v):
-            return safe_sparse_dot(
-                X, v[:-1], dense_output=True) - Xm.dot(v[:-1]) + v[-1]
-
-        def rmatvec(v):
-            res = np.empty(X.shape[1] + 1)
-            res[:-1] = safe_sparse_dot(
-                X.T, v, dense_output=True) - Xm * v.sum(axis=0)
-            res[-1] = v.sum(axis=0)
-            return res
-
-        Xop = sparse.linalg.LinearOperator(
-            matvec=matvec, matmat=matmat, rmatvec=rmatvec,
-            shape=(X.shape[0], X.shape[1] + 1), dtype=X.dtype)
-        AXy = A.dot(Xop.rmatvec(y))
-        y_hat = Xop.dot(AXy)
-        hat_diag = _sparse_multidot_diag(X, A, Xm)
-        # return (1 - hat_diag), (y - y_hat)
-        return (1 - hat_diag) / alpha, (y - y_hat) / alpha
-
-
-def _sparse_multidot_diag(X, A, Xm):
-    batch_size = X.shape[1]
-    diag = np.empty(X.shape[0])
-    for start in range(0, X.shape[0], batch_size):
-        batch = slice(start, start + batch_size, 1)
-        X_batch = np.ones((X[batch].shape[0], X.shape[1] + 1))
-        X_batch[:, :-1] = X[batch].A - Xm
-        diag[batch] = (X_batch.dot(A) * X_batch).sum(axis=1)
-    return diag
-
-
-
-# def _sparse_multidot_diag(A, B, C):
-#     batch_size = A.shape[1]
-#     diag = np.empty(A.shape[0])
-#     for start in range(0, A.shape[0], batch_size):
-#         batch = slice(start, start + batch_size, 1)
-#         C_batch = C[:, batch]
-#         if sparse.issparse(C_batch):
-#             C_batch = C_batch.A
-#         diag[batch] = (
-#             safe_sparse_dot(A[batch], B, dense_output=True)
-#             * C_batch.T).sum(axis=1)
-#     return diag
 
 
 class _BaseRidgeCV(LinearModel, MultiOutputMixin):

@@ -327,7 +327,7 @@ def _test_ridge_loo(filter_):
     # because fit_intercept is applied
 
     # generalized cross-validation (efficient leave-one-out)
-    decomp = ridge_gcv._pre_compute(X_diabetes_, y_diabetes, fit_intercept)
+    decomp = ridge_gcv._pre_compute(X_diabetes_, y_diabetes)
     errors, c = ridge_gcv._errors(1.0, y_diabetes, *decomp)
     values, c = ridge_gcv._values(1.0, y_diabetes, *decomp)
 
@@ -350,9 +350,9 @@ def _test_ridge_loo(filter_):
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
-    decomp = ridge_gcv._pre_compute_svd(X_diabetes_, y_diabetes, fit_intercept)
-    errors3, c = ridge_gcv._errors_svd(ridge.alpha, y_diabetes, *decomp)
-    values3, c = ridge_gcv._values_svd(ridge.alpha, y_diabetes, *decomp)
+    decomp = ridge_gcv._pre_compute_svd_dense(X_diabetes_, y_diabetes)
+    errors3, c = ridge_gcv._errors_svd_dense(ridge.alpha, y_diabetes, *decomp)
+    values3, c = ridge_gcv._values_svd_dense(ridge.alpha, y_diabetes, *decomp)
 
     # check that efficient and SVD efficient LOO give same results
     assert_almost_equal(errors, errors3)
@@ -862,14 +862,15 @@ def test_errors_and_values_svd_helper():
         v = rng.randn(p)
         U = rng.randn(n, p)
         UT_y = U.T.dot(y)
-        G_diag, c = ridgecv._errors_and_values_svd_helper(alpha, y, v, U, UT_y)
+        G_diag, c = ridgecv._errors_and_values_svd_helper_dense(
+            alpha, y, v, U, UT_y)
 
         # test that helper function behaves as expected
-        out, c_ = ridgecv._errors_svd(alpha, y, v, U, UT_y)
+        out, c_ = ridgecv._errors_svd_dense(alpha, y, v, U, UT_y)
         np.testing.assert_array_equal(out, (c / G_diag) ** 2)
         np.testing.assert_array_equal(c, c)
 
-        out, c_ = ridgecv._values_svd(alpha, y, v, U, UT_y)
+        out, c_ = ridgecv._values_svd_dense(alpha, y, v, U, UT_y)
         np.testing.assert_array_equal(out, y - (c / G_diag))
         np.testing.assert_array_equal(c_, c)
 
