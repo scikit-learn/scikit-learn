@@ -111,11 +111,7 @@ class CountVectorizer(BaseEstimator):
 class Pipeline(_BaseComposition):
     def __init__(self, steps, memory=None):
         self.steps = steps
-        self._validate_steps()
         self.memory = memory
-
-    def _validate_steps(self):
-        return self
 
 
 def test_basic():
