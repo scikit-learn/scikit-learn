@@ -328,7 +328,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         if max_fpr is None or max_fpr == 1:
             return auc(fpr, tpr)
         if max_fpr <= 0 or max_fpr > 1:
-            raise ValueError("Expected max_fpr in range [0, 1), got: %r"
+            raise ValueError("Expected max_fpr in range (0, 1], got: %r"
                              % max_fpr)
 
         # Add a single point at max_fpr by linear interpolation
