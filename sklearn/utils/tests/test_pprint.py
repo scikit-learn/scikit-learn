@@ -6,13 +6,11 @@ import numpy as np
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.pipeline import make_pipeline
-from sklearn.base import BaseEstimator, MetaEstimatorMixin, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection.base import SelectorMixin
-from sklearn.model_selection._search import BaseSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
-from sklearn.feature_extraction.text import VectorizerMixin
 from sklearn import set_config
 
 
