@@ -917,12 +917,9 @@ def test_iterative_imputer_early_stopping():
     [(np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, -1]]),
       {'features': 'missing-only', 'sparse': 'auto'},
       'have missing values in transform but have no missing values in fit'),
-     (np.array([[-1, 1], [-1, -1]]), np.array([[-1, 1], [1, 1]]),
-      {'features': 'some-missing', 'sparse': 'auto'},
-      'have missing values in transform but have no missing values in fit'),
      (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
       {'features': 'random', 'sparse': 'auto'},
-      "'features' has to be one of 'missing-only', 'all' or 'some-missing'"),
+      "'features' has to be either 'missing-only' or 'all'"),
      (np.array([[-1, 1], [1, 2]]), np.array([[-1, 1], [1, 2]]),
       {'features': 'all', 'sparse': 'random'},
       "'sparse' has to be a boolean or 'auto'"),
@@ -1152,23 +1149,23 @@ def test_missing_indicator_sparse_no_explicit_zeros():
 @pytest.mark.parametrize("marker", [np.nan, -1, 0])
 def test_imputation_add_indicator(marker):
     X = np.array([
-        [marker, 1, 5, marker, 1],
-        [2, marker, 1, marker, 2],
-        [6, 3, marker, marker, 3],
-        [1, 2, 9, marker, 4]
+        [marker, 1,      5,       marker, 1],
+        [2,      marker, 1,       marker, 2],
+        [6,      3,      marker,  marker, 3],
+        [1,      2,      9,       marker, 4]
     ])
     X_true = np.array([
-        [3., 1., 5., 1., 1., 0., 0.],
-        [2., 2., 1., 2., 0., 1., 0.],
-        [6., 3., 5., 3., 0., 0., 1.],
-        [1., 2., 9., 4., 0., 0., 0.]
+        [3., 1., 5., 1., 1., 0., 0., 1.],
+        [2., 2., 1., 2., 0., 1., 0., 1.],
+        [6., 3., 5., 3., 0., 0., 1., 1.],
+        [1., 2., 9., 4., 0., 0., 0., 1.]
     ])
 
     imputer = SimpleImputer(missing_values=marker, add_indicator=True)
     X_trans = imputer.fit_transform(X)
 
     assert_allclose(X_trans, X_true)
-    assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2]))
+    assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2, 3]))
 
 
 @pytest.mark.parametrize(

@@ -286,9 +286,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                fill_value)
 
         if self.add_indicator:
-            self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values, features="some-missing",
-                error_on_new=False)
+            self.indicator_ = MissingIndicator(missing_values=self.missing_values)
             self.indicator_.fit(X)
 
         return self
@@ -1245,9 +1243,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
-        self.features_ = (self._get_missing_features_info(X)[1]
-                          if self.features == 'missing-only'
-                          else np.arange(self._n_features))
+        self.features_ = self._get_missing_features_info(X)[1]
 
         return self
 
