@@ -206,9 +206,10 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         between neighbors according to the given metric.
 
     n_neighbors : int, optional (default = 5)
-        Number of neighbors to use for :meth:`kneighbors` queries. For
-        compatiblity reasons, as each sample is considered as its own neighbor,
-        one extra neighbor will be computed when mode == 'distance'.
+        Number of neighbors for each sample in the transformed sparse graph.
+        For compatiblity reasons, as each sample is considered as its own
+        neighbor, one extra neighbor will be computed when mode == 'distance'.
+        In this case, the sparse graph contains (n_neighbors + 1) neighbors.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -345,7 +346,7 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         between neighbors according to the given metric.
 
     radius : float, optional (default = 1.)
-        Range of parameter space to use for :meth:`radius_neighbors`
+        Radius of neighborhood in the transformed sparse graph.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
