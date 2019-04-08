@@ -7,7 +7,6 @@ from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.pipeline import make_pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
 from sklearn import set_config
 
@@ -110,6 +109,29 @@ class Pipeline(BaseEstimator):
     def __init__(self, steps, memory=None):
         self.steps = steps
         self.memory = memory
+
+
+class SVC(BaseEstimator):
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated',
+                 coef0=0.0, shrinking=True, probability=False,
+                 tol=1e-3, cache_size=200, class_weight=None,
+                 verbose=False, max_iter=-1, decision_function_shape='ovr',
+                 random_state=None):
+        self.kernel = kernel
+        self.degree = degree
+        self.gamma = gamma
+        self.coef0 = coef0
+        self.tol = tol
+        self.C = C
+        self.nu = 0.
+        self.shrinking = shrinking
+        self.probability = probability
+        self.cache_size = cache_size
+        self.class_weight = class_weight
+        self.verbose = verbose
+        self.max_iter = max_iter
+        self.decision_function_shape = decision_function_shape
+        self.random_state = random_state
 
 
 class PCA(BaseEstimator):
