@@ -12,7 +12,6 @@ from sklearn.model_selection._search import BaseSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
-from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import VectorizerMixin
 from sklearn import set_config
 
@@ -146,6 +145,16 @@ class NMF(BaseEstimator):
         self.l1_ratio = l1_ratio
         self.verbose = verbose
         self.shuffle = shuffle
+
+
+class SimpleImputer(BaseEstimator):
+    def __init__(self, missing_values=np.nan, strategy="mean",
+                 fill_value=None, verbose=0, copy=True):
+        self.missing_values = missing_values
+        self.strategy = strategy
+        self.fill_value = fill_value
+        self.verbose = verbose
+        self.copy = copy
 
 
 def test_basic():
