@@ -207,7 +207,7 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
 
     n_neighbors : int, optional (default = 5)
         Number of neighbors for each sample in the transformed sparse graph.
-        For compatiblity reasons, as each sample is considered as its own
+        For compatibility reasons, as each sample is considered as its own
         neighbor, one extra neighbor will be computed when mode == 'distance'.
         In this case, the sparse graph contains (n_neighbors + 1) neighbors.
 

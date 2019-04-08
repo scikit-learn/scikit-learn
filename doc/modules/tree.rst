@@ -208,7 +208,7 @@ of external libraries and is more compact:
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_tree_plot_iris_dtc.py`
-
+ * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py`
 
 .. _tree_regression:
 
@@ -344,6 +344,10 @@ Tips on practical use
   * Consider performing  dimensionality reduction (:ref:`PCA <PCA>`,
     :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to
     give your tree a better chance of finding features that are discriminative.
+
+  * :ref:`sphx_glr_auto_examples_tree_plot_unveil_tree_structure.py` will help
+    in gaining more insights about how the decision tree makes predictions, which is
+    important for understanding the important features in the data.
 
   * Visualise your tree as you are training by using the ``export``
     function.  Use ``max_depth=3`` as an initial tree depth to get a feel for
