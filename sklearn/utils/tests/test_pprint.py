@@ -4,7 +4,6 @@ from pprint import PrettyPrinter
 import numpy as np
 
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
-from sklearn.utils.metaestimators import _BaseComposition
 from sklearn.pipeline import make_pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection.base import SelectorMixin
@@ -108,7 +107,7 @@ class CountVectorizer(BaseEstimator):
         self.dtype = dtype
 
 
-class Pipeline(_BaseComposition):
+class Pipeline(BaseEstimator):
     def __init__(self, steps, memory=None):
         self.steps = steps
         self.memory = memory
