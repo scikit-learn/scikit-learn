@@ -21,6 +21,9 @@ def _update_raw_predictions(
 
     This is equivalent to
     raw_predictions += last_estimator.predict(X_train)
+
+    and it's much faster. It's only possible for data X_train that is used to
+    train the trees (it isn't usable for e.g. X_val or X_small_train)
     """
     cdef:
         unsigned int [::1] starts  # start of each leaf in partition

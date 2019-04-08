@@ -195,19 +195,48 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # with shape (n_iter_, n_trees_per_iteration)
         self._predictors = predictors = []
 
-        # scorer_ is a callable with signature (est, X, y) and calls
-        # est.predict() or est.predict_proba() depending on its nature.
+        self.scorer_ = None  # set if scoring != loss
+        raw_predictions_binned_small_train = None  # set if scoring == loss
+        raw_predictions_binned_val = None  # set if scoring == loss and val
         if self.scoring != 'loss':
+            # scorer_ is a callable with signature (est, X, y) and calls
+            # est.predict() or est.predict_proba() depending on its nature.
             self.scorer_ = check_scoring(self, self.scoring)
         else:
-            self.scorer_ = None
+            # we're going to compute scoring w.r.t the loss. As losses take
+            # raw predictions as input (unlike the scorers), we can optimize a
+            # bit and avoid repeating computing the predictions of the
+            # previous trees by storing the raw predictions of the small train
+            # and validation sets. This way at each iteration, we only need to
+            # compute the raw predictions of the newest tree(s).
+            init_value = self.loss_.get_baseline_prediction(
+                y_small_train, self.n_trees_per_iteration_)
+            raw_predictions_binned_small_train = np.zeros(
+                shape=(self.n_trees_per_iteration_,
+                       X_binned_small_train.shape[0]),
+                dtype=init_value.dtype
+            )
+            raw_predictions_binned_small_train += init_value
+
+            if self.validation_fraction is not None:
+                init_value = self.loss_.get_baseline_prediction(
+                    y_val, self.n_trees_per_iteration_)
+                raw_predictions_binned_val = np.zeros(
+                    shape=(self.n_trees_per_iteration_,
+                           X_binned_val.shape[0]),
+                    dtype=init_value.dtype
+                )
+                raw_predictions_binned_val += init_value
+
         self.train_score_ = []
         self.validation_score_ = []
         if self.do_early_stopping_:
             # populate train_score and validation_score with the predictions
             # of the initial model (before the first tree)
             self._check_early_stopping(X_binned_small_train, y_small_train,
-                                       X_binned_val, y_val)
+                                       X_binned_val, y_val,
+                                       raw_predictions_binned_small_train,
+                                       raw_predictions_binned_val)
 
         for iteration in range(self.max_iter):
 
@@ -255,9 +284,19 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             should_early_stop = False
             if self.do_early_stopping_:
+                if self.scoring == 'loss':
+                    # Need to update raw_predicitons_binned_small_train and
+                    # maybe raw_predictions_binned_val too
+                    for k, pred in enumerate(self._predictors[-1]):
+                        raw_predictions_binned_small_train[k, :] += pred.predict_binned(X_binned_small_train)
+                        if self.validation_fraction is not None:
+                            raw_predictions_binned_val[k, :] += pred.predict_binned(X_binned_val)
+
                 should_early_stop = self._check_early_stopping(
                     X_binned_small_train, y_small_train,
-                    X_binned_val, y_val
+                    X_binned_val, y_val,
+                    raw_predictions_binned_small_train,
+                    raw_predictions_binned_val
                 )
 
             if self.verbose:
@@ -292,22 +331,28 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
 
-    def _check_early_stopping(self, X_binned_train, y_train,
-                              X_binned_val, y_val):
+    def _check_early_stopping(self, X_binned_small_train, y_small_train,
+                              X_binned_val, y_val,
+                              raw_predictions_binned_small_train,
+                              raw_predictions_binned_val):
         """Check if fitting should be early-stopped.
 
         Scores are computed on validation data or on training data.
         """
 
         self.train_score_.append(
-            self._get_scores(X_binned_train, y_train))
+            self._get_scores(X_binned_small_train, y_small_train,
+                             raw_predictions_binned_small_train)
+        )
 
         if self.validation_fraction is not None:
             self.validation_score_.append(
-                self._get_scores(X_binned_val, y_val))
+                self._get_scores(X_binned_val, y_val,
+                                 raw_predictions_binned_val)
+            )
             return self._should_stop(self.validation_score_)
-
-        return self._should_stop(self.train_score_)
+        else:
+            return self._should_stop(self.train_score_)
 
     def _should_stop(self, scores):
         """
@@ -329,7 +374,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                for score in recent_scores]
         return not any(recent_improvements)
 
-    def _get_scores(self, X_binned, y):
+    def _get_scores(self, X_binned, y, raw_predictions):
         """Compute scores on data X_binned with target y.
 
         Scores are computed with a scorer if scoring parameter is not
@@ -338,10 +383,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
 
         if self.scoring != 'loss':
+            # use scorer on X_binned and y
             return self.scorer_(self, X_binned, y)
 
-        # Else, use loss
-        raw_predictions = self._raw_predict(X_binned)
+        # Else, use loss on raw_predictions.
         return -self.loss_(y, raw_predictions)
 
     def _print_iteration_stats(self, iteration_start_time):
