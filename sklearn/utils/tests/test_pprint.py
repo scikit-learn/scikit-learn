@@ -12,7 +12,6 @@ from sklearn.model_selection._search import BaseSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
-from sklearn.decomposition import PCA
 from sklearn.decomposition import NMF
 from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import VectorizerMixin
@@ -117,6 +116,19 @@ class Pipeline(_BaseComposition):
     def __init__(self, steps, memory=None):
         self.steps = steps
         self.memory = memory
+
+
+class PCA(BaseEstimator):
+    def __init__(self, n_components=None, copy=True, whiten=False,
+                 svd_solver='auto', tol=0.0, iterated_power='auto',
+                 random_state=None):
+        self.n_components = n_components
+        self.copy = copy
+        self.whiten = whiten
+        self.svd_solver = svd_solver
+        self.tol = tol
+        self.iterated_power = iterated_power
+        self.random_state = random_state
 
 
 def test_basic():
