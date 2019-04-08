@@ -81,7 +81,7 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
 
 
-class CountVectorizer(BaseEstimator, VectorizerMixin):
+class CountVectorizer(BaseEstimator):
     def __init__(self, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
