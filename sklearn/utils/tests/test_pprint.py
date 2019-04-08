@@ -59,18 +59,13 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         return self
 
 
-class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
+class RFE(BaseEstimator):
     def __init__(self, estimator, n_features_to_select=None, step=1,
                  verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
         self.verbose = verbose
-
-    def _get_support_mask(self):
-        """Delegated from SelectorMixin.
-        """
-        self.SelectorMixin._get_support_mask()
 
 
 class GridSearchCV(BaseSearchCV):
