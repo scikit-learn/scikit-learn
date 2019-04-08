@@ -286,7 +286,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                fill_value)
 
         if self.add_indicator:
-            self.indicator_ = MissingIndicator(missing_values=self.missing_values)
+            self.indicator_ = MissingIndicator(
+                missing_values=self.missing_values)
             self.indicator_.fit(X)
 
         return self
