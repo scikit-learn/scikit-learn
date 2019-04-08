@@ -12,7 +12,6 @@ from sklearn.model_selection._search import BaseSearchCV
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
-from sklearn.decomposition import NMF
 from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import VectorizerMixin
 from sklearn import set_config
@@ -129,6 +128,24 @@ class PCA(BaseEstimator):
         self.tol = tol
         self.iterated_power = iterated_power
         self.random_state = random_state
+
+
+class NMF(BaseEstimator):
+    def __init__(self, n_components=None, init=None, solver='cd',
+                 beta_loss='frobenius', tol=1e-4, max_iter=200,
+                 random_state=None, alpha=0., l1_ratio=0., verbose=0,
+                 shuffle=False):
+        self.n_components = n_components
+        self.init = init
+        self.solver = solver
+        self.beta_loss = beta_loss
+        self.tol = tol
+        self.max_iter = max_iter
+        self.random_state = random_state
+        self.alpha = alpha
+        self.l1_ratio = l1_ratio
+        self.verbose = verbose
+        self.shuffle = shuffle
 
 
 def test_basic():
