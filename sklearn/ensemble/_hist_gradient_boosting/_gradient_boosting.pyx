@@ -19,11 +19,11 @@ def _update_raw_predictions(
         grower):
     """Update raw_predictions with the predictions of the newest tree
 
-    This is equivalent to
-    raw_predictions += last_estimator.predict(X_train)
+    This is equivalent to (and much faster than):
+        raw_predictions += last_estimator.predict(X_train)
 
-    and it's much faster. It's only possible for data X_train that is used to
-    train the trees (it isn't usable for e.g. X_val or X_small_train)
+    It's only possible for data X_train that is used to train the trees (it
+    isn't usable for e.g. X_val)
     """
     cdef:
         unsigned int [::1] starts  # start of each leaf in partition

@@ -130,7 +130,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                    self.n_iter_no_change > 0)
 
         # create validation data if needed
-        if self.do_early_stopping_ and self.validation_fraction is not None:
+        self._use_validation_data = self.validation_fraction is not None
+        if self.do_early_stopping_ and self._use_validation_data:
             # stratify for classification
             stratify = y if hasattr(self.loss_, 'predict_proba') else None
 
@@ -153,18 +154,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         else:
             X_binned_train, y_train = X_binned, y
             X_binned_val, y_val = None, None
-
-        # Subsample the training set for early stopping and score monitoring
-        if self.do_early_stopping_:
-            subsample_size = 10000  # should we expose this parameter?
-            indices = np.arange(X_binned_train.shape[0])
-            if X_binned_train.shape[0] > subsample_size:
-                # TODO: not critical but stratify using resample(stratify=y)
-                indices = rng.choice(indices, subsample_size, replace=False)
-            X_binned_small_train = X_binned_train[indices]
-            y_small_train = y_train[indices]
-            # Predicting is faster on C-contiguous arrays.
-            X_binned_small_train = np.ascontiguousarray(X_binned_small_train)
 
         if self.verbose:
             print("Fitting gradient boosted rounds:")
@@ -195,48 +184,58 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # with shape (n_iter_, n_trees_per_iteration)
         self._predictors = predictors = []
 
+        # Initialize structures and attributes related to early stopping
         self.scorer_ = None  # set if scoring != loss
-        raw_predictions_binned_small_train = None  # set if scoring == loss
-        raw_predictions_binned_val = None  # set if scoring == loss and val
-        if self.scoring != 'loss':
-            # scorer_ is a callable with signature (est, X, y) and calls
-            # est.predict() or est.predict_proba() depending on its nature.
-            self.scorer_ = check_scoring(self, self.scoring)
-        else:
-            # we're going to compute scoring w.r.t the loss. As losses take
-            # raw predictions as input (unlike the scorers), we can optimize a
-            # bit and avoid repeating computing the predictions of the
-            # previous trees by storing the raw predictions of the small train
-            # and validation sets. This way at each iteration, we only need to
-            # compute the raw predictions of the newest tree(s).
-            init_value = self.loss_.get_baseline_prediction(
-                y_small_train, self.n_trees_per_iteration_)
-            raw_predictions_binned_small_train = np.zeros(
-                shape=(self.n_trees_per_iteration_,
-                       X_binned_small_train.shape[0]),
-                dtype=init_value.dtype
-            )
-            raw_predictions_binned_small_train += init_value
-
-            if self.validation_fraction is not None:
-                init_value = self.loss_.get_baseline_prediction(
-                    y_val, self.n_trees_per_iteration_)
-                raw_predictions_binned_val = np.zeros(
-                    shape=(self.n_trees_per_iteration_,
-                           X_binned_val.shape[0]),
-                    dtype=init_value.dtype
-                )
-                raw_predictions_binned_val += init_value
-
+        raw_predictions_val = None  # set if scoring == loss and use val
         self.train_score_ = []
         self.validation_score_ = []
         if self.do_early_stopping_:
             # populate train_score and validation_score with the predictions
             # of the initial model (before the first tree)
-            self._check_early_stopping(X_binned_small_train, y_small_train,
-                                       X_binned_val, y_val,
-                                       raw_predictions_binned_small_train,
-                                       raw_predictions_binned_val)
+
+            if self.scoring == 'loss':
+                # we're going to compute scoring w.r.t the loss. As losses
+                # take raw predictions as input (unlike the scorers), we can
+                # optimize a bit and avoid repeating computing the predictions
+                # of the previous trees. We'll re-use raw_predictions (as it's
+                # needed for training anyway) for evaluating the training
+                # loss, and create raw_predictions_val for storing the
+                # raw predictions of the validation data.
+
+                if self._use_validation_data:
+                    raw_predictions_val = np.zeros(
+                        shape=(self.n_trees_per_iteration_,
+                               X_binned_val.shape[0]),
+                        dtype=self._baseline_prediction.dtype
+                    )
+
+                    raw_predictions_val += self._baseline_prediction
+
+                self._check_early_stopping_loss(raw_predictions, y_train,
+                                                raw_predictions_val, y_val)
+            else:
+                self.scorer_ = check_scoring(self, self.scoring)
+                # scorer_ is a callable with signature (est, X, y) and calls
+                # est.predict() or est.predict_proba() depending on its nature.
+                # Unfortunately, each call to scorer_() will compute
+                # the predictions of all the trees. So we use a subset of the
+                # training set to compute train scores.
+                subsample_size = 10000  # should we expose this parameter?
+                indices = np.arange(X_binned_train.shape[0])
+                if X_binned_train.shape[0] > subsample_size:
+                    # TODO: not critical but stratify using resample()
+                    indices = rng.choice(indices, subsample_size,
+                                         replace=False)
+                X_binned_small_train = X_binned_train[indices]
+                y_small_train = y_train[indices]
+                # Predicting is faster on C-contiguous arrays.
+                X_binned_small_train = np.ascontiguousarray(
+                    X_binned_small_train)
+
+                self._check_early_stopping_scorer(
+                    X_binned_small_train, y_small_train,
+                    X_binned_val, y_val,
+                )
 
         for iteration in range(self.max_iter):
 
@@ -285,19 +284,22 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             should_early_stop = False
             if self.do_early_stopping_:
                 if self.scoring == 'loss':
-                    # Need to update raw_predicitons_binned_small_train and
-                    # maybe raw_predictions_binned_val too
-                    for k, pred in enumerate(self._predictors[-1]):
-                        raw_predictions_binned_small_train[k, :] += pred.predict_binned(X_binned_small_train)
-                        if self.validation_fraction is not None:
-                            raw_predictions_binned_val[k, :] += pred.predict_binned(X_binned_val)
+                    # Update raw_predictions_val with the newest tree(s)
+                    if self._use_validation_data:
+                        for k, pred in enumerate(self._predictors[-1]):
+                            raw_predictions_val[k, :] += (
+                                pred.predict_binned(X_binned_val))
 
-                should_early_stop = self._check_early_stopping(
-                    X_binned_small_train, y_small_train,
-                    X_binned_val, y_val,
-                    raw_predictions_binned_small_train,
-                    raw_predictions_binned_val
-                )
+                    should_early_stop = self._check_early_stopping_loss(
+                        raw_predictions, y_train,
+                        raw_predictions_val, y_val
+                    )
+
+                else:
+                    should_early_stop = self._check_early_stopping_scorer(
+                        X_binned_small_train, y_small_train,
+                        X_binned_val, y_val,
+                    )
 
             if self.verbose:
                 self._print_iteration_stats(iteration_start_time)
@@ -331,24 +333,42 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
 
-    def _check_early_stopping(self, X_binned_small_train, y_small_train,
-                              X_binned_val, y_val,
-                              raw_predictions_binned_small_train,
-                              raw_predictions_binned_val):
-        """Check if fitting should be early-stopped.
+    def _check_early_stopping_scorer(self, X_binned_small_train, y_small_train,
+                                     X_binned_val, y_val):
+        """Check if fitting should be early-stopped based on scorer.
 
         Scores are computed on validation data or on training data.
         """
 
         self.train_score_.append(
-            self._get_scores(X_binned_small_train, y_small_train,
-                             raw_predictions_binned_small_train)
+            self.scorer_(self, X_binned_small_train, y_small_train)
         )
 
-        if self.validation_fraction is not None:
+        if self._use_validation_data:
             self.validation_score_.append(
-                self._get_scores(X_binned_val, y_val,
-                                 raw_predictions_binned_val)
+                self.scorer_(self, X_binned_val, y_val)
+            )
+            return self._should_stop(self.validation_score_)
+        else:
+            return self._should_stop(self.train_score_)
+
+    def _check_early_stopping_loss(self,
+                                   raw_predictions,
+                                   y_train,
+                                   raw_predictions_val,
+                                   y_val):
+        """Check if fitting should be early-stopped based on loss.
+
+        Scores are computed on validation data or on training data.
+        """
+
+        self.train_score_.append(
+            -self.loss_(y_train, raw_predictions)
+        )
+
+        if self._use_validation_data:
+            self.validation_score_.append(
+                -self.loss_(y_val, raw_predictions_val)
             )
             return self._should_stop(self.validation_score_)
         else:
@@ -373,21 +393,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         recent_improvements = [score > reference_score
                                for score in recent_scores]
         return not any(recent_improvements)
-
-    def _get_scores(self, X_binned, y, raw_predictions):
-        """Compute scores on data X_binned with target y.
-
-        Scores are computed with a scorer if scoring parameter is not
-        'loss', else with the loss. As higher is always better, we return
-        -loss_value.
-        """
-
-        if self.scoring != 'loss':
-            # use scorer on X_binned and y
-            return self.scorer_(self, X_binned, y)
-
-        # Else, use loss on raw_predictions.
-        return -self.loss_(y, raw_predictions)
 
     def _print_iteration_stats(self, iteration_start_time):
         """Print info about the current fitting iteration."""
@@ -420,7 +425,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 name = 'score'
             log_msg += "train {}: {:.5f}, ".format(name, factor *
                                                    self.train_score_[-1])
-            if self.validation_fraction is not None:
+            if self._use_validation_data:
                 log_msg += "val {}: {:.5f}, ".format(
                     name, factor * self.validation_score_[-1])
 
@@ -560,10 +565,11 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         The number of tree that are built at each iteration. For regressors,
         this is always 1.
     train_score_ : ndarray, shape (max_iter + 1,)
-        The scores at each iteration on the training data. The first entry is
-        the score of the ensemble before the first iteration. Scores are
-        computed according to the ``scoring`` parameter. Scores are computed on
-        a subset of at most 10 000 samples. Empty if no early stopping.
+        The scores at each iteration on the training data. The first entry
+        is the score of the ensemble before the first iteration. Scores are
+        computed according to the ``scoring`` parameter. If ``scoring`` is
+        not 'loss', scores are computed on a subset of at most 10 000
+        samples. Empty if no early stopping.
     validation_score_ : ndarray, shape (max_iter + 1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
@@ -709,11 +715,12 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         The number of tree that are built at each iteration. This is equal to 1
         for binary classification, and to ``n_classes`` for multiclass
         classification.
-    train_score_ : array, shape (max_iter + 1,)
-        The scores at each iteration on the training data. The first entry is
-        the score of the ensemble before the first iteration. Scores are
-        computed according to the ``scoring`` parameter. Scores are computed on
-        a subset of at most 10 000 samples. Empty if no early stopping.
+    train_score_ : ndarray, shape (max_iter + 1,)
+        The scores at each iteration on the training data. The first entry
+        is the score of the ensemble before the first iteration. Scores are
+        computed according to the ``scoring`` parameter. If ``scoring`` is
+        not 'loss', scores are computed on a subset of at most 10 000
+        samples. Empty if no early stopping.
     validation_score_ : array, shape (max_iter + 1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
