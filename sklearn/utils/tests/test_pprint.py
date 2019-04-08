@@ -6,7 +6,6 @@ import numpy as np
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.pipeline import make_pipeline
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.feature_selection.base import SelectorMixin
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.svm import SVC
 from sklearn.svm import LinearSVC
