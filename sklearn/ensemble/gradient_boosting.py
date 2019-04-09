@@ -1489,7 +1489,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     except TypeError:  # regular estimator without SW support
                         raise ValueError(msg)
                     except ValueError as e:
-                        if 'not enough values to unpack' in str(e):  # pipeline
+                        if "pass parameters to specific steps of "\
+                           "your pipeline using the "\
+                           "stepname__parameter" in str(e):  # pipeline
                             raise ValueError(msg) from e
                         else:  # regular estimator whose input checking failed
                             raise
