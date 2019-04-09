@@ -159,6 +159,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     indicator_ : :class:`sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
+        ``None`` if add_indicator is False.
 
     See also
     --------
@@ -289,6 +290,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             self.indicator_ = MissingIndicator(
                 missing_values=self.missing_values)
             self.indicator_.fit(X)
+        else:
+            self.indicator_ = None
 
         return self
 
@@ -400,7 +403,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                              % (X.shape[1], self.statistics_.shape[0]))
 
         if self.add_indicator:
-            X_trans = self.indicator_.transform(X)
+            X_trans_indicator = self.indicator_.transform(X)
 
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
@@ -442,7 +445,7 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
         if self.add_indicator:
             hstack = sparse.hstack if sparse.issparse(X) else np.hstack
-            X = hstack((X, X_trans))
+            X = hstack((X, X_trans_indicator))
 
         return X
 
