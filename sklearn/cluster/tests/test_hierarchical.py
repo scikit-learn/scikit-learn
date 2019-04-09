@@ -567,8 +567,7 @@ def test_agg_n_clusters():
 
     rng = np.random.RandomState(0)
     X = rng.rand(20, 10)
-    n_clusters = [-1, 0]
-    for n_clus in n_clusters:
+    for n_clus in [-1, 0]:
         agc = AgglomerativeClustering(n_clusters=n_clus)
         msg = ("n_clusters should be an integer greater than 0."
                " %s was provided." % str(agc.n_clusters))
