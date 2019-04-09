@@ -662,12 +662,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_clusters : int, default=2
         The number of clusters to find.
 
-    distance_threshold : float (optional)
-        The distance threshold to cluster at.
-        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
-        NOT both. If the ``distance_threshold`` is set then ``n_clusters`` is
-        ignored.
-
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed".
@@ -717,6 +711,14 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             ``pooling_func`` has been deprecated in 0.20 and will be removed
             in 0.22.
 
+    distance_threshold : float (optional)
+        The distance threshold to cluster at.
+        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
+        NOT both. If the ``distance_threshold`` is set then ``n_clusters`` is
+        ignored.
+
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     n_clusters_ : int
@@ -758,11 +760,12 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     """
 
-    def __init__(self, n_clusters=2, distance_threshold=None,
+    def __init__(self, n_clusters=2,
                  affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func='deprecated'):
+                 linkage='ward', pooling_func='deprecated',
+                 distance_threshold=None):
         self.n_clusters = n_clusters
         self.distance_threshold = distance_threshold
         self.memory = memory
@@ -896,12 +899,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     n_clusters : int, default 2
         The number of clusters to find.
 
-    distance_threshold : float (optional)
-        The distance threshold to cluster at.
-        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
-        NOT both. If the ``distance_threshold`` is set then ``n_clusters`` is
-        ignored.
-
     affinity : string or callable, default "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or 'precomputed'.
@@ -947,6 +944,14 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         value, and should accept an array of shape [M, N] and the keyword
         argument `axis=1`, and reduce it to an array of size [M].
 
+    distance_threshold : float (optional)
+        The distance threshold to cluster at.
+        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
+        NOT both. If the ``distance_threshold`` is set then ``n_clusters`` is
+        ignored.
+
+        .. versionadded:: 0.21
+
     Attributes
     ----------
     labels_ : array-like, (n_features,)
@@ -983,11 +988,12 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     (1797, 32)
     """
 
-    def __init__(self, n_clusters=2, distance_threshold=None,
+    def __init__(self, n_clusters=2,
                  affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func=np.mean):
+                 linkage='ward', pooling_func=np.mean,
+                 distance_threshold=None):
         super().__init__(
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
