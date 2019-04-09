@@ -1,7 +1,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-# cython: profile=True
+# cython: language_level=3
 #
 # Author: Andreas Mueller
 #
@@ -103,7 +103,9 @@ cdef update_labels_distances_inplace(
         upper_bounds[sample] = d_c
 
 
-def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
+def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_,
+                  np.ndarray[floating, ndim=1, mode='c'] sample_weight,
+                  int n_clusters,
                   np.ndarray[floating, ndim=2, mode='c'] init,
                   float tol=1e-4, int max_iter=30, verbose=False):
     """Run Elkan's k-means.
@@ -111,6 +113,9 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
     Parameters
     ----------
     X_ : nd-array, shape (n_samples, n_features)
+
+    sample_weight : nd-array, shape (n_samples,)
+        The weights for each observation in X.
 
     n_clusters : int
         Number of clusters to find.
@@ -133,7 +138,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
     else:
         dtype = np.float64
 
-   #initialize
+    # initialize
     cdef np.ndarray[floating, ndim=2, mode='c'] centers_ = init
     cdef floating* centers_p = <floating*>centers_.data
     cdef floating* X_p = <floating*>X_.data
@@ -150,7 +155,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
     upper_bounds_ = np.empty(n_samples, dtype=dtype)
     cdef floating[:] upper_bounds = upper_bounds_
 
-    # Get the inital set of upper bounds and lower bounds for each sample.
+    # Get the initial set of upper bounds and lower bounds for each sample.
     update_labels_distances_inplace(X_p, centers_p, center_half_distances,
                                     labels, lower_bounds, upper_bounds,
                                     n_samples, n_features, n_clusters)
@@ -219,7 +224,8 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
             print("end inner loop")
 
         # compute new centers
-        new_centers = _centers_dense(X_, labels_, n_clusters, upper_bounds_)
+        new_centers = _centers_dense(X_, sample_weight, labels_,
+                                     n_clusters, upper_bounds_)
         bounds_tight[:] = 0
 
         # compute distance each center moved
@@ -237,7 +243,8 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
         center_half_distances = euclidean_distances(centers_) / 2.
         if verbose:
             print('Iteration %i, inertia %s'
-                  % (iteration, np.sum((X_ - centers_[labels]) ** 2)))
+                    % (iteration, np.sum((X_ - centers_[labels]) ** 2 *
+                                         sample_weight[:,np.newaxis])))
         center_shift_total = np.sum(center_shift)
         if center_shift_total ** 2 < tol:
             if verbose:
@@ -251,4 +258,4 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
         update_labels_distances_inplace(X_p, centers_p, center_half_distances,
                                         labels, lower_bounds, upper_bounds,
                                         n_samples, n_features, n_clusters)
-    return centers_, labels_, iteration
+    return centers_, labels_, iteration + 1

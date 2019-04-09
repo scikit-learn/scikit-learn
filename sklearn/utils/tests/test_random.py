@@ -1,16 +1,11 @@
-from __future__ import division
-
 import numpy as np
 import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal
-from sklearn.utils.random import sample_without_replacement
-from sklearn.utils.random import random_choice_csc
-from sklearn.utils.fixes import comb
 
-from sklearn.utils.testing import (
-    assert_raises,
-    assert_equal,
-    assert_true)
+from sklearn.utils.fixes import comb
+from sklearn.utils.random import random_choice_csc, sample_without_replacement
+from sklearn.utils._random import _our_rand_r_py
+from sklearn.utils.testing import (assert_equal, assert_raises)
 
 
 ###############################################################################
@@ -67,7 +62,7 @@ def check_sample_int(sample_without_replacement):
         assert_equal(len(s), n_samples)
         unique = np.unique(s)
         assert_equal(np.size(unique), n_samples)
-        assert_true(np.all(unique < n_population))
+        assert np.all(unique < n_population)
 
     # test edge case n_population == n_samples == 0
     assert_equal(np.size(sample_without_replacement(0, 0)), 0)
@@ -106,77 +101,82 @@ def check_sample_int_distribution(sample_without_replacement):
 def test_random_choice_csc(n_samples=10000, random_state=24):
     # Explicit class probabilities
     classes = [np.array([0, 1]),  np.array([0, 1, 2])]
-    class_probabilites = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
+    class_probabilities = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
 
-    got = random_choice_csc(n_samples, classes, class_probabilites,
+    got = random_choice_csc(n_samples, classes, class_probabilities,
                             random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
-        assert_array_almost_equal(class_probabilites[k], p, decimal=1)
+        assert_array_almost_equal(class_probabilities[k], p, decimal=1)
 
     # Implicit class probabilities
     classes = [[0, 1],  [1, 2]]  # test for array-like support
-    class_probabilites = [np.array([0.5, 0.5]), np.array([0, 1/2, 1/2])]
+    class_probabilities = [np.array([0.5, 0.5]), np.array([0, 1/2, 1/2])]
 
     got = random_choice_csc(n_samples=n_samples,
                             classes=classes,
                             random_state=random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel()) / float(n_samples)
-        assert_array_almost_equal(class_probabilites[k], p, decimal=1)
+        assert_array_almost_equal(class_probabilities[k], p, decimal=1)
 
     # Edge case probabilities 1.0 and 0.0
     classes = [np.array([0, 1]),  np.array([0, 1, 2])]
-    class_probabilites = [np.array([1.0, 0.0]), np.array([0.0, 1.0, 0.0])]
+    class_probabilities = [np.array([1.0, 0.0]), np.array([0.0, 1.0, 0.0])]
 
-    got = random_choice_csc(n_samples, classes, class_probabilites,
+    got = random_choice_csc(n_samples, classes, class_probabilities,
                             random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel(),
-                        minlength=len(class_probabilites[k])) / n_samples
-        assert_array_almost_equal(class_probabilites[k], p, decimal=1)
+                        minlength=len(class_probabilities[k])) / n_samples
+        assert_array_almost_equal(class_probabilities[k], p, decimal=1)
 
     # One class target data
     classes = [[1],  [0]]  # test for array-like support
-    class_probabilites = [np.array([0.0, 1.0]), np.array([1.0])]
+    class_probabilities = [np.array([0.0, 1.0]), np.array([1.0])]
 
     got = random_choice_csc(n_samples=n_samples,
                             classes=classes,
                             random_state=random_state)
-    assert_true(sp.issparse(got))
+    assert sp.issparse(got)
 
     for k in range(len(classes)):
         p = np.bincount(got.getcol(k).toarray().ravel()) / n_samples
-        assert_array_almost_equal(class_probabilites[k], p, decimal=1)
+        assert_array_almost_equal(class_probabilities[k], p, decimal=1)
 
 
 def test_random_choice_csc_errors():
-    # the length of an array in classes and class_probabilites is mismatched
+    # the length of an array in classes and class_probabilities is mismatched
     classes = [np.array([0, 1]),  np.array([0, 1, 2, 3])]
-    class_probabilites = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
+    class_probabilities = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
-                  class_probabilites, 1)
+                  class_probabilities, 1)
 
     # the class dtype is not supported
     classes = [np.array(["a", "1"]),  np.array(["z", "1", "2"])]
-    class_probabilites = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
+    class_probabilities = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
-                  class_probabilites, 1)
+                  class_probabilities, 1)
 
     # the class dtype is not supported
     classes = [np.array([4.2, 0.1]),  np.array([0.1, 0.2, 9.4])]
-    class_probabilites = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
+    class_probabilities = [np.array([0.5, 0.5]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
-                  class_probabilites, 1)
+                  class_probabilities, 1)
 
     # Given probabilities don't sum to 1
     classes = [np.array([0, 1]),  np.array([0, 1, 2])]
-    class_probabilites = [np.array([0.5, 0.6]), np.array([0.6, 0.1, 0.3])]
+    class_probabilities = [np.array([0.5, 0.6]), np.array([0.6, 0.1, 0.3])]
     assert_raises(ValueError, random_choice_csc, 4, classes,
-                  class_probabilites, 1)
+                  class_probabilities, 1)
+
+
+def test_our_rand_r():
+    assert 131541053 == _our_rand_r_py(1273642419)
+    assert 270369 == _our_rand_r_py(0)

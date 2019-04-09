@@ -105,13 +105,16 @@ in the middle, i.e., 0.5.
 .. currentmodule:: sklearn.metrics
 
 The following experiment is performed on an artificial dataset for binary
-classification with 100.000 samples (1.000 of them are used for model fitting)
+classification with 100,000 samples (1,000 of them are used for model fitting)
 with 20 features. Of the 20 features, only 2 are informative and 10 are
 redundant. The figure shows the estimated probabilities obtained with
 logistic regression, a linear support-vector classifier (SVC), and linear SVC with
-both isotonic calibration and sigmoid calibration. The calibration performance
-is evaluated with Brier score :func:`brier_score_loss`, reported in the legend
-(the smaller the better).
+both isotonic calibration and sigmoid calibration. 
+The Brier score is a metric which is a combination of calibration loss and refinement loss,
+:func:`brier_score_loss`, reported in the legend (the smaller the better).
+Calibration loss is defined as the mean squared deviation from empirical probabilities
+derived from the slope of ROC segments. Refinement loss can be defined as the expected
+optimal loss as measured by the area under the optimal cost curve.
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_curve_002.png
    :target: ../auto_examples/calibration/plot_calibration_curve.html
@@ -168,7 +171,7 @@ probability vectors predicted by the same classifier after sigmoid calibration
 on a hold-out validation set. Colors indicate the true class of an instance
 (red: class 1, green: class 2, blue: class 3).
 
-.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_000.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_001.png
    :target: ../auto_examples/calibration/plot_calibration_multiclass.html
    :align: center
 
@@ -180,7 +183,7 @@ method='sigmoid' on the remaining 200 datapoints reduces the confidence of the
 predictions, i.e., moves the probability vectors from the edges of the simplex
 towards the center:
 
-.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_001.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_002.png
    :target: ../auto_examples/calibration/plot_calibration_multiclass.html
    :align: center
 

@@ -1,6 +1,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 #
 # Author: Peter Prettenhofer
 #
@@ -203,11 +204,14 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     cdef Tree tree
 
     if issparse(X):
+        if X.format != 'csr':
+            raise ValueError("When X is a sparse matrix, a CSR format is"
+                             " expected, got {!r}".format(type(X)))
         _predict_regression_tree_stages_sparse(estimators, X, scale, out)
     else:
-        if not isinstance(X, np.ndarray):
-            raise ValueError("X should be in np.ndarray or csr_matrix format,"
-                             "got %s" % type(X))
+        if not isinstance(X, np.ndarray) or np.isfortran(X):
+            raise ValueError("X should be C-ordered np.ndarray,"
+                             " got {}".format(type(X)))
 
         for i in range(n_estimators):
             for k in range(K):
@@ -338,15 +342,15 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                     # push left child
                     node_stack[stack_size] = root_node + current_node.left_child
                     current_weight = weight_stack[stack_size]
-                    left_sample_frac = root_node[current_node.left_child].n_node_samples / \
-                                       <double>current_node.n_node_samples
+                    left_sample_frac = root_node[current_node.left_child].weighted_n_node_samples / \
+                                       current_node.weighted_n_node_samples
                     if left_sample_frac <= 0.0 or left_sample_frac >= 1.0:
-                        raise ValueError("left_sample_frac:%f, "
-                                         "n_samples current: %d, "
-                                         "n_samples left: %d"
+                        raise ValueError("left_sample_frac:%d, "
+                                         "weighted_n_node_samples current: %d, "
+                                         "weighted_n_node_samples left: %d"
                                          % (left_sample_frac,
-                                            current_node.n_node_samples,
-                                            root_node[current_node.left_child].n_node_samples))
+                                            current_node.weighted_n_node_samples,
+                                            root_node[current_node.left_child].weighted_n_node_samples))
                     weight_stack[stack_size] = current_weight * left_sample_frac
                     stack_size +=1
 
@@ -373,7 +377,7 @@ def _random_sample_mask(np.npy_intp n_total_samples,
      n_total_in_bag : int
          The number of elements in the sample mask which are set to 1.
 
-     random_state : np.RandomState
+     random_state : RandomState
          A numpy ``RandomState`` object.
 
      Returns

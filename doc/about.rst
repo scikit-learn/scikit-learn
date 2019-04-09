@@ -1,11 +1,62 @@
 About us
 ========
 
-.. include:: ../AUTHORS.rst
+History
+-------
+
+This project was started in 2007 as a Google Summer of Code project by
+David Cournapeau. Later that year, Matthieu Brucher started work on
+this project as part of his thesis.
+
+In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
+Michel of INRIA took leadership of the project and made the first public
+release, February the 1st 2010. Since then, several releases have appeared
+following a ~3 month cycle, and a thriving international community has
+been leading the development.
+
+Authors
+-------
+
+The following people are currently core contributors to scikit-learn's development
+and maintenance:
+
+.. include:: authors.rst
+
+Please do not email the authors directly to ask for assistance or report issues.
+Instead, please see `What's the best way to ask questions about scikit-learn
+<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+in the FAQ.
 
 .. seealso::
 
    :ref:`How you can contribute to the project <contributing>`
+
+Emeritus Core Developers
+------------------------
+The following people have been active contributors in the past, but are no longer active in the project
+
+- Angel Soler Gollonet
+- Alexander Fabisch
+- Alexandre Passos
+- Chris Gorgolewski
+- David Cournapeau
+- David Warde-Farley
+- Jake Vanderplas
+- Kyle Kastner
+- Matthieu Brucher
+- Raghav Rajagopalan
+- Robert Layton
+- Ron Weiss
+- Shiqiao Du
+- Thouis (Ray) Jones
+- Vincent Dubourg
+- Vincent Michel
+- Virgile Fritsch
+
+Governance
+----------
+The decision making process and governance structure of scikit-learn is laid
+out in the `governance document <governance>`_.
 
 .. _citing-scikit-learn:
 
@@ -37,7 +88,7 @@ If you want to cite scikit-learn for its API or design, you may also want to con
 following paper:
 
   `API design for machine learning software: experiences from the scikit-learn
-  project <http://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
+  project <https://arxiv.org/abs/1309.0238>`_, Buitinck *et al.*, 2013.
 
   Bibtex entry::
 
@@ -75,41 +126,41 @@ full-time. It also hosts coding sprints and other events.
    :align: center
    :target: https://www.inria.fr
 
-`Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr>`_
+`Paris-Saclay Center for Data Science <https://www.datascience-paris-saclay.fr/>`_
 funded one year for a developer to work on the project full-time
 (2014-2015) and 50% of the time of Guillaume Lemaitre (2016-2017).
 
 .. image:: images/cds-logo.png
    :width: 200pt
    :align: center
-   :target: http://www.datascience-paris-saclay.fr
+   :target: https://www.datascience-paris-saclay.fr/
 
-`NYU Moore-Sloan Data Science Environment <http://cds.nyu.edu/mooresloan/>`_
+`NYU Moore-Sloan Data Science Environment <https://cds.nyu.edu/mooresloan/>`_
 funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan Data Science
 Environment also funds several students to work on the project part-time.
 
 .. image:: images/nyu_short_color.png
    :width: 200pt
    :align: center
-   :target: http://cds.nyu.edu/mooresloan/
+   :target: https://cds.nyu.edu/mooresloan/
 
 
-`Télécom Paristech <http://www.telecom-paristech.com>`_ funded Manoj Kumar (2014),
+`Télécom Paristech <https://www.telecom-paristech.fr/>`_ funded Manoj Kumar (2014),
 Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot (2016-2017)
 and Albert Thomas (2017) to work on scikit-learn.
 
 .. image:: themes/scikit-learn/static/img/telecom.png
    :width: 100pt
    :align: center
-   :target: http://www.telecom-paristech.fr/
+   :target: https://www.telecom-paristech.fr/
 
 
-`Columbia University <http://columbia.edu>`_ funds Andreas Müller since 2016.
+`Columbia University <https://columbia.edu/>`_ funds Andreas Müller since 2016.
 
 .. image:: themes/scikit-learn/static/img/columbia.png
    :width: 100pt
    :align: center
-   :target: http://www.columbia.edu/
+   :target: https://www.columbia.edu/
 
 Andreas Müller also received a grant to improve scikit-learn from the `Alfred P. Sloan Foundation <https://sloan.org>`_ in 2017.
 
@@ -118,12 +169,21 @@ Andreas Müller also received a grant to improve scikit-learn from the `Alfred P
    :align: center
    :target: https://sloan.org/
 
-`The University of Sydney <http://sydney.edu.au>`_ funds Joel Nothman since July 2017.
+`The University of Sydney <https://sydney.edu.au/>`_ funds Joel Nothman since July 2017.
 
 .. image:: themes/scikit-learn/static/img/sydney-primary.jpeg
    :width: 200pt
    :align: center
-   :target: http://www.sydney.edu.au/
+   :target: https://sydney.edu.au/
+
+`The Labex DigiCosme <https://digicosme.lri.fr>`_ funded Nicolas Goix (2015-2016),
+Tom Dupré la Tour (2015-2016 and 2017-2018), Mathurin Massias (2018-2019) to work part time
+on scikit-learn during their PhDs. It also funded a scikit-learn coding sprint in 2015.
+
+.. image:: themes/scikit-learn/static/img/digicosme.png
+   :width: 200pt
+   :align: center
+   :target: https://digicosme.lri.fr
 
 The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
 to work on scikit-learn through the
@@ -136,7 +196,9 @@ program.
 - 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
 - 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
-- 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <http://yclin.me>`_
+- 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <https://yclin.me/>`_
+
+.. _Vlad Niculae: https://vene.ro/
 
 It also provided funding for sprints and events around scikit-learn. If
 you would like to participate in the next Google Summer of code
@@ -144,9 +206,9 @@ program, please see `this page
 <https://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_.
 
 The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
-<http://www.debian.org>`_ packaging and contributions is supported by
+<https://www.debian.org/>`_ packaging and contributions is supported by
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
-College <http://pbs.dartmouth.edu>`_).
+College <https://pbs.dartmouth.edu/>`_).
 
 The `PSF <https://www.python.org/psf/>`_ helped find and manage funding for our
 2011 Granada sprint. More information can be found `here
@@ -160,12 +222,12 @@ Donating to the project
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 If you are interested in donating to the project or to one of our code-sprints, you can use
-the *Paypal* button below or the `NumFOCUS Donations Page <http://www.numfocus.org/support-numfocus.html>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
+the *Paypal* button below or the `NumFOCUS Donations Page <https://www.numfocus.org/support-numfocus.html>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
 
 All donations will be handled by `NumFOCUS
-<http://www.numfocus.org>`_, a non-profit-organization which is
+<https://numfocus.org/>`_, a non-profit-organization which is
 managed by a board of `Scipy community members
-<http://www.numfocus.org/board.html>`_. NumFOCUS's mission is to foster
+<https://numfocus.org/board.html>`_. NumFOCUS's mission is to foster
 scientific computing software, in particular in Python. As a fiscal home
 of scikit-learn, it ensures that money is available when needed to keep
 the project funded and available while in compliance with tax regulations.
@@ -212,7 +274,7 @@ The 2013 Paris international sprint
 
 .. |telecom| image:: themes/scikit-learn/static/img/telecom.png
    :width: 120pt
-   :target: http://www.telecom-paristech.fr/
+   :target: https://www.telecom-paristech.fr/
 
 
 .. |tinyclues| image:: https://www.tinyclues.com/web/wp-content/uploads/2016/06/Tinyclues-PNG-logo.png
@@ -220,7 +282,7 @@ The 2013 Paris international sprint
    :target: https://www.tinyclues.com/
 
 
-.. |afpy| image:: https://www.afpy.org/logo.png
+.. |afpy| image:: https://www.afpy.org/static/images/logo.svg
    :width: 120pt
    :target: https://www.afpy.org
 
@@ -235,7 +297,7 @@ The 2013 Paris international sprint
 
 .. figure:: images/dysco.png
    :width: 120pt
-   :target: http://sites.uclouvain.be/dysco/
+   :target: https://sites.uclouvain.be/dysco/
 
    IAP VII/19 - DYSCO
 

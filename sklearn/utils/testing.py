@@ -15,20 +15,15 @@ import inspect
 import pkgutil
 import warnings
 import sys
-import struct
+import functools
 
 import scipy as sp
 import scipy.io
 from functools import wraps
 from operator import itemgetter
-try:
-    # Python 2
-    from urllib2 import urlopen
-    from urllib2 import HTTPError
-except ImportError:
-    # Python 3+
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
+from inspect import signature
+from urllib.request import urlopen
+from urllib.error import HTTPError
 
 import tempfile
 import shutil
@@ -42,10 +37,20 @@ try:
 except NameError:
     WindowsError = None
 
+from numpy.testing import assert_allclose
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_approx_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_less
+import numpy as np
+
 import sklearn
-from sklearn.base import BaseEstimator
-from sklearn.externals import joblib
-from sklearn.utils import deprecated
+from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
+                          RegressorMixin, TransformerMixin)
+from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils._joblib import joblib
+from sklearn.utils._unittest_backport import TestCase
 
 additional_names_in_all = []
 try:
@@ -71,31 +76,18 @@ try:
 except ImportError:
     pass
 
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_less
-from numpy.testing import assert_approx_equal
-import numpy as np
-
-from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
-                          ClusterMixin)
-from sklearn.utils._unittest_backport import TestCase
-
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
-           "assert_approx_equal", "SkipTest"]
+           "assert_approx_equal", "assert_allclose", "SkipTest"]
 __all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
 assert_not_equal = _dummy.assertNotEqual
-assert_true = _dummy.assertTrue
-assert_false = _dummy.assertFalse
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
@@ -112,6 +104,16 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # the old name for now
 assert_raises_regexp = assert_raises_regex
 
+deprecation_message = "'assert_true' is deprecated in version 0.21 " \
+                      "and will be removed in version 0.23. " \
+                      "Please use 'assert' instead."
+assert_true = deprecated(deprecation_message)(_dummy.assertTrue)
+
+deprecation_message = "'assert_false' is deprecated in version 0.21 " \
+                      "and will be removed in version 0.23. " \
+                      "Please use 'assert' instead."
+assert_false = deprecated(deprecation_message)(_dummy.assertFalse)
+
 
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
@@ -122,7 +124,7 @@ def assert_warns(warning_class, func, *args, **kw):
         The class to test for, e.g. UserWarning.
 
     func : callable
-        Calable object to trigger warnings.
+        Callable object to trigger warnings.
 
     *args : the positional arguments to `func`.
 
@@ -134,7 +136,6 @@ def assert_warns(warning_class, func, *args, **kw):
     result : the return value of `func`
 
     """
-    # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
@@ -168,12 +169,12 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
         The class to test for, e.g. UserWarning.
 
     message : str | callable
-        The entire message or a substring to  test for. If callable,
-        it takes a string as argument and will trigger an assertion error
-        if it returns `False`.
+        The message or a substring of the message to test for. If callable,
+        it takes a string as the argument and will trigger an AssertionError
+        if the callable returns `False`.
 
     func : callable
-        Calable object to trigger warnings.
+        Callable object to trigger warnings.
 
     *args : the positional arguments to `func`.
 
@@ -181,7 +182,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
     Returns
     -------
-
     result : the return value of `func`
 
     """
@@ -228,8 +228,38 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
     return result
 
 
+def assert_warns_div0(func, *args, **kw):
+    """Assume that numpy's warning for divide by zero is raised
+
+    Handles the case of platforms that do not support warning on divide by zero
+
+    Parameters
+    ----------
+    func
+    *args
+    **kw
+    """
+
+    with np.errstate(divide='warn', invalid='warn'):
+        try:
+            assert_warns(RuntimeWarning, np.divide, 1, np.zeros(1))
+        except AssertionError:
+            # This platform does not report numpy divide by zeros
+            return func(*args, **kw)
+        return assert_warns_message(RuntimeWarning,
+                                    'invalid value encountered',
+                                    func, *args, **kw)
+
+
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
+    """
+    Parameters
+    ----------
+    func
+    *args
+    **kw
+    """
     # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
@@ -251,12 +281,14 @@ def assert_no_warnings(func, *args, **kw):
 def ignore_warnings(obj=None, category=Warning):
     """Context manager and decorator to ignore warnings.
 
-    Note. Using this (in both variants) will clear all warnings
+    Note: Using this (in both variants) will clear all warnings
     from all python modules loaded. In case you need to test
-    cross-module-warning-logging this is not your tool of choice.
+    cross-module-warning-logging, this is not your tool of choice.
 
     Parameters
     ----------
+    obj : callable or None
+        callable where you want to ignore the warnings.
     category : warning class, defaults to Warning.
         The category to filter. If Warning, all categories will be muted.
 
@@ -272,16 +304,26 @@ def ignore_warnings(obj=None, category=Warning):
     >>> ignore_warnings(nasty_warn)()
     42
     """
-    if callable(obj):
+    if isinstance(obj, type) and issubclass(obj, Warning):
+        # Avoid common pitfall of passing category as the first positional
+        # argument which result in the test not being run
+        warning_name = obj.__name__
+        raise ValueError(
+            "'obj' should be a callable where you want to ignore warnings. "
+            "You passed a warning class instead: 'obj={warning_name}'. "
+            "If you want to pass a warning class to ignore_warnings, "
+            "you should use 'category={warning_name}'".format(
+                warning_name=warning_name))
+    elif callable(obj):
         return _IgnoreWarnings(category=category)(obj)
     else:
         return _IgnoreWarnings(category=category)
 
 
-class _IgnoreWarnings(object):
+class _IgnoreWarnings:
     """Improved and simplified Python warnings context manager and decorator.
 
-    This class allows to ignore the warnings raise by a function.
+    This class allows the user to ignore the warnings raised by a function.
     Copied from Python 2.7.5 and modified as required.
 
     Parameters
@@ -302,7 +344,6 @@ class _IgnoreWarnings(object):
         """Decorator to catch and hide warnings without visual nesting."""
         @wraps(fn)
         def wrapper(*args, **kwargs):
-            # very important to avoid uncontrolled state propagation
             clean_warning_registry()
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", self.category)
@@ -320,14 +361,14 @@ class _IgnoreWarnings(object):
         return "%s(%s)" % (name, ", ".join(args))
 
     def __enter__(self):
-        clean_warning_registry()  # be safe and not propagate state + chaos
-        warnings.simplefilter("ignore", self.category)
         if self._entered:
             raise RuntimeError("Cannot enter %r twice" % self)
         self._entered = True
         self._filters = self._module.filters
         self._module.filters = self._filters[:]
         self._showwarning = self._module.showwarning
+        clean_warning_registry()
+        warnings.simplefilter("ignore", self.category)
 
     def __exit__(self, *exc_info):
         if not self._entered:
@@ -335,28 +376,31 @@ class _IgnoreWarnings(object):
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-        clean_warning_registry()  # be safe and not propagate state + chaos
+        clean_warning_registry()
 
-
-assert_less = _dummy.assertLess
-assert_greater = _dummy.assertGreater
-
-assert_allclose = np.testing.assert_allclose
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
-    """Helper function to test error messages in exceptions.
+    """Helper function to test the message raised in an exception.
+
+    Given an exception, a callable to raise the exception, and
+    a message string, tests that the correct exception is raised and
+    that the message is a substring of the error thrown. Used to test
+    that the specific message thrown during an exception is correct.
 
     Parameters
     ----------
     exceptions : exception or tuple of exception
-        Name of the estimator
+        An Exception object.
+
+    message : str
+        The error message or a substring of the error message.
 
     function : callable
-        Calable object to raise error
+        Callable object to raise error.
 
     *args : the positional arguments to `function`.
 
-    **kw : the keyword arguments to `function`
+    **kwargs : the keyword arguments to `function`.
     """
     try:
         function(*args, **kwargs)
@@ -418,8 +462,12 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
                          " not a sparse matrix and an array.")
 
 
+@deprecated('deprecated in version 0.20 to be removed in version 0.22')
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     """Create a fake mldata data set.
+
+    .. deprecated:: 0.20
+        Will be removed in version 0.22
 
     Parameters
     ----------
@@ -458,24 +506,36 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     scipy.io.savemat(matfile, datasets, oned_as='column')
 
 
-class mock_mldata_urlopen(object):
+@deprecated('deprecated in version 0.20 to be removed in version 0.22')
+class mock_mldata_urlopen:
+    """Object that mocks the urlopen function to fake requests to mldata.
 
+    When requesting a dataset with a name that is in mock_datasets, this object
+    creates a fake dataset in a StringIO object and returns it. Otherwise, it
+    raises an HTTPError.
+
+    .. deprecated:: 0.20
+        Will be removed in version 0.22
+
+    Parameters
+    ----------
+    mock_datasets : dict
+        A dictionary of {dataset_name: data_dict}, or
+        {dataset_name: (data_dict, ordering). `data_dict` itself is a
+        dictionary of {column_name: data_array}, and `ordering` is a list of
+        column_names to determine the ordering in the data set (see
+        :func:`fake_mldata` for details).
+    """
     def __init__(self, mock_datasets):
-        """Object that mocks the urlopen function to fake requests to mldata.
-
-        `mock_datasets` is a dictionary of {dataset_name: data_dict}, or
-        {dataset_name: (data_dict, ordering).
-        `data_dict` itself is a dictionary of {column_name: data_array},
-        and `ordering` is a list of column_names to determine the ordering
-        in the data set (see `fake_mldata` for details).
-
-        When requesting a dataset with a name that is in mock_datasets,
-        this object creates a fake dataset in a StringIO object and
-        returns it. Otherwise, it raises an HTTPError.
-        """
         self.mock_datasets = mock_datasets
 
     def __call__(self, urlname):
+        """
+        Parameters
+        ----------
+        urlname : string
+            The url
+        """
         dataset_name = urlname.split('/')[-1]
         if dataset_name in self.mock_datasets:
             resource_name = '_' + dataset_name
@@ -496,6 +556,16 @@ class mock_mldata_urlopen(object):
 
 
 def install_mldata_mock(mock_datasets):
+    """
+    Parameters
+    ----------
+    mock_datasets : dict
+        A dictionary of {dataset_name: data_dict}, or
+        {dataset_name: (data_dict, ordering). `data_dict` itself is a
+        dictionary of {column_name: data_array}, and `ordering` is a list of
+        column_names to determine the ordering in the data set (see
+        :func:`fake_mldata` for details).
+    """
     # Lazy import to avoid mutually recursive imports
     from sklearn import datasets
     datasets.mldata.urlopen = mock_mldata_urlopen(mock_datasets)
@@ -507,36 +577,9 @@ def uninstall_mldata_mock():
     datasets.mldata.urlopen = urlopen
 
 
-# Meta estimators need another estimator to be instantiated.
-META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
-                   "MultiOutputRegressor", "MultiOutputClassifier",
-                   "OutputCodeClassifier", "OneVsRestClassifier",
-                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain"]
-# estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
-         "SelectFromModel"]
-
-# some trange ones
-DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
-             'LabelBinarizer', 'LabelEncoder',
-             'MultiLabelBinarizer', 'TfidfTransformer',
-             'TfidfVectorizer', 'IsotonicRegression',
-             'OneHotEncoder', 'RandomTreesEmbedding',
-             'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
-             'TruncatedSVD', 'PolynomialFeatures',
-             'GaussianRandomProjectionHash', 'HashingVectorizer',
-             'CheckingClassifier', 'PatchExtractor', 'CountVectorizer',
-             # GradientBoosting base estimators, maybe should
-             # exclude them in another way
-             'ZeroEstimator', 'ScaledLogOddsEstimator',
-             'QuantileEstimator', 'MeanEstimator',
-             'LogOddsEstimator', 'PriorProbabilityEstimator',
-             '_SigmoidCalibration', 'VotingClassifier']
-
-
-def all_estimators(include_meta_estimators=False,
-                   include_other=False, type_filter=None,
-                   include_dont_test=False):
+def all_estimators(include_meta_estimators=None,
+                   include_other=None, type_filter=None,
+                   include_dont_test=None):
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
@@ -547,18 +590,16 @@ def all_estimators(include_meta_estimators=False,
     Parameters
     ----------
     include_meta_estimators : boolean, default=False
-        Whether to include meta-estimators that can be constructed using
-        an estimator as their first argument. These are currently
-        BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
-        OneVsRestClassifier, RFE, RFECV.
+        Deprecated, ignored.
+        .. deprecated:: 0.21
+           ``include_meta_estimators`` has been deprecated and has no effect in
+           0.21 and will be removed in 0.23.
 
     include_other : boolean, default=False
-        Wether to include meta-estimators that are somehow special and can
-        not be default-constructed sensibly. These are currently
-        Pipeline, FeatureUnion and GridSearchCV
-
-    include_dont_test : boolean, default=False
-        Whether to include "special" label estimator or test processors.
+        Deprecated, ignored.
+        .. deprecated:: 0.21
+           ``include_other`` has been deprecated and has not effect in 0.21 and
+           will be removed in 0.23.
 
     type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
@@ -566,6 +607,12 @@ def all_estimators(include_meta_estimators=False,
         'classifier', 'regressor', 'cluster' and 'transformer' to get
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
+
+    include_dont_test : boolean, default=False
+        Deprecated, ignored.
+        .. deprecated:: 0.21
+           ``include_dont_test`` has been deprecated and has no effect in 0.21
+           and will be removed in 0.23.
 
     Returns
     -------
@@ -580,12 +627,30 @@ def all_estimators(include_meta_estimators=False,
             return False
         return True
 
+    if include_other is not None:
+        warnings.warn("include_other was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
+    if include_dont_test is not None:
+        warnings.warn("include_dont_test was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
+    if include_meta_estimators is not None:
+        warnings.warn("include_meta_estimators was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
     all_classes = []
     # get parent folder
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        if (".tests." in modname):
+        if ".tests." in modname or "externals" in modname:
+            continue
+        if IS_PYPY and ('_svmlight_format' in modname or
+                        'feature_extraction._hashing' in modname):
             continue
         module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
@@ -599,14 +664,6 @@ def all_estimators(include_meta_estimators=False,
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
-    if not include_dont_test:
-        estimators = [c for c in estimators if not c[0] in DONT_TEST]
-
-    if not include_other:
-        estimators = [c for c in estimators if not c[0] in OTHER]
-    # possibly get rid of meta estimators
-    if not include_meta_estimators:
-        estimators = [c for c in estimators if not c[0] in META_ESTIMATORS]
     if type_filter is not None:
         if not isinstance(type_filter, list):
             type_filter = [type_filter]
@@ -637,13 +694,28 @@ def all_estimators(include_meta_estimators=False,
 
 def set_random_state(estimator, random_state=0):
     """Set random state of an estimator if it has the `random_state` param.
+
+    Parameters
+    ----------
+    estimator : object
+        The estimator
+    random_state : int, RandomState instance or None, optional, default=0
+        Pseudo random number generator state.  If int, random_state is the seed
+        used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
     """
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 
 
 def if_matplotlib(func):
-    """Test decorator that skips test if matplotlib not installed."""
+    """Test decorator that skips test if matplotlib not installed.
+
+    Parameters
+    ----------
+    func
+    """
     @wraps(func)
     def run_test(*args, **kwargs):
         try:
@@ -659,53 +731,54 @@ def if_matplotlib(func):
     return run_test
 
 
-def skip_if_32bit(func):
-    """Test decorator that skips tests on 32bit platforms."""
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        bits = 8 * struct.calcsize("P")
-        if bits == 32:
-            raise SkipTest('Test skipped on 32bit platforms.')
-        else:
-            return func(*args, **kwargs)
-    return run_test
+try:
+    import pytest
 
+    skip_if_32bit = pytest.mark.skipif(_IS_32BIT,
+                                       reason='skipped on 32bit platforms')
+    skip_travis = pytest.mark.skipif(os.environ.get('TRAVIS') == 'true',
+                                     reason='skip on travis')
+    fails_if_pypy = pytest.mark.xfail(IS_PYPY, raises=NotImplementedError,
+                                      reason='not compatible with PyPy')
+    skip_if_no_parallel = pytest.mark.skipif(not joblib.parallel.mp,
+                                             reason="joblib is in serial mode")
 
-def if_safe_multiprocessing_with_blas(func):
-    """Decorator for tests involving both BLAS calls and multiprocessing.
+    #  Decorator for tests involving both BLAS calls and multiprocessing.
+    #
+    #  Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction
+    #  with some implementation of BLAS (or other libraries that manage an
+    #  internal posix thread pool) can cause a crash or a freeze of the Python
+    #  process.
+    #
+    #  In practice all known packaged distributions (from Linux distros or
+    #  Anaconda) of BLAS under Linux seems to be safe. So we this problem seems
+    #  to only impact OSX users.
+    #
+    #  This wrapper makes it possible to skip tests that can possibly cause
+    #  this crash under OS X with.
+    #
+    #  Under Python 3.4+ it is possible to use the `forkserver` start method
+    #  for multiprocessing to avoid this issue. However it can cause pickling
+    #  errors on interactively defined functions. It therefore not enabled by
+    #  default.
 
-    Under POSIX (e.g. Linux or OSX), using multiprocessing in conjunction with
-    some implementation of BLAS (or other libraries that manage an internal
-    posix thread pool) can cause a crash or a freeze of the Python process.
-
-    In practice all known packaged distributions (from Linux distros or
-    Anaconda) of BLAS under Linux seems to be safe. So we this problem seems to
-    only impact OSX users.
-
-    This wrapper makes it possible to skip tests that can possibly cause
-    this crash under OS X with.
-
-    Under Python 3.4+ it is possible to use the `forkserver` start method
-    for multiprocessing to avoid this issue. However it can cause pickling
-    errors on interactively defined functions. It therefore not enabled by
-    default.
-    """
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        if sys.platform == 'darwin':
-            raise SkipTest(
-                "Possible multi-process bug with some BLAS")
-        return func(*args, **kwargs)
-    return run_test
+    if_safe_multiprocessing_with_blas = pytest.mark.skipif(
+            sys.platform == 'darwin',
+            reason="Possible multi-process bug with some BLAS")
+except ImportError:
+    pass
 
 
 def clean_warning_registry():
-    """Safe way to reset warnings."""
-    warnings.resetwarnings()
+    """Clean Python warning registry for easier testing of warning messages.
+
+    We may not need to do this any more when getting rid of Python 2, not
+    entirely sure. See https://bugs.python.org/issue4180 and
+    https://bugs.python.org/issue21724 for more details.
+
+    """
     reg = "__warningregistry__"
     for mod_name, mod in list(sys.modules.items()):
-        if 'six.moves' in mod_name:
-            continue
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
 
@@ -713,12 +786,6 @@ def clean_warning_registry():
 def check_skip_network():
     if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
         raise SkipTest("Text tutorial requires large dataset download")
-
-
-def check_skip_travis():
-    """Skip test if being run on Travis."""
-    if os.environ.get('TRAVIS') == "true":
-        raise SkipTest("This test needs to be skipped on Travis")
 
 
 def _delete_folder(folder_path, warn=False):
@@ -736,53 +803,55 @@ def _delete_folder(folder_path, warn=False):
             warnings.warn("Could not delete temporary folder %s" % folder_path)
 
 
-class TempMemmap(object):
+class TempMemmap:
+    """
+    Parameters
+    ----------
+    data
+    mmap_mode
+    """
     def __init__(self, data, mmap_mode='r'):
-        self.temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
         self.mmap_mode = mmap_mode
         self.data = data
 
     def __enter__(self):
-        fpath = op.join(self.temp_folder, 'data.pkl')
-        joblib.dump(self.data, fpath)
-        data_read_only = joblib.load(fpath, mmap_mode=self.mmap_mode)
-        atexit.register(lambda: _delete_folder(self.temp_folder, warn=True))
+        data_read_only, self.temp_folder = create_memmap_backed_data(
+            self.data, mmap_mode=self.mmap_mode, return_folder=True)
         return data_read_only
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         _delete_folder(self.temp_folder)
 
 
-class _named_check(object):
-    """Wraps a check to show a useful description
-
+def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
+    """
     Parameters
     ----------
-    check : function
-        Must have ``__name__`` and ``__call__``
-    arg_text : str
-        A summary of arguments to the check
+    data
+    mmap_mode
+    return_folder
     """
-    # Setting the description on the function itself can give incorrect results
-    # in failing tests
-    def __init__(self, check, arg_text):
-        self.check = check
-        self.description = ("{0[1]}.{0[3]}:{1.__name__}({2})".format(
-            inspect.stack()[1], check, arg_text))
+    temp_folder = tempfile.mkdtemp(prefix='sklearn_testing_')
+    atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
+    filename = op.join(temp_folder, 'data.pkl')
+    joblib.dump(data, filename)
+    memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
+    result = (memmap_backed_data if not return_folder
+              else (memmap_backed_data, temp_folder))
+    return result
 
-    def __call__(self, *args, **kwargs):
-        return self.check(*args, **kwargs)
 
 # Utils to test docstrings
 
 
 def _get_args(function, varargs=False):
     """Helper to get function arguments"""
-    # NOTE this works only in python3.5
-    if sys.version_info < (3, 5):
-        NotImplementedError("_get_args is not available for python < 3.5")
 
-    params = inspect.signature(function).parameters
+    try:
+        params = signature(function).parameters
+    except ValueError:
+        # Error on builtin C function
+        return []
     args = [key for key, param in params.items()
             if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
     if varargs:
@@ -855,6 +924,12 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     # Don't check docstring for property-functions
     if inspect.isdatadescriptor(func):
         return incorrect
+    # Don't check docstring for setup / teardown pytest functions
+    if func_name.split('.')[-1] in ('setup_module', 'teardown_module'):
+        return incorrect
+    # Dont check estimator_checks module
+    if func_name.split('.')[2] == 'estimator_checks':
+        return incorrect
     args = list(filter(lambda x: x not in ignore, _get_args(func)))
     # drop self
     if len(args) > 0 and args[0] == 'self':
@@ -872,23 +947,16 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
 
     param_names = []
     for name, type_definition, param_doc in doc['Parameters']:
-        if (type_definition.strip() == "" or
-                type_definition.strip().startswith(':')):
-
-            param_name = name.lstrip()
-
-            # If there was no space between name and the colon
-            # "verbose:" -> len(["verbose", ""][0]) -> 7
-            # If "verbose:"[7] == ":", then there was no space
-            if (':' not in param_name or
-                    param_name[len(param_name.split(':')[0].strip())] == ':'):
+        if not type_definition.strip():
+            if ':' in name and name[:name.index(':')][-1:].strip():
                 incorrect += [func_name +
                               ' There was no space between the param name and '
-                              'colon ("%s")' % name]
-            else:
-                incorrect += [func_name + ' Incorrect type definition for '
-                              'param: "%s" (type definition was "%s")'
-                              % (name.split(':')[0], type_definition)]
+                              'colon (%r)' % name]
+            elif name.rstrip().endswith(':'):
+                incorrect += [func_name +
+                              ' Parameter %r has an empty type spec. '
+                              'Remove the colon' % (name.lstrip())]
+
         if '*' not in name:
             param_names.append(name.split(':')[0].strip('` '))
 

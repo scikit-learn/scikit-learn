@@ -6,8 +6,9 @@
 # This is the exact and Barnes-Hut t-SNE implementation. There are other
 # modifications of the algorithm:
 # * Fast Optimization for t-SNE:
-#   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
+#   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+import warnings
 from time import time
 import numpy as np
 from scipy import linalg
@@ -23,8 +24,6 @@ from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
-from ..externals.six import string_types
-from ..utils import deprecated
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -119,7 +118,7 @@ def _joint_probabilities_nn(distances, neighbors, desired_perplexity, verbose):
 
 
 def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
-                   skip_num_points=0):
+                   skip_num_points=0, compute_error=True):
     """t-SNE objective function: gradient of the KL divergence
     of p_ijs and q_ijs and the absolute error.
 
@@ -131,7 +130,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     P : array, shape (n_samples * (n_samples-1) / 2,)
         Condensed joint probability matrix.
 
-    degrees_of_freedom : float
+    degrees_of_freedom : int
         Degrees of freedom of the Student's-t distribution.
 
     n_samples : int
@@ -144,6 +143,9 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
         This does not compute the gradient for points with indices below
         `skip_num_points`. This is useful when computing transforms of new
         data where you'd like to keep the old data fixed.
+
+    compute_error: bool (optional, default:True)
+        If False, the kl_divergence is not computed and returns NaN.
 
     Returns
     -------
@@ -167,7 +169,11 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     # np.sum(x * y) because it calls BLAS
 
     # Objective: C (Kullback-Leibler divergence of P and Q)
-    kl_divergence = 2.0 * np.dot(P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
+    if compute_error:
+        kl_divergence = 2.0 * np.dot(
+            P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
+    else:
+        kl_divergence = np.nan
 
     # Gradient: dC/dY
     # pdist always returns double precision distances. Thus we need to take
@@ -184,7 +190,8 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
 
 def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
-                      angle=0.5, skip_num_points=0, verbose=False):
+                      angle=0.5, skip_num_points=0, verbose=False,
+                      compute_error=True):
     """t-SNE objective function: KL divergence of p_ijs and q_ijs.
 
     Uses Barnes-Hut tree methods to calculate the gradient that
@@ -199,7 +206,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
         Sparse approximate joint probability matrix, computed only for the
         k nearest-neighbors and symmetrized.
 
-    degrees_of_freedom : float
+    degrees_of_freedom : int
         Degrees of freedom of the Student's-t distribution.
 
     n_samples : int
@@ -225,6 +232,9 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     verbose : int
         Verbosity level.
 
+    compute_error: bool (optional, default:True)
+        If False, the kl_divergence is not computed and returns NaN.
+
     Returns
     -------
     kl_divergence : float
@@ -244,7 +254,8 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     grad = np.zeros(X_embedded.shape, dtype=np.float32)
     error = _barnes_hut_tsne.gradient(val_P, X_embedded, neighbors, indptr,
                                       grad, angle, n_components, verbose,
-                                      dof=degrees_of_freedom)
+                                      dof=degrees_of_freedom,
+                                      compute_error=compute_error)
     c = 2.0 * (degrees_of_freedom + 1.0) / degrees_of_freedom
     grad = grad.ravel()
     grad *= c
@@ -336,6 +347,10 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     tic = time()
     for i in range(it, n_iter):
+        check_convergence = (i + 1) % n_iter_check == 0
+        # only compute the error when needed
+        kwargs['compute_error'] = check_convergence or i == n_iter - 1
+
         error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
 
@@ -348,7 +363,7 @@ def _gradient_descent(objective, p0, it, n_iter,
         update = momentum * update - learning_rate * grad
         p += update
 
-        if (i + 1) % n_iter_check == 0:
+        if check_convergence:
             toc = time()
             duration = toc - tic
             tic = toc
@@ -377,8 +392,9 @@ def _gradient_descent(objective, p0, it, n_iter,
     return p, error, i
 
 
-def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
-    """Expresses to what extent the local structure is retained.
+def trustworthiness(X, X_embedded, n_neighbors=5,
+                    precomputed=False, metric='euclidean'):
+    r"""Expresses to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
 
@@ -414,27 +430,49 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     precomputed : bool, optional (default: False)
         Set this flag if X is a precomputed square distance matrix.
 
+        ..deprecated:: 0.20
+            ``precomputed`` has been deprecated in version 0.20 and will be
+            removed in version 0.22. Use ``metric`` instead.
+
+    metric : string, or callable, optional, default 'euclidean'
+        Which metric to use for computing pairwise distances between samples
+        from the original input space. If metric is 'precomputed', X must be a
+        matrix of pairwise distances or squared distances. Otherwise, see the
+        documentation of argument metric in sklearn.pairwise.pairwise_distances
+        for a list of available metrics.
+
     Returns
     -------
     trustworthiness : float
         Trustworthiness of the low-dimensional embedding.
     """
     if precomputed:
-        dist_X = X
-    else:
-        dist_X = pairwise_distances(X, squared=True)
+        warnings.warn("The flag 'precomputed' has been deprecated in version "
+                      "0.20 and will be removed in 0.22. See 'metric' "
+                      "parameter instead.", DeprecationWarning)
+        metric = 'precomputed'
+    dist_X = pairwise_distances(X, metric=metric)
+    if metric == 'precomputed':
+        dist_X = dist_X.copy()
+    # we set the diagonal to np.inf to exclude the points themselves from
+    # their own neighborhood
+    np.fill_diagonal(dist_X, np.inf)
     ind_X = np.argsort(dist_X, axis=1)
+    # `ind_X[i]` is the index of sorted distances between i and other samples
     ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
         return_distance=False)
 
+    # We build an inverted index of neighbors in the input space: For sample i,
+    # we define `inverted_index[i]` as the inverted index of sorted distances:
+    # inverted_index[i][ind_X[i]] = np.arange(1, n_sample + 1)
     n_samples = X.shape[0]
-    t = 0.0
-    ranks = np.zeros(n_neighbors)
-    for i in range(n_samples):
-        for j in range(n_neighbors):
-            ranks[j] = np.where(ind_X[i] == ind_X_embedded[i, j])[0][0]
-        ranks -= n_neighbors
-        t += np.sum(ranks[ranks > 0])
+    inverted_index = np.zeros((n_samples, n_samples), dtype=int)
+    ordered_indices = np.arange(n_samples + 1)
+    inverted_index[ordered_indices[:-1, np.newaxis],
+                   ind_X] = ordered_indices[1:]
+    ranks = inverted_index[ordered_indices[:-1, np.newaxis],
+                           ind_X_embedded] - n_neighbors
+    t = np.sum(ranks[ranks > 0])
     t = 1.0 - t * (2.0 / (n_samples * n_neighbors *
                           (2.0 * n_samples - 3.0 * n_neighbors - 1.0)))
     return t
@@ -582,11 +620,11 @@ class TSNE(BaseEstimator):
         Using t-SNE. Journal of Machine Learning Research 9:2579-2605, 2008.
 
     [2] van der Maaten, L.J.P. t-Distributed Stochastic Neighbor Embedding
-        http://homepage.tudelft.nl/19j49/t-SNE.html
+        https://lvdmaaten.github.io/tsne/
 
     [3] L.J.P. van der Maaten. Accelerating t-SNE using Tree-Based Algorithms.
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
-        http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
+        https://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
     """
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250
@@ -640,7 +678,7 @@ class TSNE(BaseEstimator):
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.metric == "precomputed":
-            if isinstance(self.init, string_types) and self.init == 'pca':
+            if isinstance(self.init, str) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
@@ -766,18 +804,12 @@ class TSNE(BaseEstimator):
         # degrees_of_freedom = n_components - 1 comes from
         # "Learning a Parametric Embedding by Preserving Local Structure"
         # Laurens van der Maaten, 2009.
-        degrees_of_freedom = max(self.n_components - 1.0, 1)
+        degrees_of_freedom = max(self.n_components - 1, 1)
 
         return self._tsne(P, degrees_of_freedom, n_samples,
                           X_embedded=X_embedded,
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
-
-    @property
-    @deprecated("Attribute n_iter_final was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use ``n_iter_`` instead")
-    def n_iter_final(self):
-        return self.n_iter_
 
     def _tsne(self, P, degrees_of_freedom, n_samples, X_embedded,
               neighbors=None, skip_num_points=0):
@@ -834,7 +866,7 @@ class TSNE(BaseEstimator):
         self.n_iter_ = it
 
         if self.verbose:
-            print("[t-SNE] Error after %d iterations: %f"
+            print("[t-SNE] KL divergence after %d iterations: %f"
                   % (it + 1, kl_divergence))
 
         X_embedded = params.reshape(n_samples, self.n_components)

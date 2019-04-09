@@ -81,8 +81,7 @@ class Logger(object):
         logging.debug("[%s]: %s" % (self, msg))
 
     def format(self, obj, indent=0):
-        """ Return the formatted representation of the object.
-        """
+        """Return the formatted representation of the object."""
         return pformat(obj, indent=indent, depth=self.depth)
 
 

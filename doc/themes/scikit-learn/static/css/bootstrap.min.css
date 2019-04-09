@@ -164,6 +164,7 @@ a.label:hover,a.label:focus,a.badge:hover,a.badge:focus{color:#ffffff;text-decor
 .label-important[href],.badge-important[href]{background-color:#953b39;}
 .label-warning,.badge-warning{background-color:#f89406;}
 .label-warning[href],.badge-warning[href]{background-color:#c67605;}
+.label-danger,.badge-danger {/* XXX: backported from later bootstrap */background-color: #d9534f;}
 .label-success,.badge-success{background-color:#468847;}
 .label-success[href],.badge-success[href]{background-color:#356635;}
 .label-info,.badge-info{background-color:#3a87ad;}

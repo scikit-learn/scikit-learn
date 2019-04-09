@@ -59,13 +59,14 @@ a linear algorithm, for example a linear SVM::
     >>> y = [0, 0, 1, 1]
     >>> rbf_feature = RBFSampler(gamma=1, random_state=1)
     >>> X_features = rbf_feature.fit_transform(X)
-    >>> clf = SGDClassifier(max_iter=5)   # doctest: +NORMALIZE_WHITESPACE
-    >>> clf.fit(X_features, y)
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
-           eta0=0.0, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
-           n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
-           shuffle=True, tol=None, verbose=0, warm_start=False)
+    >>> clf = SGDClassifier(max_iter=5)
+    >>> clf.fit(X_features, y)   # doctest: +NORMALIZE_WHITESPACE
+    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
+           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
+           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
+           n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
+           random_state=None, shuffle=True, tol=0.001, validation_fraction=0.1,
+           verbose=0, warm_start=False)
     >>> clf.score(X_features, y)
     1.0
 
@@ -193,7 +194,7 @@ or store training examples.
 .. topic:: References:
 
     .. [RR2007] `"Random features for large-scale kernel machines"
-      <http://www.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
+      <https://www.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
       Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
     .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
       <http://www.maths.lth.se/matematiklth/personal/sminchis/papers/lis_dagm10.pdf>`_

@@ -1,9 +1,10 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
-                                   assert_raises)
+                                   assert_raises, assert_allclose)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -68,6 +69,21 @@ def test_kernel_pca_consistent_transform():
     X[:, 0] = 666
     transformed2 = kpca.transform(X_copy)
     assert_array_almost_equal(transformed1, transformed2)
+
+
+def test_kernel_pca_deterministic_output():
+    rng = np.random.RandomState(0)
+    X = rng.rand(10, 10)
+    eigen_solver = ('arpack', 'dense')
+
+    for solver in eigen_solver:
+        transformed_X = np.zeros((20, 2))
+        for i in range(20):
+            kpca = KernelPCA(n_components=2, eigen_solver=solver,
+                             random_state=rng)
+            transformed_X[i, :] = kpca.fit_transform(X)[0]
+        assert_allclose(
+            transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2))
 
 
 def test_kernel_pca_sparse():
@@ -139,6 +155,32 @@ def test_remove_zero_eig():
     assert_equal(Xt.shape, (3, 0))
 
 
+def test_leave_zero_eig():
+    """This test checks that fit().transform() returns the same result as
+    fit_transform() in case of non-removed zero eigenvalue.
+    Non-regression test for issue #12141 (PR #12143)"""
+    X_fit = np.array([[1, 1], [0, 0]])
+
+    # Assert that even with all np warnings on, there is no div by zero warning
+    with pytest.warns(None) as record:
+        with np.errstate(all='warn'):
+            k = KernelPCA(n_components=2, remove_zero_eig=False,
+                          eigen_solver="dense")
+            # Fit, then transform
+            A = k.fit(X_fit).transform(X_fit)
+            # Do both at once
+            B = k.fit_transform(X_fit)
+            # Compare
+            assert_array_almost_equal(np.abs(A), np.abs(B))
+
+    for w in record:
+        # There might be warnings about the kernel being badly conditioned,
+        # but there should not be warnings about division by zero.
+        # (Numpy division by zero warning can have many message variants, but
+        # at least we know that it is a RuntimeWarning so lets check only this)
+        assert not issubclass(w.category, RuntimeWarning)
+
+
 def test_kernel_pca_precomputed():
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
@@ -172,6 +214,9 @@ def test_kernel_pca_invalid_kernel():
     assert_raises(ValueError, kpca.fit, X_fit)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model.
@@ -186,6 +231,9 @@ def test_gridsearch_pipeline():
     assert_equal(grid_search.best_score_, 1)
 
 
+@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_gridsearch_pipeline_precomputed():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model using a precomputed kernel.
@@ -201,6 +249,8 @@ def test_gridsearch_pipeline_precomputed():
     assert_equal(grid_search.best_score_, 1)
 
 
+# 0.23. warning about tol not having its correct default value.
+@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_nested_circles():
     # Test the linear separability of the first 2D KPCA transform
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,

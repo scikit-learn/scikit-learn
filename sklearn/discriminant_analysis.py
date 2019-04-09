@@ -9,13 +9,11 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 
 # License: BSD 3-Clause
 
-from __future__ import print_function
 import warnings
 import numpy as np
-from .utils import deprecated
+from .exceptions import ChangedBehaviorWarning
 from scipy import linalg
-from .externals.six import string_types
-from .externals.six.moves import xrange
+from scipy.special import expit
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .linear_model.base import LinearClassifierMixin
@@ -24,6 +22,7 @@ from .utils.multiclass import unique_labels
 from .utils import check_array, check_X_y
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
+from .utils.extmath import softmax
 from .preprocessing import StandardScaler
 
 
@@ -50,7 +49,7 @@ def _cov(X, shrinkage=None):
         Estimated covariance matrix.
     """
     shrinkage = "empirical" if shrinkage is None else shrinkage
-    if isinstance(shrinkage, string_types):
+    if isinstance(shrinkage, str):
         if shrinkage == 'auto':
             sc = StandardScaler()  # standardize features
             X = sc.fit_transform(X)
@@ -83,18 +82,18 @@ def _class_means(X, y):
 
     Returns
     -------
-    means : array-like, shape (n_features,)
+    means : array-like, shape (n_classes, n_features)
         Class means.
     """
-    means = []
-    classes = np.unique(y)
-    for group in classes:
-        Xg = X[y == group, :]
-        means.append(Xg.mean(0))
-    return np.asarray(means)
+    classes, y = np.unique(y, return_inverse=True)
+    cnt = np.bincount(y)
+    means = np.zeros(shape=(len(classes), X.shape[1]))
+    np.add.at(means, y, X)
+    means /= cnt[:, None]
+    return means
 
 
-def _class_cov(X, y, priors=None, shrinkage=None):
+def _class_cov(X, y, priors, shrinkage=None):
     """Compute class covariance matrix.
 
     Parameters
@@ -120,11 +119,11 @@ def _class_cov(X, y, priors=None, shrinkage=None):
         Class covariance matrix.
     """
     classes = np.unique(y)
-    covs = []
-    for group in classes:
+    cov = np.zeros(shape=(X.shape[1], X.shape[1]))
+    for idx, group in enumerate(classes):
         Xg = X[y == group, :]
-        covs.append(np.atleast_2d(_cov(Xg, shrinkage)))
-    return np.average(covs, axis=0, weights=priors)
+        cov += priors[idx] * np.atleast_2d(_cov(Xg, shrinkage))
+    return cov
 
 
 class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
@@ -166,8 +165,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     priors : array, optional, shape (n_classes,)
         Class priors.
 
-    n_components : int, optional
-        Number of components (< n_classes - 1) for dimensionality reduction.
+    n_components : int, optional (default=None)
+        Number of components (<= min(n_classes - 1, n_features)) for
+        dimensionality reduction. If None, will be set to
+        min(n_classes - 1, n_features).
 
     store_covariance : bool, optional
         Additionally compute class covariance matrix (default False), used
@@ -240,7 +241,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = LinearDiscriminantAnalysis()
-    >>> clf.fit(X, y)
+    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     LinearDiscriminantAnalysis(n_components=None, priors=None, shrinkage=None,
                   solver='svd', store_covariance=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -338,7 +339,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.explained_variance_ratio_ = np.sort(evals / np.sum(evals)
                                                  )[::-1][:self._max_components]
         evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
-        evecs /= np.linalg.norm(evecs, axis=0)
 
         self.scalings_ = evecs
         self.coef_ = np.dot(self.means_, evecs).dot(evecs.T)
@@ -426,8 +426,16 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         y : array, shape (n_samples,)
             Target values.
         """
-        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self)
+        # FIXME: Future warning to be removed in 0.23
+        X, y = check_X_y(X, y, ensure_min_samples=2, estimator=self,
+                         dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
+        n_samples, _ = X.shape
+        n_classes = len(self.classes_)
+
+        if n_samples == n_classes:
+            raise ValueError("The number of samples must be more "
+                             "than the number of classes.")
 
         if self.priors is None:  # estimate priors from sample
             _, y_t = np.unique(y, return_inverse=True)  # non-negative ints
@@ -437,17 +445,34 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         if (self.priors_ < 0).any():
             raise ValueError("priors must be non-negative")
-        if self.priors_.sum() != 1:
+        if not np.isclose(self.priors_.sum(), 1.0):
             warnings.warn("The priors do not sum to 1. Renormalizing",
                           UserWarning)
             self.priors_ = self.priors_ / self.priors_.sum()
 
-        # Get the maximum number of components
+        # Maximum number of components no matter what n_components is
+        # specified:
+        max_components = min(len(self.classes_) - 1, X.shape[1])
+
         if self.n_components is None:
-            self._max_components = len(self.classes_) - 1
+            self._max_components = max_components
         else:
-            self._max_components = min(len(self.classes_) - 1,
-                                       self.n_components)
+            if self.n_components > max_components:
+                warnings.warn(
+                    "n_components cannot be larger than min(n_features, "
+                    "n_classes - 1). Using min(n_features, "
+                    "n_classes - 1) = min(%d, %d - 1) = %d components."
+                    % (X.shape[1], len(self.classes_), max_components),
+                    ChangedBehaviorWarning)
+                future_msg = ("In version 0.23, setting n_components > min("
+                              "n_features, n_classes - 1) will raise a "
+                              "ValueError. You should set n_components to None"
+                              " (default), or a value smaller or equal to "
+                              "min(n_features, n_classes - 1).")
+                warnings.warn(future_msg, FutureWarning)
+                self._max_components = max_components
+            else:
+                self._max_components = self.n_components
 
         if self.solver == 'svd':
             if self.shrinkage is not None:
@@ -461,9 +486,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             raise ValueError("unknown solver {} (valid solvers are 'svd', "
                              "'lsqr', and 'eigen').".format(self.solver))
         if self.classes_.size == 2:  # treat binary case as a special case
-            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2)
+            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2,
+                                  dtype=X.dtype)
             self.intercept_ = np.array(self.intercept_[1] - self.intercept_[0],
-                                       ndmin=1)
+                                       ndmin=1, dtype=X.dtype)
         return self
 
     def transform(self, X):
@@ -505,17 +531,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         C : array, shape (n_samples, n_classes)
             Estimated probabilities.
         """
-        prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
-        if len(self.classes_) == 2:  # binary case
-            return np.column_stack([1 - prob, prob])
+        check_is_fitted(self, 'classes_')
+
+        decision = self.decision_function(X)
+        if self.classes_.size == 2:
+            proba = expit(decision)
+            return np.vstack([1-proba, proba]).T
         else:
-            # OvR normalization, like LibLinear's predict_probability
-            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
-            return prob
+            return softmax(decision)
 
     def predict_log_proba(self, X):
         """Estimate log probability.
@@ -599,8 +622,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> clf.fit(X, y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
-                                  store_covariance=False,
-                                  store_covariances=None, tol=0.0001)
+                                  store_covariance=False, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -611,19 +633,11 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(self, priors=None, reg_param=0., store_covariance=False,
-                 tol=1.0e-4, store_covariances=None):
+                 tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
-        self.store_covariances = store_covariances
         self.store_covariance = store_covariance
         self.tol = tol
-
-    @property
-    @deprecated("Attribute covariances_ was deprecated in version"
-                " 0.19 and will be removed in 0.21. Use "
-                "covariance_ instead")
-    def covariances_(self):
-        return self.covariance_
 
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
@@ -658,17 +672,13 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             self.priors_ = self.priors
 
         cov = None
-        store_covariance = self.store_covariance or self.store_covariances
-        if self.store_covariances:
-            warnings.warn("'store_covariances' was renamed to store_covariance"
-                          " in version 0.19 and will be removed in 0.21.",
-                          DeprecationWarning)
+        store_covariance = self.store_covariance
         if store_covariance:
             cov = []
         means = []
         scalings = []
         rotations = []
-        for ind in xrange(n_classes):
+        for ind in range(n_classes):
             Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)

@@ -91,22 +91,21 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     TruncatedSVD(algorithm='randomized', n_components=5, n_iter=7,
             random_state=42, tol=0.0)
     >>> print(svd.explained_variance_ratio_)  # doctest: +ELLIPSIS
-    [ 0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
+    [0.0606... 0.0584... 0.0497... 0.0434... 0.0372...]
     >>> print(svd.explained_variance_ratio_.sum())  # doctest: +ELLIPSIS
     0.249...
     >>> print(svd.singular_values_)  # doctest: +ELLIPSIS
-    [ 2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
+    [2.5841... 2.5245... 2.3201... 2.1753... 2.0443...]
 
     See also
     --------
     PCA
-    RandomizedPCA
 
     References
     ----------
     Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
+    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
 
     Notes
     -----
@@ -157,7 +156,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(X, accept_sparse=['csr', 'csc'],
+                        ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
