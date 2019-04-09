@@ -74,7 +74,7 @@ jobs:
 
   pypy3:
     docker:
-      - image: pypy:3-6.0.0
+      - image: pypy:3-7.0.0
     steps:
       - restore_cache:
           keys:
@@ -117,10 +117,10 @@ workflows:
           requires:
             - lint
       - pypy3:
-          filters:
-            branches:
-              only:
-                - 0.20.X
+#          filters:
+#            branches:
+#              only:
+#                - 0.20.X
       - deploy:
           requires:
             - doc
