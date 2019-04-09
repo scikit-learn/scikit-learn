@@ -44,7 +44,7 @@ from scipy.special import expit
 from time import time
 from ..model_selection import train_test_split
 from ..tree.tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE
+from ..tree._tree import DTYPE, DOUBLE
 from ..tree._tree import TREE_LEAF
 from . import _gb_losses
 
@@ -1432,7 +1432,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self._clear_state()
 
         # Check input
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
+        # Since check_array converts both X and y to the same dtype, but the
+        # trees use different types for X and y, checking them separately.
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
         n_samples, self.n_features_ = X.shape
 
         sample_weight_is_none = sample_weight is None
@@ -1444,6 +1446,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         check_consistent_length(X, y, sample_weight)
 
+        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
+        y = column_or_1d(y, warn=True)
         y = self._validate_y(y, sample_weight)
 
         if self.n_iter_no_change is not None:
@@ -1722,7 +1726,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # consistency with similar method _validate_y of GBC
         self.n_classes_ = 1
         if y.dtype.kind == 'O':
-            y = y.astype(np.float64)
+            y = y.astype(DOUBLE)
         # Default implementation
         return y
 
