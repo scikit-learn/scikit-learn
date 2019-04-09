@@ -15,7 +15,6 @@ from scipy import sparse
 from scipy.cluster import hierarchy
 
 from sklearn.metrics.cluster.supervised import adjusted_rand_score
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -586,9 +585,9 @@ def test_agg_n_cluster_and_distance_threshold():
                                   distance_threshold=dist_thresh)
     agc.fit(X)
     # Expecting no errors here
-    assert_true(agc.n_clusters == n_clus)
-    assert_true(agc.n_clusters_ != n_clus)
-    assert_true(agc.n_clusters_ > 0)
+    assert agc.n_clusters == n_clus
+    assert agc.n_clusters_ != n_clus
+    assert agc.n_clusters_ > 0
 
 
 def test_affinity_passed_to_fix_connectivity():
@@ -646,13 +645,13 @@ def test_agglomerative_clustering_with_distance_threshold():
             num_clusters_at_threshold = np.count_nonzero(
                 distances >= distance_threshold) + 1
             # test number of clusters produced
-            assert_true(num_clusters_at_threshold == num_clusters_produced)
+            assert num_clusters_at_threshold == num_clusters_produced
             # test clusters produced
             clusters_at_threshold = _hc_cut(n_clusters=num_clusters_produced,
                                             children=children,
                                             n_leaves=n_leaves)
-            assert_true(np.array_equiv(clusters_produced,
-                                       clusters_at_threshold))
+            assert np.array_equiv(clusters_produced,
+                                  clusters_at_threshold)
 
 
 def test_agglomerative_clustering_with_distance_threshold_edge_case():
