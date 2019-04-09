@@ -752,8 +752,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     >>> clustering = AgglomerativeClustering().fit(X)
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
     AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
-                connectivity=None, linkage='ward', memory=None, n_clusters=2,
-                pooling_func='deprecated')
+                            connectivity=None, distance_threshold=None,
+                            linkage='ward', memory=None, n_clusters=2,
+                            pooling_func='deprecated')
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
 
@@ -977,8 +978,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
     >>> agglo.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
-               connectivity=None, linkage='ward', memory=None, n_clusters=32,
-               pooling_func=...)
+                         connectivity=None, distance_threshold=None, linkage='ward',
+                         memory=None, n_clusters=32,
+                         pooling_func=...)
     >>> X_reduced = agglo.transform(X)
     >>> X_reduced.shape
     (1797, 32)
