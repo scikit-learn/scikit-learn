@@ -141,12 +141,25 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         a new copy will always be made, even if `copy=False`:
 
         - If X is not an array of floating values;
-        - If X is encoded as a CSR matrix.
+        - If X is encoded as a CSR matrix;
+        - If add_indicator=True.
+
+    add_indicator : boolean, optional (default=False)
+        If True, a `MissingIndicator` transform will stack onto output
+        of the imputer's transform. This allows a predictive estimator
+        to account for missingness despite imputation. If a feature has no
+        missing values at fit/train time, the feature won't appear on
+        the missing indicator even if there are missing values at
+        transform/test time.
 
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature.
+
+    indicator_ : :class:`sklearn.impute.MissingIndicator`
+        Indicator used to add binary indicators for missing values.
+        ``None`` if add_indicator is False.
 
     See also
     --------
@@ -159,8 +172,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     >>> imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
     ... # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=nan,
-           strategy='mean', verbose=0)
+    SimpleImputer(add_indicator=False, copy=True, fill_value=None,
+            missing_values=nan, strategy='mean', verbose=0)
     >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
     >>> print(imp_mean.transform(X))
     ... # doctest: +NORMALIZE_WHITESPACE
@@ -175,12 +188,13 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, missing_values=np.nan, strategy="mean",
-                 fill_value=None, verbose=0, copy=True):
+                 fill_value=None, verbose=0, copy=True, add_indicator=False):
         self.missing_values = missing_values
         self.strategy = strategy
         self.fill_value = fill_value
         self.verbose = verbose
         self.copy = copy
+        self.add_indicator = add_indicator
 
     def _validate_input(self, X):
         allowed_strategies = ["mean", "median", "most_frequent", "constant"]
@@ -272,6 +286,13 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                self.missing_values,
                                                fill_value)
 
+        if self.add_indicator:
+            self.indicator_ = MissingIndicator(
+                missing_values=self.missing_values)
+            self.indicator_.fit(X)
+        else:
+            self.indicator_ = None
+
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -285,7 +306,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
             statistics.fill(fill_value)
-
         else:
             for i in range(X.shape[1]):
                 column = X.data[X.indptr[i]:X.indptr[i + 1]]
@@ -382,6 +402,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             raise ValueError("X has %d features per sample, expected %d"
                              % (X.shape[1], self.statistics_.shape[0]))
 
+        if self.add_indicator:
+            X_trans_indicator = self.indicator_.transform(X)
+
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
             valid_statistics = statistics
@@ -419,6 +442,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             coordinates = np.where(mask.transpose())[::-1]
 
             X[coordinates] = values
+
+        if self.add_indicator:
+            hstack = sparse.hstack if sparse.issparse(X) else np.hstack
+            X = hstack((X, X_trans_indicator))
 
         return X
 
