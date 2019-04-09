@@ -865,6 +865,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                 memory.cache(tree_builder)(X, connectivity,
                                            n_clusters=n_clusters,
                                            **kwargs)
+
         self.children_ = ch
         self.n_connected_components_ = n_comps
         self.n_leaves_ = n_lvs
