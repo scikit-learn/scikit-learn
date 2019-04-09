@@ -19,6 +19,7 @@ from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -509,3 +510,17 @@ def test_regressormixin_score_multioutput():
            "built-in scorer 'r2' uses "
            "multioutput='uniform_average').")
     assert_warns_message(FutureWarning, msg, reg.score, X, y)
+
+
+def test_validate_X():
+    # Make sure ValueError is raised when there is a n_features mismatch
+    # between fit and predict/transform
+
+    X = [[0, 1], [2, 3]]
+
+    ss = StandardScaler().fit(X)
+    ss.transform(X)  # All good
+
+    with pytest.raises(ValueError, match="X has 3 features, but"):
+        X_more_features = [[0, 1, 4], [2, 3, 5]]
+        ss.transform(X_more_features)

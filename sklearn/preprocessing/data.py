@@ -658,9 +658,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         y
             Ignored
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        warn_on_dtype=False, estimator=self,
-                        dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
+        X = self.validate_X(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                            warn_on_dtype=False, estimator=self,
+                            dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -753,9 +753,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr', copy=copy, warn_on_dtype=False,
-                        estimator=self, dtype=FLOAT_DTYPES,
-                        force_all_finite='allow-nan')
+        X = self.validate_X(X, check_n_features=True,
+                            accept_sparse='csr', copy=copy,
+                            warn_on_dtype=False, estimator=self,
+                            dtype=FLOAT_DTYPES,
+                            force_all_finite='allow-nan')
 
         if sparse.issparse(X):
             if self.with_mean:

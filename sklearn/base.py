@@ -293,6 +293,32 @@ class BaseEstimator:
         tags.update(collected_tags)
         return tags
 
+    def _validate_n_features(self, X, check_n_features):
+        if check_n_features:
+            if not hasattr(self, '_n_features_in'):
+                raise RuntimeError(
+                    "check_n_features is True but there is no _n_features_in "
+                    "attribute."
+                )
+            if X.shape[1] != self._n_features_in:
+                raise ValueError(
+                    'X has {} features, but this {} is expecting {} features '
+                    'as input.'.format(X.shape[1], self.__class__.__name__,
+                                       self._n_features_in)
+                )
+        self._n_features_in = X.shape[1]
+
+    def validate_X(self, X, check_n_features=False, **check_array_params):
+        from .utils.validation import check_array
+        X = check_array(X, **check_array_params)
+        self._validate_n_features(X, check_n_features)
+        return X
+
+    def validate_X_y(self, X, y, check_n_features=False, **check_X_y_params):
+        from .utils.validation import check_X_y
+        X, y = check_X_y(X, **check_X_y_params)
+        self._validate_n_features(X, check_n_features)
+        return X, y
 
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
