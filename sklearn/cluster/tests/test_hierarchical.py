@@ -576,21 +576,6 @@ def test_agg_n_clusters():
         assert_raise_message(ValueError, msg, agc.fit, X)
 
 
-def test_agg_n_cluster_or_distance_threshold():
-    # Test that an error is raised when n_clusters
-    # and distance_threshold are None
-
-    n_clus = None
-    rng = np.random.RandomState(0)
-    X = rng.rand(20, 10)
-    # distance_threshold is None by default
-    agc = AgglomerativeClustering(n_clusters=n_clus)
-    msg = ("Either n_clusters (>0) or distance_threshold "
-           "needs to be set, got n_clusters={} and "
-           "distance_threshold=None instead.".format(agc.n_clusters))
-    assert_raise_message(ValueError, msg, agc.fit, X)
-
-
 def test_agg_n_cluster_and_distance_threshold():
     # Test that when distance_threshold is set that n_clusters is ignored
 
@@ -679,6 +664,13 @@ def test_agglomerative_clustering_with_distance_threshold_edge_case():
                                                 linkage=linkage)
             y_pred = clusterer.fit_predict(X)
             assert_equal(1, adjusted_rand_score(y_true, y_pred))
+
+
+def test_none_dis_threshold_n_clust():
+    X = [[0], [1]]
+    with pytest.raises(ValueError, match="cannot be both None"):
+        AgglomerativeClustering(n_clusters=None,
+                                distance_threshold=None).fit(X)
 
 
 def test_n_components_deprecation():

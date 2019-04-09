@@ -759,8 +759,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     """
 
-    def __init__(self, n_clusters=2,
-                 affinity="euclidean",
+    def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func='deprecated',
@@ -809,10 +808,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                              " %s was provided." % str(self.n_clusters))
 
         if self.n_clusters is None and self.distance_threshold is None:
-            raise ValueError("Either n_clusters (>0) or distance_threshold "
-                             "needs to be set, got n_clusters={} and "
-                             "distance_threshold={} instead.".format(
-                                self.n_clusters, self.distance_threshold))
+            raise ValueError("n_clusters and distance_threshold cannot be "
+                             "both None.")
 
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError("%s was provided as affinity. Ward can only "
@@ -866,7 +863,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                 memory.cache(tree_builder)(X, connectivity,
                                            n_clusters=n_clusters,
                                            **kwargs)
-            self.n_clusters_ = n_clusters
+            self.n_clusters_ = self.n_clusters
 
         self.children_ = ch
         self.n_connected_components_ = n_comps
@@ -996,7 +993,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         super().__init__(
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
-            affinity=affinity)
+            affinity=affinity, distance_threshold=distance_threshold)
         self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
