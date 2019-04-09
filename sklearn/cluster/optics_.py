@@ -48,10 +48,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
         number or a fraction of the number of samples (rounded to be at least
         2).
 
-    min_samples : int (default=5)
-        The number of samples in a neighborhood for a point to be considered
-        as a core point.
-
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
         as in the same neighborhood. Default value of ``np.inf`` will identify
