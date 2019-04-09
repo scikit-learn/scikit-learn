@@ -255,6 +255,12 @@ Support for Python 3.4 and below has been officially dropped.
   used to be kept if there were no missing values at all. :issue:`13562` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Feature| The :class:`impute.SimpleImputer` has a new parameter
+  ``'add_indicator'``, which simply stacks a :class:`impute.MissingIndicator`
+  transform into the output of the imputer's transform. That allows a predictive
+  estimator to account for missingness. :issue:`12583` by
+  :user:`Danylo Baibak <DanilBaibak>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
