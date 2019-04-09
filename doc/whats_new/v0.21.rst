@@ -249,6 +249,18 @@ Support for Python 3.4 and below has been officially dropped.
   raising an exception if input is sparse add `missing_values` property
   is set to 0. :issue:`13240` by :user:`Bartosz Telenczuk <btel>`.
 
+- |Fix| Fixed two bugs in :class:`MissingIndicator`. First, when ``X`` is
+  sparse, all the non-zero non missing values used to become explicit False in
+  the transformed data. Then, when ``features='missing-only'``, all features
+  used to be kept if there were no missing values at all. :issue:`13562` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Feature| The :class:`impute.SimpleImputer` has a new parameter
+  ``'add_indicator'``, which simply stacks a :class:`impute.MissingIndicator`
+  transform into the output of the imputer's transform. That allows a predictive
+  estimator to account for missingness. :issue:`12583` by
+  :user:`Danylo Baibak <DanilBaibak>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
@@ -423,6 +435,10 @@ Support for Python 3.4 and below has been officially dropped.
   shuffles each class's samples with the same ``random_state``,
   making ``shuffle=True`` ineffective.
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- |Fix| Added ability for :func:`model_selection.cross_val_predict` to handle
+  multi-label (and multioutput-multiclass) targets with ``predict_proba``-type
+  methods. :issue:`8773` by :user:`Stephen Hoover <stephen-hoover>`.
 
 - |Fix| Fixed an issue in :func:`~model_selection.cross_val_predict` where
   `method="predict_proba"` returned always `0.0` when one of the classes was
