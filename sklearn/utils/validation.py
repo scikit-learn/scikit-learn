@@ -1018,7 +1018,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     Examples
     --------
-    >>> check_psd_eigenvalues((1, 2))      # nominal case
+    >>> check_psd_eigenvalues([1, 2])      # nominal case
     ... # doctest: +NORMALIZE_WHITESPACE
     array([1, 2])
     >>> check_psd_eigenvalues((5, 5j))     # significant imag part
