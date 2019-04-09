@@ -122,7 +122,6 @@ class SVC(BaseEstimator):
         self.coef0 = coef0
         self.tol = tol
         self.C = C
-        self.nu = 0.
         self.shrinking = shrinking
         self.probability = probability
         self.cache_size = cache_size
