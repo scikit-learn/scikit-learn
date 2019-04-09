@@ -978,16 +978,15 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     >>> agglo = cluster.FeatureAgglomeration(n_clusters=32)
     >>> agglo.fit(X) # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',
-                         connectivity=None, distance_threshold=None, linkage='ward',
-                         memory=None, n_clusters=32,
-                         pooling_func=...)
+                 connectivity=None, distance_threshold=None, linkage='ward',
+                 memory=None, n_clusters=32,
+                 pooling_func=...)
     >>> X_reduced = agglo.transform(X)
     >>> X_reduced.shape
     (1797, 32)
     """
 
-    def __init__(self, n_clusters=2,
-                 affinity="euclidean",
+    def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean,
