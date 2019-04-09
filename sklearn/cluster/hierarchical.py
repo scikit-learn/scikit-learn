@@ -722,10 +722,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     Attributes
     ----------
     n_clusters_ : int
-        The number of clusters to cut the tree at.
-        Initially set to `n_clusters`. If `distance_threshold` is set
-        then this value is set to the number of clusters to cut the tree
-        at to reach `distance_threshold`.
+        The number of clusters found by the algorithm. If
+        ``distance_threshold=None``, it will be equal to the given
+        ``n_clusters``. Otherwise it is set to the number of reported clusters.
 
     labels_ : array [n_samples]
         cluster labels for each point
@@ -852,7 +851,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             kwargs['linkage'] = self.linkage
             kwargs['affinity'] = self.affinity
 
-        self.n_clusters_ = self.n_clusters
         distance_threshold = self.distance_threshold
         # if distance_threshold is set then distances is returned
         if distance_threshold is not None:
@@ -868,6 +866,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                 memory.cache(tree_builder)(X, connectivity,
                                            n_clusters=n_clusters,
                                            **kwargs)
+            self.n_clusters_ = n_clusters
 
         self.children_ = ch
         self.n_connected_components_ = n_comps
