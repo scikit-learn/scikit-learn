@@ -90,6 +90,11 @@ Support for Python 3.4 and below has been officially dropped.
   ``n_connected_components_``.
   :issue:`13427` by :user:`Stephane Couvreur <scouvreur>`.
 
+- |Enhancement| :class:`cluster.AgglomerativeClustering` and
+  :class:`cluster.FeatureAgglomeration` now accept a ``distance_threshold``
+  parameter which can be used to find the clusters instead of ``n_clusters``.
+  :issue:`9069` by :user:`Vathsala Achar <VathsalaAchar>`.
+
 :mod:`sklearn.datasets`
 .......................
 
