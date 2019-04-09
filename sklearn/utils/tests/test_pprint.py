@@ -1,16 +1,12 @@
 import re
 from pprint import PrettyPrinter
 
-from sklearn.base import BaseEstimator
+import numpy as np
+
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
-from sklearn.pipeline import make_pipeline, Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import GridSearchCV
+from sklearn.pipeline import make_pipeline
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.svm import LinearSVC, SVC
-from sklearn.decomposition import NMF, PCA
-from sklearn.impute import SimpleImputer
-from sklearn.feature_extraction.text import CountVectorizer
 from sklearn import set_config
 
 
@@ -44,17 +40,137 @@ class LogisticRegression(BaseEstimator):
         return self
 
 
+class StandardScaler(BaseEstimator, TransformerMixin):
+    def __init__(self, copy=True, with_mean=True, with_std=True):
+        self.with_mean = with_mean
+        self.with_std = with_std
+        self.copy = copy
+
+    def transform(self, X, copy=None):
+        return self
+
+
 class RFE(BaseEstimator):
     def __init__(self, estimator, n_features_to_select=None, step=1,
-                 tune_step_at=None, tuning_step=1, reducing_step=False,
                  verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
-        self.tune_step_at = tune_step_at
-        self.tuning_step = tuning_step
-        self.reducing_step = reducing_step
         self.verbose = verbose
+
+
+class GridSearchCV(BaseEstimator):
+    def __init__(self, estimator, param_grid, scoring=None,
+                 n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
+                 pre_dispatch='2*n_jobs', error_score='raise-deprecating',
+                 return_train_score=False):
+        self.estimator = estimator
+        self.param_grid = param_grid
+        self.scoring = scoring
+        self.n_jobs = n_jobs
+        self.iid = iid
+        self.refit = refit
+        self.cv = cv
+        self.verbose = verbose
+        self.pre_dispatch = pre_dispatch
+        self.error_score = error_score
+        self.return_train_score = return_train_score
+
+
+class CountVectorizer(BaseEstimator):
+    def __init__(self, input='content', encoding='utf-8',
+                 decode_error='strict', strip_accents=None,
+                 lowercase=True, preprocessor=None, tokenizer=None,
+                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
+                 ngram_range=(1, 1), analyzer='word',
+                 max_df=1.0, min_df=1, max_features=None,
+                 vocabulary=None, binary=False, dtype=np.int64):
+        self.input = input
+        self.encoding = encoding
+        self.decode_error = decode_error
+        self.strip_accents = strip_accents
+        self.preprocessor = preprocessor
+        self.tokenizer = tokenizer
+        self.analyzer = analyzer
+        self.lowercase = lowercase
+        self.token_pattern = token_pattern
+        self.stop_words = stop_words
+        self.max_df = max_df
+        self.min_df = min_df
+        self.max_features = max_features
+        self.ngram_range = ngram_range
+        self.vocabulary = vocabulary
+        self.binary = binary
+        self.dtype = dtype
+
+
+class Pipeline(BaseEstimator):
+    def __init__(self, steps, memory=None):
+        self.steps = steps
+        self.memory = memory
+
+
+class SVC(BaseEstimator):
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated',
+                 coef0=0.0, shrinking=True, probability=False,
+                 tol=1e-3, cache_size=200, class_weight=None,
+                 verbose=False, max_iter=-1, decision_function_shape='ovr',
+                 random_state=None):
+        self.kernel = kernel
+        self.degree = degree
+        self.gamma = gamma
+        self.coef0 = coef0
+        self.tol = tol
+        self.C = C
+        self.shrinking = shrinking
+        self.probability = probability
+        self.cache_size = cache_size
+        self.class_weight = class_weight
+        self.verbose = verbose
+        self.max_iter = max_iter
+        self.decision_function_shape = decision_function_shape
+        self.random_state = random_state
+
+
+class PCA(BaseEstimator):
+    def __init__(self, n_components=None, copy=True, whiten=False,
+                 svd_solver='auto', tol=0.0, iterated_power='auto',
+                 random_state=None):
+        self.n_components = n_components
+        self.copy = copy
+        self.whiten = whiten
+        self.svd_solver = svd_solver
+        self.tol = tol
+        self.iterated_power = iterated_power
+        self.random_state = random_state
+
+
+class NMF(BaseEstimator):
+    def __init__(self, n_components=None, init=None, solver='cd',
+                 beta_loss='frobenius', tol=1e-4, max_iter=200,
+                 random_state=None, alpha=0., l1_ratio=0., verbose=0,
+                 shuffle=False):
+        self.n_components = n_components
+        self.init = init
+        self.solver = solver
+        self.beta_loss = beta_loss
+        self.tol = tol
+        self.max_iter = max_iter
+        self.random_state = random_state
+        self.alpha = alpha
+        self.l1_ratio = l1_ratio
+        self.verbose = verbose
+        self.shuffle = shuffle
+
+
+class SimpleImputer(BaseEstimator):
+    def __init__(self, missing_values=np.nan, strategy="mean",
+                 fill_value=None, verbose=0, copy=True):
+        self.missing_values = missing_values
+        self.strategy = strategy
+        self.fill_value = fill_value
+        self.verbose = verbose
+        self.copy = copy
 
 
 def test_basic():
@@ -125,12 +241,32 @@ def test_deeply_nested():
     expected = """
 RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=RFE(estimator=LogisticRegression(C=1.0,
                                                                                                                      class_weight=None,
-                                                                                          ...                  step=1, tune_step_at=None, tuning_step=1,
-                                verbose=0),
-                  n_features_to_select=None, reducing_step=False, step=1,
-                  tune_step_at=None, tuning_step=1, verbose=0),
-    n_features_to_select=None, reducing_step=False, step=1, tune_step_at=None,
-    tuning_step=1, verbose=0)"""
+                                                                                                                     dual=False,
+                                                                                                                     fit_intercept=True,
+                                                                                                                     intercept_scaling=1,
+                                                                                                                     l1_ratio=None,
+                                                                                                                     max_iter=100,
+                                                                                                                     multi_class='warn',
+                                                                                                                     n_jobs=None,
+                                                                                                                     penalty='l2',
+                                                                                                                     random_state=None,
+                                                                                                                     solver='warn',
+                                                                                                                     tol=0.0001,
+                                                                                                                     verbose=0,
+                                                                                                                     warm_start=False),
+                                                                                        n_features_to_select=None,
+                                                                                        step=1,
+                                                                                        verbose=0),
+                                                                          n_features_to_select=None,
+                                                                          step=1,
+                                                                          verbose=0),
+                                                            n_features_to_select=None,
+                                                            step=1, verbose=0),
+                                              n_features_to_select=None, step=1,
+                                              verbose=0),
+                                n_features_to_select=None, step=1, verbose=0),
+                  n_features_to_select=None, step=1, verbose=0),
+    n_features_to_select=None, step=1, verbose=0)"""
 
     expected = expected[1:]  # remove first \n
     assert rfe.__repr__() == expected
@@ -167,7 +303,7 @@ def test_gridsearch_pipeline():
 
     pipeline = Pipeline([
         ('reduce_dim', PCA()),
-        ('classify', LinearSVC())
+        ('classify', SVC())
     ])
     N_FEATURES_OPTIONS = [2, 4, 8]
     C_OPTIONS = [1, 10, 100, 1000]
@@ -194,15 +330,14 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
                                             svd_solver='auto', tol=0.0,
                                             whiten=False)),
                                        ('classify',
-                                        LinearSVC(C=1.0, class_weight=None,
-                                                  dual=True, fit_intercept=True,
-                                                  intercept_scaling=1,
-                                                  loss='squared_hinge',
-                                                  max_iter=1000,
-                                                  multi_class='ovr',
-                                                  penalty='l2',
-                                                  random_state=None, tol=0.0001,
-                                                  verbose=0))]),
+                                        SVC(C=1.0, cache_size=200,
+                                            class_weight=None, coef0=0.0,
+                                            decision_function_shape='ovr',
+                                            degree=3, gamma='auto_deprecated',
+                                            kernel='rbf', max_iter=-1,
+                                            probability=False,
+                                            random_state=None, shrinking=True,
+                                            tol=0.001, verbose=False))]),
              iid='warn', n_jobs=1,
              param_grid=[{'classify__C': [1, 10, 100, 1000],
                           'reduce_dim': [PCA(copy=True, iterated_power=7,
