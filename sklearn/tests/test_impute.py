@@ -1219,7 +1219,8 @@ def test_iterative_imputer_add_indicator(marker):
     assert_allclose(X_trans, X_true)
 
 
-@pytest.mark.parametrize("imputer_constructor", [SimpleImputer, IterativeImputer])
+@pytest.mark.parametrize("imputer_constructor",
+                         [SimpleImputer, IterativeImputer])
 def test_imputer_without_indicator(imputer_constructor):
     X = np.array([[1, 1],
                   [1, 1]])
