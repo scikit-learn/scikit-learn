@@ -459,7 +459,7 @@ def completeness_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
 
 
-def v_measure_score(labels_true, labels_pred):
+def v_measure_score(labels_true, labels_pred, beta=1.0):
     """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score` with
@@ -488,6 +488,9 @@ def v_measure_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
+
+    beta : double
+        ratio of weight attributed homogeneity vs completeness
 
     Returns
     -------
@@ -554,7 +557,9 @@ def v_measure_score(labels_true, labels_pred):
       0.0...
 
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
+    if beta == 1.0:
+        return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
+    # to implement
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
