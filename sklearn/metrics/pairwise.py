@@ -98,7 +98,7 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
         - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
           infinite.
 
-        .. versionadded:: 0.20
+        .. versionadded:: 0.20.3
 
     Returns
     -------
