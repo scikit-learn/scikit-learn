@@ -1439,7 +1439,21 @@ functions or non-estimator constructors.
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
     ``kernel``
-        TODO
+        
+        Kernels refer to a set of functions which are used by a series of algorithms
+        called Kernel Methods.
+        One such example of a kernel is the Radial Basis Function, `RBF`:
+
+            k(x_i, x_j) = exp(-1 / 2 d(x_i / length_scale, x_j / length_scale)^2)
+
+        Kernels are often set as a parameter of their parent algorithm like `SVC`
+        or `GaussianProcessClassifier` for example.
+
+        In both of these situations, the algorithm provides a ``kernel`` named parameter. For `SVC` this is a string object,
+        and for `GaussianProcessClassifier` this is a kernel object from :ref:`kernels <gp_kernels>`.
+        For Gaussian Process algorithms in particular, these inherit from the `Kernel` class.
+
+        For more infomration on Kernel Methods: https://en.wikipedia.org/wiki/Kernel_method
 
     ``max_iter``
         For estimators involving iterative optimization, this determines the
