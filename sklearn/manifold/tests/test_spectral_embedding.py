@@ -170,6 +170,14 @@ def test_spectral_embedding_amg_solver(seed=36):
     except ImportError:
         raise SkipTest("pyamg not available.")
 
+    # The generated graph below is NOT fully connected if n_neighbors=3
+    n_samples = 200
+    n_clusters = 3
+    n_features = 3
+    centers = np.eye(n_clusters, n_features)
+    S, true_labels = make_blobs(n_samples=n_samples, centers=centers,
+                                cluster_std=1., random_state=42)
+
     se_amg = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
                                eigen_solver="amg", n_neighbors=5,
                                random_state=np.random.RandomState(seed))
