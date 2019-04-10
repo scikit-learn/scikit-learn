@@ -1021,30 +1021,30 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     >>> check_psd_eigenvalues([1, 2])      # nominal case
     ... # doctest: +NORMALIZE_WHITESPACE
     array([1, 2])
-    >>> check_psd_eigenvalues((5, 5j))     # significant imag part
+    >>> check_psd_eigenvalues([5, 5j])     # significant imag part
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
     ValueError: There are significant imaginary parts in eigenvalues (1.000000
         of the maximum real part). The matrix is maybe not PSD, or something
         went wrong with the eigenvalues decomposition.
-    >>> check_psd_eigenvalues((5, 5e-5j))  # insignificant imag part
+    >>> check_psd_eigenvalues([5, 5e-5j])  # insignificant imag part
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
-    >>> check_psd_eigenvalues((-5, -1))    # all negative
+    >>> check_psd_eigenvalues([-5, -1])    # all negative
     ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     Traceback (most recent call last):
         ...
     ValueError: All eigenvalues are negative (maximum is -1.000000). The matrix
         is maybe not PSD, or something went wrong with the eigenvalues
         decomposition.
-    >>> check_psd_eigenvalues((5, -1))     # significant negative
+    >>> check_psd_eigenvalues([5, -1])     # significant negative
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5, 0])
-    >>> check_psd_eigenvalues((5, -5e-5))  # insignificant negative
+    >>> check_psd_eigenvalues([5, -5e-5])  # insignificant negative
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
-    >>> check_psd_eigenvalues((5, 4e-12))  # bad conditioning (too small)
+    >>> check_psd_eigenvalues([5, 4e-12])  # bad conditioning (too small)
     ... # doctest: +NORMALIZE_WHITESPACE
     array([5., 0.])
 
