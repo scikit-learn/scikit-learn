@@ -230,6 +230,12 @@ Support for Python 3.4 and below has been officially dropped.
   gradient boosting model has been trained with sample weights.
   :issue:`13193` by :user:`Samuel O. Ronsin <samronsin>`.
 
+- |Feature| Add :class:`ensemble.VotingRegressor`
+  which provides an equivalent of :class:`ensemble.VotingClassifier`
+  for regression problems.
+  :issue:`12513` by :user:`Ramil Nugmanov <stsouko>` and
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
+
 :mod:`sklearn.externals`
 ........................
 
