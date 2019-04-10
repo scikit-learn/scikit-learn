@@ -9,7 +9,7 @@ First, three exemplary regressors are initialized (`GradientBoostingRegressor`,
 `RandomForestRegressor`, and `LinearRegression`) and used to initialize a
 `VotingRegressor`.
 
-On plot red starred dots is averaged predictions.
+The red starred dots are the averaged predictions.
 
 """
 print(__doc__)
@@ -38,14 +38,16 @@ reg3.fit(X, y)
 ereg.fit(X, y)
 
 xt = X[:20]
-yt = y[:20]
 
 plt.figure()
-plt.plot(yt, reg1.predict(xt), 'gd', label='GradientBoostingRegressor')
-plt.plot(yt, reg2.predict(xt), 'b^', label='RandomForestRegressor')
-plt.plot(yt, reg3.predict(xt), 'ys', label='LinearRegression')
-plt.plot(yt, ereg.predict(xt), 'r*', label='VotingRegressor')
+plt.plot(reg1.predict(xt), 'gd', label='GradientBoostingRegressor')
+plt.plot(reg2.predict(xt), 'b^', label='RandomForestRegressor')
+plt.plot(reg3.predict(xt), 'ys', label='LinearRegression')
+plt.plot(ereg.predict(xt), 'r*', label='VotingRegressor')
+plt.tick_params(axis='x', which='both', bottom=False, top=False,
+                labelbottom=False)
 plt.ylabel('predicted')
-plt.xlabel('experimental')
+plt.xlabel('training samples')
 plt.legend(loc="best")
+plt.title('Comparison of individual predictions with averaged')
 plt.show()

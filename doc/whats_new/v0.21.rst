@@ -160,6 +160,11 @@ Support for Python 3.4 and below has been officially dropped.
   float64 for the ``stratified`` strategy. :issue:`13266` by
   :user:`Christos Aridas<chkoar>`.
 
+- |Fix| Fixed a bug in :class:`dummy.DummyClassifier` where it was throwing a
+  dimension mismatch error in prediction time if a column vector ``y`` with
+  ``shape=(n, 1)`` was given at ``fit`` time. :issue:`13545` by :user:`Nick
+  Sorros <nsorros>` and `Adrin Jalali`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -220,10 +225,15 @@ Support for Python 3.4 and below has been officially dropped.
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
 
+- |Fix| :func:`ensemble.partial_dependence` now takes sample weights into
+  account for the partial dependence computation when the
+  gradient boosting model has been trained with sample weights.
+  :issue:`13193` by :user:`Samuel O. Ronsin <samronsin>`.
+
 - |Feature| Add :class:`ensemble.VotingRegressor`
   which provides an equivalent of :class:`ensemble.VotingClassifier`
   for regression problems.
-  :issue:`10868` by :user:`Ramil Nugmanov <stsouko>` and
+  :issue:`12513` by :user:`Ramil Nugmanov <stsouko>` and
   :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
 :mod:`sklearn.externals`
@@ -244,6 +254,12 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| In :class:`impute.MissingIndicator` avoid implicit densification by
   raising an exception if input is sparse add `missing_values` property
   is set to 0. :issue:`13240` by :user:`Bartosz Telenczuk <btel>`.
+
+- |Fix| Fixed two bugs in :class:`MissingIndicator`. First, when ``X`` is
+  sparse, all the non-zero non missing values used to become explicit False in
+  the transformed data. Then, when ``features='missing-only'``, all features
+  used to be kept if there were no missing values at all. :issue:`13562` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -419,6 +435,10 @@ Support for Python 3.4 and below has been officially dropped.
   shuffles each class's samples with the same ``random_state``,
   making ``shuffle=True`` ineffective.
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- |Fix| Added ability for :func:`model_selection.cross_val_predict` to handle
+  multi-label (and multioutput-multiclass) targets with ``predict_proba``-type
+  methods. :issue:`8773` by :user:`Stephen Hoover <stephen-hoover>`.
 
 - |Fix| Fixed an issue in :func:`~model_selection.cross_val_predict` where
   `method="predict_proba"` returned always `0.0` when one of the classes was

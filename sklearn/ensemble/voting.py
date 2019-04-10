@@ -156,7 +156,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
         the sums of the predicted probabilities, which is recommended for
         an ensemble of well-calibrated classifiers.
 
-    weights : array-like, shape = [n_classifiers], optional (default=`None`)
+    weights : array-like, shape (n_classifiers,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted class labels (`hard` voting) or class probabilities
         before averaging (`soft` voting). Uses uniform weights if `None`.
@@ -185,7 +185,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
 
         .. versionadded:: 0.20
 
-    classes_ : array-like, shape = [n_predictions]
+    classes_ : array-like, shape (n_predictions,)
         The classes labels.
 
     Examples
@@ -242,14 +242,14 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like, shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -277,12 +277,12 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples.
 
         Returns
         ----------
-        maj : array-like, shape = [n_samples]
+        maj : array-like, shape (n_samples,)
             Predicted class labels.
         """
 
@@ -321,12 +321,12 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples.
 
         Returns
         ----------
-        avg : array-like, shape = [n_samples, n_classes]
+        avg : array-like, shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
         return self._predict_proba
@@ -336,7 +336,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
@@ -384,7 +384,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
         attribute ``self.estimators_``. An estimator can be set to `None`
         using ``set_params``.
 
-    weights : array-like, shape = [n_regressors], optional (default=`None`)
+    weights : array-like, shape (n_regressors,), optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
         predicted values before averaging. Uses uniform weights if `None`.
 
@@ -432,14 +432,14 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape = [n_samples] or None
+        sample_weight : array-like, shape (n_samples,) or None
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
@@ -458,12 +458,12 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        y : array of shape = [n_samples]
+        y : array of shape (n_samples,)
             The predicted values.
         """
         check_is_fitted(self, "estimators_")
@@ -475,7 +475,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input samples.
 
         Returns
