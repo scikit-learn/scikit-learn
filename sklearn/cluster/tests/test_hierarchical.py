@@ -652,6 +652,35 @@ def test_agglomerative_clustering_with_distance_threshold():
             assert np.array_equiv(clusters_produced,
                                   clusters_at_threshold)
 
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    X = rng.randint(-3, 3, size=(n_samples, 3))
+    # this should result in all data in their own clusters
+    clustering = AgglomerativeClustering(
+        distance_threshold=1,
+        linkage="single").fit(X)
+    assert len(np.unique(clustering.labels_)) == 10
+
+    # check the distances within the clusters and with other clusters
+    threshold = 2
+    clustering = AgglomerativeClustering(
+        distance_threshold=threshold,
+        linkage="single").fit(X)
+    labels = clustering.labels_
+    D = pairwise_distances(X, metric="euclidean")
+    # to avoid taking the 0 diagonal in min()
+    np.fill_diagonal(D, np.inf)
+    for i in np.unique(labels):
+        in_cluster_mask = labels == i
+        max_in_cluster_distance = (D[in_cluster_mask][:, in_cluster_mask]
+                                   .min(axis=0).max())
+        min_out_cluster_distance = (D[in_cluster_mask][:, ~in_cluster_mask]
+                                    .min(axis=0).min())
+        # single data point clusters only have that inf diagonal here
+        if in_cluster_mask.sum() > 1:
+            assert max_in_cluster_distance < threshold
+        assert min_out_cluster_distance >= threshold
+
 
 def test_agglomerative_clustering_with_distance_threshold_edge_case():
     # test boundary case of distance_threshold matching the distance
