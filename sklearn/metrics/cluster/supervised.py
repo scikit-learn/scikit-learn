@@ -239,7 +239,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
 
-def homogeneity_completeness_v_measure(labels_true, labels_pred):
+def homogeneity_completeness_v_measure(labels_true, labels_pred, beta=1.0):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
     Those metrics are based on normalized conditional entropy measures of
@@ -308,9 +308,12 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
 
     if homogeneity + completeness == 0.0:
         v_measure_score = 0.0
-    else:
+    elif beta == 1.0:
         v_measure_score = (2.0 * homogeneity * completeness /
                            (homogeneity + completeness))
+    else:
+        v_measure_score = ((1 + beta) * homogeneity * completeness
+                           / ((beta * homogeneity) + completeness))
 
     return homogeneity, completeness, v_measure_score
 
@@ -557,9 +560,7 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
       0.0...
 
     """
-    if beta == 1.0:
-        return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
-    # to implement
+    return homogeneity_completeness_v_measure(labels_true, labels_pred, beta=beta)[2]
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
