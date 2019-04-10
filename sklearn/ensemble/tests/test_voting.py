@@ -150,22 +150,25 @@ def test_weights_regressor():
     X_r_train, X_r_test, y_r_train, y_r_test = \
         train_test_split(X_r, y_r, test_size=.25)
 
-    reg1_y = reg1.fit(X_r_train, y_r_train).predict(X_r_test)
-    reg2_y = reg2.fit(X_r_train, y_r_train).predict(X_r_test)
-    reg3_y = reg3.fit(X_r_train, y_r_train).predict(X_r_test)
-    ereg_y = ereg.fit(X_r_train, y_r_train).predict(X_r_test)
+    reg1_pred = reg1.fit(X_r_train, y_r_train).predict(X_r_test)
+    reg2_pred = reg2.fit(X_r_train, y_r_train).predict(X_r_test)
+    reg3_pred = reg3.fit(X_r_train, y_r_train).predict(X_r_test)
+    ereg_pred = ereg.fit(X_r_train, y_r_train).predict(X_r_test)
 
-    avg = np.average(np.asarray([reg1_y, reg2_y, reg3_y]), axis=0,
+    avg = np.average(np.asarray([reg1_pred, reg2_pred, reg3_pred]), axis=0,
                      weights=[1, 2, 10])
-    assert_almost_equal(ereg_y, avg, decimal=2)
+    assert_almost_equal(ereg_pred, avg, decimal=2)
 
-    ereg_n = VotingRegressor([('mean', reg1), ('median', reg2),
-                              ('quantile', reg3)], weights=None)
-    ereg_o = VotingRegressor([('mean', reg1), ('median', reg2),
-                              ('quantile', reg3)], weights=[1, 1, 1])
-    ereg_n_y = ereg_n.fit(X_r_train, y_r_train).predict(X_r_test)
-    ereg_o_y = ereg_o.fit(X_r_train, y_r_train).predict(X_r_test)
-    assert_almost_equal(ereg_n_y, ereg_o_y, decimal=2)
+    ereg_weights_none = VotingRegressor([('mean', reg1), ('median', reg2),
+                                         ('quantile', reg3)], weights=None)
+    ereg_weights_equal = VotingRegressor([('mean', reg1), ('median', reg2),
+                                          ('quantile', reg3)],
+                                         weights=[1, 1, 1])
+    ereg_weights_none.fit(X_r_train, y_r_train)
+    ereg_weights_equal.fit(X_r_train, y_r_train)
+    ereg_none_pred = ereg_weights_none.predict(X_r_test)
+    ereg_equal_pred = ereg_weights_equal.predict(X_r_test)
+    assert_almost_equal(ereg_none_pred, ereg_equal_pred, decimal=2)
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
