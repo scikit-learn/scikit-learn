@@ -179,10 +179,10 @@ def test_spectral_embedding_amg_solver(seed=36):
                                 cluster_std=1., random_state=42)
 
     se_amg = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
-                               eigen_solver="amg", n_neighbors=5,
+                               eigen_solver="amg", n_neighbors=3,
                                random_state=np.random.RandomState(seed))
     se_arpack = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
-                                  eigen_solver="arpack", n_neighbors=5,
+                                  eigen_solver="arpack", n_neighbors=3,
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
