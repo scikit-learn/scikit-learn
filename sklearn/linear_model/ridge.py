@@ -898,6 +898,19 @@ def _sparse_multidot_diag(X, A, Xm, with_intercept=True):
     return diag
 
 
+def _check_gcv_mode(X, sample_weights):
+    sparse_x = sparse.issparse(X)
+    with_sample_weights = np.ndim(sample_weights) > 0
+    if with_sample_weights and sparse_x:
+        warnings.warn(
+            'generalized cross-validation with sparse X and sample weights'
+            'not supported yet')
+        return None
+    if X.shape[0] > X.shape[1]:
+        return 'svd'
+    return 'eigen'
+
+
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Generalized Cross-Validation
 
@@ -1158,18 +1171,10 @@ class _RidgeGCV(LinearModel):
             sample_weight=sample_weight)
 
         gcv_mode = self.gcv_mode
-        with_sw = len(np.shape(sample_weight))
-
+        best_gcv_mode = _check_gcv_mode(X, sample_weight)
+        assert (best_gcv_mode is not None)
         if gcv_mode is None or gcv_mode == 'auto':
-            if n_features > n_samples:
-                gcv_mode = 'eigen'
-            else:
-                gcv_mode = 'svd'
-        elif gcv_mode == "svd" and with_sw:
-            # FIXME non-uniform sample weights not yet supported
-            warnings.warn("non-uniform sample weights unsupported for svd, "
-                          "forcing usage of eigen")
-            gcv_mode = 'eigen'
+            gcv_mode = best_gcv_mode
 
         if gcv_mode == 'eigen':
             _pre_compute = self._pre_compute
