@@ -1123,3 +1123,7 @@ The following example shows how to fit the VotingRegressor::
     :target: ../auto_examples/ensemble/plot_voting_regressor.html
     :align: center
     :scale: 75%
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor`: an example of voting regressor.
