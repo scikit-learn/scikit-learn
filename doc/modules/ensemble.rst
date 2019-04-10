@@ -1126,4 +1126,4 @@ The following example shows how to fit the VotingRegressor::
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor`: an example of voting regressor.
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor.py`
