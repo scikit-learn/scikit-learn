@@ -256,6 +256,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         super().partial_fit(
             X, y, sample_weight=sample_weight)
 
+    # XXX Remove this method in 0.23
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 

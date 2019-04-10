@@ -1671,14 +1671,14 @@ def test_elastic_net_versus_sgd(C, l1_ratio):
     n_samples = 500
     X, y = make_classification(n_samples=n_samples, n_classes=2, n_features=5,
                                n_informative=5, n_redundant=0, n_repeated=0,
-                               random_state=0)
+                               random_state=1)
     X = scale(X)
 
     sgd = SGDClassifier(
-        penalty='elasticnet', random_state=0, fit_intercept=False, tol=-np.inf,
+        penalty='elasticnet', random_state=1, fit_intercept=False, tol=-np.inf,
         max_iter=2000, l1_ratio=l1_ratio, alpha=1. / C / n_samples, loss='log')
     log = LogisticRegression(
-        penalty='elasticnet', random_state=0, fit_intercept=False, tol=1e-5,
+        penalty='elasticnet', random_state=1, fit_intercept=False, tol=1e-5,
         max_iter=1000, l1_ratio=l1_ratio, C=C, solver='saga')
 
     sgd.fit(X, y)
