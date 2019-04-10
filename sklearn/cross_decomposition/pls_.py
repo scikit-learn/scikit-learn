@@ -273,7 +273,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin, MultiOutputMixin,
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (
             _center_scale_xy(X, Y, self.scale))
         # Check for constant features
-        if any((Y == Y[0,:]).all(0)):
+        if any((Y == Y[0, :]).all(0)):
             raise ValueError("Constant feature found in 'Y': make sure all "
                              "features contain at least some distinct values")
         # Residuals (deflated) matrices
