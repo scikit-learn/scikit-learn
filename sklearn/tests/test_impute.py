@@ -1215,5 +1215,15 @@ def test_iterative_imputer_add_indicator(marker):
     imputer = IterativeImputer(missing_values=marker,
                                max_iter=1,
                                add_indicator=True)
-    X_trans = imputer.fit_transform(X)
+    X_trans = imputer.fit(X).transform(X)
     assert_allclose(X_trans, X_true)
+
+
+@pytest.mark.parametrize("imputer_constructor", [SimpleImputer, IterativeImputer])
+def test_imputer_without_indicator(imputer_constructor):
+    X = np.array([[1, 1],
+                  [1, 1]])
+    imputer = imputer_constructor()
+    imputer.fit(X)
+
+    assert imputer.indicator_ is None
