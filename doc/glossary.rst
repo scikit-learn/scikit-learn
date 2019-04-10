@@ -1336,7 +1336,12 @@ Methods
         often the likelihood of the data under the model.
 
     ``score_samples``
-        TODO
+        A method on an array of data points, which evaluates its predictions on
+        the given dataset, and returns an array consisting of log evaluations
+        for each.
+
+        It returns low values for high-dimensional data since evaluations are
+        normalized to probability densities. 
 
         If the estimator was not already :term:`fitted`, calling this method
         should raise a :class:`exceptions.NotFittedError`.
@@ -1439,7 +1444,7 @@ functions or non-estimator constructors.
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
     ``kernel``
-        
+
         Kernels refer to a set of functions which are used by a series of algorithms
         called Kernel Methods.
         One such example of a kernel is the Radial Basis Function, `RBF`:
