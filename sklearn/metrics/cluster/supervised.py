@@ -275,6 +275,9 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, beta=1.0):
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
 
+    beta : float
+        ratio of weight attributed homogeneity vs completeness
+
     Returns
     -------
     homogeneity : float
@@ -489,7 +492,7 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
 
-    beta : double
+    beta : float
         ratio of weight attributed homogeneity vs completeness
 
     Returns
