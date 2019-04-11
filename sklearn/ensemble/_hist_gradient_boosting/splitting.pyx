@@ -329,7 +329,7 @@ cdef class Splitter:
 
         Parameters
         ----------
-        sample_indices : array of int
+        sample_indices : ndarray of unsigned int, shape (n_samples_at_node,)
             The indices of the samples at the node to split.
         histograms : array of HISTOGRAM_DTYPE of \
                 shape(n_features, max_bins)
