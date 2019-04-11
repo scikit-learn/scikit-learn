@@ -157,7 +157,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, alpha_0=None, lambda_0=None):
         """Fit the model
 
         Parameters
@@ -199,8 +199,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
         eps = np.finfo(np.float64).eps
         # Add `eps` in the denominator to omit division by zero if `np.var(y)`
         # is zero
-        alpha_ = 1. / (np.var(y) + eps)
-        lambda_ = 1.
+        if alpha_0 is None:
+            alpha_0 = 1. / (np.var(y) + eps)
+        if lambda_0 is None:
+            lambda_0 = 1.
+        alpha_ = alpha_0
+        lambda_ = lambda_0
 
         verbose = self.verbose
         lambda_1 = self.lambda_1
