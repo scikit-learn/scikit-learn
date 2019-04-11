@@ -308,9 +308,6 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, beta=1.0):
 
     if homogeneity + completeness == 0.0:
         v_measure_score = 0.0
-    elif beta == 1.0:
-        v_measure_score = (2.0 * homogeneity * completeness /
-                           (homogeneity + completeness))
     else:
         v_measure_score = ((1 + beta) * homogeneity * completeness
                            / ((beta * homogeneity) + completeness))
