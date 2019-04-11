@@ -89,12 +89,12 @@ cdef class Splitter:
 
     Parameters
     ----------
-    X_binned : array of int
+    X_binned : ndarray of int, shape(n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
-    max_bins : int, optional(default=256)
+    max_bins : int, optional (default=256)
         The maximum number of bins. Used to define the shape of the
         histograms.
-    actual_n_bins : array-like of int
+    actual_n_bins : ndarray, shape (n_features,)
         The actual number of bins needed for each feature, which is lower or
         equal to max_bins.
     l2_regularization : float
