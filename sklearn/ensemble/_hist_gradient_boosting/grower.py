@@ -118,12 +118,12 @@ class TreeGrower:
 
     Parameters
     ----------
-    X_binned : array-like of int, shape=(n_samples, n_features)
+    X_binned : ndarray of int, shape (n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
-    gradients : array-like, shape=(n_samples,)
+    gradients : ndarray, shape (n_samples,)
         The gradients of each training sample. Those are the gradients of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
-    hessians : array-like, shape=(n_samples,)
+    hessians : ndarray, shape (n_samples,)
         The hessians of each training sample. Those are the hessians of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
     max_leaf_nodes : int or None, optional (default=None)
