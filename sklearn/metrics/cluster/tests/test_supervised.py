@@ -125,6 +125,7 @@ def test_not_complete_and_not_homogeneous_labeling():
     assert_almost_equal(c, 0.42, 2)
     assert_almost_equal(v, 0.52, 2)
 
+
 def test_beta_parameter():
     # neither complete nor homogeneous but not so bad either
     h, c, v = homogeneity_completeness_v_measure(
@@ -134,6 +135,7 @@ def test_beta_parameter():
     assert_almost_equal(h, 0.67, 2)
     assert_almost_equal(c, 0.42, 2)
     assert_almost_equal(v, 0.61, 2)
+
 
 def test_non_consecutive_labels():
     # regression tests for labels with gaps
