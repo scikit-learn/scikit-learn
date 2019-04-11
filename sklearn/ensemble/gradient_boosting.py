@@ -1714,8 +1714,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         total_sum = np.zeros((self.n_features_, ), dtype=np.float64)
         for stage in self.estimators_:
+            trees = [tree for tree in stage if tree.tree_.node_count > 1]
+            if len(trees) == 0:
+                continue
             stage_sum = sum(tree.tree_.compute_feature_importances(
-                normalize=False) for tree in stage) / len(stage)
+                normalize=False) for tree in trees) / len(trees)
             total_sum += stage_sum
 
         importances = total_sum / total_sum.sum()
