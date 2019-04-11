@@ -105,9 +105,11 @@ cdef class Splitter:
         min_hessian_to_split are discarded.
     min_samples_leaf : int
         The minimum number of samples per leaf.
-    min_gain_to_split : float, optional(default=0.)
+    min_gain_to_split : float
         The minimum gain needed to split a node. Splits with lower gain will
         be ignored.
+    hessians_are_constant: bool
+        Whether hessians are constant.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
@@ -171,7 +173,7 @@ cdef class Splitter:
         ----------
         split_info : SplitInfo
             The SplitInfo of the node to split
-        sample_indices : array of unsigned int
+        sample_indices : ndarray of unsigned int, shape (n_samples_at_node,)
             The indices of the samples at the node to split. This is a view
             on self.partition, and it is modified inplace by placing the
             indices of the left child at the beginning, and the indices of

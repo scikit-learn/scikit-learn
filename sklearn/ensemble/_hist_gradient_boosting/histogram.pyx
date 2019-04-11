@@ -72,6 +72,8 @@ cdef class HistogramBuilder:
     hessians : array-like, shape=(n_samples,)
         The hessians of each training sample. Those are the hessians of the
         loss w.r.t the predictions, evaluated at iteration i - 1.
+    hessians_are_constant: bool
+        Whether hessians are constant.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
