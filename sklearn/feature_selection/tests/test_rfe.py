@@ -23,7 +23,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
 
-class MockClassifier(object):
+class MockClassifier:
     """
     Dummy classifier to test recursive feature elimination
     """
@@ -250,7 +250,7 @@ def test_rfecv_grid_scores_size():
         assert rfecv.n_features_ >= min_features_to_select
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
     assert_equal(rfe._estimator_type, "classifier")
@@ -342,7 +342,7 @@ def test_number_of_subsets_of_features():
                      formula2(n_features, n_features_to_select, step))
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_rfe_cv_n_jobs():
     generator = check_random_state(0)
     iris = load_iris()

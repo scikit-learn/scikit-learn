@@ -24,14 +24,16 @@ from scipy import sparse
 from scipy.special import expit
 
 from ..utils._joblib import Parallel, delayed
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                    MultiOutputMixin)
 from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
-from ..utils.seq_dataset import ArrayDataset, CSRDataset
+from ..utils.seq_dataset import ArrayDataset32, CSRDataset32
+from ..utils.seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
 from ..preprocessing.data import normalize as f_normalize
@@ -75,15 +77,22 @@ def make_dataset(X, y, sample_weight, random_state=None):
     """
 
     rng = check_random_state(random_state)
-    # seed should never be 0 in SequentialDataset
+    # seed should never be 0 in SequentialDataset64
     seed = rng.randint(1, np.iinfo(np.int32).max)
 
+    if X.dtype == np.float32:
+        CSRData = CSRDataset32
+        ArrayData = ArrayDataset32
+    else:
+        CSRData = CSRDataset64
+        ArrayData = ArrayDataset64
+
     if sp.issparse(X):
-        dataset = CSRDataset(X.data, X.indptr, X.indices, y, sample_weight,
-                             seed=seed)
+        dataset = CSRData(X.data, X.indptr, X.indices, y, sample_weight,
+                          seed=seed)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
-        dataset = ArrayDataset(X, y, sample_weight, seed=seed)
+        dataset = ArrayData(X, y, sample_weight, seed=seed)
         intercept_decay = 1.0
 
     return dataset, intercept_decay
@@ -301,7 +310,7 @@ class LinearClassifierMixin(ClassifierMixin):
             return prob
 
 
-class SparseCoefMixin(object):
+class SparseCoefMixin:
     """Mixin for converting coef_ to and from CSR format.
 
     L1-regularizing estimators should inherit this.
@@ -355,7 +364,7 @@ class SparseCoefMixin(object):
         return self
 
 
-class LinearRegression(LinearModel, RegressorMixin):
+class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     """
     Ordinary least squares Linear Regression.
 
@@ -458,21 +467,34 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
-            copy=self.copy_X, sample_weight=sample_weight)
+            copy=self.copy_X, sample_weight=sample_weight,
+            return_mean=True)
 
         if sample_weight is not None:
             # Sample weight can be implemented via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
         if sp.issparse(X):
+            X_offset_scale = X_offset / X_scale
+
+            def matvec(b):
+                return X.dot(b) - b.dot(X_offset_scale)
+
+            def rmatvec(b):
+                return X.T.dot(b) - X_offset_scale * np.sum(b)
+
+            X_centered = sparse.linalg.LinearOperator(shape=X.shape,
+                                                      matvec=matvec,
+                                                      rmatvec=rmatvec)
+
             if y.ndim < 2:
-                out = sparse_lsqr(X, y)
+                out = sparse_lsqr(X_centered, y)
                 self.coef_ = out[0]
                 self._residues = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(sparse_lsqr)(X, y[:, j].ravel())
+                    delayed(sparse_lsqr)(X_centered, y[:, j].ravel())
                     for j in range(y.shape[1]))
                 self.coef_ = np.vstack([out[0] for out in outs])
                 self._residues = np.vstack([out[3] for out in outs])

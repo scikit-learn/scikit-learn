@@ -1,6 +1,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 #
 # Author: Peter Prettenhofer
 #
@@ -341,15 +342,15 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                     # push left child
                     node_stack[stack_size] = root_node + current_node.left_child
                     current_weight = weight_stack[stack_size]
-                    left_sample_frac = root_node[current_node.left_child].n_node_samples / \
-                                       <double>current_node.n_node_samples
+                    left_sample_frac = root_node[current_node.left_child].weighted_n_node_samples / \
+                                       current_node.weighted_n_node_samples
                     if left_sample_frac <= 0.0 or left_sample_frac >= 1.0:
-                        raise ValueError("left_sample_frac:%f, "
-                                         "n_samples current: %d, "
-                                         "n_samples left: %d"
+                        raise ValueError("left_sample_frac:%d, "
+                                         "weighted_n_node_samples current: %d, "
+                                         "weighted_n_node_samples left: %d"
                                          % (left_sample_frac,
-                                            current_node.n_node_samples,
-                                            root_node[current_node.left_child].n_node_samples))
+                                            current_node.weighted_n_node_samples,
+                                            root_node[current_node.left_child].weighted_n_node_samples))
                     weight_stack[stack_size] = current_weight * left_sample_frac
                     stack_size +=1
 

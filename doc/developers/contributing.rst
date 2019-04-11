@@ -213,6 +213,22 @@ then submit a "pull request" (PR):
     and start making changes. Always use a ``feature`` branch. It's good practice to
     never work on the ``master`` branch!
 
+.. note::
+
+  In the above setup, your ``origin`` remote repository points to
+  ``YourLogin/scikit-learn.git``. If you wish to fetch/merge from the main
+  repository instead of your forked one, you will need to add another remote
+  to use instead of ``origin``. If we choose the name ``upstream`` for it, the
+  command will be::
+
+        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+
+  And in order to fetch the new remote and base your work on the latest changes
+  of it you can::
+
+        $ git fetch upstream
+        $ git checkout -b my-feature upstream/master
+
  6. Develop the feature on your feature branch on your computer, using Git to do the
     version control. When you're done editing, add changed files using ``git add``
     and then ``git commit`` files::
@@ -235,15 +251,6 @@ then submit a "pull request" (PR):
   If you are modifying a Cython module, you have to re-run step 4 after modifications
   and before testing them.
 
-.. note::
-
-  In the above setup, your ``origin`` remote repository points to
-  YourLogin/scikit-learn.git. If you wish to fetch/merge from the main
-  repository instead of your forked one, you will need to add another remote
-  to use instead of ``origin``. If we choose the name ``upstream`` for it, the
-  command will be::
-
-        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
@@ -251,11 +258,11 @@ If any of the above seems like magic to you, then look up the `Git documentation
 web, or ask a friend or another contributor for help.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
-to merge ``master``. The command will be::
+to merge ``master``. For that, you first need to fetch the ``upstream``, and
+then merge its ``master`` into your branch::
 
-  $ git merge master
-
-with ``master`` being synchronized with the ``upstream``.
+  $ git fetch upstream
+  $ git merge upstream/master
 
 Subsequently, you need to solve the conflicts. You can refer to the `Git
 documentation related to resolving merge conflict using the command line
@@ -271,12 +278,12 @@ documentation related to resolving merge conflict using the command line
 Contributing pull requests
 --------------------------
 
-We recommend that that your contribution complies with the following
+We recommend that your contribution complies with the following
 rules before submitting a pull request:
 
 * Follow the `coding-guidelines`_ (see below). To make sure that
   your PR does not add PEP8 violations you can run
-  `./build_tools/travis/flake8_diff.sh` or `make flake8-diff` on a
+  `./build_tools/circle/flake8_diff.sh` or `make flake8-diff` on a
   Unix-like system.
 
 * When applicable, use the validation tools and scripts in the
@@ -329,8 +336,7 @@ rules before submitting a pull request:
   accepted. Bug-fixes or new features should be provided with
   `non-regression tests
   <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
-  verify the correct behavior of the fix or feature. These tests verify the
-  correct behavior of the fix or feature. In this manner, further
+  verify the correct behavior of the fix or feature. In this manner, further
   modifications on the code base are granted to be consistent with the
   desired behavior. For the case of bug fixes, at the time of the PR, the
   non-regression tests should fail for the code base in the master branch
@@ -491,7 +497,7 @@ You can edit the documentation using any text editor, and then generate the
 HTML output by typing ``make html`` from the ``doc/`` directory. Alternatively,
 ``make`` can be used to quickly generate the documentation without the example
 gallery. The resulting HTML files will be placed in ``_build/html/stable`` and are viewable
-in a web browser. See the ``README``file in the ``doc/`` directory for more information.
+in a web browser. See the ``README`` file in the ``doc/`` directory for more information.
 
 
 Building the documentation
@@ -637,6 +643,8 @@ We expect code coverage of new features to be at least around 90%.
 
    3. Loop.
 
+For guidelines on how to use ``pytest`` efficiently, see the
+:ref:`pytest_tips`.
 
 
 Developers web site
@@ -1420,22 +1428,18 @@ advised to maintain notes on the `GitHub wiki
 Specific models
 ---------------
 
-Classifiers should accept ``y`` (target) arguments to ``fit``
-that are sequences (lists, arrays) of either strings or integers.
-They should not assume that the class labels
-are a contiguous range of integers;
-instead, they should store a list of classes
-in a ``classes_`` attribute or property.
-The order of class labels in this attribute
-should match the order in which ``predict_proba``, ``predict_log_proba``
-and ``decision_function`` return their values.
-The easiest way to achieve this is to put::
+Classifiers should accept ``y`` (target) arguments to ``fit`` that are
+sequences (lists, arrays) of either strings or integers.  They should not
+assume that the class labels are a contiguous range of integers; instead, they
+should store a list of classes in a ``classes_`` attribute or property.  The
+order of class labels in this attribute should match the order in which
+``predict_proba``, ``predict_log_proba`` and ``decision_function`` return their
+values.  The easiest way to achieve this is to put::
 
     self.classes_, y = np.unique(y, return_inverse=True)
 
-in ``fit``.
-This returns a new ``y`` that contains class indexes, rather than labels,
-in the range [0, ``n_classes``).
+in ``fit``.  This returns a new ``y`` that contains class indexes, rather than
+labels, in the range [0, ``n_classes``).
 
 A classifier's ``predict`` method should return
 arrays containing class labels from ``classes_``.
@@ -1446,13 +1450,100 @@ this can be achieved with::
         D = self.decision_function(X)
         return self.classes_[np.argmax(D, axis=1)]
 
-In linear models, coefficients are stored in an array called ``coef_``,
-and the independent term is stored in ``intercept_``.
-``sklearn.linear_model.base`` contains a few base classes and mixins
-that implement common linear model patterns.
+In linear models, coefficients are stored in an array called ``coef_``, and the
+independent term is stored in ``intercept_``.  ``sklearn.linear_model.base``
+contains a few base classes and mixins that implement common linear model
+patterns.
 
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
+
+.. _estimator_tags:
+
+Estimator Tags
+--------------
+.. warning::
+
+    The estimator tags are experimental and the API is subject to change.
+
+Scikit-learn introduced estimator tags in version 0.21.  These are annotations
+of estimators that allow programmatic inspection of their capabilities, such as
+sparse matrix support, supported output types and supported methods.  The
+estimator tags are a dictionary returned by the method ``_get_tags()``.  These
+tags are used by the common tests and the :func:`sklearn.utils.estimator_checks.check_estimator` function to
+decide what tests to run and what input data is appropriate. Tags can depend on
+estimator parameters or even system architecture and can in general only be
+determined at runtime.
+
+The default value of all tags except for ``X_types`` is ``False``. These are
+defined in the ``BaseEstimator`` class.
+
+The current set of estimator tags are:
+
+non_deterministic
+    whether the estimator is not deterministic given a fixed ``random_state``
+
+requires_positive_data - unused for now
+    whether the estimator requires positive X.
+
+no_validation
+    whether the estimator skips input-validation. This is only meant for stateless and dummy transformers!
+
+multioutput - unused for now
+    whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
+
+multilabel
+    whether the estimator supports multilabel output
+
+stateless
+    whether the estimator needs access to data for fitting. Even though
+    an estimator is stateless, it might still need a call to ``fit`` for initialization.
+
+allow_nan
+    whether the estimator supports data with missing values encoded as np.NaN
+
+poor_score
+    whether the estimator fails to provide a "reasonable" test-set score, which
+    currently for regression is an R2 of 0.5 on a subset of the boston housing
+    dataset, and for classification an accuracy of 0.83 on
+    ``make_blobs(n_samples=300, random_state=0)``. These datasets and values
+    are based on current estimators in sklearn and might be replaced by
+    something more systematic.
+
+multioutput_only
+    whether estimator supports only multi-output classification or regression.
+
+_skip_test
+    whether to skip common tests entirely. Don't use this unless you have a *very good* reason.
+
+X_types
+    Supported input types for X as list of strings. Tests are currently only run if '2darray' is contained
+    in the list, signifying that the estimator takes continuous 2d numpy arrays as input. The default
+    value is ['2darray']. Other possible types are ``'string'``, ``'sparse'``,
+    ``'categorical'``, ``dict``, ``'1dlabels'`` and ``'2dlabels'``.
+    The goal is that in the future the supported input type will determine the
+    data used during testing, in particular for ``'string'``, ``'sparse'`` and
+    ``'categorical'`` data.  For now, the test for sparse data do not make use
+    of the ``'sparse'`` tag.
+
+
+To override the tags of a child class, one must define the `_more_tags()`
+method and return a dict with the desired tags, e.g::
+
+    class MyMultiOutputEstimator(BaseEstimator):
+
+        def _more_tags(self):
+            return {'multioutput_only': True,
+                    'non_deterministic': True}
+
+In addition to the tags, estimators also need to declare any non-optional
+parameters to ``__init__`` in the ``_required_parameters`` class attribute,
+which is a list or tuple.  If ``_required_parameters`` is only
+``["estimator"]`` or ``["base_estimator"]``, then the estimator will be
+instantiated with an instance of ``LinearDiscriminantAnalysis`` (or
+``RidgeRegression`` if the estimator is a regressor) in the tests. The choice
+of these two models is somewhat idiosyncratic but both should provide robust
+closed-form solutions.
 
 .. _reading-code:
 
