@@ -9,6 +9,7 @@ the gradients and hessians of the training data.
 from heapq import heappush, heappop
 import numpy as np
 from timeit import default_timer as time
+import numbers
 
 from .splitting import Splitter
 from .histogram import HistogramBuilder
@@ -140,7 +141,7 @@ class TreeGrower:
     max_bins : int, optional (default=256)
         The maximum number of bins. Used to define the shape of the
         histograms.
-    actual_n_bins : array-like of int or int, optional (default=None)
+    actual_n_bins : ndarray of int or int, optional (default=None)
         The actual number of bins needed for each feature, which is lower or
         equal to ``max_bins``. If it's an int, all features are considered to
         have the same number of bins. If None, all features are considered to
@@ -167,10 +168,12 @@ class TreeGrower:
         if actual_n_bins is None:
             actual_n_bins = max_bins
 
-        if isinstance(actual_n_bins, int):
+        if isinstance(actual_n_bins, numbers.Integral):
             actual_n_bins = np.array(
                 [actual_n_bins] * X_binned.shape[1],
                 dtype=np.uint32)
+        else:
+            actual_n_bins = np.asarray(actual_n_bins, dtype=np.uint32)
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
