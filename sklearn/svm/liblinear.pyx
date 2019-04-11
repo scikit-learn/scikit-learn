@@ -1,3 +1,4 @@
+# cython: language_level=3
 """
 Wrapper for liblinear
 
@@ -6,7 +7,8 @@ Author: fabian.pedregosa@inria.fr
 
 import  numpy as np
 cimport numpy as np
-cimport liblinear
+
+from ..utils._cython_blas cimport _dot, _axpy, _scal, _nrm2
 
 np.import_array()
 
@@ -49,10 +51,16 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
         free_problem(problem)
         free_parameter(param)
         raise ValueError(error_msg)
+    
+    cdef BlasFunctions blas_functions
+    blas_functions.dot = _dot[double]
+    blas_functions.axpy = _axpy[double]
+    blas_functions.scal = _scal[double]
+    blas_functions.nrm2 = _nrm2[double]
 
     # early return
     with nogil:
-        model = train(problem, param)
+        model = train(problem, param, &blas_functions)
 
     # coef matrix holder created as fortran since that's what's used in liblinear
     cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w

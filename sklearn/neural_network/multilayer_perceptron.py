@@ -484,9 +484,13 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         # early_stopping in partial_fit doesn't make sense
         early_stopping = self.early_stopping and not incremental
         if early_stopping:
+            # don't stratify in multilabel classification
+            should_stratify = is_classifier(self) and self.n_outputs_ == 1
+            stratify = y if should_stratify else None
             X, X_val, y, y_val = train_test_split(
                 X, y, random_state=self._random_state,
-                test_size=self.validation_fraction)
+                test_size=self.validation_fraction,
+                stratify=stratify)
             if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)
         else:
@@ -502,7 +506,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         try:
             for it in range(self.max_iter):
-                X, y = shuffle(X, y, random_state=self._random_state)
+                if self.shuffle:
+                    X, y = shuffle(X, y, random_state=self._random_state)
                 accumulated_loss = 0.0
                 for batch_slice in gen_batches(n_samples, batch_size):
                     activations[0] = X[batch_slice]
@@ -802,7 +807,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
         validation score is not improving by at least tol for
-        ``n_iter_no_change`` consecutive epochs.
+        ``n_iter_no_change`` consecutive epochs. The split is stratified,
+        except in a multilabel setting.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1

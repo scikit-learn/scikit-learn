@@ -6,7 +6,6 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
-from __future__ import division
 
 from itertools import chain
 
@@ -82,10 +81,10 @@ boolean mask array or callable
         the transformers.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support :term:`fit` and :term:`transform`.
 
     sparse_threshold : float, default = 0.3
-        If the output of the different transfromers contains sparse matrices,
+        If the output of the different transformers contains sparse matrices,
         these will be stacked as a sparse matrix if the overall density is
         lower than this value. Use ``sparse_threshold=0`` to always return
         dense.  When the transformed output consists of all dense data, the
@@ -159,6 +158,7 @@ boolean mask array or callable
            [0.5, 0.5, 0. , 1. ]])
 
     """
+    _required_parameters = ['transformers']
 
     def __init__(self, transformers, remainder='drop', sparse_threshold=0.3,
                  n_jobs=None, transformer_weights=None):
@@ -313,8 +313,8 @@ boolean mask array or callable
 
         """
         # Use Bunch object to improve autocomplete
-        return Bunch(**dict([(name, trans) for name, trans, _
-                             in self.transformers_]))
+        return Bunch(**{name: trans for name, trans, _
+                        in self.transformers_})
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -628,14 +628,11 @@ def _get_column_indices(X, key):
     """
     n_columns = X.shape[1]
 
-    if _check_key_type(key, int):
-        if isinstance(key, int):
-            return [key]
-        elif isinstance(key, slice):
-            return list(range(n_columns)[key])
-        else:
-            return list(key)
-
+    if (_check_key_type(key, int)
+            or hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_)):
+        # Convert key into positive indexes
+        idx = np.arange(n_columns)[key]
+        return np.atleast_1d(idx).tolist()
     elif _check_key_type(key, str):
         try:
             all_columns = list(X.columns)
@@ -658,10 +655,6 @@ def _get_column_indices(X, key):
             columns = list(key)
 
         return [all_columns.index(col) for col in columns]
-
-    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
-        # boolean mask
-        return list(np.arange(n_columns)[key])
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
@@ -766,7 +759,7 @@ def make_column_transformer(*transformers, **kwargs):
         the transformers.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support :term:`fit` and :term:`transform`.
 
     sparse_threshold : float, default = 0.3
         If the transformed output consists of a mix of sparse and dense data,

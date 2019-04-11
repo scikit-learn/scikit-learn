@@ -17,7 +17,6 @@ the lower the better
 #          Noel Dawe <noel@dawe.me>
 # License: BSD 3 clause
 
-from __future__ import division
 
 import warnings
 from functools import partial
@@ -635,12 +634,11 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if tps.size == 0 or fps[0] != 0 or tps[0] != 0:
-        # Add an extra threshold position if necessary
-        # to make sure that the curve starts at (0, 0)
-        tps = np.r_[0, tps]
-        fps = np.r_[0, fps]
-        thresholds = np.r_[thresholds[0] + 1, thresholds]
+    # Add an extra threshold position
+    # to make sure that the curve starts at (0, 0)
+    tps = np.r_[0, tps]
+    fps = np.r_[0, fps]
+    thresholds = np.r_[thresholds[0] + 1, thresholds]
 
     if fps[-1] <= 0:
         warnings.warn("No negative samples in y_true, "
