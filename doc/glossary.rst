@@ -1137,17 +1137,12 @@ Methods
             :term:`classes_`.
         multilabel classification
             Scikit-learn is inconsistent in its representation of multilabel
-            decision functions.  Some estimators represent it like multiclass
-            multioutput, i.e. a list of 2d arrays, each with two columns. Others
-            represent it with a single 2d array, whose columns correspond to
-            the individual binary classification decisions. The latter
-            representation is ambiguously identical to the multiclass
-            classification format, though its semantics differ: it should be
-            interpreted, like in the binary case, by thresholding at 0.
-
-            TODO: `This gist
-            <https://gist.github.com/jnothman/4807b1b0266613c20ba4d1f88d0f8cf5>`_
-            higlights the use of the different formats for multilabel.
+            decision functions. Multi-output multiclass classifiers 
+            (eg. ``RandomForestClassifier``) represent it as a list of 2d arrays.
+            Multilabel classifiers (eg. ``OneVsRestClassifier``)
+            represent it as a single 2d array, where columns correspond to the 
+            individual binary classification decisions. These scores should be 
+            threshold at 0.
         multioutput classification
             A list of 2d arrays, corresponding to each multiclass decision
             function.
