@@ -26,41 +26,41 @@ class TreeNode:
     Parameters
     ----------
     depth : int
-        The depth of the node, i.e. its distance from the root
+        The depth of the node, i.e. its distance from the root.
     sample_indices : array of int
-        The indices of the samples at the node
+        The indices of the samples at the node.
     sum_gradients : float
-        The sum of the gradients of the samples at the node
+        The sum of the gradients of the samples at the node.
     sum_hessians : float
-        The sum of the hessians of the samples at the node
+        The sum of the hessians of the samples at the node.
     parent : TreeNode or None, optional (default=None)
         The parent of the node. None for root.
 
     Attributes
     ----------
     depth : int
-        The depth of the node, i.e. its distance from the root
+        The depth of the node, i.e. its distance from the root.
     sample_indices : array of int
-        The indices of the samples at the node
+        The indices of the samples at the node.
     sum_gradients : float
-        The sum of the gradients of the samples at the node
+        The sum of the gradients of the samples at the node.
     sum_hessians : float
-        The sum of the hessians of the samples at the node
-    parent : TreeNode or None, optional (default=None)
+        The sum of the hessians of the samples at the node.
+    parent : TreeNode or None
         The parent of the node. None for root.
     split_info : SplitInfo or None
-        The result of the split evaluation
+        The result of the split evaluation.
     left_child : TreeNode or None
         The left child of the node. None for leaves.
     right_child : TreeNode or None
         The right child of the node. None for leaves.
     value : float or None
         The value of the leaf, as computed in finalize_leaf(). None for
-        non-leaf nodes
+        non-leaf nodes.
     partition_start : int
-        start position of the node's sample_indices in splitter.partition
+        start position of the node's sample_indices in splitter.partition.
     partition_stop : int
-        stop position of the node's sample_indices in splitter.partition
+        stop position of the node's sample_indices in splitter.partition.
     """
 
     split_info = None

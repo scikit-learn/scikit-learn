@@ -17,13 +17,13 @@ from .types cimport Y_DTYPE_C
 def _update_raw_predictions(
         Y_DTYPE_C [::1] raw_predictions,  # OUT
         grower):
-    """Update raw_predictions with the predictions of the newest tree
+    """Update raw_predictions with the predictions of the newest tree.
 
     This is equivalent to (and much faster than):
         raw_predictions += last_estimator.predict(X_train)
 
     It's only possible for data X_train that is used to train the trees (it
-    isn't usable for e.g. X_val)
+    isn't usable for e.g. X_val).
     """
     cdef:
         unsigned int [::1] starts  # start of each leaf in partition

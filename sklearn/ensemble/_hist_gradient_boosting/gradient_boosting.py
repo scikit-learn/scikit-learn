@@ -607,12 +607,12 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        y : array, shape (n_samples,)
+        y : ndarray, shape (n_samples,)
             The predicted values.
         """
         # Return raw predictions after converting shape
@@ -721,7 +721,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
-    validation_score_ : array, shape (max_iter + 1,)
+    validation_score_ : ndarray, shape (max_iter + 1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
         Scores are computed according to the ``scoring`` parameter. Empty if
@@ -759,15 +759,15 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        y : array, shape (n_samples,)
+        y : ndarray, shape (n_samples,)
             The predicted classes.
         """
-        # This could be done in parallel
+        # TODO: This could be done in parallel
         encoded_classes = np.argmax(self.predict_proba(X), axis=1)
         return self.classes_[encoded_classes]
 
@@ -776,28 +776,28 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        p : array, shape (n_samples, n_classes)
+        p : ndarray, shape (n_samples, n_classes)
             The class probabilities of the input samples.
         """
         raw_predictions = self._raw_predict(X)
         return self.loss_.predict_proba(raw_predictions)
 
     def decision_function(self, X):
-        """Compute the decision function of X
+        """Compute the decision function of X.
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        decision : array, shape (n_samples,) or \
+        decision : ndarray, shape (n_samples,) or \
                 (n_samples, n_trees_per_iteration)
             The raw predicted values (i.e. the sum of the trees leaves) for
             each sample. n_trees_per_iteration is equal to the number of
