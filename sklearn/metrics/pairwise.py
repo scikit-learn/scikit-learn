@@ -472,7 +472,7 @@ def haversine_distances(X, Y=None):
     >>> bsas = [-34.83333, -58.5166646]
     >>> paris = [49.0083899664, 2.53844117956]
     >>> result = haversine_distances([bsas, paris])
-    >>> result * 6371000/1000  # multiply by Earth radius to get a distance in km
+    >>> result * 6371000/1000  # multiply by Earth radius to get kilometers
     array([[    0.        , 11279.45379464],
            [11279.45379464,     0.        ]])
     """
