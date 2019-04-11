@@ -389,6 +389,14 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
 
+- |Enhancement| Use of `beta` parameter in
+  :func:`metrics.cluster.supervised.homogeneity_completeness_v_measure` and
+  :func:`metrics.cluster.supervised.v_measure_score` is now enabled, allowing different
+  weight to be allocated to `homogeneity` or `completeness`. If not passed,
+  `beta` defaults to `1.0`.
+  :issue:`13607` by :user:`Stephane Couvreur <scouvreur>` and
+  and `Ivan Ro <ivsanro1>`.
+
 - |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
   :issue:`12855` by :user:`Pawel Sendyk <psendyk>`.
