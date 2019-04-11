@@ -557,7 +557,8 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
       0.0...
 
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred, beta=beta)[2]
+    return homogeneity_completeness_v_measure(labels_true, labels_pred,
+                                              beta=beta)[2]
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
