@@ -99,17 +99,28 @@ class Pipeline(_BaseComposition):
     >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
     0.83
     >>> # getting the selected features chosen by anova_filter
-    >>> anova_svm.named_steps['anova'].get_support()
+    >>> anova_svm['anova'].get_support()
     ... # doctest: +NORMALIZE_WHITESPACE
-    array([False, False,  True,  True, False, False, True,  True, False,
-           True,  False,  True,  True, False, True,  False, True, True,
+    array([False, False,  True,  True, False, False,  True,  True, False,
+           True, False,  True,  True, False,  True, False,  True,  True,
            False, False])
     >>> # Another way to get selected features chosen by anova_filter
     >>> anova_svm.named_steps.anova.get_support()
     ... # doctest: +NORMALIZE_WHITESPACE
-    array([False, False,  True,  True, False, False, True,  True, False,
-           True,  False,  True,  True, False, True,  False, True, True,
+    array([False, False,  True,  True, False, False,  True,  True, False,
+           True, False,  True,  True, False,  True, False,  True,  True,
            False, False])
+    >>> # Indexing can also be used to extract a sub-pipeline.
+    >>> sub_pipeline = anova_svm[:1]
+    >>> sub_pipeline  # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    Pipeline(memory=None, steps=[('anova', ...)])
+    >>> coef = anova_svm[-1].coef_
+    >>> anova_svm['svc'] is anova_svm[-1]
+    True
+    >>> coef.shape
+    (1, 10)
+    >>> sub_pipeline.inverse_transform(coef).shape
+    (1, 20)
     """
 
     # BaseEstimator interface
@@ -188,6 +199,32 @@ class Pipeline(_BaseComposition):
             if trans is not None and trans != 'passthrough':
                 yield idx, name, trans
 
+    def __len__(self):
+        """
+        Returns the length of the Pipeline
+        """
+        return len(self.steps)
+
+    def __getitem__(self, ind):
+        """Returns a sub-pipeline or a single esimtator in the pipeline
+
+        Indexing with an integer will return an estimator; using a slice
+        returns another Pipeline instance which copies a slice of this
+        Pipeline. This copy is shallow: modifying (or fitting) estimators in
+        the sub-pipeline will affect the larger pipeline and vice-versa.
+        However, replacing a value in `step` will not affect a copy.
+        """
+        if isinstance(ind, slice):
+            if ind.step not in (1, None):
+                raise ValueError('Pipeline slicing only supports a step of 1')
+            return self.__class__(self.steps[ind])
+        try:
+            name, est = self.steps[ind]
+        except TypeError:
+            # Not an int, try get step by name
+            return self.named_steps[ind]
+        return est
+
     @property
     def _estimator_type(self):
         return self.steps[-1][1]._estimator_type
@@ -216,6 +253,13 @@ class Pipeline(_BaseComposition):
         fit_params_steps = {name: {} for name, step in self.steps
                             if step is not None}
         for pname, pval in fit_params.items():
+            if '__' not in pname:
+                raise ValueError(
+                    "Pipeline.fit does not accept the {} parameter. "
+                    "You can pass parameters to specific steps of your "
+                    "pipeline using the stepname__parameter format, e.g. "
+                    "`Pipeline.fit(X, y, logisticregression__sample_weight"
+                    "=sample_weight)`.".format(pname))
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X

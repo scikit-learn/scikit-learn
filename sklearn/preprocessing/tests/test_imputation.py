@@ -278,8 +278,8 @@ def test_imputation_pipeline_grid_search():
     }
 
     l = 100
-    X = sparse_random_matrix(l, l, density=0.10)
-    Y = sparse_random_matrix(l, 1, density=0.10).toarray()
+    X = sparse_random_matrix(l, l, density=0.10, random_state=0)
+    Y = sparse_random_matrix(l, 1, density=0.10, random_state=0).toarray()
     gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 

@@ -490,6 +490,7 @@ def check_dense_sparse(test_func):
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 @pytest.mark.parametrize(
         'test_func',
         (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,
