@@ -29,6 +29,7 @@ from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 
 from scipy.sparse import csc_matrix, csr_matrix
+from unittest.mock import Mock, patch
 
 rng = check_random_state(0)
 
@@ -296,6 +297,28 @@ def test_score_samples():
 
 @pytest.mark.filterwarnings('ignore:default contamination')
 @pytest.mark.filterwarnings('ignore:behaviour="old"')
+def test_iforest_warm_start():
+    """Test iterative addition of iTrees to an iForest """
+
+    rng = check_random_state(0)
+    X = rng.randn(20, 2)
+
+    # fit first 10 trees
+    clf = IsolationForest(n_estimators=10, max_samples=20,
+                          random_state=rng, warm_start=True)
+    clf.fit(X)
+    # remember the 1st tree
+    tree_1 = clf.estimators_[0]
+    # fit another 10 trees
+    clf.set_params(n_estimators=20)
+    clf.fit(X)
+    # expecting 20 fitted trees and no overwritten trees
+    assert len(clf.estimators_) == 20
+    assert clf.estimators_[0] is tree_1
+
+
+@pytest.mark.filterwarnings('ignore:default contamination')
+@pytest.mark.filterwarnings('ignore:behaviour="old"')
 def test_deprecation():
     X = [[0.0], [1.0]]
     clf = IsolationForest()
@@ -325,3 +348,36 @@ def test_behaviour_param():
     clf2 = IsolationForest(behaviour='new', contamination='auto').fit(X_train)
     assert_array_equal(clf1.decision_function([[2., 2.]]),
                        clf2.decision_function([[2., 2.]]))
+
+
+# mock get_chunk_n_rows to actually test more than one chunk (here one
+# chunk = 3 rows:
+@patch(
+    "sklearn.ensemble.iforest.get_chunk_n_rows",
+    side_effect=Mock(**{"return_value": 3}),
+)
+@pytest.mark.parametrize(
+    "contamination, n_predict_calls", [(0.25, 3), ("auto", 2)]
+)
+@pytest.mark.filterwarnings("ignore:threshold_ attribute")
+def test_iforest_chunks_works1(
+    mocked_get_chunk, contamination, n_predict_calls
+):
+    test_iforest_works(contamination)
+    assert mocked_get_chunk.call_count == n_predict_calls
+
+
+# idem with chunk_size = 5 rows
+@patch(
+    "sklearn.ensemble.iforest.get_chunk_n_rows",
+    side_effect=Mock(**{"return_value": 10}),
+)
+@pytest.mark.parametrize(
+    "contamination, n_predict_calls", [(0.25, 3), ("auto", 2)]
+)
+@pytest.mark.filterwarnings("ignore:threshold_ attribute")
+def test_iforest_chunks_works2(
+    mocked_get_chunk, contamination, n_predict_calls
+):
+    test_iforest_works(contamination)
+    assert mocked_get_chunk.call_count == n_predict_calls

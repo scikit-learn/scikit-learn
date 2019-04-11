@@ -1,4 +1,4 @@
-"""Testing for the VotingClassifier"""
+"""Testing for the VotingClassifier and VotingRegressor"""
 
 import pytest
 import numpy as np
@@ -11,20 +11,24 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import VotingClassifier
+from sklearn.ensemble import VotingClassifier, VotingRegressor
 from sklearn.model_selection import GridSearchCV
 from sklearn import datasets
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.dummy import DummyRegressor
 
 
-# Load the iris dataset and randomly permute it
+# Load datasets
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
+
+boston = datasets.load_boston()
+X_r, y_r = boston.data, boston.target
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
@@ -42,7 +46,7 @@ def test_estimator_init():
     assert_raise_message(ValueError, msg, eclf.fit, X, y)
 
     eclf = VotingClassifier(estimators=[('lr', clf)], weights=[1, 2])
-    msg = ('Number of classifiers and weights must be equal'
+    msg = ('Number of `estimators` and weights must be equal'
            '; got 2 weights, 1 estimators')
     assert_raise_message(ValueError, msg, eclf.fit, X, y)
 
@@ -76,9 +80,19 @@ def test_notfitted():
     eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
                                         ('lr2', LogisticRegression())],
                             voting='soft')
-    msg = ("This VotingClassifier instance is not fitted yet. Call \'fit\'"
+    ereg = VotingRegressor([('dr', DummyRegressor())])
+    msg = ("This %s instance is not fitted yet. Call \'fit\'"
            " with appropriate arguments before using this method.")
-    assert_raise_message(NotFittedError, msg, eclf.predict_proba, X)
+    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
+                         eclf.predict, X)
+    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
+                         eclf.predict_proba, X)
+    assert_raise_message(NotFittedError, msg % 'VotingClassifier',
+                         eclf.transform, X)
+    assert_raise_message(NotFittedError, msg % 'VotingRegressor',
+                         ereg.predict, X_r)
+    assert_raise_message(NotFittedError, msg % 'VotingRegressor',
+                         ereg.transform, X_r)
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
@@ -123,6 +137,38 @@ def test_weights_iris():
                             weights=[1, 2, 10])
     scores = cross_val_score(eclf, X, y, cv=5, scoring='accuracy')
     assert_almost_equal(scores.mean(), 0.93, decimal=2)
+
+
+def test_weights_regressor():
+    """Check weighted average regression prediction on boston dataset."""
+    reg1 = DummyRegressor(strategy='mean')
+    reg2 = DummyRegressor(strategy='median')
+    reg3 = DummyRegressor(strategy='quantile', quantile=.2)
+    ereg = VotingRegressor([('mean', reg1), ('median', reg2),
+                            ('quantile', reg3)], weights=[1, 2, 10])
+
+    X_r_train, X_r_test, y_r_train, y_r_test = \
+        train_test_split(X_r, y_r, test_size=.25)
+
+    reg1_pred = reg1.fit(X_r_train, y_r_train).predict(X_r_test)
+    reg2_pred = reg2.fit(X_r_train, y_r_train).predict(X_r_test)
+    reg3_pred = reg3.fit(X_r_train, y_r_train).predict(X_r_test)
+    ereg_pred = ereg.fit(X_r_train, y_r_train).predict(X_r_test)
+
+    avg = np.average(np.asarray([reg1_pred, reg2_pred, reg3_pred]), axis=0,
+                     weights=[1, 2, 10])
+    assert_almost_equal(ereg_pred, avg, decimal=2)
+
+    ereg_weights_none = VotingRegressor([('mean', reg1), ('median', reg2),
+                                         ('quantile', reg3)], weights=None)
+    ereg_weights_equal = VotingRegressor([('mean', reg1), ('median', reg2),
+                                          ('quantile', reg3)],
+                                         weights=[1, 1, 1])
+    ereg_weights_none.fit(X_r_train, y_r_train)
+    ereg_weights_equal.fit(X_r_train, y_r_train)
+    ereg_none_pred = ereg_weights_none.predict(X_r_test)
+    ereg_equal_pred = ereg_weights_equal.predict(X_r_test)
+    assert_almost_equal(ereg_none_pred, ereg_equal_pred, decimal=2)
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
@@ -382,8 +428,7 @@ def test_set_estimator_none():
     eclf2.set_params(voting='soft').fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
-    msg = ('All estimators are None. At least one is required'
-           ' to be a classifier!')
+    msg = 'All estimators are None. At least one is required!'
     assert_raise_message(
         ValueError, msg, eclf2.set_params(lr=None, rf=None, nb=None).fit, X, y)
 
