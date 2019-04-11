@@ -1050,13 +1050,12 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     """
     # is the provided array in double precision (float64) ?
-    is_double_precision = True
-    try:
-        is_double_precision = lambdas[0].dtype == np.dtype('f')
-    except AttributeError:  # not np array
-        pass
-    except IndexError:  # zero-length
-        pass
+    if isinstance(lambdas, np.ndarray):
+        is_double_precision = (lambdas.dtype == np.dtype('f'))
+    else:
+        # default for non-numpy inputs
+        is_double_precision = True
+
     # note: the minimum value available is
     #  - single-precision: np.finfo('float32').eps = 1.2e-07
     #  - double-precision: np.finfo('float64').eps = 2.2e-16
