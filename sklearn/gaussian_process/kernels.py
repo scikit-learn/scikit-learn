@@ -1046,7 +1046,7 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
     The main use-case of this kernel is as part of a sum-kernel where it
     explains the noise of the signal as independently and identically
-    normally-distributed. The parameter noise_level equals the variance of this 
+    normally-distributed. The parameter noise_level equals the variance of this
     noise.
 
     k(x_1, x_2) = noise_level if x_1 == x_2 else 0
