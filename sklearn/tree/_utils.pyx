@@ -1,6 +1,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+# cython: language_level=3
 
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -19,6 +20,8 @@ from libc.math cimport log as ln
 import numpy as np
 cimport numpy as np
 np.import_array()
+
+from sklearn.utils cimport _random
 
 # =============================================================================
 # Helper functions
@@ -52,16 +55,6 @@ def _realloc_test():
         assert False
 
 
-# rand_r replacement using a 32bit XorShift generator
-# See http://www.jstatsoft.org/v08/i14/paper for details
-cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
-    seed[0] ^= <UINT32_t>(seed[0] << 13)
-    seed[0] ^= <UINT32_t>(seed[0] >> 17)
-    seed[0] ^= <UINT32_t>(seed[0] << 5)
-
-    return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
-
-
 cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
     """Return copied data as 1D numpy array of intp's."""
     cdef np.npy_intp shape[1]
@@ -72,13 +65,13 @@ cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
 cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
                             UINT32_t* random_state) nogil:
     """Generate a random integer in [low; end)."""
-    return low + our_rand_r(random_state) % (high - low)
+    return low + _random.our_rand_r(random_state) % (high - low)
 
 
 cdef inline double rand_uniform(double low, double high,
                                 UINT32_t* random_state) nogil:
     """Generate a random double in [low; high)."""
-    return ((high - low) * <double> our_rand_r(random_state) /
+    return ((high - low) * <double> _random.our_rand_r(random_state) /
             <double> RAND_R_MAX) + low
 
 

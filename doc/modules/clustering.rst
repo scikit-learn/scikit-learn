@@ -271,7 +271,7 @@ small, as shown in the example and cited reference.
  * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
    MiniBatchKMeans
 
- * :ref:`sphx_glr_auto_examples_text_document_clustering.py`: Document clustering using sparse
+ * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
@@ -280,7 +280,7 @@ small, as shown in the example and cited reference.
 .. topic:: References:
 
  * `"Web Scale K-Means clustering"
-   <http://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
+   <https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf>`_
    D. Sculley, *Proceedings of the 19th international conference on World
    wide web* (2010)
 
@@ -381,7 +381,7 @@ is updated according to the following equation:
 
 .. math::
 
-    x_i^{t+1} = x_i^t + m(x_i^t)
+    x_i^{t+1} = m(x_i^t)
 
 Where :math:`N(x_i)` is the neighborhood of samples within a given distance
 around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed for each
@@ -439,7 +439,7 @@ works well for a small number of clusters but is not advised when using
 many clusters.
 
 For two clusters, it solves a convex relaxation of the `normalised
-cuts <http://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
+cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
 the similarity graph: cutting the graph in two so that the weight of the
 edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images:
@@ -752,6 +752,18 @@ Any core sample is part of a cluster, by definition. Any sample that is not a
 core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
+While the parameter ``min_samples`` primarily controls how tolerant the
+algorithm is towards noise (on noisy and large data sets it may be desiable
+to increase this parameter), the parameter ``eps`` is *crucial to choose
+appropriately* for the data set and distance function and usually cannot be
+left at the default value. It controls the local neighborhood of the points.
+When chosen too small, most data will not be clustered at all (and labeled
+as ``-1`` for "noise"). When chosen too large, it causes close clusters to
+be merged into one cluster, and eventually the entire data set to be returned
+as a single cluster. Some heuristics for choosing this parameter have been
+discussed in literature, for example based on a knee in the nearest neighbor
+distances plot (as discussed in the references below).
+
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
@@ -793,7 +805,7 @@ by black points below.
 
     This implementation is by default not memory efficient because it constructs
     a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
-    be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
+    be used (e.g., with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
     - A sparse radius neighborhood graph (where missing entries are presumed to
@@ -813,6 +825,10 @@ by black points below.
    Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+
+ * "DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+   Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
+   In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
 .. _birch:
 
@@ -897,7 +913,7 @@ the user is advised
 
  * Tian Zhang, Raghu Ramakrishnan, Maron Livny
    BIRCH: An efficient data clustering method for large databases.
-   http://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
+   https://www.cs.sfu.ca/CourseCentral/459/han/papers/zhang96.pdf
 
  * Roberto Perdisci
    JBirch - Java implementation of BIRCH clustering algorithm
@@ -1033,7 +1049,7 @@ random labelings by defining the adjusted Rand index as follows:
 .. topic:: References
 
  * `Comparing Partitions
-   <http://link.springer.com/article/10.1007%2FBF01908075>`_
+   <https://link.springer.com/article/10.1007%2FBF01908075>`_
    L. Hubert and P. Arabie, Journal of Classification 1985
 
  * `Wikipedia entry for the adjusted Rand index
@@ -1048,50 +1064,50 @@ Given the knowledge of the ground truth class assignments ``labels_true`` and
 our clustering algorithm assignments of the same samples ``labels_pred``, the
 **Mutual Information** is a function that measures the **agreement** of the two
 assignments, ignoring permutations.  Two different normalized versions of this
-measure are available, **Normalized Mutual Information(NMI)** and **Adjusted
-Mutual Information(AMI)**. NMI is often used in the literature while AMI was
+measure are available, **Normalized Mutual Information (NMI)** and **Adjusted
+Mutual Information (AMI)**. NMI is often used in the literature, while AMI was
 proposed more recently and is **normalized against chance**::
 
   >>> from sklearn import metrics
   >>> labels_true = [0, 0, 0, 1, 1, 1]
   >>> labels_pred = [0, 0, 1, 1, 2, 2]
 
-  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   0.22504...
 
 One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
 the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
-  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   0.22504...
 
 All, :func:`mutual_info_score`, :func:`adjusted_mutual_info_score` and
 :func:`normalized_mutual_info_score` are symmetric: swapping the argument does
 not change the score. Thus they can be used as a **consensus measure**::
 
-  >>> metrics.adjusted_mutual_info_score(labels_pred, labels_true)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_mutual_info_score(labels_pred, labels_true)  # doctest: +SKIP
   0.22504...
 
 Perfect labeling is scored 1.0::
 
   >>> labels_pred = labels_true[:]
-  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   1.0
 
-  >>> metrics.normalized_mutual_info_score(labels_true, labels_pred)
+  >>> metrics.normalized_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   1.0
 
 This is not true for ``mutual_info_score``, which is therefore harder to judge::
 
-  >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   0.69...
 
 Bad (e.g. independent labelings) have non-positive scores::
 
   >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
   >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
-  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  >>> metrics.adjusted_mutual_info_score(labels_true, labels_pred)  # doctest: +SKIP
   -0.10526...
 
 
@@ -1102,16 +1118,10 @@ Advantages
   for any value of ``n_clusters`` and ``n_samples`` (which is not the
   case for raw Mutual Information or the V-measure for instance).
 
-- **Bounded range [0, 1]**:  Values close to zero indicate two label
+- **Upper bound  of 1**:  Values close to zero indicate two label
   assignments that are largely independent, while values close to one
-  indicate significant agreement. Further, values of exactly 0 indicate
-  **purely** independent label assignments and a AMI of exactly 1 indicates
+  indicate significant agreement. Further, an AMI of exactly 1 indicates
   that the two label assignments are equal (with or without permutation).
-
-- **No assumption is made on the cluster structure**: can be used
-  to compare clustering algorithms such as k-means which assumes isotropic
-  blob shapes with results of spectral clustering algorithms which can
-  find cluster with "folded" shapes.
 
 
 Drawbacks
@@ -1164,7 +1174,7 @@ It also can be expressed in set cardinality formulation:
 
 The normalized mutual information is defined as
 
-.. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\sqrt{H(U)H(V)}}
+.. math:: \text{NMI}(U, V) = \frac{\text{MI}(U, V)}{\text{mean}(H(U), H(V))}
 
 This value of the mutual information and also the normalized variant is not
 adjusted for chance and will tend to increase as the number of different labels
@@ -1172,12 +1182,12 @@ adjusted for chance and will tend to increase as the number of different labels
 between the label assignments.
 
 The expected value for the mutual information can be calculated using the
-following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
+following equation [VEB2009]_. In this equation,
 :math:`a_i = |U_i|` (the number of elements in :math:`U_i`) and
 :math:`b_j = |V_j|` (the number of elements in :math:`V_j`).
 
 
-.. math:: E[\text{MI}(U,V)]=\sum_{i=1}^|U| \sum_{j=1}^|V| \sum_{n_{ij}=(a_i+b_j-N)^+
+.. math:: E[\text{MI}(U,V)]=\sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \sum_{n_{ij}=(a_i+b_j-N)^+
    }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log \left( \frac{ N.n_{ij}}{a_i b_j}\right)
    \frac{a_i!b_j!(N-a_i)!(N-b_j)!}{N!n_{ij}!(a_i-n_{ij})!(b_j-n_{ij})!
    (N-a_i-b_j+n_{ij})!}
@@ -1185,7 +1195,19 @@ following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
 Using the expected value, the adjusted mutual information can then be
 calculated using a similar form to that of the adjusted Rand index:
 
-.. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\max(H(U), H(V)) - E[\text{MI}]}
+.. math:: \text{AMI} = \frac{\text{MI} - E[\text{MI}]}{\text{mean}(H(U), H(V)) - E[\text{MI}]}
+
+For normalized mutual information and adjusted mutual information, the normalizing
+value is typically some *generalized* mean of the entropies of each clustering.
+Various generalized means exist, and no firm rules exist for preferring one over the
+others.  The decision is largely a field-by-field basis; for instance, in community
+detection, the arithmetic mean is most common. Each
+normalizing method provides "qualitatively similar behaviours" [YAT2016]_. In our
+implementation, this is controlled by the ``average_method`` parameter.
+
+Vinh et al. (2010) named variants of NMI and AMI by their averaging method [VEB2010]_. Their
+'sqrt' and 'sum' averages are the geometric and arithmetic means; we use these
+more broadly common names.
 
 .. topic:: References
 
@@ -1194,22 +1216,29 @@ calculated using a similar form to that of the adjusted Rand index:
    Machine Learning Research 3: 583–617.
    `doi:10.1162/153244303321897735 <http://strehl.com/download/strehl-jmlr02.pdf>`_.
 
- * Vinh, Epps, and Bailey, (2009). "Information theoretic measures
-   for clusterings comparison". Proceedings of the 26th Annual International
-   Conference on Machine Learning - ICML '09.
-   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
-   ISBN 9781605585161.
-
- * Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
-   Clusterings Comparison: Variants, Properties, Normalization and
-   Correction for Chance, JMLR
-   http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
-
  * `Wikipedia entry for the (normalized) Mutual Information
    <https://en.wikipedia.org/wiki/Mutual_Information>`_
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+   
+ .. [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
+   for clusterings comparison". Proceedings of the 26th Annual International
+   Conference on Machine Learning - ICML '09.
+   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
+   ISBN 9781605585161.
+
+ .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
+   Clusterings Comparison: Variants, Properties, Normalization and
+   Correction for Chance". JMLR
+   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+   
+ .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
+   community
+   detection algorithms on artificial networks". Scientific Reports 6: 30750.
+   `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
+   
+   
 
 .. _homogeneity_completeness:
 
@@ -1249,7 +1278,7 @@ Their harmonic mean called **V-measure** is computed by
   0.51...
 
 The V-measure is actually equivalent to the mutual information (NMI)
-discussed above normalized by the sum of the label entropies [B2011]_.
+discussed above, with the aggregation function being the arithmetic mean [B2011]_.
 
 Homogeneity, completeness and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
@@ -1359,7 +1388,7 @@ mean of homogeneity and completeness**:
 .. topic:: References
 
  * `V-Measure: A conditional entropy-based external cluster evaluation
-   measure <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
+   measure <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
  .. [B2011] `Identication and Characterization of Events in Social Media
@@ -1424,10 +1453,10 @@ Advantages
   for any value of ``n_clusters`` and ``n_samples`` (which is not the
   case for raw Mutual Information or the V-measure for instance).
 
-- **Bounded range [0, 1]**:  Values close to zero indicate two label
+- **Upper-bounded at 1**:  Values close to zero indicate two label
   assignments that are largely independent, while values close to one
   indicate significant agreement. Further, values of exactly 0 indicate
-  **purely** independent label assignments and a AMI of exactly 1 indicates
+  **purely** independent label assignments and a FMI of exactly 1 indicates
   that the two label assignments are equal (with or without permutation).
 
 - **No assumption is made on the cluster structure**: can be used
@@ -1528,17 +1557,17 @@ Drawbacks
  * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
-.. _calinski_harabaz_index:
+.. _calinski_harabasz_index:
 
-Calinski-Harabaz Index
-----------------------
+Calinski-Harabasz Index
+-----------------------
 
-If the ground truth labels are not known, the Calinski-Harabaz index
-(:func:`sklearn.metrics.calinski_harabaz_score`) - also known as the Variance 
+If the ground truth labels are not known, the Calinski-Harabasz index
+(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 
-Calinski-Harabaz score relates to a model with better defined clusters.
+Calinski-Harabasz score relates to a model with better defined clusters.
 
-For :math:`k` clusters, the Calinski-Harabaz score :math:`s` is given as the
+For :math:`k` clusters, the Calinski-Harabasz score :math:`s` is given as the
 ratio of the between-clusters dispersion mean and the within-cluster
 dispersion:
 
@@ -1565,16 +1594,15 @@ points in cluster :math:`q`.
   >>> X = dataset.data
   >>> y = dataset.target
 
-In normal usage, the Calinski-Harabaz index is applied to the results of a
+In normal usage, the Calinski-Harabasz index is applied to the results of a
 cluster analysis.
 
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
   >>> labels = kmeans_model.labels_
-  >>> metrics.calinski_harabaz_score(X, labels)  # doctest: +ELLIPSIS
+  >>> metrics.calinski_harabasz_score(X, labels)  # doctest: +ELLIPSIS
   561.62...
-
 
 Advantages
 ~~~~~~~~~~
@@ -1588,7 +1616,7 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- The Calinski-Harabaz index is generally higher for convex clusters than other
+- The Calinski-Harabasz index is generally higher for convex clusters than other
   concepts of clusters, such as density based clusters like those obtained
   through DBSCAN.
 
@@ -1626,7 +1654,7 @@ symmetric is:
 Then the Davies-Bouldin index is defined as:
 
 .. math::
-   DB = \frac{1}{k} \sum{i=1}^k \max_{i \neq j} R_{ij}
+   DB = \frac{1}{k} \sum_{i=1}^k \max_{i \neq j} R_{ij}
 
 Zero is the lowest possible score. Values closer to zero indicate a better
 partition.
@@ -1667,12 +1695,12 @@ Drawbacks
    "A Cluster Separation Measure"
    IEEE Transactions on Pattern Analysis and Machine Intelligence.
    PAMI-1 (2): 224-227.
-   `doi:10.1109/TPAMI.1979.4766909 <http://dx.doi.org/10.1109/TPAMI.1979.4766909>`_.
+   `doi:10.1109/TPAMI.1979.4766909 <https://doi.org/10.1109/TPAMI.1979.4766909>`_.
 
  * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
    "On Clustering Validation Techniques"
    Journal of Intelligent Information Systems, 17(2-3), 107-145.
-   `doi:10.1023/A:1012801612483 <http://dx.doi.org/10.1023/A:1012801612483>`_.
+   `doi:10.1023/A:1012801612483 <https://doi.org/10.1023/A:1012801612483>`_.
 
  * `Wikipedia entry for Davies-Bouldin index
    <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.

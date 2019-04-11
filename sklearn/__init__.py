@@ -16,6 +16,7 @@ import sys
 import re
 import warnings
 import logging
+import os
 
 from ._config import get_config, set_config, config_context
 
@@ -44,12 +45,23 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.20.dev0'
+__version__ = '0.21.dev0'
+
+
+# On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
+# simultaneously. This can happen for instance when calling BLAS inside a
+# prange. Setting the following environment variable allows multiple OpenMP
+# libraries to be loaded. It should not degrade performances since we manually
+# take care of potential over-subcription performance issues, in sections of
+# the code where nested OpenMP loops can happen, by dynamically reconfiguring
+# the inner OpenMP runtime to temporarily disable it while under the scope of
+# the outer OpenMP parallel section.
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "True")
 
 
 try:
     # This variable is injected in the __builtins__ by the build
-    # process. It used to enable importing subpackages of sklearn when
+    # process. It is used to enable importing subpackages of sklearn when
     # the binaries are not built
     __SKLEARN_SETUP__
 except NameError:
@@ -62,20 +74,22 @@ if __SKLEARN_SETUP__:
 else:
     from . import __check_build
     from .base import clone
+    from .utils._show_versions import show_versions
+
     __check_build  # avoid flakes unused variable error
 
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
-               'cross_validation', 'datasets', 'decomposition', 'dummy',
-               'ensemble', 'exceptions', 'externals', 'feature_extraction',
-               'feature_selection', 'gaussian_process', 'grid_search',
-               'isotonic', 'kernel_approximation', 'kernel_ridge',
-               'learning_curve', 'linear_model', 'manifold', 'metrics',
+               'datasets', 'decomposition', 'dummy', 'ensemble', 'exceptions',
+               'externals', 'feature_extraction', 'feature_selection',
+               'gaussian_process', 'isotonic', 'kernel_approximation',
+               'kernel_ridge', 'linear_model', 'manifold', 'metrics',
                'mixture', 'model_selection', 'multiclass', 'multioutput',
                'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
                'preprocessing', 'random_projection', 'semi_supervised',
                'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
                # Non-modules:
-               'clone', 'get_config', 'set_config', 'config_context']
+               'clone', 'get_config', 'set_config', 'config_context',
+               'show_versions']
 
 
 def setup_module(module):

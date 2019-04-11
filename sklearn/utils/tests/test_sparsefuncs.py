@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 import scipy.sparse as sp
 
@@ -19,6 +20,7 @@ from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
                                             inplace_csr_row_normalize_l1,
                                             inplace_csr_row_normalize_l2)
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_allclose
 
 
 def test_mean_variance_axis0():
@@ -94,7 +96,7 @@ def test_incr_mean_variance_axis():
         # default params for incr_mean_variance
         last_mean = np.zeros(n_features)
         last_var = np.zeros_like(last_mean)
-        last_n = 0
+        last_n = np.zeros_like(last_mean, dtype=np.int64)
 
         # Test errors
         X = np.array(data_chunks[0])
@@ -136,6 +138,8 @@ def test_incr_mean_variance_axis():
         for input_dtype, output_dtype in expected_dtypes:
             for X_sparse in (X_csr, X_csc):
                 X_sparse = X_sparse.astype(input_dtype)
+                last_mean = last_mean.astype(output_dtype)
+                last_var = last_var.astype(output_dtype)
                 X_means, X_vars = mean_variance_axis(X_sparse, axis)
                 X_means_incr, X_vars_incr, n_incr = \
                     incr_mean_variance_axis(X_sparse, axis, last_mean,
@@ -145,6 +149,43 @@ def test_incr_mean_variance_axis():
                 assert_array_almost_equal(X_means, X_means_incr)
                 assert_array_almost_equal(X_vars, X_vars_incr)
                 assert_equal(X.shape[axis], n_incr)
+
+
+@pytest.mark.parametrize("axis", [0, 1])
+@pytest.mark.parametrize("sparse_constructor", [sp.csc_matrix, sp.csr_matrix])
+def test_incr_mean_variance_axis_ignore_nan(axis, sparse_constructor):
+    old_means = np.array([535., 535., 535., 535.])
+    old_variances = np.array([4225., 4225., 4225., 4225.])
+    old_sample_count = np.array([2, 2, 2, 2], dtype=np.int64)
+
+    X = sparse_constructor(
+        np.array([[170, 170, 170, 170],
+                  [430, 430, 430, 430],
+                  [300, 300, 300, 300]]))
+
+    X_nan = sparse_constructor(
+        np.array([[170, np.nan, 170, 170],
+                  [np.nan, 170, 430, 430],
+                  [430, 430, np.nan, 300],
+                  [300, 300, 300, np.nan]]))
+
+    # we avoid creating specific data for axis 0 and 1: translating the data is
+    # enough.
+    if axis:
+        X = X.T
+        X_nan = X_nan.T
+
+    # take a copy of the old statistics since they are modified in place.
+    X_means, X_vars, X_sample_count = incr_mean_variance_axis(
+        X, axis, old_means.copy(), old_variances.copy(),
+        old_sample_count.copy())
+    X_nan_means, X_nan_vars, X_nan_sample_count = incr_mean_variance_axis(
+        X_nan, axis, old_means.copy(), old_variances.copy(),
+        old_sample_count.copy())
+
+    assert_allclose(X_nan_means, X_means)
+    assert_allclose(X_nan_vars, X_vars)
+    assert_allclose(X_nan_sample_count, X_sample_count)
 
 
 def test_mean_variance_illegal_axis():
@@ -344,60 +385,27 @@ def test_inplace_swap_column():
     assert_raises(TypeError, inplace_swap_column, X_csr.tolil())
 
 
-def test_min_max_axis0():
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("axis", [0, 1, None])
+@pytest.mark.parametrize("sparse_format", [sp.csr_matrix, sp.csc_matrix])
+@pytest.mark.parametrize(
+    "missing_values, min_func, max_func, ignore_nan",
+    [(0, np.min, np.max, False),
+     (np.nan, np.nanmin, np.nanmax, True)]
+)
+def test_min_max(dtype, axis, sparse_format, missing_values, min_func,
+                 max_func, ignore_nan):
     X = np.array([[0, 3, 0],
-                  [2, -1, 0],
+                  [2, -1, missing_values],
                   [0, 0, 0],
-                  [9, 8, 7],
-                  [4, 0, 5]], dtype=np.float64)
-    X_csr = sp.csr_matrix(X)
-    X_csc = sp.csc_matrix(X)
+                  [9, missing_values, 7],
+                  [4, 0, 5]], dtype=dtype)
+    X_sparse = sparse_format(X)
 
-    mins_csr, maxs_csr = min_max_axis(X_csr, axis=0)
-    assert_array_equal(mins_csr, X.min(axis=0))
-    assert_array_equal(maxs_csr, X.max(axis=0))
-
-    mins_csc, maxs_csc = min_max_axis(X_csc, axis=0)
-    assert_array_equal(mins_csc, X.min(axis=0))
-    assert_array_equal(maxs_csc, X.max(axis=0))
-
-    X = X.astype(np.float32)
-    X_csr = sp.csr_matrix(X)
-    X_csc = sp.csc_matrix(X)
-    mins_csr, maxs_csr = min_max_axis(X_csr, axis=0)
-    assert_array_equal(mins_csr, X.min(axis=0))
-    assert_array_equal(maxs_csr, X.max(axis=0))
-    mins_csc, maxs_csc = min_max_axis(X_csc, axis=0)
-    assert_array_equal(mins_csc, X.min(axis=0))
-    assert_array_equal(maxs_csc, X.max(axis=0))
-
-
-def test_min_max_axis1():
-    X = np.array([[0, 3, 0],
-                  [2, -1, 0],
-                  [0, 0, 0],
-                  [9, 8, 7],
-                  [4, 0, 5]], dtype=np.float64)
-    X_csr = sp.csr_matrix(X)
-    X_csc = sp.csc_matrix(X)
-
-    mins_csr, maxs_csr = min_max_axis(X_csr, axis=1)
-    assert_array_equal(mins_csr, X.min(axis=1))
-    assert_array_equal(maxs_csr, X.max(axis=1))
-
-    mins_csc, maxs_csc = min_max_axis(X_csc, axis=1)
-    assert_array_equal(mins_csc, X.min(axis=1))
-    assert_array_equal(maxs_csc, X.max(axis=1))
-
-    X = X.astype(np.float32)
-    X_csr = sp.csr_matrix(X)
-    X_csc = sp.csc_matrix(X)
-    mins_csr, maxs_csr = min_max_axis(X_csr, axis=1)
-    assert_array_equal(mins_csr, X.min(axis=1))
-    assert_array_equal(maxs_csr, X.max(axis=1))
-    mins_csc, maxs_csc = min_max_axis(X_csc, axis=1)
-    assert_array_equal(mins_csc, X.min(axis=1))
-    assert_array_equal(maxs_csc, X.max(axis=1))
+    mins_sparse, maxs_sparse = min_max_axis(X_sparse, axis=axis,
+                                            ignore_nan=ignore_nan)
+    assert_array_equal(mins_sparse, min_func(X, axis=axis))
+    assert_array_equal(maxs_sparse, max_func(X, axis=axis))
 
 
 def test_min_max_axis_errors():
@@ -434,6 +442,29 @@ def test_count_nonzero():
 
     assert_raises(TypeError, count_nonzero, X_csc)
     assert_raises(ValueError, count_nonzero, X_csr, axis=2)
+
+    assert (count_nonzero(X_csr, axis=0).dtype ==
+            count_nonzero(X_csr, axis=1).dtype)
+    assert (count_nonzero(X_csr, axis=0, sample_weight=sample_weight).dtype ==
+            count_nonzero(X_csr, axis=1, sample_weight=sample_weight).dtype)
+
+    # Check dtypes with large sparse matrices too
+    # XXX: test fails on Appveyor (python3.5 32bit)
+    try:
+        X_csr.indices = X_csr.indices.astype(np.int64)
+        X_csr.indptr = X_csr.indptr.astype(np.int64)
+        assert (count_nonzero(X_csr, axis=0).dtype ==
+                count_nonzero(X_csr, axis=1).dtype)
+        assert (count_nonzero(X_csr, axis=0,
+                              sample_weight=sample_weight).dtype ==
+                count_nonzero(X_csr, axis=1,
+                              sample_weight=sample_weight).dtype)
+    except TypeError as e:
+        if ("according to the rule 'safe'" in e.args[0] and
+                np.intp().nbytes < 8):
+            pass
+        else:
+            raise
 
 
 def test_csc_row_median():

@@ -1,22 +1,58 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-from collections import Sequence
+from collections.abc import Sequence
+import numbers
+import platform
+import struct
 
+import warnings
 import numpy as np
 from scipy.sparse import issparse
-import warnings
 
 from .murmurhash import murmurhash3_32
+from .class_weight import compute_class_weight, compute_sample_weight
+from . import _joblib
+from ..exceptions import DataConversionWarning
+from .deprecation import deprecated
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric)
-from .class_weight import compute_class_weight, compute_sample_weight
-from ..externals.joblib import cpu_count
-from ..exceptions import DataConversionWarning
-from .deprecation import deprecated
+                         check_symmetric, check_scalar)
+from .. import get_config
+
+
+# Do not deprecate parallel_backend and register_parallel_backend as they are
+# needed to tune `scikit-learn` behavior and have different effect if called
+# from the vendored version or or the site-package version. The other are
+# utilities that are independent of scikit-learn so they are not part of
+# scikit-learn public API.
+parallel_backend = _joblib.parallel_backend
+register_parallel_backend = _joblib.register_parallel_backend
+
+# deprecate the joblib API in sklearn in favor of using directly joblib
+msg = ("deprecated in version 0.20.1 to be removed in version 0.23. "
+       "Please import this functionality directly from joblib, which can "
+       "be installed with: pip install joblib.")
+deprecate = deprecated(msg)
+
+delayed = deprecate(_joblib.delayed)
+cpu_count = deprecate(_joblib.cpu_count)
+hash = deprecate(_joblib.hash)
+effective_n_jobs = deprecate(_joblib.effective_n_jobs)
+
+
+# for classes, deprecated will change the object in _joblib module so we need
+# to subclass them.
+@deprecate
+class Memory(_joblib.Memory):
+    pass
+
+
+@deprecate
+class Parallel(_joblib.Parallel):
+    pass
 
 
 __all__ = ["murmurhash3_32", "as_float_array",
@@ -24,8 +60,14 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_random_state",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
-           "check_consistent_length", "check_X_y", 'indexable',
-           "check_symmetric", "indices_to_mask", "deprecated"]
+           "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
+           "check_symmetric", "indices_to_mask", "deprecated",
+           "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
+           "register_parallel_backend", "hash", "effective_n_jobs",
+           "resample", "shuffle"]
+
+IS_PYPY = platform.python_implementation() == 'PyPy'
+_IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
 class Bunch(dict):
@@ -48,7 +90,7 @@ class Bunch(dict):
     """
 
     def __init__(self, **kwargs):
-        super(Bunch, self).__init__(kwargs)
+        super().__init__(kwargs)
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -113,6 +155,21 @@ def axis0_safe_slice(X, mask, len_mask):
     is not going to be the bottleneck, since the number of outliers
     and non_outliers are typically non-zero and it makes the code
     tougher to follow.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}
+        Data on which to apply mask.
+
+    mask : array
+        Mask to be used on X.
+
+    len_mask : int
+        The length of the mask.
+
+    Returns
+    -------
+        mask
     """
     if len_mask != 0:
         return X[safe_mask(X, mask), :]
@@ -176,6 +233,8 @@ def resample(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
+    Other Parameters
+    ----------------
     replace : boolean, True by default
         Implements resampling with replacement. If False, this will implement
         (sliced) random permutations.
@@ -286,6 +345,8 @@ def shuffle(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
+    Other Parameters
+    ----------------
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
         the data.  If int, random_state is the seed used by the random number
@@ -371,11 +432,23 @@ def safe_sqr(X, copy=True):
     return X
 
 
-def gen_batches(n, batch_size):
+def gen_batches(n, batch_size, min_batch_size=0):
     """Generator to create slices containing batch_size elements, from 0 to n.
 
     The last slice may contain less than batch_size elements, when batch_size
     does not divide n.
+
+    Parameters
+    ----------
+    n : int
+    batch_size : int
+        Number of element in each batch
+    min_batch_size : int, default=0
+        Minimum batch size to produce.
+
+    Yields
+    ------
+    slice of batch_size elements
 
     Examples
     --------
@@ -386,10 +459,16 @@ def gen_batches(n, batch_size):
     [slice(0, 3, None), slice(3, 6, None)]
     >>> list(gen_batches(2, 3))
     [slice(0, 2, None)]
+    >>> list(gen_batches(7, 3, min_batch_size=0))
+    [slice(0, 3, None), slice(3, 6, None), slice(6, 7, None)]
+    >>> list(gen_batches(7, 3, min_batch_size=2))
+    [slice(0, 3, None), slice(3, 7, None)]
     """
     start = 0
     for _ in range(int(n // batch_size)):
         end = start + batch_size
+        if end + min_batch_size > n:
+            continue
         yield slice(start, end)
         start = end
     if start < n:
@@ -399,8 +478,19 @@ def gen_batches(n, batch_size):
 def gen_even_slices(n, n_packs, n_samples=None):
     """Generator to create n_packs slices going up to n.
 
-    Pass n_samples when the slices are to be used for sparse matrix indexing;
-    slicing off-the-end raises an exception, while it works for NumPy arrays.
+    Parameters
+    ----------
+    n : int
+    n_packs : int
+        Number of slices to generate.
+    n_samples : int or None (default = None)
+        Number of samples. Pass n_samples when the slices are to be used for
+        sparse matrix indexing; slicing off-the-end raises an exception, while
+        it works for NumPy arrays.
+
+    Yields
+    ------
+    slice
 
     Examples
     --------
@@ -428,45 +518,6 @@ def gen_even_slices(n, n_packs, n_samples=None):
                 end = min(n_samples, end)
             yield slice(start, end, None)
             start = end
-
-
-def _get_n_jobs(n_jobs):
-    """Get number of jobs for the computation.
-
-    This function reimplements the logic of joblib to determine the actual
-    number of jobs depending on the cpu count. If -1 all CPUs are used.
-    If 1 is given, no parallel computing code is used at all, which is useful
-    for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
-    Thus for n_jobs = -2, all CPUs but one are used.
-
-    Parameters
-    ----------
-    n_jobs : int
-        Number of jobs stated in joblib convention.
-
-    Returns
-    -------
-    n_jobs : int
-        The actual number of jobs as positive integer.
-
-    Examples
-    --------
-    >>> from sklearn.utils import _get_n_jobs
-    >>> _get_n_jobs(4)
-    4
-    >>> jobs = _get_n_jobs(-2)
-    >>> assert jobs == max(cpu_count() - 1, 1)
-    >>> _get_n_jobs(0)
-    Traceback (most recent call last):
-    ...
-    ValueError: Parameter n_jobs == 0 has no meaning.
-    """
-    if n_jobs < 0:
-        return max(cpu_count() + 1 + n_jobs, 1)
-    elif n_jobs == 0:
-        raise ValueError('Parameter n_jobs == 0 has no meaning.')
-    else:
-        return n_jobs
 
 
 def tosequence(x):
@@ -514,3 +565,74 @@ def indices_to_mask(indices, mask_length):
     mask[indices] = True
 
     return mask
+
+
+def get_chunk_n_rows(row_bytes, max_n_rows=None,
+                     working_memory=None):
+    """Calculates how many rows can be processed within working_memory
+
+    Parameters
+    ----------
+    row_bytes : int
+        The expected number of bytes of memory that will be consumed
+        during the processing of each row.
+    max_n_rows : int, optional
+        The maximum return value.
+    working_memory : int or float, optional
+        The number of rows to fit inside this number of MiB will be returned.
+        When None (default), the value of
+        ``sklearn.get_config()['working_memory']`` is used.
+
+    Returns
+    -------
+    int or the value of n_samples
+
+    Warns
+    -----
+    Issues a UserWarning if ``row_bytes`` exceeds ``working_memory`` MiB.
+    """
+
+    if working_memory is None:
+        working_memory = get_config()['working_memory']
+
+    chunk_n_rows = int(working_memory * (2 ** 20) // row_bytes)
+    if max_n_rows is not None:
+        chunk_n_rows = min(chunk_n_rows, max_n_rows)
+    if chunk_n_rows < 1:
+        warnings.warn('Could not adhere to working_memory config. '
+                      'Currently %.0fMiB, %.0fMiB required.' %
+                      (working_memory, np.ceil(row_bytes * 2 ** -20)))
+        chunk_n_rows = 1
+    return chunk_n_rows
+
+
+def is_scalar_nan(x):
+    """Tests if x is NaN
+
+    This function is meant to overcome the issue that np.isnan does not allow
+    non-numerical types as input, and that np.nan is not np.float('nan').
+
+    Parameters
+    ----------
+    x : any type
+
+    Returns
+    -------
+    boolean
+
+    Examples
+    --------
+    >>> is_scalar_nan(np.nan)
+    True
+    >>> is_scalar_nan(float("nan"))
+    True
+    >>> is_scalar_nan(None)
+    False
+    >>> is_scalar_nan("")
+    False
+    >>> is_scalar_nan([np.nan])
+    False
+    """
+    # convert from numpy.bool_ to python bool to ensure that testing
+    # is_scalar_nan(x) is True does not fail.
+    return bool(isinstance(x, numbers.Real) and np.isnan(x))

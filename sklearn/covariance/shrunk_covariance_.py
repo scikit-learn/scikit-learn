@@ -13,12 +13,10 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 # License: BSD 3 clause
 
 # avoid division truncation
-from __future__ import division
 import warnings
 import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
-from ..externals.six.moves import xrange
 from ..utils import check_array
 
 
@@ -84,6 +82,9 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
@@ -94,6 +95,24 @@ class ShrunkCovariance(EmpiricalCovariance):
     shrinkage : float, 0 <= shrinkage <= 1
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import ShrunkCovariance
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=500)
+    >>> cov = ShrunkCovariance().fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.7387..., 0.2536...],
+           [0.2536..., 0.4110...]])
+    >>> cov.location_
+    array([0.0622..., 0.0193...])
 
     Notes
     -----
@@ -106,8 +125,8 @@ class ShrunkCovariance(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
-        super(ShrunkCovariance, self).__init__(store_precision=store_precision,
-                                               assume_centered=assume_centered)
+        super().__init__(store_precision=store_precision,
+                         assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
     def fit(self, X, y=None):
@@ -206,8 +225,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     beta_ = 0.  # sum of the coefficients of <X2.T, X2>
     delta_ = 0.  # sum of the *squared* coefficients of <X.T, X>
     # starting block computation
-    for i in xrange(n_splits):
-        for j in xrange(n_splits):
+    for i in range(n_splits):
+        for j in range(n_splits):
             rows = slice(block_size * i, block_size * (i + 1))
             cols = slice(block_size * j, block_size * (j + 1))
             beta_ += np.sum(np.dot(X2.T[rows], X2[:, cols]))
@@ -216,7 +235,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
         beta_ += np.sum(np.dot(X2.T[rows], X2[:, block_size * n_splits:]))
         delta_ += np.sum(
             np.dot(X.T[rows], X[:, block_size * n_splits:]) ** 2)
-    for j in xrange(n_splits):
+    for j in range(n_splits):
         cols = slice(block_size * j, block_size * (j + 1))
         beta_ += np.sum(np.dot(X2.T[block_size * n_splits:], X2[:, cols]))
         delta_ += np.sum(
@@ -288,10 +307,9 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
         X = np.reshape(X, (1, -1))
         warnings.warn("Only one sample available. "
                       "You may want to reshape your data array")
-        n_samples = 1
         n_features = X.size
     else:
-        n_samples, n_features = X.shape
+        _, n_features = X.shape
 
     # get Ledoit-Wolf shrinkage
     shrinkage = ledoit_wolf_shrinkage(
@@ -333,6 +351,9 @@ class LedoitWolf(EmpiricalCovariance):
 
     Attributes
     ----------
+    location_ : array-like, shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     covariance_ : array-like, shape (n_features, n_features)
         Estimated covariance matrix
 
@@ -343,6 +364,23 @@ class LedoitWolf(EmpiricalCovariance):
     shrinkage_ : float, 0 <= shrinkage <= 1
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import LedoitWolf
+    >>> real_cov = np.array([[.4, .2],
+    ...                      [.2, .8]])
+    >>> np.random.seed(0)
+    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    ...                                   cov=real_cov,
+    ...                                   size=50)
+    >>> cov = LedoitWolf().fit(X)
+    >>> cov.covariance_ # doctest: +ELLIPSIS
+    array([[0.4406..., 0.1616...],
+           [0.1616..., 0.8022...]])
+    >>> cov.location_
+    array([ 0.0595... , -0.0075...])
 
     Notes
     -----
@@ -362,8 +400,8 @@ class LedoitWolf(EmpiricalCovariance):
     """
     def __init__(self, store_precision=True, assume_centered=False,
                  block_size=1000):
-        super(LedoitWolf, self).__init__(store_precision=store_precision,
-                                         assume_centered=assume_centered)
+        super().__init__(store_precision=store_precision,
+                         assume_centered=assume_centered)
         self.block_size = block_size
 
     def fit(self, X, y=None):

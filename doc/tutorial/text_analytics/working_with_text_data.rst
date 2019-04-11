@@ -156,8 +156,8 @@ It is possible to get back the category names as follows::
   sci.med
 
 You might have noticed that the samples were shuffled randomly when we called
-``fetch_20newsgroups(..., shuffle=True, random_state=42)``: this is useful if 
-you wish to select only a subset of samples to quickly train a model and get a 
+``fetch_20newsgroups(..., shuffle=True, random_state=42)``: this is useful if
+you wish to select only a subset of samples to quickly train a model and get a
 first idea of the results before re-training on the complete dataset later.
 
 
@@ -205,7 +205,7 @@ Tokenizing text with ``scikit-learn``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Text preprocessing, tokenizing and filtering of stopwords are all included
-in :class:`CountVectorizer`, which builds a dictionary of features and 
+in :class:`CountVectorizer`, which builds a dictionary of features and
 transforms documents to feature vectors::
 
   >>> from sklearn.feature_extraction.text import CountVectorizer
@@ -214,8 +214,8 @@ transforms documents to feature vectors::
   >>> X_train_counts.shape
   (2257, 35788)
 
-:class:`CountVectorizer` supports counts of N-grams of words or consecutive 
-characters. Once fitted, the vectorizer has built a dictionary of feature 
+:class:`CountVectorizer` supports counts of N-grams of words or consecutive
+characters. Once fitted, the vectorizer has built a dictionary of feature
 indices::
 
   >>> count_vect.vocabulary_.get(u'algorithm')
@@ -319,13 +319,15 @@ to work with, ``scikit-learn`` provides a :class:`~sklearn.pipeline.Pipeline` cl
 like a compound classifier::
 
   >>> from sklearn.pipeline import Pipeline
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
-  ...                      ('tfidf', TfidfTransformer()),
-  ...                      ('clf', MultinomialNB()),
+  >>> text_clf = Pipeline([
+  ...     ('vect', CountVectorizer()),
+  ...     ('tfidf', TfidfTransformer()),
+  ...     ('clf', MultinomialNB()),
   ... ])
 
+
 The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
-We will use them to perform grid search for suitable hyperparameters below. 
+We will use them to perform grid search for suitable hyperparameters below.
 We can now train the model with a single command::
 
   >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
@@ -353,19 +355,21 @@ than naïve Bayes). We can change the learner by simply plugging a different
 classifier object into our pipeline::
 
   >>> from sklearn.linear_model import SGDClassifier
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
-  ...                      ('tfidf', TfidfTransformer()),
-  ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, random_state=42,
-  ...                                            max_iter=5, tol=None)),
+  >>> text_clf = Pipeline([
+  ...     ('vect', CountVectorizer()),
+  ...     ('tfidf', TfidfTransformer()),
+  ...     ('clf', SGDClassifier(loss='hinge', penalty='l2',
+  ...                           alpha=1e-3, random_state=42,
+  ...                           max_iter=5, tol=None)),
   ... ])
+
   >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
   Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.9127...
+  0.9101...
 
-We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further 
+We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further
 utilities for more detailed performance analysis of the results::
 
   >>> from sklearn import metrics
@@ -374,20 +378,21 @@ utilities for more detailed performance analysis of the results::
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
   <BLANKLINE>
-             alt.atheism       0.95      0.81      0.87       319
-           comp.graphics       0.88      0.97      0.92       389
-                 sci.med       0.94      0.90      0.92       396
+             alt.atheism       0.95      0.80      0.87       319
+           comp.graphics       0.87      0.98      0.92       389
+                 sci.med       0.94      0.89      0.91       396
   soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
-             avg / total       0.92      0.91      0.91      1502
+                accuracy                           0.91      1502
+               macro avg       0.91      0.91      0.91      1502
+            weighted avg       0.91      0.91      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[258,  11,  15,  35],
-         [  4, 379,   3,   3],
-         [  5,  33, 355,   3],
-         [  5,  10,   4, 379]])
-
+  array([[256,  11,  16,  36],
+         [  4, 380,   3,   2],
+         [  5,  35, 353,   3],
+         [  5,  11,   4, 378]])
 
 As expected the confusion matrix shows that posts from the newsgroups
 on atheism and Christianity are more often confused for one another than
@@ -408,7 +413,7 @@ with computer graphics.
   optimizer for the same cost function based on the liblinear_ C++
   library.
 
-.. _liblinear: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+.. _liblinear: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 
 Parameter tuning using grid search
@@ -428,10 +433,12 @@ on either words or bigrams, with or without idf, and with a penalty
 parameter of either 0.01 or 0.001 for the linear SVM::
 
   >>> from sklearn.model_selection import GridSearchCV
-  >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
-  ...               'tfidf__use_idf': (True, False),
-  ...               'clf__alpha': (1e-2, 1e-3),
+  >>> parameters = {
+  ...     'vect__ngram_range': [(1, 1), (1, 2)],
+  ...     'tfidf__use_idf': (True, False),
+  ...     'clf__alpha': (1e-2, 1e-3),
   ... }
+
 
 Obviously, such an exhaustive search can be expensive. If we have multiple
 CPU cores at our disposal, we can tell the grid searcher to try these eight
@@ -439,7 +446,7 @@ parameter combinations in parallel with the ``n_jobs`` parameter. If we give
 this parameter a value of ``-1``, grid search will detect how many cores
 are installed and use them all::
 
-  >>> gs_clf = GridSearchCV(text_clf, parameters, n_jobs=-1)
+  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, iid=False, n_jobs=-1)
 
 The grid search instance behaves like a normal ``scikit-learn``
 model. Let's perform the search on a smaller subset of the training data
@@ -554,7 +561,7 @@ upon the completion of this tutorial:
   :class:`CountVectorizer`.
 
 * If you don't have labels, try using
-  :ref:`Clustering <sphx_glr_auto_examples_text_document_clustering.py>`
+  :ref:`Clustering <sphx_glr_auto_examples_text_plot_document_clustering.py>`
   on your problem.
 
 * If you have multiple labels per document, e.g categories, have a look

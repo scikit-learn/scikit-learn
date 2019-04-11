@@ -2,6 +2,7 @@
 #cython: boundscheck=False
 #cython: wraparound=False
 #cython: cdivision=True
+# cython: language_level=3
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
@@ -69,6 +70,8 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
         for j in range(n_features):
             lower_bounds[j] = fmin(lower_bounds[j], data_row[j])
             upper_bounds[j] = fmax(upper_bounds[j], data_row[j])
+
+    for j in range(n_features):
         if tree.dist_metric.p == INF:
             rad = fmax(rad, 0.5 * (upper_bounds[j] - lower_bounds[j]))
         else:

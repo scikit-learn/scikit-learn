@@ -30,9 +30,10 @@ should be used when applicable.
 - :func:`as_float_array`: convert input to an array of floats.  If a sparse
   matrix is passed, a sparse matrix will be returned.
 
-- :func:`check_array`: convert input to 2d array, raise error on sparse
-  matrices.  Allowed sparse matrix formats can be given optionally, as well as
-  allowing 1d or nd arrays.  Calls :func:`assert_all_finite` by default.
+- :func:`check_array`: check that input is a 2D array, raise error on sparse
+  matrices. Allowed sparse matrix formats can be given optionally, as well as
+  allowing 1D or N-dimensional arrays. Calls :func:`assert_all_finite` by
+  default.
 
 - :func:`check_X_y`: check that X and y have consistent length, calls
   check_array on X, and column_or_1d on y. For multilabel classification or
@@ -45,7 +46,7 @@ should be used when applicable.
 
 - :func:`validation.check_memory` checks that input is ``joblib.Memory``-like,
   which means that it can be converted into a
-  ``sklearn.externals.joblib.Memory`` instance (typically a str denoting
+  ``sklearn.utils.Memory`` instance (typically a str denoting
   the ``cachedir``) or has the same interface.
 
 If your code relies on a random number generator, it should never use
@@ -170,13 +171,6 @@ Graph Routines
   or undirected graph.  Both the Floyd-Warshall algorithm and Dijkstra's
   algorithm are available.  The algorithm is most efficient when the
   connectivity matrix is a ``scipy.sparse.csr_matrix``.
-
-
-Benchmarking
-------------
-
-- :func:`bench.total_seconds` (back-ported from ``timedelta.total_seconds``
-  in Python 2.7).  Used in ``benchmarks/bench_glm.py``.
 
 
 Testing Functions

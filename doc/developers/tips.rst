@@ -14,8 +14,8 @@ such as `TamperMonkey`_ or `GreaseMonkey`_; to set up userscripts you must have
 one of these extensions installed, enabled and running.  We provide userscripts
 as GitHub gists; to install them, click on the "Raw" button on the gist page.
 
-.. _TamperMonkey: https://tampermonkey.net
-.. _GreaseMonkey: http://www.greasespot.net
+.. _TamperMonkey: https://tampermonkey.net/
+.. _GreaseMonkey: https://www.greasespot.net/
 
 
 .. _viewing_rendered_html_documentation:
@@ -27,7 +27,7 @@ We use CircleCI to build the HTML documentation for every pull request. To
 access that documentation, instructions are provided in the :ref:`documentation
 section of the contributor guide <contribute_documentation>`. To save you a few
 clicks, we provide a `userscript
-<https://raw.githubusercontent.com/lesteve/userscripts/master/add-button-for-pr-circleci-doc.user.js>`_
+<https://raw.githubusercontent.com/lesteve/userscripts/master/add-button-for-pr-circleci-doc.user.js>`__
 that adds a button to every PR. After installing the userscript, navigate to
 any GitHub PR; a new button labeled "See CircleCI doc for this PR" should
 appear in the top-right area.
@@ -37,7 +37,7 @@ Folding and unfolding outdated diffs on pull requests
 
 GitHub hides discussions on PRs when the corresponding lines of code have been
 changed in the mean while. This `userscript
-<https://raw.githubusercontent.com/lesteve/userscripts/master/github-expand-all.user.js>`_
+<https://raw.githubusercontent.com/lesteve/userscripts/master/github-expand-all.user.js>`__
 provides a shortcut (Control-Alt-P at the time of writing but look at the code
 to be sure) to unfold all such hidden discussions at once, so you can catch up.
 
@@ -61,6 +61,9 @@ integration, consider `this browser extension
 <https://github.com/codecov/browser-extension>`_. The coverage of each line
 will be displayed as a color background behind the line number.
 
+
+.. _pytest_tips:
+
 Useful pytest aliases and flags
 -------------------------------
 
@@ -79,7 +82,7 @@ to select tests based on their name. For instance,::
 
 will run all :term:`common tests` for the ``LogisticRegression`` estimator.
 
-When a unit tests fail, the following tricks can make debugging easier:
+When a unit test fails, the following tricks can make debugging easier:
 
   1. The command line argument ``pytest -l`` instructs pytest to print the local
      variables when a failure occurs.
@@ -89,6 +92,20 @@ When a unit tests fail, the following tricks can make debugging easier:
      shell alias to::
 
          pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
+
+Other `pytest` options that may become useful include:
+
+  - ``-x`` which exits on the first failed test
+  - ``--lf`` to rerun the tests that failed on the previous run
+  - ``--ff`` to rerun all previous tests, running the ones that failed first
+  - ``-s`` so that pytest does not capture the output of ``print()``
+    statements
+  - ``--tb=short`` or ``--tb=line`` to control the length of the logs
+
+Since our continuous integration tests will error if ``DeprecationWarning``
+or ``FutureWarning`` aren't properly caught, it is also recommended to run
+``pytest`` along with the ``-Werror::DeprecationWarning`` and
+``-Werror::FutureWarning`` flags.
 
 .. _saved_replies:
 
@@ -103,6 +120,11 @@ replies <https://github.com/settings/replies/>`_ for reviewing:
 ..
     Note that putting this content on a single line in a literal is the easiest way to make it copyable and wrapped on screen.
 
+Issue: Usage questions
+    ::
+
+        You're asking a usage question. The issue tracker is mainly for bugs and new features. For usage questions, it is recommended to try [Stack Overflow](https://stackoverflow.com/questions/tagged/scikit-learn) or [the Mailing List](https://mail.python.org/mailman/listinfo/scikit-learn).
+
 Issue: You're welcome to update the docs
     ::
 
@@ -116,15 +138,11 @@ Issue: Self-contained example for bug
 Issue: Software versions
     ::
 
-        To help diagnose your issue, could you please paste the output of:
+        To help diagnose your issue, please paste the output of:
         ```py
-        import platform; print(platform.platform())
-        import sys; print("Python", sys.version)
-        import numpy; print("NumPy", numpy.__version__)
-        import scipy; print("SciPy", scipy.__version__)
-        import sklearn; print("Scikit-Learn", sklearn.__version__)
+        import sklearn; sklearn.show_versions()
         ```
-        ? Thanks.
+        Thanks.
 
 Issue: Code blocks
     ::
@@ -176,7 +194,7 @@ PR-NEW: Fix #
 PR-NEW or Issue: Maintenance cost
     ::
 
-        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](http://scikit-learn-contrib.github.io).
+        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
 
 PR-WIP: What's needed before merge?
     ::
@@ -191,7 +209,7 @@ PR-WIP: Regression test needed
 PR-WIP: PEP8
     ::
 
-        You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in Travis CI. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
+        You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in the Circle CI `lint` job. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
 
 PR-MRG: Patience
     ::
@@ -243,8 +261,8 @@ code. Follow these steps:
        $> valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
 
 .. _valgrind: http://valgrind.org
-.. _`README.valgrind`: http://svn.python.org/projects/python/trunk/Misc/README.valgrind
-.. _`valgrind-python.supp`: http://svn.python.org/projects/python/trunk/Misc/valgrind-python.supp
+.. _`README.valgrind`: https://svn.python.org/projects/python/trunk/Misc/README.valgrind
+.. _`valgrind-python.supp`: https://svn.python.org/projects/python/trunk/Misc/valgrind-python.supp
 
 
 The result will be a list of all the memory-related errors, which reference

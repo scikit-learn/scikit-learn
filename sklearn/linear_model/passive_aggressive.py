@@ -21,20 +21,39 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
 
-    max_iter : int, optional
+    max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         `partial_fit`.
-        Defaults to 5. Defaults to 1000 from 0.21, or if tol is not None.
 
         .. versionadded:: 0.19
 
-    tol : float or None, optional
+    tol : float or None, optional (default=1e-3)
         The stopping criterion. If it is not None, the iterations will stop
-        when (loss > previous_loss - tol). Defaults to None.
-        Defaults to 1e-3 from 0.21.
+        when (loss > previous_loss - tol).
 
         .. versionadded:: 0.19
+
+    early_stopping : bool, default=False
+        Whether to use early stopping to terminate training when validation.
+        score is not improving. If set to True, it will automatically set aside
+        a stratified fraction of training data as validation and terminate
+        training when validation score is not improving by at least tol for
+        n_iter_no_change consecutive epochs.
+
+        .. versionadded:: 0.20
+
+    validation_fraction : float, default=0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
+
+        .. versionadded:: 0.20
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -47,10 +66,12 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         hinge: equivalent to PA-I in the reference paper.
         squared_hinge: equivalent to PA-II in the reference paper.
 
-    n_jobs : integer, optional
+    n_jobs : int or None, optional (default=None)
         The number of CPUs to use to do the OVA (One Versus All, for
-        multi-class problems) computation. -1 means 'all CPUs'. Defaults
-        to 1.
+        multi-class problems) computation.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     random_state : int, RandomState instance or None, optional, default=None
         The seed of the pseudo random number generator to use when shuffling
@@ -90,13 +111,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         .. versionadded:: 0.19
            parameter *average* to use weights averaging in SGD
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -114,18 +128,20 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     --------
     >>> from sklearn.linear_model import PassiveAggressiveClassifier
     >>> from sklearn.datasets import make_classification
-    >>>
+
     >>> X, y = make_classification(n_features=4, random_state=0)
-    >>> clf = PassiveAggressiveClassifier(random_state=0)
-    >>> clf.fit(X, y)
+    >>> clf = PassiveAggressiveClassifier(max_iter=1000, random_state=0,
+    ... tol=1e-3)
+    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
-                  fit_intercept=True, loss='hinge', max_iter=None, n_iter=None,
-                  n_jobs=1, random_state=0, shuffle=True, tol=None, verbose=0,
-                  warm_start=False)
+                  early_stopping=False, fit_intercept=True, loss='hinge',
+                  max_iter=1000, n_iter_no_change=5, n_jobs=None,
+                  random_state=0, shuffle=True, tol=0.001,
+                  validation_fraction=0.1, verbose=0, warm_start=False)
     >>> print(clf.coef_)
-    [[0.49324685 1.0552176  1.49519589 1.33798314]]
+    [[0.26642044 0.45070924 0.67251877 0.64185414]]
     >>> print(clf.intercept_)
-    [2.18438388]
+    [1.84127814]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -142,15 +158,19 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
-                 shuffle=True, verbose=0, loss="hinge", n_jobs=1,
-                 random_state=None, warm_start=False, class_weight=None,
-                 average=False, n_iter=None):
-        super(PassiveAggressiveClassifier, self).__init__(
+    def __init__(self, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
+                 early_stopping=False, validation_fraction=0.1,
+                 n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
+                 n_jobs=None, random_state=None, warm_start=False,
+                 class_weight=None, average=False):
+        super().__init__(
             penalty=None,
             fit_intercept=fit_intercept,
             max_iter=max_iter,
             tol=tol,
+            early_stopping=early_stopping,
+            validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change,
             shuffle=shuffle,
             verbose=verbose,
             random_state=random_state,
@@ -158,8 +178,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
             warm_start=warm_start,
             class_weight=class_weight,
             average=average,
-            n_jobs=n_jobs,
-            n_iter=n_iter)
+            n_jobs=n_jobs)
 
         self.C = C
         self.loss = loss
@@ -187,6 +206,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         -------
         self : returns an instance of self.
         """
+        self._validate_params(for_partial_fit=True)
         if self.class_weight == 'balanced':
             raise ValueError("class_weight 'balanced' is not supported for "
                              "partial_fit. For 'balanced' weights, use "
@@ -224,6 +244,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         -------
         self : returns an instance of self.
         """
+        self._validate_params()
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._fit(X, y, alpha=1.0, C=self.C,
                          loss="hinge", learning_rate=lr,
@@ -245,20 +266,39 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    max_iter : int, optional
+    max_iter : int, optional (default=1000)
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         `partial_fit`.
-        Defaults to 5. Defaults to 1000 from 0.21, or if tol is not None.
 
         .. versionadded:: 0.19
 
-    tol : float or None, optional
+    tol : float or None, optional (default=1e-3)
         The stopping criterion. If it is not None, the iterations will stop
-        when (loss > previous_loss - tol). Defaults to None.
-        Defaults to 1e-3 from 0.21.
+        when (loss > previous_loss - tol).
 
         .. versionadded:: 0.19
+
+    early_stopping : bool, default=False
+        Whether to use early stopping to terminate training when validation.
+        score is not improving. If set to True, it will automatically set aside
+        a fraction of training data as validation and terminate
+        training when validation score is not improving by at least tol for
+        n_iter_no_change consecutive epochs.
+
+        .. versionadded:: 0.20
+
+    validation_fraction : float, default=0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if early_stopping is True.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default=5
+        Number of iterations with no improvement to wait before early stopping.
+
+        .. versionadded:: 0.20
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
@@ -301,13 +341,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         .. versionadded:: 0.19
            parameter *average* to use weights averaging in SGD
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -324,14 +357,16 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     --------
     >>> from sklearn.linear_model import PassiveAggressiveRegressor
     >>> from sklearn.datasets import make_regression
-    >>>
+
     >>> X, y = make_regression(n_features=4, random_state=0)
-    >>> regr = PassiveAggressiveRegressor(random_state=0)
-    >>> regr.fit(X, y)
-    PassiveAggressiveRegressor(C=1.0, average=False, epsilon=0.1,
-                  fit_intercept=True, loss='epsilon_insensitive',
-                  max_iter=None, n_iter=None, random_state=0, shuffle=True,
-                  tol=None, verbose=0, warm_start=False)
+    >>> regr = PassiveAggressiveRegressor(max_iter=100, random_state=0,
+    ... tol=1e-3)
+    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+    PassiveAggressiveRegressor(C=1.0, average=False, early_stopping=False,
+                  epsilon=0.1, fit_intercept=True, loss='epsilon_insensitive',
+                  max_iter=100, n_iter_no_change=5, random_state=0,
+                  shuffle=True, tol=0.001, validation_fraction=0.1,
+                  verbose=0, warm_start=False)
     >>> print(regr.coef_)
     [20.48736655 34.18818427 67.59122734 87.94731329]
     >>> print(regr.intercept_)
@@ -351,11 +386,13 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
-                 shuffle=True, verbose=0, loss="epsilon_insensitive",
-                 epsilon=DEFAULT_EPSILON, random_state=None, warm_start=False,
-                 average=False, n_iter=None):
-        super(PassiveAggressiveRegressor, self).__init__(
+    def __init__(self, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
+                 early_stopping=False, validation_fraction=0.1,
+                 n_iter_no_change=5, shuffle=True, verbose=0,
+                 loss="epsilon_insensitive", epsilon=DEFAULT_EPSILON,
+                 random_state=None, warm_start=False,
+                 average=False):
+        super().__init__(
             penalty=None,
             l1_ratio=0,
             epsilon=epsilon,
@@ -363,12 +400,14 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
             fit_intercept=fit_intercept,
             max_iter=max_iter,
             tol=tol,
+            early_stopping=early_stopping,
+            validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change,
             shuffle=shuffle,
             verbose=verbose,
             random_state=random_state,
             warm_start=warm_start,
-            average=average,
-            n_iter=n_iter)
+            average=average)
         self.C = C
         self.loss = loss
 
@@ -387,7 +426,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         -------
         self : returns an instance of self.
         """
-        self._validate_params()
+        self._validate_params(for_partial_fit=True)
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="epsilon_insensitive",
@@ -416,6 +455,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         -------
         self : returns an instance of self.
         """
+        self._validate_params()
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._fit(X, y, alpha=1.0, C=self.C,
                          loss="epsilon_insensitive",

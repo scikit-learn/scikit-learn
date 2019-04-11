@@ -12,7 +12,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -146,6 +145,7 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
     return X, y, X_test, y_test
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_lasso_cv():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
@@ -161,9 +161,8 @@ def test_lasso_cv():
     lars = LassoLarsCV(normalize=False, max_iter=30).fit(X, y)
     # for this we check that they don't fall in the grid of
     # clf.alphas further than 1
-    assert_true(np.abs(
-        np.searchsorted(clf.alphas_[::-1], lars.alpha_) -
-        np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1)
+    assert np.abs(np.searchsorted(clf.alphas_[::-1], lars.alpha_) -
+                  np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1
     # check that they also give a similar MSE
     mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.mse_path_.T)
     np.testing.assert_approx_equal(mse_lars(clf.alphas_[5]).mean(),
@@ -199,13 +198,13 @@ def test_lasso_cv_positive_constraint():
     clf_unconstrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2,
                                 n_jobs=1)
     clf_unconstrained.fit(X, y)
-    assert_true(min(clf_unconstrained.coef_) < 0)
+    assert min(clf_unconstrained.coef_) < 0
 
     # On same data, constrained fit has non-negative coefficients
     clf_constrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
                               positive=True, cv=2, n_jobs=1)
     clf_constrained.fit(X, y)
-    assert_true(min(clf_constrained.coef_) >= 0)
+    assert min(clf_constrained.coef_) >= 0
 
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
@@ -232,6 +231,8 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
         decimal=1)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_enet_path():
     # We use a large number of samples and of informative features so that
     # the l1_ratio selected is more toward ridge than lasso
@@ -289,6 +290,7 @@ def test_enet_path():
     assert_almost_equal(clf1.alpha_, clf2.alpha_)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_path_parameters():
     X, y, _, _ = build_dataset()
     max_iter = 100
@@ -326,11 +328,11 @@ def test_lasso_positive_constraint():
 
     lasso = Lasso(alpha=0.1, max_iter=1000, positive=True)
     lasso.fit(X, y)
-    assert_true(min(lasso.coef_) >= 0)
+    assert min(lasso.coef_) >= 0
 
     lasso = Lasso(alpha=0.1, max_iter=1000, precompute=True, positive=True)
     lasso.fit(X, y)
-    assert_true(min(lasso.coef_) >= 0)
+    assert min(lasso.coef_) >= 0
 
 
 def test_enet_positive_constraint():
@@ -339,7 +341,7 @@ def test_enet_positive_constraint():
 
     enet = ElasticNet(alpha=0.1, max_iter=1000, positive=True)
     enet.fit(X, y)
-    assert_true(min(enet.coef_) >= 0)
+    assert min(enet.coef_) >= 0
 
 
 def test_enet_cv_positive_constraint():
@@ -351,15 +353,16 @@ def test_enet_cv_positive_constraint():
                                         max_iter=max_iter,
                                         cv=2, n_jobs=1)
     enetcv_unconstrained.fit(X, y)
-    assert_true(min(enetcv_unconstrained.coef_) < 0)
+    assert min(enetcv_unconstrained.coef_) < 0
 
     # On same data, constrained fit has non-negative coefficients
     enetcv_constrained = ElasticNetCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
                                       cv=2, positive=True, n_jobs=1)
     enetcv_constrained.fit(X, y)
-    assert_true(min(enetcv_constrained.coef_) >= 0)
+    assert min(enetcv_constrained.coef_) >= 0
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_uniform_targets():
     enet = ElasticNetCV(fit_intercept=True, n_alphas=3)
     m_enet = MultiTaskElasticNetCV(fit_intercept=True, n_alphas=3)
@@ -396,11 +399,11 @@ def test_multi_task_lasso_and_enet():
     Y = np.c_[y, y]
     # Y_test = np.c_[y_test, y_test]
     clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
-    assert_true(0 < clf.dual_gap_ < 1e-5)
+    assert 0 < clf.dual_gap_ < 1e-5
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
     clf = MultiTaskElasticNet(alpha=1, tol=1e-8).fit(X, Y)
-    assert_true(0 < clf.dual_gap_ < 1e-5)
+    assert 0 < clf.dual_gap_ < 1e-5
     assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
     clf = MultiTaskElasticNet(alpha=1.0, tol=1e-8, max_iter=1)
@@ -426,7 +429,7 @@ def test_multi_task_lasso_readonly_data():
     with TempMemmap((X, Y)) as (X, Y):
         Y = np.c_[y, y]
         clf = MultiTaskLasso(alpha=1, tol=1e-8).fit(X, Y)
-        assert_true(0 < clf.dual_gap_ < 1e-5)
+        assert 0 < clf.dual_gap_ < 1e-5
         assert_array_almost_equal(clf.coef_[0], clf.coef_[1])
 
 
@@ -454,6 +457,7 @@ def test_multioutput_enetcv_error():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
     clf = MultiTaskElasticNetCV().fit(X, y)
@@ -480,6 +484,7 @@ def test_multitask_enet_and_lasso_cv():
     assert_equal(10, len(clf.alphas_))
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_1d_multioutput_enet_and_multitask_enet_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
@@ -493,6 +498,7 @@ def test_1d_multioutput_enet_and_multitask_enet_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
@@ -505,6 +511,7 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_sparse_input_dtype_enet_and_lassocv():
     X, y, _, _ = build_dataset(n_features=10)
     clf = ElasticNetCV(n_alphas=5)
@@ -522,6 +529,7 @@ def test_sparse_input_dtype_enet_and_lassocv():
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_precompute_invalid_argument():
     X, y, _, _ = build_dataset()
     for clf in [ElasticNetCV(precompute="invalid"),
@@ -634,7 +642,7 @@ def test_enet_path_positive():
     # Test that the coefs returned by positive=True in enet_path are positive
     for path in [enet_path, lasso_path]:
         pos_path_coef = path(X, Y[:, 0], positive=True)[1]
-        assert_true(np.all(pos_path_coef >= 0))
+        assert np.all(pos_path_coef >= 0)
 
     # For multi output, positive parameter is not allowed
     # Test that an error is raised
@@ -691,7 +699,7 @@ def test_enet_copy_X_False_check_input_False():
     enet.fit(X, y, check_input=False)
 
     # No copying, X is overwritten
-    assert_true(np.any(np.not_equal(original_X, X)))
+    assert np.any(np.not_equal(original_X, X))
 
 
 def test_overrided_gram_matrix():
@@ -706,17 +714,17 @@ def test_overrided_gram_matrix():
                          clf.fit, X, y)
 
 
-def test_lasso_non_float_y():
+@pytest.mark.parametrize('model', [ElasticNet, Lasso])
+def test_lasso_non_float_y(model):
     X = [[0, 0], [1, 1], [-1, -1]]
     y = [0, 1, 2]
     y_float = [0.0, 1.0, 2.0]
 
-    for model in [ElasticNet, Lasso]:
-        clf = model(fit_intercept=False)
-        clf.fit(X, y)
-        clf_float = model(fit_intercept=False)
-        clf_float.fit(X, y_float)
-        assert_array_equal(clf.coef_, clf_float.coef_)
+    clf = model(fit_intercept=False)
+    clf.fit(X, y)
+    clf_float = model(fit_intercept=False)
+    clf_float.fit(X, y_float)
+    assert_array_equal(clf.coef_, clf_float.coef_)
 
 
 def test_enet_float_precision():
@@ -809,3 +817,62 @@ def test_coef_shape_not_zero():
     est_no_intercept = Lasso(fit_intercept=False)
     est_no_intercept.fit(np.c_[np.ones(3)], np.ones(3))
     assert est_no_intercept.coef_.shape == (1,)
+
+
+def test_warm_start_multitask_lasso():
+    X, y, X_test, y_test = build_dataset()
+    Y = np.c_[y, y]
+    clf = MultiTaskLasso(alpha=0.1, max_iter=5, warm_start=True)
+    ignore_warnings(clf.fit)(X, Y)
+    ignore_warnings(clf.fit)(X, Y)  # do a second round with 5 iterations
+
+    clf2 = MultiTaskLasso(alpha=0.1, max_iter=10)
+    ignore_warnings(clf2.fit)(X, Y)
+    assert_array_almost_equal(clf2.coef_, clf.coef_)
+
+
+@pytest.mark.parametrize('klass, n_classes, kwargs',
+                         [(Lasso, 1, dict(precompute=True)),
+                          (Lasso, 1, dict(precompute=False)),
+                          (MultiTaskLasso, 2, dict()),
+                          (MultiTaskLasso, 2, dict())])
+def test_enet_coordinate_descent(klass, n_classes, kwargs):
+    """Test that a warning is issued if model does not converge"""
+    clf = klass(max_iter=2, **kwargs)
+    n_samples = 5
+    n_features = 2
+    X = np.ones((n_samples, n_features)) * 1e50
+    y = np.ones((n_samples, n_classes))
+    if klass == Lasso:
+        y = y.ravel()
+    assert_warns(ConvergenceWarning, clf.fit, X, y)
+
+
+def test_convergence_warnings():
+    random_state = np.random.RandomState(0)
+    X = random_state.standard_normal((1000, 500))
+    y = random_state.standard_normal((1000, 3))
+
+    # check that the model fails to converge
+    with pytest.warns(ConvergenceWarning):
+        MultiTaskElasticNet(max_iter=1, tol=0).fit(X, y)
+
+    # check that the model converges w/o warnings
+    with pytest.warns(None) as record:
+        MultiTaskElasticNet(max_iter=1000).fit(X, y)
+
+    assert not record.list
+
+
+def test_sparse_input_convergence_warning():
+    X, y, _, _ = build_dataset(n_samples=1000, n_features=500)
+
+    with pytest.warns(ConvergenceWarning):
+        ElasticNet(max_iter=1, tol=0).fit(
+            sparse.csr_matrix(X, dtype=np.float32), y)
+
+    # check that the model converges w/o warnings
+    with pytest.warns(None) as record:
+        Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
+
+    assert not record.list

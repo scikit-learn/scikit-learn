@@ -4,7 +4,6 @@ MNIST dataset T-SNE benchmark
 =============================
 
 """
-from __future__ import division, print_function
 
 # License: BSD 3 clause
 
@@ -14,8 +13,8 @@ from time import time
 import numpy as np
 import json
 import argparse
+from joblib import Memory
 
-from sklearn.externals.joblib import Memory
 from sklearn.datasets import fetch_mldata
 from sklearn.manifold import TSNE
 from sklearn.neighbors import NearestNeighbors

@@ -1,7 +1,9 @@
 import sys
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 import numpy as np
 import scipy.sparse as sp
+
+import pytest
 
 from sklearn.neighbors import BallTree
 from sklearn.neighbors import NearestNeighbors
@@ -138,7 +140,8 @@ def test_binary_search_neighbors():
 
     # Test that when we use all the neighbors the results are identical
     k = n_samples
-    neighbors_nn = np.argsort(distances, axis=1)[:, 1:k].astype(np.int64)
+    neighbors_nn = np.argsort(distances, axis=1)[:, 1:k].astype(np.int64,
+                                                                copy=False)
     distances_nn = np.array([distances[k, neighbors_nn[k]]
                             for k in range(n_samples)])
     P2 = _binary_search_perplexity(distances_nn, neighbors_nn,
@@ -150,7 +153,8 @@ def test_binary_search_neighbors():
     for k in np.linspace(80, n_samples, 5):
         k = int(k)
         topn = k * 10  # check the top 10 *k entries out of k * k entries
-        neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
+        neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64,
+                                                                   copy=False)
         distances_nn = np.array([distances[k, neighbors_nn[k]]
                                 for k in range(n_samples)])
         P2k = _binary_search_perplexity(distances_nn, neighbors_nn,
@@ -174,7 +178,8 @@ def test_binary_perplexity_stability():
     distances = np.abs(distances.dot(distances.T))
     np.fill_diagonal(distances, 0.0)
     last_P = None
-    neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
+    neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64,
+                                                               copy=False)
     for _ in range(100):
         P = _binary_search_perplexity(distances.copy(), neighbors_nn.copy(),
                                       3, verbose=0)
@@ -530,7 +535,7 @@ def _run_answer_test(pos_input, pos_output, neighbors, grad_output,
     distances = pairwise_distances(pos_input).astype(np.float32)
     args = distances, perplexity, verbose
     pos_output = pos_output.astype(np.float32)
-    neighbors = neighbors.astype(np.int64)
+    neighbors = neighbors.astype(np.int64, copy=False)
     pij_input = _joint_probabilities(*args)
     pij_input = squareform(pij_input).astype(np.float32)
     grad_bh = np.zeros(pos_output.shape, dtype=np.float32)
@@ -596,35 +601,35 @@ def test_no_sparse_on_barnes_hut():
                          tsne.fit_transform, X_csr)
 
 
-def test_64bit():
+@pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
+@pytest.mark.parametrize('dt', [np.float32, np.float64])
+def test_64bit(method, dt):
     # Ensure 64bit arrays are handled correctly.
     random_state = check_random_state(0)
-    methods = ['barnes_hut', 'exact']
-    for method in methods:
-        for dt in [np.float32, np.float64]:
-            X = random_state.randn(50, 2).astype(dt)
-            tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
-                        random_state=0, method=method, verbose=0)
-            X_embedded = tsne.fit_transform(X)
-            effective_type = X_embedded.dtype
 
-            # tsne cython code is only single precision, so the output will
-            # always be single precision, irrespectively of the input dtype
-            assert effective_type == np.float32
+    X = random_state.randn(50, 2).astype(dt, copy=False)
+    tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
+                random_state=0, method=method, verbose=0)
+    X_embedded = tsne.fit_transform(X)
+    effective_type = X_embedded.dtype
+
+    # tsne cython code is only single precision, so the output will
+    # always be single precision, irrespectively of the input dtype
+    assert effective_type == np.float32
 
 
-def test_kl_divergence_not_nan():
+@pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
+def test_kl_divergence_not_nan(method):
     # Ensure kl_divergence_ is computed at last iteration
     # even though n_iter % n_iter_check != 0, i.e. 1003 % 50 != 0
     random_state = check_random_state(0)
-    methods = ['barnes_hut', 'exact']
-    for method in methods:
-        X = random_state.randn(50, 2)
-        tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
-                    random_state=0, method=method, verbose=0, n_iter=1003)
-        tsne.fit_transform(X)
 
-        assert not np.isnan(tsne.kl_divergence_)
+    X = random_state.randn(50, 2)
+    tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
+                random_state=0, method=method, verbose=0, n_iter=1003)
+    tsne.fit_transform(X)
+
+    assert not np.isnan(tsne.kl_divergence_)
 
 
 def test_barnes_hut_angle():
@@ -807,9 +812,9 @@ def assert_uniform_grid(Y, try_name=None):
     assert_less(largest_to_mean, 2, msg=try_name)
 
 
-def test_uniform_grid():
-    for method in ['barnes_hut', 'exact']:
-        yield check_uniform_grid, method
+@pytest.mark.parametrize('method', ['barnes_hut', 'exact'])
+def test_uniform_grid(method):
+    check_uniform_grid(method)
 
 
 def test_bh_match_exact():

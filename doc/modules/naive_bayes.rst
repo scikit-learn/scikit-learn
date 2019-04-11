@@ -8,17 +8,18 @@ Naive Bayes
 
 
 Naive Bayes methods are a set of supervised learning algorithms
-based on applying Bayes' theorem with the "naive" assumption of independence
-between every pair of features. Given a class variable :math:`y` and a
-dependent feature vector :math:`x_1` through :math:`x_n`,
-Bayes' theorem states the following relationship:
+based on applying Bayes' theorem with the "naive" assumption of
+conditional independence between every pair of features given the
+value of the class variable. Bayes' theorem states the following
+relationship, given class variable :math:`y` and dependent feature
+vector :math:`x_1` through :math:`x_n`, :
 
 .. math::
 
    P(y \mid x_1, \dots, x_n) = \frac{P(y) P(x_1, \dots x_n \mid y)}
                                     {P(x_1, \dots, x_n)}
 
-Using the naive independence assumption that
+Using the naive conditional independence assumption that
 
 .. math::
 
@@ -71,7 +72,7 @@ it is known to be a bad estimator, so the probability outputs from
 .. topic:: References:
 
  * H. Zhang (2004). `The optimality of Naive Bayes.
-   <http://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
+   <https://www.cs.unb.ca/~hzhang/publications/FLAIRS04ZhangH.pdf>`_
    Proc. FLAIRS.
 
 .. _gaussian_naive_bayes:
@@ -84,7 +85,7 @@ classification. The likelihood of the features is assumed to be Gaussian:
 
 .. math::
 
-   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
+   P(x_i \mid y) = \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
 
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
@@ -124,7 +125,7 @@ version of maximum likelihood, i.e. relative frequency counting:
 where :math:`N_{yi} = \sum_{x \in T} x_i` is
 the number of times feature :math:`i` appears in a sample of class :math:`y`
 in the training set :math:`T`,
-and :math:`N_{y} = \sum_{i=1}^{|T|} N_{yi}` is the total count of
+and :math:`N_{y} = \sum_{i=1}^{n} N_{yi}` is the total count of
 all features for class :math:`y`.
 
 The smoothing priors :math:`\alpha \ge 0` accounts for
@@ -174,7 +175,7 @@ match.
 
  * Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
    `Tackling the poor assumptions of naive bayes text classifiers.
-   <http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
+   <https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
    In ICML (Vol. 3, pp. 616-623).
 
 .. _bernoulli_naive_bayes:

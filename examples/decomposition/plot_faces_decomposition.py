@@ -48,13 +48,13 @@ faces_centered -= faces_centered.mean(axis=1).reshape(n_samples, -1)
 print("Dataset consists of %d faces" % n_samples)
 
 
-def plot_gallery(title, images, n_col=n_col, n_row=n_row):
+def plot_gallery(title, images, n_col=n_col, n_row=n_row, cmap=plt.cm.gray):
     plt.figure(figsize=(2. * n_col, 2.26 * n_row))
     plt.suptitle(title, size=16)
     for i, comp in enumerate(images):
         plt.subplot(n_row, n_col, i + 1)
         vmax = max(comp.max(), -comp.min())
-        plt.imshow(comp.reshape(image_shape), cmap=plt.cm.gray,
+        plt.imshow(comp.reshape(image_shape), cmap=cmap,
                    interpolation='nearest',
                    vmin=-vmax, vmax=vmax)
         plt.xticks(())
@@ -81,7 +81,8 @@ estimators = [
     ('Sparse comp. - MiniBatchSparsePCA',
      decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=0.8,
                                       n_iter=100, batch_size=3,
-                                      random_state=rng),
+                                      random_state=rng,
+                                      normalize_components=True),
      True),
 
     ('MiniBatchDictionaryLearning',
@@ -96,7 +97,7 @@ estimators = [
      True),
 
     ('Factor Analysis components - FA',
-     decomposition.FactorAnalysis(n_components=n_components, max_iter=2),
+     decomposition.FactorAnalysis(n_components=n_components, max_iter=20),
      True),
 ]
 
@@ -135,5 +136,58 @@ for name, estimator, center in estimators:
                      n_row=1)
     plot_gallery('%s - Train time %.1fs' % (name, train_time),
                  components_[:n_components])
+
+plt.show()
+
+# #############################################################################
+# Various positivity constraints applied to dictionary learning.
+estimators = [
+    ('Dictionary learning',
+        decomposition.MiniBatchDictionaryLearning(n_components=15, alpha=0.1,
+                                                  n_iter=50, batch_size=3,
+                                                  random_state=rng),
+     True),
+    ('Dictionary learning - positive dictionary',
+        decomposition.MiniBatchDictionaryLearning(n_components=15, alpha=0.1,
+                                                  n_iter=50, batch_size=3,
+                                                  random_state=rng,
+                                                  positive_dict=True),
+     True),
+    ('Dictionary learning - positive code',
+        decomposition.MiniBatchDictionaryLearning(n_components=15, alpha=0.1,
+                                                  n_iter=50, batch_size=3,
+                                                  random_state=rng,
+                                                  positive_code=True),
+     True),
+    ('Dictionary learning - positive dictionary & code',
+        decomposition.MiniBatchDictionaryLearning(n_components=15, alpha=0.1,
+                                                  n_iter=50, batch_size=3,
+                                                  random_state=rng,
+                                                  positive_dict=True,
+                                                  positive_code=True),
+     True),
+]
+
+
+# #############################################################################
+# Plot a sample of the input data
+
+plot_gallery("First centered Olivetti faces", faces_centered[:n_components],
+             cmap=plt.cm.RdBu)
+
+# #############################################################################
+# Do the estimation and plot it
+
+for name, estimator, center in estimators:
+    print("Extracting the top %d %s..." % (n_components, name))
+    t0 = time()
+    data = faces
+    if center:
+        data = faces_centered
+    estimator.fit(data)
+    train_time = (time() - t0)
+    print("done in %0.3fs" % train_time)
+    components_ = estimator.components_
+    plot_gallery(name, components_[:n_components], cmap=plt.cm.RdBu)
 
 plt.show()

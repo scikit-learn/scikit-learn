@@ -13,7 +13,6 @@ Generalized Linear models.
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 # License: BSD 3 clause
 
-from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
 import warnings
@@ -22,17 +21,19 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
+from scipy.special import expit
 
-from ..externals import six
-from ..externals.joblib import Parallel, delayed
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..utils import check_array, check_X_y, deprecated, as_float_array
+from ..utils._joblib import Parallel, delayed
+from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
+                    MultiOutputMixin)
+from ..utils import check_array, check_X_y
 from ..utils.validation import FLOAT_DTYPES
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
-from ..utils.seq_dataset import ArrayDataset, CSRDataset
+from ..utils.seq_dataset import ArrayDataset32, CSRDataset32
+from ..utils.seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted
 from ..exceptions import NotFittedError
 from ..preprocessing.data import normalize as f_normalize
@@ -50,99 +51,55 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
     This also returns the ``intercept_decay`` which is different
     for sparse datasets.
+
+    Parameters
+    ----------
+    X : array_like, shape (n_samples, n_features)
+        Training data
+
+    y : array_like, shape (n_samples, )
+        Target values.
+
+    sample_weight : numpy array of shape (n_samples,)
+        The weight of each sample
+
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for dataset shuffling and noise.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Returns
+    -------
+    dataset
+        The ``Dataset`` abstraction
+    intercept_decay
+        The intercept decay
     """
 
     rng = check_random_state(random_state)
-    # seed should never be 0 in SequentialDataset
+    # seed should never be 0 in SequentialDataset64
     seed = rng.randint(1, np.iinfo(np.int32).max)
 
+    if X.dtype == np.float32:
+        CSRData = CSRDataset32
+        ArrayData = ArrayDataset32
+    else:
+        CSRData = CSRDataset64
+        ArrayData = ArrayDataset64
+
     if sp.issparse(X):
-        dataset = CSRDataset(X.data, X.indptr, X.indices, y, sample_weight,
-                             seed=seed)
+        dataset = CSRData(X.data, X.indptr, X.indices, y, sample_weight,
+                          seed=seed)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
-        dataset = ArrayDataset(X, y, sample_weight, seed=seed)
+        dataset = ArrayData(X, y, sample_weight, seed=seed)
         intercept_decay = 1.0
 
     return dataset, intercept_decay
 
 
-@deprecated("sparse_center_data was deprecated in version 0.18 and will be "
-            "removed in 0.20. Use utilities in preprocessing.data instead")
-def sparse_center_data(X, y, fit_intercept, normalize=False):
-    """
-    Compute information needed to center data to have mean zero along
-    axis 0. Be aware that X will not be centered since it would break
-    the sparsity, but will be normalized if asked so.
-    """
-    if fit_intercept:
-        # we might require not to change the csr matrix sometimes
-        # store a copy if normalize is True.
-        # Change dtype to float64 since mean_variance_axis accepts
-        # it that way.
-        if sp.isspmatrix(X) and X.getformat() == 'csr':
-            X = sp.csr_matrix(X, copy=normalize, dtype=np.float64)
-        else:
-            X = sp.csc_matrix(X, copy=normalize, dtype=np.float64)
-
-        X_offset, X_var = mean_variance_axis(X, axis=0)
-        if normalize:
-            # transform variance to std in-place
-            X_var *= X.shape[0]
-            X_std = np.sqrt(X_var, X_var)
-            del X_var
-            X_std[X_std == 0] = 1
-            inplace_column_scale(X, 1. / X_std)
-        else:
-            X_std = np.ones(X.shape[1])
-        y_offset = y.mean(axis=0)
-        y = y - y_offset
-    else:
-        X_offset = np.zeros(X.shape[1])
-        X_std = np.ones(X.shape[1])
-        y_offset = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
-
-    return X, y, X_offset, y_offset, X_std
-
-
-@deprecated("center_data was deprecated in version 0.18 and will be removed "
-            "in 0.20. Use utilities in preprocessing.data instead")
-def center_data(X, y, fit_intercept, normalize=False, copy=True,
-                sample_weight=None):
-    """
-    Centers data to have mean zero along axis 0. This is here because
-    nearly all linear models will want their data to be centered.
-    If sample_weight is not None, then the weighted mean of X and y
-    is zero, and not the mean itself
-    """
-    X = as_float_array(X, copy)
-    if fit_intercept:
-        if isinstance(sample_weight, numbers.Number):
-            sample_weight = None
-        if sp.issparse(X):
-            X_offset = np.zeros(X.shape[1])
-            X_std = np.ones(X.shape[1])
-        else:
-            X_offset = np.average(X, axis=0, weights=sample_weight)
-            X -= X_offset
-            # XXX: currently scaled to variance=n_samples
-            if normalize:
-                X_std = np.sqrt(np.sum(X ** 2, axis=0))
-                X_std[X_std == 0] = 1
-                X /= X_std
-            else:
-                X_std = np.ones(X.shape[1])
-        y_offset = np.average(y, axis=0, weights=sample_weight)
-        y = y - y_offset
-    else:
-        X_offset = np.zeros(X.shape[1])
-        X_std = np.ones(X.shape[1])
-        y_offset = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
-    return X, y, X_offset, y_offset, X_std
-
-
 def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
-                     sample_weight=None, return_mean=False):
+                     sample_weight=None, return_mean=False, check_input=True):
     """
     Centers data to have mean zero along axis 0. If fit_intercept=False or if
     the X is a sparse matrix, no centering is done, but normalization can still
@@ -164,8 +121,15 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
 
-    X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
-                    dtype=FLOAT_DTYPES)
+    if check_input:
+        X = check_array(X, copy=copy, accept_sparse=['csr', 'csc'],
+                        dtype=FLOAT_DTYPES)
+    elif copy:
+        if sp.issparse(X):
+            X = X.copy()
+        else:
+            X = X.copy(order='K')
+
     y = np.asarray(y, dtype=X.dtype)
 
     if fit_intercept:
@@ -217,7 +181,8 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
 def _rescale_data(X, y, sample_weight):
     """Rescale data so as to support sample_weight"""
     n_samples = X.shape[0]
-    sample_weight = sample_weight * np.ones(n_samples)
+    sample_weight = np.full(n_samples, sample_weight,
+                            dtype=np.array(sample_weight).dtype)
     sample_weight = np.sqrt(sample_weight)
     sw_matrix = sparse.dia_matrix((sample_weight, 0),
                                   shape=(n_samples, n_samples))
@@ -226,7 +191,7 @@ def _rescale_data(X, y, sample_weight):
     return X, y
 
 
-class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
+class LinearModel(BaseEstimator, metaclass=ABCMeta):
     """Base class for Linear Models"""
 
     @abstractmethod
@@ -245,12 +210,12 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : array_like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape = (n_samples,)
+        C : array, shape (n_samples,)
             Returns predicted values.
         """
         return self._decision_function(X)
@@ -283,7 +248,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : array_like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -313,12 +278,12 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : array_like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : array, shape [n_samples]
             Predicted class label per sample.
         """
         scores = self.decision_function(X)
@@ -336,10 +301,7 @@ class LinearClassifierMixin(ClassifierMixin):
         multiclass is handled by normalizing that over all classes.
         """
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
+        expit(prob, out=prob)
         if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:
@@ -348,7 +310,7 @@ class LinearClassifierMixin(ClassifierMixin):
             return prob
 
 
-class SparseCoefMixin(object):
+class SparseCoefMixin:
     """Mixin for converting coef_ to and from CSR format.
 
     L1-regularizing estimators should inherit this.
@@ -402,7 +364,7 @@ class SparseCoefMixin(object):
         return self
 
 
-class LinearRegression(LinearModel, RegressorMixin):
+class LinearRegression(LinearModel, RegressorMixin, MultiOutputMixin):
     """
     Ordinary least squares Linear Regression.
 
@@ -424,10 +386,12 @@ class LinearRegression(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    n_jobs : int, optional, default 1
-        The number of jobs to use for the computation.
-        If -1 all CPUs are used. This will only provide speedup for
-        n_targets > 1 and sufficient large problems.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use for the computation. This will only provide
+        speedup for n_targets > 1 and sufficient large problems.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     Attributes
     ----------
@@ -440,6 +404,23 @@ class LinearRegression(LinearModel, RegressorMixin):
     intercept_ : array
         Independent term in the linear model.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.linear_model import LinearRegression
+    >>> X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    >>> # y = 1 * x_0 + 2 * x_1 + 3
+    >>> y = np.dot(X, np.array([1, 2])) + 3
+    >>> reg = LinearRegression().fit(X, y)
+    >>> reg.score(X, y)
+    1.0
+    >>> reg.coef_
+    array([1., 2.])
+    >>> reg.intercept_ # doctest: +ELLIPSIS
+    3.0000...
+    >>> reg.predict(np.array([[3, 5]]))
+    array([16.])
+
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
@@ -448,7 +429,7 @@ class LinearRegression(LinearModel, RegressorMixin):
     """
 
     def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=1):
+                 n_jobs=None):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
@@ -460,10 +441,10 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Training data
 
-        y : numpy array of shape [n_samples, n_targets]
+        y : array_like, shape (n_samples, n_targets)
             Target values. Will be cast to X's dtype if necessary
 
         sample_weight : numpy array of shape [n_samples]
@@ -486,24 +467,37 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
             X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
-            copy=self.copy_X, sample_weight=sample_weight)
+            copy=self.copy_X, sample_weight=sample_weight,
+            return_mean=True)
 
         if sample_weight is not None:
             # Sample weight can be implemented via a simple rescaling.
             X, y = _rescale_data(X, y, sample_weight)
 
         if sp.issparse(X):
+            X_offset_scale = X_offset / X_scale
+
+            def matvec(b):
+                return X.dot(b) - b.dot(X_offset_scale)
+
+            def rmatvec(b):
+                return X.T.dot(b) - X_offset_scale * np.sum(b)
+
+            X_centered = sparse.linalg.LinearOperator(shape=X.shape,
+                                                      matvec=matvec,
+                                                      rmatvec=rmatvec)
+
             if y.ndim < 2:
-                out = sparse_lsqr(X, y)
+                out = sparse_lsqr(X_centered, y)
                 self.coef_ = out[0]
                 self._residues = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(sparse_lsqr)(X, y[:, j].ravel())
+                    delayed(sparse_lsqr)(X_centered, y[:, j].ravel())
                     for j in range(y.shape[1]))
-                self.coef_ = np.vstack(out[0] for out in outs)
-                self._residues = np.vstack(out[3] for out in outs)
+                self.coef_ = np.vstack([out[0] for out in outs])
+                self._residues = np.vstack([out[3] for out in outs])
         else:
             self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y)
@@ -515,7 +509,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         return self
 
 
-def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
+def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
+             check_input=True):
     """Aux function used at beginning of fit in linear models"""
     n_samples, n_features = X.shape
 
@@ -524,11 +519,12 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         precompute = False
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, fit_intercept=fit_intercept, normalize=normalize,
-            copy=False, return_mean=True)
+            copy=False, return_mean=True, check_input=check_input)
     else:
         # copy was done in fit if necessary
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy)
+            X, y, fit_intercept=fit_intercept, normalize=normalize, copy=copy,
+            check_input=check_input)
     if hasattr(precompute, '__array__') and (
             fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
             normalize and not np.allclose(X_scale, np.ones(n_features))):
@@ -541,7 +537,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         Xy = None
 
     # precompute if n_samples > n_features
-    if isinstance(precompute, six.string_types) and precompute == 'auto':
+    if isinstance(precompute, str) and precompute == 'auto':
         precompute = (n_samples > n_features)
 
     if precompute is True:

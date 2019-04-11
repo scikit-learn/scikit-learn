@@ -7,16 +7,9 @@ import os
 from os.path import join, exists
 import re
 import numbers
-try:
-    # Python 2
-    from urllib2 import HTTPError
-    from urllib2 import quote
-    from urllib2 import urlopen
-except ImportError:
-    # Python 3+
-    from urllib.error import HTTPError
-    from urllib.parse import quote
-    from urllib.request import urlopen
+from urllib.error import HTTPError
+from urllib.parse import quote
+from urllib.request import urlopen
 
 import numpy as np
 import scipy as sp
@@ -25,12 +18,18 @@ from shutil import copyfileobj
 
 from .base import get_data_home
 from ..utils import Bunch
+from ..utils import deprecated
 
 MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
 
+@deprecated('mldata_filename was deprecated in version 0.20 and will be '
+            'removed in version 0.22. Please use fetch_openml.')
 def mldata_filename(dataname):
     """Convert a raw name for a data set in a mldata.org filename.
+
+    .. deprecated:: 0.20
+        Will be removed in version 0.22
 
     Parameters
     ----------
@@ -46,9 +45,13 @@ def mldata_filename(dataname):
     return re.sub(r'[().]', '', dataname)
 
 
+@deprecated('fetch_mldata was deprecated in version 0.20 and will be removed '
+            'in version 0.22. Please use fetch_openml.')
 def fetch_mldata(dataname, target_name='label', data_name='data',
                  transpose_data=True, data_home=None):
     """Fetch an mldata.org data set
+
+    mldata.org is no longer operational.
 
     If the file does not exist yet, it is downloaded from mldata.org .
 
@@ -69,6 +72,9 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
 
     mldata.org data sets may have multiple columns, which are stored in the
     Bunch object with their original name.
+
+    .. deprecated:: 0.20
+        Will be removed in version 0.22
 
     Parameters
     ----------
@@ -99,40 +105,6 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
         'data', the data to learn, 'target', the classification labels,
         'DESCR', the full description of the dataset, and
         'COL_NAMES', the original names of the dataset columns.
-
-    Examples
-    --------
-    Load the 'iris' dataset from mldata.org:
-
-    >>> from sklearn.datasets.mldata import fetch_mldata
-    >>> import tempfile
-    >>> test_data_home = tempfile.mkdtemp()
-
-    >>> iris = fetch_mldata('iris', data_home=test_data_home)
-    >>> iris.target.shape
-    (150,)
-    >>> iris.data.shape
-    (150, 4)
-
-    Load the 'leukemia' dataset from mldata.org, which needs to be transposed
-    to respects the scikit-learn axes convention:
-
-    >>> leuk = fetch_mldata('leukemia', transpose_data=True,
-    ...                     data_home=test_data_home)
-    >>> leuk.data.shape
-    (72, 7129)
-
-    Load an alternative 'iris' dataset, which has different names for the
-    columns:
-
-    >>> iris2 = fetch_mldata('datasets-UCI iris', target_name=1,
-    ...                      data_name=0, data_home=test_data_home)
-    >>> iris3 = fetch_mldata('datasets-UCI iris',
-    ...                      target_name='class', data_name='double0',
-    ...                      data_home=test_data_home)
-
-    >>> import shutil
-    >>> shutil.rmtree(test_data_home)
     """
 
     # normalize dataset name

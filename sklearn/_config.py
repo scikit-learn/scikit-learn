@@ -5,6 +5,8 @@ from contextlib import contextmanager as contextmanager
 
 _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
+    'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
+    'print_changed_only': False,
 }
 
 
@@ -19,8 +21,11 @@ def get_config():
     return _global_config.copy()
 
 
-def set_config(assume_finite=None):
+def set_config(assume_finite=None, working_memory=None,
+               print_changed_only=None):
     """Set global scikit-learn configuration
+
+    .. versionadded:: 0.19
 
     Parameters
     ----------
@@ -29,9 +34,32 @@ def set_config(assume_finite=None):
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
         avoiding error.  Global default: False.
+
+        .. versionadded:: 0.19
+
+    working_memory : int, optional
+        If set, scikit-learn will attempt to limit the size of temporary arrays
+        to this number of MiB (per job when parallelised), often saving both
+        computation time and memory on expensive operations that can be
+        performed in chunks. Global default: 1024.
+
+        .. versionadded:: 0.20
+
+    print_changed_only : bool, optional
+        If True, only the parameters that were set to non-default
+        values will be printed when printing an estimator. For example,
+        ``print(SVC())`` while True will only print 'SVC()' while the default
+        behaviour would be to print 'SVC(C=1.0, cache_size=200, ...)' with
+        all the non-changed parameters.
+
+        .. versionadded:: 0.21
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
+    if working_memory is not None:
+        _global_config['working_memory'] = working_memory
+    if print_changed_only is not None:
+        _global_config['print_changed_only'] = print_changed_only
 
 
 @contextmanager
@@ -45,6 +73,12 @@ def config_context(**new_config):
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
         avoiding error.  Global default: False.
+
+    working_memory : int, optional
+        If set, scikit-learn will attempt to limit the size of temporary arrays
+        to this number of MiB (per job when parallelised), often saving both
+        computation time and memory on expensive operations that can be
+        performed in chunks. Global default: 1024.
 
     Notes
     -----

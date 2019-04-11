@@ -8,6 +8,7 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
+from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
@@ -89,9 +90,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.18
 
-    n_jobs : int, default=1
+    n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
-        If `-1`, then the number of jobs is set to the number of CPU cores.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
         .. versionadded:: 0.18
 
@@ -107,14 +110,26 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         `remove_zero_eig` are not set, then all components are stored.
 
     dual_coef_ : array, (n_samples, n_features)
-        Inverse transform matrix. Set if `fit_inverse_transform` is True.
+        Inverse transform matrix. Only available when
+        ``fit_inverse_transform`` is True.
 
     X_transformed_fit_ : array, (n_samples, n_components)
         Projection of the fitted data on the kernel principal components.
+        Only available when ``fit_inverse_transform`` is True.
 
     X_fit_ : (n_samples, n_features)
         The data used to fit the model. If `copy_X=False`, then `X_fit_` is
         a reference. This attribute is used for the calls to transform.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.decomposition import KernelPCA
+    >>> X, _ = load_digits(return_X_y=True)
+    >>> transformer = KernelPCA(n_components=7, kernel='linear')
+    >>> X_transformed = transformer.fit_transform(X)
+    >>> X_transformed.shape
+    (1797, 7)
 
     References
     ----------
@@ -129,7 +144,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
                  tol=0, max_iter=None, remove_zero_eig=False,
-                 random_state=None, copy_X=True, n_jobs=1):
+                 random_state=None, copy_X=True, n_jobs=None):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -196,15 +211,38 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                                                 maxiter=self.max_iter,
                                                 v0=v0)
 
+        # flip eigenvectors' sign to enforce deterministic output
+        self.alphas_, _ = svd_flip(self.alphas_,
+                                   np.empty_like(self.alphas_).T)
+
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
         self.lambdas_ = self.lambdas_[indices]
         self.alphas_ = self.alphas_[:, indices]
 
-        # remove eigenvectors with a zero eigenvalue
+        # remove eigenvectors with a zero eigenvalue (null space) if required
         if self.remove_zero_eig or self.n_components is None:
             self.alphas_ = self.alphas_[:, self.lambdas_ > 0]
             self.lambdas_ = self.lambdas_[self.lambdas_ > 0]
+
+        # Maintenance note on Eigenvectors normalization
+        # ----------------------------------------------
+        # there is a link between
+        # the eigenvectors of K=Phi(X)'Phi(X) and the ones of Phi(X)Phi(X)'
+        # if v is an eigenvector of K
+        #                      then Phi(X)v  is an eigenvector of Phi(X)Phi(X)'
+        # if u is an eigenvector of Phi(X)Phi(X)'
+        #                      then Phi(X)'u is an eigenvector of Phi(X)Phi(X)'
+        #
+        # At this stage our self.alphas_ (the v) have norm 1, we need to scale
+        # them so that eigenvectors in kernel feature space (the u) have norm=1
+        # instead
+        #
+        # We COULD scale them here:
+        #       self.alphas_ = self.alphas_ / np.sqrt(self.lambdas_)
+        #
+        # But choose to perform that LATER when needed, in `fit()` and in
+        # `transform()`.
 
         return K
 
@@ -239,8 +277,9 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self._fit_transform(K)
 
         if self.fit_inverse_transform:
-            sqrt_lambdas = np.diag(np.sqrt(self.lambdas_))
-            X_transformed = np.dot(self.alphas_, sqrt_lambdas)
+            # no need to use the kernel to transform X, use shortcut expression
+            X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
+
             self._fit_inverse_transform(X_transformed, X)
 
         self.X_fit_ = X
@@ -261,6 +300,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         """
         self.fit(X, **params)
 
+        # no need to use the kernel to transform X, use shortcut expression
         X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
 
         if self.fit_inverse_transform:
@@ -281,8 +321,17 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'X_fit_')
 
+        # Compute centered gram matrix between X and training data X_fit_
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
-        return np.dot(K, self.alphas_ / np.sqrt(self.lambdas_))
+
+        # scale eigenvectors (properly account for null-space for dot product)
+        non_zeros = np.flatnonzero(self.lambdas_)
+        scaled_alphas = np.zeros_like(self.alphas_)
+        scaled_alphas[:, non_zeros] = (self.alphas_[:, non_zeros]
+                                       / np.sqrt(self.lambdas_[non_zeros]))
+
+        # Project with a scalar product between K and the scaled eigenvectors
+        return np.dot(K, scaled_alphas)
 
     def inverse_transform(self, X):
         """Transform X back to original space.

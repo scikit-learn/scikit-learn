@@ -7,6 +7,7 @@ from functools import partial
 from itertools import product
 import struct
 
+import pytest
 import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
@@ -17,6 +18,7 @@ from sklearn.random_projection import sparse_random_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
 
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -27,7 +29,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -213,7 +214,7 @@ def test_weighted_classification_toy():
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
-        clf.fit(X, y, sample_weight=np.ones(len(X)) * 0.5)
+        clf.fit(X, y, sample_weight=np.full(len(X), 0.5))
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
@@ -572,7 +573,7 @@ def test_error():
 
 def test_min_samples_split():
     """Test min_samples_split parameter"""
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -605,7 +606,7 @@ def test_min_samples_split():
 
 def test_min_samples_leaf():
     # Test if leaves contain more than leaf_count training examples
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -701,14 +702,14 @@ def check_min_weight_fraction_leaf(name, datasets, sparse=False):
                 name, est.min_weight_fraction_leaf))
 
 
-def test_min_weight_fraction_leaf():
-    # Check on dense input
-    for name in ALL_TREES:
-        yield check_min_weight_fraction_leaf, name, "iris"
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_min_weight_fraction_leaf_on_dense_input(name):
+    check_min_weight_fraction_leaf(name, "iris")
 
-    # Check on sparse input
-    for name in SPARSE_TREES:
-        yield check_min_weight_fraction_leaf, name, "multilabel", True
+
+@pytest.mark.parametrize("name", SPARSE_TREES)
+def test_min_weight_fraction_leaf_on_sparse_input(name):
+    check_min_weight_fraction_leaf(name, "multilabel", True)
 
 
 def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
@@ -775,23 +776,22 @@ def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                                           est.min_samples_leaf))
 
 
-def test_min_weight_fraction_leaf_with_min_samples_leaf():
-    # Check on dense input
-    for name in ALL_TREES:
-        yield (check_min_weight_fraction_leaf_with_min_samples_leaf,
-               name, "iris")
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_min_weight_fraction_leaf_with_min_samples_leaf_on_dense_input(name):
+    check_min_weight_fraction_leaf_with_min_samples_leaf(name, "iris")
 
-    # Check on sparse input
-    for name in SPARSE_TREES:
-        yield (check_min_weight_fraction_leaf_with_min_samples_leaf,
-               name, "multilabel", True)
+
+@pytest.mark.parametrize("name", SPARSE_TREES)
+def test_min_weight_fraction_leaf_with_min_samples_leaf_on_sparse_input(name):
+    check_min_weight_fraction_leaf_with_min_samples_leaf(
+            name, "multilabel", True)
 
 
 def test_min_impurity_split():
     # test if min_impurity_split creates leaves with impurity
     # [0, min_impurity_split) when min_samples_leaf = 1 and
     # min_samples_split = 2.
-    X = np.asfortranarray(iris.data.astype(tree._tree.DTYPE))
+    X = np.asfortranarray(iris.data, dtype=tree._tree.DTYPE)
     y = iris.target
 
     # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
@@ -804,9 +804,9 @@ def test_min_impurity_split():
         # impurity 1e-7
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        assert_true(est.min_impurity_split is None,
-                    "Failed, min_impurity_split = {0} > 1e-7".format(
-                        est.min_impurity_split))
+        assert est.min_impurity_split is None, (
+            "Failed, min_impurity_split = {0} > 1e-7".format(
+                est.min_impurity_split))
         try:
             assert_warns(DeprecationWarning, est.fit, X, y)
         except AssertionError:
@@ -1178,9 +1178,9 @@ def check_class_weights(name):
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
 
 
-def test_class_weights():
-    for name in CLF_TREES:
-        yield check_class_weights, name
+@pytest.mark.parametrize("name", CLF_TREES)
+def test_class_weights(name):
+    check_class_weights(name)
 
 
 def check_class_weight_errors(name):
@@ -1202,20 +1202,18 @@ def check_class_weight_errors(name):
     assert_raises(ValueError, clf.fit, X, _y)
 
 
-def test_class_weight_errors():
-    for name in CLF_TREES:
-        yield check_class_weight_errors, name
+@pytest.mark.parametrize("name", CLF_TREES)
+def test_class_weight_errors(name):
+    check_class_weight_errors(name)
 
 
 def test_max_leaf_nodes():
     # Test greedy trees with max_depth + 1 leafs.
-    from sklearn.tree._tree import TREE_LEAF
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
-        tree = est.tree_
-        assert_equal((tree.children_left == TREE_LEAF).sum(), k + 1)
+        assert_equal(est.get_n_leaves(), k + 1)
 
         # max_leaf_nodes in (0, 1) should raise ValueError
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
@@ -1232,8 +1230,7 @@ def test_max_leaf_nodes_max_depth():
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
-        tree = est.tree_
-        assert_greater(tree.max_depth, 1)
+        assert_equal(est.get_depth(), 1)
 
 
 def test_arrays_persist():
@@ -1244,8 +1241,8 @@ def test_arrays_persist():
         value = getattr(DecisionTreeClassifier().fit([[0], [1]],
                                                      [0, 1]).tree_, attr)
         # if pointing to freed memory, contents may be arbitrary
-        assert_true(-3 <= value.flat[0] < 3,
-                    'Array points to arbitrary memory')
+        assert -3 <= value.flat[0] < 3, \
+            'Array points to arbitrary memory'
 
 
 def test_only_constant_features():
@@ -1280,13 +1277,13 @@ def test_with_only_one_non_constant_features():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
         assert_equal(est.tree_.max_depth, 1)
-        assert_array_equal(est.predict_proba(X), 0.5 * np.ones((4, 2)))
+        assert_array_equal(est.predict_proba(X), np.full((4, 2), 0.5))
 
     for name, TreeEstimator in REG_TREES.items():
         est = TreeEstimator(random_state=0, max_features=1)
         est.fit(X, y)
         assert_equal(est.tree_.max_depth, 1)
-        assert_array_equal(est.predict(X), 0.5 * np.ones((4, )))
+        assert_array_equal(est.predict(X), np.full((4, ), 0.5))
 
 
 def test_big_input():
@@ -1364,20 +1361,25 @@ def check_sparse_input(tree, dataset, max_depth=None):
                                           y_log_proba)
 
 
-def test_sparse_input():
-    for tree_type, dataset in product(SPARSE_TREES, ("clf_small", "toy",
-                                                     "digits", "multilabel",
-                                                     "sparse-pos",
-                                                     "sparse-neg",
-                                                     "sparse-mix", "zeros")):
-        max_depth = 3 if dataset == "digits" else None
-        yield (check_sparse_input, tree_type, dataset, max_depth)
+@pytest.mark.parametrize("tree_type", SPARSE_TREES)
+@pytest.mark.parametrize(
+        "dataset",
+        ("clf_small", "toy", "digits", "multilabel",
+         "sparse-pos", "sparse-neg", "sparse-mix",
+         "zeros")
+)
+def test_sparse_input(tree_type, dataset):
+    max_depth = 3 if dataset == "digits" else None
+    check_sparse_input(tree_type, dataset, max_depth)
 
+
+@pytest.mark.parametrize("tree_type",
+                         set(SPARSE_TREES).intersection(REG_TREES))
+@pytest.mark.parametrize("dataset", ["boston", "reg_small"])
+def test_sparse_input_reg_trees(tree_type, dataset):
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
-    for tree_type, dataset in product(SPARSE_TREES, ["boston", "reg_small"]):
-        if tree_type in REG_TREES:
-            yield (check_sparse_input, tree_type, dataset, 2)
+    check_sparse_input(tree_type, dataset, 2)
 
 
 def check_sparse_parameters(tree, dataset):
@@ -1424,13 +1426,6 @@ def check_sparse_parameters(tree, dataset):
     assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
-def test_sparse_parameters():
-    for tree_type, dataset in product(SPARSE_TREES, ["sparse-pos",
-                                                     "sparse-neg",
-                                                     "sparse-mix", "zeros"]):
-        yield (check_sparse_parameters, tree_type, dataset)
-
-
 def check_sparse_criterion(tree, dataset):
     TreeEstimator = ALL_TREES[tree]
     X = DATASETS[dataset]["X"]
@@ -1451,11 +1446,13 @@ def check_sparse_criterion(tree, dataset):
         assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
-def test_sparse_criterion():
-    for tree_type, dataset in product(SPARSE_TREES, ["sparse-pos",
-                                                     "sparse-neg",
-                                                     "sparse-mix", "zeros"]):
-        yield (check_sparse_criterion, tree_type, dataset)
+@pytest.mark.parametrize("tree_type", SPARSE_TREES)
+@pytest.mark.parametrize("dataset",
+                         ["sparse-pos", "sparse-neg", "sparse-mix", "zeros"])
+@pytest.mark.parametrize("check",
+                         [check_sparse_parameters, check_sparse_criterion])
+def test_sparse(tree_type, dataset, check):
+    check(tree_type, dataset)
 
 
 def check_explicit_sparse_zeros(tree, max_depth=3,
@@ -1527,9 +1524,9 @@ def check_explicit_sparse_zeros(tree, max_depth=3,
                                       d.predict_proba(X2))
 
 
-def test_explicit_sparse_zeros():
-    for tree_type in SPARSE_TREES:
-        yield (check_explicit_sparse_zeros, tree_type)
+@pytest.mark.parametrize("tree_type", SPARSE_TREES)
+def test_explicit_sparse_zeros(tree_type):
+    check_explicit_sparse_zeros(tree_type)
 
 
 @ignore_warnings
@@ -1547,10 +1544,10 @@ def check_raise_error_on_1d_input(name):
     assert_raises(ValueError, est.predict, [X])
 
 
-@ignore_warnings
-def test_1d_input():
-    for name in ALL_TREES:
-        yield check_raise_error_on_1d_input, name
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_1d_input(name):
+    with ignore_warnings():
+        check_raise_error_on_1d_input(name)
 
 
 def _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight):
@@ -1576,13 +1573,13 @@ def check_min_weight_leaf_split_level(name):
                                            sample_weight)
 
 
-def test_min_weight_leaf_split_level():
-    for name in ALL_TREES:
-        yield check_min_weight_leaf_split_level, name
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_min_weight_leaf_split_level(name):
+    check_min_weight_leaf_split_level(name)
 
 
 def check_public_apply(name):
-    X_small32 = X_small.astype(tree._tree.DTYPE)
+    X_small32 = X_small.astype(tree._tree.DTYPE, copy=False)
 
     est = ALL_TREES[name]()
     est.fit(X_small, y_small)
@@ -1591,7 +1588,7 @@ def check_public_apply(name):
 
 
 def check_public_apply_sparse(name):
-    X_small32 = csr_matrix(X_small.astype(tree._tree.DTYPE))
+    X_small32 = csr_matrix(X_small.astype(tree._tree.DTYPE, copy=False))
 
     est = ALL_TREES[name]()
     est.fit(X_small, y_small)
@@ -1599,12 +1596,14 @@ def check_public_apply_sparse(name):
                        est.tree_.apply(X_small32))
 
 
-def test_public_apply():
-    for name in ALL_TREES:
-        yield (check_public_apply, name)
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_public_apply_all_trees(name):
+    check_public_apply(name)
 
-    for name in SPARSE_TREES:
-        yield (check_public_apply_sparse, name)
+
+@pytest.mark.parametrize("name", SPARSE_TREES)
+def test_public_apply_sparse_trees(name):
+    check_public_apply_sparse(name)
 
 
 def check_presort_sparse(est, X, y):
@@ -1623,19 +1622,18 @@ def test_presort_sparse():
     y = y[:, 0]
 
     for est, sparse_matrix in product(ests, sparse_matrices):
-        yield check_presort_sparse, est, sparse_matrix(X), y
+        check_presort_sparse(est, sparse_matrix(X), y)
 
 
-def test_invalid_presort():
-    classes = (DecisionTreeRegressor, DecisionTreeClassifier)
+@pytest.mark.parametrize('cls',
+                         (DecisionTreeRegressor, DecisionTreeClassifier))
+def test_invalid_presort(cls):
     allowed_presort = ('auto', True, False)
     invalid_presort = 'invalid'
     msg = ("'presort' should be in {}. "
            "Got {!r} instead.".format(allowed_presort, invalid_presort))
-    for cls in classes:
-        est = cls(presort=invalid_presort)
-        assert_raise_message(ValueError, msg,
-                             est.fit, X, y)
+    est = cls(presort=invalid_presort)
+    assert_raise_message(ValueError, msg, est.fit, X, y)
 
 
 def test_decision_path_hardcoded():
@@ -1674,9 +1672,9 @@ def check_decision_path(name):
     assert_less_equal(est.tree_.max_depth, max_depth)
 
 
-def test_decision_path():
-    for name in ALL_TREES:
-        yield (check_decision_path, name)
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_decision_path(name):
+    check_decision_path(name)
 
 
 def check_no_sparse_y_support(name):
@@ -1685,25 +1683,107 @@ def check_no_sparse_y_support(name):
     assert_raises(TypeError, TreeEstimator(random_state=0).fit, X, y)
 
 
-def test_no_sparse_y_support():
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_no_sparse_y_support(name):
     # Currently we don't support sparse y
-    for name in ALL_TREES:
-        yield (check_no_sparse_y_support, name)
+    check_no_sparse_y_support(name)
 
 
 def test_mae():
-    # check MAE criterion produces correct results
-    # on small toy dataset
+    """Check MAE criterion produces correct results on small toy dataset:
+
+    ------------------
+    | X | y | weight |
+    ------------------
+    | 3 | 3 |  0.1   |
+    | 5 | 3 |  0.3   |
+    | 8 | 4 |  1.0   |
+    | 3 | 6 |  0.6   |
+    | 5 | 7 |  0.3   |
+    ------------------
+    |sum wt:|  2.3   |
+    ------------------
+
+    Because we are dealing with sample weights, we cannot find the median by
+    simply choosing/averaging the centre value(s), instead we consider the
+    median where 50% of the cumulative weight is found (in a y sorted data set)
+    . Therefore with regards to this test data, the cumulative weight is >= 50%
+    when y = 4.  Therefore:
+    Median = 4
+
+    For all the samples, we can get the total error by summing:
+    Absolute(Median - y) * weight
+
+    I.e., total error = (Absolute(4 - 3) * 0.1)
+                      + (Absolute(4 - 3) * 0.3)
+                      + (Absolute(4 - 4) * 1.0)
+                      + (Absolute(4 - 6) * 0.6)
+                      + (Absolute(4 - 7) * 0.3)
+                      = 2.5
+
+    Impurity = Total error / total weight
+             = 2.5 / 2.3
+             = 1.08695652173913
+             ------------------
+
+    From this root node, the next best split is between X values of 3 and 5.
+    Thus, we have left and right child nodes:
+
+    LEFT                    RIGHT
+    ------------------      ------------------
+    | X | y | weight |      | X | y | weight |
+    ------------------      ------------------
+    | 3 | 3 |  0.1   |      | 5 | 3 |  0.3   |
+    | 3 | 6 |  0.6   |      | 8 | 4 |  1.0   |
+    ------------------      | 5 | 7 |  0.3   |
+    |sum wt:|  0.7   |      ------------------
+    ------------------      |sum wt:|  1.6   |
+                            ------------------
+
+    Impurity is found in the same way:
+    Left node Median = 6
+    Total error = (Absolute(6 - 3) * 0.1)
+                + (Absolute(6 - 6) * 0.6)
+                = 0.3
+
+    Left Impurity = Total error / total weight
+            = 0.3 / 0.7
+            = 0.428571428571429
+            -------------------
+
+    Likewise for Right node:
+    Right node Median = 4
+    Total error = (Absolute(4 - 3) * 0.3)
+                + (Absolute(4 - 4) * 1.0)
+                + (Absolute(4 - 7) * 0.3)
+                = 1.2
+
+    Right Impurity = Total error / total weight
+            = 1.2 / 1.6
+            = 0.75
+            ------
+    """
     dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
                                    max_leaf_nodes=2)
-    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3])
-    assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0/3.0])
+
+    # Test MAE where sample weights are non-uniform (as illustrated above):
+    dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3],
+               sample_weight=[0.6, 0.3, 0.1, 1.0, 0.3])
+    assert_allclose(dt_mae.tree_.impurity, [2.5 / 2.3, 0.3 / 0.7, 1.2 / 1.6])
+    assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
+
+    # Test MAE where all sample weights are uniform:
+    dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3],
+               sample_weight=np.ones(5))
+    assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
-    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3],
-               [0.6, 0.3, 0.1, 1.0, 0.3])
-    assert_array_equal(dt_mae.tree_.impurity, [7.0/2.3, 3.0/0.7, 4.0/1.6])
-    assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
+    # Test MAE where a `sample_weight` is not explicitly provided.
+    # This is equivalent to providing uniform sample weights, though
+    # the internal logic is different:
+    dt_mae.fit(X=[[3], [5], [3], [8], [5]], y=[6, 7, 3, 4, 3])
+    assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0 / 3.0])
+    assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
 
 def test_criterion_copy():
@@ -1748,3 +1828,23 @@ def test_empty_leaf_infinite_threshold():
         infinite_threshold = np.where(~np.isfinite(tree.tree_.threshold))[0]
         assert len(infinite_threshold) == 0
         assert len(empty_leaf) == 0
+
+
+@pytest.mark.parametrize('name', CLF_TREES)
+def test_multi_target(name):
+    Tree = CLF_TREES[name]
+
+    clf = Tree()
+
+    X = iris.data
+
+    # Make multi column mixed type target.
+    y = np.vstack([
+        iris.target.astype(float),
+        iris.target.astype(int),
+        iris.target.astype(str),
+    ]).T
+
+    # Try to fit and predict.
+    clf.fit(X, y)
+    clf.predict(X)

@@ -59,8 +59,8 @@ The energy function measures the quality of a joint assignment:
 
 .. math:: 
 
-   E(\mathbf{v}, \mathbf{h}) = \sum_i \sum_j w_{ij}v_ih_j + \sum_i b_iv_i
-     + \sum_j c_jh_j
+   E(\mathbf{v}, \mathbf{h}) = -\sum_i \sum_j w_{ij}v_ih_j - \sum_i b_iv_i
+     - \sum_j c_jh_j
 
 In the formula above, :math:`\mathbf{b}` and :math:`\mathbf{c}` are the
 intercept vectors for the visible and hidden layers, respectively. The
@@ -152,10 +152,10 @@ explore the space more thoroughly.
 .. topic:: References:
 
     * `"A fast learning algorithm for deep belief nets"
-      <http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf>`_
+      <https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf>`_
       G. Hinton, S. Osindero, Y.-W. Teh, 2006
 
     * `"Training Restricted Boltzmann Machines using Approximations to
       the Likelihood Gradient"
-      <http://www.cs.toronto.edu/~tijmen/pcd/pcd.pdf>`_
+      <https://www.cs.toronto.edu/~tijmen/pcd/pcd.pdf>`_
       T. Tieleman, 2008

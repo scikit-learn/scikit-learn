@@ -3,7 +3,8 @@
 IsolationForest example
 ==========================================
 
-An example using IsolationForest for anomaly detection.
+An example using :class:`sklearn.ensemble.IsolationForest` for anomaly
+detection.
 
 The IsolationForest 'isolates' observations by randomly selecting a feature
 and then randomly selecting a split value between the maximum and minimum
@@ -19,9 +20,6 @@ of normality and our decision function.
 Random partitioning produces noticeable shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path lengths
 for particular samples, they are highly likely to be anomalies.
-
-.. [1] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
-    Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
 
 """
 print(__doc__)
@@ -42,7 +40,8 @@ X_test = np.r_[X + 2, X - 2]
 X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
 
 # fit the model
-clf = IsolationForest(max_samples=100, random_state=rng)
+clf = IsolationForest(behaviour='new', max_samples=100,
+                      random_state=rng, contamination='auto')
 clf.fit(X_train)
 y_pred_train = clf.predict(X_train)
 y_pred_test = clf.predict(X_test)
