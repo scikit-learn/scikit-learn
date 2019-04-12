@@ -11,6 +11,9 @@ from distutils.version import LooseVersion
 
 from numpy.distutils.system_info import get_info
 
+from .openmp_helpers import check_openmp_support
+
+
 DEFAULT_ROOT = 'sklearn'
 # on conda, this is the latest for python 3.5
 CYTHON_MIN_VERSION = '0.28.5'
@@ -60,8 +63,10 @@ def build_from_c_and_cpp_files(extensions):
         extension.sources = sources
 
 
-def maybe_cythonize_extensions(top_path, config, with_openmp):
+def maybe_cythonize_extensions(top_path, config):
     """Tweaks for building extensions between release and development mode."""
+    with_openmp = check_openmp_support()
+
     is_release = os.path.exists(os.path.join(top_path, 'PKG-INFO'))
 
     if is_release:

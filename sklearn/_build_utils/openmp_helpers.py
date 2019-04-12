@@ -29,10 +29,6 @@ CCODE = textwrap.dedent(
 
 
 def get_openmp_flag(compiler):
-    if os.getenv('SKLEARN_NO_OPENMP'):
-        # Build explicitly without OpenMP support
-        return
-
     if hasattr(compiler, 'compiler'):
         compiler = compiler.compiler[0]
     else:
@@ -66,9 +62,8 @@ def check_openmp_support():
     ccompiler = new_compiler()
     customize_compiler(ccompiler)
 
-    openmp_flags = get_openmp_flag(ccompiler)
-    if openmp_flags is None:
-        # skip the check if OpenMP support is explicitly disabled.
+    if os.getenv('SKLEARN_NO_OPENMP'):
+        # Build explicitly without OpenMP support
         return False
 
     start_dir = os.path.abspath('.')
@@ -84,6 +79,7 @@ def check_openmp_support():
             os.mkdir('objects')
 
             # Compile, test program
+            openmp_flags = get_openmp_flag(ccompiler)
             ccompiler.compile(['test_openmp.c'], output_dir='objects',
                               extra_postargs=openmp_flags)
 
@@ -134,7 +130,7 @@ def check_openmp_support():
 
         - If you want to build scikit-learn without OpenMP support, you can set
           the environment variable SKLEARN_NO_OPENMP and rerun the build
-          command. Notice however that some estimators will run in sequential
+          command. Note however that some estimators will run in sequential
           mode and their `n_jobs` parameter will have no effect anymore.
 
                             ***

@@ -120,9 +120,10 @@ class build_ext_subclass(build_ext):
     def build_extensions(self):
         from sklearn._build_utils.openmp_helpers import get_openmp_flag
 
-        openmp_flag = get_openmp_flag(self.compiler)
+        if os.getenv('SKLEARN_NO_OPENMP'):
+            # Build explicitly without OpenMP support
+            openmp_flag = get_openmp_flag(self.compiler)
 
-        if openmp_flag is not None:
             for e in self.extensions:
                 e.extra_compile_args += openmp_flag
                 e.extra_link_args += openmp_flag

@@ -1,15 +1,12 @@
 import os
 
 from sklearn._build_utils import maybe_cythonize_extensions
-from sklearn._build_utils.openmp_helpers import check_openmp_support
 
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info
     import numpy
-
-    with_openmp = check_openmp_support()
 
     # needs to be called during build otherwise show_version may fail sometimes
     get_info('blas_opt', 0)
@@ -72,7 +69,7 @@ def configuration(parent_package='', top_path=None):
     # add the test directory
     config.add_subpackage('tests')
 
-    maybe_cythonize_extensions(top_path, config, with_openmp)
+    maybe_cythonize_extensions(top_path, config)
 
     return config
 
