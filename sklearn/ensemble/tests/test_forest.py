@@ -8,6 +8,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 #          Arnaud Joly
 # License: BSD 3 clause
 
+import os
 import pickle
 from collections import defaultdict
 from distutils.version import LooseVersion
@@ -1367,6 +1368,7 @@ def test_random_forest_memmap():
     X_orig = np.random.RandomState(0).random_sample((10, 2)).astype(np.float32)
 
     with NamedTemporaryFile() as tmp:
+        tmp.close()  # necessary under windows
         mmap = np.memmap(tmp.name, dtype='float32', mode='w+', shape=(10, 2))
         mmap[...] = X_orig[...]
 
@@ -1374,3 +1376,5 @@ def test_random_forest_memmap():
         y = np.zeros(10)
 
         RandomForestClassifier(n_estimators=2).fit(X_mmap, y)
+
+        os.remove(tmp.name)  # necessary since it's been closed manually
