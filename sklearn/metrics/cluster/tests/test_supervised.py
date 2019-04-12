@@ -127,7 +127,9 @@ def test_not_complete_and_not_homogeneous_labeling():
 
 
 def test_beta_parameter():
-    # neither complete nor homogeneous but not so bad either
+    # test for when beta passed to
+    # homogeneity_completeness_v_measure
+    # and v_measure_score
     beta_test = 0.2
     h_test = 0.67
     c_test = 0.42
@@ -140,6 +142,12 @@ def test_beta_parameter():
         beta=beta_test)
     assert_almost_equal(h, h_test, 2)
     assert_almost_equal(c, c_test, 2)
+    assert_almost_equal(v, v_test, 2)
+
+    v = v_measure_score(
+        [0, 0, 0, 1, 1, 1],
+        [0, 1, 0, 1, 2, 2],
+        beta=beta_test)
     assert_almost_equal(v, v_test, 2)
 
 
