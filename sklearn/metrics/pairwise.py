@@ -257,7 +257,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     if X.dtype == np.float32:
         # To minimize precision issues with float32, we compute the distance
         # matrix on chunks of X and Y upcast to float64
-        distances = _euclidean_distances_upcast_fast(X, XX, Y, YY)
+        distances = _euclidean_distances_upcast(X, XX, Y, YY)
     else:
         # if dtype is already float64, no need to chunk and upcast
         distances = - 2 * safe_sparse_dot(X, Y.T, dense_output=True)
@@ -273,7 +273,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     return distances if squared else np.sqrt(distances, out=distances)
 
 
-def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
+def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
     """Euclidean distances between X and Y
 
     Assumes X and Y have float32 dtype.
@@ -298,7 +298,7 @@ def _euclidean_distances_upcast_fast(X, XX=None, Y=None, YY=None):
          + (x_density * n_samples_X * y_density * n_samples_Y)) / 10,
         10 * 2**17)
 
-    # The increase amount of memory is:
+    # The increase amount of memory in 8-byte blocks is:
     # - x_density * batch_size * n_features (copy of chunk of X)
     # - y_density * batch_size * n_features (copy of chunk of Y)
     # - batch_size * batch_size (chunk of distance matrix)
