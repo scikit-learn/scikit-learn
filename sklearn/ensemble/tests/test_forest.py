@@ -14,6 +14,7 @@ from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
+from tempfile import NamedTemporaryFile
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -1359,3 +1360,17 @@ def test_multi_target(name, oob_score):
     # Try to fit and predict.
     clf.fit(X, y)
     clf.predict(X)
+
+
+def test_random_forest_memmap():
+    # check that random forest supports read-only buffer (#13626)
+    X_orig = np.random.RandomState(0).random_sample((10, 2)).astype(np.float32)
+
+    with NamedTemporaryFile() as tmp:
+        mmap = np.memmap(tmp.name, dtype='float32', mode='w+', shape=(10, 2))
+        mmap[...] = X_orig[...]
+
+        X_mmap = np.memmap(tmp.name, dtype='float32', mode='r', shape=(10, 2))
+        y = np.zeros(10)
+
+        RandomForestClassifier(n_estimators=2).fit(X_mmap, y)
