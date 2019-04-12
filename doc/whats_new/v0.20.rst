@@ -332,16 +332,6 @@ Changelog
   avoid pickling errors caused by the serialization of their methods.
   :issue:`12171` by :user:`Thomas Moreau <tomMoral>`.
 
-:mod:`sklearn.pipeline`
-.......................
-
-- |Feature| Added optional parameter ``verbose`` in :class:`pipeline.Pipeline`,
-  :class:`compose.ColumnTransformer` and :class:`pipeline.FeatureUnion`
-  and corresponding ``make_`` helpers for showing progress and timing of
-  each step. :issue:`9668` by :user:`Baze Petrushev <petrushev>`,
-  :user:`Karan Desai <karandesai-96>`, `Joel Nothman`_, and
-  :user:`thomasjpfan`.
-
 :mod:`sklearn.preprocessing`
 .............................
 

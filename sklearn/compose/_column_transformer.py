@@ -101,8 +101,9 @@ boolean mask array or callable
         transformer is multiplied by these weights. Keys are transformer names,
         values the weights.
 
-    verbose : boolean, optional
-        Verbosity mode.
+    verbose : boolean, optional(default=False)
+        Verbosity mode.  When enabled, the time elapsed while fitting each step
+        will be printed as it is completed.
 
     Attributes
     ----------
@@ -408,7 +409,6 @@ boolean mask array or callable
                     X=_get_column(X, column),
                     y=y,
                     weight=weight,
-                    return_transform=True,
                     message_clsname='ColumnTransformer',
                     message=self._log_message(name, idx, len(transformers)))
                 for idx, (name, trans, column, weight) in enumerate(
@@ -797,6 +797,10 @@ def make_column_transformer(*transformers, **kwargs):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    verbose : boolean, optional(default=False)
+        Verbosity mode.  When enabled, the time elapsed while fitting each step
+        will be printed as it is completed.
+
     Returns
     -------
     ct : ColumnTransformer
@@ -830,10 +834,12 @@ def make_column_transformer(*transformers, **kwargs):
     n_jobs = kwargs.pop('n_jobs', None)
     remainder = kwargs.pop('remainder', 'drop')
     sparse_threshold = kwargs.pop('sparse_threshold', 0.3)
+    verbose = kwargs.pop('verbose', False)
     if kwargs:
         raise TypeError('Unknown keyword arguments: "{}"'
                         .format(list(kwargs.keys())[0]))
     transformer_list = _get_transformer_list(transformers)
     return ColumnTransformer(transformer_list, n_jobs=n_jobs,
                              remainder=remainder,
-                             sparse_threshold=sparse_threshold)
+                             sparse_threshold=sparse_threshold,
+                             verbose=verbose)

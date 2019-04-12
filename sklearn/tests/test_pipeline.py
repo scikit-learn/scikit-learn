@@ -1084,9 +1084,8 @@ def test_pipeline_param_error():
         clf.fit([[0], [0]], [0, 1], sample_weight=[1, 1])
 
 
-parameter_grid_test_verbose = ((est, pattern, method) for (
-    est, pattern
-), method in itertools.product(
+parameter_grid_test_verbose = ((est, pattern, method) for
+                               (est, pattern), method in itertools.product(
     [(Pipeline([('transf', Transf()), ('clf', FitParamT())]),
       r'''\[Pipeline\].*\(step 1 of 2\) Fitting transf.* total=.*\n'''
       r'''\[Pipeline\].*\(step 2 of 2\) Fitting clf.* total=.*\n$'''),

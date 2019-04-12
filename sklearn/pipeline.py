@@ -299,7 +299,7 @@ class Pipeline(_BaseComposition):
             # Fit or load from cache the current transfomer
             Xt, fitted_transformer = fit_transform_one_cached(
                 cloned_transformer, Xt, y, None,
-                return_transform=True, message_clsname='Pipeline',
+                message_clsname='Pipeline',
                 message=self._log_message(step_idx),
                 **fit_params_steps[name])
             # Replace the transformer of the step with the fitted
@@ -643,9 +643,9 @@ def make_pipeline(*steps, **kwargs):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : boolean, default=False
-        Verbosity mode.  When enabled, the time elapsed while fitting each
-        transformer will be printed as it is completed.
+    verbose : boolean, optional(default=False)
+        Verbosity mode.  When enabled, the time elapsed while fitting each step
+        will be printed as it is completed.
 
     See also
     --------
@@ -689,24 +689,16 @@ def _fit_transform_one(transformer,
                        X,
                        y,
                        weight,
-                       return_transform=False,
                        message_clsname='',
                        message=None,
                        **fit_params):
     """
-    Fits ``transformer`` to ``X`` and ``y``.
-
-    If ``return_transform`` is ``True``, then ``X``, ``y`` will be transformed.
-    The transformed result is returned with the fitted transformer. If
-    ``weight`` is not ``None``, the result will be multipled by ``weight``.
-
-    If ``return_transform`` is ``False``, then a tuple of
-    (``None``, fitted_transformer) will be returned.
+    Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
+    with the fitted transformer. If ``weight`` is not ``None``, the result will
+    be multipled by ``weight``.
     """
     with _log_elapsed(message_clsname, message):
-        if not return_transform:
-            return None, transformer.fit(X, y, **fit_params)
-        elif hasattr(transformer, 'fit_transform'):
+        if hasattr(transformer, 'fit_transform'):
             res = transformer.fit_transform(X, y, **fit_params)
         else:
             res = transformer.fit(X, y, **fit_params).transform(X)
@@ -714,6 +706,20 @@ def _fit_transform_one(transformer,
     if weight is None:
         return res, transformer
     return res * weight, transformer
+
+
+def _fit_one(transformer,
+             X,
+             y,
+             weight,
+             message_clsname='',
+             message=None,
+             **fit_params):
+    """
+    Fits ``transformer`` to ``X`` and ``y``.
+    """
+    with _log_elapsed(message_clsname, message):
+        return transformer.fit(X, y, **fit_params)
 
 
 class FeatureUnion(_BaseComposition, TransformerMixin):
@@ -746,8 +752,9 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
-    verbose : boolean, optional
-        Verbosity mode.
+    verbose : boolean, optional(default=False)
+        Verbosity mode.  When enabled, the time elapsed while fitting each step
+        will be printed as it is completed.
 
     See also
     --------
@@ -863,7 +870,12 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self : FeatureUnion
             This estimator
         """
-        self._fit_transform(X, y, {}, is_transform=False)
+        transformers = self._parallel_func(X, y, {}, _fit_one)
+        if not transformers:
+            # All transformers are None
+            return self
+
+        self._update_transformer_list(transformers)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -883,38 +895,37 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
-        return self._fit_transform(X, y, fit_params, is_transform=True)
-
-    def _log_message(self, name, idx, total):
-        if not self.verbose:
-            return None
-        return '(step %d of %d) Fitting %s' % (idx, total, name)
-
-    def _fit_transform(self, X, y, fit_params, is_transform):
-        self.transformer_list = list(self.transformer_list)
-        self._validate_transformers()
-        transformers = list(self._iter())
-        result = Parallel(n_jobs=self.n_jobs)(delayed(_fit_transform_one)(
-            transformer, X, y, weight,
-            return_transform=is_transform,
-            message_clsname='FeatureUnion',
-            message=self._log_message(name, idx, len(transformers)),
-            **fit_params) for idx, (name, transformer,
-                                    weight) in enumerate(transformers, 1))
-
-        if not result:
+        results = self._parallel_func(X, y, fit_params, _fit_transform_one)
+        if not results:
             # All transformers are None
             return np.zeros((X.shape[0], 0))
-        Xs, transformers = zip(*result)
+
+        Xs, transformers = zip(*results)
         self._update_transformer_list(transformers)
-        if not is_transform:
-            return
 
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
             Xs = np.hstack(Xs)
         return Xs
+
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return '(step %d of %d) Fitting %s' % (idx, total, name)
+
+    def _parallel_func(self, X, y, fit_params, func):
+        """Runs func in parallel on X and y"""
+        self.transformer_list = list(self.transformer_list)
+        self._validate_transformers()
+        transformers = list(self._iter())
+
+        return Parallel(n_jobs=self.n_jobs)(delayed(func)(
+            transformer, X, y, weight,
+            message_clsname='FeatureUnion',
+            message=self._log_message(name, idx, len(transformers)),
+            **fit_params) for idx, (name, transformer,
+                                    weight) in enumerate(transformers, 1))
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -966,8 +977,9 @@ def make_union(*transformers, **kwargs):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean, optional
-         Verbosity mode.
+    verbose : boolean, optional(default=False)
+        Verbosity mode.  When enabled, the time elapsed while fitting each step
+        will be printed as it is completed.
 
     Returns
     -------
@@ -999,7 +1011,7 @@ def make_union(*transformers, **kwargs):
     if kwargs:
         # We do not currently support `transformer_weights` as we may want to
         # change its type spec in make_union
-        raise TypeError('Unknown keyword arguments: "{}"'.format(
-            list(kwargs.keys())[0]))
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
     return FeatureUnion(
         _name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)
