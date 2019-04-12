@@ -1997,9 +1997,15 @@ def test_brier_score_loss():
     assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
     assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
     assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)
-    # calculate even if only single class in y_true (#6980)
-    assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
-    assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+
+    # calculate correctly when there's only one class in y_true
+    assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
+    assert_almost_equal(brier_score_loss([0], [0.4]), 0.16)
+    assert_almost_equal(brier_score_loss([1], [0.4]), 0.36)
+    assert_almost_equal(
+        brier_score_loss(['foo'], [0.4], pos_label='bar'), 0.16)
+    assert_almost_equal(
+        brier_score_loss(['foo'], [0.4], pos_label='foo'), 0.36)
 
 
 def test_balanced_accuracy_score_unseen():
