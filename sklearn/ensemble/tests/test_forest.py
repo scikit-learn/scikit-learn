@@ -1377,4 +1377,5 @@ def test_random_forest_memmap():
 
         RandomForestClassifier(n_estimators=2).fit(X_mmap, y)
 
+        del mmap, X_mmap
         os.remove(tmp.name)  # necessary since it's been closed manually
