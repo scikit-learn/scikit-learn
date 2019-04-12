@@ -276,7 +276,10 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, beta=1.0):
         cluster labels to evaluate
 
     beta : float
-        ratio of weight attributed homogeneity vs completeness
+        Ratio of weight attributed homogeneity vs completeness.
+        If `beta` is greater than 1 completeness is weighted more
+        strongly in the calculation, if `beta` is less than 1,
+        homogeneity is weighted more strongly.
 
     Returns
     -------
@@ -493,7 +496,10 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
         cluster labels to evaluate
 
     beta : float
-        ratio of weight attributed homogeneity vs completeness
+        Ratio of weight attributed homogeneity vs completeness.
+        If `beta` is greater than 1 completeness is weighted more
+        strongly in the calculation, if `beta` is less than 1,
+        homogeneity is weighted more strongly.
 
     Returns
     -------
