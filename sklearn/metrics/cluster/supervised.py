@@ -473,7 +473,8 @@ def v_measure_score(labels_true, labels_pred, beta=1.0):
 
     The V-measure is the harmonic mean between homogeneity and completeness::
 
-        v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
+        v = (1 + beta) * homogeneity * completeness
+             / (beta * homogeneity + completeness)
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
