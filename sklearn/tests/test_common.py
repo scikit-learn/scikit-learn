@@ -147,7 +147,7 @@ def test_configure():
 
         # OpenMP checks are build checks done before cythonization to allow
         # fast fail. Since sklearn can be built and tested on 2 different
-        # machines, we disable it for a configure check. 
+        # machines, we disable it for a configure check.
         old_env = os.getenv('SKLEARN_NO_OPENMP')
         os.environ['SKLEARN_NO_OPENMP'] = "True"
 
