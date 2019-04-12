@@ -159,6 +159,26 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
             raise ValueError("p must be greater than one for minkowski metric")
 
+    def _check_metrics(self, other):
+        def _get_metric_params(obj):
+            params = (obj.metric_params.copy()
+                      if obj.metric_params is not None
+                      else {})
+            if 'p' not in params and hasattr(obj, 'p'):
+                params['p'] = obj.p
+            if obj.metric not in ['wminkowski', 'minkowski']:
+                del params['p']
+            return params
+
+        if (self.metric != other.metric
+                or _get_metric_params(self) != _get_metric_params(other)):
+            raise ValueError("The metric parameters of the given tree (%s, %s)"
+                             " do not match the parameters of this instance "
+                             "(%s, %s)." % (other.metric,
+                                            _get_metric_params(other),
+                                            self.metric,
+                                            _get_metric_params(self)))
+
     def _fit(self, X):
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -187,18 +207,21 @@ class NeighborsBase(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
                 self.effective_metric_params_['p'] = p
 
         if isinstance(X, NeighborsBase):
+            self._check_metrics(X)
             self._fit_X = X._fit_X
             self._tree = X._tree
             self._fit_method = X._fit_method
             return self
 
         elif isinstance(X, BallTree):
+            self._check_metrics(X)
             self._fit_X = X.data
             self._tree = X
             self._fit_method = 'ball_tree'
             return self
 
         elif isinstance(X, KDTree):
+            self._check_metrics(X)
             self._fit_X = X.data
             self._tree = X
             self._fit_method = 'kd_tree'

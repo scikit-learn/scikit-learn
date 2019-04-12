@@ -1026,6 +1026,8 @@ cdef class BinaryTree:
     cdef ITYPE_t n_levels
     cdef ITYPE_t n_nodes
 
+    cdef object _metric
+    cdef dict _metric_params
     cdef DistanceMetric dist_metric
     cdef int euclidean
 
@@ -1070,6 +1072,8 @@ cdef class BinaryTree:
 
 
         self.leaf_size = leaf_size
+        self._metric = metric
+        self._metric_params = kwargs if kwargs is not None else {}
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
@@ -1179,6 +1183,18 @@ cdef class BinaryTree:
     def get_arrays(self):
         return (self.data_arr, self.idx_array_arr,
                 self.node_data_arr, self.node_bounds_arr)
+
+    property metric:
+        def __get__(self):
+            return self._metric
+
+    property metric_params:
+        def __get__(self):
+            return self._metric_params
+
+    property p:
+        def __get__(self):
+            return self.dist_metric.p
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:

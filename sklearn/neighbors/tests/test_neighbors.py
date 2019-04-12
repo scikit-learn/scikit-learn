@@ -1393,3 +1393,16 @@ def test_pairwise_boolean_distance():
     nn1 = NN(metric="jaccard", algorithm='brute').fit(X)
     nn2 = NN(metric="jaccard", algorithm='ball_tree').fit(X)
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
+
+
+def test_incompatible_metric_params():
+    # test if an error is raised if the given tree does not have compatible
+    # metric parameters with the object itself. See #4194
+    data = np.random.rand(10, 10)
+    n_neighbors = 2
+    neigh_minkowski = neighbors.NearestNeighbors(n_neighbors,
+                                                 metric='minkowski')
+    neigh_jaccard = neighbors.NearestNeighbors(n_neighbors,
+                                               metric='jaccard')
+    with pytest.raises(ValueError, match="The metric parameters of the "):
+        neigh_minkowski.fit(neigh_jaccard.fit(data))
