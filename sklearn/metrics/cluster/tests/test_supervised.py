@@ -128,13 +128,19 @@ def test_not_complete_and_not_homogeneous_labeling():
 
 def test_beta_parameter():
     # neither complete nor homogeneous but not so bad either
+    beta_test = 0.2
+    h_test = 0.67
+    c_test = 0.42
+    v_test = ((1 + beta_test) * h_test * c_test
+              / (beta_test * h_test + c_test))
+
     h, c, v = homogeneity_completeness_v_measure(
         [0, 0, 0, 1, 1, 1],
         [0, 1, 0, 1, 2, 2],
-        beta=0.2)
-    assert_almost_equal(h, 0.67, 2)
-    assert_almost_equal(c, 0.42, 2)
-    assert_almost_equal(v, 0.61, 2)
+        beta=beta_test)
+    assert_almost_equal(h, h_test, 2)
+    assert_almost_equal(c, c_test, 2)
+    assert_almost_equal(v, v_test, 2)
 
 
 def test_non_consecutive_labels():
