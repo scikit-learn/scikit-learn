@@ -173,6 +173,14 @@ class BayesianRidge(LinearModel, RegressorMixin):
             .. versionadded:: 0.20
                parameter *sample_weight* support to BayesianRidge.
 
+        alpha_0 : float
+            Initial value for alpha (precision of the noise).
+            If not set, alpha_0 is 1/Var(y).
+
+        lambda_0 : float
+            Initial value for lambda (precision of the weights).
+            If not set, lambda_0 is 1.
+
         Returns
         -------
         self : returns an instance of self.
