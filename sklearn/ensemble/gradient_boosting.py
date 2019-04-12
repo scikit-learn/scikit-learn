@@ -1713,6 +1713,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self._check_initialized()
 
         total_sum = np.zeros((self.n_features_, ), dtype=np.float64)
+        trivial = True
         for stage in self.estimators_:
             trees = [tree for tree in stage if tree.tree_.node_count > 1]
             if len(trees) == 0:
@@ -1720,9 +1721,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             stage_sum = sum(tree.tree_.compute_feature_importances(
                 normalize=False) for tree in trees) / len(trees)
             total_sum += stage_sum
+            trivial = False
 
-        importances = total_sum / total_sum.sum()
-        return importances
+        if trivial:
+            return total_sum
+        else:
+            return total_sum / total_sum.sum()
 
     def _validate_y(self, y, sample_weight):
         # 'sample_weight' is not utilised but is used for
