@@ -825,8 +825,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_classes, n_features)
-        Weight vector(s).
+    coef_ : array, shape (1, n_features) or (n_classes, n_features)
+        Coefficient of the features in the decision function.
+
+        ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
