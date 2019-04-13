@@ -1366,7 +1366,7 @@ def test_multi_target(name, oob_score):
 def test_forest_feature_importances_sum():
     X, y = make_classification(n_samples=15, n_informative=3, random_state=1,
                                n_classes=3)
-    clf = RandomForestClassifier(min_samples_leaf=5,random_state=42,
+    clf = RandomForestClassifier(min_samples_leaf=5, random_state=42,
                                  n_estimators=200).fit(X, y)
     assert math.isclose(1, clf.feature_importances_.sum(), abs_tol=1e-7)
 
