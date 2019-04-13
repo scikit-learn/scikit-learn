@@ -72,7 +72,8 @@ N_REGIONS = 25
 for assign_labels in ('kmeans', 'discretize'):
     t0 = time.time()
     labels = spectral_clustering(graph, n_clusters=N_REGIONS,
-                                 assign_labels=assign_labels, random_state=42)
+                                 assign_labels=assign_labels, random_state=42,
+                                 eigen_solver='amg')
     t1 = time.time()
     labels = labels.reshape(rescaled_coins.shape)
 
