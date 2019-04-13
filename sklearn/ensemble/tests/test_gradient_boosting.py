@@ -1443,6 +1443,7 @@ def test_early_stopping_n_classes():
 
 
 def test_gbr_degenerate_feature_importances():
+    # growing an ensemble of single node trees. See #13620
     X = np.zeros((10, 10))
     y = np.ones((10,))
     gbr = GradientBoostingRegressor().fit(X, y)
