@@ -384,9 +384,10 @@ def _test_ridge_loo(filter_):
     assert_equal(ridge_gcv4.alpha_, alpha_)
 
     # check that we get same best alpha with sample weights
-    ridge_gcv.fit(filter_(X_diabetes), y_diabetes,
-                  sample_weight=np.ones(n_samples))
-    assert_equal(ridge_gcv.alpha_, alpha_)
+    if filter_ == DENSE_FILTER:
+        ridge_gcv.fit(filter_(X_diabetes), y_diabetes,
+                    sample_weight=np.ones(n_samples))
+        assert_equal(ridge_gcv.alpha_, alpha_)
 
     # simulate several responses
     Y = np.vstack((y_diabetes, y_diabetes)).T

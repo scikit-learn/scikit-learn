@@ -889,7 +889,8 @@ def _sparse_multidot_diag(X, A, Xm, with_intercept=True):
     diag = np.empty(X.shape[0])
     for start in range(0, X.shape[0], batch_size):
         batch = slice(start, start + batch_size, 1)
-        X_batch = np.ones((X[batch].shape[0], X.shape[1] + with_intercept))
+        X_batch = np.ones(
+            (X[batch].shape[0], X.shape[1] + with_intercept), dtype=X.dtype)
         if with_intercept:
             X_batch[:, :-1] = X[batch].A - Xm
         else:
@@ -904,7 +905,7 @@ def _check_gcv_mode(X, sample_weights):
     if with_sample_weights and sparse_x:
         warnings.warn(
             'generalized cross-validation with sparse X and sample weights'
-            'not supported yet')
+            ' not supported yet')
         return None
     if X.shape[0] > X.shape[1]:
         return 'svd'
@@ -1196,7 +1197,7 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
 
-        v, Q, QT_y = _pre_compute(X, y)
+        precomputed = _pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
@@ -1211,9 +1212,9 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c = _errors(float(alpha), y, v, Q, QT_y)
+                out, c = _errors(float(alpha), y, *precomputed)
             else:
-                out, c = _values(float(alpha), y, v, Q, QT_y)
+                out, c = _values(float(alpha), y, *precomputed)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
@@ -1279,7 +1280,12 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
         -------
         self : object
         """
-        if self.cv is None:
+        cv = self.cv
+        if self.cv is None and sparse.issparse(X) and np.ndim(sample_weight):
+            warnings.warn('sample weights with sparse X and gcv not supported, '
+                          'falling back to 10-fold cross-validation')
+            cv = 10
+        if cv is None:
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
                                   normalize=self.normalize,
