@@ -1,7 +1,7 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 #
-# cython: language_level=3, boundscheck=False, cdivision=True
+# cython: boundscheck=False, cdivision=True
 
 import sys
 import array

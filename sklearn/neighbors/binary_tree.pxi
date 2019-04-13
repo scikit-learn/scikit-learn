@@ -1,5 +1,4 @@
 #!python
-# cython: language_level=3
 
 
 # KD Tree and Ball Tree
