@@ -4,6 +4,8 @@
 # properly, the property decorator must come before the deprecated decorator
 # (else they are treated as functions)
 bad_deprecation_property_order=`git grep -A 10 "@property" | awk '/@property/,/def /' | grep -B1 "@deprecated"`
+# exclude this file from the matches
+bad_deprecation_property_order=`echo $bad_deprecation_property_order | grep -v check_deprecated_properties`
 
 if [ ! -z "$bad_deprecation_property_order" ]
 then
