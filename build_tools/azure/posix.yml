@@ -10,7 +10,7 @@ jobs:
   # ensure container has the following installed from here:
   # https://docs.microsoft.com/en-us/azure/devops/pipelines/process/container-phases?view=azure-devops&tabs=yaml#requirements
   ${{ if eq(parameters.name, 'Linux32') }}:
-    container: amd64/ubuntu
+    container: jrmlhermitte/test_docker_32:v2
   variables:
     ${{ if eq(parameters.name, 'Linux32') }}:
       TEST_DIR: '/tmp/test_folder'
