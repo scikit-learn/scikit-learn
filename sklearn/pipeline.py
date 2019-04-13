@@ -63,8 +63,8 @@ class Pipeline(_BaseComposition):
         transformers is advantageous when fitting is time consuming.
 
     verbose : boolean, optional
-        Verbosity mode.  When enabled, the time elapsed while fitting each step
-        will be printed as it is completed.
+        If True, the time elapsed while fitting each step will be printed as it
+        is completed.
 
     Attributes
     ----------
@@ -643,9 +643,9 @@ def make_pipeline(*steps, **kwargs):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
-    verbose : boolean, optional(default=False)
-        Verbosity mode.  When enabled, the time elapsed while fitting each step
-        will be printed as it is completed.
+    verbose : boolean, optional
+        If True, the time elapsed while fitting each step will be printed as it
+        is completed.
 
     See also
     --------
@@ -753,8 +753,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         Keys are transformer names, values the weights.
 
     verbose : boolean, optional(default=False)
-        Verbosity mode.  When enabled, the time elapsed while fitting each step
-        will be printed as it is completed.
+        If True, the time elapsed while fitting each transformer will be
+        printed as it is completed.
 
     See also
     --------
@@ -978,8 +978,8 @@ def make_union(*transformers, **kwargs):
         for more details.
 
     verbose : boolean, optional(default=False)
-        Verbosity mode.  When enabled, the time elapsed while fitting each step
-        will be printed as it is completed.
+        If True, the time elapsed while fitting each transformer will be
+        printed as it is completed.
 
     Returns
     -------

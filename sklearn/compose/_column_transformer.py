@@ -102,8 +102,8 @@ boolean mask array or callable
         values the weights.
 
     verbose : boolean, optional(default=False)
-        Verbosity mode.  When enabled, the time elapsed while fitting each step
-        will be printed as it is completed.
+        If True, the time elapsed while fitting each transformer will be
+        printed as it is completed.
 
     Attributes
     ----------
@@ -798,8 +798,8 @@ def make_column_transformer(*transformers, **kwargs):
         for more details.
 
     verbose : boolean, optional(default=False)
-        Verbosity mode.  When enabled, the time elapsed while fitting each step
-        will be printed as it is completed.
+        If True, the time elapsed while fitting each transformer will be
+        printed as it is completed.
 
     Returns
     -------
