@@ -1151,22 +1151,22 @@ def test_missing_indicator_sparse_no_explicit_zeros():
                          [SimpleImputer, IterativeImputer])
 def test_imputers_add_indicator(marker, imputer_constructor):
     X = np.array([
-        [1,      marker, marker, 2],
-        [1,      3,      marker, 1],
-        [marker, marker, marker, marker],
-        [marker, marker, marker, 3],
+        [marker, 1,      5,      marker, 1],
+        [2,      marker, 1,      marker, 2],
+        [6,      3,      marker, marker, 3],
+        [1,      2,      9,      marker, 4]
     ])
-    X_true = np.array([
-        [1., 3., 2., 0., 1., 1., 0.],
-        [1., 3., 1., 0., 0., 1., 0.],
-        [1., 3., 2., 1., 1., 1., 1.],
-        [1, 3., 3., 1., 1., 1., 0.],
+    X_true_indicator = np.array([
+        [1., 0., 0., 1.],
+        [0., 1., 0., 1.],
+        [0., 0., 1., 1.],
+        [0., 0., 0., 1.]
     ])
     imputer = imputer_constructor(missing_values=marker,
                                   add_indicator=True)
 
     X_trans = imputer.fit(X).transform(X)
-    assert_allclose(X_trans, X_true)
+    assert_allclose(X_trans[:, -4:], X_true_indicator)
     assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2, 3]))
 
 
