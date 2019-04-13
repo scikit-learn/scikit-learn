@@ -1717,13 +1717,14 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                           if tree.tree_.node_count > 1]
         if not relevant_trees:
             # degenerate case where all trees have only one node
-            return np.zeros(shape=self.n_features_)
+            return np.zeros(shape=self.n_features_, dtype=np.float64)
 
         relevant_feature_importances = [
             tree.tree_.compute_feature_importances(normalize=False)
             for tree in relevant_trees
         ]
-        avg_feature_importances = np.mean(relevant_feature_importances, axis=0)
+        avg_feature_importances = np.mean(relevant_feature_importances,
+                                          axis=0, dtype=np.float64)
         return avg_feature_importances / np.sum(avg_feature_importances)
 
     def _validate_y(self, y, sample_weight):

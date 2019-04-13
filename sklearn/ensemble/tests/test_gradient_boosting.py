@@ -1440,3 +1440,11 @@ def test_early_stopping_n_classes():
     # No error if we let training data be big enough
     gb = GradientBoostingClassifier(n_iter_no_change=5, random_state=0,
                                     validation_fraction=4)
+
+
+def test_gbr_degenerate_feature_importances():
+    X = np.zeros((10, 10))
+    y = np.ones((10,))
+    gbr = GradientBoostingRegressor().fit(X, y)
+    assert_array_equal(gbr.feature_importances_,
+                       np.zeros(10, dtype=np.float64))
