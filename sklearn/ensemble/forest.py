@@ -366,6 +366,9 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
         Returns
         -------
         feature_importances_ : array, shape = [n_features]
+            The values of this array sum to 1, unless all trees are single node
+            trees consisting of only the root node, in which case it will be an
+            array of zeros.
         """
         check_is_fitted(self, 'estimators_')
 
