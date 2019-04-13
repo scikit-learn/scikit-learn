@@ -215,6 +215,13 @@ Support for Python 3.4 and below has been officially dropped.
   classes priors instead of the log of the priors. :issue:`12983` by
   :user:`Nicolas Hug<NicolasHug>`.
 
+- |Fix| ``feature_importances_`` in
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` now ignores the single
+  node trees in feature importance calculation, and returns an
+  array of zeros if all trees have only one single node (i.e. the root node).
+  :issue:`13620` by `Adrin Jalali`_.
+
 - |Fix| Fixed a bug in :mod:`ensemble` where the ``predict`` method would
   error for multiclass multioutput forests models if any targets were strings.
   :issue:`12834` by :user:`Elizabeth Sander <elsander>`.
