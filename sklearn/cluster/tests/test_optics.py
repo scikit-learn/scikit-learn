@@ -99,7 +99,7 @@ def test_extract_xi():
 
     clust = OPTICS(min_samples=3, min_cluster_size=2,
                    max_eps=np.inf, cluster_method='xi',
-                   xi=0.1).fit(X)
+                   xi=0.4).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))

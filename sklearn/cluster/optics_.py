@@ -847,14 +847,14 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
                     # at the same level as the end of the detected cluster.
                     while (reachability_plot[c_start + 1] >
                            reachability_plot[c_end + 1]
-                           and c_start < c_end):
+                           and c_start < D['end']):
                         c_start += 1
                 elif reachability_plot[c_end + 1] * xi_complement >= D_max:
                     # Find the first index from the right side which is almost
                     # at the same level as the beginning of the detected
                     # cluster.
-                    while (reachability_plot[c_end] > D_max
-                           and c_end > c_start):
+                    while (reachability_plot[c_end - 1] < D_max
+                           and c_end > U['start']):
                         c_end -= 1
 
                 # predecessor correction
@@ -871,11 +871,11 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
                     continue
 
                 # Definition 11: criterion 1
-                if c_start > c_end:
+                if c_start > D['end']:
                     continue
 
                 # Definition 11: criterion 2
-                if c_end < c_start:
+                if c_end < U['start']:
                     continue
 
                 U_clusters.append((c_start, c_end))
@@ -883,9 +883,6 @@ def _xi_cluster(reachability_plot, predecessor, xi, min_samples,
             # add smaller clusters first.
             U_clusters.reverse()
             clusters.extend(U_clusters)
-
-            if U['end'] == n_samples - 1:
-                break
 
     return np.array(clusters)
 
