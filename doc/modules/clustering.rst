@@ -1277,9 +1277,9 @@ Their harmonic mean called **V-measure** is computed by
   >>> metrics.v_measure_score(labels_true, labels_pred)    # doctest: +ELLIPSIS
   0.51...
 
-This function's formula is as follows::
+This function's formula is as follows:::
 
-..math:: v = \frac{(1 + \beta) * \text{homogeneity} * \text{completeness}}{(\beta * \text{homogeneity} + \text{completeness})}
+.. math:: \text{v} = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
 
 `beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
 
