@@ -1374,6 +1374,6 @@ def test_forest_feature_importances_sum():
 def test_forest_degenerate_feature_importances():
     X = np.zeros((10, 10))
     y = np.ones((10,))
-    gbr = RandomForestRegressor().fit(X, y)
+    gbr = RandomForestRegressor(n_estimators=10).fit(X, y)
     assert_array_equal(gbr.feature_importances_,
                        np.zeros(10, dtype=np.float64))
