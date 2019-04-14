@@ -1936,13 +1936,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         .. versionadded:: 0.17
            *presort* parameter.
 
-<<<<<<< HEAD
-    increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
-=======
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
@@ -1967,7 +1960,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         number), the training stops.
 
         .. versionadded:: 0.20
->>>>>>> master
+
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
 
     Attributes
     ----------
@@ -2414,13 +2412,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         .. versionadded:: 0.17
            optional parameter *presort*.
 
-<<<<<<< HEAD
-    increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
-
-    decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
-=======
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
@@ -2446,7 +2437,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         .. versionadded:: 0.20
 
->>>>>>> master
+    increasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically increasing effect.
+
+    decreasing : list of ints, optional (default=None)
+        Indices of features to have a monotonically decreasing effect.
+
 
     Attributes
     ----------
