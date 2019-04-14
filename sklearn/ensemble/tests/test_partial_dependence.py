@@ -1,9 +1,10 @@
 """
 Testing for the partial dependence module.
 """
+import pytest
 
 import numpy as np
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_allclose
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import if_matplotlib
@@ -17,8 +18,7 @@ from sklearn import datasets
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
-T = [[-1, -1], [2, 2], [3, 2]]
-true_result = [-1, 1, 1]
+sample_weight = [1, 1, 1, 2, 2, 2]
 
 # also load the boston dataset
 boston = datasets.load_boston()
@@ -45,6 +45,24 @@ def test_partial_dependence_classifier():
 
     assert axes is None
     assert_array_equal(pdp, pdp_2)
+
+    # with trivial (no-op) sample weights
+    clf.fit(X, y, sample_weight=np.ones(len(y)))
+
+    pdp_w, axes_w = partial_dependence(clf, [0], X=X, grid_resolution=5)
+
+    assert pdp_w.shape == (1, 4)
+    assert axes_w[0].shape[0] == 4
+    assert_allclose(pdp_w, pdp)
+
+    # with non-trivial sample weights
+    clf.fit(X, y, sample_weight=sample_weight)
+
+    pdp_w2, axes_w2 = partial_dependence(clf, [0], X=X, grid_resolution=5)
+
+    assert pdp_w2.shape == (1, 4)
+    assert axes_w2[0].shape[0] == 4
+    assert np.all(np.abs(pdp_w2 - pdp_w) / np.abs(pdp_w) > 0.1)
 
 
 def test_partial_dependence_multiclass():
@@ -75,6 +93,31 @@ def test_partial_dependence_regressor():
     assert axes[0].shape[0] == grid_resolution
 
 
+def test_partial_dependence_sample_weight():
+    # Test near perfect correlation between partial dependence and diagonal
+    # when sample weights emphasize y = x predictions
+    N = 1000
+    rng = np.random.RandomState(123456)
+    mask = rng.randint(2, size=N, dtype=bool)
+
+    x = rng.rand(N)
+    # set y = x on mask and y = -x outside
+    y = x.copy()
+    y[~mask] = -y[~mask]
+    X = np.c_[mask, x]
+    # sample weights to emphasize data points where y = x
+    sample_weight = np.ones(N)
+    sample_weight[mask] = 1000.
+
+    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
+    clf.fit(X, y, sample_weight=sample_weight)
+
+    grid = np.arange(0, 1, 0.01)
+    pdp = partial_dependence(clf, [1], grid=grid)
+
+    assert np.corrcoef(np.ravel(pdp[0]), grid)[0, 1] > 0.99
+
+
 def test_partial_dependecy_input():
     # Test input validation of partial dependence.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -103,6 +146,8 @@ def test_partial_dependecy_input():
     assert_raises(ValueError, partial_dependence, clf, [0], grid=grid)
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+# matplotlib Python3.7 warning
 @if_matplotlib
 def test_plot_partial_dependence():
     # Test partial dependence plot function.
@@ -135,6 +180,8 @@ def test_plot_partial_dependence():
     assert all(ax.has_data for ax in axs)
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+# matplotlib Python3.7 warning
 @if_matplotlib
 def test_plot_partial_dependence_input():
     # Test partial dependence plot function input checks.
@@ -170,6 +217,8 @@ def test_plot_partial_dependence_input():
                   clf, X, [{'foo': 'bar'}])
 
 
+@pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
+# matplotlib Python3.7 warning
 @if_matplotlib
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.

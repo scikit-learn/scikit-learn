@@ -24,17 +24,17 @@ import tempfile
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg, ndimage
+from joblib import Memory
 
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn import feature_selection
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import Pipeline
-from sklearn.externals.joblib import Memory
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
-###############################################################################
+# #############################################################################
 # Generate data
 n_samples = 200
 size = 40  # image size
@@ -58,12 +58,12 @@ noise = np.random.randn(y.shape[0])
 noise_coef = (linalg.norm(y, 2) / np.exp(snr / 20.)) / linalg.norm(noise, 2)
 y += noise_coef * noise  # add noise
 
-###############################################################################
+# #############################################################################
 # Compute the coefs of a Bayesian Ridge with GridSearch
 cv = KFold(2)  # cross-validation generator for model selection
 ridge = BayesianRidge()
 cachedir = tempfile.mkdtemp()
-mem = Memory(cachedir=cachedir, verbose=1)
+mem = Memory(location=cachedir, verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
 connectivity = grid_to_graph(n_x=size, n_y=size)
@@ -88,7 +88,7 @@ coef_ = clf.best_estimator_.steps[-1][1].coef_
 coef_ = clf.best_estimator_.steps[0][1].inverse_transform(coef_.reshape(1, -1))
 coef_selection_ = coef_.reshape(size, size)
 
-###############################################################################
+# #############################################################################
 # Inverse the transformation to plot the results on an image
 plt.close('all')
 plt.figure(figsize=(7.3, 2.7))

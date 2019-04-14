@@ -10,10 +10,9 @@ import numpy as np
 from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
-from ..externals.joblib import Parallel, delayed
-from ..externals import six
-from ..externals.six.moves import map, range, zip
+from ..utils._joblib import Parallel, delayed
 from ..utils import check_array
+from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 
 from ._gradient_boosting import _partial_dependence_tree
@@ -52,13 +51,13 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
         raise ValueError('percentile values must be in [0, 1]')
 
     axes = []
+    emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
     for col in range(X.shape[1]):
         uniques = np.unique(X[:, col])
         if uniques.shape[0] < grid_resolution:
             # feature has low resolution use unique vals
             axis = uniques
         else:
-            emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
             # create axis based on percentiles and grid resolution
             axis = np.linspace(emp_percentiles[0, col],
                                emp_percentiles[1, col],
@@ -121,18 +120,16 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     """
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    if gbrt.estimators_.shape[0] == 0:
-        raise ValueError('Call %s.fit before partial_dependence' %
-                         gbrt.__class__.__name__)
+    check_is_fitted(gbrt, 'estimators_')
     if (grid is None and X is None) or (grid is not None and X is not None):
         raise ValueError('Either grid or X must be specified')
 
     target_variables = np.asarray(target_variables, dtype=np.int32,
                                   order='C').ravel()
 
-    if any([not (0 <= fx < gbrt.n_features) for fx in target_variables]):
+    if any([not (0 <= fx < gbrt.n_features_) for fx in target_variables]):
         raise ValueError('target_variables must be in [0, %d]'
-                         % (gbrt.n_features - 1))
+                         % (gbrt.n_features_ - 1))
 
     if X is not None:
         X = check_array(X, dtype=DTYPE, order='C')
@@ -166,7 +163,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
 
 def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             label=None, n_cols=3, grid_resolution=100,
-                            percentiles=(0.05, 0.95), n_jobs=1,
+                            percentiles=(0.05, 0.95), n_jobs=None,
                             verbose=0, ax=None, line_kw=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
@@ -183,10 +180,14 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         A fitted gradient boosting model.
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained.
-    features : seq of tuples or ints
+    features : seq of ints, strings, or tuples of ints or strings
         If seq[i] is an int or a tuple with one int value, a one-way
         PDP is created; if seq[i] is a tuple of two ints, a two-way
         PDP is created.
+        If feature_names is specified and seq[i] is an int, seq[i]
+        must be < len(feature_names).
+        If seq[i] is a string, feature_names must be specified, and
+        seq[i] must be in feature_names.
     feature_names : seq of str
         Name of each feature; feature_names[i] holds
         the name of the feature with index i.
@@ -195,14 +196,15 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         Only if gbrt is a multi-class model. Must be in ``gbrt.classes_``.
     n_cols : int
         The number of columns in the grid plot (default: 3).
+    grid_resolution : int, default=100
+        The number of equally spaced points on the axes.
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
-    grid_resolution : int, default=100
-        The number of equally spaced points on the axes.
-    n_jobs : int
-        The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
-        Defaults to 1.
+    n_jobs : int or None, optional (default=None)
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
     verbose : int
         Verbose output during PD computations. Defaults to 0.
     ax : Matplotlib axis object, default None
@@ -213,7 +215,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     contour_kw : dict
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
-    fig_kw : dict
+    **fig_kw : dict
         Dict with keywords passed to the figure() call.
         Note that all keywords not recognized above will be automatically
         included here.
@@ -241,9 +243,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    if gbrt.estimators_.shape[0] == 0:
-        raise ValueError('Call %s.fit before partial_dependence' %
-                         gbrt.__class__.__name__)
+    check_is_fitted(gbrt, 'estimators_')
 
     # set label_idx for multi-class GBRT
     if hasattr(gbrt, 'classes_') and np.size(gbrt.classes_) > 2:
@@ -257,8 +257,8 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         label_idx = 0
 
     X = check_array(X, dtype=DTYPE, order='C')
-    if gbrt.n_features != X.shape[1]:
-        raise ValueError('X.shape[1] does not match gbrt.n_features')
+    if gbrt.n_features_ != X.shape[1]:
+        raise ValueError('X.shape[1] does not match gbrt.n_features_')
 
     if line_kw is None:
         line_kw = {'color': 'green'}
@@ -268,12 +268,12 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert feature_names to list
     if feature_names is None:
         # if not feature_names use fx indices as name
-        feature_names = [str(i) for i in range(gbrt.n_features)]
+        feature_names = [str(i) for i in range(gbrt.n_features_)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
 
     def convert_feature(fx):
-        if isinstance(fx, six.string_types):
+        if isinstance(fx, str):
             try:
                 fx = feature_names.index(fx)
             except ValueError:
@@ -283,7 +283,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
-        if isinstance(fxs, (numbers.Integral,) + six.string_types):
+        if isinstance(fxs, (numbers.Integral, str)):
             fxs = (fxs,)
         try:
             fxs = np.array([convert_feature(fx) for fx in fxs], dtype=np.int32)
@@ -306,8 +306,9 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
                 l.append(feature_names[i])
             names.append(l)
     except IndexError:
-        raise ValueError('features[i] must be in [0, n_features) '
-                         'but was %d' % i)
+        raise ValueError('All entries of features must be less than '
+                         'len(feature_names) = {0}, got {1}.'
+                         .format(len(feature_names), i))
 
     # compute PD functions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(

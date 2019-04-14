@@ -10,15 +10,11 @@ from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.fixes import astype
+from ..utils import deprecated
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 
-from ..externals import six
-
-zip = six.moves.zip
-map = six.moves.map
 
 __all__ = [
     'Imputer',
@@ -61,6 +57,9 @@ def _most_frequent(array, extra_value, n_repeat):
             return extra_value
 
 
+@deprecated("Imputer was deprecated in version 0.20 and will be "
+            "removed in 0.22. Import impute.SimpleImputer from "
+            "sklearn instead.")
 class Imputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
@@ -134,8 +133,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        self : object
-            Returns self.
+        self : Imputer
         """
         # Check parameters
         allowed_strategies = ["mean", "median", "most_frequent"]
@@ -226,7 +224,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                                     X.indptr[1:-1])
 
             # astype necessary for bug in numpy.hsplit before v1.9
-            columns = [col[astype(mask, bool, copy=False)]
+            columns = [col[mask.astype(bool, copy=False)]
                        for col, mask in zip(columns_all, mask_valids)]
 
             # Median
@@ -265,12 +263,6 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Median
         elif strategy == "median":
-            if tuple(int(v) for v in np.__version__.split('.')[:2]) < (1, 5):
-                # In old versions of numpy, calling a median on an array
-                # containing nans returns nan. This is different is
-                # recent versions of numpy, which we want to mimic
-                masked_X.mask = np.logical_or(masked_X.mask,
-                                              np.isnan(X))
             median_masked = np.ma.median(masked_X, axis=axis)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)
@@ -293,7 +285,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             most_frequent = np.empty(X.shape[0])
 
             for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
-                row_mask = np.logical_not(row_mask).astype(np.bool)
+                row_mask = np.logical_not(row_mask)
                 row = row[row_mask]
                 most_frequent[i] = _most_frequent(row, np.nan, 0)
 
@@ -309,11 +301,17 @@ class Imputer(BaseEstimator, TransformerMixin):
         """
         if self.axis == 0:
             check_is_fitted(self, 'statistics_')
+            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
+                            force_all_finite=False, copy=self.copy)
+            statistics = self.statistics_
+            if X.shape[1] != statistics.shape[0]:
+                raise ValueError("X has %d features per sample, expected %d"
+                                 % (X.shape[1], self.statistics_.shape[0]))
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
-        if self.axis == 1:
+        else:
             X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES,
                             force_all_finite=False, copy=self.copy)
 
@@ -328,10 +326,6 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.strategy,
                                              self.missing_values,
                                              self.axis)
-        else:
-            X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
-                            force_all_finite=False, copy=self.copy)
-            statistics = self.statistics_
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)
@@ -355,8 +349,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                 np.diff(X.indptr))[mask]
 
-            X.data[mask] = astype(valid_statistics[indexes], X.dtype,
-                                  copy=False)
+            X.data[mask] = valid_statistics[indexes].astype(X.dtype,
+                                                            copy=False)
         else:
             if sparse.issparse(X):
                 X = X.toarray()
@@ -373,3 +367,6 @@ class Imputer(BaseEstimator, TransformerMixin):
             X[coordinates] = values
 
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}

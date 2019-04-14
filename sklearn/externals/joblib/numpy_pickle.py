@@ -13,8 +13,11 @@ try:
 except ImportError:
     Path = None
 
-from .numpy_pickle_utils import _COMPRESSORS
-from .numpy_pickle_utils import BinaryZlibFile
+from .compressor import lz4, LZ4_NOT_INSTALLED_ERROR
+from .compressor import _COMPRESSORS, register_compressor, BinaryZlibFile
+from .compressor import (ZlibCompressorWrapper, GzipCompressorWrapper,
+                         BZ2CompressorWrapper, LZMACompressorWrapper,
+                         XZCompressorWrapper, LZ4CompressorWrapper)
 from .numpy_pickle_utils import Unpickler, Pickler
 from .numpy_pickle_utils import _read_fileobject, _write_fileobject
 from .numpy_pickle_utils import _read_bytes, BUFFER_SIZE
@@ -26,6 +29,15 @@ from .numpy_pickle_compat import NDArrayWrapper
 # which we don't care.
 from .numpy_pickle_compat import ZNDArrayWrapper  # noqa
 from ._compat import _basestring, PY3_OR_LATER
+from .backports import make_memmap
+
+# Register supported compressors
+register_compressor('zlib', ZlibCompressorWrapper())
+register_compressor('gzip', GzipCompressorWrapper())
+register_compressor('bz2', BZ2CompressorWrapper())
+register_compressor('lzma', LZMACompressorWrapper())
+register_compressor('xz', XZCompressorWrapper())
+register_compressor('lz4', LZ4CompressorWrapper())
 
 ###############################################################################
 # Utility objects for persistence.
@@ -151,12 +163,12 @@ class NumpyArrayWrapper(object):
         if unpickler.mmap_mode == 'w+':
             unpickler.mmap_mode = 'r+'
 
-        marray = unpickler.np.memmap(unpickler.filename,
-                                     dtype=self.dtype,
-                                     shape=self.shape,
-                                     order=self.order,
-                                     mode=unpickler.mmap_mode,
-                                     offset=offset)
+        marray = make_memmap(unpickler.filename,
+                             dtype=self.dtype,
+                             shape=self.shape,
+                             order=self.order,
+                             mode=unpickler.mmap_mode,
+                             offset=offset)
         # update the offset so that it corresponds to the end of the read array
         unpickler.file_handle.seek(offset + marray.nbytes)
 
@@ -208,7 +220,7 @@ class NumpyPickler(Pickler):
     ----------
     fp: file
         File object handle used for serializing the input object.
-    protocol: int
+    protocol: int, optional
         Pickle protocol used. Default is pickle.DEFAULT_PROTOCOL under
         python 3, pickle.HIGHEST_PROTOCOL otherwise.
     """
@@ -352,14 +364,17 @@ class NumpyUnpickler(Unpickler):
 def dump(value, filename, compress=0, protocol=None, cache_size=None):
     """Persist an arbitrary Python object into one file.
 
+    Read more in the :ref:`User Guide <persistence>`.
+
     Parameters
     -----------
     value: any Python object
         The object to store to disk.
-    filename: str or pathlib.Path
-        The path of the file in which it is to be stored. The compression
-        method corresponding to one of the supported filename extensions ('.z',
-        '.gz', '.bz2', '.xz' or '.lzma') will be used automatically.
+    filename: str, pathlib.Path, or file object.
+        The file object or path of the file in which it is to be stored.
+        The compression method corresponding to one of the supported filename
+        extensions ('.z', '.gz', '.bz2', '.xz' or '.lzma') will be used
+        automatically.
     compress: int from 0 to 9 or bool or 2-tuple, optional
         Optional compression level for the data. 0 or False is no compression.
         Higher value means more compression, but also slower read and
@@ -370,7 +385,7 @@ def dump(value, filename, compress=0, protocol=None, cache_size=None):
         between supported compressors (e.g 'zlib', 'gzip', 'bz2', 'lzma'
         'xz'), the second element must be an integer from 0 to 9, corresponding
         to the compression level.
-    protocol: positive int
+    protocol: int, optional
         Pickle protocol, see pickle.dump documentation for more details.
     cache_size: positive int, optional
         This option is deprecated in 0.10 and has no effect.
@@ -402,30 +417,42 @@ def dump(value, filename, compress=0, protocol=None, cache_size=None):
 
     compress_method = 'zlib'  # zlib is the default compression method.
     if compress is True:
-        # By default, if compress is enabled, we want to be using 3 by default
-        compress_level = 3
+        # By default, if compress is enabled, we want the default compress
+        # level of the compressor.
+        compress_level = None
     elif isinstance(compress, tuple):
         # a 2-tuple was set in compress
         if len(compress) != 2:
             raise ValueError(
                 'Compress argument tuple should contain exactly 2 elements: '
-                '(compress method, compress level), you passed {0}'
+                '(compress method, compress level), you passed {}'
                 .format(compress))
         compress_method, compress_level = compress
+    elif isinstance(compress, _basestring):
+        compress_method = compress
+        compress_level = None  # Use default compress level
+        compress = (compress_method, compress_level)
     else:
         compress_level = compress
 
-    if compress_level is not False and compress_level not in range(10):
+    # LZ4 compression is only supported and installation checked with
+    # python 3+.
+    if compress_method == 'lz4' and lz4 is None and PY3_OR_LATER:
+        raise ValueError(LZ4_NOT_INSTALLED_ERROR)
+
+    if (compress_level is not None and
+            compress_level is not False and
+            compress_level not in range(10)):
         # Raising an error if a non valid compress level is given.
         raise ValueError(
-            'Non valid compress level given: "{0}". Possible values are '
-            '{1}.'.format(compress_level, list(range(10))))
+            'Non valid compress level given: "{}". Possible values are '
+            '{}.'.format(compress_level, list(range(10))))
 
     if compress_method not in _COMPRESSORS:
         # Raising an error if an unsupported compression method is given.
         raise ValueError(
-            'Non valid compression method given: "{0}". Possible values are '
-            '{1}.'.format(compress_method, _COMPRESSORS))
+            'Non valid compression method given: "{}". Possible values are '
+            '{}.'.format(compress_method, _COMPRESSORS))
 
     if not is_filename and not is_fileobj:
         # People keep inverting arguments, and the resulting error is
@@ -440,38 +467,30 @@ def dump(value, filename, compress=0, protocol=None, cache_size=None):
         # In case no explicit compression was requested using both compression
         # method and level in a tuple and the filename has an explicit
         # extension, we select the corresponding compressor.
-        if filename.endswith('.z'):
-            compress_method = 'zlib'
-        elif filename.endswith('.gz'):
-            compress_method = 'gzip'
-        elif filename.endswith('.bz2'):
-            compress_method = 'bz2'
-        elif filename.endswith('.lzma'):
-            compress_method = 'lzma'
-        elif filename.endswith('.xz'):
-            compress_method = 'xz'
-        else:
-            # no matching compression method found, we unset the variable to
-            # be sure no compression level is set afterwards.
-            compress_method = None
+
+        # unset the variable to be sure no compression level is set afterwards.
+        compress_method = None
+        for name, compressor in _COMPRESSORS.items():
+            if filename.endswith(compressor.extension):
+                compress_method = name
 
         if compress_method in _COMPRESSORS and compress_level == 0:
-            # we choose a default compress_level of 3 in case it was not given
+            # we choose the default compress_level in case it was not given
             # as an argument (using compress).
-            compress_level = 3
+            compress_level = None
 
     if not PY3_OR_LATER and compress_method in ('lzma', 'xz'):
-        raise NotImplementedError("{0} compression is only available for "
+        raise NotImplementedError("{} compression is only available for "
                                   "python version >= 3.3. You are using "
-                                  "{1}.{2}".format(compress_method,
-                                                   sys.version_info[0],
-                                                   sys.version_info[1]))
+                                  "{}.{}".format(compress_method,
+                                                 sys.version_info[0],
+                                                 sys.version_info[1]))
 
     if cache_size is not None:
         # Cache size is deprecated starting from version 0.10
         warnings.warn("Please do not set 'cache_size' in joblib.dump, "
                       "this parameter has no effect and will be removed. "
-                      "You used 'cache_size={0}'".format(cache_size),
+                      "You used 'cache_size={}'".format(cache_size),
                       DeprecationWarning, stacklevel=2)
 
     if compress_level != 0:
@@ -529,14 +548,16 @@ def _unpickle(fobj, filename="", mmap_mode=None):
 def load(filename, mmap_mode=None):
     """Reconstruct a Python object from a file persisted with joblib.dump.
 
+    Read more in the :ref:`User Guide <persistence>`.
+
     Parameters
     -----------
-    filename: str or pathlib.Path
-        The path of the file from which to load the object
+    filename: str, pathlib.Path, or file object.
+        The file object or path of the file from which to load the object
     mmap_mode: {None, 'r+', 'r', 'w+', 'c'}, optional
         If not None, the arrays are memory-mapped from the disk. This
         mode has no effect for compressed files. Note that in this
-        case the reconstructed object might not longer match exactly
+        case the reconstructed object might no longer match exactly
         the originally pickled object.
 
     Returns
@@ -555,13 +576,15 @@ def load(filename, mmap_mode=None):
     dump. If the mmap_mode argument is given, it is passed to np.load and
     arrays are loaded as memmaps. As a consequence, the reconstructed
     object might not match the original pickled object. Note that if the
-    file was saved with compression, the arrays cannot be memmaped.
+    file was saved with compression, the arrays cannot be memmapped.
     """
     if Path is not None and isinstance(filename, Path):
         filename = str(filename)
 
-    if hasattr(filename, "read") and hasattr(filename, "seek"):
-        with _read_fileobject(filename, "", mmap_mode) as fobj:
+    if hasattr(filename, "read"):
+        fobj = filename
+        filename = getattr(fobj, 'name', '')
+        with _read_fileobject(fobj, filename, mmap_mode) as fobj:
             obj = _unpickle(fobj)
     else:
         with open(filename, 'rb') as f:

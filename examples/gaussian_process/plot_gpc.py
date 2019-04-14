@@ -63,9 +63,11 @@ print("Log-loss: %.3f (initial) %.3f (optimized)"
 
 
 # Plot posteriors
-plt.figure(0)
-plt.scatter(X[:train_size, 0], y[:train_size], c='k', label="Train data")
-plt.scatter(X[train_size:, 0], y[train_size:], c='g', label="Test data")
+plt.figure()
+plt.scatter(X[:train_size, 0], y[:train_size], c='k', label="Train data",
+            edgecolors=(0, 0, 0))
+plt.scatter(X[train_size:, 0], y[train_size:], c='g', label="Test data",
+            edgecolors=(0, 0, 0))
 X_ = np.linspace(0, 5, 100)
 plt.plot(X_, gp_fix.predict_proba(X_[:, np.newaxis])[:, 1], 'r',
          label="Initial kernel: %s" % gp_fix.kernel_)
@@ -78,7 +80,7 @@ plt.ylim(-0.25, 1.5)
 plt.legend(loc="best")
 
 # Plot LML landscape
-plt.figure(1)
+plt.figure()
 theta0 = np.logspace(0, 8, 30)
 theta1 = np.logspace(-1, 1, 29)
 Theta0, Theta1 = np.meshgrid(theta0, theta1)

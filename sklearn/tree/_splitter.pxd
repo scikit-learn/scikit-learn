@@ -1,3 +1,4 @@
+# cython: language_level=3
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
@@ -14,11 +15,11 @@ cimport numpy as np
 
 from ._criterion cimport Criterion
 
-ctypedef np.npy_float32 DTYPE_t          # Type of X
-ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
-ctypedef np.npy_intp SIZE_t              # Type for indices and counters
-ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+from ._tree cimport DTYPE_t          # Type of X
+from ._tree cimport DOUBLE_t         # Type of y, sample_weight
+from ._tree cimport SIZE_t           # Type for indices and counters
+from ._tree cimport INT32_t          # Signed 32 bit integer
+from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -59,15 +60,12 @@ cdef class Splitter:
 
     cdef bint presort                    # Whether to use presorting, only
                                          # allowed on dense data
-
+    cdef const DOUBLE_t[:, ::1] y
+    cdef DOUBLE_t* sample_weight
     cdef INT32_t* monotonic              # Monotonicity constraints
                                          # -1: monotonically decreasing
                                          #  0: no constraint
                                          # +1: monotonically increasing
-
-    cdef DOUBLE_t* y
-    cdef SIZE_t y_stride
-    cdef DOUBLE_t* sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -86,17 +84,17 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef void init(self, object X, np.ndarray y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=*) except *
+    cdef int init(self, object X, const DOUBLE_t[:, ::1] y,
+                  DOUBLE_t* sample_weight,
+                  np.ndarray X_idx_sorted=*) except -1
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end,
-                         double* weighted_n_node_samples) nogil
+    cdef int node_reset(self, SIZE_t start, SIZE_t end,
+                        double* weighted_n_node_samples) nogil except -1
 
-    cdef void node_split(self,
-                         double impurity,   # Impurity of the node
-                         SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil
+    cdef int node_split(self,
+                        double impurity,   # Impurity of the node
+                        SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1
 
     cdef void node_value(self, double* dest) nogil
 

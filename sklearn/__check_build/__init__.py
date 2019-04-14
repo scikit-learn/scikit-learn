@@ -1,5 +1,5 @@
 """ Module to give helpful messages to the user that did not
-compile the scikit properly.
+compile scikit-learn properly.
 """
 import os
 
@@ -41,6 +41,6 @@ to build the package before using it: run `python setup.py install` or
 %s""" % (e, local_dir, ''.join(dir_content).strip(), msg))
 
 try:
-    from ._check_build import check_build
+    from ._check_build import check_build  # noqa
 except ImportError as e:
     raise_build_error(e)

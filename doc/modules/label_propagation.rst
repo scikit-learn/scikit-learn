@@ -52,8 +52,8 @@ differ in modifications to the similarity matrix that graph and the
 clamping effect on the label distributions.
 Clamping allows the algorithm to change the weight of the true ground labeled
 data to some degree. The :class:`LabelPropagation` algorithm performs hard
-clamping of input labels, which means :math:`\alpha=1`. This clamping factor
-can be relaxed, to say :math:`\alpha=0.8`, which means that we will always
+clamping of input labels, which means :math:`\alpha=0`. This clamping factor
+can be relaxed, to say :math:`\alpha=0.2`, which means that we will always
 retain 80 percent of our original label distribution, but the algorithm gets to
 change its confidence of the distribution within 20 percent.
 
@@ -86,6 +86,7 @@ which can drastically reduce running times.
 
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_versus_svm_iris.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_structure.py`
+  * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits.py`
   * :ref:`sphx_glr_auto_examples_semi_supervised_plot_label_propagation_digits_active_learning.py`
 
 .. topic:: References
@@ -95,5 +96,5 @@ which can drastically reduce running times.
 
     [2] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
     Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
-    http://research.microsoft.com/en-us/people/nicolasl/efficient_ssl.pdf
+    https://research.microsoft.com/en-us/people/nicolasl/efficient_ssl.pdf
 

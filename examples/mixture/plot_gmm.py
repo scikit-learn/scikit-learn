@@ -3,16 +3,18 @@
 Gaussian Mixture Model Ellipsoids
 =================================
 
-Plot the confidence ellipsoids of a mixture of two Gaussians with EM
-and variational Dirichlet process.
+Plot the confidence ellipsoids of a mixture of two Gaussians
+obtained with Expectation Maximisation (``GaussianMixture`` class) and
+Variational Inference (``BayesianGaussianMixture`` class models with
+a Dirichlet process prior).
 
-Both models have access to five components with which to fit the
-data. Note that the EM model will necessarily use all five components
-while the DP model will effectively only use as many as are needed for
-a good fit. This is a property of the Dirichlet Process prior. Here we
-can see that the EM model splits some components arbitrarily, because it
-is trying to fit too many components, while the Dirichlet Process model
-adapts it number of state automatically.
+Both models have access to five components with which to fit the data. Note
+that the Expectation Maximisation model will necessarily use all five
+components while the Variational Inference model will effectively only use as
+many as are needed for a good fit. Here we can see that the Expectation
+Maximisation model splits some components arbitrarily, because it is trying to
+fit too many components, while the Dirichlet Process model adapts it number of
+state automatically.
 
 This example doesn't show it, as we're in a low-dimensional space, but
 another advantage of the Dirichlet process model is that it can fit
@@ -56,7 +58,7 @@ def plot_results(X, Y_, means, covariances, index, title):
         ell.set_alpha(0.5)
         splot.add_artist(ell)
 
-    plt.xlim(-10., 10.)
+    plt.xlim(-9., 5.)
     plt.ylim(-3., 6.)
     plt.xticks(())
     plt.yticks(())
@@ -78,8 +80,9 @@ plot_results(X, gmm.predict(X), gmm.means_, gmm.covariances_, 0,
              'Gaussian Mixture')
 
 # Fit a Dirichlet process Gaussian mixture using five components
-dpgmm = mixture.DPGMM(n_components=5, covariance_type='full').fit(X)
-plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm._get_covars(), 1,
-             'Dirichlet Process GMM')
+dpgmm = mixture.BayesianGaussianMixture(n_components=5,
+                                        covariance_type='full').fit(X)
+plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm.covariances_, 1,
+             'Bayesian Gaussian Mixture with a Dirichlet process prior')
 
 plt.show()

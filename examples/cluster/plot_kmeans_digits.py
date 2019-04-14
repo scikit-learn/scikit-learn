@@ -52,21 +52,21 @@ print("n_digits: %d, \t n_samples %d, \t n_features %d"
       % (n_digits, n_samples, n_features))
 
 
-print(79 * '_')
-print('% 9s' % 'init'
-      '    time  inertia    homo   compl  v-meas     ARI AMI  silhouette')
+print(82 * '_')
+print('init\t\ttime\tinertia\thomo\tcompl\tv-meas\tARI\tAMI\tsilhouette')
 
 
 def bench_k_means(estimator, name, data):
     t0 = time()
     estimator.fit(data)
-    print('% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f'
+    print('%-9s\t%.2fs\t%i\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f'
           % (name, (time() - t0), estimator.inertia_,
              metrics.homogeneity_score(labels, estimator.labels_),
              metrics.completeness_score(labels, estimator.labels_),
              metrics.v_measure_score(labels, estimator.labels_),
              metrics.adjusted_rand_score(labels, estimator.labels_),
-             metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
+             metrics.adjusted_mutual_info_score(labels,  estimator.labels_,
+                                                average_method='arithmetic'),
              metrics.silhouette_score(data, estimator.labels_,
                                       metric='euclidean',
                                       sample_size=sample_size)))
@@ -83,9 +83,9 @@ pca = PCA(n_components=n_digits).fit(data)
 bench_k_means(KMeans(init=pca.components_, n_clusters=n_digits, n_init=1),
               name="PCA-based",
               data=data)
-print(79 * '_')
+print(82 * '_')
 
-###############################################################################
+# #############################################################################
 # Visualize the results on PCA-reduced data
 
 reduced_data = PCA(n_components=2).fit_transform(data)
