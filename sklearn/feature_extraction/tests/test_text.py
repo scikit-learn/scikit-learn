@@ -1196,3 +1196,18 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
                                             .findall(doc),
                     stop_words=['and'])
     assert _check_stop_words_consistency(vec) is True
+
+
+@pytest.mark.parametrize('Estimator',
+                         [CountVectorizer, TfidfVectorizer, HashingVectorizer])
+def test_callable_analyzer_vs_file_input(Estimator):
+    data = ['this is text, not file or filename']
+
+    with pytest.raises(FileNotFoundError):
+        Estimator(analyzer=lambda x: x.split(),
+                  input='filename').fit_transform(data)
+
+    with pytest.raises(AttributeError,
+                       match="'str' object has no attribute 'read'"):
+        Estimator(analyzer=lambda x: x.split(),
+                  input='file').fit_transform(data)

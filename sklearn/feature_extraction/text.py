@@ -307,7 +307,7 @@ class VectorizerMixin:
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
         if callable(self.analyzer):
-            return self.analyzer
+            return lambda doc: self.analyzer(self.decode(doc))
 
         preprocess = self.build_preprocessor()
 
@@ -488,7 +488,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
         word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
-        out of the raw, unprocessed input.
+        out of the raw, unprocessed input. If ``input`` is ``filename`` or
+        ``file``, the data is first read from the file and then passed to the
+        given callable analyzer.
 
     n_features : integer, default=(2 ** 20)
         The number of features (columns) in the output matrices. Small numbers
@@ -743,7 +745,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
-        out of the raw, unprocessed input.
+        out of the raw, unprocessed input. If ``input`` is ``filename`` or
+        ``file``, the data is first read from the file and then passed to the
+        given callable analyzer.
 
     max_df : float in range [0.0, 1.0] or int, default=1.0
         When building the vocabulary ignore terms that have a document
@@ -1367,7 +1371,9 @@ class TfidfVectorizer(CountVectorizer):
         word boundaries; n-grams at the edges of words are padded with space.
 
         If a callable is passed it is used to extract the sequence of features
-        out of the raw, unprocessed input.
+        out of the raw, unprocessed input. If ``input`` is ``filename`` or
+        ``file``, the data is first read from the file and then passed to the
+        given callable analyzer.
 
     stop_words : string {'english'}, list, or None (default=None)
         If a string, it is passed to _check_stop_list and the appropriate stop
