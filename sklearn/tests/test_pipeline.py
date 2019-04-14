@@ -1113,9 +1113,8 @@ parameter_grid_test_verbose = ((est, pattern, method) for
       r'\[FeatureUnion\].*\(step 1 of 2\) Fitting mult1.* total=.*\n'
       r'\[FeatureUnion\].*\(step 2 of 2\) Fitting mult2.* total=.*\n$'),
      (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
-      r'\[FeatureUnion\].*\(step 1 of 1\) Fitting mult2.* total=.*\n$'
-      )
-      ], ['fit', 'fit_transform', 'fit_predict'])
+      r'\[FeatureUnion\].*\(step 1 of 1\) Fitting mult2.* total=.*\n$')
+    ], ['fit', 'fit_transform', 'fit_predict'])
     if hasattr(est, method) and not (
         method == 'fit_transform' and hasattr(est, 'steps') and
         isinstance(est.steps[-1][1], FitParamT))
