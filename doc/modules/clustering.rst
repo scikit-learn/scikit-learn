@@ -1284,7 +1284,7 @@ This function's formula is as follows:::
 `beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
 
   >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)    # doctest: +ELLIPSIS
-  0.55...
+  0.54...
 
 more weight will be attributed to homogeneity, and using a value greater than 1::
 
