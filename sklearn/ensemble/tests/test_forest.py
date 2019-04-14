@@ -1372,6 +1372,7 @@ def test_forest_feature_importances_sum():
 
 
 def test_forest_degenerate_feature_importances():
+    # build a forest of single node trees. See #13636
     X = np.zeros((10, 10))
     y = np.ones((10,))
     gbr = RandomForestRegressor(n_estimators=10).fit(X, y)
