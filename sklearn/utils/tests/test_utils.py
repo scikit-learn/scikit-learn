@@ -19,7 +19,7 @@ from sklearn.utils import column_or_1d
 from sklearn.utils import safe_indexing
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
-from sklearn.utils import _message_with_time, _log_elapsed
+from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils.mocking import MockDataFrame
@@ -314,9 +314,9 @@ def test_message_with_time(source, message, is_long, time, time_str):
         ('', _message_with_time('ABC', '', 0.1) + '\n'),
         (None, ''),
     ])
-def test_log_elapsed(message, expected, capsys, monkeypatch):
+def test_print_elapsed_time(message, expected, capsys, monkeypatch):
     monkeypatch.setattr(timeit, 'default_timer', lambda: 0)
-    with _log_elapsed('ABC', message):
+    with _print_elapsed_time('ABC', message):
         monkeypatch.setattr(timeit, 'default_timer', lambda: 0.1)
     assert capsys.readouterr().out == expected
 

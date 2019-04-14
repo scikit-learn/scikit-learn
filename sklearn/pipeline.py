@@ -18,7 +18,7 @@ from scipy import sparse
 from .base import clone, TransformerMixin
 from .utils._joblib import Parallel, delayed
 from .utils.metaestimators import if_delegate_has_method
-from .utils import Bunch, _log_elapsed
+from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
 
 from .utils.metaestimators import _BaseComposition
@@ -192,16 +192,21 @@ class Pipeline(_BaseComposition):
                 "or be the string 'passthrough'. "
                 "'%s' (type %s) doesn't" % (estimator, type(estimator)))
 
-    def _iter(self, with_final=True):
+    def _iter(self, with_final=True, filter_passthrough=True):
         """
-        Generate (name, trans) tuples excluding 'passthrough' transformers
+        Generate (idx, (name, trans)) tuples from self.steps
+
+        When filter_passthrough is True, 'passthrough' and None transformers
+        are filtered out.
         """
         stop = len(self.steps)
         if not with_final:
             stop -= 1
 
         for idx, (name, trans) in enumerate(islice(self.steps, 0, stop)):
-            if trans is not None and trans != 'passthrough':
+            if not filter_passthrough:
+                yield idx, name, trans
+            elif trans is not None and trans != 'passthrough':
                 yield idx, name, trans
 
     def __len__(self):
@@ -246,12 +251,17 @@ class Pipeline(_BaseComposition):
 
     def _log_message(self, step_idx):
         if not self.verbose:
-            return
-        n_steps = len([est for _, est in self.steps if est is not None])
-        step_num = len(
-            [est for _, est in self.steps[:step_idx + 1] if est is not None])
-        return '(step %d of %d) Fitting %s' % (step_num, n_steps,
-                                               self.steps[step_idx][0])
+            return None
+        name, step = self.steps[step_idx]
+
+        if step is None or step == 'passthrough':
+            return '(step %d of %d) Passing %s' % (step_idx + 1,
+                                                   len(self.steps),
+                                                   name)
+        else:
+            return '(step %d of %d) Fitting %s' % (step_idx + 1,
+                                                   len(self.steps),
+                                                   name)
 
     # Estimator interface
 
@@ -277,7 +287,15 @@ class Pipeline(_BaseComposition):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
-        for step_idx, name, transformer in self._iter(with_final=False):
+        for (step_idx,
+             name,
+             transformer) in self._iter(with_final=False,
+                                        filter_passthrough=False):
+            if (transformer is None or transformer == 'passthrough'):
+                with _print_elapsed_time('Pipeline',
+                                         self._log_message(step_idx)):
+                    continue
+
             if hasattr(memory, 'location'):
                 # joblib >= 0.12
                 if memory.location is None:
@@ -337,9 +355,9 @@ class Pipeline(_BaseComposition):
             This estimator
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
-        if self._final_estimator != 'passthrough':
-            with _log_elapsed('Pipeline',
-                              self._log_message(len(self.steps)-1)):
+        with _print_elapsed_time('Pipeline',
+                                 self._log_message(len(self.steps) - 1)):
+            if self._final_estimator != 'passthrough':
                 self._final_estimator.fit(Xt, y, **fit_params)
         return self
 
@@ -372,9 +390,10 @@ class Pipeline(_BaseComposition):
         """
         last_step = self._final_estimator
         Xt, fit_params = self._fit(X, y, **fit_params)
-        if last_step == 'passthrough':
-            return Xt
-        with _log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
+        with _print_elapsed_time('Pipeline',
+                                 self._log_message(len(self.steps) - 1)):
+            if last_step == 'passthrough':
+                return Xt
             if hasattr(last_step, 'fit_transform'):
                 Xt = last_step.fit_transform(Xt, y, **fit_params)
             else:
@@ -436,7 +455,8 @@ class Pipeline(_BaseComposition):
         y_pred : array-like
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
-        with _log_elapsed('Pipeline', self._log_message(len(self.steps)-1)):
+        with _print_elapsed_time('Pipeline',
+                                 self._log_message(len(self.steps) - 1)):
             y_pred = self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
         return y_pred
 
@@ -697,7 +717,7 @@ def _fit_transform_one(transformer,
     with the fitted transformer. If ``weight`` is not ``None``, the result will
     be multipled by ``weight``.
     """
-    with _log_elapsed(message_clsname, message):
+    with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, 'fit_transform'):
             res = transformer.fit_transform(X, y, **fit_params)
         else:
@@ -718,7 +738,7 @@ def _fit_one(transformer,
     """
     Fits ``transformer`` to ``X`` and ``y``.
     """
-    with _log_elapsed(message_clsname, message):
+    with _print_elapsed_time(message_clsname, message):
         return transformer.fit(X, y, **fit_params)
 
 

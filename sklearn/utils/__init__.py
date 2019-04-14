@@ -597,7 +597,7 @@ def _message_with_time(source, message, time):
 
 
 @contextmanager
-def _log_elapsed(source, message=None):
+def _print_elapsed_time(source, message=None):
     """Log elapsed time to stdout when the context is exited
 
     Parameters
