@@ -422,6 +422,7 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
    ensemble.VotingClassifier
+   ensemble.VotingRegressor
 
 .. autosummary::
    :toctree: generated/

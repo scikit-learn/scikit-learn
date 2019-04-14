@@ -90,6 +90,10 @@ Support for Python 3.4 and below has been officially dropped.
   ``n_connected_components_``.
   :issue:`13427` by :user:`Stephane Couvreur <scouvreur>`.
 
+- |Fix| Fixed a bug in :class:`KMeans` where empty clusters weren't correctly
+  relocated when using sample weights. :issue:`13486`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -225,6 +229,17 @@ Support for Python 3.4 and below has been officially dropped.
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
 
+- |Fix| :func:`ensemble.partial_dependence` now takes sample weights into
+  account for the partial dependence computation when the
+  gradient boosting model has been trained with sample weights.
+  :issue:`13193` by :user:`Samuel O. Ronsin <samronsin>`.
+
+- |Feature| Add :class:`ensemble.VotingRegressor`
+  which provides an equivalent of :class:`ensemble.VotingClassifier`
+  for regression problems.
+  :issue:`12513` by :user:`Ramil Nugmanov <stsouko>` and
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
+
 :mod:`sklearn.externals`
 ........................
 
@@ -243,6 +258,18 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| In :class:`impute.MissingIndicator` avoid implicit densification by
   raising an exception if input is sparse add `missing_values` property
   is set to 0. :issue:`13240` by :user:`Bartosz Telenczuk <btel>`.
+
+- |Fix| Fixed two bugs in :class:`MissingIndicator`. First, when ``X`` is
+  sparse, all the non-zero non missing values used to become explicit False in
+  the transformed data. Then, when ``features='missing-only'``, all features
+  used to be kept if there were no missing values at all. :issue:`13562` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Feature| The :class:`impute.SimpleImputer` has a new parameter
+  ``'add_indicator'``, which simply stacks a :class:`impute.MissingIndicator`
+  transform into the output of the imputer's transform. That allows a predictive
+  estimator to account for missingness. :issue:`12583` by
+  :user:`Danylo Baibak <DanilBaibak>`.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -418,6 +445,10 @@ Support for Python 3.4 and below has been officially dropped.
   shuffles each class's samples with the same ``random_state``,
   making ``shuffle=True`` ineffective.
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- |Fix| Added ability for :func:`model_selection.cross_val_predict` to handle
+  multi-label (and multioutput-multiclass) targets with ``predict_proba``-type
+  methods. :issue:`8773` by :user:`Stephen Hoover <stephen-hoover>`.
 
 - |Fix| Fixed an issue in :func:`~model_selection.cross_val_predict` where
   `method="predict_proba"` returned always `0.0` when one of the classes was
