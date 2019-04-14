@@ -290,7 +290,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
 
         All last five solvers support both dense and sparse data. However, only
-        'sag' and 'saga' supports sparse input when`fit_intercept` is True.
+        'sag' and 'sparse_cg' supports sparse input when`fit_intercept` is
+        True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -651,8 +652,8 @@ class Ridge(_BaseRidge, RegressorMixin):
           approximately the same scale. You can preprocess the data with a
           scaler from sklearn.preprocessing.
 
-        All last five solvers support both dense and sparse data. However,
-        only 'sag' and 'saga' supports sparse input when `fit_intercept` is
+        All last five solvers support both dense and sparse data. However, only
+        'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
         True.
 
         .. versionadded:: 0.17
@@ -824,8 +825,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     Attributes
     ----------
-    coef_ : array, shape (n_features,) or (n_classes, n_features)
-        Weight vector(s).
+    coef_ : array, shape (1, n_features) or (n_classes, n_features)
+        Coefficient of the features in the decision function.
+
+        ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if
@@ -1407,8 +1410,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         contain the mean squared errors (by default) or the values of the
         ``{loss,score}_func`` function (if provided in the constructor).
 
-    coef_ : array, shape = [n_features] or [n_targets, n_features]
-        Weight vector(s).
+    coef_ : array, shape (1, n_features) or (n_targets, n_features)
+        Coefficient of the features in the decision function.
+
+        ``coef_`` is of shape (1, n_features) when the given problem is binary.
 
     intercept_ : float | array, shape = (n_targets,)
         Independent term in decision function. Set to 0.0 if

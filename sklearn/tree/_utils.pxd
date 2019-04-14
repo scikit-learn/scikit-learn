@@ -1,5 +1,3 @@
-# cython: language_level=3
-
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
@@ -7,8 +5,6 @@
 #          Nelson Liu <nelson@nelsonliu.me>
 #
 # License: BSD 3 clause
-#
-# cython: language_level=3
 
 # See _utils.pyx for details.
 
@@ -22,6 +18,7 @@ ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+
 
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).

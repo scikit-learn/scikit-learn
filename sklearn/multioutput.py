@@ -221,6 +221,11 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         When individual estimators are fast to train or predict
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
+
+    Attributes
+    ----------
+    estimators_ : list of ``n_output`` estimators
+        Estimators used for predictions.
     """
 
     def __init__(self, estimator, n_jobs=None):
@@ -251,6 +256,7 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
         super().partial_fit(
             X, y, sample_weight=sample_weight)
 
+    # XXX Remove this method in 0.23
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
