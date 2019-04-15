@@ -96,17 +96,23 @@ make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 
 # Installing required system packages to support the rendering of math
 # notation in the HTML documentation
-apt-get -yq update
-apt-get -yq remove texlive-binaries --purge
-apt-get -yq --no-install-suggests --no-install-recommends \
+sudo -E apt-get -yq update
+sudo -E apt-get -yq remove texlive-binaries --purge
+sudo -E apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng texlive-latex-base texlive-latex-extra \
     texlive-latex-recommended texlive-fonts-recommended \
-    latexmk gsfonts build-essential
+    latexmk gsfonts
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
   deactivate
 fi
+
+# Install dependencies with miniconda
+wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+   -O miniconda.sh
+chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+export PATH="$MINICONDA_PATH/bin:$PATH"
 
 # Configure the conda environment and put it in the path using the
 # provided versions

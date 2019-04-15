@@ -3,7 +3,7 @@ version: 2
 jobs:
   doc-min-dependencies:
     docker:
-      - image: continuumio/miniconda3:4.5.12
+      - image: circleci/python:3.7.3-stretch
     environment:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
@@ -32,7 +32,7 @@ jobs:
 
   doc:
     docker:
-      - image: continuumio/miniconda3:4.5.12
+      - image: circleci/python:3.7.3-stretch
     environment:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
