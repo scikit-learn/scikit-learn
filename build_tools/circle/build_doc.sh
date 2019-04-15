@@ -101,7 +101,7 @@ apt-get -yq remove texlive-binaries --purge
 apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
     install dvipng texlive-latex-base texlive-latex-extra \
     texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
-    latexmk gsfonts
+    latexmk gsfonts build-essential
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
