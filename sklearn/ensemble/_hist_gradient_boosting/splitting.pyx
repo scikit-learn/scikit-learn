@@ -266,7 +266,8 @@ cdef class Splitter:
                     offset_in_buffers[thread_idx - 1] + sizes[thread_idx - 1]
 
             # map indices from sample_indices to left/right_indices_buffer
-            for thread_idx in prange(n_threads):
+            for thread_idx in prange(n_threads, schedule='static',
+                                     chunksize=1):
                 left_count = 0
                 right_count = 0
 
@@ -301,7 +302,8 @@ cdef class Splitter:
             # map indices in left/right_indices_buffer back into
             # sample_indices. This also updates self.partition since
             # sample_indices is a view.
-            for thread_idx in prange(n_threads):
+            for thread_idx in prange(n_threads, schedule='static',
+                                     chunksize=1):
                 memcpy(
                     &sample_indices[left_offset[thread_idx]],
                     &left_indices_buffer[offset_in_buffers[thread_idx]],
@@ -358,7 +360,7 @@ cdef class Splitter:
             split_infos = <split_info_struct *> malloc(
                 self.n_features * sizeof(split_info_struct))
 
-            for feature_idx in prange(n_features):
+            for feature_idx in prange(n_features, schedule='static'):
                 # For each feature, find best bin to split on
                 split_info = self._find_best_bin_to_split_helper(
                     feature_idx, histograms, n_samples,

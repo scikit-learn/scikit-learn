@@ -151,7 +151,7 @@ cdef class HistogramBuilder:
                         ordered_gradients[i] = gradients[sample_indices[i]]
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
-            for feature_idx in prange(n_features):
+            for feature_idx in prange(n_features, schedule='static'):
                 # Compute histogram of each feature
                 self._compute_histogram_brute_single_feature(
                     feature_idx, sample_indices, histograms)
@@ -231,7 +231,7 @@ cdef class HistogramBuilder:
                 dtype=HISTOGRAM_DTYPE
             )
 
-        for feature_idx in prange(n_features, nogil=True):
+        for feature_idx in prange(n_features, schedule='static', nogil=True):
             # Compute histogram of each feature
             _subtract_histograms(feature_idx,
                                  self.max_bins,
