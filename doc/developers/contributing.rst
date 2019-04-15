@@ -43,7 +43,7 @@ also welcome to post feature requests or pull requests.
 Governance
 ----------
 The decision making process and governance structure of scikit-learn is laid
-out in the `governance document <https://github.com/scikit-learn/scikit-learn/blob/master/doc/governance.rst>`_.
+out in the governance document :ref:`governance`.
 
 Ways to contribute
 ==================
@@ -61,18 +61,17 @@ investigating bugs, and :ref:`reviewing other developers' pull requests
 <code_review>` are very valuable contributions that decrease the burden on the
 project maintainers.
 
-
 Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star to say "I use it":
 
 In case a contribution/issue involves changes to the API principles
-or changes to dependencies or supported versions, a
-`SLEP <https://github.com/scikit-learn/scikit-learn/blob/master/doc/governance.rst#enhancement-proposals-sleps>`_,where a SLEP must be submitted as a pull-request to
+or changes to dependencies or supported versions, it must be backed by a
+:ref:`slep`, where a SLEP must be submitted as a pull-request to
 `enhancement_proposals <https://github.com/scikit-learn/enhancement_proposals/>`_
 using the `SLEP template <https://github.com/scikit-learn/enhancement_proposals/blob/master/slep_template.rst>`_
-and follows the decision-making process outlined in the `governance document <https://github.com/scikit-learn/scikit-learn/blob/master/doc/governance.rst>`_.
+and follows the decision-making process outlined in the governance document :ref:`governance`.
 
 .. raw:: html
 
