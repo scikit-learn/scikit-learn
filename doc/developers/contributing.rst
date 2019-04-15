@@ -69,8 +69,8 @@ link to it from your website, or simply star to say "I use it":
 In case a contribution/issue involves changes to the API principles
 or changes to dependencies or supported versions, it must be backed by a
 :ref:`slep`, where a SLEP must be submitted as a pull-request to
-`enhancement_proposals <https://github.com/scikit-learn/enhancement_proposals/>`_
-using the `SLEP template <https://github.com/scikit-learn/enhancement_proposals/blob/master/slep_template.rst>`_
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
 and follows the decision-making process outlined in the governance document :ref:`governance`.
 
 .. raw:: html
