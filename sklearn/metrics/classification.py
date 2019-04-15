@@ -2334,8 +2334,10 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         Sample weights.
 
     pos_label : int or str, default=None
-        Label of the positive class. If None, the maximum label is used as
-        positive class
+        Label of the positive class.
+        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
+        ``pos_label`` is set to 1,
+        otherwise ``pos_label`` is set to the greater label.
 
     Returns
     -------
