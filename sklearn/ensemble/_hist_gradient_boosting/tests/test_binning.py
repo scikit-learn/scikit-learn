@@ -75,7 +75,8 @@ def test_find_binning_thresholds_low_n_bins():
 
 
 def test_find_binning_thresholds_invalid_n_bins():
-    with pytest.raises(ValueError):
+    err_msg = 'no smaller than 2 and no larger than 256'
+    with pytest.raises(ValueError, match=err_msg):
         _find_binning_thresholds(DATA, max_bins=1024)
 
 
