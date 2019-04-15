@@ -1856,5 +1856,5 @@ def test_decision_tree_memmap():
     X = np.random.RandomState(0).random_sample((10, 2)).astype(np.float32)
     y = np.zeros(10)
 
-    with TempMemmap(X) as X_read_only:
-        DecisionTreeClassifier().fit(X_read_only, y)
+    with TempMemmap((X, y)) as (X_read_only, y_read_only):
+        DecisionTreeClassifier().fit(X_read_only, y_read_only)
