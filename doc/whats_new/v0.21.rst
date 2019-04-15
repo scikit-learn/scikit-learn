@@ -395,7 +395,8 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Enhancement| Added `beta` parameter to
   :func:`metrics.cluster.supervised.homogeneity_completeness_v_measure` and
-  :func:`metrics.cluster.supervised.v_measure_score` to configure the tradeoff between homogeneity and completeness.
+  :func:`metrics.cluster.supervised.v_measure_score` to configure the
+  tradeoff between homogeneity and completeness.
   :issue:`13607` by :user:`Stephane Couvreur <scouvreur>` and
   and :user:`Ivan Sanchez <ivsanro1>`.
 
