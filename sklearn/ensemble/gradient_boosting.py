@@ -1236,7 +1236,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
                 presort=self.presort,
-                increasing=self.increasing, 
+                increasing=self.increasing,
                 decreasing=self.decreasing)
 
             if self.subsample < 1.0:
@@ -2038,7 +2038,7 @@ shape (n_estimators, ``loss_.K``)
                  max_leaf_nodes=None, warm_start=False,
                  presort='auto', validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, increasing=None,
-                decreasing=None):
+                 decreasing=None):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -2053,7 +2053,7 @@ shape (n_estimators, ``loss_.K``)
             min_impurity_split=min_impurity_split,
             warm_start=warm_start, presort=presort,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol,increasing=increasing,
+            n_iter_no_change=n_iter_no_change, tol=tol, increasing=increasing,
             decreasing=decreasing)
 
     def _validate_y(self, y, sample_weight):

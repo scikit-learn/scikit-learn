@@ -354,29 +354,40 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
         def _encode_monotonic(increasing, decreasing):
-            if increasing is None: increasing = []
-            if decreasing is None: decreasing = []
-            def is_int_in_range(feature):
-                return isinstance(feature, int) and 0 <= feature < self.n_features_
+            increasing = [] if increasing is None else increasing
+            decreasing = [] if decreasing is None else decreasing
+
+            def is_int_in_range(feature_):
+                return isinstance(feature_, int) and \
+                       0 <= feature_ < self.n_features_
+
             def is_valid(features):
                 return (isinstance(features, list) and
                         all(is_int_in_range(feature) for feature in features))
+
             if not is_valid(increasing):
-                raise ValueError("increasing should be a list of ints in the range [0,n_features].")
+                raise ValueError("increasing should be a list of ints in "
+                                 "the range [0,n_features].")
+
             if not is_valid(decreasing):
-                raise ValueError("decreasing should be a list of ints in the range [0,n_features].")       
+                raise ValueError("decreasing should be a list of ints in "
+                                 "the range [0,n_features].")
+
             if increasing and decreasing:
                 intersection = set(increasing) & set(decreasing)
                 if intersection:
-                    raise ValueError("The following features cannot be both increasing and decreasing: " + str(list(intersection)))            
-            monotonic = np.zeros(self.n_features_, dtype=np.int32)
+                    raise ValueError("The following features cannot be both "
+                                     "increasing and decreasing: "
+                                     + str(list(intersection)))
+
+            monotonic_ = np.zeros(self.n_features_, dtype=np.int32)
             if increasing:
                 for feature in increasing:
-                    monotonic[feature] = 1
+                    monotonic_[feature] = 1
             if decreasing:
                 for feature in decreasing:
-                    monotonic[feature] = -1
-            return monotonic
+                    monotonic_[feature] = -1
+            return monotonic_
         
         monotonic = _encode_monotonic(self.increasing, self.decreasing)
         
