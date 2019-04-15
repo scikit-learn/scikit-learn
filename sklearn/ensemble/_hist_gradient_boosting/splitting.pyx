@@ -63,10 +63,9 @@ class SplitInfo:
     n_samples_right : int
         The number of samples in the right child
     """
-    def __init__(self, gain=-1., feature_idx=0, bin_idx=0,
-                 sum_gradient_left=0., sum_hessian_left=0.,
-                 sum_gradient_right=0., sum_hessian_right=0.,
-                 n_samples_left=0, n_samples_right=0):
+    def __init__(self, gain, feature_idx, bin_idx, sum_gradient_left,
+                 sum_hessian_left, sum_gradient_right, sum_hessian_right,
+                 n_samples_left, n_samples_right):
         self.gain = gain
         self.feature_idx = feature_idx
         self.bin_idx = bin_idx
