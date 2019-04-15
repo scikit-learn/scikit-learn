@@ -29,6 +29,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
+from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils.testing import (assert_equal, assert_not_equal,
                                    assert_almost_equal, assert_in,
                                    assert_less, assert_greater,
@@ -1211,3 +1212,26 @@ def test_callable_analyzer_vs_file_input(Estimator):
                        match="'str' object has no attribute 'read'"):
         Estimator(analyzer=lambda x: x.split(),
                   input='file').fit_transform(data)
+
+    # check if the ChangedBehaviorWarning is raised if the given analyzer
+    # expects a file or a file name.
+    def analyzer1(doc):
+        with open(doc, 'r'):
+            pass
+
+    def analyzer2(doc):
+        with _ in doc.read():
+            pass
+
+    print(Estimator)
+    for analyzer in [analyzer1, analyzer2]:
+        for input_type in ['file', 'filename']:
+            print(input_type)
+            print(analyzer)
+            try:
+                with pytest.warns(ChangedBehaviorWarning,
+                                  match="Since v0.21, vectorizer"):
+                    Estimator(analyzer=analyzer,
+                              input=input_type).fit_transform(data)
+            except Exception:
+                pass
