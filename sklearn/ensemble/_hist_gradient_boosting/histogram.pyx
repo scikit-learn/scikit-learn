@@ -111,7 +111,7 @@ cdef class HistogramBuilder:
 
         Parameters
         ----------
-        sample_indices : array of int
+        sample_indices : array of int, shape (n_samples_at_node,)
             The indices of the samples at the node to split.
 
         Returns
