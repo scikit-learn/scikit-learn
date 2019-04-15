@@ -833,7 +833,7 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the NMI is null::
 
-      >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])i
+      >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
       ... # doctest: +SKIP
       0.0
 
