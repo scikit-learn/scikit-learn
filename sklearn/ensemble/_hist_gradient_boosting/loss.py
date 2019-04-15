@@ -44,11 +44,11 @@ class BaseLoss(ABC):
         Returns
         -------
         gradients : ndarray, shape (prediction_dim, n_samples)
-            The initial gradients. Note that the array as not been zero-initialized.
+            The initial gradients. The array is not initialized.
         hessians : ndarray, shape (prediction_dim, n_samples)
             If hessians are constant (e.g. for `LeastSquares` loss, the
-            array is initialized to ``1``. Otherwise, the array is allocated without
-            being zero-initialized.
+            array is initialized to ``1``. Otherwise, the array is allocated
+            without being initialized.
         """
         shape = (prediction_dim, n_samples)
         gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
