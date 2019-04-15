@@ -1216,18 +1216,13 @@ def test_callable_analyzer_vs_file_input(Estimator):
     # check if the ChangedBehaviorWarning is raised if the given analyzer
     # expects a file or a file name.
     def analyzer1(doc):
-        with open(doc, 'r'):
-            pass
+        open(doc, 'r')
 
     def analyzer2(doc):
-        for x in doc.read():
-            return
+        doc.read()
 
-    print(Estimator)
     for analyzer in [analyzer1, analyzer2]:
         for input_type in ['file', 'filename']:
-            print(input_type)
-            print(analyzer)
             try:
                 with pytest.warns(ChangedBehaviorWarning,
                                   match="Since v0.21, vectorizer"):
@@ -1235,3 +1230,10 @@ def test_callable_analyzer_vs_file_input(Estimator):
                               input=input_type).fit_transform(data)
             except Exception:
                 pass
+
+    # check if a custom exception from the analyzer is shown to the user
+    def analyzer3(doc):
+        raise Exception("testing")
+
+    with pytest.raises(Exception, match="testing"):
+        Estimator(analyzer=analyzer3).fit_transform(data)

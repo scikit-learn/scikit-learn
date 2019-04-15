@@ -324,7 +324,6 @@ class VectorizerMixin:
         except FileNotFoundError:
             warnings.warn(msg, ChangedBehaviorWarning)
         except AttributeError as e:
-            print(str(e))
             if str(e) == "'str' object has no attribute 'read'":
                 warnings.warn(msg, ChangedBehaviorWarning)
         except Exception:
@@ -332,8 +331,8 @@ class VectorizerMixin:
 
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
+        self._validate_analyzer()
         if callable(self.analyzer):
-            self._validate_analyzer()
             return lambda doc: self.analyzer(self.decode(doc))
 
         preprocess = self.build_preprocessor()
