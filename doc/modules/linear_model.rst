@@ -645,9 +645,10 @@ Bayesian Ridge Regression is used for regression::
     >>> Y = [0., 1., 2., 3.]
     >>> reg = linear_model.BayesianRidge()
     >>> reg.fit(X, Y)  # doctest: +NORMALIZE_WHITESPACE
-    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, compute_score=False, copy_X=True,
-           fit_intercept=True, lambda_1=1e-06, lambda_2=1e-06, n_iter=300,
-           normalize=False, tol=0.001, verbose=False)
+    BayesianRidge(alpha_1=1e-06, alpha_2=1e-06, alpha_init=None,
+                  compute_score=False, copy_X=True, fit_intercept=True,
+                  lambda_1=1e-06, lambda_2=1e-06, lambda_init=None, n_iter=300,
+                  normalize=False, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
