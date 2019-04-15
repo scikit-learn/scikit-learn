@@ -42,6 +42,15 @@ class deprecated:
         """
         if isinstance(obj, type):
             return self._decorate_class(obj)
+        elif isinstance(obj, property):
+            # Note that this is only triggered properly if the `property`
+            # decorator comes before the `deprecated` decorator, like so:
+            #
+            # @deprecated(msg)
+            # @property
+            # def deprecated_attribute_(self):
+            #     ...
+            return self._decorate_property(obj)
         else:
             return self._decorate_fun(obj)
 
@@ -80,6 +89,16 @@ class deprecated:
         # Add a reference to the wrapped function so that we can introspect
         # on function arguments in Python 2 (already works in Python 3)
         wrapped.__wrapped__ = fun
+
+        return wrapped
+
+    def _decorate_property(self, prop):
+        msg = self.extra
+
+        @property
+        def wrapped(*args, **kwargs):
+            warnings.warn(msg, category=DeprecationWarning)
+            return prop.fget(*args, **kwargs)
 
         return wrapped
 

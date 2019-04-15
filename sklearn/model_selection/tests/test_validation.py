@@ -189,7 +189,7 @@ class MockClassifier:
             raise ValueError('X cannot be d')
         if sample_weight is not None:
             assert sample_weight.shape[0] == X.shape[0], (
-                'MockClassifier extra fit_param ' 
+                'MockClassifier extra fit_param '
                 'sample_weight.shape[0] is {0}, should be {1}'
                 .format(sample_weight.shape[0], X.shape[0]))
         if class_prior is not None:

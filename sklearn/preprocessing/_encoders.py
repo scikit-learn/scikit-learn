@@ -328,23 +328,23 @@ class OneHotEncoder(_BaseEncoder):
 
     # Deprecated attributes
 
-    @property
     @deprecated("The ``active_features_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
+    @property
     def active_features_(self):
         check_is_fitted(self, 'categories_')
         return self._active_features_
 
-    @property
     @deprecated("The ``feature_indices_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
+    @property
     def feature_indices_(self):
         check_is_fitted(self, 'categories_')
         return self._feature_indices_
 
-    @property
     @deprecated("The ``n_values_`` attribute was deprecated in version "
                 "0.20 and will be removed 0.22.")
+    @property
     def n_values_(self):
         check_is_fitted(self, 'categories_')
         return self._n_values_

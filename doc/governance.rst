@@ -25,7 +25,7 @@ Contributors
 ------------
 Contributors are community members who contribute in concrete ways to the
 project. Anyone can become a contributor, and contributions can take many forms
-– not only code – as detailed in the `contributors guide <contributing>`_.
+– not only code – as detailed in the :ref:`contributors guide <contributing>`.
 
 Core developers
 ---------------

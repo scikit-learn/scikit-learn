@@ -871,12 +871,14 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
         return zero_one_loss(y_true, y_pred, normalize)
 
 If an attribute is to be deprecated,
-use the decorator ``deprecated`` on a property.
+use the decorator ``deprecated`` on a property. Please note that the
+``property`` decorator should be placed before the ``deprecated``
+decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
-    @property
     @deprecated("Attribute labels_ was deprecated in version 0.13 and "
                 "will be removed in 0.15. Use 'classes_' instead")
+    @property
     def labels_(self):
         return self.classes_
 
