@@ -676,6 +676,7 @@ General Concepts
         See https://scikit-learn-contrib.github.io.
 
     scikit-learn enhancement proposals
+    SLEP
     SLEPs
         Changes to the API principles and changes to dependencies or supported
         versions happen via a `SLEP <governance/#enhancement-proposals-sleps>`_ and follows the
