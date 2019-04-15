@@ -141,6 +141,7 @@ def test_baseline_least_squares():
     y_train = rng.normal(size=100)
     baseline_prediction = loss.get_baseline_prediction(y_train, 1)
     assert baseline_prediction.shape == tuple()  # scalar
+    assert baseline_prediction.dtype == y_train.dtype
     # Make sure baseline prediction is the mean of all targets
     assert_almost_equal(baseline_prediction, y_train.mean())
 
@@ -150,7 +151,7 @@ def test_baseline_binary_crossentropy():
 
     loss = _LOSSES['binary_crossentropy']()
     for y_train in (np.zeros(shape=100), np.ones(shape=100)):
-        y_train = y_train.astype(np.float32)
+        y_train = y_train.astype(np.float64)
         baseline_prediction = loss.get_baseline_prediction(y_train, 1)
         assert_all_finite(baseline_prediction)
         assert_almost_equal(loss.inverse_link_function(baseline_prediction),
@@ -161,9 +162,10 @@ def test_baseline_binary_crossentropy():
     # and by definition
     # p = inverse_link_function(raw_prediction) = sigmoid(raw_prediction)
     # So we want raw_prediction = link_function(p) = log(p / (1 - p))
-    y_train = rng.randint(0, 2, size=100).astype(np.float32)
+    y_train = rng.randint(0, 2, size=100).astype(np.float64)
     baseline_prediction = loss.get_baseline_prediction(y_train, 1)
     assert baseline_prediction.shape == tuple()  # scalar
+    assert baseline_prediction.dtype == y_train.dtype
     p = y_train.mean()
     assert_almost_equal(baseline_prediction, np.log(p / (1 - p)))
 
@@ -174,9 +176,10 @@ def test_baseline_categorical_crossentropy():
     prediction_dim = 4
     loss = _LOSSES['categorical_crossentropy']()
     for y_train in (np.zeros(shape=100), np.ones(shape=100)):
-        y_train = y_train.astype(np.float32)
+        y_train = y_train.astype(np.float64)
         baseline_prediction = loss.get_baseline_prediction(y_train,
                                                            prediction_dim)
+        assert baseline_prediction.dtype == y_train.dtype
         assert_all_finite(baseline_prediction)
 
     # Same logic as for above test. Here inverse_link_function = softmax and
