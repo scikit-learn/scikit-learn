@@ -337,7 +337,7 @@ cdef class Splitter:
         sum_gradients : float
             The sum of the gradients for each sample at the node
         sum_hessians : float
-            The sum of the hessians for each sample at the node
+            The sum of the hessians for each sample at the node.
 
         Returns
         -------
