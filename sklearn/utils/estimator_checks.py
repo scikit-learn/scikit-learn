@@ -396,6 +396,10 @@ def set_checking_parameters(estimator):
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
 
+    if name in ('HistGradientBoostingClassifier',
+                'HistGradientBoostingRegressor'):
+        estimator.set_params(min_samples_leaf=5)
+
 
 class NotAnArray:
     """An object that is convertible to an array
