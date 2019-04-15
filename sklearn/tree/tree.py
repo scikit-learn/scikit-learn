@@ -388,7 +388,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
                 for feature in decreasing:
                     monotonic_[feature] = -1
             return monotonic_
-        
+
         monotonic = _encode_monotonic(self.increasing, self.decreasing)
         
         splitter = self.splitter
