@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 from sklearn.datasets import make_classification, make_regression
-from sklearn.utils.estimator_checks import check_estimator
 
 from sklearn.experimental import HistGradientBoostingClassifier
 from sklearn.experimental import HistGradientBoostingRegressor
@@ -183,14 +182,3 @@ def test_should_stop():
     assert should_stop([1] * 6, n_iter_no_change=5, tol=0.)
     assert should_stop([1] * 6, n_iter_no_change=5, tol=0.001)
     assert should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5, tol=5)
-
-
-@pytest.mark.parametrize('Estimator', (
-    HistGradientBoostingRegressor(),
-    HistGradientBoostingClassifier(),
-    ))
-def test_estimator_checks(Estimator):
-    # Run the check_estimator() test suite on GBRegressor and GBClassifier.
-    # Just here for convenience, must be removed before merging since these
-    # tests are run in test_common anyways
-    check_estimator(Estimator)
