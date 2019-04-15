@@ -80,6 +80,13 @@ def test_find_binning_thresholds_invalid_n_bins():
         _find_binning_thresholds(DATA, max_bins=1024)
 
 
+def test_bin_mapper_n_features_transform():
+    mapper = _BinMapper(max_bins=42, random_state=42).fit(DATA)
+    err_msg = 'This estimator was fitted with 2 features but 4 got passed'
+    with pytest.raises(ValueError, match=err_msg):
+        mapper.transform(np.repeat(DATA, 2, axis=1))
+
+
 @pytest.mark.parametrize('n_bins', [16, 128, 256])
 def test_map_to_bins(n_bins):
     bin_thresholds = _find_binning_thresholds(DATA, max_bins=n_bins,
