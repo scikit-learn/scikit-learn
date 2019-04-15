@@ -90,6 +90,10 @@ Support for Python 3.4 and below has been officially dropped.
   ``n_connected_components_``.
   :issue:`13427` by :user:`Stephane Couvreur <scouvreur>`.
 
+- |Fix| Fixed a bug in :class:`KMeans` where empty clusters weren't correctly
+  relocated when using sample weights. :issue:`13486`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -190,6 +194,20 @@ Support for Python 3.4 and below has been officially dropped.
   prediction step, thus capping the memory usage. :issue:`13283` by
   `Nicolas Goix`_.
 
+- |Fix| The values of ``feature_importances_`` in all random forest based
+  models (i.e.
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`, and
+  :class:`ensemble.RandomTreesEmbedding`) now:
+
+  - sum up to ``1``
+  - all the single node trees in feature importance calculation are ignored
+  - in case all trees have only one single node (i.e. a root node),
+    feature importances will be an array of all zeros.
+  :issue:`13636` by `Adrin Jalali`_.
+
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor`, which didn't support
   scikit-learn estimators as the initial estimator. Also added support of
@@ -229,6 +247,12 @@ Support for Python 3.4 and below has been officially dropped.
   account for the partial dependence computation when the
   gradient boosting model has been trained with sample weights.
   :issue:`13193` by :user:`Samuel O. Ronsin <samronsin>`.
+
+- |Feature| Add :class:`ensemble.VotingRegressor`
+  which provides an equivalent of :class:`ensemble.VotingClassifier`
+  for regression problems.
+  :issue:`12513` by :user:`Ramil Nugmanov <stsouko>` and
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
 :mod:`sklearn.externals`
 ........................
