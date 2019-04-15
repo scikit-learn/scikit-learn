@@ -313,7 +313,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             n_total_leaves = sum(
                 predictor.get_n_leaf_nodes()
                 for predictors_at_ith_iteration in self._predictors
-                for predictor in predictors_at_ith_iteration)
+                for predictor in predictors_at_ith_iteration
+            )
             n_predictors = sum(
                 len(predictors_at_ith_iteration)
                 for predictors_at_ith_iteration in self._predictors)
