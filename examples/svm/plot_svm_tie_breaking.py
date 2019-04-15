@@ -24,7 +24,7 @@ from sklearn.datasets import make_blobs
 
 X, y = make_blobs(random_state=27)
 
-fig, sub = plt.subplots(1, 2)
+fig, sub = plt.subplots(2, 1, figsize=(5, 8))
 titles = ("break_ties = False",
           "break_ties = True")
 
