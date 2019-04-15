@@ -1,6 +1,3 @@
-import matplotlib.pyplot as plt
-from sklearn.linear_model import BayesianRidge
-import numpy as np
 """
 ============================================
 Curve Fitting with Bayesian Ridge Regression
@@ -27,14 +24,17 @@ It can be concluded that the model with larger evidence are more likely.
 """
 print(__doc__)
 
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.linear_model import BayesianRidge
+
+
+def func(x): return np.sin(2*np.pi*x)
+
 
 # #############################################################################
 # Generate sinusoidal data with noise
-
-def func(x):
-    return np.sin(2*np.pi*x)
-
-
 size = 25
 np.random.seed(1234)
 xtrain = np.random.uniform(0., 1., size)
