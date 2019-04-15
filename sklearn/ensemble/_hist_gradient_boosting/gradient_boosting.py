@@ -584,7 +584,7 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     >>> X, y = load_boston(return_X_y=True)
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
-    0.99...
+    0.98...
     """
 
     _VALID_LOSSES = ('least_squares',)

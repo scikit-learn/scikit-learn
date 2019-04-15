@@ -105,13 +105,16 @@ def test_early_stopping_regression(scoring, validation_fraction,
 
     X, y = make_regression(random_state=0)
 
-    gb = HistGradientBoostingRegressor(verbose=1,  # just for coverage
-                                       scoring=scoring,
-                                       tol=tol,
-                                       validation_fraction=validation_fraction,
-                                       max_iter=max_iter,
-                                       n_iter_no_change=n_iter_no_change,
-                                       random_state=0)
+    gb = HistGradientBoostingRegressor(
+        verbose=1,  # just for coverage
+        min_samples_leaf=5,  # easier to overfit fast
+        scoring=scoring,
+        tol=tol,
+        validation_fraction=validation_fraction,
+        max_iter=max_iter,
+        n_iter_no_change=n_iter_no_change,
+        random_state=0
+    )
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
@@ -143,12 +146,14 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
 
     gb = HistGradientBoostingClassifier(
         verbose=1,  # just for coverage
+        min_samples_leaf=5,  # easier to overfit fast
         scoring=scoring,
         tol=tol,
         validation_fraction=validation_fraction,
         max_iter=max_iter,
         n_iter_no_change=n_iter_no_change,
-        random_state=0)
+        random_state=0
+    )
     gb.fit(X, y)
 
     if n_iter_no_change is not None:
