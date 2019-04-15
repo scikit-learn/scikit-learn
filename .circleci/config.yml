@@ -74,7 +74,7 @@ jobs:
 
   pypy3:
     docker:
-      - image: pypy:3-6.0.0
+      - image: pypy:3-7.0.0
     steps:
       - restore_cache:
           keys:

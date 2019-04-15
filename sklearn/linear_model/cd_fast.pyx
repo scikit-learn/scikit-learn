@@ -6,7 +6,7 @@
 #
 # License: BSD 3 clause
 #
-# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs
 cimport numpy as np
