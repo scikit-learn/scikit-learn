@@ -1279,7 +1279,7 @@ Their harmonic mean called **V-measure** is computed by
 
 This function's formula is as follows:::
 
-.. math:: \text{v} = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
+.. math:: v = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
 
 `beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
 
