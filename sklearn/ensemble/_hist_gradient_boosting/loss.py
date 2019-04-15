@@ -128,7 +128,7 @@ class LeastSquares(BaseLoss):
         return loss.mean() if average else loss
 
     def get_baseline_prediction(self, y_train, prediction_dim):
-        return np.mean(y_train).astype(Y_DTYPE, copy=False)
+        return np.mean(y_train)
 
     @staticmethod
     def inverse_link_function(raw_predictions):
