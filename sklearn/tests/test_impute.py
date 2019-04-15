@@ -1166,6 +1166,8 @@ def test_imputers_add_indicator(marker, imputer_constructor):
                                   add_indicator=True)
 
     X_trans = imputer.fit(X).transform(X)
+    # The test is for testing the indicator,
+    # that's why we're looking at the last 4 columns only.
     assert_allclose(X_trans[:, -4:], X_true_indicator)
     assert_array_equal(imputer.indicator_.features_, np.array([0, 1, 2, 3]))
 
