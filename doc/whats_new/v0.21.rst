@@ -397,6 +397,10 @@ Support for Python 3.4 and below has been officially dropped.
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
   :issue:`12855` by :user:`Pawel Sendyk <psendyk>`.
 
+- |Fix| Fixed a bug where :func:`metrics.brier_score_loss` will sometimes
+  return incorrect result when there's only one class in ``y_true``.
+  :issue:`13628` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and :user:`Sandra
