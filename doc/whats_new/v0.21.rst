@@ -400,7 +400,7 @@ Support for Python 3.4 and below has been officially dropped.
   1 completeness is weighted more strongly in the calculation, if `beta` is less
   than 1, homogeneity is weighted more strongly.
   :issue:`13607` by :user:`Stephane Couvreur <scouvreur>` and
-  and `Ivan Ro <ivsanro1>`.
+  and :user:`Ivan Sanchez <ivsanro1>`.
 
 - |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
