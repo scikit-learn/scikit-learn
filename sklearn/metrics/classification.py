@@ -2335,9 +2335,8 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
     pos_label : int or str, default=None
         Label of the positive class.
-        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
-        ``pos_label`` is set to 1,
-        otherwise ``pos_label`` is set to the greater label.
+        Defaults to the greater label unless y_true is all 0 or all -1
+        in which case pos_label defaults to 1.
 
     Returns
     -------
@@ -2381,19 +2380,16 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     if y_prob.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
 
+    # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
+    # pos_labe is set to 1 (consistent with precision_recall_curve/roc_curve),
+    # otherwise pos_label is set to the greater label
+    # (different from precision_recall_curve/roc_curve,
+    # the purpose is to keep backward compatibility).
     if pos_label is None:
-        if (np.array_equal(labels, [0, 1]) or
-                np.array_equal(labels, [-1, 1]) or
-                np.array_equal(labels, [0]) or
-                np.array_equal(labels, [-1]) or
-                np.array_equal(labels, [1])):
-            # this is the same as the definition of pos_label=None
-            # in roc_curve and precision_recall_curve
+        if (np.array_equal(labels, [0]) or
+                np.array_equal(labels, [-1])):
             pos_label = 1
         else:
-            # this is different from the definition of pos_label=None
-            # in roc_curve and precision_recall_curve
-            # the purpose is to keep backward compatibility
             pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
