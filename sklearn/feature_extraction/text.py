@@ -309,9 +309,6 @@ class VectorizerMixin:
         # This is to check if the given custom analyzer expects file or a
         # filename instead of data.
         # Behavior changed in v0.21, function could be removed in v0.24
-        if not callable(self.analyzer):
-            return
-
         import tempfile
         with tempfile.NamedTemporaryFile() as f:
             fname = f.name
@@ -331,8 +328,9 @@ class VectorizerMixin:
 
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
-        self._validate_analyzer()
         if callable(self.analyzer):
+            if self.input in ['file', 'filename']:
+                self._validate_analyzer()
             return lambda doc: self.analyzer(self.decode(doc))
 
         preprocess = self.build_preprocessor()
