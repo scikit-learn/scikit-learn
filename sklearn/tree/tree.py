@@ -390,7 +390,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
             return monotonic_
 
         monotonic = _encode_monotonic(self.increasing, self.decreasing)
-        
+
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](criterion,
