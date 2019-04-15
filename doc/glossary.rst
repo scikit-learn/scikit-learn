@@ -810,7 +810,16 @@ Class APIs and Estimator Types
         * :term:`predict` if :term:`inductive`
 
     density estimator
-        TODO
+        A :term:'unsupervised' :term:'estimator' estimating density of dataset inputs without 
+        labeled response
+        Most commonly used techniques are `Histogram <https://scikit-learn.org/stable/modules/density.html>`_, 
+        `Gaussian Mixtures <https://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html#sklearn.mixture.GaussianMixture>`_, 
+        and `kernel density estimate <https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KernelDensity.html#sklearn.neighbors.KernelDensity>`_
+        * Histogram- visually represent density of specific bins
+        * Gaussian Mixtures are discussed in `Clustering <https://scikit-learn.org/stable/modules/clustering.html#clustering>`_ 
+        * Kernel density estimate have multiple forms to represent density 
+          based on bandwidth 
+        It can also perform on multi-dimension graph
 
     estimator
     estimators
