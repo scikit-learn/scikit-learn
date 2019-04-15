@@ -34,7 +34,7 @@ class BaseLoss(ABC):
         Parameters
         ----------
         n_samples : int
-            The number of samples passed to `fit()`
+            The number of samples passed to `fit()`.
         prediction_dim : int
             The dimension of a raw prediction, i.e. the number of trees
             built at each iteration. Equals 1 for regression and binary
@@ -43,10 +43,12 @@ class BaseLoss(ABC):
 
         Returns
         -------
-        gradients : array-like, shape=(prediction_dim, n_samples)
-        hessians : array-like, shape=(prediction_dim, n_samples).
+        gradients : ndarray, shape (prediction_dim, n_samples)
+            The initial gradients. Note that the array as not been zero-initialized.
+        hessians : ndarray, shape (prediction_dim, n_samples)
             If hessians are constant (e.g. for `LeastSquares` loss, the
-            array is initialized to ``1``.
+            array is initialized to ``1``. Otherwise, the array is allocated without
+            being zero-initialized.
         """
         shape = (prediction_dim, n_samples)
         gradients = np.empty(shape=shape, dtype=G_H_DTYPE)
@@ -66,7 +68,7 @@ class BaseLoss(ABC):
 
         Parameters
         ----------
-        y_train : array-like, shape=(n_samples,)
+        y_train : ndarray, shape (n_samples,)
             The target training values.
         prediction_dim : int
             The dimension of one prediction: 1 for binary classification and
@@ -74,7 +76,7 @@ class BaseLoss(ABC):
 
         Returns
         -------
-        baseline_prediction: float or array of shape (1, prediction_dim)
+        baseline_prediction : float or ndarray, shape (1, prediction_dim)
             The baseline prediction.
         """
         pass
@@ -90,14 +92,14 @@ class BaseLoss(ABC):
 
         Parameters
         ----------
-        gradients : array-like, shape=(prediction_dim, n_samples)
+        gradients : ndarray, shape (prediction_dim, n_samples)
             The gradients (treated as OUT array).
-        hessians : array-like, shape=(prediction_dim, n_samples) or \
+        hessians : ndarray, shape (prediction_dim, n_samples) or \
             (1,)
             The hessians (treated as OUT array).
-        y_true : array-like, shape=(n_samples,)
+        y_true : ndarray, shape (n_samples,)
             The true target values or each training sample.
-        raw_predictions : array-like, shape=(prediction_dim, n_samples)
+        raw_predictions : ndarray, shape (prediction_dim, n_samples)
             The raw_predictions (i.e. values from the trees) of the tree
             ensemble at iteration ``i - 1``.
         """
@@ -126,7 +128,7 @@ class LeastSquares(BaseLoss):
         return loss.mean() if average else loss
 
     def get_baseline_prediction(self, y_train, prediction_dim):
-        return np.mean(y_train).astype(Y_DTYPE)
+        return np.mean(y_train).astype(Y_DTYPE, copy=False)
 
     @staticmethod
     def inverse_link_function(raw_predictions):

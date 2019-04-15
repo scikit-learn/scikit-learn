@@ -45,23 +45,23 @@ class SplitInfo:
     Parameters
     ----------
     gain : float
-        The gain of the split
+        The gain of the split.
     feature_idx : int
-        The index of the feature to be split
+        The index of the feature to be split.
     bin_idx : int
-        The index of the bin on which the split is made
+        The index of the bin on which the split is made.
     sum_gradient_left : float
-        The sum of the gradients of all the samples in the left child
+        The sum of the gradients of all the samples in the left child.
     sum_hessian_left : float
-        The sum of the hessians of all the samples in the left child
+        The sum of the hessians of all the samples in the left child.
     sum_gradient_right : float
-        The sum of the gradients of all the samples in the right child
+        The sum of the gradients of all the samples in the right child.
     sum_hessian_right : float
-        The sum of the hessians of all the samples in the right child
-    n_samples_left : int
-        The number of samples in the left child
+        The sum of the hessians of all the samples in the right child.
+    n_samples_left : int, default=0
+        The number of samples in the left child.
     n_samples_right : int
-        The number of samples in the right child
+        The number of samples in the right child.
     """
     def __init__(self, gain=-1., feature_idx=0, bin_idx=0,
                  sum_gradient_left=0., sum_hessian_left=0.,
@@ -89,9 +89,9 @@ cdef class Splitter:
 
     Parameters
     ----------
-    X_binned : ndarray of int, shape(n_samples, n_features)
+    X_binned : ndarray of int, shape (n_samples, n_features)
         The binned input samples. Must be Fortran-aligned.
-    max_bins : int, optional (default=256)
+    max_bins : int
         The maximum number of bins. Used to define the shape of the
         histograms.
     actual_n_bins : ndarray, shape (n_features,)
@@ -99,16 +99,16 @@ cdef class Splitter:
         equal to max_bins.
     l2_regularization : float
         The L2 regularization parameter.
-    min_hessian_to_split : float
+    min_hessian_to_split : float, default=1e-3
         The minimum sum of hessians needed in each node. Splits that result in
         at least one child having a sum of hessians less than
         min_hessian_to_split are discarded.
-    min_samples_leaf : int
+    min_samples_leaf : int, default=20
         The minimum number of samples per leaf.
-    min_gain_to_split : float
+    min_gain_to_split : float, default=0.0
         The minimum gain needed to split a node. Splits with lower gain will
         be ignored.
-    hessians_are_constant: bool
+    hessians_are_constant: bool, default is False
         Whether hessians are constant.
     """
     cdef public:
@@ -172,7 +172,7 @@ cdef class Splitter:
         Parameters
         ----------
         split_info : SplitInfo
-            The SplitInfo of the node to split
+            The SplitInfo of the node to split.
         sample_indices : ndarray of unsigned int, shape (n_samples_at_node,)
             The indices of the samples at the node to split. This is a view
             on self.partition, and it is modified inplace by placing the
@@ -181,14 +181,14 @@ cdef class Splitter:
 
         Returns
         -------
-        left_indices : array of int
+        left_indices : ndarray of int, shape (n_left_samples,)
             The indices of the samples in the left child. This is a view on
             self.partition.
-        right_indices : array of int
+        right_indices : ndarray of int, shape (n_right_samples,)
             The indices of the samples in the right child. This is a view on
             self.partition.
         right_child_position : int
-            The position of the right child in ``sample_indices``
+            The position of the right child in ``sample_indices``.
         """
         # This is a multi-threaded implementation inspired by lightgbm. Here
         # is a quick break down. Let's suppose we want to split a node with 24
@@ -333,8 +333,8 @@ cdef class Splitter:
         ----------
         sample_indices : ndarray of unsigned int, shape (n_samples_at_node,)
             The indices of the samples at the node to split.
-        histograms : array of HISTOGRAM_DTYPE of \
-                shape(n_features, max_bins)
+        histograms : ndarray of HISTOGRAM_DTYPE of \
+                shape (n_features, max_bins)
             The histograms of the current node.
         sum_gradients : float
             The sum of the gradients for each sample at the node.
@@ -367,7 +367,7 @@ cdef class Splitter:
                     sum_gradients, sum_hessians)
                 split_infos[feature_idx] = split_info
 
-            # then compute best possible split among all feature
+            # then compute best possible split among all features
             best_feature_idx = self._find_best_feature_to_split_helper(
                 split_infos)
             split_info = split_infos[best_feature_idx]

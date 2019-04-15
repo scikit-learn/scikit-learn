@@ -31,7 +31,7 @@ class TreePredictor:
 
     Parameters
     ----------
-    nodes : list of PREDICTOR_RECORD_DTYPE.
+    nodes : list of PREDICTOR_RECORD_DTYPE
         The nodes of the tree.
     """
     def __init__(self, nodes):
@@ -50,12 +50,12 @@ class TreePredictor:
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : ndarray, shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        y : array, shape (n_samples,)
+        y : ndarray, shape (n_samples,)
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
@@ -67,12 +67,12 @@ class TreePredictor:
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
+        X : ndarray, shape (n_samples, n_features)
             The input samples.
 
         Returns
         -------
-        y : array, shape (n_samples,)
+        y : ndarray, shape (n_samples,)
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
