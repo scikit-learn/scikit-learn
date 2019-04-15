@@ -393,12 +393,9 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
 
-- |Enhancement| Use of `beta` parameter in
+- |Enhancement| Added `beta` parameter to
   :func:`metrics.cluster.supervised.homogeneity_completeness_v_measure` and
-  :func:`metrics.cluster.supervised.v_measure_score` is now enabled, allowing different
-  weight to be allocated to `homogeneity` or `completeness`.  If `beta` is greater than
-  1 completeness is weighted more strongly in the calculation, if `beta` is less
-  than 1, homogeneity is weighted more strongly.
+  :func:`metrics.cluster.supervised.v_measure_score` to configure the tradeoff between homogeneity and completeness.
   :issue:`13607` by :user:`Stephane Couvreur <scouvreur>` and
   and :user:`Ivan Sanchez <ivsanro1>`.
 
