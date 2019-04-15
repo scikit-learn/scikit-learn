@@ -98,9 +98,9 @@ make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
 # notation in the HTML documentation
 apt-get -yq update
 apt-get -yq remove texlive-binaries --purge
-apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
+apt-get -yq --no-install-suggests --no-install-recommends \
     install dvipng texlive-latex-base texlive-latex-extra \
-    texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
+    texlive-latex-recommended texlive-fonts-recommended \
     latexmk gsfonts build-essential
 
 # deactivate circleci virtualenv and setup a miniconda env instead
