@@ -64,9 +64,9 @@ Building Scikit-learn also requires
 .. note::
 
    It is possible to build scikit-learn without OpenMP support by setting the
-   ``SKLEARN_NO_OPENMP`` environment variable. This is not recommended since it
-   will force some estimators to run in sequential mode and their ``n_jobs``
-   parameter will be ignored.
+   ``SKLEARN_NO_OPENMP`` environment variable (before cythonization). This is
+   not recommended since it will force some estimators to run in sequential
+   mode and their ``n_jobs`` parameter will be ignored.
 
 
 Running tests requires
