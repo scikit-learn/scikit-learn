@@ -1220,8 +1220,8 @@ def test_callable_analyzer_vs_file_input(Estimator):
             pass
 
     def analyzer2(doc):
-        with _ in doc.read():
-            pass
+        for x in doc.read():
+            return
 
     print(Estimator)
     for analyzer in [analyzer1, analyzer2]:
