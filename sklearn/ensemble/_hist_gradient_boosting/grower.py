@@ -255,7 +255,7 @@ class TreeGrower:
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
 
-        if (self.max_leaf_nodes is not None and self.max_leaf_nodes == 1):
+        if self.max_leaf_nodes is not None and self.max_leaf_nodes == 1:
             self._finalize_leaf(self.root)
             return
         if self.root.n_samples < 2 * self.min_samples_leaf:
