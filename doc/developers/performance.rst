@@ -68,7 +68,7 @@ following:
      with the gold standard, easy to debug Python version.
 
   5. Once the code is optimized (not simple bottleneck spottable by
-     profiling), check whether it is possible to have **coarse graineds
+     profiling), check whether it is possible to have **coarse grained
      parallelism** that is amenable to **multi-processing** by using the
      ``joblib.Parallel`` class.
 
