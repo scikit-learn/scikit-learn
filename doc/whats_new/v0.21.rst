@@ -90,6 +90,10 @@ Support for Python 3.4 and below has been officially dropped.
   ``n_connected_components_``.
   :issue:`13427` by :user:`Stephane Couvreur <scouvreur>`.
 
+- |Fix| Fixed a bug in :class:`KMeans` where empty clusters weren't correctly
+  relocated when using sample weights. :issue:`13486`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -190,6 +194,22 @@ Support for Python 3.4 and below has been officially dropped.
   prediction step, thus capping the memory usage. :issue:`13283` by
   `Nicolas Goix`_.
 
+- |Fix| The values of ``feature_importances_`` in all random forest based
+  models (i.e.
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`,
+  :class:`ensemble.GradientBoostingClassifier`, and
+  :class:`ensemble.GradientBoostingRegressor`) now:
+
+  - sum up to ``1``
+  - all the single node trees in feature importance calculation are ignored
+  - in case all trees have only one single node (i.e. a root node),
+    feature importances will be an array of all zeros.
+  :issue:`13636` and :issue:`13620` by `Adrin Jalali`_.
+
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor`, which didn't support
   scikit-learn estimators as the initial estimator. Also added support of
@@ -214,13 +234,6 @@ Support for Python 3.4 and below has been officially dropped.
   the default initial prediction of a multiclass classifier would predict the
   classes priors instead of the log of the priors. :issue:`12983` by
   :user:`Nicolas Hug<NicolasHug>`.
-
-- |Fix| ``feature_importances_`` in
-  :class:`ensemble.GradientBoostingClassifier` and
-  :class:`ensemble.GradientBoostingRegressor` now ignores the single
-  node trees in feature importance calculation, and returns an
-  array of zeros if all trees have only one single node (i.e. the root node).
-  :issue:`13620` by `Adrin Jalali`_.
 
 - |Fix| Fixed a bug in :mod:`ensemble` where the ``predict`` method would
   error for multiclass multioutput forests models if any targets were strings.
