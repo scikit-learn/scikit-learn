@@ -30,18 +30,18 @@ def sparse_unique(arr):
 
     Parameters
     ----------
-    arr : CSR or CSC sparse matrix
+    arr : CSR or CSC or COO sparse matrix
 
     Returns
     -------
     out: ndarray
         Array containing the unique elements in the sparse matrix X.
     """
-    if isinstance(arr, sp.csr_matrix) or isinstance(arr, sp.csc_matrix):
+    if isinstance(arr, (sp.csr_matrix, sp.csc_matrix, sp.coo_matrix)):
         if np.asarray(arr.shape).prod() == arr.getnnz():
             # Degenerate case (should not happen): arr is sparse (of CSR or CSC
-            # type) but contains only nonzero values. In this case, 0 is not
-            # among the unique values of arr.
+            # or COO type) but contains only nonzero values. In this case, 0
+            # is not among the unique values of arr.
             return np.unique(arr.data)
         else:
             return np.insert(np.unique(arr.data), 0, 0)
@@ -412,8 +412,8 @@ def _sparse_min_or_max(X, axis, min_or_max):
 
 
 def _sparse_min_max(X, axis):
-        return (_sparse_min_or_max(X, axis, np.minimum),
-                _sparse_min_or_max(X, axis, np.maximum))
+    return (_sparse_min_or_max(X, axis, np.minimum),
+            _sparse_min_or_max(X, axis, np.maximum))
 
 
 def _sparse_nan_min_max(X, axis):
@@ -500,7 +500,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
         else:
             weights = np.repeat(sample_weight, np.diff(X.indptr))
             return np.bincount(X.indices, minlength=X.shape[1],
-                            weights=weights)
+                               weights=weights)
     else:
         raise ValueError('Unsupported axis: {0}'.format(axis))
 

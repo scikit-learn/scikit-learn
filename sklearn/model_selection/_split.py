@@ -645,19 +645,19 @@ class StratifiedKFold(_BaseKFold):
                                  "``(n_samples,)``. Got invalid shape "
                                  "{0}.".format(shape))
             else:
-                _y = y.toarray()
+                y = y.toarray()
         else:
-            _y = np.asarray(y)
-        type_of_target_y = type_of_target(_y)
+            y = np.asarray(y)
+        type_of_target_y = type_of_target(y)
         allowed_target_types = ('binary', 'multiclass')
         if type_of_target_y not in allowed_target_types:
             raise ValueError(
                 'Supported target types are: {}. Got {!r} instead.'.format(
                     allowed_target_types, type_of_target_y))
 
-        _y = column_or_1d(_y)
-        n_samples = _y.shape[0]
-        unique_y, y_inversed = np.unique(_y, return_inverse=True)
+        y = column_or_1d(y)
+        n_samples = y.shape[0]
+        unique_y, y_inversed = np.unique(y, return_inverse=True)
         y_counts = np.bincount(y_inversed)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
@@ -685,7 +685,7 @@ class StratifiedKFold(_BaseKFold):
         test_folds = np.zeros(n_samples, dtype=np.int)
         for test_fold_indices, per_cls_splits in enumerate(zip(*per_cls_cvs)):
             for cls, (_, test_split) in zip(unique_y, per_cls_splits):
-                cls_test_folds = test_folds[_y == cls]
+                cls_test_folds = test_folds[y == cls]
                 # the test split can be too big because we used
                 # KFold(...).split(X[:max(c, n_splits)]) when data is not 100%
                 # stratifiable for all the classes
@@ -693,7 +693,7 @@ class StratifiedKFold(_BaseKFold):
                 # If this is the case, let's trim it:
                 test_split = test_split[test_split < len(cls_test_folds)]
                 cls_test_folds[test_split] = test_fold_indices
-                test_folds[_y == cls] = cls_test_folds
+                test_folds[y == cls] = cls_test_folds
 
         return test_folds
 
@@ -1716,20 +1716,19 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                                  "``(n_samples,)``. Got invalid shape "
                                  "{0}.".format(shape))
             else:
-                _y = y.toarray()
+                y = y.toarray()
         else:
-            _y = y
-        _y = np.asarray(_y)
+            y = np.asarray(y)
         n_train, n_test = _validate_shuffle_split(
             n_samples, self.test_size, self.train_size,
             default_test_size=self._default_test_size)
 
-        if _y.ndim == 2:
+        if y.ndim == 2:
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
-            _y = np.array([' '.join(row.astype('str')) for row in _y])
+            y = np.array([' '.join(row.astype('str')) for row in y])
 
-        classes, y_indices = np.unique(_y, return_inverse=True)
+        classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
 
         class_counts = np.bincount(y_indices)

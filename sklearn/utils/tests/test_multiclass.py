@@ -62,8 +62,8 @@ EXAMPLES = {
         NotAnArray(np.array([[-3, 3], [3, -3]])),
     ],
     'multiclass': [
-        csr_matrix(np.array([1, 0, 0, 0, 2, 0], dtype=np.int8)).transpose(),
-        csr_matrix(np.array([1, 0, 0, 0, 2, 0, 0, 0, 3])).transpose(),
+        csr_matrix(np.array([[1], [0], [0], [0], [2], [0]], dtype=np.int8)),
+        csr_matrix(np.array([[1], [0], [0], [0], [2], [0], [0], [0], [3]])),
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
         np.array([1, 0, 2]),
         np.array([1, 0, 2], dtype=np.int8),

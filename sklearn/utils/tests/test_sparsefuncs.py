@@ -526,14 +526,18 @@ def test_inplace_normalize():
 
 
 def test_sparse_unique():
-    X_sparse = sp.csr_matrix(np.array([[1, 0, 0, 0],
-                                       [0, 1, 0, 0],
-                                       [0, 0, 0, 3],
-                                       [4, 0, 0, 0]], dtype=np.int8))
-    unique = sparse_unique(X_sparse)
-    assert_equal(unique, np.array([0, 1, 3, 4]))
+    _X = np.array([[1, 0, 0, 0],
+                   [0, 1, 0, 0],
+                   [0, 0, 0, 3],
+                   [4, 0, 0, 0]], dtype=np.int8)
+    Xr = sp.csr_matrix(_X)
+    Xc = sp.csc_matrix(_X)
+    Xo = sp.coo_matrix(_X)
+    assert_equal(sparse_unique(Xr), np.array([0, 1, 3, 4]))
+    assert_equal(sparse_unique(Xc), np.array([0, 1, 3, 4]))
+    assert_equal(sparse_unique(Xo), np.array([0, 1, 3, 4]))
 
-    # Degenerate case where one uses CSR/CSC matrices to store dense data
+    # Degenerate case where one uses CSR/CSC/COO matrices to store dense data
     X_notsparse = sp.csr_matrix(np.array([1, 1, 1, 2, 3]))
     unique2 = sparse_unique(X_notsparse)
     assert_array_equal(unique2, np.array([1, 2, 3]))
