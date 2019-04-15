@@ -685,8 +685,8 @@ General Concepts
         vote. Such proposal must be a consolidated document, in the form of a
         ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
         issue. A SLEP must be submitted as a pull-request to
-        `scikit-learn/enhancement_proposals <https://github.com/scikit-learn/enhancement_proposals/>` _ using the
-        `SLEP template <https://github.com/scikit-learn/enhancement_proposals/blob/master/slep_template.rst>`_.
+        `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_ using the
+        `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.
 
     semi-supervised
     semi-supervised learning
