@@ -260,6 +260,29 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
         assert len(grower.finalized_leaves) == 1
 
 
+@pytest.mark.parametrize('max_depth', [2, 3])
+def test_max_depth(max_depth):
+    # Make sure max_depth parameter works as expected
+    rng = np.random.RandomState(seed=0)
+
+    max_bins = 255
+    n_samples = 1000
+
+    # data = linear target, 3 features, 1 irrelevant.
+    X = rng.normal(size=(n_samples, 3))
+    y = X[:, 0] - X[:, 1]
+    mapper = _BinMapper(max_bins=max_bins)
+    X = mapper.fit_transform(X)
+
+    all_gradients = y.astype(G_H_DTYPE)
+    all_hessians = np.ones(shape=1, dtype=G_H_DTYPE)
+    grower = TreeGrower(X, all_gradients, all_hessians, max_depth=max_depth)
+    grower.grow()
+
+    depth = max(leaf.depth for leaf in grower.finalized_leaves)
+    assert depth == max_depth
+
+
 def test_init_parameters_validation():
 
     X_binned, all_gradients, all_hessians = _make_training_data()

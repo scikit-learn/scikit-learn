@@ -503,12 +503,12 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees.
     max_leaf_nodes : int or None, optional (default=31)
-        The maximum number of leaves for each tree. If None, there is no
-        maximum limit.
+        The maximum number of leaves for each tree. Must be strictly greater
+        than 1. If None, there is no maximum limit.
     max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
-        nodes to go from the root to the deepest leaf. Depth isn't constrained
-        by default.
+        nodes to go from the root to the deepest leaf. Must be strictly greater
+        than 1. Depth isn't constrained by default.
     min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf.
     l2_regularization : float, optional (default=0)
@@ -654,12 +654,12 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         maximum number of trees for binary classification. For multiclass
         classification, `n_classes` trees per iteration are built.
     max_leaf_nodes : int or None, optional (default=31)
-        The maximum number of leaves for each tree. If None, there is no
-        maximum limit.
+        The maximum number of leaves for each tree. Must be strictly greater
+        than 1. If None, there is no maximum limit.
     max_depth : int or None, optional (default=None)
         The maximum depth of each tree. The depth of a tree is the number of
-        nodes to go from the root to the deepest leaf. Depth isn't constrained
-        by default.
+        nodes to go from the root to the deepest leaf. Must be strictly greater
+        than 1. Depth isn't constrained by default.
     min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf.
     l2_regularization : float, optional (default=0)

@@ -105,8 +105,6 @@ class TreeNode:
         other_node : TreeNode
             The node to compare with.
         """
-        if self.split_info is None or other_node.split_info is None:
-            raise ValueError("Cannot compare nodes without split_info")
         return self.split_info.gain > other_node.split_info.gain
 
 
@@ -212,12 +210,12 @@ class TreeGrower:
             raise ValueError(
                 "X_binned should be passed as Fortran contiguous "
                 "array for maximum efficiency.")
-        if max_leaf_nodes is not None and max_leaf_nodes < 1:
+        if max_leaf_nodes is not None and max_leaf_nodes <= 1:
             raise ValueError('max_leaf_nodes={} should not be'
-                             ' smaller than 1'.format(max_leaf_nodes))
-        if max_depth is not None and max_depth < 1:
+                             ' smaller than 2'.format(max_leaf_nodes))
+        if max_depth is not None and max_depth <= 1:
             raise ValueError('max_depth={} should not be'
-                             ' smaller than 1'.format(max_depth))
+                             ' smaller than 2'.format(max_depth))
         if min_samples_leaf < 1:
             raise ValueError('min_samples_leaf={} should '
                              'not be smaller than 1'.format(min_samples_leaf))
@@ -255,9 +253,6 @@ class TreeGrower:
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
 
-        if self.max_leaf_nodes is not None and self.max_leaf_nodes == 1:
-            self._finalize_leaf(self.root)
-            return
         if self.root.n_samples < 2 * self.min_samples_leaf:
             # Do not even bother computing any splitting statistics.
             self._finalize_leaf(self.root)
@@ -298,9 +293,6 @@ class TreeGrower:
         right : TreeNode
             The resulting right child.
         """
-        if not self.splittable_nodes:
-            raise StopIteration("No more splittable nodes")
-
         # Consider the node with the highest loss reduction (a.k.a. gain)
         node = heappop(self.splittable_nodes)
 
