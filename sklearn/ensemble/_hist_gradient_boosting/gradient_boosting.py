@@ -138,15 +138,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_binned_train, X_binned_val, y_train, y_val = train_test_split(
                 X_binned, y, test_size=self.validation_fraction,
                 stratify=stratify, random_state=rng)
-            if X_binned_train.size == 0 or X_binned_val.size == 0:
-                raise ValueError(
-                    'Not enough data (n_samples={}) to '
-                    'perform early stopping with validation_fraction='
-                    '{}. Use more training data or '
-                    'adjust validation_fraction.'.format(
-                        X_binned.shape[0],
-                        self.validation_fraction)
-                )
+
             # Predicting is faster of C-contiguous arrays, training is faster
             # on Fortran arrays.
             X_binned_val = np.ascontiguousarray(X_binned_val)

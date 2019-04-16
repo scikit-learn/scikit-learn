@@ -14,77 +14,35 @@ X_regression, y_regression = make_regression(random_state=0)
     (HistGradientBoostingClassifier, X_classification, y_classification),
     (HistGradientBoostingRegressor, X_regression, y_regression)
 ])
-def test_init_parameters_validation(GradientBoosting, X, y):
+@pytest.mark.parametrize(
+    'params, err_msg',
+    [({'loss': 'blah'}, 'Loss blah is not supported for'),
+     ({'learning_rate': 0}, 'learning_rate=0 must be strictly positive'),
+     ({'learning_rate': -1}, 'learning_rate=-1 must be strictly positive'),
+     ({'max_iter': 0}, 'max_iter=0 must not be smaller than 1'),
+     ({'max_leaf_nodes': 0}, 'max_leaf_nodes=0 should not be smaller than 1'),
+     ({'max_depth': 0}, 'max_depth=0 should not be smaller than 1'),
+     ({'min_samples_leaf': 0}, 'min_samples_leaf=0 should not be smaller'),
+     ({'l2_regularization': -1}, 'l2_regularization=-1 must be positive'),
+     ({'max_bins': 1}, 'max_bins=1 should be no smaller than 2 and no larger'),
+     ({'max_bins': 257}, 'max_bins=257 should be no smaller than 2 and no'),
+     ({'n_iter_no_change': -1}, 'n_iter_no_change=-1 must be positive'),
+     ({'validation_fraction': -1}, 'validation_fraction=-1 must be strictly'),
+     ({'validation_fraction': 0}, 'validation_fraction=0 must be strictly'),
+     ({'tol': -1}, 'tol=-1 must not be smaller than 0')]
+)
+def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
 
-    with pytest.raises(
-            ValueError,
-            match="Loss blah is not supported for"):
-        GradientBoosting(loss='blah').fit(X, y)
-
-    for learning_rate in (-1, 0):
-        with pytest.raises(
-                ValueError,
-                match="learning_rate={} must be strictly positive".format(
-                    learning_rate)):
-            GradientBoosting(learning_rate=learning_rate).fit(X, y)
-
-    with pytest.raises(
-            ValueError,
-            match="max_iter=0 must not be smaller than 1"):
-        GradientBoosting(max_iter=0).fit(X, y)
-
-    with pytest.raises(
-            ValueError,
-            match="max_leaf_nodes=0 should not be smaller than 1"):
-        GradientBoosting(max_leaf_nodes=0).fit(X, y)
-
-    with pytest.raises(
-            ValueError,
-            match="max_depth=0 should not be smaller than 1"):
-        GradientBoosting(max_depth=0).fit(X, y)
-
-    with pytest.raises(
-            ValueError,
-            match="min_samples_leaf=0 should not be smaller than 1"):
-        GradientBoosting(min_samples_leaf=0).fit(X, y)
-
-    with pytest.raises(
-            ValueError,
-            match="l2_regularization=-1 must be positive"):
-        GradientBoosting(l2_regularization=-1).fit(X, y)
-
-    for max_bins in (1, 257):
-        with pytest.raises(
-                ValueError,
-                match="max_bins={} should be no smaller than 2 and "
-                      "no larger".format(max_bins)):
-            GradientBoosting(max_bins=max_bins).fit(X, y)
-
-    with pytest.raises(
-            ValueError,
-            match="n_iter_no_change=-1 must be positive"):
-        GradientBoosting(n_iter_no_change=-1).fit(X, y)
-
-    for validation_fraction in (-1, 0):
-        with pytest.raises(
-            ValueError,
-            match="validation_fraction={} must be strictly positive".format(
-                validation_fraction)):
-            GradientBoosting(validation_fraction=validation_fraction).fit(X, y)
-
-    with pytest.raises(
-            ValueError,
-            match="tol=-1 must not be smaller than 0"):
-        GradientBoosting(tol=-1).fit(X, y)
+    with pytest.raises(ValueError, match=err_msg):
+        GradientBoosting(**params).fit(X, y)
 
 
 def test_invalid_classification_loss():
     binary_clf = HistGradientBoostingClassifier(loss="binary_crossentropy")
-    with pytest.raises(
-            ValueError,
-            match="loss='binary_crossentropy' is not defined for multiclass"
-                  " classification with n_classes=3, use"
-                  " loss='categorical_crossentropy' instead"):
+    err_msg = ("loss='binary_crossentropy' is not defined for multiclass "
+               "classification with n_classes=3, use "
+               "loss='categorical_crossentropy' instead")
+    with pytest.raises(ValueError, match=err_msg):
         binary_clf.fit(np.zeros(shape=(3, 2)), np.arange(3))
 
 
@@ -162,27 +120,24 @@ def test_early_stopping_classification(data, scoring, validation_fraction,
         assert gb.n_iter_ == max_iter
 
 
-def test_should_stop():
+@pytest.mark.parametrize(
+    'scores, n_iter_no_change, tol, stopping',
+    [
+        ([], 1, 0.001, False),  # not enough iterations
+        ([1, 1, 1], 5, 0.001, False),  # not enough iterations
+        ([1, 1, 1, 1, 1], 5, 0.001, False),  # not enough iterations
+        ([1, 2, 3, 4, 5, 6], 5, 0.001, False),  # significant improvement
+        ([1, 2, 3, 4, 5, 6], 5, 0., False),  # significant improvement
+        ([1, 2, 3, 4, 5, 6], 5, 0.999, False),  # significant improvement
+        ([1, 2, 3, 4, 5, 6], 5, 5 - 1e-5, False),  # significant improvement
+        ([1] * 6, 5, 0., True),  # no significant improvement
+        ([1] * 6, 5, 0.001, True),  # no significant improvement
+        ([1] * 6, 5, 5, True),  # no significant improvement
+    ]
+)
+def test_should_stop(scores, n_iter_no_change, tol, stopping):
 
-    def should_stop(scores, n_iter_no_change, tol):
-        gbdt = HistGradientBoostingClassifier(
-            n_iter_no_change=n_iter_no_change,
-            tol=tol)
-        return gbdt._should_stop(scores)
-
-    # not enough iterations
-    assert not should_stop([], n_iter_no_change=1, tol=0.001)
-
-    assert not should_stop([1, 1, 1], n_iter_no_change=5, tol=0.001)
-    assert not should_stop([1] * 5, n_iter_no_change=5, tol=0.001)
-
-    # still making significant progress up to tol
-    assert not should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5, tol=0.001)
-    assert not should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5, tol=0.)
-    assert not should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5,
-                           tol=5 - 1e-5)
-
-    # no significant progress according to tol
-    assert should_stop([1] * 6, n_iter_no_change=5, tol=0.)
-    assert should_stop([1] * 6, n_iter_no_change=5, tol=0.001)
-    assert should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5, tol=5)
+    gbdt = HistGradientBoostingClassifier(
+        n_iter_no_change=n_iter_no_change, tol=tol
+    )
+    assert gbdt._should_stop(scores) == stopping
