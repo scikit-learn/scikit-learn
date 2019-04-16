@@ -14,7 +14,7 @@ hyperparameters (alpha, lambda) may be important.
 In this example, the sinusoid is approximated by a polynomial using different
 pairs of initial values.
 
-When starting from the default values (alpha_init =1.90, lambda_init = 1.),
+When starting from the default values (alpha_init = 1.90, lambda_init = 1.),
 the bias of the resulting curve is large, and the variance is small.
 So, lambda_init should be relatively small (1.e-3) so as to reduce the bias.
 
@@ -36,47 +36,47 @@ def func(x): return np.sin(2*np.pi*x)
 # #############################################################################
 # Generate sinusoidal data with noise
 size = 25
-np.random.seed(1234)
-xtrain = np.random.uniform(0., 1., size)
-ytrain = func(xtrain)+np.random.normal(scale=0.1, size=size)
-xtest = np.linspace(0., 1., 100)
+rng = np.random.RandomState(1234)
+x_train = rng.uniform(0., 1., size)
+y_train = func(x_train)+rng.normal(scale=0.1, size=size)
+x_test = np.linspace(0., 1., 100)
 
 
 # #############################################################################
 # Fit by cubic polynomial
-nOrder = 3
-Xtrain = np.vander(xtrain, nOrder+1, increasing=True)
-Xtest = np.vander(xtest, nOrder+1, increasing=True)
+n_order = 3
+X_train = np.vander(x_train, n_order+1, increasing=True)
+X_test = np.vander(x_test, n_order+1, increasing=True)
 
 # #############################################################################
 # Bayesian ridge regression with different initial value pairs
-inits = (1., 1.e-3)
+inits = [(1./np.var(y_train), 1.), (1., 1.e-3)]
 regs = [BayesianRidge(tol=1e-6, fit_intercept=False, compute_score=True),
         BayesianRidge(tol=1e-6, fit_intercept=False, compute_score=True,
-                      alpha_init=inits[0], lambda_init=inits[1])]
+                      alpha_init=inits[1][0], lambda_init=inits[1][1])]
 
 # #############################################################################
 # Plot the true and predicted curves with logLs (evidences)
-fig, ax = plt.subplots(1, 2, figsize=(8, 4))
-for i, reg in enumerate(regs):
-    reg.fit(Xtrain, ytrain)
-    ymean, ystd = reg.predict(Xtest, return_std=True)
+fig, axes = plt.subplots(1, 2, figsize=(8, 4))
+for i, (reg, ax) in enumerate(zip(regs, axes)):
+    reg.fit(X_train, y_train)
+    ymean, ystd = reg.predict(X_test, return_std=True)
 
-    ax[i].plot(xtest, func(xtest), color="blue", label="sin(2$πx$)")
-    ax[i].scatter(xtrain, ytrain, s=50, alpha=0.5, label="observation")
-    ax[i].plot(xtest, ymean, color="red", label="predict mean")
-    ax[i].fill_between(xtest, ymean-ystd, ymean+ystd,
-                       color="pink", alpha=0.5, label="predict std")
-    ax[i].set_ylim(-1.3, 1.3)
-    ax[i].legend()
+    ax.plot(x_test, func(x_test), color="blue", label="sin($2\\pi x$)")
+    ax.scatter(x_train, y_train, s=50, alpha=0.5, label="observation")
+    ax.plot(x_test, ymean, color="red", label="predict mean")
+    ax.fill_between(x_test, ymean-ystd, ymean+ystd,
+                    color="pink", alpha=0.5, label="predict std")
+    ax.set_ylim(-1.3, 1.3)
+    ax.legend()
+    title = "$\\alpha$_init$={:.2f},\\ \\lambda$_init$={}$".format(
+            inits[i][0], inits[i][1])
     if i == 0:
-        ax[i].set_title("$α$_init$={:.2f} ,λ$_init$={}$ (Default)".format(
-            1./np.var(ytrain), 1.))
-    elif i == 1:
-        ax[i].set_title(
-            "$α$_init$={} ,λ$_init$={}$".format(inits[0], inits[1]))
-    ax[i].text(0.05, -1.0, "$α={:.1f}$\n$λ={:.3f}$\nlog$L={:.1f}$".format(
-        reg.alpha_, reg.lambda_, reg.scores_[-1]), fontsize=12)
+        title = title+" (Default)"
+    ax.set_title(title, fontsize=12)
+    text = "$\\alpha={:.1f}$\n$\\lambda={:.3f}$\nlog$L={:.1f}$".format(
+           reg.alpha_, reg.lambda_, reg.scores_[-1])
+    ax.text(0.05, -1.0, text, fontsize=12)
 
 plt.tight_layout()
 plt.show()
