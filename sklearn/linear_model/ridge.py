@@ -286,7 +286,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
           both n_samples and n_features are large. Note that 'sag' and
           'saga' fast convergence is only guaranteed on features with
           approximately the same scale. You can preprocess the data with a
-          scaler from ..preprocessing.
+          scaler from sklearn.preprocessing.
 
 
         All last five solvers support both dense and sparse data. However, only
@@ -650,7 +650,7 @@ class Ridge(_BaseRidge, RegressorMixin):
           both n_samples and n_features are large. Note that 'sag' and
           'saga' fast convergence is only guaranteed on features with
           approximately the same scale. You can preprocess the data with a
-          scaler from ..preprocessing.
+          scaler from sklearn.preprocessing.
 
         All last five solvers support both dense and sparse data. However, only
         'sag' and 'sparse_cg' supports sparse input when `fit_intercept` is
@@ -809,7 +809,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
           when both n_samples and n_features are large. Note that 'sag' and
           'saga' fast convergence is only guaranteed on features with
           approximately the same scale. You can preprocess the data with a
-          scaler from ..preprocessing.
+          scaler from sklearn.preprocessing.
 
           .. versionadded:: 0.17
              Stochastic Average Gradient descent solver.
