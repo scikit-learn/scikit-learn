@@ -1277,6 +1277,22 @@ Their harmonic mean called **V-measure** is computed by
   >>> metrics.v_measure_score(labels_true, labels_pred)    # doctest: +ELLIPSIS
   0.51...
 
+This function's formula is as follows:::
+
+.. math:: v = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
+
+`beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
+
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)    # doctest: +ELLIPSIS
+  0.54...
+
+more weight will be attributed to homogeneity, and using a value greater than 1::
+
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=1.8)    # doctest: +ELLIPSIS
+  0.48...
+
+more weight will be attributed to completeness.
+
 The V-measure is actually equivalent to the mutual information (NMI)
 discussed above, with the aggregation function being the arithmetic mean [B2011]_.
 
