@@ -851,7 +851,8 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
 
     # test excludes 'svd' solver because it raises exception for sparse inputs
 
-    X = np.random.rand(1000, 3)
+    rng = check_random_state(42)
+    X = rng.rand(1000, 3)
     true_coefs = [1, 2, 0.1]
     y = np.dot(X, true_coefs)
     X_testing = arr_type(X)
