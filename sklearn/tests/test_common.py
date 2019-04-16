@@ -145,9 +145,13 @@ def test_configure():
         old_argv = sys.argv
         sys.argv = ['setup.py', 'config']
 
-        # OpenMP checks are build checks done before cythonization to allow
-        # fast fail. Since sklearn can be built and tested on 2 different
-        # machines, we disable it for a configure check.
+        # This test will run every setup.py and eventually call
+        # check_openmp_support(), which tries to compile a C file that uses
+        # OpenMP, unless SKLEARN_NO_OPENMP is set. Some users might want to run
+        # the tests without having build-support for OpenMP. In particular, mac
+        # users need to set some environment variables to build with openmp
+        # support, and these might not be set anymore at test time. We thus
+        # temporarily set SKLEARN_NO_OPENMP, so that this test runs smoothly.
         old_env = os.getenv('SKLEARN_NO_OPENMP')
         os.environ['SKLEARN_NO_OPENMP'] = "True"
 
