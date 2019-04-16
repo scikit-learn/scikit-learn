@@ -115,29 +115,6 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-def get_openmp_flag(compiler):
-    if sys.platform == "win32" and ('icc' in compiler or 'icl' in compiler):
-        return ['/Qopenmp']
-    elif sys.platform == "win32":
-        return ['/openmp']
-    elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
-        return ['-openmp']
-    elif sys.platform == "darwin" and 'openmp' in os.getenv('CPPFLAGS', ''):
-        # -fopenmp can't be passed as compile flag when using Apple-clang.
-        # OpenMP support has to be enabled during preprocessing.
-        #
-        # For example, our macOS wheel build jobs use the following environment
-        # variables to build with Apple-clang and the brew installed "libomp":
-        #
-        # export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-        # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-        # export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-        # export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-        return ['']
-    # Default flag for GCC and clang:
-    return ['-fopenmp']
-
-
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
 # build_ext has to be imported after setuptools
@@ -146,16 +123,14 @@ from numpy.distutils.command.build_ext import build_ext  # noqa
 
 class build_ext_subclass(build_ext):
     def build_extensions(self):
-        if hasattr(self.compiler, 'compiler'):
-            compiler = self.compiler.compiler[0]
-        else:
-            compiler = self.compiler.__class__.__name__
+        from sklearn._build_utils.openmp_helpers import get_openmp_flag
 
-        openmp_flag = get_openmp_flag(compiler)
+        if not os.getenv('SKLEARN_NO_OPENMP'):
+            openmp_flag = get_openmp_flag(self.compiler)
 
-        for e in self.extensions:
-            e.extra_compile_args += openmp_flag
-            e.extra_link_args += openmp_flag
+            for e in self.extensions:
+                e.extra_compile_args += openmp_flag
+                e.extra_link_args += openmp_flag
 
         build_ext.build_extensions(self)
 
