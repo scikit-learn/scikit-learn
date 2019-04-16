@@ -274,7 +274,7 @@ def check_estimator(Estimator):
     shapes, etc.
     Additional tests for classifiers, regressors, clustering or transformers
     will be run if the Estimator class inherits from the corresponding mixin
-    from ..base.
+    from sklearn.base.
 
     This test can be applied to classes or instances.
     Classes currently have some additional tests that related to construction,

@@ -1304,7 +1304,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can
-        .preprocess the data with a scaler from sklearn.preprocessing.
+        preprocess the data with a scaler from sklearn.preprocessing.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -1758,7 +1758,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         Note that 'sag' and 'saga' fast convergence is only guaranteed on
         features with approximately the same scale. You can preprocess the data
-        with a scaler from ..preprocessing.
+        with a scaler from sklearn.preprocessing.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.

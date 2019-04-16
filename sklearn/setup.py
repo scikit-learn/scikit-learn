@@ -1,6 +1,6 @@
 import os
 
-from _build_utils import maybe_cythonize_extensions
+from sklearn._build_utils import maybe_cythonize_extensions
 
 
 def configuration(parent_package='', top_path=None):
