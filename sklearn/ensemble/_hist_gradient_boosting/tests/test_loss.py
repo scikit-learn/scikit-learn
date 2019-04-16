@@ -1,8 +1,8 @@
 import numpy as np
 from numpy.testing import assert_almost_equal
-import scipy
 from scipy.optimize import newton
 from sklearn.utils import assert_all_finite
+from sklearn.utils.fixes import sp_version
 import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
@@ -29,7 +29,7 @@ def get_derivatives_helper(loss):
         loss.update_gradients_and_hessians(gradients, hessians, y_true,
                                            raw_predictions)
 
-        if loss.__class__ is _LOSSES['least_squares']:
+        if loss.__class__.__name__ == 'LeastSquares':
             # hessians aren't updated because they're constant:
             # the value is 1 because the loss is actually an half
             # least squares loss.
@@ -49,7 +49,7 @@ def get_derivatives_helper(loss):
     ('binary_crossentropy', -12, 1),
     ('binary_crossentropy', 30, 1),
 ])
-@pytest.mark.skipif(scipy.__version__.split('.')[:3] == ['1', '2', '0'],
+@pytest.mark.skipif(sp_version == (1, 2, 0),
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
 @pytest.mark.skipif(Y_DTYPE != np.float64,
                     reason='Newton internally uses float64 != Y_DTYPE')
@@ -117,7 +117,7 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     offset[0, :] = eps
     f_plus_eps = loss(y_true, raw_predictions + offset / 2, average=False)
     f_minus_eps = loss(y_true, raw_predictions - offset / 2, average=False)
-    numerical_gradient = (f_plus_eps - f_minus_eps) / eps
+    numerical_gradients = (f_plus_eps - f_minus_eps) / eps
 
     # Approximate hessians
     eps = 1e-4  # need big enough eps as we divide by its square
@@ -130,8 +130,8 @@ def test_numerical_gradients(loss, n_classes, prediction_dim):
     def relative_error(a, b):
         return np.abs(a - b) / np.maximum(np.abs(a), np.abs(b))
 
-    assert np.all(relative_error(numerical_gradient, gradients) < 1e-5)
-    assert np.all(relative_error(numerical_hessians, hessians) < 1e-5)
+    assert np.allclose(numerical_gradients, gradients, rtol=1e-5)
+    assert np.allclose(numerical_hessians, hessians, rtol=1e-5)
 
 
 def test_baseline_least_squares():
@@ -154,8 +154,8 @@ def test_baseline_binary_crossentropy():
         y_train = y_train.astype(np.float64)
         baseline_prediction = loss.get_baseline_prediction(y_train, 1)
         assert_all_finite(baseline_prediction)
-        assert_almost_equal(loss.inverse_link_function(baseline_prediction),
-                            y_train[0], decimal=6)
+        assert np.allclose(loss.inverse_link_function(baseline_prediction),
+                           y_train[0])
 
     # Make sure baseline prediction is equal to link_function(p), where p
     # is the proba of the positive class. We want predict_proba() to return p,
@@ -167,7 +167,7 @@ def test_baseline_binary_crossentropy():
     assert baseline_prediction.shape == tuple()  # scalar
     assert baseline_prediction.dtype == y_train.dtype
     p = y_train.mean()
-    assert_almost_equal(baseline_prediction, np.log(p / (1 - p)))
+    assert np.allclose(baseline_prediction, np.log(p / (1 - p)))
 
 
 def test_baseline_categorical_crossentropy():
@@ -189,4 +189,4 @@ def test_baseline_categorical_crossentropy():
     assert baseline_prediction.shape == (prediction_dim, 1)
     for k in range(prediction_dim):
         p = (y_train == k).mean()
-        assert_almost_equal(baseline_prediction[k, :], np.log(p))
+        assert np.allclose(baseline_prediction[k, :], np.log(p))

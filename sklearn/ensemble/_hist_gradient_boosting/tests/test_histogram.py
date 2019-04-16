@@ -50,6 +50,8 @@ def test_build_histogram(build_func):
 
 
 def test_histogram_sample_order_independence():
+    # Make sure the order of the samples has no impact on the histogram
+    # computations
     rng = np.random.RandomState(42)
     n_sub_samples = 100
     n_samples = 1000

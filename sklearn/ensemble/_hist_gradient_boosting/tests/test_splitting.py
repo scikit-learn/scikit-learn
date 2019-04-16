@@ -1,6 +1,4 @@
 import numpy as np
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_array_almost_equal
 import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.types import HISTOGRAM_DTYPE
@@ -134,8 +132,8 @@ def test_gradient_and_hessian_sanity(constant_hessian):
         else:
             expected_hessian = all_hessians[indices].sum()
 
-        assert_almost_equal(gradient, expected_gradient, decimal=3)
-        assert_almost_equal(hessian, expected_hessian, decimal=3)
+        assert np.isclose(gradient, expected_gradient)
+        assert np.isclose(hessian, expected_hessian)
 
     # make sure sum of gradients in histograms are the same for all features,
     # and make sure they're equal to their expected value
@@ -158,8 +156,8 @@ def test_gradient_and_hessian_sanity(constant_hessian):
         else:
             expected_hessian = all_hessians[indices].sum()
 
-        assert_almost_equal(gradients, expected_gradient, decimal=4)
-        assert_almost_equal(hessians, expected_hessian, decimal=4)
+        assert np.allclose(gradients, expected_gradient)
+        assert np.allclose(hessians, expected_hessian)
 
 
 def test_split_indices():
@@ -203,7 +201,7 @@ def test_split_indices():
                         min_samples_leaf, min_gain_to_split,
                         hessians_are_constant)
 
-    assert_array_almost_equal(sample_indices, splitter.partition)
+    assert np.all(sample_indices == splitter.partition)
 
     histograms = builder.compute_histograms_brute(sample_indices)
     si_root = splitter.find_node_split(sample_indices, histograms,
@@ -218,10 +216,8 @@ def test_split_indices():
     assert set(samples_left) == set([0, 1, 3, 4, 5, 6, 8])
     assert set(samples_right) == set([2, 7, 9])
 
-    assert_array_almost_equal(samples_left,
-                              splitter.partition[:position_right])
-    assert_array_almost_equal(samples_right,
-                              splitter.partition[position_right:])
+    assert list(samples_left) == list(splitter.partition[:position_right])
+    assert list(samples_right) == list(splitter.partition[position_right:])
 
     # Check that the resulting split indices sizes are consistent with the
     # count statistics anticipated when looking for the best split.
