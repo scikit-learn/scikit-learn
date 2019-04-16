@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 import pytest
 from pytest import approx
 
@@ -30,10 +29,7 @@ def _make_training_data(n_bins=256, constant_hessian=True):
         if input_features[0] <= n_bins // 2:
             return -1
         else:
-            if input_features[1] <= n_bins // 3:
-                return -1
-            else:
-                return 1
+            return -1 if input_features[1] <= n_bins // 3 else 1
 
     target = np.array([true_decision_function(x) for x in X_binned],
                       dtype=Y_DTYPE)
@@ -41,14 +37,15 @@ def _make_training_data(n_bins=256, constant_hessian=True):
     # Assume a square loss applied to an initial model that always predicts 0
     # (hardcoded for this test):
     all_gradients = target.astype(G_H_DTYPE)
-    if constant_hessian:
-        all_hessians = np.ones(shape=1, dtype=G_H_DTYPE)
-    else:
-        all_hessians = np.ones_like(all_gradients)
+    shape_hessians = 1 if constant_hessian else all_gradients.shape
+    all_hessians = np.ones(shape=shape_hessians, dtype=G_H_DTYPE)
+
     return X_binned, all_gradients, all_hessians
 
 
 def _check_children_consistency(parent, left, right):
+    # Make sure the samples are correctly dispatched from a parent to its
+    # children
     assert parent.left_child is left
     assert parent.right_child is right
 
@@ -162,6 +159,7 @@ def test_predictor_from_grower():
     assert predictor.nodes['is_leaf'].sum() == 3
 
     # Probe some predictions for each leaf of the tree
+    # each group of 3 samples corresponds to a condition in _make_training_data
     input_data = np.array([
         [0, 0],
         [42, 99],
@@ -177,11 +175,11 @@ def test_predictor_from_grower():
     ], dtype=np.uint8)
     predictions = predictor.predict_binned(input_data)
     expected_targets = [1, 1, 1, 1, 1, 1, -1, -1, -1]
-    assert_array_almost_equal(predictions, expected_targets, decimal=5)
+    assert np.allclose(predictions, expected_targets)
 
     # Check that training set can be recovered exactly:
     predictions = predictor.predict_binned(X_binned)
-    assert_array_almost_equal(predictions, -all_gradients, decimal=5)
+    assert np.allclose(predictions, -all_gradients)
 
 
 @pytest.mark.parametrize(
@@ -209,10 +207,8 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
     X = mapper.fit_transform(X)
 
     all_gradients = y.astype(G_H_DTYPE)
-    if constant_hessian:
-        all_hessians = np.ones(shape=1, dtype=G_H_DTYPE)
-    else:
-        all_hessians = np.ones_like(all_gradients)
+    shape_hessian = 1 if constant_hessian else all_gradients.shape
+    all_hessians = np.ones(shape=shape_hessian, dtype=G_H_DTYPE)
     grower = TreeGrower(X, all_gradients, all_hessians,
                         max_bins=n_bins, shrinkage=1.,
                         min_samples_leaf=min_samples_leaf,
@@ -283,13 +279,13 @@ def test_max_depth(max_depth):
     assert depth == max_depth
 
 
-def test_init_parameters_validation():
+def test_input_validation():
 
     X_binned, all_gradients, all_hessians = _make_training_data()
 
     X_binned_float = X_binned.astype(np.float32)
     with pytest.raises(NotImplementedError,
-                       match="Explicit feature binning required for now"):
+                       match="X_binned must be of type uint8"):
         TreeGrower(X_binned_float, all_gradients, all_hessians)
 
     X_binned_C_array = np.ascontiguousarray(X_binned)
@@ -298,6 +294,9 @@ def test_init_parameters_validation():
             match="X_binned should be passed as Fortran contiguous array"):
         TreeGrower(X_binned_C_array, all_gradients, all_hessians)
 
+
+def test_init_parameters_validation():
+    X_binned, all_gradients, all_hessians = _make_training_data()
     with pytest.raises(ValueError,
                        match="min_gain_to_split=-1 must be positive"):
 

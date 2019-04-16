@@ -205,7 +205,7 @@ class TreeGrower:
         """
         if X_binned.dtype != np.uint8:
             raise NotImplementedError(
-                "Explicit feature binning required for now")
+                "X_binned must be of type uint8.")
         if not X_binned.flags.f_contiguous:
             raise ValueError(
                 "X_binned should be passed as Fortran contiguous "
