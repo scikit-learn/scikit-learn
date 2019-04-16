@@ -340,7 +340,9 @@ Support for Python 3.4 and below has been officially dropped.
   deterministic when trained in a multi-class setting on several threads.
   :issue:`13422` by :user:`Clément Doumouro <ClemDoum>`.
 
-- |Fix| Fixed bug in :func:`linear_model.ridge.ridge_regression` that
+- |Fix| Fixed bug in :func:`linear_model.ridge.ridge_regression`,
+  :class:`linear_model.ridge.Ridge` and
+  :class:`linear_model.ridge.ridge.RidgeClassifier` that
   caused unhandled exception for arguments ``return_intercept=True`` and
   ``solver=auto`` (default) or any other solver different from ``sag``.
   :issue:`13363` by :user:`Bartosz Telenczuk <btel>`
