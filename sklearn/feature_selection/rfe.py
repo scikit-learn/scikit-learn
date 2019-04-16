@@ -80,7 +80,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         Step to use starting at ``tune_step_at`` number of remaining features.
         If greater than or equal to 1, then ``tuning_step`` corresponds to the
         (integer) number of features to remove at each iteration. If within
-        (0.0, 1.0), then ``tuning_step`` corresponds to the percentage (rounded
+        (0.0, 1.0), then ``tuning_step`` corresponds to the proportion (rounded
         down) of features to remove at each iteration.
 
     reducing_step : boolean, optional (default=False)
