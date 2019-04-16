@@ -70,7 +70,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     tune_step_at : int or float or None, optional (default=None)
         Number of remaining features reached when ``tuning_step`` is used
         rather than ``step``. May be specified as an (integer) number of
-        remaining features or, if within (0.0, 1.0), a percentage (rounded
+        remaining features or, if within (0.0, 1.0), a fraction (rounded
         down) of the original number of features. If original number of
         features and parameter settings would result in stepping past
         ``tune_step_at``, then the number of features removed in the iteration
