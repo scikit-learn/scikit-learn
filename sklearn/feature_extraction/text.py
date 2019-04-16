@@ -315,7 +315,8 @@ class VectorizerMixin:
         # now we're sure fname doesn't exist
 
         msg = ("Since v0.21, vectorizers pass the data to the custom analyzer "
-               "and not the file names or the file objects.")
+               "and not the file names or the file objects. This warning "
+               "will be removed in v0.23.")
         try:
             self.analyzer(fname)
         except FileNotFoundError:
