@@ -246,6 +246,17 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| Deprecated :mod:`externals.six` since we have dropped support for
   Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |API| If ``input='file'`` or ``input='filename'``, and a callable is given
+  as the ``analyzer``, :class:`sklearn.feature_extraction.text`,
+  :class:`sklearn.feature_extraction.text`, and
+  :class:`sklearn.feature_extraction.text` now read the data from the file(s)
+  and then pass it to the given ``analyzer``, instead of passing the file
+  name(s) or the file object(s) to the analyzer.
+  :issue:`13641` by `Adrin Jalali`_.
+
 :mod:`sklearn.impute`
 .....................
 
