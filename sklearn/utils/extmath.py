@@ -16,13 +16,31 @@ import warnings
 
 import numpy as np
 from scipy import linalg, sparse
+from scipy import __version__ as scipy__version__
 
 from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from .lobpcg import lobpcg
 from scipy.sparse.linalg import aslinearoperator, LinearOperator
+
+if _parse_version(scipy__version__) >= (1, 3):
+    from scipy.sparse.linalg import lobpcg
+else:
+    # Backport of lobpcg functionality from scipy 1.3.0, can be removed
+    # once support for sp_version < (1, 3) is dropped
+    from ..externals._lobpcg import lobpcg
+
+
+def _parse_version(version_string):
+    version = []
+    for x in version_string.split('.'):
+        try:
+            version.append(int(x))
+        except ValueError:
+            # x may be of the form dev-1ea1592
+            version.append(x)
+    return tuple(version)
 
 
 def squared_norm(x):
