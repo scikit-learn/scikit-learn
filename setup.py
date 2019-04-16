@@ -38,6 +38,11 @@ MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
 URL = 'http://scikit-learn.org'
 DOWNLOAD_URL = 'https://pypi.org/project/scikit-learn/#files'
 LICENSE = 'new BSD'
+PROJECT_URLS = {
+    'Bug Tracker': 'https://github.com/scikit-learn/scikit-learn/issues',
+    'Documentation': 'https://scikit-learn.org/stable/documentation.html',
+    'Source Code': 'https://github.com/scikit-learn/scikit-learn'
+}
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
@@ -220,6 +225,7 @@ def setup_package():
                     license=LICENSE,
                     url=URL,
                     download_url=DOWNLOAD_URL,
+                    project_urls=PROJECT_URLS,
                     version=VERSION,
                     long_description=LONG_DESCRIPTION,
                     classifiers=['Intended Audience :: Science/Research',

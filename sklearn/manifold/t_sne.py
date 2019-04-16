@@ -506,8 +506,8 @@ class TSNE(BaseEstimator):
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
-        between 5 and 50. The choice is not extremely critical since t-SNE
-        is quite insensitive to this parameter.
+        between 5 and 50. Different values can result in significanlty
+        different results.
 
     early_exaggeration : float, optional (default: 12.0)
         Controls how tight natural clusters in the original space are in
