@@ -308,7 +308,7 @@ class VectorizerMixin:
     def _validate_analyzer(self):
         # This is to check if the given custom analyzer expects file or a
         # filename instead of data.
-        # Behavior changed in v0.21, function could be removed in v0.24
+        # Behavior changed in v0.21, function could be removed in v0.23
         import tempfile
         with tempfile.NamedTemporaryFile() as f:
             fname = f.name
