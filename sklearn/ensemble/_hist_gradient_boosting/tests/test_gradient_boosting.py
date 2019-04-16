@@ -179,9 +179,10 @@ def test_should_stop():
     # still making significant progress up to tol
     assert not should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5, tol=0.001)
     assert not should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5, tol=0.)
-    assert not should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5, tol=0.999)
+    assert not should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5,
+                           tol=5 - 1e-5)
 
     # no significant progress according to tol
     assert should_stop([1] * 6, n_iter_no_change=5, tol=0.)
     assert should_stop([1] * 6, n_iter_no_change=5, tol=0.001)
-    assert should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5, tol=1.001)
+    assert should_stop([1, 2, 3, 4, 5, 6], n_iter_no_change=5, tol=5)
