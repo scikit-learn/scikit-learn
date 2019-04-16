@@ -12,7 +12,7 @@ import runpy
 import types
 from multiprocessing import process, util
 
-from sklearn.externals.joblib.externals.loky.backend import context
+from . import context
 
 
 if sys.platform != 'win32':

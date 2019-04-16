@@ -33,7 +33,7 @@ class NotFittedError(ValueError, AttributeError):
     NotFittedError('This LinearSVC instance is not fitted yet'...)
 
     .. versionchanged:: 0.18
-       Moved from sklearn.utils.validation.
+       Moved from .utils.validation.
     """
 
 
@@ -41,7 +41,7 @@ class ChangedBehaviorWarning(UserWarning):
     """Warning class used to notify the user of any change in the behavior.
 
     .. versionchanged:: 0.18
-       Moved from sklearn.base.
+       Moved from .base.
     """
 
 
@@ -49,7 +49,7 @@ class ConvergenceWarning(UserWarning):
     """Custom warning to capture convergence problems
 
     .. versionchanged:: 0.18
-       Moved from sklearn.utils.
+       Moved from .utils.
     """
 
 
@@ -67,7 +67,7 @@ class DataConversionWarning(UserWarning):
         - passes an input whose shape can be interpreted ambiguously.
 
     .. versionchanged:: 0.18
-       Moved from sklearn.utils.validation.
+       Moved from .utils.validation.
     """
 
 
@@ -81,7 +81,7 @@ class DataDimensionalityWarning(UserWarning):
     dimensionality of the problem will not be reduced.
 
     .. versionchanged:: 0.18
-       Moved from sklearn.utils.
+       Moved from .utils.
     """
 
 
@@ -124,7 +124,7 @@ class FitFailedWarning(RuntimeWarning):
     Details: \\nValueError: Penalty term must be positive; got (C=-2)\\n'...)
 
     .. versionchanged:: 0.18
-       Moved from sklearn.cross_validation.
+       Moved from .cross_validation.
     """
 
 
@@ -135,7 +135,7 @@ class NonBLASDotWarning(EfficiencyWarning):
     operation and hence the efficiency may be affected.
 
     .. versionchanged:: 0.18
-       Moved from sklearn.utils.validation, extends EfficiencyWarning.
+       Moved from .utils.validation, extends EfficiencyWarning.
     """
 
 
@@ -152,5 +152,5 @@ class UndefinedMetricWarning(UserWarning):
     """Warning used when the metric is invalid
 
     .. versionchanged:: 0.18
-       Moved from sklearn.base.
+       Moved from .base.
     """

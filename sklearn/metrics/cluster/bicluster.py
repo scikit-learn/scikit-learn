@@ -1,8 +1,8 @@
 
 import numpy as np
 
-from sklearn.utils.linear_assignment_ import linear_assignment
-from sklearn.utils.validation import check_consistent_length, check_array
+from ...utils.linear_assignment_ import linear_assignment
+from ...utils.validation import check_consistent_length, check_array
 
 __all__ = ["consensus_score"]
 

@@ -2,7 +2,7 @@ import inspect
 from functools import partial
 
 try:
-    from sklearn.externals.joblib.externals.cloudpickle import dumps, loads
+    from ..cloudpickle import dumps, loads
     cloudpickle = True
 except ImportError:
     cloudpickle = False
@@ -93,7 +93,7 @@ def wrap_non_picklable_objects(obj, keep_wrapper=True):
     complex classes.
     """
     if not cloudpickle:
-        raise ImportError("could not from sklearn.externals.joblib.externals import cloudpickle. Please install "
+        raise ImportError("could not from .. import cloudpickle. Please install "
                           "cloudpickle to allow extended serialization. "
                           "(`pip install cloudpickle`).")
 
