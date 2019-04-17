@@ -56,7 +56,7 @@ The following people have been active contributors in the past, but are no longe
 Governance
 ----------
 The decision making process and governance structure of scikit-learn is laid
-out in the `governance document <governance>`_.
+out in the :ref:`governance document <governance>`.
 
 .. _citing-scikit-learn:
 
