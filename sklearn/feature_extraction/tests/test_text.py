@@ -1235,5 +1235,13 @@ def test_callable_analyzer_vs_file_input(Estimator):
     def analyzer3(doc):
         raise Exception("testing")
 
+    import tempfile
+    with tempfile.NamedTemporaryFile('w', delete=False) as f:
+        f.write("sample content\n")
+        fname = f.name
+
     with pytest.raises(Exception, match="testing"):
-        Estimator(analyzer=analyzer3).fit_transform(data)
+        Estimator(analyzer=analyzer3, input='filename').fit_transform([fname])
+
+    import os
+    os.remove(fname)
