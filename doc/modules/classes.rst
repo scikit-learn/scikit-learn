@@ -422,6 +422,9 @@ Samples generator
    ensemble.RandomTreesEmbedding
    ensemble.VotingClassifier
    ensemble.VotingRegressor
+   ensemble.HistGradientBoostingRegressor
+   ensemble.HistGradientBoostingClassifier
+
 
 .. autosummary::
    :toctree: generated/
@@ -469,6 +472,22 @@ partial dependence
    exceptions.NotFittedError
    exceptions.NonBLASDotWarning
    exceptions.UndefinedMetricWarning
+
+
+:mod:`sklearn.experimental`: Experimental
+=========================================
+
+.. automodule:: sklearn.experimental
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+
+   experimental.enable_hist_gradient_boosting
+
 
 .. _feature_extraction_ref:
 
@@ -1486,23 +1505,6 @@ Utilities from joblib:
    utils.parallel_backend
    utils.register_parallel_backend
 
-.. _experimental_ref:
-
-Experimental
-============
-
-.. automodule:: sklearn.experimental
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   experimental.HistGradientBoostingRegressor
-   experimental.HistGradientBoostingClassifier
 
 Recently deprecated
 ===================

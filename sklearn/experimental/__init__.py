@@ -1,11 +1,7 @@
 """
-The :mod:`sklearn.experimental` module includes estimators and tools whose API
-and behaviour might change without a deprecation cycle.
+The :mod:`sklearn.experimental` module provides importable modules that enable
+the use of experimental features or estimators.
+
+The features and estimators that are experimental aren't subject to
+deprecation cycles. Use them at your own risks!
 """
-
-from ..ensemble._hist_gradient_boosting.gradient_boosting import (
-    HistGradientBoostingClassifier,
-    HistGradientBoostingRegressor
-)
-
-__all__ = ['HistGradientBoostingRegressor', 'HistGradientBoostingClassifier']

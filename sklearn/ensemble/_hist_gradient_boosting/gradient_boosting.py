@@ -489,6 +489,21 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
     might be preferred since binning may lead to split points that are too
     approximate in this setting.
 
+    This implementation is inspired by
+    `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+
+    .. note::
+
+      This estimator is still **experimental** for now: the predictions
+      and the API might change without any deprecation cycle. To use it,
+      you need to explicitly import ``enable_hist_gradient_boosting``::
+
+        >>> # explicitly require this experimental feature
+        >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+        >>> # now you can import normally from ensemble
+        >>> from sklearn.ensemble import HistGradientBoostingClassifier
+
+
     Parameters
     ----------
     loss : {'least_squares'}, optional (default='least_squares')
@@ -571,8 +586,10 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
 
     Examples
     --------
+    >>> # To use this experimental feature, we need to explicitly ask for it:
+    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.datasets import load_boston
-    >>> from sklearn.experimental import HistGradientBoostingRegressor
     >>> X, y = load_boston(return_X_y=True)
     >>> est = HistGradientBoostingRegressor().fit(X, y)
     >>> est.score(X, y)
@@ -635,6 +652,20 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`
     might be preferred since binning may lead to split points that are too
     approximate in this setting.
+
+    This implementation is inspired by
+    `LightGBM <https://github.com/Microsoft/LightGBM>`_.
+
+    .. note::
+
+      This estimator is still **experimental** for now: the predictions
+      and the API might change without any deprecation cycle. To use it,
+      you need to explicitly import ``enable_hist_gradient_boosting``::
+
+        >>> # explicitly require this experimental feature
+        >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+        >>> # now you can import normally from ensemble
+        >>> from sklearn.ensemble import HistGradientBoostingClassifier
 
     Parameters
     ----------
@@ -722,8 +753,10 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
     Examples
     --------
+    >>> # To use this experimental feature, we need to explicitly ask for it:
+    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    >>> from sklearn.ensemble import HistGradientBoostingRegressor
     >>> from sklearn.datasets import load_iris
-    >>> from sklearn.experimental import HistGradientBoostingClassifier
     >>> X, y = load_iris(return_X_y=True)
     >>> clf = HistGradientBoostingClassifier().fit(X, y)
     >>> clf.score(X, y)

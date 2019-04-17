@@ -3,8 +3,10 @@ import argparse
 
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.experimental import HistGradientBoostingClassifier
-from sklearn.experimental import HistGradientBoostingRegressor
+# To use this experimental feature, we need to explicitly ask for it:
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
 from sklearn.ensemble._hist_gradient_boosting.utils import (

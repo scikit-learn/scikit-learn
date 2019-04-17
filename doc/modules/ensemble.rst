@@ -460,12 +460,12 @@ trees.
 .. note::
 
   Scikit-learn 0.21 introduces two new experimental implementation of
-  gradient boosting trees, namely
-  :class:`sklearn.experimental.HistGradientBoostingClassifier` and
-  :class:`sklearn.experimental.HistGradientBoostingRegressor`. These fast
-  estimators first bin the input samples X into integer-valued bins
-  (typically 256 bins) which tremendously reduces the number of splitting
-  points to consider, and allow the algorithm to leverage integer-based data
+  gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
+  and :class:`HistGradientBoostingRegressor`, inspired by
+  `LightGBM <https://github.com/Microsoft/LightGBM>`_. These fast estimators
+  first bin the input samples ``X`` into integer-valued bins (typically 256
+  bins) which tremendously reduces the number of splitting points to
+  consider, and allow the algorithm to leverage integer-based data
   structures (histograms) instead of relying on sorted continuous values.
 
   The new histogram-based estimators can be orders of magnitude faster than
@@ -474,7 +474,16 @@ trees.
   different, and some of the features from :class:`GradientBoostingClassifier`
   and :class:`GradientBoostingRegressor` are not yet supported.
 
-  The following doc focuses on :class:`GradientBoostingClassifier` and
+  These new estimators are still **experimental** for now: their predictions
+  and their API might change without any deprecation cycle. To use them, you
+  need to explicitly import ``enable_hist_gradient_boosting``::
+
+    >>> # explicitly require this experimental feature
+    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    >>> # now you can import normally from ensemble
+    >>> from sklearn.ensemble import HistGradientBoostingClassifier
+
+  The following guide focuses on :class:`GradientBoostingClassifier` and
   :class:`GradientBoostingRegressor` only, which might be preferred for small
   sample sizes since binning may lead to split points that are too approximate
   in this setting.

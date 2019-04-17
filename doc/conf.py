@@ -263,6 +263,11 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
                    'sphx_glr_plot_compare_methods_001.png': 349}
 
 
+# enable experimental module so that the new GBDTs estimators can be
+# discovered properly by sphinx
+from sklearn.experimental import enable_hist_gradient_boosting
+
+
 def make_carousel_thumbs(app, exception):
     """produces the final resized carousel images"""
     if exception is not None:
