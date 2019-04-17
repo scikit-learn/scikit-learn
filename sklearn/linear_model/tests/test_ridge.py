@@ -887,25 +887,6 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
         assert_allclose(out, true_coefs, rtol=0, atol=atol)
 
 
-def test_ridge_regression_warns_with_return_intercept():
-    # return_itercept is only supported by sag/saga
-
-    X, y = make_regression(n_samples=1000, n_features=2, n_informative=2,
-                           bias=10., random_state=42)
-
-    for solver in ['sparse_cg', 'cholesky', 'svd', 'lsqr', 'saga']:
-
-
-        assert_raises_regex(ValueError,
-                            "In Ridge, only 'sag' solver",
-                            ridge_regression, X, y, 1, solver=solver,
-                            return_intercept=True)
-
-    target = ridge_regression(X, y, 1,
-                              solver="sag",
-                              return_intercept=True
-                              )
-
 def test_errors_and_values_helper():
     ridgecv = _RidgeGCV()
     rng = check_random_state(42)
