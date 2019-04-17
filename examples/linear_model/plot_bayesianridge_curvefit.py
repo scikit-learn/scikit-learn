@@ -8,8 +8,10 @@ Computes a Bayesian Ridge Regression of Sinusoids.
 See :ref:`bayesian_ridge_regression` for more information on the regressor.
 
 In general, when fitting a curve with a polynomial by Bayesian ridge
-regression (evidence approxymation), the selection of initial values of
-hyperparameters (alpha, lambda) may be important.
+regression (evidence approximation), the selection of initial values of
+the regularization parameters (alpha, lambda) may be important.
+This is because the regularization parameters is determined by an iterative
+procedure that depends on initial values.
 
 In this example, the sinusoid is approximated by a polynomial using different
 pairs of initial values.

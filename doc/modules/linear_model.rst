@@ -624,11 +624,12 @@ jointly during the fit of the model, the regularization parameters
 *log marginal likelihood*. The scikit-learn implementation
 is based on the algorithm described in Appendix A of (Tipping, 2001)
 where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
-as suggested in (MacKay, 1992).
+as suggested in (MacKay, 1992). The initial value of the maximization procedure
+can be set with the hyperparameters ``alpha_init`` and ``lambda_init``.
 
-The remaining hyperparameters are the parameters :math:`\alpha_1`,
-:math:`\alpha_2`, :math:`\lambda_1` and :math:`\lambda_2` of the gamma priors
-over :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
+There are two more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
+:math:`\lambda_1` and :math:`\lambda_2` of the gamma prior distributions over
+:math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
 
