@@ -24,7 +24,7 @@ from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
 from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
 
 
-from sklearn.utils cimport _random 
+from ..utils cimport _random
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t

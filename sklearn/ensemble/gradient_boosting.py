@@ -1709,17 +1709,26 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         feature_importances_ : array, shape (n_features,)
+            The values of this array sum to 1, unless all trees are single node
+            trees consisting of only the root node, in which case it will be an
+            array of zeros.
         """
         self._check_initialized()
 
-        total_sum = np.zeros((self.n_features_, ), dtype=np.float64)
-        for stage in self.estimators_:
-            stage_sum = sum(tree.tree_.compute_feature_importances(
-                normalize=False) for tree in stage) / len(stage)
-            total_sum += stage_sum
+        relevant_trees = [tree
+                          for stage in self.estimators_ for tree in stage
+                          if tree.tree_.node_count > 1]
+        if not relevant_trees:
+            # degenerate case where all trees have only one node
+            return np.zeros(shape=self.n_features_, dtype=np.float64)
 
-        importances = total_sum / total_sum.sum()
-        return importances
+        relevant_feature_importances = [
+            tree.tree_.compute_feature_importances(normalize=False)
+            for tree in relevant_trees
+        ]
+        avg_feature_importances = np.mean(relevant_feature_importances,
+                                          axis=0, dtype=np.float64)
+        return avg_feature_importances / np.sum(avg_feature_importances)
 
     def _validate_y(self, y, sample_weight):
         # 'sample_weight' is not utilised but is used for
