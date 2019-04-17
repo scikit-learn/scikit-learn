@@ -2,6 +2,10 @@ import pytest
 import sys
 
 
+# Ignore flake8 (import not at top of file, etc.)
+# flake8: noqa
+
+
 @pytest.fixture
 def clean_imports():
     # Removes the relevant scikit-learn related imports (also removes from the
@@ -20,14 +24,14 @@ def clean_imports():
 
 def test_valid_import(clean_imports):
     # recommended way
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    from sklearn.experimental import enable_hist_gradient_boosting
     from sklearn.ensemble import HistGradientBoostingClassifier
 
 
 def test_valid_import_2(clean_imports):
     # recommended way, making sure ensemble can be imported before
     import sklearn.ensemble
-    from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    from sklearn.experimental import enable_hist_gradient_boosting
     from sklearn.ensemble import HistGradientBoostingClassifier
 
 
