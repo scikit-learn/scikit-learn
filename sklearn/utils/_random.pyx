@@ -19,7 +19,7 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from sklearn.utils import check_random_state
+from . import check_random_state
 
 cdef UINT32_t DEFAULT_SEED = 1
 
