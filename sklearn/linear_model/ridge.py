@@ -384,10 +384,9 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                          " 'lsqr', 'sag' or 'saga'. Got %s." % solver)
 
     if return_intercept and solver != 'sag':
-        warnings.warn("In Ridge, only 'sag' solver can directly fit the "
-                      "intercept. Solver has been "
-                      "automatically changed into 'sag'.")
-        solver = 'sag'
+        raise ValueError("In Ridge, only 'sag' solver can directly fit the "
+                         "intercept. Solver has been "
+                         "automatically changed into 'sag'.")
 
     _dtype = [np.float64, np.float32]
 

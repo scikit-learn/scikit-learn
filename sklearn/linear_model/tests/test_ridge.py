@@ -834,9 +834,7 @@ def test_ridge_fit_intercept_sparse():
     # test the solver switch and the corresponding warning
     for solver in ['saga', 'lsqr']:
         sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
-        assert_warns(UserWarning, sparse.fit, X_csr, y)
-        assert_almost_equal(dense.intercept_, sparse.intercept_)
-        assert_array_almost_equal(dense.coef_, sparse.coef_)
+        assert_raises_regex(ValueError, "In Ridge,", sparse.fit, X_csr, y)
 
 
 @pytest.mark.parametrize('return_intercept', [False, True])
@@ -862,6 +860,18 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
     X_testing = arr_type(X)
 
     alpha, atol, tol = 1e-3, 1e-4, 1e-6
+
+    if solver not in ['sag', 'auto'] and return_intercept:
+        assert_raises_regex(ValueError,
+                            "In Ridge, only 'sag' solver",
+                            ridge_regression, X_testing, y,
+                            alpha=alpha,
+                            solver=solver,
+                            sample_weight=sample_weight,
+                            return_intercept=return_intercept,
+                            tol=tol)
+        return
+
     out = ridge_regression(X_testing, y, alpha=alpha,
                            solver=solver,
                            sample_weight=sample_weight,
@@ -884,24 +894,17 @@ def test_ridge_regression_warns_with_return_intercept():
                            bias=10., random_state=42)
 
     for solver in ['sparse_cg', 'cholesky', 'svd', 'lsqr', 'saga']:
-        with pytest.warns(UserWarning, match="In Ridge, only 'sag' solver"):
-            target = ridge_regression(X, y, 1,
-                                      solver=solver,
-                                      return_intercept=True
-                                      )
-            assert len(target) == 2
-            assert target[0].shape == (2,)
 
-    with pytest.warns(None) as record:
-        target = ridge_regression(X, y, 1,
-                                  solver="sag",
-                                  return_intercept=True
-                                  )
-        assert len(target) == 2
-        assert target[0].shape == (2,)
 
-    # no warning should be raised
-    assert len(record) == 0
+        assert_raises_regex(ValueError,
+                            "In Ridge, only 'sag' solver",
+                            ridge_regression, X, y, 1, solver=solver,
+                            return_intercept=True)
+
+    target = ridge_regression(X, y, 1,
+                              solver="sag",
+                              return_intercept=True
+                              )
 
 def test_errors_and_values_helper():
     ridgecv = _RidgeGCV()
