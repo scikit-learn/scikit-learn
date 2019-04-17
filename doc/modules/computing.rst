@@ -553,6 +553,11 @@ These environment variables should be set before importing scikit-learn.
     is supported. In addition, dumps from joblib.Memory might be incompatible,
     and you might loose some caches and have to redownload some datasets.
 
+    .. deprecated:: 0.21
+
+       As of version 0.21 this parameter has no effect, vendored joblib was
+       removed and site joblib is always used.
+
 :SKLEARN_ASSUME_FINITE:
 
     Sets the default value for the `assume_finite` argument of
