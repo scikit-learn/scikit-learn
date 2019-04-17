@@ -177,7 +177,8 @@ class PCA(_BasePCA):
             run randomized SVD by the method of Halko et al.
         lobpcg :
             run Locally Optimal Block Preconditioned Conjugate Gradient
-            (LOBPCG) by Knyazev 2001 for a normal matrix of the smallest size.
+            (LOBPCG) by Knyazev 2001 for a normal matrix X'*X or X*X',
+            whichever of the two is of the smallest size.
 
         .. versionadded:: 0.18.0
 
