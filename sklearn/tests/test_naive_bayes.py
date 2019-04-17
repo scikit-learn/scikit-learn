@@ -23,7 +23,7 @@ from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
-from sklearn.naive_bayes import CategoricalNB, _old_numpy
+from sklearn.naive_bayes import CategoricalNB
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -662,8 +662,6 @@ def test_cnb():
 def test_catnb():
     # Check the ability to predict the learning set.
     clf = CategoricalNB()
-    if _old_numpy:
-        assert_raises(ValueError, clf.fit, -X, y2)
     y_pred = clf.fit(X2, y2).predict(X2)
     assert_array_equal(y_pred, y2)
 

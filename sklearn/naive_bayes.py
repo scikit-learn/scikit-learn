@@ -37,8 +37,6 @@ from .utils.validation import check_is_fitted
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
 
-_old_numpy = parse_version(np.__version__) < parse_version('1.9.0')
-
 
 class BaseNB(BaseEstimator, ClassifierMixin, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators
@@ -1070,13 +1068,6 @@ class CategoricalNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
         self.handle_unknown = handle_unknown
-        self._check_params = dict(accept_sparse=False)
-        if _old_numpy:
-            self._check_params.update(dtype=[np.int64], warn_on_dtype=True)
-            warnings.warn(
-                'numpy is older than 1.9.0. Therefore assure that X is'
-                'castable to int without loss of information and all '
-                'features of X are greater or equal 0.')
 
     def fit(self, X, y):
         """Fit Naive Bayes classifier according to X, y
@@ -1137,25 +1128,16 @@ class CategoricalNB(BaseDiscreteNB):
                                                       sample_weight=None)
 
     def _check_X(self, X):
-        if _old_numpy:
-            self._check_old_numpy(X)
-        return check_array(X, **self._check_params)
+        return check_array(X, accept_sparse=False)
 
     def _check_X_y(self, X, y):
-        if _old_numpy:
-            self._check_old_numpy(X)
-        return check_X_y(X, y, **self._check_params)
+        return check_X_y(X, y, accept_sparse=False)
 
     def _check_settings(self):
         if self.handle_unknown not in ('ignore', 'warn', 'raise'):
             raise ValueError("The attribute 'handle_unknown' is '{}' and "
                              "should either be 'ignore', 'warn' or 'raise'"
                              .format(self.handle_unknown))
-
-    def _check_old_numpy(self, X):
-        # np.bincount takes only int dtype and non negative values
-        if np.any(X < 0):
-            raise ValueError("All values of X have to be non-negative.")
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
@@ -1177,14 +1159,6 @@ class CategoricalNB(BaseDiscreteNB):
                                    self.cat_count_[i],
                                    self.feature_cat_index_mapping_[i])
 
-    def _count_cats(self, X_feature):
-        if _old_numpy:
-            bins = np.bincount(X_feature)
-            non_zero_bins = np.nonzero(bins)[0]
-            return non_zero_bins, bins[non_zero_bins]
-        else:
-            return np.unique(X_feature, return_counts=True)
-
     def _update_cat_mapping(self, cat_mapping, cats):
         for cat in cats:
             cat_mapping.setdefault(cat, len(cat_mapping))
@@ -1198,10 +1172,8 @@ class CategoricalNB(BaseDiscreteNB):
     def _update_cat_count(self, X_feature, Y, cat_count, cat_mapping):
         for j in range(self.class_count_.shape[0]):
             X_feature_class = X_feature[Y[:, j] == 1]
-            # np.bincount returns None for empty X_feature_class
-            if _old_numpy and X_feature_class.size == 0:
-                continue
-            class_cats, n_feature_class = self._count_cats(X_feature_class)
+            class_cats, n_feature_class = np.unique(X_feature_class,
+                                                    return_counts=True)
             indices = [cat_mapping[cat] for cat in class_cats]
             cat_count[j, indices] = n_feature_class
 
