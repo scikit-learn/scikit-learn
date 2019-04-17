@@ -19,7 +19,6 @@ Across the module, we designate the vector :math:`w = (w_1,
 To perform classification with generalized linear models, see
 :ref:`Logistic_regression`.
 
-
 .. _ordinary_least_squares:
 
 Ordinary Least Squares
@@ -27,8 +26,8 @@ Ordinary Least Squares
 
 :class:`LinearRegression` fits a linear model with coefficients
 :math:`w = (w_1, ..., w_p)` to minimize the residual sum
-of squares between the observed responses in the dataset, and the
-responses predicted by the linear approximation. Mathematically it
+of squares between the observed targets in the dataset, and the
+targets predicted by the linear approximation. Mathematically it
 solves a problem of the form:
 
 .. math:: \min_{w} || X w - y||_2^2
@@ -56,7 +55,7 @@ independence of the features. When features are correlated and the
 columns of the design matrix :math:`X` have an approximate linear
 dependence, the design matrix becomes close to singular
 and as a result, the least-squares estimate becomes highly sensitive
-to random errors in the observed response, producing a large
+to random errors in the observed target, producing a large
 variance. This situation of *multicollinearity* can arise, for
 example, when data are collected without an experimental design.
 
@@ -163,7 +162,7 @@ Lasso
 The :class:`Lasso` is a linear model that estimates sparse coefficients.
 It is useful in some contexts due to its tendency to prefer solutions
 with fewer non-zero coefficients, effectively reducing the number of
-variables upon which the given solution is dependent. For this reason, the
+features upon which the given solution is dependent. For this reason, the
 Lasso and its variants are fundamental to the field of compressed sensing.
 Under certain conditions, it can recover the exact set of non-zero
 coefficients (see
@@ -172,7 +171,7 @@ coefficients (see
 Mathematically, it consists of a linear model with an added regularization term.
 The objective function to minimize is:
 
-.. math::  \min_{w} { \frac{1}{2n_{samples}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
+.. math::  \min_{w} { \frac{1}{2n_{\text{samples}}} ||X w - y||_2 ^ 2 + \alpha ||w||_1}
 
 The lasso estimate thus solves the minimization of the
 least-squares penalty with :math:`\alpha ||w||_1` added, where
@@ -225,7 +224,7 @@ the duality gap computation used for convergence control.
 Setting regularization parameter
 --------------------------------
 
-The ``alpha`` parameter controls the degree of sparsity of the esimated
+The ``alpha`` parameter controls the degree of sparsity of the estimated
 coefficients.
 
 Using cross-validation
@@ -423,7 +422,7 @@ Least-angle regression (LARS) is a regression algorithm for
 high-dimensional data, developed by Bradley Efron, Trevor Hastie, Iain
 Johnstone and Robert Tibshirani. LARS is similar to forward stepwise
 regression. At each step, it finds the feature most correlated with the
-response. When there are multiple features having equal correlation, instead
+target. When there are multiple features having equal correlation, instead
 of continuing along the same feature, it proceeds in a direction equiangular
 between the features.
 
@@ -439,7 +438,7 @@ The advantages of LARS are:
   - It produces a full piecewise linear solution path, which is
     useful in cross-validation or similar attempts to tune the model.
 
-  - If two variables are almost equally correlated with the response,
+  - If two features are almost equally correlated with the target,
     then their coefficients should increase at approximately the same
     rate. The algorithm thus behaves as intuition would expect, and
     also is more stable.
@@ -496,7 +495,7 @@ Mathematical formulation
 ------------------------
 
 The algorithm is similar to forward stepwise regression, but instead
-of including variables at each step, the estimated parameters are
+of including features at each step, the estimated coefficients are
 increased in a direction equiangular to each one's correlations with
 the residual.
 
@@ -592,7 +591,6 @@ The disadvantages of Bayesian regression include:
 
     - Inference of the model can be time consuming.
 
-
 .. topic:: References
 
  * A good introduction to Bayesian methods is given in C. Bishop: Pattern
@@ -654,7 +652,6 @@ After being fitted, the model can then be used to predict new values::
 
     >>> reg.predict([[1, 0.]])
     array([0.50000013])
-
 
 The coefficients :math:`w` of the model can be accessed::
 
@@ -724,7 +721,6 @@ ARD is also known in the literature as *Sparse Bayesian Learning* and
     .. [4] Tristan Fletcher: `Relevance Vector Machines explained <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.651.8603&rep=rep1&type=pdf>`_
 
 
-
 .. _Logistic_regression:
 
 Logistic regression
@@ -742,8 +738,8 @@ class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
 Rest, or multinomial logistic regression with optional :math:`\ell_1`, :math:`\ell_2`
 or Elastic-Net regularization. Note that regularization is applied by default.
 
-As an optimization problem, binary class :math:`\ell_2` penalized logistic regression
-minimizes the following cost function:
+As an optimization problem, binary class :math:`\ell_2` penalized logistic
+regression minimizes the following cost function:
 
 .. math:: \min_{w, c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
@@ -760,7 +756,7 @@ Elastic-Net regularization is a combination of :math:`\ell_1` and
 where :math:`\rho` controls the strength of :math:`\ell_1` regularization vs.
 :math:`\ell_2` regularization (it corresponds to the `l1_ratio` parameter).
 
-Note that, in this notation, it's assumed that the observation :math:`y_i` takes
+Note that, in this notation, it's assumed that the target :math:`y_i` takes
 values in the set :math:`{-1, 1}` at trial :math:`i`. We can also see that
 Elastic-Net is equivalent to :math:`\ell_1` when :math:`\rho = 1` and equivalent
 to :math:`\ell_2` when :math:`\rho=0`.
@@ -782,7 +778,7 @@ weights to zero) model.
 
 The "lbfgs", "sag" and "newton-cg" solvers only support :math:`\ell_2`
 regularization or no regularization, and are found to converge faster for some
-high dimensional data. Setting `multi_class` to "multinomial" with these solvers
+high-dimensional data. Setting `multi_class` to "multinomial" with these solvers
 learns a true multinomial logistic regression model [5]_, which means that its
 probability estimates should be better calibrated than the default "one-vs-rest"
 setting.
@@ -1028,7 +1024,7 @@ in these settings.
 
   * :ref:`Theil Sen <theil_sen_regression>` will cope better with
     medium-size outliers in the X direction, but this property will
-    disappear in large dimensional settings.
+    disappear in high-dimensional settings.
 
  When in doubt, use :ref:`RANSAC <ransac_regression>`.
 
@@ -1250,7 +1246,7 @@ the features in second-order polynomials, so that the model looks like this:
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2 + w_3 x_1 x_2 + w_4 x_1^2 + w_5 x_2^2
 
 The (sometimes surprising) observation is that this is *still a linear model*:
-to see this, imagine creating a new variable
+to see this, imagine creating a new set of features
 
 .. math::  z = [x_1, x_2, x_1 x_2, x_1^2, x_2^2]
 
