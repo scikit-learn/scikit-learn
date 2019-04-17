@@ -39,6 +39,9 @@ from sklearn.utils.testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LinearRegression
+from sklearn.svm import NuSVR
 
 
 GRADIENT_BOOSTING_ESTIMATORS = [GradientBoostingClassifier,
@@ -1378,6 +1381,33 @@ def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
         gb(init=init_est).fit(X, y, sample_weight=sample_weight)
 
 
+def test_gradient_boosting_with_init_pipeline():
+    # Check that the init estimator can be a pipeline (see issue #13466)
+
+    X, y = make_regression(random_state=0)
+    init = make_pipeline(LinearRegression())
+    gb = GradientBoostingRegressor(init=init)
+    gb.fit(X, y)  # pipeline without sample_weight works fine
+
+    with pytest.raises(
+            ValueError,
+            match='The initial estimator Pipeline does not support sample '
+                  'weights'):
+        gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
+
+    # Passing sample_weight to a pipeline raises a ValueError. This test makes
+    # sure we make the distinction between ValueError raised by a pipeline that
+    # was passed sample_weight, and a ValueError raised by a regular estimator
+    # whose input checking failed.
+    with pytest.raises(
+            ValueError,
+            match='nu <= 0 or nu > 1'):
+        # Note that NuSVR properly supports sample_weight
+        init = NuSVR(gamma='auto', nu=1.5)
+        gb = GradientBoostingRegressor(init=init)
+        gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
+
+
 @pytest.mark.parametrize('estimator, missing_method', [
     (GradientBoostingClassifier(init=LinearSVC()), 'predict_proba'),
     (GradientBoostingRegressor(init=OneHotEncoder()), 'predict')
@@ -1410,3 +1440,12 @@ def test_early_stopping_n_classes():
     # No error if we let training data be big enough
     gb = GradientBoostingClassifier(n_iter_no_change=5, random_state=0,
                                     validation_fraction=4)
+
+
+def test_gbr_degenerate_feature_importances():
+    # growing an ensemble of single node trees. See #13620
+    X = np.zeros((10, 10))
+    y = np.ones((10,))
+    gbr = GradientBoostingRegressor().fit(X, y)
+    assert_array_equal(gbr.feature_importances_,
+                       np.zeros(10, dtype=np.float64))

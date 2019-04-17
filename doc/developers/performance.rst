@@ -328,6 +328,27 @@ memory alignment, direct blas calls...
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
 - http://conference.scipy.org/proceedings/SciPy2009/paper_2/
 
+Using OpenMP
+------------
+
+Since scikit-learn can be built without OpenMP support, it's necessary to
+protect each direct call to OpenMP. This can be done using the following
+syntax::
+
+  # importing OpenMP
+  IF SKLEARN_OPENMP_SUPPORTED:
+      cimport openmp
+
+  # calling OpenMP
+  IF SKLEARN_OPENMP_SUPPORTED:
+      max_threads = openmp.omp_get_max_threads()
+  ELSE:
+      max_threads = 1
+
+.. note::
+
+   Protecting the parallel loop, ``prange``, is already done by cython.
+
 
 .. _profiling-compiled-extension:
 
