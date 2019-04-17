@@ -18,7 +18,6 @@ are supervised learning methods based on applying Bayes' theorem with strong
 import warnings
 
 from abc import ABCMeta, abstractmethod
-from pkg_resources import parse_version
 
 
 import numpy as np
