@@ -1,5 +1,3 @@
-# We need the absolute_import to avoid the local joblib to override the
-# site one
 import os as _os
 import warnings as _warnings
 
