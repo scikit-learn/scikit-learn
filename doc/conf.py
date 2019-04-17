@@ -265,7 +265,7 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
 
 # enable experimental module so that the new GBDTs estimators can be
 # discovered properly by sphinx
-from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 
 
 def make_carousel_thumbs(app, exception):
