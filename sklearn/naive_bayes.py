@@ -20,7 +20,6 @@ import warnings
 from abc import ABCMeta, abstractmethod
 from pkg_resources import parse_version
 
-from collections import defaultdict
 
 import numpy as np
 from scipy.sparse import issparse
@@ -550,7 +549,7 @@ class BaseDiscreteNB(BaseNB):
         -------
         self : object
         """
-        X = self._check_X(X)
+        X, y = self._check_X_y(X, y)
         _, n_features = X.shape
 
         if _check_partial_fit_first_call(self, classes):
@@ -1067,15 +1066,17 @@ class CategoricalNB(BaseDiscreteNB):
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
                  handle_unknown='warn'):
-        if _old_numpy:
-            warnings.warn(
-                'numpy is older than 1.9.0. Therefore assure that X is'
-                'castable to int without loss of information and all '
-                'features of X are greater or equal 0.')
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
         self.handle_unknown = handle_unknown
+        self._check_params = dict(accept_sparse=False)
+        if _old_numpy:
+            self._check_params.update(dtype=[np.int64], warn_on_dtype=True)
+            warnings.warn(
+                'numpy is older than 1.9.0. Therefore assure that X is'
+                'castable to int without loss of information and all '
+                'features of X are greater or equal 0.')
 
     def fit(self, X, y):
         """Fit Naive Bayes classifier according to X, y
@@ -1138,16 +1139,12 @@ class CategoricalNB(BaseDiscreteNB):
     def _check_X(self, X):
         if _old_numpy:
             self._check_old_numpy(X)
-            return check_array(X, accept_sparse=False, dtype=[np.int64],
-                               warn_on_dtype=True)
-        return check_array(X, accept_sparse=False)
+        return check_array(X, **self._check_params)
 
     def _check_X_y(self, X, y):
         if _old_numpy:
             self._check_old_numpy(X)
-            return check_X_y(X, y, accept_sparse=False, dtype=[np.int64],
-                             warn_on_dtype=False)
-        return check_X_y(X, y, accept_sparse=False)
+        return check_X_y(X, y, **self._check_params)
 
     def _check_settings(self):
         if self.handle_unknown not in ('ignore', 'warn', 'raise'):
@@ -1156,35 +1153,31 @@ class CategoricalNB(BaseDiscreteNB):
                              .format(self.handle_unknown))
 
     def _check_old_numpy(self, X):
-        # np.bincount takes only int dtype and needs all values to be
-        # non negative
+        # np.bincount takes only int dtype and non negative values
         if np.any(X < 0):
-            raise ValueError("All values of X have to be "
-                             "non-negative.")
+            raise ValueError("All values of X have to be non-negative.")
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.category_count_ = [np.zeros((self.class_count_.shape[0], 0))
-                                for _ in range(n_features)]
-        self.feature_cat_index_mapping_ = [defaultdict(None) for _ in
-                                           range(n_features)]
+        self.cat_count_ = [np.zeros((self.class_count_.shape[0], 0))
+                           for _ in range(n_features)]
+        self.feature_cat_index_mapping_ = [{} for _ in range(n_features)]
 
     def _count(self, X, Y):
         self.class_count_ += Y.sum(axis=0)
         for i in range(self.n_features_):
             X_feature = X[:, i]
-            categories = np.unique(X_feature)
-            self._update_mapping(self.feature_cat_index_mapping_[i],
-                                 categories)
+            cats = np.unique(X_feature)
+            self._update_cat_mapping(self.feature_cat_index_mapping_[i], cats)
             # update category_count_dimensions in case partial_fit is used, to
             # to account for unseen categories
-            self.category_count_[i] = self._update_category_count_dims(
-                self.category_count_[i], self.feature_cat_index_mapping_[i])
-            self._update_category_count(X_feature, Y,
-                                        self.category_count_[i],
-                                        self.feature_cat_index_mapping_[i])
+            self.cat_count_[i] = self._update_cat_count_dims(
+                self.cat_count_[i], self.feature_cat_index_mapping_[i])
+            self._update_cat_count(X_feature, Y,
+                                   self.cat_count_[i],
+                                   self.feature_cat_index_mapping_[i])
 
-    def _count_categories(self, X_feature):
+    def _count_cats(self, X_feature):
         if _old_numpy:
             bins = np.bincount(X_feature)
             non_zero_bins = np.nonzero(bins)[0]
@@ -1192,42 +1185,36 @@ class CategoricalNB(BaseDiscreteNB):
         else:
             return np.unique(X_feature, return_counts=True)
 
-    def _update_mapping(self, cat_mapping, categories):
-        cat_mapping.default_factory = cat_mapping.__len__
-        for category in categories:
-            cat_mapping[category]
-        cat_mapping.default_factory = None
+    def _update_cat_mapping(self, cat_mapping, cats):
+        for cat in cats:
+            cat_mapping.setdefault(cat, len(cat_mapping))
 
-    def _update_category_count_dims(self, cat_count, cat_mapping):
+    def _update_cat_count_dims(self, cat_count, cat_mapping):
         diff = len(cat_mapping) - cat_count.shape[1]
         if diff > 0:
-            b = np.zeros((self.class_count_.shape[0], len(cat_mapping)))
-            b[:, :cat_count.shape[1]] = cat_count
-            return b
+            return np.pad(cat_count, [(0, 0), (0, diff)], 'constant')
         return cat_count
 
-    def _update_category_count(self, X_feature, Y, cat_count, cat_mapping):
+    def _update_cat_count(self, X_feature, Y, cat_count, cat_mapping):
         for j in range(self.class_count_.shape[0]):
             X_feature_class = X_feature[Y[:, j] == 1]
-            if len(X_feature_class) == 0:
+            # np.bincount returns None for empty X_feature_class
+            if _old_numpy and X_feature_class.size == 0:
                 continue
-            class_cats, n_feature_class = (
-                self._count_categories(X_feature_class))
-            indices = [cat_mapping[category] for category
-                       in class_cats]
+            class_cats, n_feature_class = self._count_cats(X_feature_class)
+            indices = [cat_mapping[cat] for cat in class_cats]
             cat_count[j, indices] = n_feature_class
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = {}
         for i in range(self.n_features_):
-            smoothed_cat_count = self.category_count_[i] + alpha
+            smoothed_cat_count = self.cat_count_[i] + alpha
             smoothed_class_count = smoothed_cat_count.sum(axis=1)
             feature_log_prob[i] = (np.log(smoothed_cat_count) -
                                    np.log(smoothed_class_count.reshape(-1, 1)))
         self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
-
         if not X.shape[1] == self.n_features_:
             raise ValueError("Expected input with %d features, got %d instead"
                              .format(self.n_features_, X.shape[1]))
@@ -1236,21 +1223,21 @@ class CategoricalNB(BaseDiscreteNB):
             X_feature = X[:, i]
             indices = []
             mapping = self.feature_cat_index_mapping_[i]
-            for sample, category in enumerate(X_feature):
+            for sample, cat in enumerate(X_feature):
                 try:
-                    indices.append(mapping[category])
+                    indices.append(mapping[cat])
                 except KeyError:
                     if self.handle_unknown == 'warn':
                         warnings.warn(
                             "Category {} not expected for feature {} "
                             "of features 0 - {}."
-                            .format(category, i, self.n_features_-1)
+                            .format(cat, i, self.n_features_-1)
                         )
                     elif self.handle_unknown == 'error':
                         raise KeyError(
                             "Category {} not expected for feature {} "
                             "of features 0 - {}."
-                            .format(category, i, self.n_features_-1)
+                            .format(cat, i, self.n_features_-1)
                         )
             # indices length is 0, if all categories have not been seen in the
             # training set

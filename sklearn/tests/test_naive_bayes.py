@@ -212,9 +212,9 @@ def test_discretenb_partial_fit(cls):
     clf2.partial_fit([[0, 1], [1, 0]], [0, 1], classes=[0, 1])
     assert_array_equal(clf1.class_count_, clf2.class_count_)
     if cls == CategoricalNB:
-        for i in range(len(clf1.category_count_)):
-            assert_array_equal(clf1.category_count_[i],
-                               clf2.category_count_[i])
+        for i in range(len(clf1.cat_count_)):
+            assert_array_equal(clf1.cat_count_[i],
+                               clf2.cat_count_[i])
     else:
         assert_array_equal(clf1.feature_count_, clf2.feature_count_)
 
@@ -226,11 +226,11 @@ def test_discretenb_partial_fit(cls):
         # the categories for each feature of CategoricalNB are mapped to an
         # index chronologically with each call of partial fit and therefore
         # the category_count matrices cannot be compared for equality
-        for i in range(len(clf1.category_count_)):
-            assert_array_equal(clf1.category_count_[i].shape,
-                               clf3.category_count_[i].shape)
-            assert_array_equal(np.sum(clf1.category_count_[i], axis=1),
-                               np.sum(clf3.category_count_[i], axis=1))
+        for i in range(len(clf1.cat_count_)):
+            assert_array_equal(clf1.cat_count_[i].shape,
+                               clf3.cat_count_[i].shape)
+            assert_array_equal(np.sum(clf1.cat_count_[i], axis=1),
+                               np.sum(clf3.cat_count_[i], axis=1))
 
         # assert 1st feature
         # get indices for categories 0 and 1 for the first class, class 0
@@ -238,10 +238,10 @@ def test_discretenb_partial_fit(cls):
         ix1 = clf1.feature_cat_index_mapping_[0][1]
         # assert category 0 occurs 1x in the first class and 0x in the 2nd
         # class
-        assert_array_equal(clf1.category_count_[0][ix0], np.array([1, 0]))
+        assert_array_equal(clf1.cat_count_[0][ix0], np.array([1, 0]))
         # assert category 1 occurs 0x in the first class and 1x in the 2nd
         # class
-        assert_array_equal(clf1.category_count_[0][ix1], np.array([0, 1]))
+        assert_array_equal(clf1.cat_count_[0][ix1], np.array([0, 1]))
 
         # assert 2nd feature
         # get indices for categories 0 and 1 for the first class, class 0
@@ -249,10 +249,10 @@ def test_discretenb_partial_fit(cls):
         ix1 = clf1.feature_cat_index_mapping_[1][1]
         # assert category 0 occurs 0x in the first class and 1x in the 2nd
         # class
-        assert_array_equal(clf1.category_count_[1][ix0], np.array([0, 1]))
+        assert_array_equal(clf1.cat_count_[1][ix0], np.array([0, 1]))
         # assert category 1 occurs 1x in the first class and 0x in the 2nd
         # class
-        assert_array_equal(clf1.category_count_[1][ix1], np.array([1, 0]))
+        assert_array_equal(clf1.cat_count_[1][ix1], np.array([1, 0]))
 
     else:
         assert_array_equal(clf1.feature_count_, clf3.feature_count_)
