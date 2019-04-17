@@ -122,7 +122,7 @@ else:
 
 # global variable to change the pickler behavior
 try:
-    from ....externals import cloudpickle  # noqa: F401
+    from sklearn.externals.joblib.externals import cloudpickle  # noqa: F401
     DEFAULT_ENV = "cloudpickle"
 except ImportError:
     # If cloudpickle is not present, fallback to pickle
@@ -149,7 +149,7 @@ def set_loky_pickler(loky_pickler=None):
         return
 
     if loky_pickler == "cloudpickle":
-        from ....externals.cloudpickle import CloudPickler as loky_pickler_cls
+        from sklearn.externals.joblib.externals.cloudpickle import CloudPickler as loky_pickler_cls
     else:
         try:
             from importlib import import_module
