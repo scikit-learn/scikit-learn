@@ -855,26 +855,26 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
     X = rng.rand(1000, 3)
     true_coefs = [1, 2, 0.1]
     y = np.dot(X, true_coefs)
-    intercept = 0.
+    true_intercept = 0.
     if return_intercept:
-        intercept = 10000.
-    y += intercept
+        true_intercept = 10000.
+    y += true_intercept
     X_testing = arr_type(X)
 
     alpha, atol, tol = 1e-3, 1e-4, 1e-6
-    target = ridge_regression(X_testing, y, alpha=alpha,
-                              solver=solver,
-                              sample_weight=sample_weight,
-                              return_intercept=return_intercept,
-                              tol=tol,
-                              )
+    out = ridge_regression(X_testing, y, alpha=alpha,
+                           solver=solver,
+                           sample_weight=sample_weight,
+                           return_intercept=return_intercept,
+                           tol=tol,
+                           )
 
     if return_intercept:
-        coef, intercept = target
+        coef, intercept = out
         assert_allclose(coef, true_coefs, rtol=0, atol=atol)
-        assert_allclose(intercept, intercept, rtol=0, atol=atol)
+        assert_allclose(intercept, true_intercept, rtol=0, atol=atol)
     else:
-        assert_allclose(target, true_coefs, rtol=0, atol=atol)
+        assert_allclose(out, true_coefs, rtol=0, atol=atol)
 
 
 def test_ridge_regression_warns_with_return_intercept():
