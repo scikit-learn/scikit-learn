@@ -347,6 +347,10 @@ Support for Python 3.4 and below has been officially dropped.
   ``solver=auto`` (default) or any other solver different from ``sag``.
   :issue:`13363` by :user:`Bartosz Telenczuk <btel>`
 
+- |Fix| :func:`linear_model.ridge.ridge_regression` will now raise an exception
+  if ``return_intercept=True`` and solver is different from ``sag``. Previously,
+  only warning was issued. :issue:`13363` by :user:`Bartosz Telenczuk <btel>`
+
 - |API| :func:`linear_model.ridge.ridge_regression` will choose ``sparse_cg``
   solver for sparse inputs when ``solver=auto`` and ``sample_weight``
   is provided (previously `cholesky` solver was selected). :issue:`13363`
