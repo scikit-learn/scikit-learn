@@ -639,6 +639,16 @@ Multiple modules
   :issue:`13422` by :user:`Madhura Parikh <jdnc>` and
   :user:`Clément Doumouro <ClemDoum>`.
 
+
+Dependencies
+............
+
+- |Enhancement| Joblib is no longer vendored in scikit-learn, and becomes a
+  dependency. Minimal supported version is joblib 0.11, however using
+  version >= 0.13 is strongly recommended. 
+  :issue:`13531` by :user:`Roman Yurchak <rth>`.
+
+
 Changes to estimator checks
 ---------------------------
 
