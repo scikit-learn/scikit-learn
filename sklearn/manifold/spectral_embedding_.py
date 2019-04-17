@@ -21,13 +21,6 @@ from ..utils.extmath import _deterministic_vector_sign_flip
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 
-if _parse_version(scipy__version__) >= (1, 3):
-    from scipy.sparse.linalg import lobpcg
-else:
-    # Backport of lobpcg functionality from scipy 1.3.0, can be removed
-    # once support for sp_version < (1, 3) is dropped
-    from ..externals._lobpcg import lobpcg
-
 
 def _parse_version(version_string):
     version = []
@@ -38,6 +31,14 @@ def _parse_version(version_string):
             # x may be of the form dev-1ea1592
             version.append(x)
     return tuple(version)
+
+
+if _parse_version(scipy__version__) >= (1, 3):
+    from scipy.sparse.linalg import lobpcg
+else:
+    # Backport of lobpcg functionality from scipy 1.3.0, can be removed
+    # once support for sp_version < (1, 3) is dropped
+    from ..externals._lobpcg import lobpcg
 
 
 def _graph_connected_component(graph, node_id):
