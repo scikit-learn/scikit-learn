@@ -85,6 +85,9 @@ Support for Python 3.4 and below has been officially dropped.
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
 
+- |Fix| Fixed a bug where :class:`cluster.Birch` could occasionally raise an
+  AttributeError. :issue:`13651` by `Joel Nothman`_.
+
 - |API| The ``n_components_`` attribute in :class:`cluster.AgglomerativeClustering`
   and :class:`cluster.FeatureAgglomeration` has been renamed to
   ``n_connected_components_``.
@@ -194,6 +197,22 @@ Support for Python 3.4 and below has been officially dropped.
   prediction step, thus capping the memory usage. :issue:`13283` by
   `Nicolas Goix`_.
 
+- |Fix| The values of ``feature_importances_`` in all random forest based
+  models (i.e.
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`,
+  :class:`ensemble.GradientBoostingClassifier`, and
+  :class:`ensemble.GradientBoostingRegressor`) now:
+
+  - sum up to ``1``
+  - all the single node trees in feature importance calculation are ignored
+  - in case all trees have only one single node (i.e. a root node),
+    feature importances will be an array of all zeros.
+  :issue:`13636` and :issue:`13620` by `Adrin Jalali`_.
+
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor`, which didn't support
   scikit-learn estimators as the initial estimator. Also added support of
@@ -265,11 +284,11 @@ Support for Python 3.4 and below has been officially dropped.
   used to be kept if there were no missing values at all. :issue:`13562` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Feature| The :class:`impute.SimpleImputer` has a new parameter
-  ``'add_indicator'``, which simply stacks a :class:`impute.MissingIndicator`
-  transform into the output of the imputer's transform. That allows a predictive
-  estimator to account for missingness. :issue:`12583` by
-  :user:`Danylo Baibak <DanilBaibak>`.
+- |Feature| The :class:`impute.SimpleImputer` and :class:`IterativeImputer` have
+  a new parameter ``'add_indicator'``, which simply stacks a
+  :class:`impute.MissingIndicator` transform into the output of the imputer's
+  transform. That allows a predictive estimator to account for missingness.
+  :issue:`12583`, :issue:`13601` by :user:`Danylo Baibak <DanilBaibak>`.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -392,6 +411,13 @@ Support for Python 3.4 and below has been officially dropped.
   it is otherwise identical to accuracy.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
+
+- |Enhancement| Added `beta` parameter to
+  :func:`metrics.cluster.supervised.homogeneity_completeness_v_measure` and
+  :func:`metrics.cluster.supervised.v_measure_score` to configure the
+  tradeoff between homogeneity and completeness.
+  :issue:`13607` by :user:`Stephane Couvreur <scouvreur>` and
+  and :user:`Ivan Sanchez <ivsanro1>`.
 
 - |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
