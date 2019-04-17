@@ -18,7 +18,7 @@ rm -rf $INSTALL_FOLDER
 # Needed to rewrite the doctests
 # Note: BSD sed -i needs an argument unders OSX
 # so first renaming to .bak and then deleting backup files
-find joblib -name "*.py" | xargs sed -i.bak "s/from joblib/from .joblib/"
+find joblib -name "*.py" | xargs sed -i.bak "s/from joblib/from sklearn.externals.joblib/"
 find joblib -name "*.bak" | xargs rm
 
 # Remove the tests folders to speed-up test time for scikit-learn.
