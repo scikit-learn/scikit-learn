@@ -29,7 +29,9 @@ for the California housing dataset, with a :class:`GradientBoostingRegressor
 One-way PDPs tell us about the interaction between the target response and
 the target feature (e.g. linear, non-linear). The upper left plot in the
 above figure shows the effect of the median income in a district on the
-median house price; we can clearly see a linear relationship among them.
+median house price; we can clearly see a linear relationship among them. Note
+that PDPs assume that the target features are independent from the complement
+features, and this assumption is often violated in practice.
 
 PDPs with two target features show the interactions among the two features.
 For example, the two-variable PDP in the above figure shows the dependence

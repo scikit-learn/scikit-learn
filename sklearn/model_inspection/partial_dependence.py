@@ -177,7 +177,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     return averaged_predictions
 
 
-def partial_dependence(est, features, X, response_method='auto',
+def partial_dependence(estimator, X, features, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
                        method='auto'):
     """Partial dependence of ``features``.
@@ -190,16 +190,17 @@ def partial_dependence(est, features, X, response_method='auto',
 
     Parameters
     ----------
-    est : BaseEstimator
-        A fitted classification or regression model. Multioutput-multiclass
-        classifiers are not supported.
-    features : list or array-like of int
-        The target features for which the partial dependency should be
-        computed.
+    estimator : BaseEstimator
+        A fitted estimator object implementing `predict`, `predict_proba`,
+        or `decision_function`. Multioutput-multiclass classifiers are not
+        supported.
     X : array-like, shape=(n_samples, n_features)
         ``X`` is used both to generate a grid of values for the
         ``features``, and to compute the averaged predictions when
         method is 'brute'.
+    features : list or array-like of int
+        The target features for which the partial dependency should be
+        computed.
     response_method : 'auto', 'predict_proba' or 'decision_function', \
             optional (default='auto') :
         Specifies whether to use :term:`predict_proba` or
@@ -281,11 +282,11 @@ def partial_dependence(est, features, X, response_method='auto',
 
     """
 
-    if not (is_classifier(est) or is_regressor(est)):
+    if not (is_classifier(estimator) or is_regressor(estimator)):
         raise ValueError('est must be a fitted regressor or classifier.')
 
-    if (hasattr(est, 'classes_') and
-            isinstance(est.classes_[0], np.ndarray)):
+    if (hasattr(estimator, 'classes_') and
+            isinstance(estimator.classes_[0], np.ndarray)):
         raise ValueError('Multiclass-multioutput estimators are not supported')
 
     X = check_array(X)
@@ -296,7 +297,7 @@ def partial_dependence(est, features, X, response_method='auto',
             'response_method {} is invalid. Accepted response_method names '
             'are {}.'.format(response_method, ', '.join(accepted_responses)))
 
-    if is_regressor(est) and response_method != 'auto':
+    if is_regressor(estimator) and response_method != 'auto':
         raise ValueError(
             "The response_method parameter is ignored for regressors and "
             "must be 'auto'."
@@ -308,13 +309,13 @@ def partial_dependence(est, features, X, response_method='auto',
                 method, ', '.join(accepted_methods)))
 
     if method == 'auto':
-        if isinstance(est, BaseGradientBoosting) and est.init is None:
+        if isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
             method = 'recursion'
         else:
             method = 'brute'
 
     if method == 'recursion':
-        if not isinstance(est, BaseGradientBoosting):
+        if not isinstance(estimator, BaseGradientBoosting):
             raise ValueError(
                 'est must be an instance of BaseGradientBoosting '
                 'for the "recursion" method. Try using method="brute".')
@@ -326,10 +327,10 @@ def partial_dependence(est, features, X, response_method='auto',
                 "With the 'recursion' method, the response_method must be "
                 "'decision_function'. Got {}.".format(response_method)
             )
-        check_is_fitted(est, 'estimators_',
+        check_is_fitted(estimator, 'estimators_',
                         msg='est parameter must be a fitted estimator')
         # Note: if method is brute, this check is done at prediction time
-        n_features = est.n_features_
+        n_features = estimator.n_features_
     else:
         n_features = X.shape[1]
 
@@ -341,11 +342,11 @@ def partial_dependence(est, features, X, response_method='auto',
     grid, values = _grid_from_X(X[:, features], percentiles,
                                 grid_resolution)
     if method == 'brute':
-        averaged_predictions = _partial_dependence_brute(est, grid,
+        averaged_predictions = _partial_dependence_brute(estimator, grid,
                                                          features, X,
                                                          response_method)
     else:
-        averaged_predictions = _partial_dependence_recursion(est, grid,
+        averaged_predictions = _partial_dependence_recursion(estimator, grid,
                                                              features)
 
     # reshape averaged_predictions to

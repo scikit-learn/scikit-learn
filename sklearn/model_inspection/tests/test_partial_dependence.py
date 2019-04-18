@@ -73,8 +73,8 @@ def test_output_shape(Estimator, method, data, grid_resolution,
     (X, y), n_targets = data
 
     est.fit(X, y)
-    pdp, axes = partial_dependence(est, features=features,
-                                   X=X, method=method,
+    pdp, axes = partial_dependence(est, X=X, features=features,
+                                   method=method,
                                    grid_resolution=grid_resolution)
 
     expected_pdp_shape = (n_targets, *[grid_resolution
@@ -204,10 +204,10 @@ def test_recursion_decision_function(target_feature):
     est = GradientBoostingClassifier(random_state=0, loss='deviance')
     est.fit(X, y)
 
-    preds_1, _ = partial_dependence(est, target_feature, X,
+    preds_1, _ = partial_dependence(est, X, [target_feature],
                                     response_method='decision_function',
                                     method='recursion')
-    preds_2, _ = partial_dependence(est, target_feature, X,
+    preds_2, _ = partial_dependence(est, X, [target_feature],
                                     response_method='decision_function',
                                     method='brute')
 
@@ -269,7 +269,7 @@ def test_multiclass_multioutput(Estimator):
     with pytest.raises(
             ValueError,
             match="Multiclass-multioutput estimators are not supported"):
-        partial_dependence(est, [0], X=X)
+        partial_dependence(est, X, [0])
 
 
 def test_partial_dependence_input():
@@ -285,18 +285,18 @@ def test_partial_dependence_input():
     with pytest.raises(
             ValueError,
             match="est must be a fitted regressor or classifier"):
-        partial_dependence(KMeans(), [0], X)
+        partial_dependence(KMeans(), X, [0])
 
     with pytest.raises(
             ValueError,
             match='The response_method parameter is ignored for regressors'):
-        partial_dependence(lr, [0], X, response_method='predict_proba')
+        partial_dependence(lr, X, [0], response_method='predict_proba')
 
     with pytest.raises(
             ValueError,
             match="With the 'recursion' method, the response_method must be "
                   "'decision_function'."):
-        partial_dependence(gbc, [0], X, response_method='predict_proba',
+        partial_dependence(gbc, X, [0], response_method='predict_proba',
                            method='recursion')
 
     # for GBDTs, if users want to use predict_proba then they're forced to set
@@ -305,13 +305,13 @@ def test_partial_dependence_input():
             ValueError,
             match="With the 'recursion' method, the response_method must be "
                   "'decision_function"):
-        partial_dependence(gbc, [0], X, response_method='predict_proba',
+        partial_dependence(gbc, X, [0], response_method='predict_proba',
                            method='auto')
 
     with pytest.raises(
             ValueError,
             match="response_method blahblah is invalid. Accepted response"):
-        partial_dependence(gbc, [0], X, response_method='blahblah')
+        partial_dependence(gbc, X, [0], response_method='blahblah')
 
     class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
         pass
@@ -321,47 +321,47 @@ def test_partial_dependence_input():
             ValueError,
             match='The estimator has no predict_proba and no '
                   'decision_function method.'):
-        partial_dependence(bad_clf, [0], X, response_method='auto')
+        partial_dependence(bad_clf, X, [0], response_method='auto')
 
     with pytest.raises(
             ValueError,
             match='The estimator has no predict_proba method.'):
-        partial_dependence(bad_clf, [0], X, response_method='predict_proba')
+        partial_dependence(bad_clf, X, [0], response_method='predict_proba')
 
     with pytest.raises(
             ValueError,
             match='The estimator has no decision_function method.'):
-        partial_dependence(bad_clf, [0], X,
+        partial_dependence(bad_clf, X, [0],
                            response_method='decision_function')
 
     with pytest.raises(
             ValueError,
             match="method blahblah is invalid. Accepted method names "
                   "are brute, recursion, auto."):
-        partial_dependence(lr, [0], X, method='blahblah')
+        partial_dependence(lr, X, [0], method='blahblah')
 
     with pytest.raises(
             ValueError,
             match='est must be an instance of BaseGradientBoosting '
                   'for the "recursion" method'):
-        partial_dependence(lr, [0], X, method='recursion')
+        partial_dependence(lr, X, [0], method='recursion')
 
     for feature in (-1, 1000000):
         for est in (lr, gbc):
             with pytest.raises(
                     ValueError,
                     match="all features must be in"):
-                partial_dependence(est, [feature], X=X)
+                partial_dependence(est, X, [feature])
 
     for unfitted_est in (LinearRegression(), GradientBoostingRegressor()):
         with pytest.raises(
                 ValueError,
                 match='est parameter must be a fitted estimator'):
-            partial_dependence(unfitted_est, [0], X=X)
+            partial_dependence(unfitted_est, X, [0])
 
     # check that array-like objects are accepted
     for est in (lr, gbc):
-        partial_dependence(est, [0],  X=list(X))
+        partial_dependence(est, list(X), [0])
 
 
 def test_warning_recursion_non_constant_init():
@@ -374,9 +374,9 @@ def test_warning_recursion_non_constant_init():
     with pytest.warns(
             UserWarning,
             match='Using recursion method with a non-constant init predictor'):
-        partial_dependence(gbc, [0], X=X, method='recursion')
+        partial_dependence(gbc, X, [0], method='recursion')
 
     with pytest.warns(
             UserWarning,
             match='Using recursion method with a non-constant init predictor'):
-        partial_dependence(gbc, [0], X=X, method='recursion')
+        partial_dependence(gbc, X, [0], method='recursion')

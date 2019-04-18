@@ -20,7 +20,7 @@ from ..model_inspection import partial_dependence
 __all__ = ['plot_partial_dependence']
 
 
-def plot_partial_dependence(est, X, features, feature_names=None,
+def plot_partial_dependence(estimator, X, features, feature_names=None,
                             target=None, response_method='auto', n_cols=3,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=1, verbose=0, fig=None,
@@ -34,10 +34,10 @@ def plot_partial_dependence(est, X, features, feature_names=None,
 
     Parameters
     ----------
-    est : BaseEstimator
-        A fitted classification or regression model. Classifiers must have a
-        ``predict_proba()`` or ``decision_function`` method.
-        Multioutput-multiclass estimators aren't supported.
+    estimator : BaseEstimator
+        A fitted estimator object implementing `predict`, `predict_proba`,
+        or `decision_function`. Multioutput-multiclass classifiers are not
+        supported.
     X : array-like, shape=(n_samples, n_features)
         The data to use to build the grid of values on which the dependence
         will be evaluated. This is usually the training data.
@@ -156,12 +156,12 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     from matplotlib.ticker import ScalarFormatter
 
     # set target_idx for multi-class estimators
-    if hasattr(est, 'classes_') and np.size(est.classes_) > 2:
+    if hasattr(estimator, 'classes_') and np.size(estimator.classes_) > 2:
         if target is None:
             raise ValueError('target must be specified for multi-class')
-        target_idx = np.searchsorted(est.classes_, target)
-        if (not (0 <= target_idx < len(est.classes_)) or
-                est.classes_[target_idx] != target):
+        target_idx = np.searchsorted(estimator.classes_, target)
+        if (not (0 <= target_idx < len(estimator.classes_)) or
+                estimator.classes_[target_idx] != target):
             raise ValueError('target not in est.classes_, got {}'.format(
                 target))
     else:
@@ -221,7 +221,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
 
     # compute averaged predictions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(partial_dependence)(est, fxs, X=X,
+        delayed(partial_dependence)(estimator, X, fxs,
                                     response_method=response_method,
                                     method=method,
                                     grid_resolution=grid_resolution,
@@ -234,7 +234,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
     pd, _ = pd_result[0]  # checking the first result is enough
-    if is_regressor(est) and pd.shape[0] > 1:
+    if is_regressor(estimator) and pd.shape[0] > 1:
         if target is None:
             raise ValueError(
                 'target must be specified for multi-output regressors')

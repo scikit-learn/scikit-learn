@@ -111,7 +111,7 @@ def main():
     fig = plt.figure()
 
     target_feature = (1, 5)
-    pdp, axes = partial_dependence(est, target_feature, X=X,
+    pdp, axes = partial_dependence(est, X, target_feature,
                                    grid_resolution=50)
     XX, YY = np.meshgrid(axes[0], axes[1])
     Z = pdp[0].T
