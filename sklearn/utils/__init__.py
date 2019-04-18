@@ -64,7 +64,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
            "register_parallel_backend", "hash", "effective_n_jobs",
-           "resample", "shuffle"]
+           "resample", "shuffle", "check_matplotlib_support"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -636,3 +636,13 @@ def is_scalar_nan(x):
     # convert from numpy.bool_ to python bool to ensure that testing
     # is_scalar_nan(x) is True does not fail.
     return bool(isinstance(x, numbers.Real) and np.isnan(x))
+
+
+def check_matplotlib_support(caller_name):
+    try:
+        import matplotlib
+    except ImportError as e:
+        raise ImportError(
+            "{} requires matplotlib. You can install matplotlib with "
+            "`pip install matplotlib`".format(caller_name)
+        ) from e

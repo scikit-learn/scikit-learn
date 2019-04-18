@@ -5,7 +5,7 @@
 Partial dependence plots
 ========================
 
-.. currentmodule:: sklearn.plot
+.. currentmodule:: sklearn.inspection
 
 Partial dependence plots (PDP) show the dependence between the target
 response [1]_ and a set of 'target' features, marginalizing over the values
@@ -21,8 +21,8 @@ The figure below shows four one-way and one two-way partial dependence plots
 for the California housing dataset, with a :class:`GradientBoostingRegressor
 <sklearn.ensemble.GradientBoostingRegressor>`:
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_partial_dependence_001.png
-   :target: ../auto_examples/plot_partial_dependence.html
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_002.png
+   :target: ../auto_examples/inspection/plot_partial_dependence.html
    :align: center
    :scale: 70
 
@@ -41,7 +41,7 @@ an average occupancy greater than two, the house price is nearly independent of
 the house age, whereas for values less than 2 there is a strong dependence
 on age.
 
-The :mod:`sklearn.plot` module provides a convenience function
+The :mod:`sklearn.inspection` module provides a convenience function
 :func:`plot_partial_dependence` to create one-way and two-way partial
 dependence plots. In the below example we show how to create a grid of
 partial dependence plots: two one-way PDPs for the features ``0`` and ``1``
@@ -49,7 +49,7 @@ and a two-way PDP between the two features::
 
     >>> from sklearn.datasets import make_hastie_10_2
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> from sklearn.plot import plot_partial_dependence
+    >>> from sklearn.inspection import plot_partial_dependence
 
     >>> X, y = make_hastie_10_2(random_state=0)
     >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
@@ -72,11 +72,11 @@ regression settings.
 
 If you need the raw values of the partial dependence function rather than
 the plots, you can use the
-:func:`sklearn.model_inspection.partial_dependence` function::
+:func:`sklearn.inspection.partial_dependence` function::
 
-    >>> from sklearn.model_inspection import partial_dependence
+    >>> from sklearn.inspection import partial_dependence
 
-    >>> pdp, axes = partial_dependence(clf, [0], X=X)
+    >>> pdp, axes = partial_dependence(clf, X, [0])
     >>> pdp  # doctest: +ELLIPSIS
     array([[ 2.466...,  2.466..., ...
     >>> axes  # doctest: +ELLIPSIS
@@ -85,7 +85,7 @@ the plots, you can use the
 The values at which the partial dependence should be evaluated are directly
 generated from ``X``. For 2-way partial dependence, a 2D-grid of values is
 generated. The ``values`` field returned by
-:func:`sklearn.model_inspection.partial_dependence` gives the actual values
+:func:`sklearn.inspection.partial_dependence` gives the actual values
 used in the grid for each target feature. They also correspond to the axis
 of the plots.
 
@@ -114,7 +114,7 @@ which the trees were trained.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_plot_plot_partial_dependence.py`
+ * :ref:`sphx_glr_auto_examples_inspection_plot_partial_dependence.py`
 
 .. topic:: References
 

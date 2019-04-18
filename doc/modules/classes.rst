@@ -1211,12 +1211,13 @@ Model validation
    pipeline.make_pipeline
    pipeline.make_union
 
-.. _model_inspection_ref:
 
-:mod:`sklearn.model_inspection`: Model inspection
-=================================================
+.. _inspection_ref:
 
-.. automodule:: sklearn.model_inspection
+:mod:`sklearn.inspection`: inspection
+=====================================
+
+.. automodule:: sklearn.inspection
    :no-members:
    :no-inherited-members:
 
@@ -1226,24 +1227,9 @@ Model validation
    :toctree: generated/
    :template: function.rst
 
-   model_inspection.partial_dependence
+   inspection.partial_dependence
+   inspection.plot_partial_dependence
 
-.. _plot_ref:
-
-:mod:`sklearn.plot`: Plot
-=========================
-
-.. automodule:: sklearn.plot
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   plot.plot_partial_dependence
 
 .. _preprocessing_ref:
 
