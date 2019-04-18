@@ -1,7 +1,6 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-# cython: language_level=3
 
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -21,7 +20,7 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from sklearn.utils cimport _random
+from ..utils cimport _random
 
 # =============================================================================
 # Helper functions
