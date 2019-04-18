@@ -13,13 +13,13 @@ TIMEOUT = 60
 def _make_cwd_env():
     """Helper to prepare environment for the child processes"""
     # This is a port from cloudpickle https://github.com/cloudpipe/cloudpickle
-    cloudpickle_repo_folder = op.normpath(
-        op.join(op.dirname(__file__), '..'))
+    sklearn_repo_folder = op.normpath(
+        op.join(op.dirname(__file__), '../..'))
     env = os.environ.copy()
     pythonpath = "{src}{sep}tests{pathsep}{src}".format(
-        src=cloudpickle_repo_folder, sep=os.sep, pathsep=os.pathsep)
+        src=sklearn_repo_folder, sep=os.sep, pathsep=os.pathsep)
     env['PYTHONPATH'] = pythonpath
-    return cloudpickle_repo_folder, env
+    return sklearn_repo_folder, env
 
 
 def assert_run_python_script(source_code, timeout=TIMEOUT):
