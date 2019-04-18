@@ -263,10 +263,11 @@ def test_min_samples_edge_case():
     assert_array_equal(clust.labels_, expected_labels)
 
     expected_labels = np.r_[[-1] * 9]
-    clust = OPTICS(min_samples=4,
-                   max_eps=3, cluster_method='xi',
-                   xi=0.04).fit(X)
-    assert_array_equal(clust.labels_, expected_labels)
+    with pytest.warns(UserWarning, match="All reachability values"):
+        clust = OPTICS(min_samples=4,
+                       max_eps=3, cluster_method='xi',
+                       xi=0.04).fit(X)
+        assert_array_equal(clust.labels_, expected_labels)
 
 
 # try arbitrary minimum sizes
