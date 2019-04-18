@@ -387,7 +387,8 @@ def lobpcg_svd(M, n_components, n_oversamples=10, n_iter='auto',
     Compared to 'randomised', the 'lobpcg' option gives more accurate
     approximations, with the same n_iter, n_components, and n_oversamples,
     at the slightly increased costs, allows setting the tolerance, and can
-    output the accuracy.
+    output the accuracy. tol = None or tol = .0 in 'lobpcg' is ignored and
+    substituted by a local default in LOBPCG.
 
     Parameters
     ----------

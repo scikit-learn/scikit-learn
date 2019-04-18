@@ -338,7 +338,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     eigen_tol : float, optional, default: 0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
-        when ``eigen_solver='arpack'``.
+        when 'arpack'  or `lobpcg` eigen_solver. tol = .0 in 'lobpcg' is
+        ignored and substituted by a local default in LOBPCG.
 
     assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
         The strategy to use to assign labels in the embedding

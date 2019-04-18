@@ -67,8 +67,9 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         by `np.random`.
 
     tol : float, optional
-        Tolerance for ARPACK. 0 means machine precision. Ignored by randomized
-        SVD solver.
+        Tolerance for ARPACK or LOBPCG SVD solver. Ignored by randomized SVD
+        solver. tol = 0 means machine precision in ARPACK, but ignored and
+        substituted by a default in LOBPCG.
 
     Attributes
     ----------
@@ -179,6 +180,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
                 raise ValueError("n_components must be < n_features;"
                                  " got %d >= %d" % (k, n_features))
             U, Sigma, VT = lobpcg_svd(X, self.n_components,
+                                      tol=self.tol,
                                       n_iter=self.n_iter,
                                       random_state=random_state)
         elif self.algorithm == "randomized":

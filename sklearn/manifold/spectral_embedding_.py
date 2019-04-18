@@ -197,7 +197,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eigen_solver.
+        when using `arpack` or `lobpcg` eigen_solver. tol = .0 in 'lobpcg' is
+        ignored and substituted by a local default in LOBPCG.
 
     norm_laplacian : bool, optional, default=True
         If True, then compute normalized Laplacian.
@@ -340,7 +341,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # doesn't behave well in low dimension
             X = random_state.rand(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
-            lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
+            lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-12,
                                             largest=False, maxiter=2000)
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:

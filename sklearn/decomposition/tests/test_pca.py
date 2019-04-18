@@ -841,7 +841,6 @@ def check_pca_float_dtype_preservation(svd_solver):
                                                          copy=False)
     X_32 = X_64.astype(np.float32)
 
-    # the PCA default tol=.0 may break lobpcg_svd
     pca_64 = PCA(n_components=3, svd_solver=svd_solver,
                  random_state=0, tol=1-10).fit(X_64)
     pca_32 = PCA(n_components=3, tol=1-5, svd_solver=svd_solver,
@@ -863,7 +862,6 @@ def check_pca_int_dtype_upcast_to_double(svd_solver):
     X_i64 = X_i64.astype(np.int64, copy=False)
     X_i32 = X_i64.astype(np.int32, copy=False)
 
-    # the PCA default tol=.0 may break lobpcg_svd
     pca_64 = PCA(n_components=3, svd_solver=svd_solver,
                  random_state=0, tol=1-10).fit(X_i64)
     pca_32 = PCA(n_components=3, svd_solver=svd_solver,

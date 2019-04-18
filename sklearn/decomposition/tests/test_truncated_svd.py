@@ -203,7 +203,6 @@ def test_singular_values():
                         random_state=rng).fit(X)
     rpca = TruncatedSVD(n_components=2, algorithm='randomized',
                         random_state=rng).fit(X)
-    # the PCA default tol=.0 may break lobpcg_svd
     lpca = TruncatedSVD(n_components=2, algorithm='lobpcg',
                         random_state=rng, tol=1e-10).fit(X)
     assert_array_almost_equal(apca.singular_values_, rpca.singular_values_, 1)

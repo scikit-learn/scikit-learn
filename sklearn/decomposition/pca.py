@@ -183,8 +183,9 @@ class PCA(_BasePCA):
         .. versionadded:: 0.18.0
 
     tol : float >= 0, optional (default .0)
-        Tolerance for singular values computed by svd_solver == 'arpack'
-        For svd_solver == 'lobpcg', tol must be reasonable, not .0!
+        Tolerance for singular values computed by svd_solver == 'arpack' or
+        svd_solver == 'lobpcg'. tol = .0 in svd_solver == 'lobpcg' is ignored
+        and substituted by a local default in LOBPCG.
 
         .. versionadded:: 0.18.0
 
@@ -539,7 +540,7 @@ class PCA(_BasePCA):
             # sign flipping is done inside
             U, S, V = lobpcg_svd(X, n_components=n_components,
                                  n_iter=self.iterated_power,
-                                 flip_sign=True,
+                                 flip_sign=True, tol=self.tol,
                                  random_state=random_state)
 
         self.n_samples_, self.n_features_ = n_samples, n_features
