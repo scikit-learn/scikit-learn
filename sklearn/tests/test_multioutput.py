@@ -166,7 +166,7 @@ classes = list(map(np.unique, (y1, y2, y3)))
 
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
-    mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=-1)
+    mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
     mor.partial_fit(X, y, classes)
     est1 = mor.estimators_[0]
     mor.partial_fit(X, y)
@@ -332,14 +332,14 @@ def test_multi_output_classification_partial_fit_sample_weights():
     Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     yw = [[3, 2], [2, 3], [3, 2]]
     w = np.asarray([2., 1., 1.])
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
     clf_w = MultiOutputClassifier(sgd_linear_clf)
     clf_w.fit(Xw, yw, w)
 
     # unweighted, but with repeated samples
     X = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     y = [[3, 2], [3, 2], [2, 3], [3, 2]]
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
     clf = MultiOutputClassifier(sgd_linear_clf)
     clf.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]

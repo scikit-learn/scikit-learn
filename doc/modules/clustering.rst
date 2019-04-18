@@ -752,6 +752,18 @@ Any core sample is part of a cluster, by definition. Any sample that is not a
 core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
+While the parameter ``min_samples`` primarily controls how tolerant the
+algorithm is towards noise (on noisy and large data sets it may be desiable
+to increase this parameter), the parameter ``eps`` is *crucial to choose
+appropriately* for the data set and distance function and usually cannot be
+left at the default value. It controls the local neighborhood of the points.
+When chosen too small, most data will not be clustered at all (and labeled
+as ``-1`` for "noise"). When chosen too large, it causes close clusters to
+be merged into one cluster, and eventually the entire data set to be returned
+as a single cluster. Some heuristics for choosing this parameter have been
+discussed in literature, for example based on a knee in the nearest neighbor
+distances plot (as discussed in the references below).
+
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
@@ -793,7 +805,7 @@ by black points below.
 
     This implementation is by default not memory efficient because it constructs
     a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
-    be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
+    be used (e.g., with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
     - A sparse radius neighborhood graph (where missing entries are presumed to
@@ -813,6 +825,10 @@ by black points below.
    Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+
+ * "DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+   Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
+   In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
 .. _birch:
 
@@ -1260,6 +1276,22 @@ Their harmonic mean called **V-measure** is computed by
 
   >>> metrics.v_measure_score(labels_true, labels_pred)    # doctest: +ELLIPSIS
   0.51...
+
+This function's formula is as follows:::
+
+.. math:: v = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
+
+`beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
+
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)    # doctest: +ELLIPSIS
+  0.54...
+
+more weight will be attributed to homogeneity, and using a value greater than 1::
+
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=1.8)    # doctest: +ELLIPSIS
+  0.48...
+
+more weight will be attributed to completeness.
 
 The V-measure is actually equivalent to the mutual information (NMI)
 discussed above, with the aggregation function being the arithmetic mean [B2011]_.
