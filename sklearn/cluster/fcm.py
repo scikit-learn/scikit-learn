@@ -28,7 +28,7 @@ from . import _k_means
 from ._k_means_elkan import k_means_elkan
 
 
-def fcm(X, c_clusters, m=2, eps=10, random_state=None, max_iter=300):
+def fcm(X, c_clusters, m=2, eps=10, random_state=None, max_iter=300, sample_weight=None):
     
     if m <= 1:
         raise ValueError("Invalid number of m."
@@ -42,6 +42,8 @@ def fcm(X, c_clusters, m=2, eps=10, random_state=None, max_iter=300):
         raise ValueError('Number of iterations should be a positive number,'
                          ' got %d instead' % max_iter)
     
+    X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
+
     membership_mat = np.random.random((len(X), c_clusters))
     membership_mat = np.divide(membership_mat, np.sum(membership_mat, axis=1)[:, np.newaxis])
 
@@ -65,7 +67,7 @@ def fcm(X, c_clusters, m=2, eps=10, random_state=None, max_iter=300):
     
     return Centroids, np.argmax(new_membership_mat, axis=1), new_membership_mat
 
-class FCM(BaseEstimator, ClusterMixin, TransformerMixin):
+class FCM(BaseEstimator, ClusterMixin):
     """Fuzzy CMeans clustering
 
     Parameters
@@ -162,7 +164,7 @@ class FCM(BaseEstimator, ClusterMixin, TransformerMixin):
 
         """
         random_state = check_random_state(self.random_state)
-
+        X = check_array(X, accept_sparse='csr')
         self.cluster_centers_, self.labels_, self.membership_mat = \
             fcm(
                 X, 
@@ -170,7 +172,9 @@ class FCM(BaseEstimator, ClusterMixin, TransformerMixin):
                 m = self.m,
                 eps = self.eps,
                 random_state = random_state, 
-                max_iter=self.max_iter)
+                max_iter=self.max_iter,
+                sample_weight=sample_weight
+            )
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):
@@ -197,57 +201,3 @@ class FCM(BaseEstimator, ClusterMixin, TransformerMixin):
             Index of the cluster each sample belongs to.
         """
         return self.fit(X, sample_weight=sample_weight).labels_
-
-    def fit_transform(self, X, y=None, sample_weight=None):
-        """Compute clustering and transform X to cluster-probabiliy space.
-
-        Equivalent to fit(X).transform(X), but more efficiently implemented.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            New data to transform.
-
-        y : Ignored
-            not used, present here for API consistency by convention.
-
-        sample_weight : array-like, shape (n_samples,), optional
-            The weights for each observation in X. If None, all observations
-            are assigned equal weight (default: None)
-
-        Returns
-        -------
-        X_new : array, shape [n_samples, k]
-            X transformed in the new space.
-        """
-        # Currently, this just skips a copy of the data if it is not in
-        # np.array or CSR format already.
-        # XXX This skips _check_test_data, which may change the dtype;
-        # we should refactor the input validation.
-        return self.fit(X, sample_weight=sample_weight)._transform(X)
-
-    def transform(self, X):
-        """Transform X to a cluster-probabiliy space.
-
-        In the new space, each dimension is the probality to each cluster
-        centers.  Note that even if X is sparse, the array returned by
-        `transform` will typically be dense.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            New data to transform.
-
-        Returns
-        -------
-        X_new : array, shape [n_samples, k]
-            X transformed in the new space.
-        """
-        check_is_fitted(self, 'cluster_centers_')
-
-        X = self._check_test_data(X)
-        return self._transform(X)
-
-    def _transform(self, X):
-        """guts of transform method; no input validation"""
-        return self.membership_mat
