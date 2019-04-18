@@ -388,32 +388,40 @@ def test_warning_recursion_non_constant_init():
 @if_matplotlib
 def test_plot_partial_dependence():
     # Test partial dependence plot function.
+    import matplotlib.pyplot as plt  # noqa
+
     boston = load_boston()
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
 
     grid_resolution = 25
-    fig, axs = plot_partial_dependence(clf, boston.data, [0, 1, (0, 1)],
-                                       grid_resolution=grid_resolution,
-                                       feature_names=boston.feature_names)
+    plot_partial_dependence(clf, boston.data, [0, 1, (0, 1)],
+                            grid_resolution=grid_resolution,
+                            feature_names=boston.feature_names)
+    fig = plt.gcf()
+    axs = fig.get_axes()
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
     # check with str features and array feature names
-    fig, axs = plot_partial_dependence(clf, boston.data, ['CRIM', 'ZN',
-                                                          ('CRIM', 'ZN')],
-                                       grid_resolution=grid_resolution,
-                                       feature_names=boston.feature_names)
+    plot_partial_dependence(clf, boston.data, ['CRIM', 'ZN',
+                                               ('CRIM', 'ZN')],
+                            grid_resolution=grid_resolution,
+                            feature_names=boston.feature_names)
 
+    fig = plt.gcf()
+    axs = fig.get_axes()
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
     # check with list feature_names
     feature_names = boston.feature_names.tolist()
-    fig, axs = plot_partial_dependence(clf, boston.data, ['CRIM', 'ZN',
-                                                          ('CRIM', 'ZN')],
-                                       grid_resolution=grid_resolution,
-                                       feature_names=feature_names)
+    plot_partial_dependence(clf, boston.data, ['CRIM', 'ZN',
+                                               ('CRIM', 'ZN')],
+                            grid_resolution=grid_resolution,
+                            feature_names=feature_names)
+    fig = plt.gcf()
+    axs = fig.get_axes()
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
@@ -421,14 +429,17 @@ def test_plot_partial_dependence():
 @if_matplotlib
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
+    import matplotlib.pyplot as plt  # noqa
     iris = load_iris()
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
 
     grid_resolution = 25
-    fig, axs = plot_partial_dependence(clf, iris.data, [0, 1],
-                                       target=0,
-                                       grid_resolution=grid_resolution)
+    plot_partial_dependence(clf, iris.data, [0, 1],
+                            target=0,
+                            grid_resolution=grid_resolution)
+    fig = plt.gcf()
+    axs = fig.get_axes()
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
@@ -438,9 +449,11 @@ def test_plot_partial_dependence_multiclass():
     clf.fit(iris.data, target)
 
     grid_resolution = 25
-    fig, axs = plot_partial_dependence(clf, iris.data, [0, 1],
-                                       target='setosa',
-                                       grid_resolution=grid_resolution)
+    plot_partial_dependence(clf, iris.data, [0, 1],
+                            target='setosa',
+                            grid_resolution=grid_resolution)
+    fig = plt.gcf()
+    axs = fig.get_axes()
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
@@ -448,20 +461,25 @@ def test_plot_partial_dependence_multiclass():
 @if_matplotlib
 def test_plot_partial_dependence_multioutput():
     # Test partial dependence plot function on multi-output input.
+    import matplotlib.pyplot as plt  # noqa
     (X, y), _ = multioutput_regression_data
     clf = LinearRegression()
     clf.fit(X, y)
 
     grid_resolution = 25
-    fig, axs = plot_partial_dependence(clf, X, [0, 1],
-                                       target=0,
-                                       grid_resolution=grid_resolution)
+    plot_partial_dependence(clf, X, [0, 1],
+                            target=0,
+                            grid_resolution=grid_resolution)
+    fig = plt.gcf()
+    axs = fig.get_axes()
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
-    fig, axs = plot_partial_dependence(clf, X, [0, 1],
-                                       target=1,
-                                       grid_resolution=grid_resolution)
+    plot_partial_dependence(clf, X, [0, 1],
+                            target=1,
+                            grid_resolution=grid_resolution)
+    fig = plt.gcf()
+    axs = fig.get_axes()
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
@@ -543,7 +561,7 @@ def test_plot_partial_dependence_fig():
 
     fig = plt.figure()
     grid_resolution = 25
-    returned_fig, axs = plot_partial_dependence(
+    plot_partial_dependence(
         clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 
-    assert returned_fig is fig
+    assert plt.gcf() is fig

@@ -460,13 +460,6 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         Note that all keywords not recognized above will be automatically
         included here.
 
-    Returns
-    -------
-    fig : figure
-        The Matplotlib Figure object.
-    axs : seq of Axis objects
-        A seq of Axis objects, one for each subplot.
-
     Examples
     --------
     >>> from sklearn.datasets import make_friedman1
@@ -666,4 +659,3 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     fig.subplots_adjust(bottom=0.15, top=0.7, left=0.1, right=0.95, wspace=0.4,
                         hspace=0.3)
-    return fig, axs
