@@ -2,7 +2,7 @@
 
 # Authors: Junyi Li (lijy263@mail2.sysu.edu.cn)
 # License: BSD 3 clause
-
+# The import part this file is copy from k_means_.py, some functions is not used for now.
 import warnings
 
 import numpy as np
@@ -66,14 +66,12 @@ def fcm(X, c_clusters, m=2, eps=10, random_state=None, max_iter=300):
     return Centroids, np.argmax(new_membership_mat, axis=1), new_membership_mat
 
 class FCM(BaseEstimator, ClusterMixin, TransformerMixin):
-    """K-Means clustering
-
-    Read more in the :ref:`User Guide <k_means>`.
+    """Fuzzy CMeans clustering
 
     Parameters
     ----------
 
-    n_clusters : int, optional, default: 8
+    n_clusters : int, optional, default: 3
         The number of clusters to form as well as the number of
         centroids to generate.
 
@@ -87,7 +85,7 @@ class FCM(BaseEstimator, ClusterMixin, TransformerMixin):
         and gives the initial centers.
 
     max_iter : int, default: 300
-        Maximum number of iterations of the k-means algorithm for a
+        Maximum number of iterations of the Fuzzy c means algorithm for a
         single run.
 
     random_state : int, RandomState instance or None (default)
@@ -95,12 +93,17 @@ class FCM(BaseEstimator, ClusterMixin, TransformerMixin):
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
+    m  : int, optional, default: 2
+        A key number for the update the centroids and the cluster-probability matrix.
+    
+    eps : float, optional, default: 10
+        If the sum of |new_cluster_probability_matrix - old_cluster_probability_matrix| is smaller than eps, then the algorithm will stop.
+        
+
     Attributes
     ----------
     cluster_centers_ : array, [n_clusters, n_features]
-        Coordinates of cluster centers. If the algorithm stops before fully
-        converging (see ``tol`` and ``max_iter``), these will not be
-        consistent with ``labels_``.
+        Coordinates of cluster centers. 
 
     labels_ :
         Labels of each point
@@ -110,9 +113,18 @@ class FCM(BaseEstimator, ClusterMixin, TransformerMixin):
     See also
     --------
 
+    Note
+    --------
+
+    Now, something remains implementing:
+        
+        * sample weighted section
+        * parallel run the model
+        * ... 
+
     """
 
-    def __init__(self, n_clusters=8, m=2, eps=10, init='random', max_iter=300, random_state=None):
+    def __init__(self, n_clusters=3, m=2, eps=10, init='random', max_iter=300, random_state=None):
 
         self.n_clusters = n_clusters
         self.init = init
