@@ -196,12 +196,12 @@ def partial_dependence(est, features, X, response_method='auto',
     features : list or array-like of int
         The target features for which the partial dependency should be
         computed.
-    X : array-like, shape=(n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         ``X`` is used both to generate a grid of values for the
         ``features``, and to compute the averaged predictions when
         method is 'brute'.
     response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto') :
+            optional (default='auto')
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -237,8 +237,8 @@ def partial_dependence(est, features, X, response_method='auto',
 
     Returns
     -------
-    averaged_predictions : array, \
-            shape=(n_outputs, len(values[0]), len(values[1]), ...)
+    averaged_predictions : ndarray, \
+            shape (n_outputs, len(values[0]), len(values[1]), ...)
         The predictions for all the points in the grid, averaged over all
         samples in X (or over the training data if ``method`` is
         'recursion'). ``n_outputs`` corresponds to the number of classes in
