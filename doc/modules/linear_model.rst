@@ -68,8 +68,10 @@ Ordinary Least Squares Complexity
 ---------------------------------
 
 The least squares solution is computed using the singular value
-decomposition of X. If X is a matrix of shape (n, p) this method has a
-cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
+decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
+this method has a cost of 
+:math:`O(n_{\text{samples}} n_{\text{features}}^2)`, assuming that
+:math:`n_{\text{samples} \geq n_{\text{features}}}`.
 
 .. _ridge_regression:
 
@@ -79,7 +81,7 @@ Ridge Regression
 :class:`Ridge` regression addresses some of the problems of
 :ref:`ordinary_least_squares` by imposing a penalty on the size of the
 coefficients. The ridge coefficients minimize a penalized residual sum
-of squares.
+of squares:
 
 
 .. math::
@@ -162,7 +164,7 @@ Lasso
 The :class:`Lasso` is a linear model that estimates sparse coefficients.
 It is useful in some contexts due to its tendency to prefer solutions
 with fewer non-zero coefficients, effectively reducing the number of
-features upon which the given solution is dependent. For this reason, the
+features upon which the given solution is dependent. For this reason
 Lasso and its variants are fundamental to the field of compressed sensing.
 Under certain conditions, it can recover the exact set of non-zero
 coefficients (see
@@ -428,9 +430,8 @@ between the features.
 
 The advantages of LARS are:
 
-  - It is numerically efficient in contexts where p >> n (i.e., when the
-    number of features is significantly greater than the number of
-    samples)
+  - It is numerically efficient in contexts where the number of features 
+    is significantly greater than the number of samples.
 
   - It is computationally just as fast as forward selection and has
     the same order of complexity as ordinary least squares.
@@ -488,7 +489,7 @@ function of the norm of its coefficients.
 
 The Lars algorithm provides the full path of the coefficients along
 the regularization parameter almost for free, thus a common operation
-consist of retrieving the path with one of the functions :func:`lars_path`
+is to retrieve the path with one of the functions :func:`lars_path`
 or :func:`lars_path_gram`.
 
 Mathematical formulation
@@ -733,10 +734,10 @@ classifier. In this model, the probabilities describing the possible outcomes
 of a single trial are modeled using a
 `logistic function <https://en.wikipedia.org/wiki/Logistic_function>`_.
 
-The implementation of logistic regression in scikit-learn can be accessed from the
-class :class:`LogisticRegression`. This implementation can fit binary, One-vs-
-Rest, or multinomial logistic regression with optional :math:`\ell_1`, :math:`\ell_2`
-or Elastic-Net regularization. Note that regularization is applied by default.
+Logistic regression is implemented in :class:`LogisticRegression`. 
+This implementation can fit binary, One-vs-Rest, or multinomial logistic 
+regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net 
+regularization. Note that regularization is applied by default.
 
 As an optimization problem, binary class :math:`\ell_2` penalized logistic
 regression minimizes the following cost function:
