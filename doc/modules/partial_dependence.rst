@@ -92,7 +92,7 @@ of the plots.
 For each value of the 'target' features in the ``grid`` the partial
 dependence function needs to marginalize the predictions of the estimator
 over all possible values of the 'complement' features. With the ``'brute'``
-method, this is done by replacing every target feature value of `X` by those
+method, this is done by replacing every target feature value of ``X`` by those
 in the grid, and computing the average prediction.
 
 In decision trees this can be evaluated efficiently without reference to the
