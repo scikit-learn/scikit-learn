@@ -118,26 +118,24 @@ model with equal covariance per component.
 K-means
 =======
 
-The :class:`KMeans` algorithm clusters data by trying to separate samples
-in n groups of equal variance, minimizing a criterion known as the
-`inertia <inertia>`_ or within-cluster sum-of-squares.
-This algorithm requires the number of clusters to be specified.
-It scales well to large number of samples and has been used
-across a large range of application areas in many different fields.
+The :class:`KMeans` algorithm clusters data by trying to separate samples in n
+groups of equal variance, minimizing a criterion known as the *inertia* or
+within-cluster sum-of-squares (see below). This algorithm requires the number
+of clusters to be specified. It scales well to large number of samples and has
+been used across a large range of application areas in many different fields.
 
-The k-means algorithm divides a set of :math:`N` samples :math:`X`
-into :math:`K` disjoint clusters :math:`C`,
-each described by the mean :math:`\mu_j` of the samples in the cluster.
-The means are commonly called the cluster "centroids";
-note that they are not, in general, points from :math:`X`,
+The k-means algorithm divides a set of :math:`N` samples :math:`X` into
+:math:`K` disjoint clusters :math:`C`, each described by the mean :math:`\mu_j`
+of the samples in the cluster. The means are commonly called the cluster
+"centroids"; note that they are not, in general, points from :math:`X`,
 although they live in the same space.
-The K-means algorithm aims to choose centroids
-that minimise the *inertia*, or within-cluster sum of squared criterion:
+
+The K-means algorithm aims to choose centroids that minimise the **inertia**,
+or **within-cluster sum-of-squares criterion**:
 
 .. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
-Inertia, or the within-cluster sum of squares criterion,
-can be recognized as a measure of how internally coherent clusters are.
+Inertia can be recognized as a measure of how internally coherent clusters are.
 It suffers from various drawbacks:
 
 - Inertia makes the assumption that clusters are convex and isotropic,
@@ -148,9 +146,9 @@ It suffers from various drawbacks:
   better and zero is optimal. But in very high-dimensional spaces, Euclidean
   distances tend to become inflated
   (this is an instance of the so-called "curse of dimensionality").
-  Running a dimensionality reduction algorithm such as `PCA <PCA>`_
-  prior to k-means clustering can alleviate this problem
-  and speed up the computations.
+  Running a dimensionality reduction algorithm such as :ref:`PCA` prior to
+  k-means clustering can alleviate this problem and speed up the
+  computations.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_001.png
    :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
