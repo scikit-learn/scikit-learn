@@ -424,7 +424,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
         X_scaled = X_std * (max - min) + min
 
     where min, max = feature_range.
- 
+
     The transformation is calculated as (when ``axis=0``)::
 
        X_scaled = scale * X + min - X.min(axis=0) * scale
@@ -592,7 +592,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     -----
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
-    
+
     We use a biased estimator for the standard deviation, equivalent to
     `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
     affect model performance.
@@ -671,8 +671,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         # incr_mean_variance_axis and _incremental_variance_axis
         if (hasattr(self, 'n_samples_seen_') and
                 isinstance(self.n_samples_seen_, (int, np.integer))):
-            self.n_samples_seen_ = np.repeat(self.n_samples_seen_,
-                                             X.shape[1]).astype(np.int64)
+            self.n_samples_seen_ = np.repeat(
+                self.n_samples_seen_, X.shape[1]).astype(np.int64, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
@@ -687,8 +687,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                         shape=X.shape).sum(axis=0).A.ravel()
 
             if not hasattr(self, 'n_samples_seen_'):
-                self.n_samples_seen_ = (X.shape[0] -
-                                        counts_nan).astype(np.int64)
+                self.n_samples_seen_ = (
+                        X.shape[0] - counts_nan).astype(np.int64, copy=False)
 
             if self.with_std:
                 # First pass
@@ -2041,9 +2041,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_quantiles : int, optional (default=1000)
+    n_quantiles : int, optional (default=1000 or n_samples)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
+        If n_quantiles is larger than the number of samples, n_quantiles is set
+        to the number of samples as a larger number of quantiles does not give
+        a better approximation of the cumulative distribution function
+        estimator.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
@@ -2072,6 +2076,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
+    n_quantiles_ : integer
+        The actual number of quantiles used to discretize the cumulative
+        distribution function.
+
     quantiles_ : ndarray, shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
 
@@ -2218,10 +2226,19 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                        self.subsample))
 
         X = self._check_inputs(X)
+        n_samples = X.shape[0]
+
+        if self.n_quantiles > n_samples:
+            warnings.warn("n_quantiles (%s) is greater than the total number "
+                          "of samples (%s). n_quantiles is set to "
+                          "n_samples."
+                          % (self.n_quantiles, n_samples))
+        self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
+
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
-        self.references_ = np.linspace(0, 1, self.n_quantiles,
+        self.references_ = np.linspace(0, 1, self.n_quantiles_,
                                        endpoint=True)
         if sparse.issparse(X):
             self._sparse_fit(X, rng)
@@ -2414,7 +2431,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                        ignore_implicit_zeros=False,
                        subsample=int(1e5),
                        random_state=None,
-                       copy=False):
+                       copy="warn"):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2443,9 +2460,13 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         Axis used to compute the means and standard deviations along. If 0,
         transform each feature, otherwise (if 1) transform each sample.
 
-    n_quantiles : int, optional (default=1000)
+    n_quantiles : int, optional (default=1000 or n_samples)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
+        If n_quantiles is larger than the number of samples, n_quantiles is set
+        to the number of samples as a larger number of quantiles does not give
+        a better approximation of the cumulative distribution function
+        estimator.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
@@ -2468,17 +2489,23 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         by np.random. Note that this is used by subsampling and smoothing
         noise.
 
-    copy : boolean, optional, (default=True)
+    copy : boolean, optional, (default="warn")
         Set to False to perform inplace transformation and avoid a copy (if the
-        input is already a numpy array).
+        input is already a numpy array). If True, a copy of `X` is transformed,
+        leaving the original `X` unchanged
 
-    Attributes
-    ----------
-    quantiles_ : ndarray, shape (n_quantiles, n_features)
-        The values corresponding the quantiles of reference.
+        .. deprecated:: 0.21
+            The default value of parameter `copy` will be changed from False
+            to True in 0.23. The current default of False is being changed to
+            make it more consistent with the default `copy` values of other
+            functions in :mod:`sklearn.preprocessing.data`. Furthermore, the
+            current default of False may have unexpected side effects by
+            modifying the value of `X` inplace
 
-    references_ : ndarray, shape(n_quantiles, )
-        Quantiles of references.
+    Returns
+    -------
+    Xt : ndarray or sparse matrix, shape (n_samples, n_features)
+        The transformed data.
 
     Examples
     --------
@@ -2486,7 +2513,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     >>> from sklearn.preprocessing import quantile_transform
     >>> rng = np.random.RandomState(0)
     >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> quantile_transform(X, n_quantiles=10, random_state=0)
+    >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
     ... # doctest: +ELLIPSIS
     array([...])
 
@@ -2511,6 +2538,17 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
+    if copy == "warn":
+        warnings.warn("The default value of `copy` will change from False to "
+                      "True in 0.23 in order to make it more consistent with "
+                      "the default `copy` values of other functions in "
+                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      "unexpected side effects by modifying the value of `X` "
+                      "inplace. To avoid inplace modifications of `X`, it is "
+                      "recommended to explicitly set `copy=True`",
+                      FutureWarning)
+        copy = False
+
     n = QuantileTransformer(n_quantiles=n_quantiles,
                             output_distribution=output_distribution,
                             subsample=subsample,

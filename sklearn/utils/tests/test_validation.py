@@ -187,9 +187,22 @@ def test_check_array_force_all_finiteinvalid(value, force_all_finite,
                     accept_sparse=True)
 
 
+def test_check_array_force_all_finite_object():
+    X = np.array([['a', 'b', np.nan]], dtype=object).T
+
+    X_checked = check_array(X, dtype=None, force_all_finite='allow-nan')
+    assert X is X_checked
+
+    X_checked = check_array(X, dtype=None, force_all_finite=False)
+    assert X is X_checked
+
+    with pytest.raises(ValueError, match='Input contains NaN'):
+        check_array(X, dtype=None, force_all_finite=True)
+
+
 @ignore_warnings
 def test_check_array():
-    # accept_sparse == None
+    # accept_sparse == False
     # raise error on sparse inputs
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
@@ -413,9 +426,6 @@ def test_check_array_accept_sparse_type_exception():
            "Use X.toarray() to convert to a dense numpy array.")
     assert_raise_message(TypeError, msg,
                          check_array, X_csr, accept_sparse=False)
-    with pytest.warns(DeprecationWarning):
-        assert_raise_message(TypeError, msg,
-                             check_array, X_csr, accept_sparse=None)
 
     msg = ("Parameter 'accept_sparse' should be a string, "
            "boolean or list of strings. You provided 'accept_sparse={}'.")
@@ -431,9 +441,6 @@ def test_check_array_accept_sparse_type_exception():
 
     assert_raise_message(TypeError, "SVR",
                          check_array, X_csr, accept_sparse=[invalid_type])
-
-    # Test deprecation of 'None'
-    assert_warns(DeprecationWarning, check_array, X, accept_sparse=None)
 
 
 def test_check_array_accept_sparse_no_exception():

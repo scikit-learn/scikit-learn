@@ -16,7 +16,7 @@ import numpy as np
 from scipy.special import expit
 from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
-from sklearn.preprocessing import LabelEncoder
+from .preprocessing import LabelEncoder
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from .preprocessing import label_binarize, LabelBinarizer
@@ -131,7 +131,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
             Returns an instance of self.
         """
         X, y = check_X_y(X, y, accept_sparse=['csc', 'csr', 'coo'],
-                         force_all_finite=False)
+                         force_all_finite=False, allow_nd=True)
         X, y = indexable(X, y)
         le = LabelBinarizer().fit(y)
         self.classes_ = le.classes_

@@ -11,52 +11,51 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from sklearn.utils import IS_PYPY
-from sklearn.utils import _joblib
-from sklearn.utils.testing import assert_raises, _get_args
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
-from sklearn.utils.testing import assert_in
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_allclose_dense_sparse
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import set_random_state
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_greater_equal
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_dict_equal
-from sklearn.utils.testing import create_memmap_backed_data
-from sklearn.utils import is_scalar_nan
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.linear_model import Ridge
+from . import IS_PYPY
+from . import _joblib
+from .testing import assert_raises, _get_args
+from .testing import assert_raises_regex
+from .testing import assert_raise_message
+from .testing import assert_equal
+from .testing import assert_not_equal
+from .testing import assert_in
+from .testing import assert_array_equal
+from .testing import assert_array_almost_equal
+from .testing import assert_allclose
+from .testing import assert_allclose_dense_sparse
+from .testing import assert_warns_message
+from .testing import set_random_state
+from .testing import assert_greater
+from .testing import assert_greater_equal
+from .testing import SkipTest
+from .testing import ignore_warnings
+from .testing import assert_dict_equal
+from .testing import create_memmap_backed_data
+from . import is_scalar_nan
+from ..discriminant_analysis import LinearDiscriminantAnalysis
+from ..linear_model import Ridge
 
 
-from sklearn.base import (clone, ClusterMixin, is_classifier, is_regressor,
+from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
                           _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
-from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 
-from sklearn.random_projection import BaseRandomProjection
-from sklearn.feature_selection import SelectKBest
-from sklearn.linear_model.stochastic_gradient import BaseSGD
-from sklearn.pipeline import make_pipeline
-from sklearn.exceptions import DataConversionWarning
-from sklearn.exceptions import SkipTestWarning
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection._validation import _safe_split
-from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
+from ..random_projection import BaseRandomProjection
+from ..feature_selection import SelectKBest
+from ..pipeline import make_pipeline
+from ..exceptions import DataConversionWarning
+from ..exceptions import SkipTestWarning
+from ..model_selection import train_test_split
+from ..model_selection import ShuffleSplit
+from ..model_selection._validation import _safe_split
+from ..metrics.pairwise import (rbf_kernel, linear_kernel,
                                       pairwise_distances)
 
-from sklearn.utils import shuffle
-from sklearn.utils.validation import has_fit_parameter, _num_samples
-from sklearn.preprocessing import StandardScaler
-from sklearn.datasets import load_iris, load_boston, make_blobs
+from .import shuffle
+from .validation import has_fit_parameter, _num_samples
+from ..preprocessing import StandardScaler
+from ..datasets import load_iris, load_boston, make_blobs
 
 
 BOSTON = None
@@ -1931,6 +1930,8 @@ def check_class_weight_classifiers(name, classifier_orig):
             classifier.set_params(max_iter=1000)
         if hasattr(classifier, "min_weight_fraction_leaf"):
             classifier.set_params(min_weight_fraction_leaf=0.01)
+        if hasattr(classifier, "n_iter_no_change"):
+            classifier.set_params(n_iter_no_change=20)
 
         set_random_state(classifier)
         classifier.fit(X_train, y_train)
@@ -1991,7 +1992,10 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
     classifier.set_params(class_weight=class_weight)
     coef_manual = classifier.fit(X, y).coef_.copy()
 
-    assert_allclose(coef_balanced, coef_manual)
+    assert_allclose(coef_balanced, coef_manual,
+                    err_msg="Classifier %s is not computing"
+                    " class_weight=balanced properly."
+                    % name)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -2191,11 +2195,6 @@ def check_parameters_default_constructible(name, Estimator):
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
                 assert init_param.default is None
-                continue
-
-            if (issubclass(Estimator, BaseSGD) and
-                    init_param.name in ['tol', 'max_iter']):
-                # To remove in 0.21, when they get their future default values
                 continue
 
             param_value = params[init_param.name]

@@ -23,7 +23,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
-from sklearn.metrics import jaccard_similarity_score, mean_squared_error
+from sklearn.metrics import jaccard_score, mean_squared_error
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
@@ -166,7 +166,7 @@ classes = list(map(np.unique, (y1, y2, y3)))
 
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
-    mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=-1)
+    mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
     mor.partial_fit(X, y, classes)
     est1 = mor.estimators_[0]
     mor.partial_fit(X, y)
@@ -332,14 +332,14 @@ def test_multi_output_classification_partial_fit_sample_weights():
     Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     yw = [[3, 2], [2, 3], [3, 2]]
     w = np.asarray([2., 1., 1.])
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
     clf_w = MultiOutputClassifier(sgd_linear_clf)
     clf_w.fit(Xw, yw, w)
 
     # unweighted, but with repeated samples
     X = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     y = [[3, 2], [3, 2], [2, 3], [3, 2]]
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
     clf = MultiOutputClassifier(sgd_linear_clf)
     clf.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]
@@ -431,8 +431,8 @@ def test_classifier_chain_vs_independent_models():
     chain.fit(X_train, Y_train)
     Y_pred_chain = chain.predict(X_test)
 
-    assert_greater(jaccard_similarity_score(Y_test, Y_pred_chain),
-                   jaccard_similarity_score(Y_test, Y_pred_ovr))
+    assert_greater(jaccard_score(Y_test, Y_pred_chain, average='samples'),
+                   jaccard_score(Y_test, Y_pred_ovr, average='samples'))
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
@@ -510,6 +510,6 @@ def test_base_chain_crossval_fit_and_predict():
         assert Y_pred_cv.shape == Y_pred.shape
         assert not np.all(Y_pred == Y_pred_cv)
         if isinstance(chain, ClassifierChain):
-            assert jaccard_similarity_score(Y, Y_pred_cv) > .4
+            assert jaccard_score(Y, Y_pred_cv, average='samples') > .4
         else:
             assert mean_squared_error(Y, Y_pred_cv) < .25

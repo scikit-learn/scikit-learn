@@ -23,8 +23,8 @@ rng = check_random_state(0)
 d = 4
 n1 = 20
 n2 = 25
-X1 = rng.random_sample((n1, d)).astype('float64')
-X2 = rng.random_sample((n2, d)).astype('float64')
+X1 = rng.random_sample((n1, d)).astype('float64', copy=False)
+X2 = rng.random_sample((n2, d)).astype('float64', copy=False)
 
 # make boolean arrays: ones and zeros
 X1_bool = X1.round(0)
