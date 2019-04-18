@@ -296,7 +296,7 @@ features are the same for all the regression problems, also called tasks.
 
 The following figure compares the location of the non-zero entries in the
 coefficient matrix W obtained with a simple Lasso or a MultiTaskLasso.
-The Lasso estimates yields scattered non-zeros while the non-zeros of
+The Lasso estimates yield scattered non-zeros while the non-zeros of
 the MultiTaskLasso are full columns.
 
 .. |multi_task_lasso_1| image:: ../auto_examples/linear_model/images/sphx_glr_plot_multi_task_lasso_support_001.png
