@@ -1,4 +1,3 @@
-
 import pytest
 import numpy as np
 import warnings
@@ -473,7 +472,9 @@ def test_deprecated_auc_reorder():
 
 @pytest.mark.parametrize(
     "y_true, labels",
-    [(np.array([0, 1, 0, 2]), None),
+    [(np.array([0, 1, 0, 2]), [0, 1, 2]),
+     (np.array([0, 1, 0, 2]), None),
+     (["a", "b", "a", "c"], ["a", "b", "c"]),
      (["a", "b", "a", "c"], None)]
 )
 def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
@@ -521,9 +522,10 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
             average="weighted"), ovo_weighted_score)
 
 
-@pytest.mark.parametrize("labels", [None, [0, 1, 2]])
-def test_multiclass_ovo_roc_auc_toydata_binary(labels):
-    y_true = np.array([0, 2, 0, 2])
+@pytest.mark.parametrize("y_true, labels",
+                         [(np.array([0, 2, 0, 2]), [0, 1, 2]),
+                          (np.array(['a', 'd', 'a', 'd']), ['a', 'b', 'd'])])
+def test_multiclass_ovo_roc_auc_toydata_binary(y_true, labels):
     # Tests the one-vs-one multiclass ROC AUC algorithm for binary y_true
     #
     # on a small example, representative of an expected use case.
@@ -587,6 +589,8 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     [("Parameter 'labels' must be unique", np.array([0, 1, 2, 2]), [0, 2, 0]),
      ("Parameter 'labels' must be unique", np.array(["a", "b", "c", "c"]),
       ["a", "a", "b"]),
+     ("Number of classes in y_true not equal to the number of columns "
+      "in 'y_score'", np.array([0, 2, 0, 2]), None),
      ("Parameter 'labels' must be ordered", np.array(["a", "b", "c", "c"]),
       ["a", "c", "b"]),
      ("Number of given labels, 2, not equal to the number of columns in "
