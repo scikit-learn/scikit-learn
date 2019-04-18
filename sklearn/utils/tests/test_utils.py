@@ -20,7 +20,6 @@ from sklearn.utils import gen_even_slices
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils.mocking import MockDataFrame
-from sklearn.utils import check_matplotlib_support
 from sklearn import config_context
 
 

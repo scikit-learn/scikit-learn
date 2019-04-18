@@ -16,7 +16,7 @@ from joblib import Parallel, delayed
 from ..base import is_classifier, is_regressor
 from ..utils.extmath import cartesian
 from ..utils import check_array
-from ..utils import check_matplotlib_support
+from ..utils import check_matplotlib_support  # noqa
 from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
@@ -314,7 +314,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 method, ', '.join(accepted_methods)))
 
     if method == 'auto':
-        if isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
+        if (isinstance(estimator, BaseGradientBoosting) and
+                estimator.init is None):
             method = 'recursion'
         else:
             method = 'brute'
@@ -492,11 +493,11 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     However, as soon as ``init`` is not a constant estimator, the partial
     dependence values are incorrect for 'recursion'.
     """
-    check_matplotlib_support('plot_partial_dependence')
-    import matplotlib.pyplot as plt
-    from matplotlib import transforms
-    from matplotlib.ticker import MaxNLocator
-    from matplotlib.ticker import ScalarFormatter
+    check_matplotlib_support('plot_partial_dependence')  # noqa
+    import matplotlib.pyplot as plt  # noqa
+    from matplotlib import transforms  # noqa
+    from matplotlib.ticker import MaxNLocator  # noqa
+    from matplotlib.ticker import ScalarFormatter  # noqa
 
     # set target_idx for multi-class estimators
     if hasattr(estimator, 'classes_') and np.size(estimator.classes_) > 2:

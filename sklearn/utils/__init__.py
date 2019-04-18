@@ -640,7 +640,7 @@ def is_scalar_nan(x):
 
 def check_matplotlib_support(caller_name):
     try:
-        import matplotlib
+        import matplotlib  # noqa
     except ImportError as e:
         raise ImportError(
             "{} requires matplotlib. You can install matplotlib with "
