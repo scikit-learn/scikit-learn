@@ -55,122 +55,43 @@ def test_pca():
     assert_almost_equal(pca.explained_variance_ratio_.sum(), 1.0, 3)
 
 
-def test_pca_arpack_solver():
-    # PCA on dense arrays
-    X = iris.data
-    d = X.shape[1]
-
-    # Loop excluding the extremes, invalid inputs for arpack
-    for n_comp in np.arange(1, d):
-        pca = PCA(n_components=n_comp, svd_solver='arpack', random_state=0)
-
-        X_r = pca.fit(X).transform(X)
-        np.testing.assert_equal(X_r.shape[1], n_comp)
-
-        X_r2 = pca.fit_transform(X)
-        assert_array_almost_equal(X_r, X_r2)
-
-        X_r = pca.transform(X)
-        assert_array_almost_equal(X_r, X_r2)
-
-        # Test get_covariance and get_precision
-        cov = pca.get_covariance()
-        precision = pca.get_precision()
-        assert_array_almost_equal(np.dot(cov, precision),
-                                  np.eye(d), 12)
-
-    pca = PCA(n_components=0, svd_solver='arpack', random_state=0)
-    assert_raises(ValueError, pca.fit, X)
-    # Check internal state
-    assert_equal(pca.n_components,
-                 PCA(n_components=0,
-                     svd_solver='arpack', random_state=0).n_components)
-    assert_equal(pca.svd_solver,
-                 PCA(n_components=0,
-                     svd_solver='arpack', random_state=0).svd_solver)
-
-    pca = PCA(n_components=d, svd_solver='arpack', random_state=0)
-    assert_raises(ValueError, pca.fit, X)
-    assert_equal(pca.n_components,
-                 PCA(n_components=d,
-                     svd_solver='arpack', random_state=0).n_components)
-    assert_equal(pca.svd_solver,
-                 PCA(n_components=0,
-                     svd_solver='arpack', random_state=0).svd_solver)
-
-
-def test_pca_randomized_solver():
+def test_pca_arpack_randomized_lobpcg_solvers():
     # PCA on dense arrays
     X = iris.data
 
-    # Loop excluding the 0, invalid for randomized
-    for n_comp in np.arange(1, X.shape[1]):
-        pca = PCA(n_components=n_comp, svd_solver='randomized', random_state=0)
+    # Loop over 3 solvers
+    for solver in ['arpack', 'randomized', 'lobpcg']:
+        # Loop excluding the 0, invalid for lobpcg
+        for n_comp in np.arange(1, X.shape[1]):
+            pca = PCA(n_components=n_comp, svd_solver=solver, random_state=0)
 
-        X_r = pca.fit(X).transform(X)
-        assert X_r.shape[1] == n_comp
+            X_r = pca.fit(X).transform(X)
+            assert X_r.shape[1] == n_comp
 
-        X_r2 = pca.fit_transform(X)
-        assert_array_almost_equal(X_r, X_r2)
+            X_r2 = pca.fit_transform(X)
+            assert_array_almost_equal(X_r, X_r2)
 
-        X_r = pca.transform(X)
-        assert_array_almost_equal(X_r, X_r2)
+            X_r = pca.transform(X)
+            assert_array_almost_equal(X_r, X_r2)
 
-        # Test get_covariance and get_precision
-        cov = pca.get_covariance()
-        precision = pca.get_precision()
-        assert_array_almost_equal(np.dot(cov, precision),
-                                  np.eye(X.shape[1]), 12)
+            # Test get_covariance and get_precision
+            cov = pca.get_covariance()
+            precision = pca.get_precision()
+            assert_array_almost_equal(np.dot(cov, precision),
+                                      np.eye(X.shape[1]), 12)
 
-    pca = PCA(n_components=0, svd_solver='randomized', random_state=0)
-    assert_raises(ValueError, pca.fit, X)
+        pca = PCA(n_components=0, svd_solver=solver, random_state=0)
+        assert_raises(ValueError, pca.fit, X)
 
-    pca = PCA(n_components=0, svd_solver='randomized', random_state=0)
-    assert_raises(ValueError, pca.fit, X)
-    # Check internal state
-    assert_equal(pca.n_components,
-                 PCA(n_components=0,
-                     svd_solver='randomized', random_state=0).n_components)
-    assert_equal(pca.svd_solver,
-                 PCA(n_components=0,
-                     svd_solver='randomized', random_state=0).svd_solver)
-
-
-def test_pca_lobpcg_solver():
-    # PCA on dense arrays
-    X = iris.data
-
-    # Loop excluding the 0, invalid for lobpcg
-    for n_comp in np.arange(1, X.shape[1]):
-        pca = PCA(n_components=n_comp, svd_solver='lobpcg', random_state=0)
-
-        X_r = pca.fit(X).transform(X)
-        assert X_r.shape[1] == n_comp
-
-        X_r2 = pca.fit_transform(X)
-        assert_array_almost_equal(X_r, X_r2)
-
-        X_r = pca.transform(X)
-        assert_array_almost_equal(X_r, X_r2)
-
-        # Test get_covariance and get_precision
-        cov = pca.get_covariance()
-        precision = pca.get_precision()
-        assert_array_almost_equal(np.dot(cov, precision),
-                                  np.eye(X.shape[1]), 12)
-
-    pca = PCA(n_components=0, svd_solver='lobpcg', random_state=0)
-    assert_raises(ValueError, pca.fit, X)
-
-    pca = PCA(n_components=0, svd_solver='lobpcg', random_state=0)
-    assert_raises(ValueError, pca.fit, X)
-    # Check internal state
-    assert_equal(pca.n_components,
-                 PCA(n_components=0,
-                     svd_solver='lobpcg', random_state=0).n_components)
-    assert_equal(pca.svd_solver,
-                 PCA(n_components=0,
-                     svd_solver='lobpcg', random_state=0).svd_solver)
+        pca = PCA(n_components=0, svd_solver=solver, random_state=0)
+        assert_raises(ValueError, pca.fit, X)
+        # Check internal state
+        assert_equal(pca.n_components,
+                     PCA(n_components=0,
+                         svd_solver=solver, random_state=0).n_components)
+        assert_equal(pca.svd_solver,
+                     PCA(n_components=0,
+                         svd_solver=solver, random_state=0).svd_solver)
 
 
 def test_no_empty_slice_warning():
