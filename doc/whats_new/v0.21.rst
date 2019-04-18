@@ -272,6 +272,14 @@ Support for Python 3.4 and below has been officially dropped.
   making ``shuffle=True`` ineffective.
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+:mod:`sklearn.multioutput`
+........................
+
+- |Fix| Fixed a bug in :class:`multiout.MultiOutputClassifier` where the
+  `predict_proba` method incorrectly checked for `predict_proba` attribute in
+  the estimator object.
+  :issue:`12222` by :user:`Rebekah Kim <rebekahkim>`.
+
 :mod:`sklearn.neighbors`
 ........................
 
