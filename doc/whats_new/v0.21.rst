@@ -30,6 +30,11 @@ random sampling procedures.
 - :class:`neural_network.MLPClassifier` |Fix|
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
+- :class:`linear_model.SGDClassifier` and any derived classifiers. |Fix|
+- Any model using the :func:`linear_model.sag.sag_solver` function with a `0`
+  seed, including :class:`linear_model.LogisticRegression`,
+  :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge`,
+  and :class:`linear_model.RidgeCV` with 'sag' solver. |Fix|
 
 
 Details are listed in the changelog below.
@@ -68,6 +73,10 @@ Support for Python 3.4 and below has been officially dropped.
   between 0 and 1.
   :issue:`13086` by :user:`Scott Cole <srcole>`.
 
+- |Enhancement| Allow n-dimensional arrays as input for
+  `calibration.CalibratedClassifierCV`. :issue:`13485` by
+  :user:`William de Vazelhes <wdevazelhes>`.
+
 :mod:`sklearn.cluster`
 ......................
 
@@ -75,6 +84,18 @@ Support for Python 3.4 and below has been officially dropped.
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
+
+- |Fix| Fixed a bug where :class:`cluster.Birch` could occasionally raise an
+  AttributeError. :issue:`13651` by `Joel Nothman`_.
+
+- |API| The ``n_components_`` attribute in :class:`cluster.AgglomerativeClustering`
+  and :class:`cluster.FeatureAgglomeration` has been renamed to
+  ``n_connected_components_``.
+  :issue:`13427` by :user:`Stephane Couvreur <scouvreur>`.
+
+- |Fix| Fixed a bug in :class:`KMeans` where empty clusters weren't correctly
+  relocated when using sample weights. :issue:`13486`
+  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -146,6 +167,11 @@ Support for Python 3.4 and below has been officially dropped.
   float64 for the ``stratified`` strategy. :issue:`13266` by
   :user:`Christos Aridas<chkoar>`.
 
+- |Fix| Fixed a bug in :class:`dummy.DummyClassifier` where it was throwing a
+  dimension mismatch error in prediction time if a column vector ``y`` with
+  ``shape=(n, 1)`` was given at ``fit`` time. :issue:`13545` by :user:`Nick
+  Sorros <nsorros>` and `Adrin Jalali`_.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -166,9 +192,9 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| Minimized the validation of X in
   :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
   :issue:`13174` by :user:`Christos Aridas <chkoar>`.
-  
+
 - |Enhancement| :class:`ensemble.IsolationForest` now exposes ``warm_start``
-  parameter, allowing iterative addition of trees to an isolation 
+  parameter, allowing iterative addition of trees to an isolation
   forest. :issue:`13496` by :user:`Peter Marko <petibear>`.
 
 - |Efficiency| Make :class:`ensemble.IsolationForest` more memory efficient
@@ -178,6 +204,22 @@ Support for Python 3.4 and below has been officially dropped.
 - |Efficiency| :class:`ensemble.IsolationForest` now uses chunks of data at
   prediction step, thus capping the memory usage. :issue:`13283` by
   `Nicolas Goix`_.
+
+- |Fix| The values of ``feature_importances_`` in all random forest based
+  models (i.e.
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`,
+  :class:`ensemble.GradientBoostingClassifier`, and
+  :class:`ensemble.GradientBoostingRegressor`) now:
+
+  - sum up to ``1``
+  - all the single node trees in feature importance calculation are ignored
+  - in case all trees have only one single node (i.e. a root node),
+    feature importances will be an array of all zeros.
+  :issue:`13636` and :issue:`13620` by `Adrin Jalali`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor`, which didn't support
@@ -214,6 +256,17 @@ Support for Python 3.4 and below has been officially dropped.
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
 
+- |Fix| :func:`ensemble.partial_dependence` now takes sample weights into
+  account for the partial dependence computation when the
+  gradient boosting model has been trained with sample weights.
+  :issue:`13193` by :user:`Samuel O. Ronsin <samronsin>`.
+
+- |Feature| Add :class:`ensemble.VotingRegressor`
+  which provides an equivalent of :class:`ensemble.VotingClassifier`
+  for regression problems.
+  :issue:`12513` by :user:`Ramil Nugmanov <stsouko>` and
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
+
 :mod:`sklearn.externals`
 ........................
 
@@ -232,6 +285,18 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| In :class:`impute.MissingIndicator` avoid implicit densification by
   raising an exception if input is sparse add `missing_values` property
   is set to 0. :issue:`13240` by :user:`Bartosz Telenczuk <btel>`.
+
+- |Fix| Fixed two bugs in :class:`MissingIndicator`. First, when ``X`` is
+  sparse, all the non-zero non missing values used to become explicit False in
+  the transformed data. Then, when ``features='missing-only'``, all features
+  used to be kept if there were no missing values at all. :issue:`13562` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Feature| The :class:`impute.SimpleImputer` and :class:`IterativeImputer` have
+  a new parameter ``'add_indicator'``, which simply stacks a
+  :class:`impute.MissingIndicator` transform into the output of the imputer's
+  transform. That allows a predictive estimator to account for missingness.
+  :issue:`12583`, :issue:`13601` by :user:`Danylo Baibak <DanilBaibak>`.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -307,6 +372,27 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23.
   :issue:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
+- |Fix| Fixed a bug in
+  :class:`linear_model.stochastic_gradient.BaseSGDClassifier` that was not
+  deterministic when trained in a multi-class setting on several threads.
+  :issue:`13422` by :user:`Clément Doumouro <ClemDoum>`.
+
+- |Fix| Fixed bug in :func:`linear_model.ridge.ridge_regression`,
+  :class:`linear_model.ridge.Ridge` and
+  :class:`linear_model.ridge.ridge.RidgeClassifier` that
+  caused unhandled exception for arguments ``return_intercept=True`` and
+  ``solver=auto`` (default) or any other solver different from ``sag``.
+  :issue:`13363` by :user:`Bartosz Telenczuk <btel>`
+
+- |Fix| :func:`linear_model.ridge.ridge_regression` will now raise an exception
+  if ``return_intercept=True`` and solver is different from ``sag``. Previously,
+  only warning was issued. :issue:`13363` by :user:`Bartosz Telenczuk <btel>`
+
+- |API| :func:`linear_model.ridge.ridge_regression` will choose ``sparse_cg``
+  solver for sparse inputs when ``solver=auto`` and ``sample_weight``
+  is provided (previously `cholesky` solver was selected). :issue:`13363`
+  by :user:`Bartosz Telenczuk <btel>`
+
 :mod:`sklearn.manifold`
 ............................
 
@@ -349,6 +435,13 @@ Support for Python 3.4 and below has been officially dropped.
   it is otherwise identical to accuracy.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
+
+- |Enhancement| Added `beta` parameter to
+  :func:`metrics.cluster.supervised.homogeneity_completeness_v_measure` and
+  :func:`metrics.cluster.supervised.v_measure_score` to configure the
+  tradeoff between homogeneity and completeness.
+  :issue:`13607` by :user:`Stephane Couvreur <scouvreur>` and
+  and :user:`Ivan Sanchez <ivsanro1>`.
 
 - |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
@@ -402,6 +495,10 @@ Support for Python 3.4 and below has been officially dropped.
   shuffles each class's samples with the same ``random_state``,
   making ``shuffle=True`` ineffective.
   :issue:`13124` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- |Fix| Added ability for :func:`model_selection.cross_val_predict` to handle
+  multi-label (and multioutput-multiclass) targets with ``predict_proba``-type
+  methods. :issue:`8773` by :user:`Stephen Hoover <stephen-hoover>`.
 
 - |Fix| Fixed an issue in :func:`~model_selection.cross_val_predict` where
   `method="predict_proba"` returned always `0.0` when one of the classes was
@@ -556,9 +653,29 @@ Multiple modules
   but this can be altered with the ``print_changed_only`` option in
   :func:`sklearn.set_config`. :issue:`11705` by :user:`Nicolas Hug
   <NicolasHug>`.
+- |MajorFeature| Add estimators tags: these are annotations of estimators
+  that allow programmatic inspection of their capabilities, such as sparse
+  matrix support, supported output types and supported methods. Estimator
+  tags also determine the tests that are run on an estimator when
+  `check_estimator` is called. Read more in the :ref:`User Guide
+  <estimator_tags>`. :issue:`8022` by :user:`Andreas Müller <amueller>`.
 - |Efficiency| Memory copies are avoided when casting arrays to a different
   dtype in multiple estimators. :issue:`11973` by :user:`Roman Yurchak
   <rth>`.
+- |Fix| Fixed a bug in the implementation of the :func:`our_rand_r`
+  helper function that was not behaving consistently across platforms.
+  :issue:`13422` by :user:`Madhura Parikh <jdnc>` and
+  :user:`Clément Doumouro <ClemDoum>`.
+
+
+Dependencies
+............
+
+- |Enhancement| Joblib is no longer vendored in scikit-learn, and becomes a
+  dependency. Minimal supported version is joblib 0.11, however using
+  version >= 0.13 is strongly recommended. 
+  :issue:`13531` by :user:`Roman Yurchak <rth>`.
+
 
 Changes to estimator checks
 ---------------------------
