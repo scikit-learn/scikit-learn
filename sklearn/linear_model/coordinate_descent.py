@@ -11,6 +11,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy import sparse
+from joblib import Parallel, delayed, effective_n_jobs
 
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
@@ -18,7 +19,6 @@ from .base import _preprocess_data
 from ..utils import check_array, check_X_y
 from ..utils.validation import check_random_state
 from ..model_selection import check_cv
-from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted

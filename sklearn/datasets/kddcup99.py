@@ -15,13 +15,12 @@ import os
 from os.path import dirname, exists, join
 
 import numpy as np
-
+import joblib
 
 from .base import _fetch_remote
 from .base import get_data_home
 from .base import RemoteFileMetadata
 from ..utils import Bunch
-from ..utils import _joblib
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
@@ -284,8 +283,8 @@ def _fetch_brute_kddcup99(data_home=None,
         # (error: 'Incorrect data length while decompressing[...] the file
         #  could be corrupted.')
 
-        _joblib.dump(X, samples_path, compress=0)
-        _joblib.dump(y, targets_path, compress=0)
+        joblib.dump(X, samples_path, compress=0)
+        joblib.dump(y, targets_path, compress=0)
     elif not available:
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
@@ -293,8 +292,8 @@ def _fetch_brute_kddcup99(data_home=None,
     try:
         X, y
     except NameError:
-        X = _joblib.load(samples_path)
-        y = _joblib.load(targets_path)
+        X = joblib.load(samples_path)
+        y = joblib.load(targets_path)
 
     return Bunch(data=X, target=y)
 

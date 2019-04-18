@@ -12,9 +12,9 @@ from itertools import chain
 import numpy as np
 import warnings
 from scipy import sparse
+from joblib import Parallel, delayed
 
 from ..base import clone, TransformerMixin
-from ..utils._joblib import Parallel, delayed
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch

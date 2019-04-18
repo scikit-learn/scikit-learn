@@ -218,15 +218,15 @@ def _joblib_parallel_args(**kwargs):
 
     See joblib.Parallel documentation for more details
     """
-    from . import _joblib
+    import joblib
 
-    if _joblib.__version__ >= LooseVersion('0.12'):
+    if joblib.__version__ >= LooseVersion('0.12'):
         return kwargs
 
     extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
     if extra_args:
         raise NotImplementedError('unhandled arguments %s with joblib %s'
-                                  % (list(extra_args), _joblib.__version__))
+                                  % (list(extra_args), joblib.__version__))
     args = {}
     if 'prefer' in kwargs:
         prefer = kwargs['prefer']

@@ -7,6 +7,8 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
+from joblib import Parallel, delayed, effective_n_jobs
+
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
@@ -15,7 +17,6 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics.scorer import check_scoring
