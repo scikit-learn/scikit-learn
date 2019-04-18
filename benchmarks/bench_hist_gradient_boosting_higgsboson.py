@@ -70,15 +70,14 @@ print(f"Training set with {n_samples} records with {n_features} features.")
 
 print("Fitting a sklearn model...")
 tic = time()
-est = HistGradientBoostingClassifier(
-    loss='binary_crossentropy',
-    learning_rate=lr,
-    max_iter=n_trees,
-    max_bins=max_bins,
-    max_leaf_nodes=n_leaf_nodes,
-    n_iter_no_change=None,
-    random_state=0,
-    verbose=1)
+est = HistGradientBoostingClassifier(loss='binary_crossentropy',
+                                     learning_rate=lr,
+                                     max_iter=n_trees,
+                                     max_bins=max_bins,
+                                     max_leaf_nodes=n_leaf_nodes,
+                                     n_iter_no_change=None,
+                                     random_state=0,
+                                     verbose=1)
 est.fit(data_train, target_train)
 toc = time()
 predicted_test = est.predict(data_test)
