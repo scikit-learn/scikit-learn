@@ -396,7 +396,8 @@ def set_checking_parameters(estimator):
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
 
-    if name == 'HistGradientBoostingClassifier':
+    if name in ('HistGradientBoostingClassifier',
+                'HistGradientBoostingRegressor'):
         # The default min_samples_leaf (20) isn't appropriate for small
         # datasets (only very shallow trees are built) that the checks use.
         estimator.set_params(min_samples_leaf=5)
