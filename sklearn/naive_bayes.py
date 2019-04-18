@@ -1174,7 +1174,7 @@ class CategoricalNB(BaseDiscreteNB):
             class_cats, n_feature_class = np.unique(X_feature_class,
                                                     return_counts=True)
             indices = [cat_mapping[cat] for cat in class_cats]
-            cat_count[j, indices] = n_feature_class
+            cat_count[j, indices] += n_feature_class
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = {}

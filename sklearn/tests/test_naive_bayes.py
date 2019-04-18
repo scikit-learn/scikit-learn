@@ -206,10 +206,10 @@ def test_discretenb_prior(cls):
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
 def test_discretenb_partial_fit(cls):
     clf1 = cls()
-    clf1.fit([[0, 1], [1, 0]], [0, 1])
+    clf1.fit([[0, 1], [1, 0], [1, 1]], [0, 1, 1])
 
     clf2 = cls()
-    clf2.partial_fit([[0, 1], [1, 0]], [0, 1], classes=[0, 1])
+    clf2.partial_fit([[0, 1], [1, 0], [1, 1]], [0, 1, 1], classes=[0, 1])
     assert_array_equal(clf1.class_count_, clf2.class_count_)
     if cls is CategoricalNB:
         for i in range(len(clf1.cat_count_)):
@@ -221,6 +221,7 @@ def test_discretenb_partial_fit(cls):
     clf3 = cls()
     clf3.partial_fit([[0, 1]], [0], classes=[0, 1])
     clf3.partial_fit([[1, 0]], [1])
+    clf3.partial_fit([[1, 1]], [1])
     assert_array_equal(clf1.class_count_, clf3.class_count_)
     if cls is CategoricalNB:
         # the categories for each feature of CategoricalNB are mapped to an
@@ -239,9 +240,9 @@ def test_discretenb_partial_fit(cls):
         # assert category 0 occurs 1x in the first class and 0x in the 2nd
         # class
         assert_array_equal(clf1.cat_count_[0][ix0], np.array([1, 0]))
-        # assert category 1 occurs 0x in the first class and 1x in the 2nd
+        # assert category 1 occurs 0x in the first class and 2x in the 2nd
         # class
-        assert_array_equal(clf1.cat_count_[0][ix1], np.array([0, 1]))
+        assert_array_equal(clf1.cat_count_[0][ix1], np.array([0, 2]))
 
         # assert 2nd feature
         # get indices for categories 0 and 1 for the first class, class 0
@@ -250,9 +251,9 @@ def test_discretenb_partial_fit(cls):
         # assert category 0 occurs 0x in the first class and 1x in the 2nd
         # class
         assert_array_equal(clf1.cat_count_[1][ix0], np.array([0, 1]))
-        # assert category 1 occurs 1x in the first class and 0x in the 2nd
+        # assert category 1 occurs 1x in the first class and 1x in the 2nd
         # class
-        assert_array_equal(clf1.cat_count_[1][ix1], np.array([1, 0]))
+        assert_array_equal(clf1.cat_count_[1][ix1], np.array([1, 1]))
     else:
         assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
