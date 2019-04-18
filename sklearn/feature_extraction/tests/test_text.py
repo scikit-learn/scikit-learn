@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from collections.abc import Mapping
+import os
 import re
 import warnings
 
@@ -1201,7 +1202,7 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
 
 @pytest.mark.parametrize('Estimator',
                          [CountVectorizer, TfidfVectorizer, HashingVectorizer])
-def test_callable_analyzer_vs_file_input(Estimator):
+def test_callable_analyzer_vs_file_input(tmpdir, Estimator):
     data = ['this is text, not file or filename']
 
     with pytest.raises(FileNotFoundError):
@@ -1235,13 +1236,8 @@ def test_callable_analyzer_vs_file_input(Estimator):
     def analyzer3(doc):
         raise Exception("testing")
 
-    import tempfile
-    with tempfile.NamedTemporaryFile('w', delete=False) as f:
-        f.write("sample content\n")
-        fname = f.name
+    f = tmpdir.join("file.txt")
+    f.write("sample content\n")
 
     with pytest.raises(Exception, match="testing"):
-        Estimator(analyzer=analyzer3, input='filename').fit_transform([fname])
-
-    import os
-    os.remove(fname)
+        Estimator(analyzer=analyzer3, input='file').fit_transform([f])

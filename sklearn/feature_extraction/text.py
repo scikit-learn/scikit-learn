@@ -305,7 +305,7 @@ class VectorizerMixin:
             self._stop_words_id = id(self.stop_words)
             return 'error'
 
-    def _validate_analyzer(self):
+    def _validate_custom_analyzer(self):
         # This is to check if the given custom analyzer expects file or a
         # filename instead of data.
         # Behavior changed in v0.21, function could be removed in v0.23
@@ -331,7 +331,7 @@ class VectorizerMixin:
         """Return a callable that handles preprocessing and tokenization"""
         if callable(self.analyzer):
             if self.input in ['file', 'filename']:
-                self._validate_analyzer()
+                self._validate_custom_analyzer()
             return lambda doc: self.analyzer(self.decode(doc))
 
         preprocess = self.build_preprocessor()
