@@ -95,11 +95,11 @@ class FCM(BaseEstimator, ClusterMixin):
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    m  : int, optional, default: 2
+    m : int, optional, default: 2
         A key number for the update the centroids and the cluster-probability matrix.
     
     eps : float, optional, default: 10
-        If the sum of |new_cluster_probability_matrix - old_cluster_probability_matrix| is smaller than eps, then the algorithm will stop.
+        If the sum of the abs of the (new_cluster_probability_matrix - old_cluster_probability_matrix) is smaller than eps, then the algorithm will stop.
         
 
     Attributes
@@ -112,17 +112,14 @@ class FCM(BaseEstimator, ClusterMixin):
 
     Examples
     --------
-    See also
-    --------
 
-    Note
+    Notes
     --------
 
     Now, something remains implementing:
-        
-        * sample weighted section
-        * parallel run the model
-        * ... 
+    1. sample weighted section
+    2. parallel run the model
+    3. ... 
 
     """
 
