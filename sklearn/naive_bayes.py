@@ -1068,7 +1068,7 @@ class CategoricalNB(BaseDiscreteNB):
         self.class_prior = class_prior
         self.handle_unknown = handle_unknown
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters
@@ -1081,14 +1081,18 @@ class CategoricalNB(BaseDiscreteNB):
         y : array-like, shape = [n_samples]
             Target values.
 
+        sample_weight : array-like, shape = [n_samples], (default=None)
+            Weights applied to individual samples (1. for unweighted).
+
         Returns
         -------
         self : object
         """
         self._check_settings()
-        return super(CategoricalNB, self).fit(X, y, sample_weight=None)
+        return super(CategoricalNB, self).fit(X, y,
+                                              sample_weight=sample_weight)
 
-    def partial_fit(self, X, y, classes=None):
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
         This method is expected to be called several times consecutively
@@ -1118,13 +1122,16 @@ class CategoricalNB(BaseDiscreteNB):
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
+        sample_weight : array-like, shape = [n_samples], (default=None)
+            Weights applied to individual samples (1. for unweighted).
+
         Returns
         -------
         self : object
         """
         self._check_settings()
-        return super(CategoricalNB, self).partial_fit(X, y, classes,
-                                                      sample_weight=None)
+        return (super(CategoricalNB, self)
+                .partial_fit(X, y, classes, sample_weight=sample_weight))
 
     def _check_X(self, X):
         return check_array(X, accept_sparse=False)
@@ -1170,11 +1177,19 @@ class CategoricalNB(BaseDiscreteNB):
 
     def _update_cat_count(self, X_feature, Y, cat_count, cat_mapping):
         for j in range(self.class_count_.shape[0]):
-            X_feature_class = X_feature[Y[:, j] == 1]
-            class_cats, n_feature_class = np.unique(X_feature_class,
-                                                    return_counts=True)
+            X_feature_class = X_feature[Y[:, j] > 0]
+            Y_class = Y[Y[:, j] > 0, j]
+            class_cats, n_feature_class = self._unique_sums(X_feature_class,
+                                                            Y_class)
             indices = [cat_mapping[cat] for cat in class_cats]
             cat_count[j, indices] += n_feature_class
+
+    def _unique_sums(self, X_feature_class, Y_class):
+        # Sum for each category in x the corresponding values in y
+        class_cats, inv = np.unique(X_feature_class, return_inverse=True)
+        n_feature_class = np.zeros(len(class_cats), dtype=Y_class.dtype)
+        np.add.at(n_feature_class, inv, Y_class)
+        return class_cats, n_feature_class
 
     def _update_feature_log_prob(self, alpha):
         feature_log_prob = {}

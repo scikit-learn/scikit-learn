@@ -397,7 +397,7 @@ def test_discretenb_provide_prior_with_partial_fit(cls):
                                   clf_partial.class_log_prior_)
 
 
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
 def test_discretenb_sample_weight_multiclass(cls):
     # check shape consistency for number of samples at fit time
     X = [
