@@ -35,18 +35,27 @@ Emeritus Core Developers
 ------------------------
 The following people have been active contributors in the past, but are no longer active in the project
 
-- Angel Soler Gollonet
+
 - Alexander Fabisch
 - Alexandre Passos
+- Angel Soler Gollonet
+- Arnaud Joly
 - Chris Gorgolewski
 - David Cournapeau
 - David Warde-Farley
+- Eduard Duchesnay
 - Jake Vanderplas
+- Jaques Grobler
 - Kyle Kastner
+- Lars Buitinck
+- Manoj Kumar
+- Mathieu Blondel
 - Matthieu Brucher
+- Noel Dawe
 - Raghav Rajagopalan
 - Robert Layton
 - Ron Weiss
+- Satrajit Ghosh
 - Shiqiao Du
 - Thouis (Ray) Jones
 - Vincent Dubourg
