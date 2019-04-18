@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from collections.abc import Mapping
-import os
 import re
 import warnings
 
