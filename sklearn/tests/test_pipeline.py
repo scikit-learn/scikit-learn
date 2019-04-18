@@ -1088,32 +1088,32 @@ parameter_grid_test_verbose = ((est, pattern, method) for
                                (est, pattern), method in itertools.product(
     [
      (Pipeline([('transf', Transf()), ('clf', FitParamT())]),
-      r'\[Pipeline\].*\(step 1 of 2\) Fitting transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 2\) Fitting clf.* total=.*\n$'),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$'),
      (Pipeline([('transf', Transf()), ('noop', None),
                ('clf', FitParamT())]),
-      r'\[Pipeline\].*\(step 1 of 3\) Fitting transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 3\) Passing noop.* total=.*\n'
-      r'\[Pipeline\].*\(step 3 of 3\) Fitting clf.* total=.*\n$'),
+      r'\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n'
+      r'\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$'),
      (Pipeline([('transf', Transf()), ('noop', 'passthrough'),
                ('clf', FitParamT())]),
-      r'\[Pipeline\].*\(step 1 of 3\) Fitting transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 3\) Passing noop.* total=.*\n'
-      r'\[Pipeline\].*\(step 3 of 3\) Fitting clf.* total=.*\n$'),
+      r'\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n'
+      r'\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$'),
      (Pipeline([('transf', Transf()), ('clf', None)]),
-      r'\[Pipeline\].*\(step 1 of 2\) Fitting transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 2\) Passing clf.* total=.*\n$'),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$'),
      (Pipeline([('transf', None), ('mult', Mult())]),
-      r'\[Pipeline\].*\(step 1 of 2\) Passing transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 2\) Fitting mult.* total=.*\n$'),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing mult.* total=.*\n$'),
      (Pipeline([('transf', 'passthrough'), ('mult', Mult())]),
-      r'\[Pipeline\].*\(step 1 of 2\) Passing transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 2\) Fitting mult.* total=.*\n$'),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing mult.* total=.*\n$'),
      (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
-      r'\[FeatureUnion\].*\(step 1 of 2\) Fitting mult1.* total=.*\n'
-      r'\[FeatureUnion\].*\(step 2 of 2\) Fitting mult2.* total=.*\n$'),
+      r'\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n'
+      r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'),
      (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
-      r'\[FeatureUnion\].*\(step 1 of 1\) Fitting mult2.* total=.*\n$')
+      r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$')
     ], ['fit', 'fit_transform', 'fit_predict'])
     if hasattr(est, method) and not (
         method == 'fit_transform' and hasattr(est, 'steps') and

@@ -390,7 +390,7 @@ boolean mask array or callable
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
-        return '(%d of %d) Fitting %s' % (idx, total, name)
+        return '(%d of %d) Processing %s' % (idx, total, name)
 
     def _fit_transform(self, X, y, func, fitted=False):
         """

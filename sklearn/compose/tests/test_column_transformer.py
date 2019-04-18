@@ -986,50 +986,42 @@ def test_column_transformer_no_estimators():
     assert ct.transformers_[-1][2] == [0, 1, 2]
 
 
-@pytest.mark.parametrize(['est', 'pattern'], [
-    (ColumnTransformer(
-        [('trans1', Trans(), [0]),
-         ('trans2', Trans(), [1])],
-        remainder=DoubleTrans()),
-     (r'\[ColumnTransformer\].*\(1 of 3\) Fitting trans1.* total=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 3\) Fitting trans2.* total=.*\n'
-      r'\[ColumnTransformer\].*\(3 of 3\) Fitting remainder.* total=.*\n$')),
-    (ColumnTransformer(
-        [('trans1', Trans(), [0]),
-         ('trans2', Trans(), [1])],
-        remainder='passthrough'),
-     (r'\[ColumnTransformer\].*\(1 of 3\) Fitting trans1.* total=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 3\) Fitting trans2.* total=.*\n'
-      r'\[ColumnTransformer\].*\(3 of 3\) Fitting remainder.* total=.*\n$')),
-    (ColumnTransformer(
-        [('trans1', Trans(), [0]),
-         ('trans2', 'drop', [1])],
-        remainder='passthrough'),
-     (r'\[ColumnTransformer\].*\(1 of 2\) Fitting trans1.* total=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 2\) Fitting remainder.* total=.*\n$')),
-    (ColumnTransformer(
-        [('trans1', Trans(), [0]),
-         ('trans2', 'passthrough', [1])],
-        remainder='passthrough'),
-     (r'\[ColumnTransformer\].*\(1 of 3\) Fitting trans1.* total=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 3\) Fitting trans2.* total=.*\n'
-      r'\[ColumnTransformer\].*\(3 of 3\) Fitting remainder.* total=.*\n$')),
-    (ColumnTransformer(
-        [('trans1', Trans(), [0])],
-        remainder='passthrough'),
-     (r'\[ColumnTransformer\].*\(1 of 2\) Fitting trans1.* total=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 2\) Fitting remainder.* total=.*\n$')),
-    (ColumnTransformer(
-        [('trans1', Trans(), [0]),
-         ('trans2', Trans(), [1])],
-        remainder='drop'),
-     (r'\[ColumnTransformer\].*\(1 of 2\) Fitting trans1.* total=.*\n'
-      r'\[ColumnTransformer\].*\(2 of 2\) Fitting trans2.* total=.*\n$')),
-    (ColumnTransformer(
-        [('trans1', Trans(), [0])],
-        remainder='drop'),
-     (r'\[ColumnTransformer\].*\(1 of 1\) Fitting trans1.* total=.*\n$'))
-])
+@pytest.mark.parametrize(
+    ['est', 'pattern'],
+    [(ColumnTransformer([('trans1', Trans(), [0]), ('trans2', Trans(), [1])],
+                        remainder=DoubleTrans()),
+      (r'\[ColumnTransformer\].*\(1 of 3\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 3\) Processing trans2.* total=.*\n'
+       r'\[ColumnTransformer\].*\(3 of 3\) Processing remainder.* total=.*\n$'
+       )),
+     (ColumnTransformer([('trans1', Trans(), [0]), ('trans2', Trans(), [1])],
+                        remainder='passthrough'),
+      (r'\[ColumnTransformer\].*\(1 of 3\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 3\) Processing trans2.* total=.*\n'
+       r'\[ColumnTransformer\].*\(3 of 3\) Processing remainder.* total=.*\n$'
+       )),
+     (ColumnTransformer([('trans1', Trans(), [0]), ('trans2', 'drop', [1])],
+                        remainder='passthrough'),
+      (r'\[ColumnTransformer\].*\(1 of 2\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 2\) Processing remainder.* total=.*\n$'
+       )),
+     (ColumnTransformer([('trans1', Trans(), [0]),
+                         ('trans2', 'passthrough', [1])],
+                        remainder='passthrough'),
+      (r'\[ColumnTransformer\].*\(1 of 3\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 3\) Processing trans2.* total=.*\n'
+       r'\[ColumnTransformer\].*\(3 of 3\) Processing remainder.* total=.*\n$'
+       )),
+     (ColumnTransformer([('trans1', Trans(), [0])], remainder='passthrough'),
+      (r'\[ColumnTransformer\].*\(1 of 2\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 2\) Processing remainder.* total=.*\n$'
+       )),
+     (ColumnTransformer([('trans1', Trans(), [0]), ('trans2', Trans(), [1])],
+                        remainder='drop'),
+      (r'\[ColumnTransformer\].*\(1 of 2\) Processing trans1.* total=.*\n'
+       r'\[ColumnTransformer\].*\(2 of 2\) Processing trans2.* total=.*\n$')),
+     (ColumnTransformer([('trans1', Trans(), [0])], remainder='drop'),
+      (r'\[ColumnTransformer\].*\(1 of 1\) Processing trans1.* total=.*\n$'))])
 @pytest.mark.parametrize('method', ['fit', 'fit_transform'])
 def test_column_transformer_verbose(est, pattern, method, capsys):
     X_array = np.array([[0, 1, 2], [2, 4, 6], [8, 6, 4]]).T

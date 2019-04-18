@@ -254,14 +254,9 @@ class Pipeline(_BaseComposition):
             return None
         name, step = self.steps[step_idx]
 
-        if step is None or step == 'passthrough':
-            return '(step %d of %d) Passing %s' % (step_idx + 1,
-                                                   len(self.steps),
-                                                   name)
-        else:
-            return '(step %d of %d) Fitting %s' % (step_idx + 1,
-                                                   len(self.steps),
-                                                   name)
+        return '(step %d of %d) Processing %s' % (step_idx + 1,
+                                                  len(self.steps),
+                                                  name)
 
     # Estimator interface
 
@@ -932,7 +927,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
-        return '(step %d of %d) Fitting %s' % (idx, total, name)
+        return '(step %d of %d) Processing %s' % (idx, total, name)
 
     def _parallel_func(self, X, y, fit_params, func):
         """Runs func in parallel on X and y"""
