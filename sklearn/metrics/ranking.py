@@ -33,7 +33,7 @@ from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..preprocessing.label import _encode_python
+from ..preprocessing.label import _encode
 
 from .base import _average_binary_score, _average_multiclass_ovo_score
 
@@ -461,64 +461,39 @@ def _multiclass_roc_auc_score(binary_metric, y_true, y_score, labels,
                          " for multiclass ROC AUC. 'multiclass' must be"
                          " one of {1}.".format(
                                 multiclass, multiclass_options))
+
     if labels is not None:
-        unique_labels = np.unique(labels)
-        if len(unique_labels) != len(labels):
+        labels = column_or_1d(labels)
+        classes = _encode(labels)
+        if len(classes) != len(labels):
             raise ValueError("Parameter 'labels' must be unique")
-        if len(unique_labels) != y_score.shape[1]:
+        if not np.array_equal(classes, labels):
+            raise ValueError("Parameter 'labels' must be ordered")
+        if len(classes) != y_score.shape[1]:
             raise ValueError(
                 "Number of given labels, {0}, not equal to the number "
                 "of columns in 'y_score', {1}".format(
-                    len(unique_labels), y_score.shape[1]))
-        if set(np.unique(y_true)) > set(unique_labels):
+                    len(classes), y_score.shape[1]))
+        if len(np.setdiff1d(y_true, classes)):
             raise ValueError(
                 "'y_true' contains labels not in parameter 'labels'")
+    else:
+        classes = _encode(y_true)
 
     if multiclass == "ovo":
         if sample_weight is not None:
             raise ValueError("Parameter 'sample_weight' is not supported"
                              " for multiclass one-vs-one ROC AUC."
                              " 'sample_weight' must be None in this case.")
-        y_true_encoded = _encode_y_true_multiclass_ovo(y_true, labels)
+        _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(binary_metric, y_true_encoded,
                                              y_score, average=average)
     else:
         # ovr is same as multi-label
-        if labels is None:
-            labels = np.unique(y_true)
-        y_true_multilabel = label_binarize(y_true, labels)
+        y_true_multilabel = label_binarize(y_true, classes)
         return _average_binary_score(binary_metric, y_true_multilabel, y_score,
                                      average, sample_weight=sample_weight)
-
-
-def _encode_y_true_multiclass_ovo(y_true, labels):
-    """Encodes y_true for multiclass ovo scoring
-
-    Parameters
-    ----------
-    y_true : numpy array, shape = (n_samples, )
-        True multiclass labels
-
-    labels : array-like, shape = (n_classes, ) or None
-        List of labels to index. If ``None``, the lexicon order of ``y_true``
-        is used.
-
-    Returns
-    -------
-    y_true_encoded : numpy array, shape = (n_samples, )
-        Encoded y_true
-    """
-    if labels is not None:
-        _, y_true_encoded = _encode_python(y_true,
-                                           uniques=np.array(labels),
-                                           encode=True)
-        return y_true_encoded
-
-    if np.issubdtype(y_true.dtype, np.integer):
-        return y_true
-
-    return np.unique(y_true, return_inverse=True)[1]
 
 
 def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):

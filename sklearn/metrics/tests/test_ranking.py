@@ -30,7 +30,6 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
-from sklearn.metrics.ranking import _encode_y_true_multiclass_ovo
 
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -475,8 +474,7 @@ def test_deprecated_auc_reorder():
 @pytest.mark.parametrize(
     "y_true, labels",
     [(np.array([0, 1, 0, 2]), None),
-     (["a", "b", "a", "c"], None),
-     (["c", "b", "c", "a"], ["c", "b", "a"])]
+     (["a", "b", "a", "c"], None)]
 )
 def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
     # Tests the one-vs-one multiclass ROC AUC algorithm
@@ -523,10 +521,8 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
             average="weighted"), ovo_weighted_score)
 
 
-@pytest.mark.parametrize(
-    "labels", [None, [0, 1, 2]])
-@pytest.mark.parametrize("multiclass", ["ovo"])
-def test_multiclass_ovo_roc_auc_toydata_binary(labels, multiclass):
+@pytest.mark.parametrize("labels", [None, [0, 1, 2]])
+def test_multiclass_ovo_roc_auc_toydata_binary(labels):
     y_true = np.array([0, 2, 0, 2])
     # Tests the one-vs-one multiclass ROC AUC algorithm for binary y_true
     #
@@ -543,39 +539,21 @@ def test_multiclass_ovo_roc_auc_toydata_binary(labels, multiclass):
     ovo_score = (score_01 + score_10) / 2
 
     assert_almost_equal(
-        roc_auc_score(y_true, y_scores, labels=labels, multiclass=multiclass),
+        roc_auc_score(y_true, y_scores, labels=labels, multiclass='ovo'),
         ovo_score)
 
     # Weighted, one-vs-one multiclass ROC AUC algorithm
     assert_almost_equal(
-        roc_auc_score(y_true, y_scores, labels=labels, multiclass=multiclass,
+        roc_auc_score(y_true, y_scores, labels=labels, multiclass='ovo',
                       average="weighted"), ovo_score)
-
-
-@pytest.mark.parametrize("y_true, y_true_encoded, labels", [
-    (np.array([0, 1, 0, 2, 1]), np.array([0, 1, 0, 2, 1]), None),
-    (np.array([0, 2, 0, 2, 2]), np.array([0, 2, 0, 2, 2]), None),
-    (np.array(["a", "b", "a", "b", "b"]), np.array([0, 1, 0, 1, 1]), None),
-    (np.array(["a", "b", "a", "b", "c"]), np.array([0, 1, 0, 1, 2]), None),
-    (np.array([0, 1, 0, 2, 1]), np.array([2, 0, 2, 1, 0]), [1, 2, 0]),
-    (np.array([0, 2, 0, 2, 2]), np.array([2, 0, 2, 0, 0]), [2, 1, 0]),
-    (np.array(["a", "b", "a", "b", "b"]),
-     np.array([0, 2, 0, 2, 2]), ["a", "c", "b"]),
-    (np.array(["a", "b", "a", "b", "c"]),
-     np.array([1, 2, 1, 2, 0]), ["c", "a", "b"]),
-])
-def test_encode_y_true_multiclass_ovo(y_true, y_true_encoded, labels):
-    assert_almost_equal(
-        _encode_y_true_multiclass_ovo(y_true, labels),
-        y_true_encoded)
 
 
 @pytest.mark.parametrize(
     "y_true, labels",
     [(np.array([0, 1, 2, 2]), None),
      (["a", "b", "c", "c"], None),
-     (["c", "b", "a", "a"], ["c", "b", "a"]),
-     (["c", "a", "b", "b"], ["c", "a", "b"])])
+     ([0, 1, 2, 2], [0, 1, 2]),
+     (["a", "b", "c", "c"], ["a", "b", "c"])])
 def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     # Tests the unweighted, one-vs-rest multiclass ROC AUC algorithm
     # on a small example, representative of an expected use case.
@@ -609,6 +587,8 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     [("Parameter 'labels' must be unique", np.array([0, 1, 2, 2]), [0, 2, 0]),
      ("Parameter 'labels' must be unique", np.array(["a", "b", "c", "c"]),
       ["a", "a", "b"]),
+     ("Parameter 'labels' must be ordered", np.array(["a", "b", "c", "c"]),
+      ["a", "c", "b"]),
      ("Number of given labels, 2, not equal to the number of columns in "
       "'y_score', 3",
       np.array([0, 1, 2, 2]), [0, 1]),

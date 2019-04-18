@@ -15,24 +15,25 @@ curve (AUC) is usually better.
 The "steepness" of ROC curves is also important, since it is ideal to maximize
 the true positive rate while minimizing the false positive rate.
 
-Multiclass settings
+Multi-label settings
 -------------------
 
 ROC curves are typically used in binary classification to study the output of
-a classifier. In order to extend ROC curve and ROC area to multi-class
-or multi-label classification, it is necessary to binarize the output. One ROC
+a classifier. In order to extend ROC curve and ROC area to multi-label
+classification, it is necessary to binarize the output. One ROC
 curve can be drawn per label, but one can also draw a ROC curve by considering
 each element of the label indicator matrix as a binary prediction
 (micro-averaging).
 
-Another evaluation measure for multi-class classification is
+Another evaluation measure for multi-label classification is
 macro-averaging, which gives equal weight to the classification of each
 label.
 
 .. note::
 
     See also :func:`sklearn.metrics.roc_auc_score`,
-             :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`.
+             :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`,
+             :ref:`sphx_glr_auto_examples_model_selection_plot_roc_multiclass.py`.
 
 """
 print(__doc__)
@@ -101,7 +102,7 @@ plt.show()
 
 
 ##############################################################################
-# Plot ROC curves for the multiclass problem
+# Plot ROC curves for the multilabel problem
 
 # Compute macro-average ROC curve and ROC area
 

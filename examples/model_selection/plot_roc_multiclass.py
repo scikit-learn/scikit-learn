@@ -9,16 +9,17 @@ case with one label per sample. See
 of multilabel roc.
 
 The mutliclass One-vs-One scheme compares every unique pairwise combination
-of classes. In this example, we train a SVM classifier on the iris dataset and
-calcuate the AUC using a macro average and a average weighted by the number of
-true instances for each label combination.
+of classes. [1]_ In this example, we train a SVM classifier on the iris dataset
+and calcuate the AUC using a macro average and a average weighted by the number
+of true instances for each label combination.
 
 .. topic:: References:
 
-    .. [HT2001] Hand, D.J. and Till, R.J., 2001. `A simple generalisation
+    .. [1] Hand, D.J. and Till, R.J., 2001. `A simple generalisation
        of the area under the ROC curve for multiple class classification
        problems. <http://link.springer.com/article/10.1023/A:1010920819831>`_
        Machine learning, 45(2), pp.171-186.
+
 """
 print(__doc__)
 
