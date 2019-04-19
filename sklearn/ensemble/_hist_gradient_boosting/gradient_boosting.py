@@ -526,8 +526,8 @@ class HistGradientBoostingRegressor(BaseHistGradientBoosting, RegressorMixin):
         than 1. Depth isn't constrained by default.
     min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf. For small datasets with less
-        than a few hundred samples, it is recommended to lower this value since
-        only very shallow trees would be built.
+        than a few hundred samples, it is recommended to lower this value
+        since only very shallow trees would be built.
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter. Use ``0`` for no regularization
         (default).
@@ -695,8 +695,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         than 1. Depth isn't constrained by default.
     min_samples_leaf : int, optional (default=20)
         The minimum number of samples per leaf. For small datasets with less
-        than a few hundred samples, it is recommended to lower this value since
-        only very shallow trees would be built.
+        than a few hundred samples, it is recommended to lower this value
+        since only very shallow trees would be built.
     l2_regularization : float, optional (default=0)
         The L2 regularization parameter. Use 0 for no regularization.
     max_bins : int, optional (default=256)
