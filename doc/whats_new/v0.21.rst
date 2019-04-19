@@ -632,6 +632,15 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.utils`
+...................
+
+- |API| Deprecated ``warn_on_dtype`` parameter from :func:`utils.check_array`
+  and :func:`utils.check_X_y`. Added explicit warning for dtype conversion
+  in :func:`check_pairwise_arrays` if the ``metric`` being passed is a
+  pairwise boolean metric.
+  :issue:`13382` by :user:`Prathmesh Savale <praths007>`.
+
 Multiple modules
 ................
 

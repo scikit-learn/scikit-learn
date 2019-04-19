@@ -30,6 +30,7 @@ from ..utils._joblib import delayed
 from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from ..exceptions import DataConversionWarning
 
 
 # Utility Functions
@@ -99,19 +100,18 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
     """
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
-    warn_on_dtype = dtype is not None
     estimator = 'check_pairwise_arrays'
     if dtype is None:
         dtype = dtype_float
 
     if Y is X or Y is None:
         X = Y = check_array(X, accept_sparse='csr', dtype=dtype,
-                            warn_on_dtype=warn_on_dtype, estimator=estimator)
+                            estimator=estimator)
     else:
         X = check_array(X, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+                        estimator=estimator)
         Y = check_array(Y, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+                        estimator=estimator)
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
@@ -1502,6 +1502,11 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                             " support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+
+        if dtype == bool and (X.dtype != bool or Y.dtype != bool):
+            msg = "Data was converted to boolean for metric %s" % metric
+            warnings.warn(msg, DataConversionWarning)
+
         X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
 
         # precompute data-derived metric params
