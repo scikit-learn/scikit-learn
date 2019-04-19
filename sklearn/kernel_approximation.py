@@ -757,13 +757,4 @@ class Nystroem(BaseEstimator, TransformerMixin):
         return params
 
 
-# Add `rel_entr` if it is not defined by scipy (0.14.0 and earlier).
-try:
-    from scipy.special import rel_entr
-except ImportError:
-    def xfunc(x, y):
-        if x > 0 and y > 0:
-            return x * np.log(x / y)
-        elif x == 0 and y >= 0:
-            return 0
-    rel_entr = np.vectorize(xfunc)
+from scipy.special import rel_entr
