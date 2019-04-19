@@ -692,7 +692,7 @@ centered on zero and with a precision :math:`\lambda_{i}`:
 
 .. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
 
-with :math:`\diag \; (A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
+with :math:`\text{diag}(A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
 
 In contrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
 has its own standard deviation :math:`\lambda_i`. The prior over all
