@@ -506,6 +506,14 @@ Support for Python 3.4 and below has been officially dropped.
   containing this same sample due to the scaling used in decision_function.
   :issue:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
+:mod:`sklearn.multioutput`
+........................
+
+- |Fix| Fixed a bug in :class:`multiout.MultiOutputClassifier` where the
+  `predict_proba` method incorrectly checked for `predict_proba` attribute in
+  the estimator object.
+  :issue:`12222` by :user:`Rebekah Kim <rebekahkim>`
+  
 :mod:`sklearn.neighbors`
 ........................
 
