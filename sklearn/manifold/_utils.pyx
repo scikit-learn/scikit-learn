@@ -1,4 +1,4 @@
-# cython: language_level=3, boundscheck=False
+# cython: boundscheck=False
 
 from libc cimport math
 cimport cython

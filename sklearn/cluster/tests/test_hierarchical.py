@@ -598,3 +598,17 @@ def test_affinity_passed_to_fix_connectivity():
     linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
 
     assert_equal(fa.counter, 3)
+
+
+def test_n_components_deprecation():
+    # Test that a Deprecation warning is thrown when n_components_
+    # attribute is accessed
+
+    X = np.array([[1, 2], [1, 4], [1, 0], [4, 2]])
+    agc = AgglomerativeClustering().fit(X)
+
+    match = ("``n_components_`` attribute was deprecated "
+             "in favor of ``n_connected_components_``")
+    with pytest.warns(DeprecationWarning, match=match):
+        n = agc.n_components_
+    assert n == agc.n_connected_components_

@@ -27,7 +27,7 @@ make_conda() {
 if [[ "$DISTRIB" == "conda" ]]; then
     TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-                cython=$CYTHON_VERSION"
+                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"
@@ -45,10 +45,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     if [[ -n "$PILLOW_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
-    fi
-
-    if [[ -n "$JOBLIB_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL joblib=$JOBLIB_VERSION"
     fi
 
 	make_conda $TO_INSTALL
