@@ -55,6 +55,10 @@
     <p>Andreas Mueller</p>
     </td>
     <td>
+    <a href='https://github.com/vene'><img src='https://avatars0.githubusercontent.com/u/241745?v=4' class='avatar' /></a> <br />
+    <p>Vlad Niculae</p>
+    </td>
+    <td>
     <a href='https://github.com/jnothman'><img src='https://avatars2.githubusercontent.com/u/78827?v=4' class='avatar' /></a> <br />
     <p>Joel Nothman</p>
     </td>
@@ -62,12 +66,12 @@
     <a href='https://github.com/qinhanmin2014'><img src='https://avatars2.githubusercontent.com/u/12003569?v=4' class='avatar' /></a> <br />
     <p>Hanmin Qin</p>
     </td>
+    </tr>
+    <tr>
     <td>
     <a href='https://github.com/bthirion'><img src='https://avatars1.githubusercontent.com/u/234454?v=4' class='avatar' /></a> <br />
     <p>Bertrand Thirion</p>
     </td>
-    </tr>
-    <tr>
     <td>
     <a href='https://github.com/TomDLT'><img src='https://avatars2.githubusercontent.com/u/11065596?v=4' class='avatar' /></a> <br />
     <p>Tom Dupré la Tour</p>
