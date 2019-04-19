@@ -200,7 +200,8 @@ def test_multi_output_predict_proba():
     sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, tol=1e-3)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     multi_target_linear.fit(X, y)
-    with pytest.raises(ValueError):
+    err_msg = "The base estimator should implement predict_proba method"
+    with pytest.raises(ValueError, match=err_msg):
         multi_target_linear.predict_proba(X)
 
 
