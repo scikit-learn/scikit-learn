@@ -385,6 +385,31 @@ def test_warning_recursion_non_constant_init():
         partial_dependence(gbc, X, [0], method='recursion')
 
 
+def test_partial_dependence_sample_weight():
+    # Test near perfect correlation between partial dependence and diagonal
+    # when sample weights emphasize y = x predictions
+    # non-regression test for #13193
+    N = 1000
+    rng = np.random.RandomState(123456)
+    mask = rng.randint(2, size=N, dtype=bool)
+
+    x = rng.rand(N)
+    # set y = x on mask and y = -x outside
+    y = x.copy()
+    y[~mask] = -y[~mask]
+    X = np.c_[mask, x]
+    # sample weights to emphasize data points where y = x
+    sample_weight = np.ones(N)
+    sample_weight[mask] = 1000.
+
+    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
+    clf.fit(X, y, sample_weight=sample_weight)
+
+    pdp, values = partial_dependence(clf, X, features=[1])
+
+    assert np.corrcoef(pdp, values)[0, 1] > 0.99
+
+
 @if_matplotlib
 def test_plot_partial_dependence():
     # Test partial dependence plot function.
