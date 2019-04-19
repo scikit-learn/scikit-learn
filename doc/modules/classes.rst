@@ -421,6 +421,7 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
    ensemble.VotingClassifier
+   ensemble.VotingRegressor
 
 .. autosummary::
    :toctree: generated/
@@ -844,7 +845,7 @@ details.
    metrics.fbeta_score
    metrics.hamming_loss
    metrics.hinge_loss
-   metrics.jaccard_similarity_score
+   metrics.jaccard_score
    metrics.log_loss
    metrics.matthews_corrcoef
    metrics.multilabel_confusion_matrix
@@ -1505,6 +1506,7 @@ To be removed in 0.23
    utils.cpu_count
    utils.delayed
    metrics.calinski_harabaz_score
+   metrics.jaccard_similarity_score
    linear_model.logistic_regression_path
 
 

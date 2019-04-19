@@ -17,7 +17,7 @@ been leading the development.
 Authors
 -------
 
-The following people have been core contributors to scikit-learn's development
+The following people are currently core contributors to scikit-learn's development
 and maintenance:
 
 .. include:: authors.rst
@@ -31,12 +31,34 @@ in the FAQ.
 
    :ref:`How you can contribute to the project <contributing>`
 
-.. _citing-scikit-learn:
+Emeritus Core Developers
+------------------------
+The following people have been active contributors in the past, but are no longer active in the project
+
+- Angel Soler Gollonet
+- Alexander Fabisch
+- Alexandre Passos
+- Chris Gorgolewski
+- David Cournapeau
+- David Warde-Farley
+- Jake Vanderplas
+- Kyle Kastner
+- Matthieu Brucher
+- Raghav Rajagopalan
+- Robert Layton
+- Ron Weiss
+- Shiqiao Du
+- Thouis (Ray) Jones
+- Vincent Dubourg
+- Vincent Michel
+- Virgile Fritsch
 
 Governance
 ----------
 The decision making process and governance structure of scikit-learn is laid
-out in the `governance document <governance>`_.
+out in the :ref:`governance document <governance>`.
+
+.. _citing-scikit-learn:
 
 Citing scikit-learn
 -------------------

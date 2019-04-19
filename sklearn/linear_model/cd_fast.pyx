@@ -6,7 +6,7 @@
 #
 # License: BSD 3 clause
 #
-# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport fabs
 cimport numpy as np
@@ -24,6 +24,8 @@ from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
 from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
 
 
+from ..utils cimport _random
+
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t
 
@@ -38,17 +40,9 @@ cdef enum:
     RAND_R_MAX = 0x7FFFFFFF
 
 
-cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
-    seed[0] ^= <UINT32_t>(seed[0] << 13)
-    seed[0] ^= <UINT32_t>(seed[0] >> 17)
-    seed[0] ^= <UINT32_t>(seed[0] << 5)
-
-    return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
-
-
 cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) nogil:
     """Generate a random integer in [0; end)."""
-    return our_rand_r(random_state) % end
+    return _random.our_rand_r(random_state) % end
 
 
 cdef inline floating fmax(floating x, floating y) nogil:
