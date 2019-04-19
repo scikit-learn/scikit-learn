@@ -13,6 +13,8 @@ import numpy as np
 
 from . import __version__
 from sklearn.utils import _IS_32BIT
+from .utils.validation import check_X_y
+from .utils.validation import check_array
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -295,27 +297,25 @@ class BaseEstimator:
 
     def _validate_n_features(self, X, check_n_features):
         if check_n_features:
-            if not hasattr(self, '_n_features_in'):
+            if not hasattr(self, 'n_features_in_'):
                 raise RuntimeError(
-                    "check_n_features is True but there is no _n_features_in "
+                    "check_n_features is True but there is no n_features_in_ "
                     "attribute."
                 )
-            if X.shape[1] != self._n_features_in:
+            if X.shape[1] != self.n_features_in_:
                 raise ValueError(
                     'X has {} features, but this {} is expecting {} features '
                     'as input.'.format(X.shape[1], self.__class__.__name__,
-                                       self._n_features_in)
+                                       self.n_features_in_)
                 )
-        self._n_features_in = X.shape[1]
+        self.n_features_in_ = X.shape[1]
 
     def validate_X(self, X, check_n_features=False, **check_array_params):
-        from .utils.validation import check_array
         X = check_array(X, **check_array_params)
         self._validate_n_features(X, check_n_features)
         return X
 
     def validate_X_y(self, X, y, check_n_features=False, **check_X_y_params):
-        from .utils.validation import check_X_y
         X, y = check_X_y(X, **check_X_y_params)
         self._validate_n_features(X, check_n_features)
         return X, y
@@ -549,6 +549,15 @@ class TransformerMixin:
         else:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
+
+
+class NonRectangularInputMixin:
+    """Mixin class for all estimators with non-rectangular input.
+
+    For now only vectorizers are relevant for this mixin.
+    """
+
+    n_features_in_ = None
 
 
 class DensityMixin:

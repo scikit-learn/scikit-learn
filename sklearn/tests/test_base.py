@@ -20,6 +20,7 @@ from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.feature_extraction import DictVectorizer
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -524,3 +525,24 @@ def test_validate_X():
     with pytest.raises(ValueError, match="X has 3 features, but"):
         X_more_features = [[0, 1, 4], [2, 3, 5]]
         ss.transform(X_more_features)
+
+
+def test_n_features_in_attribute():
+    # Make sure n_features_in_ is correctly set.
+    # Note that n_features_in_ is always None for vectorizers, while for other
+    # estimators the attribute doesn't exist until fit() is called.
+    X_2 = [[0, 1], [2, 3]]
+    X_3 = [[0, 1, 4], [2, 3, 5]]
+
+    ss = StandardScaler()
+    assert not hasattr(ss, 'n_features_in_')
+    ss.fit(X_2)
+    assert ss.n_features_in_ == 2
+    ss = ss.fit(X_3)
+    assert ss.n_features_in_ == 3
+
+    dv = DictVectorizer()
+    assert dv.n_features_in_ is None
+    d = [{'foo': 1, 'bar': 2}, {'foo': 3, 'baz': 1}]
+    dv.fit(d)
+    assert dv.n_features_in_ is None

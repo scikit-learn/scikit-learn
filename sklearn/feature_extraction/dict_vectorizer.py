@@ -9,7 +9,7 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, NonRectangularInputMixin
 from ..utils import check_array, tosequence
 
 
@@ -21,7 +21,8 @@ def _tosequence(X):
         return tosequence(X)
 
 
-class DictVectorizer(BaseEstimator, TransformerMixin):
+class DictVectorizer(BaseEstimator, TransformerMixin,
+                     NonRectangularInputMixin):
     """Transforms lists of feature-value mappings to vectors.
 
     This transformer turns lists of mappings (dict-like objects) of feature
