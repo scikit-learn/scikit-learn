@@ -31,6 +31,7 @@ from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
+from sklearn.model_selection import GridSearchCV
 
 
 def test_multi_target_regression():
@@ -166,7 +167,7 @@ classes = list(map(np.unique, (y1, y2, y3)))
 
 def test_multi_output_classification_partial_fit_parallelism():
     sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
-    mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=-1)
+    mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=4)
     mor.partial_fit(X, y, classes)
     est1 = mor.estimators_[0]
     mor.partial_fit(X, y)
@@ -174,6 +175,34 @@ def test_multi_output_classification_partial_fit_parallelism():
     if cpu_count() > 1:
         # parallelism requires this to be the case for a sane implementation
         assert est1 is not est2
+
+
+# check predict_proba passes
+def test_multi_output_predict_proba():
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, tol=1e-3)
+    param = {'loss': ('hinge', 'log', 'modified_huber')}
+
+    # inner function for custom scoring
+    def custom_scorer(estimator, X, y):
+        if hasattr(estimator, "predict_proba"):
+            return 1.0
+        else:
+            return 0.0
+    grid_clf = GridSearchCV(sgd_linear_clf, param_grid=param,
+                            scoring=custom_scorer, cv=3, error_score=np.nan)
+    multi_target_linear = MultiOutputClassifier(grid_clf)
+    multi_target_linear.fit(X, y)
+
+    multi_target_linear.predict_proba(X)
+
+    # SGDClassifier defaults to loss='hinge' which is not a probabilistic
+    # loss function; therefore it does not expose a predict_proba method
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5, tol=1e-3)
+    multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
+    multi_target_linear.fit(X, y)
+    err_msg = "The base estimator should implement predict_proba method"
+    with pytest.raises(ValueError, match=err_msg):
+        multi_target_linear.predict_proba(X)
 
 
 # 0.23. warning about tol not having its correct default value.

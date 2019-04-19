@@ -137,8 +137,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
-                    warn_on_dtype=False, estimator='the scale function',
-                    dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
+                    estimator='the scale function', dtype=FLOAT_DTYPES,
+                    force_all_finite='allow-nan')
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -348,7 +348,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             raise TypeError("MinMaxScaler does no support sparse input. "
                             "You may consider to use MaxAbsScaler instead.")
 
-        X = check_array(X, copy=self.copy, warn_on_dtype=False,
+        X = check_array(X, copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
@@ -468,7 +468,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
-    X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=False,
+    X = check_array(X, copy=False, ensure_2d=False,
                     dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
     original_ndim = X.ndim
 
@@ -658,9 +658,15 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         y
             Ignored
         """
+<<<<<<< HEAD
         X = self.validate_X(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                             warn_on_dtype=False, estimator=self,
                             dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
+=======
+        X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
+>>>>>>> upstream/master
 
         # Even in the case of `with_mean=False`, we update the mean anyway
         # This is needed for the incremental computation of the var
@@ -753,11 +759,17 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy
+<<<<<<< HEAD
         X = self.validate_X(X, check_n_features=True,
                             accept_sparse='csr', copy=copy,
                             warn_on_dtype=False, estimator=self,
                             dtype=FLOAT_DTYPES,
                             force_all_finite='allow-nan')
+=======
+        X = check_array(X, accept_sparse='csr', copy=copy,
+                        estimator=self, dtype=FLOAT_DTYPES,
+                        force_all_finite='allow-nan')
+>>>>>>> upstream/master
 
         if sparse.issparse(X):
             if self.with_mean:
