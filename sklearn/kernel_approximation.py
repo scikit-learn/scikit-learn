@@ -755,6 +755,3 @@ class Nystroem(BaseEstimator, TransformerMixin):
                                  "Nystroem if using a callable kernel.")
 
         return params
-
-
-from scipy.special import rel_entr
