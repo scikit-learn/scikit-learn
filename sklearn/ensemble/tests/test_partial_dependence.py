@@ -98,6 +98,7 @@ def test_partial_dependence_regressor():
     assert axes[0].shape[0] == grid_resolution
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependence_sample_weight():
     # Test near perfect correlation between partial dependence and diagonal
     # when sample weights emphasize y = x predictions
@@ -123,6 +124,7 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(np.ravel(pdp[0]), grid)[0, 1] > 0.99
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependecy_input():
     # Test input validation of partial dependence.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
