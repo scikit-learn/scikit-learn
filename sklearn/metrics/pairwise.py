@@ -1032,16 +1032,16 @@ def distance_metrics():
 
     The valid distance metrics, and the function they map to, are:
 
-    ============     ====================================
-    metric           Function
-    ============     ====================================
-    'cityblock'      metrics.pairwise.manhattan_distances
-    'cosine'         metrics.pairwise.cosine_distances
-    'euclidean'      metrics.pairwise.euclidean_distances
-    'l1'             metrics.pairwise.manhattan_distances
-    'l2'             metrics.pairwise.euclidean_distances
-    'manhattan'      metrics.pairwise.manhattan_distances
-    ============     ====================================
+    ============   ====================================
+    metric         Function
+    ============   ====================================
+    'cityblock'    metrics.pairwise.manhattan_distances
+    'cosine'       metrics.pairwise.cosine_distances
+    'euclidean'    metrics.pairwise.euclidean_distances
+    'l1'           metrics.pairwise.manhattan_distances
+    'l2'           metrics.pairwise.euclidean_distances
+    'manhattan'    metrics.pairwise.manhattan_distances
+    ============   ====================================
 
     Read more in the :ref:`User Guide <metrics>`.
 
