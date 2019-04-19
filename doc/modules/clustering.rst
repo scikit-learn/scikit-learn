@@ -118,26 +118,24 @@ model with equal covariance per component.
 K-means
 =======
 
-The :class:`KMeans` algorithm clusters data by trying to separate samples
-in n groups of equal variance, minimizing a criterion known as the
-`inertia <inertia>`_ or within-cluster sum-of-squares.
-This algorithm requires the number of clusters to be specified.
-It scales well to large number of samples and has been used
-across a large range of application areas in many different fields.
+The :class:`KMeans` algorithm clusters data by trying to separate samples in n
+groups of equal variance, minimizing a criterion known as the *inertia* or
+within-cluster sum-of-squares (see below). This algorithm requires the number
+of clusters to be specified. It scales well to large number of samples and has
+been used across a large range of application areas in many different fields.
 
-The k-means algorithm divides a set of :math:`N` samples :math:`X`
-into :math:`K` disjoint clusters :math:`C`,
-each described by the mean :math:`\mu_j` of the samples in the cluster.
-The means are commonly called the cluster "centroids";
-note that they are not, in general, points from :math:`X`,
+The k-means algorithm divides a set of :math:`N` samples :math:`X` into
+:math:`K` disjoint clusters :math:`C`, each described by the mean :math:`\mu_j`
+of the samples in the cluster. The means are commonly called the cluster
+"centroids"; note that they are not, in general, points from :math:`X`,
 although they live in the same space.
-The K-means algorithm aims to choose centroids
-that minimise the *inertia*, or within-cluster sum of squared criterion:
+
+The K-means algorithm aims to choose centroids that minimise the **inertia**,
+or **within-cluster sum-of-squares criterion**:
 
 .. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_i - \mu_j||^2)
 
-Inertia, or the within-cluster sum of squares criterion,
-can be recognized as a measure of how internally coherent clusters are.
+Inertia can be recognized as a measure of how internally coherent clusters are.
 It suffers from various drawbacks:
 
 - Inertia makes the assumption that clusters are convex and isotropic,
@@ -148,9 +146,9 @@ It suffers from various drawbacks:
   better and zero is optimal. But in very high-dimensional spaces, Euclidean
   distances tend to become inflated
   (this is an instance of the so-called "curse of dimensionality").
-  Running a dimensionality reduction algorithm such as `PCA <PCA>`_
-  prior to k-means clustering can alleviate this problem
-  and speed up the computations.
+  Running a dimensionality reduction algorithm such as :ref:`PCA` prior to
+  k-means clustering can alleviate this problem and speed up the
+  computations.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_001.png
    :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
@@ -752,6 +750,18 @@ Any core sample is part of a cluster, by definition. Any sample that is not a
 core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
+While the parameter ``min_samples`` primarily controls how tolerant the
+algorithm is towards noise (on noisy and large data sets it may be desiable
+to increase this parameter), the parameter ``eps`` is *crucial to choose
+appropriately* for the data set and distance function and usually cannot be
+left at the default value. It controls the local neighborhood of the points.
+When chosen too small, most data will not be clustered at all (and labeled
+as ``-1`` for "noise"). When chosen too large, it causes close clusters to
+be merged into one cluster, and eventually the entire data set to be returned
+as a single cluster. Some heuristics for choosing this parameter have been
+discussed in literature, for example based on a knee in the nearest neighbor
+distances plot (as discussed in the references below).
+
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
@@ -793,7 +803,7 @@ by black points below.
 
     This implementation is by default not memory efficient because it constructs
     a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
-    be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
+    be used (e.g., with sparse matrices). This matrix will consume n^2 floats.
     A couple of mechanisms for getting around this are:
 
     - A sparse radius neighborhood graph (where missing entries are presumed to
@@ -813,6 +823,10 @@ by black points below.
    Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+
+ * "DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+   Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
+   In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
 .. _birch:
 
@@ -1260,6 +1274,22 @@ Their harmonic mean called **V-measure** is computed by
 
   >>> metrics.v_measure_score(labels_true, labels_pred)    # doctest: +ELLIPSIS
   0.51...
+
+This function's formula is as follows:::
+
+.. math:: v = \frac{(1 + \beta) \times \text{homogeneity} \times \text{completeness}}{(\beta \times \text{homogeneity} + \text{completeness})}
+
+`beta` defaults to a value of 1.0, but for using a value less than 1 for beta::
+
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=0.6)    # doctest: +ELLIPSIS
+  0.54...
+
+more weight will be attributed to homogeneity, and using a value greater than 1::
+
+  >>> metrics.v_measure_score(labels_true, labels_pred, beta=1.8)    # doctest: +ELLIPSIS
+  0.48...
+
+more weight will be attributed to completeness.
 
 The V-measure is actually equivalent to the mutual information (NMI)
 discussed above, with the aggregation function being the arithmetic mean [B2011]_.
