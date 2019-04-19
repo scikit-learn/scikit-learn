@@ -505,11 +505,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             for i in range(n_classes) for j in range(i + 1, n_classes)))))
 
         self.estimators_ = estimators_indices[0]
-        try:
-            self.pairwise_indices_ = (
-                estimators_indices[1] if self._pairwise else None)
-        except AttributeError:
-            self.pairwise_indices_ = None
+        self.pairwise_indices_ = (
+            estimators_indices[1] if self._pairwise else None)
 
         return self
 
@@ -629,10 +626,6 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def _pairwise(self):
         """Indicate if wrapped estimator is using a precomputed Gram matrix"""
         return getattr(self.estimator, "_pairwise", False)
-
-    def _more_tags(self):
-        # FIXME Remove once #10440 is merged
-        return {'_skip_test': True}
 
 
 class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
