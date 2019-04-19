@@ -627,7 +627,7 @@ where the update of the parameters :math:`\alpha` and :math:`\lambda` is done
 as suggested in (MacKay, 1992). The initial value of the maximization procedure
 can be set with the hyperparameters ``alpha_init`` and ``lambda_init``.
 
-There are two more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
+There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\lambda_1` and :math:`\lambda_2` of the gamma prior distributions over
 :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
@@ -668,6 +668,7 @@ is more robust to ill-posed problems.
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py`
+ * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`
 
 .. topic:: References:
 
