@@ -701,12 +701,10 @@ def test_suppress_validation():
     assert_raises(ValueError, assert_all_finite, X)
 
 
-@pytest.mark.filterwarnings("ignore: 'warn_on_dtype' is deprecated")  # 0.23
 def test_check_array_series():
     # regression test that check_array works on pandas Series
     pd = importorskip("pandas")
-    res = check_array(pd.Series([1, 2, 3]), ensure_2d=False,
-                      warn_on_dtype=True)
+    res = check_array(pd.Series([1, 2, 3]), ensure_2d=False)
     assert_array_equal(res, np.array([1, 2, 3]))
 
     # with categorical dtype (not a numpy dtype) (GH12699)

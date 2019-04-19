@@ -140,15 +140,13 @@ def test_pairwise_boolean_distance(metric):
 
     # non-boolean arrays are converted to boolean for boolean
     # distance metrics with a data conversion warning
-    msg = ("Data was converted to boolean "
-           "for metric %s" % (metric))
+    msg = "Data was converted to boolean for metric %s" % metric
     with pytest.warns(DataConversionWarning, match=msg):
         pairwise_distances(X, metric=metric)
 
 
 def test_no_data_conversion_warning():
-    # No warnings issued if metric is not a
-    # boolean distance function
+    # No warnings issued if metric is not a boolean distance function
     rng = np.random.RandomState(0)
     X = rng.randn(5, 4)
     with pytest.warns(None) as records:

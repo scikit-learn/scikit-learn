@@ -412,8 +412,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         does not match the requested dtype, causing a memory copy.
 
         .. deprecated:: 0.21
-            ``warn_on_dtype`` is deprecated in
-            version 0.21 and will be removed in 0.23.
+            ``warn_on_dtype`` is deprecated in version 0.21 and will be
+            removed in 0.23.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -426,9 +426,9 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # warn_on_dtype deprecation
     if warn_on_dtype is not None:
         warnings.warn(
-            "'warn_on_dtype' is deprecated in "
-            "version 0.21 and will be removed in 0.23. "
-            "Use 'warn_on_dtype=None' to remove this warning.",
+            "'warn_on_dtype' is deprecated in version 0.21 and will be "
+            "removed in 0.23. Don't set `warn_on_dtype` to remove this "
+            "warning.",
             DeprecationWarning)
 
     # store reference to original array to check if copy is needed when
@@ -691,8 +691,8 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         does not match the requested dtype, causing a memory copy.
 
         .. deprecated:: 0.21
-            ``warn_on_dtype`` is deprecated in
-            version 0.21 and will be removed in 0.23.
+            ``warn_on_dtype`` is deprecated in version 0.21 and will be
+             removed in 0.23.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
