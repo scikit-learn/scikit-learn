@@ -19,7 +19,6 @@ import sys
 import functools
 import tempfile
 from subprocess import check_output, STDOUT, CalledProcessError
-import textwrap
 from subprocess import TimeoutExpired
 
 
@@ -995,7 +994,6 @@ def assert_run_python_script(source_code, timeout=60):
             src=sklearn_repo_folder, sep=os.sep, pathsep=os.pathsep)
         env['PYTHONPATH'] = pythonpath
         return sklearn_repo_folder, env
-
 
     fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')
     os.close(fd)
