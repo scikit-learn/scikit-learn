@@ -26,7 +26,7 @@ from scipy.sparse.linalg import aslinearoperator, LinearOperator
 from distutils.version import LooseVersion
 
 
-if LooseVersion(scipy.__version__) >= "1.3":
+if LooseVersion(scipy__version__) >= "1.3":
     from scipy.sparse.linalg import lobpcg
 else:
     # Backport of lobpcg functionality from scipy 1.3.0, can be removed
