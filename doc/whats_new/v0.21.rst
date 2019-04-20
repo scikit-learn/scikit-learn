@@ -274,6 +274,18 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| Deprecated :mod:`externals.six` since we have dropped support for
   Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| A new module ``sklearn.inspection`` is created.
+
+- |Feature| Partial dependence plots
+  (:func:`inspection.plot_partial_dependence`) are now supported for
+  any regressor or classifier (provided that they have a `predict_proba`
+  method). :issue:`12599` by :user:`Trevor Stephens <trevorstephens>` and
+  :user:`Nicolas Hug <NicolasHug>`.
+
+
 :mod:`sklearn.impute`
 .....................
 
@@ -448,6 +460,11 @@ Support for Python 3.4 and below has been officially dropped.
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
   :issue:`12855` by :user:`Pawel Sendyk <psendyk>`.
 
+- |Fix| Fixed a bug in :func:`metrics.label_ranking_average_precision_score` 
+  where sample_weight wasn't taken into account for samples with degenerate
+  labels.
+  :issue:`13447` by :user:`Dan Ellis <dpwe>`.
+
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
   :issue:`10580` by :user:`Reshama Shaikh <reshamas>` and :user:`Sandra
@@ -515,6 +532,14 @@ Support for Python 3.4 and below has been officially dropped.
   containing this same sample due to the scaling used in decision_function.
   :issue:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
+:mod:`sklearn.multioutput`
+........................
+
+- |Fix| Fixed a bug in :class:`multiout.MultiOutputClassifier` where the
+  `predict_proba` method incorrectly checked for `predict_proba` attribute in
+  the estimator object.
+  :issue:`12222` by :user:`Rebekah Kim <rebekahkim>`
+  
 :mod:`sklearn.neighbors`
 ........................
 
@@ -636,17 +661,14 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
-:mod:`sklearn.inspection`
-.........................
+:mod:`sklearn.utils`
+...................
 
-
-- |Feature| A new module ``sklearn.inspection`` is created.
-
-- |Feature| Partial dependence plots
-  (:func:`inspection.plot_partial_dependence`) are now supported for
-  any regressor or classifier (provided that they have a `predict_proba`
-  method). :issue:`12599` by :user:`Trevor Stephens <trevorstephens>` and
-  :user:`Nicolas Hug <NicolasHug>`.
+- |API| Deprecated ``warn_on_dtype`` parameter from :func:`utils.check_array`
+  and :func:`utils.check_X_y`. Added explicit warning for dtype conversion
+  in :func:`check_pairwise_arrays` if the ``metric`` being passed is a
+  pairwise boolean metric.
+  :issue:`13382` by :user:`Prathmesh Savale <praths007>`.
 
 Multiple modules
 ................
