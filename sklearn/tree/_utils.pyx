@@ -20,7 +20,7 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from sklearn.utils cimport _random
+from ..utils cimport _random
 
 # =============================================================================
 # Helper functions
