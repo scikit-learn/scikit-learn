@@ -318,9 +318,9 @@ Support for Python 3.4 and below has been officially dropped.
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
   :issue:`12855` by :user:`Pawel Sendyk <psendyk>`.
 
-- |Fix| :func:`metrics.label_ranking_average_precision_score` was returning
-  incorrect values where some samples had degenerate labels and `sample_weight`
-  was used.
+- |Fix| Fixed a bug in :func:`metrics.label_ranking_average_precision_score` 
+  where sample_weight wasn't taken into account for samples with degenerate
+  labels.
   :issue:`13447` by :user:`Dan Ellis <dpwe>`.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
