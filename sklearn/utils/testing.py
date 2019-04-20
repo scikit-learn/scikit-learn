@@ -17,6 +17,9 @@ import pkgutil
 import warnings
 import sys
 import functools
+import tempfile
+from subprocess import check_output, STDOUT, CalledProcessError
+from subprocess import TimeoutExpired
 
 
 import scipy as sp
@@ -83,7 +86,8 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
-           "assert_approx_equal", "assert_allclose", "SkipTest"]
+           "assert_approx_equal", "assert_allclose",
+           "assert_run_python_script", "SkipTest"]
 __all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
@@ -971,3 +975,61 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
             if n1 != n2:
                 incorrect += [func_name + ' ' + n1 + ' != ' + n2]
     return incorrect
+
+
+def assert_run_python_script(source_code, timeout=60):
+    """Utility to check assertions in an independent Python subprocess.
+
+    The script provided in the source code should return 0 and not print
+    anything on stderr or stdout.
+
+    This is a port from cloudpickle https://github.com/cloudpipe/cloudpickle
+
+    Parameters
+    ----------
+    source_code : str
+        The Python source code to execute.
+    timeout : int
+        Time in seconds before timeout.
+    """
+    def _make_cwd_env():
+        """Helper to prepare environment for the child processes"""
+        sklearn_repo_folder = op.normpath(
+            op.join(op.dirname(__file__), '../..'))
+        env = os.environ.copy()
+        pythonpath = "{src}{sep}tests{pathsep}{src}".format(
+            src=sklearn_repo_folder, sep=os.sep, pathsep=os.pathsep)
+        env['PYTHONPATH'] = pythonpath
+        return sklearn_repo_folder, env
+
+    fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')
+    os.close(fd)
+    try:
+        with open(source_file, 'wb') as f:
+            f.write(source_code.encode('utf-8'))
+        cmd = [sys.executable, source_file]
+        cwd, env = _make_cwd_env()
+        kwargs = {
+            'cwd': cwd,
+            'stderr': STDOUT,
+            'env': env,
+        }
+        # If coverage is running, pass the config file to the subprocess
+        coverage_rc = os.environ.get("COVERAGE_PROCESS_START")
+        if coverage_rc:
+            kwargs['env']['COVERAGE_PROCESS_START'] = coverage_rc
+
+        kwargs['timeout'] = timeout
+        try:
+            try:
+                out = check_output(cmd, **kwargs)
+            except CalledProcessError as e:
+                raise RuntimeError(u"script errored with output:\n%s"
+                                   % e.output.decode('utf-8'))
+            if out != b"":
+                raise AssertionError(out.decode('utf-8'))
+        except TimeoutExpired as e:
+            raise RuntimeError(u"script timeout, output so far:\n%s"
+                               % e.output.decode('utf-8'))
+    finally:
+        os.unlink(source_file)
