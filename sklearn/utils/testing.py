@@ -984,6 +984,13 @@ def assert_run_python_script(source_code, timeout=60):
     anything on stderr or stdout.
 
     This is a port from cloudpickle https://github.com/cloudpipe/cloudpickle
+
+    Parameters
+    ----------
+    source_code : str
+        The Python source code to execute.
+    timeout : int
+        Time in seconds before timeout.
     """
     def _make_cwd_env():
         """Helper to prepare environment for the child processes"""
