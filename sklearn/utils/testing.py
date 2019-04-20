@@ -1014,11 +1014,6 @@ def assert_run_python_script(source_code, timeout=60):
             'stderr': STDOUT,
             'env': env,
         }
-        # If coverage is running, pass the config file to the subprocess
-        coverage_rc = os.environ.get("COVERAGE_PROCESS_START")
-        if coverage_rc:
-            kwargs['env']['COVERAGE_PROCESS_START'] = coverage_rc
-
         kwargs['timeout'] = timeout
         try:
             try:
@@ -1026,8 +1021,8 @@ def assert_run_python_script(source_code, timeout=60):
             except CalledProcessError as e:
                 raise RuntimeError(u"script errored with output:\n%s"
                                    % e.output.decode('utf-8'))
-            # if out != b"":
-            #     raise AssertionError(out.decode('utf-8'))
+            if out != b"":
+                raise AssertionError(out.decode('utf-8'))
         except TimeoutExpired as e:
             raise RuntimeError(u"script timeout, output so far:\n%s"
                                % e.output.decode('utf-8'))
