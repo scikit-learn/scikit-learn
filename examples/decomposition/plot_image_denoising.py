@@ -31,9 +31,10 @@ for other tasks such as object classification, where performance is not
 necessarily related to visualisation.
 
 """
+from time import time
+
 print(__doc__)
 
-from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -55,7 +56,7 @@ except ImportError:
 face = face / 255.
 
 # downsample for higher speed
-face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
+face = face[::4, ::4] + face[1::4, ::4] + face[::4, 1::4] + face[1::4, 1::4]
 face /= 4.0
 height, width = face.shape
 
@@ -162,5 +163,4 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     print('done in %.2fs.' % dt)
     show_with_diff(reconstructions[title], face,
                    title + ' (time: %.1fs)' % dt)
-
 plt.show()
