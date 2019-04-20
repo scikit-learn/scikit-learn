@@ -992,23 +992,14 @@ def assert_run_python_script(source_code, timeout=60):
     timeout : int
         Time in seconds before timeout.
     """
-    def _make_cwd_env():
-        """Helper to prepare environment for the child processes"""
-        sklearn_repo_folder = op.normpath(
-            op.join(op.dirname(__file__), '../..'))
-        env = os.environ.copy()
-        pythonpath = "{src}{sep}tests{pathsep}{src}".format(
-            src=sklearn_repo_folder, sep=os.sep, pathsep=os.pathsep)
-        env['PYTHONPATH'] = pythonpath
-        return sklearn_repo_folder, env
-
     fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')
     os.close(fd)
     try:
         with open(source_file, 'wb') as f:
             f.write(source_code.encode('utf-8'))
         cmd = [sys.executable, source_file]
-        cwd, env = _make_cwd_env()
+        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
+        env = os.environ.copy()
         kwargs = {
             'cwd': cwd,
             'stderr': STDOUT,
