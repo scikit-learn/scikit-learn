@@ -7,8 +7,6 @@ Generalized Linear Models with Exponential Dispersion Family
 # License: BSD 3 clause
 
 # TODO: Write more examples.
-# TODO: Make option self.copy_X more meaningful.
-#       So far, fit uses Xnew instead of X.
 # TODO: Should the option `normalize` be included (like other linear models)?
 #       So far, it is not included. User must pass a normalized X.
 # TODO: Add cross validation support?
@@ -39,6 +37,7 @@ Generalized Linear Models with Exponential Dispersion Family
 #   sklearn.linear_models uses w for coefficients, standard literature on
 #   GLMs use beta for coefficients and w for (sample) weights.
 #   So far, coefficients=w and sample weights=s.
+# - The intercept term is the first index, i.e. coef[0]
 
 
 from __future__ import division
@@ -84,6 +83,83 @@ def _check_weights(sample_weight, n_samples):
                              "element.")
 
     return weights
+
+
+def _safe_lin_pred(X, coef):
+    """Compute the linear predictor taking care if intercept is present."""
+    if coef.size == X.shape[1] + 1:
+        return X @ coef[1:] + coef[0]
+    else:
+        return X @ coef
+
+
+def _safe_sandwich_dot(X, d, intercept=False):
+    """Compute sandwich product X.T @ diag(d) @ X.
+
+    With ``intercept=True``, X is treated as if a column of 1 were appended as
+    first column of X.
+    X can be sparse, d must be an ndarray. Always returns a ndarray."""
+    if sparse.issparse(X):
+        temp = (X.transpose().multiply(d) @ X).toarray()
+    else:
+        temp = (X.T * d) @ X
+    if intercept:
+        dim = X.shape[1] + 1
+        if sparse.issparse(X):
+            order = 'F' if sparse.isspmatrix_csc(X) else 'C'
+        else:
+            order = 'F' if X.flags['F_CONTIGUOUS'] else 'C'
+        res = np.empty((dim, dim), dtype=max(X.dtype, d.dtype), order=order)
+        res[0, 0] = d.sum()
+        res[1:, 0] = d @ X
+        res[0, 1:] = res[1:, 0]
+        res[1:, 1:] = temp
+    else:
+        res = temp
+    return res
+
+
+def _min_norm_sugrad(coef, grad, P2, P1):
+    """Compute the gradient of all subgradients with minimal L2-norm.
+
+    subgrad = grad + P2 * coef + P1 * subgrad(|coef|_1)
+
+    g_i = grad_i + (P2*coef)_i
+
+    if coef_i > 0:   g_i + P1_i
+    if coef_i < 0:   g_i - P1_i
+    if coef_i = 0:   sign(g_i) * max(|g_i|-P1_i, 0)
+
+    Parameters
+    ----------
+    coef : ndarray
+        coef[0] may be intercept.
+
+    grad : ndarray, shape=coef.shape
+
+    P2 : {1d or 2d array, None}
+        always without intercept, ``None`` means P2 = 0
+
+    P1 : ndarray
+        always without intercept
+    """
+    intercept = (coef.size == P1.size + 1)
+    idx = 1 if intercept else 0  # offset if coef[0] is intercept
+    # compute grad + coef @ P2 without intercept
+    grad_wP2 = grad[idx:].copy()
+    if P2 is None:
+        pass
+    elif P2.ndim == 1:
+        grad_wP2 += coef[idx:] * P2
+    else:
+        grad_wP2 += coef[idx:] @ P2
+    res = np.where(coef[idx:] == 0,
+                   np.sign(grad_wP2) * np.maximum(np.abs(grad_wP2) - P1, 0),
+                   grad_wP2 + np.sign(coef[idx:]) * P1)
+    if intercept:
+        return np.concatenate(([grad[0]], res))
+    else:
+        return res
 
 
 class Link(metaclass=ABCMeta):
@@ -473,13 +549,16 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
                 (1. - ind_weight) * np.average(y, weights=weights))
 
     def _mu_deviance_derivative(self, coef, X, y, weights, link):
-        """Compute mu, the deviance and it's derivative w.r.t coef."""
-        lin_pred = X @ coef
+        """Compute mu and the derivative of the deviance w.r.t coef."""
+        lin_pred = _safe_lin_pred(X, coef)
         mu = link.inverse(lin_pred)
-        dev = self.deviance(y, mu, weights)
         d1 = link.inverse_derivative(lin_pred)
-        devp = X.T @ (d1 * self.deviance_derivative(y, mu, weights))
-        return mu, dev, devp
+        temp = d1 * self.deviance_derivative(y, mu, weights)
+        if coef.size == X.shape[1] + 1:
+            devp = np.concatenate(([temp.sum()], temp @ X))
+        else:
+            devp = temp @ X  # sampe as X.T @ temp
+        return mu, devp
 
     def _score(self, coef, phi, X, y, weights, link):
         r"""Compute the score function.
@@ -499,12 +578,15 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         :math:`\boldsymbol{\Sigma}=\mathrm{diag}(\mathbf{V}[y_1],\ldots)`.
         Note: The derivative of the deviance w.r.t. coef equals -2 * score.
         """
-        lin_pred = X @ coef
+        lin_pred = _safe_lin_pred(X, coef)
         mu = link.inverse(lin_pred)
         sigma_inv = 1/self.variance(mu, phi=phi, weights=weights)
         d = link.inverse_derivative(lin_pred)
         temp = sigma_inv * d * (y - mu)
-        score = X.T @ temp
+        if coef.size == X.shape[1] + 1:
+            score = np.concatenate(([temp.sum()], temp @ X))
+        else:
+            score = temp @ X  # sampe as X.T @ temp
         return score
 
     def _fisher_matrix(self, coef, phi, X, y, weights, link):
@@ -526,14 +608,14 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         with :math:`\mathbf{W} = \mathbf{D}^2 \boldsymbol{\Sigma}^{-1}`,
         see func:`_score`.
         """
-        n_samples = X.shape[0]
-        lin_pred = X @ coef
+        lin_pred = _safe_lin_pred(X, coef)
         mu = link.inverse(lin_pred)
         sigma_inv = 1/self.variance(mu, phi=phi, weights=weights)
-        d2 = link.inverse_derivative(lin_pred)**2
-        d2_sigma_inv = sparse.dia_matrix((sigma_inv*d2, 0),
-                                         shape=(n_samples, n_samples))
-        fisher_matrix = X.T @ d2_sigma_inv @ X
+        d = link.inverse_derivative(lin_pred)
+        d2_sigma_inv = sigma_inv * d * d
+        intercept = (coef.size == X.shape[1] + 1)
+        fisher_matrix = _safe_sandwich_dot(X, d2_sigma_inv,
+                                           intercept=intercept)
         return fisher_matrix
 
     def _observed_information(self, coef, phi, X, y, weights, link):
@@ -559,17 +641,17 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
         \right)`,
         see :func:`score_` function and :func:`_fisher_matrix`.
         """
-        n_samples = X.shape[0]
-        lin_pred = X @ coef
+        lin_pred = _safe_lin_pred(X, coef)
         mu = link.inverse(lin_pred)
         sigma_inv = 1/self.variance(mu, phi=phi, weights=weights)
         dp = link.inverse_derivative2(lin_pred)
         d2 = link.inverse_derivative(lin_pred)**2
         v = self.unit_variance_derivative(mu)/self.unit_variance(mu)
         r = y - mu
-        temp = sparse.dia_matrix((sigma_inv*(-dp*r+d2*v*r+d2), 0),
-                                 shape=(n_samples, n_samples))
-        observed_information = X.T @ temp @ X
+        temp = sigma_inv * (-dp * r + d2 * v * r + d2)
+        intercept = (coef.size == X.shape[1] + 1)
+        observed_information = _safe_sandwich_dot(X, temp,
+                                                  intercept=intercept)
         return observed_information
 
     def _eta_mu_score_fisher(self, coef, phi, X, y, weights, link,
@@ -600,28 +682,29 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
                   an array of shape (X.shape[1], X.shape[1])
                 * If diag_fisher is ``True`, an array of shape (X.shape[0])
         """
-        n_samples, n_features = X.shape
+        intercept = (coef.size == X.shape[1] + 1)
         # eta = linear predictor
-        eta = X @ coef
+        eta = _safe_lin_pred(X, coef)
         mu = link.inverse(eta)
         sigma_inv = 1./self.variance(mu, phi=phi, weights=weights)
         d1 = link.inverse_derivative(eta)  # = h'(eta)
         # Alternatively:
         # h'(eta) = h'(g(mu)) = 1/g'(mu), note that h is inverse of g
         # d1 = 1./link.derivative(mu)
-        score = X.T @ (sigma_inv * d1 * (y - mu))
-        #
-        d2_sigma_inv = sigma_inv * (d1**2)
-        if diag_fisher:
-            return eta, mu, score, d2_sigma_inv
+        d1_sigma_inv = d1 * sigma_inv
+        temp = d1_sigma_inv * (y - mu)
+        if intercept:
+            score = np.concatenate(([temp.sum()], temp @ X))
         else:
-            if sparse.issparse(X):
-                d2_sigma_inv = sparse.dia_matrix((d2_sigma_inv, 0),
-                                                 shape=(n_samples, n_samples))
-                fisher = (X.T @ d2_sigma_inv @ X).toarray()
-            else:
-                fisher = (X.T * d2_sigma_inv) @ X
-            return eta, mu, score, fisher
+            score = temp @ X
+
+        d2_sigma_inv = d1 * d1_sigma_inv
+        if diag_fisher:
+            fisher_matrix = d2_sigma_inv
+        else:
+            fisher_matrix = _safe_sandwich_dot(X, d2_sigma_inv,
+                                               intercept=intercept)
+        return eta, mu, score, fisher_matrix
 
 
 class TweedieDistribution(ExponentialDispersionModel):
@@ -809,7 +892,7 @@ class BinomialDistribution(ExponentialDispersionModel):
         return 2 * (special.xlogy(y, y/mu) + special.xlogy(1-y, (1-y)/(1-mu)))
 
 
-def _irls_step(X, W, P2, z):
+def _irls_step(X, W, P2, z, fit_intercept=True):
     """Compute one step in iteratively reweighted least squares.
 
     Solve A w = b for w with
@@ -829,43 +912,57 @@ def _irls_step(X, W, P2, z):
     P2 : {ndarray, sparse matrix}, shape (n_features, n_features)
         The L2-penalty matrix or vector (=diagonal matrix)
 
-    z  : ndarray, shape (n_samples,)
+    z : ndarray, shape (n_samples,)
         Working observations
+
+    fit_intercept : boolean, optional (default=True)
 
     Returns
     -------
-    coef: ndarray, shape (X.shape[1])
+    coef : ndarray, shape (c,)
+        If fit_intercept=False, shape c=X.shape[1].
+        If fit_intercept=True, then c=X.shapee[1] + 1.
     """
     # Note: solve vs least squares, what is more appropriate?
     #       scipy.linalg.solve seems faster, but scipy.linalg.lstsq
     #       is more robust.
-    n_samples, n_features = X.shape
-    if sparse.issparse(X):
-        W = sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)).tocsr()
-        if P2.ndim == 1:
-            L2 = (sparse.dia_matrix((P2, 0), shape=(n_features, n_features))
-                  ).tocsr()
+    # Note: X.T @ W @ X is not sparse, even when X is sparse.
+    #      Sparse solver would splinalg.spsolve(A, b) or splinalg.lsmr(A, b)
+    if fit_intercept:
+        Wz = W * z
+        if sparse.issparse(X):
+            b = np.concatenate(([Wz.sum()], X.transpose() @ Wz))
         else:
-            L2 = sparse.csr_matrix(P2)
-        XtW = X.transpose() * W
-        A = XtW * X + L2
-        b = XtW * z
-        # coef = splinalg.spsolve(A, b)
-        coef, *_ = splinalg.lsmr(A, b)
+            b = np.concatenate(([Wz.sum()], X.T @ Wz))
+        A = _safe_sandwich_dot(X, W, intercept=fit_intercept)
+        if P2.ndim == 1:
+            idx = np.arange(start=1, stop=A.shape[0])
+            A[(idx, idx)] += P2  # add to diag elements without intercept
+        elif sparse.issparse(P2):
+            A[1:, 1:] += P2.toarray()
+        else:
+            A[1:, 1:] += P2
     else:
-        XtW = (X.T * W)
-        A = XtW.dot(X)
+        if sparse.issparse(X):
+            XtW = X.transpose().multiply(W)
+            A = (XtW @ X).toarray()
+        else:
+            XtW = (X.T * W)
+            A = XtW @ X
+        b = XtW @ z
         if P2.ndim == 1:
             A[np.diag_indices_from(A)] += P2
+        elif sparse.issparse(P2):
+            A += P2.toarray()
         else:
             A += P2
-        b = XtW.dot(z)
-        # coef = linalg.solve(A, b, overwrite_a=True, overwrite_b=True)
-        coef, *_ = linalg.lstsq(A, b, overwrite_a=True, overwrite_b=True)
+    # coef = linalg.solve(A, b, overwrite_a=True, overwrite_b=True)
+    coef, *_ = linalg.lstsq(A, b, overwrite_a=True, overwrite_b=True)
     return coef
 
 
-def _irls_solver(coef, X, y, weights, P2, family, link, max_iter, tol):
+def _irls_solver(coef, X, y, weights, P2, fit_intercept, family, link,
+                 max_iter, tol):
     """Solve GLM with L2 penalty by IRLS algorithm.
 
     Note: If X is sparse, P2 must also be sparse.
@@ -889,7 +986,7 @@ def _irls_solver(coef, X, y, weights, P2, family, link, max_iter, tol):
     # Note: ' denotes derivative, but also transpose for matrices
 
     # eta = linear predictor
-    eta = X @ coef
+    eta = _safe_lin_pred(X, coef)
     mu = link.inverse(eta)
     # D = h'(eta)
     hp = link.inverse_derivative(eta)
@@ -906,10 +1003,10 @@ def _irls_solver(coef, X, y, weights, P2, family, link, max_iter, tol):
         z = eta + (y - mu) / hp
         # solve A*coef = b
         # A = X' W X + P2, b = X' W z
-        coef = _irls_step(X, W, P2, z)
+        coef = _irls_step(X, W, P2, z, fit_intercept=fit_intercept)
         # updated linear predictor
         # do it here for updated values for tolerance
-        eta = X @ coef
+        eta = _safe_lin_pred(X, coef)
         mu = link.inverse(eta)
         hp = link.inverse_derivative(eta)
         V = family.variance(mu, phi=1, weights=weights)
@@ -917,11 +1014,18 @@ def _irls_solver(coef, X, y, weights, P2, family, link, max_iter, tol):
         # which tolerace? |coef - coef_old| or gradient?
         # use gradient for compliance with newton-cg and lbfgs
         # gradient = -X' D (y-mu)/V(mu) + l2 P2 w
-        gradient = -(X.T @ (hp*(y-mu)/V))
-        if P2.ndim == 1:
-            gradient += P2*coef
+        temp = hp * (y - mu) / V
+        if sparse.issparse(X):
+            gradient = -(X.transpose() @ temp)
         else:
-            gradient += P2 @ coef
+            gradient = -(X.T @ temp)
+        idx = 1 if fit_intercept else 0  # offset if coef[0] is intercept
+        if P2.ndim == 1:
+            gradient += P2 * coef[idx:]
+        else:
+            gradient += P2 @ coef[idx:]
+        if fit_intercept:
+            gradient = np.concatenate(([-temp.sum()], gradient))
         if (np.max(np.abs(gradient)) <= tol):
             converged = True
             break
@@ -937,7 +1041,7 @@ def _irls_solver(coef, X, y, weights, P2, family, link, max_iter, tol):
 def _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles, inner_tol,
               max_inner_iter=1000, selection='cyclic',
               random_state=None, diag_fisher=False):
-    """Compute inner loop of coordinate descent = cycles through features.
+    """Compute inner loop of coordinate descent, i.e. cycles through features.
 
     Minimization of 1-d subproblems::
 
@@ -953,24 +1057,31 @@ def _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles, inner_tol,
     #          of Improved GLMNET or Gap Safe Screening Rules
     #          https://arxiv.org/abs/1611.05780
     n_samples, n_features = X.shape
+    intercept = (coef.size == X.shape[1] + 1)
+    idx = 1 if intercept else 0  # offset if coef[0] is intercept
     B = fisher
     if P2.ndim == 1:
-        coef_P2 = coef * P2
+        coef_P2 = coef[idx:] * P2
         if not diag_fisher:
-            B[np.diag_indices_from(B)] += P2
+            idiag = np.arange(start=idx, stop=B.shape[0])
+            # B[np.diag_indices_from(B)] += P2
+            B[(idiag, idiag)] += P2
     else:
-        coef_P2 = P2 @ coef  # P2 is symmetric, mat @ vec is usually faster
+        coef_P2 = coef[idx:] @ P2
         if not diag_fisher:
             if sparse.issparse(P2):
-                B += P2.toarray()
+                B[idx:, idx:] += P2.toarray()
             else:
-                B += P2
-    A = -score + coef_P2  # + d @ (H+P2) but d=0 so far
+                B[idx:, idx:] += P2
+    # A = -score + coef_P2
+    A = -score
+    A[idx:] += coef_P2
+    # A += d @ (H+P2) but so far d=0
     # inner loop
-    inner_iter = 0
-    while inner_iter < max_inner_iter:
+    for inner_iter in range(1, max_inner_iter+1):
         inner_iter += 1
         n_cycles += 1
+        # cycle through features, update intercept separately at the end
         if selection == 'random':
             featurelist = random_state.permutation(n_features)
         else:
@@ -985,70 +1096,85 @@ def _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles, inner_tol,
             # with beta = z+d, beta_hat = d-a/b and gamma = c/b
             # z = 1/b * S(bd-a,c) - d
             # S(a,b) = sign(a) max(|a|-b, 0) soft thresholding
-            a = A[j]
+            jdx = j+idx  # index for arrays containing entries for intercept
+            a = A[jdx]
             if diag_fisher:
+                # Note: fisher is ndarray of shape (n_samples,) => no idx
+                # Calculate Bj = B[j, :] = B[:, j] as it is needed later anyway
+                Bj = np.zeros_like(A)
+                if intercept:
+                    Bj[0] = fisher.sum()
                 if sparse.issparse(X):
-                    xj = X[:, j]
-                    b = xj.transpose() @ xj.multiply(fisher[:, np.newaxis])
-                    b = b[0, 0]
+                    Bj[idx:] = (X[:, j].transpose().multiply(fisher) @ X
+                                ).toarray().ravel()
                 else:
-                    b = X[:, j] @ (fisher * X[:, j])
+                    Bj[idx:] = (fisher * X[:, j]) @ X
 
                 if P2.ndim == 1:
-                    b += P2[j]
+                    Bj[idx:] += P2[j]
                 else:
-                    b += P2[j, j]
+                    if sparse.issparse(P2):
+                        # slice columns as P2 is csc
+                        Bj[idx:] += P2[:, j].toarray().ravel()
+                    else:
+                        Bj[idx:] += P2[:, j]
+                b = Bj[jdx]
             else:
-                b = B[j, j]
+                b = B[jdx, jdx]
 
+            # those ten lines aree what it is all about
             if b <= 0:
                 z = 0
             elif P1[j] == 0:
                 z = -a/b
-            elif a + P1[j] < b * (coef[j] + d[j]):
+            elif a + P1[j] < b * (coef[jdx] + d[jdx]):
                 z = -(a + P1[j])/b
-            elif a - P1[j] > b * (coef[j] + d[j]):
+            elif a - P1[j] > b * (coef[jdx] + d[jdx]):
                 z = -(a - P1[j])/b
             else:
-                z = -(coef[j] + d[j])
+                z = -(coef[jdx] + d[jdx])
 
             # update direction d
-            d[j] += z
+            d[jdx] += z
             # update A because d_j is now d_j+z
             # A = f'(w) + d*H(w) + (w+d)*P2
             # => A += (H+P2)*e_j z = B_j * z
             # Note: B is symmetric B = B.transpose
             if diag_fisher:
-                if sparse.issparse(X):
-                    A += (X.transpose() @
-                          X[:, j].multiply(fisher[:, np.newaxis])
-                          ).toarray().ravel() * z
-                else:
-                    # A += (X.T @ (fisher * X[:, j])) * z
-                    # same without transpose of X
-                    A += ((fisher * X[:, j]) @ X) * z
-
-                if P2.ndim == 1:
-                    A[j] += P2[j] * z
-                elif sparse.issparse(P2):
-                    # slice columns as P2 is csc
-                    A += P2[:, j].toarray().ravel() * z
-                else:
-                    A += P2[:, j] * z
+                # Bj = B[:, j] calculated above, still valid
+                A += Bj * z
             else:
                 # B is symmetric, C- or F-contiguous, but never sparse
                 if B.flags['F_CONTIGUOUS']:
                     # slice columns like for sparse csc
-                    A += B[:, j] * z
+                    A += B[:, jdx] * z
                 else:  # B.flags['C_CONTIGUOUS'] might be true
                     # slice rows
-                    A += B[j, :] * z
-            # end of cycle
+                    A += B[jdx, :] * z
+            # end of cycle over features
+        # update intercept
+        if intercept:
+            if diag_fisher:
+                Bj = np.zeros_like(A)
+                Bj[0] = fisher.sum()
+                Bj[1:] = fisher @ X
+                b = Bj[0]
+            else:
+                b = B[0, 0]
+            z = 0 if b <= 0 else -A[0]/b
+            d[0] += z
+            if diag_fisher:
+                A += Bj * z
+            else:
+                if B.flags['F_CONTIGUOUS']:
+                    A += B[:, 0] * z
+                else:
+                    A += B[0, :] * z
+        # end of complete cycle
         # stopping criterion for inner loop
         # sum_i(|minimum of norm of subgrad of q(d)_i|)
-        mn_subgrad = np.where(coef + d == 0,
-                              np.sign(A) * np.maximum(np.abs(A) - P1, 0),
-                              A + np.sign(coef + d) * P1)
+        # subgrad q(d) = A + subgrad ||P1*(w+d)||_1
+        mn_subgrad = _min_norm_sugrad(coef=coef + d, grad=A, P2=None, P1=P1)
         mn_subgrad = linalg.norm(mn_subgrad, ord=1)
         if mn_subgrad <= inner_tol:
             if inner_iter == 1:
@@ -1058,7 +1184,7 @@ def _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles, inner_tol,
     return d, coef_P2, n_cycles, inner_tol
 
 
-def _cd_solver(coef, X, y, weights, P1, P2, family, link,
+def _cd_solver(coef, X, y, weights, P1, P2, fit_intercept, family, link,
                max_iter=100, max_inner_iter=1000, tol=1e-4,
                selection='cyclic ', random_state=None,
                diag_fisher=False, copy_X=True):
@@ -1083,7 +1209,7 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
        = min_z A_j z + 1/2 B_jj z^2
                + ||P1_j (w_j+d_j+z)||_1 - ||P1_j (w_j+d_j)||_1
        A = f'(w) + d*H(w) + (w+d)*P2
-       B = H+P2
+       B = H + P2
 
     Repeat steps 1-3 until convergence.
     Note: Use Fisher matrix instead of Hessian for H.
@@ -1091,7 +1217,9 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
 
     Parameters
     ----------
-    coef: ndarray, shape (n_features,)
+    coef : ndarray, shape (c,)
+        If fit_intercept=False, shape c=X.shape[1].
+        If fit_intercept=True, then c=X.shapee[1] + 1.
 
     X : {ndarray, csc sparse matrix}, shape (n_samples, n_features)
         Training data (with intercept included if present). If not sparse,
@@ -1112,6 +1240,10 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
         The L2-penalty matrix or vector (=diagonal matrix). If a matrix is
         passed, it must be symmetric. If X is sparse, P2 must also be sparse.
 
+    fit_intercept : boolean, optional (default=True)
+        Specifies if a constant (a.k.a. bias or intercept) should be
+        added to the linear predictor (X*coef+intercept).
+
     family : ExponentialDispersionModel
 
     link : Link
@@ -1120,8 +1252,8 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
         Maximum numer of outer (Newton) iterations.
 
     max_inner_iter : int, optional (default=1000)
-        Maximum number of iterations, i.e. cycles over all features, in inner
-        loop.
+        Maximum number of iterations in each inner loop, i.e. max number of
+        cycles over all features per inner loop.
 
     tol : float, optional (default=1e-4)
         Covergence criterion is
@@ -1133,8 +1265,8 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
     random_state : {int, RandomState instance, None}, optional (default=None)
 
     diag_fisher : boolean, optional (default=False)
-        'False' calculates full fisher matrix, 'True' only diagonal matrix s.t.
-        fisher = X.T @ diag @ X. This saves storage but needs more
+        ``False`` calculates full fisher matrix, ``True`` only diagonal matrix
+        s.t. fisher = X.T @ diag @ X. This saves storage but needs more
         matrix-vector multiplications.
 
     copy_X : boolean, optional (default=True)
@@ -1142,7 +1274,9 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
 
     Returns
     -------
-    coef : ndarray, shape (n_features,)
+    coef : ndarray, shape (c,)
+        If fit_intercept=False, shape c=X.shape[1].
+        If fit_intercept=True, then c=X.shapee[1] + 1.
 
     n_iter : numer of outer iterations = newton iterations
 
@@ -1174,6 +1308,7 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
     n_cycles = 0  # number of (complete) cycles over features
     converged = False
     n_samples, n_features = X.shape
+    idx = 1 if fit_intercept else 0  # offset if coef[0] is intercept
     # line search parameters
     (beta, sigma) = (0.5, 0.01)
     # some precalculations
@@ -1186,16 +1321,7 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
     d = np.zeros_like(coef)
     # initial stopping tolerance of inner loop
     # use L1-norm of minimum of norm of subgradient of F
-    # fp_wP2 = f'(w) + w*P2
-    if P2.ndim == 1:
-        fp_wP2 = -score + coef * P2
-    else:
-        # Note: P2 is symmetric and matrix @ vector is faster for sparse
-        #       matrices.
-        fp_wP2 = -score + P2 @ coef
-    inner_tol = np.where(coef == 0,
-                         np.sign(fp_wP2) * np.maximum(np.abs(fp_wP2) - P1, 0),
-                         fp_wP2 + np.sign(coef) * P1)
+    inner_tol = _min_norm_sugrad(coef=coef, grad=-score, P2=P2, P1=P1)
     inner_tol = linalg.norm(inner_tol, ord=1)
     # outer loop
     while n_iter < max_iter:
@@ -1211,23 +1337,23 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
         # F(w + lambda d) - F(w) <= lambda * bound
         # bound = sigma * (f'(w)*d + w*P2*d
         #                  +||P1 (w+d)||_1 - ||P1 w||_1)
-        P1w_1 = linalg.norm(P1 * coef, ord=1)
+        P1w_1 = linalg.norm(P1 * coef[idx:], ord=1)
+        P1wd_1 = linalg.norm(P1 * (coef + d)[idx:], ord=1)
         # Note: coef_P2 already calculated and still valid
-        bound = sigma * (-(score @ d) + coef_P2 @ d +
-                         linalg.norm(P1 * (coef + d), ord=1) - P1w_1)
+        bound = sigma * (-(score @ d) + coef_P2 @ d[idx:] + P1wd_1 - P1w_1)
         Fw = (0.5 * family.deviance(y, mu, weights) +
-              0.5 * (coef_P2 @ coef) + P1w_1)
+              0.5 * (coef_P2 @ coef[idx:]) + P1w_1)
         la = 1./beta
         for k in range(20):
             la *= beta  # starts with la=1
             coef_wd = coef + la * d
-            mu_wd = link.inverse(X @ coef_wd)
+            mu_wd = link.inverse(_safe_lin_pred(X, coef_wd))
             Fwd = (0.5 * family.deviance(y, mu_wd, weights) +
-                   linalg.norm(P1 * coef_wd, ord=1))
+                   linalg.norm(P1 * coef_wd[idx:], ord=1))
             if P2.ndim == 1:
-                Fwd += 0.5 * ((coef_wd * P2) @ coef_wd)
+                Fwd += 0.5 * ((coef_wd[idx:] * P2) @ coef_wd[idx:])
             else:
-                Fwd += 0.5 * (coef_wd @ (P2 @ coef_wd))
+                Fwd += 0.5 * (coef_wd[idx:] @ (P2 @ coef_wd[idx:]))
             if Fwd - Fw <= sigma * la * bound:
                 break
         # update coefficients
@@ -1238,16 +1364,10 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
             coef=coef, phi=1, X=X, y=y, weights=weights, link=link,
             diag_fisher=diag_fisher)
         # stopping criterion for outer loop
-        # sum_i(|minimum of norm of subgrad of F(w)_i|)
+        # sum_i(|minimum-norm of subgrad of F(w)_i|)
         # fp_wP2 = f'(w) + w*P2
         # Note: eta, mu and score are already updated
-        if P2.ndim == 1:
-            fp_wP2 = -score + coef * P2
-        else:
-            fp_wP2 = -score + P2 @ coef  # P2 is symmetric, mat @ vec is faster
-        mn_subgrad = np.where(coef == 0,
-                              np.sign(fp_wP2)*np.maximum(np.abs(fp_wP2)-P1, 0),
-                              fp_wP2 + np.sign(coef) * P1)
+        mn_subgrad = _min_norm_sugrad(coef=coef, grad=-score, P2=P2, P1=P1)
         mn_subgrad = linalg.norm(mn_subgrad, ord=1)
         if mn_subgrad <= tol:
             converged = True
@@ -1255,8 +1375,8 @@ def _cd_solver(coef, X, y, weights, P1, P2, family, link,
         # end of outer loop
     if not converged:
         warnings.warn("Coordinate descent failed to converge. Increase"
-                      " the number of iterations (currently {0})"
-                      .format(max_iter), ConvergenceWarning)
+                      " the maximum number of iterations max_iter"
+                      " (currently {0})".format(max_iter), ConvergenceWarning)
 
     return coef, n_iter, n_cycles
 
@@ -1387,8 +1507,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
         where g_i is the i-th component of the gradient (derivative) of
         the objective function. For the cd solver, covergence is reached
-        when ``sum_i(|minimum of norm of g_i|)``, where g_i is the
-        subgradient of the objective.
+        when ``sum_i(|minimum-norm of g_i|)``, where g_i is the
+        subgradient of the objective and minimum-norm of g_i is the element of
+        the subgradient g_i with the smallest L2-norm.
 
     warm_start : boolean, optional (default=False)
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -1563,19 +1684,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         #######################################################################
         # 1. input validation                                                 #
         #######################################################################
-        # 1.1 validate arguments of fit #######################################
-        _dtype = [np.float64, np.float32]
-        X, y = check_X_y(X, y, accept_sparse=['csc', 'csr'],
-                         dtype=_dtype, y_numeric=True, multi_output=False,
-                         copy=self.copy_X)
-        # Without converting y to float, deviance might raise
-        # ValueError: Integers to negative integer powers are not allowed.
-        # Also, y must not be sparse.
-        y = np.asarray(y, dtype=np.float64)
-
-        weights = _check_weights(sample_weight, y.shape[0])
-
-        # 1.2 validate arguments of __init__ ##################################
+        # 1.1 validate arguments of __init__ ##################################
         # Guarantee that self._family_instance is an instance of class
         # ExponentialDispersionModel
         if isinstance(self.family, ExponentialDispersionModel):
@@ -1668,6 +1777,94 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if not isinstance(self.warm_start, bool):
             raise ValueError("The argument warm_start must be bool;"
                              " got {0}".format(self.warm_start))
+        if self.selection not in ['cyclic', 'random']:
+            raise ValueError("The argument selection must be 'cyclic' or "
+                             "'random'; got (selection={0})"
+                             .format(self.selection))
+        random_state = check_random_state(self.random_state)
+        if not isinstance(self.diag_fisher, bool):
+            raise ValueError("The argument diag_fisher must be bool;"
+                             " got {0}".format(self.diag_fisher))
+        if not isinstance(self.copy_X, bool):
+            raise ValueError("The argument copy_X must be bool;"
+                             " got {0}".format(self.copy_X))
+        if not isinstance(self.check_input, bool):
+            raise ValueError("The argument check_input must be bool; got "
+                             "(check_input={0})".format(self.check_input))
+
+        family = self._family_instance
+        link = self._link_instance
+
+        # 1.2 validate arguments of fit #######################################
+        _dtype = [np.float64, np.float32]
+        if solver == 'cd':
+            _stype = ['csc']
+        else:
+            _stype = ['csc', 'csr']
+        X, y = check_X_y(X, y, accept_sparse=_stype,
+                         dtype=_dtype, y_numeric=True, multi_output=False,
+                         copy=self.copy_X)
+        # Without converting y to float, deviance might raise
+        # ValueError: Integers to negative integer powers are not allowed.
+        # Also, y must not be sparse.
+        y = np.asarray(y, dtype=np.float64)
+
+        weights = _check_weights(sample_weight, y.shape[0])
+
+        n_samples, n_features = X.shape
+
+        # 1.3 arguments to take special care ##################################
+        # P1, P2, start_params
+        if isinstance(self.P1, str) and self.P1 == 'identity':
+            P1 = np.ones(n_features)
+        else:
+            P1 = np.atleast_1d(self.P1)
+            try:
+                P1 = P1.astype(np.float64, casting='safe', copy=False)
+            except TypeError:
+                raise TypeError("The given P1 cannot be converted to a numeric"
+                                "array; got (P1.dtype={0})."
+                                .format(P1.dtype))
+            if (P1.ndim != 1) or (P1.shape[0] != n_features):
+                raise ValueError("P1 must be either 'identity' or a 1d array "
+                                 "with the length of X.shape[1]; "
+                                 "got (P1.shape[0]={0}), "
+                                 "needed (X.shape[1]={1})."
+                                 .format(P1.shape[0], n_features))
+        # If X is sparse, make P2 sparse, too.
+        if isinstance(self.P2, str) and self.P2 == 'identity':
+            if sparse.issparse(X):
+                P2 = (sparse.dia_matrix((np.ones(n_features), 0),
+                      shape=(n_features, n_features))).tocsc()
+            else:
+                P2 = np.ones(n_features)
+        else:
+            P2 = check_array(self.P2, copy=True,
+                             accept_sparse=_stype,
+                             dtype=_dtype, ensure_2d=False)
+            if P2.ndim == 1:
+                P2 = np.asarray(P2)
+                if P2.shape[0] != n_features:
+                    raise ValueError("P2 should be a 1d array of shape "
+                                     "(n_features,) with "
+                                     "n_features=X.shape[1]; "
+                                     "got (P2.shape=({0},)), needed ({1},)"
+                                     .format(P2.shape[0], X.shape[1]))
+                if sparse.issparse(X):
+                    P2 = (sparse.dia_matrix((P2, 0),
+                          shape=(n_features, n_features))).tocsc()
+            elif (P2.ndim == 2 and P2.shape[0] == P2.shape[1] and
+                    P2.shape[0] == X.shape[1]):
+                if sparse.issparse(X):
+                    P2 = (sparse.dia_matrix((P2, 0),
+                          shape=(n_features, n_features))).tocsc()
+            else:
+                raise ValueError("P2 must be either None or an array of shape "
+                                 "(n_features, n_features) with "
+                                 "n_features=X.shape[1]; "
+                                 "got (P2.shape=({0}, {1})), needed ({2}, {2})"
+                                 .format(P2.shape[0], P2.shape[1], X.shape[1]))
+
         start_params = self.start_params
         if isinstance(start_params, str):
             if start_params not in ['irls', 'least_squares', 'zero']:
@@ -1687,102 +1884,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                                  .format(X.shape[1] + self.fit_intercept,
                                          start_params.shape[0],
                                          start_params.ndim))
-        if self.selection not in ['cyclic', 'random']:
-            raise ValueError("The argument selection must be 'cyclic' or "
-                             "'random'; got (selection={0})"
-                             .format(self.selection))
-        random_state = check_random_state(self.random_state)
-        if not isinstance(self.diag_fisher, bool):
-            raise ValueError("The argument diag_fisher must be bool;"
-                             " got {0}".format(self.diag_fisher))
-        if not isinstance(self.copy_X, bool):
-            raise ValueError("The argument copy_X must be bool;"
-                             " got {0}".format(self.copy_X))
-        if not isinstance(self.check_input, bool):
-            raise ValueError("The argument check_input must be bool; got "
-                             "(check_input={0})".format(self.check_input))
 
-        if isinstance(self.P1, str) and self.P1 == 'identity':
-            P1 = np.ones(X.shape[1])
-        else:
-            P1 = np.atleast_1d(self.P1)
-            try:
-                P1 = P1.astype(np.float64, casting='safe', copy=True)
-            except TypeError:
-                raise TypeError("The given P1 cannot be converted to a numeric"
-                                "array; got (P1.dtype={0})."
-                                .format(P1.dtype))
-            if (P1.ndim != 1) or (P1.shape[0] != X.shape[1]):
-                raise ValueError("P1 must be either 'identity' or a 1d array "
-                                 "with the length of X.shape[1]; "
-                                 "got (P1.shape[0]={0}), "
-                                 "needed (X.shape[1]={1})."
-                                 .format(P1.shape[0], X.shape[1]))
-        # If X is sparse, make P2 sparse, too.
-        if isinstance(self.P2, str) and self.P2 == 'identity':
-            if sparse.issparse(X):
-                P2 = (sparse.dia_matrix((np.ones(X.shape[1]), 0),
-                      shape=(X.shape[1], X.shape[1]))).tocsr()
-            else:
-                P2 = np.ones(X.shape[1])
-        else:
-            P2 = check_array(self.P2, copy=True,
-                             accept_sparse=['csr', 'csc'],
-                             dtype=_dtype, ensure_2d=False)
-            if P2.ndim == 1:
-                P2 = np.asarray(P2)
-                if P2.shape[0] != X.shape[1]:
-                    raise ValueError("P2 should be a 1d array of shape "
-                                     "(n_features,) with "
-                                     "n_features=X.shape[1]; "
-                                     "got (P2.shape=({0},)), needed ({1},)"
-                                     .format(P2.shape[0], X.shape[1]))
-                if sparse.issparse(X):
-                    P2 = (sparse.dia_matrix((P2, 0),
-                          shape=(X.shape[1], X.shape[1]))).tocsr()
-            elif (P2.ndim == 2 and P2.shape[0] == P2.shape[1] and
-                    P2.shape[0] == X.shape[1]):
-                if sparse.issparse(X):
-                    P2 = (sparse.dia_matrix((P2, 0),
-                          shape=(X.shape[1], X.shape[1]))).tocsr()
-            else:
-                raise ValueError("P2 must be either None or an array of shape "
-                                 "(n_features, n_features) with "
-                                 "n_features=X.shape[1]; "
-                                 "got (P2.shape=({0}, {1})), needed ({2}, {2})"
-                                 .format(P2.shape[0], P2.shape[1], X.shape[1]))
-
-        family = self._family_instance
-        link = self._link_instance
-
-        if self.fit_intercept:
-            # Note: intercept is first column <=> coef[0] is for intecept
-            if sparse.issparse(X):
-                Xnew = sparse.hstack([np.ones([X.shape[0], 1]), X],
-                                     format=X.format)
-            else:
-                Xnew = np.concatenate((np.ones((X.shape[0], 1)), X), axis=1)
-            P1 = np.concatenate((np.array([0]), P1))
-            if P2.ndim == 1:
-                P2 = np.concatenate((np.array([0]), P2))
-            elif sparse.issparse(P2):
-                P2 = sparse.block_diag((sparse.dia_matrix((1, 1)), P2),
-                                       format=P2.format,
-                                       dtype=P2.dtype).tocsr()
-            else:
-                # as of numpy 1.13 this would work:
-                # P2 = np.block([[np.zeros((1, 1)), np.zeros((1, X.shape[1]))],
-                #                [np.zeros((X.shape[1], 1)), P2]])
-                P2 = np.hstack((np.zeros((X.shape[1], 1)), P2))
-                P2 = np.vstack((np.zeros((1, X.shape[1]+1)), P2))
-        else:
-            Xnew = X
-
-        n_samples, n_features = Xnew.shape
         l1 = self.alpha * self.l1_ratio
         l2 = self.alpha * (1 - self.l1_ratio)
-        P1 *= l1
-        P2 *= l2
+        # P1 and P2 are now for sure copies
+        P1 = l1 * P1
+        P2 = l2 * P2
         # one only ever needs the symmetrized L2 penalty matrix 1/2 (P2 + P2')
         # reason: w' P2 w = (w' P2 w)', i.e. it is symmetric
         if P2.ndim == 2:
@@ -1791,14 +1898,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             else:
                 P2 = 0.5 * (P2 + P2.T)
 
-        # 1.3 additional validations ##########################################
+        # 1.4 additional validations ##########################################
         if self.check_input:
             if not np.all(family.in_y_range(y)):
                 raise ValueError("Some value(s) of y are out of the valid "
                                  "range for family {0}"
                                  .format(family.__class__.__name__))
-            if not np.all(weights >= 0):
-                raise ValueError("Sample weights must be non-negative.")
             # check if P1 has only non-negative values, negative values might
             # indicate group lasso in the future.
             if not isinstance(self.P1, str):  # if self.P1 != 'identity':
@@ -1830,7 +1935,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 else:
                     if not np.all(linalg.eigvalsh(P2) >= epsneg):
                         raise ValueError("P2 must be positive semi-definite.")
-            # TODO: if alpha=0 check that Xnew is not rank deficient
+            # TODO: if alpha=0 check that X is not rank deficient
             # TODO: what else to check?
 
         #######################################################################
@@ -1874,13 +1979,14 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 z = eta + (y-mu)/hp
                 # solve A*coef = b
                 # A = X' W X + l2 P2, b = X' W z
-                coef = _irls_step(Xnew, W, P2, z)
+                coef = _irls_step(X, W, P2, z,
+                                  fit_intercept=self.fit_intercept)
             elif start_params == 'least_squares':
                 # less restrictive tolerance for finding start values
                 tol = np.max([self.tol, np.sqrt(self.tol)])
                 if self.alpha == 0:
                     reg = LinearRegression(copy_X=True, fit_intercept=False)
-                    reg.fit(Xnew, link.link(y))
+                    reg.fit(X, link.link(y))
                     coef = reg.coef_
                 elif self.l1_ratio <= 0.01:
                     # ElasticNet says l1_ratio <= 0.01 is not reliable
@@ -1888,19 +1994,21 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
                     reg = Ridge(copy_X=True, fit_intercept=False,
                                 alpha=self.alpha*n_samples, tol=tol)
-                    reg.fit(Xnew, link.link(y))
+                    reg.fit(X, link.link(y))
                     coef = reg.coef_
                 else:
                     # TODO: Does this make sense at all?
                     reg = ElasticNet(copy_X=True, fit_intercept=False,
                                      alpha=self.alpha, l1_ratio=self.l1_ratio,
                                      tol=tol)
-                    reg.fit(Xnew, link.link(y))
+                    reg.fit(X, link.link(y))
                     coef = reg.coef_
             else:  # start_params == 'zero'
-                coef = np.zeros(n_features)
                 if self.fit_intercept:
+                    coef = np.zeros(n_features+1)
                     coef[0] = link.link(np.average(y, weights=weights))
+                else:
+                    coef = np.zeros(n_features)
         else:  # assign given array as start values
             coef = start_params
 
@@ -1915,24 +2023,28 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # Note: we already symmetriezed P2 = 1/2 (P2 + P2')
         if solver == 'irls':
             coef, self.n_iter_ = \
-                _irls_solver(coef=coef, X=Xnew, y=y, weights=weights, P2=P2,
-                             family=family, link=link, max_iter=self.max_iter,
-                             tol=self.tol)
+                _irls_solver(coef=coef, X=X, y=y, weights=weights, P2=P2,
+                             fit_intercept=self.fit_intercept, family=family,
+                             link=link, max_iter=self.max_iter, tol=self.tol)
 
         # 4.2 L-BFGS ##########################################################
         elif solver == 'lbfgs':
             def func(coef, X, y, weights, P2, family, link):
-                mu, dev, devp = \
+                mu, devp = \
                     family._mu_deviance_derivative(coef, X, y, weights, link)
+                dev = family.deviance(y, mu, weights)
+                intercept = (coef.size == X.shape[1] + 1)
+                idx = 1 if intercept else 0  # offset if coef[0] is intercept
                 if P2.ndim == 1:
-                    L2 = P2 * coef
+                    L2 = P2 * coef[idx:]
                 else:
-                    L2 = P2 @ coef
-                obj = 0.5 * dev + 0.5 * (coef @ L2)
-                objp = 0.5 * devp + L2
+                    L2 = P2 @ coef[idx:]
+                obj = 0.5 * dev + 0.5 * (coef[idx:] @ L2)
+                objp = 0.5 * devp
+                objp[idx:] += L2
                 return obj, objp
 
-            args = (Xnew, y, weights, P2, family, link)
+            args = (X, y, weights, P2, family, link)
             coef, loss, info = fmin_l_bfgs_b(
                 func, coef, fprime=None, args=args,
                 iprint=(self.verbose > 0) - 1, pgtol=self.tol,
@@ -1952,50 +2064,66 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # precisely, expected hessian of deviance.
         elif solver == 'newton-cg':
             def func(coef, X, y, weights, P2, family, link):
+                intercept = (coef.size == X.shape[1] + 1)
+                idx = 1 if intercept else 0  # offset if coef[0] is intercept
                 if P2.ndim == 1:
-                    L2 = coef @ (P2 * coef)
+                    L2 = coef[idx:] @ (P2 * coef[idx:])
                 else:
-                    L2 = coef @ (P2 @ coef)
-                mu = link.inverse(X @ coef)
+                    L2 = coef[idx:] @ (P2 @ coef[idx:])
+                mu = link.inverse(_safe_lin_pred(X, coef))
                 return 0.5 * family.deviance(y, mu, weights) + 0.5 * L2
 
             def grad(coef, X, y, weights, P2, family, link):
+                mu, devp = \
+                    family._mu_deviance_derivative(coef, X, y, weights, link)
+                intercept = (coef.size == X.shape[1] + 1)
+                idx = 1 if intercept else 0  # offset if coef[0] is intercept
                 if P2.ndim == 1:
-                    L2 = P2 * coef
+                    L2 = P2 * coef[idx:]
                 else:
-                    L2 = P2 @ coef
-                eta = X @ coef
-                mu = link.inverse(eta)
-                d1 = link.inverse_derivative(eta)
-                grad = X.T @ (d1 * family.deviance_derivative(y, mu, weights))
-                return 0.5 * grad + L2
+                    L2 = P2 @ coef[idx:]
+                objp = 0.5 * devp
+                objp[idx:] += L2
+                return objp
 
             def grad_hess(coef, X, y, weights, P2, family, link):
+                intercept = (coef.size == X.shape[1] + 1)
+                idx = 1 if intercept else 0  # offset if coef[0] is intercept
                 if P2.ndim == 1:
-                    L2 = P2 * coef
+                    L2 = P2 * coef[idx:]
                 else:
-                    L2 = P2 @ coef
-                eta = X @ coef
+                    L2 = P2 @ coef[idx:]
+                eta = _safe_lin_pred(X, coef)
                 mu = link.inverse(eta)
                 d1 = link.inverse_derivative(eta)
-                grad = 0.5 * \
-                    (X.T @ (d1 * family.deviance_derivative(y, mu, weights))) \
-                    + L2
-                # expected hessian = X.T @ diag_matrix @ X
+                temp = d1 * family.deviance_derivative(y, mu, weights)
+                if intercept:
+                    grad = np.concatenate(([0.5 * temp.sum()],
+                                           0.5 * temp @ X + L2))
+                else:
+                    grad = 0.5 * temp @ X + L2  # sampe as 0.5* X.T @ temp + L2
+
+                # expected hessian = fisher = X.T @ diag_matrix @ X
                 # calculate only diag_matrix
                 diag = d1**2 / family.variance(mu, phi=1, weights=weights)
 
-                def Hs(s):
-                    ret = 0.5 * (X.T @ (diag * (X @ s)))
+                def Hs(coef):
+                    # return (0.5 * fisher + P2) @ coef
+                    # ret = 0.5 * (X.T @ (diag * (X @ coef)))
+                    ret = 0.5 * ((diag * (X @ coef[idx:])) @ X)
                     if P2.ndim == 1:
-                        ret += P2 * s
+                        ret += P2 * coef[idx:]
                     else:
-                        ret += P2 @ s
+                        ret += P2 @ coef[idx:]
+                    if intercept:
+                        h0i = np.concatenate(([diag.sum()], diag @ X))
+                        ret = np.concatenate(([0.5 * (h0i @ coef)],
+                                             ret + 0.5 * coef[0] * h0i[1:]))
                     return ret
 
                 return grad, Hs
 
-            args = (Xnew, y, weights, P2, family, link)
+            args = (X, y, weights, P2, family, link)
             coef, n_iter_i = newton_cg(grad_hess, func, grad, coef,
                                        args=args, maxiter=self.max_iter,
                                        tol=self.tol)
@@ -2007,13 +2135,14 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         elif solver == 'cd':
             # For coordinate descent, if X is sparse, it should be csc format
             # If X is sparse, P2 must also be csc
-            if sparse.issparse(Xnew):
-                Xnew = Xnew.tocsc(copy=self.copy_X)
+            if sparse.issparse(X):
+                X = X.tocsc(copy=self.copy_X)
                 P2 = sparse.csc_matrix(P2)
 
             coef, self.n_iter_, self._n_cycles = \
-                _cd_solver(coef=coef, X=Xnew, y=y, weights=weights, P1=P1,
-                           P2=P2, family=family, link=link,
+                _cd_solver(coef=coef, X=X, y=y, weights=weights, P1=P1,
+                           P2=P2, fit_intercept=self.fit_intercept,
+                           family=family, link=link,
                            max_iter=self.max_iter, tol=self.tol,
                            selection=self.selection, random_state=random_state,
                            diag_fisher=self.diag_fisher, copy_X=self.copy_X)

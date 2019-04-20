@@ -566,7 +566,7 @@ def test_poisson_enet():
         pd = PoissonDistribution()
         link = LogLink()
         N = y.shape[0]
-        mu = link.inverse(X @ coef[1:]+coef[0])
+        mu = link.inverse(X @ coef[1:] + coef[0])
         alpha, l1_ratio = (1, 0.5)
         return 1./(2.*N) * pd.deviance(y, mu) \
             + 0.5 * alpha * (1-l1_ratio) * (coef[1:]**2).sum() \
@@ -587,9 +587,9 @@ def test_poisson_enet():
     assert_almost_equal(glm.intercept_, glmnet_intercept, decimal=4)
     assert_array_almost_equal(glm.coef_, glmnet_coef, decimal=4)
 
-    # start_params='least_squares' with different alpha
+    # check warm_start, therefore start with different alpha
     glm = GeneralizedLinearRegressor(alpha=0.005, l1_ratio=0.5,
-                                     family='poisson',
+                                     family='poisson', max_iter=300,
                                      link='log', solver='cd', tol=1e-5,
                                      start_params='zero')
     glm.fit(X, y)
