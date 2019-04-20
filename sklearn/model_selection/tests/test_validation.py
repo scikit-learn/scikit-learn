@@ -1762,3 +1762,29 @@ def test_score():
     fit_and_score_args = [None, None, None, two_params_scorer]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
+
+
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+def test_cross_validate_return_test_indices():
+    n_samples = 100
+    clf = SVC(kernel="linear", random_state=0)
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+
+    ret = cross_validate(clf, X, y, return_train_score=False,
+                         return_estimator=False, return_test_indices=False)
+    assert 'test_indices' not in ret
+
+    ret = cross_validate(clf, X, y, return_train_score=False,
+                         return_estimator=False, return_test_indices=True)
+    assert np.all(np.sort(np.hstack(ret['test_indices']))
+                  == np.arange(n_samples))
+
+    ret = cross_validate(clf, X, y, return_train_score=False,
+                         return_estimator=True, return_test_indices=True)
+    assert np.all(np.sort(np.hstack(ret['test_indices']))
+                  == np.arange(n_samples))
+
+    ret = cross_validate(clf, X, y, return_train_score=True,
+                         return_estimator=True, return_test_indices=True)
+    assert np.all(np.sort(np.hstack(ret['test_indices']))
+                  == np.arange(n_samples))
