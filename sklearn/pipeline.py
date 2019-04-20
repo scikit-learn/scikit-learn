@@ -390,10 +390,9 @@ class Pipeline(_BaseComposition):
             if last_step == 'passthrough':
                 return Xt
             if hasattr(last_step, 'fit_transform'):
-                Xt = last_step.fit_transform(Xt, y, **fit_params)
+                return last_step.fit_transform(Xt, y, **fit_params)
             else:
-                Xt = last_step.fit(Xt, y, **fit_params).transform(Xt)
-        return Xt
+                return last_step.fit(Xt, y, **fit_params).transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X, **predict_params):
@@ -710,7 +709,7 @@ def _fit_transform_one(transformer,
     """
     Fits ``transformer`` to ``X`` and ``y``. The transformed result is returned
     with the fitted transformer. If ``weight`` is not ``None``, the result will
-    be multipled by ``weight``.
+    be multiplied by ``weight``.
     """
     with _print_elapsed_time(message_clsname, message):
         if hasattr(transformer, 'fit_transform'):
