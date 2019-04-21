@@ -57,7 +57,8 @@ X_hetero = X + rng.randn(n_samples, n_features) * sigmas
 # #############################################################################
 # Fit the models
 
-n_components = np.arange(0, n_features - 5, 5)  # options for n_components
+# options for n_components (45 removed for speed)
+n_components = np.arange(0, n_features - 5, 5)
 
 
 def compute_scores(X):
