@@ -48,9 +48,6 @@ from scipy import linalg, sparse, special
 import scipy.sparse.linalg as splinalg
 from scipy.optimize import fmin_l_bfgs_b
 import warnings
-from .base import LinearRegression
-from .coordinate_descent import ElasticNet
-from .ridge import Ridge
 from ..base import BaseEstimator, RegressorMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_X_y
@@ -93,6 +90,14 @@ def _safe_lin_pred(X, coef):
         return X @ coef
 
 
+def _safe_toarray(X):
+    """Returns a numpy array."""
+    if sparse.issparse(X):
+        return X.toarray()
+    else:
+        return np.asarray(X)
+
+
 def _safe_sandwich_dot(X, d, intercept=False):
     """Compute sandwich product X.T @ diag(d) @ X.
 
@@ -100,7 +105,9 @@ def _safe_sandwich_dot(X, d, intercept=False):
     first column of X.
     X can be sparse, d must be an ndarray. Always returns a ndarray."""
     if sparse.issparse(X):
-        temp = (X.transpose().multiply(d) @ X).toarray()
+        temp = (X.transpose() @ X.multiply(d[:, np.newaxis]))
+        # for older versions of numpy and scipy, temp may be a np.matrix
+        temp = _safe_toarray(temp)
     else:
         temp = (X.T * d) @ X
     if intercept:
@@ -945,7 +952,8 @@ def _irls_step(X, W, P2, z, fit_intercept=True):
     else:
         if sparse.issparse(X):
             XtW = X.transpose().multiply(W)
-            A = (XtW @ X).toarray()
+            # for older versions of numpy and scipy, A may be a np.matrix
+            A = _safe_toarray(XtW @ X)
         else:
             XtW = (X.T * W)
             A = XtW @ X
@@ -1105,8 +1113,9 @@ def _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles, inner_tol,
                 if intercept:
                     Bj[0] = fisher.sum()
                 if sparse.issparse(X):
-                    Bj[idx:] = (X[:, j].transpose().multiply(fisher) @ X
-                                ).toarray().ravel()
+                    Bj[idx:] = _safe_toarray(X[:, j].transpose() @
+                                             X.multiply(fisher[:, np.newaxis])
+                                             ).ravel()
                 else:
                     Bj[idx:] = (fisher * X[:, j]) @ X
 
@@ -1477,27 +1486,32 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         the chi squared statisic or the deviance statistic. If None, the
         dispersion is not estimated.
 
-    solver : {'auto', 'irls', 'newton-cg', 'lbfgs', 'cd'}, \
+    solver : {'auto', 'cd', 'irls', 'lbfgs', 'newton-cg'}, \
             optional (default='auto')
         Algorithm to use in the optimization problem:
 
         'auto'
             Sets 'irls' if l1_ratio equals 0, else 'cd'.
 
-        'irls'
-            Iterated reweighted least squares (with Fisher scoring).
-            It is the standard algorithm for GLMs. It cannot deal with
-            L1 penalties.
-
-        'newton-cg', 'lbfgs'
-            Cannot deal with L1 penalties.
-
         'cd'
             Coordinate descent algorithm. It can deal with L1 as well as L2
             penalties. Note that in order to avoid unnecessary memory
-            duplication of the X argument in the ``fit`` method, X should be
-            directly passed as a Fortran-contiguous numpy array or sparse csc
-            matrix.
+            duplication of X in the ``fit`` method, X should be directly passed
+            as a Fortran-contiguous numpy array or sparse csc matrix.
+
+        'irls'
+            Iterated reweighted least squares.
+            It is the standard algorithm for GLMs. It cannot deal with
+            L1 penalties.
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer. It cannot deal with L1 penalties.
+
+        'newton-cg', 'lbfgs'
+            Newton conjugate gradient algorithm cannot deal with L1 penalties.
+
+        Note that all solvers except lbfgs use the fisher matrix, i.e. the
+        expected Hessian instead of the Hessian matrix.
 
     max_iter : int, optional (default=100)
         The maximal number of iterations for solver algorithms.
@@ -1505,11 +1519,11 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     tol : float, optional (default=1e-4)
         Stopping criterion. For the irls, newton-cg and lbfgs solvers,
         the iteration will stop when ``max{|g_i|, i = 1, ..., n} <= tol``
-        where g_i is the i-th component of the gradient (derivative) of
+        where ``g_i`` is the i-th component of the gradient (derivative) of
         the objective function. For the cd solver, covergence is reached
-        when ``sum_i(|minimum-norm of g_i|)``, where g_i is the
-        subgradient of the objective and minimum-norm of g_i is the element of
-        the subgradient g_i with the smallest L2-norm.
+        when ``sum_i(|minimum-norm of g_i|)``, where ``g_i`` is the
+        subgradient of the objective and minimum-norm of ``g_i`` is the element
+        of the subgradient ``g_i`` with the smallest L2-norm.
 
     warm_start : boolean, optional (default=False)
         If set to ``True``, reuse the solution of the previous call to ``fit``
@@ -1518,23 +1532,21 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         does not exit (first call to ``fit``), option ``start_params`` sets the
         start values for ``coef_`` and ``intercept_``.
 
-    start_params : {'irls', 'least_squares', 'zero', array of shape \
-            (n_features*, )}, optional (default='irls')
+    start_params : {'guess', 'zero', array of shape (n_features*, )}, \
+            optional (default='guess')
         Relevant only if ``warm_start=False`` or if fit is called
         the first time (``self.coef_`` does not yet exist).
 
-        'irls'
+        'guess'
             Start values of mu are calculated by family.starting_mu(..). Then,
-            one step of irls obtains start values for ``coef_``. This gives
-            usually good results.
-
-        'least_squares'
-        Start values for ``coef_`` are obtained by a least squares fit in the
-        link space (y is transformed to the space of the linear predictor).
+            one Newton step obtains start values for ``coef_``. If
+            ``solver='irls'``, it uses one irls step, else the Newton step is
+            calculated by the cd solver.
+            This gives usually good starting values.
 
         'zero'
         All coefficients are set to zero. If ``fit_intercept=True``, the
-        start value for the intercept is obtained by the average of y.
+        start value for the intercept is obtained by the weighted average of y.
 
         array
         The array of size n_features* is directly used as start values
@@ -1560,17 +1572,17 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    diag_fisher : boolean, (default=False)
-        Only relevant for solver 'cd'. If ``False``, the full Fisher matrix
-        (expected Hessian) is computed in each outer iteretion (Newton
-        iteration). If ``True``, only a diagonal matrix (stored as 1d array) is
-        computed, such that fisher = X.T @ diag @ X. This saves memory and
-        matrix-matrix multiplications, but needs more matrix-vector
-        multiplications. If you use large sparse X or if you have many
-        features, i.e. n_features >> n_samples, you might set this option to
-        ``True``.
+    diag_fisher : boolean, optional, (default=False)
+        Only relevant for solver 'cd' (see also ``start_params='guess'``).
+        If ``False``, the full Fisher matrix (expected Hessian) is computed in
+        each outer iteration (Newton iteration). If ``True``, only a diagonal
+        matrix (stored as 1d array) is computed, such that
+        fisher = X.T @ diag @ X. This saves memory and matrix-matrix
+        multiplications, but needs more matrix-vector multiplications. If you
+        use large sparse X or if you have many features,
+        i.e. n_features >> n_samples, you might set this option to ``True``.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, optional, (default=True)
         If ``True``, X will be copied; else, it may be overwritten.
 
     check_input : boolean, optional (default=True)
@@ -1634,7 +1646,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, alpha=1.0, l1_ratio=0, P1='identity', P2='identity',
                  fit_intercept=True, family='normal', link='auto',
                  fit_dispersion=None, solver='auto', max_iter=100,
-                 tol=1e-4, warm_start=False, start_params='irls',
+                 tol=1e-4, warm_start=False, start_params='guess',
                  selection='cyclic', random_state=None, diag_fisher=False,
                  copy_X=True, check_input=True, verbose=0):
         self.alpha = alpha
@@ -1867,11 +1879,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         start_params = self.start_params
         if isinstance(start_params, str):
-            if start_params not in ['irls', 'least_squares', 'zero']:
-                raise ValueError("The argument start_params must be 'irls', "
-                                 "'least-squares', 'zero' or an array of "
-                                 " correct length;"
-                                 " got(start_params={0})".format(start_params))
+            if start_params not in ['guess',  'zero']:
+                raise ValueError("The argument start_params must be 'guess', "
+                                 "'zero' or an array of correct length; "
+                                 "got(start_params={0})".format(start_params))
         else:
             start_params = check_array(start_params, accept_sparse=False,
                                        force_all_finite=True, ensure_2d=False,
@@ -1894,9 +1905,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # reason: w' P2 w = (w' P2 w)', i.e. it is symmetric
         if P2.ndim == 2:
             if sparse.issparse(P2):
-                P2 = 0.5 * (P2 + P2.transpose())
+                if sparse.isspmatrix_csc(P2):
+                    P2 = 0.5 * (P2 + P2.transpose()).tocsc()
+                else:
+                    P2 = 0.5 * (P2 + P2.transpose()).tocsr()
             else:
                 P2 = 0.5 * (P2 + P2.T)
+
+        # For coordinate descent, if X is sparse, P2 must also be csc
+        if solver == 'cd' and sparse.issparse(X):
+            P2 = sparse.csc_matrix(P2)
 
         # 1.4 additional validations ##########################################
         if self.check_input:
@@ -1964,45 +1982,63 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             else:
                 coef = self.coef_
         elif isinstance(start_params, str):
-            if start_params == 'irls':
-                # See 3.1 IRLS
-                # Use mu_start and apply one irls step to calculate coef
+            if start_params == 'guess':
+                # Set mu=starting_mu of the family and do one Newton step
+                # If solver=cd use cd, else irls
                 mu = family.starting_mu(y, weights=weights)
-                # linear predictor
-                eta = link.link(mu)
-                # h'(eta)
-                hp = link.inverse_derivative(eta)
-                # working weights W, in principle a diagonal matrix
-                # therefore here just as 1d array
-                W = (hp**2 / family.variance(mu, phi=1, weights=weights))
-                # working observations
-                z = eta + (y-mu)/hp
-                # solve A*coef = b
-                # A = X' W X + l2 P2, b = X' W z
-                coef = _irls_step(X, W, P2, z,
-                                  fit_intercept=self.fit_intercept)
-            elif start_params == 'least_squares':
-                # less restrictive tolerance for finding start values
-                tol = np.max([self.tol, np.sqrt(self.tol)])
-                if self.alpha == 0:
-                    reg = LinearRegression(copy_X=True, fit_intercept=False)
-                    reg.fit(X, link.link(y))
-                    coef = reg.coef_
-                elif self.l1_ratio <= 0.01:
-                    # ElasticNet says l1_ratio <= 0.01 is not reliable
-                    # => use Ridge
-                    # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
-                    reg = Ridge(copy_X=True, fit_intercept=False,
-                                alpha=self.alpha*n_samples, tol=tol)
-                    reg.fit(X, link.link(y))
-                    coef = reg.coef_
+                eta = link.link(mu)  # linear predictor
+                if solver in ['cd', 'lbfgs', 'newton-cg']:
+                    # see function _cd_solver
+                    sigma_inv = 1/family.variance(mu, phi=1, weights=weights)
+                    d1 = link.inverse_derivative(eta)
+                    temp = sigma_inv * d1 * (y - mu)
+                    if self.fit_intercept:
+                        score = np.concatenate(([temp.sum()], temp @ X))
+                    else:
+                        score = temp @ X  # sampe as X.T @ temp
+
+                    d2_sigma_inv = d1 * d1 * sigma_inv
+                    diag_fisher = self.diag_fisher
+                    if diag_fisher:
+                        fisher = d2_sigma_inv
+                    else:
+                        fisher = \
+                            _safe_sandwich_dot(X, d2_sigma_inv,
+                                               intercept=self.fit_intercept)
+                    # set up space for search direction d for inner loop
+                    if self.fit_intercept:
+                        coef = np.zeros(n_features+1)
+                    else:
+                        coef = np.zeros(n_features)
+                    d = np.zeros_like(coef)
+                    # initial stopping tolerance of inner loop
+                    # use L1-norm of minimum of norm of subgradient of F
+                    # use less restrictive tolerance for initial guess
+                    inner_tol = _min_norm_sugrad(coef=coef, grad=-score, P2=P2,
+                                                 P1=P1)
+                    inner_tol = 4 * linalg.norm(inner_tol, ord=1)
+                    # just one outer loop = Newton step
+                    n_cycles = 0
+                    d, coef_P2, n_cycles, inner_tol = \
+                        _cd_cycle(d, X, coef, score, fisher, P1, P2, n_cycles,
+                                  inner_tol, max_inner_iter=1000,
+                                  selection=self.selection,
+                                  random_state=self.random_state,
+                                  diag_fisher=self.diag_fisher)
+                    coef += d  # for simplicity no line search here
                 else:
-                    # TODO: Does this make sense at all?
-                    reg = ElasticNet(copy_X=True, fit_intercept=False,
-                                     alpha=self.alpha, l1_ratio=self.l1_ratio,
-                                     tol=tol)
-                    reg.fit(X, link.link(y))
-                    coef = reg.coef_
+                    # See _irls_solver
+                    # h'(eta)
+                    hp = link.inverse_derivative(eta)
+                    # working weights W, in principle a diagonal matrix
+                    # therefore here just as 1d array
+                    W = (hp**2 / family.variance(mu, phi=1, weights=weights))
+                    # working observations
+                    z = eta + (y-mu)/hp
+                    # solve A*coef = b
+                    # A = X' W X + l2 P2, b = X' W z
+                    coef = _irls_step(X, W, P2, z,
+                                      fit_intercept=self.fit_intercept)
             else:  # start_params == 'zero'
                 if self.fit_intercept:
                     coef = np.zeros(n_features+1)
@@ -2048,7 +2084,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             coef, loss, info = fmin_l_bfgs_b(
                 func, coef, fprime=None, args=args,
                 iprint=(self.verbose > 0) - 1, pgtol=self.tol,
-                maxiter=self.max_iter)
+                maxiter=self.max_iter, factr=1e3)
             if self.verbose > 0:
                 if info["warnflag"] == 1:
                     warnings.warn("lbfgs failed to converge."
@@ -2106,6 +2142,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 # expected hessian = fisher = X.T @ diag_matrix @ X
                 # calculate only diag_matrix
                 diag = d1**2 / family.variance(mu, phi=1, weights=weights)
+                if intercept:
+                    h0i = np.concatenate(([diag.sum()], diag @ X))
 
                 def Hs(coef):
                     # return (0.5 * fisher + P2) @ coef
@@ -2116,7 +2154,6 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     else:
                         ret += P2 @ coef[idx:]
                     if intercept:
-                        h0i = np.concatenate(([diag.sum()], diag @ X))
                         ret = np.concatenate(([0.5 * (h0i @ coef)],
                                              ret + 0.5 * coef[0] * h0i[1:]))
                     return ret
@@ -2124,21 +2161,15 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 return grad, Hs
 
             args = (X, y, weights, P2, family, link)
-            coef, n_iter_i = newton_cg(grad_hess, func, grad, coef,
-                                       args=args, maxiter=self.max_iter,
-                                       tol=self.tol)
+            coef, self.n_iter_ = newton_cg(grad_hess, func, grad, coef,
+                                           args=args, maxiter=self.max_iter,
+                                           tol=self.tol)
 
         # 4.4 coordinate descent ##############################################
         # Note: we already set P1 = l1*P1, see above
         # Note: we already set P2 = l2*P2, see above
         # Note: we already symmetriezed P2 = 1/2 (P2 + P2')
         elif solver == 'cd':
-            # For coordinate descent, if X is sparse, it should be csc format
-            # If X is sparse, P2 must also be csc
-            if sparse.issparse(X):
-                X = X.tocsc(copy=self.copy_X)
-                P2 = sparse.csc_matrix(P2)
-
             coef, self.n_iter_, self._n_cycles = \
                 _cd_solver(coef=coef, X=X, y=y, weights=weights, P1=P1,
                            P2=P2, fit_intercept=self.fit_intercept,
