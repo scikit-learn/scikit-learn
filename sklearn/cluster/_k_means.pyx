@@ -8,7 +8,7 @@
 #
 # License: BSD 3 clause
 #
-# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport sqrt
 import numpy as np
@@ -17,7 +17,7 @@ cimport numpy as np
 cimport cython
 from cython cimport floating
 
-from sklearn.utils.sparsefuncs_fast import assign_rows_csr
+from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils._cython_blas cimport _dot
 
 ctypedef np.float64_t DOUBLE

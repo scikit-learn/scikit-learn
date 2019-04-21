@@ -758,10 +758,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.affinity = affinity
         self.pooling_func = pooling_func
 
-    @property
     @deprecated("The ``n_components_`` attribute was deprecated "
                 "in favor of ``n_connected_components_`` in 0.21 "
                 "and will be removed in 0.23.")
+    @property
     def n_components_(self):
         return self.n_connected_components_
 

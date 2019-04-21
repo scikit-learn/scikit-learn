@@ -140,7 +140,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     To use joblib.Memory to cache the svmlight file::
 
         from joblib import Memory
-        from sklearn.datasets import load_svmlight_file
+        from .datasets import load_svmlight_file
         mem = Memory("./mycache")
 
         @mem.cache

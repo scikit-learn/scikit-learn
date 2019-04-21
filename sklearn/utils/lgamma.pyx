@@ -1,5 +1,3 @@
-# cython: language_level=3
-
 cdef extern from "src/gamma.h":
     cdef double sklearn_lgamma(double x)
 
