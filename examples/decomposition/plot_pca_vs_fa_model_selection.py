@@ -57,12 +57,12 @@ X_hetero = X + rng.randn(n_samples, n_features) * sigmas
 # #############################################################################
 # Fit the models
 
-n_components = np.arange(0, n_features, 5)  # options for n_components
+n_components = np.arange(0, n_features - 5, 5)  # options for n_components
 
 
 def compute_scores(X):
     pca = PCA(svd_solver='full')
-    fa = FactorAnalysis()
+    fa = FactorAnalysis(tol = 1)
 
     pca_scores, fa_scores = [], []
     for n in n_components:
