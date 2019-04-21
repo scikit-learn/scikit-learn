@@ -94,6 +94,7 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
     pca.fit(X)
     n_components_pca_mle = pca.n_components_
 
+    print("%s:" % title)
     print("best n_components by PCA CV = %d" % n_components_pca)
     print("best n_components by FactorAnalysis CV = %d" % n_components_fa)
     print("best n_components by PCA MLE = %d" % n_components_pca_mle)
