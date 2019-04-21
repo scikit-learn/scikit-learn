@@ -639,6 +639,16 @@ def is_scalar_nan(x):
 
 
 def check_matplotlib_support(caller_name):
+    """Raise ImportError with detailed error message if mpl is not installed.
+
+    Plot utilities like plot_partial_dependence should lazily import
+    matplotlib and call this helper before any computation.
+
+    Parameters
+    ----------
+    caller_name : str
+        The name of the caller that requires matplotlib.
+    """
     try:
         import matplotlib  # noqa
     except ImportError as e:
