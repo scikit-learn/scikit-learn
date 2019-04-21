@@ -9,6 +9,7 @@ from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import (OPTICS,
                                      _extend_region,
                                      _extract_xi_labels)
+from sklearn.metrics import v_measure_score
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.cluster.dbscan_ import DBSCAN
@@ -69,13 +70,12 @@ def test_extend_upward(r_plot, end):
 @pytest.mark.parametrize(
     ('ordering', 'clusters', 'expected'),
     [[[0, 1, 2, 3], [[0, 1], [2, 3]], [0, 0, 1, 1]],
-     [[0, 1, 2, 3], [[0, 1], [3, 3]], [0, 0, -1, 1]],
-     [[0, 1, 2, 3], [[0, 1], [3, 3], [0, 3]], [0, 0, -1, 1]],
-     [[3, 1, 2, 0], [[0, 1], [3, 3], [0, 3]], [1, 0, -1, 0]],
+     [[0, 1, 2, 3], [[0, 1], [3, 3]], [1, 1, -1, 0]],
+     [[0, 1, 2, 3], [[0, 1], [3, 3], [0, 3]], [1, 1, -1, 0]],
+     [[3, 1, 2, 0], [[0, 1], [3, 3], [0, 3]], [0, 1, -1, 1]],
      ])
 def test_the_extract_xi_labels(ordering, clusters, expected):
     labels = _extract_xi_labels(ordering, clusters)
-
     assert_array_equal(labels, expected)
 
 
@@ -93,24 +93,24 @@ def test_extract_xi():
     C6 = [5, 6] + .2 * rng.randn(n_points_per_cluster, 2)
 
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
-    expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5,
+    expected_labels = np.r_[[0] * 5, [1] * 5, [2] * 5, [3] * 5, [2] * 5,
                             -1, [4] * 5]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
     clust = OPTICS(min_samples=3, min_cluster_size=2,
                    max_eps=np.inf, cluster_method='xi',
                    xi=0.4).fit(X)
-    assert_array_equal(clust.labels_, expected_labels)
+    assert np.isclose(v_measure_score(clust.labels_, expected_labels), 1)
 
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))
-    expected_labels = np.r_[[1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5,
+    expected_labels = np.r_[[0] * 5, [1] * 5, [2] * 5, [3] * 5, [2] * 5,
                             -1, -1, [4] * 5]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
     clust = OPTICS(min_samples=3, min_cluster_size=3,
                    max_eps=np.inf, cluster_method='xi',
-                   xi=0.1).fit(X)
-    assert_array_equal(clust.labels_, expected_labels)
+                   xi=0.4).fit(X)
+    assert np.isclose(v_measure_score(clust.labels_, expected_labels), 1)
 
     C1 = [[0, 0], [0, 0.1], [0, -.1], [0.1, 0]]
     C2 = [[10, 10], [10, 9], [10, 11], [9, 10]]
@@ -122,20 +122,7 @@ def test_extract_xi():
     clust = OPTICS(min_samples=2, min_cluster_size=2,
                    max_eps=np.inf, cluster_method='xi',
                    xi=0.04).fit(X)
-    assert_array_equal(clust.labels_, expected_labels)
-
-
-def test_cluster_hierarchy_():
-    n_points_per_cluster = 100
-    C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2)
-    C2 = [0, 0] + 10 * rng.randn(n_points_per_cluster, 2)
-    X = np.vstack((C1, C2))
-    X = shuffle(X, random_state=0)
-
-    clusters = OPTICS(min_samples=20, xi=.1).fit(X).cluster_hierarchy_
-    assert clusters.shape == (2, 2)
-    diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
-    assert diff / len(X) < 0.05
+    assert np.isclose(v_measure_score(clust.labels_, expected_labels), 1)
 
 
 def test_correct_number_of_clusters():
