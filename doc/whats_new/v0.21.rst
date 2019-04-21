@@ -570,6 +570,13 @@ Support for Python 3.4 and below has been officially dropped.
   therefore ``len(pipeline)`` returns the number of steps in the pipeline.
   :issue:`13439` by :user:`Lakshya KD <LakshKD>`.
 
+- |Feature| Added optional parameter ``verbose`` in :class:`pipeline.Pipeline`,
+  :class:`compose.ColumnTransformer` and :class:`pipeline.FeatureUnion`
+  and corresponding ``make_`` helpers for showing progress and timing of
+  each step. :issue:`11364` by :user:`Baze Petrushev <petrushev>`,
+  :user:`Karan Desai <karandesai-96>`, `Joel Nothman`_, and
+  :user:`Thomas Fan <thomasjpfan>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
