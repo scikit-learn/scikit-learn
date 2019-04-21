@@ -811,14 +811,14 @@ Class APIs and Estimator Types
 
     density estimator
         An :term:`unsupervised` estimation of input density without a labeled response.
-        Most commonly used techniques are `Histograms <https://scikit-learn.org/stable/modules/density.html#density-estimation-histograms>`_, 
-        `GaussianMixture`, 
+        Most commonly used techniques are `Histograms <https://scikit-learn.org/stable/modules/density.html#density-estimation-histograms>`_,
+        `GaussianMixture`,
         and `KernelDensity` estimation.
 
         * `Histograms <https://scikit-learn.org/stable/modules/density.html#density-estimation-histograms>`_
           visually represents the density of specific bins.
-        * Gaussian Mixtures are discussed in `Clustering`. 
-        * Kernel density estimation has multiple forms to represent density based on bandwidth.
+        * Gaussian Mixtures are discussed in `Clustering`.
+        * Kernel density estimation has multiple forms to represent density based on the chosen kernel and associated bandwidth.
 
         It can also be performed on a multi-dimensional graph.
 
@@ -1147,11 +1147,11 @@ Methods
             :term:`classes_`.
         multilabel classification
             Scikit-learn is inconsistent in its representation of multilabel
-            decision functions. Multi-output multiclass classifiers 
+            decision functions. Multi-output multiclass classifiers
             (eg. ``RandomForestClassifier``) represent it as a list of 2d arrays.
             Multilabel classifiers (eg. ``OneVsRestClassifier``)
-            represent it as a single 2d array, where columns correspond to the 
-            individual binary classification decisions. These scores should be 
+            represent it as a single 2d array, where columns correspond to the
+            individual binary classification decisions. These scores should be
             threshold at 0.
         multioutput classification
             A list of 2d arrays, corresponding to each multiclass decision
@@ -1341,12 +1341,13 @@ Methods
         often the likelihood of the data under the model.
 
     ``score_samples``
-        A method on an array of data points, which evaluates its predictions on
-        the given dataset, and returns an array consisting of log evaluations
-        for each.
+        A method that returns the likelihood of given samples.
 
-        It returns low values for high-dimensional data since evaluations are
-        normalized to probability densities. 
+        For density estimation, it returns the value (log) of the density of the
+        samples.
+
+        For outlier detection, it returns a score for the sample based on its
+        likelihood (thus if it is an outlier, it's not likely at all).
 
         If the estimator was not already :term:`fitted`, calling this method
         should raise a :class:`exceptions.NotFittedError`.
