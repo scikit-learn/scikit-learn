@@ -63,7 +63,7 @@ n_components = np.arange(0, n_features - 5, 5)
 
 def compute_scores(X):
     pca = PCA(svd_solver='full')
-    fa = FactorAnalysis(tol = 1)
+    fa = FactorAnalysis(tol=1)
 
     pca_scores, fa_scores = [], []
     for n in n_components:
