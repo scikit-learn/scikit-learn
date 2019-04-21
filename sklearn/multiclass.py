@@ -475,7 +475,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         or ``None``
 
         Indices of samples used when training the estimators.
-        ``None`` when ``estomator`` does not have ``_pairwise`` attribute.
+        ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
     """
 
     def __init__(self, estimator, n_jobs=None):
