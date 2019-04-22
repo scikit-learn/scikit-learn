@@ -310,6 +310,32 @@ def test_ridge_individual_penalties():
     assert_raises(ValueError, ridge.fit, X, y)
 
 
+def test_ridge_gcv_vs_k_fold():
+    alphas = [1e-3, .1, 1., 10., 1e3]
+    shapes = [(71, 52), (71, 83)]
+    for (n_samples, n_features), fit_intercept in product(
+            shapes, [True, False]):
+        x, y = make_regression(
+            n_samples=n_samples, n_features=n_features, n_targets=3,
+            random_state=0, shuffle=False, noise=30.)
+        x += 30 * np.random.RandomState(0).randn(x.shape[1])
+        x_s = sp.csr_matrix(x)
+        loo = RidgeCV(cv=n_samples, fit_intercept=fit_intercept,
+                      alphas=alphas, scoring='neg_mean_squared_error')
+        loo.fit(x, y)
+        for gcv_mode, sparse_x in product(['svd', 'eigen'], [True, False]):
+            print('{}, {}, sparse: {}, intercept: {}, alpha: {}'.format(
+                (n_samples, n_features), gcv_mode, sparse_x, fit_intercept,
+                loo.alpha_))
+            xx = x_s if sparse_x else x
+            gcv = RidgeCV(gcv_mode=gcv_mode, fit_intercept=fit_intercept,
+                          alphas=alphas)
+            gcv.fit(xx, y)
+            assert gcv.alpha_ == loo.alpha_
+            assert np.allclose(gcv.coef_, loo.coef_, rtol=1e-3)
+            assert np.allclose(gcv.intercept_, loo.intercept_, rtol=1e-3)
+
+
 def _test_ridge_loo(filter_):
     # test that can work with both dense or sparse matrices
     n_samples = X_diabetes.shape[0]
