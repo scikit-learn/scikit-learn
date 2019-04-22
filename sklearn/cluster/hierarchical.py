@@ -850,25 +850,23 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             kwargs['affinity'] = self.affinity
 
         distance_threshold = self.distance_threshold
-        # if distance_threshold is set then distances is returned
+
+        return_distance = distance_threshold is not None
+        out = memory.cache(tree_builder)(X, connectivity,
+                                         n_clusters=n_clusters,
+                                         return_distance=return_distance,
+                                         **kwargs)
+        (self.children_,
+         self.n_connected_components_,
+         self.n_leaves_,
+         parents) = out[:4]
+
         if distance_threshold is not None:
-            ch, n_comps, n_lvs, parents, distances = \
-                memory.cache(tree_builder)(X, connectivity,
-                                           n_clusters=n_clusters,
-                                           return_distance=True,
-                                           **kwargs)
+            distances = out[-1]
             self.n_clusters_ = np.count_nonzero(
                 distances >= distance_threshold) + 1
         else:
-            ch, n_comps, n_lvs, parents = \
-                memory.cache(tree_builder)(X, connectivity,
-                                           n_clusters=n_clusters,
-                                           **kwargs)
             self.n_clusters_ = self.n_clusters
-
-        self.children_ = ch
-        self.n_connected_components_ = n_comps
-        self.n_leaves_ = n_lvs
 
         # Cut the tree
         if compute_full_tree:
