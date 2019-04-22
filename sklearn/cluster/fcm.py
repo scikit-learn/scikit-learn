@@ -3,18 +3,18 @@
 
 # Authors: Junyi Li (lijy263@mail2.sysu.edu.cn)
 # License: BSD 3 clause
-# The import part this file is copy from k_means_.py, some functions is not used for now.
+# The import part this file is copy from k_means_.py,
+# some functions is not used for now.
 import numpy as np
-import warnings
-from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_array, check_consistent_length
+from ..utils import check_array
+from ..utils import check_random_state
 
-def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300, sample_weight=None):
+
+def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
+     sample_weight=None):
     """Fuzzy CMeans clustering
-
-    Read more in the :ref:`User Guide <dbscan>`.
 
     Parameters
     ----------
@@ -54,6 +54,7 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300, sample_weig
         Cluster labels for each point.
     
     """
+
     if m <= 1:
         raise ValueError("Invalid number of m."
                          " m=%d must be bigger than 1." % m)
@@ -65,37 +66,42 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300, sample_weig
     if max_iter <= 0:
         raise ValueError('Number of iterations should be a positive number,'
                          ' got %d instead' % max_iter)
-    
+
     if len(X) < n_clusters:
         n_clusters = len(X)
 
     X = check_array(X, accept_sparse='csr')
 
     membership_mat = np.random.random((len(X), n_clusters))
-    membership_mat = np.divide(membership_mat, np.sum(membership_mat, axis=1)[:, np.newaxis])
+    membership_mat = membership_mat \
+        / np.sum(membership_mat, axis=1)[:, np.newaxis]
 
     for iter_time in range(max_iter):
         working_membership_mat = membership_mat ** m
-        Centroids = np.divide(np.dot(working_membership_mat.T, 
-                X), np.sum(working_membership_mat.T, axis=1)[:, np.newaxis])
-        
+        Centroids = np.dot(working_membership_mat.T, X) \
+            / np.sum(working_membership_mat.T, axis=1)[:, np.newaxis]
+
         n_c_distance_mat = np.zeros((len(X), n_clusters))
         for i, x in enumerate(X):
             for j, c in enumerate(Centroids):
-                n_c_distance_mat[i][j] = np.linalg.norm(x-c, 2)
-        
+                n_c_distance_mat[i][j] = np.linalg.norm(x - c, 2)
+
         new_membership_mat = np.zeros((len(X), n_clusters))
-        
+
         for i, x in enumerate(X):
             for j, c in enumerate(Centroids):
                 new_membership_mat[i][j] = 1. / np.sum(
-                    (n_c_distance_mat[i][j] / n_c_distance_mat[i]) ** (2 / (m - 1))
+                    (
+                        n_c_distance_mat[i][j] /
+                        n_c_distance_mat[i]) ** (2 / (m - 1)
                     )
+                )
         if np.sum(abs(new_membership_mat - membership_mat)) < eps:
             break
-        membership_mat =  new_membership_mat
-    
+        membership_mat = new_membership_mat
+
     return Centroids, np.argmax(new_membership_mat, axis=1)
+
 
 class FCM(BaseEstimator, ClusterMixin):
     """Perform fuzzy c-means clustering
@@ -140,19 +146,19 @@ class FCM(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    Now, something remains implementing: sample weighted section and parallel run the model.
+    Now, something remains implementing: sample weighted \
+    section and parallel run the model.
 
     """
 
-    def __init__(self, n_clusters=3, m=2, eps=10, init='random', max_iter=300, random_state=None):
-
+    def __init__(self, n_clusters=3, m=2, eps=10, init='random', \
+        max_iter=300, random_state=None):
         self.n_clusters = n_clusters
         self.init = init
         self.m = m
         self.eps = eps
         self.max_iter = max_iter
         self.random_state = random_state
-        
 
     def _check_test_data(self, X):
         X = check_array(X, accept_sparse='csr')
@@ -183,13 +189,13 @@ class FCM(BaseEstimator, ClusterMixin):
         """
 
         random_state = check_random_state(self.random_state)
-        self.cluster_centers_, self.labels_, self.membership_mat = \
+        self.cluster_centers_, self.labels_ = \
             fcm(
-                X, 
-                n_clusters = self.n_clusters,
-                m = self.m,
-                eps = self.eps,
-                random_state = random_state, 
+                X,
+                n_clusters=self.n_clusters,
+                m=self.m,
+                eps=self.eps,
+                random_state=random_state,
                 max_iter=self.max_iter,
                 sample_weight=sample_weight
             )
@@ -219,4 +225,3 @@ class FCM(BaseEstimator, ClusterMixin):
             Index of the cluster each sample belongs to.
         """
         return self.fit(X, sample_weight=sample_weight).labels_
-
