@@ -54,6 +54,7 @@ def _assert_all_finite(X, allow_nan=False):
                 not allow_nan and not np.isfinite(X).all()):
             type_err = 'infinity' if allow_nan else 'NaN, infinity'
             raise ValueError(msg_err.format(type_err, X.dtype))
+    # for object dtype data, we only check for NaNs (GH-13254)
     elif X.dtype == np.dtype('object') and not allow_nan:
         if _object_dtype_isnan(X).any():
             raise ValueError("Input contains NaN")
@@ -351,11 +352,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         to be any format. False means that a sparse matrix input will
         raise an error.
 
-        .. deprecated:: 0.19
-           Passing 'None' to parameter ``accept_sparse`` in methods is
-           deprecated in version 0.19 "and will be removed in 0.21. Use
-           ``accept_sparse=False`` instead.
-
     accept_large_sparse : bool (default=True)
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
         accept_sparse, accept_large_sparse=False will cause it to be accepted
@@ -388,6 +384,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         - False: accept both np.inf and np.nan in array.
         - 'allow-nan': accept only np.nan values in array. Values cannot
           be infinite.
+
+        For object dtyped data, only np.nan is checked and not np.inf.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
@@ -422,15 +420,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         The converted and validated array.
 
     """
-    # accept_sparse 'None' deprecation check
-    if accept_sparse is None:
-        warnings.warn(
-            "Passing 'None' to parameter 'accept_sparse' in methods "
-            "check_array and check_X_y is deprecated in version 0.19 "
-            "and will be removed in 0.21. Use 'accept_sparse=False' "
-            " instead.", DeprecationWarning)
-        accept_sparse = False
-
     # store reference to original array to check if copy is needed when
     # function returns
     array_orig = array
@@ -625,11 +614,6 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
-
-        .. deprecated:: 0.19
-           Passing 'None' to parameter ``accept_sparse`` in methods is
-           deprecated in version 0.19 "and will be removed in 0.21. Use
-           ``accept_sparse=False`` instead.
 
     accept_large_sparse : bool (default=True)
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by

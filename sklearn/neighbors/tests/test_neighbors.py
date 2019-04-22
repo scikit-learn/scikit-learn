@@ -191,7 +191,7 @@ def test_precomputed(random_state=42):
         assert_array_almost_equal(pred_X, pred_D)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_precomputed_cross_validation():
     # Ensure array is split correctly
     rng = np.random.RandomState(0)
