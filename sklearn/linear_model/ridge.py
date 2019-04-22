@@ -976,7 +976,7 @@ class _RidgeGCV(LinearModel):
 
     def _set_intercept(self, X_offset, y_offset, X_scale):
         if getattr(self, '_X_offset', None) is not None:
-            X_offset = X_offset + self._X_offset
+            X_offset = X_offset + self._X_offset * X_scale
         super()._set_intercept(X_offset, y_offset, X_scale)
 
     def _pre_compute(self, X, y):
