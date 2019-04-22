@@ -20,7 +20,7 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
     ----------
     X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
             array of shape (n_samples, n_samples)
-    
+
     n_clusters : integer
         The number of seeds to choose
 
@@ -52,7 +52,7 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
 
     labels : array [n_samples]
         Cluster labels for each point.
-    
+
     """
     if m <= 1:
         raise ValueError("Invalid number of m."
@@ -72,13 +72,14 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
     X = check_array(X, accept_sparse='csr')
 
     membership_mat = np.random.random((len(X), n_clusters))
-    membership_mat = membership_mat \
-                     / np.sum(membership_mat, axis=1)[:, np.newaxis]
+    membership_mat = membership_mat / np.sum(membership_mat,
+                                            axis=1)[:, np.newaxis]
 
     for iter_time in range(max_iter):
         working_membership_mat = membership_mat ** m
-        Centroids = np.dot(working_membership_mat.T, X) \
-                    / np.sum(working_membership_mat.T, axis=1)[:, np.newaxis]
+        Centroids = np.dot(working_membership_mat.T,
+                           X) / np.sum(working_membership_mat.T,
+                                       axis=1)[:, np.newaxis]
 
         n_c_distance_mat = np.zeros((len(X), n_clusters))
         for i, x in enumerate(X):
@@ -109,7 +110,7 @@ class FCM(BaseEstimator, ClusterMixin):
     ----------
     X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
             array of shape (n_samples, n_samples)
-    
+
     n_clusters : integer, optional (default = 3)
         The number of seeds to choose
 
