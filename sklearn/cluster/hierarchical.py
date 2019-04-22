@@ -724,7 +724,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_clusters_ : int
         The number of clusters found by the algorithm. If
         ``distance_threshold=None``, it will be equal to the given
-        ``n_clusters``. Otherwise it is set to the number of reported clusters.
+        ``n_clusters``.
 
     labels_ : array [n_samples]
         cluster labels for each point
@@ -951,6 +951,11 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     Attributes
     ----------
+    n_clusters_ : int
+        The number of clusters found by the algorithm. If
+        ``distance_threshold=None``, it will be equal to the given
+        ``n_clusters``.
+
     labels_ : array-like, (n_features,)
         cluster labels for each feature.
 
