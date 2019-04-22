@@ -177,7 +177,6 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     See also
     --------
-
     DBSCAN
         A similar clustering for a specified neighborhood radius (eps).
         Our implementation is optimized for runtime.
@@ -191,14 +190,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
     .. [2] Schubert, Erich, Michael Gertz.
        "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
-
     """
 
     def __init__(self, min_samples=5, max_eps=np.inf, metric='minkowski', p=2,
                  metric_params=None, cluster_method='xi', eps=None, xi=0.05,
                  predecessor_correction=True, min_cluster_size=None,
                  algorithm='auto', leaf_size=30, n_jobs=None):
-
         self.max_eps = max_eps
         self.min_samples = min_samples
         self.min_cluster_size = min_cluster_size
@@ -234,14 +231,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, dtype=np.float)
 
-        n_samples = len(X)
-
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"
                              " 'dbscan' or 'xi' but is %s" %
                              self.cluster_method)
-
-        _validate_size(self.min_samples, n_samples, 'min_samples')
 
         (self.ordering_, self.core_distances_, self.reachability_,
          self.predecessor_) = compute_optics_graph(
@@ -252,19 +245,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         # Extract clusters from the calculated orders and reachability
         if self.cluster_method == 'xi':
-            if self.min_cluster_size is None:
-                min_cluster_size = self.min_samples
-            else:
-                min_cluster_size = self.min_cluster_size
-
-            _validate_size(min_cluster_size, n_samples, 'min_cluster_size')
-
             labels_, clusters_ = cluster_optics_xi(
                 self.reachability_,
                 self.predecessor_,
                 self.ordering_,
                 self.min_samples,
-                min_cluster_size,
+                self.min_cluster_size,
                 self.xi,
                 self.predecessor_correction)
             self.cluster_hierarchy_ = clusters_
@@ -324,7 +310,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
         Distance at which each sample becomes a core point.
         Points which will never be core have a distance of inf.
     """
-    n_samples = len(X)
+    n_samples = X.shape[0]
     core_distances = np.empty(n_samples)
     core_distances.fill(np.nan)
 
@@ -351,7 +337,8 @@ def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
 
     min_samples : int (default=5)
         The number of samples in a neighborhood for a point to be considered
-        as a core point.
+        as a core point. Expressed as an absolute number or a fraction of the
+        number of samples (rounded to be at least 2).
 
     max_eps : float, optional (default=np.inf)
         The maximum distance between two samples for them to be considered
@@ -442,7 +429,11 @@ def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
        and Jörg Sander. "OPTICS: ordering points to identify the clustering
        structure." ACM SIGMOD Record 28, no. 2 (1999): 49-60.
     """
-    n_samples = len(X)
+    n_samples = X.shape[0]
+    _validate_size(min_samples, n_samples, 'min_samples')
+    if min_samples <= 1:
+        min_samples = max(2, min_samples * n_samples)
+
     # Start all points as 'unprocessed' ##
     reachability_ = np.empty(n_samples)
     reachability_.fill(np.inf)
@@ -620,8 +611,15 @@ def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
         not reflect the hierarchy, usually ``len(clusters) >
         np.unique(labels)``.
     """
+    n_samples = len(reachability)
+    _validate_size(min_samples, n_samples, 'min_samples')
+    if min_samples <= 1:
+        min_samples = max(2, min_samples * n_samples)
     if min_cluster_size is None:
         min_cluster_size = min_samples
+    _validate_size(min_cluster_size, n_samples, 'min_cluster_size')
+    if min_cluster_size <= 1:
+        min_cluster_size = max(2, min_cluster_size * n_samples)
 
     clusters = _xi_cluster(reachability[ordering], predecessor[ordering],
                            ordering, xi,
@@ -690,7 +688,6 @@ def _extend_region(steep_point, xward_point, start, min_samples):
                 break
         else:
             return end
-
         index += 1
     return end
 
@@ -719,7 +716,6 @@ def _correct_predecessor(reachability_plot, predecessor, ordering, s, e):
        "Improving the Cluster Structure Extracted from OPTICS Plots." Proc. of
        the Conference "Lernen, Wissen, Daten, Analysen" (LWDA) (2018): 318-329.
     """
-
     while s < e:
         if reachability_plot[s] > reachability_plot[e]:
             return s, e
@@ -780,11 +776,6 @@ def _xi_cluster(reachability_plot, predecessor, ordering, xi, min_samples,
     # but process the data only until the last actual point
     # this is fine since the last point is considered upward anyway
     reachability_plot = np.hstack((reachability_plot, np.inf))
-
-    if min_cluster_size <= 1:
-        min_cluster_size = max(2, min_cluster_size * n_samples)
-    if min_samples <= 1:
-        min_samples = max(2, min_samples * n_samples)
 
     xi_complement = 1 - xi
     sdas = []  # steep down areas, introduced in section 4.3.2 of the paper
