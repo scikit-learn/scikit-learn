@@ -27,6 +27,9 @@ random sampling procedures.
 - :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
 - :class:`ensemble.GradientBoostingClassifier` |Fix|
+- :class:`sklearn.feature_extraction.text.HashingVectorizer`,
+  :class:`sklearn.feature_extraction.text.TfidfVectorizer`, and
+  :class:`sklearn.feature_extraction.text.CountVectorizer` |API|
 - :class:`neural_network.MLPClassifier` |Fix|
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
@@ -250,11 +253,11 @@ Support for Python 3.4 and below has been officially dropped.
 .................................
 
 - |API| If ``input='file'`` or ``input='filename'``, and a callable is given
-  as the ``analyzer``, :class:`sklearn.feature_extraction.text`,
-  :class:`sklearn.feature_extraction.text`, and
-  :class:`sklearn.feature_extraction.text` now read the data from the file(s)
-  and then pass it to the given ``analyzer``, instead of passing the file
-  name(s) or the file object(s) to the analyzer.
+  as the ``analyzer``, :class:`sklearn.feature_extraction.text.HashingVectorizer`,
+  :class:`sklearn.feature_extraction.text.TfidfVectorizer`, and
+  :class:`sklearn.feature_extraction.text.CountVectorizer` now read the data
+  from the file(s) and then pass it to the given ``analyzer``, instead of
+  passing the file name(s) or the file object(s) to the analyzer.
   :issue:`13641` by `Adrin Jalali`_.
 
 :mod:`sklearn.impute`
