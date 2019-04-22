@@ -87,6 +87,8 @@ X_train, X_test, Y_train, Y_test = train_test_split(
 # Models we will use
 logistic = linear_model.LogisticRegression(solver='newton-cg', tol=1,
                                            multi_class='multinomial')
+# Tolerance set to 1 to quickly generate the example. However, you probably
+# want to use the default value or a much smaller one.
 rbm = BernoulliRBM(random_state=0, verbose=True)
 
 rbm_features_classifier = Pipeline(
