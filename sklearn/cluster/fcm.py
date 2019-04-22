@@ -13,7 +13,7 @@ from ..utils import check_random_state
 
 
 def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
-     sample_weight=None):
+        sample_weight=None):
     """Fuzzy CMeans clustering
 
     Parameters
@@ -54,7 +54,6 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
         Cluster labels for each point.
     
     """
-
     if m <= 1:
         raise ValueError("Invalid number of m."
                          " m=%d must be bigger than 1." % m)
@@ -74,12 +73,12 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
 
     membership_mat = np.random.random((len(X), n_clusters))
     membership_mat = membership_mat \
-        / np.sum(membership_mat, axis=1)[:, np.newaxis]
+                     / np.sum(membership_mat, axis=1)[:, np.newaxis]
 
     for iter_time in range(max_iter):
         working_membership_mat = membership_mat ** m
         Centroids = np.dot(working_membership_mat.T, X) \
-            / np.sum(working_membership_mat.T, axis=1)[:, np.newaxis]
+                    / np.sum(working_membership_mat.T, axis=1)[:, np.newaxis]
 
         n_c_distance_mat = np.zeros((len(X), n_clusters))
         for i, x in enumerate(X):
@@ -92,9 +91,9 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
             for j, c in enumerate(Centroids):
                 new_membership_mat[i][j] = 1. / np.sum(
                     (
-                        n_c_distance_mat[i][j] /
-                        n_c_distance_mat[i]) ** (2 / (m - 1)
-                    )
+                            n_c_distance_mat[i][j] /
+                            n_c_distance_mat[i]) ** (2 / (m - 1)
+                                                     )
                 )
         if np.sum(abs(new_membership_mat - membership_mat)) < eps:
             break
@@ -143,16 +142,14 @@ class FCM(BaseEstimator, ClusterMixin):
     labels_ :
         Labels of each point
 
-
     Notes
     -----
     Now, something remains implementing: sample weighted \
     section and parallel run the model.
-
     """
 
-    def __init__(self, n_clusters=3, m=2, eps=10, init='random', \
-        max_iter=300, random_state=None):
+    def __init__(self, n_clusters=3, m=2, eps=10, init='random',
+                 max_iter=300, random_state=None):
         self.n_clusters = n_clusters
         self.init = init
         self.m = m
@@ -198,7 +195,7 @@ class FCM(BaseEstimator, ClusterMixin):
                 random_state=random_state,
                 max_iter=self.max_iter,
                 sample_weight=sample_weight
-            )
+                )
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):
