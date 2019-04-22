@@ -49,7 +49,7 @@ The following people have been active contributors in the past, but are no longe
 - Jacob Schreiber
 - Jake Vanderplas
 - Jaques Grobler
-- Jarred Millman
+- Jarrod Millman
 - Kyle Kastner
 - Lars Buitinck
 - Manoj Kumar
