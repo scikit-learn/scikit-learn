@@ -385,6 +385,17 @@ def _test_ridge_loo(filter_):
     assert_almost_equal(errors, errors3)
     assert_almost_equal(values, values3)
 
+    # generalized cross-validation (efficient leave-one-out,
+    # SVD variation)
+    decomp = ridge_gcv._pre_compute_svd_sparse(
+        sp.csr_matrix(X_diabetes_), y_diabetes)
+    errors4, c = ridge_gcv._errors_svd_sparse(ridge.alpha, y_diabetes, *decomp)
+    values4, c = ridge_gcv._values_svd_sparse(ridge.alpha, y_diabetes, *decomp)
+
+    # check that efficient and SVD efficient LOO give same results
+    assert_almost_equal(errors, errors4)
+    assert_almost_equal(values, values4)
+
     # check best alpha
     ridge_gcv.fit(filter_(X_diabetes), y_diabetes)
     alpha_ = ridge_gcv.alpha_
@@ -531,7 +542,7 @@ def test_dense_sparse(test_func):
 def test_ridge_cv_sparse_svd():
     X = sp.csr_matrix(X_diabetes)
     ridge = RidgeCV(gcv_mode="svd")
-    assert_raises(TypeError, ridge.fit, X)
+    assert_raises(TypeError, ridge.fit, X, y_diabetes)
 
 
 def test_ridge_sparse_svd():
