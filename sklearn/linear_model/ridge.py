@@ -418,8 +418,6 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         raise ValueError("Number of samples in X and y does not correspond:"
                          " %d != %d" % (n_samples, n_samples_))
 
-
-
     if has_sw:
         if np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")
@@ -438,7 +436,6 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
-
 
     n_iter = None
     if solver == 'sparse_cg':
