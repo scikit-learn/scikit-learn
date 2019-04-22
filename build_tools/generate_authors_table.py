@@ -46,8 +46,6 @@ def get_contributors():
 
     # keep only the logins
     logins = [c['login'] for c in members]
-    # add missing contributors with GitHub accounts
-    logins.extend(['jarrodmillman'])
     # remove duplicate
     logins = set(logins)
 

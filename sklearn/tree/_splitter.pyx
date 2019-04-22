@@ -116,7 +116,7 @@ cdef class Splitter:
 
     cdef int init(self,
                    object X,
-                   DOUBLE_t[:, ::1] y,
+                   const DOUBLE_t[:, ::1] y,
                    DOUBLE_t* sample_weight,
                    np.ndarray X_idx_sorted=None) except -1:
         """Initialize the splitter.
@@ -236,7 +236,7 @@ cdef class Splitter:
 
 
 cdef class BaseDenseSplitter(Splitter):
-    cdef DTYPE_t[:, :] X
+    cdef const DTYPE_t[:, :] X
 
     cdef np.ndarray X_idx_sorted
     cdef INT32_t* X_idx_sorted_ptr
@@ -260,7 +260,7 @@ cdef class BaseDenseSplitter(Splitter):
 
     cdef int init(self,
                   object X,
-                  DOUBLE_t[:, ::1] y,
+                  const DOUBLE_t[:, ::1] y,
                   DOUBLE_t* sample_weight,
                   np.ndarray X_idx_sorted=None) except -1:
         """Initialize the splitter
@@ -876,7 +876,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     cdef int init(self,
                   object X,
-                  DOUBLE_t[:, ::1] y,
+                  const DOUBLE_t[:, ::1] y,
                   DOUBLE_t* sample_weight,
                   np.ndarray X_idx_sorted=None) except -1:
         """Initialize the splitter
