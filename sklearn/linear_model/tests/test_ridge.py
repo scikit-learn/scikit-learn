@@ -312,7 +312,7 @@ def test_ridge_individual_penalties():
 
 def test_ridge_gcv_vs_k_fold():
     alphas = [1e-3, .1, 1., 10., 1e3]
-    shapes = [(71, 52), (71, 83)]
+    shapes = [(11, 8), (11, 20)]
     for (n_samples, n_features), fit_intercept, normalize in product(
             shapes, [True, False], [True, False]):
         x, y = make_regression(
