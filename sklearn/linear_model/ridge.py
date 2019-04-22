@@ -961,10 +961,9 @@ def _check_gcv_mode(X, sample_weights):
     sparse_x = sparse.issparse(X)
     with_sample_weights = np.ndim(sample_weights) > 0
     if with_sample_weights and sparse_x:
-        warnings.warn(
-            'generalized cross-validation with sparse X and sample weights'
-            ' not supported yet')
-        return None
+        raise ValueError(
+            'sample weights not (yet) supported by '
+            'generalized cross-validation when X is sparse')
     if X.shape[0] > X.shape[1]:
         return 'svd'
     return 'eigen'
@@ -1231,7 +1230,6 @@ class _RidgeGCV(LinearModel):
 
         gcv_mode = self.gcv_mode
         best_gcv_mode = _check_gcv_mode(X, sample_weight)
-        assert (best_gcv_mode is not None)
         if gcv_mode is None or gcv_mode == 'auto':
             gcv_mode = best_gcv_mode
 
@@ -1263,10 +1261,10 @@ class _RidgeGCV(LinearModel):
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
-        if np.any(self.alphas < 0):
-            raise ValueError("alphas cannot be negative. "
-                             "Got {} containing some "
-                             "negative value instead.".format(self.alphas))
+        if np.any(self.alphas <= 0):
+            raise ValueError(
+                "alphas must be positive. Got {} containing some "
+                "negative or null value instead.".format(self.alphas))
 
         for i, alpha in enumerate(self.alphas):
             if error:
@@ -1339,10 +1337,13 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
         self : object
         """
         cv = self.cv
-        if self.cv is None and sparse.issparse(X) and np.ndim(sample_weight):
-            warnings.warn('sample weights with sparse X and gcv not supported, '
-                          'falling back to 10-fold cross-validation')
-            cv = 10
+        gcv_modes = {None, 'auto', 'svd', 'eigen'}
+        if self.cv in gcv_modes and sparse.issparse(X) and np.ndim(
+                sample_weight):
+            warnings.warn(
+                'sample weights with sparse X and gcv not supported, '
+                'falling back to 5-fold cross-validation')
+            cv = 5
         if cv is None:
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
@@ -1359,9 +1360,11 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
+            solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
-                                    normalize=self.normalize),
-                              parameters, cv=self.cv, scoring=self.scoring)
+                                    normalize=self.normalize,
+                                    solver=solver),
+                              parameters, cv=cv, scoring=self.scoring)
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha

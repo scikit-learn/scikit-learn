@@ -337,6 +337,44 @@ def test_ridge_gcv_vs_k_fold():
             assert np.allclose(gcv.intercept_, loo.intercept_, rtol=1e-4)
 
 
+def test_ridge_gcv_sample_weights():
+    x, y, c = make_regression(
+        n_samples=23, n_features=7, n_targets=4, coef=True,
+        random_state=0, shuffle=False, noise=30.)
+    x += 30 * np.random.RandomState(0).randn(x.shape[1])
+    x_s = sp.csr_matrix(x)
+    sample_weights = 3 * np.random.RandomState(0).randn(len(x))
+    sample_weights = np.asarray(
+        sample_weights - sample_weights.min() + 1, dtype=int)
+    indices = np.concatenate([n * [i] for (i, n) in enumerate(sample_weights)])
+    sample_weights = 1. * sample_weights
+    tiled_x, tiled_y = x[indices], y[indices]
+    # alphas = [1e-3, .1, 1., 10., 1e3]
+    alphas = [1.e-10]
+    ridge = Ridge(fit_intercept=True, alpha=alphas[0], normalize=True)
+    ridge.fit(tiled_x, tiled_y)
+    for gcv_mode in ['svd', 'eigen']:
+        gcv = RidgeCV(fit_intercept=True, scoring='neg_mean_squared_error',
+                      alphas=alphas, normalize=True, gcv_mode=gcv_mode)
+        gcv.fit(x, y, sample_weight=sample_weights)
+        assert np.allclose(gcv.coef_, ridge.coef_, rtol=1e-2)
+        assert np.allclose(gcv.intercept_, ridge.intercept_, rtol=1e-2)
+
+    ridge = Ridge(fit_intercept=True, alpha=alphas[0], normalize=True,
+                  solver='sparse_cg')
+    # ridge.fit(sp.csr_matrix(tiled_x), tiled_y)
+    # TODO: once Ridge is fixed to handle correctly sparse x and sample
+    # weights, replace with the line above. For now we just check ridgecv and
+    # ridge give the same result
+    ridge.fit(x_s, y, sample_weight=sample_weights)
+    for gcv_mode in ['svd', 'eigen']:
+        gcv = RidgeCV(fit_intercept=True, scoring='neg_mean_squared_error',
+                      alphas=alphas, normalize=True, gcv_mode=gcv_mode)
+        gcv.fit(x_s, y, sample_weight=sample_weights)
+        assert np.allclose(gcv.coef_, ridge.coef_, rtol=1e-2)
+        assert np.allclose(gcv.intercept_, ridge.intercept_, rtol=1e-2)
+
+
 def _test_ridge_loo(filter_):
     # test that can work with both dense or sparse matrices
     n_samples = X_diabetes.shape[0]
@@ -445,7 +483,7 @@ def _test_ridge_cv_normalize(filter_):
     ridge_cv = RidgeCV(normalize=True, cv=3)
     ridge_cv.fit(filter_(10. * X_diabetes), y_diabetes)
 
-    gs = GridSearchCV(Ridge(normalize=True), cv=3,
+    gs = GridSearchCV(Ridge(normalize=True, solver='sparse_cg'), cv=3,
                       param_grid={'alpha': ridge_cv.alphas})
     gs.fit(filter_(10. * X_diabetes), y_diabetes)
     assert_equal(gs.best_estimator_.alpha, ridge_cv.alpha_)
@@ -794,13 +832,13 @@ def test_ridgecv_negative_alphas():
     # Negative integers
     ridge = RidgeCV(alphas=(-1, -10, -100))
     assert_raises_regex(ValueError,
-                        "alphas cannot be negative.",
+                        "alphas must be positive",
                         ridge.fit, X, y)
 
     # Negative floats
     ridge = RidgeCV(alphas=(-0.1, -1.0, -10.0))
     assert_raises_regex(ValueError,
-                        "alphas cannot be negative.",
+                        "alphas must be positive",
                         ridge.fit, X, y)
 
 
