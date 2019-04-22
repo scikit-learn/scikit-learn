@@ -693,11 +693,17 @@ def test_agglomerative_clustering_with_distance_threshold_edge_case():
             assert_equal(1, adjusted_rand_score(y_true, y_pred))
 
 
-def test_none_dis_threshold_n_clust():
+def test_dist_threshold_invalid_parameters():
     X = [[0], [1]]
     with pytest.raises(ValueError, match="cannot be both None"):
         AgglomerativeClustering(n_clusters=None,
                                 distance_threshold=None).fit(X)
+
+    X = [[0], [1]]
+    with pytest.raises(ValueError, match="compute_full_tree must be True if"):
+        AgglomerativeClustering(n_clusters=None,
+                                distance_threshold=1,
+                                compute_full_tree=False).fit(X)
 
 
 def test_n_components_deprecation():

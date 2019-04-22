@@ -659,7 +659,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    n_clusters : int, default=2
+    n_clusters : int or None, optional (default=2)
         The number of clusters to find.
 
     affinity : string or callable, default: "euclidean"
@@ -711,11 +711,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             ``pooling_func`` has been deprecated in 0.20 and will be removed
             in 0.22.
 
-    distance_threshold : float (optional)
-        The distance threshold to cluster at.
-        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
-        NOT both. If the ``distance_threshold`` is set then ``n_clusters`` is
-        ignored.
+    distance_threshold : float, optional (default=None)
+        The distance threshold to cluster at. If not ``None``, ``n_clusters``
+        must be ``None`` and ``compute_full_tree`` must be ``True``.
 
         .. versionadded:: 0.21
 
@@ -812,6 +810,11 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             raise ValueError("n_clusters and distance_threshold cannot be "
                              "both None.")
 
+        if (self.distance_threshold is not None
+                and not self.compute_full_tree):
+            raise ValueError("compute_full_tree must be True if "
+                             "distance_threshold is set.")
+
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError("%s was provided as affinity. Ward can only "
                              "work with euclidean distances." %
@@ -891,7 +894,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     Parameters
     ----------
-    n_clusters : int, default 2
+    n_clusters : int or None, optional (default=2)
         The number of clusters to find.
 
     affinity : string or callable, default "euclidean"
@@ -939,11 +942,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         value, and should accept an array of shape [M, N] and the keyword
         argument `axis=1`, and reduce it to an array of size [M].
 
-    distance_threshold : float (optional)
-        The distance threshold to cluster at.
-        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
-        NOT both. If the ``distance_threshold`` is set then ``n_clusters`` is
-        ignored.
+    distance_threshold : float, optional (default=None)
+        The distance threshold to cluster at. If not ``None``, ``n_clusters``
+        must be ``None`` and ``compute_full_tree`` must be ``True``.
 
         .. versionadded:: 0.21
 
