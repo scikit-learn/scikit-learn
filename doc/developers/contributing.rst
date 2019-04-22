@@ -43,7 +43,7 @@ also welcome to post feature requests or pull requests.
 Governance
 ----------
 The decision making process and governance structure of scikit-learn is laid
-out in the governance document :ref:`governance`.
+out in the governance document: :ref:`governance`.
 
 Ways to contribute
 ==================
@@ -71,7 +71,7 @@ or changes to dependencies or supported versions, it must be backed by a
 :ref:`slep`, where a SLEP must be submitted as a pull-request to
 `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
 using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
-and follows the decision-making process outlined in the governance document :ref:`governance`.
+and follows the decision-making process outlined in the governance document: :ref:`governance`.
 
 .. raw:: html
 
