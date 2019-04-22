@@ -45,7 +45,7 @@ import numpy as np
 
 np.import_array()
 
-from sklearn.utils cimport _random
+from . cimport _random
 
 cdef class SequentialDataset{{name}}:
     """Base class for datasets with sequential data access.
