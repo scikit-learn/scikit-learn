@@ -723,10 +723,9 @@ def _correct_predecessor(reachability_plot, predecessor, ordering, s, e):
     while s < e:
         if reachability_plot[s] > reachability_plot[e]:
             return s, e
-        p_e = predecessor[e]
-        for i in range(s, e):
-            if p_e == ordering[i]:
-                return s, e
+        p_e = ordering[predecessor[e]]
+        if s <= p_e < e:
+            return s, e
         e -= 1
     return None, None
 
