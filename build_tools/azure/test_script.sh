@@ -25,7 +25,7 @@ TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML --py
 
 if [[ "$COVERAGE" == "true" ]]; then
     COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
-    TEST_CMD="$TEST_CMD --cov sklearn --cov-file=$BUILD_SOURCESDIRECTORY/.coveragerc"
+    TEST_CMD="$TEST_CMD --cov sklearn --rcfile=$BUILD_SOURCESDIRECTORY/.coveragerc"
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
