@@ -837,11 +837,14 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         compute_full_tree = self.compute_full_tree
         if self.connectivity is None:
             compute_full_tree = True
-        if compute_full_tree == 'auto' and self.distance_threshold is None:
-            # Early stopping is likely to give a speed up only for
-            # a large number of clusters. The actual threshold
-            # implemented here is heuristic
-            compute_full_tree = self.n_clusters < max(100, .02 * n_samples)
+        if compute_full_tree == 'auto':
+            if self.distance_threshold is not None:
+                compute_full_tree = True
+            else:
+                # Early stopping is likely to give a speed up only for
+                # a large number of clusters. The actual threshold
+                # implemented here is heuristic
+                compute_full_tree = self.n_clusters < max(100, .02 * n_samples)
         n_clusters = self.n_clusters
         if compute_full_tree:
             n_clusters = None

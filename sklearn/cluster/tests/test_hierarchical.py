@@ -577,15 +577,15 @@ def test_agg_n_clusters():
 def test_agg_n_cluster_and_distance_threshold():
     # Test that when distance_threshold is set that n_clusters is ignored
 
-    n_clus, dist_thresh = None, 10
+    n_clusters, distance_threshold = None, 10
     rng = np.random.RandomState(0)
     X = rng.rand(20, 10)
-    agc = AgglomerativeClustering(n_clusters=n_clus,
-                                  distance_threshold=dist_thresh)
+    agc = AgglomerativeClustering(n_clusters=n_clusters,
+                                  distance_threshold=distance_threshold)
     agc.fit(X)
     # Expecting no errors here
-    assert agc.n_clusters == n_clus
-    assert agc.n_clusters_ != n_clus
+    assert agc.n_clusters == n_clusters
+    assert agc.n_clusters_ != n_clusters
     assert agc.n_clusters_ > 0
 
 
