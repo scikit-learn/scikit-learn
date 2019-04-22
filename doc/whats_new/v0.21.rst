@@ -88,6 +88,9 @@ Support for Python 3.4 and below has been officially dropped.
   to set and that scales better, by :user:`Shane <espg>`,
   :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
 
+- |Fix| Fixed a bug where :class:`cluster.Birch` could occasionally raise an
+  AttributeError. :issue:`13651` by `Joel Nothman`_.
+
 - |API| The ``n_components_`` attribute in :class:`cluster.AgglomerativeClustering`
   and :class:`cluster.FeatureAgglomeration` has been renamed to
   ``n_connected_components_``.
@@ -184,9 +187,9 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| Minimized the validation of X in
   :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
   :issue:`13174` by :user:`Christos Aridas <chkoar>`.
-  
+
 - |Enhancement| :class:`ensemble.IsolationForest` now exposes ``warm_start``
-  parameter, allowing iterative addition of trees to an isolation 
+  parameter, allowing iterative addition of trees to an isolation
   forest. :issue:`13496` by :user:`Peter Marko <petibear>`.
 
 - |Efficiency| Make :class:`ensemble.IsolationForest` more memory efficient
@@ -196,6 +199,22 @@ Support for Python 3.4 and below has been officially dropped.
 - |Efficiency| :class:`ensemble.IsolationForest` now uses chunks of data at
   prediction step, thus capping the memory usage. :issue:`13283` by
   `Nicolas Goix`_.
+
+- |Fix| The values of ``feature_importances_`` in all random forest based
+  models (i.e.
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`,
+  :class:`ensemble.GradientBoostingClassifier`, and
+  :class:`ensemble.GradientBoostingRegressor`) now:
+
+  - sum up to ``1``
+  - all the single node trees in feature importance calculation are ignored
+  - in case all trees have only one single node (i.e. a root node),
+    feature importances will be an array of all zeros.
+  :issue:`13636` and :issue:`13620` by `Adrin Jalali`_.
 
 - |Fix| Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
   :class:`ensemble.GradientBoostingRegressor`, which didn't support
@@ -279,11 +298,11 @@ Support for Python 3.4 and below has been officially dropped.
   used to be kept if there were no missing values at all. :issue:`13562` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Feature| The :class:`impute.SimpleImputer` has a new parameter
-  ``'add_indicator'``, which simply stacks a :class:`impute.MissingIndicator`
-  transform into the output of the imputer's transform. That allows a predictive
-  estimator to account for missingness. :issue:`12583` by
-  :user:`Danylo Baibak <DanilBaibak>`.
+- |Feature| The :class:`impute.SimpleImputer` and :class:`IterativeImputer` have
+  a new parameter ``'add_indicator'``, which simply stacks a
+  :class:`impute.MissingIndicator` transform into the output of the imputer's
+  transform. That allows a predictive estimator to account for missingness.
+  :issue:`12583`, :issue:`13601` by :user:`Danylo Baibak <DanilBaibak>`.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -364,6 +383,22 @@ Support for Python 3.4 and below has been officially dropped.
   deterministic when trained in a multi-class setting on several threads.
   :issue:`13422` by :user:`Clément Doumouro <ClemDoum>`.
 
+- |Fix| Fixed bug in :func:`linear_model.ridge.ridge_regression`,
+  :class:`linear_model.ridge.Ridge` and
+  :class:`linear_model.ridge.ridge.RidgeClassifier` that
+  caused unhandled exception for arguments ``return_intercept=True`` and
+  ``solver=auto`` (default) or any other solver different from ``sag``.
+  :issue:`13363` by :user:`Bartosz Telenczuk <btel>`
+
+- |Fix| :func:`linear_model.ridge.ridge_regression` will now raise an exception
+  if ``return_intercept=True`` and solver is different from ``sag``. Previously,
+  only warning was issued. :issue:`13363` by :user:`Bartosz Telenczuk <btel>`
+
+- |API| :func:`linear_model.ridge.ridge_regression` will choose ``sparse_cg``
+  solver for sparse inputs when ``solver=auto`` and ``sample_weight``
+  is provided (previously `cholesky` solver was selected). :issue:`13363`
+  by :user:`Bartosz Telenczuk <btel>`
+
 :mod:`sklearn.manifold`
 ............................
 
@@ -407,9 +442,21 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12334` by :user:`Emmanuel Arias <eamanu@eamanu.com>`,
   `Joel Nothman`_ and `Andreas Müller`_
 
+- |Enhancement| Added `beta` parameter to
+  :func:`metrics.cluster.supervised.homogeneity_completeness_v_measure` and
+  :func:`metrics.cluster.supervised.v_measure_score` to configure the
+  tradeoff between homogeneity and completeness.
+  :issue:`13607` by :user:`Stephane Couvreur <scouvreur>` and
+  and :user:`Ivan Sanchez <ivsanro1>`.
+
 - |Fix| The metric :func:`metrics.r2_score` is degenerate with a single sample
   and now it returns NaN and raises :class:`exceptions.UndefinedMetricWarning`.
   :issue:`12855` by :user:`Pawel Sendyk <psendyk>`.
+
+- |Fix| Fixed a bug in :func:`metrics.label_ranking_average_precision_score` 
+  where sample_weight wasn't taken into account for samples with degenerate
+  labels.
+  :issue:`13447` by :user:`Dan Ellis <dpwe>`.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23.
@@ -478,6 +525,14 @@ Support for Python 3.4 and below has been officially dropped.
   containing this same sample due to the scaling used in decision_function.
   :issue:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
+:mod:`sklearn.multioutput`
+........................
+
+- |Fix| Fixed a bug in :class:`multiout.MultiOutputClassifier` where the
+  `predict_proba` method incorrectly checked for `predict_proba` attribute in
+  the estimator object.
+  :issue:`12222` by :user:`Rebekah Kim <rebekahkim>`
+  
 :mod:`sklearn.neighbors`
 ........................
 
@@ -523,6 +578,13 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| :class:`pipeline.Pipeline`  implements ``__len__`` and
   therefore ``len(pipeline)`` returns the number of steps in the pipeline.
   :issue:`13439` by :user:`Lakshya KD <LakshKD>`.
+
+- |Feature| Added optional parameter ``verbose`` in :class:`pipeline.Pipeline`,
+  :class:`compose.ColumnTransformer` and :class:`pipeline.FeatureUnion`
+  and corresponding ``make_`` helpers for showing progress and timing of
+  each step. :issue:`11364` by :user:`Baze Petrushev <petrushev>`,
+  :user:`Karan Desai <karandesai-96>`, `Joel Nothman`_, and
+  :user:`Thomas Fan <thomasjpfan>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -599,6 +661,15 @@ Support for Python 3.4 and below has been officially dropped.
   affects all ensemble methods using decision trees.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
+:mod:`sklearn.utils`
+...................
+
+- |API| Deprecated ``warn_on_dtype`` parameter from :func:`utils.check_array`
+  and :func:`utils.check_X_y`. Added explicit warning for dtype conversion
+  in :func:`check_pairwise_arrays` if the ``metric`` being passed is a
+  pairwise boolean metric.
+  :issue:`13382` by :user:`Prathmesh Savale <praths007>`.
+
 Multiple modules
 ................
 
@@ -621,6 +692,16 @@ Multiple modules
   helper function that was not behaving consistently across platforms.
   :issue:`13422` by :user:`Madhura Parikh <jdnc>` and
   :user:`Clément Doumouro <ClemDoum>`.
+
+
+Dependencies
+............
+
+- |Enhancement| Joblib is no longer vendored in scikit-learn, and becomes a
+  dependency. Minimal supported version is joblib 0.11, however using
+  version >= 0.13 is strongly recommended. 
+  :issue:`13531` by :user:`Roman Yurchak <rth>`.
+
 
 Changes to estimator checks
 ---------------------------

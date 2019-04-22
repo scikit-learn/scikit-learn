@@ -14,7 +14,7 @@ from urllib.request import urlopen, Request
 import numpy as np
 import scipy.sparse
 
-from sklearn.externals import _arff
+from ..externals import _arff
 from .base import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
