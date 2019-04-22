@@ -64,6 +64,8 @@ n_components = np.arange(0, n_features - 5, 5)
 def compute_scores(X):
     pca = PCA(svd_solver='full')
     fa = FactorAnalysis(tol=1)
+    # Tolerance set to 1 to quickly generate the example. However, you probably
+    # want to use the default value or a much smaller one.
 
     pca_scores, fa_scores = [], []
     for n in n_components:
