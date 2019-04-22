@@ -73,7 +73,7 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
 
     membership_mat = np.random.random((len(X), n_clusters))
     membership_mat = membership_mat / np.sum(membership_mat,
-                                            axis=1)[:, np.newaxis]
+                                             axis=1)[:, np.newaxis]
 
     for iter_time in range(max_iter):
         working_membership_mat = membership_mat ** m
@@ -138,7 +138,7 @@ class FCM(BaseEstimator, ClusterMixin):
     Attributes
     ----------
     cluster_centers_ : array, [n_clusters, n_features]
-        Coordinates of cluster centers. 
+        Coordinates of cluster centers.
 
     labels_ :
         Labels of each point
@@ -148,7 +148,6 @@ class FCM(BaseEstimator, ClusterMixin):
     Now, something remains implementing: sample weighted \
     section and parallel run the model.
     """
-
     def __init__(self, n_clusters=3, m=2, eps=10, init='random',
                  max_iter=300, random_state=None):
         self.n_clusters = n_clusters
@@ -175,7 +174,7 @@ class FCM(BaseEstimator, ClusterMixin):
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
-            Training instances to cluster. 
+            Training instances to cluster.
 
         y : Ignored
             not used, present here for API consistency by convention.
