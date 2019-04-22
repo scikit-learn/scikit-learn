@@ -100,7 +100,7 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
             break
         membership_mat = new_membership_mat
 
-    return Centroids, np.argmax(new_membership_mat, axis=1)
+    return Centroids, np.argmax(new_membership_mat, axis=1), iter_time
 
 
 class FCM(BaseEstimator, ClusterMixin):
@@ -186,7 +186,7 @@ class FCM(BaseEstimator, ClusterMixin):
         """
 
         random_state = check_random_state(self.random_state)
-        self.cluster_centers_, self.labels_ = \
+        self.cluster_centers_, self.labels_, self.n_iter_ = \
             fcm(
                 X,
                 n_clusters=self.n_clusters,
