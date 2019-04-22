@@ -317,7 +317,7 @@ def test_ridge_gcv_vs_k_fold():
             shapes, [True, False], [True, False]):
         x, y = make_regression(
             n_samples=n_samples, n_features=n_features, n_targets=3,
-            random_state=0, shuffle=False, noise=30.)
+            random_state=0, shuffle=False, noise=30., n_informative=5)
         x += 30 * np.random.RandomState(0).randn(x.shape[1])
         x_s = sp.csr_matrix(x)
         loo = RidgeCV(cv=n_samples, fit_intercept=fit_intercept,
