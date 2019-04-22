@@ -1,66 +1,58 @@
+# -*- coding: utf-8 -*-
 """Fuzzy C-Means clustering"""
 
 # Authors: Junyi Li (lijy263@mail2.sysu.edu.cn)
 # License: BSD 3 clause
 # The import part this file is copy from k_means_.py, some functions is not used for now.
-import warnings
-
 import numpy as np
-import scipy.sparse as sp
+import warnings
+from scipy import sparse
 
-from ..base import BaseEstimator, ClusterMixin, TransformerMixin
-from ..metrics.pairwise import euclidean_distances
-from ..metrics.pairwise import pairwise_distances_argmin_min
-from ..utils.extmath import row_norms, squared_norm, stable_cumsum
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _num_samples
-from ..utils import check_array
-from ..utils import gen_batches
-from ..utils import check_random_state
-from ..utils.validation import check_is_fitted
-from ..utils.validation import FLOAT_DTYPES
-from ..utils._joblib import Parallel
-from ..utils._joblib import delayed
-from ..utils._joblib import effective_n_jobs
-from ..exceptions import ConvergenceWarning
+from ..base import BaseEstimator, ClusterMixin
+from ..utils import check_array, check_consistent_length
 
 def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300, sample_weight=None):
     """Fuzzy CMeans clustering
 
+    Read more in the :ref:`User Guide <dbscan>`.
+
     Parameters
     ----------
-    X : array or sparse matrix, shape (n_samples, n_features)
-        The data to pick seeds for. To avoid memory copy, the input data
-        should be double precision (dtype=np.float64).
-
-    n_clusters : int, optional, default: 3
-        The number of clusters to form as well as the number of
-        centroids to generate.
-
-    max_iter : int, default: 300
-        Maximum number of iterations of the Fuzzy c means algorithm for a
-        single run.
-
-    random_state : int, RandomState instance or None (default)
-        Determines random number generation for centroid initialization. Use
-        an int to make the randomness deterministic.
-        See :term:`Glossary <random_state>`.
-
-    m : int, optional, default: 2
-        A key number for the update the centroids and the cluster-probability matrix.
+    X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
+            array of shape (n_samples, n_samples)
     
-    eps : float, optional, default: 10
-        If the sum of the abs of the (new_cluster_probability_matrix - old_cluster_probability_matrix) is smaller than eps, then the algorithm will stop.
-        
+    n_clusters : integer
+        The number of seeds to choose
 
-    Attributes
-    ----------
-    cluster_centers_ : array, [n_clusters, n_features]
-        Coordinates of cluster centers. 
+    eps : float, optional (default = 10)
+        If the sum of the abs of the (new_cluster_probability_matrix \
+        - old_cluster_probability_matrix) is smaller than eps, \
+         then the algorithm will stop.
 
-    labels_ :
-        Labels of each point
+    m : float, optional (default = 2)
+        The fuzzy number.
 
+    random_state : int, RandomState instance
+        The generator used to initialize the centers. Use an int to make the
+        randomness deterministic.
+
+    max_iter : int, optional (default = 300)
+        The maximum iteration time for FCM clustering algorthm.
+
+    sample_weight : array, shape (n_samples,), optional
+        Weight of each sample, such that a sample with a weight of at least
+        ``min_samples`` is by itself a core sample; a sample with negative
+        weight may inhibit its eps-neighbor from being core.
+        Note that weights are absolute, and default to 1.
+
+    Returns
+    -------
+    centroid : float ndarray with shape (n_clusters, n_features)
+        Centroids found at the last iteration of fuzzy c-means.
+
+    labels : array [n_samples]
+        Cluster labels for each point.
+    
     """
     if m <= 1:
         raise ValueError("Invalid number of m."
@@ -74,7 +66,10 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300, sample_weig
         raise ValueError('Number of iterations should be a positive number,'
                          ' got %d instead' % max_iter)
     
-    X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
+    if len(X) < n_clusters:
+        n_clusters = len(X)
+
+    X = check_array(X, accept_sparse='csr')
 
     membership_mat = np.random.random((len(X), n_clusters))
     membership_mat = np.divide(membership_mat, np.sum(membership_mat, axis=1)[:, np.newaxis])
@@ -100,42 +95,39 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300, sample_weig
             break
         membership_mat =  new_membership_mat
     
-    return Centroids, np.argmax(new_membership_mat, axis=1), new_membership_mat
+    return Centroids, np.argmax(new_membership_mat, axis=1)
 
 class FCM(BaseEstimator, ClusterMixin):
-    """Fuzzy CMeans clustering
+    """Perform fuzzy c-means clustering
 
     Parameters
     ----------
-
-    n_clusters : int, optional, default: 3
-        The number of clusters to form as well as the number of
-        centroids to generate.
-
-    init : {'random'}
-        Method for initialization, defaults to 'random':
-
-        'random': choose k observations (rows) at random from data for
-        the initial centroids.
-
-        If an ndarray is passed, it should be of shape (n_clusters, n_features)
-        and gives the initial centers.
-
-    max_iter : int, default: 300
-        Maximum number of iterations of the Fuzzy c means algorithm for a
-        single run.
-
-    random_state : int, RandomState instance or None (default)
-        Determines random number generation for centroid initialization. Use
-        an int to make the randomness deterministic.
-        See :term:`Glossary <random_state>`.
-
-    m : int, optional, default: 2
-        A key number for the update the centroids and the cluster-probability matrix.
+    X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
+            array of shape (n_samples, n_samples)
     
-    eps : float, optional, default: 10
-        If the sum of the abs of the (new_cluster_probability_matrix - old_cluster_probability_matrix) is smaller than eps, then the algorithm will stop.
-        
+    n_clusters : integer, optional (default = 3)
+        The number of seeds to choose
+
+    eps : float, optional (default = 10)
+        If the sum of the abs of the (new_cluster_probability_matrix \
+        - old_cluster_probability_matrix) is smaller than eps, \
+         then the algorithm will stop.
+
+    m : float, optional (default = 2)
+        The fuzzy number.
+
+    random_state : int, RandomState instance
+        The generator used to initialize the centers. Use an int to make the
+        randomness deterministic.
+
+    max_iter : int, optional (default = 300)
+        The maximum iteration time for FCM clustering algorthm.
+
+    sample_weight : array, shape (n_samples,), optional
+        Weight of each sample, such that a sample with a weight of at least
+        ``min_samples`` is by itself a core sample; a sample with negative
+        weight may inhibit its eps-neighbor from being core.
+        Note that weights are absolute, and default to 1.
 
     Attributes
     ----------
@@ -147,12 +139,8 @@ class FCM(BaseEstimator, ClusterMixin):
 
 
     Notes
-    --------
-
-    Now, something remains implementing:
-    1. sample weighted section
-    2. parallel run the model
-    3. ... 
+    -----
+    Now, something remains implementing: sample weighted section and parallel run the model.
 
     """
 
@@ -167,7 +155,7 @@ class FCM(BaseEstimator, ClusterMixin):
         
 
     def _check_test_data(self, X):
-        X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
+        X = check_array(X, accept_sparse='csr')
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
@@ -231,3 +219,4 @@ class FCM(BaseEstimator, ClusterMixin):
             Index of the cluster each sample belongs to.
         """
         return self.fit(X, sample_weight=sample_weight).labels_
+
