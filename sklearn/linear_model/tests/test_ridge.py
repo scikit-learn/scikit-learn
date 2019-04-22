@@ -539,12 +539,6 @@ def test_dense_sparse(test_func):
     check_dense_sparse(test_func)
 
 
-def test_ridge_cv_sparse_svd():
-    X = sp.csr_matrix(X_diabetes)
-    ridge = RidgeCV(gcv_mode="svd")
-    assert_raises(TypeError, ridge.fit, X, y_diabetes)
-
-
 def test_ridge_sparse_svd():
     X = sp.csc_matrix(rng.rand(100, 10))
     y = rng.rand(100)
