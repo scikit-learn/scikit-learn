@@ -77,15 +77,16 @@ def _grid_from_X(X, percentiles, grid_resolution):
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution
-            emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
-            if np.allclose(emp_percentiles[0, feature],
-                           emp_percentiles[1, feature]):
+            emp_percentiles = mquantiles(X[:, feature], prob=percentiles,
+                                         axis=0)
+            if np.allclose(emp_percentiles[0],
+                           emp_percentiles[1]):
                 raise ValueError(
                     'percentiles are too close to each other, '
                     'unable to build the grid. Please choose percentiles '
                     'that are further apart.')
-            axis = np.linspace(emp_percentiles[0, feature],
-                               emp_percentiles[1, feature],
+            axis = np.linspace(emp_percentiles[0],
+                               emp_percentiles[1],
                                num=grid_resolution, endpoint=True)
         values.append(axis)
 
