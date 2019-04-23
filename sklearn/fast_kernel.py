@@ -18,7 +18,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    bs : int, default = 'auto'
+    batch_size : int, default = 'auto'
         Mini-batch size for gradient descent.
 
     n_epoch : int, default = 1
@@ -97,11 +97,11 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """
-    def __init__(self, bs="auto", n_epoch=2, n_components=1000,
+    def __init__(self, batch_size="auto", n_epoch=2, n_components=1000,
                  subsample_size="auto", mem_gb=1, kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
                  kernel_params=None, random_state=None):
-        self.bs = bs
+        self.batch_size = batch_size
         self.n_epoch = n_epoch
         self.n_components = n_components
         self.subsample_size = subsample_size
@@ -154,7 +154,6 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
             K = np.exp(-np.sqrt(d) / bandwidth)
         else:  # self.kernel == "cauchy":
             K = 1 / (1 + distance / np.square(bandwidth))
-
         return K
 
     def _nystrom_svd(self, X, n_components):
@@ -272,10 +271,10 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
                                                replace=False).astype('int32')
         max_S, beta = self._setup(X[self.pinx_], n_components, mG, alpha=.95)
         # Calculate best batch size.
-        if self.bs == "auto":
+        if self.batch_size == "auto":
             bs = min(np.int32(beta / max_S + 1), mG)
         else:
-            bs = self.bs
+            bs = self.batch_size
         self.bs_ = min(bs, n)
 
         # Calculate best step size.
@@ -391,7 +390,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
 
     Parameters
     ----------
-    bs : int, default = 'auto'
+    batch_size : int, default = 'auto'
         Mini-batch size for gradient descent.
 
     n_epoch : int, default = 1
@@ -469,13 +468,13 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
            kernel='gaussian', kernel_params=None, mem_gb=1, n_components=1000,
            n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
-    >>> loss = np.mean(np.square(y_train - y_pred))
+    >>> loss = np.mean(y_train != y_pred)
     """
-    def __init__(self, bs="auto", n_epoch=2, n_components=1000,
+    def __init__(self, batch_size="auto", n_epoch=2, n_components=1000,
                  subsample_size="auto", mem_gb=1, kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
                  kernel_params=None, random_state=None):
-        self.bs = bs
+        self.batch_size = batch_size
         self.n_epoch = n_epoch
         self.n_components = n_components
         self.subsample_size = subsample_size
@@ -504,7 +503,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
         self : returns an instance of self.
        """
         self.regressor_ = FKR_EigenPro(
-            bs=self.bs, n_epoch=self.n_epoch, n_components=self.n_components,
+            batch_size=self.batch_size, n_epoch=self.n_epoch, n_components=self.n_components,
             subsample_size=self.subsample_size, mem_gb=self.mem_gb,
             kernel=self.kernel, bandwidth=self.bandwidth, gamma=self.gamma,
             degree=self.degree, coef0=self.coef0,

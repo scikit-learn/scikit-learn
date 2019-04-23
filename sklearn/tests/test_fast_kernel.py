@@ -52,7 +52,7 @@ def test_fast_kernel_regression_simple():
     X, y = make_regression(n_features=100, n_informative=1,
                            random_state=1)
     FKR_prediction = FKR_EigenPro(
-        bs=500, kernel="gaussian", n_epoch=100, bandwidth=10,
+        batch_size=500, kernel="gaussian", n_epoch=100, bandwidth=10,
         random_state=1).fit(X, y).predict(X)
     assert_array_almost_equal(abs(FKR_prediction / y)/2.0, .5, decimal=2)
 
@@ -91,7 +91,7 @@ def test_fast_kernel_classification_gaussian():
     X, y = make_classification(n_samples=10, hypercube=False,
                                random_state=1)
     FKC_prediction = FKC_EigenPro(
-        bs=9, kernel="gaussian", bandwidth=2.5,
+        batch_size=9, kernel="gaussian", bandwidth=2.5,
         n_epoch=100, random_state=1)\
         .fit(X, y).predict(X)
     assert_array_almost_equal(FKC_prediction, y)

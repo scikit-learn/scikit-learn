@@ -27,17 +27,17 @@ rng = np.random.RandomState(1)
 mnist = fetch_mldata('MNIST original')
 mnist.data = mnist.data / 255.
 
-p = np.random.permutation(60000)
+p = rng.permutation(60000)
 x_train = mnist.data[p][:60000]
 y_train = np.int32(mnist.target[p][:60000])
 x_test = mnist.data[60000:]
 y_test = np.int32(mnist.target[60000:])
 
 # randomize 20% of labels
-p = np.random.choice(len(y_train), np.int32(len(y_train)*.2), False)
-y_train[p] = np.random.choice(10, np.int32(len(y_train)*.2))
-p = np.random.choice(len(y_test), np.int32(len(y_test) * .2), False)
-y_test[p] = np.random.choice(10, np.int32(len(y_test) * .2))
+p = rng.choice(len(y_train), np.int32(len(y_train) * .2), False)
+y_train[p] = rng.choice(10, np.int32(len(y_train) * .2))
+p = rng.choice(len(y_test), np.int32(len(y_test) * .2), False)
+y_test[p] = rng.choice(10, np.int32(len(y_test) * .2))
 
 # Run tests comparing fkc to svc
 fkc_fit_times = []
@@ -52,16 +52,19 @@ train_sizes = [500, 1000, 2000]
 # Fit models to data
 for train_size in train_sizes:
     for name, estimator in [
-        ("FastKernel", FKC_EigenPro(n_epoch=2, bandwidth=5, random_state=rng)),
-            ("SupportVector", SVC(C=5, gamma=1./(2 * 5 * 5)))]:
+        ("FastKernel",
+         FKC_EigenPro(n_epoch=2, bandwidth=5, random_state=rng)),
+            ("SupportVector", SVC(C=5, gamma=1. / (2 * 5 * 5)))]:
         stime = time()
         estimator.fit(x_train[:train_size], y_train[:train_size])
         fit_t = time() - stime
 
+        y_pred_train = estimator.predict(x_train[:train_size])
+
         stime = time()
         y_pred_test = estimator.predict(x_test)
         pred_t = time() - stime
-
+        train_err = 100. * np.sum(y_pred_train != y_train) / train_size
         err = 100. * np.sum(y_pred_test != y_test) / len(y_test)
         if name == "FastKernel":
             fkc_fit_times.append(fit_t)
@@ -71,8 +74,9 @@ for train_size in train_sizes:
             svc_fit_times.append(fit_t)
             svc_pred_times.append(pred_t)
             svc_err.append(err)
-        print("%s Classification with %i training samples in %0.2f seconds." %
-              (name, train_size, fit_t + pred_t))
+        print("%s Classification with %i training samples in %0.2f seconds. "
+              "Train error %.4f" %
+              (name, train_size, fit_t + pred_t, train_err))
 
 # set up grid for figures
 fig = plt.figure(num=None, figsize=(6, 4), dpi=160)
