@@ -280,6 +280,8 @@ def make_carousel_thumbs(app, exception):
 # Config for sphinx_issues
 
 issues_uri = 'https://github.com/scikit-learn/scikit-learn/issues/{issue}'
+# we use the issues path for PRs since the issues URL will forward
+issues_pr_uri = 'https://github.com/scikit-learn/scikit-learn/pull/{issue}'
 issues_github_path = 'scikit-learn/scikit-learn'
 issues_user_uri = 'https://github.com/{user}'
 
