@@ -155,7 +155,7 @@ def test_k_best():
 def test_sanity_classification():
     base_estimator = SVC(gamma="scale", probability=True)
     base_estimator.fit(X_train[n_labeled_samples:],
-                        y_train[n_labeled_samples:])
+                       y_train[n_labeled_samples:])
 
     st = SelfTrainingClassifier(base_estimator)
     st.fit(X_train, y_train_missing_labels)
@@ -196,7 +196,7 @@ def test_zero_iterations(base_estimator, y):
     clf1.fit(X_train, y)
 
     clf2 = base_estimator.fit(X_train[:n_labeled_samples],
-                               y[:n_labeled_samples])
+                              y[:n_labeled_samples])
 
     assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
     assert clf1.termination_condition_ == "max_iter"
