@@ -31,7 +31,6 @@ for other tasks such as object classification, where performance is not
 necessarily related to visualisation.
 
 """
-
 print(__doc__)
 
 from time import time
@@ -163,4 +162,5 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     print('done in %.2fs.' % dt)
     show_with_diff(reconstructions[title], face,
                    title + ' (time: %.1fs)' % dt)
+
 plt.show()
