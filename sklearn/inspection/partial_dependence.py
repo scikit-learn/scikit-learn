@@ -61,14 +61,14 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
         assert len(percentiles) == 2
     except (AssertionError, TypeError):
         raise ValueError('percentiles must be a sequence of 2 elements.')
-    if not all(0. <= x <= 1. for x in percentiles):
-        raise ValueError('percentiles values must be in [0, 1].')
+    if not all(0 <= x <= 1 for x in percentiles):
+        raise ValueError("'percentiles' values must be in [0, 1].")
     if percentiles[0] >= percentiles[1]:
         raise ValueError('percentiles[0] must be strictly less '
                          'than percentiles[1].')
 
     if grid_resolution <= 1:
-        raise ValueError('grid_resolution must be strictly greater than 1.')
+        raise ValueError("'grid_resolution' must be strictly greater than 1.")
 
     values = []
     for feature in range(X.shape[1]):
@@ -151,7 +151,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
         try:
             predictions = prediction_method(X_eval)
         except NotFittedError:
-            raise ValueError('est parameter must be a fitted estimator')
+            raise ValueError("'estimator' parameter must be a fitted estimator")
 
         # Note: predictions is of shape
         # (n_points,) for non-multioutput regressors
@@ -288,7 +288,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
     """
 
     if not (is_classifier(estimator) or is_regressor(estimator)):
-        raise ValueError('est must be a fitted regressor or classifier.')
+        raise ValueError("'estimator' must be a fitted regressor or classifier.")
 
     if (hasattr(estimator, 'classes_') and
             isinstance(estimator.classes_[0], np.ndarray)):

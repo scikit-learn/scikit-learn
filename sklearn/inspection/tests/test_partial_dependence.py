@@ -3,7 +3,6 @@ Testing for the partial dependence module.
 """
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
 import pytest
 
 import sklearn
@@ -26,6 +25,8 @@ from sklearn.metrics import r2_score
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import if_matplotlib
 
 
@@ -97,11 +98,11 @@ def test_grid_from_X():
     X = np.asarray([[1, 2],
                     [3, 4]])
     grid, axes = _grid_from_X(X)
-    assert_array_almost_equal(grid, [[1, 2],
+    assert_array_equal(grid, [[1, 2],
                                      [1, 4],
                                      [3, 2],
                                      [3, 4]])
-    assert_array_almost_equal(axes, X.T)
+    assert_array_equal(axes, X.T)
 
     # test shapes of returned objects depending on the number of unique values
     # for a feature.
@@ -161,7 +162,7 @@ def test_grid_from_X():
                           'brute')])
 def test_partial_dependence_helpers(est, method, target_feature):
     # Check that what is returned by _partial_dependence_brute or
-    # _partial_dependece_recursion is equivalent to manually setting a target
+    # _partial_dependence_recursion is equivalent to manually setting a target
     # feature to a given value, and computing the average prediction over all
     # samples.
     # This also checks that the brute and recursion methods give the same
@@ -192,13 +193,13 @@ def test_partial_dependence_helpers(est, method, target_feature):
         mean_predictions.append(est.predict(X_).mean())
 
     pdp = pdp[0]  # (shape is (1, 2) so make it (2,))
-    assert_array_almost_equal(pdp, mean_predictions, decimal=3)
+    assert_allclose(pdp, mean_predictions, atol=1e-3)
 
 
 @pytest.mark.parametrize('target_feature', (0, 1, 2, 3, 4, 5))
 def test_recursion_decision_function(target_feature):
-    # Make sure the recursion method (implicitely uses decision_function) has
-    # the same result as using brute method with response_method=decision
+    # Make sure the recursion method (implicitly uses decision_function) has
+    # the same result as using brute method with response_method=decision_function
 
     X, y = make_classification(n_classes=2, n_clusters_per_class=1,
                                random_state=1)
@@ -214,7 +215,7 @@ def test_recursion_decision_function(target_feature):
                                     response_method='decision_function',
                                     method='brute')
 
-    assert_array_almost_equal(preds_1, preds_2, decimal=5)
+    assert_allclose(preds_1, preds_2, atol=1e-7)
 
 
 @pytest.mark.parametrize('est', (LinearRegression(),
