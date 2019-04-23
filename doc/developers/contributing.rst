@@ -40,6 +40,10 @@ ticket to the
 `GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
 
+Governance
+----------
+The decision making process and governance structure of scikit-learn is laid
+out in the governance document: :ref:`governance`.
 
 Ways to contribute
 ==================
@@ -61,6 +65,13 @@ Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star to say "I use it":
+
+In case a contribution/issue involves changes to the API principles
+or changes to dependencies or supported versions, it must be backed by a
+:ref:`slep`, where a SLEP must be submitted as a pull-request to
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
+and follows the decision-making process outlined in :ref:`governance`.
 
 .. raw:: html
 
