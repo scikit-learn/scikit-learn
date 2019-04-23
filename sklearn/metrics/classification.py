@@ -2374,7 +2374,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     labels = np.unique(y_true)
     if len(labels) > 2:
         raise ValueError("Only binary classification is supported. "
-                         "Provided labels %s." % labels)
+                         "Labels in y_true: %s." % labels)
     if y_prob.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
     if y_prob.min() < 0:
