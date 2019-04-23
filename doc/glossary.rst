@@ -680,7 +680,7 @@ General Concepts
     SLEPs
         Changes to the API principles and changes to dependencies or supported
         versions happen via a :ref:`SLEP <slep>` and follows the
-        decision-making process outlined in the :ref:`governance document <governance>`.
+        decision-making process outlined in :ref:`governance`.
         For all votes, a proposal must have been made public and discussed before the
         vote. Such proposal must be a consolidated document, in the form of a
         ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
