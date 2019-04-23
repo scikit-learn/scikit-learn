@@ -133,6 +133,9 @@ def test_partial_dependecy_input():
     assert_raises(ValueError, partial_dependence,
                   clf, [0], grid=None, X=None)
 
+    assert_raises(ValueError, partial_dependence,
+                  clf, [0], grid=[0, 1], X=X)
+
     # first argument must be an instance of BaseGradientBoosting
     assert_raises(ValueError, partial_dependence,
                   {}, [0], X=X)
