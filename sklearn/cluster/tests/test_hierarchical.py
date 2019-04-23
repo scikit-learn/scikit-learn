@@ -630,6 +630,7 @@ def test_agglomerative_clustering_with_distance_threshold():
     for linkage in ("ward", "complete", "average"):
         for conn in [None, connectivity]:
             clustering = AgglomerativeClustering(
+                n_clusters=None,
                 distance_threshold=distance_threshold,
                 connectivity=conn, linkage=linkage)
             clustering.fit(X)
@@ -657,6 +658,7 @@ def test_agglomerative_clustering_with_distance_threshold():
     X = rng.randint(-3, 3, size=(n_samples, 3))
     # this should result in all data in their own clusters
     clustering = AgglomerativeClustering(
+        n_clusters=None,
         distance_threshold=1,
         linkage="single").fit(X)
     assert len(np.unique(clustering.labels_)) == 10
@@ -664,6 +666,7 @@ def test_agglomerative_clustering_with_distance_threshold():
     # check the distances within the clusters and with other clusters
     threshold = 2
     clustering = AgglomerativeClustering(
+        n_clusters=None,
         distance_threshold=threshold,
         linkage="single").fit(X)
     labels = clustering.labels_
@@ -687,17 +690,23 @@ def test_agglomerative_clustering_with_distance_threshold_edge_case():
     X = [[0], [1]]
     for linkage in ("ward", "complete", "average"):
         for threshold, y_true in [(0.5, [1, 0]), (1.0, [1, 0]), (1.5, [0, 0])]:
-            clusterer = AgglomerativeClustering(distance_threshold=threshold,
-                                                linkage=linkage)
+            clusterer = AgglomerativeClustering(
+                n_clusters=None,
+                distance_threshold=threshold,
+                linkage=linkage)
             y_pred = clusterer.fit_predict(X)
             assert_equal(1, adjusted_rand_score(y_true, y_pred))
 
 
 def test_dist_threshold_invalid_parameters():
     X = [[0], [1]]
-    with pytest.raises(ValueError, match="cannot be both None"):
+    with pytest.raises(ValueError, match="Exactly one of "):
         AgglomerativeClustering(n_clusters=None,
                                 distance_threshold=None).fit(X)
+
+    with pytest.raises(ValueError, match="Exactly one of "):
+        AgglomerativeClustering(n_clusters=2,
+                                distance_threshold=1).fit(X)
 
     X = [[0], [1]]
     with pytest.raises(ValueError, match="compute_full_tree must be True if"):

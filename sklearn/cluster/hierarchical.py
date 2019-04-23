@@ -806,9 +806,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             raise ValueError("n_clusters should be an integer greater than 0."
                              " %s was provided." % str(self.n_clusters))
 
-        if self.n_clusters is None and self.distance_threshold is None:
-            raise ValueError("n_clusters and distance_threshold cannot be "
-                             "both None.")
+        if not ((self.n_clusters is None) ^ (self.distance_threshold is None)):
+            raise ValueError("Exactly one of n_clusters and "
+                             "distance_threshold has to be set, and the other "
+                             "needs to be None.")
 
         if (self.distance_threshold is not None
                 and not self.compute_full_tree):
