@@ -139,7 +139,7 @@ def test_grid_from_X():
     for percentiles in ((-1, .95), (.05, 2)):
         with pytest.raises(
                 ValueError,
-                match="percentiles values must be in"):
+                match="'percentiles' values must be in"):
             _grid_from_X(X, percentiles=percentiles)
 
     with pytest.raises(
@@ -149,7 +149,7 @@ def test_grid_from_X():
 
     with pytest.raises(
             ValueError,
-            match='grid_resolution must be strictly greater than 1.'):
+            match="'grid_resolution' must be strictly greater than 1."):
         _grid_from_X(X, grid_resolution=1)
 
 
@@ -288,7 +288,7 @@ def test_partial_dependence_input():
 
     with pytest.raises(
             ValueError,
-            match="est must be a fitted regressor or classifier"):
+            match="'estimator' must be a fitted regressor or classifier"):
         partial_dependence(KMeans(), X, [0])
 
     with pytest.raises(
@@ -346,8 +346,8 @@ def test_partial_dependence_input():
 
     with pytest.raises(
             ValueError,
-            match='est must be an instance of BaseGradientBoosting '
-                  'for the "recursion" method'):
+            match="'estimator' must be an instance of BaseGradientBoosting "
+                  "for the 'recursion' method"):
         partial_dependence(lr, X, [0], method='recursion')
 
     for feature in (-1, 1000000):
@@ -360,7 +360,7 @@ def test_partial_dependence_input():
     for unfitted_est in (LinearRegression(), GradientBoostingRegressor()):
         with pytest.raises(
                 ValueError,
-                match='est parameter must be a fitted estimator'):
+                match="'estimator' parameter must be a fitted estimator"):
             partial_dependence(unfitted_est, X, [0])
 
     # check that array-like objects are accepted

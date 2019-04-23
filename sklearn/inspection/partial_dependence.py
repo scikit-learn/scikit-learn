@@ -323,8 +323,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
     if method == 'recursion':
         if not isinstance(estimator, BaseGradientBoosting):
             raise ValueError(
-                'est must be an instance of BaseGradientBoosting '
-                'for the "recursion" method. Try using method="brute".')
+                "'estimator' must be an instance of BaseGradientBoosting "
+                "for the 'recursion' method. Try using method='brute'.")
         if response_method == 'auto':
             response_method = 'decision_function'
 
@@ -334,7 +334,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 "'decision_function'. Got {}.".format(response_method)
             )
         check_is_fitted(estimator, 'estimators_',
-                        msg='est parameter must be a fitted estimator')
+                        msg="'estimator' parameter must be a fitted estimator")
         # Note: if method is brute, this check is done at prediction time
         n_features = estimator.n_features_
     else:
