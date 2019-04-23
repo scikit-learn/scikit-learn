@@ -302,7 +302,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
                 pred = _predict_binary(e, X)
                 np.maximum(maxima, pred, out=maxima)
                 argmaxima[maxima == pred] = i
-            return self.classes_[np.array(argmaxima.T)]
+            return self.classes_[argmaxima]
         else:
             indices = array.array('i')
             indptr = array.array('i', [0])
