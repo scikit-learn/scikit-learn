@@ -503,7 +503,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
         self : returns an instance of self.
        """
         self.regressor_ = FKR_EigenPro(
-            batch_size=self.batch_size, n_epoch=self.n_epoch, 
+            batch_size=self.batch_size, n_epoch=self.n_epoch,
             n_components=self.n_components,
             subsample_size=self.subsample_size, mem_gb=self.mem_gb,
             kernel=self.kernel, bandwidth=self.bandwidth, gamma=self.gamma,
