@@ -20,8 +20,7 @@ from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices)
 from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
-from ..utils import Parallel, delayed, effective_n_jobs
-from ..externals.six.moves import xrange
+from ..utils._joblib import Parallel, delayed, effective_n_jobs
 from ..exceptions import NotFittedError
 
 from ._online_lda import (mean_change, _dirichlet_expectation_1d,
@@ -93,7 +92,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         X_indices = X.indices
         X_indptr = X.indptr
 
-    for idx_d in xrange(n_samples):
+    for idx_d in range(n_samples):
         if is_sparse_x:
             ids = X_indices[X_indptr[idx_d]:X_indptr[idx_d + 1]]
             cnts = X_data[X_indptr[idx_d]:X_indptr[idx_d + 1]]
@@ -107,7 +106,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
         exp_topic_word_d = exp_topic_word_distr[:, ids]
 
         # Iterate between `doc_topic_d` and `norm_phi` until convergence
-        for _ in xrange(0, max_iters):
+        for _ in range(0, max_iters):
             last_d = doc_topic_d
 
             # The optimal phi_{dwk} is proportional to
@@ -148,12 +147,12 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     doc_topic_prior : float, optional (default=None)
         Prior of document topic distribution `theta`. If the value is None,
         defaults to `1 / n_components`.
-        In the literature, this is called `alpha`.
+        In [1]_, this is called `alpha`.
 
     topic_word_prior : float, optional (default=None)
         Prior of topic word distribution `beta`. If the value is None, defaults
         to `1 / n_components`.
-        In the literature, this is called `beta`.
+        In [1]_, this is called `eta`.
 
     learning_method : 'batch' | 'online', default='batch'
         Method used to update `_component`. Only used in `fit` method.
@@ -544,7 +543,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         n_jobs = effective_n_jobs(self.n_jobs)
         with Parallel(n_jobs=n_jobs, verbose=max(0,
                       self.verbose - 1)) as parallel:
-            for i in xrange(max_iter):
+            for i in range(max_iter):
                 if learning_method == 'online':
                     for idx_slice in gen_batches(n_samples, batch_size):
                         self._em_step(X[idx_slice, :], total_samples=n_samples,
@@ -682,7 +681,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             X_indptr = X.indptr
 
         # E[log p(docs | theta, beta)]
-        for idx_d in xrange(0, n_samples):
+        for idx_d in range(0, n_samples):
             if is_sparse_x:
                 ids = X_indices[X_indptr[idx_d]:X_indptr[idx_d + 1]]
                 cnts = X_data[X_indptr[idx_d]:X_indptr[idx_d + 1]]

@@ -25,11 +25,12 @@ from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
-from ..utils import Parallel
-from ..utils import delayed
-from ..utils import effective_n_jobs
+from ..utils._joblib import Parallel
+from ..utils._joblib import delayed
+from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from ..exceptions import DataConversionWarning
 
 
 # Utility Functions
@@ -99,19 +100,18 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
     """
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
-    warn_on_dtype = dtype is not None
     estimator = 'check_pairwise_arrays'
     if dtype is None:
         dtype = dtype_float
 
     if Y is X or Y is None:
         X = Y = check_array(X, accept_sparse='csr', dtype=dtype,
-                            warn_on_dtype=warn_on_dtype, estimator=estimator)
+                            estimator=estimator)
     else:
         X = check_array(X, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+                        estimator=estimator)
         Y = check_array(Y, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+                        estimator=estimator)
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
@@ -537,7 +537,7 @@ def cosine_distances(X, Y=None):
     See also
     --------
     sklearn.metrics.pairwise.cosine_similarity
-    scipy.spatial.distance.cosine (dense matrices only)
+    scipy.spatial.distance.cosine : dense matrices only
     """
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)
@@ -1049,6 +1049,11 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
+def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
+    """Write in-place to a slice of a distance matrix"""
+    dist_matrix[:, slice_] = dist_func(*args, **kwargs)
+
+
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     """Break the pairwise matrix in n_jobs even slices
     and compute them in parallel"""
@@ -1059,13 +1064,14 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
-    # TODO: in some cases, backend='threading' may be appropriate
-    fd = delayed(func)
-    ret = Parallel(n_jobs=n_jobs, verbose=0)(
-        fd(X, Y[s], **kwds)
+    # enforce a threading backend to prevent data communication overhead
+    fd = delayed(_dist_wrapper)
+    ret = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype, order='F')
+    Parallel(backend="threading", n_jobs=n_jobs)(
+        fd(func, ret, s, X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
 
-    return np.hstack(ret)
+    return ret
 
 
 def _pairwise_callable(X, Y, metric, **kwds):
@@ -1120,13 +1126,29 @@ def _check_chunk_size(reduced, chunk_size):
                         'Expected sequence(s) of length %d.' %
                         (reduced if is_tuple else reduced[0], chunk_size))
     if any(_num_samples(r) != chunk_size for r in reduced):
-        # XXX: we use int(_num_samples...) because sometimes _num_samples
-        #      returns a long in Python 2, even for small numbers.
-        actual_size = tuple(int(_num_samples(r)) for r in reduced)
+        actual_size = tuple(_num_samples(r) for r in reduced)
         raise ValueError('reduce_func returned object of length %s. '
                          'Expected same length as input: %d.' %
                          (actual_size if is_tuple else actual_size[0],
                           chunk_size))
+
+
+def _precompute_metric_params(X, Y, metric=None, **kwds):
+    """Precompute data-derived metric parameters if not provided
+    """
+    if metric == "seuclidean" and 'V' not in kwds:
+        if X is Y:
+            V = np.var(X, axis=0, ddof=1)
+        else:
+            V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
+        return {'V': V}
+    if metric == "mahalanobis" and 'VI' not in kwds:
+        if X is Y:
+            VI = np.linalg.inv(np.cov(X.T)).T
+        else:
+            VI = np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T
+        return {'VI': VI}
+    return {}
 
 
 def pairwise_distances_chunked(X, Y=None, reduce_func=None,
@@ -1201,6 +1223,8 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     --------
     Without reduce_func:
 
+    >>> import numpy as np
+    >>> from sklearn.metrics import pairwise_distances_chunked
     >>> X = np.random.RandomState(0).rand(5, 3)
     >>> D_chunk = next(pairwise_distances_chunked(X))
     >>> D_chunk  # doctest: +ELLIPSIS
@@ -1264,6 +1288,10 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
                                         working_memory=working_memory)
         slices = gen_batches(n_samples_X, chunk_n_rows)
 
+    # precompute data-derived metric params
+    params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+    kwds.update(**params)
+
     for sl in slices:
         if sl.start == 0 and sl.stop == n_samples_X:
             X_chunk = X  # enable optimised paths for X is Y
@@ -1271,6 +1299,12 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
             X_chunk = X[sl]
         D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
                                      n_jobs=n_jobs, **kwds)
+        if ((X is Y or Y is None)
+                and PAIRWISE_DISTANCE_FUNCTIONS.get(metric, None)
+                is euclidean_distances):
+            # zeroing diagonal, taking care of aliases of "euclidean",
+            # i.e. "l2"
+            D_chunk.flat[sl.start::_num_samples(X) + 1] = 0
         if reduce_func is not None:
             chunk_size = D_chunk.shape[0]
             D_chunk = reduce_func(D_chunk, sl.start)
@@ -1387,7 +1421,16 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                             " support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+
+        if dtype == bool and (X.dtype != bool or Y.dtype != bool):
+            msg = "Data was converted to boolean for metric %s" % metric
+            warnings.warn(msg, DataConversionWarning)
+
         X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
+
+        # precompute data-derived metric params
+        params = _precompute_metric_params(X, Y, metric=metric, **kwds)
+        kwds.update(**params)
 
         if effective_n_jobs(n_jobs) == 1 and X is Y:
             return distance.squareform(distance.pdist(X, metric=metric,
@@ -1543,8 +1586,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         func = metric.__call__
     elif metric in PAIRWISE_KERNEL_FUNCTIONS:
         if filter_params:
-            kwds = dict((k, kwds[k]) for k in kwds
-                        if k in KERNEL_PARAMS[metric])
+            kwds = {k: kwds[k] for k in kwds
+                    if k in KERNEL_PARAMS[metric]}
         func = PAIRWISE_KERNEL_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)

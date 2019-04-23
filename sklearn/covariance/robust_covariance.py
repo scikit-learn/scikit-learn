@@ -7,7 +7,6 @@ Here are implemented estimators that are resistant to outliers.
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
 # License: BSD 3 clause
-from __future__ import division
 
 import warnings
 import numbers
@@ -587,8 +586,8 @@ class MinCovDet(EmpiricalCovariance):
     >>> from sklearn.datasets import make_gaussian_quantiles
     >>> real_cov = np.array([[.8, .3],
     ...                      [.3, .4]])
-    >>> np.random.seed(0)
-    >>> X = np.random.multivariate_normal(mean=[0, 0],
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0],
     ...                                   cov=real_cov,
     ...                                   size=500)
     >>> cov = MinCovDet(random_state=0).fit(X)
@@ -601,14 +600,14 @@ class MinCovDet(EmpiricalCovariance):
     References
     ----------
 
-    .. [Rouseeuw1984] `P. J. Rousseeuw. Least median of squares regression.
-        J. Am Stat Ass, 79:871, 1984.`
-    .. [Rousseeuw] `A Fast Algorithm for the Minimum Covariance Determinant
+    .. [Rouseeuw1984] P. J. Rousseeuw. Least median of squares regression.
+        J. Am Stat Ass, 79:871, 1984.
+    .. [Rousseeuw] A Fast Algorithm for the Minimum Covariance Determinant
         Estimator, 1999, American Statistical Association and the American
-        Society for Quality, TECHNOMETRICS`
-    .. [ButlerDavies] `R. W. Butler, P. L. Davies and M. Jhun,
+        Society for Quality, TECHNOMETRICS
+    .. [ButlerDavies] R. W. Butler, P. L. Davies and M. Jhun,
         Asymptotics For The Minimum Covariance Determinant Estimator,
-        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400`
+        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
 
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
@@ -685,9 +684,9 @@ class MinCovDet(EmpiricalCovariance):
         References
         ----------
 
-        .. [RVD] `A Fast Algorithm for the Minimum Covariance
+        .. [RVD] A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
-            and the American Society for Quality, TECHNOMETRICS`
+            and the American Society for Quality, TECHNOMETRICS
 
         Returns
         -------
@@ -726,9 +725,9 @@ class MinCovDet(EmpiricalCovariance):
         References
         ----------
 
-        .. [RVDriessen] `A Fast Algorithm for the Minimum Covariance
+        .. [RVDriessen] A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
-            and the American Society for Quality, TECHNOMETRICS`
+            and the American Society for Quality, TECHNOMETRICS
 
         Returns
         -------

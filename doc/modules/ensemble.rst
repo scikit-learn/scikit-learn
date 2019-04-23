@@ -291,13 +291,13 @@ to the prediction function.
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`
 
-.. _random_trees_embedding:
-
 .. topic:: References
 
  .. [L2014] G. Louppe,
          "Understanding Random Forests: From Theory to Practice",
          PhD Thesis, U. of Liege, 2014.
+
+.. _random_trees_embedding:
 
 Totally Random Trees Embedding
 ------------------------------
@@ -927,7 +927,7 @@ averaged.
 Voting Classifier
 ========================
 
-The idea behind the :class:`VotingClassifier` is to combine
+The idea behind the `VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
 Such a classifier can be useful for a set of equally well performing model
@@ -1053,10 +1053,10 @@ Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
     :align: center
     :scale: 75%
 
-Using the `VotingClassifier` with `GridSearch`
-----------------------------------------------
+Using the `VotingClassifier` with `GridSearchCV`
+------------------------------------------------
 
-The `VotingClassifier` can also be used together with `GridSearch` in order
+The `VotingClassifier` can also be used together with `GridSearchCV` in order
 to tune the hyperparameters of the individual estimators::
 
    >>> from sklearn.model_selection import GridSearchCV
@@ -1084,3 +1084,46 @@ Optionally, weights can be provided for the individual classifiers::
 
    >>> eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)],
    ...                         voting='soft', weights=[2, 5, 1])
+
+
+.. _voting_regressor:
+
+Voting Regressor
+================
+
+The idea behind the `VotingRegressor` is to combine conceptually
+different machine learning regressors and return the average predicted values.
+Such a regressor can be useful for a set of equally well performing models
+in order to balance out their individual weaknesses.
+
+Usage
+.....
+
+The following example shows how to fit the VotingRegressor::
+
+   >>> from sklearn import datasets
+   >>> from sklearn.ensemble import GradientBoostingRegressor
+   >>> from sklearn.ensemble import RandomForestRegressor
+   >>> from sklearn.linear_model import LinearRegression
+   >>> from sklearn.ensemble import VotingRegressor
+
+   >>> # Loading some example data
+   >>> boston = datasets.load_boston()
+   >>> X = boston.data
+   >>> y = boston.target
+
+   >>> # Training classifiers
+   >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
+   >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
+   >>> reg3 = LinearRegression()
+   >>> ereg = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
+   >>> ereg = ereg.fit(X, y)
+
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_voting_regressor_001.png
+    :target: ../auto_examples/ensemble/plot_voting_regressor.html
+    :align: center
+    :scale: 75%
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_voting_regressor.py`

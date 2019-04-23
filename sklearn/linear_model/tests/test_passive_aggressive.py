@@ -1,4 +1,3 @@
-from sklearn.utils.testing import assert_true
 import numpy as np
 import scipy.sparse as sp
 
@@ -77,15 +76,15 @@ def test_classifier_accuracy():
             for average in (False, True):
                 clf = PassiveAggressiveClassifier(
                     C=1.0, max_iter=30, fit_intercept=fit_intercept,
-                    random_state=0, average=average, tol=None)
+                    random_state=1, average=average, tol=None)
                 clf.fit(data, y)
                 score = clf.score(data, y)
                 assert_greater(score, 0.79)
                 if average:
-                    assert_true(hasattr(clf, 'average_coef_'))
-                    assert_true(hasattr(clf, 'average_intercept_'))
-                    assert_true(hasattr(clf, 'standard_intercept_'))
-                    assert_true(hasattr(clf, 'standard_coef_'))
+                    assert hasattr(clf, 'average_coef_')
+                    assert hasattr(clf, 'average_intercept_')
+                    assert hasattr(clf, 'standard_intercept_')
+                    assert hasattr(clf, 'standard_coef_')
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -102,10 +101,10 @@ def test_classifier_partial_fit():
             score = clf.score(data, y)
             assert_greater(score, 0.79)
             if average:
-                assert_true(hasattr(clf, 'average_coef_'))
-                assert_true(hasattr(clf, 'average_intercept_'))
-                assert_true(hasattr(clf, 'standard_intercept_'))
-                assert_true(hasattr(clf, 'standard_coef_'))
+                assert hasattr(clf, 'average_coef_')
+                assert hasattr(clf, 'average_intercept_')
+                assert hasattr(clf, 'standard_intercept_')
+                assert hasattr(clf, 'standard_coef_')
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -243,10 +242,10 @@ def test_regressor_mse():
                 pred = reg.predict(data)
                 assert_less(np.mean((pred - y_bin) ** 2), 1.7)
                 if average:
-                    assert_true(hasattr(reg, 'average_coef_'))
-                    assert_true(hasattr(reg, 'average_intercept_'))
-                    assert_true(hasattr(reg, 'standard_intercept_'))
-                    assert_true(hasattr(reg, 'standard_coef_'))
+                    assert hasattr(reg, 'average_coef_')
+                    assert hasattr(reg, 'average_intercept_')
+                    assert hasattr(reg, 'standard_intercept_')
+                    assert hasattr(reg, 'standard_coef_')
 
 
 # 0.23. warning about tol not having its correct default value.
@@ -265,10 +264,10 @@ def test_regressor_partial_fit():
             pred = reg.predict(data)
             assert_less(np.mean((pred - y_bin) ** 2), 1.7)
             if average:
-                assert_true(hasattr(reg, 'average_coef_'))
-                assert_true(hasattr(reg, 'average_intercept_'))
-                assert_true(hasattr(reg, 'standard_intercept_'))
-                assert_true(hasattr(reg, 'standard_coef_'))
+                assert hasattr(reg, 'average_coef_')
+                assert hasattr(reg, 'average_intercept_')
+                assert hasattr(reg, 'standard_intercept_')
+                assert hasattr(reg, 'standard_coef_')
 
 
 # 0.23. warning about tol not having its correct default value.

@@ -239,12 +239,31 @@ Random partitioning produces noticeably shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path
 lengths for particular samples, they are highly likely to be anomalies.
 
-This strategy is illustrated below.
+The implementation of :class:`ensemble.IsolationForest` is based on an ensemble
+of :class:`tree.ExtraTreeRegressor`. Following Isolation Forest original paper,
+the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
+:math:`n` is the number of samples used to build the tree (see (Liu et al.,
+2008) for more details).
+
+This algorithm is illustrated below.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_001.png
    :target: ../auto_examples/ensemble/plot_isolation_forest.html
    :align: center
    :scale: 75%
+
+.. _iforest_warm_start:
+
+The :class:`ensemble.IsolationForest` supports ``warm_start=True`` which
+allows you to add more trees to an already fitted model::
+
+  >>> from sklearn.ensemble import IsolationForest
+  >>> import numpy as np
+  >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [0, 0], [-20, 50], [3, 5]])
+  >>> clf = IsolationForest(n_estimators=10, warm_start=True)
+  >>> clf.fit(X)  # fit 10 trees  # doctest: +SKIP
+  >>> clf.set_params(n_estimators=20)  # add 10 more trees  # doctest: +SKIP
+  >>> clf.fit(X)  # fit the added trees  # doctest: +SKIP
 
 .. topic:: Examples:
 

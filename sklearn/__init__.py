@@ -16,6 +16,7 @@ import sys
 import re
 import warnings
 import logging
+import os
 
 from ._config import get_config, set_config, config_context
 
@@ -45,6 +46,17 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
 __version__ = '0.21.dev0'
+
+
+# On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
+# simultaneously. This can happen for instance when calling BLAS inside a
+# prange. Setting the following environment variable allows multiple OpenMP
+# libraries to be loaded. It should not degrade performances since we manually
+# take care of potential over-subcription performance issues, in sections of
+# the code where nested OpenMP loops can happen, by dynamically reconfiguring
+# the inner OpenMP runtime to temporarily disable it while under the scope of
+# the outer OpenMP parallel section.
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "True")
 
 
 try:
@@ -87,7 +99,7 @@ def setup_module(module):
     import numpy as np
     import random
 
-    # It could have been provided in the environment
+    # Check if a random seed exists in the environment, if not create one.
     _random_seed = os.environ.get('SKLEARN_SEED', None)
     if _random_seed is None:
         _random_seed = np.random.uniform() * (2 ** 31 - 1)

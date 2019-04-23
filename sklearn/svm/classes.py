@@ -117,7 +117,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     >>> from sklearn.datasets import make_classification
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = LinearSVC(random_state=0, tol=1e-5)
-    >>> clf.fit(X, y)
+    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
          intercept_scaling=1, loss='squared_hinge', max_iter=1000,
          multi_class='ovr', penalty='l2', random_state=0, tol=1e-05, verbose=0)
@@ -259,7 +259,7 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    epsilon : float, optional (default=0.1)
+    epsilon : float, optional (default=0.0)
         Epsilon parameter in the epsilon-insensitive loss function. Note
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set ``epsilon=0``.
@@ -329,7 +329,7 @@ class LinearSVR(LinearModel, RegressorMixin):
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_features=4, random_state=0)
     >>> regr = LinearSVR(random_state=0, tol=1e-5)
-    >>> regr.fit(X, y)
+    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     LinearSVR(C=1.0, dual=True, epsilon=0.0, fit_intercept=True,
          intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
          random_state=0, tol=1e-05, verbose=0)
@@ -431,7 +431,10 @@ class SVC(BaseSVC):
 
     The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
-    to scale to dataset with more than a couple of 10000 samples.
+    to scale to datasets with more than a couple of 10000 samples. For large
+    datasets consider using :class:`sklearn.linear_model.LinearSVC` or
+    :class:`sklearn.linear_model.SGDClassifier` instead, possibly after a
+    :class:`sklearn.kernel_approximation.Nystroem` transformer.
 
     The multiclass support is handled according to a one-vs-one scheme.
 
@@ -463,7 +466,7 @@ class SVC(BaseSVC):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
         as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
@@ -563,10 +566,9 @@ class SVC(BaseSVC):
         probability=False, an empty array. Platt scaling uses the logistic
         function
         ``1 / (1 + exp(decision_value * probA_ + probB_))``
-        where ``probA_`` and ``probB_`` are learned from the dataset. For more
-        information on the multiclass case and training procedure see section
-        8 of LIBSVM: A Library for Support Vector Machines (in References)
-        for more.
+        where ``probA_`` and ``probB_`` are learned from the dataset [2]_. For
+        more information on the multiclass case and training procedure see
+        section 8 of [1]_.
 
     Examples
     --------
@@ -593,11 +595,14 @@ class SVC(BaseSVC):
         implemented using liblinear. Check the See also section of
         LinearSVC for more comparison element.
 
-    Notes
-    -----
-    **References:**
-    `LIBSVM: A Library for Support Vector Machines
-    <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`__
+    References
+    ----------
+    .. [1] `LIBSVM: A Library for Support Vector Machines
+        <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
+
+    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
+        machines and comparison to regularizedlikelihood methods."
+        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
     """
 
     _impl = 'c_svc'
@@ -608,7 +613,7 @@ class SVC(BaseSVC):
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
                  random_state=None):
 
-        super(SVC, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
@@ -649,7 +654,7 @@ class NuSVC(BaseSVC):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
         as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
@@ -775,7 +780,7 @@ class NuSVC(BaseSVC):
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', random_state=None):
 
-        super(NuSVC, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=0., nu=nu, shrinking=shrinking,
             probability=probability, cache_size=cache_size,
@@ -789,7 +794,12 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     The free parameters in the model are C and epsilon.
 
-    The implementation is based on libsvm.
+    The implementation is based on libsvm. The fit time complexity
+    is more than quadratic with the number of samples which makes it hard
+    to scale to datasets with more than a couple of 10000 samples. For large
+    datasets consider using :class:`sklearn.linear_model.LinearSVR` or
+    :class:`sklearn.linear_model.SGDRegressor` instead, possibly after a
+    :class:`sklearn.kernel_approximation.Nystroem` transformer.
 
     Read more in the :ref:`User Guide <svm_regression>`.
 
@@ -810,7 +820,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
         as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
@@ -872,9 +882,9 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> from sklearn.svm import SVR
     >>> import numpy as np
     >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
     >>> clf = SVR(gamma='scale', C=1.0, epsilon=0.2)
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma='scale',
@@ -903,7 +913,7 @@ class SVR(BaseLibSVM, RegressorMixin):
                  coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
-        super(SVR, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
             shrinking=shrinking, probability=False, cache_size=cache_size,
@@ -946,7 +956,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
         as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
@@ -1030,7 +1040,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
                  gamma='auto_deprecated', coef0=0.0, shrinking=True,
                  tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
 
-        super(NuSVR, self).__init__(
+        super().__init__(
             kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
             tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
@@ -1063,7 +1073,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.std())
+        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
         as value of gamma. The current default of gamma, 'auto', will change
         to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
         'auto' is used as a default indicating that no explicit value of gamma
@@ -1138,7 +1148,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
 
-        super(OneClassSVM, self).__init__(
+        super().__init__(
             kernel, degree, gamma, coef0, tol, 0., nu, 0.,
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
@@ -1174,8 +1184,8 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
             warnings.warn("The random_state parameter is deprecated and will"
                           " be removed in version 0.22.", DeprecationWarning)
 
-        super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
-                                     sample_weight=sample_weight, **params)
+        super().fit(X, np.ones(_num_samples(X)),
+                    sample_weight=sample_weight, **params)
         self.offset_ = -self._intercept_
         return self
 
@@ -1214,7 +1224,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         """
         Perform classification on samples in X.
 
-        For an one-class model, +1 or -1 is returned.
+        For a one-class model, +1 or -1 is returned.
 
         Parameters
         ----------
@@ -1227,5 +1237,5 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        y = super(OneClassSVM, self).predict(X)
+        y = super().predict(X)
         return np.asarray(y, dtype=np.intp)

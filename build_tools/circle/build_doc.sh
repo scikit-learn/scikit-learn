@@ -57,7 +57,7 @@ get_build_type() {
         echo QUICK BUILD: no changed filenames for $git_range
         return
     fi
-    changed_examples=$(echo "$filenames" | grep -e ^examples/)
+    changed_examples=$(echo "$filenames" | grep -E "^examples/(.*/)*plot_")
     if [[ -n "$changed_examples" ]]
     then
         echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
@@ -101,7 +101,7 @@ sudo -E apt-get -yq remove texlive-binaries --purge
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
     install dvipng texlive-latex-base texlive-latex-extra \
     texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
-    latexmk
+    latexmk gsfonts
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
@@ -120,11 +120,12 @@ conda update --yes --quiet conda
 conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
   numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" cython \
   pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow \
-  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}"
+  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
+  joblib
 
 source activate testenv
-pip install sphinx-gallery
-pip install numpydoc==0.8
+pip install "sphinx-gallery>=0.2,<0.3"
+pip install numpydoc==0.9
 
 # Build and install scikit-learn in dev mode
 python setup.py develop

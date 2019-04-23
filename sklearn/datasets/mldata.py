@@ -7,16 +7,9 @@ import os
 from os.path import join, exists
 import re
 import numbers
-try:
-    # Python 2
-    from urllib2 import HTTPError
-    from urllib2 import quote
-    from urllib2 import urlopen
-except ImportError:
-    # Python 3+
-    from urllib.error import HTTPError
-    from urllib.parse import quote
-    from urllib.request import urlopen
+from urllib.error import HTTPError
+from urllib.parse import quote
+from urllib.request import urlopen
 
 import numpy as np
 import scipy as sp
@@ -31,7 +24,7 @@ MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
 
 @deprecated('mldata_filename was deprecated in version 0.20 and will be '
-            'removed in version 0.22')
+            'removed in version 0.22. Please use fetch_openml.')
 def mldata_filename(dataname):
     """Convert a raw name for a data set in a mldata.org filename.
 
@@ -53,7 +46,7 @@ def mldata_filename(dataname):
 
 
 @deprecated('fetch_mldata was deprecated in version 0.20 and will be removed '
-            'in version 0.22')
+            'in version 0.22. Please use fetch_openml.')
 def fetch_mldata(dataname, target_name='label', data_name='data',
                  transpose_data=True, data_home=None):
     """Fetch an mldata.org data set

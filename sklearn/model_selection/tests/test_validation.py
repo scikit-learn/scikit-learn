@@ -1,5 +1,4 @@
 """Test the validation module"""
-from __future__ import division
 
 import sys
 import warnings
@@ -14,8 +13,6 @@ from sklearn.exceptions import FitFailedWarning
 
 from sklearn.model_selection.tests.test_search import FailingClassifier
 
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -29,7 +26,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, ShuffleSplit
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import cross_validate
 from sklearn.model_selection import permutation_test_score
@@ -44,6 +41,7 @@ from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection._validation import _check_is_permutation
 from sklearn.model_selection._validation import _fit_and_score
+from sklearn.model_selection._validation import _score
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
@@ -60,6 +58,7 @@ from sklearn.metrics.scorer import check_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
@@ -69,7 +68,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.multiclass import OneVsRestClassifier
@@ -116,8 +115,7 @@ class MockImprovingEstimator(BaseEstimator):
 class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     """Dummy classifier that provides partial_fit"""
     def __init__(self, n_max_train_sizes):
-        super(MockIncrementalImprovingEstimator,
-              self).__init__(n_max_train_sizes)
+        super().__init__(n_max_train_sizes)
         self.x = None
 
     def _is_training_data(self, X):
@@ -153,18 +151,16 @@ class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
     """Dummy classifier that disallows repeated calls of fit method"""
 
     def fit(self, X_subset, y_subset):
-        assert_false(
-            hasattr(self, 'fit_called_'),
-            'fit is called the second time'
-        )
+        assert not hasattr(self, 'fit_called_'), \
+                   'fit is called the second time'
         self.fit_called_ = True
-        return super(type(self), self).fit(X_subset, y_subset)
+        return super().fit(X_subset, y_subset)
 
     def predict(self, X):
         raise NotImplementedError
 
 
-class MockClassifier(object):
+class MockClassifier:
     """Dummy classifier to test the cross-validation"""
 
     def __init__(self, a=0, allow_nd=False):
@@ -192,27 +188,27 @@ class MockClassifier(object):
         if X.ndim >= 3 and not self.allow_nd:
             raise ValueError('X cannot be d')
         if sample_weight is not None:
-            assert_true(sample_weight.shape[0] == X.shape[0],
-                        'MockClassifier extra fit_param sample_weight.shape[0]'
-                        ' is {0}, should be {1}'.format(sample_weight.shape[0],
-                                                        X.shape[0]))
+            assert sample_weight.shape[0] == X.shape[0], (
+                'MockClassifier extra fit_param '
+                'sample_weight.shape[0] is {0}, should be {1}'
+                .format(sample_weight.shape[0], X.shape[0]))
         if class_prior is not None:
-            assert_true(class_prior.shape[0] == len(np.unique(y)),
-                        'MockClassifier extra fit_param class_prior.shape[0]'
-                        ' is {0}, should be {1}'.format(class_prior.shape[0],
-                                                        len(np.unique(y))))
+            assert class_prior.shape[0] == len(np.unique(y)), (
+                'MockClassifier extra fit_param class_prior.shape[0]'
+                ' is {0}, should be {1}'.format(class_prior.shape[0],
+                                                len(np.unique(y))))
         if sparse_sample_weight is not None:
             fmt = ('MockClassifier extra fit_param sparse_sample_weight'
                    '.shape[0] is {0}, should be {1}')
-            assert_true(sparse_sample_weight.shape[0] == X.shape[0],
-                        fmt.format(sparse_sample_weight.shape[0], X.shape[0]))
+            assert sparse_sample_weight.shape[0] == X.shape[0], \
+                fmt.format(sparse_sample_weight.shape[0], X.shape[0])
         if sparse_param is not None:
             fmt = ('MockClassifier extra fit_param sparse_param.shape '
                    'is ({0}, {1}), should be ({2}, {3})')
-            assert_true(sparse_param.shape == P_sparse.shape,
-                        fmt.format(sparse_param.shape[0],
-                                   sparse_param.shape[1],
-                                   P_sparse.shape[0], P_sparse.shape[1]))
+            assert sparse_param.shape == P_sparse.shape, (
+                fmt.format(sparse_param.shape[0],
+                           sparse_param.shape[1],
+                           P_sparse.shape[0], P_sparse.shape[1]))
         return self
 
     def predict(self, T):
@@ -238,7 +234,7 @@ y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
 P_sparse = coo_matrix(np.eye(5))
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_score():
     clf = MockClassifier()
 
@@ -280,7 +276,8 @@ def test_cross_val_score():
                   error_score='raise')
 
 
-@pytest.mark.filterwarnings('ignore:You should specify a value for')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of n_split')  # 0.22
+@pytest.mark.filterwarnings('ignore:The default value of cv')  # 0.22
 def test_cross_validate_many_jobs():
     # regression test for #12154: cv='warn' with n_jobs>1 trigger a copy of
     # the parameters leading to a failure in check_cv due to cv is 'warn'
@@ -291,7 +288,7 @@ def test_cross_validate_many_jobs():
     cross_validate(grid, X, y, n_jobs=2)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_validate_invalid_scoring_param():
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
@@ -420,7 +417,7 @@ def check_cross_validate_single_metric(clf, X, y, scores):
             mse_scores_dict = cross_validate(clf, X, y, cv=5,
                                              scoring='neg_mean_squared_error',
                                              return_train_score=False)
-        assert_true(isinstance(mse_scores_dict, dict))
+        assert isinstance(mse_scores_dict, dict)
         assert_equal(len(mse_scores_dict), dict_len)
         assert_array_almost_equal(mse_scores_dict['test_score'],
                                   test_mse_scores)
@@ -435,7 +432,7 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         else:
             r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'],
                                             return_train_score=False)
-        assert_true(isinstance(r2_scores_dict, dict))
+        assert isinstance(r2_scores_dict, dict)
         assert_equal(len(r2_scores_dict), dict_len)
         assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
 
@@ -456,10 +453,10 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
                    {'r2': make_scorer(r2_score),
                     'neg_mean_squared_error': 'neg_mean_squared_error'})
 
-    keys_sans_train = set(('test_r2', 'test_neg_mean_squared_error',
-                           'fit_time', 'score_time'))
+    keys_sans_train = {'test_r2', 'test_neg_mean_squared_error',
+                       'fit_time', 'score_time'}
     keys_with_train = keys_sans_train.union(
-        set(('train_r2', 'train_neg_mean_squared_error')))
+            {'train_r2', 'train_neg_mean_squared_error'})
 
     for return_train_score in (True, False):
         for scoring in all_scoring:
@@ -475,7 +472,7 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
             else:
                 cv_results = cross_validate(clf, X, y, cv=5, scoring=scoring,
                                             return_train_score=False)
-            assert_true(isinstance(cv_results, dict))
+            assert isinstance(cv_results, dict)
             assert_equal(set(cv_results.keys()),
                          keys_with_train if return_train_score
                          else keys_sans_train)
@@ -497,7 +494,7 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
             assert np.all(cv_results['score_time'] < 10)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_cross_val_score_predict_groups():
     # Check if ValueError (when groups is None) propagates to cross_val_score
     # and cross_val_predict
@@ -518,7 +515,7 @@ def test_cross_val_score_predict_groups():
 
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_score_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -556,7 +553,7 @@ def test_cross_val_score_mask():
     assert_array_equal(scores_indices, scores_masks)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_score_precomputed():
     # test for svm with precomputed kernel
     svm = SVC(kernel="precomputed")
@@ -583,7 +580,7 @@ def test_cross_val_score_precomputed():
                   linear_kernel.tolist(), y)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_score_fit_params():
     clf = MockClassifier()
     n_samples = X.shape[0]
@@ -702,8 +699,8 @@ def test_permutation_score():
     score_group, _, pvalue_group = permutation_test_score(
         svm, X, y, n_permutations=30, cv=cv, scoring="accuracy",
         groups=np.ones(y.size), random_state=0)
-    assert_true(score_group == score)
-    assert_true(pvalue_group == pvalue)
+    assert score_group == score
+    assert pvalue_group == pvalue
 
     # check that we obtain the same results with a sparse representation
     svm_sparse = SVC(kernel='linear')
@@ -712,8 +709,8 @@ def test_permutation_score():
         svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
         scoring="accuracy", groups=np.ones(y.size), random_state=0)
 
-    assert_true(score_group == score)
-    assert_true(pvalue_group == pvalue)
+    assert score_group == score
+    assert pvalue_group == pvalue
 
     # test with custom scoring object
     def custom_score(y_true, y_pred):
@@ -779,7 +776,8 @@ def test_cross_val_score_multilabel():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict():
     boston = load_boston()
     X, y = boston.data, boston.target
@@ -831,7 +829,7 @@ def test_cross_val_predict():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
@@ -852,7 +850,8 @@ def test_cross_val_predict_decision_function_shape():
     X = X[:100]
     y = y[:100]
     assert_raise_message(ValueError,
-                         'Only 1 class/es in training fold, this'
+                         'Only 1 class/es in training fold,'
+                         ' but 2 in overall dataset. This'
                          ' is not supported for decision_function'
                          ' with imbalanced folds. To fix '
                          'this, use a cross-validation technique '
@@ -880,7 +879,7 @@ def test_cross_val_predict_decision_function_shape():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_predict_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
@@ -897,7 +896,7 @@ def test_cross_val_predict_predict_proba_shape():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_predict_log_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
@@ -914,7 +913,7 @@ def test_cross_val_predict_predict_log_proba_shape():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_input_types():
     iris = load_iris()
     X, y = iris.data, iris.target
@@ -961,7 +960,7 @@ def test_cross_val_predict_input_types():
 
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 # python3.7 deprecation warnings in pandas via matplotlib :-/
 def test_cross_val_predict_pandas():
     # check cross_val_score doesn't destroy pandas dataframe
@@ -980,7 +979,27 @@ def test_cross_val_predict_pandas():
         cross_val_predict(clf, X_df, y_ser)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+def test_cross_val_predict_unbalanced():
+    X, y = make_classification(n_samples=100, n_features=2, n_redundant=0,
+                               n_informative=2, n_clusters_per_class=1,
+                               random_state=1)
+    # Change the first sample to a new class
+    y[0] = 2
+    clf = LogisticRegression(random_state=1)
+    cv = StratifiedKFold(n_splits=2, random_state=1)
+    train, test = list(cv.split(X, y))
+    yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
+    assert y[test[0]][0] == 2  # sanity check for further assertions
+    assert np.all(yhat_proba[test[0]][:, 2] == 0)
+    assert np.all(yhat_proba[test[0]][:, 0:1] > 0)
+    assert np.all(yhat_proba[test[1]] > 0)
+    assert_array_almost_equal(yhat_proba.sum(axis=1), np.ones(y.shape),
+                              decimal=12)
+
+
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_score_sparse_fit_params():
     iris = load_iris()
     X, y = iris.data, iris.target
@@ -1273,14 +1292,14 @@ def test_check_is_permutation():
     rng = np.random.RandomState(0)
     p = np.arange(100)
     rng.shuffle(p)
-    assert_true(_check_is_permutation(p, 100))
-    assert_false(_check_is_permutation(np.delete(p, 23), 100))
+    assert _check_is_permutation(p, 100)
+    assert not _check_is_permutation(np.delete(p, 23), 100)
 
     p[0] = 23
-    assert_false(_check_is_permutation(p, 100))
+    assert not _check_is_permutation(p, 100)
 
     # Check if the additional duplicate indices are caught
-    assert_false(_check_is_permutation(np.hstack((p, 0)), 100))
+    assert not _check_is_permutation(np.hstack((p, 0)), 100)
 
 
 def test_cross_val_predict_sparse_prediction():
@@ -1298,70 +1317,226 @@ def test_cross_val_predict_sparse_prediction():
     assert_array_almost_equal(preds_sparse, preds)
 
 
-def check_cross_val_predict_with_method(est):
+def check_cross_val_predict_binary(est, X, y, method):
+    """Helper for tests of cross_val_predict with binary classification"""
+    cv = KFold(n_splits=3, shuffle=False)
+
+    # Generate expected outputs
+    if y.ndim == 1:
+        exp_shape = (len(X),) if method == 'decision_function' else (len(X), 2)
+    else:
+        exp_shape = y.shape
+    expected_predictions = np.zeros(exp_shape)
+    for train, test in cv.split(X, y):
+        est = clone(est).fit(X[train], y[train])
+        expected_predictions[test] = getattr(est, method)(X[test])
+
+    # Check actual outputs for several representations of y
+    for tg in [y, y + 1, y - 2, y.astype('str')]:
+        assert_array_equal(cross_val_predict(est, X, tg, method=method, cv=cv),
+                           expected_predictions)
+
+
+def check_cross_val_predict_multiclass(est, X, y, method):
+    """Helper for tests of cross_val_predict with multiclass classification"""
+    cv = KFold(n_splits=3, shuffle=False)
+
+    # Generate expected outputs
+    float_min = np.finfo(np.float64).min
+    default_values = {'decision_function': float_min,
+                      'predict_log_proba': float_min,
+                      'predict_proba': 0}
+    expected_predictions = np.full((len(X), len(set(y))),
+                                   default_values[method],
+                                   dtype=np.float64)
+    _, y_enc = np.unique(y, return_inverse=True)
+    for train, test in cv.split(X, y_enc):
+        est = clone(est).fit(X[train], y_enc[train])
+        fold_preds = getattr(est, method)(X[test])
+        i_cols_fit = np.unique(y_enc[train])
+        expected_predictions[np.ix_(test, i_cols_fit)] = fold_preds
+
+    # Check actual outputs for several representations of y
+    for tg in [y, y + 1, y - 2, y.astype('str')]:
+        assert_array_equal(cross_val_predict(est, X, tg, method=method, cv=cv),
+                           expected_predictions)
+
+
+def check_cross_val_predict_multilabel(est, X, y, method):
+    """Check the output of cross_val_predict for 2D targets using
+    Estimators which provide a predictions as a list with one
+    element per class.
+    """
+    cv = KFold(n_splits=3, shuffle=False)
+
+    # Create empty arrays of the correct size to hold outputs
+    float_min = np.finfo(np.float64).min
+    default_values = {'decision_function': float_min,
+                      'predict_log_proba': float_min,
+                      'predict_proba': 0}
+    n_targets = y.shape[1]
+    expected_preds = []
+    for i_col in range(n_targets):
+        n_classes_in_label = len(set(y[:, i_col]))
+        if n_classes_in_label == 2 and method == 'decision_function':
+            exp_shape = (len(X),)
+        else:
+            exp_shape = (len(X), n_classes_in_label)
+        expected_preds.append(np.full(exp_shape, default_values[method],
+                                      dtype=np.float64))
+
+    # Generate expected outputs
+    y_enc_cols = [np.unique(y[:, i], return_inverse=True)[1][:, np.newaxis]
+                  for i in range(y.shape[1])]
+    y_enc = np.concatenate(y_enc_cols, axis=1)
+    for train, test in cv.split(X, y_enc):
+        est = clone(est).fit(X[train], y_enc[train])
+        fold_preds = getattr(est, method)(X[test])
+        for i_col in range(n_targets):
+            fold_cols = np.unique(y_enc[train][:, i_col])
+            if expected_preds[i_col].ndim == 1:
+                # Decision function with <=2 classes
+                expected_preds[i_col][test] = fold_preds[i_col]
+            else:
+                idx = np.ix_(test, fold_cols)
+                expected_preds[i_col][idx] = fold_preds[i_col]
+
+    # Check actual outputs for several representations of y
+    for tg in [y, y + 1, y - 2, y.astype('str')]:
+        cv_predict_output = cross_val_predict(est, X, tg, method=method, cv=cv)
+        assert_equal(len(cv_predict_output), len(expected_preds))
+        for i in range(len(cv_predict_output)):
+            assert_array_equal(cv_predict_output[i], expected_preds[i])
+
+
+def check_cross_val_predict_with_method_binary(est):
+    # This test includes the decision_function with two classes.
+    # This is a special case: it has only one column of output.
+    X, y = make_classification(n_classes=2, random_state=0)
+    for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        check_cross_val_predict_binary(est, X, y, method)
+
+
+def check_cross_val_predict_with_method_multiclass(est):
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    classes = len(set(y))
-
-    kfold = KFold()
-
-    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
-    for method in methods:
-        predictions = cross_val_predict(est, X, y, method=method)
-        assert_equal(len(predictions), len(y))
-
-        expected_predictions = np.zeros([len(y), classes])
-        func = getattr(est, method)
-
-        # Naive loop (should be same as cross_val_predict):
-        for train, test in kfold.split(X, y):
-            est.fit(X[train], y[train])
-            expected_predictions[test] = func(X[test])
-
-        predictions = cross_val_predict(est, X, y, method=method,
-                                        cv=kfold)
-        assert_array_almost_equal(expected_predictions, predictions)
-
-        # Test alternative representations of y
-        predictions_y1 = cross_val_predict(est, X, y + 1, method=method,
-                                           cv=kfold)
-        assert_array_equal(predictions, predictions_y1)
-
-        predictions_y2 = cross_val_predict(est, X, y - 2, method=method,
-                                           cv=kfold)
-        assert_array_equal(predictions, predictions_y2)
-
-        predictions_ystr = cross_val_predict(est, X, y.astype('str'),
-                                             method=method, cv=kfold)
-        assert_array_equal(predictions, predictions_ystr)
+    for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        check_cross_val_predict_multiclass(est, X, y, method)
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_with_method():
-    check_cross_val_predict_with_method(LogisticRegression())
+    check_cross_val_predict_with_method_binary(LogisticRegression())
+    check_cross_val_predict_with_method_multiclass(LogisticRegression())
 
 
 @pytest.mark.filterwarnings('ignore: max_iter and tol parameters')
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_method_checking():
     # Regression test for issue #9639. Tests that cross_val_predict does not
     # check estimator methods (e.g. predict_proba) before fitting
-    est = SGDClassifier(loss='log', random_state=2)
-    check_cross_val_predict_with_method(est)
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
+    for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        est = SGDClassifier(loss='log', random_state=2)
+        check_cross_val_predict_multiclass(est, X, y, method)
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearchcv_cross_val_predict_with_method():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
     est = GridSearchCV(LogisticRegression(random_state=42),
                        {'C': [0.1, 1]},
                        cv=2)
-    check_cross_val_predict_with_method(est)
+    for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        check_cross_val_predict_multiclass(est, X, y, method)
+
+
+def test_cross_val_predict_with_method_multilabel_ovr():
+    # OVR does multilabel predictions, but only arrays of
+    # binary indicator columns. The output of predict_proba
+    # is a 2D array with shape (n_samples, n_classes).
+    n_samp = 100
+    n_classes = 4
+    X, y = make_multilabel_classification(n_samples=n_samp, n_labels=3,
+                                          n_classes=n_classes, n_features=5,
+                                          random_state=42)
+    est = OneVsRestClassifier(LogisticRegression(random_state=0,
+                                                 solver='lbfgs'))
+    for method in ['predict_proba', 'decision_function']:
+        check_cross_val_predict_binary(est, X, y, method=method)
+
+
+class RFWithDecisionFunction(RandomForestClassifier):
+    # None of the current multioutput-multiclass estimators have
+    # decision function methods. Create a mock decision function
+    # to test the cross_val_predict function's handling of this case.
+    def decision_function(self, X):
+        probs = self.predict_proba(X)
+        msg = "This helper should only be used on multioutput-multiclass tasks"
+        assert isinstance(probs, list), msg
+        probs = [p[:, -1] if p.shape[1] == 2 else p for p in probs]
+        return probs
+
+
+def test_cross_val_predict_with_method_multilabel_rf():
+    # The RandomForest allows multiple classes in each label.
+    # Output of predict_proba is a list of outputs of predict_proba
+    # for each individual label.
+    n_classes = 4
+    X, y = make_multilabel_classification(n_samples=100, n_labels=3,
+                                          n_classes=n_classes, n_features=5,
+                                          random_state=42)
+    y[:, 0] += y[:, 1]  # Put three classes in the first column
+    for method in ['predict_proba', 'predict_log_proba', 'decision_function']:
+        est = RFWithDecisionFunction(n_estimators=5, random_state=0)
+        with warnings.catch_warnings():
+            # Suppress "RuntimeWarning: divide by zero encountered in log"
+            warnings.simplefilter('ignore')
+            check_cross_val_predict_multilabel(est, X, y, method=method)
+
+
+def test_cross_val_predict_with_method_rare_class():
+    # Test a multiclass problem where one class will be missing from
+    # one of the CV training sets.
+    rng = np.random.RandomState(0)
+    X = rng.normal(0, 1, size=(14, 10))
+    y = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 3])
+    est = LogisticRegression()
+    for method in ['predict_proba', 'predict_log_proba', 'decision_function']:
+        with warnings.catch_warnings():
+            # Suppress warning about too few examples of a class
+            warnings.simplefilter('ignore')
+            check_cross_val_predict_multiclass(est, X, y, method)
+
+
+def test_cross_val_predict_with_method_multilabel_rf_rare_class():
+    # The RandomForest allows anything for the contents of the labels.
+    # Output of predict_proba is a list of outputs of predict_proba
+    # for each individual label.
+    # In this test, the first label has a class with a single example.
+    # We'll have one CV fold where the training data don't include it.
+    rng = np.random.RandomState(0)
+    X = rng.normal(0, 1, size=(5, 10))
+    y = np.array([[0, 0], [1, 1], [2, 1], [0, 1], [1, 0]])
+    for method in ['predict_proba', 'predict_log_proba']:
+        est = RFWithDecisionFunction(n_estimators=5, random_state=0)
+        with warnings.catch_warnings():
+            # Suppress "RuntimeWarning: divide by zero encountered in log"
+            warnings.simplefilter('ignore')
+            check_cross_val_predict_multilabel(est, X, y, method=method)
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
@@ -1386,7 +1561,7 @@ def get_expected_predictions(X, y, cv, classes, est, method):
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_cross_val_predict_class_subset():
 
     X = np.arange(200).reshape(100, 2)
@@ -1428,7 +1603,7 @@ def test_cross_val_predict_class_subset():
         assert_array_almost_equal(expected_predictions, predictions)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_score_memmap():
     # Ensure a scalar score of memmap type is accepted
     iris = load_iris()
@@ -1457,7 +1632,7 @@ def test_score_memmap():
 
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_permutation_test_score_pandas():
     # check permutation_test_score doesn't destroy pandas dataframe
     types = [(MockDataFrame, MockDataFrame)]
@@ -1477,7 +1652,7 @@ def test_permutation_test_score_pandas():
         permutation_test_score(clf, X_df, y_ser)
 
 
-def test_fit_and_score():
+def test_fit_and_score_failing():
     # Create a failing classifier to deliberately fail
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
@@ -1537,3 +1712,53 @@ def test_fit_and_score():
                          error_score='unvalid-string')
 
     assert_equal(failing_clf.score(), 0.)  # FailingClassifier coverage
+
+
+def test_fit_and_score_working():
+    X, y = make_classification(n_samples=30, random_state=0)
+    clf = SVC(kernel="linear", random_state=0)
+    train, test = next(ShuffleSplit().split(X))
+    # Test return_parameters option
+    fit_and_score_args = [clf, X, y, dict(), train, test, 0]
+    fit_and_score_kwargs = {'parameters': {'max_iter': 100, 'tol': 0.1},
+                            'fit_params': None,
+                            'return_parameters': True}
+    result = _fit_and_score(*fit_and_score_args,
+                            **fit_and_score_kwargs)
+    assert result[-1] == fit_and_score_kwargs['parameters']
+
+
+def three_params_scorer(i, j, k):
+    return 3.4213
+
+
+@pytest.mark.parametrize("return_train_score, scorer, expected", [
+    (False, three_params_scorer,
+     "[CV] .................................... , score=3.421, total=   0.0s"),
+    (True, three_params_scorer,
+     "[CV] ................ , score=(train=3.421, test=3.421), total=   0.0s"),
+    (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer},
+     "[CV]  , sc1=(train=3.421, test=3.421)"
+     ", sc2=(train=3.421, test=3.421), total=   0.0s")
+])
+def test_fit_and_score_verbosity(capsys, return_train_score, scorer, expected):
+    X, y = make_classification(n_samples=30, random_state=0)
+    clf = SVC(kernel="linear", random_state=0)
+    train, test = next(ShuffleSplit().split(X))
+
+    # test print without train score
+    fit_and_score_args = [clf, X, y, scorer, train, test, 10, None, None]
+    fit_and_score_kwargs = {'return_train_score': return_train_score}
+    _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
+    out, _ = capsys.readouterr()
+    assert out.split('\n')[1] == expected
+
+
+def test_score():
+    error_message = "scoring must return a number, got None"
+
+    def two_params_scorer(estimator, X_test):
+        return None
+    fit_and_score_args = [None, None, None, two_params_scorer]
+    assert_raise_message(ValueError, error_message,
+                         _score, *fit_and_score_args)
