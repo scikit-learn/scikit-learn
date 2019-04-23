@@ -697,7 +697,7 @@ def is_scalar_nan(x):
 def check_matplotlib_support(caller_name):
     """Raise ImportError with detailed error message if mpl is not installed.
 
-    Plot utilities like plot_partial_dependence should lazily import
+    Plot utilities like :func:`plot_partial_dependence` should lazily import
     matplotlib and call this helper before any computation.
 
     Parameters
