@@ -38,7 +38,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
 
     Parameters
     ----------
-    X : ndarray, shape=(n_samples, n_target_features)
+    X : ndarray, shape (n_samples, n_target_features)
         The data
     percentiles : tuple of floats
         The percentiles which are used to construct the extreme values of
@@ -49,7 +49,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
 
     Returns
     -------
-    grid : ndarray, shape=(n_points, X.shape[1])
+    grid : ndarray, shape (n_points, n_target_features)
         A value for each feature at each point in the grid. ``n_points`` is
         always ``<= grid_resolution ** X.shape[1]``.
     values : list of 1d ndarrays
@@ -198,7 +198,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         A fitted estimator object implementing `predict`, `predict_proba`,
         or `decision_function`. Multioutput-multiclass classifiers are not
         supported.
-    X : array-like, shape=(n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         ``X`` is used both to generate a grid of values for the
         ``features``, and to compute the averaged predictions when
         method is 'brute'.
@@ -206,7 +206,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
         The target features for which the partial dependency should be
         computed.
     response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto') :
+            optional (default='auto')
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -242,8 +242,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
 
     Returns
     -------
-    averaged_predictions : array, \
-            shape=(n_outputs, len(values[0]), len(values[1]), ...)
+    averaged_predictions : ndarray, \
+            shape (n_outputs, len(values[0]), len(values[1]), ...)
         The predictions for all the points in the grid, averaged over all
         samples in X (or over the training data if ``method`` is
         'recursion'). ``n_outputs`` corresponds to the number of classes in
@@ -381,7 +381,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         A fitted estimator object implementing `predict`, `predict_proba`,
         or `decision_function`. Multioutput-multiclass classifiers are not
         supported.
-    X : array-like, shape=(n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         The data to use to build the grid of values on which the dependence
         will be evaluated. This is usually the training data.
     features : list of {int, str, pair of int, pair of str}
@@ -390,7 +390,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         features[i] is a tuple, a two-way PDP is created. Each tuple must be
         of size 2.
         if any entry is a string, then it must be in ``feature_names``.
-    feature_names : seq of str, shape=(n_features,), optional
+    feature_names : seq of str, shape (n_features,), optional
         Name of each feature; feature_names[i] holds the name of the feature
         with index i. By default, the name of the feature corresponds to
         their numerical index.
@@ -443,10 +443,15 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         produces the same plots, up to a constant offset in the target
         response.
     n_jobs : int, optional (default=None)
+<<<<<<< HEAD
         The number of CPUs to use to compute the partial dependences.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+=======
+        The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
+        See :term:`Glossary <n_jobs>` for more details.
+>>>>>>> cb5166a31a446e5bc74466bc99d581fbb9a7c537
     verbose : int, optional (default=0)
         Verbose output during PD computations.
     fig : Matplotlib figure object, optional (default=None)
