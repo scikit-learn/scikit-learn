@@ -59,6 +59,7 @@ Support for Python 3.4 and below has been officially dropped.
     or *Miscellaneous*.
     Entries should end with:
     :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.base`
 ...................
