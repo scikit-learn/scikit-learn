@@ -29,7 +29,7 @@ random sampling procedures.
 - :class:`ensemble.GradientBoostingClassifier` |Fix|
 - :class:`sklearn.feature_extraction.text.HashingVectorizer`,
   :class:`sklearn.feature_extraction.text.TfidfVectorizer`, and
-  :class:`sklearn.feature_extraction.text.CountVectorizer` |API|
+  :class:`sklearn.feature_extraction.text.CountVectorizer` |Fix|
 - :class:`neural_network.MLPClassifier` |Fix|
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
@@ -271,7 +271,7 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |API| If ``input='file'`` or ``input='filename'``, and a callable is given
+- |Fix| |API| If ``input='file'`` or ``input='filename'``, and a callable is given
   as the ``analyzer``, :class:`sklearn.feature_extraction.text.HashingVectorizer`,
   :class:`sklearn.feature_extraction.text.TfidfVectorizer`, and
   :class:`sklearn.feature_extraction.text.CountVectorizer` now read the data
@@ -400,7 +400,7 @@ Support for Python 3.4 and below has been officially dropped.
   by :user:`Bartosz Telenczuk <btel>`
 
 :mod:`sklearn.manifold`
-............................
+.......................
 
 - |Efficiency| Make :func:`manifold.tsne.trustworthiness` use an inverted index
   instead of an `np.where` lookup to find the rank of neighbors in the input
@@ -531,7 +531,7 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
 :mod:`sklearn.multioutput`
-........................
+..........................
 
 - |Fix| Fixed a bug in :class:`multiout.MultiOutputClassifier` where the
   `predict_proba` method incorrectly checked for `predict_proba` attribute in
@@ -667,7 +667,7 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
 :mod:`sklearn.utils`
-...................
+....................
 
 - |API| Deprecated ``warn_on_dtype`` parameter from :func:`utils.check_array`
   and :func:`utils.check_X_y`. Added explicit warning for dtype conversion
