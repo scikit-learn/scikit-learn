@@ -274,9 +274,6 @@ def partial_dependence(estimator, X, features, response_method='auto',
     --------
     sklearn.inspection.plot_partial_dependence: Plot partial dependence
 
-
-    .. _warning_recursion_init:
-
     Warnings
     --------
     The 'recursion' method only works for gradient boosting estimators, and
@@ -479,8 +476,6 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     --------
     sklearn.inspection.partial_dependence: Return raw partial
       dependence values
-
-    .. _warning_recursion_init_plot:
 
     Warnings
     --------
