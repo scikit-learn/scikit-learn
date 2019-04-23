@@ -11,7 +11,7 @@ from scipy.sparse.linalg import eigsh
 from ..utils import check_random_state
 from ..utils.extmath import svd_flip, randomized_svd
 from ..utils.validation import (check_is_fitted, check_array,
-                                check_kernel_eigenvalues)
+                                check_psd_eigenvalues)
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
@@ -281,8 +281,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
             self.lambdas_ = self.lambdas_ * signs
 
         # make sure that there are no numerical or conditioning issues
-        self.lambdas_ = check_kernel_eigenvalues(self.lambdas_)
-
+        self.lambdas_ = check_psd_eigenvalues(self.lambdas_)
 
         # flip eigenvectors' sign to enforce deterministic output
         self.alphas_, _ = svd_flip(self.alphas_,
@@ -314,9 +313,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         # We COULD scale them here:
         #       self.alphas_ = self.alphas_ / np.sqrt(self.lambdas_)
         #
-        # But the original choice was to perform that LATER when needed, in
-        # fit() and in transform(). We keep it to preserve the meaning of
-        # self.alphas_ across sk-learn versions.
+        # But choose to perform that LATER when needed, in `fit()` and in
+        # `transform()`.
 
         return K
 
@@ -351,8 +349,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self._fit_transform(K)
 
         if self.fit_inverse_transform:
-            # Transform X
-            # (shortcut since we transform the same X that was used to fit)
+            # no need to use the kernel to transform X, use shortcut expression
             X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
 
             self._fit_inverse_transform(X_transformed, X)
@@ -375,8 +372,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         """
         self.fit(X, **params)
 
-        # Transform X
-        # (shortcut since we transform the same X that was used to fit)
+        # no need to use the kernel to transform X, use shortcut expression
         X_transformed = self.alphas_ * np.sqrt(self.lambdas_)
 
         if self.fit_inverse_transform:
@@ -401,11 +397,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         K = self._centerer.transform(self._get_kernel(X, self.X_fit_))
 
         # scale eigenvectors (properly account for null-space for dot product)
-        nz = np.flatnonzero(self.lambdas_)
+        non_zeros = np.flatnonzero(self.lambdas_)
         scaled_alphas = np.zeros_like(self.alphas_)
-        scaled_alphas[:, nz] = self.alphas_[:, nz] / np.sqrt(self.lambdas_[nz])
+        scaled_alphas[:, non_zeros] = (self.alphas_[:, non_zeros]
+                                       / np.sqrt(self.lambdas_[non_zeros]))
 
-        # Project by doing a scalar product between K and the scaled eigenvects
+        # Project with a scalar product between K and the scaled eigenvectors
         return np.dot(K, scaled_alphas)
 
     def inverse_transform(self, X):

@@ -113,6 +113,8 @@ Functions
    :template: function.rst
 
    cluster.affinity_propagation
+   cluster.cluster_optics_dbscan
+   cluster.compute_optics_graph
    cluster.dbscan
    cluster.estimate_bandwidth
    cluster.k_means
@@ -419,6 +421,7 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
    ensemble.VotingClassifier
+   ensemble.VotingRegressor
 
 .. autosummary::
    :toctree: generated/
@@ -754,6 +757,7 @@ Kernels:
 
    linear_model.enet_path
    linear_model.lars_path
+   linear_model.lars_path_gram
    linear_model.lasso_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
@@ -841,7 +845,7 @@ details.
    metrics.fbeta_score
    metrics.hamming_loss
    metrics.hinge_loss
-   metrics.jaccard_similarity_score
+   metrics.jaccard_score
    metrics.log_loss
    metrics.matthews_corrcoef
    metrics.multilabel_confusion_matrix
@@ -1418,12 +1422,6 @@ Low-level methods
 
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
-
-   utils.testing.mock_mldata_urlopen
-
-.. autosummary::
-   :toctree: generated/
    :template: function.rst
 
    utils.arrayfuncs.cholesky_delete
@@ -1435,6 +1433,7 @@ Low-level methods
    utils.check_scalar
    utils.check_consistent_length
    utils.check_random_state
+   utils.check_psd_eigenvalues
    utils.class_weight.compute_class_weight
    utils.class_weight.compute_sample_weight
    utils.deprecated
@@ -1508,6 +1507,7 @@ To be removed in 0.23
    utils.cpu_count
    utils.delayed
    metrics.calinski_harabaz_score
+   metrics.jaccard_similarity_score
    linear_model.logistic_regression_path
 
 
@@ -1521,6 +1521,7 @@ To be removed in 0.22
    covariance.GraphLasso
    covariance.GraphLassoCV
    preprocessing.Imputer
+   utils.testing.mock_mldata_urlopen
 
 .. autosummary::
    :toctree: generated/

@@ -40,10 +40,11 @@ from sklearn.utils.validation import (
     check_memory,
     check_non_negative,
     _num_samples,
-    check_scalar)
+    check_scalar,
+    check_psd_eigenvalues)
 import sklearn
 
-from sklearn.exceptions import NotFittedError
+from sklearn.exceptions import NotFittedError, PSDSpectrumWarning
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
@@ -202,7 +203,7 @@ def test_check_array_force_all_finite_object():
 
 @ignore_warnings
 def test_check_array():
-    # accept_sparse == None
+    # accept_sparse == False
     # raise error on sparse inputs
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
@@ -387,12 +388,15 @@ def test_check_array_dtype_warning():
         assert_equal(X_checked.dtype, np.float64)
 
     for X in float64_data:
-        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
-                                       accept_sparse=True, warn_on_dtype=True)
-        assert_equal(X_checked.dtype, np.float64)
-        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
-                                       accept_sparse=True, warn_on_dtype=False)
-        assert_equal(X_checked.dtype, np.float64)
+        with pytest.warns(None) as record:
+            warnings.simplefilter("ignore", DeprecationWarning)  # 0.23
+            X_checked = check_array(X, dtype=np.float64,
+                                    accept_sparse=True, warn_on_dtype=True)
+            assert_equal(X_checked.dtype, np.float64)
+            X_checked = check_array(X, dtype=np.float64,
+                                    accept_sparse=True, warn_on_dtype=False)
+            assert_equal(X_checked.dtype, np.float64)
+        assert len(record) == 0
 
     for X in float32_data:
         X_checked = assert_no_warnings(check_array, X,
@@ -417,6 +421,17 @@ def test_check_array_dtype_warning():
     assert_equal(X_checked.format, 'csr')
 
 
+def test_check_array_warn_on_dtype_deprecation():
+    X = np.asarray([[0.0], [1.0]])
+    Y = np.asarray([[2.0], [3.0]])
+    with pytest.warns(DeprecationWarning,
+                      match="'warn_on_dtype' is deprecated"):
+        check_array(X, warn_on_dtype=True)
+    with pytest.warns(DeprecationWarning,
+                      match="'warn_on_dtype' is deprecated"):
+        check_X_y(X, Y, warn_on_dtype=True)
+
+
 def test_check_array_accept_sparse_type_exception():
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
@@ -426,9 +441,6 @@ def test_check_array_accept_sparse_type_exception():
            "Use X.toarray() to convert to a dense numpy array.")
     assert_raise_message(TypeError, msg,
                          check_array, X_csr, accept_sparse=False)
-    with pytest.warns(DeprecationWarning):
-        assert_raise_message(TypeError, msg,
-                             check_array, X_csr, accept_sparse=None)
 
     msg = ("Parameter 'accept_sparse' should be a string, "
            "boolean or list of strings. You provided 'accept_sparse={}'.")
@@ -444,9 +456,6 @@ def test_check_array_accept_sparse_type_exception():
 
     assert_raise_message(TypeError, "SVR",
                          check_array, X_csr, accept_sparse=[invalid_type])
-
-    # Test deprecation of 'None'
-    assert_warns(DeprecationWarning, check_array, X, accept_sparse=None)
 
 
 def test_check_array_accept_sparse_no_exception():
@@ -696,8 +705,7 @@ def test_suppress_validation():
 def test_check_array_series():
     # regression test that check_array works on pandas Series
     pd = importorskip("pandas")
-    res = check_array(pd.Series([1, 2, 3]), ensure_2d=False,
-                      warn_on_dtype=True)
+    res = check_array(pd.Series([1, 2, 3]), ensure_2d=False)
     assert_array_equal(res, np.array([1, 2, 3]))
 
     # with categorical dtype (not a numpy dtype) (GH12699)
@@ -718,7 +726,10 @@ def test_check_dataframe_warns_on_dtype():
                          check_array, df, dtype=np.float64, warn_on_dtype=True)
     assert_warns(DataConversionWarning, check_array, df,
                  dtype='numeric', warn_on_dtype=True)
-    assert_no_warnings(check_array, df, dtype='object', warn_on_dtype=True)
+    with pytest.warns(None) as record:
+        warnings.simplefilter("ignore", DeprecationWarning)  # 0.23
+        check_array(df, dtype='object', warn_on_dtype=True)
+    assert len(record) == 0
 
     # Also check that it raises a warning for mixed dtypes in a DataFrame.
     df_mixed = pd.DataFrame([['1', 2, 3], ['4', 5, 6]])
@@ -734,8 +745,11 @@ def test_check_dataframe_warns_on_dtype():
     df_mixed_numeric = pd.DataFrame([[1., 2, 3], [4., 5, 6]])
     assert_warns(DataConversionWarning, check_array, df_mixed_numeric,
                  dtype='numeric', warn_on_dtype=True)
-    assert_no_warnings(check_array, df_mixed_numeric.astype(int),
-                       dtype='numeric', warn_on_dtype=True)
+    with pytest.warns(None) as record:
+        warnings.simplefilter("ignore", DeprecationWarning)  # 0.23
+        check_array(df_mixed_numeric.astype(int),
+                    dtype='numeric', warn_on_dtype=True)
+    assert len(record) == 0
 
 
 class DummyMemory:
@@ -841,3 +855,82 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
                      min_val=min_val, max_val=max_val)
     assert str(raised_error.value) == str(err_msg)
     assert type(raised_error.value) == type(err_msg)
+
+
+_psd_cases_valid = {
+    'nominal': ((1, 2), np.array([1, 2]), None, ""),
+    'nominal_np_array': (np.array([1, 2]), np.array([1, 2]), None, ""),
+    'insignificant_imag': ((5, 5e-5j), np.array([5, 0]), None, ""),
+    'significant neg': ((5, -1), np.array([5, 0]), PSDSpectrumWarning,
+                        "There are significant negative eigenvalues"),
+    'significant neg float32': (np.array([3e-4, -2e-6], dtype=np.float32),
+                                np.array([3e-4, 0], dtype=np.float32),
+                                PSDSpectrumWarning,
+                                "There are significant negative eigenvalues"),
+    'significant neg float64': (np.array([1e-5, -2e-10], dtype=np.float64),
+                                np.array([1e-5, 0], dtype=np.float64),
+                                PSDSpectrumWarning,
+                                "There are significant negative eigenvalues"),
+    'insignificant neg': ((5, -5e-5), np.array([5, 0]), None, ""),
+    'insignificant neg float32': (np.array([1, -1e-6], dtype=np.float32),
+                                  np.array([1, 0], dtype=np.float32),
+                                  None, ""),
+    'insignificant neg float64': (np.array([1, -1e-10], dtype=np.float64),
+                                  np.array([1, 0], dtype=np.float64),
+                                  None, ""),
+}
+
+
+@pytest.mark.parametrize("lambdas, expected_lambdas, w_type, w_msg",
+                         list(_psd_cases_valid.values()),
+                         ids=list(_psd_cases_valid.keys()))
+@pytest.mark.parametrize("warn_on_zeros", [True, False])
+def test_check_psd_eigenvalues_valid(lambdas, expected_lambdas, w_type, w_msg,
+                                     warn_on_zeros):
+    """Test that check_psd_eigenvalues returns the right output for valid
+    input, possibly raising the right warning"""
+
+    with pytest.warns(w_type, match=w_msg) as w:
+        assert_array_equal(
+            check_psd_eigenvalues(lambdas, warn_on_zeros=warn_on_zeros),
+            expected_lambdas
+        )
+    if w_type is None:
+        assert not w
+
+
+def test_check_psd_eigenvalues_bad_conditioning_warning():
+    """Test that check_psd_eigenvalues raises a warning for bad conditioning
+    when warn_on_zeros is set to True, and does not when it is set to False"""
+
+    input = (5, 4e-12)
+    output = np.array([5, 0])
+
+    with pytest.warns(None, ) as w:
+        assert_array_equal(check_psd_eigenvalues(input, warn_on_zeros=False),
+                           output)
+    assert not w
+
+    w_msg = "the largest eigenvalue is more than 1.00E\\+12 times the smallest"
+    with pytest.warns(PSDSpectrumWarning, match=w_msg) as w:
+        assert_array_equal(check_psd_eigenvalues(input, warn_on_zeros=True),
+                           output)
+
+
+_psd_cases_invalid = {
+    'significant_imag': ((5, 5j), ValueError,
+                         "There are significant imaginary parts in eigenv"),
+    'all negative': ((-5, -1), ValueError,
+                     "All eigenvalues are negative \\(maximum is -1.000")
+}
+
+
+@pytest.mark.parametrize("lambdas, err_type, err_msg",
+                         list(_psd_cases_invalid.values()),
+                         ids=list(_psd_cases_invalid.keys()))
+def test_check_psd_eigenvalues_invalid(lambdas, err_type, err_msg):
+    """Test that check_psd_eigenvalues raises the right error for invalid
+    input"""
+
+    with pytest.raises(err_type, match=err_msg):
+        check_psd_eigenvalues(lambdas)

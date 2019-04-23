@@ -13,7 +13,7 @@ __all__ = ['NotFittedError',
            'NonBLASDotWarning',
            'SkipTestWarning',
            'UndefinedMetricWarning',
-           'KernelWarning']
+           'PSDSpectrumWarning']
 
 
 class NotFittedError(ValueError, AttributeError):
@@ -157,8 +157,13 @@ class UndefinedMetricWarning(UserWarning):
     """
 
 
-class KernelWarning(UserWarning):
-    """Custom warning to capture kernel issues
+class PSDSpectrumWarning(UserWarning):
+    """Warning raised when the eigenvalues of a PSD matrix have issues
+
+    This warning is typically raised by ``check_psd_eigenvalues`` when the
+    eigenvalues of a positive semidefinite (PSD) matrix such as a gram matrix
+    (kernel) present significant negative eigenvalues, or bad conditioning i.e.
+    very small non-zero eigenvalues compared to the largest eigenvalue.
 
     .. versionadded:: 0.21
     """

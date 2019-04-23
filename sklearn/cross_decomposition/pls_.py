@@ -530,7 +530,7 @@ class PLSRegression(_PLS):
         W: x_weights_
         C: y_weights_
         P: x_loadings_
-        Q: y_loadings__
+        Q: y_loadings_
 
     Are computed such that::
 

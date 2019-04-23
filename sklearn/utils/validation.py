@@ -21,7 +21,7 @@ from numpy.core.numeric import ComplexWarning
 
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
-from ..exceptions import NonBLASDotWarning, KernelWarning
+from ..exceptions import NonBLASDotWarning, PSDSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 from ._joblib import Memory
@@ -55,6 +55,7 @@ def _assert_all_finite(X, allow_nan=False):
                 not allow_nan and not np.isfinite(X).all()):
             type_err = 'infinity' if allow_nan else 'NaN, infinity'
             raise ValueError(msg_err.format(type_err, X.dtype))
+    # for object dtype data, we only check for NaNs (GH-13254)
     elif X.dtype == np.dtype('object') and not allow_nan:
         if _object_dtype_isnan(X).any():
             raise ValueError("Input contains NaN")
@@ -332,7 +333,7 @@ def _ensure_no_complex_data(array):
 def check_array(array, accept_sparse=False, accept_large_sparse=True,
                 dtype="numeric", order=None, copy=False, force_all_finite=True,
                 ensure_2d=True, allow_nd=False, ensure_min_samples=1,
-                ensure_min_features=1, warn_on_dtype=False, estimator=None):
+                ensure_min_features=1, warn_on_dtype=None, estimator=None):
 
     """Input validation on an array, list, sparse matrix or similar.
 
@@ -351,11 +352,6 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
-
-        .. deprecated:: 0.19
-           Passing 'None' to parameter ``accept_sparse`` in methods is
-           deprecated in version 0.19 "and will be removed in 0.21. Use
-           ``accept_sparse=False`` instead.
 
     accept_large_sparse : bool (default=True)
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
@@ -390,6 +386,8 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         - 'allow-nan': accept only np.nan values in array. Values cannot
           be infinite.
 
+        For object dtyped data, only np.nan is checked and not np.inf.
+
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
 
@@ -410,9 +408,13 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         dimensions or is originally 1D and ``ensure_2d`` is True. Setting to 0
         disables this check.
 
-    warn_on_dtype : boolean (default=False)
+    warn_on_dtype : boolean or None, optional (default=None)
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
+
+        .. deprecated:: 0.21
+            ``warn_on_dtype`` is deprecated in version 0.21 and will be
+            removed in 0.23.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -421,16 +423,14 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     -------
     array_converted : object
         The converted and validated array.
-
     """
-    # accept_sparse 'None' deprecation check
-    if accept_sparse is None:
+    # warn_on_dtype deprecation
+    if warn_on_dtype is not None:
         warnings.warn(
-            "Passing 'None' to parameter 'accept_sparse' in methods "
-            "check_array and check_X_y is deprecated in version 0.19 "
-            "and will be removed in 0.21. Use 'accept_sparse=False' "
-            " instead.", DeprecationWarning)
-        accept_sparse = False
+            "'warn_on_dtype' is deprecated in version 0.21 and will be "
+            "removed in 0.23. Don't set `warn_on_dtype` to remove this "
+            "warning.",
+            DeprecationWarning)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -602,7 +602,7 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
               dtype="numeric", order=None, copy=False, force_all_finite=True,
               ensure_2d=True, allow_nd=False, multi_output=False,
               ensure_min_samples=1, ensure_min_features=1, y_numeric=False,
-              warn_on_dtype=False, estimator=None):
+              warn_on_dtype=None, estimator=None):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X to be 2D and y 1D. By
@@ -626,11 +626,6 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
-
-        .. deprecated:: 0.19
-           Passing 'None' to parameter ``accept_sparse`` in methods is
-           deprecated in version 0.19 "and will be removed in 0.21. Use
-           ``accept_sparse=False`` instead.
 
     accept_large_sparse : bool (default=True)
         If a CSR, CSC, COO or BSR sparse matrix is supplied and accepted by
@@ -692,9 +687,13 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         it is converted to float64. Should only be used for regression
         algorithms.
 
-    warn_on_dtype : boolean (default=False)
+    warn_on_dtype : boolean or None, optional (default=None)
         Raise DataConversionWarning if the dtype of the input data structure
         does not match the requested dtype, causing a memory copy.
+
+        .. deprecated:: 0.21
+            ``warn_on_dtype`` is deprecated in version 0.21 and will be
+             removed in 0.23.
 
     estimator : str or estimator instance (default=None)
         If passed, include the name of the estimator in warning messages.
@@ -985,119 +984,153 @@ def check_scalar(x, name, target_type, min_val=None, max_val=None):
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
 
 
-def check_kernel_eigenvalues(lambdas, warn_on_zeros=False):
-    """Checks that the provided array of kernel eigenvalues for numerical or
-    conditioning issues and returns a fixed validated version.
+def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
+    """Check the eigenvalues of a positive semidefinite (PSD) matrix.
+
+    Checks the provided array of PSD matrix eigenvalues for numerical or
+    conditioning issues and returns a fixed validated version. This method
+    should typically be used if the PSD matrix is user-provided (e.g. a
+    Gram matrix) or computed using a user-provided dissimilarity metric
+    (e.g. kernel function), or if the decomposition process uses approximation
+    methods (randomized SVD, etc.).
 
     It checks:
 
-     - that there are no significant imaginary parts in eigenvalues (more than
-     1e-5 times the maximum real part). If this check fails, it raises a
-     ValueError. Otherwise all non-significant imaginary parts that may remain
-     are removed.
+    - that there are no significant imaginary parts in eigenvalues (more than
+      1e-5 times the maximum real part). If this check fails, it raises a
+      ``ValueError``. Otherwise all non-significant imaginary parts that may
+      remain are removed.
 
-     - that eigenvalues are not all negative. If this check fails, it raises a
-     ValueError
+    - that eigenvalues are not all negative. If this check fails, it raises a
+      ``ValueError``
 
-     - that there are no significant negative eigenvalues (with absolute value
-     more than 1e-10 and more than 1e-5 times the largest positive eigenvalue).
-     If this check fails, it raises a KernelWarning. All negative eigenvalues
-     are set to zero in all cases.
+    - that there are no significant negative eigenvalues (with absolute value
+      more than 1e-10 and more than 1e-5 times the largest positive
+      eigenvalue). If this check fails, it raises a ``PSDSpectrumWarning``. All
+      negative eigenvalues (even smaller ones) are set to zero in all cases.
 
-     - that the eigenvalues are well conditioned. That means, that the
-     eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
-     If this check fails and `warn_on_zeros=True`, it raises a KernelWarning.
-     All the eigenvalues that are too small are then set to zero.
-
-    Note: the returned array is converted to numpy array.
-
-    >>> check_kernel_eigenvalues((1, 2))      # nominal case
-    ... # doctest: +NORMALIZE_WHITESPACE
-    array([1, 2])
-    >>> check_kernel_eigenvalues((5, 5j))     # significant imag part
-    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    Traceback (most recent call last):
-        ...
-    ValueError: There are significant imaginary parts in eigenvalues (1.000000
-        of the max real part). Something may be wrong with the kernel.
-    >>> check_kernel_eigenvalues((5, 5e-5j))  # insignificant imag part
-    ... # doctest: +NORMALIZE_WHITESPACE
-    array([5., 0.])
-    >>> check_kernel_eigenvalues((-5, -1))    # all negative
-    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    Traceback (most recent call last):
-        ...
-    ValueError: All eigenvalues are negative (max is -1.000000). Something may
-        be wrong with the kernel.
-    >>> check_kernel_eigenvalues((5, -1))     # significant negative
-    ... # doctest: +NORMALIZE_WHITESPACE
-    array([5, 0])
-    >>> check_kernel_eigenvalues((5, -5e-5))  # insignificant negative
-    ... # doctest: +NORMALIZE_WHITESPACE
-    array([5., 0.])
-    >>> check_kernel_eigenvalues((5, 4e-12))  # bad conditioning (too small)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    array([5., 0.])
+    - that the eigenvalues are well conditioned. That means, that the
+      eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
+      If this check fails and ``warn_on_zeros=True``, it raises a
+      ``PSDSpectrumWarning``. All the eigenvalues that are too small are then
+      set to zero.
 
     Parameters
     ----------
     lambdas : array-like
         Array of eigenvalues to check / fix.
 
-    warn_on_zeros : boolean (default: False)
-        When this is set to `True`, a `KernelWarning` will be raised when there
-        are extremely small eigenvalues. Otherwise no warning will be raised.
-        Note that in both cases, extremely small eigenvalues will be set to
-        zero.
+    warn_on_zeros : bool, optional (default=False)
+        When this is set to ``True``, a ``PSDSpectrumWarning`` will be raised
+        when there are extremely small eigenvalues. Otherwise no warning will
+        be raised. Note that in both cases, extremely small eigenvalues will be
+        set to zero.
 
     Returns
     -------
     lambdas_fixed : array-like
-        The fixed validated array of eigenvalues.
+        A fixed validated copy of the array of eigenvalues.
+
+    Examples
+    --------
+    >>> check_psd_eigenvalues([1, 2])      # nominal case
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([1, 2])
+    >>> check_psd_eigenvalues([5, 5j])     # significant imag part
+    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    Traceback (most recent call last):
+        ...
+    ValueError: There are significant imaginary parts in eigenvalues (1.000000
+        of the maximum real part). The matrix is maybe not PSD, or something
+        went wrong with the eigenvalues decomposition.
+    >>> check_psd_eigenvalues([5, 5e-5j])  # insignificant imag part
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([5., 0.])
+    >>> check_psd_eigenvalues([-5, -1])    # all negative
+    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    Traceback (most recent call last):
+        ...
+    ValueError: All eigenvalues are negative (maximum is -1.000000). The matrix
+        is maybe not PSD, or something went wrong with the eigenvalues
+        decomposition.
+    >>> check_psd_eigenvalues([5, -1])     # significant negative
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([5, 0])
+    >>> check_psd_eigenvalues([5, -5e-5])  # insignificant negative
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([5., 0.])
+    >>> check_psd_eigenvalues([5, 4e-12])  # bad conditioning (too small)
+    ... # doctest: +NORMALIZE_WHITESPACE
+    array([5., 0.])
+
     """
+    # is the provided array in double precision (float64) ?
+    if isinstance(lambdas, np.ndarray):
+        # From https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
+        # and https://docs.scipy.org/doc/numpy/user/basics.types.html
+        if lambdas.dtype.kind == 'f':
+            is_double_precision = (lambdas.dtype.itemsize >= 8)
+        else:
+            # default for non-float dtypes
+            is_double_precision = True
+    else:
+        # default for non-numpy inputs
+        is_double_precision = True
+
+    # note: the minimum value available is
+    #  - single-precision: np.finfo('float32').eps = 1.2e-07
+    #  - double-precision: np.finfo('float64').eps = 2.2e-16
+
+    # the various thresholds used for validation
+    # we may wish to change the value according to precision.
+    significant_imag_ratio = 1e-5
+    significant_neg_ratio = 1e-5 if is_double_precision else 5e-3
+    significant_neg_value = 1e-10 if is_double_precision else 1e-6
+    small_pos_ratio = 1e-12
 
     # Check that there are no significant imaginary parts
     if not np.isreal(lambdas).all():
         max_imag_abs = abs(np.imag(lambdas)).max()
         max_real_abs = abs(np.real(lambdas)).max()
-        if max_imag_abs > 1e-5 * max_real_abs:
+        if max_imag_abs > significant_imag_ratio * max_real_abs:
             raise ValueError(
                 "There are significant imaginary parts in eigenvalues (%f "
-                "of the max real part). Something may be wrong with the "
-                "kernel." % (max_imag_abs / max_real_abs))
+                "of the maximum real part). The matrix is maybe not PSD, or "
+                "something went wrong with the eigenvalues decomposition."
+                "" % (max_imag_abs / max_real_abs))
 
     # Remove the insignificant imaginary parts
-    lambdas = np.real(lambdas)
+    lambdas = np.real(np.copy(lambdas))
 
     # Check that there are no significant negative eigenvalues
     max_eig = lambdas.max()
     if max_eig < 0:
-        raise ValueError("All eigenvalues are negative (max is %f). Something "
-                         "may be wrong with the kernel." % max_eig)
+        raise ValueError("All eigenvalues are negative (maximum is %f). The "
+                         "matrix is maybe not PSD, or something went wrong "
+                         "with the eigenvalues decomposition." % max_eig)
 
     else:
         min_eig = lambdas.min()
-        if -min_eig > 1e-5 * max(max_eig, 0) and -min_eig > 1e-10:
-            # If kernel has been computed with single precision we would
-            # probably need more tolerant thresholds such as:
-            # (-min_eig > 5e-3 * max(max_eig, 0) and -min_eig > 1e-8)
+        if (min_eig < -significant_neg_ratio * max(max_eig, 0)
+                and min_eig < -significant_neg_value):
             warnings.warn("There are significant negative eigenvalues "
-                          "(%f of the max positive). Something may be "
-                          "wrong with the kernel. Replacing them by "
-                          "zero." % (-min_eig / max_eig), KernelWarning)
+                          "(%f of the maximum positive). The matrix is maybe "
+                          "not PSD, or something went wrong with the "
+                          "eigenvalues decomposition. Replacing them with "
+                          "zero." % (-min_eig / max_eig), PSDSpectrumWarning)
 
     # Remove all negative values in all cases
     lambdas[lambdas < 0] = 0
 
     # Finally check for conditioning
-    max_conditioning = 1e12  # Max allowed conditioning (ratio big/small)
-    too_small_lambdas = lambdas < max_eig / max_conditioning
+    too_small_lambdas = (0 < lambdas) & (lambdas < small_pos_ratio * max_eig)
     if too_small_lambdas.any():
         if warn_on_zeros:
-            warnings.warn("The kernel is badly conditioned: the largest "
+            warnings.warn("Badly conditioned PSD matrix spectrum: the largest "
                           "eigenvalue is more than %.2E times the smallest. "
-                          "Small eigenvalues will be replaced "
-                          "by 0" % max_conditioning, KernelWarning)
+                          "Small eigenvalues will be replaced with 0."
+                          "" % (1 / small_pos_ratio),
+                          PSDSpectrumWarning)
         lambdas[too_small_lambdas] = 0
 
     return lambdas

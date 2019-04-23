@@ -138,6 +138,21 @@ def test_pairwise_boolean_distance(metric):
             res[np.isnan(res)] = 0
             assert np.sum(res != 0) == 0
 
+    # non-boolean arrays are converted to boolean for boolean
+    # distance metrics with a data conversion warning
+    msg = "Data was converted to boolean for metric %s" % metric
+    with pytest.warns(DataConversionWarning, match=msg):
+        pairwise_distances(X, metric=metric)
+
+
+def test_no_data_conversion_warning():
+    # No warnings issued if metric is not a boolean distance function
+    rng = np.random.RandomState(0)
+    X = rng.randn(5, 4)
+    with pytest.warns(None) as records:
+        pairwise_distances(X, metric="minkowski")
+    assert len(records) == 0
+
 
 @pytest.mark.parametrize('func', [pairwise_distances, pairwise_kernels])
 def test_pairwise_precomputed(func):
@@ -905,7 +920,7 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
                                                 y_is_x):
     # check that pairwise_distances give the same result in sequential and
     # parallel, when metric has data-derived parameters.
-    with config_context(working_memory=0.1):  # to have more than 1 chunk
+    with config_context(working_memory=1):  # to have more than 1 chunk
         rng = np.random.RandomState(0)
         X = rng.random_sample((1000, 10))
 
