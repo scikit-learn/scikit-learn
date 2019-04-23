@@ -31,10 +31,10 @@ for other tasks such as object classification, where performance is not
 necessarily related to visualisation.
 
 """
-from time import time
 
 print(__doc__)
 
+from time import time
 
 import matplotlib.pyplot as plt
 import numpy as np
