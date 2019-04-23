@@ -27,6 +27,9 @@ random sampling procedures.
 - :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
 - :class:`ensemble.GradientBoostingClassifier` |Fix|
+- :class:`sklearn.feature_extraction.text.HashingVectorizer`,
+  :class:`sklearn.feature_extraction.text.TfidfVectorizer`, and
+  :class:`sklearn.feature_extraction.text.CountVectorizer` |Fix|
 - :class:`neural_network.MLPClassifier` |Fix|
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
@@ -274,17 +277,16 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| Deprecated :mod:`externals.six` since we have dropped support for
   Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-:mod:`sklearn.inspection`
-.........................
+:mod:`sklearn.feature_extraction`
+.................................
 
-- |Feature| A new module ``sklearn.inspection`` is created.
-
-- |Feature| Partial dependence plots
-  (:func:`inspection.plot_partial_dependence`) are now supported for
-  any regressor or classifier (provided that they have a `predict_proba`
-  method). :issue:`12599` by :user:`Trevor Stephens <trevorstephens>` and
-  :user:`Nicolas Hug <NicolasHug>`.
-
+- |Fix| |API| If ``input='file'`` or ``input='filename'``, and a callable is given
+  as the ``analyzer``, :class:`sklearn.feature_extraction.text.HashingVectorizer`,
+  :class:`sklearn.feature_extraction.text.TfidfVectorizer`, and
+  :class:`sklearn.feature_extraction.text.CountVectorizer` now read the data
+  from the file(s) and then pass it to the given ``analyzer``, instead of
+  passing the file name(s) or the file object(s) to the analyzer.
+  :issue:`13641` by `Adrin Jalali`_.
 
 :mod:`sklearn.impute`
 .....................
@@ -310,6 +312,17 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`impute.MissingIndicator` transform into the output of the imputer's
   transform. That allows a predictive estimator to account for missingness.
   :issue:`12583`, :issue:`13601` by :user:`Danylo Baibak <DanilBaibak>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| A new module ``sklearn.inspection`` is created.
+
+- |Feature| Partial dependence plots
+  (:func:`inspection.plot_partial_dependence`) are now supported for
+  any regressor or classifier (provided that they have a `predict_proba`
+  method). :issue:`12599` by :user:`Trevor Stephens <trevorstephens>` and
+  :user:`Nicolas Hug <NicolasHug>`.
 
 :mod:`sklearn.isotonic`
 .......................
@@ -407,7 +420,7 @@ Support for Python 3.4 and below has been officially dropped.
   by :user:`Bartosz Telenczuk <btel>`
 
 :mod:`sklearn.manifold`
-............................
+.......................
 
 - |Efficiency| Make :func:`manifold.tsne.trustworthiness` use an inverted index
   instead of an `np.where` lookup to find the rank of neighbors in the input
@@ -533,7 +546,7 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
 :mod:`sklearn.multioutput`
-........................
+..........................
 
 - |Fix| Fixed a bug in :class:`multiout.MultiOutputClassifier` where the
   `predict_proba` method incorrectly checked for `predict_proba` attribute in
@@ -585,6 +598,13 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| :class:`pipeline.Pipeline`  implements ``__len__`` and
   therefore ``len(pipeline)`` returns the number of steps in the pipeline.
   :issue:`13439` by :user:`Lakshya KD <LakshKD>`.
+
+- |Feature| Added optional parameter ``verbose`` in :class:`pipeline.Pipeline`,
+  :class:`compose.ColumnTransformer` and :class:`pipeline.FeatureUnion`
+  and corresponding ``make_`` helpers for showing progress and timing of
+  each step. :issue:`11364` by :user:`Baze Petrushev <petrushev>`,
+  :user:`Karan Desai <karandesai-96>`, `Joel Nothman`_, and
+  :user:`Thomas Fan <thomasjpfan>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -662,7 +682,7 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
 :mod:`sklearn.utils`
-...................
+....................
 
 - |API| Deprecated ``warn_on_dtype`` parameter from :func:`utils.check_array`
   and :func:`utils.check_X_y`. Added explicit warning for dtype conversion
