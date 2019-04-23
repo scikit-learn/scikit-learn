@@ -16,7 +16,7 @@ __all__ = ["SelfTrainingClassifier"]
 def _validate_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
     if not hasattr(estimator, "predict_proba"):
-        msg = "base_classifier ({}) should implement predict_proba!"
+        msg = "base_estimator ({}) should implement predict_proba!"
         raise ValueError(msg.format(type(estimator).__name__))
 
 
@@ -35,26 +35,26 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     Parameters
     ----------
-    base_classifier : estimator object
+    base_estimator : estimator object
         An estimator object implementing ``fit`` and ``predict_proba``.
         Invoking the ``fit`` method will fit a clone of the passed estimator,
-        which will be stored in the ``base_classifier_`` attribute.
+        which will be stored in the ``base_estimator_`` attribute.
 
-    selection_criterion : {'threshold', 'n_best'}, optional
+    criterion : {'threshold', 'k_best'}, optional \
     (default='threshold')
         The selection criterion used to select which labels to add to the
         training set. If 'threshold', pseudo-labels with prediction
-        probabilities above `threshold` are added to the dataset. If 'n_best',
-        the `n_best` pseudo-labels with highest prediction probabilities are
+        probabilities above `threshold` are added to the dataset. If 'k_best',
+        the `k_best` pseudo-labels with highest prediction probabilities are
         added to the dataset.
 
     threshold : float, optional (default=0.75)
-        The decision threshold for use with `selection_criterion`='threshold'.
+        The decision threshold for use with `criterion`='threshold'.
         Should be in [0, 1).
 
-    n_best : int, optional (default=10)
+    k_best : int, optional (default=10)
         The amount of samples to add in each iteration. Only used when
-        `selection_criterion`='n_best'.
+        `criterion`='k_best'.
 
     max_iter : int or ``None``, optional (default=10)
         Maximum number of iterations allowed. Should be greater than or equal
@@ -67,7 +67,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
-    base_classifier_ : estimator object
+    base_estimator_ : estimator object
         The fitted estimator.
 
     transduction_ : array, shape=(n_samples,)
@@ -119,16 +119,16 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     _estimator_type = "classifier"
 
     def __init__(self,
-                 base_classifier,
+                 base_estimator,
                  threshold=0.75,
-                 selection_criterion='threshold',
-                 n_best=10,
+                 criterion='threshold',
+                 k_best=10,
                  max_iter=10,
                  verbose=False):
-        self.base_classifier = base_classifier
+        self.base_estimator = base_estimator
         self.threshold = threshold
-        self.selection_criterion = selection_criterion
-        self.n_best = n_best
+        self.criterion = criterion
+        self.k_best = k_best
         self.max_iter = max_iter
         self.verbose = verbose
 
@@ -152,10 +152,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         X, y = check_X_y(X, y)
 
-        if self.base_classifier is None:
-            raise ValueError("base_classifier cannot be None!")
+        if self.base_estimator is None:
+            raise ValueError("base_estimator cannot be None!")
 
-        self.base_classifier_ = clone(self.base_classifier)
+        self.base_estimator_ = clone(self.base_estimator)
 
         if self.max_iter is not None and self.max_iter < 0:
             msg = "max_iter must be >= 0 or None, got {}".format(self.max_iter)
@@ -165,10 +165,10 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             msg = "threshold must be in [0,1), got {}".format(self.threshold)
             raise ValueError(msg)
 
-        if self.selection_criterion not in ['threshold', 'n_best']:
-            raise ValueError("selection_criterion must be either 'threshold' "
-                             "or 'n_best', got "
-                             "{}".format(self.selection_criterion))
+        if self.criterion not in ['threshold', 'k_best']:
+            raise ValueError("criterion must be either 'threshold' "
+                             "or 'k_best', got "
+                             "{}".format(self.criterion))
 
         if y.dtype.kind in ['U', 'S']:
             raise ValueError("y has dtype string. If you wish to predict on "
@@ -180,9 +180,9 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         if np.all(has_label):
             warnings.warn("y contains no unlabeled samples", UserWarning)
 
-        if self.selection_criterion == 'n_best' and (self.n_best > X.shape[0] -
+        if self.criterion == 'k_best' and (self.k_best > X.shape[0] -
                                                      np.sum(has_label)):
-            warnings.warn("n_best is larger than the amount of unlabeled "
+            warnings.warn("k_best is larger than the amount of unlabeled "
                           "samples. All unlabeled samples will be labeled in "
                           "the first iteration", UserWarning)
 
@@ -195,24 +195,24 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         while not np.all(has_label) and (self.max_iter is None or
                                          self.n_iter_ < self.max_iter):
             self.n_iter_ += 1
-            self.base_classifier_.fit(
+            self.base_estimator_.fit(
                 X[safe_mask(X, has_label)],
                 self.transduction_[safe_mask(self.transduction_, has_label)])
 
             if self.n_iter_ == 1:
-                _validate_estimator(self.base_classifier)
+                _validate_estimator(self.base_estimator)
 
             # Predict on the unlabeled samples
-            prob = self.base_classifier_.predict_proba(
+            prob = self.base_estimator_.predict_proba(
                 X[safe_mask(X, ~has_label)])
-            pred = self.base_classifier_.classes_[np.argmax(prob, axis=1)]
+            pred = self.base_estimator_.classes_[np.argmax(prob, axis=1)]
             max_proba = np.max(prob, axis=1)
 
             # Select samples
-            if self.selection_criterion == 'threshold':
+            if self.criterion == 'threshold':
                 new_labels_unlabeled = max_proba > self.threshold
             else:
-                n_to_select = min(self.n_best, max_proba.shape[0])
+                n_to_select = min(self.k_best, max_proba.shape[0])
                 if n_to_select == max_proba.shape[0]:
                     new_labels_unlabeled = np.ones_like(max_proba, dtype=bool)
                 else:
@@ -243,13 +243,13 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         if np.all(has_label):
             self.termination_condition_ = "all_labeled"
 
-        self.base_classifier_.fit(
+        self.base_estimator_.fit(
             X[safe_mask(X, has_label)],
             self.transduction_[safe_mask(self.transduction_, has_label)])
-        self.classes_ = self.base_classifier_.classes_
+        self.classes_ = self.base_estimator_.classes_
         return self
 
-    @if_delegate_has_method(delegate='base_classifier')
+    @if_delegate_has_method(delegate='base_estimator')
     def predict(self, X):
         """Predict the classes of X.
 
@@ -265,7 +265,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         """
         check_is_fitted(self, 'transduction_')
         X = check_array(X)
-        return self.base_classifier_.predict(X)
+        return self.base_estimator_.predict(X)
 
     def predict_proba(self, X):
         """Predict probability for each possible outcome.
@@ -281,11 +281,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             array with prediction probabilities
         """
         check_is_fitted(self, 'transduction_')
-        return self.base_classifier_.predict_proba(X)
+        return self.base_estimator_.predict_proba(X)
 
-    @if_delegate_has_method(delegate='base_classifier')
+    @if_delegate_has_method(delegate='base_estimator')
     def decision_function(self, X):
-        """Calls decision function of the base_classifier
+        """Calls decision function of the base_estimator
 
         Parameters
         ----------
@@ -295,12 +295,12 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Returns
         -------
         y : array-like, shape=(n_samples, n_features)
-            result of the decision function of the base_classifier
+            result of the decision function of the base_estimator
         """
         check_is_fitted(self, 'transduction_')
-        return self.base_classifier_.decision_function(X)
+        return self.base_estimator_.decision_function(X)
 
-    @if_delegate_has_method(delegate='base_classifier')
+    @if_delegate_has_method(delegate='base_estimator')
     def predict_log_proba(self, X):
         """Predict log probability for each possible outcome.
 
@@ -315,11 +315,11 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
             array with log prediction probabilities
         """
         check_is_fitted(self, 'transduction_')
-        return self.base_classifier_.predict_log_proba(X)
+        return self.base_estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method(delegate='base_classifier')
+    @if_delegate_has_method(delegate='base_estimator')
     def score(self, X, y):
-        """Calls score on the base_classifier
+        """Calls score on the base_estimator
 
         Parameters
         ----------
@@ -332,7 +332,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
         Returns
         -------
         score : float
-            result of calling score on the base_classifier
+            result of calling score on the base_estimator
         """
         check_is_fitted(self, 'transduction_')
-        return self.base_classifier_.score(X, y)
+        return self.base_estimator_.score(X, y)

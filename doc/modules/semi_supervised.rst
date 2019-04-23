@@ -49,9 +49,7 @@ as attributes. The optional `max_iter` parameter specifies how many times the
 loop is executed at most.
 
 The `max_iter` parameter may be set to `None`, causing the algorithm to
-iterate until all samples have labels. However, in practice, this can cause the
-fitting to never terminate, as the `base_classifier` may never produce
-confident predictions for certain samples.
+iterate until all samples have labels.
 
 .. topic:: Examples
 

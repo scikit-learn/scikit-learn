@@ -35,16 +35,16 @@ y_train_missing_strings[y_train_missing_labels == -1] = -1
 
 def test_missing_predict_proba():
     # Check that an error is thrown if predict_proba is not implemented
-    base_classifier = SVC(probability=False, gamma='scale')
-    self_training = SelfTrainingClassifier(base_classifier)
+    base_estimator = SVC(probability=False, gamma='scale')
+    self_training = SelfTrainingClassifier(base_estimator)
 
-    with pytest.raises(ValueError, match=r"base_classifier \(SVC\) should"):
+    with pytest.raises(ValueError, match=r"base_estimator \(SVC\) should"):
         self_training.fit(X_train, y_train_missing_labels)
 
 
 def test_none_classifier():
     st = SelfTrainingClassifier(None)
-    with pytest.raises(ValueError, match="base_classifier cannot be None"):
+    with pytest.raises(ValueError, match="base_estimator cannot be None"):
         st.fit(X_train, y_train_missing_labels)
 
 
@@ -52,56 +52,56 @@ def test_none_classifier():
                          [(-1, 1.0), (-100, -2), (-10, 10)])
 def test_invalid_params(max_iter, threshold):
     # Test negative iterations
-    base_classifier = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(base_classifier, max_iter=max_iter)
+    base_estimator = SVC(gamma="scale", probability=True)
+    st = SelfTrainingClassifier(base_estimator, max_iter=max_iter)
     with pytest.raises(ValueError, match="max_iter must be >= 0 or None"):
         st.fit(X_train, y_train)
 
-    base_classifier = SVC(gamma="scale", probability=True)
-    st = SelfTrainingClassifier(base_classifier, threshold=threshold)
+    base_estimator = SVC(gamma="scale", probability=True)
+    st = SelfTrainingClassifier(base_estimator, threshold=threshold)
     with pytest.raises(ValueError, match="threshold must be in"):
         st.fit(X_train, y_train)
 
 
 def test_invalid_params_selection_crit():
     st = SelfTrainingClassifier(KNeighborsClassifier(),
-                                selection_criterion='foo')
+                                criterion='foo')
 
-    with pytest.raises(ValueError, match="selection_criterion must be either"):
+    with pytest.raises(ValueError, match="criterion must be either"):
         st.fit(X_train, y_train)
 
 
-def test_warns_n_best():
+def test_warns_k_best():
     st = SelfTrainingClassifier(KNeighborsClassifier(),
-                                selection_criterion='n_best',
-                                n_best=1000)
-    with pytest.warns(UserWarning, match="n_best is larger than"):
+                                criterion='k_best',
+                                k_best=1000)
+    with pytest.warns(UserWarning, match="k_best is larger than"):
         st.fit(X_train, y_train_missing_labels)
 
     assert st.termination_condition_ == 'all_labeled'
 
 
-@pytest.mark.parametrize("base_classifier",
+@pytest.mark.parametrize("base_estimator",
                          [KNeighborsClassifier(),
                           SVC(gamma="scale", probability=True,
                               random_state=0)])
 @pytest.mark.parametrize("selection_crit",
-                         ['threshold', 'n_best'])
-def test_classification(base_classifier, selection_crit):
+                         ['threshold', 'k_best'])
+def test_classification(base_estimator, selection_crit):
     # Check classification for various parameter settings.
     # Also assert that predictions for strings and numerical labels are equal.
     # Also test for multioutput classification
     threshold = 0.75
     max_iter = 10
-    st = SelfTrainingClassifier(base_classifier, max_iter=max_iter,
+    st = SelfTrainingClassifier(base_estimator, max_iter=max_iter,
                                 threshold=threshold,
-                                selection_criterion=selection_crit)
+                                criterion=selection_crit)
     st.fit(X_train, y_train_missing_labels)
     pred = st.predict(X_test)
     proba = st.predict_proba(X_test)
 
-    st_string = SelfTrainingClassifier(base_classifier, max_iter=max_iter,
-                                       selection_criterion=selection_crit,
+    st_string = SelfTrainingClassifier(base_estimator, max_iter=max_iter,
+                                       criterion=selection_crit,
                                        threshold=threshold)
     st_string.fit(X_train, y_train_missing_strings)
     pred_string = st_string.predict(X_test)
@@ -131,10 +131,10 @@ def test_classification(base_classifier, selection_crit):
                  (n_labeled_samples,))
 
 
-def test_n_best():
+def test_k_best():
     st = SelfTrainingClassifier(KNeighborsClassifier(n_neighbors=1),
-                                selection_criterion='n_best',
-                                n_best=10,
+                                criterion='k_best',
+                                k_best=10,
                                 max_iter=None)
     y_train_only_one_label = np.copy(y_train)
     y_train_only_one_label[1:] = -1
@@ -153,16 +153,16 @@ def test_n_best():
 
 
 def test_sanity_classification():
-    base_classifier = SVC(gamma="scale", probability=True)
-    base_classifier.fit(X_train[n_labeled_samples:],
+    base_estimator = SVC(gamma="scale", probability=True)
+    base_estimator.fit(X_train[n_labeled_samples:],
                         y_train[n_labeled_samples:])
 
-    st = SelfTrainingClassifier(base_classifier)
+    st = SelfTrainingClassifier(base_estimator)
     st.fit(X_train, y_train_missing_labels)
 
-    pred1, pred2 = base_classifier.predict(X_test), st.predict(X_test)
+    pred1, pred2 = base_estimator.predict(X_test), st.predict(X_test)
     assert not np.array_equal(pred1, pred2)
-    score_supervised = accuracy_score(base_classifier.predict(X_test), y_test)
+    score_supervised = accuracy_score(base_estimator.predict(X_test), y_test)
     score_self_training = accuracy_score(st.predict(X_test), y_test)
 
     assert score_self_training > score_supervised
@@ -179,23 +179,23 @@ def test_none_iter():
     assert st.termination_condition_ == "all_labeled"
 
 
-@pytest.mark.parametrize("base_classifier",
+@pytest.mark.parametrize("base_estimator",
                          [KNeighborsClassifier(),
                           SVC(gamma="scale", probability=True,
                               random_state=0)])
 @pytest.mark.parametrize("y", [y_train_missing_labels,
                                y_train_missing_strings])
-def test_zero_iterations(base_classifier, y):
+def test_zero_iterations(base_estimator, y):
     # Check classification for zero iterations.
     # Fitting a SelfTrainingClassifier with zero iterations should give the
     # same results as fitting a supervised classifier.
     # This also asserts that string arrays work as expected.
 
-    clf1 = SelfTrainingClassifier(base_classifier, max_iter=0)
+    clf1 = SelfTrainingClassifier(base_estimator, max_iter=0)
 
     clf1.fit(X_train, y)
 
-    clf2 = base_classifier.fit(X_train[:n_labeled_samples],
+    clf2 = base_estimator.fit(X_train[:n_labeled_samples],
                                y[:n_labeled_samples])
 
     assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
@@ -291,10 +291,10 @@ def test_verbose(verbose):
         assert 'iteration' not in output.getvalue()
 
 
-def test_verbose_n_best():
+def test_verbose_k_best():
     st = SelfTrainingClassifier(KNeighborsClassifier(n_neighbors=1),
-                                selection_criterion='n_best',
-                                n_best=10, verbose=True,
+                                criterion='k_best',
+                                k_best=10, verbose=True,
                                 max_iter=None)
     old_stdout = sys.stdout
     sys.stdout = output = StringIO()
@@ -314,12 +314,12 @@ def test_verbose_n_best():
                       (n_samples - 1) % 10) in output.getvalue()
 
 
-def test_n_best_selects_best():
+def test_k_best_selects_best():
     # Tests that the labels added by st really are the 10 best labels.
     svc = SVC(gamma='scale', probability=True, random_state=0)
     st = SelfTrainingClassifier(svc,
-                                selection_criterion='n_best',
-                                max_iter=1, n_best=10)
+                                criterion='k_best',
+                                max_iter=1, k_best=10)
     has_label = y_train_missing_labels != -1
     st.fit(X_train, y_train_missing_labels)
 
