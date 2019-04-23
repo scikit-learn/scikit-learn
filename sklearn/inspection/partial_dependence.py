@@ -366,7 +366,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
 def plot_partial_dependence(estimator, X, features, feature_names=None,
                             target=None, response_method='auto', n_cols=3,
                             grid_resolution=100, percentiles=(0.05, 0.95),
-                            method='auto', n_jobs=1, verbose=0, fig=None,
+                            method='auto', n_jobs=None, verbose=0, fig=None,
                             line_kw=None, contour_kw=None, **fig_kw):
     """Partial dependence plots.
 
@@ -392,7 +392,8 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         if any entry is a string, then it must be in ``feature_names``.
     feature_names : seq of str, shape=(n_features,), optional
         Name of each feature; feature_names[i] holds the name of the feature
-        with index i.
+        with index i. By default, the name of the feature corresponds to
+        their numerical index.
     target : int, optional (default=None)
         - In a multiclass setting, specifies the class for which the PDPs
           should be computed. Note that for binary classification, the
@@ -441,9 +442,11 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         ``init`` predictor of the boosting process. In practice this still
         produces the same plots, up to a constant offset in the target
         response.
-    n_jobs : int, optional (default=1)
-        The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
-        See :term:`Glossary <n_jobs>` for more details.
+    n_jobs : int, optional (default=None)
+        The number of CPUs to use to compute the partial dependences.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
     verbose : int, optional (default=0)
         Verbose output during PD computations.
     fig : Matplotlib figure object, optional (default=None)
