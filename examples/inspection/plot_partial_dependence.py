@@ -87,8 +87,9 @@ def main():
     # We don't compute the 2-way PDP (5, 1) here, because it is a lot slower
     # with the brute method.
     features = [0, 5, 1, 2]
-    fig, axs = plot_partial_dependence(est, X, features, feature_names=names,
-                                       n_jobs=3, grid_resolution=50)
+    plot_partial_dependence(est, X, features, feature_names=names,
+                            n_jobs=3, grid_resolution=50)
+    fig = plt.gcf()
     fig.suptitle('Partial dependence of house value on non-location features\n'
                  'for the California housing dataset, with MLPRegressor')
     plt.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
@@ -100,8 +101,9 @@ def main():
     est.fit(X, y)
     print('Computing partial dependence plots...')
     features = [0, 5, 1, 2, (5, 1)]
-    fig, axs = plot_partial_dependence(est, X, features, feature_names=names,
-                                       n_jobs=3, grid_resolution=50)
+    plot_partial_dependence(est, X, features, feature_names=names,
+                            n_jobs=3, grid_resolution=50)
+    fig = plt.gcf()
     fig.suptitle('Partial dependence of house value on non-location features\n'
                  'for the California housing dataset, with Gradient Boosting')
     plt.subplots_adjust(top=0.9)
