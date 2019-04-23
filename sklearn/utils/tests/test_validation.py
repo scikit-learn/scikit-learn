@@ -873,9 +873,11 @@ _psd_cases_valid = {
                                 "There are significant negative eigenvalues"),
     'insignificant neg': ((5, -5e-5), np.array([5, 0]), None, ""),
     'insignificant neg float32': (np.array([1, -1e-6], dtype=np.float32),
-                                  np.array([1, 0], dtype=np.float32), None, ""),
+                                  np.array([1, 0], dtype=np.float32),
+                                  None, ""),
     'insignificant neg float64': (np.array([1, -1e-10], dtype=np.float64),
-                                  np.array([1, 0], dtype=np.float64), None, ""),
+                                  np.array([1, 0], dtype=np.float64),
+                                  None, ""),
 }
 
 
