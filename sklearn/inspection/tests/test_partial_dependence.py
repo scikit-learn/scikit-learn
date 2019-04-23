@@ -577,6 +577,7 @@ def test_plot_partial_dependence_input():
 
     close_fig()
 
+
 @if_matplotlib
 def test_plot_partial_dependence_fig():
     # Make sure fig object is correctly used if not None
