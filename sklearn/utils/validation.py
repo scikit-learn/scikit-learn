@@ -1051,7 +1051,13 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
     """
     # is the provided array in double precision (float64) ?
     if isinstance(lambdas, np.ndarray):
-        is_double_precision = (lambdas.dtype == np.dtype('f'))
+        # From https://docs.scipy.org/doc/numpy/reference/arrays.dtypes.html
+        # and https://docs.scipy.org/doc/numpy/user/basics.types.html
+        if lambdas.dtype.kind == 'f':
+            is_double_precision = (lambdas.dtype.itemsize >= 8)
+        else:
+            # default for non-float dtypes
+            is_double_precision = True
     else:
         # default for non-numpy inputs
         is_double_precision = True
@@ -1062,9 +1068,8 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     # the various thresholds used for validation
     # we may wish to change the value according to precision.
-    # currently we do it only for the 'absolute' threshold.
     significant_imag_ratio = 1e-5
-    significant_neg_ratio = 1e-5  # if is_double_precision else 5e-3
+    significant_neg_ratio = 1e-5 if is_double_precision else 5e-3
     significant_neg_value = 1e-10 if is_double_precision else 1e-6
     small_pos_ratio = 1e-12
 

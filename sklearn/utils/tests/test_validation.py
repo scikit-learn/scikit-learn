@@ -840,10 +840,23 @@ def test_check_scalar_invalid(x, target_name, target_type, min_val, max_val,
 
 _psd_cases_valid = {
     'nominal': ((1, 2), np.array([1, 2]), None, ""),
+    'nominal_np_array': (np.array([1, 2]), np.array([1, 2]), None, ""),
     'insignificant_imag': ((5, 5e-5j), np.array([5, 0]), None, ""),
     'significant neg': ((5, -1), np.array([5, 0]), PSDSpectrumWarning,
                         "There are significant negative eigenvalues"),
-    'insignificant neg': ((5, -5e-5), np.array([5, 0]), None, "")
+    'significant neg float32': (np.array([3e-4, -2e-6], dtype=np.float32),
+                                np.array([3e-4, 0], dtype=np.float32),
+                                PSDSpectrumWarning,
+                                "There are significant negative eigenvalues"),
+    'significant neg float64': (np.array([1e-5, -2e-10], dtype=np.float64),
+                                np.array([1e-5, 0], dtype=np.float64),
+                                PSDSpectrumWarning,
+                                "There are significant negative eigenvalues"),
+    'insignificant neg': ((5, -5e-5), np.array([5, 0]), None, ""),
+    'insignificant neg float32': (np.array([1, -1e-6], dtype=np.float32),
+                                  np.array([1, 0], dtype=np.float32), None, ""),
+    'insignificant neg float64': (np.array([1, -1e-10], dtype=np.float64),
+                                  np.array([1, 0], dtype=np.float64), None, ""),
 }
 
 
