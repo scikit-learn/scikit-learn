@@ -8,6 +8,7 @@
 import warnings
 from itertools import count
 import numbers
+from collections.abc import Iterable
 
 import numpy as np
 from scipy.stats.mstats import mquantiles
@@ -27,7 +28,7 @@ from ..ensemble._gradient_boosting import _partial_dependence_tree
 __all__ = ['partial_dependence', 'plot_partial_dependence']
 
 
-def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
+def _grid_from_X(X, percentiles, grid_resolution):
     """Generate a grid of points based on the percentiles of X.
 
     The grid is a cartesian product between the columns of ``values``. The
@@ -57,10 +58,8 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
         array ``values[j]`` is either ``grid_resolution``, or the number of
         unique values in ``X[:, j]``, whichever is smaller.
     """
-    try:
-        assert len(percentiles) == 2
-    except (AssertionError, TypeError):
-        raise ValueError('percentiles must be a sequence of 2 elements.')
+    if not isinstance(percentiles, Iterable) or len(percentiles) != 2:
+        raise ValueError("'percentiles' must be a sequence of 2 elements.")
     if not all(0 <= x <= 1 for x in percentiles):
         raise ValueError("'percentiles' values must be in [0, 1].")
     if percentiles[0] >= percentiles[1]:
@@ -102,8 +101,7 @@ def _partial_dependence_recursion(est, grid, features):
     # grid needs to be DTYPE
     grid = np.asarray(grid, dtype=DTYPE, order='C')
 
-    n_trees_per_stage = est.estimators_.shape[1]
-    n_estimators = est.estimators_.shape[0]
+    n_estimators, n_trees_per_stage = est.estimators_.shape
     learning_rate = est.learning_rate
     averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]),
                                     dtype=np.float64, order='C')
@@ -151,7 +149,8 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
         try:
             predictions = prediction_method(X_eval)
         except NotFittedError:
-            raise ValueError("'estimator' parameter must be a fitted estimator")
+            raise ValueError(
+                "'estimator' parameter must be a fitted estimator")
 
         # Note: predictions is of shape
         # (n_points,) for non-multioutput regressors
@@ -288,7 +287,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
     """
 
     if not (is_classifier(estimator) or is_regressor(estimator)):
-        raise ValueError("'estimator' must be a fitted regressor or classifier.")
+        raise ValueError(
+            "'estimator' must be a fitted regressor or classifier.")
 
     if (hasattr(estimator, 'classes_') and
             isinstance(estimator.classes_[0], np.ndarray)):
@@ -573,12 +573,12 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     # Also note: as multiclass-multioutput classifiers are not supported,
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
-    pd, _ = pd_result[0]  # checking the first result is enough
-    if is_regressor(estimator) and pd.shape[0] > 1:
+    avg_preds, _ = pd_result[0]  # checking the first result is enough
+    if is_regressor(estimator) and avg_preds.shape[0] > 1:
         if target is None:
             raise ValueError(
                 'target must be specified for multi-output regressors')
-        if not 0 <= target <= pd.shape[0]:
+        if not 0 <= target <= avg_preds.shape[0]:
             raise ValueError(
                 'target must be in [0, n_tasks], got {}.'.format(target))
         target_idx = target
@@ -587,8 +587,9 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
 
     # get global min and max values of PD grouped by plot type
     pdp_lim = {}
-    for pd, values in pd_result:
-        min_pd, max_pd = pd[target_idx].min(), pd[target_idx].max()
+    for avg_preds, values in pd_result:
+        min_pd = avg_preds[target_idx].min()
+        max_pd = avg_preds[target_idx].max()
         n_fx = len(values)
         old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
         min_pd = min(min_pd, old_min_pd)
@@ -612,16 +613,17 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     n_cols = min(n_cols, len(features))
     n_rows = int(np.ceil(len(features) / float(n_cols)))
     axs = []
-    for i, fx, name, (pd, values) in zip(count(), features, names, pd_result):
+    for i, fx, name, (avg_preds, values) in zip(
+            count(), features, names, pd_result):
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
         if len(values) == 1:
-            ax.plot(values[0], pd[target_idx].ravel(), **line_kw)
+            ax.plot(values[0], avg_preds[target_idx].ravel(), **line_kw)
         else:
             # make contour plot
             assert len(values) == 2
             XX, YY = np.meshgrid(values[0], values[1])
-            Z = pd[target_idx].T
+            Z = avg_preds[target_idx].T
             CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
                             colors='k')
             ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],

@@ -95,13 +95,15 @@ def test_grid_from_X():
 
     # Make sure that the grid is a cartesian product of the input (it will use
     # the unique values instead of the percentiles)
+    percentiles = (.05, .95)
+    grid_resolution = 100
     X = np.asarray([[1, 2],
                     [3, 4]])
-    grid, axes = _grid_from_X(X)
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution)
     assert_array_equal(grid, [[1, 2],
-                                     [1, 4],
-                                     [3, 2],
-                                     [3, 4]])
+                              [1, 4],
+                              [3, 2],
+                              [3, 4]])
     assert_array_equal(axes, X.T)
 
     # test shapes of returned objects depending on the number of unique values
@@ -111,7 +113,7 @@ def test_grid_from_X():
 
     # n_unique_values > grid_resolution
     X = rng.normal(size=(20, 2))
-    grid, axes = _grid_from_X(X, grid_resolution=grid_resolution)
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
     assert grid.shape == (grid_resolution * grid_resolution, X.shape[1])
     assert np.asarray(axes).shape == (2, grid_resolution)
 
@@ -119,47 +121,38 @@ def test_grid_from_X():
     n_unique_values = 12
     X[n_unique_values - 1:, 0] = 12345
     rng.shuffle(X)  # just to make sure the order is irrelevant
-    grid, axes = _grid_from_X(X, grid_resolution=grid_resolution)
+    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
     assert grid.shape == (n_unique_values * grid_resolution, X.shape[1])
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (grid_resolution,)
 
-    with pytest.raises(
-            ValueError,
-            match='percentiles are too close'):
-        _grid_from_X(X, grid_resolution=2, percentiles=(0, 0.0001))
 
-    for percentiles in ((1, 2, 3, 4), 12345):
-        with pytest.raises(
-                ValueError,
-                match="percentiles must be a sequence"):
-            _grid_from_X(X, percentiles=percentiles)
-
-    for percentiles in ((-1, .95), (.05, 2)):
-        with pytest.raises(
-                ValueError,
-                match="'percentiles' values must be in"):
-            _grid_from_X(X, percentiles=percentiles)
-
-    with pytest.raises(
-            ValueError,
-            match=r"percentiles\[0\] must be strictly less than"):
-        _grid_from_X(X, percentiles=(.9, .1))
-
-    with pytest.raises(
-            ValueError,
-            match="'grid_resolution' must be strictly greater than 1."):
-        _grid_from_X(X, grid_resolution=1)
+@pytest.mark.parametrize(
+    "grid_resolution, percentiles, err_msg",
+    [(2, (0, 0.0001), "percentiles are too close"),
+     (100, (1, 2, 3, 4), "'percentiles' must be a sequence of 2 elements"),
+     (100, 12345, "'percentiles' must be a sequence of 2 elements"),
+     (100, (-1, .95), r"'percentiles' values must be in \[0, 1\]"),
+     (100, (.05, 2), r"'percentiles' values must be in \[0, 1\]"),
+     (100, (.9, .1), r"percentiles\[0\] must be strictly less than"),
+     (1, (0.05, 0.95), "'grid_resolution' must be strictly greater than 1")]
+)
+def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
+    X = np.asarray([[1, 2], [3, 4]])
+    with pytest.raises(ValueError, match=err_msg):
+        _grid_from_X(
+            X, grid_resolution=grid_resolution, percentiles=percentiles
+        )
 
 
 @pytest.mark.parametrize('target_feature', (0, 3))
-@pytest.mark.parametrize('est, method',
-                         [(LinearRegression(), 'brute'),
-                          (GradientBoostingRegressor(random_state=0),
-                          'recursion'),
-                          (GradientBoostingRegressor(random_state=0),
-                          'brute')])
+@pytest.mark.parametrize(
+    'est, method',
+    [(LinearRegression(), 'brute'),
+     (GradientBoostingRegressor(random_state=0), 'recursion'),
+     (GradientBoostingRegressor(random_state=0), 'brute')]
+)
 def test_partial_dependence_helpers(est, method, target_feature):
     # Check that what is returned by _partial_dependence_brute or
     # _partial_dependence_recursion is equivalent to manually setting a target
@@ -199,7 +192,8 @@ def test_partial_dependence_helpers(est, method, target_feature):
 @pytest.mark.parametrize('target_feature', (0, 1, 2, 3, 4, 5))
 def test_recursion_decision_function(target_feature):
     # Make sure the recursion method (implicitly uses decision_function) has
-    # the same result as using brute method with response_method=decision_function
+    # the same result as using brute method with
+    # response_method=decision_function
 
     X, y = make_classification(n_classes=2, n_clusters_per_class=1,
                                random_state=1)
@@ -276,96 +270,87 @@ def test_multiclass_multioutput(Estimator):
         partial_dependence(est, X, [0])
 
 
-def test_partial_dependence_input():
-    # Test input validation of partial_dependence.
+class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
+    def fit(self, X, y):
+        return self
 
+
+@pytest.mark.parametrize(
+    "estimator, params, err_msg",
+    [(KMeans(),
+      {'features': [0]},
+      "'estimator' must be a fitted regressor or classifier"),
+     (LinearRegression(),
+      {'features': [0], 'response_method': 'predict_proba'},
+      'The response_method parameter is ignored for regressors'),
+     (GradientBoostingClassifier(random_state=0),
+      {'features': [0], 'response_method': 'predict_proba',
+       'method': 'recursion'},
+      "'recursion' method, the response_method must be 'decision_function'"),
+     (GradientBoostingClassifier(random_state=0),
+      {'features': [0], 'response_method': 'predict_proba', 'method': 'auto'},
+      "'recursion' method, the response_method must be 'decision_function'"),
+     (GradientBoostingClassifier(random_state=0),
+      {'features': [0], 'response_method': 'blahblah'},
+      'response_method blahblah is invalid. Accepted response_method'),
+     (NoPredictProbaNoDecisionFunction(),
+      {'features': [0], 'response_method': 'auto'},
+      'The estimator has no predict_proba and no decision_function method'),
+     (NoPredictProbaNoDecisionFunction(),
+      {'features': [0], 'response_method': 'predict_proba'},
+      'The estimator has no predict_proba method.'),
+     (NoPredictProbaNoDecisionFunction(),
+      {'features': [0], 'response_method': 'decision_function'},
+      'The estimator has no decision_function method.'),
+     (LinearRegression(),
+      {'features': [0], 'method': 'blahblah'},
+      'blahblah is invalid. Accepted method names are brute, recursion, auto'),
+     (LinearRegression(),
+      {'features': [0], 'method': 'recursion'},
+      "'estimator' must be an instance of BaseGradientBoosting for the"
+      " 'recursion'")]
+)
+def test_partial_dependence_error(estimator, params, err_msg):
     X, y = make_classification(random_state=0)
+    estimator.fit(X, y)
 
-    lr = LinearRegression()
-    lr.fit(X, y)
-    gbc = GradientBoostingClassifier(random_state=0)
-    gbc.fit(X, y)
+    with pytest.raises(ValueError, match=err_msg):
+        partial_dependence(estimator, X, **params)
 
-    with pytest.raises(
-            ValueError,
-            match="'estimator' must be a fitted regressor or classifier"):
-        partial_dependence(KMeans(), X, [0])
 
-    with pytest.raises(
-            ValueError,
-            match='The response_method parameter is ignored for regressors'):
-        partial_dependence(lr, X, [0], response_method='predict_proba')
+@pytest.mark.parametrize(
+    'estimator',
+    [LinearRegression(), GradientBoostingClassifier(random_state=0)]
+)
+@pytest.mark.parametrize('features', [-1, 1000000])
+def test_partial_dependence_unknown_feature(estimator, features):
+    X, y = make_classification(random_state=0)
+    estimator.fit(X, y)
 
-    with pytest.raises(
-            ValueError,
-            match="With the 'recursion' method, the response_method must be "
-                  "'decision_function'."):
-        partial_dependence(gbc, X, [0], response_method='predict_proba',
-                           method='recursion')
+    err_msg = 'all features must be in'
+    with pytest.raises(ValueError, match=err_msg):
+        partial_dependence(estimator, X, [features])
 
-    # for GBDTs, if users want to use predict_proba then they're forced to set
-    # 'method' to brute.
-    with pytest.raises(
-            ValueError,
-            match="With the 'recursion' method, the response_method must be "
-                  "'decision_function"):
-        partial_dependence(gbc, X, [0], response_method='predict_proba',
-                           method='auto')
 
-    with pytest.raises(
-            ValueError,
-            match="response_method blahblah is invalid. Accepted response"):
-        partial_dependence(gbc, X, [0], response_method='blahblah')
+@pytest.mark.parametrize(
+    'estimator',
+    [LinearRegression(), GradientBoostingClassifier(random_state=0)]
+)
+def test_partial_dependence_unfitted_estimator(estimator):
+    err_msg = "'estimator' parameter must be a fitted estimator"
+    with pytest.raises(ValueError, match=err_msg):
+        partial_dependence(estimator, X, [0])
 
-    class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
-        pass
-    bad_clf = NoPredictProbaNoDecisionFunction()
 
-    with pytest.raises(
-            ValueError,
-            match='The estimator has no predict_proba and no '
-                  'decision_function method.'):
-        partial_dependence(bad_clf, X, [0], response_method='auto')
-
-    with pytest.raises(
-            ValueError,
-            match='The estimator has no predict_proba method.'):
-        partial_dependence(bad_clf, X, [0], response_method='predict_proba')
-
-    with pytest.raises(
-            ValueError,
-            match='The estimator has no decision_function method.'):
-        partial_dependence(bad_clf, X, [0],
-                           response_method='decision_function')
-
-    with pytest.raises(
-            ValueError,
-            match="method blahblah is invalid. Accepted method names "
-                  "are brute, recursion, auto."):
-        partial_dependence(lr, X, [0], method='blahblah')
-
-    with pytest.raises(
-            ValueError,
-            match="'estimator' must be an instance of BaseGradientBoosting "
-                  "for the 'recursion' method"):
-        partial_dependence(lr, X, [0], method='recursion')
-
-    for feature in (-1, 1000000):
-        for est in (lr, gbc):
-            with pytest.raises(
-                    ValueError,
-                    match="all features must be in"):
-                partial_dependence(est, X, [feature])
-
-    for unfitted_est in (LinearRegression(), GradientBoostingRegressor()):
-        with pytest.raises(
-                ValueError,
-                match="'estimator' parameter must be a fitted estimator"):
-            partial_dependence(unfitted_est, X, [0])
-
+@pytest.mark.parametrize(
+    'estimator',
+    [LinearRegression(), GradientBoostingClassifier(random_state=0)]
+)
+def test_partial_dependence_X_list(estimator):
     # check that array-like objects are accepted
-    for est in (lr, gbc):
-        partial_dependence(est, list(X), [0])
+    X, y = make_classification(random_state=0)
+    estimator.fit(X, y)
+    partial_dependence(estimator, list(X), [0])
 
 
 def test_warning_recursion_non_constant_init():
