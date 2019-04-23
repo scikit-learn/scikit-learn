@@ -85,7 +85,7 @@ and follows the decision-making process outlined in :ref:`governance`.
    Scikit-learn thrives in an ecosystem of several related projects, which also
    may have relevant issues to work on, including smaller projects such as:
 
-   * `scikit-learn-contrib <https://github.com/search?q=org%3Ascikit-learn-contrib+is%3Aissue+is%3Aopen+sort%3Aupdated-desc&type=Issues>`__
+   * `scikit-learn-contrib <https://github.com/scikit-learn-contrib/scikit-learn-contrib/issues>`__
    * `joblib <https://github.com/joblib/joblib/issues>`__
    * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
    * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
