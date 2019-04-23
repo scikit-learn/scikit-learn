@@ -443,15 +443,10 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         produces the same plots, up to a constant offset in the target
         response.
     n_jobs : int, optional (default=None)
-<<<<<<< HEAD
         The number of CPUs to use to compute the partial dependences.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-=======
-        The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
-        See :term:`Glossary <n_jobs>` for more details.
->>>>>>> cb5166a31a446e5bc74466bc99d581fbb9a7c537
     verbose : int, optional (default=0)
         Verbose output during PD computations.
     fig : Matplotlib figure object, optional (default=None)
