@@ -52,7 +52,7 @@ X_test = np.vander(x_test, n_order+1, increasing=True)
 
 # #############################################################################
 # Bayesian ridge regression with different initial value pairs
-inits = [(1./np.var(y_train), 1.), (1., 1.e-3)]
+inits = [(1. / np.var(y_train), 1.), (1., 1.e-3)]
 regs = [BayesianRidge(tol=1e-6, fit_intercept=False, compute_score=True),
         BayesianRidge(tol=1e-6, fit_intercept=False, compute_score=True,
                       alpha_init=inits[1][0], lambda_init=inits[1][1])]
