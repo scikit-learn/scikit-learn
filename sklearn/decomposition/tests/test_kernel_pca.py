@@ -3,8 +3,7 @@ from datetime import datetime
 import numpy as np
 import scipy.sparse as sp
 import pytest
-from sklearn.utils.testing import (assert_array_equal,
-                                   assert_array_almost_equal, assert_less,
+from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
                                    assert_equal, assert_not_equal,
                                    assert_raises, assert_allclose)
 
