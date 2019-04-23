@@ -80,8 +80,10 @@ def _grid_from_X(X, percentiles, grid_resolution):
             emp_percentiles = mquantiles(X, prob=percentiles, axis=0)
             if np.allclose(emp_percentiles[0, feature],
                            emp_percentiles[1, feature]):
-                raise ValueError('percentiles are too close to each other, '
-                                 'unable to build the grid.')
+                raise ValueError(
+                    'percentiles are too close to each other, '
+                    'unable to build the grid. Please choose percentiles '
+                    'that are further apart.')
             axis = np.linspace(emp_percentiles[0, feature],
                                emp_percentiles[1, feature],
                                num=grid_resolution, endpoint=True)

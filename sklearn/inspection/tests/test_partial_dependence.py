@@ -396,6 +396,16 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
 
 
+def close_fig(fignum=None):
+    from matplotlib.pyplot import get_fignums, close as _close  # noqa
+
+    if fignum is None:
+        for fignum in get_fignums():
+            _close(fignum)
+    else:
+        _close(fignum)
+
+
 @if_matplotlib
 def test_plot_partial_dependence():
     # Test partial dependence plot function.
@@ -436,6 +446,8 @@ def test_plot_partial_dependence():
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
+    close_fig()
+
 
 @if_matplotlib
 def test_plot_partial_dependence_multiclass():
@@ -468,6 +480,8 @@ def test_plot_partial_dependence_multiclass():
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
+    close_fig()
+
 
 @if_matplotlib
 def test_plot_partial_dependence_multioutput():
@@ -493,6 +507,8 @@ def test_plot_partial_dependence_multioutput():
     axs = fig.get_axes()
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
+
+    close_fig()
 
 
 @if_matplotlib
@@ -559,6 +575,7 @@ def test_plot_partial_dependence_input():
         plot_partial_dependence(lr, X, features=[0, 1, 2],
                                 feature_names=['a', 'b', 'a'])
 
+    close_fig()
 
 @if_matplotlib
 def test_plot_partial_dependence_fig():
@@ -576,3 +593,5 @@ def test_plot_partial_dependence_fig():
         clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 
     assert plt.gcf() is fig
+
+    close_fig()
