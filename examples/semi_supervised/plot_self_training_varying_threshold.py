@@ -1,5 +1,4 @@
-"""
-=============================================
+"""=============================================
 Effect of varying threshold for self-training
 =============================================
 
@@ -24,7 +23,8 @@ augment its dataset (the amount of self-labeled samples is 0). As a result, the
 accuracy achieved with a threshold of 0.9999 is the same as a normal supervised
 classifier would achieve.
 
-The optimum accuracy lies in between both of these extremes at around 0.7.
+The optimal accuracy lies in between both of these extremes at a threshold of
+around 0.7.
 """
 print(__doc__)
 
