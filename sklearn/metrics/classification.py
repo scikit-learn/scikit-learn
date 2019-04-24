@@ -24,6 +24,7 @@ the lower the better
 
 import warnings
 import numpy as np
+from collections.abc import Iterable
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
@@ -1265,7 +1266,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                                     warn_for=('precision', 'recall',
                                               'f-score'),
                                     sample_weight=None):
-    """Compute precision, recall, F-measure and support for each class
+    """Compute precision, recall, F-measures and support for each class
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
@@ -1286,7 +1287,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     The support is the number of occurrences of each class in ``y_true``.
 
     If ``pos_label is None`` and in binary classification, this function
-    returns the average precision, recall and F-measure if ``average``
+    returns the average precision, recall and F-measures if ``average``
     is one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
@@ -1299,7 +1300,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
-    beta : float, 1.0 by default
+    beta : float or array of float. Default value set to 1.0 float.
         The strength of recall versus precision in the F-score.
 
     labels : list, optional
@@ -1353,11 +1354,21 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     precision : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    recall : float (if average is not None) or array of float, , shape =\
+    recall : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    fbeta_score : float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+    fbeta_score : 
+                if beta is a float : 
+                    if average is not None :
+                        float
+                    else :
+                        array of float, shape = [n_unique_labels]
+                
+                elif beta is an array of float :
+                    if average is not None :
+                        array of float, shape = [len(beta)]
+                    else :
+                        array of float, shape = [len(beta), n_unique_labels]
 
     support : int (if average is not None) or array of int, shape =\
         [n_unique_labels]
@@ -1409,7 +1420,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     In such cases, the metric will be set to 0, as will f-score, and
     ``UndefinedMetricWarning`` will be raised.
     """
-    if beta <= 0:
+    many_beta = isinstance(beta, Iterable)
+
+    if many_beta :
+        if any([b <= 0 for b in beta]) :
+            raise ValueError("all beta should be >0 in the F-beta scores")
+    elif beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels,
                                     pos_label)
@@ -1429,7 +1445,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         true_sum = np.array([true_sum.sum()])
 
     # Finally, we have all our sufficient statistics. Divide! #
-    beta2 = beta ** 2
+    beta2 = (beta ** 2)
+    if many_beta :
+        beta2 = np.reshape(beta2,(-1,1))
 
     # Divide, and on zero-division, set scores to 0 and warn:
 
@@ -1457,7 +1475,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         assert average != 'binary' or len(precision) == 1
         precision = np.average(precision, weights=weights)
         recall = np.average(recall, weights=weights)
-        f_score = np.average(f_score, weights=weights)
+        if many_beta :
+            f_score = np.apply_along_axis(lambda x: np.average(x, weights=weights) , axis=1, arr=f_score)
+        else :
+            f_score = np.average(f_score, weights=weights)
         true_sum = None  # return no support
 
     return precision, recall, f_score, true_sum
