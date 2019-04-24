@@ -999,7 +999,6 @@ def assert_run_python_script(source_code, timeout=60):
             f.write(source_code.encode('utf-8'))
         cmd = [sys.executable, source_file]
         cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
-        print(cwd)
         env = os.environ.copy()
         kwargs = {
             'cwd': cwd,
