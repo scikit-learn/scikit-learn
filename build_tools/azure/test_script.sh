@@ -24,7 +24,8 @@ pip list
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML --pyargs"
 
 if [[ "$COVERAGE" == "true" ]]; then
-    TEST_CMD="$TEST_CMD --cov sklearn"
+    export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
+    TEST_CMD="$TEST_CMD --cov-config=$BUILD_SOURCESDIRECTORY/.coveragerc --cov sklearn"
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
