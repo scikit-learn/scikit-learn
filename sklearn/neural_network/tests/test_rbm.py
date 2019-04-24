@@ -9,7 +9,7 @@ from sklearn.datasets import load_digits
 from io import StringIO
 from sklearn.neural_network import BernoulliRBM
 from sklearn.utils.validation import assert_all_finite
-np.seterr(all='warn')
+# np.seterr(all='warn')
 
 Xdigits = load_digits().data
 Xdigits -= Xdigits.min()
