@@ -421,27 +421,11 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
    ensemble.VotingClassifier
+   ensemble.VotingRegressor
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
-
-
-partial dependence
-------------------
-
-.. automodule:: sklearn.ensemble.partial_dependence
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence
 
 
 .. _exceptions_ref:
@@ -955,6 +939,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.cosine_distances
    metrics.pairwise.distance_metrics
    metrics.pairwise.euclidean_distances
+   metrics.pairwise.haversine_distances
    metrics.pairwise.kernel_metrics
    metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
@@ -1226,6 +1211,25 @@ Model validation
 
    pipeline.make_pipeline
    pipeline.make_union
+
+
+.. _inspection_ref:
+
+:mod:`sklearn.inspection`: inspection
+=====================================
+
+.. automodule:: sklearn.inspection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.partial_dependence
+   inspection.plot_partial_dependence
 
 
 .. _preprocessing_ref:
@@ -1507,6 +1511,13 @@ To be removed in 0.23
    metrics.calinski_harabaz_score
    metrics.jaccard_similarity_score
    linear_model.logistic_regression_path
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   ensemble.partial_dependence.partial_dependence
+   ensemble.partial_dependence.plot_partial_dependence
 
 
 To be removed in 0.22

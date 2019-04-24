@@ -1,4 +1,3 @@
-# cython: language_level=3
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -46,7 +45,7 @@ import numpy as np
 
 np.import_array()
 
-from sklearn.utils cimport _random
+from . cimport _random
 
 cdef class SequentialDataset{{name}}:
     """Base class for datasets with sequential data access.

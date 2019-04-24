@@ -81,12 +81,13 @@ else:
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
                'datasets', 'decomposition', 'dummy', 'ensemble', 'exceptions',
                'externals', 'feature_extraction', 'feature_selection',
-               'gaussian_process', 'isotonic', 'kernel_approximation',
-               'kernel_ridge', 'linear_model', 'manifold', 'metrics',
-               'mixture', 'model_selection', 'multiclass', 'multioutput',
-               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
-               'preprocessing', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
+               'gaussian_process', 'inspection', 'isotonic',
+               'kernel_approximation', 'kernel_ridge', 'linear_model',
+               'manifold', 'metrics', 'mixture', 'model_selection',
+               'multiclass', 'multioutput', 'naive_bayes', 'neighbors',
+               'neural_network', 'pipeline', 'preprocessing',
+               'random_projection', 'semi_supervised', 'svm', 'tree',
+               'discriminant_analysis', 'impute', 'compose',
                # Non-modules:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']
@@ -98,7 +99,7 @@ def setup_module(module):
     import numpy as np
     import random
 
-    # It could have been provided in the environment
+    # Check if a random seed exists in the environment, if not create one.
     _random_seed = os.environ.get('SKLEARN_SEED', None)
     if _random_seed is None:
         _random_seed = np.random.uniform() * (2 ** 31 - 1)
