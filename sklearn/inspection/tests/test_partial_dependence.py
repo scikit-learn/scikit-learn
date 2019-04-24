@@ -27,7 +27,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import if_matplotlib
+from sklearn.utils.testing import skip_if_no_matplotlib
 from sklearn.utils.testing import close_figure
 
 
@@ -397,7 +397,7 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
 
 
-@if_matplotlib
+@skip_if_no_matplotlib
 def test_plot_partial_dependence():
     # Test partial dependence plot function.
     import matplotlib.pyplot as plt  # noqa
@@ -440,7 +440,7 @@ def test_plot_partial_dependence():
     close_figure()
 
 
-@if_matplotlib
+@skip_if_no_matplotlib
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
     import matplotlib.pyplot as plt  # noqa
@@ -474,7 +474,7 @@ def test_plot_partial_dependence_multiclass():
     close_figure()
 
 
-@if_matplotlib
+@skip_if_no_matplotlib
 def test_plot_partial_dependence_multioutput():
     # Test partial dependence plot function on multi-output input.
     import matplotlib.pyplot as plt  # noqa
@@ -502,7 +502,7 @@ def test_plot_partial_dependence_multioutput():
     close_figure()
 
 
-@if_matplotlib
+@skip_if_no_matplotlib
 @pytest.mark.parametrize(
     "data, params, err_msg",
     [(multioutput_regression_data[0], {"target": None, 'features': [0]},
@@ -542,7 +542,7 @@ def test_plot_partial_dependence_error(data, params, err_msg):
     close_figure()
 
 
-@if_matplotlib
+@skip_if_no_matplotlib
 def test_plot_partial_dependence_fig():
     # Make sure fig object is correctly used if not None
 
