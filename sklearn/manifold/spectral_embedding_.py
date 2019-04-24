@@ -287,8 +287,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # lobpcg needs double precision floats
         laplacian = check_array(laplacian, dtype=np.float64,
                                 accept_sparse=True)
-        laplacian = _set_diag(laplacian, 1, norm_laplacian)
-        laplacian = laplacian + 1e-5 * sparse.eye(laplacian.shape[0])
+        laplacian = _set_diag(laplacian, 1 + 1e-5, norm_laplacian)
+
+        # noinspection PyUnboundLocalVariable
         ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
