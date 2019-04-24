@@ -28,6 +28,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import close_figure
+from sklearn.utils.testing import skip_if_no_matplotlib
 
 
 # toy sample
@@ -498,6 +499,7 @@ def test_plot_partial_dependence_multioutput():
     close_figure()
 
 
+@skip_if_no_matplotlib
 @pytest.mark.parametrize(
     "data, params, err_msg",
     [(multioutput_regression_data[0], {"target": None, 'features': [0]},
@@ -528,7 +530,6 @@ def test_plot_partial_dependence_multioutput():
 @pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
 @pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
 def test_plot_partial_dependence_error(data, params, err_msg):
-    plt = pytest.importorskip('matplotlib.pyplot')
     X, y = data
     estimator = LinearRegression().fit(X, y)
 
