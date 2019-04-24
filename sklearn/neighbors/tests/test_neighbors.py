@@ -935,6 +935,7 @@ def test_neighbors_badargs():
 
     X = rng.random_sample((10, 2))
     Xsparse = csr_matrix(X)
+    X3 = rng.random_sample((10, 3))
     y = np.ones(10)
 
     for cls in (neighbors.KNeighborsClassifier,
@@ -958,11 +959,12 @@ def test_neighbors_badargs():
                       Xsparse, y)
 
         nbrs = cls(metric='haversine', algorithm='brute')
-        nbrs.fit(np.hstack([X, X[:, -1:]]), y)
+        nbrs.fit(X3, y)
         assert_raise_message(ValueError,
                              "Haversine distance only valid in 2 dimensions",
                              nbrs.predict,
-                             X)
+                             X3)
+
         nbrs = cls()
         assert_raises(ValueError,
                       nbrs.fit,
