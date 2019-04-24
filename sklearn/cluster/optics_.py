@@ -705,7 +705,7 @@ def _update_filter_sdas(sdas, mib, xi_complement, reachability_plot):
     return res
 
 
-def _correct_predecessor(reachability_plot, predecessor, ordering, s, e):
+def _correct_predecessor(reachability_plot, predecessor_plot, ordering, s, e):
     """Correct for predecessors.
 
     Applies Algorithm 2 of [1]_.
@@ -719,7 +719,7 @@ def _correct_predecessor(reachability_plot, predecessor, ordering, s, e):
     while s < e:
         if reachability_plot[s] > reachability_plot[e]:
             return s, e
-        p_e = ordering[predecessor[e]]
+        p_e = ordering[predecessor_plot[e]]
         for i in range(s, e):
             if p_e == ordering[i]:
                 return s, e
@@ -727,7 +727,7 @@ def _correct_predecessor(reachability_plot, predecessor, ordering, s, e):
     return None, None
 
 
-def _xi_cluster(reachability_plot, predecessor, ordering, xi, min_samples,
+def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
                 min_cluster_size, predecessor_correction):
     """Automatically extract clusters according to the Xi-steep method.
 
@@ -739,7 +739,7 @@ def _xi_cluster(reachability_plot, predecessor, ordering, xi, min_samples,
         The reachability plot, i.e. reachability ordered according to
         the calculated ordering, all computed by OPTICS.
 
-    predecessor : array, shape (n_samples)
+    predecessor_plot : array, shape (n_samples)
         Predecessors ordered according to the calculated ordering.
 
     xi : float, between 0 and 1
@@ -853,7 +853,7 @@ def _xi_cluster(reachability_plot, predecessor, ordering, xi, min_samples,
                 # predecessor correction
                 if predecessor_correction:
                     c_start, c_end = _correct_predecessor(reachability_plot,
-                                                          predecessor,
+                                                          predecessor_plot,
                                                           ordering,
                                                           c_start,
                                                           c_end)
