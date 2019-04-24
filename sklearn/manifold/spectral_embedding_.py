@@ -293,7 +293,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         M = ml.aspreconditioner()
         X = random_state.rand(laplacian.shape[0], n_components + 1)
         X[:, 0] = dd.ravel()
-        lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-5,
+        lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
@@ -321,7 +321,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # doesn't behave well in low dimension
             X = random_state.rand(laplacian.shape[0], n_components + 1)
             X[:, 0] = dd.ravel()
-            lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-5,
+            lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
