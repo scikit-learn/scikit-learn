@@ -27,6 +27,9 @@ random sampling procedures.
 - :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
 - :class:`ensemble.GradientBoostingClassifier` |Fix|
+- :class:`sklearn.feature_extraction.text.HashingVectorizer`,
+  :class:`sklearn.feature_extraction.text.TfidfVectorizer`, and
+  :class:`sklearn.feature_extraction.text.CountVectorizer` |Fix|
 - :class:`neural_network.MLPClassifier` |Fix|
 - :func:`svm.SVC.decision_function` and
   :func:`multiclass.OneVsOneClassifier.decision_function`. |Fix|
@@ -48,12 +51,15 @@ Changelog
 Support for Python 3.4 and below has been officially dropped.
 
 ..
-    See version doc/whats_new/v0.20.rst for structure. Entries should be
-    prefixed with one of the labels: |MajorFeature|, |Feature|, |Efficiency|,
-    |Enhancement|, |Fix| or |API|. They should be under a heading for the
-    relevant module (or *Multiple Modules* or *Miscellaneous*), and within each
-    section should be ordered according to the label ordering above. Entries
-    should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.base`
 ...................
@@ -288,6 +294,17 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| Deprecated :mod:`externals.six` since we have dropped support for
   Python 2.7. :issue:`12916` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| |API| If ``input='file'`` or ``input='filename'``, and a callable is given
+  as the ``analyzer``, :class:`sklearn.feature_extraction.text.HashingVectorizer`,
+  :class:`sklearn.feature_extraction.text.TfidfVectorizer`, and
+  :class:`sklearn.feature_extraction.text.CountVectorizer` now read the data
+  from the file(s) and then pass it to the given ``analyzer``, instead of
+  passing the file name(s) or the file object(s) to the analyzer.
+  :issue:`13641` by `Adrin Jalali`_.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -409,7 +426,7 @@ Support for Python 3.4 and below has been officially dropped.
   by :user:`Bartosz Telenczuk <btel>`
 
 :mod:`sklearn.manifold`
-............................
+.......................
 
 - |Efficiency| Make :func:`manifold.tsne.trustworthiness` use an inverted index
   instead of an `np.where` lookup to find the rank of neighbors in the input
@@ -535,7 +552,7 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
 :mod:`sklearn.multioutput`
-........................
+..........................
 
 - |Fix| Fixed a bug in :class:`multiout.MultiOutputClassifier` where the
   `predict_proba` method incorrectly checked for `predict_proba` attribute in
@@ -671,7 +688,7 @@ Support for Python 3.4 and below has been officially dropped.
   :issue:`12344` by :user:`Adrin Jalali <adrinjalali>`.
 
 :mod:`sklearn.utils`
-...................
+....................
 
 - |API| Deprecated ``warn_on_dtype`` parameter from :func:`utils.check_array`
   and :func:`utils.check_X_y`. Added explicit warning for dtype conversion
