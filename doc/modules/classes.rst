@@ -956,6 +956,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.cosine_distances
    metrics.pairwise.distance_metrics
    metrics.pairwise.euclidean_distances
+   metrics.pairwise.haversine_distances
    metrics.pairwise.kernel_metrics
    metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
