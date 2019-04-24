@@ -444,10 +444,10 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 def haversine_distances(X, Y=None):
     """Compute the Haversine distance between samples in X and Y
 
-    The Haversine distance is the angular distance between two points on
-    the surface of a sphere. The first distance of each point is assumed
-    to be the latitude, the second is the longitude, given in radians.
-    The dimension of the points must be 2.
+    The Haversine (or great circle) distance is the angular distance between
+    two points on the surface of a sphere. The first distance of each point is
+    assumed to be the latitude, the second is the longitude, given in radians.
+    The dimension of the data must be 2.
 
     .. math::
        D(x, y) = 2\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
@@ -462,6 +462,12 @@ def haversine_distances(X, Y=None):
     Returns
     -------
     distance : {array}, shape (n_samples_1, n_samples_2)
+
+    Notes
+    -----
+    As the Earth is nearly spherical, the haversine formula provides a good
+    approximation of the distance between two points of the Earth surface, with
+    a less than 1% error on average.
 
     Examples
     --------

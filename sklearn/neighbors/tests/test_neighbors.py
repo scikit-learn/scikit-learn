@@ -1077,15 +1077,13 @@ def test_valid_brute_metric_for_auto_algorithm():
     require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
     for metric in VALID_METRICS['brute']:
         if metric != 'precomputed' and metric not in require_params:
+            nn = neighbors.NearestNeighbors(n_neighbors=3,
+                                            algorithm='auto',
+                                            metric=metric)
             if metric != 'haversine':
-                nn = neighbors.NearestNeighbors(n_neighbors=3,
-                                                algorithm='auto',
-                                                metric=metric).fit(X)
+                nn.fit(X)
                 nn.kneighbors(X)
             else:
-                nn = neighbors.NearestNeighbors(n_neighbors=3,
-                                                algorithm='auto',
-                                                metric=metric)
                 nn.fit(X[:, :2])
                 nn.kneighbors(X[:, :2])
         elif metric == 'precomputed':
