@@ -21,11 +21,11 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 pip list
 
-TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML --pyargs"
+TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
 if [[ "$COVERAGE" == "true" ]]; then
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
-    TEST_CMD="$TEST_CMD --cov-config=$BUILD_SOURCESDIRECTORY/.coveragerc --cov sklearn"
+    TEST_CMD="$TEST_CMD --cov-config=$COVERAGE_PROCESS_START --cov sklearn"
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
@@ -37,5 +37,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD sklearn
+$TEST_CMD --pyargs sklearn
 set +x
