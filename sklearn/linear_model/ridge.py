@@ -949,7 +949,7 @@ def _sparse_multidot_diag(X, A, Xm, with_intercept=True):
     batch_size = X.shape[1]
     diag = np.empty(X.shape[0])
     for start in range(0, X.shape[0], batch_size):
-        batch = slice(start, start + batch_size, 1)
+        batch = slice(start, min(X.shape[0], start + batch_size), 1)
         X_batch = np.ones(
             (X[batch].shape[0], X.shape[1] + with_intercept), dtype=X.dtype)
         if with_intercept:
