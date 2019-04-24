@@ -1,5 +1,7 @@
+import numpy as np
+
 from sklearn.utils.testing import (assert_array_equal, assert_equal,
-                                   assert_raises)
+                                   assert_not_equal, assert_raises)
 
 from scipy.sparse import bsr_matrix, csc_matrix, csr_matrix
 
@@ -26,3 +28,17 @@ def test_variance_threshold():
     for X in [data, csr_matrix(data)]:
         X = VarianceThreshold(threshold=.4).fit_transform(X)
         assert_equal((len(data), 1), X.shape)
+
+
+def test_zero_variance_floating_point_error():
+    # Test that VarianceThreshold(0.0).fit eliminates features that have
+    # the same value in every sample, even when floating point errors
+    # cause np.var not to be 0 for the feature.
+    # See #13691
+
+    data = [[-0.13725701]] * 10
+    assert_not_equal(np.var(data), 0.)
+    for X in [data, csr_matrix(data), csc_matrix(data), bsr_matrix(data)]:
+        assert_raises(ValueError, VarianceThreshold().fit, X)
+
+

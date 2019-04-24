@@ -64,16 +64,15 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
         X = check_array(X, ('csr', 'csc'), dtype=np.float64)
 
         if hasattr(X, "toarray"):   # sparse matrix
+            _, self.variances_ = mean_variance_axis(X, axis=0)
             if self.threshold == 0.:
                 mins, maxes = min_max_axis(X, axis=0)
-                self.variances_ = maxes - mins
-            else:
-                _, self.variances_ = mean_variance_axis(X, axis=0)
+                self.variances_ = np.minimum(self.variances_, maxes - mins)
         else:
+            self.variances_ = np.var(X, axis=0)
             if self.threshold == 0.:
-                self.variances_ = np.ptp(X, axis=0)
-            else:
-                self.variances_ = np.var(X, axis=0)
+                peak_to_peaks = np.ptp(X, axis=0)
+                self.variances_ = np.minimum(self.variances_, peak_to_peaks)
 
         if np.all(self.variances_ <= self.threshold):
             msg = "No feature in X meets the variance threshold {0:.5f}"
