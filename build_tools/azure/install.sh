@@ -47,6 +47,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
     fi
 
+    if [[ -n "$MATPLOTLIB_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL matplotlib=$MATPLOTLIB_VERSION"
+    fi
+
 	make_conda $TO_INSTALL
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then

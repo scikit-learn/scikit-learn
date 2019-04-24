@@ -428,23 +428,6 @@ Samples generator
    :template: function.rst
 
 
-partial dependence
-------------------
-
-.. automodule:: sklearn.ensemble.partial_dependence
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence
-
-
 .. _exceptions_ref:
 
 :mod:`sklearn.exceptions`: Exceptions and warnings
@@ -1230,6 +1213,25 @@ Model validation
    pipeline.make_union
 
 
+.. _inspection_ref:
+
+:mod:`sklearn.inspection`: inspection
+=====================================
+
+.. automodule:: sklearn.inspection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.partial_dependence
+   inspection.plot_partial_dependence
+
+
 .. _preprocessing_ref:
 
 :mod:`sklearn.preprocessing`: Preprocessing and Normalization
@@ -1509,6 +1511,13 @@ To be removed in 0.23
    metrics.calinski_harabaz_score
    metrics.jaccard_similarity_score
    linear_model.logistic_regression_path
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   ensemble.partial_dependence.partial_dependence
+   ensemble.partial_dependence.plot_partial_dependence
 
 
 To be removed in 0.22

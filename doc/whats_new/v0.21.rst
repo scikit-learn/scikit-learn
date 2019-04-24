@@ -187,6 +187,14 @@ Support for Python 3.4 and below has been officially dropped.
   communication overhead. :issue:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
 
+- |API| :func:`ensemble.partial_dependence` and
+  :func:`ensemble.plot_partial_dependence` are now deprecated in favor of
+  :func:`inspection.partial_dependence<sklearn.inspection.partial_dependence>`
+  and
+  :func:`inspection.plot_partial_dependence<sklearn.inspection.plot_partial_dependence>`.
+  :issue:`12599` by :user:`Trevor Stephens<trevorstephens>` and
+  :user:`Nicolas Hug<NicolasHug>`.
+
 - |Enhancement| Minimized the validation of X in
   :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
   :issue:`13174` by :user:`Christos Aridas <chkoar>`.
@@ -254,8 +262,9 @@ Support for Python 3.4 and below has been officially dropped.
   with the document and the caller functions.
   :issue:`6463` by :user:`movelikeriver <movelikeriver>`.
 
-- |Fix| :func:`ensemble.partial_dependence` now takes sample weights into
-  account for the partial dependence computation when the
+- |Fix| :func:`ensemble.partial_dependence` (and consequently the new
+  version :func:`sklearn.inspection.partial_dependence`) now takes sample
+  weights into account for the partial dependence computation when the
   gradient boosting model has been trained with sample weights.
   :issue:`13193` by :user:`Samuel O. Ronsin <samronsin>`.
 
@@ -306,6 +315,15 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`impute.MissingIndicator` transform into the output of the imputer's
   transform. That allows a predictive estimator to account for missingness.
   :issue:`12583`, :issue:`13601` by :user:`Danylo Baibak <DanilBaibak>`.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| Partial dependence plots
+  (:func:`inspection.plot_partial_dependence`) are now supported for
+  any regressor or classifier (provided that they have a `predict_proba`
+  method). :issue:`12599` by :user:`Trevor Stephens <trevorstephens>` and
+  :user:`Nicolas Hug <NicolasHug>`.
 
 :mod:`sklearn.isotonic`
 .......................
