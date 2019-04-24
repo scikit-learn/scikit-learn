@@ -28,6 +28,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import if_matplotlib
+from sklearn.utils.testing import close_figure
 
 
 # toy sample
@@ -396,16 +397,6 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
 
 
-def close_fig(fignum=None):
-    from matplotlib.pyplot import get_fignums, close as _close  # noqa
-
-    if fignum is None:
-        for fignum in get_fignums():
-            _close(fignum)
-    else:
-        _close(fignum)
-
-
 @if_matplotlib
 def test_plot_partial_dependence():
     # Test partial dependence plot function.
@@ -446,7 +437,7 @@ def test_plot_partial_dependence():
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
-    close_fig()
+    close_figure()
 
 
 @if_matplotlib
@@ -480,7 +471,7 @@ def test_plot_partial_dependence_multiclass():
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
-    close_fig()
+    close_figure()
 
 
 @if_matplotlib
@@ -508,74 +499,46 @@ def test_plot_partial_dependence_multioutput():
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
-    close_fig()
+    close_figure()
 
 
-@if_matplotlib
+@pytest.mark.parametrize(
+    "data, params, err_msg",
+    [(multioutput_regression_data[0], {"target": None, 'features': [0]},
+      "target must be specified for multi-output"),
+     (multioutput_regression_data[0], {"target": -1, 'features': [0]},
+      r'target must be in \[0, n_tasks\]'),
+     (multioutput_regression_data[0], {"target": 100, 'features': [0]},
+      r'target must be in \[0, n_tasks\]'),
+     (make_classification(random_state=0),
+     {'features': ['foobar'], 'feature_names': None},
+     'Feature foobar not in feature_names'),
+     (make_classification(random_state=0),
+     {'features': ['foobar'], 'feature_names': ['abcd', 'def']},
+      'Feature foobar not in feature_names'),
+     (make_classification(random_state=0), {'features': [(1, 2, 3)]},
+      'Each entry in features must be either an int, '),
+     (make_classification(random_state=0), {'features': [1, {}]},
+      'Each entry in features must be either an int, '),
+     (make_classification(random_state=0), {'features': [tuple()]},
+      'Each entry in features must be either an int, '),
+     (make_classification(random_state=0),
+      {'features': [123], 'feature_names': ['blahblah']},
+      'All entries of features must be less than '),
+     (make_classification(random_state=0),
+      {'features': [0, 1, 2], 'feature_names': ['a', 'b', 'a']},
+      'feature_names should not contain duplicates')]
+)
 @pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
 @pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
-def test_plot_partial_dependence_input():
-    X, y = make_classification(random_state=0)
+def test_plot_partial_dependence_error(data, params, err_msg):
+    X, y = data
+    estimator = LinearRegression().fit(X, y)
 
-    lr = LinearRegression()
-    lr.fit(X, y)
-    gbc = GradientBoostingClassifier(random_state=0)
-    gbc.fit(X, y)
+    with pytest.raises(ValueError, match=err_msg):
+        plot_partial_dependence(estimator, X, **params)
 
-    # check target param for multiclass
-    (X_m, y_m), _ = multiclass_classification_data
-    lr_m = LogisticRegression()
-    lr_m.fit(X_m, y_m)
-    with pytest.raises(
-            ValueError,
-            match='target must be specified for multi-class'):
-        plot_partial_dependence(lr_m, X_m, [0], target=None)
-    for target in (-1, 100):
-        with pytest.raises(
-                ValueError,
-                match='target not in est.classes_'):
-            plot_partial_dependence(lr_m, X_m, [0], target=target)
-
-    # check target param for multioutput
-    (X_m, y_m), _ = multioutput_regression_data
-    lr_m = LinearRegression()
-    lr_m.fit(X_m, y_m)
-    with pytest.raises(
-            ValueError,
-            match='target must be specified for multi-output'):
-        plot_partial_dependence(lr_m, X_m, [0], target=None)
-    for target in (-1, 100):
-        with pytest.raises(
-                ValueError,
-                match=r'target must be in \[0, n_tasks\]'):
-            plot_partial_dependence(lr_m, X_m, [0], target=target)
-
-    for feature_names in (None, ['abcd', 'def']):
-        with pytest.raises(
-                ValueError,
-                match='Feature foobar not in feature_names'):
-            plot_partial_dependence(lr, X, features=['foobar'],
-                                    feature_names=feature_names)
-
-    for features in([(1, 2, 3)], [1, {}], [tuple()]):
-        with pytest.raises(
-                ValueError,
-                match='Each entry in features must be either an int, '):
-            plot_partial_dependence(lr, X, features=features)
-
-    with pytest.raises(
-            ValueError,
-            match='All entries of features must be less than '):
-        plot_partial_dependence(lr, X, features=[123],
-                                feature_names=['blah'])
-
-    with pytest.raises(
-            ValueError,
-            match='feature_names should not contain duplicates'):
-        plot_partial_dependence(lr, X, features=[0, 1, 2],
-                                feature_names=['a', 'b', 'a'])
-
-    close_fig()
+    close_figure()
 
 
 @if_matplotlib
@@ -595,4 +558,4 @@ def test_plot_partial_dependence_fig():
 
     assert plt.gcf() is fig
 
-    close_fig()
+    close_figure()

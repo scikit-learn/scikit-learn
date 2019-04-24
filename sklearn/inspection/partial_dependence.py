@@ -367,7 +367,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                             target=None, response_method='auto', n_cols=3,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=None, verbose=0, fig=None,
-                            line_kw=None, contour_kw=None, **fig_kw):
+                            line_kw=None, contour_kw=None):
     """Partial dependence plots.
 
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
@@ -451,17 +451,13 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         Verbose output during PD computations.
     fig : Matplotlib figure object, optional (default=None)
         A figure object onto which the plots will be drawn, after the figure
-        has been cleared.
+        has been cleared. By default, a new one is created.
     line_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
     contour_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
-    **fig_kw : dict, optional
-        Dict with keywords passed to the figure() call.
-        Note that all keywords not recognized above will be automatically
-        included here.
 
     Examples
     --------
@@ -469,8 +465,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
-    >>> fig, axs = plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
-    ...
+    >>> plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
 
     See also
     --------
@@ -599,7 +594,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
         Z_level = np.linspace(*pdp_lim[2], num=8)
 
     if fig is None:
-        fig = plt.figure(**fig_kw)
+        fig = plt.figure()
     else:
         fig.clear()
 

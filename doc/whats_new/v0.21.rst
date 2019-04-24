@@ -316,8 +316,6 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.inspection`
 .........................
 
-- |Feature| A new module ``sklearn.inspection`` is created.
-
 - |Feature| Partial dependence plots
   (:func:`inspection.plot_partial_dependence`) are now supported for
   any regressor or classifier (provided that they have a `predict_proba`
