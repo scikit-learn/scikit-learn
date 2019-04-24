@@ -1,6 +1,7 @@
 [run]
 branch = True
 source = sklearn
+parallel = True
 omit =
     */sklearn/externals/*
     */benchmarks/*
