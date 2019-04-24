@@ -7,7 +7,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from ..utils import check_array, safe_sqr
+from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
@@ -153,8 +153,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        X = check_array(X, "csc", ensure_min_features=2,
-                        force_all_finite=False)
+        X, y = check_X_y(X, y, "csc", ensure_min_features=2,
+                         force_all_finite=False)
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -485,8 +485,8 @@ class RFECV(RFE, MetaEstimatorMixin):
             Group labels for the samples used while splitting the dataset into
             train/test set.
         """
-        X = check_array(X, "csr", ensure_min_features=2,
-                        force_all_finite=False)
+        X, y = check_X_y(X, y, "csr", ensure_min_features=2,
+                         force_all_finite=False)
 
         # Initialization
         cv = check_cv(self.cv, y, is_classifier(self.estimator))
