@@ -423,18 +423,18 @@ Support for Python 3.4 and below has been officially dropped.
   deterministic when trained in a multi-class setting on several threads.
   :pr:`13422` by :user:`Clément Doumouro <ClemDoum>`.
 
-- |Fix| Fixed bug in :func:`linear_model.ridge.ridge_regression`,
-  :class:`linear_model.ridge.Ridge` and
-  :class:`linear_model.ridge.ridge.RidgeClassifier` that
+- |Fix| Fixed bug in :func:`linear_model.ridge_regression`,
+  :class:`linear_model.Ridge` and
+  :class:`linear_model.ridge.RidgeClassifier` that
   caused unhandled exception for arguments ``return_intercept=True`` and
   ``solver=auto`` (default) or any other solver different from ``sag``.
   :pr:`13363` by :user:`Bartosz Telenczuk <btel>`
 
-- |Fix| :func:`linear_model.ridge.ridge_regression` will now raise an exception
+- |Fix| :func:`linear_model.ridge_regression` will now raise an exception
   if ``return_intercept=True`` and solver is different from ``sag``. Previously,
   only warning was issued. :pr:`13363` by :user:`Bartosz Telenczuk <btel>`
 
-- |Fix| :func:`linear_model.ridge.ridge_regression` will choose ``sparse_cg``
+- |Fix| :func:`linear_model.ridge_regression` will choose ``sparse_cg``
   solver for sparse inputs when ``solver=auto`` and ``sample_weight``
   is provided (previously `cholesky` solver was selected).
   :pr:`13363` by :user:`Bartosz Telenczuk <btel>`
@@ -498,8 +498,8 @@ Support for Python 3.4 and below has been officially dropped.
   `Joel Nothman`_ and `Andreas Müller`_
 
 - |Enhancement| Added `beta` parameter to
-  :func:`metrics.cluster.supervised.homogeneity_completeness_v_measure` and
-  :func:`metrics.cluster.supervised.v_measure_score` to configure the
+  :func:`metrics.cluster.homogeneity_completeness_v_measure` and
+  :func:`metrics.cluster.v_measure_score` to configure the
   tradeoff between homogeneity and completeness.
   :pr:`13607` by :user:`Stephane Couvreur <scouvreur>` and
   and :user:`Ivan Sanchez <ivsanro1>`.
@@ -592,7 +592,7 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.multioutput`
 ..........................
 
-- |Fix| Fixed a bug in :class:`multiout.MultiOutputClassifier` where the
+- |Fix| Fixed a bug in :class:`multioutput.MultiOutputClassifier` where the
   `predict_proba` method incorrectly checked for `predict_proba` attribute in
   the estimator object.
   :pr:`12222` by :user:`Rebekah Kim <rebekahkim>`
@@ -685,7 +685,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |API| The default value of `copy` in :func:`preprocessing.quantile_transform`
   will change from False to True in 0.23 in order to make it more consistent
   with the default `copy` values of other functions in
-  :mod:`preprocessing.data` and prevent unexpected side effects by modifying
+  :mod:`preprocessing` and prevent unexpected side effects by modifying
   the value of `X` inplace.
   :pr:`13459` by :user:`Hunter McGushion <HunterMcGushion>`.
 
@@ -707,7 +707,7 @@ Support for Python 3.4 and below has been officially dropped.
   removing a hard-to-install dependency. :pr:`8508` by `Andreas Müller`_.
 
 - |Feature| Decision Trees can now be exported in a human readable
-  textual format using :func:`tree.export.export_text`.
+  textual format using :func:`tree.export_text`.
   :pr:`6261` by `Giuseppe Vettigli <JustGlowing>`.
 
 - |Feature| ``get_n_leaves()`` and ``get_depth()`` have been added to
