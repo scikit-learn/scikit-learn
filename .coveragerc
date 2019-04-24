@@ -2,6 +2,7 @@
 branch = True
 source = sklearn
 include = */sklearn/*
+parallel = True
 omit =
     */sklearn/externals/*
     */benchmarks/*
