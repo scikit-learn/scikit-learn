@@ -1084,8 +1084,8 @@ def test_valid_brute_metric_for_auto_algorithm():
                 nn = neighbors.NearestNeighbors(n_neighbors=3,
                                                 algorithm='auto',
                                                 metric=metric)
-                nn.fit(X[:2])
-                nn.kneighbors(X[:2])
+                nn.fit(X[:, :2])
+                nn.kneighbors(X[:, :2])
         elif metric == 'precomputed':
             X_precomputed = rng.random_sample((10, 4))
             Y_precomputed = rng.random_sample((3, 4))
