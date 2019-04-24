@@ -1790,3 +1790,23 @@ def test_cross_validate_return_test_indices():
                          return_estimator=True, return_test_indices=True)
     assert_array_equal(np.sort(np.hstack(ret['test_indices'])),
                        np.arange(n_samples))
+
+
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
+def test_cross_validate_reconstruct_predictions():
+    clf = SVC(kernel="linear", random_state=0)
+    iris = load_iris()
+    X, y = iris['data'], iris['target']
+    cv = 5
+
+    ret = cross_validate(clf, X, y, cv=cv, return_estimator=True,
+                         return_test_indices=True)
+    cv_accuracy_score = np.zeros(cv)
+
+    # reconstruct predictions for each cv split using estimator
+    for idx, (clf, test_indices) in \
+            enumerate(zip(ret['estimator'], ret['test_indices'])):
+        preds = clf.predict(X[test_indices])
+        cv_accuracy_score[idx] = accuracy_score(y[test_indices], preds)
+
+    assert_array_almost_equal(ret['test_score'], cv_accuracy_score)
