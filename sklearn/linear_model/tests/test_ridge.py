@@ -372,7 +372,7 @@ def test_ridge_gcv_sample_weights():
     for gcv_mode in ['svd', 'eigen']:
         gcv = RidgeCV(fit_intercept=True, scoring='neg_mean_squared_error',
                       alphas=alphas, normalize=True, gcv_mode=gcv_mode)
-        gcv.fit(x_s, y, sample_weight=sample_weights)
+        ignore_warnings(gcv.fit)(x_s, y, sample_weight=sample_weights)
         assert np.allclose(gcv.coef_, ridge.coef_, rtol=1e-2)
         assert np.allclose(gcv.intercept_, ridge.intercept_, rtol=1e-2)
 
