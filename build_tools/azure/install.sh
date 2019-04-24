@@ -16,9 +16,6 @@ if [[ "$UNAMESTR" == "Darwin" ]]; then
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-
-    # avoid error due to multiple OpenMP libraries loaded simultaneously
-    export KMP_DUPLICATE_LIB_OK=TRUE
 fi
 
 make_conda() {
@@ -30,7 +27,7 @@ make_conda() {
 if [[ "$DISTRIB" == "conda" ]]; then
     TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
                 numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-                cython=$CYTHON_VERSION"
+                cython=$CYTHON_VERSION joblib=$JOBLIB_VERSION"
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"
@@ -48,10 +45,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     if [[ -n "$PILLOW_VERSION" ]]; then
         TO_INSTALL="$TO_INSTALL pillow=$PILLOW_VERSION"
-    fi
-
-    if [[ -n "$JOBLIB_VERSION" ]]; then
-        TO_INSTALL="$TO_INSTALL joblib=$JOBLIB_VERSION"
     fi
 
 	make_conda $TO_INSTALL

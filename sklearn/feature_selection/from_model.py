@@ -231,3 +231,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
         return self
+
+    def _more_tags(self):
+        return {'allow_nan': True}

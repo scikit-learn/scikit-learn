@@ -13,7 +13,7 @@ from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel, _pre_fit
-from ..base import RegressorMixin
+from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array, check_X_y
 from ..model_selection import check_cv
 from ..utils._joblib import Parallel, delayed
@@ -539,7 +539,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         return np.squeeze(coef)
 
 
-class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
+class OrthogonalMatchingPursuit(LinearModel, RegressorMixin, MultiOutputMixin):
     """Orthogonal Matching Pursuit model (OMP)
 
     Read more in the :ref:`User Guide <omp>`.

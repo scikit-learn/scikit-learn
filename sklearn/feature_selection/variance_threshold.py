@@ -86,3 +86,6 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
         check_is_fitted(self, 'variances_')
 
         return self.variances_ > self.threshold
+
+    def _more_tags(self):
+        return {'allow_nan': True}

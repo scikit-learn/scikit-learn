@@ -2,9 +2,11 @@
 The :mod:`sklearn.utils` module includes various utilities.
 """
 from collections.abc import Sequence
+from contextlib import contextmanager
 import numbers
 import platform
 import struct
+import timeit
 
 import warnings
 import numpy as np
@@ -19,7 +21,7 @@ from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric)
+                         check_symmetric, check_scalar)
 from .. import get_config
 
 
@@ -60,7 +62,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_random_state",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
-           "check_consistent_length", "check_X_y", 'indexable',
+           "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
            "register_parallel_backend", "hash", "effective_n_jobs",
@@ -565,6 +567,60 @@ def indices_to_mask(indices, mask_length):
     mask[indices] = True
 
     return mask
+
+
+def _message_with_time(source, message, time):
+    """Create one line message for logging purposes
+
+    Parameters
+    ----------
+    source : str
+        String indicating the source or the reference of the message
+
+    message : str
+        Short message
+
+    time : int
+        Time in seconds
+    """
+    start_message = "[%s] " % source
+
+    # adapted from joblib.logger.short_format_time without the Windows -.1s
+    # adjustment
+    if time > 60:
+        time_str = "%4.1fmin" % (time / 60)
+    else:
+        time_str = " %5.1fs" % time
+    end_message = " %s, total=%s" % (message, time_str)
+    dots_len = (70 - len(start_message) - len(end_message))
+    return "%s%s%s" % (start_message, dots_len * '.', end_message)
+
+
+@contextmanager
+def _print_elapsed_time(source, message=None):
+    """Log elapsed time to stdout when the context is exited
+
+    Parameters
+    ----------
+    source : str
+        String indicating the source or the reference of the message
+
+    message : str or None
+        Short message. If None, nothing will be printed
+
+    Returns
+    -------
+    context_manager
+        Prints elapsed time upon exit if verbose
+    """
+    if message is None:
+        yield
+    else:
+        start = timeit.default_timer()
+        yield
+        print(
+            _message_with_time(source, message,
+                               timeit.default_timer() - start))
 
 
 def get_chunk_n_rows(row_bytes, max_n_rows=None,

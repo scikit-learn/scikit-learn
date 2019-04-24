@@ -64,8 +64,8 @@ for the training samples::
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
                early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
                l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-               n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-               power_t=0.5, random_state=None, shuffle=True, tol=None,
+               n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
+               random_state=None, shuffle=True, tol=0.001,
                validation_fraction=0.1, verbose=0, warm_start=False)
 
 
@@ -154,7 +154,7 @@ one-vs-all classification.
 
 :class:`SGDClassifier` supports both weighted classes and weighted
 instances via the fit parameters ``class_weight`` and ``sample_weight``. See
-the examples below and the doc string of :meth:`SGDClassifier.fit` for
+the examples below and the docstring of :meth:`SGDClassifier.fit` for
 further information.
 
 .. topic:: Examples:

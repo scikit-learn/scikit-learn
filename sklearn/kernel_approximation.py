@@ -58,9 +58,9 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=0.001,
-           validation_fraction=0.1, verbose=0, warm_start=False)
+           n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
+           random_state=None, shuffle=True, tol=0.001, validation_fraction=0.1,
+           verbose=0, warm_start=False)
     >>> clf.score(X_features, y)
     1.0
 
@@ -167,9 +167,9 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=10,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=0.001,
-           validation_fraction=0.1, verbose=0, warm_start=False)
+           n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
+           random_state=None, shuffle=True, tol=0.001, validation_fraction=0.1,
+           verbose=0, warm_start=False)
     >>> clf.score(X_features, y)
     1.0
 
@@ -287,11 +287,11 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=0, shuffle=True, tol=0.001,
-           validation_fraction=0.1, verbose=0, warm_start=False)
+           n_iter_no_change=5, n_jobs=None, penalty='l2', power_t=0.5,
+           random_state=0, shuffle=True, tol=0.001, validation_fraction=0.1,
+           verbose=0, warm_start=False)
     >>> clf.score(X_transformed, y) # doctest: +ELLIPSIS
-    0.9543...
+    0.9499...
 
     Notes
     -----
@@ -434,6 +434,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             X_new.append(X_step)
 
         return sp.hstack(X_new)
+
+    def _more_tags(self):
+        return {'stateless': True}
 
 
 class Nystroem(BaseEstimator, TransformerMixin):

@@ -38,9 +38,6 @@ then
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-
-    # avoid error due to multiple OpenMP libraries loaded simultaneously
-    export KMP_DUPLICATE_LIB_OK=TRUE
 fi
 
 make_conda() {
@@ -116,7 +113,6 @@ elif [[ "$DISTRIB" == "scipy-dev" ]]; then
     pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
-    export SKLEARN_SITE_JOBLIB=1
     echo "Installing pillow master"
     pip install https://github.com/python-pillow/Pillow/archive/master.zip
     pip install pytest pytest-cov

@@ -362,6 +362,9 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
     def _check_params(self, X, y):
         pass
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 ######################################################################
 # Specific filters

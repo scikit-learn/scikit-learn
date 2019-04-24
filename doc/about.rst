@@ -17,7 +17,7 @@ been leading the development.
 Authors
 -------
 
-The following people have been core contributors to scikit-learn's development
+The following people are currently core contributors to scikit-learn's development
 and maintenance:
 
 .. include:: authors.rst
@@ -30,6 +30,49 @@ in the FAQ.
 .. seealso::
 
    :ref:`How you can contribute to the project <contributing>`
+
+Emeritus Core Developers
+------------------------
+The following people have been active contributors in the past, but are no longer active in the project
+
+
+- Alexander Fabisch
+- Alexandre Passos
+- Angel Soler Gollonet
+- Arnaud Joly
+- Chris Gorgolewski
+- David Cournapeau
+- David Warde-Farley
+- Eduard Duchesnay
+- Fabian Pedragosa
+- Gilles Louppe
+- Jacob Schreiber
+- Jake Vanderplas
+- Jaques Grobler
+- Jarrod Millman
+- Kyle Kastner
+- Lars Buitinck
+- Manoj Kumar
+- Mathieu Blondel
+- Matthieu Brucher
+- Noel Dawe
+- Paolo Losi
+- Peter Prettenhofer
+- Raghav Rajagopalan
+- Robert Layton
+- Ron Weiss
+- Satrajit Ghosh
+- Shiqiao Du
+- Thouis (Ray) Jones
+- Vincent Dubourg
+- Vincent Michel
+- Virgile Fritsch
+- Wei Li
+
+Governance
+----------
+The decision making process and governance structure of scikit-learn is laid
+out in the :ref:`governance document <governance>`.
 
 .. _citing-scikit-learn:
 
@@ -170,6 +213,8 @@ program.
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
 - 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
 - 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <https://yclin.me/>`_
+
+.. _Vlad Niculae: https://vene.ro/
 
 It also provided funding for sprints and events around scikit-learn. If
 you would like to participate in the next Google Summer of code

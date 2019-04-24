@@ -170,9 +170,9 @@ General Concepts
         :class:`~sklearn.preprocessing.OneHotEncoder` can be used to
         one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
-        `https://contrib.scikit-learn.org/categorical-encoding/
-        <category_encoders>`_ package for tools related to encoding
-        categorical features.
+        `categorical-encoding
+        <https://contrib.scikit-learn.org/categorical-encoding>`_
+        package for tools related to encoding categorical features.
 
     clone
     cloned
@@ -674,6 +674,19 @@ General Concepts
         broadly authorized by the core developers and the contrib community,
         but not maintained by the core developer team.
         See https://scikit-learn-contrib.github.io.
+
+    scikit-learn enhancement proposals
+    SLEP
+    SLEPs
+        Changes to the API principles and changes to dependencies or supported
+        versions happen via a :ref:`SLEP <slep>` and follows the
+        decision-making process outlined in :ref:`governance`.
+        For all votes, a proposal must have been made public and discussed before the
+        vote. Such proposal must be a consolidated document, in the form of a
+        ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+        issue. A SLEP must be submitted as a pull-request to
+        `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_ using the
+        `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.
 
     semi-supervised
     semi-supervised learning
@@ -1236,7 +1249,8 @@ Methods
         repeatedly calling ``partial_fit`` does not clear the model, but
         updates it with respect to the data provided. The portion of data
         provided to ``partial_fit`` may be called a mini-batch.
-        Each mini-batch must be of consistent shape, etc.
+        Each mini-batch must be of consistent shape, etc. In iterative
+        estimators, ``partial_fit`` often only performs a single iteration.
 
         ``partial_fit`` may also be used for :term:`out-of-core` learning,
         although usually limited to the case where learning can be performed

@@ -105,7 +105,8 @@ class PCA(_BasePCA):
     """Principal component analysis (PCA)
 
     Linear dimensionality reduction using Singular Value Decomposition of the
-    data to project it to a lower dimensional space.
+    data to project it to a lower dimensional space. The input data is centered
+    but not scaled for each feature before applying the SVD.
 
     It uses the LAPACK implementation of the full SVD or a randomized truncated
     SVD by the method of Halko et al. 2009, depending on the shape of the input
@@ -250,7 +251,7 @@ class PCA(_BasePCA):
     "Automatic choice of dimensionality for PCA". In NIPS, pp. 598-604*
 
     Implements the probabilistic PCA model from:
-    `Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
+    Tipping, M. E., and Bishop, C. M. (1999). "Probabilistic principal
     component analysis". Journal of the Royal Statistical Society:
     Series B (Statistical Methodology), 61(3), 611-622.
     via the score and score_samples methods.
