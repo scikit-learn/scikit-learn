@@ -634,12 +634,11 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if tps.size == 0 or fps[0] != 0 or tps[0] != 0:
-        # Add an extra threshold position if necessary
-        # to make sure that the curve starts at (0, 0)
-        tps = np.r_[0, tps]
-        fps = np.r_[0, fps]
-        thresholds = np.r_[thresholds[0] + 1, thresholds]
+    # Add an extra threshold position
+    # to make sure that the curve starts at (0, 0)
+    tps = np.r_[0, tps]
+    fps = np.r_[0, fps]
+    thresholds = np.r_[thresholds[0] + 1, thresholds]
 
     if fps[-1] <= 0:
         warnings.warn("No negative samples in y_true, "
@@ -728,13 +727,13 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
         if (relevant.size == 0 or relevant.size == n_labels):
             # If all labels are relevant or unrelevant, the score is also
             # equal to 1. The label ranking has no meaning.
-            out += 1.
-            continue
+            aux = 1.
+        else:
+            scores_i = y_score[i]
+            rank = rankdata(scores_i, 'max')[relevant]
+            L = rankdata(scores_i[relevant], 'max')
+            aux = (L / rank).mean()
 
-        scores_i = y_score[i]
-        rank = rankdata(scores_i, 'max')[relevant]
-        L = rankdata(scores_i[relevant], 'max')
-        aux = (L / rank).mean()
         if sample_weight is not None:
             aux = aux * sample_weight[i]
         out += aux

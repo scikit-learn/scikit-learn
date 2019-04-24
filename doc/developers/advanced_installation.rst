@@ -61,6 +61,14 @@ Building Scikit-learn also requires
 - Cython >=0.28.5
 - OpenMP
 
+.. note::
+
+   It is possible to build scikit-learn without OpenMP support by setting the
+   ``SKLEARN_NO_OPENMP`` environment variable (before cythonization). This is
+   not recommended since it will force some estimators to run in sequential
+   mode and their ``n_jobs`` parameter will be ignored.
+
+
 Running tests requires
 
 .. |PytestMinVersion| replace:: 3.3.0

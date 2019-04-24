@@ -502,7 +502,10 @@ def test_regressormixin_score_multioutput():
     msg = ("The default value of multioutput (not exposed in "
            "score method) will change from 'variance_weighted' "
            "to 'uniform_average' in 0.23 to keep consistent "
-           "with 'metrics.r2_score'. To use the new default, "
-           "please either call 'metrics.r2_score' directly or "
-           "make a custom scorer with 'metrics.make_scorer'.")
+           "with 'metrics.r2_score'. To specify the default "
+           "value manually and avoid the warning, please "
+           "either call 'metrics.r2_score' directly or make a "
+           "custom scorer with 'metrics.make_scorer' (the "
+           "built-in scorer 'r2' uses "
+           "multioutput='uniform_average').")
     assert_warns_message(FutureWarning, msg, reg.score, X, y)

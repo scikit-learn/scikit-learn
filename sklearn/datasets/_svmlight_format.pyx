@@ -5,7 +5,7 @@
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 #
-# cython: language_level=2, boundscheck=False, wraparound=False
+# cython: boundscheck=False, wraparound=False
 
 import array
 from cpython cimport array
@@ -61,7 +61,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based,
     for line in f:
         # skip comments
         line_cstr = line
-        hash_ptr = strchr(line_cstr, '#')
+        hash_ptr = strchr(line_cstr, 35)  # ASCII value of '#' is 35
         if hash_ptr != NULL:
             line = line[:hash_ptr - line_cstr]
 
