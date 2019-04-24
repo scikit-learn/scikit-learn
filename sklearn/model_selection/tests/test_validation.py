@@ -1770,21 +1770,23 @@ def test_cross_validate_return_test_indices():
     clf = SVC(kernel="linear", random_state=0)
     X, y = make_classification(n_samples=n_samples, random_state=0)
 
+    # test indices not returned when return_test_indices is False
     ret = cross_validate(clf, X, y, return_train_score=False,
                          return_estimator=False, return_test_indices=False)
     assert 'test_indices' not in ret
 
+    # test indices returned, with checks for various configurations
     ret = cross_validate(clf, X, y, return_train_score=False,
                          return_estimator=False, return_test_indices=True)
-    assert np.all(np.sort(np.hstack(ret['test_indices']))
-                  == np.arange(n_samples))
+    assert_array_equal(np.sort(np.hstack(ret['test_indices'])),
+                       np.arange(n_samples))
 
     ret = cross_validate(clf, X, y, return_train_score=False,
                          return_estimator=True, return_test_indices=True)
-    assert np.all(np.sort(np.hstack(ret['test_indices']))
-                  == np.arange(n_samples))
+    assert_array_equal(np.sort(np.hstack(ret['test_indices'])),
+                       np.arange(n_samples))
 
     ret = cross_validate(clf, X, y, return_train_score=True,
                          return_estimator=True, return_test_indices=True)
-    assert np.all(np.sort(np.hstack(ret['test_indices']))
-                  == np.arange(n_samples))
+    assert_array_equal(np.sort(np.hstack(ret['test_indices'])),
+                       np.arange(n_samples))
