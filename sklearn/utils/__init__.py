@@ -252,7 +252,7 @@ def resample(*arrays, **options):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-    stratify : array-like or None (default=None)
+    stratify : ndarray or None (default=None)
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
@@ -332,7 +332,9 @@ def resample(*arrays, **options):
     else:
         # Code adapted from StratifiedShuffleSplit()
         y = stratify
+        y = check_array(stratify, ensure_2d=False, dtype=None)
         if y.ndim == 2:
+            print(y.shape)
             # for multi-label y, map each distinct row to a string repr
             # using join because str(row) uses an ellipsis if len(row) > 1000
             y = np.array([' '.join(row.astype('str')) for row in y])
@@ -347,8 +349,6 @@ def resample(*arrays, **options):
         class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
                                  np.cumsum(class_counts)[:-1])
 
-        # if there are ties in the class-counts, we want
-        # to make sure to break them anew in each iteration
         n_i = _approximate_mode(class_counts, max_n_samples, random_state)
 
         indices = []

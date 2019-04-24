@@ -104,7 +104,7 @@ def test_resample_stratified():
 
     _, y_stratified = resample(X, y, n_samples=10, random_state=0, stratify=y)
     assert not np.all(y_stratified == 1)
-    np.sum(y_stratified) == 9  # all 1s, one 0
+    assert np.sum(y_stratified) == 9  # all 1s, one 0
 
 
 def test_resample_stratified_replace():
@@ -135,7 +135,20 @@ def test_resample_stratify_2dy():
     n_samples = 100
     X = rng.normal(size=(n_samples, 1))
     y = rng.randint(0, 2, size=(n_samples, 2))
-    resample(X, y, n_samples=50, random_state=rng, stratify=y)
+    X, y = resample(X, y, n_samples=50, random_state=rng, stratify=y)
+    assert y.ndim == 2
+
+
+def test_resample_stratify_sparse_error():
+    # resample must be ndarray
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 2))
+    y = rng.randint(0, 2, size=n_samples)
+    stratify = sp.csr_matrix(y)
+    with pytest.raises(TypeError, match='A sparse matrix was passed'):
+        X, y = resample(X, y, n_samples=50, random_state=rng,
+                        stratify=stratify)
 
 
 def test_safe_mask():
