@@ -45,6 +45,16 @@ Details are listed in the changelog below.
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
 
+Known Major Bugs
+----------------
+
+* The default `max_iter` for :class:`linear_model.LogisticRegression` is too
+  small for many solvers given the default `tol`. In particular, we
+  accidentally changed the default `max_iter` for the liblinear solver from
+  1000 to 100 iterations in :pr:`3591` released in version 0.16.
+  In a future release we hope to choose better default `max_iter` and `tol`
+  heuristically depending on the solver (see :pr:`13317`).
+
 Changelog
 ---------
 
