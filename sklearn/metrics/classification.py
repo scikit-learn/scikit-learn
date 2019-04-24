@@ -2420,15 +2420,15 @@ def multiclass_auc(y_true, y_prob):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import multiclass_auc
-    >>> y_true = [0, 2, 1, 0]
-    >>> y_prob = [[0.98, 0.01, 0.01], [0.89, 0.1, 0.01], [0.04, 0.83, 0.13], [0.3, 0.13, 0.57]]
-    >>> multiclass_auc(y_true, y_prob)  # doctest: +ELLIPSIS
-    0.666...
-    >>> y_true = [0, 0, 1, 0, 1, 1]
-    >>> y_prob = [[0.63, 0.27], [0.89, 0.11], [0.15, 0.85], [0.27, 0.73], [0.02, 0.98], [0.42, 0.58]]
-    >>> multiclass_auc(y_true, y_prob)  # doctest: +ELLIPSIS
-    0.888...
+    >>> from sklearn.metrics.classification import multiclass_auc
+    >>> y_true = np.array([2, 0, 1, 0, 1])
+    >>> y_prob = np.array([[0.98, 0.01, 0.01], [0.89, 0.1, 0.01], [0.04, 0.83, 0.13], [0.3, 0.13, 0.57], [0.14, 0.32, 0.54]])
+    >>> multiclass_auc(y_true, y_prob)
+    0.5
+    >>> y_true = np.array([1, 0, 1, 0, 1, 1])
+    >>> y_prob = np.array([[0.63, 0.27], [0.89, 0.11], [0.15, 0.85], [0.27, 0.73], [0.02, 0.98], [0.42, 0.58]])
+    >>> multiclass_auc(y_true, y_prob)
+    0.75
 
     References
     ----------
