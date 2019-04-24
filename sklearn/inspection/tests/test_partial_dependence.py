@@ -502,6 +502,7 @@ def test_plot_partial_dependence_multioutput():
     close_figure()
 
 
+@if_matplotlib
 @pytest.mark.parametrize(
     "data, params, err_msg",
     [(multioutput_regression_data[0], {"target": None, 'features': [0]},
