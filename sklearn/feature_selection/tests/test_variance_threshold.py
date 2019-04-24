@@ -40,5 +40,3 @@ def test_zero_variance_floating_point_error():
     assert_not_equal(np.var(data), 0.)
     for X in [data, csr_matrix(data), csc_matrix(data), bsr_matrix(data)]:
         assert_raises(ValueError, VarianceThreshold().fit, X)
-
-
