@@ -12,6 +12,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..preprocessing import normalize
 
+
 def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
         sample_weight=None):
     """Fuzzy CMeans clustering
