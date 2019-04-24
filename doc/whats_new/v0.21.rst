@@ -51,12 +51,15 @@ Changelog
 Support for Python 3.4 and below has been officially dropped.
 
 ..
-    See version doc/whats_new/v0.20.rst for structure. Entries should be
-    prefixed with one of the labels: |MajorFeature|, |Feature|, |Efficiency|,
-    |Enhancement|, |Fix| or |API|. They should be under a heading for the
-    relevant module (or *Multiple Modules* or *Miscellaneous*), and within each
-    section should be ordered according to the label ordering above. Entries
-    should end with: :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :issue:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.base`
 ...................
