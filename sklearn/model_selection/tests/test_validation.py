@@ -1801,12 +1801,12 @@ def test_cross_validate_reconstruct_predictions():
 
     ret = cross_validate(clf, X, y, cv=cv, return_estimator=True,
                          return_test_indices=True)
-    cv_accuracy_score = np.zeros(cv)
+    split_test_scores = np.zeros(cv)
 
     # reconstruct predictions for each cv split using estimator
-    for idx, (clf, test_indices) in \
+    for idx, (clf, split_indices) in \
             enumerate(zip(ret['estimator'], ret['test_indices'])):
-        preds = clf.predict(X[test_indices])
-        cv_accuracy_score[idx] = accuracy_score(y[test_indices], preds)
+        split_preds = clf.predict(X[split_indices])
+        split_test_scores[idx] = accuracy_score(y[split_indices], split_preds)
 
-    assert_array_almost_equal(ret['test_score'], cv_accuracy_score)
+    assert_array_almost_equal(ret['test_score'], split_test_scores)
