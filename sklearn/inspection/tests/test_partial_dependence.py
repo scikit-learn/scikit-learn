@@ -27,7 +27,6 @@ from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import skip_if_no_matplotlib
 from sklearn.utils.testing import close_figure
 
 
@@ -397,10 +396,9 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
 
 
-@skip_if_no_matplotlib
 def test_plot_partial_dependence():
     # Test partial dependence plot function.
-    import matplotlib.pyplot as plt  # noqa
+    plt = pytest.importorskip('matplotlib.pyplot')
 
     boston = load_boston()
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
@@ -440,10 +438,9 @@ def test_plot_partial_dependence():
     close_figure()
 
 
-@skip_if_no_matplotlib
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
-    import matplotlib.pyplot as plt  # noqa
+    plt = pytest.importorskip('matplotlib.pyplot')
     iris = load_iris()
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
@@ -474,10 +471,9 @@ def test_plot_partial_dependence_multiclass():
     close_figure()
 
 
-@skip_if_no_matplotlib
 def test_plot_partial_dependence_multioutput():
     # Test partial dependence plot function on multi-output input.
-    import matplotlib.pyplot as plt  # noqa
+    plt = pytest.importorskip('matplotlib.pyplot')
     (X, y), _ = multioutput_regression_data
     clf = LinearRegression()
     clf.fit(X, y)
@@ -502,7 +498,6 @@ def test_plot_partial_dependence_multioutput():
     close_figure()
 
 
-@skip_if_no_matplotlib
 @pytest.mark.parametrize(
     "data, params, err_msg",
     [(multioutput_regression_data[0], {"target": None, 'features': [0]},
@@ -533,6 +528,7 @@ def test_plot_partial_dependence_multioutput():
 @pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
 @pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
 def test_plot_partial_dependence_error(data, params, err_msg):
+    plt = pytest.importorskip('matplotlib.pyplot')
     X, y = data
     estimator = LinearRegression().fit(X, y)
 
@@ -542,11 +538,10 @@ def test_plot_partial_dependence_error(data, params, err_msg):
     close_figure()
 
 
-@skip_if_no_matplotlib
 def test_plot_partial_dependence_fig():
     # Make sure fig object is correctly used if not None
 
-    import matplotlib.pyplot as plt
+    plt = pytest.importorskip('matplotlib.pyplot')
 
     (X, y), _ = regression_data
     clf = LinearRegression()
