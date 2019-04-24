@@ -1368,6 +1368,9 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
                                     normalize=self.normalize,
                                     solver=solver),
                               parameters, cv=cv, scoring=self.scoring)
+            # note: unlike when using gcv, sample weights won't be used
+            # to compute the validation score so selected hyperparameter
+            # may differ
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha

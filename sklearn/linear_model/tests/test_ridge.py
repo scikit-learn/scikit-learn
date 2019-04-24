@@ -350,13 +350,14 @@ def test_ridge_gcv_sample_weights():
     indices = np.concatenate([n * [i] for (i, n) in enumerate(sample_weights)])
     sample_weights = 1. * sample_weights
     tiled_x, tiled_y = x[indices], y[indices]
-    # alphas = [1e-3, .1, 1., 10., 1e3]
-    alphas = [1.e-10]
-    ridge = Ridge(fit_intercept=True, alpha=alphas[0], normalize=True)
+    # loo scores won't be the same for expanded X and original X with sample
+    # weights so there must be only one value in the hyperparameter grid
+    alphas = [1.]
+    ridge = Ridge(fit_intercept=True, alpha=alphas[0], normalize=False)
     ridge.fit(tiled_x, tiled_y)
     for gcv_mode in ['svd', 'eigen']:
-        gcv = RidgeCV(fit_intercept=True, scoring='neg_mean_squared_error',
-                      alphas=alphas, normalize=True, gcv_mode=gcv_mode)
+        gcv = RidgeCV(fit_intercept=True, alphas=alphas,
+                      normalize=False, gcv_mode=gcv_mode)
         gcv.fit(x, y, sample_weight=sample_weights)
         assert np.allclose(gcv.coef_, ridge.coef_, rtol=1e-2)
         assert np.allclose(gcv.intercept_, ridge.intercept_, rtol=1e-2)
