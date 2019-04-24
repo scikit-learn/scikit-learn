@@ -94,14 +94,14 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug where :class:`cluster.Birch` could occasionally raise an
   AttributeError. :pr:`13651` by `Joel Nothman`_.
 
+- |Fix| Fixed a bug in :class:`KMeans` where empty clusters weren't correctly
+  relocated when using sample weights.
+  :pr:`13486` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |API| The ``n_components_`` attribute in :class:`cluster.AgglomerativeClustering`
   and :class:`cluster.FeatureAgglomeration` has been renamed to
   ``n_connected_components_``.
   :pr:`13427` by :user:`Stephane Couvreur <scouvreur>`.
-
-- |Fix| Fixed a bug in :class:`KMeans` where empty clusters weren't correctly
-  relocated when using sample weights. :pr:`13486`
-  by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.datasets`
 .......................
@@ -181,27 +181,40 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.ensemble`
 .......................
 
+- |MajorFeature| Add two new implementations of
+  gradient boosting trees: :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor`. The implementation of
+  these estimators is inspired by
+  `LightGBM <https://github.com/Microsoft/LightGBM>`_ and can be orders of
+  magnitude faster than :class:`ensemble.GradientBoostingRegressor` and
+  :class:`ensemble.GradientBoostingClassifier` when the number of samples is
+  larger than tens of thousands of samples. The API of these new estimators
+  is slightly different, and some of the features from
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` are not yet supported.
+
+  These new estimators are experimental, which means that their results or
+  their API might change without any deprecation cycle. To use them, you
+  need to explicitly import ``enable_hist_gradient_boosting``::
+
+    >>> # explicitly require this experimental feature
+    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    >>> # now you can import normally from ensemble
+    >>> from sklearn.ensemble import HistGradientBoostingClassifier
+
+  :pr:`12807` by :user:`Nicolas Hug<NicolasHug>`.
+
+- |Feature| Add :class:`ensemble.VotingRegressor`
+  which provides an equivalent of :class:`ensemble.VotingClassifier`
+  for regression problems.
+  :pr:`12513` by :user:`Ramil Nugmanov <stsouko>` and
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
+
 - |Efficiency| Make :class:`ensemble.IsolationForest` prefer threads over
   processes when running with ``n_jobs > 1`` as the underlying decision tree
   fit calls do release the GIL. This changes reduces memory usage and
   communication overhead. :pr:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
-
-- |API| :func:`ensemble.partial_dependence` and
-  :func:`ensemble.plot_partial_dependence` are now deprecated in favor of
-  :func:`inspection.partial_dependence<sklearn.inspection.partial_dependence>`
-  and
-  :func:`inspection.plot_partial_dependence<sklearn.inspection.plot_partial_dependence>`.
-  :pr:`12599` by :user:`Trevor Stephens<trevorstephens>` and
-  :user:`Nicolas Hug<NicolasHug>`.
-
-- |Enhancement| Minimized the validation of X in
-  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
-  :pr:`13174` by :user:`Christos Aridas <chkoar>`.
-
-- |Enhancement| :class:`ensemble.IsolationForest` now exposes ``warm_start``
-  parameter, allowing iterative addition of trees to an isolation
-  forest. :pr:`13496` by :user:`Peter Marko <petibear>`.
 
 - |Efficiency| Make :class:`ensemble.IsolationForest` more memory efficient
   by avoiding keeping in memory each tree prediction. :pr:`13260` by
@@ -210,6 +223,14 @@ Support for Python 3.4 and below has been officially dropped.
 - |Efficiency| :class:`ensemble.IsolationForest` now uses chunks of data at
   prediction step, thus capping the memory usage. :pr:`13283` by
   `Nicolas Goix`_.
+
+- |Enhancement| Minimized the validation of X in
+  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
+  :pr:`13174` by :user:`Christos Aridas <chkoar>`.
+
+- |Enhancement| :class:`ensemble.IsolationForest` now exposes ``warm_start``
+  parameter, allowing iterative addition of trees to an isolation
+  forest. :pr:`13496` by :user:`Peter Marko <petibear>`.
 
 - |Fix| The values of ``feature_importances_`` in all random forest based
   models (i.e.
@@ -268,34 +289,13 @@ Support for Python 3.4 and below has been officially dropped.
   gradient boosting model has been trained with sample weights.
   :pr:`13193` by :user:`Samuel O. Ronsin <samronsin>`.
 
-- |Feature| Add :class:`ensemble.VotingRegressor`
-  which provides an equivalent of :class:`ensemble.VotingClassifier`
-  for regression problems.
-  :pr:`12513` by :user:`Ramil Nugmanov <stsouko>` and
-  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
-
-- |MajorFeature| Add two new implementations of
-  gradient boosting trees: :class:`ensemble.HistGradientBoostingClassifier`
-  and :class:`ensemble.HistGradientBoostingRegressor`. The implementation of
-  these estimators is inspired by
-  `LightGBM <https://github.com/Microsoft/LightGBM>`_ and can be orders of
-  magnitude faster than :class:`ensemble.GradientBoostingRegressor` and
-  :class:`ensemble.GradientBoostingClassifier` when the number of samples is
-  larger than tens of thousands of samples. The API of these new estimators
-  is slightly different, and some of the features from
-  :class:`ensemble.GradientBoostingClassifier` and
-  :class:`ensemble.GradientBoostingRegressor` are not yet supported.
-
-  These new estimators are experimental, which means that their results or
-  their API might change without any deprecation cycle. To use them, you
-  need to explicitly import ``enable_hist_gradient_boosting``::
-
-    >>> # explicitly require this experimental feature
-    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-    >>> # now you can import normally from ensemble
-    >>> from sklearn.ensemble import HistGradientBoostingClassifier
-
-  :issue:`12807` by :user:`Nicolas Hug<NicolasHug>`.
+- |API| :func:`ensemble.partial_dependence` and
+  :func:`ensemble.plot_partial_dependence` are now deprecated in favor of
+  :func:`inspection.partial_dependence<sklearn.inspection.partial_dependence>`
+  and
+  :func:`inspection.plot_partial_dependence<sklearn.inspection.plot_partial_dependence>`.
+  :pr:`12599` by :user:`Trevor Stephens<trevorstephens>` and
+  :user:`Nicolas Hug<NicolasHug>`.
 
 :mod:`sklearn.externals`
 ........................
@@ -306,8 +306,8 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| |API| If ``input='file'`` or ``input='filename'``, and a callable is given
-  as the ``analyzer``, :class:`sklearn.feature_extraction.text.HashingVectorizer`,
+- |Fix| If ``input='file'`` or ``input='filename'``, and a callable is given as
+  the ``analyzer``, :class:`sklearn.feature_extraction.text.HashingVectorizer`,
   :class:`sklearn.feature_extraction.text.TfidfVectorizer`, and
   :class:`sklearn.feature_extraction.text.CountVectorizer` now read the data
   from the file(s) and then pass it to the given ``analyzer``, instead of
@@ -320,8 +320,14 @@ Support for Python 3.4 and below has been officially dropped.
 - |MajorFeature| Added :class:`impute.IterativeImputer`, which is a strategy
   for imputing missing values by modeling each feature with missing values as a
   function of other features in a round-robin fashion. :pr:`8478` and
-  :pr:`12177` by :user:`Sergey Feldman <sergeyf>` :user:`Ben Lawson
+  :pr:`12177` by :user:`Sergey Feldman <sergeyf>` and :user:`Ben Lawson
   <benlawson>`.
+
+- |Feature| The :class:`impute.SimpleImputer` and :class:`IterativeImputer`
+  have a new parameter ``'add_indicator'``, which simply stacks a
+  :class:`impute.MissingIndicator` transform into the output of the imputer's
+  transform. That allows a predictive estimator to account for missingness.
+  :pr:`12583`, :pr:`13601` by :user:`Danylo Baibak <DanilBaibak>`.
 
 - |Fix| In :class:`impute.MissingIndicator` avoid implicit densification by
   raising an exception if input is sparse add `missing_values` property
@@ -333,14 +339,10 @@ Support for Python 3.4 and below has been officially dropped.
   used to be kept if there were no missing values at all. :pr:`13562` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Feature| The :class:`impute.SimpleImputer` and :class:`IterativeImputer` have
-  a new parameter ``'add_indicator'``, which simply stacks a
-  :class:`impute.MissingIndicator` transform into the output of the imputer's
-  transform. That allows a predictive estimator to account for missingness.
-  :pr:`12583`, :pr:`13601` by :user:`Danylo Baibak <DanilBaibak>`.
-
 :mod:`sklearn.inspection`
 .........................
+
+(new subpackage)
 
 - |Feature| Partial dependence plots
   (:func:`inspection.plot_partial_dependence`) are now supported for
@@ -352,7 +354,8 @@ Support for Python 3.4 and below has been officially dropped.
 .......................
 
 - |Feature| Allow different dtypes (such as float32) in
-  :class:`isotonic.IsotonicRegression` :pr:`8769` by :user:`Vlad Niculae <vene>`
+  :class:`isotonic.IsotonicRegression`.
+  :pr:`8769` by :user:`Vlad Niculae <vene>`
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -366,13 +369,15 @@ Support for Python 3.4 and below has been officially dropped.
   users to compute :class:`linear_model.lars_path` without providing
   ``X`` and ``y``. :pr:`11699` by :user:`Kuai Yu <yukuairoy>`.
 
-- |Enhancement| :func:`linear_model.make_dataset` now preserves
-  ``float32`` and ``float64`` dtypes. :pr:`8769` and :pr:`11000` by
+- |Efficiency| :func:`linear_model.make_dataset` now preserves
+  ``float32`` and ``float64`` dtypes, reducing memory consumption in stochastic
+  gradient, SAG and SAGA solvers.
+  :pr:`8769` and :pr:`11000` by
   :user:`Nelle Varoquaux <NelleV>`, :user:`Arthur Imbert <Henley13>`,
   :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Enhancement| :class:`linear_model.LogisticRegression` now supports an
-  unregularized objective by setting ``penalty`` to ``'none'``. This is
+  unregularized objective when ``penalty='none'`` is passed. This is
   equivalent to setting ``C=np.inf`` with l2 regularization. Not supported
   by the liblinear solver. :pr:`12860` by :user:`Nicolas Hug
   <NicolasHug>`.
@@ -413,15 +418,6 @@ Support for Python 3.4 and below has been officially dropped.
   ``backend="threading"``, causing them to perform worse than in the sequential
   case. :pr:`13389` by :user:`Pierre Glaser <pierreglaser>`.
 
-- |API|  The use of :class:`linear_model.lars_path` with ``X=None``
-  while passing ``Gram`` is deprecated in version 0.21 and will be removed
-  in version 0.23. Use :class:`linear_model.lars_path_gram` instead.
-  :pr:`11699` by :user:`Kuai Yu <yukuairoy>`.
-
-- |API| :func:`linear_model.logistic_regression_path` is deprecated
-  in version 0.21 and will be removed in version 0.23.
-  :pr:`12821` by :user:`Nicolas Hug <NicolasHug>`.
-
 - |Fix| Fixed a bug in
   :class:`linear_model.stochastic_gradient.BaseSGDClassifier` that was not
   deterministic when trained in a multi-class setting on several threads.
@@ -438,10 +434,19 @@ Support for Python 3.4 and below has been officially dropped.
   if ``return_intercept=True`` and solver is different from ``sag``. Previously,
   only warning was issued. :pr:`13363` by :user:`Bartosz Telenczuk <btel>`
 
-- |API| :func:`linear_model.ridge.ridge_regression` will choose ``sparse_cg``
+- |Fix| :func:`linear_model.ridge.ridge_regression` will choose ``sparse_cg``
   solver for sparse inputs when ``solver=auto`` and ``sample_weight``
-  is provided (previously `cholesky` solver was selected). :pr:`13363`
-  by :user:`Bartosz Telenczuk <btel>`
+  is provided (previously `cholesky` solver was selected).
+  :pr:`13363` by :user:`Bartosz Telenczuk <btel>`
+
+- |API|  The use of :class:`linear_model.lars_path` with ``X=None``
+  while passing ``Gram`` is deprecated in version 0.21 and will be removed
+  in version 0.23. Use :class:`linear_model.lars_path_gram` instead.
+  :pr:`11699` by :user:`Kuai Yu <yukuairoy>`.
+
+- |API| :func:`linear_model.logistic_regression_path` is deprecated
+  in version 0.21 and will be removed in version 0.23.
+  :pr:`12821` by :user:`Nicolas Hug <NicolasHug>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -536,8 +541,13 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Feature| Classes :class:`~model_selection.GridSearchCV` and
   :class:`~model_selection.RandomizedSearchCV` now allow for refit=callable
+<<<<<<< HEAD
   to add flexibility in identifying the best
   estimator. An example for this interface has been added.
+=======
+  to add flexibility in identifying the best estimator.
+  See :doc:`/auto_examples/model_selection/plot_grid_search_refit_callable.py`.
+>>>>>>> DOC what's new cleaning
   :pr:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
   `Joel Nothman`_ and :user:`Adrin Jalali <adrinjalali>`.
 
@@ -553,8 +563,8 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Enhancement| Some :term:`CV splitter` classes and
   `model_selection.train_test_split` now raise ``ValueError`` when the
-  resulting train set is empty. :pr:`12861` by :user:`Nicolas Hug
-  <NicolasHug>`.
+  resulting training set is empty.
+  :pr:`12861` by :user:`Nicolas Hug <NicolasHug>`.
 
 - |Fix| Fixed a bug where :class:`model_selection.StratifiedKFold`
   shuffles each class's samples with the same ``random_state``,
@@ -590,11 +600,10 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.neighbors`
 ........................
 
-- |MajorFeature| A metric learning algorithm:
-  :class:`neighbors.NeighborhoodComponentsAnalysis`, which implements the
-  Neighborhood Components Analysis algorithm described in Goldberger et al.
-  (2005). :pr:`10058` by :user:`William de Vazelhes
-  <wdevazelhes>` and :user:`John Chiotellis <johny-c>`.
+- |MajorFeature| Added :class:`neighbors.NeighborhoodComponentsAnalysis` for
+  metric learning, which implements the Neighborhood Components Analysis
+  algorithm.  :pr:`10058` by :user:`William de Vazelhes <wdevazelhes>` and
+  :user:`John Chiotellis <johny-c>`.
 
 - |API| Methods in :class:`neighbors.NearestNeighbors` :
   :func:`~neighbors.NearestNeighbors.kneighbors`,
@@ -614,7 +623,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Fixed a bug in :class:`neural_network.MLPClassifier` where
   validation sets for early stopping were not sampled with stratification. In
-  multilabel case however, splits are still not stratified.
+  the multilabel case however, splits are still not stratified.
   :pr:`13164` by :user:`Nicolas Hug<NicolasHug>`.
 
 :mod:`sklearn.pipeline`
@@ -626,19 +635,20 @@ Support for Python 3.4 and below has been officially dropped.
   step (e.g. ``my_pipeline['svc']``), rather than accessing ``named_steps``.
   :pr:`2568` by `Joel Nothman`_.
 
-- |API| :class:`pipeline.Pipeline` now supports using ``'passthrough'`` as a
-  transformer. :pr:`11144` by :user:`Thomas Fan <thomasjpfan>`.
-
-- |Enhancement| :class:`pipeline.Pipeline`  implements ``__len__`` and
-  therefore ``len(pipeline)`` returns the number of steps in the pipeline.
-  :pr:`13439` by :user:`Lakshya KD <LakshKD>`.
-
 - |Feature| Added optional parameter ``verbose`` in :class:`pipeline.Pipeline`,
   :class:`compose.ColumnTransformer` and :class:`pipeline.FeatureUnion`
   and corresponding ``make_`` helpers for showing progress and timing of
   each step. :pr:`11364` by :user:`Baze Petrushev <petrushev>`,
   :user:`Karan Desai <karandesai-96>`, `Joel Nothman`_, and
   :user:`Thomas Fan <thomasjpfan>`.
+
+- |Enhancement| :class:`pipeline.Pipeline` now supports using ``'passthrough'``
+  as a transformer, with the same effect as ``None``.
+  :pr:`11144` by :user:`Thomas Fan <thomasjpfan>`.
+
+- |Enhancement| :class:`pipeline.Pipeline`  implements ``__len__`` and
+  therefore ``len(pipeline)`` returns the number of steps in the pipeline.
+  :pr:`13439` by :user:`Lakshya KD <LakshKD>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -647,23 +657,24 @@ Support for Python 3.4 and below has been officially dropped.
   feature per category with a new drop parameter. :pr:`12908` by
   :user:`Drew Johnston <drewmjohnston>`.
 
-- |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` to cache class
+- |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` cache class
   mappings instead of calculating it every time on the fly.
   :pr:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
 
-- |Efficiency| :class:`preprocessing.PolynomialFeatures` now supports compressed
-  sparse row (CSR) matrices as input for degrees 2 and 3. This is typically much
-  faster than the dense case as it scales with matrix density and expansion degree
-  (on the order of density^degree), and is much, much faster than the compressed
-  sparse column (CSC) case. :pr:`12197` by :user:`Andrew Nystrom <awnystrom>`.
+- |Efficiency| :class:`preprocessing.PolynomialFeatures` now supports
+  compressed sparse row (CSR) matrices as input for degrees 2 and 3. This is
+  typically much faster than the dense case as it scales with matrix density
+  and expansion degree (on the order of density^degree), and is much, much
+  faster than the compressed sparse column (CSC) case.
+  :pr:`12197` by :user:`Andrew Nystrom <awnystrom>`.
 
-- |Efficiency| |API| Speed improvement in :class:`preprocessing.PolynomialFeatures`,
+- |Efficiency| Speed improvement in :class:`preprocessing.PolynomialFeatures`,
   in the dense case. Also added a new parameter ``order`` which controls output
   order for further speed performances. :pr:`12251` by `Tom Dupre la Tour`_.
 
 - |Fix| Fixed the calculation overflow when using a float16 dtype with
-  :class:`preprocessing.StandardScaler`. :pr:`13007` by
-  :user:`Raffaello Baluyot <baluyotraf>`
+  :class:`preprocessing.StandardScaler`.
+  :pr:`13007` by :user:`Raffaello Baluyot <baluyotraf>`
 
 - |Fix| Fixed a bug in :class:`preprocessing.QuantileTransformer` and
   :func:`preprocessing.quantile_transform` to force n_quantiles to be at most
@@ -681,11 +692,12 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.svm`
 ..................
 
-- |Fix| Fixed an issue in :func:`svm.SVC.decision_function`
-  when ``decision_function_shape='ovr'``. The decision_function value of a given
+- |Fix| Fixed an issue in :func:`svm.SVC.decision_function` when
+  ``decision_function_shape='ovr'``. The decision_function value of a given
   sample was different depending on whether the decision_function was evaluated
-  on the sample alone or on a batch containing this same sample due to the scaling
-  used in decision_function. :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
+  on the sample alone or on a batch containing this same sample due to the
+  scaling used in decision_function.
+  :pr:`10440` by :user:`Jonathan Ohayon <Johayon>`.
 
 :mod:`sklearn.tree`
 ...................
@@ -737,23 +749,26 @@ Multiple modules
   but this can be altered with the ``print_changed_only`` option in
   :func:`sklearn.set_config`. :pr:`11705` by :user:`Nicolas Hug
   <NicolasHug>`.
+
 - |MajorFeature| Add estimators tags: these are annotations of estimators
   that allow programmatic inspection of their capabilities, such as sparse
   matrix support, supported output types and supported methods. Estimator
   tags also determine the tests that are run on an estimator when
   `check_estimator` is called. Read more in the :ref:`User Guide
   <estimator_tags>`. :pr:`8022` by :user:`Andreas Müller <amueller>`.
+
 - |Efficiency| Memory copies are avoided when casting arrays to a different
   dtype in multiple estimators. :pr:`11973` by :user:`Roman Yurchak
   <rth>`.
+
 - |Fix| Fixed a bug in the implementation of the :func:`our_rand_r`
   helper function that was not behaving consistently across platforms.
   :pr:`13422` by :user:`Madhura Parikh <jdnc>` and
   :user:`Clément Doumouro <ClemDoum>`.
 
 
-Dependencies
-............
+Miscellaneous
+.............
 
 - |Enhancement| Joblib is no longer vendored in scikit-learn, and becomes a
   dependency. Minimal supported version is joblib 0.11, however using
@@ -771,3 +786,6 @@ These changes mostly affect library developers.
   when `fit` is called twice with the same data, the ouput of
   `predict`, `predict_proba`, `transform`, and `decision_function` does not
   change. :pr:`12328` by :user:`Nicolas Hug <NicolasHug>`
+
+- Many checks can now be disabled or configured with :ref:`estimator_tags`.
+  :pr:`8022` by :user:`Andreas Müller <amueller>`.
