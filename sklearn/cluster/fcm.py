@@ -10,7 +10,7 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array
 from ..utils import check_random_state
-
+from ..preprocessing import normalize
 
 def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
         sample_weight=None):
@@ -70,7 +70,7 @@ def fcm(X, n_clusters, m=2, eps=10, random_state=None, max_iter=300,
         n_clusters = len(X)
 
     X = check_array(X, accept_sparse='csr')
-
+    X = normalize(X, axis=0)
     membership_mat = np.random.random((len(X), n_clusters))
     membership_mat = membership_mat / np.sum(membership_mat,
                                              axis=1)[:, np.newaxis]
