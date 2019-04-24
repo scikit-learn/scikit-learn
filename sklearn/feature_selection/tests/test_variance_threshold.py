@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from sklearn.utils.testing import (assert_array_equal, assert_equal,
                                    assert_not_equal, assert_raises)
@@ -39,5 +40,6 @@ def test_zero_variance_floating_point_error():
     data = [[-0.13725701]] * 10
     assert_not_equal(np.var(data), 0.)
     for X in [data, csr_matrix(data), csc_matrix(data), bsr_matrix(data)]:
-        # All features removed, so exception should be thrown
-        assert_raises(ValueError, VarianceThreshold().fit, X)
+        msg = "No feature in X meets the variance threshold 0.00000"
+        with pytest.raises(ValueError, match=msg):
+            VarianceThreshold().fit(X)
