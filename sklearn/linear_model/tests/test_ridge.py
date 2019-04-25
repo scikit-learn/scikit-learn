@@ -5,6 +5,7 @@ from itertools import product
 
 import pytest
 
+import sklearn
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
@@ -993,3 +994,40 @@ def test_dtype_match_cholesky():
     assert ridge_32.predict(X_32).dtype == X_32.dtype
     assert ridge_64.predict(X_64).dtype == X_64.dtype
     assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
+
+
+def test_ridge_X_sparse_svd_memory_error(monkeypatch):
+    X = sp.csr_matrix(X_diabetes)
+
+    def toarray(order=None, out=None):
+        raise MemoryError()
+
+    monkeypatch.setattr(sp.csr.csr_matrix, 'toarray', toarray)
+
+    ridgecv = RidgeCV(gcv_mode='svd')
+
+    msg = (r"Setting gcv_mode='svd' with a sparse X creates a "
+           r"n_samples \* n_features dense matrix, setting gcv_mode='eigen' "
+           r"may help because it creates a n_samples\*\*2 dense matrix")
+
+    with pytest.raises(MemoryError, match=msg):
+        ridgecv.fit(X, y_diabetes)
+
+
+def test_ridge_X_sparse_auto_memory_error(monkeypatch):
+    X = sp.csr_matrix(X_diabetes)
+
+    def safe_sparse_dot_mock(*args, **kwargs):
+        raise MemoryError()
+
+    monkeypatch.setattr(sklearn.linear_model.ridge, 'safe_sparse_dot',
+                        safe_sparse_dot_mock)
+
+    ridgecv = RidgeCV()
+
+    msg = (r"Setting gcv_mode='eigen' with a sparse X creates a "
+           r"n_samples \* n_samples dense matrix, setting gcv_mode='svd' "
+           r"may help because it creates a n_samples\*\*2 dense matrix")
+
+    with pytest.raises(MemoryError, match=msg):
+        ridgecv.fit(X, y_diabetes)
