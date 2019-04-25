@@ -34,6 +34,7 @@ from sklearn.metrics.pairwise import laplacian_kernel
 from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import cosine_distances
+from sklearn.metrics.pairwise import gower_distances
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import pairwise_distances_chunked
 from sklearn.metrics.pairwise import pairwise_distances_argmin_min
