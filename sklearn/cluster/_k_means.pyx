@@ -8,7 +8,7 @@
 #
 # License: BSD 3 clause
 #
-# cython: language_level=3, boundscheck=False, wraparound=False, cdivision=True
+# cython: boundscheck=False, wraparound=False, cdivision=True
 
 from libc.math cimport sqrt
 import numpy as np
@@ -17,7 +17,7 @@ cimport numpy as np
 cimport cython
 from cython cimport floating
 
-from sklearn.utils.sparsefuncs_fast import assign_rows_csr
+from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils._cython_blas cimport _dot
 
 ctypedef np.float64_t DOUBLE
@@ -309,7 +309,7 @@ def _centers_dense(np.ndarray[floating, ndim=2] X,
         for i, cluster_id in enumerate(empty_clusters):
             # XXX two relocated clusters could be close to each other
             far_index = far_from_centers[i]
-            new_center = X[far_index]
+            new_center = X[far_index] * sample_weight[far_index]
             centers[cluster_id] = new_center
             weight_in_cluster[cluster_id] = sample_weight[far_index]
 

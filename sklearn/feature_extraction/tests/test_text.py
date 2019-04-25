@@ -29,6 +29,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from sklearn.utils import IS_PYPY
+from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils.testing import (assert_equal, assert_not_equal,
                                    assert_almost_equal, assert_in,
                                    assert_less, assert_greater,
@@ -1196,3 +1197,47 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
                                             .findall(doc),
                     stop_words=['and'])
     assert _check_stop_words_consistency(vec) is True
+
+
+@pytest.mark.parametrize('Estimator',
+                         [CountVectorizer, TfidfVectorizer, HashingVectorizer])
+@pytest.mark.parametrize(
+    'input_type, err_type, err_msg',
+    [('filename', FileNotFoundError, ''),
+     ('file', AttributeError, "'str' object has no attribute 'read'")]
+)
+def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
+    data = ['this is text, not file or filename']
+    with pytest.raises(err_type, match=err_msg):
+        Estimator(analyzer=lambda x: x.split(),
+                  input=input_type).fit_transform(data)
+
+
+@pytest.mark.parametrize('Estimator',
+                         [CountVectorizer, TfidfVectorizer, HashingVectorizer])
+@pytest.mark.parametrize(
+    'analyzer', [lambda doc: open(doc, 'r'), lambda doc: doc.read()]
+)
+@pytest.mark.parametrize('input_type', ['file', 'filename'])
+def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
+    data = ['this is text, not file or filename']
+    warn_msg = 'Since v0.21, vectorizer'
+    with pytest.raises((FileNotFoundError, AttributeError)):
+        with pytest.warns(ChangedBehaviorWarning, match=warn_msg) as records:
+            Estimator(analyzer=analyzer, input=input_type).fit_transform(data)
+    assert len(records) == 1
+    assert warn_msg in str(records[0])
+
+
+@pytest.mark.parametrize('Estimator',
+                         [CountVectorizer, TfidfVectorizer, HashingVectorizer])
+def test_callable_analyzer_reraise_error(tmpdir, Estimator):
+    # check if a custom exception from the analyzer is shown to the user
+    def analyzer(doc):
+        raise Exception("testing")
+
+    f = tmpdir.join("file.txt")
+    f.write("sample content\n")
+
+    with pytest.raises(Exception, match="testing"):
+        Estimator(analyzer=analyzer, input='file').fit_transform([f])

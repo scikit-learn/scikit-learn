@@ -19,11 +19,11 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import is_classifier, clone
-from ..utils import indexable, check_random_state, safe_indexing
+from ..utils import (indexable, check_random_state, safe_indexing,
+                     _message_with_time)
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..utils._joblib import Parallel, delayed
-from ..utils._joblib import logger
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
@@ -572,8 +572,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     if verbose > 1:
         total_time = score_time + fit_time
-        end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
-        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+        print(_message_with_time('CV', msg, total_time))
 
     ret = [train_scores, test_scores] if return_train_score else [test_scores]
 

@@ -239,7 +239,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     return (sum_comb - prod_comb) / (mean_comb - prod_comb)
 
 
-def homogeneity_completeness_v_measure(labels_true, labels_pred):
+def homogeneity_completeness_v_measure(labels_true, labels_pred, beta=1.0):
     """Compute the homogeneity and completeness and V-Measure scores at once.
 
     Those metrics are based on normalized conditional entropy measures of
@@ -275,6 +275,12 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
 
+    beta : float
+        Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
+        If ``beta`` is greater than 1, ``completeness`` is weighted more
+        strongly in the calculation. If ``beta`` is less than 1,
+        ``homogeneity`` is weighted more strongly.
+
     Returns
     -------
     homogeneity : float
@@ -309,8 +315,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     if homogeneity + completeness == 0.0:
         v_measure_score = 0.0
     else:
-        v_measure_score = (2.0 * homogeneity * completeness /
-                           (homogeneity + completeness))
+        v_measure_score = ((1 + beta) * homogeneity * completeness
+                           / (beta * homogeneity + completeness))
 
     return homogeneity, completeness, v_measure_score
 
@@ -459,7 +465,7 @@ def completeness_score(labels_true, labels_pred):
     return homogeneity_completeness_v_measure(labels_true, labels_pred)[1]
 
 
-def v_measure_score(labels_true, labels_pred):
+def v_measure_score(labels_true, labels_pred, beta=1.0):
     """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score` with
@@ -467,7 +473,8 @@ def v_measure_score(labels_true, labels_pred):
 
     The V-measure is the harmonic mean between homogeneity and completeness::
 
-        v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
+        v = (1 + beta) * homogeneity * completeness
+             / (beta * homogeneity + completeness)
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -488,6 +495,12 @@ def v_measure_score(labels_true, labels_pred):
 
     labels_pred : array, shape = [n_samples]
         cluster labels to evaluate
+
+    beta : float
+        Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
+        If ``beta`` is greater than 1, ``completeness`` is weighted more
+        strongly in the calculation. If ``beta`` is less than 1,
+        ``homogeneity`` is weighted more strongly.
 
     Returns
     -------
@@ -554,7 +567,8 @@ def v_measure_score(labels_true, labels_pred):
       0.0...
 
     """
-    return homogeneity_completeness_v_measure(labels_true, labels_pred)[2]
+    return homogeneity_completeness_v_measure(labels_true, labels_pred,
+                                              beta=beta)[2]
 
 
 def mutual_info_score(labels_true, labels_pred, contingency=None):
@@ -833,7 +847,7 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the NMI is null::
 
-      >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])i
+      >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
       ... # doctest: +SKIP
       0.0
 
