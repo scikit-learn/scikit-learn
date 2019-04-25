@@ -259,7 +259,7 @@ class LinearSVR(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    epsilon : float, optional (default=0.1)
+    epsilon : float, optional (default=0.0)
         Epsilon parameter in the epsilon-insensitive loss function. Note
         that the value of this parameter depends on the scale of the target
         variable y. If unsure, set ``epsilon=0``.
@@ -1224,7 +1224,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         """
         Perform classification on samples in X.
 
-        For an one-class model, +1 or -1 is returned.
+        For a one-class model, +1 or -1 is returned.
 
         Parameters
         ----------

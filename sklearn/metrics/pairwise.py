@@ -24,13 +24,13 @@ from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..preprocessing import MinMaxScaler
 from ..preprocessing import normalize
 from ..utils._joblib import Parallel
 from ..utils._joblib import delayed
 from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from ..exceptions import DataConversionWarning
 
 
 # Utility Functions
@@ -58,8 +58,7 @@ def _return_float_dtype(X, Y):
     return X, Y, dtype
 
 
-def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
-                          force_all_finite=True):
+def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
     """ Set X and Y appropriately and checks inputs
 
     If Y is None, it is set as a pointer to X (i.e. not a copy).
@@ -89,17 +88,6 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
 
         .. versionadded:: 0.18
 
-    force_all_finite : boolean or 'allow-nan', (default=True)
-        Whether to raise an error on np.inf and np.nan in X. The possibilities
-        are:
-
-        - True: Force all values of X to be finite.
-        - False: accept both np.inf and np.nan in X.
-        - 'allow-nan':  accept  only  np.nan  values in  X.  Values  cannot  be
-          infinite.
-
-        .. versionadded:: 0.20
-
     Returns
     -------
     safe_X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
@@ -112,22 +100,18 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
     """
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
-    warn_on_dtype = dtype is not None
     estimator = 'check_pairwise_arrays'
     if dtype is None:
         dtype = dtype_float
 
     if Y is X or Y is None:
         X = Y = check_array(X, accept_sparse='csr', dtype=dtype,
-                            warn_on_dtype=warn_on_dtype, estimator=estimator,
-                            force_all_finite=force_all_finite)
+                            estimator=estimator)
     else:
         X = check_array(X, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator,
-                        force_all_finite=force_all_finite)
+                        estimator=estimator)
         Y = check_array(Y, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator,
-                        force_all_finite=force_all_finite)
+                        estimator=estimator)
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
@@ -322,7 +306,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan', 'gower']
+          'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
@@ -420,7 +404,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan', 'gower']
+          'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
@@ -455,6 +439,51 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
     return pairwise_distances_argmin_min(X, Y, axis, metric,
                                          metric_kwargs=metric_kwargs,
                                          batch_size=batch_size)[0]
+
+
+def haversine_distances(X, Y=None):
+    """Compute the Haversine distance between samples in X and Y
+
+    The Haversine (or great circle) distance is the angular distance between
+    two points on the surface of a sphere. The first distance of each point is
+    assumed to be the latitude, the second is the longitude, given in radians.
+    The dimension of the data must be 2.
+
+    .. math::
+       D(x, y) = 2\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
+                                + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+
+    Parameters
+    ----------
+    X : array_like, shape (n_samples_1, 2)
+
+    Y : array_like, shape (n_samples_2, 2), optional
+
+    Returns
+    -------
+    distance : {array}, shape (n_samples_1, n_samples_2)
+
+    Notes
+    -----
+    As the Earth is nearly spherical, the haversine formula provides a good
+    approximation of the distance between two points of the Earth surface, with
+    a less than 1% error on average.
+
+    Examples
+    --------
+    We want to calculate the distance between the Ezeiza Airport
+    (Buenos Aires, Argentina) and the Charles de Gaulle Airport (Paris, France)
+
+    >>> from sklearn.metrics.pairwise import haversine_distances
+    >>> bsas = [-34.83333, -58.5166646]
+    >>> paris = [49.0083899664, 2.53844117956]
+    >>> result = haversine_distances([bsas, paris])
+    >>> result * 6371000/1000  # multiply by Earth radius to get kilometers
+    array([[    0.        , 11279.45379464],
+           [11279.45379464,     0.        ]])
+    """
+    from sklearn.neighbors import DistanceMetric
+    return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True):
@@ -553,7 +582,7 @@ def cosine_distances(X, Y=None):
     See also
     --------
     sklearn.metrics.pairwise.cosine_similarity
-    scipy.spatial.distance.cosine (dense matrices only)
+    scipy.spatial.distance.cosine : dense matrices only
     """
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)
@@ -567,253 +596,7 @@ def cosine_distances(X, Y=None):
     return S
 
 
-def gower_distances(X, Y=None, categorical_features=None, scale=True):
-    """Compute the distances between the observations in X and Y,
-    that may contain mixed types of data, using an implementation
-    of Gower formula.
-
-    Parameters
-    ----------
-    X : array-like, or pandas.DataFrame, shape (n_samples, n_features)
-
-    Y : array-like, or pandas.DataFrame, optional,
-        shape (n_samples, n_features)
-
-    categorical_features : array-like, optional, shape (n_features)
-        Indicates with True/False whether a column is a categorical attribute.
-        This is useful when categorical atributes are represented as integer
-        values. Categorical ordinal attributes are treated as numeric, and
-        must be marked as false.
-
-        Alternatively, the categorical_features array can be represented only
-        with the numerical indexes of the categorical attribtes.
-
-        If the categorical_features array is not provided, by default all
-        non-numeric columns are considered categorical.
-
-    scale : boolean, optional (default=True)
-        Indicates if the data will be scaled between 0 and 1. If false, it
-        is assumed the data is already scaled.
-
-    Returns
-    -------
-    similarities : ndarray, shape (n_samples, n_samples)
-
-    References
-    ----------
-    Gower, J.C., 1971, A General Coefficient of Similarity and Some of Its
-    Properties.
-
-    Notes
-    -----
-    The numeric feature ranges are determined from both X and Y.
-
-    Current implementation does not support sparse matrices.
-
-    All the non-numerical types (e.g., str), are treated as categorical
-    features.
-
-    This implementation modifies the Gower's original similarity measure in
-    the folowing aspects:
-
-    * The values in the original similarity S range between 0 and 1. To
-    guarantee this, it is assumed the numerical features of X and Y are
-    scaled between 0 and 1.
-
-    * Different from the original similarity S, this implementation
-    returns 1-S.
-
-    """
-    if issparse(X) or issparse(Y):
-        raise TypeError("Gower distance does not support sparse matrices")
-
-    if X is None or len(X) == 0:
-        raise ValueError("X can not be None or empty")
-
-    y_is_not_none = Y is not None
-
-    # It is necessary to convert to ndarray in advance to define the dtype
-    # as np.object, otherwise numeric columns will be converted to string
-    # if there are other string columns.
-    if not isinstance(X, np.ndarray):
-        X = np.asarray(X, dtype=np.object)
-
-    if y_is_not_none and not isinstance(Y, np.ndarray):
-        Y = np.asarray(Y, dtype=np.object)
-
-    X, Y = check_pairwise_arrays(X, Y, precomputed=False, dtype=X.dtype,
-                                 force_all_finite=False)
-
-    n_rows, n_cols = X.shape
-
-    categorical_features_obj, categorical_features_num, numerical_features = \
-        _detect_categorical_features(X, categorical_features)
-
-    # Categorical columns
-    X_cat_obj = X[:, categorical_features_obj].astype(np.object)
-    X_cat_num = X[:, categorical_features_num].astype(np.float)
-
-    # Numerical columns
-    X_num = X[:, numerical_features].astype(np.float)
-
-    Y_cat_obj = None
-    Y_cat_num = None
-    Y_num = None
-    if y_is_not_none:
-        Y_cat_obj = Y[:, categorical_features_obj].astype(np.object)
-        Y_cat_num = Y[:, categorical_features_num].astype(np.float)
-        Y_num = Y[:, numerical_features].astype(np.float)
-    else:
-        Y_cat_obj = X_cat_obj
-        Y_cat_num = X_cat_num
-        Y_num = X_num
-
-    num_cols = X_num.shape[1]
-    n_col_num_present = num_cols > 0
-    n_col_cat_obj_present = X_cat_obj.shape[1] > 0
-    n_col_cat_num_present = X_cat_num.shape[1] > 0
-
-    # Calculates the min and max values, and if requested, scale the
-    # input values as proposed by the Gower's paper.
-    if n_col_num_present:
-        min_of_numeric = np.zeros(num_cols)
-        max_of_numeric = np.zeros(num_cols)
-        for col in range(num_cols):
-            col_array = X_num[:, col]
-            lo = np.nanmin(col_array)
-            hi = np.nanmax(col_array)
-
-            if y_is_not_none:
-                col_array = Y_num[:, col]
-                lo = np.nanmin([lo, np.nanmin(col_array)])
-                hi = np.nanmax([hi, np.nanmax(col_array)])
-
-            if np.isnan(lo):
-                lo = 0.0
-            if np.isnan(hi):
-                hi = 0.0
-
-            min_of_numeric[col] = lo
-            max_of_numeric[col] = hi
-
-        # Scales the numeric values between 0 and 1.
-        if scale:
-            scaler = MinMaxScaler().fit([min_of_numeric, max_of_numeric])
-            X_num = scaler.transform(X_num)
-            if y_is_not_none:
-                Y_num = scaler.transform(Y_num)
-            else:
-                Y_num = X_num
-        # If not, checks if the data is scaled.
-        elif np.min(min_of_numeric) < 0 or np.max(max_of_numeric) > 1:
-            warnings.warn("Input data is not scaled between 0 and 1.",
-                          UserWarning)
-
-    y_n_rows = Y.shape[0]
-    D = np.zeros((n_rows, y_n_rows), dtype=np.float)
-
-    for i in range(n_rows):
-        j_start = i
-
-        # for non square results
-        if n_rows != y_n_rows or y_is_not_none:
-            j_start = 0
-
-        sum_s = 0
-        n_cols_not_missing = np.zeros(n_rows - j_start)
-        # sum and missing values treatment for each type of data, if available
-        if n_col_cat_obj_present:
-            row_cat_none = ~(np.equal(X_cat_obj[i, :], None) |
-                             np.equal(Y_cat_obj[j_start:n_rows, :], None))
-
-            n_cols_not_missing = np.sum(row_cat_none.astype(np.int), axis=1)
-            sum_s = (~np.equal(X_cat_obj[i, :], Y_cat_obj[j_start:n_rows, :])
-                     & row_cat_none).astype(np.int).sum(axis=1)
-
-        if n_col_cat_num_present:
-            row_cat_nan = ~(np.isnan(X_cat_num[i, :]) |
-                            np.isnan(Y_cat_num[j_start:n_rows, :]))
-
-            n_cols_not_missing = \
-                n_cols_not_missing + \
-                np.sum(row_cat_nan.astype(np.int), axis=1)
-
-            sum_s = sum_s + (~np.equal(X_cat_num[i, :],
-                                       Y_cat_num[j_start:n_rows, :])
-                             & row_cat_nan).astype(np.int).sum(axis=1)
-
-        if n_col_num_present:
-            n_cols_not_missing = n_cols_not_missing + \
-                                 np.sum((~(np.isnan(X_num[i, :]) |
-                                           np.isnan(Y_num[j_start:n_rows, :])))
-                                        .astype(np.int), axis=1)
-
-            sum_s = sum_s + np.nansum(
-                np.absolute(X_num[i, :] - Y_num[j_start:n_rows, :]), axis=1)
-
-        result = np.divide(sum_s, n_cols_not_missing,
-                           out=np.full(n_cols_not_missing.shape, np.nan),
-                           where=n_cols_not_missing != 0)
-
-        D[i, j_start:] = result
-        if not y_is_not_none:
-            D[i:, j_start] = result
-
-    return D
-
-
-def _detect_categorical_features(X, categorical_features=None):
-    """Identifies the numerical and non-numerical (categorical) columns
-    of an array.
-
-    Parameters
-    ----------
-    X : array-like, or pandas.DataFrame, shape (n_samples, n_features)
-
-    categorical_features : array-like, optional, shape (n_features)
-        Indicates with True/False whether a column is a categorical attribute.
-
-        Alternatively, the categorical_features array can be represented only
-        with the numerical indexes of the categorical attribtes.
-
-        If the categorical_features array is None, they will be automatically
-        detected in X.
-
-    Returns
-    -------
-    categorical_features_obj, categorical_features_num, numerical_features
-     : ndarray, shape (n_features)
-    """
-
-    _, n_cols = np.shape(X)
-    # Automatic detection of categorical features
-    categorical_features_detected = np.zeros(n_cols, dtype=bool)
-    for col in range(0, n_cols):
-        if not np.issubdtype(type(X[0][col]), np.number):
-            categorical_features_detected[col] = True
-
-    categorical_features_obj = categorical_features_detected
-    # Numerical categorical features can't be automatically detected
-    categorical_features_num = np.zeros(n_cols, dtype=bool)
-
-    if categorical_features is not None:
-        categorical_features = np.asarray(categorical_features)
-        if np.issubdtype(categorical_features.dtype, np.integer):
-            new_categorical_features = np.zeros(n_cols, dtype=bool)
-            new_categorical_features[categorical_features] = True
-            categorical_features = new_categorical_features
-
-        # Identifies categorical values represented by objects or numbers
-        categorical_features_num = \
-            categorical_features_detected != categorical_features
-        categorical_features_obj = \
-            categorical_features_detected & categorical_features
-
-    return categorical_features_obj, categorical_features_num, \
-        ~(categorical_features_obj | categorical_features_num)
-
 # Paired distances
-
 def paired_euclidean_distances(X, Y):
     """
     Computes the paired euclidean distances between X and Y
@@ -1278,6 +1061,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'cityblock': manhattan_distances,
     'cosine': cosine_distances,
     'euclidean': euclidean_distances,
+    'haversine': haversine_distances,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
@@ -1300,10 +1084,10 @@ def distance_metrics():
     'cityblock'      metrics.pairwise.manhattan_distances
     'cosine'         metrics.pairwise.cosine_distances
     'euclidean'      metrics.pairwise.euclidean_distances
+    'haversine'      metrics.pairwise.haversine_distances
     'l1'             metrics.pairwise.manhattan_distances
     'l2'             metrics.pairwise.euclidean_distances
     'manhattan'      metrics.pairwise.manhattan_distances
-    'gower'          metrics.pairwise.gower_distances
     ============     ====================================
 
     Read more in the :ref:`User Guide <metrics>`.
@@ -1374,7 +1158,8 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
                   'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
                   'russellrao', 'seuclidean', 'sokalmichener',
-                  'sokalsneath', 'sqeuclidean', 'yule', 'wminkowski', 'gower']
+                  'sokalsneath', 'sqeuclidean', 'yule', 'wminkowski',
+                  'haversine']
 
 
 def _check_chunk_size(reduced, chunk_size):
@@ -1684,6 +1469,11 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                             " support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+
+        if dtype == bool and (X.dtype != bool or Y.dtype != bool):
+            msg = "Data was converted to boolean for metric %s" % metric
+            warnings.warn(msg, DataConversionWarning)
+
         X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
 
         # precompute data-derived metric params

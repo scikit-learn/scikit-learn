@@ -40,6 +40,10 @@ ticket to the
 `GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
 
+Governance
+----------
+The decision making process and governance structure of scikit-learn is laid
+out in the governance document: :ref:`governance`.
 
 Ways to contribute
 ==================
@@ -61,6 +65,13 @@ Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star to say "I use it":
+
+In case a contribution/issue involves changes to the API principles
+or changes to dependencies or supported versions, it must be backed by a
+:ref:`slep`, where a SLEP must be submitted as a pull-request to
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
+and follows the decision-making process outlined in :ref:`governance`.
 
 .. raw:: html
 
@@ -278,7 +289,7 @@ documentation related to resolving merge conflict using the command line
 Contributing pull requests
 --------------------------
 
-We recommend that that your contribution complies with the following
+We recommend that your contribution complies with the following
 rules before submitting a pull request:
 
 * Follow the `coding-guidelines`_ (see below). To make sure that
@@ -860,12 +871,14 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
         return zero_one_loss(y_true, y_pred, normalize)
 
 If an attribute is to be deprecated,
-use the decorator ``deprecated`` on a property.
+use the decorator ``deprecated`` on a property. Please note that the
+``property`` decorator should be placed before the ``deprecated``
+decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
-    @property
     @deprecated("Attribute labels_ was deprecated in version 0.13 and "
                 "will be removed in 0.15. Use 'classes_' instead")
+    @property
     def labels_(self):
         return self.classes_
 
@@ -1458,6 +1471,8 @@ patterns.
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
 
+.. _estimator_tags:
+
 Estimator Tags
 --------------
 .. warning::
@@ -1473,7 +1488,8 @@ decide what tests to run and what input data is appropriate. Tags can depend on
 estimator parameters or even system architecture and can in general only be
 determined at runtime.
 
-The default value of all tags except for ``X_types`` is ``False``.
+The default value of all tags except for ``X_types`` is ``False``. These are
+defined in the ``BaseEstimator`` class.
 
 The current set of estimator tags are:
 
@@ -1523,6 +1539,15 @@ X_types
     ``'categorical'`` data.  For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
+
+To override the tags of a child class, one must define the `_more_tags()`
+method and return a dict with the desired tags, e.g::
+
+    class MyMultiOutputEstimator(BaseEstimator):
+
+        def _more_tags(self):
+            return {'multioutput_only': True,
+                    'non_deterministic': True}
 
 In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
