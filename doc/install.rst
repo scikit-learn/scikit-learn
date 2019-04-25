@@ -21,6 +21,9 @@ Scikit-learn requires:
 - NumPy (>= 1.11.0),
 - SciPy (>= 0.17.0).
 
+Scikit-learn plotting capabilities require Matplotlib (>= 1.5.1). Some of the
+scikit-learn examples might require one or more extra dependencies:
+scikit-image (>= 0.12.3), pandas (>= 0.18.0), and joblib (>= 0.11)
 
 .. warning::
 
@@ -56,7 +59,6 @@ installation from the command line.
 
    For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
    are required.
-
 
 For installation instructions for more distributions see
 :ref:`other distributions <install_by_distribution>`.
