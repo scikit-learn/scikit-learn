@@ -983,8 +983,8 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         .. versionadded:: 0.20
 
     transform_max_iter : int, optional (default=1000)
-        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`,
-        `transform_max_iter` is passed to the underlying transformer.
+        Maximum number of iterations to perform if `algorithm='lasso_cd'` or
+        `lasso_cd`.
 
         .. versionadded:: 0.21
 
