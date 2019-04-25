@@ -2398,14 +2398,16 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
 def multiclass_auc(y_true, y_prob):
     """
-    Computes multi-class AUC (MAUC) as described in [1]. It reduces to the standard AUC in case
-    of two classes.
+    Computes multi-class AUC (MAUC) as described in [1]. It reduces to the
+    standard AUC in case of two classes.
 
-    Computes a separability matrix (denoted as A in the paper) for all pairwise comparisons of
-    different classes. Each value in the separability matrix is an overall measure of how well
-    separated are the estimated distributions for the two considered classes.
-    The overall performance of the classification rule in separating all classes is then the average
-    of the separability matrix (divided by 2 because the matrix is symmetric).
+    Computes a separability matrix (denoted as A in the paper) for all
+    pairwise comparisons of different classes. Each value in the separability
+    matrix is an overall measure of how well separated are the estimated
+    distributions for the two considered classes.
+    The overall performance of the classification rule in separating all
+    classes is then the average of the separability matrix (divided by
+    2 because the matrix is symmetric).
 
     Parameters
     ----------
@@ -2422,49 +2424,61 @@ def multiclass_auc(y_true, y_prob):
     >>> import numpy as np
     >>> from sklearn.metrics import multiclass_auc
     >>> y_true = np.array([2, 0, 1, 0, 1])
-    >>> y_prob = np.array([[0.98, 0.01, 0.01], [0.89, 0.1, 0.01], [0.04, 0.83, 0.13], [0.3, 0.13, 0.57], [0.14, 0.32, 0.54]])
+    >>> y_prob = np.array([[0.98, 0.01, 0.01], [0.89, 0.1, 0.01], \
+    [0.04, 0.83, 0.13], [0.3, 0.13, 0.57], [0.14, 0.32, 0.54]])
     >>> multiclass_auc(y_true, y_prob)
     0.5
     >>> y_true = np.array([1, 0, 1, 0, 1, 1])
-    >>> y_prob = np.array([[0.63, 0.27], [0.89, 0.11], [0.15, 0.85], [0.27, 0.73], [0.02, 0.98], [0.42, 0.58]])
+    >>> y_prob = np.array([[0.63, 0.27], [0.89, 0.11], [0.15, 0.85], \
+    [0.27, 0.73], [0.02, 0.98], [0.42, 0.58]])
     >>> multiclass_auc(y_true, y_prob)
     0.75
 
     References
     ----------
-    .. [1] `A simple generalisation of the area under the ROC curve for multiple class
-    classification problems`. Machine learning. 2001 Nov 1;45(2):171-86.
+    .. [1] `A simple generalisation of the area under the ROC curve for
+    multiple class classification problems`. Machine learning.
+    2001 Nov 1;45(2):171-86.
     """
     num_classes = y_prob.shape[1]
 
     # Compute A values for all all pairwise comparisons of y_true
     # Diagonal elements are zeros and matrix is symmetric
     average_a_values = [
-        [_separability(y_true, y_prob, c1=i, c2=j) for i in range(num_classes)] for j in
+        [_separability(y_true, y_prob, c1=i, c2=j) for i in range(num_classes)]
+        for j in
         range(num_classes)]
-    return np.sum(average_a_values) / float(num_classes * (num_classes - 1))  # Eqn 7
+    return np.sum(average_a_values) / float(
+        num_classes * (num_classes - 1))  # Eqn 7
 
 
 def _separability(labels, probabilities, c1=0, c2=1):
     """Compute separability between classes labeled as `c1` and `c2` """
 
     # Get a list of indices for class1 and class2
-    indices_selected_classes = np.where(np.logical_or(labels == float(c1), labels == float(c2)))
+    indices_selected_classes = np.where(
+        np.logical_or(labels == float(c1), labels == float(c2)))
     # Use above indices to select corresponding labels and probabilities
     labels_selected_classes = np.take(labels, indices_selected_classes)[0]
-    probs_selected_classes = np.take(probabilities, indices_selected_classes, axis=0)[0]
+    probs_selected_classes = \
+    np.take(probabilities, indices_selected_classes, axis=0)[0]
     # Concatenate labels and probabilities
-    points_selected_classes = np.concatenate((probs_selected_classes, np.array([labels_selected_classes]).T), axis=1)
+    points_selected_classes = np.concatenate(
+        (probs_selected_classes, np.array([labels_selected_classes]).T),
+        axis=1)
     # Compute rank for each data point
     all_rank_indices = np.arange(1, np.shape(labels_selected_classes)[0] + 1)
     # Compute total ranks for class1 and class2
-    ranks_class1 = _ranks_for_class_np(points_selected_classes, c1, all_rank_indices)
-    ranks_class2 = _ranks_for_class_np(points_selected_classes, c2, all_rank_indices)
+    ranks_class1 = _ranks_for_class_np(points_selected_classes, c1,
+                                       all_rank_indices)
+    ranks_class2 = _ranks_for_class_np(points_selected_classes, c2,
+                                       all_rank_indices)
     # Number of `c1` and `c2` instances
     n1, n2 = np.shape(ranks_class1)[0], np.shape(ranks_class2)[0]
     # Eqn 3 with 1->2 and 0->1 and averaged over swapped classes
-    return (sum(ranks_class1) + sum(ranks_class2) - (n1 * (n1 + 1) / 2.0) - (n2 * (n2 + 1) / 2.0)) / (
-    2 * float(n1 * n2))
+    return (sum(ranks_class1) + sum(ranks_class2) - (n1 * (n1 + 1) / 2.0) - (
+    n2 * (n2 + 1) / 2.0)) / (
+               2 * float(n1 * n2))
 
 
 def _ranks_for_class_np(points, c, all_rank_indices):
