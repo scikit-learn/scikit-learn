@@ -85,6 +85,23 @@ def test_graphical_lasso_iris():
         assert_array_almost_equal(icov, icov_R)
 
 
+def test_graph_lasso_2D():
+    # Hard-coded solution from Python skggm package
+    # obtained by calling `quic(emp_cov, lam=.1, tol=1e-8)`
+    cov_skggm = np.array([[3.09550269, 1.186972],
+                         [1.186972, 0.57713289]])
+
+    icov_skggm = np.array([[1.52836773, -3.14334831],
+                          [-3.14334831,  8.19753385]])
+    X = datasets.load_iris().data[:, 2:]
+    emp_cov = empirical_covariance(X)
+    for method in ('cd', 'lars'):
+        cov, icov = graphical_lasso(emp_cov, alpha=.1, return_costs=False,
+                                    mode=method)
+        assert_array_almost_equal(cov, cov_skggm)
+        assert_array_almost_equal(icov, icov_skggm)
+
+
 def test_graphical_lasso_iris_singular():
     # Small subset of rows to test the rank-deficient case
     # Need to choose samples such that none of the variances are zero
@@ -112,7 +129,7 @@ def test_graphical_lasso_iris_singular():
         assert_array_almost_equal(icov, icov_R, decimal=5)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_graphical_lasso_cv(random_state=1):
     # Sample data from a sparse multivariate normal
     dim = 5

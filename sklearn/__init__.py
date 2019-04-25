@@ -16,6 +16,7 @@ import sys
 import re
 import warnings
 import logging
+import os
 
 from ._config import get_config, set_config, config_context
 
@@ -47,6 +48,17 @@ warnings.filterwarnings('always', category=DeprecationWarning,
 __version__ = '0.21.dev0'
 
 
+# On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
+# simultaneously. This can happen for instance when calling BLAS inside a
+# prange. Setting the following environment variable allows multiple OpenMP
+# libraries to be loaded. It should not degrade performances since we manually
+# take care of potential over-subcription performance issues, in sections of
+# the code where nested OpenMP loops can happen, by dynamically reconfiguring
+# the inner OpenMP runtime to temporarily disable it while under the scope of
+# the outer OpenMP parallel section.
+os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "True")
+
+
 try:
     # This variable is injected in the __builtins__ by the build
     # process. It is used to enable importing subpackages of sklearn when
@@ -69,12 +81,13 @@ else:
     __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
                'datasets', 'decomposition', 'dummy', 'ensemble', 'exceptions',
                'externals', 'feature_extraction', 'feature_selection',
-               'gaussian_process', 'isotonic', 'kernel_approximation',
-               'kernel_ridge', 'linear_model', 'manifold', 'metrics',
-               'mixture', 'model_selection', 'multiclass', 'multioutput',
-               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
-               'preprocessing', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
+               'gaussian_process', 'inspection', 'isotonic',
+               'kernel_approximation', 'kernel_ridge', 'linear_model',
+               'manifold', 'metrics', 'mixture', 'model_selection',
+               'multiclass', 'multioutput', 'naive_bayes', 'neighbors',
+               'neural_network', 'pipeline', 'preprocessing',
+               'random_projection', 'semi_supervised', 'svm', 'tree',
+               'discriminant_analysis', 'impute', 'compose',
                # Non-modules:
                'clone', 'get_config', 'set_config', 'config_context',
                'show_versions']
@@ -86,7 +99,7 @@ def setup_module(module):
     import numpy as np
     import random
 
-    # It could have been provided in the environment
+    # Check if a random seed exists in the environment, if not create one.
     _random_seed = os.environ.get('SKLEARN_SEED', None)
     if _random_seed is None:
         _random_seed = np.random.uniform() * (2 ** 31 - 1)

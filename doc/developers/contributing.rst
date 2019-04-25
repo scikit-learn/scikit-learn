@@ -40,6 +40,10 @@ ticket to the
 `GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_. You are
 also welcome to post feature requests or pull requests.
 
+Governance
+----------
+The decision making process and governance structure of scikit-learn is laid
+out in the governance document: :ref:`governance`.
 
 Ways to contribute
 ==================
@@ -61,6 +65,13 @@ Another way to contribute is to report issues you're facing, and give a "thumbs
 up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star to say "I use it":
+
+In case a contribution/issue involves changes to the API principles
+or changes to dependencies or supported versions, it must be backed by a
+:ref:`slep`, where a SLEP must be submitted as a pull-request to
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
+and follows the decision-making process outlined in :ref:`governance`.
 
 .. raw:: html
 
@@ -213,6 +224,22 @@ then submit a "pull request" (PR):
     and start making changes. Always use a ``feature`` branch. It's good practice to
     never work on the ``master`` branch!
 
+.. note::
+
+  In the above setup, your ``origin`` remote repository points to
+  ``YourLogin/scikit-learn.git``. If you wish to fetch/merge from the main
+  repository instead of your forked one, you will need to add another remote
+  to use instead of ``origin``. If we choose the name ``upstream`` for it, the
+  command will be::
+
+        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+
+  And in order to fetch the new remote and base your work on the latest changes
+  of it you can::
+
+        $ git fetch upstream
+        $ git checkout -b my-feature upstream/master
+
  6. Develop the feature on your feature branch on your computer, using Git to do the
     version control. When you're done editing, add changed files using ``git add``
     and then ``git commit`` files::
@@ -235,15 +262,6 @@ then submit a "pull request" (PR):
   If you are modifying a Cython module, you have to re-run step 4 after modifications
   and before testing them.
 
-.. note::
-
-  In the above setup, your ``origin`` remote repository points to
-  YourLogin/scikit-learn.git. If you wish to fetch/merge from the main
-  repository instead of your forked one, you will need to add another remote
-  to use instead of ``origin``. If we choose the name ``upstream`` for it, the
-  command will be::
-
-        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
 If any of the above seems like magic to you, then look up the `Git documentation
 <https://git-scm.com/documentation>`_ and the `Git development workflow
@@ -251,11 +269,11 @@ If any of the above seems like magic to you, then look up the `Git documentation
 web, or ask a friend or another contributor for help.
 
 If some conflicts arise between your branch and the ``master`` branch, you need
-to merge ``master``. The command will be::
+to merge ``master``. For that, you first need to fetch the ``upstream``, and
+then merge its ``master`` into your branch::
 
-  $ git merge master
-
-with ``master`` being synchronized with the ``upstream``.
+  $ git fetch upstream
+  $ git merge upstream/master
 
 Subsequently, you need to solve the conflicts. You can refer to the `Git
 documentation related to resolving merge conflict using the command line
@@ -271,7 +289,7 @@ documentation related to resolving merge conflict using the command line
 Contributing pull requests
 --------------------------
 
-We recommend that that your contribution complies with the following
+We recommend that your contribution complies with the following
 rules before submitting a pull request:
 
 * Follow the `coding-guidelines`_ (see below). To make sure that
@@ -490,7 +508,7 @@ You can edit the documentation using any text editor, and then generate the
 HTML output by typing ``make html`` from the ``doc/`` directory. Alternatively,
 ``make`` can be used to quickly generate the documentation without the example
 gallery. The resulting HTML files will be placed in ``_build/html/stable`` and are viewable
-in a web browser. See the ``README``file in the ``doc/`` directory for more information.
+in a web browser. See the ``README`` file in the ``doc/`` directory for more information.
 
 
 Building the documentation
@@ -636,6 +654,8 @@ We expect code coverage of new features to be at least around 90%.
 
    3. Loop.
 
+For guidelines on how to use ``pytest`` efficiently, see the
+:ref:`pytest_tips`.
 
 
 Developers web site
@@ -851,12 +871,14 @@ to ``zero_one`` and call ``zero_one_loss`` from that function::
         return zero_one_loss(y_true, y_pred, normalize)
 
 If an attribute is to be deprecated,
-use the decorator ``deprecated`` on a property.
+use the decorator ``deprecated`` on a property. Please note that the
+``property`` decorator should be placed before the ``deprecated``
+decorator for the docstrings to be rendered properly.
 E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
 
-    @property
     @deprecated("Attribute labels_ was deprecated in version 0.13 and "
                 "will be removed in 0.15. Use 'classes_' instead")
+    @property
     def labels_(self):
         return self.classes_
 
@@ -1449,6 +1471,8 @@ patterns.
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
 
+.. _estimator_tags:
+
 Estimator Tags
 --------------
 .. warning::
@@ -1459,12 +1483,13 @@ Scikit-learn introduced estimator tags in version 0.21.  These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
 sparse matrix support, supported output types and supported methods.  The
 estimator tags are a dictionary returned by the method ``_get_tags()``.  These
-tags are used by the common tests and the :func:`sklearn.utils.estomator_checks.check_estimator` function to
-decide what tests to run and what input data is appropriate. Tags can depends on
+tags are used by the common tests and the :func:`sklearn.utils.estimator_checks.check_estimator` function to
+decide what tests to run and what input data is appropriate. Tags can depend on
 estimator parameters or even system architecture and can in general only be
 determined at runtime.
 
-The default value of all tags except for ``X_types`` is ``False``.
+The default value of all tags except for ``X_types`` is ``False``. These are
+defined in the ``BaseEstimator`` class.
 
 The current set of estimator tags are:
 
@@ -1509,13 +1534,22 @@ X_types
     in the list, signifying that the estimator takes continuous 2d numpy arrays as input. The default
     value is ['2darray']. Other possible types are ``'string'``, ``'sparse'``,
     ``'categorical'``, ``dict``, ``'1dlabels'`` and ``'2dlabels'``.
-    The goals is that in the future the supported input type will determine the
-    data used during testsing, in particular for ``'string'``, ``'sparse'`` and
+    The goal is that in the future the supported input type will determine the
+    data used during testing, in particular for ``'string'``, ``'sparse'`` and
     ``'categorical'`` data.  For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
 
-In addition to the tags, estimators are also need to declare any non-optional
+To override the tags of a child class, one must define the `_more_tags()`
+method and return a dict with the desired tags, e.g::
+
+    class MyMultiOutputEstimator(BaseEstimator):
+
+        def _more_tags(self):
+            return {'multioutput_only': True,
+                    'non_deterministic': True}
+
+In addition to the tags, estimators also need to declare any non-optional
 parameters to ``__init__`` in the ``_required_parameters`` class attribute,
 which is a list or tuple.  If ``_required_parameters`` is only
 ``["estimator"]`` or ``["base_estimator"]``, then the estimator will be

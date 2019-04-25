@@ -37,6 +37,7 @@ extensions = [
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
+    'custom_references_resolver'
 ]
 
 # this is needed for some reason...
@@ -102,6 +103,10 @@ exclude_patterns = ['_build', 'templates', 'includes', 'themes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
+# sklearn uses a custom extension: `custom_references_resolver` to modify
+# the order of link resolution for the 'any' role. It resolves python class
+# links first before resolving 'std' domain links. Unresolved roles are
+# considered to be <code> blocks.
 default_role = 'any'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
@@ -274,9 +279,8 @@ def make_carousel_thumbs(app, exception):
 
 # Config for sphinx_issues
 
-issues_uri = 'https://github.com/scikit-learn/scikit-learn/issues/{issue}'
+# we use the issues path for PRs since the issues URL will forward
 issues_github_path = 'scikit-learn/scikit-learn'
-issues_user_uri = 'https://github.com/{user}'
 
 
 def setup(app):

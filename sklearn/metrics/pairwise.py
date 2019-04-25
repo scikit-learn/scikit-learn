@@ -30,6 +30,7 @@ from ..utils._joblib import delayed
 from ..utils._joblib import effective_n_jobs
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from ..exceptions import DataConversionWarning
 
 
 # Utility Functions
@@ -99,19 +100,18 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None):
     """
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
-    warn_on_dtype = dtype is not None
     estimator = 'check_pairwise_arrays'
     if dtype is None:
         dtype = dtype_float
 
     if Y is X or Y is None:
         X = Y = check_array(X, accept_sparse='csr', dtype=dtype,
-                            warn_on_dtype=warn_on_dtype, estimator=estimator)
+                            estimator=estimator)
     else:
         X = check_array(X, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+                        estimator=estimator)
         Y = check_array(Y, accept_sparse='csr', dtype=dtype,
-                        warn_on_dtype=warn_on_dtype, estimator=estimator)
+                        estimator=estimator)
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
@@ -441,6 +441,51 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
                                          batch_size=batch_size)[0]
 
 
+def haversine_distances(X, Y=None):
+    """Compute the Haversine distance between samples in X and Y
+
+    The Haversine (or great circle) distance is the angular distance between
+    two points on the surface of a sphere. The first distance of each point is
+    assumed to be the latitude, the second is the longitude, given in radians.
+    The dimension of the data must be 2.
+
+    .. math::
+       D(x, y) = 2\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
+                                + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+
+    Parameters
+    ----------
+    X : array_like, shape (n_samples_1, 2)
+
+    Y : array_like, shape (n_samples_2, 2), optional
+
+    Returns
+    -------
+    distance : {array}, shape (n_samples_1, n_samples_2)
+
+    Notes
+    -----
+    As the Earth is nearly spherical, the haversine formula provides a good
+    approximation of the distance between two points of the Earth surface, with
+    a less than 1% error on average.
+
+    Examples
+    --------
+    We want to calculate the distance between the Ezeiza Airport
+    (Buenos Aires, Argentina) and the Charles de Gaulle Airport (Paris, France)
+
+    >>> from sklearn.metrics.pairwise import haversine_distances
+    >>> bsas = [-34.83333, -58.5166646]
+    >>> paris = [49.0083899664, 2.53844117956]
+    >>> result = haversine_distances([bsas, paris])
+    >>> result * 6371000/1000  # multiply by Earth radius to get kilometers
+    array([[    0.        , 11279.45379464],
+           [11279.45379464,     0.        ]])
+    """
+    from sklearn.neighbors import DistanceMetric
+    return DistanceMetric.get_metric('haversine').pairwise(X, Y)
+
+
 def manhattan_distances(X, Y=None, sum_over_features=True):
     """ Compute the L1 distances between the vectors in X and Y.
 
@@ -537,7 +582,7 @@ def cosine_distances(X, Y=None):
     See also
     --------
     sklearn.metrics.pairwise.cosine_similarity
-    scipy.spatial.distance.cosine (dense matrices only)
+    scipy.spatial.distance.cosine : dense matrices only
     """
     # 1.0 - cosine_similarity(X, Y) without copy
     S = cosine_similarity(X, Y)
@@ -1016,6 +1061,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'cityblock': manhattan_distances,
     'cosine': cosine_distances,
     'euclidean': euclidean_distances,
+    'haversine': haversine_distances,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
@@ -1038,6 +1084,7 @@ def distance_metrics():
     'cityblock'      metrics.pairwise.manhattan_distances
     'cosine'         metrics.pairwise.cosine_distances
     'euclidean'      metrics.pairwise.euclidean_distances
+    'haversine'      metrics.pairwise.haversine_distances
     'l1'             metrics.pairwise.manhattan_distances
     'l2'             metrics.pairwise.euclidean_distances
     'manhattan'      metrics.pairwise.manhattan_distances
@@ -1047,6 +1094,11 @@ def distance_metrics():
 
     """
     return PAIRWISE_DISTANCE_FUNCTIONS
+
+
+def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
+    """Write in-place to a slice of a distance matrix"""
+    dist_matrix[:, slice_] = dist_func(*args, **kwargs)
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1059,13 +1111,14 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     if effective_n_jobs(n_jobs) == 1:
         return func(X, Y, **kwds)
 
-    # TODO: in some cases, backend='threading' may be appropriate
-    fd = delayed(func)
-    ret = Parallel(n_jobs=n_jobs, verbose=0)(
-        fd(X, Y[s], **kwds)
+    # enforce a threading backend to prevent data communication overhead
+    fd = delayed(_dist_wrapper)
+    ret = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype, order='F')
+    Parallel(backend="threading", n_jobs=n_jobs)(
+        fd(func, ret, s, X, Y[s], **kwds)
         for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
 
-    return np.hstack(ret)
+    return ret
 
 
 def _pairwise_callable(X, Y, metric, **kwds):
@@ -1105,7 +1158,8 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
                   'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
                   'russellrao', 'seuclidean', 'sokalmichener',
-                  'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
+                  'sokalsneath', 'sqeuclidean', 'yule', 'wminkowski',
+                  'haversine']
 
 
 def _check_chunk_size(reduced, chunk_size):
@@ -1415,6 +1469,11 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=None, **kwds):
                             " support sparse matrices.")
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
+
+        if dtype == bool and (X.dtype != bool or Y.dtype != bool):
+            msg = "Data was converted to boolean for metric %s" % metric
+            warnings.warn(msg, DataConversionWarning)
+
         X, Y = check_pairwise_arrays(X, Y, dtype=dtype)
 
         # precompute data-derived metric params

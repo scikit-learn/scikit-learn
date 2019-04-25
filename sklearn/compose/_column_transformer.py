@@ -81,7 +81,7 @@ boolean mask array or callable
         the transformers.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support :term:`fit` and :term:`transform`.
 
     sparse_threshold : float, default = 0.3
         If the output of the different transformers contains sparse matrices,
@@ -100,6 +100,10 @@ boolean mask array or callable
         Multiplicative weights for features per transformer. The output of the
         transformer is multiplied by these weights. Keys are transformer names,
         values the weights.
+
+    verbose : boolean, optional(default=False)
+        If True, the time elapsed while fitting each transformer will be
+        printed as it is completed.
 
     Attributes
     ----------
@@ -160,13 +164,19 @@ boolean mask array or callable
     """
     _required_parameters = ['transformers']
 
-    def __init__(self, transformers, remainder='drop', sparse_threshold=0.3,
-                 n_jobs=None, transformer_weights=None):
+    def __init__(self,
+                 transformers,
+                 remainder='drop',
+                 sparse_threshold=0.3,
+                 n_jobs=None,
+                 transformer_weights=None,
+                 verbose=False):
         self.transformers = transformers
         self.remainder = remainder
         self.sparse_threshold = sparse_threshold
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
+        self.verbose = verbose
 
     @property
     def _transformers(self):
@@ -377,6 +387,11 @@ boolean mask array or callable
                     "The output of the '{0}' transformer should be 2D (scipy "
                     "matrix, array, or pandas DataFrame).".format(name))
 
+    def _log_message(self, name, idx, total):
+        if not self.verbose:
+            return None
+        return '(%d of %d) Processing %s' % (idx, total, name)
+
     def _fit_transform(self, X, y, func, fitted=False):
         """
         Private function to fit and/or transform on demand.
@@ -385,12 +400,19 @@ boolean mask array or callable
         on the passed function.
         ``fitted=True`` ensures the fitted transformers are used.
         """
+        transformers = list(
+            self._iter(fitted=fitted, replace_strings=True))
         try:
             return Parallel(n_jobs=self.n_jobs)(
-                delayed(func)(clone(trans) if not fitted else trans,
-                              _get_column(X, column), y, weight)
-                for _, trans, column, weight in self._iter(
-                    fitted=fitted, replace_strings=True))
+                delayed(func)(
+                    transformer=clone(trans) if not fitted else trans,
+                    X=_get_column(X, column),
+                    y=y,
+                    weight=weight,
+                    message_clsname='ColumnTransformer',
+                    message=self._log_message(name, idx, len(transformers)))
+                for idx, (name, trans, column, weight) in enumerate(
+                        self._iter(fitted=fitted, replace_strings=True), 1))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
@@ -759,7 +781,7 @@ def make_column_transformer(*transformers, **kwargs):
         the transformers.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
-        estimator must support `fit` and `transform`.
+        estimator must support :term:`fit` and :term:`transform`.
 
     sparse_threshold : float, default = 0.3
         If the transformed output consists of a mix of sparse and dense data,
@@ -774,6 +796,10 @@ def make_column_transformer(*transformers, **kwargs):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+    verbose : boolean, optional(default=False)
+        If True, the time elapsed while fitting each transformer will be
+        printed as it is completed.
 
     Returns
     -------
@@ -800,7 +826,7 @@ def make_column_transformer(*transformers, **kwargs):
                             ['numerical_column']),
                            ('onehotencoder',
                             OneHotEncoder(...),
-                            ['categorical_column'])])
+                            ['categorical_column'])], verbose=False)
 
     """
     # transformer_weights keyword is not passed through because the user
@@ -808,10 +834,12 @@ def make_column_transformer(*transformers, **kwargs):
     n_jobs = kwargs.pop('n_jobs', None)
     remainder = kwargs.pop('remainder', 'drop')
     sparse_threshold = kwargs.pop('sparse_threshold', 0.3)
+    verbose = kwargs.pop('verbose', False)
     if kwargs:
         raise TypeError('Unknown keyword arguments: "{}"'
                         .format(list(kwargs.keys())[0]))
     transformer_list = _get_transformer_list(transformers)
     return ColumnTransformer(transformer_list, n_jobs=n_jobs,
                              remainder=remainder,
-                             sparse_threshold=sparse_threshold)
+                             sparse_threshold=sparse_threshold,
+                             verbose=verbose)

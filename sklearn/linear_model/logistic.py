@@ -260,9 +260,8 @@ def _multinomial_loss(w, X, Y, alpha, sample_weight):
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
 
-    sample_weight : array-like, shape (n_samples,) optional
+    sample_weight : array-like, shape (n_samples,)
         Array of weights that are assigned to individual samples.
-        If not provided, then each sample is given unit weight.
 
     Returns
     -------
@@ -317,7 +316,7 @@ def _multinomial_loss_grad(w, X, Y, alpha, sample_weight):
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
 
-    sample_weight : array-like, shape (n_samples,) optional
+    sample_weight : array-like, shape (n_samples,)
         Array of weights that are assigned to individual samples.
 
     Returns
@@ -371,7 +370,7 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
     alpha : float
         Regularization parameter. alpha is equal to 1 / C.
 
-    sample_weight : array-like, shape (n_samples,) optional
+    sample_weight : array-like, shape (n_samples,)
         Array of weights that are assigned to individual samples.
 
     Returns
@@ -965,7 +964,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
         elif solver in ['sag', 'saga']:
             if multi_class == 'multinomial':
-                target = target.astype(np.float64)
+                target = target.astype(X.dtype, copy=False)
                 loss = 'multinomial'
             else:
                 loss = 'log'
@@ -1205,8 +1204,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses the one-vs-rest (OvR)
-    scheme if the 'multi_class' option is set to 'ovr', and uses the cross-
-    entropy loss if the 'multi_class' option is set to 'multinomial'.
+    scheme if the 'multi_class' option is set to 'ovr', and uses the
+    cross-entropy loss if the 'multi_class' option is set to 'multinomial'.
     (Currently the 'multinomial' option is supported only by the 'lbfgs',
     'sag', 'saga' and 'newton-cg' solvers.)
 
@@ -1315,7 +1314,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             Default will change from 'liblinear' to 'lbfgs' in 0.22.
 
     max_iter : int, optional (default=100)
-        Useful only for the newton-cg, sag and lbfgs solvers.
         Maximum number of iterations taken for the solvers to converge.
 
     multi_class : str, {'ovr', 'multinomial', 'auto'}, optional (default='ovr')
@@ -1487,6 +1485,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Returns
         -------
         self : object
+
+        Notes
+        -----
+        The SAGA solver supports both float64 and float32 bit arrays.
         """
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
@@ -1521,10 +1523,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        if solver in ['newton-cg']:
-            _dtype = [np.float64, np.float32]
-        else:
+        if solver in ['lbfgs', 'liblinear']:
             _dtype = np.float64
+        else:
+            _dtype = [np.float64, np.float32]
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
                          accept_large_sparse=solver != 'liblinear')
