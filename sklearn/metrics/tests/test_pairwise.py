@@ -649,6 +649,8 @@ def test_euclidean_distances(dtype, x_array_constr, y_array_constr):
     Y = y_array_constr(Y)
     distances = euclidean_distances(X, Y)
 
+    # the default rtol=1e-7 is too close to the float32 precision
+    # and fails due too rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
     assert distances.dtype == dtype
 
@@ -668,30 +670,29 @@ def test_euclidean_distances_sym(dtype, x_array_constr):
     X = x_array_constr(X)
     distances = euclidean_distances(X)
 
+    # the default rtol=1e-7 is too close to the float32 precision
+    # and fails due too rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
     assert distances.dtype == dtype
 
 
-@pytest.mark.parametrize("dtype, s",
-                         [(np.float32, 1e-4),
-                          (np.float64, 1e-8)])
+@pytest.mark.parametrize(
+    "dtype, eps, rtol",
+    [(np.float32, 1e-4, 1e-5),
+     pytest.param(
+         np.float64, 1e-8, 0.99,
+         marks=pytest.mark.xfail(reason='failing due to lack of precision'))])
 @pytest.mark.parametrize("dim", [1, 1000000])
-def test_euclidean_distances_extreme_values(dtype, s, dim):
+def test_euclidean_distances_extreme_values(dtype, eps, rtol, dim):
     # check that euclidean distances is correct with float32 input thanks to
     # upcasting. On float64 there are still precision issues.
     X = np.array([[1.] * dim], dtype=dtype)
-    Y = np.array([[1. + s] * dim], dtype=dtype)
+    Y = np.array([[1. + eps] * dim], dtype=dtype)
 
     distances = euclidean_distances(X, Y)
     expected = cdist(X, Y)
 
-    if dtype == np.float64:
-        # This is expected to fail for float64 due to lack of precision of the
-        # fast method of euclidean distances.
-        with pytest.raises(AssertionError, match='Not equal to tolerance'):
-            assert_allclose(distances, expected, rtol=(0.99))
-    else:
-        assert_allclose(distances, expected, rtol=1e-5)
+    assert_allclose(distances, expected, rtol=1e-5)
 
 
 def test_cosine_distances():

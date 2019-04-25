@@ -203,6 +203,11 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         ``(X**2).sum(axis=1)``)
         May be ignored in some cases, see the note below.
 
+    Notes
+    -----
+    To achieve better accuracy, `X_norm_squared` and `Y_norm_squared` may be
+    unused if they are passed as ``float32``.
+
     Returns
     -------
     distances : array, shape (n_samples_1, n_samples_2)
@@ -226,6 +231,9 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     """
     X, Y = check_pairwise_arrays(X, Y)
 
+    # If norms are passed as float32, they are unused. If arrays are passed as
+    # float32, norms needs to be recomputed on upcast chunks.
+    # TODO: use a float64 accumulator in row_norms to avoid the latter.
     if X_norm_squared is not None:
         XX = check_array(X_norm_squared)
         if XX.shape == (1, X.shape[0]):
@@ -282,7 +290,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
     Assumes XX and YY have float64 dtype or are None.
 
     X and Y are upcast to float64 by chunks, which size is chosen to limit
-    memory increase by approximately 10%.
+    memory increase by approximately 10% (at least 10Mib).
     """
     n_samples_X = X.shape[0]
     n_samples_Y = Y.shape[0]

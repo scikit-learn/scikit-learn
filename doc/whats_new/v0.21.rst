@@ -486,13 +486,13 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`13447` by :user:`Dan Ellis <dpwe>`.
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
-  in version 0.21 and will be removed in version 0.23. :issue:`10580` by
+  in version 0.21 and will be removed in version 0.23. :pr:`10580` by
   :user:`Reshama Shaikh <reshamas>` and :user:`Sandra Mitrovic <SandraMNE>`.
 
 - |Fix| The function :func:`euclidean_distances`, and therefore
   several estimators with ``metric='euclidean'``, suffered from numerical
   precision issues with ``float32`` features. Precision has been increased at the
-  cost of a small drop of performance. :issue:`13554` by :user:`Celelibi` and
+  cost of a small drop of performance. :pr:`13554` by :user:`Celelibi` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
