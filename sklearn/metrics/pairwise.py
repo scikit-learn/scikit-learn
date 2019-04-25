@@ -129,6 +129,7 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
                         estimator=estimator,
                         force_all_finite=force_all_finite)
 
+
     if precomputed:
         if X.shape[1] != Y.shape[0]:
             raise ValueError("Precomputed metric requires shape "
@@ -1423,7 +1424,7 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
                   'russellrao', 'seuclidean', 'sokalmichener',
                   'sokalsneath', 'sqeuclidean', 'yule', 'wminkowski',
-                  'haversine', 'gower']
+				  'haversine', 'gower']
 
 
 def _check_chunk_size(reduced, chunk_size):
