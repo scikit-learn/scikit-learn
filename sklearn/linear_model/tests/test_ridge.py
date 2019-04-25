@@ -1008,13 +1008,14 @@ def test_ridge_X_sparse_svd_memory_error(monkeypatch):
 
     msg = (r"Setting gcv_mode='svd' with a sparse X creates a "
            r"n_samples \* n_features dense matrix, setting gcv_mode='eigen' "
-           r"may help because it creates a n_samples\*\*2 dense matrix")
+           r"may help because it would create a n_samples\*\*2 dense matrix")
 
     with pytest.raises(MemoryError, match=msg):
         ridgecv.fit(X, y_diabetes)
 
 
-def test_ridge_X_sparse_auto_memory_error(monkeypatch):
+@pytest.mark.parametrize('gcv_mode', [None, 'auto', 'eigen'])
+def test_ridge_X_sparse_auto_memory_error(monkeypatch, gcv_mode):
     X = sp.csr_matrix(X_diabetes)
 
     def safe_sparse_dot_mock(*args, **kwargs):
@@ -1023,11 +1024,11 @@ def test_ridge_X_sparse_auto_memory_error(monkeypatch):
     monkeypatch.setattr(sklearn.linear_model.ridge, 'safe_sparse_dot',
                         safe_sparse_dot_mock)
 
-    ridgecv = RidgeCV()
+    ridgecv = RidgeCV(gcv_mode=gcv_mode)
 
     msg = (r"Setting gcv_mode='eigen' with a sparse X creates a "
            r"n_samples \* n_samples dense matrix, setting gcv_mode='svd' "
-           r"may help because it creates a n_samples\*\*2 dense matrix")
+           r"may help because it would create a n_samples\*\*2 dense matrix")
 
     with pytest.raises(MemoryError, match=msg):
         ridgecv.fit(X, y_diabetes)

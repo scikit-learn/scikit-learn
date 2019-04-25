@@ -979,7 +979,7 @@ class _RidgeGCV(LinearModel):
         except MemoryError:
             msg = ("Setting gcv_mode='eigen' with a sparse X creates a "
                    "n_samples * n_samples dense matrix, setting "
-                   "gcv_mode='svd' may help because it creates a "
+                   "gcv_mode='svd' may help because it would create a "
                    "n_samples**2 dense matrix")
             raise MemoryError(msg)
         # the following emulates an additional constant regressor
@@ -1037,7 +1037,7 @@ class _RidgeGCV(LinearModel):
             except MemoryError:
                 msg = ("Setting gcv_mode='svd' with a sparse X creates a "
                        "n_samples * n_features dense matrix, setting "
-                       "gcv_mode='eigen' may help because it creates a "
+                       "gcv_mode='eigen' may help because it would create a "
                        "n_samples**2 dense matrix")
                 raise MemoryError(msg)
         if centered_kernel:
