@@ -489,17 +489,10 @@ Support for Python 3.4 and below has been officially dropped.
   in version 0.21 and will be removed in version 0.23. :issue:`10580` by
   :user:`Reshama Shaikh <reshamas>` and :user:`Sandra Mitrovic <SandraMNE>`.
 
-<<<<<<< fbcfc522bed7811eea85debc07bb55e2280d4899
 - |Fix| The function :func:`euclidean_distances`, and therefore
   several estimators with ``metric='euclidean'``, suffered from numerical
   precision issues with ``float32`` features. Precision has been increased at the
   cost of a small drop of performance. :issue:`13554` by :user:`Celelibi` and
-=======
-- |Fix| The function :func:`euclidean_distances`, and therefore the functions
-  :func:`pairwise_distances` and :func:`pairwise_distances_chunked` with
-  ``metric=euclidean``, suffered from numerical precision issues. Precision has
-  been increased for float32. :issue:`13410` by :user:` <Celelibi>` and
->>>>>>> vect vect euclidean
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |API| :func:`metrics.jaccard_similarity_score` is deprecated in favour of
