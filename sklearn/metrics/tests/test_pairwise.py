@@ -888,6 +888,30 @@ def test_gower_distances():
         assert record[0].message.args[0] == \
             "Input data is not scaled between 0 and 1."
 
+
+def test_haversine_distances():
+    # Check haversine distance with distances computation
+    def slow_haversine_distances(x, y):
+        diff_lat = y[0] - x[0]
+        diff_lon = y[1] - x[1]
+        a = np.sin(diff_lat / 2) ** 2 + (
+            np.cos(x[0]) * np.cos(y[0]) * np.sin(diff_lon/2) ** 2
+        )
+        c = 2 * np.arcsin(np.sqrt(a))
+        return c
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 2))
+    Y = rng.random_sample((10, 2))
+    D1 = np.array([[slow_haversine_distances(x, y) for y in Y] for x in X])
+    D2 = haversine_distances(X, Y)
+    assert_array_almost_equal(D1, D2)
+    # Test haversine distance does not accept X where n_feature != 2
+    X = rng.random_sample((10, 3))
+    assert_raise_message(ValueError,
+                         "Haversine distance only valid in 2 dimensions",
+                         haversine_distances, X)
+
+
 # Paired distances
 
 def test_paired_euclidean_distances():
