@@ -90,7 +90,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
 
         sample_weight : array-like, shape = (n_samples) or (n_samples, n_outputs) or None
             Sample weights. If None, then samples are equally weighted.
-            Only supported if the underlying regressor supports sample
+            Only supported if the underlying estimator supports sample
             weights.
 
         Returns
@@ -103,7 +103,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
 
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
-                             "multi-output regression but has only one.")
+                             "multi-output estimator but has only one.")
 
         if (sample_weight is not None and
                 not has_fit_parameter(self.estimator, 'sample_weight')):
@@ -116,7 +116,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             sample_weight = sample_weight.T
         else:
             raise ValueError("sample weight must have at most two dimensions "
-                             "for multi-output regression but has more than "
+                             "for multi-output estimator but has more than "
                              "two.")
 
         first_time = not hasattr(self, 'estimators_')
@@ -144,7 +144,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
 
         sample_weight : array-like, shape = (n_samples) or (n_samples, n_outputs) or None
             Sample weights. If None, then samples are equally weighted.
-            Only supported if the underlying regressor supports sample
+            Only supported if the underlying estimator supports sample
             weights.
 
         Returns
@@ -165,7 +165,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
 
         if y.ndim == 1:
             raise ValueError("y must have at least two dimensions for "
-                             "multi-output regression but has only one.")
+                             "multi-output estimator but has only one.")
 
         if (sample_weight is not None and
                 not has_fit_parameter(self.estimator, 'sample_weight')):
@@ -178,7 +178,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             sample_weight = sample_weight.T
         else:
             raise ValueError("sample weight must have at most two dimensions "
-                             "for multi-output regression but has more than "
+                             "for multi-output estimator but has more than "
                              "two.")
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
