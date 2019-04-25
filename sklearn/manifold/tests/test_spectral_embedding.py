@@ -179,7 +179,7 @@ def test_spectral_embedding_amg_solver(seed=36):
 
 
 def test_spectral_embedding_amg_solver_failure(seed=36):
-    # Test spectral embedding with amg solver failure
+    # Test spectral embedding with amg solver failure, see issue #13393
     pytest.importorskip('pyamg')
 
     # The generated graph below is NOT fully connected if n_neighbors=3
