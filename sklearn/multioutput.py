@@ -88,7 +88,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like, shape = (n_samples) or (n_samples, n_outputs) or None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -110,6 +110,15 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
+        if sample_weight is None or sample_weight.ndim == 1:
+            sample_weight = [sample_weight] * y.shape[1]
+        elif sample_weight.ndim == 2:
+            sample_weight = sample_weight.T
+        else:
+            raise ValueError("sample weight must have at most two dimensions "
+                             "for multi-output regression but has more than "
+                             "two.")
+
         first_time = not hasattr(self, 'estimators_')
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
@@ -117,7 +126,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                 self.estimators_[i] if not first_time else self.estimator,
                 X, y[:, i],
                 classes[i] if classes is not None else None,
-                sample_weight, first_time) for i in range(y.shape[1]))
+                sample_weight[i], first_time) for i in range(y.shape[1]))
         return self
 
     def fit(self, X, y, sample_weight=None):
@@ -133,7 +142,7 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Multi-output targets. An indicator matrix turns on multilabel
             estimation.
 
-        sample_weight : array-like, shape = (n_samples) or None
+        sample_weight : array-like, shape = (n_samples) or (n_samples, n_outputs) or None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying regressor supports sample
             weights.
@@ -163,9 +172,18 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
+        if sample_weight is None or sample_weight.ndim == 1:
+            sample_weight = [sample_weight] * y.shape[1]
+        elif sample_weight.ndim == 2:
+            sample_weight = sample_weight.T
+        else:
+            raise ValueError("sample weight must have at most two dimensions "
+                             "for multi-output regression but has more than "
+                             "two.")
+
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
-                self.estimator, X, y[:, i], sample_weight)
+                self.estimator, X, y[:, i], sample_weight[i])
             for i in range(y.shape[1]))
         return self
 
