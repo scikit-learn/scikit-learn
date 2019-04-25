@@ -2461,7 +2461,7 @@ def _separability(labels, probabilities, c1=0, c2=1):
     # Use above indices to select corresponding labels and probabilities
     labels_selected_classes = np.take(labels, indices_selected_classes)[0]
     probs_selected_classes = \
-    np.take(probabilities, indices_selected_classes, axis=0)[0]
+        np.take(probabilities, indices_selected_classes, axis=0)[0]
     # Concatenate labels and probabilities
     points_selected_classes = np.concatenate(
         (probs_selected_classes, np.array([labels_selected_classes]).T),
@@ -2475,10 +2475,13 @@ def _separability(labels, probabilities, c1=0, c2=1):
                                        all_rank_indices)
     # Number of `c1` and `c2` instances
     n1, n2 = np.shape(ranks_class1)[0], np.shape(ranks_class2)[0]
+    def sum_integers(n):
+        return n * (n + 1) / 2.0
+    # Sum positive integers for n1 and n2
+    sums_n = sum_integers(n1) - sum_integers(n2)
+    sum_ranks = sum(ranks_class1) + sum(ranks_class2)
     # Eqn 3 with 1->2 and 0->1 and averaged over swapped classes
-    return (sum(ranks_class1) + sum(ranks_class2) - (n1 * (n1 + 1) / 2.0) - (
-    n2 * (n2 + 1) / 2.0)) / (
-               2 * float(n1 * n2))
+    return (sum_ranks - sums_n) / (2 * float(n1 * n2))
 
 
 def _ranks_for_class_np(points, c, all_rank_indices):
