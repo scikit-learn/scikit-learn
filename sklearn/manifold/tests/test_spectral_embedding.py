@@ -193,11 +193,11 @@ def test_spectral_embedding_amg_solver_failure(seed=36):
     se_amg0 = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
                                 eigen_solver="amg", n_neighbors=3,
                                 random_state=np.random.RandomState(seed))
-    se_amg1 = SpectralEmbedding(n_components=3, affinity="nearest_neighbors",
-                                eigen_solver="amg", n_neighbors=3,
-                                random_state=np.random.RandomState(seed+1))
     embed_amg0 = se_amg0.fit_transform(S)
-    embed_amg1 = se_amg1.fit_transform(S)
+
+    se_amg0.set_params(random_state=np.random.RandomState(seed+1))
+    embed_amg1 = se_amg0.fit_transform(S)
+
     assert _check_with_col_sign_flipping(embed_amg0, embed_amg1, 0.05)
 
 
