@@ -2475,6 +2475,7 @@ def _separability(labels, probabilities, c1=0, c2=1):
                                        all_rank_indices)
     # Number of `c1` and `c2` instances
     n1, n2 = np.shape(ranks_class1)[0], np.shape(ranks_class2)[0]
+    
     def sum_integers(n):
         return n * (n + 1) / 2.0
     # Sum positive integers for n1 and n2
