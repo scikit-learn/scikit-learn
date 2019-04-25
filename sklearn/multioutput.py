@@ -88,7 +88,8 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             and can be omitted in the subsequent calls.
             Note that y doesn't need to contain all labels in `classes`.
 
-        sample_weight : array-like, shape = (n_samples) or (n_samples, n_outputs) or None
+        sample_weight : array-like, shape = (n_samples) or \
+                        (n_samples, n_outputs) or None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying estimator supports sample
             weights.
@@ -110,6 +111,8 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
         if sample_weight is None or sample_weight.ndim == 1:
             sample_weight = [sample_weight] * y.shape[1]
         elif sample_weight.ndim == 2:
@@ -142,7 +145,8 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             Multi-output targets. An indicator matrix turns on multilabel
             estimation.
 
-        sample_weight : array-like, shape = (n_samples) or (n_samples, n_outputs) or None
+        sample_weight : array-like, shape = (n_samples) or \
+                        (n_samples, n_outputs) or None
             Sample weights. If None, then samples are equally weighted.
             Only supported if the underlying estimator supports sample
             weights.
@@ -172,6 +176,8 @@ class MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("Underlying estimator does not support"
                              " sample weights.")
 
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
         if sample_weight is None or sample_weight.ndim == 1:
             sample_weight = [sample_weight] * y.shape[1]
         elif sample_weight.ndim == 2:
