@@ -281,7 +281,6 @@ def make_carousel_thumbs(app, exception):
 
 # we use the issues path for PRs since the issues URL will forward
 issues_github_path = 'scikit-learn/scikit-learn'
-issues_user_uri = 'https://github.com/{user}'
 
 
 def setup(app):
