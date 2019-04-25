@@ -425,12 +425,13 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
 
-    def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
-                 n_init=10, gamma=1., affinity='rbf', n_neighbors=10,
-                 eigen_tol=0.0, assign_labels='kmeans', degree=3, coef0=1,
-                 kernel_params=None, n_jobs=None):
+    def __init__(self, n_clusters=8, eigen_solver=None, n_components=None,
+                 random_state=None, n_init=10, gamma=1., affinity='rbf',
+                 n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',
+                 degree=3, coef0=1, kernel_params=None, n_jobs=None):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
+        self.n_components = n_components
         self.random_state = random_state
         self.n_init = n_init
         self.gamma = gamma
@@ -486,6 +487,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
                                            n_clusters=self.n_clusters,
+                                           n_components=self.n_components,
                                            eigen_solver=self.eigen_solver,
                                            random_state=random_state,
                                            n_init=self.n_init,
