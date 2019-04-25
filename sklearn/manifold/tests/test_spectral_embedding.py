@@ -165,10 +165,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
 
 def test_spectral_embedding_amg_solver(seed=36):
     # Test spectral embedding with amg solver
-    try:
-        from pyamg import smoothed_aggregation_solver  # noqa
-    except ImportError:
-        raise SkipTest("pyamg not available.")
+    pytest.importorskip('pyamg')
 
     se_amg = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
                                eigen_solver="amg", n_neighbors=5,
@@ -183,10 +180,7 @@ def test_spectral_embedding_amg_solver(seed=36):
 
 def test_spectral_embedding_amg_solver_failure(seed=36):
     # Test spectral embedding with amg solver failure
-    try:
-        from pyamg import smoothed_aggregation_solver  # noqa
-    except ImportError:
-        raise SkipTest("pyamg not available.")
+    pytest.importorskip('pyamg')
 
     # The generated graph below is NOT fully connected if n_neighbors=3
     n_samples = 200
