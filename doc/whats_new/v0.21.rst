@@ -192,7 +192,7 @@ Support for Python 3.4 and below has been officially dropped.
   :func:`inspection.partial_dependence<sklearn.inspection.partial_dependence>`
   and
   :func:`inspection.plot_partial_dependence<sklearn.inspection.plot_partial_dependence>`.
-  :issue:`12599` by :user:`Trevor Stephens<trevorstephens>` and
+  :pr:`12599` by :user:`Trevor Stephens<trevorstephens>` and
   :user:`Nicolas Hug<NicolasHug>`.
 
 - |Enhancement| Minimized the validation of X in
@@ -322,7 +322,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| Partial dependence plots
   (:func:`inspection.plot_partial_dependence`) are now supported for
   any regressor or classifier (provided that they have a `predict_proba`
-  method). :issue:`12599` by :user:`Trevor Stephens <trevorstephens>` and
+  method). :pr:`12599` by :user:`Trevor Stephens <trevorstephens>` and
   :user:`Nicolas Hug <NicolasHug>`.
 
 :mod:`sklearn.isotonic`
@@ -450,7 +450,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Feature| Added :func:`metrics.pairwise.haversine_distances` which can be
   accessed with `metric='pairwise'` through :func:`metrics.pairwise_distances`
   and estimators. (Haversine distance was previously available for nearest
-  neighbors calculation.) :issue:`12568` by :user:`Wei Xue <xuewei4d>`,
+  neighbors calculation.) :pr:`12568` by :user:`Wei Xue <xuewei4d>`,
   :user:`Emmanuel Arias <eamanu>` and `Joel Nothman`_.
 
 - |Efficiency| Faster :func:`metrics.pairwise_distances` with `n_jobs`
@@ -697,7 +697,7 @@ Support for Python 3.4 and below has been officially dropped.
 ....................
 
 - |Feature| :func:`utils.resample` now accepts a ``stratify`` parameter for
-  sampling according to class distributions. :issue:`13549` by :user:`Nicolas
+  sampling according to class distributions. :pr:`13549` by :user:`Nicolas
   Hug <NicolasHug>`.
 
 - |API| Deprecated ``warn_on_dtype`` parameter from :func:`utils.check_array`
