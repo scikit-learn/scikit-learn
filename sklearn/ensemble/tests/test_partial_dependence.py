@@ -14,6 +14,7 @@ from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import datasets
+from sklearn.utils.testing import has_matplotlib
 from sklearn.utils.testing import ignore_warnings
 
 
@@ -30,9 +31,9 @@ iris = datasets.load_iris()
 
 
 # TODO: to removed in 0.23
-@skip_if_no_matplotlib
 def teardown_module(module):
-    close_figure()
+    if has_matplotlib():
+        close_figure()
 
 
 @ignore_warnings(category=DeprecationWarning)

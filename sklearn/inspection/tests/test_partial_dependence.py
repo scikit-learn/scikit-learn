@@ -28,6 +28,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import close_figure
+from sklearn.utils.testing import has_matplotlib
 from sklearn.utils.testing import skip_if_no_matplotlib
 
 
@@ -45,9 +46,9 @@ regression_data = (make_regression(random_state=0), 1)
 multioutput_regression_data = (make_regression(n_targets=2, random_state=0), 2)
 
 
-@skip_if_no_matplotlib
 def teardown_module(module):
-    close_figure()
+    if has_matplotlib():
+        close_figure()
 
 
 @pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
