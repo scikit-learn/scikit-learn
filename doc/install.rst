@@ -60,6 +60,7 @@ installation from the command line.
    For installing on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
    are required.
 
+
 For installation instructions for more distributions see
 :ref:`other distributions <install_by_distribution>`.
 For compiling the development version from source, or building the package
