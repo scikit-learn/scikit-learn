@@ -56,7 +56,6 @@ from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.metrics import multiclass_auc
 from sklearn.metrics import auc
 from sklearn.metrics import roc_curve
-import random
 
 ###############################################################################
 # Utilities for testing
