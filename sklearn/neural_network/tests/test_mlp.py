@@ -27,7 +27,6 @@ from sklearn.utils.testing import (assert_raises, assert_greater,
                                    assert_equal, ignore_warnings)
 from sklearn.utils.testing import assert_raise_message
 
-# np.seterr(all='warn')
 
 ACTIVATION_TYPES = ["identity", "logistic", "tanh", "relu"]
 
