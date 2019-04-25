@@ -352,7 +352,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| The function :func:`euclidean_distances`, and therefore
   several estimators with ``metric='euclidean'``, suffered from numerical
-  precision issues with float32 features. Precision has been increased at the
+  precision issues with ``float32`` features. Precision has been increased at the
   cost of a small drop of performance. :issue:`13554` by :user:`Celelibi` and
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
