@@ -85,7 +85,7 @@ datasets = [
                      'min_samples': 20, 'xi': 0.25}),
     (noisy_moons, {'damping': .75, 'preference': -220, 'n_clusters': 2}),
     (varied, {'eps': .18, 'n_neighbors': 2,
-              'min_samples': 30, 'xi': 0.001, 'min_cluster_size': .2}),
+              'min_samples': 5, 'xi': 0.035, 'min_cluster_size': .2}),
     (aniso, {'eps': .15, 'n_neighbors': 2,
              'min_samples': 20, 'xi': 0.1, 'min_cluster_size': .2}),
     (blobs, {}),

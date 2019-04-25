@@ -772,10 +772,9 @@ def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
     """
 
     # all indices are inclusive (specially at the end)
-    n_samples = len(reachability_plot)
     # add an inf to the end of reachability plot
-    # but process the data only until the last actual point
-    # this is fine since the last point is considered upward anyway
+    # this helps to find potential clusters at the end of the
+    # reachability plot even if there's no upward region at the end of it.
     reachability_plot = np.hstack((reachability_plot, np.inf))
 
     xi_complement = 1 - xi
@@ -800,41 +799,40 @@ def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
             continue
 
         mib = max(mib, np.max(reachability_plot[index:steep_index + 1]))
-        index = steep_index
 
-        # check if a steep downward area starts
-        if steep_downward[index]:
+        # steep downward areas
+        if steep_downward[steep_index]:
             sdas = _update_filter_sdas(sdas, mib, xi_complement,
                                        reachability_plot)
-            D_start = index
-            end = _extend_region(steep_downward, upward,
-                                 D_start, min_samples)
-            index = min(end + 1, n_samples - 1)
-            D = {'start': D_start, 'end': end, 'mib': 0.}
+            D_start = steep_index
+            D_end = _extend_region(steep_downward, upward,
+                                   D_start, min_samples)
+            D = {'start': D_start, 'end': D_end, 'mib': 0.}
             sdas.append(D)
-            mib = reachability_plot[end + 1]
+            index = D_end + 1
+            mib = reachability_plot[index]
 
-        elif steep_upward[index]:
+        # steep upward areas
+        else:
             sdas = _update_filter_sdas(sdas, mib, xi_complement,
                                        reachability_plot)
-            U_start = index
-            end = _extend_region(steep_upward, downward, U_start,
-                                 min_samples)
-            index = min(end + 1, n_samples - 1)
-            U = {'start': U_start, 'end': end}
-            mib = reachability_plot[end + 1]
+            U_start = steep_index
+            U_end = _extend_region(steep_upward, downward, U_start,
+                                   min_samples)
+            index = U_end + 1
+            mib = reachability_plot[index]
 
             U_clusters = []
             for D in sdas:
                 c_start = D['start']
-                c_end = min(U['end'], n_samples - 1)
-                D_max = reachability_plot[D['start']]
+                c_end = U_end
 
                 # line (**), sc2*
                 if reachability_plot[c_end + 1] * xi_complement < D['mib']:
                     continue
 
                 # Definition 11: criterion 4
+                D_max = reachability_plot[D['start']]
                 if D_max * xi_complement >= reachability_plot[c_end + 1]:
                     # Find the first index from the left side which is almost
                     # at the same level as the end of the detected cluster.
@@ -847,7 +845,7 @@ def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
                     # at the same level as the beginning of the detected
                     # cluster.
                     while (reachability_plot[c_end - 1] < D_max
-                           and c_end > U['start']):
+                           and c_end > U_start):
                         c_end -= 1
 
                 # predecessor correction
@@ -869,7 +867,7 @@ def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
                     continue
 
                 # Definition 11: criterion 2
-                if c_end < U['start']:
+                if c_end < U_start:
                     continue
 
                 U_clusters.append((c_start, c_end))
