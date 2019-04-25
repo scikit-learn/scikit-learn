@@ -1962,10 +1962,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         .. versionadded:: 0.20
 
     increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
 
     decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------
@@ -2438,11 +2440,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         .. versionadded:: 0.20
 
     increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
 
     decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
-
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------

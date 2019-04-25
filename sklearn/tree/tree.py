@@ -710,10 +710,12 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         speed up the training.
 
     increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
 
     decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------
@@ -1072,10 +1074,12 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         speed up the training.
 
     increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
 
     decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------

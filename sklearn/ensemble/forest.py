@@ -914,10 +914,12 @@ class RandomForestClassifier(ForestClassifier):
         through the fit method) if sample_weight is specified.
 
     increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
 
     decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------
@@ -1189,10 +1191,12 @@ class RandomForestRegressor(ForestRegressor):
         new forest. See :term:`the Glossary <warm_start>`.
 
     increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
 
     decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------
@@ -1475,10 +1479,12 @@ class ExtraTreesClassifier(ForestClassifier):
         through the fit method) if sample_weight is specified.
 
     increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
 
     decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------
@@ -1721,10 +1727,12 @@ class ExtraTreesRegressor(ForestRegressor):
         new forest. See :term:`the Glossary <warm_start>`.
 
     increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
 
     decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------
@@ -1930,10 +1938,12 @@ class RandomTreesEmbedding(BaseForest):
         new forest. See :term:`the Glossary <warm_start>`.
 
     increasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically increasing effect.
+        Indices of features constrained to have a monotonically increasing
+        effect on the predicted variable.
 
     decreasing : list of ints, optional (default=None)
-        Indices of features to have a monotonically decreasing effect.
+        Indices of features constrained to have a monotonically decreasing
+        effect on the predicted variable.
 
     Attributes
     ----------
