@@ -45,6 +45,11 @@ regression_data = (make_regression(random_state=0), 1)
 multioutput_regression_data = (make_regression(n_targets=2, random_state=0), 2)
 
 
+@skip_if_no_matplotlib
+def teardown_module(module):
+    close_figure()
+
+
 @pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
 @pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
 @pytest.mark.parametrize('Estimator, method, data', [
@@ -436,8 +441,6 @@ def test_plot_partial_dependence():
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
-    close_figure()
-
 
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
@@ -469,8 +472,6 @@ def test_plot_partial_dependence_multiclass():
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
-    close_figure()
-
 
 def test_plot_partial_dependence_multioutput():
     # Test partial dependence plot function on multi-output input.
@@ -495,8 +496,6 @@ def test_plot_partial_dependence_multioutput():
     axs = fig.get_axes()
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
-
-    close_figure()
 
 
 @skip_if_no_matplotlib
@@ -536,8 +535,6 @@ def test_plot_partial_dependence_error(data, params, err_msg):
     with pytest.raises(ValueError, match=err_msg):
         plot_partial_dependence(estimator, X, **params)
 
-    close_figure()
-
 
 def test_plot_partial_dependence_fig():
     # Make sure fig object is correctly used if not None
@@ -554,5 +551,3 @@ def test_plot_partial_dependence_fig():
         clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 
     assert plt.gcf() is fig
-
-    close_figure()

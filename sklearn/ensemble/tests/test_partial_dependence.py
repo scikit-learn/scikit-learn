@@ -29,6 +29,12 @@ boston = datasets.load_boston()
 iris = datasets.load_iris()
 
 
+# TODO: to removed in 0.23
+@skip_if_no_matplotlib
+def teardown_module(module):
+    close_figure()
+
+
 @ignore_warnings(category=DeprecationWarning)
 def test_partial_dependence_classifier():
     # Test partial dependence for classifier
@@ -187,8 +193,6 @@ def test_plot_partial_dependence():
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
-    close_figure()
-
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
@@ -226,8 +230,6 @@ def test_plot_partial_dependence_input():
     # not valid features value
     assert_raises(ValueError, plot_partial_dependence,
                   clf, X, [{'foo': 'bar'}])
-
-    close_figure()
 
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
@@ -267,8 +269,6 @@ def test_plot_partial_dependence_multiclass():
     assert_raises(ValueError, plot_partial_dependence,
                   clf, iris.data, [0, 1],
                   grid_resolution=grid_resolution)
-
-    close_figure()
 
 
 @pytest.mark.parametrize(
