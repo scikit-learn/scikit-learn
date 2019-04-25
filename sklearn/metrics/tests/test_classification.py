@@ -51,7 +51,12 @@ from sklearn.metrics import multilabel_confusion_matrix
 from sklearn.metrics.classification import _check_targets
 from sklearn.exceptions import UndefinedMetricWarning
 
-from scipy.spatial.distance import hamming as sp_hamming
+# from scipy.spatial.distance import hamming as sp_hamming
+
+from sklearn.metrics import multiclass_auc
+from sklearn.metrics import auc
+from sklearn.metrics import roc_curve
+import random
 
 ###############################################################################
 # Utilities for testing
@@ -2041,3 +2046,11 @@ def test_multilabel_jaccard_similarity_score_deprecation():
     assert_equal(jss(y1, np.logical_not(y1)), 0)
     assert_equal(jss(y1, np.zeros(y1.shape)), 0)
     assert_equal(jss(y2, np.zeros(y1.shape)), 0)
+
+
+def test_multiclass_auc():
+    y_true = np.array([1, 0, 1, 0, 1, 1])
+    y_pred = np.array([[0.63, 0.27], [0.89, 0.11], [0.15, 0.85], [0.27, 0.73], [0.02, 0.98], [0.42, 0.58]])
+    # Compare multi-class AUC to the standard AUC in case of two classes
+    fpr, tpr, thresholds = roc_curve(y_true, y_pred[:, 1], pos_label=2)
+    assert_almost_equal([multiclass_auc(y_true, y_pred)], [auc(fpr, tpr)])
