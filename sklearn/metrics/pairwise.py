@@ -141,6 +141,7 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
     return X, Y
 
 
+
 def check_paired_arrays(X, Y):
     """ Set X and Y appropriately and checks inputs for paired distances
 

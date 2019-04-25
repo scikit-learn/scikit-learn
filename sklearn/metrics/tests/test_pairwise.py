@@ -1030,6 +1030,7 @@ def test_haversine_distances():
                          haversine_distances, X)
 
 
+
 # Paired distances
 
 def test_paired_euclidean_distances():
