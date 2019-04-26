@@ -450,8 +450,8 @@ def haversine_distances(X, Y=None):
     The dimension of the data must be 2.
 
     .. math::
-       D(x, y) = 2\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
-                                + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
+                                + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
 
     Parameters
     ----------

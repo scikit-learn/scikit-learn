@@ -685,17 +685,19 @@ def test_agglomerative_clustering_with_distance_threshold():
         assert min_out_cluster_distance >= threshold
 
 
-def test_agglomerative_clustering_with_distance_threshold_edge_case():
+@pytest.mark.parameterize('linkage', ['ward', 'complete', 'average'])
+@pytest.mark.parameterize(('threshold', 'y_true'),
+                          [(0.5, [1, 0]), (1.0, [1, 0]), (1.5, [0, 0])])
+def test_agglomerative_clustering_with_distance_threshold_edge_case(
+        linkage, threshold, y_true):
     # test boundary case of distance_threshold matching the distance
     X = [[0], [1]]
-    for linkage in ("ward", "complete", "average"):
-        for threshold, y_true in [(0.5, [1, 0]), (1.0, [1, 0]), (1.5, [0, 0])]:
-            clusterer = AgglomerativeClustering(
-                n_clusters=None,
-                distance_threshold=threshold,
-                linkage=linkage)
-            y_pred = clusterer.fit_predict(X)
-            assert_equal(1, adjusted_rand_score(y_true, y_pred))
+    clusterer = AgglomerativeClustering(
+        n_clusters=None,
+        distance_threshold=threshold,
+        linkage=linkage)
+    y_pred = clusterer.fit_predict(X)
+    assert adjusted_rand_score(y_true, y_pred) == 1
 
 
 def test_dist_threshold_invalid_parameters():
