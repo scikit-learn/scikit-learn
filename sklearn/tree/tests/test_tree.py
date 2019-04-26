@@ -1865,27 +1865,22 @@ def test_decision_tree_memmap():
     "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "boston"}))
 @pytest.mark.parametrize(
     "tree_cls", [DecisionTreeClassifier, ExtraTreeClassifier])
-def test_prune_tree_clf_are_subtrees(criterion, dataset, tree_cls):
+def test_prune_tree_classifier_are_subtrees(criterion, dataset, tree_cls):
     dataset = DATASETS[dataset]
     X, y = dataset["X"], dataset["y"]
     assert_pruning_creates_subtree(tree_cls, X, y)
+    assert_ccp_pruning_path_increases(tree_cls, X, y)
 
 
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
 @pytest.mark.parametrize("dataset", DATASETS.keys())
 @pytest.mark.parametrize(
     "tree_cls", [DecisionTreeRegressor, ExtraTreeRegressor])
-def test_prune_tree_reg_are_subtrees(criterion, dataset, tree_cls):
+def test_prune_tree_regression_are_subtrees(criterion, dataset, tree_cls):
     dataset = DATASETS[dataset]
     X, y = dataset["X"], dataset["y"]
     assert_pruning_creates_subtree(tree_cls, X, y)
-
-
-def test_prune_tree_prunes_all_leaves():
-    clf = DecisionTreeClassifier(ccp_alpha=100)
-    clf.fit(X, y)
-    assert clf.tree_.max_depth == 0
-    assert clf.tree_.node_count == 1
+    assert_ccp_pruning_path_increases(tree_cls, X, y)
 
 
 def test_prune_tree_raises_negative_ccp_alpha():
@@ -1902,6 +1897,12 @@ def test_prune_tree_raises_negative_ccp_alpha():
     with pytest.raises(ValueError, match=msg):
         clf.set_params(ccp_alpha=-1.0)
         clf._prune_tree()
+
+
+def assert_ccp_pruning_path_increases(estimator_cls, X, y):
+    est = estimator_cls(max_leaf_nodes=20, random_state=0)
+    pruning_path = est.cost_complexity_pruning_path(X, y)
+    assert np.all(np.diff(pruning_path) >= 0)
 
 
 def assert_pruning_creates_subtree(estimator_cls, X, y):

@@ -1127,25 +1127,57 @@ cdef class Tree:
 # Build Pruned Tree
 # =============================================================================
 
-cpdef build_pruned_tree_ccp(
-    Tree tree, # OUT
-    Tree orig_tree,
-    DOUBLE_t ccp_alpha):
-    """Build a pruned tree with Minimal Cost-Complexity Pruning.
 
-    Build a pruned tree from the original tree. The values and nodes from the
-    original tree are copied into the pruned tree.
+cdef class _CCPPruneController:
+    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+        pass
+
+
+cdef class _AlphaPruning(_CCPPruneController):
+    cdef DOUBLE_t ccp_alpha
+
+    def __cinit__(self, DOUBLE_t ccp_alpha):
+        self.ccp_alpha = ccp_alpha
+
+    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+        # The subtree on the previous iteration has the greatest ccp_alpha
+        # less than or equal to self.ccp_alpha
+        return self.ccp_alpha < effective_alpha
+
+
+cdef class _PathFinder(_CCPPruneController):
+    cdef Stack stack
+
+    def __cinit__(self):
+        self.stack = Stack(INITIAL_STACK_SIZE)
+
+    cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
+        # the sixth element is used because it is a double
+        rc = self.stack.push(0, 0, 0, 0, 0, effective_alpha, 0)
+        if rc == -1:
+            with gil:
+                raise MemoryError()
+        return 0
+
+cdef _cost_complexity_prune(
+    Tree orig_tree,
+    _CCPPruneController ccp_contorller,
+    unsigned char[:] leaves_in_subtree,
+    SIZE_t[:] capacity):
+    """Performs cost complexity pruning.
+
+    The ccp_controller signals when the pruning should stop.
 
     Parameters
     ----------
-    tree : Tree
-        Location to place the pruned tree
     orig_tree : Tree
         Original tree
-    ccp_alpha : positive double
-        Complexity parameter. The subtree with the largest cost complexity
-        that is smaller than ``ccp_alpha`` will be chosen. By default,
-        no pruning is performed.
+    ccp_controller : _CCPPruneController
+        cost complexity controller
+    leaves_in_subtree : unsigned char[:]
+        output for leaves of subtree
+    capacity : SIZE_T*
+        output for capacity of subtree
     """
 
     cdef:
@@ -1161,8 +1193,8 @@ cpdef build_pruned_tree_ccp(
         SIZE_t[:] child_l = orig_tree.children_left
         SIZE_t[:] child_r = orig_tree.children_right
         SIZE_t[:] parent = np.zeros(shape=n_nodes, dtype=np.intp)
-        unsigned char[:] leaves_in_subtree = np.zeros(
-            shape=n_nodes, dtype=np.uint8)
+        # unsigned char[:] leaves_in_subtree = np.zeros(
+        #     shape=n_nodes, dtype=np.uint8)
 
         # Only uses the start and parent variables
         Stack stack = Stack(INITIAL_STACK_SIZE)
@@ -1184,13 +1216,12 @@ cpdef build_pruned_tree_ccp(
         DOUBLE_t[:] g_node = np.zeros(shape=n_nodes, dtype=np.float64)
         SIZE_t pruned_branch_node_idx
         DOUBLE_t subtree_alpha
-        DOUBLE_t current_ccp_alpha
+        DOUBLE_t effective_alpha
         SIZE_t child_l_idx
         SIZE_t child_r_idx
         SIZE_t n_pruned_leaves
         DOUBLE_t r_diff
         DOUBLE_t max_float64 = np.finfo(np.float64).max
-        SIZE_t capacity = 0
 
     # find parent node ids and leaves
     with nogil:
@@ -1247,18 +1278,16 @@ cpdef build_pruned_tree_ccp(
                 break
 
             # computes ccp_alpha for subtrees and finds the minimal alpha
-            current_ccp_alpha = max_float64
+            effective_alpha = max_float64
             for i in range(n_nodes):
                 if not candidate_nodes[i]:
                     continue
                 subtree_alpha = (r_node[i] - r_branch[i]) / (n_leaves[i] - 1)
-                if subtree_alpha < current_ccp_alpha:
-                    current_ccp_alpha = subtree_alpha
+                if subtree_alpha < effective_alpha:
+                    effective_alpha = subtree_alpha
                     pruned_branch_node_idx = i
 
-            # The subtree on the previous iteration has the greatest ccp_alpha
-            # less than or equal to self.ccp_alpha
-            if current_ccp_alpha > ccp_alpha:
+            if ccp_contorller.stop_pruning(effective_alpha):
                 break
 
             # stack uses only the start variable
@@ -1308,9 +1337,69 @@ cpdef build_pruned_tree_ccp(
 
         for i in range(in_subtree.shape[0]):
             if in_subtree[i]:
-                capacity += 1
+                capacity[0] += 1
 
-    _build_pruned_tree(tree, orig_tree, leaves_in_subtree, capacity)
+
+cpdef build_pruned_tree_ccp(
+    Tree tree, # OUT
+    Tree orig_tree,
+    DOUBLE_t ccp_alpha):
+    """Build a pruned tree with Minimal Cost-Complexity Pruning.
+
+    Build a pruned tree from the original tree. The values and nodes from the
+    original tree are copied into the pruned tree.
+
+    Parameters
+    ----------
+    tree : Tree
+        Location to place the pruned tree
+    orig_tree : Tree
+        Original tree
+    ccp_alpha : positive double
+        Complexity parameter. The subtree with the largest cost complexity
+        that is smaller than ``ccp_alpha`` will be chosen. By default,
+        no pruning is performed.
+    """
+
+    cdef:
+        SIZE_t n_nodes = orig_tree.node_count
+        unsigned char[:] leaves_in_subtree = np.zeros(
+            shape=n_nodes, dtype=np.uint8)
+        SIZE_t[:] capacity = np.zeros(shape=1, dtype=np.intp)
+
+    pruning_controller = _AlphaPruning(ccp_alpha=ccp_alpha)
+
+    _cost_complexity_prune(orig_tree, pruning_controller,
+                           leaves_in_subtree, capacity)
+
+    _build_pruned_tree(tree, orig_tree, leaves_in_subtree, capacity[0])
+
+
+cpdef ccp_pruning_path(Tree orig_tree):
+    """Computes the cost complexity pruning path"""
+    cdef:
+        unsigned char[:] leaves_in_subtree = np.zeros(
+            shape=orig_tree.node_count, dtype=np.uint8)
+        SIZE_t[:] capacity = np.zeros(shape=1, dtype=np.intp)
+
+    path_finder = _PathFinder()
+
+    _cost_complexity_prune(orig_tree, path_finder,
+                           leaves_in_subtree, capacity)
+
+    cdef:
+        np.ndarray ccp_alphas = np.empty(shape=path_finder.stack.top,
+                                         dtype=np.float64)
+        StackRecord stack_record
+        SIZE_t idx = path_finder.stack.top - 1
+
+    while not path_finder.stack.is_empty():
+        path_finder.stack.pop(&stack_record)
+        # The impurity element is used for storing alphas
+        ccp_alphas[idx] = stack_record.impurity
+        idx -= 1
+
+    return ccp_alphas
 
 
 cdef _build_pruned_tree(

@@ -27,6 +27,7 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
+from ..base import clone
 from ..base import RegressorMixin
 from ..base import is_classifier
 from ..base import MultiOutputMixin
@@ -42,6 +43,7 @@ from ._tree import DepthFirstTreeBuilder
 from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
 from ._tree import build_pruned_tree_ccp
+from ._tree import ccp_pruning_path
 from . import _tree, _splitter, _criterion
 
 __all__ = ["DecisionTreeClassifier",
@@ -538,6 +540,14 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         build_pruned_tree_ccp(pruned_tree, self.tree_, self.ccp_alpha)
 
         self.tree_ = pruned_tree
+
+    def cost_complexity_pruning_path(self, X, y, sample_weight=None):
+        # Fit tree
+        est = clone(self).set_params(ccp_alpha=0.0)
+        est.fit(X, y, sample_weight=sample_weight)
+
+        # Construct pruning path
+        return ccp_pruning_path(est.tree_)
 
     @property
     def feature_importances_(self):

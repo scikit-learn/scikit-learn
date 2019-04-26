@@ -113,3 +113,6 @@ cpdef build_pruned_tree_ccp(
     Tree tree, # OUT
     Tree orig_tree,
     double ccp_alpha)
+
+
+cpdef ccp_pruning_path(Tree orig_tree)
