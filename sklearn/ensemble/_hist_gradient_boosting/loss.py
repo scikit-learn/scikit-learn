@@ -79,7 +79,6 @@ class BaseLoss(ABC):
         baseline_prediction : float or ndarray, shape (1, prediction_dim)
             The baseline prediction.
         """
-        pass
 
     @abstractmethod
     def update_gradients_and_hessians(self, gradients, hessians, y_true,
@@ -103,7 +102,6 @@ class BaseLoss(ABC):
             The raw_predictions (i.e. values from the trees) of the tree
             ensemble at iteration ``i - 1``.
         """
-        pass
 
 
 class LeastSquares(BaseLoss):
