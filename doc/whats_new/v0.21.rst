@@ -274,6 +274,29 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`12513` by :user:`Ramil Nugmanov <stsouko>` and
   :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
+- |MajorFeature| Add two new implementations of
+  gradient boosting trees: :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor`. The implementation of
+  these estimators is inspired by
+  `LightGBM <https://github.com/Microsoft/LightGBM>`_ and can be orders of
+  magnitude faster than :class:`ensemble.GradientBoostingRegressor` and
+  :class:`ensemble.GradientBoostingClassifier` when the number of samples is
+  larger than tens of thousands of samples. The API of these new estimators
+  is slightly different, and some of the features from
+  :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` are not yet supported.
+
+  These new estimators are experimental, which means that their results or
+  their API might change without any deprecation cycle. To use them, you
+  need to explicitly import ``enable_hist_gradient_boosting``::
+
+    >>> # explicitly require this experimental feature
+    >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+    >>> # now you can import normally from ensemble
+    >>> from sklearn.ensemble import HistGradientBoostingClassifier
+
+  :issue:`12807` by :user:`Nicolas Hug<NicolasHug>`.
+
 :mod:`sklearn.externals`
 ........................
 
