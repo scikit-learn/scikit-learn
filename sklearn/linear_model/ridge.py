@@ -978,9 +978,9 @@ class _RidgeGCV(LinearModel):
             K = safe_sparse_dot(X, X.T, dense_output=True)
         except MemoryError:
             msg = ("Setting gcv_mode='eigen' with a sparse X creates a "
-                   "n_samples * n_samples dense matrix, setting "
+                   "n_samples**2 dense matrix, setting "
                    "gcv_mode='svd' may help because it would create a "
-                   "n_samples**2 dense matrix")
+                   "n_samples * n_features dense matrix")
             raise MemoryError(msg)
         # the following emulates an additional constant regressor
         # corresponding to fit_intercept=True

@@ -1027,8 +1027,9 @@ def test_ridge_X_sparse_auto_memory_error(monkeypatch, gcv_mode):
     ridgecv = RidgeCV(gcv_mode=gcv_mode)
 
     msg = (r"Setting gcv_mode='eigen' with a sparse X creates a "
-           r"n_samples \* n_samples dense matrix, setting gcv_mode='svd' "
-           r"may help because it would create a n_samples\*\*2 dense matrix")
+           r"n_samples\*\*2 dense matrix, setting gcv_mode='svd' "
+           r"may help because it would create a n_samples \* n_features "
+           r"dense matrix")
 
     with pytest.raises(MemoryError, match=msg):
         ridgecv.fit(X, y_diabetes)
