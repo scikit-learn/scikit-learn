@@ -396,6 +396,12 @@ def set_checking_parameters(estimator):
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
 
+    if name in ('HistGradientBoostingClassifier',
+                'HistGradientBoostingRegressor'):
+        # The default min_samples_leaf (20) isn't appropriate for small
+        # datasets (only very shallow trees are built) that the checks use.
+        estimator.set_params(min_samples_leaf=5)
+
 
 class NotAnArray:
     """An object that is convertible to an array
@@ -2462,6 +2468,7 @@ def check_fit_idempotent(name, estimator_orig):
               if hasattr(estimator, method)}
 
     # Fit again
+    set_random_state(estimator)
     estimator.fit(X_train, y_train)
 
     for method in check_methods:
