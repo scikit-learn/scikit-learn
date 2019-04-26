@@ -28,7 +28,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 
-from ..preprocessing import LabelBinarizer, label_binarize
+from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
 from ..utils import assert_all_finite
 from ..utils import check_array
@@ -2301,25 +2301,6 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     return np.average(losses, weights=sample_weight)
 
 
-def _check_binary_probabilistic_predictions(y_true, y_prob):
-    """Check that y_true is binary and y_prob contains valid probabilities"""
-    check_consistent_length(y_true, y_prob)
-
-    labels = np.unique(y_true)
-
-    if len(labels) > 2:
-        raise ValueError("Only binary classification is supported. "
-                         "Provided labels %s." % labels)
-
-    if y_prob.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-
-    if y_prob.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
-
-    return label_binarize(y_true, labels)[:, 0]
-
-
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """Compute the Brier score.
     The smaller the Brier score, the better, hence the naming with "loss".
@@ -2353,8 +2334,9 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
         Sample weights.
 
     pos_label : int or str, default=None
-        Label of the positive class. If None, the maximum label is used as
-        positive class
+        Label of the positive class.
+        Defaults to the greater label unless y_true is all 0 or all -1
+        in which case pos_label defaults to 1.
 
     Returns
     -------
@@ -2389,8 +2371,25 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     assert_all_finite(y_prob)
     check_consistent_length(y_true, y_prob, sample_weight)
 
+    labels = np.unique(y_true)
+    if len(labels) > 2:
+        raise ValueError("Only binary classification is supported. "
+                         "Labels in y_true: %s." % labels)
+    if y_prob.max() > 1:
+        raise ValueError("y_prob contains values greater than 1.")
+    if y_prob.min() < 0:
+        raise ValueError("y_prob contains values less than 0.")
+
+    # if pos_label=None, when y_true is in {-1, 1} or {0, 1},
+    # pos_labe is set to 1 (consistent with precision_recall_curve/roc_curve),
+    # otherwise pos_label is set to the greater label
+    # (different from precision_recall_curve/roc_curve,
+    # the purpose is to keep backward compatibility).
     if pos_label is None:
-        pos_label = y_true.max()
+        if (np.array_equal(labels, [0]) or
+                np.array_equal(labels, [-1])):
+            pos_label = 1
+        else:
+            pos_label = y_true.max()
     y_true = np.array(y_true == pos_label, int)
-    y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
