@@ -482,9 +482,9 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Fixed a bug where :func:`metrics.brier_score_loss` will sometimes
   return incorrect result when there's only one class in ``y_true``.
-  :issue:`13628` by :user:`Hanmin Qin <qinhanmin2014>`.
+  :pr:`13628` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-- |Fix| Fixed a bug in :func:`metrics.label_ranking_average_precision_score` 
+- |Fix| Fixed a bug in :func:`metrics.label_ranking_average_precision_score`
   where sample_weight wasn't taken into account for samples with degenerate
   labels.
   :pr:`13447` by :user:`Dan Ellis <dpwe>`.
