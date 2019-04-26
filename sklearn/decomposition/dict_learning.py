@@ -65,7 +65,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         `algorithm='lasso_cd'`.
 
     max_iter : int, 1000 by default
-        Maximum number of iterations to perform if `algorithm='lasso_cd'`.
+        Maximum number of iterations to perform if `algorithm='lasso_cd'` or
+        `lasso_lars`.
 
     copy_cov : boolean, optional
         Whether to copy the precomputed covariance matrix; if False, it may be
@@ -241,7 +242,8 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         `algorithm='lasso_cd'`.
 
     max_iter : int, 1000 by default
-        Maximum number of iterations to perform if `algorithm='lasso_cd'`.
+        Maximum number of iterations to perform if `algorithm='lasso_cd'` or
+        `lasso_lars`.
 
     n_jobs : int or None, optional (default=None)
         Number of parallel jobs to run.
@@ -495,8 +497,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         .. versionadded:: 0.20
 
     method_max_iter : int, optional (default=1000)
-        It is passed to the underlying ``method`` as their ``max_iter``
-        parameter.
+        Maximum number of iterations to perform.
 
         .. versionadded:: 0.21
 
@@ -713,8 +714,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         .. versionadded:: 0.20
 
     method_max_iter : int, optional (default=1000)
-        It is passed to the underlying ``method`` as their ``max_iter``
-        parameter.
+        Maximum number of iterations to perform in each ``sparse_encode`` step.
 
         .. versionadded:: 0.21
 
@@ -984,7 +984,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
     transform_max_iter : int, optional (default=1000)
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
-        `lasso_cd`.
+        `lasso_lars`.
 
         .. versionadded:: 0.21
 
@@ -1138,8 +1138,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         .. versionadded:: 0.20
 
     transform_max_iter : int, optional (default=1000)
-        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`,
-        `transform_max_iter` is passed to the underlying transformer.
+        Maximum number of iterations to perform if `algorithm='lasso_cd'` or
+        `lasso_lars`.
 
         .. versionadded:: 0.21
 
@@ -1328,8 +1328,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         .. versionadded:: 0.20
 
     transform_max_iter : int, optional (default=1000)
-        If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`,
-        `transform_max_iter` is passed to the underlying transformer.
+        Maximum number of iterations to perform if `algorithm='lasso_cd'` or
+        `lasso_lars`.
 
         .. versionadded:: 0.21
 
