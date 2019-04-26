@@ -44,7 +44,7 @@ from sklearn.utils.validation import (
     check_psd_eigenvalues)
 import sklearn
 
-from sklearn.exceptions import NotFittedError, PSDSpectrumWarning
+from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
@@ -861,15 +861,15 @@ _psd_cases_valid = {
     'nominal': ((1, 2), np.array([1, 2]), None, ""),
     'nominal_np_array': (np.array([1, 2]), np.array([1, 2]), None, ""),
     'insignificant_imag': ((5, 5e-5j), np.array([5, 0]), None, ""),
-    'significant neg': ((5, -1), np.array([5, 0]), PSDSpectrumWarning,
+    'significant neg': ((5, -1), np.array([5, 0]), PositiveSpectrumWarning,
                         "There are significant negative eigenvalues"),
     'significant neg float32': (np.array([3e-4, -2e-6], dtype=np.float32),
                                 np.array([3e-4, 0], dtype=np.float32),
-                                PSDSpectrumWarning,
+                                PositiveSpectrumWarning,
                                 "There are significant negative eigenvalues"),
     'significant neg float64': (np.array([1e-5, -2e-10], dtype=np.float64),
                                 np.array([1e-5, 0], dtype=np.float64),
-                                PSDSpectrumWarning,
+                                PositiveSpectrumWarning,
                                 "There are significant negative eigenvalues"),
     'insignificant neg': ((5, -5e-5), np.array([5, 0]), None, ""),
     'insignificant neg float32': (np.array([1, -1e-6], dtype=np.float32),
@@ -912,7 +912,7 @@ def test_check_psd_eigenvalues_bad_conditioning_warning():
     assert not w
 
     w_msg = "the largest eigenvalue is more than 1.00E\\+12 times the smallest"
-    with pytest.warns(PSDSpectrumWarning, match=w_msg) as w:
+    with pytest.warns(PositiveSpectrumWarning, match=w_msg) as w:
         assert_array_equal(check_psd_eigenvalues(input, warn_on_zeros=True),
                            output)
 

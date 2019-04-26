@@ -21,7 +21,7 @@ from numpy.core.numeric import ComplexWarning
 
 from .fixes import _object_dtype_isnan
 from .. import get_config as _get_config
-from ..exceptions import NonBLASDotWarning, PSDSpectrumWarning
+from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 from ._joblib import Memory
@@ -1006,13 +1006,13 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     - that there are no significant negative eigenvalues (with absolute value
       more than 1e-10 and more than 1e-5 times the largest positive
-      eigenvalue). If this check fails, it raises a ``PSDSpectrumWarning``. All
+      eigenvalue). If this check fails, it raises a ``PositiveSpectrumWarning``. All
       negative eigenvalues (even smaller ones) are set to zero in all cases.
 
     - that the eigenvalues are well conditioned. That means, that the
       eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
       If this check fails and ``warn_on_zeros=True``, it raises a
-      ``PSDSpectrumWarning``. All the eigenvalues that are too small are then
+      ``PositiveSpectrumWarning``. All the eigenvalues that are too small are then
       set to zero.
 
     Parameters
@@ -1021,7 +1021,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
         Array of eigenvalues to check / fix.
 
     warn_on_zeros : bool, optional (default=False)
-        When this is set to ``True``, a ``PSDSpectrumWarning`` will be raised
+        When this is set to ``True``, a ``PositiveSpectrumWarning`` will be raised
         when there are extremely small eigenvalues. Otherwise no warning will
         be raised. Note that in both cases, extremely small eigenvalues will be
         set to zero.
@@ -1117,7 +1117,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
                           "(%f of the maximum positive). The matrix is maybe "
                           "not PSD, or something went wrong with the "
                           "eigenvalues decomposition. Replacing them with "
-                          "zero." % (-min_eig / max_eig), PSDSpectrumWarning)
+                          "zero." % (-min_eig / max_eig), PositiveSpectrumWarning)
 
     # Remove all negative values in all cases
     lambdas[lambdas < 0] = 0
@@ -1130,7 +1130,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
                           "eigenvalue is more than %.2E times the smallest. "
                           "Small eigenvalues will be replaced with 0."
                           "" % (1 / small_pos_ratio),
-                          PSDSpectrumWarning)
+                          PositiveSpectrumWarning)
         lambdas[too_small_lambdas] = 0
 
     return lambdas

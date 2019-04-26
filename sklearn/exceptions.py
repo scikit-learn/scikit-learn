@@ -13,7 +13,7 @@ __all__ = ['NotFittedError',
            'NonBLASDotWarning',
            'SkipTestWarning',
            'UndefinedMetricWarning',
-           'PSDSpectrumWarning']
+           'PositiveSpectrumWarning']
 
 
 class NotFittedError(ValueError, AttributeError):
@@ -157,7 +157,7 @@ class UndefinedMetricWarning(UserWarning):
     """
 
 
-class PSDSpectrumWarning(UserWarning):
+class PositiveSpectrumWarning(UserWarning):
     """Warning raised when the eigenvalues of a PSD matrix have issues
 
     This warning is typically raised by ``check_psd_eigenvalues`` when the
