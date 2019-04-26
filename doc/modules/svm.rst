@@ -222,16 +222,6 @@ calibrated using Platt scaling: logistic regression on the SVM's scores,
 fit by an additional cross-validation on the training data.
 In the multiclass case, this is extended as per Wu et al. (2004).
 
-Please note that when ``decision_function_shape='ovr'`` and ``n_classes > 2``,
-unlike ``decision_function``, the ``predict`` does not try to break ties by
-default. You can set ``break_ties=True`` for the output of ``predict`` to
-be the same as ``np.argmax(clf.decision_function(...), axis=1)``; but have in
-mind that it comes with a computational cost.
-
-.. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_tie_breaking_001.png
-   :target: ../auto_examples/svm/plot_svm_tie_breaking.html
-   :align: center
-
 Needless to say, the cross-validation involved in Platt scaling
 is an expensive operation for large datasets.
 In addition, the probability estimates may be inconsistent with the scores,
@@ -244,6 +234,17 @@ Platt's method is also known to have theoretical issues.
 If confidence scores are required, but these do not have to be probabilities,
 then it is advisable to set ``probability=False``
 and use ``decision_function`` instead of ``predict_proba``.
+
+Please note that when ``decision_function_shape='ovr'`` and ``n_classes > 2``,
+unlike ``decision_function``, the ``predict`` does not try to break ties by
+default. You can set ``break_ties=True`` for the output of ``predict`` to be
+the same as ``np.argmax(clf.decision_function(...), axis=1)``, otherwise the
+first class among the tied classes will always be returned; but have in mind
+that it comes with a computational cost.
+
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_tie_breaking_001.png
+   :target: ../auto_examples/svm/plot_svm_tie_breaking.html
+   :align: center
 
 .. topic:: References:
 

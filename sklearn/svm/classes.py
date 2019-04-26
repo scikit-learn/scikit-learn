@@ -522,11 +522,11 @@ class SVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     break_ties : bool, optional (default=False)
-        If true, `decision_function_shape`='ovr', and number of classes > 2,
-        `predict` will break ties according to the confidence values of
-        `decision_function`; otherwise the first class among the tied classes
-        is returned. Please note that breaking ties comes at a relatively high
-        computational cost compared to a simple predict.
+        If true, ``decision_function_shape='ovr'``, and number of classes > 2,
+        :term:`predict` will break ties according to the confidence values of
+        :term:`decision_function`; otherwise the first class among the tied
+        classes is returned. Please note that breaking ties comes at a
+        relatively high computational cost compared to a simple predict.
 
         .. versionadded:: 0.21
 
@@ -719,11 +719,11 @@ class NuSVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     break_ties : bool, optional (default=False)
-        If true, `decision_function_shape`='ovr', and number of classes > 2,
-        `predict` will break ties according to the confidence values of
-        `decision_function`; otherwise the first class among the tied classes
-        is returned. Please note that breaking ties comes at a relatively high
-        computational cost compared to a simple predict.
+        If true, ``decision_function_shape='ovr'``, and number of classes > 2,
+        :term:`predict` will break ties according to the confidence values of
+        :term:`decision_function`; otherwise the first class among the tied
+        classes is returned. Please note that breaking ties comes at a
+        relatively high computational cost compared to a simple predict.
 
         .. versionadded:: 0.21
 
