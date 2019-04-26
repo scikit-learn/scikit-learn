@@ -1017,7 +1017,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     Parameters
     ----------
-    lambdas : array-like
+    lambdas : array-like, shape (n_eigenvalues,)
         Array of eigenvalues to check / fix.
 
     warn_on_zeros : bool, optional (default=False)
