@@ -976,12 +976,12 @@ class _RidgeGCV(LinearModel):
         # even if X is very sparse, K is usually very dense
         try:
             K = safe_sparse_dot(X, X.T, dense_output=True)
-        except MemoryError:
+        except MemoryError as e:
             msg = ("Setting gcv_mode='eigen' with a sparse X creates a "
                    "n_samples**2 dense matrix, setting "
                    "gcv_mode='svd' may help because it would create a "
                    "n_samples * n_features dense matrix")
-            raise MemoryError(msg)
+            raise MemoryError(msg) from e
         # the following emulates an additional constant regressor
         # corresponding to fit_intercept=True
         # but this is done only when the features have been centered
@@ -1034,12 +1034,12 @@ class _RidgeGCV(LinearModel):
         if sparse.issparse(X):
             try:
                 X = X.toarray()
-            except MemoryError:
+            except MemoryError as e:
                 msg = ("Setting gcv_mode='svd' with a sparse X creates a "
                        "n_samples * n_features dense matrix, setting "
                        "gcv_mode='eigen' may help because it would create a "
                        "n_samples**2 dense matrix")
-                raise MemoryError(msg)
+                raise MemoryError(msg) from e
         if centered_kernel:
             X = np.hstack((X, np.ones((X.shape[0], 1))))
         # to emulate fit_intercept=True situation, add a column on ones
