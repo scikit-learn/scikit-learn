@@ -1028,7 +1028,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     Returns
     -------
-    lambdas_fixed : array-like
+    lambdas_fixed : ndarray, shape (n_eigenvalues,)
         A fixed validated copy of the array of eigenvalues.
 
     Examples
