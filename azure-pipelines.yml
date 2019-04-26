@@ -38,6 +38,7 @@ jobs:
         PYAMG_VERSION: '*'
         PILLOW_VERSION: '*'
         JOBLIB_VERSION: '*'
+        MATPLOTLIB_VERSION: '*'
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
