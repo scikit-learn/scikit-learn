@@ -1423,7 +1423,7 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
                   'russellrao', 'seuclidean', 'sokalmichener',
                   'sokalsneath', 'sqeuclidean', 'yule', 'wminkowski',
-                  'haversine', 'gower']
+				  'haversine', 'gower']
 
 
 def _check_chunk_size(reduced, chunk_size):
