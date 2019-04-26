@@ -522,10 +522,7 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         return self.tree_.decision_path(X)
 
     def _prune_tree(self):
-        """Prunes tree using Minimal Cost-Complexity Pruning.
-
-        .. versionadded:: 0.21
-        """
+        """Prunes tree using Minimal Cost-Complexity Pruning."""
         check_is_fitted(self, 'tree_')
 
         if self.ccp_alpha < 0.0:
@@ -542,11 +539,27 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
         self.tree_ = pruned_tree
 
     def cost_complexity_pruning_path(self, X, y, sample_weight=None):
-        # Fit tree
+        """Prunes tree using Minimal Cost-Complexity Pruning.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+            The target values (class labels) as integers or strings.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. Splits are also
+            ignored if they would result in any single class carrying a
+            negative weight in either child node.
+        """
         est = clone(self).set_params(ccp_alpha=0.0)
         est.fit(X, y, sample_weight=sample_weight)
-
-        # Construct pruning path
         return ccp_pruning_path(est.tree_)
 
     @property
