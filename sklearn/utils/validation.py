@@ -1006,8 +1006,9 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     - that there are no significant negative eigenvalues (with absolute value
       more than 1e-10 and more than 1e-5 times the largest positive
-      eigenvalue). If this check fails, it raises a ``PositiveSpectrumWarning``.
-      All negative eigenvalues (even smaller ones) are set to zero in all cases.
+      eigenvalue). If this check fails, it raises a
+      ``PositiveSpectrumWarning``. All negative eigenvalues (even smaller ones)
+      are set to zero in all cases.
 
     - that the eigenvalues are well conditioned. That means, that the
       eigenvalues are all greater than the maximum eigenvalue divided by 1e12.
@@ -1116,8 +1117,9 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
             warnings.warn("There are significant negative eigenvalues "
                           "(%f of the maximum positive). The matrix is maybe "
                           "not PSD, or something went wrong with the "
-                          "eigenvalues decomposition. Replacing them with zero."
-                          "" % (-min_eig / max_eig), PositiveSpectrumWarning)
+                          "eigenvalues decomposition. Replacing them with "
+                          "zero." % (-min_eig / max_eig),
+                          PositiveSpectrumWarning)
 
     # Remove all negative values in all cases
     lambdas[lambdas < 0] = 0
