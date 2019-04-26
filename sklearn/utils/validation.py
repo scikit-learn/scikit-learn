@@ -1090,7 +1090,7 @@ def check_psd_eigenvalues(lambdas, warn_on_zeros=False):
 
     # Check that there are no significant imaginary parts
     if not np.isreal(lambdas).all():
-        max_imag_abs = abs(np.imag(lambdas)).max()
+        max_imag_abs = np.abs(np.imag(lambdas)).max()
         max_real_abs = abs(np.real(lambdas)).max()
         if max_imag_abs > significant_imag_ratio * max_real_abs:
             raise ValueError(
