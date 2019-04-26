@@ -906,7 +906,7 @@ def test_check_psd_eigenvalues_bad_conditioning_warning():
     input = (5, 4e-12)
     output = np.array([5, 0])
 
-    with pytest.warns(None, ) as w:
+    with pytest.warns(None) as w:
         assert_array_equal(check_psd_eigenvalues(input, warn_on_zeros=False),
                            output)
     assert not w
