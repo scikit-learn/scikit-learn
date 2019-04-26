@@ -970,3 +970,21 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
             if n1 != n2:
                 incorrect += [func_name + ' ' + n1 + ' != ' + n2]
     return incorrect
+
+
+def close_figure(fig=None):
+    """Close a matplotlibt figure.
+
+    Parameters
+    ----------
+    fig : int or str or Figure, optional (default=None)
+        The figure, figure number or figure name to close. If ``None``, all
+        current figures are closed.
+    """
+    from matplotlib.pyplot import get_fignums, close as _close  # noqa
+
+    if fig is None:
+        for fig in get_fignums():
+            _close(fig)
+    else:
+        _close(fig)
