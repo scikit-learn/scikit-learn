@@ -28,7 +28,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import if_matplotlib
-from sklearn.utils.testing import close_figure
 
 
 # toy sample
@@ -437,7 +436,7 @@ def test_plot_partial_dependence():
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
-    close_figure()
+    plt.close('all')
 
 
 @if_matplotlib
@@ -471,7 +470,7 @@ def test_plot_partial_dependence_multiclass():
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
-    close_figure()
+    plt.close('all')
 
 
 @if_matplotlib
@@ -499,7 +498,7 @@ def test_plot_partial_dependence_multioutput():
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
-    close_figure()
+    plt.close('all')
 
 
 @if_matplotlib
@@ -533,13 +532,14 @@ def test_plot_partial_dependence_multioutput():
 @pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
 @pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
 def test_plot_partial_dependence_error(data, params, err_msg):
+    import matplotlib.pyplot as plt  # noqa
     X, y = data
     estimator = LinearRegression().fit(X, y)
 
     with pytest.raises(ValueError, match=err_msg):
         plot_partial_dependence(estimator, X, **params)
 
-    close_figure()
+    plt.close()
 
 
 @if_matplotlib
@@ -559,4 +559,4 @@ def test_plot_partial_dependence_fig():
 
     assert plt.gcf() is fig
 
-    close_figure()
+    plt.close()
