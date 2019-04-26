@@ -102,7 +102,7 @@ Support for Python 3.4 and below has been officially dropped.
 - |Enhancement| :class:`cluster.AgglomerativeClustering` and
   :class:`cluster.FeatureAgglomeration` now accept a ``distance_threshold``
   parameter which can be used to find the clusters instead of ``n_clusters``.
-  :issue:`9069` by :user:`Vathsala Achar <VathsalaAchar>`.
+  :issue:`9069` by :user:`Vathsala Achar <VathsalaAchar>` and `Adrin Jalali`_.
 
 - |Fix| Fixed a bug in :class:`KMeans` where empty clusters weren't correctly
   relocated when using sample weights. :issue:`13486`

@@ -660,7 +660,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     Parameters
     ----------
     n_clusters : int or None, optional (default=2)
-        The number of clusters to find.
+        The number of clusters to find. It must be ``None`` if
+        ``distance_threshold`` is not ``None``.
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -688,7 +689,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         not small compared to the number of samples. This option is
         useful only when specifying a connectivity matrix. Note also that
         when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree.
+        be advantageous to compute the full tree. It must be ``True`` if
+        ``distance_threshold`` is not ``None``.
 
     linkage : {"ward", "complete", "average", "single"}, optional \
             (default="ward")
@@ -712,8 +714,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             in 0.22.
 
     distance_threshold : float, optional (default=None)
-        The distance threshold to cluster at. If not ``None``, ``n_clusters``
-        must be ``None`` and ``compute_full_tree`` must be ``True``.
+        The linkage distance threshold above which, clusters will not be
+        merged. If not ``None``, ``n_clusters`` must be ``None`` and
+        ``compute_full_tree`` must be ``True``.
 
         .. versionadded:: 0.21
 
@@ -899,7 +902,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     Parameters
     ----------
     n_clusters : int or None, optional (default=2)
-        The number of clusters to find.
+        The number of clusters to find. It must be ``None`` if
+        ``distance_threshold`` is not ``None``.
 
     affinity : string or callable, default "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
@@ -925,7 +929,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         not small compared to the number of features. This option is
         useful only when specifying a connectivity matrix. Note also that
         when varying the number of clusters and using caching, it may
-        be advantageous to compute the full tree.
+        be advantageous to compute the full tree. It must be ``True`` if
+        ``distance_threshold`` is not ``None``.
 
     linkage : {"ward", "complete", "average", "single"}, optional\
             (default="ward")
@@ -947,8 +952,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         argument `axis=1`, and reduce it to an array of size [M].
 
     distance_threshold : float, optional (default=None)
-        The distance threshold to cluster at. If not ``None``, ``n_clusters``
-        must be ``None`` and ``compute_full_tree`` must be ``True``.
+        The linkage distance threshold above which, clusters will not be
+        merged. If not ``None``, ``n_clusters`` must be ``None`` and
+        ``compute_full_tree`` must be ``True``.
 
         .. versionadded:: 0.21
 
