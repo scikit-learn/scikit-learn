@@ -7,7 +7,7 @@
 Version 0.21.0
 ==============
 
-**In development**
+**May 1, 2019**
 
 Changed models
 --------------
