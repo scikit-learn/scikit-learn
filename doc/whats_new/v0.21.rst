@@ -822,3 +822,52 @@ These changes mostly affect library developers.
 
 - Many checks can now be disabled or configured with :ref:`estimator_tags`.
   :pr:`8022` by :user:`Andreas Müller <amueller>`.
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of the
+project since version 0.20, including:
+
+adanhawth, Aditya Vyas, Adrin Jalali, Agamemnon Krasoulis, Albert Thomas,
+Alberto Torres, Alexandre Gramfort, amourav, Andrea Navarrete, Andreas Mueller,
+Andrew Nystrom, assiaben, Aurélien Bellet, Bartosz Michałowski, Bartosz
+Telenczuk, bauks, BenjaStudio, bertrandhaut, Bharat Raghunathan, brentfagan,
+Bryan Woods, Cat Chenal, Cheuk Ting Ho, Chris Choe, Christos Aridas, Clément
+Doumouro, Cole Smith, Connossor, Corey Levinson, Dan Ellis, Dan Stine, Danylo
+Baibak, daten-kieker, Denis Kataev, Didi Bar-Zev, Dillon Gardner, Dmitry Mottl,
+Dmitry Vukolov, Dougal J. Sutherland, Dowon, drewmjohnston, Dror Atariah,
+Edward J Brown, Ekaterina Krivich, Elizabeth Sander, Emmanuel Arias, Eric
+Chang, Eric Larson, Erich Schubert, esvhd, Falak, Feda Curic, Federico Caselli,
+Fibinse Xavier`, Finn O'Shea, Gabriel Marzinotto, Gabriel Vacaliuc, Gabriele
+Calvo, Gael Varoquaux, GauravAhlawat, Giuseppe Vettigli, Greg Gandenberger,
+Guillaume Fournier, Guillaume Lemaitre, Gustavo De Mari Pereira, Hanmin Qin,
+haroldfox, hhu-luqi, Hunter McGushion, Ian Sanders, JackLangerman, Jacopo
+Notarstefano, jakirkham, James Bourbeau, Jan Koch, Jan S, janvanrijn, Jarrod
+Millman, jdethurens, jeremiedbb, JF, joaak, Joan Massich, Joel Nothman,
+Jonathan Ohayon, Joris Van den Bossche, josephsalmon, Jérémie Méhault, Katrin
+Leinweber, ken, kms15, Koen, Kossori Aruku, Krishna Sangeeth, Kuai Yu, Kulbear,
+Kushal Chauhan, Kyle Jackson, Lakshya KD, Leandro Hermida, Lee Yi Jie Joel,
+Lily Xiong, Lisa Sarah Thomas, Loic Esteve, louib, luk-f-a, maikia, mail-liam,
+Manimaran, Manuel López-Ibáñez, Marc Torrellas, Marco Gaido, Marco Gorelli,
+MarcoGorelli, marineLM, Mark Hannel, Martin Gubri, Masstran, mathurinm, Matthew
+Roeschke, Max Copeland, melsyt, mferrari3, Mickaël Schoentgen, Ming Li, Mitar,
+Mohammad Aftab, Mohammed AbdelAal, Mohammed Ibraheem, Muhammad Hassaan Rafique,
+mwestt, Naoya Iijima, Nicholas Smith, Nicolas Goix, Nicolas Hug, Nikolay
+Shebanov, Oleksandr Pavlyk, Oliver Rausch, Olivier Grisel, Orestis, Osman, Owen
+Flanagan, Paul Paczuski, Pavel Soriano, pavlos kallis, Pawel Sendyk, peay,
+Peter, Peter Cock, Peter Hausamann, Peter Marko, Pierre Glaser, pierretallotte,
+Pim de Haan, Piotr Szymański, Prabakaran Kumaresshan, Pradeep Reddy Raamana,
+Prathmesh Savale, Pulkit Maloo, Quentin Batista, Radostin Stoyanov, Raf
+Baluyot, Rajdeep Dua, Ramil Nugmanov, Raúl García Calvo, Rebekah Kim, Reshama
+Shaikh, Rohan Lekhwani, Rohan Singh, Rohan Varma, Rohit Kapoor, Roman
+Feldbauer, Roman Yurchak, Romuald M, Roopam Sharma, Ryan, Rüdiger Busche, Sam
+Waterbury, Samuel O. Ronsin, SandroCasagrande, Scott Cole, Scott Lowe,
+Sebastian Raschka, Shangwu Yao, Shivam Kotwalia, Shiyu Duan, smarie, Sriharsha
+Hatwar, Stephen Hoover, Stephen Tierney, Stéphane Couvreur, surgan12,
+SylvainLan, TakingItCasual, Tashay Green, thibsej, Thomas Fan, Thomas J Fan,
+Thomas Moreau, Tom Dupré la Tour, Tommy, Tulio Casagrande, Umar Farouk Umar,
+Utkarsh Upadhyay, Vinayak Mehta, Vishaal Kapoor, Vivek Kumar, Vlad Niculae,
+vqean3, Wenhao Zhang, William de Vazelhes, xhan, Xing Han Lu, xinyuliu12,
+Yaroslav Halchenko, Zach Griffith, Zach Miller, Zayd Hammoudeh, Zhuyi Xue,
+Zijie (ZJ) Poh, ^__^
