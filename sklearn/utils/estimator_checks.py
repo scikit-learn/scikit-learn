@@ -3,7 +3,6 @@ import warnings
 import sys
 import traceback
 import pickle
-from collections import defaultdict
 from copy import deepcopy
 from functools import partial
 from inspect import signature
@@ -12,7 +11,6 @@ import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
 
-from sklearn.neighbors.base import NeighborsBase
 from sklearn.utils import IS_PYPY
 from sklearn.utils import _joblib
 from sklearn.utils.testing import assert_raises, _get_args
@@ -45,7 +43,6 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
-from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
@@ -2396,7 +2393,11 @@ def check_estimator_sparse_dense(name, estimator_orig):
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
                 pred_sp = estimator_sp.predict(X_sp)
-                assert_allclose(pred, pred_sp)
+                if not (name in ['SGDClassifier'] or
+                        getattr(estimator, 'kernel', None) == 'precomputed' or
+                        getattr(estimator, 'metric', None) == 'precomputed'):
+                    assert_allclose(pred, pred_sp)
+
                 assert pred.shape == pred_sp.shape
             if hasattr(estimator, 'predict_proba'):
                 probs = estimator.predict_proba(X)
