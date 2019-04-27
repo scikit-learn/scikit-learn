@@ -61,23 +61,23 @@ from ..datasets import load_iris, load_boston, make_blobs
 BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 
-MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
-                'ExtraTreeRegressor', 'ExtraTreesRegressor',
-                'FKC_EigenPro', 'FKR_EigenPro',
-                'GaussianProcessRegressor', 'TransformedTargetRegressor',
-                'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
-                'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
-                'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
-                'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
-                'RANSACRegressor', 'RadiusNeighborsRegressor',
-                'RandomForestRegressor', 'Ridge', 'RidgeCV']
 
-ALLOW_NAN = ['Imputer', 'SimpleImputer', 'MissingIndicator',
-             'MaxAbsScaler', 'MinMaxScaler', 'RobustScaler', 'StandardScaler',
-             'PowerTransformer', 'QuantileTransformer']
+def _safe_tags(estimator, key=None):
+    # if estimator doesn't have _get_tags, use _DEFAULT_TAGS
+    # if estimator has tags but not key, use _DEFAULT_TAGS[key]
+    if hasattr(estimator, "_get_tags"):
+        if key is not None:
+            return estimator._get_tags().get(key, _DEFAULT_TAGS[key])
+        tags = estimator._get_tags()
+        return {key: tags.get(key, _DEFAULT_TAGS[key])
+                for key in _DEFAULT_TAGS.keys()}
+    if key is not None:
+        return _DEFAULT_TAGS[key]
+    return _DEFAULT_TAGS
 
 
-def _yield_non_meta_checks(name, estimator):
+def _yield_checks(name, estimator):
+    tags = _safe_tags(estimator)
     yield check_estimators_dtypes
     yield check_fit_score_takes_y
     yield check_sample_weights_pandas_series
