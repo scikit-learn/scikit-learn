@@ -34,6 +34,7 @@ from .testing import create_memmap_backed_data
 from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
+from ..linear_model.stochastic_gradient import BaseSGD
 
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
@@ -2399,7 +2400,7 @@ def check_estimator_sparse_dense(name, estimator_orig):
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
                 pred_sp = estimator_sp.predict(X_sp)
-                if not (name in ['SGDClassifier'] or
+                if not (isinstance(estimator, BaseSGD) or  # SGD is too random
                         getattr(estimator, 'kernel', None) == 'precomputed' or
                         getattr(estimator, 'metric', None) == 'precomputed'):
                     assert_allclose(pred, pred_sp)
