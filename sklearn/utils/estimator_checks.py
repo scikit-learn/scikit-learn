@@ -873,6 +873,10 @@ def check_fit2d_1sample(name, estimator_orig):
 
     set_random_state(estimator, 1)
 
+    # min_cluster_size cannot be less than the data size for OPTICS.
+    if name == 'OPTICS':
+        estimator.set_params(min_samples=1)
+
     msgs = ["1 sample", "n_samples = 1", "n_samples=1", "one sample",
             "1 class", "one class"]
 

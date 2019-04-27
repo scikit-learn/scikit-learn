@@ -89,7 +89,8 @@ Support for Python 3.4 and below has been officially dropped.
 - |MajorFeature| A new clustering algorithm: :class:`cluster.OPTICS`: an
   algoritm related to :class:`cluster.DBSCAN`, that has hyperparameters easier
   to set and that scales better, by :user:`Shane <espg>`,
-  :user:`Adrin Jalali <adrinjalali>`, and :user:`Erich Schubert <kno10>`.
+  `Adrin Jalali`_, :user:`Erich Schubert <kno10>`, `Hanmin Qin`_, and
+  :user:`Assia Benbihi <assiaben>`.
 
 - |Fix| Fixed a bug where :class:`cluster.Birch` could occasionally raise an
   AttributeError. :pr:`13651` by `Joel Nothman`_.
