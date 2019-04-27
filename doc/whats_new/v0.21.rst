@@ -234,6 +234,11 @@ Support for Python 3.4 and below has been officially dropped.
   prediction step, thus capping the memory usage. :pr:`13283` by
   `Nicolas Goix`_.
 
+- |Efficiency| :class:`sklearn.ensemble.GradientBoostingClassifier` and
+  :class:`sklearn.ensemble.GradientBoostingRegressor` now keep the
+  input ``y`` as ``float64`` to avoid it being copied internally by trees.
+  :pr:`13524` by `Adrin Jalali`_.
+
 - |Enhancement| Minimized the validation of X in
   :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
   :pr:`13174` by :user:`Christos Aridas <chkoar>`.
