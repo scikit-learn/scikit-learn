@@ -401,6 +401,12 @@ Support for Python 3.4 and below has been officially dropped.
   now supports fitting the intercept (i.e. ``fit_intercept=True``) when
   inputs are sparse. :pr:`13336` by :user:`Bartosz Telenczuk <btel>`.
 
+- |Enhancement| The coordinate descent solver used in `Lasso`, `ElasticNet`,
+  etc. now issues a `ConvergenceWarning` when it completes without meeting the
+  desired toleranbce.
+  :pr:`11754` and :pr:`13397` by :user:`Brent Fagan <brentfagan>` and
+  :user:`Adrin Jalali <adrinjalali>`.
+
 - |Fix| Fixed a bug in :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver, where the
   weights would not be correctly updated in some cases.
@@ -672,6 +678,10 @@ Support for Python 3.4 and below has been officially dropped.
   feature per category with a new drop parameter. :pr:`12908` by
   :user:`Drew Johnston <drewmjohnston>`.
 
+- |Efficiency| :class:`preprocessing.OneHotEncoder` and
+  :class:`preprocessing.OrdinalEncoder` now handle pandas DataFrames more
+  efficiently. :pr:`13253` by :user:`maikia`.
+
 - |Efficiency| Make :class:`preprocessing.MultiLabelBinarizer` cache class
   mappings instead of calculating it every time on the fly.
   :pr:`12116` by :user:`Ekaterina Krivich <kiote>` and `Joel Nothman`_.
@@ -731,6 +741,10 @@ Support for Python 3.4 and below has been officially dropped.
   :class:`tree.DecisionTreeRegressor`, :class:`tree.ExtraTreeClassifier`,
   and :class:`tree.ExtraTreeRegressor`.
   :pr:`12300` by :user:`Adrin Jalali <adrinjalali>`.
+
+- |Fix| Trees and forests did not previously `predict` multi-output
+  classification targets with string labels, despite accepting them in `fit`.
+  :pr:`11458` by :user:`Mitar Milutinovic <mitar>`.
 
 - |Fix| Fixed an issue with :class:`tree.BaseDecisionTree`
   and consequently all estimators based
