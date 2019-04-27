@@ -562,13 +562,8 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Feature| Classes :class:`~model_selection.GridSearchCV` and
   :class:`~model_selection.RandomizedSearchCV` now allow for refit=callable
-<<<<<<< HEAD
-  to add flexibility in identifying the best
-  estimator. An example for this interface has been added.
-=======
   to add flexibility in identifying the best estimator.
   See :doc:`/auto_examples/model_selection/plot_grid_search_refit_callable.py`.
->>>>>>> DOC what's new cleaning
   :pr:`11354` by :user:`Wenhao Zhang <wenhaoz@ucla.edu>`,
   `Joel Nothman`_ and :user:`Adrin Jalali <adrinjalali>`.
 
