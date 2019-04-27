@@ -104,9 +104,9 @@ Support for Python 3.4 and below has been officially dropped.
 - |Fix| Fixed a bug where :class:`cluster.Birch` could occasionally raise an
   AttributeError. :pr:`13651` by `Joel Nothman`_.
 
-- |Fix| Fixed a bug in :class:`KMeans` where empty clusters weren't correctly
-  relocated when using sample weights.
-  :pr:`13486` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where empty clusters weren't
+  correctly relocated when using sample weights. :pr:`13486` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 - |API| The ``n_components_`` attribute in :class:`cluster.AgglomerativeClustering`
   and :class:`cluster.FeatureAgglomeration` has been renamed to
@@ -116,9 +116,8 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.datasets`
 .......................
 
-- |Fix| Added support for 64-bit group IDs and pointers in SVMLight files
-  :class:`datasets.svmlight_format` :pr:`10727` by
-  :user:`Bryan K Woods <bryan-woods>`.
+- |Fix| Added support for 64-bit group IDs and pointers in SVMLight files.
+  :pr:`10727` by :user:`Bryan K Woods <bryan-woods>`.
 
 - |Fix| :func:`datasets.load_sample_images` returns images with a deterministic
   order. :pr:`13250` by :user:`Thomas Fan <thomasjpfan>`.
@@ -288,14 +287,16 @@ Support for Python 3.4 and below has been officially dropped.
   classes priors instead of the log of the priors. :pr:`12983` by
   :user:`Nicolas Hug<NicolasHug>`.
 
-- |Fix| Fixed a bug in :mod:`ensemble` where the ``predict`` method would
-  error for multiclass multioutput forests models if any targets were strings.
-  :pr:`12834` by :user:`Elizabeth Sander <elsander>`.
+- |Fix| Fixed a bug in :class:`ensemble.RandomForestClassifier` where the
+  ``predict`` method would error for multiclass multioutput forests models
+  if any targets were strings. :pr:`12834` by :user:`Elizabeth Sander
+  <elsander>`.
 
 - |Fix| Fixed a bug in :class:`ensemble.gradient_boosting.LossFunction` and
   :class:`ensemble.gradient_boosting.LeastSquaresError` where the default
   value of ``learning_rate`` in ``update_terminal_regions`` is not consistent
-  with the document and the caller functions.
+  with the document and the caller functions. Note however that directly using
+  these loss functions is deprecated.
   :pr:`6463` by :user:`movelikeriver <movelikeriver>`.
 
 - |Fix| :func:`ensemble.partial_dependence` (and consequently the new
@@ -338,21 +339,23 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`12177` by :user:`Sergey Feldman <sergeyf>` and :user:`Ben Lawson
   <benlawson>`.
 
-- |Feature| The :class:`impute.SimpleImputer` and :class:`IterativeImputer`
-  have a new parameter ``'add_indicator'``, which simply stacks a
-  :class:`impute.MissingIndicator` transform into the output of the imputer's
-  transform. That allows a predictive estimator to account for missingness.
-  :pr:`12583`, :pr:`13601` by :user:`Danylo Baibak <DanilBaibak>`.
+- |Feature| The :class:`impute.SimpleImputer` and
+  :class:`impute.IterativeImputer` have a new parameter ``'add_indicator'``,
+  which simply stacks a :class:`impute.MissingIndicator` transform into the
+  output of the imputer's transform. That allows a predictive estimator to
+  account for missingness. :pr:`12583`, :pr:`13601` by :user:`Danylo Baibak
+  <DanilBaibak>`.
 
 - |Fix| In :class:`impute.MissingIndicator` avoid implicit densification by
   raising an exception if input is sparse add `missing_values` property
   is set to 0. :pr:`13240` by :user:`Bartosz Telenczuk <btel>`.
 
-- |Fix| Fixed two bugs in :class:`MissingIndicator`. First, when ``X`` is
-  sparse, all the non-zero non missing values used to become explicit False in
-  the transformed data. Then, when ``features='missing-only'``, all features
-  used to be kept if there were no missing values at all. :pr:`13562` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Fix| Fixed two bugs in :class:`impute.MissingIndicator`. First, when
+  ``X`` is sparse, all the non-zero non missing values used to become
+  explicit False in the transformed data. Then, when
+  ``features='missing-only'``, all features used to be kept if there were no
+  missing values at all. :pr:`13562` by :user:`Jérémie du Boisberranger
+  <jeremiedbb>`.
 
 :mod:`sklearn.inspection`
 .........................
@@ -446,7 +449,7 @@ Support for Python 3.4 and below has been officially dropped.
 
 - |Fix| Fixed bug in :func:`linear_model.ridge_regression`,
   :class:`linear_model.Ridge` and
-  :class:`linear_model.ridge.RidgeClassifier` that
+  :class:`linear_model.RidgeClassifier` that
   caused unhandled exception for arguments ``return_intercept=True`` and
   ``solver=auto`` (default) or any other solver different from ``sag``.
   :pr:`13363` by :user:`Bartosz Telenczuk <btel>`
@@ -519,8 +522,8 @@ Support for Python 3.4 and below has been officially dropped.
   `Joel Nothman`_ and `Andreas Müller`_
 
 - |Enhancement| Added `beta` parameter to
-  :func:`metrics.cluster.homogeneity_completeness_v_measure` and
-  :func:`metrics.cluster.v_measure_score` to configure the
+  :func:`metrics.homogeneity_completeness_v_measure` and
+  :func:`metrics.v_measure_score` to configure the
   tradeoff between homogeneity and completeness.
   :pr:`13607` by :user:`Stephane Couvreur <scouvreur>` and
   and :user:`Ivan Sanchez <ivsanro1>`.
