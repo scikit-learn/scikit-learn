@@ -13,6 +13,8 @@ from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import datasets
+from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns_message
 
 
 # toy sample
@@ -27,6 +29,7 @@ boston = datasets.load_boston()
 iris = datasets.load_iris()
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependence_classifier():
     # Test partial dependence for classifier
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -65,6 +68,7 @@ def test_partial_dependence_classifier():
     assert np.all(np.abs(pdp_w2 - pdp_w) / np.abs(pdp_w) > 0.1)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependence_multiclass():
     # Test partial dependence for multi-class classifier
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -80,6 +84,7 @@ def test_partial_dependence_multiclass():
     assert axes[0].shape[0] == grid_resolution
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependence_regressor():
     # Test partial dependence for regressor
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
@@ -93,6 +98,7 @@ def test_partial_dependence_regressor():
     assert axes[0].shape[0] == grid_resolution
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependence_sample_weight():
     # Test near perfect correlation between partial dependence and diagonal
     # when sample weights emphasize y = x predictions
@@ -118,6 +124,7 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(np.ravel(pdp[0]), grid)[0, 1] > 0.99
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependecy_input():
     # Test input validation of partial dependence.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -146,6 +153,7 @@ def test_partial_dependecy_input():
     assert_raises(ValueError, partial_dependence, clf, [0], grid=grid)
 
 
+@ignore_warnings(category=DeprecationWarning)
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
 @if_matplotlib
@@ -183,6 +191,7 @@ def test_plot_partial_dependence():
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
 @if_matplotlib
+@ignore_warnings(category=DeprecationWarning)
 def test_plot_partial_dependence_input():
     # Test partial dependence plot function input checks.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -220,6 +229,7 @@ def test_plot_partial_dependence_input():
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
 @if_matplotlib
+@ignore_warnings(category=DeprecationWarning)
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -253,3 +263,32 @@ def test_plot_partial_dependence_multiclass():
     assert_raises(ValueError, plot_partial_dependence,
                   clf, iris.data, [0, 1],
                   grid_resolution=grid_resolution)
+
+
+def test_warning_raised_partial_dependence():
+    # Test that deprecation warning is raised
+
+    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
+    clf.fit(boston.data, boston.target)
+    grid_resolution = 25
+
+    assert_warns_message(DeprecationWarning, "The function "
+                         "ensemble.partial_dependence has been deprecated ",
+                         partial_dependence, clf, [0], X=boston.data,
+                         grid_resolution=grid_resolution)
+
+
+@if_matplotlib
+def test_warning_raised_partial_dependence_plot():
+    # Test that deprecation warning is raised
+
+    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
+    clf.fit(boston.data, boston.target)
+    grid_resolution = 25
+
+    assert_warns_message(DeprecationWarning, "The function "
+                         "ensemble.plot_partial_dependence has been "
+                         "deprecated",
+                         plot_partial_dependence, clf, boston.data,
+                         [0, 1, (0, 1)], grid_resolution=grid_resolution,
+                         feature_names=boston.feature_names)

@@ -37,9 +37,6 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         it will be 4000 if there are less than 100,000 samples
         (for training), and otherwise 10000.
 
-    mem_gb : int, default = 1
-        Physical device memory in GB.
-
     kernel : string or callable, default = "gaussian"
         Kernel mapping used internally. Strings can be anything supported
         by sklearn's library, however, it is recommended to use a radial
@@ -92,20 +89,19 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
     >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
     FKR_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
-           kernel='gaussian', kernel_params=None, mem_gb=1, n_components=1000,
+           kernel='gaussian', kernel_params=None, n_components=1000,
            n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """
     def __init__(self, batch_size="auto", n_epoch=2, n_components=1000,
-                 subsample_size="auto", mem_gb=1, kernel="gaussian",
+                 subsample_size="auto", kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
                  kernel_params=None, random_state=None):
         self.batch_size = batch_size
         self.n_epoch = n_epoch
         self.n_components = n_components
         self.subsample_size = subsample_size
-        self.mem_gb = mem_gb
         self.kernel = kernel
         self.bandwidth = bandwidth
         self.gamma = gamma
@@ -262,7 +258,8 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         n_components = min(sample_size - 1, self.n_components)
         n_components = max(1, n_components)
 
-        mem_bytes = self.mem_gb * 1024 ** 3
+        # Each batch will require about 1 gb memory
+        mem_bytes = 1024 ** 3
         mem_usages = (d + n_label + 2 * np.arange(sample_size)) * n * 4
         mG = np.sum(mem_usages < mem_bytes)
 
@@ -409,9 +406,6 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
         'auto', it will be 4000 if there are less than 100,000 samples
         (for training), and otherwise 10000.
 
-    mem_gb : int, default = 1
-        Physical device memory in GB.
-
     kernel : string or callable, default = "gaussian"
         Kernel mapping used internally. Strings can be anything
         supported by sklearn's library, however, it is recommended to
@@ -465,20 +459,19 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
     >>> rgs = FKC_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
     FKC_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
-           kernel='gaussian', kernel_params=None, mem_gb=1, n_components=1000,
+           kernel='gaussian', kernel_params=None, n_components=1000,
            n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(y_train != y_pred)
     """
     def __init__(self, batch_size="auto", n_epoch=2, n_components=1000,
-                 subsample_size="auto", mem_gb=1, kernel="gaussian",
+                 subsample_size="auto", kernel="gaussian",
                  bandwidth=5, gamma=None, degree=3, coef0=1,
                  kernel_params=None, random_state=None):
         self.batch_size = batch_size
         self.n_epoch = n_epoch
         self.n_components = n_components
         self.subsample_size = subsample_size
-        self.mem_gb = mem_gb
         self.kernel = kernel
         self.bandwidth = bandwidth
         self.gamma = gamma
@@ -505,8 +498,8 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
         self.regressor_ = FKR_EigenPro(
             batch_size=self.batch_size, n_epoch=self.n_epoch,
             n_components=self.n_components,
-            subsample_size=self.subsample_size, mem_gb=self.mem_gb,
-            kernel=self.kernel, bandwidth=self.bandwidth, gamma=self.gamma,
+            subsample_size=self.subsample_size, kernel=self.kernel,
+            bandwidth=self.bandwidth, gamma=self.gamma,
             degree=self.degree, coef0=self.coef0,
             kernel_params=self.kernel_params, random_state=self.random_state)
         X, Y = check_X_y(X, Y, multi_output=False, ensure_min_samples=3)

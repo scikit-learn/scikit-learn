@@ -17,10 +17,14 @@ Installing the latest release
 
 Scikit-learn requires:
 
-- Python (>= 3.5),
-- NumPy (>= 1.11.0),
-- SciPy (>= 0.17.0).
+- Python (>= 3.5)
+- NumPy (>= 1.11.0)
+- SciPy (>= 0.17.0)
+- joblib (>= 0.11)
 
+Scikit-learn plotting capabilities (i.e., functions start with "plot_") require
+Matplotlib (>= 1.5.1). Some of the scikit-learn examples might require one or
+more extra dependencies: scikit-image (>= 0.12.3), pandas (>= 0.18.0).
 
 .. warning::
 

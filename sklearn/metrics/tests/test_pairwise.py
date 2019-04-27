@@ -21,9 +21,11 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
+from sklearn.metrics.pairwise import haversine_distances
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
 from sklearn.metrics.pairwise import polynomial_kernel
@@ -53,21 +55,42 @@ from sklearn.exceptions import DataConversionWarning
 def test_pairwise_distances():
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
+
     # Euclidean distance should be equivalent to calling the function.
     X = rng.random_sample((5, 4))
     S = pairwise_distances(X, metric="euclidean")
     S2 = euclidean_distances(X)
     assert_array_almost_equal(S, S2)
+
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((2, 4))
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
     assert_array_almost_equal(S, S2)
+
     # Test with tuples as X and Y
     X_tuples = tuple([tuple([v for v in row]) for row in X])
     Y_tuples = tuple([tuple([v for v in row]) for row in Y])
     S2 = pairwise_distances(X_tuples, Y_tuples, metric="euclidean")
     assert_array_almost_equal(S, S2)
+
+    # Test haversine distance
+    # The data should be valid latitude and longitude
+    X = rng.random_sample((5, 2))
+    X[:, 0] = (X[:, 0] - 0.5) * 2 * np.pi/2
+    X[:, 1] = (X[:, 1] - 0.5) * 2 * np.pi
+    S = pairwise_distances(X, metric="haversine")
+    S2 = haversine_distances(X)
+    assert_array_almost_equal(S, S2)
+
+    # Test haversine distance, with Y != X
+    Y = rng.random_sample((2, 2))
+    Y[:, 0] = (Y[:, 0] - 0.5)*2*np.pi/2
+    Y[:, 1] = (Y[:, 1] - 0.5)*2*np.pi
+    S = pairwise_distances(X, Y, metric="haversine")
+    S2 = haversine_distances(X, Y)
+    assert_array_almost_equal(S, S2)
+
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.
     S = pairwise_distances(X, metric="cityblock")
@@ -75,12 +98,14 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], S.shape[1])
     assert_equal(S.shape[0], X.shape[0])
     assert_array_almost_equal(S, S2)
+
     # The manhattan metric should be equivalent to cityblock.
     S = pairwise_distances(X, Y, metric="manhattan")
     S2 = pairwise_distances(X, Y, metric=cityblock)
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
+
     # Test cosine as a string metric versus cosine callable
     # The string "cosine" uses sklearn.metric,
     # while the function cosine is scipy.spatial
@@ -89,6 +114,7 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
+
     # Test with sparse X and Y,
     # currently only supported for Euclidean, L1 and cosine.
     X_sparse = csr_matrix(X)
@@ -104,16 +130,19 @@ def test_pairwise_distances():
     assert_array_almost_equal(S, S2)
     S2 = manhattan_distances(X, Y)
     assert_array_almost_equal(S, S2)
+
     # Test with scipy.spatial.distance metric, with a kwd
     kwds = {"p": 2.0}
     S = pairwise_distances(X, Y, metric="minkowski", **kwds)
     S2 = pairwise_distances(X, Y, metric=minkowski, **kwds)
     assert_array_almost_equal(S, S2)
+
     # same with Y = None
     kwds = {"p": 2.0}
     S = pairwise_distances(X, metric="minkowski", **kwds)
     S2 = pairwise_distances(X, metric=minkowski, **kwds)
     assert_array_almost_equal(S, S2)
+
     # Test that scipy distance metrics throw an error if sparse matrix given
     assert_raises(TypeError, pairwise_distances, X_sparse, metric="minkowski")
     assert_raises(TypeError, pairwise_distances, X, Y_sparse,
@@ -620,6 +649,29 @@ def test_cosine_distances():
     assert_array_almost_equal(D[np.diag_indices_from(D)], [0.] * D.shape[0])
     assert np.all(D >= 0.)
     assert np.all(D <= 2.)
+
+
+def test_haversine_distances():
+    # Check haversine distance with distances computation
+    def slow_haversine_distances(x, y):
+        diff_lat = y[0] - x[0]
+        diff_lon = y[1] - x[1]
+        a = np.sin(diff_lat / 2) ** 2 + (
+            np.cos(x[0]) * np.cos(y[0]) * np.sin(diff_lon/2) ** 2
+        )
+        c = 2 * np.arcsin(np.sqrt(a))
+        return c
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 2))
+    Y = rng.random_sample((10, 2))
+    D1 = np.array([[slow_haversine_distances(x, y) for y in Y] for x in X])
+    D2 = haversine_distances(X, Y)
+    assert_array_almost_equal(D1, D2)
+    # Test haversine distance does not accept X where n_feature != 2
+    X = rng.random_sample((10, 3))
+    assert_raise_message(ValueError,
+                         "Haversine distance only valid in 2 dimensions",
+                         haversine_distances, X)
 
 
 # Paired distances
