@@ -462,9 +462,12 @@ def test_ridge_cv_individual_penalties():
     # Using a custom CV object should throw an error in combination with
     # alpha_per_target=True
     ridge_cv = RidgeCV(alphas=alphas, cv=LeaveOneOut(), alpha_per_target=True)
-    assert_raises(ValueError, ridge_cv.fit, X, y)
+    msg = "cv!=None and alpha_per_target=True are incompatible"
+    with pytest.raises(ValueError, match=msg):
+        ridge_cv.fit(X, y)
     ridge_cv = RidgeCV(alphas=alphas, cv=6, alpha_per_target=True)
-    assert_raises(ValueError, ridge_cv.fit, X, y)
+    with pytest.raises(ValueError, match=msg):
+        ridge_cv.fit(X, y)
 
 
 def _test_ridge_diabetes(filter_):

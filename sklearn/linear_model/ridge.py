@@ -417,8 +417,6 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         raise ValueError("Number of samples in X and y does not correspond:"
                          " %d != %d" % (n_samples, n_samples_))
 
-
-
     if has_sw:
         if np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")
@@ -437,7 +435,6 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
-
 
     n_iter = None
     if solver == 'sparse_cg':
@@ -1119,8 +1116,8 @@ class _RidgeGCV(LinearModel):
             X, y = _rescale_data(X, y, sample_weight)
 
         # Ensure that y is a 2D array: n_samples x n_targets
-        flat_y = y.ndim == 1
-        if flat_y:
+        is_flat_y = y.ndim == 1
+        if is_flat_y:
             y = np.atleast_2d(y).T
         n_targets = y.shape[1]
 
@@ -1146,7 +1143,11 @@ class _RidgeGCV(LinearModel):
             C.append(c)
 
         if self.store_cv_values:
-            self.cv_values_ = cv_values
+            if is_flat_y:
+                self.cv_values_ = cv_values.reshape(n_samples,
+                                                    len(self.alphas))
+            else:
+                self.cv_values_ = cv_values
 
         if error:
             if self.alpha_per_target:
@@ -1187,10 +1188,7 @@ class _RidgeGCV(LinearModel):
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
         # If the original y was flat, remove some dimensions to match
-        if flat_y:
-            if self.store_cv_values:
-                self.cv_values_ = cv_values.reshape(n_samples,
-                                                    len(self.alphas))
+        if is_flat_y:
             self.coef_ = self.coef_.ravel()
 
         self._set_intercept(X_offset, y_offset, X_scale)
@@ -1340,10 +1338,10 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     alpha_per_target : boolean, default=False
         Flag indicating whether to optimize the alpha value (picked from the
-        list specified in the `alphas` parameter) for each target separately.
-        When set to `True`, after fitting, the `alpha_` attribute will contain
-        a value for each target. When set to `False`, a single alpha is used
-        for all targets. This flag has no effect when there is only one target.
+        `alphas` parameter list) for each target separately. When set to
+        `True`, after fitting, the `alpha_` attribute will contain a value for
+        each target. When set to `False`, a single alpha is used for all
+        targets. This flag has no effect when there is only one target.
 
     Attributes
     ----------
