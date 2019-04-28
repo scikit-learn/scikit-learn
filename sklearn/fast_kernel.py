@@ -89,8 +89,8 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
     >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
     FKR_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-        kernel='gaussian', kernel_params=None, n_components=1000,
-        n_epoch=3, random_state=None, subsample_size=50)
+                 kernel='gaussian', kernel_params=None, n_components=1000,
+                 n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(np.square(y_train - y_pred))
     """
@@ -463,8 +463,8 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
     >>> rgs = FKC_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
     FKC_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
-        kernel='gaussian', kernel_params=None, n_components=1000,
-        n_epoch=3, random_state=None, subsample_size=50)
+                 kernel='gaussian', kernel_params=None, n_components=1000,
+                 n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
     >>> loss = np.mean(y_train != y_pred)
     """
