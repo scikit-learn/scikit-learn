@@ -1993,7 +1993,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     In multilabel classification, the Hamming loss is different from the
     subset zero-one loss. The zero-one loss considers the entire set of labels
-    for a given sample incorrect if it does entirely match the true set of
+    for a given sample incorrect if it does not entirely match the true set of
     labels. Hamming loss is more forgiving in that it penalizes the individual
     labels.
 
