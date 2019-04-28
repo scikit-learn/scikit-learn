@@ -345,7 +345,7 @@ def _minor_reduce(X, ufunc):
     # reduceat tries casts X.indptr to intp, which errors
     # if it is int64 on a 32 bit system.
     # Reinitializing prevents this where possible, see #13737
-    # X = type(X)((X.data, X.indices, X.indptr), shape=X.shape)
+    X = type(X)((X.data, X.indices, X.indptr), shape=X.shape)
     value = ufunc.reduceat(X.data, X.indptr[major_index])
     return major_index, value
 
