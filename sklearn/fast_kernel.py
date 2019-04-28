@@ -379,7 +379,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
         return Y
 
     def _get_tags(self):
-        return {'multioutput', True}
+        return {'multioutput': True}
 
 
 class FKC_EigenPro(BaseEstimator, ClassifierMixin):
@@ -539,4 +539,4 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
         return self.classes_[np.argmax(Y, axis=1)]
 
     def _get_tags(self):
-        return {'multioutput', True}
+        return {'multioutput': True}
