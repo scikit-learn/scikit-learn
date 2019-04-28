@@ -1167,7 +1167,7 @@ cdef class Tree:
             double current_weight
             double total_weight  # used for sanity check only
             Node *current_node  # use a pointer to avoid copying attributes
-            int current_node_idx
+            SIZE_t current_node_idx
             bint is_target_feature
             SIZE_t _TREE_LEAF = TREE_LEAF  # to avoid python interactions
 
@@ -1218,13 +1218,13 @@ cdef class Tree:
                             current_node.weighted_n_node_samples)
                         current_weight = weight_stack[stack_size]
                         weight_stack[stack_size] = current_weight * left_sample_frac
-                        stack_size +=1
+                        stack_size += 1
 
                         # push right child
                         node_idx_stack[stack_size] = current_node.right_child
                         weight_stack[stack_size] = (
                             current_weight * (1 - left_sample_frac))
-                        stack_size +=1
+                        stack_size += 1
 
             # Sanity check. Should never happen.
             if not (0.999 < total_weight < 1.001):
