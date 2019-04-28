@@ -114,6 +114,7 @@ Functions
 
    cluster.affinity_propagation
    cluster.cluster_optics_dbscan
+   cluster.cluster_optics_xi
    cluster.compute_optics_graph
    cluster.dbscan
    cluster.estimate_bandwidth
@@ -422,6 +423,9 @@ Samples generator
    ensemble.RandomTreesEmbedding
    ensemble.VotingClassifier
    ensemble.VotingRegressor
+   ensemble.HistGradientBoostingRegressor
+   ensemble.HistGradientBoostingClassifier
+
 
 .. autosummary::
    :toctree: generated/
@@ -452,6 +456,22 @@ Samples generator
    exceptions.NotFittedError
    exceptions.NonBLASDotWarning
    exceptions.UndefinedMetricWarning
+
+
+:mod:`sklearn.experimental`: Experimental
+=========================================
+
+.. automodule:: sklearn.experimental
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+
+   experimental.enable_hist_gradient_boosting
+
 
 .. _feature_extraction_ref:
 
@@ -1488,6 +1508,7 @@ Utilities from joblib:
 
    utils.parallel_backend
    utils.register_parallel_backend
+
 
 Recently deprecated
 ===================
