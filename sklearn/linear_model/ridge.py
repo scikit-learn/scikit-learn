@@ -1242,11 +1242,11 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
                 self.cv_values_ = estimator.cv_values_
         else:
             if self.store_cv_values:
-                raise ValueError("cv!=None and store_cv_values=True "
-                                 " are incompatible")
+                raise ValueError("cv!=None and store_cv_values=True are "
+                                 "incompatible")
             if self.alpha_per_target:
-                raise ValueError("cv!=None and alpha_per_target=True "
-                                 " are incompatible")
+                raise ValueError("cv!=None and alpha_per_target=True are "
+                                 "incompatible")
             else:
                 parameters = {'alpha': self.alphas}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
