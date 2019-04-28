@@ -88,7 +88,7 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
     >>> y_train = rng.randn(n_samples, n_targets)
     >>> rgs = FKR_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
-    FKR_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
+    FKR_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
            kernel='gaussian', kernel_params=None, n_components=1000,
            n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
@@ -378,6 +378,9 @@ class FKR_EigenPro(BaseEstimator, RegressorMixin):
             Y = np.reshape(Y, Y.shape[0])
         return Y
 
+    def _get_tags(self):
+        return {'multioutput', True}
+
 
 class FKC_EigenPro(BaseEstimator, ClassifierMixin):
     """Fast kernel classification using EigenPro iteration.
@@ -458,7 +461,7 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
     >>> y_train = rng.randint(n_targets, size=n_samples)
     >>> rgs = FKC_EigenPro(n_epoch=3, bandwidth=1, subsample_size=50)
     >>> rgs.fit(x_train, y_train)
-    FKC_EigenPro(bandwidth=1, bs='auto', coef0=1, degree=3, gamma=None,
+    FKC_EigenPro(bandwidth=1, batch_size='auto', coef0=1, degree=3, gamma=None,
            kernel='gaussian', kernel_params=None, n_components=1000,
            n_epoch=3, random_state=None, subsample_size=50)
     >>> y_pred = rgs.predict(x_train)
@@ -534,3 +537,6 @@ class FKC_EigenPro(BaseEstimator, ClassifierMixin):
         check_is_fitted(self, ["regressor_"])
         Y = self.regressor_.predict(X)
         return self.classes_[np.argmax(Y, axis=1)]
+
+    def _get_tags(self):
+        return {'multioutput', True}
