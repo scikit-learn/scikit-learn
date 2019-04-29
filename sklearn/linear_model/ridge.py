@@ -978,7 +978,6 @@ def _sparse_multidot_diag(X, A, Xm, with_intercept=True, intercept_col=None):
             X_batch[:, :-1] = X[batch].A - Xm
             if intercept_col is not None:
                 X_batch[:, -1] = intercept_col[batch]
-                print(X_batch[:, -1])
         else:
             X_batch = X[batch].A
         diag[batch] = (X_batch.dot(A) * X_batch).sum(axis=1)
@@ -1183,10 +1182,7 @@ class _RidgeGCV(LinearModel):
         # sum(sample_weights), e.g. n when uniform sample weights.
         intercept_sv = np.zeros(V.shape[0])
         intercept_sv[-1] = 1
-        if self._with_sw:
-            intercept_dim = np.isclose(V, intercept_sv[:, None]).all(axis=0)
-        else:
-            intercept_dim = np.isclose(V, intercept_sv[:, None]).all(axis=0)
+        intercept_dim = np.isclose(V, intercept_sv[:, None]).all(axis=0)
         w = 1 / (s + alpha)
         w[intercept_dim] = 1 / s[intercept_dim]
         A = (V * w).dot(V.T)
