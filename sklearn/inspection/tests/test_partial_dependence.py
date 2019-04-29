@@ -27,7 +27,6 @@ from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import close_figure
 from sklearn.utils.testing import has_matplotlib
 from sklearn.utils.testing import skip_if_no_matplotlib
 
@@ -442,6 +441,7 @@ def test_plot_partial_dependence():
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
+    plt.close('all')
 
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
@@ -473,6 +473,8 @@ def test_plot_partial_dependence_multiclass():
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
+    plt.close('all')
+
 
 def test_plot_partial_dependence_multioutput():
     # Test partial dependence plot function on multi-output input.
@@ -498,9 +500,10 @@ def test_plot_partial_dependence_multioutput():
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
-
+<<<<<<< HEAD
+=======
+    plt.close('all')
 @skip_if_no_matplotlib
-@pytest.mark.parametrize(
     "data, params, err_msg",
     [(multioutput_regression_data[0], {"target": None, 'features': [0]},
       "target must be specified for multi-output"),
@@ -530,12 +533,18 @@ def test_plot_partial_dependence_multioutput():
 @pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
 @pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
 def test_plot_partial_dependence_error(data, params, err_msg):
+    import matplotlib.pyplot as plt  # noqa
     X, y = data
     estimator = LinearRegression().fit(X, y)
 
     with pytest.raises(ValueError, match=err_msg):
         plot_partial_dependence(estimator, X, **params)
 
+<<<<<<< HEAD
+=======
+    plt.close()
+
+>>>>>>> origin/master
 
 def test_plot_partial_dependence_fig():
     # Make sure fig object is correctly used if not None
@@ -552,3 +561,8 @@ def test_plot_partial_dependence_fig():
         clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 
     assert plt.gcf() is fig
+<<<<<<< HEAD
+=======
+
+    plt.close()
+>>>>>>> origin/master
