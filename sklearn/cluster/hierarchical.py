@@ -148,7 +148,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     Parameters
     ----------
     X : array, shape (n_samples, n_features)
-        feature matrix  representing n_samples samples to be clustered
+        feature matrix representing n_samples samples to be clustered
 
     connectivity : sparse matrix (optional).
         connectivity matrix. Defines for each sample the neighboring samples
@@ -219,7 +219,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     n_samples, n_features = X.shape
 
     if connectivity is None:
-        from scipy.cluster import hierarchy     # imports PIL
+        from scipy.cluster import hierarchy  # imports PIL
 
         if n_clusters is not None:
             warnings.warn('Partial build of the tree is implemented '
@@ -433,7 +433,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             'of %s, but %s was given' % (linkage_choices.keys(), linkage))
 
     if connectivity is None:
-        from scipy.cluster import hierarchy     # imports PIL
+        from scipy.cluster import hierarchy  # imports PIL
 
         if n_clusters is not None:
             warnings.warn('Partial build of the tree is implemented '
@@ -597,7 +597,7 @@ _TREE_BUILDERS = dict(
 
 
 ###############################################################################
-# Functions for cutting  hierarchical clustering tree
+# Functions for cutting hierarchical clustering tree
 
 def _hc_cut(n_clusters, children, n_leaves):
     """Function cutting the ward tree for a given number of clusters.

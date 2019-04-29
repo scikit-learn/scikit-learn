@@ -1119,7 +1119,7 @@ def learning_curve(estimator, X, y, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv='warn',
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
-                   random_state=None,  error_score='raise-deprecating'):
+                   random_state=None, error_score='raise-deprecating'):
     """Learning curve.
 
     Determines cross-validated training and test scores for different training

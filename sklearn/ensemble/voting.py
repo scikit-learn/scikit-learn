@@ -415,7 +415,7 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
     >>> y = np.array([2, 6, 12, 20, 30, 42])
     >>> er = VotingRegressor([('lr', r1), ('rf', r2)])
     >>> print(er.fit(X, y).predict(X))
-    [ 3.3  5.7 11.8 19.7 28.  40.3]
+    [ 3.3,  5.7, 11.8, 19.7, 28.0, 40.3]
 
     See also
     --------
