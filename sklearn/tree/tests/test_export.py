@@ -417,3 +417,5 @@ def test_plot_tree():
                                    "samples = 6\nvalue = [3, 3]")
     assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
+
+    plt.close('all')
