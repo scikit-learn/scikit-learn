@@ -27,7 +27,6 @@ from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import has_matplotlib
 from sklearn.utils.testing import skip_if_no_matplotlib
 
 
@@ -43,11 +42,6 @@ multiclass_classification_data = (make_classification(n_classes=3,
                                                       random_state=0), 3)
 regression_data = (make_regression(random_state=0), 1)
 multioutput_regression_data = (make_regression(n_targets=2, random_state=0), 2)
-
-
-def teardown_module(module):
-    if has_matplotlib():
-        close_figure()
 
 
 @pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
@@ -500,10 +494,10 @@ def test_plot_partial_dependence_multioutput():
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
-<<<<<<< HEAD
-=======
     plt.close('all')
+
 @skip_if_no_matplotlib
+@pytest.mark.parametrize(
     "data, params, err_msg",
     [(multioutput_regression_data[0], {"target": None, 'features': [0]},
       "target must be specified for multi-output"),
@@ -540,11 +534,8 @@ def test_plot_partial_dependence_error(data, params, err_msg):
     with pytest.raises(ValueError, match=err_msg):
         plot_partial_dependence(estimator, X, **params)
 
-<<<<<<< HEAD
-=======
     plt.close()
 
->>>>>>> origin/master
 
 def test_plot_partial_dependence_fig():
     # Make sure fig object is correctly used if not None
@@ -561,8 +552,5 @@ def test_plot_partial_dependence_fig():
         clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 
     assert plt.gcf() is fig
-<<<<<<< HEAD
-=======
 
     plt.close()
->>>>>>> origin/master

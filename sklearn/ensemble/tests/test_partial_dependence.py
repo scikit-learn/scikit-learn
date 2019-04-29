@@ -7,14 +7,12 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import close_figure
 from sklearn.utils.testing import skip_if_no_matplotlib
 from sklearn.ensemble.partial_dependence import partial_dependence
 from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import datasets
-from sklearn.utils.testing import has_matplotlib
 from sklearn.utils.testing import ignore_warnings
 
 
@@ -28,12 +26,6 @@ boston = datasets.load_boston()
 
 # also load the iris dataset
 iris = datasets.load_iris()
-
-
-# TODO: to removed in 0.23
-def teardown_module(module):
-    if has_matplotlib():
-        close_figure()
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -163,8 +155,8 @@ def test_partial_dependecy_input():
 @ignore_warnings(category=DeprecationWarning)
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
-@skip_if_no_matplotlib
 def test_plot_partial_dependence():
+    plt = pytest.importorskip('matplotlib.pyplot')
     # Test partial dependence plot function.
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
@@ -193,6 +185,8 @@ def test_plot_partial_dependence():
                                        feature_names=feature_names)
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
+
+    plt.close('all')
 
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
@@ -235,9 +229,9 @@ def test_plot_partial_dependence_input():
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
-@skip_if_no_matplotlib
 @ignore_warnings(category=DeprecationWarning)
 def test_plot_partial_dependence_multiclass():
+    plt = pytest.importorskip('matplotlib.pyplot')
     # Test partial dependence plot function on multi-class input.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
@@ -270,6 +264,8 @@ def test_plot_partial_dependence_multiclass():
     assert_raises(ValueError, plot_partial_dependence,
                   clf, iris.data, [0, 1],
                   grid_resolution=grid_resolution)
+
+    plt.close('all')
 
 
 @pytest.mark.parametrize(
