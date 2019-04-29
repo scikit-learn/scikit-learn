@@ -202,7 +202,7 @@ def test_check_array_force_all_finite_object():
 
 @ignore_warnings
 def test_check_array():
-    # accept_sparse == None
+    # accept_sparse == False
     # raise error on sparse inputs
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
@@ -387,12 +387,15 @@ def test_check_array_dtype_warning():
         assert_equal(X_checked.dtype, np.float64)
 
     for X in float64_data:
-        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
-                                       accept_sparse=True, warn_on_dtype=True)
-        assert_equal(X_checked.dtype, np.float64)
-        X_checked = assert_no_warnings(check_array, X, dtype=np.float64,
-                                       accept_sparse=True, warn_on_dtype=False)
-        assert_equal(X_checked.dtype, np.float64)
+        with pytest.warns(None) as record:
+            warnings.simplefilter("ignore", DeprecationWarning)  # 0.23
+            X_checked = check_array(X, dtype=np.float64,
+                                    accept_sparse=True, warn_on_dtype=True)
+            assert_equal(X_checked.dtype, np.float64)
+            X_checked = check_array(X, dtype=np.float64,
+                                    accept_sparse=True, warn_on_dtype=False)
+            assert_equal(X_checked.dtype, np.float64)
+        assert len(record) == 0
 
     for X in float32_data:
         X_checked = assert_no_warnings(check_array, X,
@@ -417,6 +420,17 @@ def test_check_array_dtype_warning():
     assert_equal(X_checked.format, 'csr')
 
 
+def test_check_array_warn_on_dtype_deprecation():
+    X = np.asarray([[0.0], [1.0]])
+    Y = np.asarray([[2.0], [3.0]])
+    with pytest.warns(DeprecationWarning,
+                      match="'warn_on_dtype' is deprecated"):
+        check_array(X, warn_on_dtype=True)
+    with pytest.warns(DeprecationWarning,
+                      match="'warn_on_dtype' is deprecated"):
+        check_X_y(X, Y, warn_on_dtype=True)
+
+
 def test_check_array_accept_sparse_type_exception():
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
@@ -426,9 +440,6 @@ def test_check_array_accept_sparse_type_exception():
            "Use X.toarray() to convert to a dense numpy array.")
     assert_raise_message(TypeError, msg,
                          check_array, X_csr, accept_sparse=False)
-    with pytest.warns(DeprecationWarning):
-        assert_raise_message(TypeError, msg,
-                             check_array, X_csr, accept_sparse=None)
 
     msg = ("Parameter 'accept_sparse' should be a string, "
            "boolean or list of strings. You provided 'accept_sparse={}'.")
@@ -444,9 +455,6 @@ def test_check_array_accept_sparse_type_exception():
 
     assert_raise_message(TypeError, "SVR",
                          check_array, X_csr, accept_sparse=[invalid_type])
-
-    # Test deprecation of 'None'
-    assert_warns(DeprecationWarning, check_array, X, accept_sparse=None)
 
 
 def test_check_array_accept_sparse_no_exception():
@@ -696,8 +704,7 @@ def test_suppress_validation():
 def test_check_array_series():
     # regression test that check_array works on pandas Series
     pd = importorskip("pandas")
-    res = check_array(pd.Series([1, 2, 3]), ensure_2d=False,
-                      warn_on_dtype=True)
+    res = check_array(pd.Series([1, 2, 3]), ensure_2d=False)
     assert_array_equal(res, np.array([1, 2, 3]))
 
     # with categorical dtype (not a numpy dtype) (GH12699)
@@ -718,7 +725,10 @@ def test_check_dataframe_warns_on_dtype():
                          check_array, df, dtype=np.float64, warn_on_dtype=True)
     assert_warns(DataConversionWarning, check_array, df,
                  dtype='numeric', warn_on_dtype=True)
-    assert_no_warnings(check_array, df, dtype='object', warn_on_dtype=True)
+    with pytest.warns(None) as record:
+        warnings.simplefilter("ignore", DeprecationWarning)  # 0.23
+        check_array(df, dtype='object', warn_on_dtype=True)
+    assert len(record) == 0
 
     # Also check that it raises a warning for mixed dtypes in a DataFrame.
     df_mixed = pd.DataFrame([['1', 2, 3], ['4', 5, 6]])
@@ -734,8 +744,11 @@ def test_check_dataframe_warns_on_dtype():
     df_mixed_numeric = pd.DataFrame([[1., 2, 3], [4., 5, 6]])
     assert_warns(DataConversionWarning, check_array, df_mixed_numeric,
                  dtype='numeric', warn_on_dtype=True)
-    assert_no_warnings(check_array, df_mixed_numeric.astype(int),
-                       dtype='numeric', warn_on_dtype=True)
+    with pytest.warns(None) as record:
+        warnings.simplefilter("ignore", DeprecationWarning)  # 0.23
+        check_array(df_mixed_numeric.astype(int),
+                    dtype='numeric', warn_on_dtype=True)
+    assert len(record) == 0
 
 
 class DummyMemory:
