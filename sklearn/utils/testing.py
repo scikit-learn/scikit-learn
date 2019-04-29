@@ -720,8 +720,7 @@ def has_matplotlib():
         import matplotlib  # noqa
         matplotlib.use('Agg', warn=False)
         return True
-    except ImportError as e:
-        print(str(e))
+    except ImportError:
         return False
 
 
