@@ -389,6 +389,7 @@ def _test_ridge_loo(filter_):
     else:
         X_diabetes_ = X_diabetes
     ridge_gcv = _RidgeGCV(fit_intercept=fit_intercept)
+    ridge_gcv._with_sw = False
     ridge = Ridge(alpha=1.0, fit_intercept=fit_intercept)
 
     # because fit_intercept is applied
@@ -961,6 +962,7 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
 
 def test_errors_and_values_helper():
     ridgecv = _RidgeGCV()
+    ridgecv._with_sw = False
     rng = check_random_state(42)
     alpha = 1.
     n = 5
@@ -982,6 +984,7 @@ def test_errors_and_values_helper():
 
 def test_errors_and_values_svd_helper():
     ridgecv = _RidgeGCV()
+    ridgecv._with_sw = False
     rng = check_random_state(42)
     alpha = 1.
     for n, p in zip((5, 10), (12, 6)):

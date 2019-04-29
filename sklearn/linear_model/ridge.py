@@ -1044,7 +1044,11 @@ class _RidgeGCV(LinearModel):
         center = self.fit_intercept and sparse.issparse(X)
         K, X_m = _centered_gram(X, center)
         if self.fit_intercept:
-            K += 1.
+            if self._with_sw:
+                K += np.outer(
+                    self._sqrt_sw, self._sqrt_sw)
+            else:
+                K += 1.
         v, Q = linalg.eigh(K)
         QT_y = np.dot(Q.T, y)
         self._X_offset = X_m
@@ -1060,9 +1064,13 @@ class _RidgeGCV(LinearModel):
         """
         w = 1. / (v + alpha)
         if self.fit_intercept:
-            constant_column = np.var(Q, 0) < 1.e-12
-            # detect constant columns
-            w[constant_column] = 0  # cancel regularization for the intercept
+            if self._with_sw:
+                intercept_dim = np.isclose(
+                    Q, self._normalized_sqrt_sw[:, None]).all(axis=0)
+            else:
+                intercept_dim = np.var(Q, 0) < 1.e-12
+            # detect intercept
+            w[intercept_dim] = 0  # cancel regularization for the intercept
 
         c = np.dot(Q, self._diag_dot(w, QT_y))
         G_diag = self._decomp_diag(w, Q)
@@ -1088,7 +1096,10 @@ class _RidgeGCV(LinearModel):
         else:
             cov[-1] = 0
             cov[:, -1] = 0
-            cov[-1, -1] = n
+            if self._with_sw:
+                cov[-1, -1] = self._weight_sum
+            else:
+                cov[-1, -1] = n
         kernel_size = max(0, X.shape[1] - X.shape[0])
         s, V = linalg.eigh(cov)
         s = s[kernel_size:]
@@ -1117,7 +1128,10 @@ class _RidgeGCV(LinearModel):
         and self._values_svd.
         """
         n, p = X.shape
-        intercept_dim, *_ = np.where(s == n)
+        if self._with_sw:
+            intercept_dim, *_ = np.where(s == self._weight_sum)
+        else:
+            intercept_dim, *_ = np.where(s == n)
         w = 1 / (s + alpha)
         if len(intercept_dim) == 1:
             w[intercept_dim[0]] = 1 / s[intercept_dim[0]]
@@ -1161,7 +1175,11 @@ class _RidgeGCV(LinearModel):
 
     def _pre_compute_svd_dense(self, X, y):
         if self.fit_intercept:
-            X = np.hstack((X, np.ones((X.shape[0], 1))))
+            if self._with_sw:
+                intercept = self._sqrt_sw[:, None]
+            else:
+                intercept = np.ones((X.shape[0], 1))
+            X = np.hstack((X, intercept))
         # to emulate fit_intercept=True situation, add a column on ones
         # Note that by centering, the other columns are orthogonal to that one
         U, s, _ = linalg.svd(X, full_matrices=0)
@@ -1173,10 +1191,14 @@ class _RidgeGCV(LinearModel):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
-        constant_column = np.var(U, 0) < 1.e-12
-        # detect columns colinear to ones
+        if self._with_sw:
+            intercept_dim = np.isclose(
+                U, self._normalized_sqrt_sw[:, None]).all(axis=0)
+        else:
+            intercept_dim = np.var(U, 0) < 1.e-12
+        # detect intercept column
         w = ((v + alpha) ** -1) - (alpha ** -1)
-        w[constant_column] = - (alpha ** -1)
+        w[intercept_dim] = - (alpha ** -1)
         # cancel the regularization for the intercept
         c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
         G_diag = self._decomp_diag(w, U) + (alpha ** -1)
@@ -1257,7 +1279,13 @@ class _RidgeGCV(LinearModel):
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
-
+            self._sqrt_sw = np.sqrt(sample_weight)
+            self._normalized_sqrt_sw = self._sqrt_sw / np.linalg.norm(
+                self._sqrt_sw)
+            self._weight_sum = sample_weight.sum()
+            self._with_sw = True
+        else:
+            self._with_sw = False
         precomputed = _pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
