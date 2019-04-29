@@ -496,6 +496,7 @@ def test_plot_partial_dependence_multioutput():
 
     plt.close('all')
 
+
 @skip_if_no_matplotlib
 @pytest.mark.parametrize(
     "data, params, err_msg",
