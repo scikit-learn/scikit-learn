@@ -1040,7 +1040,9 @@ class _RidgeGCV(LinearModel):
         super()._set_intercept(X_offset, y_offset, X_scale)
 
     def _pre_compute(self, X, y):
-        K, X_m = _centered_gram(X, self.fit_intercept)
+        # if X is dense it has already been centered in preprocessing
+        center = self.fit_intercept and sparse.issparse(X)
+        K, X_m = _centered_gram(X, center)
         if self.fit_intercept:
             K += 1.
         v, Q = linalg.eigh(K)
