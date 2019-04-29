@@ -970,7 +970,7 @@ class RandomForestClassifier(ForestClassifier):
                 min_weight_fraction_leaf=0.0, n_estimators=100, n_jobs=None,
                 oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(clf.feature_importances_)
-    [0.14205973, 0.76664038,  0.0282433, 0.06305659]
+    [0.14205973 0.76664038 0.0282433  0.06305659]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
