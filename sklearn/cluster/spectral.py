@@ -431,7 +431,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                  degree=3, coef0=1, kernel_params=None, n_jobs=None):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
-        self.n_components = n_components
+        self.n_components = n_clusters if n_components \
+            is None else n_components
         self.random_state = random_state
         self.n_init = n_init
         self.gamma = gamma
