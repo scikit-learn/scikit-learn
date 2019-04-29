@@ -401,7 +401,7 @@ def test_export_text():
 
 def test_plot_tree():
     # mostly smoke tests
-    pytest.importorskip("matplotlib.pyplot")
+    plt = pytest.importorskip("matplotlib.pyplot")
     # Check correctness of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3,
                                  min_samples_split=2,
