@@ -35,6 +35,8 @@ random sampling procedures.
   seed, including :class:`linear_model.LogisticRegression`,
   :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.Ridge`,
   and :class:`linear_model.RidgeCV` with 'sag' solver. |Fix|
+- :class:`linear_model.ridge.RidgeCV` when using generalized cross-validation
+  with sparse inputs. |Fix|
 
 
 Details are listed in the changelog below.
@@ -384,6 +386,10 @@ Support for Python 3.4 and below has been officially dropped.
   solver for sparse inputs when ``solver=auto`` and ``sample_weight``
   is provided (previously `cholesky` solver was selected). :issue:`13363`
   by :user:`Bartosz Telenczuk <btel>`
+
+- |Fix| :class:`linear_model.ridge.RidgeCV` with generalized cross-validation
+  now correctly fits an intercept when ``fit_intercept=True`` and the design
+  matrix is sparse. :issue:`13350` by :user:`Jérôme Dockès <jeromedockes>`
 
 :mod:`sklearn.manifold`
 ............................
