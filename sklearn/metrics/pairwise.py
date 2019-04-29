@@ -345,7 +345,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
                 d += XX_chunk
                 d += YY_chunk
 
-            distances[x_slice, y_slice] = d.astype(np.float32)
+            distances[x_slice, y_slice] = d.astype(np.float32, copy=False)
 
     return distances
 
