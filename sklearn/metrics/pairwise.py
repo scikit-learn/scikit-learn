@@ -290,7 +290,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
     Assumes XX and YY have float64 dtype or are None.
 
     X and Y are upcast to float64 by chunks, which size is chosen to limit
-    memory increase by approximately 10% (at least 10Mib).
+    memory increase by approximately 10% (at least 10MiB).
     """
     n_samples_X = X.shape[0]
     n_samples_Y = Y.shape[0]
@@ -302,7 +302,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
     y_density = Y.nnz / np.prod(Y.shape) if issparse(Y) else 1
 
     # Allow 10% more memory than X, Y and the distance matrix take (at least
-    # 10Mib)
+    # 10MiB)
     maxmem = max(
         ((x_density * n_samples_X + y_density * n_samples_Y) * n_features
          + (x_density * n_samples_X * y_density * n_samples_Y)) / 10,
@@ -345,7 +345,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None):
                 d += XX_chunk
                 d += YY_chunk
 
-            distances[x_slice, y_slice] = d.astype(np.float32, copy=False)
+            distances[x_slice, y_slice] = d.astype(np.float32)
 
     return distances
 
