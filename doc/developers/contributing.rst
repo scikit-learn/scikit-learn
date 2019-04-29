@@ -195,68 +195,67 @@ The preferred way to contribute to scikit-learn is to fork the `main
 repository <https://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
 then submit a "pull request" (PR):
 
- 1. `Create an account <https://github.com/join>`_ on
-    GitHub if you do not already have one.
+1. `Create an account <https://github.com/join>`_ on
+   GitHub if you do not already have one.
 
- 2. Fork the `project repository
-    <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
-    button near the top of the page. This creates a copy of the code under your
-    account on the GitHub user account. For more details on how to fork a
-    repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
+2. Fork the `project repository
+   <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
+   button near the top of the page. This creates a copy of the code under your
+   account on the GitHub user account. For more details on how to fork a
+   repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
- 3. Clone your fork of the scikit-learn repo from your GitHub account to your
-    local disk::
+3. Clone your fork of the scikit-learn repo from your GitHub account to your
+   local disk::
 
-        $ git clone git@github.com:YourLogin/scikit-learn.git
-        $ cd scikit-learn
+       $ git clone git@github.com:YourLogin/scikit-learn.git
+       $ cd scikit-learn
 
- 4. Install library in editable mode::
+4. Install library in editable mode::
 
-        $ pip install --editable .
+       $ pip install --editable .
 
-    for more details about advanced installation, see the
-    :ref:`install_bleeding_edge` section.
+   for more details about advanced installation, see the
+   :ref:`install_bleeding_edge` section.
 
- 5. Create a branch to hold your development changes::
+5. Create a branch to hold your development changes::
 
-        $ git checkout -b my-feature
+       $ git checkout -b my-feature
 
-    and start making changes. Always use a ``feature`` branch. It's good practice to
-    never work on the ``master`` branch!
+   and start making changes. Always use a ``feature`` branch. It's good practice to
+   never work on the ``master`` branch!
 
-.. note::
+   .. note::
 
-  In the above setup, your ``origin`` remote repository points to
-  ``YourLogin/scikit-learn.git``. If you wish to fetch/merge from the main
-  repository instead of your forked one, you will need to add another remote
-  to use instead of ``origin``. If we choose the name ``upstream`` for it, the
-  command will be::
+     In the above setup, your ``origin`` remote repository points to
+     ``YourLogin/scikit-learn.git``. If you wish to fetch/merge from the main
+     repository instead of your forked one, you will need to add another remote
+     to use instead of ``origin``. If we choose the name ``upstream`` for it, the
+     command will be::
 
-        $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
+         $ git remote add upstream https://github.com/scikit-learn/scikit-learn.git
 
-  And in order to fetch the new remote and base your work on the latest changes
-  of it you can::
+     And in order to fetch the new remote and base your work on the latest changes
+     of it you can::
 
-        $ git fetch upstream
-        $ git checkout -b my-feature upstream/master
+         $ git fetch upstream
+         $ git checkout -b my-feature upstream/master
 
+6. Develop the feature on your feature branch on your computer, using Git to do the
+   version control. When you're done editing, add changed files using ``git add``
+   and then ``git commit`` files::
 
- 6. Develop the feature on your feature branch on your computer, using Git to do the
-    version control. When you're done editing, add changed files using ``git add``
-    and then ``git commit`` files::
+       $ git add modified_files
+       $ git commit
 
-        $ git add modified_files
-        $ git commit
+   to record your changes in Git, then push the changes to your GitHub account with::
 
-    to record your changes in Git, then push the changes to your GitHub account with::
+       $ git push -u origin my-feature
 
-        $ git push -u origin my-feature
-
- 7. Follow `these
-    <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
-    instructions to create a pull request from your fork. This will send an
-    email to the committers. You may want to consider sending an email to the
-    mailing list for more visibility.
+7. Follow `these
+   <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+   instructions to create a pull request from your fork. This will send an
+   email to the committers. You may want to consider sending an email to the
+   mailing list for more visibility.
 
 .. note::
 
