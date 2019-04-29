@@ -34,6 +34,7 @@ Previous Releases
 .. toctree::
     :maxdepth: 1
 
+    Version 0.20 <whats_new/v0.20.rst>
     Version 0.19 <whats_new/v0.19.rst>
     Version 0.18 <whats_new/v0.18.rst>
     Version 0.17 <whats_new/v0.17.rst>
