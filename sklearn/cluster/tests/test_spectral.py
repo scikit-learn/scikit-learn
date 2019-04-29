@@ -208,9 +208,13 @@ def test_spectral_clustering_with_arpack_amg_solvers():
 
 def test_n_components():
     # no value passed to n_components
+    X, y = make_blobs(n_samples=20, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
     sp = SpectralClustering(n_clusters=2, affinity="nearest_neighbors",
                             random_state=0)
-    assert sp.n_components == sp.n_clusters
+    n_component = sp.fit(X).n_components
+    assert n_component == sp.n_clusters
+
     # set n_components value to be 2
     n_comp = 2
     sp = SpectralClustering(n_components=n_comp, affinity="nearest_neighbors",
