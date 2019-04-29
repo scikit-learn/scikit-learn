@@ -15,6 +15,7 @@ from ._split import StratifiedShuffleSplit
 from ._split import PredefinedSplit
 from ._split import train_test_split
 from ._split import check_cv
+from ._split import GapCrossValidator
 
 from ._validation import cross_val_score
 from ._validation import cross_val_predict
@@ -49,6 +50,7 @@ __all__ = ('BaseCrossValidator',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
            'check_cv',
+           'GapCrossValidator',
            'cross_val_predict',
            'cross_val_score',
            'cross_validate',
