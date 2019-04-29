@@ -12,14 +12,14 @@ from scipy.linalg import cholesky, cho_solve, solve
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.special import erf, expit
 
-from sklearn.base import BaseEstimator, ClassifierMixin, clone
-from sklearn.gaussian_process.kernels \
+from ..base import BaseEstimator, ClassifierMixin, clone
+from .kernels \
     import RBF, CompoundKernel, ConstantKernel as C
-from sklearn.utils.validation import check_X_y, check_is_fitted, check_array
-from sklearn.utils import check_random_state
-from sklearn.preprocessing import LabelEncoder
-from sklearn.multiclass import OneVsRestClassifier, OneVsOneClassifier
-from sklearn.exceptions import ConvergenceWarning
+from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..utils import check_random_state
+from ..preprocessing import LabelEncoder
+from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
+from ..exceptions import ConvergenceWarning
 
 
 # Values required for approximating the logistic sigmoid by

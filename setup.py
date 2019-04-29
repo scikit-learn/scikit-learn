@@ -38,6 +38,11 @@ MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
 URL = 'http://scikit-learn.org'
 DOWNLOAD_URL = 'https://pypi.org/project/scikit-learn/#files'
 LICENSE = 'new BSD'
+PROJECT_URLS = {
+    'Bug Tracker': 'https://github.com/scikit-learn/scikit-learn/issues',
+    'Documentation': 'https://scikit-learn.org/stable/documentation.html',
+    'Source Code': 'https://github.com/scikit-learn/scikit-learn'
+}
 
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
@@ -52,6 +57,7 @@ else:
     SCIPY_MIN_VERSION = '0.17.0'
     NUMPY_MIN_VERSION = '1.11.0'
 
+JOBLIB_MIN_VERSION = '0.11'
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
@@ -110,29 +116,6 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-def get_openmp_flag(compiler):
-    if sys.platform == "win32" and ('icc' in compiler or 'icl' in compiler):
-        return ['/Qopenmp']
-    elif sys.platform == "win32":
-        return ['/openmp']
-    elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
-        return ['-openmp']
-    elif sys.platform == "darwin" and 'openmp' in os.getenv('CPPFLAGS', ''):
-        # -fopenmp can't be passed as compile flag when using Apple-clang.
-        # OpenMP support has to be enabled during preprocessing.
-        #
-        # For example, our macOS wheel build jobs use the following environment
-        # variables to build with Apple-clang and the brew installed "libomp":
-        #
-        # export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
-        # export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include"
-        # export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
-        # export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-        return ['']
-    # Default flag for GCC and clang:
-    return ['-fopenmp']
-
-
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
 # build_ext has to be imported after setuptools
@@ -141,16 +124,14 @@ from numpy.distutils.command.build_ext import build_ext  # noqa
 
 class build_ext_subclass(build_ext):
     def build_extensions(self):
-        if hasattr(self.compiler, 'compiler'):
-            compiler = self.compiler.compiler[0]
-        else:
-            compiler = self.compiler.__class__.__name__
+        from sklearn._build_utils.openmp_helpers import get_openmp_flag
 
-        openmp_flag = get_openmp_flag(compiler)
+        if not os.getenv('SKLEARN_NO_OPENMP'):
+            openmp_flag = get_openmp_flag(self.compiler)
 
-        for e in self.extensions:
-            e.extra_compile_args += openmp_flag
-            e.extra_link_args += openmp_flag
+            for e in self.extensions:
+                e.extra_compile_args += openmp_flag
+                e.extra_link_args += openmp_flag
 
         build_ext.build_extensions(self)
 
@@ -220,6 +201,7 @@ def setup_package():
                     license=LICENSE,
                     url=URL,
                     download_url=DOWNLOAD_URL,
+                    project_urls=PROJECT_URLS,
                     version=VERSION,
                     long_description=LONG_DESCRIPTION,
                     classifiers=['Intended Audience :: Science/Research',
@@ -245,7 +227,8 @@ def setup_package():
                     cmdclass=cmdclass,
                     install_requires=[
                         'numpy>={}'.format(NUMPY_MIN_VERSION),
-                        'scipy>={}'.format(SCIPY_MIN_VERSION)
+                        'scipy>={}'.format(SCIPY_MIN_VERSION),
+                        'joblib>={}'.format(JOBLIB_MIN_VERSION)
                     ],
                     **extra_setuptools_args)
 

@@ -2,7 +2,6 @@
 #cython: boundscheck=False
 #cython: wraparound=False
 #cython: cdivision=True
-# cython: language_level=3
 
 # By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
 # written for the scikit-learn project
@@ -981,8 +980,8 @@ cdef class HaversineDistance(DistanceMetric):
     The dimension of the points must be 2:
 
     .. math::
-       D(x, y) = 2\arcsin[\sqrt{\sin^2((x1 - y1) / 2)
-                                + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+       D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
+                                + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
     """
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
