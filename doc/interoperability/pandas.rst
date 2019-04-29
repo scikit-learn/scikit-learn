@@ -5,10 +5,13 @@
 Pandas Interoperability
 =======================
 
+This part of the User Guide aims to highlight some of the particularities that
+arise when using pandas datastructures as input for scikit-learn.
+
 The basics of using pandas and Scikit-learn
 ==================================================================
 
-In principle, Scikit-learn supports the use of
+Scikit-learn supports the use of
 `pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__
 implicitly. However, this implicit support has its conditions and potential
 pitfalls and some (not all) of these will be outlined below.
