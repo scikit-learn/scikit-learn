@@ -1128,13 +1128,14 @@ class _RidgeGCV(LinearModel):
         and self._values_svd.
         """
         n, p = X.shape
+        intercept_sv = np.zeros(V.shape[0])
+        intercept_sv[-1] = 1
         if self._with_sw:
-            intercept_dim, *_ = np.where(s == self._weight_sum)
+            intercept_dim = np.isclose(V, intercept_sv[:, None]).all(axis=0)
         else:
-            intercept_dim, *_ = np.where(s == n)
+            intercept_dim = np.isclose(V, intercept_sv[:, None]).all(axis=0)
         w = 1 / (s + alpha)
-        if len(intercept_dim) == 1:
-            w[intercept_dim[0]] = 1 / s[intercept_dim[0]]
+        w[intercept_dim] = 1 / s[intercept_dim]
         A = (V * w).dot(V.T)
         Xm = self._X_offset
 
