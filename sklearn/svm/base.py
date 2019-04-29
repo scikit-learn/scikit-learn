@@ -574,6 +574,10 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
             Class labels for samples in X.
         """
         check_is_fitted(self, "classes_")
+        if self.break_ties and self.decision_function_shape == 'ovo':
+            raise ValueError("break_ties can only be True if "
+                             "decision_function_shape is 'ovo'")
+
         if (self.break_ties
                 and self.decision_function_shape == 'ovr'
                 and len(self.classes_) > 2):
