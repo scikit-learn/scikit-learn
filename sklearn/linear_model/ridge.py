@@ -1035,10 +1035,8 @@ class _RidgeGCV(LinearModel):
                 - X_mX - X_mX.T, X_mean)
 
     def _compute_covariance(self, X, center=True):
-        """Computes centered Gram matrix.
+        """Computes centered covariance matrix.
 
-        Notes
-        -----
         if center is True, compute
         (X - X.mean(axis=0)).T.dot(X - X.mean(axis=0))
         else
