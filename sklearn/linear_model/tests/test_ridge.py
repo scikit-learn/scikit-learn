@@ -36,7 +36,7 @@ from sklearn.linear_model.ridge import _solve_cholesky_kernel
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import make_multilabel_classification
@@ -345,11 +345,13 @@ def test_ridge_gcv_vs_k_fold(gcv_mode, X_constructor, X_shape, fit_intercept,
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('fit_intercept', [True, False])
-@pytest.mark.parametrize('n_features', [7, 31])
+@pytest.mark.parametrize('n_features', [11, 69])
 def test_ridge_gcv_sample_weights(
         gcv_mode, X_constructor, fit_intercept, n_features):
-    x, y, c = make_regression(
-        n_samples=23, n_features=n_features, n_targets=4, coef=True,
+    alphas = [1e-3, .1, 1., 10., 1e3]
+
+    x, y, c = datasets.make_regression(
+        n_samples=53, n_features=n_features, n_targets=4, coef=True,
         random_state=0, shuffle=False, noise=30.)
     x += 30 * np.random.RandomState(0).randn(x.shape[1])
     sample_weights = 3 * np.random.RandomState(0).randn(len(x))
@@ -358,16 +360,36 @@ def test_ridge_gcv_sample_weights(
     indices = np.concatenate([n * [i] for (i, n) in enumerate(sample_weights)])
     sample_weights = 1. * sample_weights
     tiled_x, tiled_y = x[indices], y[indices]
-    alphas = [1.]
-    ridge = Ridge(
-        fit_intercept=fit_intercept, alpha=alphas[0], normalize=False)
-    ridge.fit(tiled_x, tiled_y)
+
+    cv = GroupKFold(n_splits=x.shape[0])
+    splits = cv.split(tiled_x, tiled_y, groups=indices)
+    kfold = RidgeCV(
+        alphas=alphas, cv=splits, scoring='neg_mean_squared_error',
+        fit_intercept=fit_intercept)
+    with ignore_warnings():
+        kfold.fit(tiled_x, tiled_y)
+
+    ridge_reg = Ridge(alpha=kfold.alpha_, fit_intercept=fit_intercept)
+    splits = cv.split(tiled_x, tiled_y, groups=indices)
+    predictions = cross_val_predict(ridge_reg, tiled_x, tiled_y, cv=splits)
+    kfold_errors = (tiled_y - predictions)**2
+    kfold_errors = [
+        np.sum(kfold_errors[indices == i], axis=0) for
+        i in np.arange(x.shape[0])]
+    kfold_errors = np.asarray(kfold_errors)
+
     x_gcv = X_constructor(x)
-    gcv = RidgeCV(fit_intercept=fit_intercept, alphas=alphas,
-                  normalize=False, gcv_mode=gcv_mode)
-    gcv.fit(x_gcv, y, sample_weight=sample_weights)
-    assert np.allclose(gcv.coef_, ridge.coef_, rtol=1e-2)
-    assert np.allclose(gcv.intercept_, ridge.intercept_, rtol=1e-2)
+    ridge_gcv = RidgeCV(
+        alphas=alphas, store_cv_values=True,
+        gcv_mode=gcv_mode, fit_intercept=fit_intercept)
+    ridge_gcv.fit(x_gcv, y, sample_weight=sample_weights)
+    gcv_errors = ridge_gcv.cv_values_[:, :, alphas.index(kfold.alpha_)]
+
+    assert kfold.alpha_ == ridge_gcv.alpha_
+    assert_allclose(gcv_errors, kfold_errors, rtol=5e-2)
+    assert_allclose(gcv_errors, kfold_errors, rtol=5e-2)
+    assert_allclose(ridge_gcv.coef_, kfold.coef_, rtol=5e-2)
+    assert_allclose(ridge_gcv.intercept_, kfold.intercept_, rtol=5e-2)
 
 
 def _test_ridge_loo(filter_):
