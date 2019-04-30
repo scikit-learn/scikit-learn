@@ -1011,13 +1011,18 @@ class _RidgeGCV(LinearModel):
         if not center:
             X_m = np.zeros(X.shape[1], dtype=X.dtype)
             return safe_sparse_dot(X, X.T, dense_output=True), X_m
-        if sparse.issparse(X):
-            X_m, _ = mean_variance_axis(X, axis=0)
-        else:
-            X_m = X.mean(axis=0)
-        X_mX = safe_sparse_dot(X_m, X.T, dense_output=True)
-        return (safe_sparse_dot(X, X.T, dense_output=True) + np.dot(X_m, X_m)
-                - X_mX - X_mX[:, None], X_m)
+        n = X.shape[0]
+        X_w = self._sqrt_sw_matrix.dot(X)
+        X_m, _ = mean_variance_axis(X_w, axis=0)
+        X_m = X_m * n / self._weight_sum
+        X_mX = self._sqrt_sw[:, None] * safe_sparse_dot(
+            X_m, X.T, dense_output=True)
+        X_mX_m = np.empty((X.shape[0], X.shape[0]), dtype=X.dtype)
+        X_mX_m[:, :] = np.dot(X_m, X_m)
+        X_mX_m = X_mX_m * self._sqrt_sw
+        X_mX_m = X_mX_m * self._sqrt_sw[:, None]
+        return (safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m
+                - X_mX - X_mX.T, X_m)
 
     def _compute_covariance(self, X, center=True):
         """Computes centered Gram matrix.
