@@ -1664,7 +1664,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cosine']
+        ['additive_chi2', 'chi2', 'linear', 'poly', 'polynomial', 'rbf',
+         'laplacian', 'sigmoid', 'cosine']
 
     Read more in the :ref:`User Guide <metrics>`.
 
