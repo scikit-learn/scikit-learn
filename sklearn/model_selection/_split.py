@@ -12,7 +12,7 @@ functions to split the data based on a preset strategy.
 from collections.abc import Iterable
 import warnings
 from itertools import chain, combinations
-from math import ceil, floor
+from math import ceil, floor, modf
 import numbers
 from abc import ABCMeta, abstractmethod
 from inspect import signature
@@ -45,7 +45,8 @@ __all__ = ['BaseCrossValidator',
            'check_cv',
            'GapCrossValidator',
            'GapLeavePOut',
-           'GapKFold']
+           'GapKFold',
+           'gap_train_test_split']
 
 
 NSPLIT_WARNING = (
@@ -2462,3 +2463,106 @@ class GapKFold(GapCrossValidator):
             Returns the number of splitting iterations in the cross-validator.
         """
         return self.n_splits
+
+def gap_train_test_split(*arrays, **options):
+    """Split arrays or matrices into random train and test subsets (with a gap)
+
+    Parameters
+    ----------
+    *arrays : sequence of indexables with same length / shape[0]
+        Allowed inputs are lists, numpy arrays, scipy-sparse
+        matrices or pandas dataframes.
+
+    gap_size : float or int
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset between the training and the test set. If int,
+        represents the absolute number of the dropped samples.
+
+    test_size : float, int, or None, (default=None)
+        If float, should be between 0.0 and 1.0 and equal to
+        test / (train + test). If int, represents the absolute number of
+        test samples. If None, the value is set to the complement of the
+        train size and the gap. If ``train_size`` is also None,
+        it will be set to 0.25.
+
+    train_size : float, int, or None, (default=None)
+        If float, should be between 0.0 and 1.0 and equal to
+        train / (train + test). If int, represents the absolute number of
+        train samples. If None, the value is automatically set to
+        the complement of the test size and the gap size.
+
+    Returns
+    -------
+    splitting : list, length=2 * len(arrays)
+        List containing train-test split of inputs.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = np.arange(10).reshape((5, 2)), range(5)
+    >>> X
+    array([[0, 1],
+           [2, 3],
+           [4, 5],
+           [6, 7],
+           [8, 9]])
+    >>> list(y)
+    [0, 1, 2, 3, 4]
+
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, test_size=0.33, random_state=42)
+    ...
+    >>> X_train
+    array([[4, 5],
+           [0, 1],
+           [6, 7]])
+    >>> y_train
+    [2, 0, 3]
+    >>> X_test
+    array([[2, 3],
+           [8, 9]])
+    >>> y_test
+    [1, 4]
+
+    >>> train_test_split(y, shuffle=False)
+    [[0, 1, 2], [3, 4]]
+
+    """
+    n_arrays = len(arrays)
+    if n_arrays == 0:
+        raise ValueError("At least one array required as input")
+    test_size = options.pop('test_size', None)
+    train_size = options.pop('train_size', None)
+    gap_size = options.pop('gap_size')
+
+    if options:
+        raise TypeError("Invalid parameters passed: %s" % str(options))
+
+    arrays = indexable(*arrays)
+    n_samples = _num_samples(arrays[0])
+
+    def size_to_number(size, n):
+        b, a = modf(size)
+        return int(max(a, round(b * n)))
+
+    n_gap = size_to_number(gap_size, n_samples)
+    n_remain = n_samples - n_gap
+    if test_size is None and train_size is None:
+        test_size = 0.25
+    if train_size is None:
+        n_test = size_to_number(test_size, n_remain)
+        n_train = n_remain - n_test
+    elif test_size is None:
+        n_train = size_to_number(train_size, n_remain)
+        n_test = n_remain - n_train
+    else:
+        warnings.warn("Only test_size is taken into account.", Warning)
+        n_test = size_to_number(test_size, n_remain)
+        n_train = n_remain - n_test
+
+    train = np.arange(n_train)
+    test = np.arange(n_train + n_gap, n_samples)
+
+    return list(chain.from_iterable((safe_indexing(a, train),
+                                     safe_indexing(a, test)) for a in arrays))

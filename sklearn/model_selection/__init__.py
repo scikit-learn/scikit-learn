@@ -18,6 +18,7 @@ from ._split import check_cv
 from ._split import GapCrossValidator
 from ._split import GapLeavePOut
 from ._split import GapKFold
+from ._split import gap_train_test_split
 
 from ._validation import cross_val_score
 from ._validation import cross_val_predict
@@ -55,6 +56,7 @@ __all__ = ('BaseCrossValidator',
            'GapCrossValidator',
            'GapLeavePOut',
            'GapKFold',
+           'gap_train_test_split',
            'cross_val_predict',
            'cross_val_score',
            'cross_validate',
