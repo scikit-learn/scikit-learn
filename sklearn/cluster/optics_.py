@@ -844,7 +844,7 @@ def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
                     # Find the first index from the right side which is almost
                     # at the same level as the beginning of the detected
                     # cluster.
-                    while (reachability_plot[c_end - 1] < D_max
+                    while (reachability_plot[c_end - 1] > D_max
                            and c_end > U_start):
                         c_end -= 1
 
