@@ -17,6 +17,7 @@ from ._split import train_test_split
 from ._split import check_cv
 from ._split import GapCrossValidator
 from ._split import GapLeavePOut
+from ._split import GapKFold
 
 from ._validation import cross_val_score
 from ._validation import cross_val_predict

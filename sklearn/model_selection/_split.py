@@ -44,7 +44,8 @@ __all__ = ['BaseCrossValidator',
            'train_test_split',
            'check_cv',
            'GapCrossValidator',
-           'GapLeavePOut']
+           'GapLeavePOut',
+           'GapKFold']
 
 
 NSPLIT_WARNING = (
@@ -2273,7 +2274,7 @@ class GapLeavePOut(GapCrossValidator):
     """Leave-P-Out cross-validator with Gap
 
     Provides train/test indices to split data in train/test sets. This results
-    in testing on only consecutive samples of size p, while the remaining
+    in testing on only contiguous samples of size p, while the remaining
     samples (with the gap removed) form the training set in each iteration.
 
     Parameters
@@ -2307,8 +2308,8 @@ class GapLeavePOut(GapCrossValidator):
     """
 
     def __init__(self, p, gap_before=0, gap_after=0):
-        self.p = p
         super().__init__(gap_before, gap_after)
+        self.p = p
 
     def _iter_test_indices(self, X, y=None, groups=None):
         self.__check_validity(X, y, groups)
@@ -2359,3 +2360,105 @@ class GapLeavePOut(GapCrossValidator):
             raise ValueError("Not enough training samples available.")
         if n_samples - gap_after - self.p <= gap_before + 1:
             warnings.warn(SINGLETON_WARNING, Warning)
+
+class GapKFold(GapCrossValidator):
+    """K-Folds cross-validator with Gap
+
+    Provides train/test indices to split data in train/test sets. Split
+    dataset into k consecutive folds (without shuffling).
+
+    Each fold is then used once as a validation while the k - 1 remaining
+    folds (with the gap removed) form the training set.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of folds. Must be at least 2.
+
+    gap_before : int
+        Gap before the test sets.
+
+    gap_after : int
+        Gap after the test sets.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GapKFold
+    >>> kf = GapKFold(n_splits=5, gap_before=3, gap_after=4)
+    >>> kf.get_n_splits(X)
+    5
+    >>> print(kf)
+    GapKFold(gap_after=4, gap_before=3, n_splits=5)
+    >>> for train_index, test_index in kf.split(np.arange(10)):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    TRAIN: [6 7 8 9] TEST: [0 1]
+    TRAIN: [8 9] TEST: [2 3]
+    TRAIN: [0] TEST: [4 5]
+    TRAIN: [0 1 2] TEST: [6 7]
+    TRAIN: [0 1 2 3 4] TEST: [8 9]
+
+    Notes
+    -----
+    The first ``n_samples % n_splits`` folds have size
+    ``n_samples // n_splits + 1``, other folds have size
+    ``n_samples // n_splits``, where ``n_samples`` is the number of samples.
+    """
+
+    def __init__(self, n_splits=5, gap_before=0, gap_after=0):
+        if not isinstance(n_splits, numbers.Integral):
+            raise ValueError('The number of folds must be of Integral type. '
+                             '%s of type %s was passed.'
+                             % (n_splits, type(n_splits)))
+        n_splits = int(n_splits)
+
+        if n_splits <= 1:
+            raise ValueError(
+                "k-fold cross-validation requires at least one"
+                " train/test split by setting n_splits=2 or more,"
+                " got n_splits={0}.".format(n_splits))
+
+        super().__init__(gap_before, gap_after)
+        self.n_splits = n_splits
+
+    def _iter_test_indices(self, X, y=None, groups=None):
+        n_samples = _num_samples(X)
+        n_splits = self.n_splits
+        gap_before, gap_after = self.gap_before, self.gap_after
+        if n_splits > n_samples:
+            raise ValueError(
+                ("Cannot have number of splits n_splits={0} greater"
+                 " than the number of samples: n_samples={1}.")
+                .format(self.n_splits, n_samples))
+
+        indices = np.arange(n_samples)
+        fold_sizes = np.full(n_splits, n_samples // n_splits, dtype=np.int)
+        fold_sizes[:n_samples % n_splits] += 1
+        current = 0
+        for fold_size in fold_sizes:
+            start, stop = current, current + fold_size
+            if start - gap_before <= 0 and stop + gap_after >= n_samples:
+                raise ValueError("Not enough training samples available")
+            yield indices[start:stop]
+            current = stop
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        """Returns the number of splitting iterations in the cross-validator
+
+        Parameters
+        ----------
+        X : object
+            Always ignored, exists for compatibility.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        groups : object
+            Always ignored, exists for compatibility.
+
+        Returns
+        -------
+        n_splits : int
+            Returns the number of splitting iterations in the cross-validator.
+        """
+        return self.n_splits
