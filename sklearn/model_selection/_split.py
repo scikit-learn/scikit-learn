@@ -2188,24 +2188,13 @@ class GapCrossValidator(metaclass=ABCMeta):
         test : ndarray
             The testing set indices for that split.
         """
-        X, y, groups = indexable(X, y, groups)
-        indices = np.arange(_num_samples(X))
-        for train_index, test_index in self._iter_indices(X, y, groups):
+        for train_index, test_index in zip(
+                self._iter_train_indices(X, y, groups),
+                self._iter_test_indices(X, y, groups)):
             yield train_index, test_index
 
-    # Since subclasses implement any of the following 5 methods,
-    #  none can be abstract.
-    def _iter_indices(self, X=None, y=None, groups=None):
-        """Generates integer indices corresponding to both training sets and
-        test sets.
-
-        By default, delegates to _iter_train_indices(X, y, groups) and
-        _iter_test_indices(X, y, groups)
-        """
-        for a, b in zip(self._iter_train_indices(X, y, groups),
-                        self._iter_test_indices(X, y, groups)):
-            yield a, b
-
+    # Since subclasses implement any of the following 4 methods,
+    # none can be abstract.
     def _iter_train_indices(self, X=None, y=None, groups=None):
         """Generates integer indices corresponding to training sets.
 
