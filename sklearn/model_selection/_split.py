@@ -2499,7 +2499,7 @@ def gap_train_test_split(*arrays, **options):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.model_selection import gap_train_test_split
     >>> X, y = np.arange(10).reshape((5, 2)), range(5)
     >>> X
     array([[0, 1],
@@ -2510,23 +2510,22 @@ def gap_train_test_split(*arrays, **options):
     >>> list(y)
     [0, 1, 2, 3, 4]
 
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, test_size=0.33, random_state=42)
+    >>> X_train, X_test, y_train, y_test = gap_train_test_split(
+    ...     X, y, test_size=0.33, gap_size=1)
     ...
     >>> X_train
-    array([[4, 5],
-           [0, 1],
-           [6, 7]])
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
     >>> y_train
-    [2, 0, 3]
+    [0, 1, 2]
     >>> X_test
-    array([[2, 3],
-           [8, 9]])
+    array([[8, 9]])
     >>> y_test
-    [1, 4]
+    [4]
 
-    >>> train_test_split(y, shuffle=False)
-    [[0, 1, 2], [3, 4]]
+    >>> gap_train_test_split(np.arange(10), gap_size=0.1)
+    [[0, 1, 2, 3, 4, 5, 6], [8, 9]]
 
     """
     n_arrays = len(arrays)
