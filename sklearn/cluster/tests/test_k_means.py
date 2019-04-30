@@ -342,10 +342,12 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
         kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
                         tol=tol, max_iter=max_iter, n_jobs=1)
 
-        labels_1 = kmeans.fit(X).predict(X)
-        labels_2 = kmeans.fit_predict(X)
+        labels_1 = kmeans.fit_predict(X)
+        labels_2 = kmeans.predict(X)
+        labels_3 = kmeans.labels_
 
         assert_array_equal(labels_1, labels_2)
+        assert_array_equal(labels_1, labels_3)
 
 
 def test_mb_kmeans_verbose():
