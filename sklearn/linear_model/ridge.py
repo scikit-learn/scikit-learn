@@ -919,16 +919,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         return self._label_binarizer.classes_
 
 
-def _check_gcv_mode(X, sample_weights):
-    sparse_x = sparse.issparse(X)
-    with_sample_weights = np.ndim(sample_weights) > 0
-    # sample weights not supported with sparse design yet,
-    # because mean_variance_axis does not support sample weights
-    if with_sample_weights and sparse_x:
-        pass
-        # raise ValueError(
-        #     'sample weights not (yet) supported by '
-        #     'generalized cross-validation when X is sparse')
+def _check_gcv_mode(X, gcv_mode):
+    if gcv_mode not in {None, 'auto', 'svd', 'eigen'}:
+        raise ValueError('bad gcv_mode "%s"' % gcv_mode)
+    if gcv_mode not in {None, 'auto'}:
+        return gcv_mode
     # if X has more rows than columns, use decomposition of X^T.X,
     # otherwise X.X^T
     if X.shape[0] > X.shape[1]:
@@ -1315,10 +1310,7 @@ class _RidgeGCV(LinearModel):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
-        gcv_mode = self.gcv_mode
-        best_gcv_mode = _check_gcv_mode(X, sample_weight)
-        if gcv_mode is None or gcv_mode == 'auto':
-            gcv_mode = best_gcv_mode
+        gcv_mode = _check_gcv_mode(X, self.gcv_mode)
 
         if gcv_mode == 'eigen':
             _pre_compute = self._pre_compute
@@ -1334,8 +1326,6 @@ class _RidgeGCV(LinearModel):
                 _pre_compute = self._pre_compute_svd_dense
                 _errors = self._errors_svd_dense
                 _values = self._values_svd_dense
-        else:
-            raise ValueError('bad gcv_mode "%s"' % gcv_mode)
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
@@ -1434,14 +1424,6 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
         self : object
         """
         cv = self.cv
-        gcv_modes = {None, 'auto', 'svd', 'eigen'}
-        if self.cv in gcv_modes and sparse.issparse(X) and np.ndim(
-                sample_weight):
-            pass
-            # warnings.warn(
-            #     'sample weights with sparse X and gcv not supported, '
-            #     'falling back to 5-fold cross-validation')
-            # cv = 5
         if cv is None:
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
