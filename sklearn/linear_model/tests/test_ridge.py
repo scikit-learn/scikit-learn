@@ -311,31 +311,35 @@ def test_ridge_individual_penalties():
     assert_raises(ValueError, ridge.fit, X, y)
 
 
-def test_ridge_gcv_vs_k_fold():
+@pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
+@pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
+@pytest.mark.parametrize('X_shape', [(11, 8), (11, 20)])
+@pytest.mark.parametrize('fit_intercept', [True, False])
+@pytest.mark.parametrize('normalize', [True, False])
+def test_ridge_gcv_vs_k_fold(gcv_mode, X_constructor, X_shape, fit_intercept,
+                             normalize):
+    n_samples, n_features = X_shape
+    X, y = make_regression(
+        n_samples=n_samples, n_features=n_features, n_targets=3,
+        random_state=0, shuffle=False, noise=30., n_informative=5
+    )
+    X += 30 * np.random.RandomState(0).randn(X.shape[1])
+
     alphas = [1e-3, .1, 1., 10., 1e3]
-    shapes = [(11, 8), (11, 20)]
-    for (n_samples, n_features), fit_intercept, normalize in product(
-            shapes, [True, False], [True, False]):
-        x, y = make_regression(
-            n_samples=n_samples, n_features=n_features, n_targets=3,
-            random_state=0, shuffle=False, noise=30., n_informative=5)
-        x += 30 * np.random.RandomState(0).randn(x.shape[1])
-        x_s = sp.csr_matrix(x)
-        loo = RidgeCV(cv=n_samples, fit_intercept=fit_intercept,
-                      alphas=alphas, scoring='neg_mean_squared_error',
-                      normalize=normalize)
-        loo.fit(x, y)
-        for gcv_mode, sparse_x in product(['svd', 'eigen'], [True, False]):
-            print('{}, {}, sparse: {}, intercept: {}, alpha: {}'.format(
-                (n_samples, n_features), gcv_mode, sparse_x, fit_intercept,
-                loo.alpha_))
-            xx = x_s if sparse_x else x
-            gcv = RidgeCV(gcv_mode=gcv_mode, fit_intercept=fit_intercept,
-                          alphas=alphas, normalize=normalize)
-            gcv.fit(xx, y)
-            assert gcv.alpha_ == loo.alpha_
-            assert np.allclose(gcv.coef_, loo.coef_, rtol=1e-4)
-            assert np.allclose(gcv.intercept_, loo.intercept_, rtol=1e-4)
+    loo_ridge = RidgeCV(cv=n_samples, fit_intercept=fit_intercept,
+                        alphas=alphas, scoring='neg_mean_squared_error',
+                        normalize=normalize)
+    gcv_ridge = RidgeCV(gcv_mode=gcv_mode, fit_intercept=fit_intercept,
+                        alphas=alphas, normalize=normalize)
+
+    loo_ridge.fit(X, y)
+
+    X_gcv = X_constructor(X)
+    gcv_ridge.fit(X_gcv, y)
+
+    assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
+    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-4)
+    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-4)
 
 
 def test_ridge_gcv_sample_weights():
