@@ -43,7 +43,8 @@ __all__ = ['BaseCrossValidator',
            'PredefinedSplit',
            'train_test_split',
            'check_cv',
-           'GapCrossValidator']
+           'GapCrossValidator',
+           'GapLeavePOut']
 
 
 NSPLIT_WARNING = (
@@ -54,6 +55,7 @@ CV_WARNING = (
     "The default value of cv will change from 3 to 5 "
     "in version 0.22. Specify it explicitly to silence this warning.")
 
+SINGLETON_WARNING = "Too few samples. Some training set is a singleton."
 
 class BaseCrossValidator(metaclass=ABCMeta):
     """Base class for all cross-validators
@@ -2266,3 +2268,59 @@ class GapCrossValidator(metaclass=ABCMeta):
 
     def __repr__(self):
         return _build_repr(self)
+
+class GapLeavePOut(GapCrossValidator):
+
+    def __init__(self, p, gap_before=0, gap_after=0):
+        self.p = p
+        super().__init__(gap_before, gap_after)
+
+    def _iter_test_indices(self, X, y=None, groups=None):
+        self.__check_validity(X, y, groups)
+        n_samples = _num_samples(X)
+        gap_before, gap_after = self.gap_before, self.gap_after
+        if n_samples - gap_after - self.p >= gap_before + 1:
+            for i in range(n_samples - self.p +1):
+                yield np.arange(i, i + self.p)
+        else:
+            for i in range(n_samples - gap_after - self.p):
+                yield np.arange(i, i + self.p)
+            for i in range(gap_before + 1, n_samples - self.p +1):
+                yield np.arange(i, i + self.p)
+
+
+    def get_n_splits(self, X, y=None, groups=None):
+        """Returns the number of splitting iterations in the cross-validator
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : object
+            Always ignored, exists for compatibility.
+
+        groups : object
+            Always ignored, exists for compatibility.
+        """
+        self.__check_validity(X, y, groups)
+        n_samples = _num_samples(X)
+        gap_before, gap_after = self.gap_before, self.gap_after
+        if n_samples - gap_after - self.p >= gap_before + 1:
+            n_splits = n_samples - self.p + 1
+        else:
+            n_splits = max(n_samples - gap_after - self.p, 0)
+            n_splits += max(n_samples - self.p - gap_before, 0)
+        return n_splits
+
+    def __check_validity(self, X, y=None, groups=None):
+        if X is None:
+            raise ValueError("The 'X' parameter should not be None.")
+        n_samples = _num_samples(X)
+        gap_before, gap_after = self.gap_before, self.gap_after
+        if (0 >= n_samples - gap_after - self.p and
+                gap_before >= n_samples - self.p):
+            raise ValueError("Not enough training samples available.")
+        if n_samples - gap_after - self.p <= gap_before + 1:
+            warnings.warn(SINGLETON_WARNING, Warning)
