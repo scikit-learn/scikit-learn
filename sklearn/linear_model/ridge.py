@@ -1019,8 +1019,11 @@ class _RidgeGCV(LinearModel):
             The mean of ``X`` for each feature.
         """
         if not center:
-            X_m = np.zeros(X.shape[1], dtype=X.dtype)
-            return safe_sparse_dot(X, X.T, dense_output=True), X_m
+            # in this case centering has been done in preprocessing
+            # or we are not fitting an intercept.
+            X_mean = np.zeros(X.shape[1], dtype=X.dtype)
+            return safe_sparse_dot(X, X.T, dense_output=True), X_mean
+        # otherwise X is always sparse
         n_samples = X.shape[0]
         X_weighted = self._sqrt_sw_matrix.dot(X)
         X_mean, _ = mean_variance_axis(X_weighted, axis=0)
@@ -1057,8 +1060,11 @@ class _RidgeGCV(LinearModel):
             The mean of ``X`` for each feature.
         """
         if not center:
-            X_m = np.zeros(X.shape[1], dtype=X.dtype)
-            return safe_sparse_dot(X.T, X, dense_output=True), X_m
+            # in this case centering has been done in preprocessing
+            # or we are not fitting an intercept.
+            X_mean = np.zeros(X.shape[1], dtype=X.dtype)
+            return safe_sparse_dot(X.T, X, dense_output=True), X_mean
+        # otherwise X is always sparse
         n_samples = X.shape[0]
         X_weighted = self._sqrt_sw_matrix.dot(X)
         X_mean, _ = mean_variance_axis(X_weighted, axis=0)
