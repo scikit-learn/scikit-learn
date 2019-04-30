@@ -328,7 +328,7 @@ def test_k_means_fortran_aligned_data():
     (4, 300, 1e-1),  # loose convergence
 ])
 def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
-    # check that fit.predict gives same result as fit_predict
+    # check that predict gives same result as fit_predict or labels_
     # There's a very small chance of failure with elkan on unstructured dataset
     # because predict method uses fast euclidean distances computation which
     # may cause small numerical instabilities.
