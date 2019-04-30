@@ -880,6 +880,12 @@ def test_gower_distances():
 
     D = gower_distances(X, Y)
 
+    # Test to obtain a non-squared distance matrix with numeric data only
+    X = np.array([[1.0, 0.0, 0.0], [0.181818, 0.0, 1], [0.0, 0.0, 0.160377]], dtype=object)
+    Y = np.array([[0.090909, 0.0, 0.500109]], dtype=object)
+    D = gower_distances(X, Y)
+
+
     # Simplified calculation of Gower distance for expected values
     n_rows, n_cols = X.shape[0], Y.shape[0]
     D_expected = np.zeros((n_rows, n_cols))
