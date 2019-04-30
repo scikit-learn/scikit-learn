@@ -919,7 +919,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         return self._label_binarizer.classes_
 
 
-def _centered_gram(X, center=True):
+def _compute_gram(X, center=True):
     """Computes centered Gram matrix.
 
     Notes
@@ -941,7 +941,7 @@ def _centered_gram(X, center=True):
             - X_mX - X_mX[:, None], X_m)
 
 
-def _centered_covariance(X, center=True):
+def _compute_covariance(X, center=True):
     """Computes centered Gram matrix.
 
     Notes
@@ -1071,7 +1071,7 @@ class _RidgeGCV(LinearModel):
     def _pre_compute(self, X, y):
         # if X is dense it has already been centered in preprocessing
         center = self.fit_intercept and sparse.issparse(X)
-        K, X_m = _centered_gram(X, center)
+        K, X_m = _compute_gram(X, center)
         if self.fit_intercept:
             if self._with_sw:
                 # to emulate centering X with sample weights,
@@ -1127,7 +1127,7 @@ class _RidgeGCV(LinearModel):
     def _pre_compute_svd_sparse(self, X, y):
         n, p = X.shape
         cov = np.empty((p + 1, p + 1))
-        cov[:-1, :-1], X_m = _centered_covariance(X, self.fit_intercept)
+        cov[:-1, :-1], X_m = _compute_covariance(X, self.fit_intercept)
         if not self.fit_intercept:
             cov = cov[:-1, :-1]
         # to emulate centering X with sample weights,
