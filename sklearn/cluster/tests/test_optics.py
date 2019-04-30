@@ -119,21 +119,7 @@ def test_extract_xi():
                    max_eps=np.inf, cluster_method='xi').fit(X)
     assert np.isclose(v_measure_score(clust.labels_, expected_labels), 1)
     assert np.array_equal(np.where(clust.labels_ == -1)[0],
-                      np.where(expected_labels == -1)[0])
-
-
-def test_cluster_hierarchy_():
-    rng = np.random.RandomState(0)
-    n_points_per_cluster = 100
-    C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2)
-    C2 = [0, 0] + 10 * rng.randn(n_points_per_cluster, 2)
-    X = np.vstack((C1, C2))
-    X = shuffle(X, random_state=0)
-
-    clusters = OPTICS(min_samples=20, xi=.1).fit(X).cluster_hierarchy_
-    assert clusters.shape == (2, 2)
-    diff = np.sum(clusters - np.array([[0, 99], [0, 199]]))
-    assert diff / len(X) < 0.05
+                          np.where(expected_labels == -1)[0])
 
 
 def test_correct_number_of_clusters():
