@@ -359,7 +359,8 @@ def test_ridge_gcv_sample_weights(
     sample_weights = 1. * sample_weights
     tiled_x, tiled_y = x[indices], y[indices]
     alphas = [1.]
-    ridge = Ridge(fit_intercept=fit_intercept, alpha=alphas[0], normalize=False)
+    ridge = Ridge(
+        fit_intercept=fit_intercept, alpha=alphas[0], normalize=False)
     ridge.fit(tiled_x, tiled_y)
     x_gcv = X_constructor(x)
     gcv = RidgeCV(fit_intercept=fit_intercept, alphas=alphas,
