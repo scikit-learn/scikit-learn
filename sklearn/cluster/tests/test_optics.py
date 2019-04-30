@@ -127,6 +127,7 @@ def test_extract_xi():
 
 
 def test_cluster_hierarchy_():
+    rng = np.random.RandomState(0)
     n_points_per_cluster = 100
     C1 = [0, 0] + 2 * rng.randn(n_points_per_cluster, 2)
     C2 = [0, 0] + 50 * rng.randn(n_points_per_cluster, 2)
