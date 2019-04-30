@@ -93,6 +93,47 @@ is equivalent to :func:`linear_kernel`, only slower.)
       Information Retrieval. Cambridge University Press.
       https://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
 
+.. _gower_distances:
+
+Gower distances
+-----------------
+The function :func:`gower_distances` computes the distances between the
+observations in X and Y, that may contain combinations of numerical, boolean,
+or categorical attributes, using an implementation of Gower Similarity.
+
+.. math::
+
+    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i\text{ is not missing or }y_i\text{ is not missing}\}|}
+
+Where:
+
+x, y : array_like (1, n_features) are the observations to be compared.
+
+s(x, y) : Calculates the similarity of all features (for k = 1 to n_features)
+of x and y, as described by the expressions:
+
+    s(x_k, y_k) = 0, if k represents a boolean or categorical attribute,
+    and they are equal.
+
+    s(x_k, y_k) = 1, if k represents a boolean or categorical attribute,
+    and they are unequal.
+
+    s(x_k, y_k) = abs(x_k - y_k), if k represents a numerical attribute.
+
+    s(x_k, y_k) = 0, if x_k or y_k are missing.
+
+
+The Gower formula combines a Manhattan (L1) distance for numeric features
+with Hamming distance for categorical features to obtain a general coefficient
+for categorical and numeric data. Numeric variables are expected to be scaled
+between 0 and 1.
+
+.. topic:: References:
+
+    * Gower, J.C., 1971, A General Coefficient of Similarity and Some of Its 
+    Properties, Biometrics, Vol. 27, No. 4. (Dec., 1971), pp. 857-871.
+    http://members.cbio.mines-paristech.fr/~jvert/svn/bibli/local/Gower1971general.pdf
+
 .. _linear_kernel:
 
 Linear kernel
