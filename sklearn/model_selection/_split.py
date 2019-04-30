@@ -2270,6 +2270,41 @@ class GapCrossValidator(metaclass=ABCMeta):
         return _build_repr(self)
 
 class GapLeavePOut(GapCrossValidator):
+    """Leave-P-Out cross-validator with Gap
+
+    Provides train/test indices to split data in train/test sets. This results
+    in testing on only consecutive samples of size p, while the remaining
+    samples (with the gap removed) form the training set in each iteration.
+
+    Parameters
+    ----------
+    p : int
+        Size of the test sets.
+
+    gap_before : int
+        Gap before the test sets.
+
+    gap_after : int
+        Gap after the test sets.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.model_selection import GapLeavePOut
+    >>> glpo = GapLeavePOut(2, 1, 1)
+    >>> glpo.get_n_splits(X)
+    4
+    >>> print(glpo)
+    GapLeavePOut(gap_after=1, gap_before=1, p=2)
+    >>> for train_index, test_index in glpo.split([0, 1, 2, 3, 4]):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [3 4] TEST: [0 1]
+    TRAIN: [4] TEST: [1 2]
+    TRAIN: [0] TEST: [2 3]
+    TRAIN: [0 1] TEST: [3 4]
+    """
 
     def __init__(self, p, gap_before=0, gap_after=0):
         self.p = p
