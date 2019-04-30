@@ -342,29 +342,31 @@ def test_ridge_gcv_vs_k_fold(gcv_mode, X_constructor, X_shape, fit_intercept,
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-4)
 
 
-def test_ridge_gcv_sample_weights():
+@pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
+@pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
+@pytest.mark.parametrize('fit_intercept', [True, False])
+@pytest.mark.parametrize('n_features', [7, 31])
+def test_ridge_gcv_sample_weights(
+        gcv_mode, X_constructor, fit_intercept, n_features):
     x, y, c = make_regression(
-        n_samples=23, n_features=7, n_targets=4, coef=True,
+        n_samples=23, n_features=n_features, n_targets=4, coef=True,
         random_state=0, shuffle=False, noise=30.)
     x += 30 * np.random.RandomState(0).randn(x.shape[1])
-    x_s = sp.csr_matrix(x)
     sample_weights = 3 * np.random.RandomState(0).randn(len(x))
     sample_weights = np.asarray(
         sample_weights - sample_weights.min() + 1, dtype=int)
     indices = np.concatenate([n * [i] for (i, n) in enumerate(sample_weights)])
     sample_weights = 1. * sample_weights
     tiled_x, tiled_y = x[indices], y[indices]
-    # loo scores won't be the same for expanded X and original X with sample
-    # weights so there must be only one value in the hyperparameter grid
     alphas = [1.]
-    ridge = Ridge(fit_intercept=True, alpha=alphas[0], normalize=False)
+    ridge = Ridge(fit_intercept=fit_intercept, alpha=alphas[0], normalize=False)
     ridge.fit(tiled_x, tiled_y)
-    for (gcv_mode, x_gcv) in product(['svd', 'eigen'], [x, x_s]):
-        gcv = RidgeCV(fit_intercept=True, alphas=alphas,
-                      normalize=False, gcv_mode=gcv_mode)
-        gcv.fit(x_gcv, y, sample_weight=sample_weights)
-        assert np.allclose(gcv.coef_, ridge.coef_, rtol=1e-2)
-        assert np.allclose(gcv.intercept_, ridge.intercept_, rtol=1e-2)
+    x_gcv = X_constructor(x)
+    gcv = RidgeCV(fit_intercept=fit_intercept, alphas=alphas,
+                  normalize=False, gcv_mode=gcv_mode)
+    gcv.fit(x_gcv, y, sample_weight=sample_weights)
+    assert np.allclose(gcv.coef_, ridge.coef_, rtol=1e-2)
+    assert np.allclose(gcv.intercept_, ridge.intercept_, rtol=1e-2)
 
 
 def _test_ridge_loo(filter_):
