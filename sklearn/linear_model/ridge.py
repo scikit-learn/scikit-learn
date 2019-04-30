@@ -920,8 +920,12 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
 
 def _check_gcv_mode(X, gcv_mode):
-    if gcv_mode not in {None, 'auto', 'svd', 'eigen'}:
-        raise ValueError('bad gcv_mode "%s"' % gcv_mode)
+    possible_gcv_modes = {None, 'auto', 'svd', 'eigen'}
+    if gcv_mode not in possible_gcv_modes:
+        raise ValueError(
+            "Unknown value for 'gcv_mode'. "
+            "Got {} instead of one of {}" .format(
+                gcv_mode, possible_gcv_modes))
     if gcv_mode not in {None, 'auto'}:
         return gcv_mode
     # if X has more rows than columns, use decomposition of X^T.X,
@@ -994,30 +998,41 @@ class _RidgeGCV(LinearModel):
         return D * B
 
     def _compute_gram(self, X, center=True):
-        """Computes centered Gram matrix.
+        """Computes the Gram matrix with possible centering.
 
-        Notes
-        -----
-        if center is True, compute
+        If ``center`` is ``True``, compute
         (X - X.mean(axis=0)).dot((X - X.mean(axis=0)).T)
-        else
-        X.dot(X.T)
+        else X.dot(X.T)
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            The input uncentered data.
+        center : bool, default is True
+            Whether or not to remove the mean from ``X``.
+
+        Returns
+        -------
+        gram : ndarray, shape (n_samples, n_samples)
+            The Gram matrix.
+        X_m : ndarray, shape (n_feature,)
+            The mean of ``X`` for each feature.
         """
         if not center:
             X_m = np.zeros(X.shape[1], dtype=X.dtype)
             return safe_sparse_dot(X, X.T, dense_output=True), X_m
-        n = X.shape[0]
-        X_w = self._sqrt_sw_matrix.dot(X)
-        X_m, _ = mean_variance_axis(X_w, axis=0)
-        X_m = X_m * n / self._weight_sum
+        n_samples = X.shape[0]
+        X_weighted = self._sqrt_sw_matrix.dot(X)
+        X_mean, _ = mean_variance_axis(X_weighted, axis=0)
+        X_mean *= n_samples / self._weight_sum
         X_mX = self._sqrt_sw[:, None] * safe_sparse_dot(
-            X_m, X.T, dense_output=True)
-        X_mX_m = np.empty((X.shape[0], X.shape[0]), dtype=X.dtype)
-        X_mX_m[:, :] = np.dot(X_m, X_m)
-        X_mX_m = X_mX_m * self._sqrt_sw
-        X_mX_m = X_mX_m * self._sqrt_sw[:, None]
+            X_mean, X.T, dense_output=True)
+        X_mX_m = np.empty((n_samples, n_samples), dtype=X.dtype)
+        X_mX_m[:, :] = np.dot(X_mean, X_mean)
+        X_mX_m *= self._sqrt_sw
+        X_mX_m *= self._sqrt_sw[:, None]
         return (safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m
-                - X_mX - X_mX.T, X_m)
+                - X_mX - X_mX.T, X_mean)
 
     def _compute_covariance(self, X, center=True):
         """Computes centered Gram matrix.
@@ -1028,17 +1043,31 @@ class _RidgeGCV(LinearModel):
         (X - X.mean(axis=0)).T.dot(X - X.mean(axis=0))
         else
         X.T.dot(X)
+
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            The input uncentered data.
+        center : bool, default is True
+            Whether or not to remove the mean from ``X``.
+
+        Returns
+        -------
+        covariance : ndarray, shape (n_features, n_features)
+            The covariance matrix.
+        X_m : ndarray, shape (n_feature,)
+            The mean of ``X`` for each feature.
         """
         if not center:
             X_m = np.zeros(X.shape[1], dtype=X.dtype)
             return safe_sparse_dot(X.T, X, dense_output=True), X_m
-        n = X.shape[0]
-        X_w = self._sqrt_sw_matrix.dot(X)
-        X_m, _ = mean_variance_axis(X_w, axis=0)
-        X_m = X_m * n / self._weight_sum
-        return safe_sparse_dot(
-            X.T, X, dense_output=True) - self._weight_sum * np.outer(
-                X_m, X_m), X_m
+        n_samples = X.shape[0]
+        X_weighted = self._sqrt_sw_matrix.dot(X)
+        X_mean, _ = mean_variance_axis(X_weighted, axis=0)
+        X_mean = X_mean * n_samples / self._weight_sum
+        return (safe_sparse_dot(X.T, X, dense_output=True) -
+                self._weight_sum * np.outer(X_mean, X_mean),
+                X_mean)
 
     def _sparse_multidot_diag(self, X, A, Xm):
         """
@@ -1101,7 +1130,7 @@ class _RidgeGCV(LinearModel):
             # when no sample weights) is the eigenvector of XX^T which
             # corresponds to the intercept; we cancel the regularization on
             # this dimension. the corresponding eigenvalue is
-            # sum(sample_weights).
+            # sum(sample_weight).
             if self._with_sw:
                 intercept_dim = np.isclose(
                     Q, self._normalized_sqrt_sw[:, None]).all(axis=0)
@@ -1179,7 +1208,7 @@ class _RidgeGCV(LinearModel):
         # is the eigenvector of X^TX which
         # corresponds to the intercept; we cancel the regularization on
         # this dimension. the corresponding eigenvalue is
-        # sum(sample_weights), e.g. n when uniform sample weights.
+        # sum(sample_weight), e.g. n when uniform sample weights.
         intercept_sv = np.zeros(V.shape[0])
         intercept_sv[-1] = 1
         intercept_dim = np.isclose(V, intercept_sv[:, None]).all(axis=0)
@@ -1300,6 +1329,11 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
+        if np.any(self.alphas <= 0):
+            raise ValueError(
+                "alphas must be positive. Got {} containing some "
+                "negative or null value instead.".format(self.alphas))
+
         X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
                          multi_output=True, y_numeric=True)
         if sample_weight is not None and not isinstance(sample_weight, float):
@@ -1340,7 +1374,6 @@ class _RidgeGCV(LinearModel):
             self._weight_sum = X.shape[0]
         self._sqrt_sw_matrix = sparse.dia_matrix(
             (self._sqrt_sw, 0), shape=(X.shape[0], X.shape[0]))
-        precomputed = _pre_compute(X, y)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
@@ -1348,11 +1381,7 @@ class _RidgeGCV(LinearModel):
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
-        if np.any(self.alphas <= 0):
-            raise ValueError(
-                "alphas must be positive. Got {} containing some "
-                "negative or null value instead.".format(self.alphas))
-
+        precomputed = _pre_compute(X, y)
         for i, alpha in enumerate(self.alphas):
             if error:
                 out, c = _errors(float(alpha), y, *precomputed)
