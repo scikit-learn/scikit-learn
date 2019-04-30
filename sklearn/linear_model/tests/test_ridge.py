@@ -316,12 +316,13 @@ def test_ridge_individual_penalties():
 @pytest.mark.parametrize('X_shape', [(11, 8), (11, 20)])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('normalize', [True, False])
+@pytest.mark.parametrize('noise', [1., 30.])
 def test_ridge_gcv_vs_k_fold(gcv_mode, X_constructor, X_shape, fit_intercept,
-                             normalize):
+                             normalize, noise):
     n_samples, n_features = X_shape
     X, y = make_regression(
         n_samples=n_samples, n_features=n_features, n_targets=3,
-        random_state=0, shuffle=False, noise=30., n_informative=5
+        random_state=0, shuffle=False, noise=noise, n_informative=5
     )
     X += 30 * np.random.RandomState(0).randn(X.shape[1])
 
@@ -346,13 +347,14 @@ def test_ridge_gcv_vs_k_fold(gcv_mode, X_constructor, X_shape, fit_intercept,
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('n_features', [11, 69])
+@pytest.mark.parametrize('noise', [1., 30.])
 def test_ridge_gcv_sample_weights(
-        gcv_mode, X_constructor, fit_intercept, n_features):
+        gcv_mode, X_constructor, fit_intercept, n_features, noise):
     alphas = [1e-3, .1, 1., 10., 1e3]
     rng = np.random.RandomState(0)
     x, y = datasets.make_regression(
         n_samples=59, n_features=n_features, n_targets=4,
-        random_state=0, shuffle=False, noise=30.)
+        random_state=0, shuffle=False, noise=noise)
     x += 30 * rng.randn(x.shape[1])
     sample_weight = 3 * rng.randn(len(x))
     sample_weight = (sample_weight - sample_weight.min() + 1).astype(int)
