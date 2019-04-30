@@ -359,24 +359,10 @@ def test_ridge_gcv_sample_weights():
     alphas = [1.]
     ridge = Ridge(fit_intercept=True, alpha=alphas[0], normalize=False)
     ridge.fit(tiled_x, tiled_y)
-    for gcv_mode in ['svd', 'eigen']:
+    for (gcv_mode, x_gcv) in product(['svd', 'eigen'], [x, x_s]):
         gcv = RidgeCV(fit_intercept=True, alphas=alphas,
                       normalize=False, gcv_mode=gcv_mode)
-        gcv.fit(x, y, sample_weight=sample_weights)
-        assert np.allclose(gcv.coef_, ridge.coef_, rtol=1e-2)
-        assert np.allclose(gcv.intercept_, ridge.intercept_, rtol=1e-2)
-
-    ridge = Ridge(fit_intercept=True, alpha=alphas[0], normalize=True,
-                  solver='sparse_cg')
-    # ridge.fit(sp.csr_matrix(tiled_x), tiled_y)
-    # TODO: once Ridge is fixed to handle correctly sparse x and sample
-    # weights, replace with the line above. For now we just check ridgecv and
-    # ridge give the same result
-    ridge.fit(x_s, y, sample_weight=sample_weights)
-    for gcv_mode in ['svd', 'eigen']:
-        gcv = RidgeCV(fit_intercept=True, scoring='neg_mean_squared_error',
-                      alphas=alphas, normalize=True, gcv_mode=gcv_mode)
-        ignore_warnings(gcv.fit)(x_s, y, sample_weight=sample_weights)
+        gcv.fit(x_gcv, y, sample_weight=sample_weights)
         assert np.allclose(gcv.coef_, ridge.coef_, rtol=1e-2)
         assert np.allclose(gcv.intercept_, ridge.intercept_, rtol=1e-2)
 
@@ -394,6 +380,11 @@ def _test_ridge_loo(filter_):
         X_diabetes_ = X_diabetes
     ridge_gcv = _RidgeGCV(fit_intercept=fit_intercept)
     ridge_gcv._with_sw = False
+    ridge_gcv._sqrt_sw = np.ones(X_diabetes_.shape[0])
+    ridge_gcv._sqrt_sw_matrix = sp.dia_matrix(
+        (ridge_gcv._sqrt_sw, 0),
+        shape=(X_diabetes_.shape[0], X_diabetes_.shape[0]))
+    ridge_gcv._weight_sum = X_diabetes_.shape[0]
     ridge = Ridge(alpha=1.0, fit_intercept=fit_intercept)
 
     # because fit_intercept is applied

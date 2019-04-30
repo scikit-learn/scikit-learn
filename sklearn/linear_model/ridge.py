@@ -1192,7 +1192,6 @@ class _RidgeGCV(LinearModel):
         w[intercept_dim] = 1 / s[intercept_dim]
         A = (V * w).dot(V.T)
         Xm = self._X_offset
-        S = self._sqrt_sw_matrix
         # add a column to X containing the square roots of sample weights
         sw = self._sqrt_sw if self._with_sw else np.ones(
             X.shape[0], dtype=X.dtype)
