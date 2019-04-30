@@ -18,7 +18,6 @@ from ..utils import gen_batches, get_chunk_n_rows
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from ..metrics import v_measure_score
 
 
 class OPTICS(BaseEstimator, ClusterMixin):
