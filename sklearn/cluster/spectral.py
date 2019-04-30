@@ -307,6 +307,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
 
+    n_components : integer, optional, default is n_clusters
+        Number of eigen vectors to use for the spectral embedding
+
     random_state : int, RandomState instance or None (default)
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
@@ -383,12 +386,12 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     ...         assign_labels="discretize",
     ...         random_state=0).fit(X)
     >>> clustering.labels_
-    array([1, 1, 1, 0, 0, 0])
+    array([1, 1, 1, 0, 0, 0], dtype=int64)
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
     SpectralClustering(affinity='rbf', assign_labels='discretize', coef0=1,
               degree=3, eigen_solver=None, eigen_tol=0.0, gamma=1.0,
-              kernel_params=None, n_clusters=2, n_init=10, n_jobs=None,
-              n_neighbors=10, random_state=0)
+              kernel_params=None, n_clusters=2, n_components=2, n_init=10,
+              n_jobs=None, n_neighbors=10, random_state=0)
 
     Notes
     -----
