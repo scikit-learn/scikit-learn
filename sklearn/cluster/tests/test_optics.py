@@ -107,6 +107,8 @@ def test_extract_xi():
                             -1, -1, [4] * 5]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
+    pytest.skip('FIXME (#13739): This is not stable across platforms.')
+
     clust = OPTICS(min_samples=3, min_cluster_size=3,
                    max_eps=np.inf, cluster_method='xi',
                    xi=0.1).fit(X)
