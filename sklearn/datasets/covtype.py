@@ -17,7 +17,7 @@ Courtesy of Jock A. Blackard and Colorado State University.
 from gzip import GzipFile
 import logging
 from os.path import dirname, exists, join
-from os import remove
+from os import remove, makedirs
 
 import numpy as np
 
@@ -26,7 +26,6 @@ from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import Bunch
 from .base import _pkl_filepath
-from ..utils.fixes import makedirs
 from ..utils import _joblib
 from ..utils import check_random_state
 
@@ -116,7 +115,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         remove(archive_path)
 
         X = Xy[:, :-1]
-        y = Xy[:, -1].astype(np.int32)
+        y = Xy[:, -1].astype(np.int32, copy=False)
 
         _joblib.dump(X, samples_path, compress=9)
         _joblib.dump(y, targets_path, compress=9)

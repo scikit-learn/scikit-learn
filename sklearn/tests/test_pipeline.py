@@ -5,17 +5,17 @@ from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
+import re
+import itertools
 
 import pytest
 import numpy as np
 from scipy import sparse
 
-from sklearn.externals.six.moves import zip
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
@@ -47,7 +47,7 @@ JUNK_FOOD_DOCS = (
 )
 
 
-class NoFit(object):
+class NoFit:
     """Small class to test parameter dispatching.
     """
 
@@ -203,7 +203,7 @@ def test_pipeline_init():
 
     # Test clone
     pipe2 = assert_no_warnings(clone, pipe)
-    assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
+    assert not pipe.named_steps['svc'] is pipe2.named_steps['svc']
 
     # Check that apart from estimators, the parameters are the same
     params = pipe.get_params(deep=True)
@@ -411,7 +411,7 @@ def test_fit_predict_with_intermediate_fit_params():
                      clf__should_succeed=True)
     assert pipe.named_steps['transf'].fit_params['should_get_this']
     assert pipe.named_steps['clf'].successful
-    assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
+    assert 'should_succeed' not in pipe.named_steps['transf'].fit_params
 
 
 def test_predict_with_predict_params():
@@ -451,7 +451,7 @@ def test_feature_union():
 
     # Test clone
     fs2 = assert_no_warnings(clone, fs)
-    assert_false(fs.transformer_list[0][1] is fs2.transformer_list[0][1])
+    assert fs.transformer_list[0][1] is not fs2.transformer_list[0][1]
 
     # test setting parameters
     fs.set_params(select__k=2)
@@ -531,6 +531,29 @@ def test_pipeline_fit_transform():
     assert_array_almost_equal(X_trans, X_trans2)
 
 
+def test_pipeline_slice():
+    pipe = Pipeline([('transf1', Transf()),
+                     ('transf2', Transf()),
+                     ('clf', FitParamT())])
+    pipe2 = pipe[:-1]
+    assert isinstance(pipe2, Pipeline)
+    assert pipe2.steps == pipe.steps[:-1]
+    assert 2 == len(pipe2.named_steps)
+    assert_raises(ValueError, lambda: pipe[::-1])
+
+
+def test_pipeline_index():
+    transf = Transf()
+    clf = FitParamT()
+    pipe = Pipeline([('transf', transf), ('clf', clf)])
+    assert pipe[0] == transf
+    assert pipe['transf'] == transf
+    assert pipe[-1] == clf
+    assert pipe['clf'] == clf
+    assert_raises(IndexError, lambda: pipe[3])
+    assert_raises(KeyError, lambda: pipe['foobar'])
+
+
 def test_set_pipeline_steps():
     transf1 = Transf()
     transf2 = Transf()
@@ -575,6 +598,27 @@ def test_pipeline_named_steps():
 
 
 @pytest.mark.parametrize('passthrough', [None, 'passthrough'])
+def test_pipeline_correctly_adjusts_steps(passthrough):
+    X = np.array([[1]])
+    y = np.array([1])
+    mult2 = Mult(mult=2)
+    mult3 = Mult(mult=3)
+    mult5 = Mult(mult=5)
+
+    pipeline = Pipeline([
+        ('m2', mult2),
+        ('bad', passthrough),
+        ('m3', mult3),
+        ('m5', mult5)
+    ])
+
+    pipeline.fit(X, y)
+    expected_names = ['m2', 'bad', 'm3', 'm5']
+    actual_names = [name for name, _ in pipeline.steps]
+    assert expected_names == actual_names
+
+
+@pytest.mark.parametrize('passthrough', [None, 'passthrough'])
 def test_set_pipeline_step_passthrough(passthrough):
     X = np.array([[1]])
     y = np.array([1])
@@ -605,6 +649,7 @@ def test_set_pipeline_step_passthrough(passthrough):
                        'memory': None,
                        'm2__mult': 2,
                        'last__mult': 5,
+                       'verbose': False
                        })
 
     pipeline.set_params(m2=passthrough)
@@ -652,25 +697,25 @@ def test_pipeline_ducktyping():
     pipeline.inverse_transform
 
     pipeline = make_pipeline(Transf())
-    assert_false(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline('passthrough')
     assert pipeline.steps[0] == ('passthrough', 'passthrough')
-    assert_false(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
     pipeline.inverse_transform
 
     pipeline = make_pipeline(Transf(), NoInvTransf())
-    assert_false(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
-    assert_false(hasattr(pipeline, 'inverse_transform'))
+    assert not hasattr(pipeline, 'inverse_transform')
 
     pipeline = make_pipeline(NoInvTransf(), Transf())
-    assert_false(hasattr(pipeline, 'predict'))
+    assert not hasattr(pipeline, 'predict')
     pipeline.transform
-    assert_false(hasattr(pipeline, 'inverse_transform'))
+    assert not hasattr(pipeline, 'inverse_transform')
 
 
 def test_make_pipeline():
@@ -928,12 +973,12 @@ def test_pipeline_wrong_memory():
                         " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
-class DummyMemory(object):
+class DummyMemory:
     def cache(self, func):
         return func
 
 
-class WrongDummyMemory(object):
+class WrongDummyMemory:
     pass
 
 
@@ -981,7 +1026,7 @@ def test_pipeline_memory():
         assert_array_equal(pipe.score(X, y), cached_pipe.score(X, y))
         assert_array_equal(pipe.named_steps['transf'].means_,
                            cached_pipe.named_steps['transf'].means_)
-        assert_false(hasattr(transf, 'means_'))
+        assert not hasattr(transf, 'means_')
         # Check that we are reading the cache while fitting
         # a second time
         cached_pipe.fit(X, y)
@@ -1027,5 +1072,66 @@ def test_make_pipeline_memory():
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())
     assert pipeline.memory is None
+    assert len(pipeline) == 2
 
     shutil.rmtree(cachedir)
+
+
+def test_pipeline_param_error():
+    clf = make_pipeline(LogisticRegression())
+    with pytest.raises(ValueError, match="Pipeline.fit does not accept "
+                                         "the sample_weight parameter"):
+        clf.fit([[0], [0]], [0, 1], sample_weight=[1, 1])
+
+
+parameter_grid_test_verbose = ((est, pattern, method) for
+                               (est, pattern), method in itertools.product(
+    [
+     (Pipeline([('transf', Transf()), ('clf', FitParamT())]),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$'),
+     (Pipeline([('transf', Transf()), ('noop', None),
+               ('clf', FitParamT())]),
+      r'\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n'
+      r'\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$'),
+     (Pipeline([('transf', Transf()), ('noop', 'passthrough'),
+               ('clf', FitParamT())]),
+      r'\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n'
+      r'\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$'),
+     (Pipeline([('transf', Transf()), ('clf', None)]),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$'),
+     (Pipeline([('transf', None), ('mult', Mult())]),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing mult.* total=.*\n$'),
+     (Pipeline([('transf', 'passthrough'), ('mult', Mult())]),
+      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+      r'\[Pipeline\].*\(step 2 of 2\) Processing mult.* total=.*\n$'),
+     (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
+      r'\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n'
+      r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'),
+     (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
+      r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$')
+    ], ['fit', 'fit_transform', 'fit_predict'])
+    if hasattr(est, method) and not (
+        method == 'fit_transform' and hasattr(est, 'steps') and
+        isinstance(est.steps[-1][1], FitParamT))
+)
+
+
+@pytest.mark.parametrize('est, pattern, method', parameter_grid_test_verbose)
+def test_verbose(est, method, pattern, capsys):
+    func = getattr(est, method)
+
+    X = [[1, 2, 3], [4, 5, 6]]
+    y = [[7], [8]]
+
+    est.set_params(verbose=False)
+    func(X, y)
+    assert not capsys.readouterr().out, 'Got output for verbose=False'
+
+    est.set_params(verbose=True)
+    func(X, y)
+    assert re.match(pattern, capsys.readouterr().out)

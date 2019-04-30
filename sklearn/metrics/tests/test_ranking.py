@@ -1,4 +1,3 @@
-from __future__ import division, print_function
 
 import pytest
 import numpy as np
@@ -951,6 +950,25 @@ def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
     check_alternative_lrap_implementation(
                label_ranking_average_precision_score,
                n_classes, n_samples, random_state)
+
+
+def test_lrap_sample_weighting_zero_labels():
+    # Degenerate sample labeling (e.g., zero labels for a sample) is a valid
+    # special case for lrap (the sample is considered to achieve perfect
+    # precision), but this case is not tested in test_common.
+    # For these test samples, the APs are 0.5, 0.75, and 1.0 (default for zero
+    # labels).
+    y_true = np.array([[1, 0, 0, 0], [1, 0, 0, 1], [0, 0, 0, 0]],
+                      dtype=np.bool)
+    y_score = np.array([[0.3, 0.4, 0.2, 0.1], [0.1, 0.2, 0.3, 0.4],
+                        [0.4, 0.3, 0.2, 0.1]])
+    samplewise_lraps = np.array([0.5, 0.75, 1.0])
+    sample_weight = np.array([1.0, 1.0, 0.0])
+
+    assert_almost_equal(
+        label_ranking_average_precision_score(y_true, y_score,
+                                              sample_weight=sample_weight),
+        np.sum(sample_weight * samplewise_lraps) / np.sum(sample_weight))
 
 
 def test_coverage_error():

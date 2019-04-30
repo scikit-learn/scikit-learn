@@ -39,7 +39,6 @@ Single and multi-output problems are both handled.
 #
 # License: BSD 3 clause
 
-from __future__ import division
 
 from warnings import catch_warnings, simplefilter, warn
 import threading
@@ -49,9 +48,8 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
-from ..base import ClassifierMixin, RegressorMixin
+from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..utils._joblib import Parallel, delayed
-from ..externals import six
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
@@ -63,6 +61,7 @@ from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import parallel_helper, _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -123,7 +122,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -142,7 +141,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  verbose=0,
                  warm_start=False,
                  class_weight=None):
-        super(BaseForest, self).__init__(
+        super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params)
@@ -243,7 +242,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.n_estimators == 'warn':
             warn("The default value of n_estimators will change from "
-                          "10 in version 0.20 to 100 in 0.22.", FutureWarning)
+                 "10 in version 0.20 to 100 in 0.22.", FutureWarning)
             self.n_estimators = 10
 
         # Validate or convert input data
@@ -313,11 +312,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 # would have got if we hadn't used a warm_start.
                 random_state.randint(MAX_INT, size=len(self.estimators_))
 
-            trees = []
-            for i in range(n_more_estimators):
-                tree = self._make_estimator(append=False,
-                                            random_state=random_state)
-                trees.append(tree)
+            trees = [self._make_estimator(append=False,
+                                          random_state=random_state)
+                     for i in range(n_more_estimators)]
 
             # Parallel loop: we prefer the threading backend as the Cython code
             # for fitting the trees is internally releasing the Python GIL
@@ -369,15 +366,23 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         feature_importances_ : array, shape = [n_features]
+            The values of this array sum to 1, unless all trees are single node
+            trees consisting of only the root node, in which case it will be an
+            array of zeros.
         """
         check_is_fitted(self, 'estimators_')
 
         all_importances = Parallel(n_jobs=self.n_jobs,
                                    **_joblib_parallel_args(prefer='threads'))(
             delayed(getattr)(tree, 'feature_importances_')
-            for tree in self.estimators_)
+            for tree in self.estimators_ if tree.tree_.node_count > 1)
 
-        return sum(all_importances) / len(self.estimators_)
+        if not all_importances:
+            return np.zeros(self.n_features_, dtype=np.float64)
+
+        all_importances = np.mean(all_importances,
+                                  axis=0, dtype=np.float64)
+        return all_importances / np.sum(all_importances)
 
 
 def _accumulate_prediction(predict, X, out, lock):
@@ -395,8 +400,7 @@ def _accumulate_prediction(predict, X, out, lock):
                 out[i] += prediction[i]
 
 
-class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
-                                          ClassifierMixin)):
+class ForestClassifier(BaseForest, ClassifierMixin, metaclass=ABCMeta):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -415,7 +419,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                  verbose=0,
                  warm_start=False,
                  class_weight=None):
-        super(ForestClassifier, self).__init__(
+        super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
@@ -436,10 +440,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         oob_decision_function = []
         oob_score = 0.0
-        predictions = []
-
-        for k in range(self.n_outputs_):
-            predictions.append(np.zeros((n_samples, n_classes_[k])))
+        predictions = [np.zeros((n_samples, n_classes_[k]))
+                       for k in range(self.n_outputs_)]
 
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
@@ -493,7 +495,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         if self.class_weight is not None:
             valid_presets = ('balanced', 'balanced_subsample')
-            if isinstance(self.class_weight, six.string_types):
+            if isinstance(self.class_weight, str):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
                                      '"balanced" and "balanced_subsample". Given "%s".'
@@ -547,7 +549,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         else:
             n_samples = proba[0].shape[0]
-            predictions = np.zeros((n_samples, self.n_outputs_))
+            # all dtypes should be the same, so just take the first
+            class_type = self.classes_[0].dtype
+            predictions = np.empty((n_samples, self.n_outputs_),
+                                   dtype=class_type)
 
             for k in range(self.n_outputs_):
                 predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
@@ -636,7 +641,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             return proba
 
 
-class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
+class ForestRegressor(BaseForest, RegressorMixin, metaclass=ABCMeta):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes
@@ -654,7 +659,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
                  random_state=None,
                  verbose=0,
                  warm_start=False):
-        super(ForestRegressor, self).__init__(
+        super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
@@ -863,7 +868,8 @@ class RandomForestClassifier(ForestClassifier):
 
 
     bootstrap : boolean, optional (default=True)
-        Whether bootstrap samples are used when building trees.
+        Whether bootstrap samples are used when building trees. If False, the
+        whole datset is used to build each tree.
 
     oob_score : bool (default=False)
         Whether to use out-of-bag samples to estimate
@@ -956,7 +962,7 @@ class RandomForestClassifier(ForestClassifier):
     ...                            random_state=0, shuffle=False)
     >>> clf = RandomForestClassifier(n_estimators=100, max_depth=2,
     ...                              random_state=0)
-    >>> clf.fit(X, y)
+    >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
                 max_depth=2, max_features='auto', max_leaf_nodes=None,
                 min_impurity_decrease=0.0, min_impurity_split=None,
@@ -1010,7 +1016,7 @@ class RandomForestClassifier(ForestClassifier):
                  verbose=0,
                  warm_start=False,
                  class_weight=None):
-        super(RandomForestClassifier, self).__init__(
+        super().__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -1153,7 +1159,8 @@ class RandomForestRegressor(ForestRegressor):
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     bootstrap : boolean, optional (default=True)
-        Whether bootstrap samples are used when building trees.
+        Whether bootstrap samples are used when building trees. If False, the
+        whole datset is used to build each tree.
 
     oob_score : bool, optional (default=False)
         whether to use out-of-bag samples to estimate
@@ -1208,7 +1215,7 @@ class RandomForestRegressor(ForestRegressor):
     ...                        random_state=0, shuffle=False)
     >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
     ...                              n_estimators=100)
-    >>> regr.fit(X, y)
+    >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=2,
                max_features='auto', max_leaf_nodes=None,
                min_impurity_decrease=0.0, min_impurity_split=None,
@@ -1235,7 +1242,7 @@ class RandomForestRegressor(ForestRegressor):
     search of the best split. To obtain a deterministic behaviour during
     fitting, ``random_state`` has to be fixed.
 
-    The default value ``max_features="auto"`` uses ``n_features`` 
+    The default value ``max_features="auto"`` uses ``n_features``
     rather than ``n_features / 3``. The latter was originally suggested in
     [1], whereas the former was more recently justified empirically in [2].
 
@@ -1244,7 +1251,7 @@ class RandomForestRegressor(ForestRegressor):
 
     .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
-    .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized 
+    .. [2] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
 
     See also
@@ -1268,7 +1275,7 @@ class RandomForestRegressor(ForestRegressor):
                  random_state=None,
                  verbose=0,
                  warm_start=False):
-        super(RandomForestRegressor, self).__init__(
+        super().__init__(
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -1403,7 +1410,8 @@ class ExtraTreesClassifier(ForestClassifier):
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     bootstrap : boolean, optional (default=False)
-        Whether bootstrap samples are used when building trees.
+        Whether bootstrap samples are used when building trees. If False, the
+        whole datset is used to build each tree.
 
     oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate
@@ -1496,7 +1504,7 @@ class ExtraTreesClassifier(ForestClassifier):
     References
     ----------
 
-    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized 
+    .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
            trees", Machine Learning, 63(1), 3-42, 2006.
 
     See also
@@ -1523,7 +1531,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  verbose=0,
                  warm_start=False,
                  class_weight=None):
-        super(ExtraTreesClassifier, self).__init__(
+        super().__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -1664,7 +1672,8 @@ class ExtraTreesRegressor(ForestRegressor):
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
     bootstrap : boolean, optional (default=False)
-        Whether bootstrap samples are used when building trees.
+        Whether bootstrap samples are used when building trees. If False, the
+        whole datset is used to build each tree.
 
     oob_score : bool, optional (default=False)
         Whether to use out-of-bag samples to estimate the R^2 on unseen data.
@@ -1745,7 +1754,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  random_state=None,
                  verbose=0,
                  warm_start=False):
-        super(ExtraTreesRegressor, self).__init__(
+        super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -1920,7 +1929,7 @@ class RandomTreesEmbedding(BaseForest):
                  random_state=None,
                  verbose=0,
                  warm_start=False):
-        super(RandomTreesEmbedding, self).__init__(
+        super().__init__(
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
@@ -2001,8 +2010,7 @@ class RandomTreesEmbedding(BaseForest):
 
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
-        super(RandomTreesEmbedding, self).fit(X, y,
-                                              sample_weight=sample_weight)
+        super().fit(X, y, sample_weight=sample_weight)
 
         self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output,
                                               categories='auto')
@@ -2023,4 +2031,5 @@ class RandomTreesEmbedding(BaseForest):
         X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
+        check_is_fitted(self, 'one_hot_encoder_')
         return self.one_hot_encoder_.transform(self.apply(X))

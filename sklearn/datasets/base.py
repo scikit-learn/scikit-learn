@@ -6,8 +6,6 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
-from __future__ import print_function
-
 import os
 import csv
 import sys
@@ -22,7 +20,7 @@ from ..utils import check_random_state
 
 import numpy as np
 
-from sklearn.externals.six.moves.urllib.request import urlretrieve
+from urllib.request import urlretrieve
 
 RemoteFileMetadata = namedtuple('RemoteFileMetadata',
                                 ['filename', 'url', 'checksum'])
@@ -547,7 +545,7 @@ def load_digits(n_class=10, return_X_y=False):
                       delimiter=',')
     with open(join(module_path, 'descr', 'digits.rst')) as f:
         descr = f.read()
-    target = data[:, -1].astype(np.int)
+    target = data[:, -1].astype(np.int, copy=False)
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
@@ -644,8 +642,8 @@ def load_linnerud(return_X_y=False):
     -------
     data : Bunch
         Dictionary-like object, the interesting attributes are: 'data' and
-        'targets', the two multivariate datasets, with 'data' corresponding to
-        the exercise and 'targets' corresponding to the physiological
+        'target', the two multivariate datasets, with 'data' corresponding to
+        the exercise and 'target' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
         In addition, you will also have access to 'data_filename',
         the physical location of linnerud data csv dataset, and
@@ -796,7 +794,7 @@ def load_sample_images():
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
     filenames = [join(module_path, filename)
-                 for filename in os.listdir(module_path)
+                 for filename in sorted(os.listdir(module_path))
                  if filename.endswith(".jpg")]
     # Load image data for each image in the source folder.
     images = [imread(filename) for filename in filenames]

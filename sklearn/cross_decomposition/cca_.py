@@ -1,9 +1,10 @@
 from .pls_ import _PLS
+from ..base import _UnstableArchMixin
 
 __all__ = ['CCA']
 
 
-class CCA(_PLS):
+class CCA(_PLS, _UnstableArchMixin):
     """CCA Canonical Correlation Analysis.
 
     CCA inherits from PLS with mode="B" and deflation_mode="canonical".
@@ -101,7 +102,7 @@ class CCA(_PLS):
 
     def __init__(self, n_components=2, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
-        super(CCA, self).__init__(n_components=n_components, scale=scale,
-                                  deflation_mode="canonical", mode="B",
-                                  norm_y_weights=True, algorithm="nipals",
-                                  max_iter=max_iter, tol=tol, copy=copy)
+        super().__init__(n_components=n_components, scale=scale,
+                         deflation_mode="canonical", mode="B",
+                         norm_y_weights=True, algorithm="nipals",
+                         max_iter=max_iter, tol=tol, copy=copy)

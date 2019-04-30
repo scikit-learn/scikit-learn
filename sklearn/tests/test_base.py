@@ -3,11 +3,10 @@
 
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 import sklearn
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
@@ -51,6 +50,25 @@ class T(BaseEstimator):
         self.b = b
 
 
+class NaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
+
+class NoNaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
+class OverrideTag(NaNTag):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
+class DiamondOverwriteTag(NaNTag, NoNaNTag):
+    pass
+
+
 class ModifyInitParams(BaseEstimator):
     """Deprecated behavior.
     Equal parameters but with a type cast.
@@ -67,7 +85,7 @@ class Buggy(BaseEstimator):
         self.a = 1
 
 
-class NoEstimator(object):
+class NoEstimator:
     def __init__(self):
         pass
 
@@ -116,7 +134,7 @@ def test_clone_2():
     selector = SelectFpr(f_classif, alpha=0.1)
     selector.own_attribute = "test"
     new_selector = clone(selector)
-    assert_false(hasattr(new_selector, "own_attribute"))
+    assert not hasattr(new_selector, "own_attribute")
 
 
 def test_clone_buggy():
@@ -187,7 +205,7 @@ def test_repr():
     )
 
     some_est = T(a=["long_params"] * 1000)
-    assert_equal(len(repr(some_est)), 415)
+    assert_equal(len(repr(some_est)), 495)
 
 
 def test_str():
@@ -212,8 +230,8 @@ def test_is_classifier():
     assert is_classifier(svc)
     assert is_classifier(GridSearchCV(svc, {'C': [0.1, 1]}))
     assert is_classifier(Pipeline([('svc', svc)]))
-    assert_true(is_classifier(Pipeline(
-        [('svc_cv', GridSearchCV(svc, {'C': [0.1, 1]}))])))
+    assert is_classifier(Pipeline(
+        [('svc_cv', GridSearchCV(svc, {'C': [0.1, 1]}))]))
 
 
 def test_set_params():
@@ -235,7 +253,7 @@ def test_set_params_passes_all_parameters():
 
     class TestDecisionTree(DecisionTreeClassifier):
         def set_params(self, **kwargs):
-            super(TestDecisionTree, self).set_params(**kwargs)
+            super().set_params(**kwargs)
             # expected_kwargs is in test scope
             assert kwargs == expected_kwargs
             return self
@@ -362,7 +380,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
     tree = TreeNoVersion().fit(iris.data, iris.target)
 
     tree_pickle_noversion = pickle.dumps(tree)
-    assert_false(b"version" in tree_pickle_noversion)
+    assert b"version" not in tree_pickle_noversion
     message = pickle_error_message.format(estimator="TreeNoVersion",
                                           old_version="pre-0.18",
                                           current_version=sklearn.__version__)
@@ -383,7 +401,7 @@ def test_pickle_version_no_warning_is_issued_with_non_sklearn_estimator():
         TreeNoVersion.__module__ = module_backup
 
 
-class DontPickleAttributeMixin(object):
+class DontPickleAttributeMixin:
     def __getstate__(self):
         data = self.__dict__.copy()
         data["_attribute_not_pickled"] = None
@@ -451,3 +469,43 @@ def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator_restored = pickle.loads(serialized)
     assert_equal(estimator_restored.attribute_pickled, 5)
     assert_equal(estimator_restored._attribute_not_pickled, None)
+
+
+def test_tag_inheritance():
+    # test that changing tags by inheritance is not allowed
+
+    nan_tag_est = NaNTag()
+    no_nan_tag_est = NoNaNTag()
+    assert nan_tag_est._get_tags()['allow_nan']
+    assert not no_nan_tag_est._get_tags()['allow_nan']
+
+    invalid_tags_est = OverrideTag()
+    with pytest.raises(TypeError, match="Inconsistent values for tag"):
+        invalid_tags_est._get_tags()
+
+    diamond_tag_est = DiamondOverwriteTag()
+    with pytest.raises(TypeError, match="Inconsistent values for tag"):
+        diamond_tag_est._get_tags()
+
+
+# XXX: Remove in 0.23
+def test_regressormixin_score_multioutput():
+    from sklearn.linear_model import LinearRegression
+    # no warnings when y_type is continuous
+    X = [[1], [2], [3]]
+    y = [1, 2, 3]
+    reg = LinearRegression().fit(X, y)
+    assert_no_warnings(reg.score, X, y)
+    # warn when y_type is continuous-multioutput
+    y = [[1, 2], [2, 3], [3, 4]]
+    reg = LinearRegression().fit(X, y)
+    msg = ("The default value of multioutput (not exposed in "
+           "score method) will change from 'variance_weighted' "
+           "to 'uniform_average' in 0.23 to keep consistent "
+           "with 'metrics.r2_score'. To specify the default "
+           "value manually and avoid the warning, please "
+           "either call 'metrics.r2_score' directly or make a "
+           "custom scorer with 'metrics.make_scorer' (the "
+           "built-in scorer 'r2' uses "
+           "multioutput='uniform_average').")
+    assert_warns_message(FutureWarning, msg, reg.score, X, y)

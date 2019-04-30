@@ -40,6 +40,7 @@ import scipy.sparse as sp
 import itertools
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
+from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
@@ -54,7 +55,6 @@ from .utils.metaestimators import _safe_split, if_delegate_has_method
 
 from .utils._joblib import Parallel
 from .utils._joblib import delayed
-from .externals.six.moves import zip as izip
 
 __all__ = [
     "OneVsRestClassifier",
@@ -130,7 +130,8 @@ class _ConstantPredictor(BaseEstimator):
                          X.shape[0], axis=0)
 
 
-class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin,
+                          MultiOutputMixin):
     """One-vs-the-rest (OvR) multiclass/multilabel strategy
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
@@ -268,7 +269,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_partial_fit_binary)(estimator, X, column)
-            for estimator, column in izip(self.estimators_, columns))
+            for estimator, column in zip(self.estimators_, columns))
 
         return self
 
@@ -301,7 +302,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                 pred = _predict_binary(e, X)
                 np.maximum(maxima, pred, out=maxima)
                 argmaxima[maxima == pred] = i
-            return self.classes_[np.array(argmaxima.T)]
+            return self.classes_[argmaxima]
         else:
             indices = array.array('i')
             indptr = array.array('i', [0])
@@ -464,11 +465,15 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     Attributes
     ----------
-    estimators_ : list of `n_classes * (n_classes - 1) / 2` estimators
+    estimators_ : list of ``n_classes * (n_classes - 1) / 2`` estimators
         Estimators used for predictions.
 
     classes_ : numpy array of shape [n_classes]
         Array containing labels.
+
+    pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
+        Indices of samples used when training the estimators.
+        ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
     """
 
     def __init__(self, estimator, n_jobs=None):
@@ -504,11 +509,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             for i in range(n_classes) for j in range(i + 1, n_classes)))))
 
         self.estimators_ = estimators_indices[0]
-        try:
-            self.pairwise_indices_ = (
-                estimators_indices[1] if self._pairwise else None)
-        except AttributeError:
-            self.pairwise_indices_ = None
+        self.pairwise_indices_ = (
+            estimators_indices[1] if self._pairwise else None)
 
         return self
 
@@ -557,7 +559,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             n_jobs=self.n_jobs)(
                 delayed(_partial_fit_ovo_binary)(
                     estimator, X, y, self.classes_[i], self.classes_[j])
-                for estimator, (i, j) in izip(self.estimators_,
+                for estimator, (i, j) in zip(self.estimators_,
                                               (combinations)))
 
         self.pairwise_indices_ = None
@@ -743,7 +745,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         else:
             self.code_book_[self.code_book_ != 1] = 0
 
-        classes_index = dict((c, i) for i, c in enumerate(self.classes_))
+        classes_index = {c: i for i, c in enumerate(self.classes_)}
 
         Y = np.array([self.code_book_[classes_index[y[i]]]
                       for i in range(X.shape[0])], dtype=np.int)

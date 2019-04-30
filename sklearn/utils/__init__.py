@@ -1,9 +1,12 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
+from collections.abc import Sequence
+from contextlib import contextmanager
 import numbers
 import platform
 import struct
+import timeit
 
 import warnings
 import numpy as np
@@ -13,13 +16,12 @@ from .murmurhash import murmurhash3_32
 from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
-from .fixes import _Sequence as Sequence
 from .deprecation import deprecated
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric)
+                         check_symmetric, check_scalar)
 from .. import get_config
 
 
@@ -60,11 +62,11 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_random_state",
            "compute_class_weight", "compute_sample_weight",
            "column_or_1d", "safe_indexing",
-           "check_consistent_length", "check_X_y", 'indexable',
+           "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
            "cpu_count", "Parallel", "Memory", "delayed", "parallel_backend",
            "register_parallel_backend", "hash", "effective_n_jobs",
-           "resample", "shuffle"]
+           "resample", "shuffle", "check_matplotlib_support"]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -90,7 +92,7 @@ class Bunch(dict):
     """
 
     def __init__(self, **kwargs):
-        super(Bunch, self).__init__(kwargs)
+        super().__init__(kwargs)
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -252,6 +254,10 @@ def resample(*arrays, **options):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
+    stratify : array-like or None (default=None)
+        If not None, data is split in a stratified fashion, using this as
+        the class labels.
+
     Returns
     -------
     resampled_arrays : sequence of indexable data-structures
@@ -290,14 +296,23 @@ def resample(*arrays, **options):
       >>> resample(y, n_samples=2, random_state=0)
       array([0, 1])
 
+    Example using stratification::
+
+      >>> y = [0, 0, 1, 1, 1, 1, 1, 1, 1]
+      >>> resample(y, n_samples=5, replace=False, stratify=y,
+      ...          random_state=0)
+      [1, 1, 1, 0, 1]
+
 
     See also
     --------
     :func:`sklearn.utils.shuffle`
     """
+
     random_state = check_random_state(options.pop('random_state', None))
     replace = options.pop('replace', True)
     max_n_samples = options.pop('n_samples', None)
+    stratify = options.pop('stratify', None)
     if options:
         raise ValueError("Unexpected kw arguments: %r" % options.keys())
 
@@ -316,12 +331,42 @@ def resample(*arrays, **options):
 
     check_consistent_length(*arrays)
 
-    if replace:
-        indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+    if stratify is None:
+        if replace:
+            indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+        else:
+            indices = np.arange(n_samples)
+            random_state.shuffle(indices)
+            indices = indices[:max_n_samples]
     else:
-        indices = np.arange(n_samples)
-        random_state.shuffle(indices)
-        indices = indices[:max_n_samples]
+        # Code adapted from StratifiedShuffleSplit()
+        y = check_array(stratify, ensure_2d=False, dtype=None)
+        if y.ndim == 2:
+            # for multi-label y, map each distinct row to a string repr
+            # using join because str(row) uses an ellipsis if len(row) > 1000
+            y = np.array([' '.join(row.astype('str')) for row in y])
+
+        classes, y_indices = np.unique(y, return_inverse=True)
+        n_classes = classes.shape[0]
+
+        class_counts = np.bincount(y_indices)
+
+        # Find the sorted list of instances for each class:
+        # (np.unique above performs a sort, so code is O(n logn) already)
+        class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
+                                 np.cumsum(class_counts)[:-1])
+
+        n_i = _approximate_mode(class_counts, max_n_samples, random_state)
+
+        indices = []
+
+        for i in range(n_classes):
+            indices_i = random_state.choice(class_indices[i], n_i[i],
+                                            replace=replace)
+            indices.extend(indices_i)
+
+        indices = random_state.permutation(indices)
+
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
@@ -567,6 +612,60 @@ def indices_to_mask(indices, mask_length):
     return mask
 
 
+def _message_with_time(source, message, time):
+    """Create one line message for logging purposes
+
+    Parameters
+    ----------
+    source : str
+        String indicating the source or the reference of the message
+
+    message : str
+        Short message
+
+    time : int
+        Time in seconds
+    """
+    start_message = "[%s] " % source
+
+    # adapted from joblib.logger.short_format_time without the Windows -.1s
+    # adjustment
+    if time > 60:
+        time_str = "%4.1fmin" % (time / 60)
+    else:
+        time_str = " %5.1fs" % time
+    end_message = " %s, total=%s" % (message, time_str)
+    dots_len = (70 - len(start_message) - len(end_message))
+    return "%s%s%s" % (start_message, dots_len * '.', end_message)
+
+
+@contextmanager
+def _print_elapsed_time(source, message=None):
+    """Log elapsed time to stdout when the context is exited
+
+    Parameters
+    ----------
+    source : str
+        String indicating the source or the reference of the message
+
+    message : str or None
+        Short message. If None, nothing will be printed
+
+    Returns
+    -------
+    context_manager
+        Prints elapsed time upon exit if verbose
+    """
+    if message is None:
+        yield
+    else:
+        start = timeit.default_timer()
+        yield
+        print(
+            _message_with_time(source, message,
+                               timeit.default_timer() - start))
+
+
 def get_chunk_n_rows(row_bytes, max_n_rows=None,
                      working_memory=None):
     """Calculates how many rows can be processed within working_memory
@@ -633,9 +732,95 @@ def is_scalar_nan(x):
     >>> is_scalar_nan([np.nan])
     False
     """
-
     # convert from numpy.bool_ to python bool to ensure that testing
     # is_scalar_nan(x) is True does not fail.
-    # Redondant np.floating is needed because numbers can't match np.float32
-    # in python 2.
-    return bool(isinstance(x, (numbers.Real, np.floating)) and np.isnan(x))
+    return bool(isinstance(x, numbers.Real) and np.isnan(x))
+
+
+def _approximate_mode(class_counts, n_draws, rng):
+    """Computes approximate mode of multivariate hypergeometric.
+
+    This is an approximation to the mode of the multivariate
+    hypergeometric given by class_counts and n_draws.
+    It shouldn't be off by more than one.
+
+    It is the mostly likely outcome of drawing n_draws many
+    samples from the population given by class_counts.
+
+    Parameters
+    ----------
+    class_counts : ndarray of int
+        Population per class.
+    n_draws : int
+        Number of draws (samples to draw) from the overall population.
+    rng : random state
+        Used to break ties.
+
+    Returns
+    -------
+    sampled_classes : ndarray of int
+        Number of samples drawn from each class.
+        np.sum(sampled_classes) == n_draws
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils import _approximate_mode
+    >>> _approximate_mode(class_counts=np.array([4, 2]), n_draws=3, rng=0)
+    array([2, 1])
+    >>> _approximate_mode(class_counts=np.array([5, 2]), n_draws=4, rng=0)
+    array([3, 1])
+    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
+    ...                   n_draws=2, rng=0)
+    array([0, 1, 1, 0])
+    >>> _approximate_mode(class_counts=np.array([2, 2, 2, 1]),
+    ...                   n_draws=2, rng=42)
+    array([1, 1, 0, 0])
+    """
+    rng = check_random_state(rng)
+    # this computes a bad approximation to the mode of the
+    # multivariate hypergeometric given by class_counts and n_draws
+    continuous = n_draws * class_counts / class_counts.sum()
+    # floored means we don't overshoot n_samples, but probably undershoot
+    floored = np.floor(continuous)
+    # we add samples according to how much "left over" probability
+    # they had, until we arrive at n_samples
+    need_to_add = int(n_draws - floored.sum())
+    if need_to_add > 0:
+        remainder = continuous - floored
+        values = np.sort(np.unique(remainder))[::-1]
+        # add according to remainder, but break ties
+        # randomly to avoid biases
+        for value in values:
+            inds, = np.where(remainder == value)
+            # if we need_to_add less than what's in inds
+            # we draw randomly from them.
+            # if we need to add more, we add them all and
+            # go to the next value
+            add_now = min(len(inds), need_to_add)
+            inds = rng.choice(inds, size=add_now, replace=False)
+            floored[inds] += 1
+            need_to_add -= add_now
+            if need_to_add == 0:
+                break
+    return floored.astype(np.int)
+
+
+def check_matplotlib_support(caller_name):
+    """Raise ImportError with detailed error message if mpl is not installed.
+
+    Plot utilities like :func:`plot_partial_dependence` should lazily import
+    matplotlib and call this helper before any computation.
+
+    Parameters
+    ----------
+    caller_name : str
+        The name of the caller that requires matplotlib.
+    """
+    try:
+        import matplotlib  # noqa
+    except ImportError as e:
+        raise ImportError(
+            "{} requires matplotlib. You can install matplotlib with "
+            "`pip install matplotlib`".format(caller_name)
+        ) from e

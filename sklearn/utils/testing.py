@@ -11,28 +11,27 @@
 #          Thierry Guillemot
 # License: BSD 3 clause
 import os
+import os.path as op
 import inspect
 import pkgutil
 import warnings
 import sys
 import functools
+import tempfile
+from subprocess import check_output, STDOUT, CalledProcessError
+from subprocess import TimeoutExpired
+
 
 import scipy as sp
 import scipy.io
 from functools import wraps
 from operator import itemgetter
-try:
-    # Python 2
-    from urllib2 import urlopen
-    from urllib2 import HTTPError
-except ImportError:
-    # Python 3+
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
+from inspect import signature
+from urllib.request import urlopen
+from urllib.error import HTTPError
 
 import tempfile
 import shutil
-import os.path as op
 import atexit
 import unittest
 
@@ -42,12 +41,20 @@ try:
 except NameError:
     WindowsError = None
 
-import sklearn
-from sklearn.base import BaseEstimator
-from sklearn.utils._joblib import joblib
-from sklearn.utils.fixes import signature
-from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from numpy.testing import assert_allclose
+from numpy.testing import assert_almost_equal
+from numpy.testing import assert_approx_equal
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_less
+import numpy as np
 
+import sklearn
+from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
+                          RegressorMixin, TransformerMixin)
+from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils._joblib import joblib
+from sklearn.utils._unittest_backport import TestCase
 
 additional_names_in_all = []
 try:
@@ -73,31 +80,19 @@ try:
 except ImportError:
     pass
 
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_less
-from numpy.testing import assert_approx_equal
-import numpy as np
-
-from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
-                          ClusterMixin)
-from sklearn.utils._unittest_backport import TestCase
-
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
-           "assert_approx_equal", "SkipTest"]
+           "assert_approx_equal", "assert_allclose",
+           "assert_run_python_script", "SkipTest"]
 __all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
 assert_not_equal = _dummy.assertNotEqual
-assert_true = _dummy.assertTrue
-assert_false = _dummy.assertFalse
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
@@ -113,6 +108,16 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
+
+deprecation_message = "'assert_true' is deprecated in version 0.21 " \
+                      "and will be removed in version 0.23. " \
+                      "Please use 'assert' instead."
+assert_true = deprecated(deprecation_message)(_dummy.assertTrue)
+
+deprecation_message = "'assert_false' is deprecated in version 0.21 " \
+                      "and will be removed in version 0.23. " \
+                      "Please use 'assert' instead."
+assert_false = deprecated(deprecation_message)(_dummy.assertFalse)
 
 
 def assert_warns(warning_class, func, *args, **kw):
@@ -320,7 +325,7 @@ def ignore_warnings(obj=None, category=Warning):
         return _IgnoreWarnings(category=category)
 
 
-class _IgnoreWarnings(object):
+class _IgnoreWarnings:
     """Improved and simplified Python warnings context manager and decorator.
 
     This class allows the user to ignore the warnings raised by a function.
@@ -378,11 +383,6 @@ class _IgnoreWarnings(object):
         self.log[:] = []
         clean_warning_registry()
 
-
-assert_less = _dummy.assertLess
-assert_greater = _dummy.assertGreater
-
-assert_allclose = np.testing.assert_allclose
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
     """Helper function to test the message raised in an exception.
@@ -512,7 +512,7 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
 
 
 @deprecated('deprecated in version 0.20 to be removed in version 0.22')
-class mock_mldata_urlopen(object):
+class mock_mldata_urlopen:
     """Object that mocks the urlopen function to fake requests to mldata.
 
     When requesting a dataset with a name that is in mock_datasets, this object
@@ -582,38 +582,9 @@ def uninstall_mldata_mock():
     datasets.mldata.urlopen = urlopen
 
 
-# Meta estimators need another estimator to be instantiated.
-META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
-                   "MultiOutputRegressor", "MultiOutputClassifier",
-                   "OutputCodeClassifier", "OneVsRestClassifier",
-                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
-                   "RegressorChain"]
-# estimators that there is no way to default-construct sensibly
-OTHER = ["Pipeline", "FeatureUnion",
-         "GridSearchCV", "RandomizedSearchCV",
-         "SelectFromModel", "ColumnTransformer"]
-
-# some strange ones
-DONT_TEST = ['SparseCoder', 'DictVectorizer',
-             'LabelBinarizer', 'LabelEncoder',
-             'MultiLabelBinarizer', 'TfidfTransformer',
-             'TfidfVectorizer', 'IsotonicRegression',
-             'OneHotEncoder', 'RandomTreesEmbedding', 'OrdinalEncoder',
-             'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
-             'TruncatedSVD', 'PolynomialFeatures',
-             'GaussianRandomProjectionHash', 'HashingVectorizer',
-             'CheckingClassifier', 'PatchExtractor', 'CountVectorizer',
-             # GradientBoosting base estimators, maybe should
-             # exclude them in another way
-             'ZeroEstimator', 'ScaledLogOddsEstimator',
-             'QuantileEstimator', 'MeanEstimator',
-             'LogOddsEstimator', 'PriorProbabilityEstimator',
-             '_SigmoidCalibration', 'VotingClassifier']
-
-
-def all_estimators(include_meta_estimators=False,
-                   include_other=False, type_filter=None,
-                   include_dont_test=False):
+def all_estimators(include_meta_estimators=None,
+                   include_other=None, type_filter=None,
+                   include_dont_test=None):
     """Get a list of all estimators from sklearn.
 
     This function crawls the module and gets all classes that inherit
@@ -624,15 +595,16 @@ def all_estimators(include_meta_estimators=False,
     Parameters
     ----------
     include_meta_estimators : boolean, default=False
-        Whether to include meta-estimators that can be constructed using
-        an estimator as their first argument. These are currently
-        BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
-        OneVsRestClassifier, RFE, RFECV.
+        Deprecated, ignored.
+        .. deprecated:: 0.21
+           ``include_meta_estimators`` has been deprecated and has no effect in
+           0.21 and will be removed in 0.23.
 
     include_other : boolean, default=False
-        Wether to include meta-estimators that are somehow special and can
-        not be default-constructed sensibly. These are currently
-        Pipeline, FeatureUnion and GridSearchCV
+        Deprecated, ignored.
+        .. deprecated:: 0.21
+           ``include_other`` has been deprecated and has not effect in 0.21 and
+           will be removed in 0.23.
 
     type_filter : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
@@ -642,7 +614,10 @@ def all_estimators(include_meta_estimators=False,
         get the estimators that fit at least one of the types.
 
     include_dont_test : boolean, default=False
-        Whether to include "special" label estimator or test processors.
+        Deprecated, ignored.
+        .. deprecated:: 0.21
+           ``include_dont_test`` has been deprecated and has no effect in 0.21
+           and will be removed in 0.23.
 
     Returns
     -------
@@ -657,12 +632,27 @@ def all_estimators(include_meta_estimators=False,
             return False
         return True
 
+    if include_other is not None:
+        warnings.warn("include_other was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
+    if include_dont_test is not None:
+        warnings.warn("include_dont_test was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
+    if include_meta_estimators is not None:
+        warnings.warn("include_meta_estimators was deprecated in version 0.21,"
+                      " has no effect and will be removed in 0.23",
+                      DeprecationWarning)
+
     all_classes = []
     # get parent folder
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname:
+        if ".tests." in modname or "externals" in modname:
             continue
         if IS_PYPY and ('_svmlight_format' in modname or
                         'feature_extraction._hashing' in modname):
@@ -679,14 +669,6 @@ def all_estimators(include_meta_estimators=False,
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
-    if not include_dont_test:
-        estimators = [c for c in estimators if not c[0] in DONT_TEST]
-
-    if not include_other:
-        estimators = [c for c in estimators if not c[0] in OTHER]
-    # possibly get rid of meta estimators
-    if not include_meta_estimators:
-        estimators = [c for c in estimators if not c[0] in META_ESTIMATORS]
     if type_filter is not None:
         if not isinstance(type_filter, list):
             type_filter = [type_filter]
@@ -802,8 +784,6 @@ def clean_warning_registry():
     """
     reg = "__warningregistry__"
     for mod_name, mod in list(sys.modules.items()):
-        if 'six.moves' in mod_name:
-            continue
         if hasattr(mod, reg):
             getattr(mod, reg).clear()
 
@@ -828,7 +808,7 @@ def _delete_folder(folder_path, warn=False):
             warnings.warn("Could not delete temporary folder %s" % folder_path)
 
 
-class TempMemmap(object):
+class TempMemmap:
     """
     Parameters
     ----------
@@ -995,3 +975,70 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
             if n1 != n2:
                 incorrect += [func_name + ' ' + n1 + ' != ' + n2]
     return incorrect
+
+
+def assert_run_python_script(source_code, timeout=60):
+    """Utility to check assertions in an independent Python subprocess.
+
+    The script provided in the source code should return 0 and not print
+    anything on stderr or stdout.
+
+    This is a port from cloudpickle https://github.com/cloudpipe/cloudpickle
+
+    Parameters
+    ----------
+    source_code : str
+        The Python source code to execute.
+    timeout : int
+        Time in seconds before timeout.
+    """
+    fd, source_file = tempfile.mkstemp(suffix='_src_test_sklearn.py')
+    os.close(fd)
+    try:
+        with open(source_file, 'wb') as f:
+            f.write(source_code.encode('utf-8'))
+        cmd = [sys.executable, source_file]
+        cwd = op.normpath(op.join(op.dirname(sklearn.__file__), '..'))
+        env = os.environ.copy()
+        kwargs = {
+            'cwd': cwd,
+            'stderr': STDOUT,
+            'env': env,
+        }
+        # If coverage is running, pass the config file to the subprocess
+        coverage_rc = os.environ.get("COVERAGE_PROCESS_START")
+        if coverage_rc:
+            kwargs['env']['COVERAGE_PROCESS_START'] = coverage_rc
+
+        kwargs['timeout'] = timeout
+        try:
+            try:
+                out = check_output(cmd, **kwargs)
+            except CalledProcessError as e:
+                raise RuntimeError(u"script errored with output:\n%s"
+                                   % e.output.decode('utf-8'))
+            if out != b"":
+                raise AssertionError(out.decode('utf-8'))
+        except TimeoutExpired as e:
+            raise RuntimeError(u"script timeout, output so far:\n%s"
+                               % e.output.decode('utf-8'))
+    finally:
+        os.unlink(source_file)
+
+
+def close_figure(fig=None):
+    """Close a matplotlibt figure.
+
+    Parameters
+    ----------
+    fig : int or str or Figure, optional (default=None)
+        The figure, figure number or figure name to close. If ``None``, all
+        current figures are closed.
+    """
+    from matplotlib.pyplot import get_fignums, close as _close  # noqa
+
+    if fig is None:
+        for fig in get_fignums():
+            _close(fig)
+    else:
+        _close(fig)

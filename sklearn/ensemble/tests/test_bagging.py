@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
@@ -86,7 +85,7 @@ def test_sparse_classification():
         """SVC variant that records the nature of the training set"""
 
         def fit(self, X, y):
-            super(CustomSVC, self).fit(X, y)
+            super().fit(X, y)
             self.data_type_ = type(X)
             return self
 
@@ -174,7 +173,7 @@ def test_sparse_regression():
         """SVC variant that records the nature of the training set"""
 
         def fit(self, X, y):
-            super(CustomSVR, self).fit(X, y)
+            super().fit(X, y)
             self.data_type_ = type(X)
             return self
 
@@ -434,7 +433,7 @@ def test_error():
                   BaggingClassifier(base, max_features="foobar").fit, X, y)
 
     # Test support of decision_function
-    assert_false(hasattr(BaggingClassifier(base).fit(X, y), 'decision_function'))
+    assert not hasattr(BaggingClassifier(base).fit(X, y), 'decision_function')
 
 
 def test_parallel_classification():
@@ -519,7 +518,7 @@ def test_parallel_regression():
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_gridsearch():
     # Check that bagging ensembles can be grid-searched.
     # Transform iris into a binary classification task
@@ -811,7 +810,7 @@ def test_set_oob_score_label_encoding():
 
 
 def replace(X):
-    X = X.copy().astype('float')
+    X = X.astype('float', copy=True)
     X[~np.isfinite(X)] = 0
     return X
 

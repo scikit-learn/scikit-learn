@@ -504,7 +504,8 @@ div.body h6 {
 
 div.body h1,
 div.body h2,
-div.body h3 {
+div.body h3,
+div.body h4 {
     padding: 10px;
     text-align: center;
     border-radius: 10px;
@@ -513,7 +514,8 @@ div.body h3 {
 }
 
 div.body h2,
-div.body h3 {
+div.body h3,
+div.body h4 {
     text-align: left;
 }
 
@@ -537,9 +539,13 @@ div.body h3 {
     background-color: #eee;
     padding: 5px;
     border-radius: 10px;
-
 }
-div.body h4 { font-size: 110%; background-color: #F4F4F4; }
+div.body h4 { 
+    font-size: 110%; 
+    background-color: #F4F4F4; 
+    padding: 5px;
+    border-radius: 10px;
+}
 div.body h5 { font-size: 100%; background-color: #F4F4F4; }
 div.body h6 { font-size: 100%; background-color: #F4F4F4; }
 
@@ -1129,6 +1135,13 @@ table.docutils.citation tr td.label, table.docutils.footnote tr td.label {
     border-radius: 0px;
     color: #1D1F22;
     text-shadow: none;
+}
+
+table.longtable {
+    -moz-hyphens: none;
+    -ms-hyphens: none;
+    -webkit-hyphens: none;
+    hyphens: none;
 }
 
 /*----- testimonials ----------*/
