@@ -332,6 +332,9 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     # There's a very small chance of failure with elkan on unstructured dataset
     # because predict method uses fast euclidean distances computation which
     # may cause small numerical instabilities.
+    # NB: This test is largely redundant wrt test_predict and test_predict_equal_labels
+    #     This has the added effect of testing idempotence of the fittng procesdure
+    #     which appears to be where it fails on some MacOS setups.
     if sys.platform == "darwin":
         pytest.xfail(
             "Known failures on MacOS, See "
