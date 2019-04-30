@@ -349,47 +349,46 @@ def test_ridge_gcv_vs_k_fold(gcv_mode, X_constructor, X_shape, fit_intercept,
 def test_ridge_gcv_sample_weights(
         gcv_mode, X_constructor, fit_intercept, n_features):
     alphas = [1e-3, .1, 1., 10., 1e3]
-
-    x, y, c = datasets.make_regression(
-        n_samples=53, n_features=n_features, n_targets=4, coef=True,
+    rng = np.random.RandomState(0)
+    x, y = datasets.make_regression(
+        n_samples=59, n_features=n_features, n_targets=4,
         random_state=0, shuffle=False, noise=30.)
-    x += 30 * np.random.RandomState(0).randn(x.shape[1])
-    sample_weights = 3 * np.random.RandomState(0).randn(len(x))
-    sample_weights = np.asarray(
-        sample_weights - sample_weights.min() + 1, dtype=int)
-    indices = np.concatenate([n * [i] for (i, n) in enumerate(sample_weights)])
-    sample_weights = 1. * sample_weights
-    tiled_x, tiled_y = x[indices], y[indices]
+    x += 30 * rng.randn(x.shape[1])
+    sample_weight = 3 * rng.randn(len(x))
+    sample_weight = (sample_weight - sample_weight.min() + 1).astype(int)
+    indices = np.repeat(np.arange(x.shape[0]), sample_weight)
+    sample_weight = sample_weight.astype(float)
+    X_tiled, y_tiled = x[indices], y[indices]
 
     cv = GroupKFold(n_splits=x.shape[0])
-    splits = cv.split(tiled_x, tiled_y, groups=indices)
+    splits = cv.split(X_tiled, y_tiled, groups=indices)
     kfold = RidgeCV(
         alphas=alphas, cv=splits, scoring='neg_mean_squared_error',
         fit_intercept=fit_intercept)
     with ignore_warnings():
-        kfold.fit(tiled_x, tiled_y)
+        kfold.fit(X_tiled, y_tiled)
 
     ridge_reg = Ridge(alpha=kfold.alpha_, fit_intercept=fit_intercept)
-    splits = cv.split(tiled_x, tiled_y, groups=indices)
-    predictions = cross_val_predict(ridge_reg, tiled_x, tiled_y, cv=splits)
-    kfold_errors = (tiled_y - predictions)**2
+    splits = cv.split(X_tiled, y_tiled, groups=indices)
+    predictions = cross_val_predict(ridge_reg, X_tiled, y_tiled, cv=splits)
+    kfold_errors = (y_tiled - predictions)**2
     kfold_errors = [
         np.sum(kfold_errors[indices == i], axis=0) for
         i in np.arange(x.shape[0])]
     kfold_errors = np.asarray(kfold_errors)
 
     x_gcv = X_constructor(x)
-    ridge_gcv = RidgeCV(
+    gcv_ridge = RidgeCV(
         alphas=alphas, store_cv_values=True,
         gcv_mode=gcv_mode, fit_intercept=fit_intercept)
-    ridge_gcv.fit(x_gcv, y, sample_weight=sample_weights)
-    gcv_errors = ridge_gcv.cv_values_[:, :, alphas.index(kfold.alpha_)]
+    gcv_ridge.fit(x_gcv, y, sample_weight=sample_weight)
+    gcv_errors = gcv_ridge.cv_values_[:, :, alphas.index(kfold.alpha_)]
 
-    assert kfold.alpha_ == ridge_gcv.alpha_
+    assert kfold.alpha_ == gcv_ridge.alpha_
     assert_allclose(gcv_errors, kfold_errors, rtol=5e-2)
     assert_allclose(gcv_errors, kfold_errors, rtol=5e-2)
-    assert_allclose(ridge_gcv.coef_, kfold.coef_, rtol=5e-2)
-    assert_allclose(ridge_gcv.intercept_, kfold.intercept_, rtol=5e-2)
+    assert_allclose(gcv_ridge.coef_, kfold.coef_, rtol=5e-2)
+    assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=5e-2)
 
 
 def _test_ridge_loo(filter_):
@@ -433,8 +432,8 @@ def _test_ridge_loo(filter_):
         values2.append(value)
 
     # check that efficient and brute-force LOO give same results
-    assert_almost_equal(errors, errors2)
-    assert_almost_equal(values, values2)
+    assert errors == pytest.approx(errors2)
+    assert values == pytest.approx(values2)
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
@@ -443,8 +442,8 @@ def _test_ridge_loo(filter_):
     values3, c = ridge_gcv._values_svd_dense(ridge.alpha, y_diabetes, *decomp)
 
     # check that efficient and SVD efficient LOO give same results
-    assert_almost_equal(errors, errors3)
-    assert_almost_equal(values, values3)
+    assert errors == pytest.approx(errors3)
+    assert values == pytest.approx(values3)
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
@@ -454,8 +453,8 @@ def _test_ridge_loo(filter_):
     values4, c = ridge_gcv._values_svd_sparse(ridge.alpha, y_diabetes, *decomp)
 
     # check that efficient and SVD efficient LOO give same results
-    assert_almost_equal(errors, errors4)
-    assert_almost_equal(values, values4)
+    assert errors == pytest.approx(errors4)
+    assert values == pytest.approx(values4)
 
     # check best alpha
     ridge_gcv.fit(filter_(X_diabetes), y_diabetes)
@@ -467,26 +466,26 @@ def _test_ridge_loo(filter_):
     scoring = make_scorer(mean_squared_error, greater_is_better=False)
     ridge_gcv2 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv2.fit)(filter_(X_diabetes), y_diabetes)
-    assert_equal(ridge_gcv2.alpha_, alpha_)
+    assert ridge_gcv2.alpha_ == pytest.approx(alpha_)
 
     # check that we get same best alpha with custom score_func
     func = lambda x, y: -mean_squared_error(x, y)
     scoring = make_scorer(func)
     ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
-    assert_equal(ridge_gcv3.alpha_, alpha_)
+    assert ridge_gcv3.alpha_ == pytest.approx(alpha_)
 
     # check that we get same best alpha with a scorer
     scorer = get_scorer('neg_mean_squared_error')
     ridge_gcv4 = RidgeCV(fit_intercept=False, scoring=scorer)
     ridge_gcv4.fit(filter_(X_diabetes), y_diabetes)
-    assert_equal(ridge_gcv4.alpha_, alpha_)
+    assert ridge_gcv4.alpha_ == pytest.approx(alpha_)
 
     # check that we get same best alpha with sample weights
     if filter_ == DENSE_FILTER:
         ridge_gcv.fit(filter_(X_diabetes), y_diabetes,
                       sample_weight=np.ones(n_samples))
-        assert_equal(ridge_gcv.alpha_, alpha_)
+        assert ridge_gcv.alpha_ == pytest.approx(alpha_)
 
     # simulate several responses
     Y = np.vstack((y_diabetes, y_diabetes)).T
@@ -496,8 +495,8 @@ def _test_ridge_loo(filter_):
     ridge_gcv.fit(filter_(X_diabetes), y_diabetes)
     y_pred = ridge_gcv.predict(filter_(X_diabetes))
 
-    assert_array_almost_equal(np.vstack((y_pred, y_pred)).T,
-                              Y_pred, decimal=5)
+    assert_allclose(np.vstack((y_pred, y_pred)).T,
+                    Y_pred, rtol=1e-5)
 
     return ret
 
