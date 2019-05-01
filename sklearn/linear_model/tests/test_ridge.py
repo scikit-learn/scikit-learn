@@ -416,9 +416,9 @@ def _test_ridge_loo(filter_):
     # because fit_intercept is applied
 
     # generalized cross-validation (efficient leave-one-out)
-    decomp = ridge_gcv._pre_compute(X_diabetes_, y_diabetes)
-    errors, c = ridge_gcv._errors(1.0, y_diabetes, *decomp)
-    values, c = ridge_gcv._values(1.0, y_diabetes, *decomp)
+    decomp = ridge_gcv._decompose_gram(X_diabetes_, y_diabetes)
+    errors, c = ridge_gcv._errors_gram(1.0, y_diabetes, *decomp)
+    values, c = ridge_gcv._values_gram(1.0, y_diabetes, *decomp)
 
     # brute-force leave-one-out: remove one example at a time
     errors2 = []
@@ -439,9 +439,11 @@ def _test_ridge_loo(filter_):
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
-    decomp = ridge_gcv._pre_compute_svd_dense(X_diabetes_, y_diabetes)
-    errors3, c = ridge_gcv._errors_svd_dense(ridge.alpha, y_diabetes, *decomp)
-    values3, c = ridge_gcv._values_svd_dense(ridge.alpha, y_diabetes, *decomp)
+    decomp = ridge_gcv._decompose_covariance_dense(X_diabetes_, y_diabetes)
+    errors3, c = ridge_gcv._errors_covariance_dense(
+        ridge.alpha, y_diabetes, *decomp)
+    values3, c = ridge_gcv._values_covariance_dense(
+        ridge.alpha, y_diabetes, *decomp)
 
     # check that efficient and SVD efficient LOO give same results
     assert errors == pytest.approx(errors3)
@@ -449,10 +451,12 @@ def _test_ridge_loo(filter_):
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
-    decomp = ridge_gcv._pre_compute_svd_sparse(
+    decomp = ridge_gcv._decompose_covariance_sparse(
         sp.csr_matrix(X_diabetes_), y_diabetes)
-    errors4, c = ridge_gcv._errors_svd_sparse(ridge.alpha, y_diabetes, *decomp)
-    values4, c = ridge_gcv._values_svd_sparse(ridge.alpha, y_diabetes, *decomp)
+    errors4, c = ridge_gcv._errors_covariance_sparse(
+        ridge.alpha, y_diabetes, *decomp)
+    values4, c = ridge_gcv._values_covariance_sparse(
+        ridge.alpha, y_diabetes, *decomp)
 
     # check that efficient and SVD efficient LOO give same results
     assert errors == pytest.approx(errors4)
@@ -981,7 +985,7 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
         assert_allclose(out, true_coefs, rtol=0, atol=atol)
 
 
-def test_errors_and_values_helper():
+def test_errors_and_values_gram():
     ridgecv = _RidgeGCV()
     ridgecv._with_sw = False
     rng = check_random_state(42)
@@ -991,19 +995,19 @@ def test_errors_and_values_helper():
     v = rng.randn(n)
     Q = rng.randn(len(v), len(v))
     QT_y = Q.T.dot(y)
-    G_diag, c = ridgecv._errors_and_values_helper(alpha, y, v, Q, QT_y)
+    G_diag, c = ridgecv._errors_and_values_gram(alpha, y, v, Q, QT_y)
 
     # test that helper function behaves as expected
-    out, c_ = ridgecv._errors(alpha, y, v, Q, QT_y)
+    out, c_ = ridgecv._errors_gram(alpha, y, v, Q, QT_y)
     np.testing.assert_array_equal(out, (c / G_diag) ** 2)
     np.testing.assert_array_equal(c, c)
 
-    out, c_ = ridgecv._values(alpha, y, v, Q, QT_y)
+    out, c_ = ridgecv._values_gram(alpha, y, v, Q, QT_y)
     np.testing.assert_array_equal(out, y - (c / G_diag))
     np.testing.assert_array_equal(c_, c)
 
 
-def test_errors_and_values_svd_helper():
+def test_errors_and_values_covariance():
     ridgecv = _RidgeGCV()
     ridgecv._with_sw = False
     rng = check_random_state(42)
@@ -1013,15 +1017,15 @@ def test_errors_and_values_svd_helper():
         v = rng.randn(p)
         U = rng.randn(n, p)
         UT_y = U.T.dot(y)
-        G_diag, c = ridgecv._errors_and_values_svd_helper_dense(
+        G_diag, c = ridgecv._errors_and_values_covariance_dense(
             alpha, y, v, U, UT_y)
 
         # test that helper function behaves as expected
-        out, c_ = ridgecv._errors_svd_dense(alpha, y, v, U, UT_y)
+        out, c_ = ridgecv._errors_covariance_dense(alpha, y, v, U, UT_y)
         np.testing.assert_array_equal(out, (c / G_diag) ** 2)
         np.testing.assert_array_equal(c, c)
 
-        out, c_ = ridgecv._values_svd_dense(alpha, y, v, U, UT_y)
+        out, c_ = ridgecv._values_covariance_dense(alpha, y, v, U, UT_y)
         np.testing.assert_array_equal(out, y - (c / G_diag))
         np.testing.assert_array_equal(c_, c)
 

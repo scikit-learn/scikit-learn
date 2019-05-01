@@ -1102,7 +1102,7 @@ class _RidgeGCV(LinearModel):
             X_offset += self._X_offset * X_scale
         super()._set_intercept(X_offset, y_offset, X_scale)
 
-    def _pre_compute(self, X, y):
+    def _decompose_gram(self, X, y):
         # if X is dense it has already been centered in preprocessing
         center = self.fit_intercept and sparse.issparse(X)
         K, X_m = self._compute_gram(X, center)
@@ -1121,7 +1121,7 @@ class _RidgeGCV(LinearModel):
         self._X_offset = X_m
         return v, Q, QT_y
 
-    def _errors_and_values_helper(self, alpha, y, v, Q, QT_y):
+    def _errors_and_values_gram(self, alpha, y, v, Q, QT_y):
         """Helper function to avoid code duplication between self._errors and
         self._values.
 
@@ -1150,18 +1150,19 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _errors(self, alpha, y, v, Q, QT_y):
-        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
+    def _errors_gram(self, alpha, y, v, Q, QT_y):
+        G_diag, c = self._errors_and_values_gram(alpha, y, v, Q, QT_y)
         return (c / G_diag) ** 2, c
 
-    def _values(self, alpha, y, v, Q, QT_y):
-        G_diag, c = self._errors_and_values_helper(alpha, y, v, Q, QT_y)
+    def _values_gram(self, alpha, y, v, Q, QT_y):
+        G_diag, c = self._errors_and_values_gram(alpha, y, v, Q, QT_y)
         return y - (c / G_diag), c
 
-    def _pre_compute_svd_sparse(self, X, y):
+    def _decompose_covariance_sparse(self, X, y):
         n_samples, n_features = X.shape
         cov = np.empty((n_features + 1, n_features + 1))
-        cov[:-1, :-1], self._X_offset = self._compute_covariance(X, self.fit_intercept)
+        cov[:-1, :-1], self._X_offset = self._compute_covariance(
+            X, self.fit_intercept)
         if not self.fit_intercept:
             cov = cov[:-1, :-1]
         # to emulate centering X with sample weights,
@@ -1183,7 +1184,7 @@ class _RidgeGCV(LinearModel):
         V = V[:, kernel_size:]
         return s, V, X
 
-    def _errors_and_values_svd_helper_sparse_no_intercept(
+    def _errors_and_values_covariance_sparse_no_intercept(
             self, alpha, y, s, V, X):
         """compute loo values and dual coef when X is sparse"""
         n_samples, n_features = X.shape
@@ -1198,7 +1199,7 @@ class _RidgeGCV(LinearModel):
             hat_diag = hat_diag[:, np.newaxis]
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
-    def _errors_and_values_svd_helper_sparse_intercept(
+    def _errors_and_values_covariance_sparse_intercept(
             self, alpha, y, s, V, X):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
@@ -1255,14 +1256,14 @@ class _RidgeGCV(LinearModel):
             hat_diag = hat_diag[:, np.newaxis]
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
-    def _errors_and_values_svd_helper_sparse(self, alpha, y, s, V, X):
+    def _errors_and_values_covariance_sparse(self, alpha, y, s, V, X):
         if self.fit_intercept:
-            return self._errors_and_values_svd_helper_sparse_intercept(
+            return self._errors_and_values_covariance_sparse_intercept(
                 alpha, y, s, V, X)
-        return self._errors_and_values_svd_helper_sparse_no_intercept(
+        return self._errors_and_values_covariance_sparse_no_intercept(
             alpha, y, s, V, X)
 
-    def _pre_compute_svd_dense(self, X, y):
+    def _decompose_covariance_dense(self, X, y):
         if self.fit_intercept:
             if self._with_sw:
                 intercept = self._sqrt_sw[:, None]
@@ -1276,7 +1277,7 @@ class _RidgeGCV(LinearModel):
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
 
-    def _errors_and_values_svd_helper_dense(self, alpha, y, v, U, UT_y):
+    def _errors_and_values_covariance_dense(self, alpha, y, v, U, UT_y):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
@@ -1296,23 +1297,23 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _errors_svd_sparse(self, alpha, y, v, U, UT_y):
-        G_diag, c = self._errors_and_values_svd_helper_sparse(
+    def _errors_covariance_sparse(self, alpha, y, v, U, UT_y):
+        G_diag, c = self._errors_and_values_covariance_sparse(
             alpha, y, v, U, UT_y)
         return (c / G_diag) ** 2, c
 
-    def _values_svd_sparse(self, alpha, y, v, U, UT_y):
-        G_diag, c = self._errors_and_values_svd_helper_sparse(
+    def _values_covariance_sparse(self, alpha, y, v, U, UT_y):
+        G_diag, c = self._errors_and_values_covariance_sparse(
             alpha, y, v, U, UT_y)
         return y - (c / G_diag), c
 
-    def _errors_svd_dense(self, alpha, y, v, U, UT_y):
-        G_diag, c = self._errors_and_values_svd_helper_dense(
+    def _errors_covariance_dense(self, alpha, y, v, U, UT_y):
+        G_diag, c = self._errors_and_values_covariance_dense(
             alpha, y, v, U, UT_y)
         return (c / G_diag) ** 2, c
 
-    def _values_svd_dense(self, alpha, y, v, U, UT_y):
-        G_diag, c = self._errors_and_values_svd_helper_dense(
+    def _values_covariance_dense(self, alpha, y, v, U, UT_y):
+        G_diag, c = self._errors_and_values_covariance_dense(
             alpha, y, v, U, UT_y)
         return y - (c / G_diag), c
 
@@ -1352,19 +1353,19 @@ class _RidgeGCV(LinearModel):
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
 
         if gcv_mode == 'eigen':
-            _pre_compute = self._pre_compute
-            _errors = self._errors
-            _values = self._values
+            _decompose = self._decompose_gram
+            _errors = self._errors_gram
+            _values = self._values_gram
         elif gcv_mode == 'svd':
             # assert n_samples >= n_features
             if sparse.issparse(X):
-                _pre_compute = self._pre_compute_svd_sparse
-                _errors = self._errors_svd_sparse
-                _values = self._values_svd_sparse
+                _decompose = self._decompose_covariance_sparse
+                _errors = self._errors_covariance_sparse
+                _values = self._values_covariance_sparse
             else:
-                _pre_compute = self._pre_compute_svd_dense
-                _errors = self._errors_svd_dense
-                _values = self._values_svd_dense
+                _decompose = self._decompose_covariance_dense
+                _errors = self._errors_covariance_dense
+                _values = self._values_covariance_dense
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
@@ -1386,12 +1387,12 @@ class _RidgeGCV(LinearModel):
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
-        precomputed = _pre_compute(X, y)
+        decomposition = _decompose(X, y)
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c = _errors(float(alpha), y, *precomputed)
+                out, c = _errors(float(alpha), y, *decomposition)
             else:
-                out, c = _values(float(alpha), y, *precomputed)
+                out, c = _values(float(alpha), y, *decomposition)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
