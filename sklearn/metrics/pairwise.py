@@ -766,7 +766,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
             j_start = 0
         sum_s = 0
         n_cols_not_missing = 0
-        
+
         # sum and missing values treatment for each type of data, if available
         if n_col_cat_obj_present:
             row_cat_none = ~(np.equal(X_cat_obj[i, :], None) |

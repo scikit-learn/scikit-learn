@@ -884,7 +884,6 @@ def test_gower_distances():
 
     D = gower_distances(X, Y)
 
-
     # Simplified calculation of Gower distance for expected values
     n_rows, n_cols = X.shape[0], Y.shape[0]
     D_expected = np.zeros((n_rows, n_cols))
