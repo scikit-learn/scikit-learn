@@ -2473,7 +2473,7 @@ def gap_train_test_split(*arrays, **options):
         Allowed inputs are lists, numpy arrays, scipy-sparse
         matrices or pandas dataframes.
 
-    gap_size : float or int
+    gap_size : float or int, (default=0)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset between the training and the test set. If int,
         represents the absolute number of the dropped samples.
@@ -2533,7 +2533,7 @@ def gap_train_test_split(*arrays, **options):
         raise ValueError("At least one array required as input")
     test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
-    gap_size = options.pop('gap_size')
+    gap_size = options.pop('gap_size', 0)
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
