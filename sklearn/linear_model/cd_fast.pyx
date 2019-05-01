@@ -24,7 +24,7 @@ from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
 from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
 
 
-from ..utils cimport _random
+from ..utils._random cimport our_rand_r
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t
@@ -42,7 +42,7 @@ cdef enum:
 
 cdef inline UINT32_t rand_int(UINT32_t end, UINT32_t* random_state) nogil:
     """Generate a random integer in [0; end)."""
-    return _random.our_rand_r(random_state) % end
+    return our_rand_r(random_state) % end
 
 
 cdef inline floating fmax(floating x, floating y) nogil:
