@@ -1997,8 +1997,8 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     labels. Hamming loss is more forgiving in that it penalizes the individual
     labels.
 
-    The Hamming loss is upperbounded by the normalized zero-one loss. It is
-    always between 0 and 1, lower being better.
+    The Hamming loss is upperbounded by the subset zero-one loss, when zero-one
+    loss is normalized. It is always between 0 and 1, lower being better.
 
     References
     ----------
