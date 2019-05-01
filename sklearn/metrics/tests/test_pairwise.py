@@ -661,6 +661,15 @@ def test_gower_distances():
     # The calculation formula for Gower similarity is available in the
     # user guide.
 
+
+    # Test nan matrices
+    X = np.array([[np.nan, np.nan],
+                  [np.nan, np.nan]],
+                 dtype=object)
+    D = gower_distances(X)
+    D_expected=[[np.nan, np.nan],[np.nan, np.nan]]
+    assert_array_almost_equal(D_expected, D)
+
     with pytest.raises(TypeError):
         gower_distances(csr_matrix((2, 2)))
 
@@ -880,13 +889,6 @@ def test_gower_distances():
 
     D = gower_distances(X, Y)
 
-    # Test to obtain a non-squared distance matrix with numeric data only
-    X = np.array([[1.0, 0.0, 0.0], [0.181818, 0.0, 1], [0.0, 0.0, 0.160377]],
-                 dtype=object)
-    Y = np.array([[0.090909, 0.0, 0.500109]], dtype=object)
-    D = gower_distances(X, Y)
-
-
     # Simplified calculation of Gower distance for expected values
     n_rows, n_cols = X.shape[0], Y.shape[0]
     D_expected = np.zeros((n_rows, n_cols))
@@ -900,6 +902,26 @@ def test_gower_distances():
                  [1, 0][X[i][4] == Y[j][4]]) / X.shape[1]
 
     assert_array_almost_equal(D_expected, D)
+
+    # Test to obtain a non-squared distance matrix with numeric data only
+    X = np.array([[1.0, 0.0, 0.0], [0.181818, 0.0, 1], [0.0, 0.0, 0.160377]],
+                 dtype=object)
+    Y = np.array([[0.090909, 0.0, 0.500109]], dtype=object)
+    D = gower_distances(X, Y)
+
+
+    # Simplified calculation of Gower distance for expected values
+    n_rows, n_cols = X.shape[0], Y.shape[0]
+    D_expected = np.zeros((n_rows, n_cols))
+    for i in range(0, n_rows):
+        for j in range(0, n_cols):
+            D_expected[i][j] = \
+                (abs(X[i][0] - Y[j][0]) +
+                 abs(X[i][1] - Y[j][1]) +
+                 abs(X[i][2] - Y[j][2])) / X.shape[1]
+
+    assert_array_almost_equal(D_expected, D)
+
 
     # Tests a range of negative and positive numeric values
     # Range starting with zero
