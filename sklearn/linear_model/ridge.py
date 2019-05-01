@@ -1040,7 +1040,7 @@ class _RidgeGCV(LinearModel):
     def _compute_covariance(self, X, center=True):
         """Computes centered covariance matrix.
 
-        if center is True, compute
+        If ``center`` is ``True``, compute
         (X - X.mean(axis=0)).T.dot(X - X.mean(axis=0))
         else
         X.T.dot(X)
@@ -1073,7 +1073,7 @@ class _RidgeGCV(LinearModel):
                 self._weight_sum * np.outer(X_mean, X_mean),
                 X_mean)
 
-    def _sparse_multidot_diag(self, X, A, Xm):
+    def _sparse_multidot_diag(self, X, A, X_mean):
         """
         compute the diagonal of (X - Xm).dot(A).dot((X - Xm).T)
         when X is sparse, without storing X - Xm nor X.dot(A)
@@ -1086,9 +1086,10 @@ class _RidgeGCV(LinearModel):
             batch = slice(start, min(X.shape[0], start + batch_size), 1)
             X_batch = np.empty(
                 (X[batch].shape[0], X.shape[1] + self.fit_intercept),
-                dtype=X.dtype)
+                dtype=X.dtype
+            )
             if self.fit_intercept:
-                X_batch[:, :-1] = X[batch].A - Xm * scale[batch][:, None]
+                X_batch[:, :-1] = X[batch].A - X_mean * scale[batch][:, None]
                 X_batch[:, -1] = intercept_col[batch]
             else:
                 X_batch = X[batch].A
@@ -1098,7 +1099,7 @@ class _RidgeGCV(LinearModel):
     def _set_intercept(self, X_offset, y_offset, X_scale):
         # add the mean of X which was computed separately if X is sparse
         if getattr(self, '_X_offset', None) is not None:
-            X_offset = X_offset + self._X_offset * X_scale
+            X_offset += self._X_offset * X_scale
         super()._set_intercept(X_offset, y_offset, X_scale)
 
     def _pre_compute(self, X, y):
@@ -1158,9 +1159,9 @@ class _RidgeGCV(LinearModel):
         return y - (c / G_diag), c
 
     def _pre_compute_svd_sparse(self, X, y):
-        n, p = X.shape
-        cov = np.empty((p + 1, p + 1))
-        cov[:-1, :-1], X_m = self._compute_covariance(X, self.fit_intercept)
+        n_samples, n_features = X.shape
+        cov = np.empty((n_features + 1, n_features + 1))
+        cov[:-1, :-1], self._X_offset = self._compute_covariance(X, self.fit_intercept)
         if not self.fit_intercept:
             cov = cov[:-1, :-1]
         # to emulate centering X with sample weights,
@@ -1174,25 +1175,24 @@ class _RidgeGCV(LinearModel):
             if self._with_sw:
                 cov[-1, -1] = self._weight_sum
             else:
-                cov[-1, -1] = n
+                cov[-1, -1] = n_samples
         kernel_size = max(0, X.shape[1] - X.shape[0])
         s, V = linalg.eigh(cov)
         # remove eigenvalues and vectors in the null space of X^T.X
         s = s[kernel_size:]
         V = V[:, kernel_size:]
-        self._X_offset = X_m
         return s, V, X
 
     def _errors_and_values_svd_helper_sparse_no_intercept(
             self, alpha, y, s, V, X):
         """compute loo values and dual coef when X is sparse"""
-        n, p = X.shape
+        n_samples, n_features = X.shape
         w = 1 / (s + alpha)
         A = (V * w).dot(V.T)
-        Xm = self._X_offset
+        X_mean = self._X_offset
         AXy = A.dot(safe_sparse_dot(X.T, y, dense_output=True))
         y_hat = safe_sparse_dot(X, AXy, dense_output=True)
-        hat_diag = self._sparse_multidot_diag(X, A, Xm)
+        hat_diag = self._sparse_multidot_diag(X, A, X_mean)
         if len(y.shape) != 1:
             # handle case where y is 2-d
             hat_diag = hat_diag[:, np.newaxis]
@@ -1207,7 +1207,7 @@ class _RidgeGCV(LinearModel):
         intercept.
 
         """
-        n, p = X.shape
+        n_samples, n_features = X.shape
         # the vector [0, 0, ..., 0, 1]
         # is the eigenvector of X^TX which
         # corresponds to the intercept; we cancel the regularization on
@@ -1219,7 +1219,7 @@ class _RidgeGCV(LinearModel):
         w = 1 / (s + alpha)
         w[intercept_dim] = 1 / s[intercept_dim]
         A = (V * w).dot(V.T)
-        Xm = self._X_offset
+        X_mean = self._X_offset
         # add a column to X containing the square roots of sample weights
         sw = self._sqrt_sw if self._with_sw else np.ones(
             X.shape[0], dtype=X.dtype)
@@ -1227,24 +1227,25 @@ class _RidgeGCV(LinearModel):
         def matvec(v):
             return safe_sparse_dot(
                 X, v[:-1], dense_output=True
-            ) - sw * Xm.dot(v[:-1]) + v[-1] * sw
+            ) - sw * X_mean.dot(v[:-1]) + v[-1] * sw
 
         def matmat(v):
             return safe_sparse_dot(
                 X, v[:-1], dense_output=True
-            ) - sw[:, None] * Xm.dot(v[:-1]) + v[-1] * sw[:, None]
+            ) - sw[:, None] * X_mean.dot(v[:-1]) + v[-1] * sw[:, None]
 
         def rmatvec(v):
             v = v.ravel()
-            res = np.empty(X.shape[1] + 1)
+            res = np.empty(n_features + 1)
             res[:-1] = safe_sparse_dot(
-                X.T, v, dense_output=True) - Xm * sw.dot(v)
+                X.T, v, dense_output=True) - X_mean * sw.dot(v)
             res[-1] = np.dot(v, sw)
             return res
 
         Xop = sparse.linalg.LinearOperator(
             matvec=matvec, matmat=matmat, rmatvec=rmatvec,
-            shape=(X.shape[0], X.shape[1] + 1), dtype=X.dtype)
+            shape=(n_samples, n_feautres + 1), dtype=X.dtype
+        )
         AXy = A.dot(Xop.adjoint().dot(y))
         y_hat = Xop.dot(AXy)
         hat_diag = self._sparse_multidot_diag(X, A, Xm)
