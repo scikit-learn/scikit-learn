@@ -1136,11 +1136,10 @@ class _RidgeGCV(LinearModel):
             # corresponds to the intercept; we cancel the regularization on
             # this dimension. the corresponding eigenvalue is
             # sum(sample_weight).
-            if self._with_sw:
-                intercept_dim = np.isclose(
-                    Q, self._normalized_sqrt_sw[:, None]).all(axis=0)
-            else:
-                intercept_dim = np.var(Q, 0) < 1.e-12
+            intercept_dim = np.logical_or(
+                np.isclose(Q, self._normalized_sqrt_sw[:, None]).all(axis=0),
+                np.isclose(Q, - self._normalized_sqrt_sw[:, None]).all(axis=0)
+            )
             w[intercept_dim] = 0  # cancel regularization for the intercept
 
         c = np.dot(Q, self._diag_dot(w, QT_y))
@@ -1216,7 +1215,10 @@ class _RidgeGCV(LinearModel):
         # sum(sample_weight), e.g. n when uniform sample weights.
         intercept_sv = np.zeros(V.shape[0])
         intercept_sv[-1] = 1
-        intercept_dim = np.isclose(V, intercept_sv[:, None]).all(axis=0)
+        intercept_dim = np.logical_or(
+            np.isclose(V, intercept_sv[:, None]).all(axis=0),
+            np.isclose(V, - intercept_sv[:, None]).all(axis=0)
+        )
         w = 1 / (s + alpha)
         w[intercept_dim] = 1 / s[intercept_dim]
         A = (V * w).dot(V.T)
@@ -1281,11 +1283,10 @@ class _RidgeGCV(LinearModel):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
-        if self._with_sw:
-            intercept_dim = np.isclose(
-                U, self._normalized_sqrt_sw[:, None]).all(axis=0)
-        else:
-            intercept_dim = np.var(U, 0) < 1.e-12
+        intercept_dim = np.logical_or(
+            np.isclose(U, self._normalized_sqrt_sw[:, None]).all(axis=0),
+            np.isclose(U, - self._normalized_sqrt_sw[:, None]).all(axis=0)
+        )
         # detect intercept column
         w = ((v + alpha) ** -1) - (alpha ** -1)
         w[intercept_dim] = - (alpha ** -1)
@@ -1370,14 +1371,14 @@ class _RidgeGCV(LinearModel):
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
             self._sqrt_sw = np.sqrt(sample_weight)
-            self._normalized_sqrt_sw = self._sqrt_sw / np.linalg.norm(
-                self._sqrt_sw)
             self._weight_sum = sample_weight.sum()
             self._with_sw = True
         else:
             self._with_sw = False
             self._sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
-            self._weight_sum = X.shape[0]
+            self._weight_sum = float(X.shape[0])
+        self._normalized_sqrt_sw = self._sqrt_sw / np.linalg.norm(
+            self._sqrt_sw)
         self._sqrt_sw_matrix = sparse.dia_matrix(
             (self._sqrt_sw, 0), shape=(X.shape[0], X.shape[0]))
         n_y = 1 if len(y.shape) == 1 else y.shape[1]

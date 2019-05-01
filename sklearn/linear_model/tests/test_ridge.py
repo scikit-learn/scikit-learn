@@ -410,6 +410,8 @@ def _test_ridge_loo(filter_):
     ridge_gcv._sqrt_sw_matrix = sp.dia_matrix(
         (ridge_gcv._sqrt_sw, 0),
         shape=(X_diabetes_.shape[0], X_diabetes_.shape[0]))
+    ridge_gcv._normalized_sqrt_sw = (
+        ridge_gcv._sqrt_sw / np.linalg.norm(ridge_gcv._sqrt_sw))
     ridge_gcv._weight_sum = X_diabetes_.shape[0]
     ridge = Ridge(alpha=1.0, fit_intercept=fit_intercept)
 
@@ -991,6 +993,7 @@ def test_errors_and_values_gram():
     rng = check_random_state(42)
     alpha = 1.
     n = 5
+    ridgecv._normalized_sqrt_sw = np.ones(n) / np.sqrt(n)
     y = rng.randn(n)
     v = rng.randn(n)
     Q = rng.randn(len(v), len(v))
@@ -1013,6 +1016,7 @@ def test_errors_and_values_covariance():
     rng = check_random_state(42)
     alpha = 1.
     for n, p in zip((5, 10), (12, 6)):
+        ridgecv._normalized_sqrt_sw = np.ones(n) / np.sqrt(n)
         y = rng.randn(n)
         v = rng.randn(p)
         U = rng.randn(n, p)
