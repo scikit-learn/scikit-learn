@@ -423,17 +423,18 @@ or large number of trees, parallelization can thus provide some benefits :
     >>> models = [DecisionTreeClassifier(random_state=i) for i in range(num_of_trees)]
     >>>
     >>> t = time.time()
-    >>> [models[i].fit(X, y) for i in range(num_of_trees)]
+    >>> for i in range(num_of_trees):
+    >>>   _ = models[i].fit(X, y)
     >>> print("Time without parallelization : {:.4}s".format(time.time() - t))
-    Time without parallelization : 3.004s
+    Time without parallelization : 2.453s
     >>>
     >>> t = time.time()
-    >>> Parallel(n_jobs=4, prefer="threads")(delayed(models[i].fit)(X, y) for i in range(num_of_trees))
+    >>> _=Parallel(n_jobs=4, prefer="threads")(delayed(models[i].fit)(X, y) for i in range(num_of_trees))
     >>> print("Time with parallelization : {:.4}s".format(time.time() - t))
-    Time with parallelization : 2.168s
+    Time with parallelization : 1.811s
     >>>
     >>> # The rest of the algorithm would come here
-    >>> # In the previous case, parallelization improves the algorithm speed by almost 30%
+    >>> # In the previous case, parallelization improves the algorithm speed by about 25%
     >>> # NB : this code is provided as example and is not extracted from sklearn RandomForest implementations
 
 Checkout the official joblib documentation:
