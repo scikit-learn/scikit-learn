@@ -1244,11 +1244,11 @@ class _RidgeGCV(LinearModel):
 
         Xop = sparse.linalg.LinearOperator(
             matvec=matvec, matmat=matmat, rmatvec=rmatvec,
-            shape=(n_samples, n_feautres + 1), dtype=X.dtype
+            shape=(n_samples, n_features + 1), dtype=X.dtype
         )
         AXy = A.dot(Xop.adjoint().dot(y))
         y_hat = Xop.dot(AXy)
-        hat_diag = self._sparse_multidot_diag(X, A, Xm)
+        hat_diag = self._sparse_multidot_diag(X, A, X_mean)
         # return (1 - hat_diag), (y - y_hat)
         if len(y.shape) != 1:
             # handle case where y is 2-d
