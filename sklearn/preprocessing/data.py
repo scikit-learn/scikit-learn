@@ -2262,7 +2262,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             upper_bound_x = 1
             lower_bound_y = quantiles[0]
             upper_bound_y = quantiles[-1]
-            #  for inverse transform, match a uniform distribution
+            # for inverse transform, match a uniform distribution
             with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
                 if output_distribution == 'normal':
                     X_col = stats.norm.cdf(X_col)
