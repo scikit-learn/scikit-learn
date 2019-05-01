@@ -935,6 +935,24 @@ def _check_gcv_mode(X, gcv_mode):
     return 'eigen'
 
 
+def _find_smallest_angle(query, vectors):
+    """find the column of vectors that is most aligned with query.
+
+    both query and the columns of vectors must have their l2 norm equal to 1.
+
+    Parameters
+    ----------
+    query : ndarray, shape (n,)
+        Normalized query vector.
+
+    vectors : ndarray, shape (n, m)
+        Vectors to which we compare query, as columns. Must be normalized.
+    """
+    abs_cosine = np.abs(query.dot(vectors))
+    index = np.argmax(abs_cosine)
+    return index
+
+
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Generalized Cross-Validation
 
@@ -1136,10 +1154,7 @@ class _RidgeGCV(LinearModel):
             # corresponds to the intercept; we cancel the regularization on
             # this dimension. the corresponding eigenvalue is
             # sum(sample_weight).
-            intercept_dim = np.logical_or(
-                np.isclose(Q, self._normalized_sqrt_sw[:, None]).all(axis=0),
-                np.isclose(Q, - self._normalized_sqrt_sw[:, None]).all(axis=0)
-            )
+            intercept_dim = _find_smallest_angle(self._normalized_sqrt_sw, Q)
             w[intercept_dim] = 0  # cancel regularization for the intercept
 
         c = np.dot(Q, self._diag_dot(w, QT_y))
@@ -1215,10 +1230,7 @@ class _RidgeGCV(LinearModel):
         # sum(sample_weight), e.g. n when uniform sample weights.
         intercept_sv = np.zeros(V.shape[0])
         intercept_sv[-1] = 1
-        intercept_dim = np.logical_or(
-            np.isclose(V, intercept_sv[:, None]).all(axis=0),
-            np.isclose(V, - intercept_sv[:, None]).all(axis=0)
-        )
+        intercept_dim = _find_smallest_angle(intercept_sv, V)
         w = 1 / (s + alpha)
         w[intercept_dim] = 1 / s[intercept_dim]
         A = (V * w).dot(V.T)
@@ -1283,14 +1295,12 @@ class _RidgeGCV(LinearModel):
         """Helper function to avoid code duplication between self._errors_svd
         and self._values_svd.
         """
-        intercept_dim = np.logical_or(
-            np.isclose(U, self._normalized_sqrt_sw[:, None]).all(axis=0),
-            np.isclose(U, - self._normalized_sqrt_sw[:, None]).all(axis=0)
-        )
-        # detect intercept column
         w = ((v + alpha) ** -1) - (alpha ** -1)
-        w[intercept_dim] = - (alpha ** -1)
-        # cancel the regularization for the intercept
+        if self.fit_intercept:
+            # detect intercept column
+            intercept_dim = _find_smallest_angle(self._normalized_sqrt_sw, U)
+            # cancel the regularization for the intercept
+            w[intercept_dim] = - (alpha ** -1)
         c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
         G_diag = self._decomp_diag(w, U) + (alpha ** -1)
         if len(y.shape) != 1:
