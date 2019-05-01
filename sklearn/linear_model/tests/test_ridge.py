@@ -387,10 +387,10 @@ def test_ridge_gcv_sample_weights(
     gcv_errors = gcv_ridge.cv_values_[:, :, alphas.index(kfold.alpha_)]
 
     assert kfold.alpha_ == gcv_ridge.alpha_
-    assert_allclose(gcv_errors, kfold_errors, rtol=5e-2)
-    assert_allclose(gcv_errors, kfold_errors, rtol=5e-2)
-    assert_allclose(gcv_ridge.coef_, kfold.coef_, rtol=5e-2)
-    assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=5e-2)
+    assert_allclose(gcv_errors, kfold_errors, rtol=1e-2)
+    assert_allclose(gcv_errors, kfold_errors, rtol=1e-2)
+    assert_allclose(gcv_ridge.coef_, kfold.coef_, rtol=1e-2)
+    assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-2)
 
 
 def _test_ridge_loo(filter_):
