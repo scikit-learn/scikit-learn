@@ -424,13 +424,11 @@ or large number of trees, parallelization can thus provide some benefits :
     >>>
     >>> t = time.time()
     >>> _ = [models[i].fit(X, y) for i in range(num_of_trees)]
-    >>> print("Time without parallelization : {:.4}s".format(time.time() - t))
-    Time without parallelization : 2.414s
+    >>> time_without_parallelization = time.time() - t # about 2.4s
     >>>
     >>> t = time.time()
-    >>> _=Parallel(n_jobs=4, prefer="threads")(delayed(models[i].fit)(X, y) for i in range(num_of_trees))
-    >>> print("Time with parallelization : {:.4}s".format(time.time() - t))
-    Time with parallelization : 1.811s
+    >>> _ = Parallel(n_jobs=4, prefer="threads")(delayed(models[i].fit)(X, y) for i in range(num_of_trees))
+    >>> time_with_parallelization = time.time() - t # about 1.8s
     >>>
     >>> # The rest of the algorithm would come here
     >>> # In the previous case, parallelization improves the algorithm speed by about 25%
