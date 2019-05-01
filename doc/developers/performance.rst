@@ -423,10 +423,9 @@ or large number of trees, parallelization can thus provide some benefits :
     >>> models = [DecisionTreeClassifier(random_state=i) for i in range(num_of_trees)]
     >>>
     >>> t = time.time()
-    >>> for i in range(num_of_trees):
-    >>>   _ = models[i].fit(X, y)
+    >>> _ = [models[i].fit(X, y) for i in range(num_of_trees)]
     >>> print("Time without parallelization : {:.4}s".format(time.time() - t))
-    Time without parallelization : 2.453s
+    Time without parallelization : 2.414s
     >>>
     >>> t = time.time()
     >>> _=Parallel(n_jobs=4, prefer="threads")(delayed(models[i].fit)(X, y) for i in range(num_of_trees))
