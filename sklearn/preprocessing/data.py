@@ -1477,7 +1477,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or CSR/CSC sparse matrix, shape [n_samples, n_features]
             The data to transform, row by row.
-            
+
             Prefer CSR over CSC for sparse input (for speed), but CSC is
             required if the degree is 4 or higher. If the degree is less than
             4 and the input format is CSC, it will be converted to CSR, have
