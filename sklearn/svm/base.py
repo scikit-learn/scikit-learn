@@ -230,7 +230,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         # XXX this is ugly.
         # Regression models should not have a class_weight_ attribute.
         self.class_weight_ = np.empty(0)
-        return column_or_1d(y, warn=True).astype(np.float64)
+        return column_or_1d(y, warn=True).astype(np.float64, copy=False)
 
     def _warn_from_fit_status(self):
         assert self.fit_status_ in (0, 1)
@@ -293,7 +293,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         if hasattr(self, "classes_"):
             n_class = len(self.classes_) - 1
-        else:   # regression
+        else:  # regression
             n_class = 1
         n_SV = self.support_vectors_.shape[0]
 
@@ -547,6 +547,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         the weight vector (``coef_``). See also `this question
         <https://stats.stackexchange.com/questions/14876/
         interpreting-distance-from-hyperplane-in-svm>`_ for further details.
+        If decision_function_shape='ovr', the decision function is a monotonic
+        transformation of ovo decision function.
         """
         dec = self._decision_function(X)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
