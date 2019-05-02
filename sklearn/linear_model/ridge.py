@@ -1408,13 +1408,13 @@ class _RidgeGCV(LinearModel):
             sqrt_sw = np.sqrt(sample_weight)
         else:
             sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
-        n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
-        C = []
 
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
+        n_y = 1 if len(y.shape) == 1 else y.shape[1]
+        cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
+        C = []
         X_mean, *decomposition = _decompose(X, y, sqrt_sw)
         for i, alpha in enumerate(self.alphas):
             if error:
