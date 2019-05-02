@@ -333,7 +333,8 @@ def test_ridge_gcv_vs_ridge_loo_cv(
         random_state=0, shuffle=False, noise=noise, n_informative=5
     )
     y = y.reshape(y_shape)
-    X += 30 * np.random.RandomState(0).randn(X.shape[1])
+    # X += 30 * np.random.RandomState(0).randn(X.shape[1])
+    X += 30
 
     alphas = [1e-3, .1, 1., 10., 1e3]
     loo_ridge = RidgeCV(cv=n_samples, fit_intercept=fit_intercept,
@@ -368,7 +369,8 @@ def test_ridge_gcv_sample_weights(
         n_samples=11, n_features=n_features, n_targets=n_targets,
         random_state=0, shuffle=False, noise=noise)
     y = y.reshape(y_shape)
-    x += 30 * rng.randn(x.shape[1])
+    # x += 30 * rng.randn(x.shape[1])
+    x += 30
     sample_weight = 3 * rng.randn(len(x))
     sample_weight = (sample_weight - sample_weight.min() + 1).astype(int)
     indices = np.repeat(np.arange(x.shape[0]), sample_weight)
@@ -380,7 +382,10 @@ def test_ridge_gcv_sample_weights(
     kfold = RidgeCV(
         alphas=alphas, cv=splits, scoring='neg_mean_squared_error',
         fit_intercept=fit_intercept)
-    with ignore_warnings():
+    # ignore warning from GridSearchCV: DeprecationWarning: The default of the
+    # `iid` parameter will change from True to False in version 0.22 and will
+    # be removed in 0.24
+    with ignore_warnings(category=DeprecationWarning):
         kfold.fit(X_tiled, y_tiled)
 
     ridge_reg = Ridge(alpha=kfold.alpha_, fit_intercept=fit_intercept)
