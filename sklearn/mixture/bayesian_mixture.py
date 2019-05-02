@@ -266,7 +266,7 @@ class BayesianGaussianMixture(BaseMixture):
     mean_precision_ : array-like, shape (n_components,)
         The precision of each components on the mean distribution (Gaussian).
 
-    means_prior_ : array-like, shape (n_features,)
+    mean_prior_ : array-like, shape (n_features,)
         The prior on the mean distribution (Gaussian).
 
     degrees_of_freedom_prior_ : float

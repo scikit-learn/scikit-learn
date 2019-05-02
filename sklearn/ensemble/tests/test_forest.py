@@ -9,6 +9,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 # License: BSD 3 clause
 
 import pickle
+import math
 from collections import defaultdict
 from distutils.version import LooseVersion
 import itertools
@@ -44,6 +45,7 @@ from sklearn.exceptions import NotFittedError
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
+from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
@@ -457,7 +459,7 @@ def check_gridsearch(name):
 
 
 @pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_gridsearch(name):
     # Check that base trees can be grid-searched.
@@ -1337,3 +1339,42 @@ def test_backend_respected():
         clf.predict_proba(X)
 
     assert ba.count == 0
+
+
+@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
+@pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
+@pytest.mark.parametrize('oob_score', (True, False))
+def test_multi_target(name, oob_score):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(bootstrap=True, oob_score=oob_score)
+
+    X = iris.data
+
+    # Make multi column mixed type target.
+    y = np.vstack([
+        iris.target.astype(float),
+        iris.target.astype(int),
+        iris.target.astype(str),
+    ]).T
+
+    # Try to fit and predict.
+    clf.fit(X, y)
+    clf.predict(X)
+
+
+def test_forest_feature_importances_sum():
+    X, y = make_classification(n_samples=15, n_informative=3, random_state=1,
+                               n_classes=3)
+    clf = RandomForestClassifier(min_samples_leaf=5, random_state=42,
+                                 n_estimators=200).fit(X, y)
+    assert math.isclose(1, clf.feature_importances_.sum(), abs_tol=1e-7)
+
+
+def test_forest_degenerate_feature_importances():
+    # build a forest of single node trees. See #13636
+    X = np.zeros((10, 10))
+    y = np.ones((10,))
+    gbr = RandomForestRegressor(n_estimators=10).fit(X, y)
+    assert_array_equal(gbr.feature_importances_,
+                       np.zeros(10, dtype=np.float64))

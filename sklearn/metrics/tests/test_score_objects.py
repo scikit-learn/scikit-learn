@@ -5,7 +5,6 @@ import os
 import numbers
 
 import numpy as np
-
 import pytest
 
 from sklearn.utils.testing import assert_almost_equal
@@ -18,7 +17,8 @@ from sklearn.utils.testing import assert_not_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
-                             log_loss, precision_score, recall_score)
+                             log_loss, precision_score, recall_score,
+                             jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
                                     _passthrough_scorer)
@@ -52,7 +52,9 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss', 'brier_score_loss']
+               'neg_log_loss', 'log_loss', 'brier_score_loss',
+               'jaccard', 'jaccard_weighted', 'jaccard_macro',
+               'jaccard_micro']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -64,7 +66,8 @@ CLUSTER_SCORERS = ["adjusted_rand_score",
                    "normalized_mutual_info_score",
                    "fowlkes_mallows_score"]
 
-MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
+MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples',
+                           'jaccard_samples']
 
 
 def _make_estimators(X_train, y_train, y_ml_train):
@@ -108,7 +111,7 @@ def teardown_module():
     shutil.rmtree(TEMP_FOLDER)
 
 
-class EstimatorWithoutFit(object):
+class EstimatorWithoutFit:
     """Dummy estimator to test scoring validators"""
     pass
 
@@ -119,7 +122,7 @@ class EstimatorWithFit(BaseEstimator):
         return self
 
 
-class EstimatorWithFitAndScore(object):
+class EstimatorWithFitAndScore:
     """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
         return self
@@ -128,7 +131,7 @@ class EstimatorWithFitAndScore(object):
         return 1.0
 
 
-class EstimatorWithFitAndPredict(object):
+class EstimatorWithFitAndPredict:
     """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
         self.y = y
@@ -138,7 +141,7 @@ class EstimatorWithFitAndPredict(object):
         return self.y
 
 
-class DummyScorer(object):
+class DummyScorer:
     """Dummy scorer that always returns 1."""
     def __call__(self, est, X, y):
         return 1
@@ -249,7 +252,7 @@ def test_check_scoring_and_check_multimetric_scoring():
                              scoring=scoring)
 
 
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
@@ -285,7 +288,8 @@ def test_classification_scores():
     clf.fit(X_train, y_train)
 
     for prefix, metric in [('f1', f1_score), ('precision', precision_score),
-                           ('recall', recall_score)]:
+                           ('recall', recall_score),
+                           ('jaccard', jaccard_score)]:
 
         score1 = get_scorer('%s_weighted' % prefix)(clf, X_test, y_test)
         score2 = metric(y_test, clf.predict(X_test), pos_label=None,

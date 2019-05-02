@@ -39,7 +39,6 @@ Single and multi-output problems are both handled.
 #
 # License: BSD 3 clause
 
-from __future__ import division
 
 from warnings import catch_warnings, simplefilter, warn
 import threading
@@ -49,7 +48,7 @@ import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
-from ..base import ClassifierMixin, RegressorMixin
+from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..utils._joblib import Parallel, delayed
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
@@ -62,6 +61,7 @@ from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import parallel_helper, _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -122,7 +122,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseForest(BaseEnsemble, metaclass=ABCMeta):
+class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
@@ -364,15 +364,23 @@ class BaseForest(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         feature_importances_ : array, shape = [n_features]
+            The values of this array sum to 1, unless all trees are single node
+            trees consisting of only the root node, in which case it will be an
+            array of zeros.
         """
         check_is_fitted(self, 'estimators_')
 
         all_importances = Parallel(n_jobs=self.n_jobs,
                                    **_joblib_parallel_args(prefer='threads'))(
             delayed(getattr)(tree, 'feature_importances_')
-            for tree in self.estimators_)
+            for tree in self.estimators_ if tree.tree_.node_count > 1)
 
-        return sum(all_importances) / len(self.estimators_)
+        if not all_importances:
+            return np.zeros(self.n_features_, dtype=np.float64)
+
+        all_importances = np.mean(all_importances,
+                                  axis=0, dtype=np.float64)
+        return all_importances / np.sum(all_importances)
 
 
 def _accumulate_prediction(predict, X, out, lock):

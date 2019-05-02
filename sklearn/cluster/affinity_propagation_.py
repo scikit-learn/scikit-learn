@@ -8,7 +8,7 @@
 import numpy as np
 import warnings
 
-from sklearn.exceptions import ConvergenceWarning
+from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_array
 from ..utils.validation import check_is_fitted
@@ -403,7 +403,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
 
-        if self.cluster_centers_.size > 0:
+        if self.cluster_centers_.shape[0] > 0:
             return pairwise_distances_argmin(X, self.cluster_centers_)
         else:
             warnings.warn("This model does not have any cluster centers "

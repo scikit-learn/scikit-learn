@@ -1,4 +1,3 @@
-from __future__ import division
 import pytest
 
 import numpy as np
@@ -107,10 +106,10 @@ def test_dict_learning_reconstruction():
 
 
 def test_dict_learning_reconstruction_parallel():
-    # regression test that parallel reconstruction works with n_jobs=-1
+    # regression test that parallel reconstruction works with n_jobs>1
     n_components = 12
     dico = DictionaryLearning(n_components, transform_algorithm='omp',
-                              transform_alpha=0.001, random_state=0, n_jobs=-1)
+                              transform_alpha=0.001, random_state=0, n_jobs=4)
     code = dico.fit(X).transform(X)
     assert_array_almost_equal(np.dot(code, dico.components_), X)
 
@@ -124,7 +123,7 @@ def test_dict_learning_lassocd_readonly_data():
     with TempMemmap(X) as X_read_only:
         dico = DictionaryLearning(n_components, transform_algorithm='lasso_cd',
                                   transform_alpha=0.001, random_state=0,
-                                  n_jobs=-1)
+                                  n_jobs=4)
         with ignore_warnings(category=ConvergenceWarning):
             code = dico.fit(X_read_only).transform(X_read_only)
         assert_array_almost_equal(np.dot(code, dico.components_), X_read_only,

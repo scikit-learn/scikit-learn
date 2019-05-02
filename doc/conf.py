@@ -12,7 +12,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-from __future__ import print_function
 import sys
 import os
 import warnings
@@ -38,6 +37,7 @@ extensions = [
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
+    'custom_references_resolver'
 ]
 
 # this is needed for some reason...
@@ -103,6 +103,10 @@ exclude_patterns = ['_build', 'templates', 'includes', 'themes']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
+# sklearn uses a custom extension: `custom_references_resolver` to modify
+# the order of link resolution for the 'any' role. It resolves python class
+# links first before resolving 'std' domain links. Unresolved roles are
+# considered to be <code> blocks.
 default_role = 'any'
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
@@ -259,6 +263,11 @@ carousel_thumbs = {'sphx_glr_plot_classifier_comparison_001.png': 600,
                    'sphx_glr_plot_compare_methods_001.png': 349}
 
 
+# enable experimental module so that the new GBDTs estimators can be
+# discovered properly by sphinx
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+
+
 def make_carousel_thumbs(app, exception):
     """produces the final resized carousel images"""
     if exception is not None:
@@ -275,9 +284,8 @@ def make_carousel_thumbs(app, exception):
 
 # Config for sphinx_issues
 
-issues_uri = 'https://github.com/scikit-learn/scikit-learn/issues/{issue}'
+# we use the issues path for PRs since the issues URL will forward
 issues_github_path = 'scikit-learn/scikit-learn'
-issues_user_uri = 'https://github.com/{user}'
 
 
 def setup(app):
@@ -289,7 +297,7 @@ def setup(app):
 
 # The following is used by sphinx.ext.linkcode to provide links to github
 linkcode_resolve = make_linkcode_resolve('sklearn',
-                                         u'https://github.com/scikit-learn/'
+                                         'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
 

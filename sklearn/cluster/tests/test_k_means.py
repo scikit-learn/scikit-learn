@@ -9,6 +9,7 @@ import pytest
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
@@ -76,7 +77,7 @@ def test_kmeans_results(representation, algo, dtype):
 def test_elkan_results(distribution):
     # check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
-    if distribution is 'normal':
+    if distribution == 'normal':
         X = rnd.normal(size=(50, 10))
     else:
         X, _ = make_blobs(random_state=rnd)
@@ -331,6 +332,14 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     # There's a very small chance of failure with elkan on unstructured dataset
     # because predict method uses fast euclidean distances computation which
     # may cause small numerical instabilities.
+    # NB: This test is largely redundant with respect to test_predict and
+    #     test_predict_equal_labels.  This test has the added effect of
+    #     testing idempotence of the fittng procesdure which appears to
+    #     be where it fails on some MacOS setups.
+    if sys.platform == "darwin":
+        pytest.xfail(
+            "Known failures on MacOS, See "
+            "https://github.com/scikit-learn/scikit-learn/issues/12644")
     if not (algo == 'elkan' and constructor is sp.csr_matrix):
         rng = np.random.RandomState(seed)
 
@@ -922,3 +931,17 @@ def test_iter_attribute():
     estimator = KMeans(algorithm="elkan", max_iter=1)
     estimator.fit(np.random.rand(10, 10))
     assert estimator.n_iter_ == 1
+
+
+def test_k_means_empty_cluster_relocated():
+    # check that empty clusters are correctly relocated when using sample
+    # weights (#13486)
+    X = np.array([[-1], [1]])
+    sample_weight = [1.9, 0.1]
+    init = np.array([[-1], [10]])
+
+    km = KMeans(n_clusters=2, init=init, n_init=1)
+    km.fit(X, sample_weight=sample_weight)
+
+    assert len(set(km.labels_)) == 2
+    assert_allclose(km.cluster_centers_, [[-1], [1]])

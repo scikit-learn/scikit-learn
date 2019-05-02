@@ -7,7 +7,6 @@
 #          Eric Chang <ericchang2017@u.northwestern.edu>
 # License: BSD 3 clause
 
-from __future__ import division
 
 from itertools import chain, combinations
 import warnings
@@ -138,8 +137,8 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
-                    warn_on_dtype=True, estimator='the scale function',
-                    dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
+                    estimator='the scale function', dtype=FLOAT_DTYPES,
+                    force_all_finite='allow-nan')
     if sparse.issparse(X):
         if with_mean:
             raise ValueError(
@@ -349,7 +348,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             raise TypeError("MinMaxScaler does no support sparse input. "
                             "You may consider to use MaxAbsScaler instead.")
 
-        X = check_array(X, copy=self.copy, warn_on_dtype=True,
+        X = check_array(X, copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
@@ -408,6 +407,9 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X /= self.scale_
         return X
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     """Transforms features by scaling each feature to a given range.
@@ -422,7 +424,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
         X_scaled = X_std * (max - min) + min
 
     where min, max = feature_range.
- 
+
     The transformation is calculated as (when ``axis=0``)::
 
        X_scaled = scale * X + min - X.min(axis=0) * scale
@@ -466,7 +468,7 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
     """  # noqa
     # Unlike the scaler object, this function allows 1d input.
     # If copy is required, it will be done inside the scaler object.
-    X = check_array(X, copy=False, ensure_2d=False, warn_on_dtype=True,
+    X = check_array(X, copy=False, ensure_2d=False,
                     dtype=FLOAT_DTYPES, force_all_finite='allow-nan')
     original_ndim = X.ndim
 
@@ -590,7 +592,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     -----
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
-    
+
     We use a biased estimator for the standard deviation, equivalent to
     `numpy.std(x, ddof=0)`. Note that the choice of `ddof` is unlikely to
     affect model performance.
@@ -657,7 +659,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             Ignored
         """
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
-                        warn_on_dtype=True, estimator=self, dtype=FLOAT_DTYPES,
+                        estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
         # Even in the case of `with_mean=False`, we update the mean anyway
@@ -669,8 +671,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         # incr_mean_variance_axis and _incremental_variance_axis
         if (hasattr(self, 'n_samples_seen_') and
                 isinstance(self.n_samples_seen_, (int, np.integer))):
-            self.n_samples_seen_ = np.repeat(self.n_samples_seen_,
-                                             X.shape[1]).astype(np.int64)
+            self.n_samples_seen_ = np.repeat(
+                self.n_samples_seen_, X.shape[1]).astype(np.int64, copy=False)
 
         if sparse.issparse(X):
             if self.with_mean:
@@ -685,8 +687,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                         shape=X.shape).sum(axis=0).A.ravel()
 
             if not hasattr(self, 'n_samples_seen_'):
-                self.n_samples_seen_ = (X.shape[0] -
-                                        counts_nan).astype(np.int64)
+                self.n_samples_seen_ = (
+                        X.shape[0] - counts_nan).astype(np.int64, copy=False)
 
             if self.with_std:
                 # First pass
@@ -751,7 +753,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'scale_')
 
         copy = copy if copy is not None else self.copy
-        X = check_array(X, accept_sparse='csr', copy=copy, warn_on_dtype=True,
+        X = check_array(X, accept_sparse='csr', copy=copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
 
@@ -808,6 +810,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if self.with_mean:
                 X += self.mean_
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 class MaxAbsScaler(BaseEstimator, TransformerMixin):
@@ -975,6 +980,9 @@ class MaxAbsScaler(BaseEstimator, TransformerMixin):
         else:
             X *= self.scale_
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 def maxabs_scale(X, axis=0, copy=True):
@@ -1231,6 +1239,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
                 X += self.center_
         return X
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
                  quantile_range=(25.0, 75.0), copy=True):
@@ -1464,17 +1475,21 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape [n_samples, n_features]
+        X : array-like or CSR/CSC sparse matrix, shape [n_samples, n_features]
             The data to transform, row by row.
-            Sparse input should preferably be in CSR format (for speed),
-            but must be in CSC format if the degree is 4 or higher.
 
-            If the input matrix is in CSR format and the expansion is of
-            degree 2 or 3, the method described in the work "Leveraging
-            Sparsity to Speed Up Polynomial Feature Expansions of CSR
-            Matrices Using K-Simplex Numbers" by Andrew Nystrom and
-            John Hughes is used, which is much faster than the method
-            used on CSC input.
+            Prefer CSR over CSC for sparse input (for speed), but CSC is
+            required if the degree is 4 or higher. If the degree is less than
+            4 and the input format is CSC, it will be converted to CSR, have
+            its polynomial features generated, then converted back to CSC.
+
+            If the degree is 2 or 3, the method described in "Leveraging
+            Sparsity to Speed Up Polynomial Feature Expansions of CSR Matrices
+            Using K-Simplex Numbers" by Andrew Nystrom and John Hughes is
+            used, which is much faster than the method used on CSC input. For
+            this reason, a CSC input will be converted to CSR, and the output
+            will be converted back to CSC prior to being returned, hence the
+            preference of CSR.
 
         Returns
         -------
@@ -1723,6 +1738,9 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
+    def _more_tags(self):
+        return {'stateless': True}
+
 
 def binarize(X, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix
@@ -1854,6 +1872,9 @@ class Binarizer(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
+
+    def _more_tags(self):
+        return {'stateless': True}
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
@@ -2010,10 +2031,12 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     to spread out the most frequent values. It also reduces the impact of
     (marginal) outliers: this is therefore a robust preprocessing scheme.
 
-    The transformation is applied on each feature independently.
-    The cumulative distribution function of a feature is used to project the
-    original values. Features values of new/unseen data that fall below
-    or above the fitted range will be mapped to the bounds of the output
+    The transformation is applied on each feature independently. First an
+    estimate of the cumulative distribution function of a feature is
+    used to map the original values to a uniform distribution. The obtained
+    values are then mapped to the desired output distribution using the
+    associated quantile function. Features values of new/unseen data that fall
+    below or above the fitted range will be mapped to the bounds of the output
     distribution. Note that this transform is non-linear. It may distort linear
     correlations between variables measured at the same scale but renders
     variables measured at different scales more directly comparable.
@@ -2022,9 +2045,13 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_quantiles : int, optional (default=1000)
+    n_quantiles : int, optional (default=1000 or n_samples)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
+        If n_quantiles is larger than the number of samples, n_quantiles is set
+        to the number of samples as a larger number of quantiles does not give
+        a better approximation of the cumulative distribution function
+        estimator.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
@@ -2053,6 +2080,10 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
+    n_quantiles_ : integer
+        The actual number of quantiles used to discretize the cumulative
+        distribution function.
+
     quantiles_ : ndarray, shape (n_quantiles, n_features)
         The values corresponding the quantiles of reference.
 
@@ -2199,10 +2230,19 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                                                        self.subsample))
 
         X = self._check_inputs(X)
+        n_samples = X.shape[0]
+
+        if self.n_quantiles > n_samples:
+            warnings.warn("n_quantiles (%s) is greater than the total number "
+                          "of samples (%s). n_quantiles is set to "
+                          "n_samples."
+                          % (self.n_quantiles, n_samples))
+        self.n_quantiles_ = max(1, min(self.n_quantiles, n_samples))
+
         rng = check_random_state(self.random_state)
 
         # Create the quantiles of reference
-        self.references_ = np.linspace(0, 1, self.n_quantiles,
+        self.references_ = np.linspace(0, 1, self.n_quantiles_,
                                        endpoint=True)
         if sparse.issparse(X):
             self._sparse_fit(X, rng)
@@ -2214,11 +2254,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     def _transform_col(self, X_col, quantiles, inverse):
         """Private function to transform a single feature"""
 
-        if self.output_distribution == 'normal':
-            output_distribution = 'norm'
-        else:
-            output_distribution = self.output_distribution
-        output_distribution = getattr(stats, output_distribution)
+        output_distribution = self.output_distribution
 
         if not inverse:
             lower_bound_x = quantiles[0]
@@ -2230,15 +2266,22 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             upper_bound_x = 1
             lower_bound_y = quantiles[0]
             upper_bound_y = quantiles[-1]
-            #  for inverse transform, match a uniform PDF
+            # for inverse transform, match a uniform distribution
             with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-                X_col = output_distribution.cdf(X_col)
+                if output_distribution == 'normal':
+                    X_col = stats.norm.cdf(X_col)
+                # else output distribution is already a uniform distribution
+
         # find index for lower and higher bounds
         with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-            lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
-                                lower_bound_x)
-            upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
-                                upper_bound_x)
+            if output_distribution == 'normal':
+                lower_bounds_idx = (X_col - BOUNDS_THRESHOLD <
+                                    lower_bound_x)
+                upper_bounds_idx = (X_col + BOUNDS_THRESHOLD >
+                                    upper_bound_x)
+            if output_distribution == 'uniform':
+                lower_bounds_idx = (X_col == lower_bound_x)
+                upper_bounds_idx = (X_col == upper_bound_x)
 
         isfinite_mask = ~np.isnan(X_col)
         X_col_finite = X_col[isfinite_mask]
@@ -2260,18 +2303,20 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         X_col[upper_bounds_idx] = upper_bound_y
         X_col[lower_bounds_idx] = lower_bound_y
-        # for forward transform, match the output PDF
+        # for forward transform, match the output distribution
         if not inverse:
             with np.errstate(invalid='ignore'):  # hide NaN comparison warnings
-                X_col = output_distribution.ppf(X_col)
-            # find the value to clip the data to avoid mapping to
-            # infinity. Clip such that the inverse transform will be
-            # consistent
-            clip_min = output_distribution.ppf(BOUNDS_THRESHOLD -
-                                               np.spacing(1))
-            clip_max = output_distribution.ppf(1 - (BOUNDS_THRESHOLD -
-                                                    np.spacing(1)))
-            X_col = np.clip(X_col, clip_min, clip_max)
+                if output_distribution == 'normal':
+                    X_col = stats.norm.ppf(X_col)
+                    # find the value to clip the data to avoid mapping to
+                    # infinity. Clip such that the inverse transform will be
+                    # consistent
+                    clip_min = stats.norm.ppf(BOUNDS_THRESHOLD - np.spacing(1))
+                    clip_max = stats.norm.ppf(1 - (BOUNDS_THRESHOLD -
+                                                   np.spacing(1)))
+                    X_col = np.clip(X_col, clip_min, clip_max)
+                # else output distribution is uniform and the ppf is the
+                # identity function so we let X_col unchanged
 
         return X_col
 
@@ -2288,7 +2333,7 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
                 raise ValueError('QuantileTransformer only accepts'
                                  ' non-negative sparse matrices.')
 
-        # check the output PDF
+        # check the output distribution
         if self.output_distribution not in ('normal', 'uniform'):
             raise ValueError("'output_distribution' has to be either 'normal'"
                              " or 'uniform'. Got '{}' instead.".format(
@@ -2381,13 +2426,16 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
 
         return self._transform(X, inverse=True)
 
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 def quantile_transform(X, axis=0, n_quantiles=1000,
                        output_distribution='uniform',
                        ignore_implicit_zeros=False,
                        subsample=int(1e5),
                        random_state=None,
-                       copy=False):
+                       copy="warn"):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2395,10 +2443,12 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     to spread out the most frequent values. It also reduces the impact of
     (marginal) outliers: this is therefore a robust preprocessing scheme.
 
-    The transformation is applied on each feature independently.
-    The cumulative distribution function of a feature is used to project the
-    original values. Features values of new/unseen data that fall below
-    or above the fitted range will be mapped to the bounds of the output
+    The transformation is applied on each feature independently. First an
+    estimate of the cumulative distribution function of a feature is
+    used to map the original values to a uniform distribution. The obtained
+    values are then mapped to the desired output distribution using the
+    associated quantile function. Features values of new/unseen data that fall
+    below or above the fitted range will be mapped to the bounds of the output
     distribution. Note that this transform is non-linear. It may distort linear
     correlations between variables measured at the same scale but renders
     variables measured at different scales more directly comparable.
@@ -2414,9 +2464,13 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         Axis used to compute the means and standard deviations along. If 0,
         transform each feature, otherwise (if 1) transform each sample.
 
-    n_quantiles : int, optional (default=1000)
+    n_quantiles : int, optional (default=1000 or n_samples)
         Number of quantiles to be computed. It corresponds to the number
         of landmarks used to discretize the cumulative distribution function.
+        If n_quantiles is larger than the number of samples, n_quantiles is set
+        to the number of samples as a larger number of quantiles does not give
+        a better approximation of the cumulative distribution function
+        estimator.
 
     output_distribution : str, optional (default='uniform')
         Marginal distribution for the transformed data. The choices are
@@ -2439,17 +2493,23 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
         by np.random. Note that this is used by subsampling and smoothing
         noise.
 
-    copy : boolean, optional, (default=True)
+    copy : boolean, optional, (default="warn")
         Set to False to perform inplace transformation and avoid a copy (if the
-        input is already a numpy array).
+        input is already a numpy array). If True, a copy of `X` is transformed,
+        leaving the original `X` unchanged
 
-    Attributes
-    ----------
-    quantiles_ : ndarray, shape (n_quantiles, n_features)
-        The values corresponding the quantiles of reference.
+        .. deprecated:: 0.21
+            The default value of parameter `copy` will be changed from False
+            to True in 0.23. The current default of False is being changed to
+            make it more consistent with the default `copy` values of other
+            functions in :mod:`sklearn.preprocessing.data`. Furthermore, the
+            current default of False may have unexpected side effects by
+            modifying the value of `X` inplace
 
-    references_ : ndarray, shape(n_quantiles, )
-        Quantiles of references.
+    Returns
+    -------
+    Xt : ndarray or sparse matrix, shape (n_samples, n_features)
+        The transformed data.
 
     Examples
     --------
@@ -2457,7 +2517,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     >>> from sklearn.preprocessing import quantile_transform
     >>> rng = np.random.RandomState(0)
     >>> X = np.sort(rng.normal(loc=0.5, scale=0.25, size=(25, 1)), axis=0)
-    >>> quantile_transform(X, n_quantiles=10, random_state=0)
+    >>> quantile_transform(X, n_quantiles=10, random_state=0, copy=True)
     ... # doctest: +ELLIPSIS
     array([...])
 
@@ -2482,6 +2542,17 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
     """
+    if copy == "warn":
+        warnings.warn("The default value of `copy` will change from False to "
+                      "True in 0.23 in order to make it more consistent with "
+                      "the default `copy` values of other functions in "
+                      ":mod:`sklearn.preprocessing.data` and prevent "
+                      "unexpected side effects by modifying the value of `X` "
+                      "inplace. To avoid inplace modifications of `X`, it is "
+                      "recommended to explicitly set `copy=True`",
+                      FutureWarning)
+        copy = False
+
     n = QuantileTransformer(n_quantiles=n_quantiles,
                             output_distribution=output_distribution,
                             subsample=subsample,
@@ -2841,6 +2912,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                              .format(valid_methods, self.method))
 
         return X
+
+    def _more_tags(self):
+        return {'allow_nan': True}
 
 
 def power_transform(X, method='warn', standardize=True, copy=True):

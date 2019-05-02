@@ -6,21 +6,15 @@ of hard-coded contributors.
 The table should be updated for each new inclusion in the teams.
 Generating the table requires admin rights.
 """
-from __future__ import print_function
-
 import sys
 import requests
 import getpass
 
-try:
-    # With authentication: up to 5000 requests per hour.
-    print("user:", file=sys.stderr)
-    user = input()
-    passwd = getpass.getpass()
-    auth = (user, passwd)
-except IndexError:
-    # Without authentication: up to 60 requests per hour.
-    auth = None
+# With authentication: up to 5000 requests per hour.
+print("user:", file=sys.stderr)
+user = input()
+passwd = getpass.getpass("Password or access token:\n")
+auth = (user, passwd)
 
 ROW_SIZE = 7
 LOGO_URL = 'https://avatars2.githubusercontent.com/u/365630?v=4'
@@ -42,22 +36,18 @@ def get_contributors():
     """Get the list of contributor profiles. Require admin rights."""
     # get members of scikit-learn teams on GitHub
     members = []
-    for team in [11523, 33471]:
-        for page in [1, 2]:  # 30 per page
-            members.extend(requests.get(
-                "https://api.github.com/teams/%d/members?page=%d"
-                % (team, page), auth=auth).json())
+    team = 11523
+    for page in [1, 2]:  # 30 per page
+        reply = requests.get(
+            "https://api.github.com/teams/%d/members?page=%d"
+            % (team, page), auth=auth)
+        reply.raise_for_status()
+        members.extend(reply.json())
 
     # keep only the logins
     logins = [c['login'] for c in members]
-    # add missing contributors with GitHub accounts
-    logins.extend(['dubourg', 'jarrodmillman', 'mbrucher', 'thouis'])
-    # add missing contributors without GitHub accounts
-    logins.extend(['Angel Soler Gollonet'])
     # remove duplicate
     logins = set(logins)
-    # remove CI
-    logins.remove('sklearn-ci')
 
     # get profiles from GitHub
     profiles = [get_profile(login) for login in logins]
@@ -80,7 +70,6 @@ def get_profile(login):
 
         # fix missing names
         missing_names = {'bthirion': 'Bertrand Thirion',
-                         'dubourg': 'Vincent Dubourg',
                          'Duchesnay': 'Edouard Duchesnay',
                          'Lars': 'Lars Buitinck',
                          'MechCoder': 'Manoj Kumar'}
