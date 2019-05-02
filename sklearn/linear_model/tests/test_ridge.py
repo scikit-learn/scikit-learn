@@ -330,7 +330,8 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
     X, y = make_regression(
         n_samples=n_samples, n_features=n_features, n_targets=n_targets,
-        random_state=0, shuffle=False, noise=noise, n_informative=5
+        random_state=0, shuffle=False, noise=noise, n_informative=5,
+        bias=13.
     )
     y = y.reshape(y_shape)
     X += 30
@@ -366,7 +367,7 @@ def test_ridge_gcv_sample_weights(
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
     X, y = datasets.make_regression(
         n_samples=11, n_features=n_features, n_targets=n_targets,
-        random_state=0, shuffle=False, noise=noise)
+        random_state=0, shuffle=False, noise=noise, bias=13.)
     y = y.reshape(y_shape)
     X += 30
     sample_weight = 3 * rng.randn(len(X))
