@@ -33,6 +33,7 @@ from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
+from sklearn.linear_model.ridge import _check_gcv_mode
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
@@ -393,12 +394,34 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=5e-2)
 
 
-def test_ridge_gcv_bad_gcv_mode():
-    x, y = make_regression()
+def test_check_gcv_mode():
+    x, y = make_regression(n_samples=5, n_features=2)
     for mode in [True, 1, 5, 'bad', 'gcv', np.arange(3)]:
         gcv = RidgeCV(gcv_mode=mode)
         assert_raises_regex(
             ValueError, "Unknown value for 'gcv_mode'", gcv.fit, x, y)
+        assert_raises_regex(
+            ValueError, "Unknown value for 'gcv_mode'", _check_gcv_mode,
+            x, mode)
+    assert _check_gcv_mode(x, None) == 'svd'
+    assert _check_gcv_mode(x, 'auto') == 'svd'
+    assert _check_gcv_mode(x, 'eigen') == 'eigen'
+    assert _check_gcv_mode(x, 'svd') == 'svd'
+
+    assert _check_gcv_mode(x.T, None) == 'eigen'
+    assert _check_gcv_mode(x.T, 'auto') == 'eigen'
+    assert _check_gcv_mode(x.T, 'eigen') == 'eigen'
+    assert _check_gcv_mode(x.T, 'svd') == 'svd'
+
+
+def test_ridgecv_store_cv_values():
+    x, y = make_regression(n_samples=10, n_features=2)
+    cv = RidgeCV(cv=3, store_cv_values=True)
+    assert_raises_regex(ValueError, 'cv!=None and store_cv_values',
+                        cv.fit, x, y)
+    gcv = RidgeCV(cv=None, store_cv_values=True)
+    gcv.fit(x, y)
+    assert hasattr(gcv, cv_values_)
 
 
 def _test_ridge_loo(filter_):
