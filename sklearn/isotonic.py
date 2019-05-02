@@ -210,7 +210,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Correctness of Kruskal's algorithms for monotone regression with ties
     Leeuw, Psychometrica, 1977
 
-
     Examples
     --------
     >>> from sklearn.datasets import make_regression
