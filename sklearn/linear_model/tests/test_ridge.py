@@ -348,8 +348,8 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     gcv_ridge.fit(X_gcv, y)
 
     assert gcv_ridge.alpha_ == pytest.approx(loo_ridge.alpha_)
-    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-4)
-    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-4)
+    assert_allclose(gcv_ridge.coef_, loo_ridge.coef_, rtol=1e-3)
+    assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
