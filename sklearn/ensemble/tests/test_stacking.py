@@ -44,13 +44,14 @@ X_iris, y_iris = load_iris(return_X_y=True)
      LeaveOneOut()]
 )
 @pytest.mark.parametrize(
-    "final_estimator", [None, RandomForestClassifier(random_state=42)])
+    "final_estimator", [None, RandomForestClassifier(random_state=42)]
+)
 @pytest.mark.parametrize(
-    "pass_through, X_trans_shape",
+    "passthrough, X_trans_shape",
     [(False, 6),
      (True, 10)]
 )
-def test_stacking_classifier_iris(cv, final_estimator, pass_through,
+def test_stacking_classifier_iris(cv, final_estimator, passthrough,
                                   X_trans_shape):
     X_train, X_test, y_train, y_test = train_test_split(
         X_iris, y_iris, stratify=y_iris, random_state=42
@@ -58,7 +59,7 @@ def test_stacking_classifier_iris(cv, final_estimator, pass_through,
     estimators = [('lr', LogisticRegression()), ('svc', LinearSVC())]
     clf = StackingClassifier(estimators=estimators,
                              final_estimator=final_estimator,
-                             cv=cv, pass_through=pass_through, random_state=42)
+                             cv=cv, passthrough=passthrough, random_state=42)
     clf.fit(X_train, y_train)
     clf.predict(X_test)
     clf.predict_proba(X_test)
@@ -83,13 +84,14 @@ def test_stacking_classifier_iris(cv, final_estimator, pass_through,
      LeaveOneOut()]
 )
 @pytest.mark.parametrize(
-    "final_estimator", [None, RandomForestRegressor(random_state=42)])
+    "final_estimator", [None, RandomForestRegressor(random_state=42)]
+)
 @pytest.mark.parametrize(
-    "pass_through, X_trans_shape",
+    "passthrough, X_trans_shape",
     [(False, 2),
      (True, 12)]
 )
-def test_stacking_regressor_diabetes(cv, final_estimator, pass_through,
+def test_stacking_regressor_diabetes(cv, final_estimator, passthrough,
                                      X_trans_shape):
     X_train, X_test, y_train, y_test = train_test_split(
         X_diabetes, y_diabetes, random_state=42
@@ -97,7 +99,7 @@ def test_stacking_regressor_diabetes(cv, final_estimator, pass_through,
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
     reg = StackingRegressor(estimators=estimators,
                             final_estimator=final_estimator,
-                            cv=cv, pass_through=pass_through, random_state=42)
+                            cv=cv, passthrough=passthrough, random_state=42)
     reg.fit(X_train, y_train)
     reg.predict(X_test)
     assert reg.score(X_test, y_test) < 0.6
@@ -134,35 +136,47 @@ class NoWeightClassifier(BaseEstimator, ClassifierMixin):
 @pytest.mark.filterwarnings("ignore:Default solver will be changed to 'lbfgs'")
 @pytest.mark.filterwarnings("ignore:Default multi_class will be changed")
 @pytest.mark.parametrize(
-    "X, y, estimators, methods, final_estimator, type_err, msg_err",
-    [(X_iris, y_iris, None, 'auto', RandomForestClassifier(),
-      AttributeError, 'Invalid `estimators`'),
-     (X_iris, y_iris, [('lr', LogisticRegression()), ('svm', LinearSVC())],
-      'random', RandomForestClassifier(),
-      AttributeError, 'When "method_estimators" is a string'),
-     (X_iris, y_iris, [('lr', LogisticRegression()), ('svm', LinearSVC())],
-      ['predict'], RandomForestClassifier(),
-      AttributeError, 'When "method_estimators" is a list'),
-     (X_iris, y_iris, [('lr', LinearRegression()),
-                       ('svm', LinearSVR())],
-      ['predict', 'predict_proba'], None,
+    "X, y, params, type_err, msg_err",
+    [(X_iris, y_iris,
+     {'estimators': None, 'final_estimator': RandomForestClassifier(),
+      'predict_method': 'auto'},
+      AttributeError, "Invalid 'estimators' attribute,"),
+     (X_iris, y_iris,
+      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
+       'final_estimator': RandomForestClassifier(), 'passthrough': 'random'},
+      AttributeError, "Invalid 'passthrough' attribute,"),
+     (X_iris, y_iris,
+      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
+       'final_estimator': RandomForestClassifier(),
+       'predict_method': 'random'},
+      AttributeError, "When 'predict_method' is a string"),
+     (X_iris, y_iris,
+      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
+       'final_estimator': RandomForestClassifier(),
+       'predict_method': ['predict']},
+      AttributeError, "When 'predict_method' is a list"),
+     (X_iris, y_iris,
+      {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
+       'final_estimator': None,
+       'predict_method': ['predict', 'predict_proba']},
       ValueError, 'does not implement the method'),
-     (X_iris, y_iris, [('lr', LogisticRegression()),
-                       ('cor', NoWeightClassifier())],
-      'auto', None, ValueError, 'does not support sample weight'),
-     (X_iris, y_iris, [('lr', None), ('svm', None)],
-      'auto', None, ValueError, 'All estimators are None'),
-     (X_iris, y_iris, [('lr', LogisticRegression()), ('svm', LinearSVC())],
-      'auto', RandomForestRegressor(),
+     (X_iris, y_iris,
+      {'estimators': [('lr', LogisticRegression()),
+                      ('cor', NoWeightClassifier())],
+       'final_estimator': None, 'predict_method': 'auto'},
+      ValueError, 'does not support sample weight'),
+     (X_iris, y_iris,
+      {'estimators': [('lr', None), ('svm', None)],
+       'final_estimator': None, 'predict_method': 'auto'},
+      ValueError, 'All estimators are None'),
+     (X_iris, y_iris,
+      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVC())],
+       'final_estimator': RandomForestRegressor(), 'predict_method': 'auto'},
       AttributeError, 'attribute should be a classifier.')]
 )
-def test_stacking_classifier_error(X, y, estimators, methods, final_estimator,
-                                   type_err, msg_err):
+def test_stacking_classifier_error(X, y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
-        clf = StackingClassifier(estimators=estimators,
-                                 method_estimators=methods,
-                                 final_estimator=final_estimator,
-                                 cv=3)
+        clf = StackingClassifier(**params, cv=3)
         clf.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 
@@ -171,38 +185,47 @@ def test_stacking_classifier_error(X, y, estimators, methods, final_estimator,
 @pytest.mark.filterwarnings("ignore:Default solver will be changed to 'lbfgs'")
 @pytest.mark.filterwarnings("ignore:Default multi_class will be changed")
 @pytest.mark.parametrize(
-    "X, y, estimators, methods, final_estimator, type_err, msg_err",
-    [(X_diabetes, y_diabetes, None, 'auto', RandomForestRegressor(),
-      AttributeError, 'Invalid `estimators`'),
-     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
-                               ('svm', LinearSVR())],
-      'random', RandomForestRegressor(),
-      AttributeError, 'When "method_estimators" is a string'),
-     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
-                               ('svm', LinearSVR())],
-      ['predict'], RandomForestRegressor(),
-      AttributeError, 'When "method_estimators" is a list'),
-     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
-                               ('svm', LinearSVR())],
-      ['predict', 'predict_proba'], None,
+    "X, y, params, type_err, msg_err",
+    [(X_diabetes, y_diabetes,
+      {'estimators': None, 'final_estimator': RandomForestRegressor(),
+       'predict_method': 'auto'},
+      AttributeError, "Invalid 'estimators' attribute,"),
+     (X_diabetes, y_diabetes,
+      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())],
+       'final_estimator': RandomForestRegressor(), 'passthrough': 'random'},
+      AttributeError, "Invalid 'passthrough' attribute,"),
+     (X_diabetes, y_diabetes,
+      {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
+       'final_estimator': RandomForestRegressor(),
+       'predict_method': 'random'},
+      AttributeError, "When 'predict_method' is a string"),
+     (X_diabetes, y_diabetes,
+      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())],
+       'final_estimator': RandomForestRegressor(),
+       'predict_method': ['predict']},
+      AttributeError, "When 'predict_method' is a list"),
+     (X_diabetes, y_diabetes,
+      {'estimators': [('lr', LogisticRegression()), ('svm', LinearSVR())],
+       'final_estimator': None,
+       'predict_method': ['predict', 'predict_proba']},
       ValueError, 'does not implement the method'),
-     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
-                               ('cor', NoWeightRegressor())],
-      'auto', None, ValueError, 'does not support sample weight'),
-     (X_diabetes, y_diabetes, [('lr', None), ('svm', None)],
-      'auto', None, ValueError, 'All estimators are None'),
-     (X_diabetes, y_diabetes, [('lr', LinearRegression()),
-                               ('svm', LinearSVR())],
-      'auto', RandomForestClassifier(),
+     (X_diabetes, y_diabetes,
+      {'estimators': [('lr', LinearRegression()),
+                      ('cor', NoWeightRegressor())],
+       'final_estimator': None, 'predict_method': 'auto'},
+      ValueError, 'does not support sample weight'),
+     (X_diabetes, y_diabetes,
+      {'estimators': [('lr', None), ('svm', None)],
+       'final_estimator': None, 'predict_method': 'auto'},
+      ValueError, 'All estimators are None'),
+     (X_diabetes, y_diabetes,
+      {'estimators': [('lr', LinearRegression()), ('svm', LinearSVR())],
+       'final_estimator': RandomForestClassifier(), 'predict_method': 'auto'},
       AttributeError, 'attribute should be a regressor.')]
 )
-def test_stacking_regressor_error(X, y, estimators, methods, final_estimator,
-                                  type_err, msg_err):
+def test_stacking_regressor_error(X, y, params, type_err, msg_err):
     with pytest.raises(type_err, match=msg_err):
-        reg = StackingRegressor(estimators=estimators,
-                                method_estimators=methods,
-                                final_estimator=final_estimator,
-                                cv=3)
+        reg = StackingRegressor(**params, cv=3)
         reg.fit(X, y, sample_weight=np.ones(X.shape[0]))
 
 

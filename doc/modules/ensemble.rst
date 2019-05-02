@@ -858,7 +858,7 @@ E.g., if the prediction for a given sample is
 the VotingClassifier (with ``voting='hard'``) would classify the sample
 as "class 1" based on the majority class label.
 
-In the cases of a tie, the :class:`VotingClassifier` will select the class based
+In the cases of a tie, the `VotingClassifier` will select the class based
 on the ascending sort order. E.g., in the following scenario
 
 - classifier 1 -> class 2
@@ -1045,7 +1045,7 @@ biases [W1992]. More precisely, the predictions of each individual estimator
 are stacked together and used by another estimator to compute the final
 prediction. This final estimator is trained through cross-validation.
 
-The :class:`StackingClassifier` and :class:`StackingRegressor` provides such
+The :class:`StackingClassifier` and :class:`StackingRegressor` provide such
 strategies which can be applied to classification and regression problems.
 
 The ``estimators`` parameter corresponds to the list of the estimators which
@@ -1079,8 +1079,9 @@ to be called on the training data::
   StackingRegressor(...)
 
 During training, the ``estimators`` are fitted on the whole training data
-``X_train``. To generalize and avoid over-fitting, the ``final_estimator`` is
-trained by cross-validation using internally
+``X_train``. They will be used when calling ``predict``, ``predict``, or
+``predict_proba``. To generalize and avoid over-fitting, the
+``final_estimator`` is trained on out-samples using internally
 :func:`sklearn.model_selection.cross_val_predict`.
 
 Note that the output of the ``estimators`` is controlled by the parameter
@@ -1107,6 +1108,10 @@ Note that it is also possible to get the output of the stacked outputs of the
          [14.97..., 14.05..., 16.45...],
          [25.19..., 25.54..., 22.92...],
          [18.93..., 19.26..., 17.03... ]])
+
+.. note::
+   Multiple layers stacking can be achieved by assigning ``final_estimator`` to
+   a :class:`StackingClassifier` or :class:`StackingRegressor`.
 
 .. topic:: References
 

@@ -41,13 +41,13 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
     @abstractmethod
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 method_estimators='auto', pass_through=False, n_jobs=1,
+                 predict_method='auto', passthrough=False, n_jobs=1,
                  random_state=None, verbose=0):
         self.estimators = estimators
         self.final_estimator = final_estimator
         self.cv = cv
-        self.method_estimators = method_estimators
-        self.pass_through = pass_through
+        self.predict_method = predict_method
+        self.passthrough = passthrough
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.verbose = verbose
@@ -80,7 +80,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             return method
 
     def _concatenate_predictions(self, X, y_pred):
-        if self.pass_through:
+        if self.passthrough:
             return np.concatenate([X] + [pred.reshape(-1, 1) if pred.ndim == 1
                                          else pred for pred in y_pred], axis=1)
         else:
@@ -148,46 +148,57 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         self._validate_meta_estimator()
 
         if self.estimators is None or len(self.estimators) == 0:
-            raise AttributeError('Invalid `estimators` attribute, '
-                                 '`estimators` should be a list of '
-                                 '(string, estimator) tuples')
+            raise AttributeError(
+                "Invalid 'estimators' attribute, 'estimators' should be a list"
+                " of (string, estimator) tuples."
+            )
+
+        if not isinstance(self.passthrough, bool):
+            raise AttributeError(
+                "Invalid 'passthrough' attribute, 'passthrough' should be a "
+                "boolean. Got {!r} instead.".format(self.passthrough)
+            )
 
         if sample_weight is not None:
             for name, est in self.estimators:
                 if (est is not None and
                         not has_fit_parameter(est, 'sample_weight')):
-                    raise ValueError('Underlying estimator \'%s\' does not'
-                                     ' support sample weights.' % name)
+                    raise ValueError(
+                        "Underlying estimator {} does not support "
+                        "sample weights.".format(name)
+                    )
 
         names, estimators_ = zip(*self.estimators)
         self._validate_names(names)
 
         n_isnone = np.sum([est is None for est in estimators_])
         if n_isnone == len(self.estimators):
-            raise ValueError('All estimators are None. At least one is '
-                             'required to be an estimator.')
+            raise ValueError(
+                "All estimators are None. At least one is required to be an "
+                "estimator."
+            )
 
-        if isinstance(self.method_estimators, str):
-            if self.method_estimators != 'auto':
-                raise AttributeError('When "method_estimators" is a '
-                                     'string, it should be "auto". Got {} '
-                                     'instead.'
-                                     .format(self.method_estimators))
-            method_estimators = [self.method_estimators] * len(estimators_)
+        if isinstance(self.predict_method, str):
+            if self.predict_method != 'auto':
+                raise AttributeError(
+                    "When 'predict_method' is a string, it should be 'auto'. "
+                    " Got {} instead.".format(self.predict_method)
+                )
+            predict_method = [self.predict_method] * len(estimators_)
         else:
-            if len(self.estimators) != len(self.method_estimators):
-                raise AttributeError('When "method_estimators" is a '
-                                     'list, it should be the same length as '
-                                     'the list of estimators. Provided '
-                                     '{} methods for {} estimators.'
-                                     .format(len(self.method_estimators),
-                                             len(self.estimators)))
-            method_estimators = self.method_estimators
+            if len(self.estimators) != len(self.predict_method):
+                raise AttributeError(
+                    "When 'predict_method' is a list, it should be the same "
+                    "length as the list of estimators. Provided {} methods "
+                    "for {} estimators."
+                    .format(len(self.predict_method), len(self.estimators))
+                )
+            predict_method = self.predict_method
 
-        self.method_estimators_ = [
+        self.predict_method_ = [
             self._method_name(name, est, meth)
             for name, est, meth in zip(names, estimators_,
-                                       method_estimators)]
+                                       predict_method)]
 
         # Fit the base estimators on the whole training data. Those
         # base estimators will be used in transform, predict, and
@@ -197,7 +208,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             for est in estimators_ if est is not None)
 
         # To train the meta-classifier using the most data as possible, we use
-        # a cross-validation to predict the output of the stacked estimators.
+        # a cross-validation to obtain the output of the stacked estimators.
 
         # To ensure that the data provided to each estimator are the same, we
         # need to set the random state of the cv if there is one and we need to
@@ -211,13 +222,13 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
                                        method=meth, n_jobs=self.n_jobs,
                                        verbose=self.verbose)
-            for est, meth in zip(estimators_, self.method_estimators_)
+            for est, meth in zip(estimators_, self.predict_method_)
             if est is not None)
 
         # Only not None estimators will be used in transform. Remove the None
         # from the method as well.
-        self.method_estimators_ = [meth for meth in self.method_estimators_
-                                   if meth is not None]
+        self.predict_method_ = [meth for meth in self.predict_method_
+                                if meth is not None]
 
         X_meta = self._concatenate_predictions(X, X_meta)
         self.final_estimator_.fit(X_meta, y)
@@ -242,7 +253,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         return self._concatenate_predictions(X, [
             getattr(est, meth)(X)
             for est, meth in zip(self.estimators_,
-                                 self.method_estimators_)
+                                 self.predict_method_)
             if est is not None])
 
     @if_delegate_has_method(delegate='final_estimator_')
@@ -302,7 +313,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    method_estimators : list of string or 'auto', optional
+    predict_method : list of string or 'auto', optional
         Methods called for each base estimator. It can be:
 
         * if a list of string in which each string is associated to the
@@ -310,7 +321,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         * if ``auto``, it will try to invoke, for each estimator,
         ``predict_proba``, ``decision_function`` or ``predict`` in that order.
 
-    pass_through : bool, optional
+    passthrough : bool, optional
         Whether or not to concatenate the original data ``X`` with the output
         of ``estimators`` to feed the ``final_estimator``. The default is
         False.
@@ -333,7 +344,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     final_estimator_ : estimator object
         The classifier to stacked the base estimators fitted.
 
-    method_estimators_ : list of string
+    predict_method_ : list of string
         The method used by each base estimator.
 
     References
@@ -369,14 +380,14 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 method_estimators='auto', pass_through=False, n_jobs=1,
+                 predict_method='auto', passthrough=False, n_jobs=1,
                  random_state=None, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
-            method_estimators=method_estimators,
-            pass_through=pass_through,
+            predict_method=predict_method,
+            passthrough=passthrough,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose
@@ -393,8 +404,9 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
             )
         )
         if not is_classifier(self.final_estimator_):
-            raise AttributeError('`final_estimator` attribute should be a '
-                                 'classifier.')
+            raise AttributeError(
+                "'final_estimator' attribute should be a classifier."
+            )
 
     @if_delegate_has_method(delegate='final_estimator_')
     def predict_proba(self, X):
@@ -452,7 +464,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    method_estimators : list of string or 'auto', optional
+    predict_method : list of string or 'auto', optional
         Methods called for each base estimator. It can be:
 
         * if a list of string in which each string is associated to the
@@ -460,7 +472,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         * if ``auto``, it will try to invoke, for each estimator,
         ``predict_proba``, ``decision_function`` or ``predict`` in that order.
 
-    pass_through : bool, optional
+    passthrough : bool, optional
         Whether or not to concatenate the original data ``X`` with the output
         of ``estimators`` to feed the ``final_estimator``. The default is
         False.
@@ -483,7 +495,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     final_estimator_ : estimator object
         The regressor to stacked the base estimators fitted.
 
-    method_estimators_ : list of string
+    predict_method_ : list of string
         The method used by each base estimator.
 
     References
@@ -518,14 +530,14 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
 
     """
     def __init__(self, estimators, final_estimator=None, cv=None,
-                 method_estimators='auto', pass_through=False, n_jobs=1,
+                 predict_method='auto', passthrough=False, n_jobs=1,
                  random_state=None, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
             cv=cv,
-            method_estimators=method_estimators,
-            pass_through=pass_through,
+            predict_method=predict_method,
+            passthrough=passthrough,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose
@@ -536,5 +548,6 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
             default=LinearRegression()
         )
         if not is_regressor(self.final_estimator_):
-            raise AttributeError('`final_estimator` attribute should be a '
-                                 'regressor.')
+            raise AttributeError(
+                "'final_estimator' attribute should be a regressor."
+            )
