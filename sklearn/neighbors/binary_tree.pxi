@@ -1138,7 +1138,7 @@ cdef class BinaryTree:
                 int(self.n_splits),
                 int(self.n_calls),
                 self.dist_metric,
-                self.sample_weight)
+                self.sample_weight_arr)
 
     def __setstate__(self, state):
         """
