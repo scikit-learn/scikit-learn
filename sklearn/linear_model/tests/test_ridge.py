@@ -333,7 +333,6 @@ def test_ridge_gcv_vs_ridge_loo_cv(
         random_state=0, shuffle=False, noise=noise, n_informative=5
     )
     y = y.reshape(y_shape)
-    # X += 30 * np.random.RandomState(0).randn(X.shape[1])
     X += 30
 
     alphas = [1e-3, .1, 1., 10., 1e3]
@@ -365,19 +364,18 @@ def test_ridge_gcv_sample_weights(
     alphas = [1e-3, .1, 1., 10., 1e3]
     rng = np.random.RandomState(0)
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
-    x, y = datasets.make_regression(
+    X, y = datasets.make_regression(
         n_samples=11, n_features=n_features, n_targets=n_targets,
         random_state=0, shuffle=False, noise=noise)
     y = y.reshape(y_shape)
-    # x += 30 * rng.randn(x.shape[1])
-    x += 30
-    sample_weight = 3 * rng.randn(len(x))
+    X += 30
+    sample_weight = 3 * rng.randn(len(X))
     sample_weight = (sample_weight - sample_weight.min() + 1).astype(int)
-    indices = np.repeat(np.arange(x.shape[0]), sample_weight)
+    indices = np.repeat(np.arange(X.shape[0]), sample_weight)
     sample_weight = sample_weight.astype(float)
-    X_tiled, y_tiled = x[indices], y[indices]
+    X_tiled, y_tiled = X[indices], y[indices]
 
-    cv = GroupKFold(n_splits=x.shape[0])
+    cv = GroupKFold(n_splits=X.shape[0])
     splits = cv.split(X_tiled, y_tiled, groups=indices)
     kfold = RidgeCV(
         alphas=alphas, cv=splits, scoring='neg_mean_squared_error',
@@ -394,14 +392,14 @@ def test_ridge_gcv_sample_weights(
     kfold_errors = (y_tiled - predictions)**2
     kfold_errors = [
         np.sum(kfold_errors[indices == i], axis=0) for
-        i in np.arange(x.shape[0])]
+        i in np.arange(X.shape[0])]
     kfold_errors = np.asarray(kfold_errors)
 
-    x_gcv = X_constructor(x)
+    X_gcv = X_constructor(X)
     gcv_ridge = RidgeCV(
         alphas=alphas, store_cv_values=True,
         gcv_mode=gcv_mode, fit_intercept=fit_intercept)
-    gcv_ridge.fit(x_gcv, y, sample_weight=sample_weight)
+    gcv_ridge.fit(X_gcv, y, sample_weight=sample_weight)
     if len(y_shape) == 2:
         gcv_errors = gcv_ridge.cv_values_[:, :, alphas.index(kfold.alpha_)]
     else:
