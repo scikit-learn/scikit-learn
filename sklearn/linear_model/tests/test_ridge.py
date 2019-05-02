@@ -352,14 +352,17 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('n_features', [11, 69])
+@pytest.mark.parametrize('y_shape', [(59,), (59, 1), (59, 3)])
 @pytest.mark.parametrize('noise', [1., 30.])
 def test_ridge_gcv_sample_weights(
-        gcv_mode, X_constructor, fit_intercept, n_features, noise):
+        gcv_mode, X_constructor, fit_intercept, n_features, y_shape, noise):
     alphas = [1e-3, .1, 1., 10., 1e3]
     rng = np.random.RandomState(0)
+    n_targets = y_shape[-1] if len(y_shape) == 2 else 1
     x, y = datasets.make_regression(
-        n_samples=59, n_features=n_features, n_targets=4,
+        n_samples=59, n_features=n_features, n_targets=n_targets,
         random_state=0, shuffle=False, noise=noise)
+    y = y.reshape(y_shape)
     x += 30 * rng.randn(x.shape[1])
     sample_weight = 3 * rng.randn(len(x))
     sample_weight = (sample_weight - sample_weight.min() + 1).astype(int)
@@ -389,7 +392,10 @@ def test_ridge_gcv_sample_weights(
         alphas=alphas, store_cv_values=True,
         gcv_mode=gcv_mode, fit_intercept=fit_intercept)
     gcv_ridge.fit(x_gcv, y, sample_weight=sample_weight)
-    gcv_errors = gcv_ridge.cv_values_[:, :, alphas.index(kfold.alpha_)]
+    if len(y_shape) == 2:
+        gcv_errors = gcv_ridge.cv_values_[:, :, alphas.index(kfold.alpha_)]
+    else:
+        gcv_errors = gcv_ridge.cv_values_[:, alphas.index(kfold.alpha_)]
 
     assert kfold.alpha_ == gcv_ridge.alpha_
     assert_allclose(gcv_errors, kfold_errors, rtol=5e-2)
