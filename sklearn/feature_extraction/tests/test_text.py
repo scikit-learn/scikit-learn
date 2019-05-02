@@ -1199,8 +1199,12 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
     assert _check_stop_words_consistency(vec) is True
 
 
-@pytest.mark.parametrize('Estimator',
-                         [CountVectorizer, TfidfVectorizer, HashingVectorizer])
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+)
 @pytest.mark.parametrize(
     'input_type, err_type, err_msg',
     [('filename', FileNotFoundError, ''),
@@ -1213,8 +1217,12 @@ def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
                   input=input_type).fit_transform(data)
 
 
-@pytest.mark.parametrize('Estimator',
-                         [CountVectorizer, TfidfVectorizer, HashingVectorizer])
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+)
 @pytest.mark.parametrize(
     'analyzer', [lambda doc: open(doc, 'r'), lambda doc: doc.read()]
 )
@@ -1229,8 +1237,12 @@ def test_callable_analyzer_change_behavior(Estimator, analyzer, input_type):
     assert warn_msg in str(records[0])
 
 
-@pytest.mark.parametrize('Estimator',
-                         [CountVectorizer, TfidfVectorizer, HashingVectorizer])
+@pytest.mark.parametrize(
+    'Estimator',
+    [CountVectorizer,
+     TfidfVectorizer,
+     pytest.param(HashingVectorizer, marks=fails_if_pypy)]
+)
 def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     # check if a custom exception from the analyzer is shown to the user
     def analyzer(doc):

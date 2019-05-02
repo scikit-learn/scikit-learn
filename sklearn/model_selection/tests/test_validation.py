@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score, ShuffleSplit
@@ -1333,8 +1334,8 @@ def check_cross_val_predict_binary(est, X, y, method):
 
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype('str')]:
-        assert_array_equal(cross_val_predict(est, X, tg, method=method, cv=cv),
-                           expected_predictions)
+        assert_allclose(cross_val_predict(est, X, tg, method=method, cv=cv),
+                        expected_predictions)
 
 
 def check_cross_val_predict_multiclass(est, X, y, method):
@@ -1358,8 +1359,8 @@ def check_cross_val_predict_multiclass(est, X, y, method):
 
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype('str')]:
-        assert_array_equal(cross_val_predict(est, X, tg, method=method, cv=cv),
-                           expected_predictions)
+        assert_allclose(cross_val_predict(est, X, tg, method=method, cv=cv),
+                        expected_predictions)
 
 
 def check_cross_val_predict_multilabel(est, X, y, method):
@@ -1406,7 +1407,7 @@ def check_cross_val_predict_multilabel(est, X, y, method):
         cv_predict_output = cross_val_predict(est, X, tg, method=method, cv=cv)
         assert_equal(len(cv_predict_output), len(expected_preds))
         for i in range(len(cv_predict_output)):
-            assert_array_equal(cv_predict_output[i], expected_preds[i])
+            assert_allclose(cv_predict_output[i], expected_preds[i])
 
 
 def check_cross_val_predict_with_method_binary(est):
