@@ -430,22 +430,15 @@ def _test_ridge_loo(filter_):
     else:
         X_diabetes_ = X_diabetes
     ridge_gcv = _RidgeGCV(fit_intercept=fit_intercept)
-    ridge_gcv._with_sw = False
-    ridge_gcv._sqrt_sw = np.ones(X_diabetes_.shape[0])
-    ridge_gcv._sqrt_sw_matrix = sp.dia_matrix(
-        (ridge_gcv._sqrt_sw, 0),
-        shape=(X_diabetes_.shape[0], X_diabetes_.shape[0]))
-    ridge_gcv._normalized_sqrt_sw = (
-        ridge_gcv._sqrt_sw / np.linalg.norm(ridge_gcv._sqrt_sw))
-    ridge_gcv._weight_sum = X_diabetes_.shape[0]
+    sqrt_sw = np.ones(X_diabetes_.shape[0])
     ridge = Ridge(alpha=1.0, fit_intercept=fit_intercept)
 
     # because fit_intercept is applied
 
     # generalized cross-validation (efficient leave-one-out)
-    decomp = ridge_gcv._decompose_gram(X_diabetes_, y_diabetes)
-    errors, c = ridge_gcv._errors_gram(1.0, y_diabetes, *decomp)
-    values, c = ridge_gcv._values_gram(1.0, y_diabetes, *decomp)
+    decomp = ridge_gcv._decompose_gram(X_diabetes_, y_diabetes, sqrt_sw)
+    errors, c = ridge_gcv._errors_gram(1.0, y_diabetes, sqrt_sw, *decomp)
+    values, c = ridge_gcv._values_gram(1.0, y_diabetes, sqrt_sw, *decomp)
 
     # brute-force leave-one-out: remove one example at a time
     errors2 = []
@@ -466,11 +459,12 @@ def _test_ridge_loo(filter_):
 
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
-    decomp = ridge_gcv._decompose_covariance_dense(X_diabetes_, y_diabetes)
+    decomp = ridge_gcv._decompose_covariance_dense(
+        X_diabetes_, y_diabetes, sqrt_sw)
     errors3, c = ridge_gcv._errors_covariance_dense(
-        ridge.alpha, y_diabetes, *decomp)
+        ridge.alpha, y_diabetes, sqrt_sw, *decomp)
     values3, c = ridge_gcv._values_covariance_dense(
-        ridge.alpha, y_diabetes, *decomp)
+        ridge.alpha, y_diabetes, sqrt_sw, *decomp)
 
     # check that efficient and SVD efficient LOO give same results
     assert errors == pytest.approx(errors3)
@@ -479,18 +473,18 @@ def _test_ridge_loo(filter_):
     # generalized cross-validation (efficient leave-one-out,
     # SVD variation)
     decomp = ridge_gcv._decompose_covariance_sparse(
-        sp.csr_matrix(X_diabetes_), y_diabetes)
+        sp.csr_matrix(X_diabetes_), y_diabetes, sqrt_sw)
     errors4, c = ridge_gcv._errors_covariance_sparse(
-        ridge.alpha, y_diabetes, *decomp)
+        ridge.alpha, y_diabetes, sqrt_sw, *decomp)
     values4, c = ridge_gcv._values_covariance_sparse(
-        ridge.alpha, y_diabetes, *decomp)
+        ridge.alpha, y_diabetes, sqrt_sw, *decomp)
 
     # check that efficient and SVD efficient LOO give same results
     assert errors == pytest.approx(errors4)
     assert values == pytest.approx(values4)
 
     # check best alpha
-    ridge_gcv.fit(filter_(X_diabetes), y_diabetes)
+    ridge_gcv.fit(filter_(X_diabetes), y_diabetes, sqrt_sw)
     alpha_ = ridge_gcv.alpha_
     ret.append(alpha_)
 
@@ -498,7 +492,7 @@ def _test_ridge_loo(filter_):
     f = ignore_warnings
     scoring = make_scorer(mean_squared_error, greater_is_better=False)
     ridge_gcv2 = RidgeCV(fit_intercept=False, scoring=scoring)
-    f(ridge_gcv2.fit)(filter_(X_diabetes), y_diabetes)
+    f(ridge_gcv2.fit)(filter_(X_diabetes), y_diabetes, sqrt_sw)
     assert ridge_gcv2.alpha_ == pytest.approx(alpha_)
 
     # check that we get same best alpha with custom score_func
@@ -1022,19 +1016,19 @@ def test_errors_and_values_gram():
     rng = check_random_state(42)
     alpha = 1.
     n = 5
-    ridgecv._normalized_sqrt_sw = np.ones(n) / np.sqrt(n)
+    sqrt_sw = np.ones(n)
     y = rng.randn(n)
     v = rng.randn(n)
     Q = rng.randn(len(v), len(v))
     QT_y = Q.T.dot(y)
-    G_diag, c = ridgecv._errors_and_values_gram(alpha, y, v, Q, QT_y)
+    G_diag, c = ridgecv._errors_and_values_gram(alpha, y, sqrt_sw, v, Q, QT_y)
 
     # test that helper function behaves as expected
-    out, c_ = ridgecv._errors_gram(alpha, y, v, Q, QT_y)
+    out, c_ = ridgecv._errors_gram(alpha, y, sqrt_sw, v, Q, QT_y)
     np.testing.assert_array_equal(out, (c / G_diag) ** 2)
     np.testing.assert_array_equal(c, c)
 
-    out, c_ = ridgecv._values_gram(alpha, y, v, Q, QT_y)
+    out, c_ = ridgecv._values_gram(alpha, y, sqrt_sw, v, Q, QT_y)
     np.testing.assert_array_equal(out, y - (c / G_diag))
     np.testing.assert_array_equal(c_, c)
 
@@ -1045,20 +1039,22 @@ def test_errors_and_values_covariance():
     rng = check_random_state(42)
     alpha = 1.
     for n, p in zip((5, 10), (12, 6)):
-        ridgecv._normalized_sqrt_sw = np.ones(n) / np.sqrt(n)
+        sqrt_sw = np.ones(n)
         y = rng.randn(n)
         v = rng.randn(p)
         U = rng.randn(n, p)
         UT_y = U.T.dot(y)
         G_diag, c = ridgecv._errors_and_values_covariance_dense(
-            alpha, y, v, U, UT_y)
+            alpha, y, sqrt_sw, v, U, UT_y)
 
         # test that helper function behaves as expected
-        out, c_ = ridgecv._errors_covariance_dense(alpha, y, v, U, UT_y)
+        out, c_ = ridgecv._errors_covariance_dense(
+            alpha, y, sqrt_sw, v, U, UT_y)
         np.testing.assert_array_equal(out, (c / G_diag) ** 2)
         np.testing.assert_array_equal(c, c)
 
-        out, c_ = ridgecv._values_covariance_dense(alpha, y, v, U, UT_y)
+        out, c_ = ridgecv._values_covariance_dense(
+            alpha, y, sqrt_sw, v, U, UT_y)
         np.testing.assert_array_equal(out, y - (c / G_diag))
         np.testing.assert_array_equal(c_, c)
 

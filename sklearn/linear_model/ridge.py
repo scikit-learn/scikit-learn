@@ -1016,7 +1016,7 @@ class _RidgeGCV(LinearModel):
             D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
         return D * B
 
-    def _compute_gram(self, X, center=True):
+    def _compute_gram(self, X, sqrt_sw, center=True):
         """Computes the Gram matrix with possible centering.
 
         If ``center`` is ``True``, compute
@@ -1027,6 +1027,10 @@ class _RidgeGCV(LinearModel):
         ----------
         X : ndarray, shape (n_samples, n_features)
             The input uncentered data.
+
+        sqrt_sw : ndarray, shape (n_samples,)
+            square roots of sample weights
+
         center : bool, default is True
             Whether or not to remove the mean from ``X``.
 
@@ -1034,7 +1038,7 @@ class _RidgeGCV(LinearModel):
         -------
         gram : ndarray, shape (n_samples, n_samples)
             The Gram matrix.
-        X_m : ndarray, shape (n_feature,)
+        X_mean : ndarray, shape (n_feature,)
             The mean of ``X`` for each feature.
         """
         if not center:
@@ -1044,19 +1048,21 @@ class _RidgeGCV(LinearModel):
             return safe_sparse_dot(X, X.T, dense_output=True), X_mean
         # otherwise X is always sparse
         n_samples = X.shape[0]
-        X_weighted = self._sqrt_sw_matrix.dot(X)
+        sample_weight_matrix = sparse.dia_matrix(
+            (sqrt_sw, 0), shape=(n_samples, n_samples))
+        X_weighted = sample_weight_matrix.dot(X)
         X_mean, _ = mean_variance_axis(X_weighted, axis=0)
-        X_mean *= n_samples / self._weight_sum
-        X_mX = self._sqrt_sw[:, None] * safe_sparse_dot(
+        X_mean *= n_samples / sqrt_sw.dot(sqrt_sw)
+        X_mX = sqrt_sw[:, None] * safe_sparse_dot(
             X_mean, X.T, dense_output=True)
         X_mX_m = np.empty((n_samples, n_samples), dtype=X.dtype)
         X_mX_m[:, :] = np.dot(X_mean, X_mean)
-        X_mX_m *= self._sqrt_sw
-        X_mX_m *= self._sqrt_sw[:, None]
+        X_mX_m *= sqrt_sw
+        X_mX_m *= sqrt_sw[:, None]
         return (safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m
                 - X_mX - X_mX.T, X_mean)
 
-    def _compute_covariance(self, X, center=True):
+    def _compute_covariance(self, X, sqrt_sw, center=True):
         """Computes centered covariance matrix.
 
         If ``center`` is ``True``, compute
@@ -1068,6 +1074,10 @@ class _RidgeGCV(LinearModel):
         ----------
         X : ndarray, shape (n_samples, n_features)
             The input uncentered data.
+
+        sqrt_sw : ndarray, shape (n_samples,)
+            square roots of sample weights
+
         center : bool, default is True
             Whether or not to remove the mean from ``X``.
 
@@ -1075,7 +1085,7 @@ class _RidgeGCV(LinearModel):
         -------
         covariance : ndarray, shape (n_features, n_features)
             The covariance matrix.
-        X_m : ndarray, shape (n_feature,)
+        X_mean : ndarray, shape (n_feature,)
             The mean of ``X`` for each feature.
         """
         if not center:
@@ -1085,14 +1095,17 @@ class _RidgeGCV(LinearModel):
             return safe_sparse_dot(X.T, X, dense_output=True), X_mean
         # otherwise X is always sparse
         n_samples = X.shape[0]
-        X_weighted = self._sqrt_sw_matrix.dot(X)
+        sample_weight_matrix = sparse.dia_matrix(
+            (sqrt_sw, 0), shape=(n_samples, n_samples))
+        X_weighted = sample_weight_matrix.dot(X)
         X_mean, _ = mean_variance_axis(X_weighted, axis=0)
-        X_mean = X_mean * n_samples / self._weight_sum
+        X_mean = X_mean * n_samples / sqrt_sw.dot(sqrt_sw)
+        weight_sum = sqrt_sw.dot(sqrt_sw)
         return (safe_sparse_dot(X.T, X, dense_output=True) -
-                self._weight_sum * np.outer(X_mean, X_mean),
+                weight_sum * np.outer(X_mean, X_mean),
                 X_mean)
 
-    def _sparse_multidot_diag(self, X, A, X_mean):
+    def _sparse_multidot_diag(self, X, A, X_mean, sqrt_sw):
         """Compute the diagonal of (X - X_mean).dot(A).dot((X - X_mean).T)
         without explicitely centering X nor computing X.dot(A)
         when X is sparse.
@@ -1105,13 +1118,16 @@ class _RidgeGCV(LinearModel):
 
         X_mean : np.ndarray, shape = (n_features,)
 
+        sqrt_sw : np.ndarray, shape = (n_features,)
+            square roots of sample weights
+
         Returns
         -------
         diag : np.ndarray, shape = (n_samples,)
             The computed diagonal.
         """
-        intercept_col = self._sqrt_sw
-        scale = self._sqrt_sw
+        intercept_col = sqrt_sw
+        scale = sqrt_sw
         batch_size = X.shape[1]
         diag = np.empty(X.shape[0])
         for start in range(0, X.shape[0], batch_size):
@@ -1134,27 +1150,23 @@ class _RidgeGCV(LinearModel):
             X_offset += self._X_offset * X_scale
         super()._set_intercept(X_offset, y_offset, X_scale)
 
-    def _decompose_gram(self, X, y):
+    def _decompose_gram(self, X, y, sqrt_sw):
         """Eigendecomposition of X.X^T, used when n_samples <= n_features"""
         # if X is dense it has already been centered in preprocessing
         center = self.fit_intercept and sparse.issparse(X)
-        K, X_m = self._compute_gram(X, center)
+        K, X_m = self._compute_gram(X, sqrt_sw, center=center)
         if self.fit_intercept:
-            if self._with_sw:
-                # to emulate centering X with sample weights,
-                # ie removing the weighted average, we add a column
-                # containing the square roots of the sample weights.
-                # by centering, it is orthogonal to the other columns
-                K += np.outer(self._sqrt_sw, self._sqrt_sw)
-            else:
-                # with uniform sample weights we add a column of 1
-                K += 1.
+            # to emulate centering X with sample weights,
+            # ie removing the weighted average, we add a column
+            # containing the square roots of the sample weights.
+            # by centering, it is orthogonal to the other columns
+            K += np.outer(sqrt_sw, sqrt_sw)
         v, Q = linalg.eigh(K)
         QT_y = np.dot(Q.T, y)
         self._X_offset = X_m
         return v, Q, QT_y
 
-    def _errors_and_values_gram(self, alpha, y, v, Q, QT_y):
+    def _errors_and_values_gram(self, alpha, y, sqrt_sw, v, Q, QT_y):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
         Used when we have a decomposition of X.X^T (n_features >= n_samples).
@@ -1166,7 +1178,8 @@ class _RidgeGCV(LinearModel):
             # corresponds to the intercept; we cancel the regularization on
             # this dimension. the corresponding eigenvalue is
             # sum(sample_weight).
-            intercept_dim = _find_smallest_angle(self._normalized_sqrt_sw, Q)
+            normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
+            intercept_dim = _find_smallest_angle(normalized_sw, Q)
             w[intercept_dim] = 0  # cancel regularization for the intercept
 
         c = np.dot(Q, self._diag_dot(w, QT_y))
@@ -1176,20 +1189,20 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _errors_gram(self, alpha, y, v, Q, QT_y):
-        G_diag, c = self._errors_and_values_gram(alpha, y, v, Q, QT_y)
+    def _errors_gram(self, alpha, y, sqrt_sw, v, Q, QT_y):
+        G_diag, c = self._errors_and_values_gram(alpha, y, sqrt_sw, v, Q, QT_y)
         return (c / G_diag) ** 2, c
 
-    def _values_gram(self, alpha, y, v, Q, QT_y):
-        G_diag, c = self._errors_and_values_gram(alpha, y, v, Q, QT_y)
+    def _values_gram(self, alpha, y, sqrt_sw, v, Q, QT_y):
+        G_diag, c = self._errors_and_values_gram(alpha, y, sqrt_sw, v, Q, QT_y)
         return y - (c / G_diag), c
 
-    def _decompose_covariance_sparse(self, X, y):
+    def _decompose_covariance_sparse(self, X, y, sqrt_sw):
         """Eigendecomposition of X^T.X, used when n_samples > n_features."""
         n_samples, n_features = X.shape
         cov = np.empty((n_features + 1, n_features + 1))
         cov[:-1, :-1], self._X_offset = self._compute_covariance(
-            X, self.fit_intercept)
+            X, sqrt_sw, center=self.fit_intercept)
         if not self.fit_intercept:
             cov = cov[:-1, :-1]
         # to emulate centering X with sample weights,
@@ -1200,10 +1213,7 @@ class _RidgeGCV(LinearModel):
         else:
             cov[-1] = 0
             cov[:, -1] = 0
-            if self._with_sw:
-                cov[-1, -1] = self._weight_sum
-            else:
-                cov[-1, -1] = n_samples
+            cov[-1, -1] = sqrt_sw.dot(sqrt_sw)
         kernel_size = max(0, X.shape[1] - X.shape[0])
         s, V = linalg.eigh(cov)
         # remove eigenvalues and vectors in the null space of X^T.X
@@ -1212,7 +1222,7 @@ class _RidgeGCV(LinearModel):
         return s, V, X
 
     def _errors_and_values_covariance_sparse_no_intercept(
-            self, alpha, y, s, V, X):
+            self, alpha, y, sqrt_sw, s, V, X):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
         Used when we have a decomposition of X^T.X
@@ -1224,14 +1234,14 @@ class _RidgeGCV(LinearModel):
         X_mean = self._X_offset
         AXy = A.dot(safe_sparse_dot(X.T, y, dense_output=True))
         y_hat = safe_sparse_dot(X, AXy, dense_output=True)
-        hat_diag = self._sparse_multidot_diag(X, A, X_mean)
+        hat_diag = self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
         if len(y.shape) != 1:
             # handle case where y is 2-d
             hat_diag = hat_diag[:, np.newaxis]
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
     def _errors_and_values_covariance_sparse_intercept(
-            self, alpha, y, s, V, X):
+            self, alpha, y, sqrt_sw, s, V, X):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
         Used when we have a decomposition of X^T.X
@@ -1252,25 +1262,24 @@ class _RidgeGCV(LinearModel):
         A = (V * w).dot(V.T)
         X_mean = self._X_offset
         # add a column to X containing the square roots of sample weights
-        sw = self._sqrt_sw if self._with_sw else np.ones(
-            X.shape[0], dtype=X.dtype)
 
         def matvec(v):
             return safe_sparse_dot(
                 X, v[:-1], dense_output=True
-            ) - sw * X_mean.dot(v[:-1]) + v[-1] * sw
+            ) - sqrt_sw * X_mean.dot(v[:-1]) + v[-1] * sqrt_sw
 
         def matmat(v):
-            return safe_sparse_dot(
-                X, v[:-1], dense_output=True
-            ) - sw[:, None] * X_mean.dot(v[:-1]) + v[-1] * sw[:, None]
+            return (
+                safe_sparse_dot(X, v[:-1], dense_output=True) -
+                sqrt_sw[:, None] * X_mean.dot(v[:-1]) + v[-1] *
+                sqrt_sw[:, None])
 
         def rmatvec(v):
             v = v.ravel()
             res = np.empty(n_features + 1)
             res[:-1] = safe_sparse_dot(
-                X.T, v, dense_output=True) - X_mean * sw.dot(v)
-            res[-1] = np.dot(v, sw)
+                X.T, v, dense_output=True) - X_mean * sqrt_sw.dot(v)
+            res[-1] = np.dot(v, sqrt_sw)
             return res
 
         Xop = sparse.linalg.LinearOperator(
@@ -1279,14 +1288,14 @@ class _RidgeGCV(LinearModel):
         )
         AXy = A.dot(Xop.adjoint().dot(y))
         y_hat = Xop.dot(AXy)
-        hat_diag = self._sparse_multidot_diag(X, A, X_mean)
+        hat_diag = self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
         # return (1 - hat_diag), (y - y_hat)
         if len(y.shape) != 1:
             # handle case where y is 2-d
             hat_diag = hat_diag[:, np.newaxis]
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
-    def _errors_and_values_covariance_sparse(self, alpha, y, s, V, X):
+    def _errors_and_values_covariance_sparse(self, alpha, y, sqrt_sw, s, V, X):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
         Used when we have a decomposition of X^T.X
@@ -1294,16 +1303,13 @@ class _RidgeGCV(LinearModel):
         """
         if self.fit_intercept:
             return self._errors_and_values_covariance_sparse_intercept(
-                alpha, y, s, V, X)
+                alpha, y, sqrt_sw, s, V, X)
         return self._errors_and_values_covariance_sparse_no_intercept(
-            alpha, y, s, V, X)
+            alpha, y, sqrt_sw, s, V, X)
 
-    def _decompose_covariance_dense(self, X, y):
+    def _decompose_covariance_dense(self, X, y, sqrt_sw):
         if self.fit_intercept:
-            if self._with_sw:
-                intercept = self._sqrt_sw[:, None]
-            else:
-                intercept = np.ones((X.shape[0], 1))
+            intercept = sqrt_sw[:, None]
             X = np.hstack((X, intercept))
         # to emulate fit_intercept=True situation, add a column on ones
         # Note that by centering, the other columns are orthogonal to that one
@@ -1312,7 +1318,8 @@ class _RidgeGCV(LinearModel):
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
 
-    def _errors_and_values_covariance_dense(self, alpha, y, v, U, UT_y):
+    def _errors_and_values_covariance_dense(
+            self, alpha, y, sqrt_sw, v, U, UT_y):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
         Used when we have an SVD decomposition of X
@@ -1321,7 +1328,8 @@ class _RidgeGCV(LinearModel):
         w = ((v + alpha) ** -1) - (alpha ** -1)
         if self.fit_intercept:
             # detect intercept column
-            intercept_dim = _find_smallest_angle(self._normalized_sqrt_sw, U)
+            normalized_sw = sqrt_sw / np.linalg.norm(sqrt_sw)
+            intercept_dim = _find_smallest_angle(normalized_sw, U)
             # cancel the regularization for the intercept
             w[intercept_dim] = - (alpha ** -1)
         c = np.dot(U, self._diag_dot(w, UT_y)) + (alpha ** -1) * y
@@ -1331,24 +1339,24 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _errors_covariance_sparse(self, alpha, y, v, U, UT_y):
+    def _errors_covariance_sparse(self, alpha, y, sqrt_sw, v, U, UT_y):
         G_diag, c = self._errors_and_values_covariance_sparse(
-            alpha, y, v, U, UT_y)
+            alpha, y, sqrt_sw, v, U, UT_y)
         return (c / G_diag) ** 2, c
 
-    def _values_covariance_sparse(self, alpha, y, v, U, UT_y):
+    def _values_covariance_sparse(self, alpha, y, sqrt_sw, v, U, UT_y):
         G_diag, c = self._errors_and_values_covariance_sparse(
-            alpha, y, v, U, UT_y)
+            alpha, y, sqrt_sw, v, U, UT_y)
         return y - (c / G_diag), c
 
-    def _errors_covariance_dense(self, alpha, y, v, U, UT_y):
+    def _errors_covariance_dense(self, alpha, y, sqrt_sw, v, U, UT_y):
         G_diag, c = self._errors_and_values_covariance_dense(
-            alpha, y, v, U, UT_y)
+            alpha, y, sqrt_sw, v, U, UT_y)
         return (c / G_diag) ** 2, c
 
-    def _values_covariance_dense(self, alpha, y, v, U, UT_y):
+    def _values_covariance_dense(self, alpha, y, sqrt_sw, v, U, UT_y):
         G_diag, c = self._errors_and_values_covariance_dense(
-            alpha, y, v, U, UT_y)
+            alpha, y, sqrt_sw, v, U, UT_y)
         return y - (c / G_diag), c
 
     def _remove_temp_vars(self):
@@ -1410,17 +1418,9 @@ class _RidgeGCV(LinearModel):
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
-            self._sqrt_sw = np.sqrt(sample_weight)
-            self._weight_sum = sample_weight.sum()
-            self._with_sw = True
+            sqrt_sw = np.sqrt(sample_weight)
         else:
-            self._with_sw = False
-            self._sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
-            self._weight_sum = float(X.shape[0])
-        self._normalized_sqrt_sw = self._sqrt_sw / np.linalg.norm(
-            self._sqrt_sw)
-        self._sqrt_sw_matrix = sparse.dia_matrix(
-            (self._sqrt_sw, 0), shape=(X.shape[0], X.shape[0]))
+            sqrt_sw = np.ones(X.shape[0], dtype=X.dtype)
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
@@ -1428,12 +1428,12 @@ class _RidgeGCV(LinearModel):
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True)
         error = scorer is None
 
-        decomposition = _decompose(X, y)
+        decomposition = _decompose(X, y, sqrt_sw)
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c = _errors(float(alpha), y, *decomposition)
+                out, c = _errors(float(alpha), y, sqrt_sw, *decomposition)
             else:
-                out, c = _values(float(alpha), y, *decomposition)
+                out, c = _values(float(alpha), y, sqrt_sw, *decomposition)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
