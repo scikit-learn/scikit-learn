@@ -1155,12 +1155,9 @@ class _RidgeGCV(LinearModel):
         return v, Q, QT_y
 
     def _errors_and_values_gram(self, alpha, y, v, Q, QT_y):
-        """Helper function to avoid code duplication between self._errors and
-        self._values.
+        """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
-        Notes
-        -----
-        We don't construct matrix G, instead compute action on y & diagonal.
+        Used when we have a decomposition of X.X^T (n_features >= n_samples).
         """
         w = 1. / (v + alpha)
         if self.fit_intercept:
@@ -1216,7 +1213,11 @@ class _RidgeGCV(LinearModel):
 
     def _errors_and_values_covariance_sparse_no_intercept(
             self, alpha, y, s, V, X):
-        """compute loo values and dual coef when X is sparse"""
+        """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
+
+        Used when we have a decomposition of X^T.X
+        (n_features < n_samples and X is sparse), and not fitting an intercept.
+        """
         n_samples, n_features = X.shape
         w = 1 / (s + alpha)
         A = (V * w).dot(V.T)
@@ -1231,12 +1232,11 @@ class _RidgeGCV(LinearModel):
 
     def _errors_and_values_covariance_sparse_intercept(
             self, alpha, y, s, V, X):
-        """Helper function to avoid code duplication between self._errors_svd
-        and self._values_svd.
+        """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
-        compute loo values and dual coef when X is sparse and we fit an
-        intercept.
-
+        Used when we have a decomposition of X^T.X
+        (n_features < n_samples and X is sparse),
+        and we are fitting an intercept.
         """
         n_samples, n_features = X.shape
         # the vector [0, 0, ..., 0, 1]
@@ -1287,6 +1287,11 @@ class _RidgeGCV(LinearModel):
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
     def _errors_and_values_covariance_sparse(self, alpha, y, s, V, X):
+        """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
+
+        Used when we have a decomposition of X^T.X
+        (n_features < n_samples and X is sparse).
+        """
         if self.fit_intercept:
             return self._errors_and_values_covariance_sparse_intercept(
                 alpha, y, s, V, X)
@@ -1308,8 +1313,10 @@ class _RidgeGCV(LinearModel):
         return v, U, UT_y
 
     def _errors_and_values_covariance_dense(self, alpha, y, v, U, UT_y):
-        """Helper function to avoid code duplication between self._errors_svd
-        and self._values_svd.
+        """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
+
+        Used when we have an SVD decomposition of X
+        (n_features >= n_samples and X is dense).
         """
         w = ((v + alpha) ** -1) - (alpha ** -1)
         if self.fit_intercept:
