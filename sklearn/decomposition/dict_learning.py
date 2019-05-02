@@ -644,7 +644,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         Sparsity controlling parameter.
 
     n_iter : int,
-        Number of iterations to perform.
+        Number of mini-batch iterations to perform.
 
     return_code : boolean,
         Whether to also return the code U or just the dictionary V.
@@ -714,7 +714,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         .. versionadded:: 0.20
 
     method_max_iter : int, optional (default=1000)
-        Maximum number of iterations to perform in each ``sparse_encode`` step.
+        Maximum number of iterations to perform when solving the lasso problem.
 
         .. versionadded:: 0.21
 
