@@ -1695,7 +1695,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             Regression and binary classification are special cases with
             ``k == 1``, otherwise ``k==n_classes``.
         """
-        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         raw_predictions = self._raw_predict_init(X)
         for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate,
@@ -2108,7 +2108,7 @@ shape (n_estimators, ``loss_.K``)
             `classes_`. Regression and binary classification produce an
             array of shape [n_samples].
         """
-        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         raw_predictions = self._raw_predict(X)
         if raw_predictions.shape[1] == 1:
             return raw_predictions.ravel()
@@ -2550,7 +2550,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y : array, shape (n_samples,)
             The predicted values.
         """
-        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         # In regression we can directly return the raw value from the trees.
         return self._raw_predict(X).ravel()
 
