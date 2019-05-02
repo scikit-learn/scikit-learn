@@ -34,6 +34,6 @@ __all__ = ["BaseEnsemble",
            "BaggingRegressor", "IsolationForest", "GradientBoostingClassifier",
            "GradientBoostingRegressor", "AdaBoostClassifier",
            "AdaBoostRegressor", "VotingClassifier", "VotingRegressor",
+           "StackingClassifier", "StackingRegressor",
            "bagging", "forest", "gradient_boosting",
-           "partial_dependence", "weight_boosting",
-           "StackingClassifier", "StackingRegressor"]
+           "partial_dependence", "weight_boosting"]

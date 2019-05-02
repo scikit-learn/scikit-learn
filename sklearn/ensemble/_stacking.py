@@ -15,8 +15,6 @@ from ..base import MetaEstimatorMixin
 
 from .base import _parallel_fit_estimator
 
-from sklearn.externals.joblib import Parallel, delayed
-
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
 
@@ -24,6 +22,7 @@ from ..model_selection import cross_val_predict
 from ..model_selection import check_cv
 
 from ..utils import check_random_state
+from ..utils._joblib import Parallel, delayed
 from ..utils.metaestimators import _BaseComposition
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.validation import has_fit_parameter
