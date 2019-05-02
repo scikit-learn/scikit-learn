@@ -43,7 +43,7 @@ jobs:
       condition: succeededOrFailed()
     - script: |
         build_tools/azure/upload_codecov.sh
-      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'), eq(variables['DISTRIB'], 'conda'))
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))
       displayName: 'Upload To Codecov'
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)
