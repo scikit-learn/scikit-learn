@@ -141,12 +141,22 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 
     >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3)
+    >>> reg = linear_model.RidgeCV(alphas=[1.0, 10.0], store_cv_values=True)
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
-    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=3, fit_intercept=True, scoring=None,
-        normalize=False)
-    >>> reg.alpha_                                      # doctest: +SKIP
-    0.1
+    RidgeCV(alphas=array([ 1., 10.]), cv=None, fit_intercept=True, gcv_mode=None,
+            normalize=False, scoring=None, store_cv_values=True)
+    >>> reg.alpha_                                          # doctest: +SKIP
+    1.0
+    >>> reg.cv_values_
+    array([[0.105625  , 0.25917355],
+          [0.0225    , 0.12570248],
+          [0.9025    , 0.9025    ]])
+
+In some cases, for example for very large datasets, this is not the most
+efficient way to set the hyperparameter, and k-fold cross-validation can be
+faster. Specifying the value of the `cv` attribute will trigger the use of
+cross-validation with `GridSearchCV`, for example `cv=10` for 10-fold
+cross-validation.
 
 .. topic:: References
 
