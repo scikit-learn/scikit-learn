@@ -394,24 +394,28 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=5e-2)
 
 
-def test_check_gcv_mode():
-    x, y = make_regression(n_samples=5, n_features=2)
-    for mode in [True, 1, 5, 'bad', 'gcv', np.arange(3)]:
-        gcv = RidgeCV(gcv_mode=mode)
-        assert_raises_regex(
-            ValueError, "Unknown value for 'gcv_mode'", gcv.fit, x, y)
-        assert_raises_regex(
-            ValueError, "Unknown value for 'gcv_mode'", _check_gcv_mode,
-            x, mode)
-    assert _check_gcv_mode(x, None) == 'svd'
-    assert _check_gcv_mode(x, 'auto') == 'svd'
-    assert _check_gcv_mode(x, 'eigen') == 'eigen'
-    assert _check_gcv_mode(x, 'svd') == 'svd'
+@pytest.mark.parametrize('mode', [True, 1, 5, 'bad', 'gcv', np.arange(3)])
+def test_check_gcv_mode_error(mode):
+    X, y = make_regression(n_samples=5, n_features=2)
+    gcv = RidgeCV(gcv_mode=mode)
+    with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
+        gcv.fit(X, y)
+        _check_gcv_mode(X, mode)
 
-    assert _check_gcv_mode(x.T, None) == 'eigen'
-    assert _check_gcv_mode(x.T, 'auto') == 'eigen'
-    assert _check_gcv_mode(x.T, 'eigen') == 'eigen'
-    assert _check_gcv_mode(x.T, 'svd') == 'svd'
+
+@pytest.mark.parametrize(
+    'mode, mode_samples_sup_features, mode_features_sup_samples',
+    [(None, 'svd', 'eigen'),
+     ('auto', 'svd', 'eigen'),
+     ('eigen', 'eigen', 'eigen'),
+     ('svd', 'svd', 'svd')]
+)
+def test_check_gcv_mode_choice(mode, mode_samples_sup_features,
+                               mode_features_sup_samples):
+    X, _ = make_regression(n_samples=5, n_features=2)
+
+    assert _check_gcv_mode(X, mode) == mode_samples_sup_features
+    assert _check_gcv_mode(X.T, mode) == mode_features_sup_samples
 
 
 def _test_ridge_loo(filter_):
