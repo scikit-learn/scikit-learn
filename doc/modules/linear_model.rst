@@ -147,7 +147,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
             normalize=False, scoring=None, store_cv_values=True)
     >>> reg.alpha_                                          # doctest: +SKIP
     1.0
-    >>> reg.cv_values_
+    >>> reg.cv_values_                                      # doctest: +SKIP
     array([[0.105625  , 0.25917355],
           [0.0225    , 0.12570248],
           [0.9025    , 0.9025    ]])
