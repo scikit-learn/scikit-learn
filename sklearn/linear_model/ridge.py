@@ -920,13 +920,14 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
 
 def _check_gcv_mode(X, gcv_mode):
-    possible_gcv_modes = {None, 'auto', 'svd', 'eigen'}
-    if gcv_mode not in possible_gcv_modes:
+    possible_gcv_modes = [None, 'auto', 'svd', 'eigen']
+    if (gcv_mode is not None and not isinstance(gcv_mode, str)) or (
+            gcv_mode not in possible_gcv_modes):
         raise ValueError(
             "Unknown value for 'gcv_mode'. "
             "Got {} instead of one of {}" .format(
                 gcv_mode, possible_gcv_modes))
-    if gcv_mode not in {None, 'auto'}:
+    if gcv_mode not in [None, 'auto']:
         return gcv_mode
     # if X has more rows than columns, use decomposition of X^T.X,
     # otherwise X.X^T

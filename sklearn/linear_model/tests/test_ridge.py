@@ -393,6 +393,14 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=5e-2)
 
 
+def test_ridge_gcv_bad_gcv_mode():
+    x, y = make_regression()
+    for mode in [True, 1, 5, 'bad', 'gcv', np.arange(3)]:
+        gcv = RidgeCV(gcv_mode=mode)
+        assert_raises_regex(
+            ValueError, "Unknown value for 'gcv_mode'", gcv.fit, x, y)
+
+
 def _test_ridge_loo(filter_):
     # test that can work with both dense or sparse matrices
     n_samples = X_diabetes.shape[0]
