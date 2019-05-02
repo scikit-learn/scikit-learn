@@ -2161,6 +2161,7 @@ def _build_repr(self):
 
     return '%s(%s)' % (class_name, _pprint(params, offset=len(class_name)))
 
+
 class GapCrossValidator(metaclass=ABCMeta):
     """Base class for all gap cross-validators"""
 
@@ -2248,7 +2249,7 @@ class GapCrossValidator(metaclass=ABCMeta):
         for mark in marks:
             complement = np.ones(len(mark), dtype=np.bool)
             for i, marked in enumerate(mark):
-                if marked: # then make its neighbourhood False
+                if marked:   # then make its neighbourhood False
                     begin = max(i - before, 0)
                     end = min(i + after + 1, len(complement))
                     complement[np.arange(begin, end)] = False
@@ -2270,6 +2271,7 @@ class GapCrossValidator(metaclass=ABCMeta):
 
     def __repr__(self):
         return _build_repr(self)
+
 
 class GapLeavePOut(GapCrossValidator):
     """Leave-P-Out cross-validator with Gap
@@ -2317,14 +2319,13 @@ class GapLeavePOut(GapCrossValidator):
         n_samples = _num_samples(X)
         gap_before, gap_after = self.gap_before, self.gap_after
         if n_samples - gap_after - self.p >= gap_before + 1:
-            for i in range(n_samples - self.p +1):
+            for i in range(n_samples - self.p + 1):
                 yield np.arange(i, i + self.p)
         else:
             for i in range(n_samples - gap_after - self.p):
                 yield np.arange(i, i + self.p)
-            for i in range(gap_before + 1, n_samples - self.p +1):
+            for i in range(gap_before + 1, n_samples - self.p + 1):
                 yield np.arange(i, i + self.p)
-
 
     def get_n_splits(self, X, y=None, groups=None):
         """Returns the number of splitting iterations in the cross-validator
@@ -2361,6 +2362,7 @@ class GapLeavePOut(GapCrossValidator):
             raise ValueError("Not enough training samples available.")
         if n_samples - gap_after - self.p <= gap_before + 1:
             warnings.warn(SINGLETON_WARNING, Warning)
+
 
 class GapKFold(GapCrossValidator):
     """K-Folds cross-validator with Gap
@@ -2463,6 +2465,7 @@ class GapKFold(GapCrossValidator):
             Returns the number of splitting iterations in the cross-validator.
         """
         return self.n_splits
+
 
 def gap_train_test_split(*arrays, **options):
     """Split arrays or matrices into random train and test subsets (with a gap)
