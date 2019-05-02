@@ -420,18 +420,18 @@ def test_check_gcv_mode_error(mode):
 
 
 @pytest.mark.parametrize(
-    'mode, mode_samples_sup_features, mode_features_sup_samples',
+    'mode, mode_n_greater_than_p, mode_p_greater_than_n',
     [(None, 'svd', 'eigen'),
      ('auto', 'svd', 'eigen'),
      ('eigen', 'eigen', 'eigen'),
      ('svd', 'svd', 'svd')]
 )
-def test_check_gcv_mode_choice(mode, mode_samples_sup_features,
-                               mode_features_sup_samples):
+def test_check_gcv_mode_choice(mode, mode_n_greater_than_p,
+                               mode_p_greater_than_n):
     X, _ = make_regression(n_samples=5, n_features=2)
 
-    assert _check_gcv_mode(X, mode) == mode_samples_sup_features
-    assert _check_gcv_mode(X.T, mode) == mode_features_sup_samples
+    assert _check_gcv_mode(X, mode) == mode_n_greater_than_p
+    assert _check_gcv_mode(X.T, mode) == mode_p_greater_than_n
 
 
 def _test_ridge_loo(filter_):
