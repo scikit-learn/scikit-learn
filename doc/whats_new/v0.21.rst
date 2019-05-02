@@ -24,10 +24,6 @@ random sampling procedures.
 - :class:`linear_model.BayesianRidge` |Fix|
 - Decision trees and derived ensembles when both `max_depth` and
   `max_leaf_nodes` are set. |Fix|
-- :class:`decomposition.SparseCoder`,
-  :class:`decomposition.DictionaryLearning`, and
-  :class:`decomposition.MiniBatchDictionaryLearning` |Fix|
-- :class:`decomposition.SparseCoder` with `algorithm='lasso_lars'` |Fix|
 - :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` with 'saga' solver. |Fix|
 - :class:`ensemble.GradientBoostingClassifier` |Fix|
@@ -160,19 +156,6 @@ Support for Python 3.4 and below has been officially dropped.
   the default value is used.
   :pr:`12988` by :user:`Zijie (ZJ) Poh <zjpoh>`.
 
-- |Fix| :func:`decomposition.sparse_encode()` now passes the `max_iter` to the
-  underlying `LassoLars` when `algorithm='lasso_lars'`. :issue:`12650` by
-  `Adrin Jalali`_.
-- |Enhancement| :func:`decomposition.dict_learning()` and
-  :func:`decomposition.dict_learning_online()` now accept `method_max_iter` and
-  pass it to `sparse_encode`. :issue:`12650` by `Adrin Jalali`_.
-- |Enhancement| :class:`decomposition.SparseCoder`,
-  :class:`decomposition.DictionaryLearning`, and
-  :class:`decomposition.MiniBatchDictionaryLearning` now take a
-  `transform_max_iter` parameter and pass it to either
-  :func:`decomposition.dict_learning()` or
-  :func:`decomposition.sparse_encode()`. :issue:`12650` by `Adrin Jalali`_.
-  
 :mod:`sklearn.discriminant_analysis`
 ....................................
 

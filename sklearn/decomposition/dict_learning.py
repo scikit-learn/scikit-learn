@@ -499,7 +499,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     method_max_iter : int, optional (default=1000)
         Maximum number of iterations to perform.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     Returns
     -------
@@ -716,7 +716,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     method_max_iter : int, optional (default=1000)
         Maximum number of iterations to perform when solving the lasso problem.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     Returns
     -------
@@ -986,7 +986,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1141,7 +1141,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     Attributes
     ----------
@@ -1331,7 +1331,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     Attributes
     ----------
