@@ -1329,6 +1329,13 @@ class _RidgeGCV(LinearModel):
             alpha, y, v, U, UT_y)
         return y - (c / G_diag), c
 
+    def _remove_temp_vars(self):
+        for var_name in [
+                '_X_offset', '_sqrt_sw', '_weight_sum', '_with_sw',
+                '_normalized_sqrt_sw', '_sqrt_sw_matrix']:
+            if hasattr(self, var_name):
+                delattr(self, var_name)
+
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
@@ -1436,6 +1443,7 @@ class _RidgeGCV(LinearModel):
                 cv_values_shape = n_samples, n_y, len(self.alphas)
             self.cv_values_ = cv_values.reshape(cv_values_shape)
 
+        self._remove_temp_vars()
         return self
 
 
