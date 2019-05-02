@@ -39,6 +39,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |MajorFeature| Added :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` to stack predictors using a final
+  classifier or regressor.
+  :issue:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Caio Oliveira <caioaao>`.
+
 Changes to estimator checks
 ---------------------------
 

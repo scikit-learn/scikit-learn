@@ -319,12 +319,6 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`12599` by :user:`Trevor Stephens<trevorstephens>` and
   :user:`Nicolas Hug<NicolasHug>`.
 
-- |MajorFeature| Added :class:`ensemble.StackingClassifier` and
-  :class:`ensemble.StackingRegressor` to stack predictors using a final
-  classifier or regressor.
-  :issue:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
-  :user:`Caio Oliveira <caioaao>`.
-
 :mod:`sklearn.externals`
 ........................
 
