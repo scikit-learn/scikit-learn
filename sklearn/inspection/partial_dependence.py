@@ -109,7 +109,8 @@ def _partial_dependence_recursion(est, grid, features):
     for stage in range(n_estimators):
         for k in range(n_trees_per_stage):
             tree = est.estimators_[stage, k].tree_
-            tree._partial_dependence(grid, features, averaged_predictions[k])
+            tree.compute_partial_dependence(grid, features,
+                                            averaged_predictions[k])
     averaged_predictions *= est.learning_rate
 
     return averaged_predictions
