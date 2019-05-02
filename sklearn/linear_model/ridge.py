@@ -1096,6 +1096,19 @@ class _RidgeGCV(LinearModel):
         """Compute the diagonal of (X - X_mean).dot(A).dot((X - X_mean).T)
         without explicitely centering X nor computing X.dot(A)
         when X is sparse.
+
+        Parameters
+        ----------
+        X : sparse matrix, shape = (n_samples, n_features)
+
+        A : np.ndarray, shape = (n_features, n_features)
+
+        X_mean : np.ndarray, shape = (n_features,)
+
+        Returns
+        -------
+        diag : np.ndarray, shape = (n_samples,)
+            The computed diagonal.
         """
         intercept_col = self._sqrt_sw
         scale = self._sqrt_sw
