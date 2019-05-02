@@ -358,7 +358,7 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 @pytest.mark.parametrize('y_shape, fit_intercept, noise',
                          [((11,), True, 1.),
                           ((11, 1), True, 20.),
-                         ((11, 3), False, 30.)])
+                          ((11, 3), False, 30.)])
 def test_ridge_gcv_sample_weights(
         gcv_mode, X_constructor, fit_intercept, n_features, y_shape, noise):
     alphas = [1e-3, .1, 1., 10., 1e3]
