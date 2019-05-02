@@ -939,14 +939,14 @@ def _check_gcv_mode(X, gcv_mode):
 def _find_smallest_angle(query, vectors):
     """Find the column of vectors that is most aligned with the query.
 
-    both query and the columns of vectors must have their l2 norm equal to 1.
+    Both query and the columns of vectors must have their l2 norm equal to 1.
 
     Parameters
     ----------
-    query : ndarray, shape (n,)
+    query : ndarray, shape (n_samples,)
         Normalized query vector.
 
-    vectors : ndarray, shape (n, m)
+    vectors : ndarray, shape (n_samples, n_features)
         Vectors to which we compare query, as columns. Must be normalized.
     """
     abs_cosine = np.abs(query.dot(vectors))
@@ -1093,7 +1093,7 @@ class _RidgeGCV(LinearModel):
                 X_mean)
 
     def _sparse_multidot_diag(self, X, A, X_mean):
-        """ compute the diagonal of (X - X_mean).dot(A).dot((X - X_mean).T)
+        """Compute the diagonal of (X - X_mean).dot(A).dot((X - X_mean).T)
         without explicitely centering X nor computing X.dot(A)
         when X is sparse.
         """
