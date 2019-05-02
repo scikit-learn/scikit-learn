@@ -1207,11 +1207,11 @@ class _RidgeGCV(LinearModel):
             cov[-1] = 0
             cov[:, -1] = 0
             cov[-1, -1] = sqrt_sw.dot(sqrt_sw)
-        kernel_size = max(0, X.shape[1] - X.shape[0])
+        nullspace_dim = max(0, X.shape[1] - X.shape[0])
         s, V = linalg.eigh(cov)
         # remove eigenvalues and vectors in the null space of X^T.X
-        s = s[kernel_size:]
-        V = V[:, kernel_size:]
+        s = s[nullspace_dim:]
+        V = V[:, nullspace_dim:]
         return X_mean, s, V, X
 
     def _errors_and_values_covariance_sparse_no_intercept(
