@@ -1255,6 +1255,7 @@ class _RidgeGCV(LinearModel):
         # add a column to X containing the square roots of sample weights
 
         def matvec(v):
+            v = v.ravel()
             return safe_sparse_dot(
                 X, v[:-1], dense_output=True
             ) - sqrt_sw * X_mean.dot(v[:-1]) + v[-1] * sqrt_sw

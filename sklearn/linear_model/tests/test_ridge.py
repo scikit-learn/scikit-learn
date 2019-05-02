@@ -315,16 +315,20 @@ def test_ridge_individual_penalties():
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('X_shape', [(11, 8), (11, 20)])
+@pytest.mark.parametrize('y_shape', [(11,), (11, 1), (11, 3)])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('noise', [1., 30.])
 def test_ridge_gcv_vs_ridge_loo_cv(
-        gcv_mode, X_constructor, X_shape, fit_intercept, normalize, noise):
+        gcv_mode, X_constructor, X_shape, y_shape,
+        fit_intercept, normalize, noise):
     n_samples, n_features = X_shape
+    n_targets = y_shape[-1] if len(y_shape) == 2 else 1
     X, y = make_regression(
-        n_samples=n_samples, n_features=n_features, n_targets=3,
+        n_samples=n_samples, n_features=n_features, n_targets=n_targets,
         random_state=0, shuffle=False, noise=noise, n_informative=5
     )
+    y = y.reshape(y_shape)
     X += 30 * np.random.RandomState(0).randn(X.shape[1])
 
     alphas = [1e-3, .1, 1., 10., 1e3]
