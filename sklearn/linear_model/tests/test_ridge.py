@@ -419,6 +419,7 @@ def test_check_gcv_mode_error(mode):
         _check_gcv_mode(X, mode)
 
 
+@pytest.mark.parametrize("sparse", [True, False])
 @pytest.mark.parametrize(
     'mode, mode_n_greater_than_p, mode_p_greater_than_n',
     [(None, 'svd', 'eigen'),
@@ -426,10 +427,11 @@ def test_check_gcv_mode_error(mode):
      ('eigen', 'eigen', 'eigen'),
      ('svd', 'svd', 'svd')]
 )
-def test_check_gcv_mode_choice(mode, mode_n_greater_than_p,
+def test_check_gcv_mode_choice(sparse, mode, mode_n_greater_than_p,
                                mode_p_greater_than_n):
     X, _ = make_regression(n_samples=5, n_features=2)
-
+    if sparse:
+        X = sp.csr_matrix(X)
     assert _check_gcv_mode(X, mode) == mode_n_greater_than_p
     assert _check_gcv_mode(X.T, mode) == mode_p_greater_than_n
 

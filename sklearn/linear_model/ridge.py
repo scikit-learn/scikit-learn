@@ -1567,12 +1567,15 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        If None, the negative mean squared error if cv is 'auto' or None
+        (i.e. when using generalized cross-validation), and r2 score otherwise.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
         - None, to use the efficient Leave-One-Out cross-validation
+          (also known as Generalized Cross-Validation).
         - integer, to specify the number of folds.
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -1588,15 +1591,13 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         Flag indicating which strategy to use when performing
         Generalized Cross-Validation. Options are::
 
-            'auto' : use svd if n_samples > n_features or when X is a sparse
-                     matrix, otherwise use eigen
-            'svd' : force computation via singular value decomposition of X
-                    (does not work for sparse matrices)
-            'eigen' : force computation via eigendecomposition of X^T X
+            'auto' : use 'svd' if n_samples > n_features, otherwise use 'eigen'
+            'svd' : force use of singular value decomposition of X when X is
+                dense, eigenvalue decomposition of X^T.X when X is sparse.
+            'eigen' : force computation via eigendecomposition of X.X^T
 
         The 'auto' mode is the default and is intended to pick the cheaper
-        option of the two depending upon the shape and format of the training
-        data.
+        option of the two depending on the shape of the training data.
 
     store_cv_values : boolean, default=False
         Flag indicating if the cross-validation values corresponding to
