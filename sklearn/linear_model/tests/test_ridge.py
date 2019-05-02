@@ -400,6 +400,7 @@ def test_check_gcv_mode_error(mode):
     gcv = RidgeCV(gcv_mode=mode)
     with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
         gcv.fit(X, y)
+    with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
         _check_gcv_mode(X, mode)
 
 
