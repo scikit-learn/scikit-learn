@@ -1161,14 +1161,17 @@ def test_partial_roc_auc_score():
         tpr_min, tpr_max = tpr_range[0], tpr_range[1]
 
         if tpr_min != 0:
-            fpr_min = interp1d(tpr, fpr)(tpr_min)
+            fpr_min = interp1d(tpr, fpr, assume_sorted=True)(tpr_min)
         if tpr_max != 1:
-            fpr_max = interp1d(tpr, fpr)(tpr_max)
+            fpr_max = interp1d(tpr, fpr, assume_sorted=True)(tpr_max)
 
         if fpr_min == fpr_max:
             return 0
 
-        partial_auc, _ = quad(interp1d(fpr, tpr), fpr_min, fpr_max, limit=1000)
+        partial_auc, _ = quad(
+            interp1d(fpr, tpr, assume_sorted=True), fpr_min, fpr_max,
+            limit=1000
+        )
 
         # Formula (5) from McClish 1989
         min_area = 0.5 * (fpr_max - fpr_min) * (fpr_max + fpr_min)

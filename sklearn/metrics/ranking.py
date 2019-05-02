@@ -374,17 +374,19 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
             )
 
         # PAUC Calculation
-        # tpr is specified.  Calculate corresponding fpr.
-        if tpr_min != 0:
+        if tpr_min != 0 or tpr_max != 1:
+            # tpr is specified.  Calculate corresponding fpr.
             fpr_min = np.interp(tpr_min, tpr, fpr)
-        if tpr_max != 1:
             fpr_max = np.interp(tpr_max, tpr, fpr)
 
-        tpr_min = np.interp(fpr_min, fpr, tpr)
-        tpr_max = np.interp(fpr_max, fpr, tpr)
+            min_idx = np.searchsorted(tpr, tpr_min, "left")
+            max_idx = np.searchsorted(tpr, tpr_max, "right")
+        else:
+            tpr_min = np.interp(fpr_min, fpr, tpr)
+            tpr_max = np.interp(fpr_max, fpr, tpr)
 
-        min_idx = np.searchsorted(fpr, fpr_min, "left")
-        max_idx = np.searchsorted(fpr, fpr_max, "right")
+            min_idx = np.searchsorted(fpr, fpr_min, "left")
+            max_idx = np.searchsorted(fpr, fpr_max, "right")
 
         partial_fpr = np.concatenate((
             [fpr_min], fpr[min_idx:max_idx], [fpr_max]
@@ -400,6 +402,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         min_area = 0.5 * (fpr_max ** 2 - fpr_min ** 2)
         max_area = fpr_max - fpr_min
         denom = max_area - min_area
+
         if denom == 0:
             # Only if fpr_max == fpr_min
             return 0
