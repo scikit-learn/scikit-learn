@@ -64,7 +64,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
     @staticmethod
     def _method_name(name, estimator, method):
-        if estimator is None:
+        if estimator is None or estimator == 'drop':
             return None
         if method == 'auto':
             if getattr(estimator, 'predict_proba', None):
@@ -161,8 +161,9 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         if sample_weight is not None:
             for name, est in self.estimators:
-                if (est is not None and
-                        not has_fit_parameter(est, 'sample_weight')):
+                if est is None or est == 'drop':
+                    continue
+                if not has_fit_parameter(est, 'sample_weight'):
                     raise ValueError(
                         "Underlying estimator {} does not support "
                         "sample weights.".format(name)
@@ -171,11 +172,13 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         names, estimators_ = zip(*self.estimators)
         self._validate_names(names)
 
-        n_isnone = np.sum([est is None for est in estimators_])
+        n_isnone = np.sum(
+            [est is None or est == 'drop' for est in estimators_]
+        )
         if n_isnone == len(self.estimators):
             raise ValueError(
-                "All estimators are None. At least one is required to be an "
-                "estimator."
+                "All estimators are None or 'drop'. At least one is required "
+                "to be an estimator."
             )
 
         if isinstance(self.predict_method, str):
@@ -205,7 +208,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         # predict_proba. They are exposed publicly.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
-            for est in estimators_ if est is not None)
+            for est in estimators_ if not (est is None or est == 'drop'))
 
         # To train the meta-classifier using the most data as possible, we use
         # a cross-validation to obtain the output of the stacked estimators.
@@ -223,10 +226,10 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                                        method=meth, n_jobs=self.n_jobs,
                                        verbose=self.verbose)
             for est, meth in zip(estimators_, self.predict_method_)
-            if est is not None)
+            if not (est is None or est == 'drop'))
 
-        # Only not None estimators will be used in transform. Remove the None
-        # from the method as well.
+        # Only not None or not 'drop' estimators will be used in transform.
+        # Remove the None from the method as well.
         self.predict_method_ = [meth for meth in self.predict_method_
                                 if meth is not None]
 
@@ -250,14 +253,14 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
             Prediction outputs for each estimator.
         """
         check_is_fitted(self, 'estimators_')
-        return self._concatenate_predictions(X, [
-            getattr(est, meth)(X)
-            for est, meth in zip(self.estimators_,
-                                 self.predict_method_)
-            if est is not None])
+        return self._concatenate_predictions(
+            X, [getattr(est, meth)(X)
+                for est, meth in zip(self.estimators_, self.predict_method_)
+                if not (est is None or est == 'drop')]
+        )
 
     @if_delegate_has_method(delegate='final_estimator_')
-    def predict(self, X):
+    def predict(self, X, **predict_params):
         """Predict target for X.
 
         Parameters
@@ -265,6 +268,12 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples and
             n_features is the number of features.
+
+        **predict_params : dict of string -> object
+            Parameters to the ``predict`` called by the ``final_estimator``.
+            Note that while this may be
+            used to return uncertainties from some models with ``return_std``
+            or ``return_cov``.
 
         Returns
         -------
@@ -292,7 +301,7 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
     ----------
     estimators : list of (string, estimator) tuples
         Base estimators which will be stacked together. An estimator can be set
-        to None using set_params.
+        to None or 'drop' using ``set_params``.
 
     final_estimator : estimator object
         A classifier which will be used to combine the base estimators.
@@ -405,7 +414,8 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
         )
         if not is_classifier(self.final_estimator_):
             raise AttributeError(
-                "'final_estimator' attribute should be a classifier."
+                "'final_estimator' attribute should be a classifier. Got {!r}"
+                .format(self.final_estimator_)
             )
 
     @if_delegate_has_method(delegate='final_estimator_')
@@ -443,7 +453,7 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
     ----------
     estimators : list of (string, estimator) tuples
         Base estimators which will be stacked together. An estimator can be set
-        to None using set_params.
+        to None or 'drop using ``set_params``.
 
     final_estimator : estimator object
         A regressor which will be used to combine the base estimators.
@@ -549,5 +559,6 @@ class StackingRegressor(_BaseStacking, RegressorMixin):
         )
         if not is_regressor(self.final_estimator_):
             raise AttributeError(
-                "'final_estimator' attribute should be a regressor."
+                "'final_estimator' attribute should be a regressor. Got {!r}"
+                .format(self.final_estimator_)
             )
