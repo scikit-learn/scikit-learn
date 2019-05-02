@@ -1135,6 +1135,7 @@ class _RidgeGCV(LinearModel):
         super()._set_intercept(X_offset, y_offset, X_scale)
 
     def _decompose_gram(self, X, y):
+        """Eigendecomposition of X.X^T, used when n_samples <= n_features"""
         # if X is dense it has already been centered in preprocessing
         center = self.fit_intercept and sparse.issparse(X)
         K, X_m = self._compute_gram(X, center)
@@ -1187,6 +1188,7 @@ class _RidgeGCV(LinearModel):
         return y - (c / G_diag), c
 
     def _decompose_covariance_sparse(self, X, y):
+        """Eigendecomposition of X^T.X, used when n_samples > n_features."""
         n_samples, n_features = X.shape
         cov = np.empty((n_features + 1, n_features + 1))
         cov[:-1, :-1], self._X_offset = self._compute_covariance(
