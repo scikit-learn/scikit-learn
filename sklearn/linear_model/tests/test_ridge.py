@@ -1017,6 +1017,7 @@ def test_errors_and_values_gram():
     alpha = 1.
     n = 5
     sqrt_sw = np.ones(n)
+    X_m = None
     y = rng.randn(n)
     v = rng.randn(n)
     Q = rng.randn(len(v), len(v))
@@ -1024,18 +1025,17 @@ def test_errors_and_values_gram():
     G_diag, c = ridgecv._errors_and_values_gram(alpha, y, sqrt_sw, v, Q, QT_y)
 
     # test that helper function behaves as expected
-    out, c_ = ridgecv._errors_gram(alpha, y, sqrt_sw, v, Q, QT_y)
+    out, c_ = ridgecv._errors_gram(alpha, y, sqrt_sw, X_m, v, Q, QT_y)
     np.testing.assert_array_equal(out, (c / G_diag) ** 2)
     np.testing.assert_array_equal(c, c)
 
-    out, c_ = ridgecv._values_gram(alpha, y, sqrt_sw, v, Q, QT_y)
+    out, c_ = ridgecv._values_gram(alpha, y, sqrt_sw, X_m, v, Q, QT_y)
     np.testing.assert_array_equal(out, y - (c / G_diag))
     np.testing.assert_array_equal(c_, c)
 
 
 def test_errors_and_values_covariance():
     ridgecv = _RidgeGCV()
-    ridgecv._with_sw = False
     rng = check_random_state(42)
     alpha = 1.
     for n, p in zip((5, 10), (12, 6)):
@@ -1044,17 +1044,18 @@ def test_errors_and_values_covariance():
         v = rng.randn(p)
         U = rng.randn(n, p)
         UT_y = U.T.dot(y)
+        X_m = np.zeros(p)
         G_diag, c = ridgecv._errors_and_values_covariance_dense(
             alpha, y, sqrt_sw, v, U, UT_y)
 
         # test that helper function behaves as expected
         out, c_ = ridgecv._errors_covariance_dense(
-            alpha, y, sqrt_sw, v, U, UT_y)
+            alpha, y, sqrt_sw, X_m, v, U, UT_y)
         np.testing.assert_array_equal(out, (c / G_diag) ** 2)
         np.testing.assert_array_equal(c, c)
 
         out, c_ = ridgecv._values_covariance_dense(
-            alpha, y, sqrt_sw, v, U, UT_y)
+            alpha, y, sqrt_sw, X_m, v, U, UT_y)
         np.testing.assert_array_equal(out, y - (c / G_diag))
         np.testing.assert_array_equal(c_, c)
 
