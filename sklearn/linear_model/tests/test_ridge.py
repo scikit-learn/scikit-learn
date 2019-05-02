@@ -414,16 +414,6 @@ def test_check_gcv_mode():
     assert _check_gcv_mode(x.T, 'svd') == 'svd'
 
 
-def test_ridgecv_store_cv_values():
-    x, y = make_regression(n_samples=10, n_features=2)
-    cv = RidgeCV(cv=3, store_cv_values=True)
-    assert_raises_regex(ValueError, 'cv!=None and store_cv_values',
-                        cv.fit, x, y)
-    gcv = RidgeCV(cv=None, store_cv_values=True)
-    gcv.fit(x, y)
-    assert hasattr(gcv, cv_values_)
-
-
 def _test_ridge_loo(filter_):
     # test that can work with both dense or sparse matrices
     n_samples = X_diabetes.shape[0]
@@ -750,6 +740,10 @@ def test_ridgecv_store_cv_values():
     y = rng.randn(n_samples, n_targets)
     r.fit(x, y)
     assert r.cv_values_.shape == (n_samples, n_targets, n_alphas)
+
+    r = RidgeCV(cv=3, store_cv_values=True)
+    assert_raises_regex(ValueError, 'cv!=None and store_cv_values',
+                        r.fit, x, y)
 
 
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
