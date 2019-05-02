@@ -13,7 +13,6 @@ jobs:
         PYTHON_VERSION: '3.5'
         JOBLIB_VERSION: '0.11'
         SKLEARN_NO_OPENMP: 'True'
-        COVERAGE: 'true'
       # Linux + Python 3.5 build with OpenBLAS and without SITE_JOBLIB
       py35_conda_openblas:
         DISTRIB: 'conda'
