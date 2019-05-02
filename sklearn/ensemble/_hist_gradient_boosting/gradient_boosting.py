@@ -462,6 +462,20 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return raw_predictions
 
+    def _compute_partial_dependence_recursion(self, grid, features):
+        grid = np.asarray(grid, dtype=X_DTYPE, order='C')
+        averaged_predictions = np.zeros(
+            (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE)
+
+        for i in range(self.n_iter_):
+            for k in range(self.n_trees_per_iteration_):
+                predictor = self._predictors[i][k]
+                predictor._partial_dependence(grid, features,
+                                              averaged_predictions[k])
+        averaged_predictions *= self.learning_rate
+
+        return averaged_predictions
+
     @abstractmethod
     def _get_loss(self):
         pass

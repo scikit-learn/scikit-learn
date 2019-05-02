@@ -98,3 +98,83 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
             node = nodes[node.left]
         else:
             node = nodes[node.right]
+
+def _partial_dependence(
+    node_struct [:] nodes,
+    const X_DTYPE_C [:, ::1] X,
+    int [:] target_feature,
+    Y_DTYPE_C [:] out):
+
+    cdef:
+
+        unsigned int current_node_idx
+        unsigned int [:] node_idx_stack = np.zeros(shape=nodes.shape[0],
+                                                   dtype=np.uint32)
+        double[::1] weight_stack = np.zeros(shape=nodes.shape[0],
+                                            dtype=np.double)
+        node_struct * current_node  # pointer to avoid copying attributes
+
+        unsigned int sample_idx
+        unsigned feature_idx
+        unsigned stack_size
+        double left_sample_frac
+        double current_weight
+        double total_weight  # used for sanity check only
+        bint is_target_feature
+
+    for sample_idx in range(X.shape[0]):
+        # init stacks for current sample
+        stack_size = 1
+        node_idx_stack[0] = 0  # root node
+        weight_stack[0] = 1  # all the samples are in the root node
+        total_weight = 0
+
+        while stack_size > 0:
+
+            # pop the stack
+            stack_size -= 1
+            current_node_idx = node_idx_stack[stack_size]
+            current_node = &nodes[current_node_idx]
+
+            if current_node.is_leaf:
+                out[sample_idx] += (weight_stack[stack_size] *
+                                    current_node.value)
+                total_weight += weight_stack[stack_size]
+            else:
+                # determine if the split feature is a target feature
+                is_target_feature = False
+                for feature_idx in range(target_feature.shape[0]):
+                    if target_feature[feature_idx] == current_node.feature_idx:
+                        is_target_feature = True
+                        break
+
+                if is_target_feature:
+                    # In this case, we push left or right child on stack
+                    if X[sample_idx, feature_idx] <= current_node.threshold:
+                        node_idx_stack[stack_size] = current_node.left
+                    else:
+                        node_idx_stack[stack_size] = current_node.right
+                    stack_size += 1
+                else:
+                    # In this case, we push both children onto the stack,
+                    # and give a weight proportional to the number of
+                    # samples going through each branch.
+
+                    # push left child
+                    node_idx_stack[stack_size] = current_node.left
+                    left_sample_frac = (
+                        nodes[current_node.left].count / current_node.count)
+                    current_weight = weight_stack[stack_size]
+                    weight_stack[stack_size] = current_weight * left_sample_frac
+                    stack_size += 1
+
+                    # push right child
+                    node_idx_stack[stack_size] = current_node.right
+                    weight_stack[stack_size] = (
+                        current_weight * (1 - left_sample_frac))
+                    stack_size += 1
+
+        # Sanity check. Should never happen.
+        if not (0.999 < total_weight < 1.001):
+            raise ValueError("Total weight should be 1.0 but was %.9f" %
+                                total_weight)

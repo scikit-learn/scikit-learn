@@ -5,7 +5,6 @@
 #          Nicolas Hug
 # License: BSD 3 clause
 
-import warnings
 from itertools import count
 import numbers
 from collections.abc import Iterable
@@ -22,6 +21,8 @@ from ..utils.validation import check_is_fitted
 from ..tree._tree import DTYPE
 from ..exceptions import NotFittedError
 from ..ensemble.gradient_boosting import BaseGradientBoosting
+from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
+    BaseHistGradientBoosting)
 
 
 __all__ = ['partial_dependence', 'plot_partial_dependence']
@@ -93,26 +94,7 @@ def _grid_from_X(X, percentiles, grid_resolution):
 
 
 def _partial_dependence_recursion(est, grid, features):
-    if est.init is not None:
-        warnings.warn(
-            'Using recursion method with a non-constant init predictor will '
-            'lead to incorrect partial dependence values.',
-            UserWarning
-        )
-
-    # grid needs to be DTYPE
-    grid = np.asarray(grid, dtype=DTYPE, order='C')
-
-    n_estimators, n_trees_per_stage = est.estimators_.shape
-    averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]),
-                                    dtype=np.float64, order='C')
-    for stage in range(n_estimators):
-        for k in range(n_trees_per_stage):
-            tree = est.estimators_[stage, k].tree_
-            tree._partial_dependence(grid, features, averaged_predictions[k])
-    averaged_predictions *= est.learning_rate
-
-    return averaged_predictions
+    return est._compute_partial_dependence_recursion(grid, features)
 
 
 def _partial_dependence_brute(est, grid, features, X, response_method):
@@ -315,11 +297,13 @@ def partial_dependence(estimator, X, features, response_method='auto',
         if (isinstance(estimator, BaseGradientBoosting) and
                 estimator.init is None):
             method = 'recursion'
+        elif isinstance(estimator, BaseHistGradientBoosting):
+            method = 'recursion'
         else:
             method = 'brute'
 
     if method == 'recursion':
-        if not isinstance(estimator, BaseGradientBoosting):
+        if not isinstance(estimator, (BaseGradientBoosting, BaseHistGradientBoosting)):
             raise ValueError(
                 "'estimator' must be an instance of BaseGradientBoosting "
                 "for the 'recursion' method. Try using method='brute'.")
@@ -331,13 +315,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
                 "With the 'recursion' method, the response_method must be "
                 "'decision_function'. Got {}.".format(response_method)
             )
-        check_is_fitted(estimator, 'estimators_',
-                        msg="'estimator' parameter must be a fitted estimator")
-        # Note: if method is brute, this check is done at prediction time
-        n_features = estimator.n_features_
-    else:
-        n_features = X.shape[1]
 
+    n_features = X.shape[1]
     features = np.asarray(features, dtype=np.int32, order='C').ravel()
     if any(not (0 <= f < n_features) for f in features):
         raise ValueError('all features must be in [0, %d]'

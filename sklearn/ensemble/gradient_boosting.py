@@ -22,6 +22,7 @@ The module structure is the following:
 
 from abc import ABCMeta
 from abc import abstractmethod
+import warnings
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
@@ -1729,6 +1730,28 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         avg_feature_importances = np.mean(relevant_feature_importances,
                                           axis=0, dtype=np.float64)
         return avg_feature_importances / np.sum(avg_feature_importances)
+
+    def _compute_partial_dependence_recursion(self, grid, features):
+        check_is_fitted(self, 'estimators_',
+                        msg="'estimator' parameter must be a fitted estimator")
+        if self.init is not None:
+            warnings.warn(
+                'Using recursion method with a non-constant init predictor will '
+                'lead to incorrect partial dependence values.',
+                UserWarning
+            )
+        grid = np.asarray(grid, dtype=DTYPE, order='C')
+        n_estimators, n_trees_per_stage = self.estimators_.shape
+        averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]),
+                                        dtype=np.float64, order='C')
+        for stage in range(n_estimators):
+            for k in range(n_trees_per_stage):
+                tree = self.estimators_[stage, k].tree_
+                tree._partial_dependence(grid, features,
+                                         averaged_predictions[k])
+        averaged_predictions *= self.learning_rate
+
+        return averaged_predictions
 
     def _validate_y(self, y, sample_weight):
         # 'sample_weight' is not utilised but is used for
