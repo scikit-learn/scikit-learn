@@ -37,7 +37,7 @@ from ..linear_model import Ridge
 
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                          _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
+                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 
@@ -45,12 +45,12 @@ from ..random_projection import BaseRandomProjection
 from ..feature_selection import SelectKBest
 from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
+from ..exceptions import NotFittedError
 from ..exceptions import SkipTestWarning
 from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
-from ..metrics.pairwise import (rbf_kernel, linear_kernel,
-                                      pairwise_distances)
+from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
 from .import shuffle
 from .validation import has_fit_parameter, _num_samples
@@ -1658,8 +1658,7 @@ def check_estimators_unfitted(name, estimator_orig):
 
     estimator = clone(estimator_orig)
 
-    msg = ("{} instance is not fitted yet. Call 'fit' with appropriate "
-           "arguments".format(estimator.__class__.__name__))
+    msg = "not fitted yet. Call 'fit' with appropriate arguments"
 
     for method in ('decision_function', 'predict', 'predict_proba',
                    'predict_log_proba'):
