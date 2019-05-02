@@ -2296,14 +2296,12 @@ class GapLeavePOut(GapCrossValidator):
     >>> import numpy as np
     >>> from sklearn.model_selection import GapLeavePOut
     >>> glpo = GapLeavePOut(2, 1, 1)
-    >>> glpo.get_n_splits(X)
+    >>> glpo.get_n_splits([0, 1, 2, 3, 4])
     4
     >>> print(glpo)
     GapLeavePOut(gap_after=1, gap_before=1, p=2)
     >>> for train_index, test_index in glpo.split([0, 1, 2, 3, 4]):
     ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [3 4] TEST: [0 1]
     TRAIN: [4] TEST: [1 2]
     TRAIN: [0] TEST: [2 3]
@@ -2389,7 +2387,7 @@ class GapKFold(GapCrossValidator):
     >>> import numpy as np
     >>> from sklearn.model_selection import GapKFold
     >>> kf = GapKFold(n_splits=5, gap_before=3, gap_after=4)
-    >>> kf.get_n_splits(X)
+    >>> kf.get_n_splits(np.arange(10))
     5
     >>> print(kf)
     GapKFold(gap_after=4, gap_before=3, n_splits=5)
@@ -2527,7 +2525,7 @@ def gap_train_test_split(*arrays, **options):
     >>> y_test
     [4]
 
-    >>> gap_train_test_split(np.arange(10), gap_size=0.1)
+    >>> gap_train_test_split(list(range(10)), gap_size=0.1)
     [[0, 1, 2, 3, 4, 5, 6], [8, 9]]
 
     """
