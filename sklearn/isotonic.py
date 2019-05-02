@@ -209,7 +209,18 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     Correctness of Kruskal's algorithms for monotone regression with ties
     Leeuw, Psychometrica, 1977
+
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.isotonic import IsotonicRegression
+    >>> X, y = make_regression(n_samples=10, n_features=1)
+    >>> iso_reg = IsotonicRegression().fit(X.flatten(), y)
+    >>> iso_reg.predict([.1, .2])  # doctest: +ELLIPSIS
+    array([2.4301..., 4.8603...])
     """
+
     def __init__(self, y_min=None, y_max=None, increasing=True,
                  out_of_bounds='nan'):
         self.y_min = y_min
