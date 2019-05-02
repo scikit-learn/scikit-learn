@@ -1736,8 +1736,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         msg="'estimator' parameter must be a fitted estimator")
         if self.init is not None:
             warnings.warn(
-                'Using recursion method with a non-constant init predictor will '
-                'lead to incorrect partial dependence values.',
+                'Using recursion method with a non-constant init predictor '
+                'will lead to incorrect partial dependence values.',
                 UserWarning
             )
         grid = np.asarray(grid, dtype=DTYPE, order='C')
@@ -1747,8 +1747,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         for stage in range(n_estimators):
             for k in range(n_trees_per_stage):
                 tree = self.estimators_[stage, k].tree_
-                tree._partial_dependence(grid, features,
-                                         averaged_predictions[k])
+                tree.compute_partial_dependence(grid, features,
+                                                averaged_predictions[k])
         averaged_predictions *= self.learning_rate
 
         return averaged_predictions

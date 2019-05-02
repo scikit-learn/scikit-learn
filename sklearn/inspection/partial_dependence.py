@@ -303,7 +303,8 @@ def partial_dependence(estimator, X, features, response_method='auto',
             method = 'brute'
 
     if method == 'recursion':
-        if not isinstance(estimator, (BaseGradientBoosting, BaseHistGradientBoosting)):
+        if not isinstance(estimator,
+                          (BaseGradientBoosting, BaseHistGradientBoosting)):
             raise ValueError(
                 "'estimator' must be an instance of BaseGradientBoosting "
                 "for the 'recursion' method. Try using method='brute'.")

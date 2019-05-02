@@ -99,7 +99,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         else:
             node = nodes[node.right]
 
-def _partial_dependence(
+def _compute_partial_dependence(
     node_struct [:] nodes,
     const X_DTYPE_C [:, ::1] X,
     int [:] target_feature,

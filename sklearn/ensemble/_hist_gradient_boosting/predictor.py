@@ -10,7 +10,7 @@ from .types import Y_DTYPE
 from .types import X_BINNED_DTYPE
 from ._predictor import _predict_from_numeric_data
 from ._predictor import _predict_from_binned_data
-from ._predictor import _partial_dependence
+from ._predictor import _compute_partial_dependence
 
 
 PREDICTOR_RECORD_DTYPE = np.dtype([
@@ -80,5 +80,5 @@ class TreePredictor:
         _predict_from_binned_data(self.nodes, X, out)
         return out
 
-    def _partial_dependence(self, grid, features, out):
-        _partial_dependence(self.nodes, grid, features, out)
+    def compute_partial_dependence(self, grid, features, out):
+        _compute_partial_dependence(self.nodes, grid, features, out)
