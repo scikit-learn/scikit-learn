@@ -937,7 +937,7 @@ def _check_gcv_mode(X, gcv_mode):
 
 
 def _find_smallest_angle(query, vectors):
-    """find the column of vectors that is most aligned with query.
+    """Find the column of vectors that is most aligned with the query.
 
     both query and the columns of vectors must have their l2 norm equal to 1.
 
