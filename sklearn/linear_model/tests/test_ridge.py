@@ -318,8 +318,8 @@ def test_ridge_individual_penalties():
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('noise', [1., 30.])
-def test_ridge_gcv_vs_ridge_loo_cv(gcv_mode, X_constructor, X_shape, fit_intercept,
-                             normalize, noise):
+def test_ridge_gcv_vs_ridge_loo_cv(
+        gcv_mode, X_constructor, X_shape, fit_intercept, normalize, noise):
     n_samples, n_features = X_shape
     X, y = make_regression(
         n_samples=n_samples, n_features=n_features, n_targets=3,
