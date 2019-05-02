@@ -207,19 +207,25 @@ def test_kde_sample_weights():
 
 def test_pickling(tmpdir):
     # Make sure that predictions are the same before and after pickling. Used
-    # to be a bug because sample_weights wasn't pickled and the resulting tree
-    # would miss some info.
+    # Check that pickling works even when sample_weights are added
 
     kde = KernelDensity()
+    kde_weighted = kde
     data = np.reshape([1., 2., 3.], (-1, 1))
     kde.fit(data)
+    kde_weighted.fit(data, sample_weight=[0.1, 0.2, 0.3])
 
     X = np.reshape([1.1, 2.1], (-1, 1))
     scores = kde.score_samples(X)
+    scores_weighted = kde_weighted.score_samples(X)
 
     file_path = str(tmpdir.join('dump.pkl'))
+    file_path_weighted = str(tmpdir.join('dump_weighted.pkl'))
     _joblib.dump(kde, file_path)
+    _joblib.dump(kde_weighted, file_path_weighted)
     kde = _joblib.load(file_path)
+    kde_weighted = _joblib.load(file_path_weighted)
     scores_pickled = kde.score_samples(X)
-
+    scores_weighted_pickled = kde_weighted.score_samples(X)
     assert_allclose(scores, scores_pickled)
+    assert_allclose(scores_weighted, scores_weighted_pickled)
