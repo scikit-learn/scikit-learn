@@ -315,10 +315,14 @@ def test_ridge_individual_penalties():
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('X_shape', [(11, 8), (11, 20)])
-@pytest.mark.parametrize('y_shape', [(11,), (11, 1), (11, 3)])
-@pytest.mark.parametrize('fit_intercept', [True, False])
-@pytest.mark.parametrize('normalize', [True, False])
-@pytest.mark.parametrize('noise', [1., 30.])
+@pytest.mark.parametrize(
+    'y_shape, fit_intercept, normalize, noise',
+    [
+        ((11,), True, True, 1.),
+        ((11, 1), True, False, 20.),
+        ((11, 3), False, False, 30.),
+    ]
+)
 def test_ridge_gcv_vs_ridge_loo_cv(
         gcv_mode, X_constructor, X_shape, y_shape,
         fit_intercept, normalize, noise):
@@ -350,17 +354,18 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
-@pytest.mark.parametrize('fit_intercept', [True, False])
-@pytest.mark.parametrize('n_features', [11, 69])
-@pytest.mark.parametrize('y_shape', [(59,), (59, 1), (59, 3)])
-@pytest.mark.parametrize('noise', [1., 30.])
+@pytest.mark.parametrize('n_features', [8, 20])
+@pytest.mark.parametrize('y_shape, fit_intercept, noise',
+                         [((11,), True, 1.),
+                          ((11, 1), True, 20.),
+                         ((11, 3), False, 30.)])
 def test_ridge_gcv_sample_weights(
         gcv_mode, X_constructor, fit_intercept, n_features, y_shape, noise):
     alphas = [1e-3, .1, 1., 10., 1e3]
     rng = np.random.RandomState(0)
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
     x, y = datasets.make_regression(
-        n_samples=59, n_features=n_features, n_targets=n_targets,
+        n_samples=11, n_features=n_features, n_targets=n_targets,
         random_state=0, shuffle=False, noise=noise)
     y = y.reshape(y_shape)
     x += 30 * rng.randn(x.shape[1])
