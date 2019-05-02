@@ -128,7 +128,8 @@ def _yield_classifier_checks(name, classifier):
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
         yield check_supervised_y_2d
-    yield check_estimators_unfitted
+    if tags["requires_fit"]:
+        yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
@@ -176,7 +177,8 @@ def _yield_regressor_checks(name, regressor):
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
-    yield check_estimators_unfitted
+    if tags["requires_fit"]:
+        yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -222,7 +224,8 @@ def _yield_outliers_checks(name, estimator):
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
         # test if NotFittedError is raised
-        yield check_estimators_unfitted
+        if _safe_tags(estimator, "requires_fit"):
+            yield check_estimators_unfitted
 
 
 def _yield_all_checks(name, estimator):
