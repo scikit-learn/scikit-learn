@@ -528,7 +528,7 @@ class SVC(BaseSVC):
         classes is returned. Please note that breaking ties comes at a
         relatively high computational cost compared to a simple predict.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator used when shuffling
@@ -725,7 +725,7 @@ class NuSVC(BaseSVC):
         classes is returned. Please note that breaking ties comes at a
         relatively high computational cost compared to a simple predict.
 
-        .. versionadded:: 0.21
+        .. versionadded:: 0.22
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator used when shuffling
