@@ -951,7 +951,60 @@ def test_random_search_cv_results():
                    any(np.ma.getmaskarray(cv_results['param_gamma'])))
 
 
-@ignore_warnings(category=DeprecationWarning)
+@pytest.mark.parametrize(
+    "SearchCV, specialized_params",
+    [(GridSearchCV, {'param_grid': {'C': [1, 10]}}),
+     (RandomizedSearchCV,
+      {'param_distributions': {'C': [1, 10]}, 'n_iter': 2})]
+)
+def test_search_default_iid(SearchCV, specialized_params):
+    # Test the IID parameter
+    # noise-free simple 2d-data
+    X, y = make_blobs(centers=[[0, 0], [1, 0], [0, 1], [1, 1]], random_state=0,
+                      cluster_std=0.1, shuffle=False, n_samples=80)
+    # split dataset into two folds that are not iid
+    # first one contains data of all 4 blobs, second only from two.
+    mask = np.ones(X.shape[0], dtype=np.bool)
+    mask[np.where(y == 1)[0][::2]] = 0
+    mask[np.where(y == 2)[0][::2]] = 0
+    # this leads to perfect classification on one fold and a score of 1/3 on
+    # the other
+    # create "cv" for splits
+    cv = [[mask, ~mask], [~mask, mask]]
+
+    common_params = {'estimator': SVC(gamma='auto'), 'cv': cv,
+                     'return_train_score': True}
+    search = SearchCV(**common_params, **specialized_params)
+    search.fit(X, y)
+
+    test_cv_scores = np.array(
+        list(search.cv_results_['split%d_test_score' % s][0]
+                                for s in range(search.n_splits_))
+    )
+    test_mean = search.cv_results_['mean_test_score'][0]
+    test_std = search.cv_results_['std_test_score'][0]
+
+    train_cv_scores = np.array(
+        list(search.cv_results_['split%d_train_score' % s][0]
+                                for s in range(search.n_splits_))
+    )
+    train_mean = search.cv_results_['mean_train_score'][0]
+    train_std = search.cv_results_['std_train_score'][0]
+
+    assert search.cv_results_['param_C'][0] == 1
+    # scores are the same as above
+    assert_allclose(test_cv_scores, [1, 1. / 3.])
+    # Unweighted mean/std is used
+    assert test_mean == pytest.approx(np.mean(test_cv_scores))
+    assert test_std == pytest.approx(np.std(test_cv_scores))
+
+    # For the train scores, we do not take a weighted mean irrespective of
+    # i.i.d. or not
+    assert train_mean == pytest.approx(1)
+    assert train_std == pytest.approx(0)
+
+
+@pytest.mark.filterwarnings("ignore:The 'iid' parameter has been")  # 0.24
 def test_search_iid_param():
     # Test the IID parameter
     # noise-free simple 2d-data
@@ -968,14 +1021,14 @@ def test_search_iid_param():
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
     grid_search = GridSearchCV(SVC(gamma='auto'), param_grid={'C': [1, 10]},
-                               cv=cv, return_train_score=True)
+                               iid=True, cv=cv, return_train_score=True)
     random_search = RandomizedSearchCV(SVC(gamma='auto'), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv, iid=True,
                                        return_train_score=True)
     for search in (grid_search, random_search):
         search.fit(X, y)
-        assert search.iid or search.iid is None
+        assert search._iid
 
         test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
                                                           % s_i][0]
@@ -1022,7 +1075,7 @@ def test_search_iid_param():
 
     for search in (grid_search, random_search):
         search.fit(X, y)
-        assert not search.iid
+        assert not search._iid
 
         test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
                                                           % s][0]
@@ -1049,6 +1102,7 @@ def test_search_iid_param():
         assert_almost_equal(train_std, 0)
 
 
+@pytest.mark.filterwarnings("ignore:The 'iid' parameter has been")  # 0.24
 def test_grid_search_cv_results_multimetric():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
@@ -1071,6 +1125,7 @@ def test_grid_search_cv_results_multimetric():
         compare_cv_results_multimetric_with_single(*grid_searches, iid=iid)
 
 
+@pytest.mark.filterwarnings("ignore:The 'iid' parameter has been")  # 0.24
 def test_random_search_cv_results_multimetric():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
@@ -1151,7 +1206,6 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
         assert_equal(getattr(search_multi, key), getattr(search_acc, key))
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_search_cv_results_rank_tie_breaking():
     X, y = make_blobs(n_samples=50, random_state=42)
@@ -1184,7 +1238,6 @@ def test_search_cv_results_rank_tie_breaking():
         assert_almost_equal(search.cv_results_['rank_test_score'], [1, 1, 3])
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_search_cv_results_none_param():
     X, y = [[1], [2], [3], [4], [5]], [0, 0, 0, 0, 1]
@@ -1227,7 +1280,6 @@ def test_search_cv_timing():
         assert_greater_equal(search.refit_time_, 0)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_correct_score_results():
     # test that correct scores are used
     n_splits = 3
@@ -1263,7 +1315,6 @@ def test_grid_search_correct_score_results():
                 assert_almost_equal(correct_score, cv_scores[i])
 
 
-@pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 def test_fit_grid_point():
     X, y = make_classification(random_state=0)
     cv = StratifiedKFold(random_state=0)
@@ -1292,7 +1343,6 @@ def test_fit_grid_point():
                          {'score': scorer}, verbose=True)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_pickle():
     # Test that a fit search can be pickled
@@ -1311,7 +1361,6 @@ def test_pickle():
                               random_search_pickled.predict(X))
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of n_split')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of multioutput')  # 0.23
 def test_grid_search_with_multioutput_data():
@@ -1359,7 +1408,6 @@ def test_grid_search_with_multioutput_data():
                                               % i][cand_i])
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_predict_proba_disabled():
     # Test predict_proba when disabled on estimator.
     X = np.arange(20).reshape(5, -1)
@@ -1369,7 +1417,6 @@ def test_predict_proba_disabled():
     assert not hasattr(gs, "predict_proba")
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_allows_nans():
     # Test GridSearchCV with SimpleImputer
     X = np.arange(20, dtype=np.float64).reshape(5, -1)
@@ -1401,7 +1448,6 @@ class FailingClassifier(BaseEstimator):
         return 0.
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_failing_classifier():
     # GridSearchCV with on_error != 'raise'
     # Ensures that a warning is raised and score reset where appropriate.
@@ -1449,7 +1495,6 @@ def test_grid_search_failing_classifier():
     assert gs.best_index_ != clf.FAILING_PARAMETER
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_grid_search_failing_classifier_raise():
     # GridSearchCV with on_error == 'raise' raises the error
@@ -1502,7 +1547,6 @@ def test_parameters_sampler_replacement():
     assert_equal(len(samples), 7)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_stochastic_gradient_loss_param():
     # Make sure the predict_proba works when loss is specified
@@ -1534,7 +1578,6 @@ def test_stochastic_gradient_loss_param():
     assert not hasattr(clf, "predict_proba")
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_search_train_scores_set_to_false():
     X = np.arange(6).reshape(6, -1)
@@ -1545,7 +1588,6 @@ def test_search_train_scores_set_to_false():
     gs.fit(X, y)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 def test_grid_search_cv_splits_consistency():
     # Check if a one time iterable is accepted as a cv parameter.
     n_samples = 100
@@ -1627,7 +1669,6 @@ def test_grid_search_cv_splits_consistency():
                                   per_param_scores[3])
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_transform_inverse_transform_round_trip():
     clf = MockClassifier()
@@ -1708,29 +1749,15 @@ def test__custom_fit_no_run_search():
         BadSearchCV(SVC(), cv=5).fit(X, y)
 
 
-def test_deprecated_grid_search_iid():
-    depr_message = ("The default of the `iid` parameter will change from True "
-                    "to False in version 0.22")
+@pytest.mark.parametrize("iid", [False, True])
+def test_deprecated_grid_search_iid(iid):
     X, y = make_blobs(n_samples=54, random_state=0, centers=2)
     grid = GridSearchCV(SVC(gamma='scale', random_state=0),
-                        param_grid={'C': [10]}, cv=3)
-    # no warning with equally sized test sets
-    assert_no_warnings(grid.fit, X, y)
+                        param_grid={'C': [10]}, cv=3, iid=iid)
 
-    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
-                        param_grid={'C': [10]}, cv=5)
-    # warning because 54 % 5 != 0
-    assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
-
-    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
-                        param_grid={'C': [10]}, cv=2)
-    # warning because stratification into two classes and 27 % 2 != 0
-    assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
-
-    grid = GridSearchCV(SVC(gamma='scale', random_state=0),
-                        param_grid={'C': [10]}, cv=KFold(2))
-    # no warning because no stratification and 54 % 2 == 0
-    assert_no_warnings(grid.fit, X, y)
+    depr_message = "The 'iid' parameter has been deprecated in 0.22"
+    with pytest.warns(DeprecationWarning, match=depr_message):
+        grid.fit(X, y)
 
 
 def test_empty_cv_iterator_error():
