@@ -1164,7 +1164,7 @@ cdef class BinaryTree:
         self.dist_metric = state[11]
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
-        self.sample_weight = state[12]
+        self.sample_weight_arr = state[12]
 
     def get_tree_stats(self):
         return (self.n_trims, self.n_leaves, self.n_splits)
