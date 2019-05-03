@@ -70,12 +70,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         by `np.random`.
 
     normalize_components : boolean, optional (default=True)
-        - if False, use a version of Sparse PCA without components
-          normalization and without data centering. This is likely a bug and
-          even though it's the default for backward compatibility,
-          this should not be used.
-        - if True, use a version of Sparse PCA with components normalization
-          and data centering.
+        This parameter does not have effect anymore. The components are always
+        normalized. This parameter will be removed in 0.24.
 
         .. versionadded:: 0.20
 
@@ -159,12 +155,20 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         X = check_array(X)
 
         if self.normalize_components != 'deprecated':
-            warnings.warn("'normalize_components' has been deprecated in 0.22."
-                          "It will be removed in 0.24.")
+            if self.normalize_components:
+                warnings.warn(
+                    "'normalize_components' has been deprecated in 0.22. "
+                    "It will be removed in 0.24.", DeprecationWarning
+                )
+            else:
+                raise NotImplementedError(
+                    "Using {} without normalizing the components is not "
+                    "supported anymore. Remove the 'normalize_components'."
+                    .format(self.__class__.__name__)
+                )
 
-        if self.normalize_components:
-            self.mean_ = X.mean(axis=0)
-            X = X - self.mean_
+        self.mean_ = X.mean(axis=0)
+        X = X - self.mean_
 
         if self.n_components is None:
             n_components = X.shape[1]
@@ -185,11 +189,10 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                                                )
         self.components_ = Vt.T
 
-        if self.normalize_components:
-            components_norm = \
-                    np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
-            components_norm[components_norm == 0] = 1
-            self.components_ /= components_norm
+        components_norm = \
+                np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
+        components_norm[components_norm == 0] = 1
+        self.components_ /= components_norm
 
         self.error_ = E
         return self
@@ -289,13 +292,9 @@ class MiniBatchSparsePCA(SparsePCA):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    normalize_components : boolean, optional (default=False)
-        - if False, use a version of Sparse PCA without components
-          normalization and without data centering. This is likely a bug and
-          even though it's the default for backward compatibility,
-          this should not be used.
-        - if True, use a version of Sparse PCA with components normalization
-          and data centering.
+    normalize_components : boolean, optional (default=True)
+        This parameter does not have effect anymore. The components are always
+        normalized. This parameter will be removed in 0.24.
 
         .. versionadded:: 0.20
 
@@ -343,7 +342,7 @@ class MiniBatchSparsePCA(SparsePCA):
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=None, method='lars', random_state=None,
-                 normalize_components=False):
+                 normalize_components='deprecated'):
         super().__init__(
             n_components=n_components, alpha=alpha, verbose=verbose,
             ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
@@ -374,12 +373,20 @@ class MiniBatchSparsePCA(SparsePCA):
         X = check_array(X)
 
         if self.normalize_components != 'deprecated':
-            warnings.warn("'normalize_components' has been deprecated in 0.22."
-                          "It will be removed in 0.24.")
+            if self.normalize_components:
+                warnings.warn(
+                    "'normalize_components' has been deprecated in 0.22. "
+                    "It will be removed in 0.24.", DeprecationWarning
+                )
+            else:
+                raise NotImplementedError(
+                    "{} without normalizing the components is not supported "
+                    "anymore. Remove the 'normalize_components'."
+                    .format(self.__class__.__name__)
+                )
 
-        if self.normalize_components:
-            self.mean_ = X.mean(axis=0)
-            X = X - self.mean_
+        self.mean_ = X.mean(axis=0)
+        X = X - self.mean_
 
         if self.n_components is None:
             n_components = X.shape[1]
@@ -397,10 +404,9 @@ class MiniBatchSparsePCA(SparsePCA):
             return_n_iter=True)
         self.components_ = Vt.T
 
-        if self.normalize_components:
-            components_norm = \
-                    np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
-            components_norm[components_norm == 0] = 1
-            self.components_ /= components_norm
+        components_norm = \
+                np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
+        components_norm[components_norm == 0] = 1
+        self.components_ /= components_norm
 
         return self
