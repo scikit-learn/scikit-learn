@@ -171,7 +171,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
             copy_Xy=copy_cov).T
     else:
         raise ValueError('Sparse coding method must be "lasso_lars" '
-                         '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
+                         '"lasso_cd", "lasso", "threshold" or "omp", got %s.'
                          % algorithm)
     if new_code.ndim != 2:
         return new_code.reshape(n_samples, n_components)
