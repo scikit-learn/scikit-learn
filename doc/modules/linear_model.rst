@@ -136,7 +136,7 @@ Setting the regularization parameter: generalized Cross-Validation
 ------------------------------------------------------------------
 
 :class:`RidgeCV` implements ridge regression with built-in
-cross-validation of the alpha parameter.  The object works in the same way
+cross-validation of the alpha parameter. The object works in the same way
 as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 

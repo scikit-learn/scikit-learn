@@ -1589,6 +1589,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
+        If using generalized cross-validation, alphas must be positive.
 
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
