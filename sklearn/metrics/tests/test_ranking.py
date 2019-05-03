@@ -1211,9 +1211,11 @@ def test_partial_roc_auc_score():
                 continue
             assert_almost_equal(
                 roc_auc_score(y_true, y_score, fpr_range=(min_val, max_val)),
-                _pauc(y_true, y_score, fpr_range=[min_val, max_val])
+                _pauc(y_true, y_score, fpr_range=[min_val, max_val]),
+                decimal=5,
             )
             assert_almost_equal(
                 roc_auc_score(y_true, y_score, tpr_range=(min_val, max_val)),
-                _pauc(y_true, y_score, tpr_range=[min_val, max_val])
+                _pauc(y_true, y_score, tpr_range=[min_val, max_val]),
+                decimal=5,
             )
