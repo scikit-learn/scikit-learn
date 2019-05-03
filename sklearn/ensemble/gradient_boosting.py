@@ -1731,7 +1731,24 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                                           axis=0, dtype=np.float64)
         return avg_feature_importances / np.sum(avg_feature_importances)
 
-    def _compute_partial_dependence_recursion(self, grid, features):
+    def _compute_partial_dependence_recursion(self, grid, target_features):
+        """Fast partial dependence computation.
+
+        Parameters
+        ----------
+        grid : ndarray, shape (n_samples, n_target_features)
+            The grid points on which the partial dependence should be
+            evaluated.
+        target_features : ndarray, shape (n_target_features)
+            The set of target features for which the partial dependence
+            should be evaluated.
+
+        Returns
+        -------
+        averaged_predictions : ndarray, shape \
+                (n_trees_per_iteration, n_samples)
+            The value of the partial dependence function on each grid point.
+        """
         check_is_fitted(self, 'estimators_',
                         msg="'estimator' parameter must be a fitted estimator")
         if self.init is not None:
@@ -1747,7 +1764,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         for stage in range(n_estimators):
             for k in range(n_trees_per_stage):
                 tree = self.estimators_[stage, k].tree_
-                tree.compute_partial_dependence(grid, features,
+                tree.compute_partial_dependence(grid, target_features,
                                                 averaged_predictions[k])
         averaged_predictions *= self.learning_rate
 

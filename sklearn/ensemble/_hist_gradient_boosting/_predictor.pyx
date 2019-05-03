@@ -103,8 +103,37 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 def _compute_partial_dependence(
     node_struct [:] nodes,
     const X_DTYPE_C [:, ::1] X,
-    int [:] target_feature,
+    int [:] target_features,
     Y_DTYPE_C [:] out):
+    """Partial dependence of the response on the ``target_features`` set.
+
+    For each sample in ``X`` a tree traversal is performed.
+    Each traversal starts from the root with weight 1.0.
+
+    At each non-leaf node that splits on a target feature, either
+    the left child or the right child is visited based on the feature
+    value of the current sample, and the weight is not modified.
+    At each non-leaf node that splits on a complementary feature,
+    both children are visited and the weight is multiplied by the fraction
+    of training samples which went to each child.
+
+    At each leaf, the value of the node is multiplied by the current
+    weight (weights sum to 1 for all visited terminal nodes).
+
+    Parameters
+    ----------
+    nodes : view on array of PREDICTOR_RECORD_DTYPE, shape (n_nodes)
+        The array representing the predictor tree.
+    X : view on 2d ndarray, shape (n_samples, n_target_features)
+        The grid points on which the partial dependence should be
+        evaluated.
+    target_features : view on 1d ndarray, shape (n_target_features)
+        The set of target features for which the partial dependence
+        should be evaluated.
+    out : view on 1d ndarray, shape (n_samples)
+        The value of the partial dependence function on each grid
+        point.
+    """
 
     cdef:
 
@@ -144,8 +173,8 @@ def _compute_partial_dependence(
             else:
                 # determine if the split feature is a target feature
                 is_target_feature = False
-                for feature_idx in range(target_feature.shape[0]):
-                    if target_feature[feature_idx] == current_node.feature_idx:
+                for feature_idx in range(target_features.shape[0]):
+                    if target_features[feature_idx] == current_node.feature_idx:
                         is_target_feature = True
                         break
 
