@@ -1107,6 +1107,10 @@ def test_partial_roc_auc_score():
                   fpr_range=(-0.1, 1))
     assert_raises(ValueError, roc_auc_score, y_true, y_true,
                   tpr_range=(-0.1, 1))
+    assert_raises(ValueError, roc_auc_score, y_true, y_true,
+                  fpr_range=(0.2, 0.2))
+    assert_raises(ValueError, roc_auc_score, y_true, y_true,
+                  tpr_range=(0.2, 0.2))
 
     # List range
     assert_equal(roc_auc_score(y_true, y_score),
@@ -1143,6 +1147,8 @@ def test_partial_roc_auc_score():
     y_score = [0, 1]
     for min_val in np.linspace(0, 1, 7):
         for max_val in np.linspace(min_val, 1, 7):
+            if min_val == max_val:
+                continue
             assert_almost_equal(
                 roc_auc_score(y_true, y_score, fpr_range=[min_val, max_val]),
                 0 if min_val == max_val else 1
@@ -1159,14 +1165,15 @@ def test_partial_roc_auc_score():
     y_score = [0, 1, 0, 1]
     for min_val in np.linspace(0, 1, 7):
         for max_val in np.linspace(min_val, 1, 7):
-            expected = 0 if min_val == max_val else 0.5
+            if min_val == max_val:
+                continue
             assert_almost_equal(
                 roc_auc_score(y_true, y_score, fpr_range=[min_val, max_val]),
-                expected
+                0.5
             )
             assert_almost_equal(
                 roc_auc_score(y_true, y_score, tpr_range=[min_val, max_val]),
-                expected
+                0.5
             )
 
     # Alternate calculation
@@ -1200,6 +1207,8 @@ def test_partial_roc_auc_score():
     y_true, _, y_score = make_prediction(binary=True)
     for min_val in np.linspace(0, 1, 7):
         for max_val in np.linspace(min_val, 1, 7):
+            if min_val == max_val:
+                continue
             assert_almost_equal(
                 roc_auc_score(y_true, y_score, fpr_range=(min_val, max_val)),
                 _pauc(y_true, y_score, fpr_range=[min_val, max_val])

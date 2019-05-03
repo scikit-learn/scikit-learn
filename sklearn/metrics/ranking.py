@@ -360,13 +360,13 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         if (fpr_min != 0 or fpr_max != 1) and (tpr_min != 0 or tpr_max != 1):
             raise ValueError("Can only specify fpr_range or tpr_range.")
 
-        if fpr_min < 0 or fpr_max > 1 or fpr_min > fpr_max:
+        if fpr_min < 0 or fpr_max > 1 or fpr_min >= fpr_max:
             raise ValueError(
                 "Expected fpr_range to be in [0, 1] "
                 "and fpr_range[0] < fpr_range[1], "
                 "got {}.".format(fpr_range)
             )
-        if tpr_min < 0 or tpr_max > 1 or tpr_min > tpr_max:
+        if tpr_min < 0 or tpr_max > 1 or tpr_min >= tpr_max:
             raise ValueError(
                 "Expected tpr_range to be in [0, 1] "
                 "and tpr_range[0] < tpr_range[1], "
