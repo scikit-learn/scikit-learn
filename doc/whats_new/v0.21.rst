@@ -231,14 +231,6 @@ Support for Python 3.4 and below has been officially dropped.
   communication overhead. :pr:`12543` by :user:`Isaac Storch <istorch>`
   and `Olivier Grisel`_.
 
-- |Enhancement| Minimized the validation of X in
-  :class:`ensemble.AdaBoostClassifier` and :class:`ensemble.AdaBoostRegressor`
-  :issue:`13174` by :user:`Christos Aridas <chkoar>`.
-
-- |Enhancement| :class:`ensemble.IsolationForest` now exposes ``warm_start``
-  parameter, allowing iterative addition of trees to an isolation
-  forest. :issue:`13496` by :user:`Peter Marko <petibear>`.
-  
 - |Efficiency| Make :class:`ensemble.IsolationForest` more memory efficient
   by avoiding keeping in memory each tree prediction. :pr:`13260` by
   `Nicolas Goix`_.
@@ -554,16 +546,6 @@ Support for Python 3.4 and below has been officially dropped.
   where sample_weight wasn't taken into account for samples with degenerate
   labels.
   :pr:`13447` by :user:`Dan Ellis <dpwe>`.
-
-- |Enhancement| Add `fpr_range` and `tpr_range` to
-  :func:`metrics.roc_auc_score` to calculate the standardize partial AUC
-  over the range of true positive rates and false positive rate.
-  :issue:`11668` by `Joel Nothman`_ and :user:`Zijie (ZJ) Poh <zjpoh>`
-
-- |API| The parameter `max_fpr` in :func:`metrics.roc_auc_score` deprecated
-  in version 0.21 and will be removed in version 0.23.
-  This parameter is removed in favor of `fpr_range`.
-  :issue:`11668` by `Joel Nothman`_ and :user:`Zijie (ZJ) Poh <zjpoh>`
 
 - |API| The parameter ``labels`` in :func:`metrics.hamming_loss` is deprecated
   in version 0.21 and will be removed in version 0.23. :pr:`10580` by

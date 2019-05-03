@@ -39,6 +39,19 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| Add `fpr_range` and `tpr_range` to
+  :func:`metrics.roc_auc_score` to calculate the standardize partial AUC
+  over the range of true positive rates and false positive rate.
+  :issue:`11668` by `Joel Nothman`_ and :user:`Zijie (ZJ) Poh <zjpoh>`
+
+- |API| The parameter `max_fpr` in :func:`metrics.roc_auc_score` deprecated
+  in version 0.21 and will be removed in version 0.23.
+  This parameter is removed in favor of `fpr_range`.
+  :issue:`11668` by `Joel Nothman`_ and :user:`Zijie (ZJ) Poh <zjpoh>`
+
 Changes to estimator checks
 ---------------------------
 
