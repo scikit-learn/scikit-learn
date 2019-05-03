@@ -1344,10 +1344,11 @@ class _RidgeGCV(LinearModel):
         # X already centered
         X_mean = np.zeros(X.shape[1], dtype=X.dtype)
         if self.fit_intercept:
-            intercept = sqrt_sw[:, None]
-            X = np.hstack((X, intercept))
-        # to emulate fit_intercept=True situation, add a column on ones
-        # Note that by centering, the other columns are orthogonal to that one
+            # to emulate fit_intercept=True situation, add a column
+            # containing the square roots of the sample weights
+            # by centering, the other columns are orthogonal to that one
+            intercept_column = sqrt_sw[:, None]
+            X = np.hstack((X, intercept_column))
         U, s, _ = linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
