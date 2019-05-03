@@ -1106,13 +1106,6 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Ignored.
-
-        .. deprecated:: 0.20
-           ``random_state`` has been deprecated in 0.20 and will be removed in
-           0.22.
-
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
@@ -1146,12 +1139,11 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
 
     def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
-                 verbose=False, max_iter=-1, random_state=None):
+                 verbose=False, max_iter=-1):
 
         super().__init__(
             kernel, degree, gamma, coef0, tol, 0., nu, 0.,
-            shrinking, False, cache_size, None, verbose, max_iter,
-            random_state)
+            shrinking, False, cache_size, None, verbose, max_iter, None)
 
     def fit(self, X, y=None, sample_weight=None, **params):
         """
@@ -1179,11 +1171,6 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         If X is not a C-ordered contiguous array it is copied.
 
         """
-
-        if self.random_state is not None:
-            warnings.warn("The random_state parameter is deprecated and will"
-                          " be removed in version 0.22.", DeprecationWarning)
-
         super().fit(X, np.ones(_num_samples(X)),
                     sample_weight=sample_weight, **params)
         self.offset_ = -self._intercept_
