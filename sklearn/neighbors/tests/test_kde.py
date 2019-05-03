@@ -225,7 +225,8 @@ def test_pickling(tmpdir):
     assert_allclose(scores, scores_pickled)
 
 def test_pickling_with_sample_weights(tmpdir):
-    # Test to see if KernelDensity object is pickled if supplied with sample weights
+    # Test to see if KernelDensity object is pickled if supplied with
+    # sample weights.
 
     kde = KernelDensity()
     data = np.reshape([1., 2., 3.], (-1, 1))
