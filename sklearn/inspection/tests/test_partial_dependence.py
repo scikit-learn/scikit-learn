@@ -321,8 +321,7 @@ class NoPredictProbaNoDecisionFunction(BaseEstimator, ClassifierMixin):
       'blahblah is invalid. Accepted method names are brute, recursion, auto'),
      (LinearRegression(),
       {'features': [0], 'method': 'recursion'},
-      "'estimator' must be an instance of BaseGradientBoosting for the"
-      " 'recursion'")]
+      "Only the following estimators support the 'recursion' method:")]
 )
 def test_partial_dependence_error(estimator, params, err_msg):
     X, y = make_classification(random_state=0)
