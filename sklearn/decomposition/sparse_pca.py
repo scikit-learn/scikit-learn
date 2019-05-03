@@ -190,7 +190,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self.components_ = Vt.T
 
         components_norm = \
-                np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
+            np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
 
@@ -405,7 +405,7 @@ class MiniBatchSparsePCA(SparsePCA):
         self.components_ = Vt.T
 
         components_norm = \
-                np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
+            np.linalg.norm(self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
 
