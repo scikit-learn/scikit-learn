@@ -954,6 +954,70 @@ def _find_smallest_angle(query, vectors):
     return index
 
 
+class _X_operator(sparse.linalg.LinearOperator):
+    """Behaves as centered and scaled X with an added intercept column.
+
+    This operator behaves as
+    np.hstack([X - sqrt_sw[:, None] * X_mean, sqrt_sw[:, None]])
+    """
+
+    def __init__(self, X, X_mean, sqrt_sw):
+        self.n_samples, self.n_features = X.shape
+        super().__init__(X.dtype, (self.n_samples, self.n_features + 1))
+        self.X = X
+        self.X_mean = X_mean
+        self.sqrt_sw = sqrt_sw
+
+    def _matvec(self, v):
+        v = v.ravel()
+        return safe_sparse_dot(
+            self.X, v[:-1], dense_output=True
+        ) - self.sqrt_sw * self.X_mean.dot(v[:-1]) + v[-1] * self.sqrt_sw
+
+    def _matmat(self, v):
+        return (
+            safe_sparse_dot(self.X, v[:-1], dense_output=True) -
+            self.sqrt_sw[:, None] * self.X_mean.dot(v[:-1]) + v[-1] *
+            self.sqrt_sw[:, None])
+
+    def _transpose(self):
+        return _Xt_operator(self.X, self.X_mean, self.sqrt_sw)
+
+
+class _Xt_operator(sparse.linalg.LinearOperator):
+    """Behaves as transposed centered and scaled X with an intercept column.
+
+    This operator behaves as
+    np.hstack([X - sqrt_sw[:, None] * X_mean, sqrt_sw[:, None]]).T
+    """
+
+    def __init__(self, X, X_mean, sqrt_sw):
+        self.n_samples, self.n_features = X.shape
+        super().__init__(X.dtype, (self.n_features + 1, self.n_samples))
+        self.X = X
+        self.X_mean = X_mean
+        self.sqrt_sw = sqrt_sw
+
+    def _matvec(self, v):
+        v = v.ravel()
+        res = np.empty(self.n_features + 1)
+        res[:-1] = (
+            safe_sparse_dot(self.X.T, v, dense_output=True) -
+            (self.X_mean * self.sqrt_sw.dot(v))
+        )
+        res[-1] = np.dot(v, self.sqrt_sw)
+        return res
+
+    def _matmat(self, v):
+        res = np.empty((self.n_features + 1, v.shape[1]))
+        res[:-1] = (
+            safe_sparse_dot(self.X.T, v, dense_output=True) -
+            self.X_mean[:, None] * self.sqrt_sw.dot(v)
+        )
+        res[-1] = np.dot(self.sqrt_sw, v)
+        return res
+
+
 class _RidgeGCV(LinearModel):
     """Ridge regression with built-in Generalized Cross-Validation
 
@@ -1253,33 +1317,9 @@ class _RidgeGCV(LinearModel):
         w[intercept_dim] = 1 / s[intercept_dim]
         A = (V * w).dot(V.T)
         # add a column to X containing the square roots of sample weights
-
-        def matvec(v):
-            v = v.ravel()
-            return safe_sparse_dot(
-                X, v[:-1], dense_output=True
-            ) - sqrt_sw * X_mean.dot(v[:-1]) + v[-1] * sqrt_sw
-
-        def matmat(v):
-            return (
-                safe_sparse_dot(X, v[:-1], dense_output=True) -
-                sqrt_sw[:, None] * X_mean.dot(v[:-1]) + v[-1] *
-                sqrt_sw[:, None])
-
-        def rmatvec(v):
-            v = v.ravel()
-            res = np.empty(n_features + 1)
-            res[:-1] = safe_sparse_dot(
-                X.T, v, dense_output=True) - X_mean * sqrt_sw.dot(v)
-            res[-1] = np.dot(v, sqrt_sw)
-            return res
-
-        Xop = sparse.linalg.LinearOperator(
-            matvec=matvec, matmat=matmat, rmatvec=rmatvec,
-            shape=(n_samples, n_features + 1), dtype=X.dtype
-        )
-        AXy = A.dot(Xop.adjoint().dot(y))
-        y_hat = Xop.dot(AXy)
+        X_op = _X_operator(X, X_mean, sqrt_sw)
+        AXy = A.dot(X_op.T.dot(y))
+        y_hat = X_op.dot(AXy)
         hat_diag = self._sparse_multidot_diag(X, A, X_mean, sqrt_sw)
         # return (1 - hat_diag), (y - y_hat)
         if len(y.shape) != 1:

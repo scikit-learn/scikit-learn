@@ -34,6 +34,7 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_cholesky
 from sklearn.linear_model.ridge import _solve_cholesky_kernel
 from sklearn.linear_model.ridge import _check_gcv_mode
+from sklearn.linear_model.ridge import _X_operator
 from sklearn.datasets import make_regression
 
 from sklearn.model_selection import GridSearchCV
@@ -312,15 +313,31 @@ def test_ridge_individual_penalties():
     assert_raises(ValueError, ridge.fit, X, y)
 
 
+@pytest.mark.parametrize('n_col', [(), (1,), (3,)])
+def test_x_operator(n_col):
+    rng = np.random.RandomState(0)
+    X = rng.randn(11, 8)
+    X_m = rng.randn(8)
+    sqrt_sw = rng.randn(len(X))
+    Y = rng.randn(11, *n_col)
+    A = rng.randn(9, *n_col)
+    operator = _X_operator(sp.csr_matrix(X), X_m, sqrt_sw)
+    reference_operator = np.hstack(
+        [X - sqrt_sw[:, None] * X_m, sqrt_sw[:, None]])
+    assert_allclose(reference_operator.dot(A), operator.dot(A))
+    assert_allclose(reference_operator.T.dot(Y), operator.T.dot(Y))
+
+
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('X_shape', [(11, 8), (11, 20)])
+@pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize(
-    'y_shape, fit_intercept, normalize, noise',
+    'y_shape, normalize, noise',
     [
-        ((11,), True, True, 1.),
-        ((11, 1), True, False, 20.),
-        ((11, 3), False, False, 30.),
+        ((11,), True, 1.),
+        ((11, 1), False, 20.),
+        ((11, 3), False, 30.),
     ]
 )
 def test_ridge_gcv_vs_ridge_loo_cv(
@@ -359,6 +376,7 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 @pytest.mark.parametrize('y_shape, fit_intercept, noise',
                          [((11,), True, 1.),
                           ((11, 1), True, 20.),
+                          ((11, 3), True, 30.),
                           ((11, 3), False, 30.)])
 def test_ridge_gcv_sample_weights(
         gcv_mode, X_constructor, fit_intercept, n_features, y_shape, noise):
