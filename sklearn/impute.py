@@ -141,12 +141,25 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
         a new copy will always be made, even if `copy=False`:
 
         - If X is not an array of floating values;
-        - If X is encoded as a CSR matrix.
+        - If X is encoded as a CSR matrix;
+        - If add_indicator=True.
+
+    add_indicator : boolean, optional (default=False)
+        If True, a `MissingIndicator` transform will stack onto output
+        of the imputer's transform. This allows a predictive estimator
+        to account for missingness despite imputation. If a feature has no
+        missing values at fit/train time, the feature won't appear on
+        the missing indicator even if there are missing values at
+        transform/test time.
 
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
         The imputation fill value for each feature.
+
+    indicator_ : :class:`sklearn.impute.MissingIndicator`
+        Indicator used to add binary indicators for missing values.
+        ``None`` if add_indicator is False.
 
     See also
     --------
@@ -159,8 +172,8 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
     >>> imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
     >>> imp_mean.fit([[7, 2, 3], [4, np.nan, 6], [10, 5, 9]])
     ... # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=nan,
-           strategy='mean', verbose=0)
+    SimpleImputer(add_indicator=False, copy=True, fill_value=None,
+            missing_values=nan, strategy='mean', verbose=0)
     >>> X = [[np.nan, 2, 3], [4, np.nan, 6], [10, np.nan, 9]]
     >>> print(imp_mean.transform(X))
     ... # doctest: +NORMALIZE_WHITESPACE
@@ -175,12 +188,13 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, missing_values=np.nan, strategy="mean",
-                 fill_value=None, verbose=0, copy=True):
+                 fill_value=None, verbose=0, copy=True, add_indicator=False):
         self.missing_values = missing_values
         self.strategy = strategy
         self.fill_value = fill_value
         self.verbose = verbose
         self.copy = copy
+        self.add_indicator = add_indicator
 
     def _validate_input(self, X):
         allowed_strategies = ["mean", "median", "most_frequent", "constant"]
@@ -272,6 +286,13 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
                                                self.missing_values,
                                                fill_value)
 
+        if self.add_indicator:
+            self.indicator_ = MissingIndicator(
+                missing_values=self.missing_values)
+            self.indicator_.fit(X)
+        else:
+            self.indicator_ = None
+
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -285,7 +306,6 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             # for constant strategy, self.statistcs_ is used to store
             # fill_value in each column
             statistics.fill(fill_value)
-
         else:
             for i in range(X.shape[1]):
                 column = X.data[X.indptr[i]:X.indptr[i + 1]]
@@ -382,6 +402,9 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             raise ValueError("X has %d features per sample, expected %d"
                              % (X.shape[1], self.statistics_.shape[0]))
 
+        if self.add_indicator:
+            X_trans_indicator = self.indicator_.transform(X)
+
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
             valid_statistics = statistics
@@ -419,6 +442,10 @@ class SimpleImputer(BaseEstimator, TransformerMixin):
             coordinates = np.where(mask.transpose())[::-1]
 
             X[coordinates] = values
+
+        if self.add_indicator:
+            hstack = sparse.hstack if sparse.issparse(X) else np.hstack
+            X = hstack((X, X_trans_indicator))
 
         return X
 
@@ -511,6 +538,14 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         ``sample_posterior`` is True. Use an integer for determinism.
         See :term:`the Glossary <random_state>`.
 
+    add_indicator : boolean, optional (default=False)
+        If True, a `MissingIndicator` transform will stack onto output
+        of the imputer's transform. This allows a predictive estimator
+        to account for missingness despite imputation. If a feature has no
+        missing values at fit/train time, the feature won't appear on
+        the missing indicator even if there are missing values at
+        transform/test time.
+
     Attributes
     ----------
     initial_imputer_ : object of type :class:`sklearn.impute.SimpleImputer`
@@ -530,6 +565,10 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
 
     n_features_with_missing_ : int
         Number of features with missing values.
+
+    indicator_ : :class:`sklearn.impute.MissingIndicator`
+        Indicator used to add binary indicators for missing values.
+        ``None`` if add_indicator is False.
 
     See also
     --------
@@ -573,7 +612,8 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                  min_value=None,
                  max_value=None,
                  verbose=0,
-                 random_state=None):
+                 random_state=None,
+                 add_indicator=False):
 
         self.estimator = estimator
         self.missing_values = missing_values
@@ -587,6 +627,7 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
         self.max_value = max_value
         self.verbose = verbose
         self.random_state = random_state
+        self.add_indicator = add_indicator
 
     def _impute_one_feature(self,
                             X_filled,
@@ -895,6 +936,13 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 .format(self.tol)
             )
 
+        if self.add_indicator:
+            self.indicator_ = MissingIndicator(
+                missing_values=self.missing_values)
+            X_trans_indicator = self.indicator_.fit_transform(X)
+        else:
+            self.indicator_ = None
+
         if self.estimator is None:
             from .linear_model import BayesianRidge
             self._estimator = BayesianRidge()
@@ -968,6 +1016,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 warnings.warn("[IterativeImputer] Early stopping criterion not"
                               " reached.", ConvergenceWarning)
         Xt[~mask_missing_values] = X[~mask_missing_values]
+
+        if self.add_indicator:
+            Xt = np.hstack((Xt, X_trans_indicator))
         return Xt
 
     def transform(self, X):
@@ -987,6 +1038,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
              The imputed input data.
         """
         check_is_fitted(self, 'initial_imputer_')
+
+        if self.add_indicator:
+            X_trans_indicator = self.indicator_.transform(X)
 
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
@@ -1016,6 +1070,9 @@ class IterativeImputer(BaseEstimator, TransformerMixin):
                 i_rnd += 1
 
         Xt[~mask_missing_values] = X[~mask_missing_values]
+
+        if self.add_indicator:
+            Xt = np.hstack((Xt, X_trans_indicator))
         return Xt
 
     def fit(self, X, y=None):
@@ -1144,13 +1201,10 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             imputer_mask = sparse_constructor(
                 (mask, X.indices.copy(), X.indptr.copy()),
                 shape=X.shape, dtype=bool)
+            imputer_mask.eliminate_zeros()
 
-            missing_values_mask = imputer_mask.copy()
-            missing_values_mask.eliminate_zeros()
-            features_with_missing = (
-                np.flatnonzero(np.diff(missing_values_mask.indptr))
-                if missing_values_mask.format == 'csc'
-                else np.unique(missing_values_mask.indices))
+            if self.features == 'missing-only':
+                n_missing = imputer_mask.getnnz(axis=0)
 
             if self.sparse is False:
                 imputer_mask = imputer_mask.toarray()
@@ -1158,12 +1212,19 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                 imputer_mask = imputer_mask.tocsc()
         else:
             imputer_mask = _get_mask(X, self.missing_values)
-            features_with_missing = np.flatnonzero(imputer_mask.sum(axis=0))
+
+            if self.features == 'missing-only':
+                n_missing = imputer_mask.sum(axis=0)
 
             if self.sparse is True:
                 imputer_mask = sparse.csc_matrix(imputer_mask)
 
-        return imputer_mask, features_with_missing
+        if self.features == 'all':
+            features_indices = np.arange(X.shape[1])
+        else:
+            features_indices = np.flatnonzero(n_missing)
+
+        return imputer_mask, features_indices
 
     def _validate_input(self, X):
         if not is_scalar_nan(self.missing_values):
@@ -1216,9 +1277,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
-        self.features_ = (self._get_missing_features_info(X)[1]
-                          if self.features == 'missing-only'
-                          else np.arange(self._n_features))
+        self.features_ = self._get_missing_features_info(X)[1]
 
         return self
 
@@ -1253,8 +1312,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                                  "in transform but have no missing values "
                                  "in fit.".format(features_diff_fit_trans))
 
-            if (self.features_.size > 0 and
-                    self.features_.size < self._n_features):
+            if self.features_.size < self._n_features:
                 imputer_mask = imputer_mask[:, self.features_]
 
         return imputer_mask

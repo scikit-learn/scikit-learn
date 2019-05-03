@@ -293,7 +293,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         if hasattr(self, "classes_"):
             n_class = len(self.classes_) - 1
-        else:   # regression
+        else:  # regression
             n_class = 1
         n_SV = self.support_vectors_.shape[0]
 

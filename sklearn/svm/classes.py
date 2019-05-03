@@ -1224,7 +1224,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         """
         Perform classification on samples in X.
 
-        For an one-class model, +1 or -1 is returned.
+        For a one-class model, +1 or -1 is returned.
 
         Parameters
         ----------

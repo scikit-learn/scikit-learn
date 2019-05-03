@@ -29,7 +29,7 @@ class NotFittedError(ValueError, AttributeError):
     ...     LinearSVC().predict([[1, 2], [2, 3], [3, 4]])
     ... except NotFittedError as e:
     ...     print(repr(e))
-    ...                        # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     NotFittedError('This LinearSVC instance is not fitted yet'...)
 
     .. versionchanged:: 0.18
@@ -114,7 +114,7 @@ class FitFailedWarning(RuntimeWarning):
     >>> X, y = [[1, 2], [3, 4], [5, 6], [7, 8]], [0, 0, 1, 1]
     >>> with warnings.catch_warnings(record=True) as w:
     ...     try:
-    ...         gs.fit(X, y)   # This will raise a ValueError since C is < 0
+    ...         gs.fit(X, y)  # This will raise a ValueError since C is < 0
     ...     except ValueError:
     ...         pass
     ...     print(repr(w[-1].message))
