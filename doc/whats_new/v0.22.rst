@@ -42,8 +42,8 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Fix| :class:`sklearn.ensemble.VotingClassifier` and
-  :class:`sklearn.ensemble.VotingRegressor` were failing during ``fit`` in one
+- |Fix| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` were failing during ``fit`` in one
   of the estimators was set to ``None`` and ``sample_weight`` was not ``None``.
   :pr:`13779` by :user:`Guillaume Lemaitre <glemaitre>`.
 
