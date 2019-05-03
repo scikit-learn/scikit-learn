@@ -525,6 +525,7 @@ def test_make_column_transformer_pandas():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
     norm = Normalizer()
+    ct1 = ColumnTransformer([('norm', Normalizer(), X_df.columns)])
     ct2 = make_column_transformer((norm, X_df.columns))
     assert_almost_equal(ct1.fit_transform(X_df),
                         ct2.fit_transform(X_df))
