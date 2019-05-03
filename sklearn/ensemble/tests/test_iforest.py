@@ -127,7 +127,8 @@ def test_iforest_error():
     # test X_test n_features match X_train one:
     assert_raises(ValueError, IsolationForest().fit(X).predict, X[:, 1:])
 
-    with pytest.raises(ValueError, match='Old behaviour is not available'):
+    err_msg = 'Old behaviour is not available'
+    with pytest.raises(NotImplementedError, match=err_msg):
         IsolationForest(behaviour='old').fit(X)
 
 

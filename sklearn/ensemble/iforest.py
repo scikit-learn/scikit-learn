@@ -218,7 +218,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
                 warn("'behaviour' is deprecated in 0.22 and will be removed"
                      " in 0.24", DeprecationWarning)
             else:
-                raise ValueError(
+                raise NotImplementedError(
                     "Old behaviour is not available anymore. Remove the "
                     "behaviour parameter."
                 )
