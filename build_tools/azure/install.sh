@@ -79,4 +79,4 @@ except ImportError:
     print('pandas not installed')
 "
 pip list
-python setup.py develop
+pip install -e .
