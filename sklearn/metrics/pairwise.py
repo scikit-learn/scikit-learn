@@ -1169,17 +1169,17 @@ def distance_metrics():
 
     The valid distance metrics, and the function they map to, are:
 
-    ============     ====================================
-    metric           Function
-    ============     ====================================
-    'cityblock'      metrics.pairwise.manhattan_distances
-    'cosine'         metrics.pairwise.cosine_distances
-    'euclidean'      metrics.pairwise.euclidean_distances
-    'haversine'      metrics.pairwise.haversine_distances
-    'l1'             metrics.pairwise.manhattan_distances
-    'l2'             metrics.pairwise.euclidean_distances
-    'manhattan'      metrics.pairwise.manhattan_distances
-    ============     ====================================
+    ============   ====================================
+    metric         Function
+    ============   ====================================
+    'cityblock'    metrics.pairwise.manhattan_distances
+    'cosine'       metrics.pairwise.cosine_distances
+    'euclidean'    metrics.pairwise.euclidean_distances
+    'haversine'    metrics.pairwise.haversine_distances
+    'l1'           metrics.pairwise.manhattan_distances
+    'l2'           metrics.pairwise.euclidean_distances
+    'manhattan'    metrics.pairwise.manhattan_distances
+    ============   ====================================
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1664,7 +1664,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cosine']
+        ['additive_chi2', 'chi2', 'linear', 'poly', 'polynomial', 'rbf',
+         'laplacian', 'sigmoid', 'cosine']
 
     Read more in the :ref:`User Guide <metrics>`.
 

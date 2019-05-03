@@ -24,8 +24,8 @@ Legend for changelogs
 - |API|: you will need to change your code to have the same effect in the
   future; or a feature will be removed in the future.
 
+.. include:: whats_new/v0.22.rst
 .. include:: whats_new/v0.21.rst
-.. include:: whats_new/v0.20.rst
 
 .. _previous_releases_whats_new:
 
@@ -34,6 +34,7 @@ Previous Releases
 .. toctree::
     :maxdepth: 1
 
+    Version 0.20 <whats_new/v0.20.rst>
     Version 0.19 <whats_new/v0.19.rst>
     Version 0.18 <whats_new/v0.18.rst>
     Version 0.17 <whats_new/v0.17.rst>
