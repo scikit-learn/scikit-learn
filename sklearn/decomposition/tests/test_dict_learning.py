@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import TempMemmap
 
 from sklearn.decomposition import DictionaryLearning
@@ -56,8 +57,6 @@ def test_dict_learning_overcomplete():
     assert dico.components_.shape == (n_components, n_features)
 
 
-# positive lars deprecated 0.22
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("transform_algorithm", [
     "lasso_lars",
     "lasso_cd",
@@ -75,6 +74,9 @@ def test_dict_learning_overcomplete():
 def test_dict_learning_positivity(transform_algorithm,
                                   positive_code,
                                   positive_dict):
+    if transform_algorithm == 'lars' and (positive_code or positive_dict):
+        raise SkipTest()
+
     n_components = 5
     dico = DictionaryLearning(
         n_components, transform_algorithm=transform_algorithm, random_state=0,
@@ -170,8 +172,6 @@ def test_dict_learning_online_shapes():
     assert_equal(np.dot(code, dictionary).shape, X.shape)
 
 
-# positive lars deprecated 0.22
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
 @pytest.mark.parametrize("transform_algorithm", [
     "lasso_lars",
     "lasso_cd",
@@ -189,6 +189,9 @@ def test_dict_learning_online_shapes():
 def test_dict_learning_online_positivity(transform_algorithm,
                                          positive_code,
                                          positive_dict):
+    if transform_algorithm == 'lars' and (positive_code or positive_dict):
+        raise SkipTest()
+
     rng = np.random.RandomState(0)
     n_components = 8
 
@@ -307,29 +310,25 @@ def test_sparse_encode_shapes():
         assert_equal(code.shape, (n_samples, n_components))
 
 
-# positive lars deprecated 0.22
-@pytest.mark.filterwarnings('ignore::DeprecationWarning')
-@pytest.mark.parametrize("positive", [
-    False,
-    True,
-])
-def test_sparse_encode_positivity(positive):
+@pytest.mark.parametrize(
+    "algo, positive",
+    [('lasso_lars', True), ('lasso_lars', False),
+     ('lasso_cd', True), ('lasso_cd', False),
+     pytest.param('lars', True, marks=pytest.mark.skip), ('lars', False),
+     ('threshold', True), ('threshold', False),
+     pytest.param('omp', True, marks=pytest.mark.xfail), ('omp', False)]
+)
+def test_sparse_encode_positivity(algo, positive):
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-    for algo in ('lasso_lars', 'lasso_cd', 'lars', 'threshold'):
-        code = sparse_encode(X, V, algorithm=algo, positive=positive)
-        if positive:
-            assert (code >= 0).all()
-        else:
-            assert (code < 0).any()
-
-    try:
-        sparse_encode(X, V, algorithm='omp', positive=positive)
-    except ValueError:
-        if not positive:
-            raise
+    # for algo in ('lasso_lars', 'lasso_cd', 'lars', 'threshold'):
+    code = sparse_encode(X, V, algorithm=algo, positive=positive)
+    if positive:
+        assert (code >= 0).all()
+    else:
+        assert (code < 0).any()
 
 
 def test_sparse_encode_input():
