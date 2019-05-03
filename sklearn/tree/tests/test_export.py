@@ -399,9 +399,8 @@ def test_export_text():
     assert export_text(reg, decimals=1, show_weights=True) == expected_report
 
 
-def test_plot_tree():
+def test_plot_tree(plt):
     # mostly smoke tests
-    plt = pytest.importorskip("matplotlib.pyplot")
     # Check correctness of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3,
                                  min_samples_split=2,
@@ -417,5 +416,3 @@ def test_plot_tree():
                                    "samples = 6\nvalue = [3, 3]")
     assert nodes[1].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [3, 0]"
     assert nodes[2].get_text() == "entropy = 0.0\nsamples = 3\nvalue = [0, 3]"
-
-    plt.close('all')

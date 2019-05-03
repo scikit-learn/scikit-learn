@@ -155,8 +155,7 @@ def test_partial_dependecy_input():
 @ignore_warnings(category=DeprecationWarning)
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
-def test_plot_partial_dependence():
-    plt = pytest.importorskip('matplotlib.pyplot')
+def test_plot_partial_dependence(plt):
     # Test partial dependence plot function.
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
@@ -186,14 +185,11 @@ def test_plot_partial_dependence():
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
-    plt.close('all')
-
 
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
-@skip_if_no_matplotlib
 @ignore_warnings(category=DeprecationWarning)
-def test_plot_partial_dependence_input():
+def test_plot_partial_dependence_input(plt):
     # Test partial dependence plot function input checks.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
 
@@ -230,8 +226,7 @@ def test_plot_partial_dependence_input():
 @pytest.mark.filterwarnings('ignore: Using or importing the ABCs from')
 # matplotlib Python3.7 warning
 @ignore_warnings(category=DeprecationWarning)
-def test_plot_partial_dependence_multiclass():
-    plt = pytest.importorskip('matplotlib.pyplot')
+def test_plot_partial_dependence_multiclass(plt):
     # Test partial dependence plot function on multi-class input.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
@@ -264,8 +259,6 @@ def test_plot_partial_dependence_multiclass():
     assert_raises(ValueError, plot_partial_dependence,
                   clf, iris.data, [0, 1],
                   grid_resolution=grid_resolution)
-
-    plt.close('all')
 
 
 @pytest.mark.parametrize(
