@@ -440,6 +440,7 @@ def test_plot_partial_dependence():
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
     plt = pytest.importorskip('matplotlib.pyplot')
+    print('XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX')
     iris = load_iris()
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(iris.data, iris.target)
