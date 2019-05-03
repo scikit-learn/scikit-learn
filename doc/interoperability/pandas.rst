@@ -45,7 +45,7 @@ discussed below `Dealing with heterogenous data`_.
   and `here <http://pandas.pydata.org/pandas-docs/stable/getting_started/basics.html#attributes-and-underlying-data>`__.
 
 There are several conditions on using a DataFrame as an input to
-Scikit-learn primitives, one of which is that the data in the
+most Scikit-learn estimators, one of which is that the data in the
 DataFrame columns used by the estimator are of numerical type. Other conditions
 and pitfalls are described in subsequent sections. The numerical condition can
 be checked e.g. using something like::
