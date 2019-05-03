@@ -1166,6 +1166,10 @@ cdef class BinaryTree:
                           == 'EuclideanDistance')
         self.sample_weight_arr = state[12]
 
+        if self.sample_weight_arr is not None:
+            self.sample_weight = get_memview_DTYPE_1D(self.sample_weight_arr)
+            self.sum_weight = np.sum(self.sample_weight)
+
     def get_tree_stats(self):
         return (self.n_trims, self.n_leaves, self.n_splits)
 
