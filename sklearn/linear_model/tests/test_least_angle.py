@@ -508,10 +508,8 @@ def test_lars_path_positive_constraint():
     # and all positive when positive=True
     # for method 'lar' (default) and lasso
 
-    # Once deprecation of LAR + positive option is done use these:
-    # assert_raises(ValueError, linear_model.lars_path, diabetes['data'],
-    #               diabetes['target'], method='lar', positive=True)
-    with pytest.warns(DeprecationWarning, match='broken'):
+    err_msg = "'positive'=True is only possible with 'method'='lasso'"
+    with pytest.raises(ValueError, match=err_msg):
         linear_model.lars_path(diabetes['data'], diabetes['target'],
                                return_path=True, method='lar',
                                positive=True)

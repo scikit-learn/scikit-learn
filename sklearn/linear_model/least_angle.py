@@ -397,10 +397,10 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     """
     if method == 'lar' and positive:
-        warnings.warn('positive option is broken for Least'
-                      ' Angle Regression (LAR). Use method="lasso".'
-                      ' This option will be removed in version 0.22.',
-                      DeprecationWarning)
+        raise ValueError(
+            "'positive'=True is only possible with 'method'='lasso'. Got "
+            "'method={}'instead.".format(method)
+        )
     n_samples = n_samples if n_samples is not None else y.size
 
     if Xy is None:
