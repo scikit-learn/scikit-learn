@@ -467,12 +467,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         averaged_predictions = np.zeros(
             (self.n_trees_per_iteration_, grid.shape[0]), dtype=Y_DTYPE)
 
-        for i in range(self.n_iter_):
-            for k in range(self.n_trees_per_iteration_):
-                predictor = self._predictors[i][k]
+        for predictors_of_ith_iteration in self._predictors:
+            for k, predictor in enumerate(predictors_of_ith_iteration):
                 predictor.compute_partial_dependence(grid, features,
                                                      averaged_predictions[k])
-        averaged_predictions *= self.learning_rate
+        # Note that the learning rate is already accounted for in the leaves
+        # values.
 
         return averaged_predictions
 

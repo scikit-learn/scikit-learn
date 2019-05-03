@@ -12,6 +12,7 @@ cimport numpy as np
 
 from .types cimport X_DTYPE_C
 from .types cimport Y_DTYPE_C
+from .types import Y_DTYPE
 from .types cimport X_BINNED_DTYPE_C
 
 
@@ -110,16 +111,16 @@ def _compute_partial_dependence(
         unsigned int current_node_idx
         unsigned int [:] node_idx_stack = np.zeros(shape=nodes.shape[0],
                                                    dtype=np.uint32)
-        double[::1] weight_stack = np.zeros(shape=nodes.shape[0],
-                                            dtype=np.double)
+        Y_DTYPE_C [::1] weight_stack = np.zeros(shape=nodes.shape[0],
+                                                dtype=Y_DTYPE)
         node_struct * current_node  # pointer to avoid copying attributes
 
         unsigned int sample_idx
         unsigned feature_idx
         unsigned stack_size
-        double left_sample_frac
-        double current_weight
-        double total_weight  # used for sanity check only
+        Y_DTYPE_C left_sample_frac
+        Y_DTYPE_C current_weight
+        Y_DTYPE_C total_weight  # used for sanity check only
         bint is_target_feature
 
     for sample_idx in range(X.shape[0]):
@@ -163,7 +164,8 @@ def _compute_partial_dependence(
                     # push left child
                     node_idx_stack[stack_size] = current_node.left
                     left_sample_frac = (
-                        nodes[current_node.left].count / current_node.count)
+                        <Y_DTYPE_C> nodes[current_node.left].count /
+                        current_node.count)
                     current_weight = weight_stack[stack_size]
                     weight_stack[stack_size] = current_weight * left_sample_frac
                     stack_size += 1
