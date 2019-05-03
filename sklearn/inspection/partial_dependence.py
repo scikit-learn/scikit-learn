@@ -205,8 +205,7 @@ def partial_dependence(estimator, X, features, response_method='auto',
     method : str, optional (default='auto')
         The method used to calculate the averaged predictions:
 
-        - 'recursion' is only supported for gradient boosting estimator
-          (namely
+        - 'recursion' is only supported for gradient boosting estimator (namely
           :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`,
           :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`,
           :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`,
@@ -281,6 +280,10 @@ def partial_dependence(estimator, X, features, response_method='auto',
     :class:`HistGradientBoostingRegressor
     <sklearn.ensemble.HistGradientBoostingRegressor>`, which do not have an
     ``init`` parameter.
+<<<<<<< HEAD
+=======
+
+>>>>>>> cd7d64d40190ddeb111da4c011a4b7573ae767cc
     """
 
     if not (is_classifier(estimator) or is_regressor(estimator)):
@@ -423,8 +426,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
     method : str, optional (default='auto')
         The method to use to calculate the partial dependence predictions:
 
-        - 'recursion' is only supported for gradient boosting estimator
-          (namely
+        - 'recursion' is only supported for gradient boosting estimator (namely
           :class:`GradientBoostingClassifier<sklearn.ensemble.GradientBoostingClassifier>`,
           :class:`GradientBoostingRegressor<sklearn.ensemble.GradientBoostingRegressor>`,
           :class:`HistGradientBoostingClassifier<sklearn.ensemble.HistGradientBoostingClassifier>`,
