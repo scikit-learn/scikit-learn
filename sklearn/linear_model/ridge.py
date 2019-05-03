@@ -1223,7 +1223,7 @@ class _RidgeGCV(LinearModel):
         QT_y = np.dot(Q.T, y)
         return X_mean, v, Q, QT_y
 
-    def _errors_and_values_gram(self, alpha, y, sqrt_sw, v, Q, QT_y):
+    def _solve_gram(self, alpha, y, sqrt_sw, v, Q, QT_y):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
         Used when we have a decomposition of X.X^T (n_features >= n_samples).
@@ -1247,11 +1247,11 @@ class _RidgeGCV(LinearModel):
         return G_diag, c
 
     def _errors_gram(self, alpha, y, sqrt_sw, X_mean, v, Q, QT_y):
-        G_diag, c = self._errors_and_values_gram(alpha, y, sqrt_sw, v, Q, QT_y)
+        G_diag, c = self._solve_gram(alpha, y, sqrt_sw, v, Q, QT_y)
         return (c / G_diag) ** 2, c
 
     def _values_gram(self, alpha, y, sqrt_sw, X_mean, v, Q, QT_y):
-        G_diag, c = self._errors_and_values_gram(alpha, y, sqrt_sw, v, Q, QT_y)
+        G_diag, c = self._solve_gram(alpha, y, sqrt_sw, v, Q, QT_y)
         return y - (c / G_diag), c
 
     def _decompose_covariance_sparse(self, X, y, sqrt_sw):
@@ -1278,7 +1278,7 @@ class _RidgeGCV(LinearModel):
         V = V[:, nullspace_dim:]
         return X_mean, s, V, X
 
-    def _errors_and_values_covariance_sparse_no_intercept(
+    def _solve_covariance_sparse_no_intercept(
             self, alpha, y, sqrt_sw, X_mean, s, V, X):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
@@ -1296,7 +1296,7 @@ class _RidgeGCV(LinearModel):
             hat_diag = hat_diag[:, np.newaxis]
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
-    def _errors_and_values_covariance_sparse_intercept(
+    def _solve_covariance_sparse_intercept(
             self, alpha, y, sqrt_sw, X_mean, s, V, X):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
@@ -1327,7 +1327,7 @@ class _RidgeGCV(LinearModel):
             hat_diag = hat_diag[:, np.newaxis]
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
-    def _errors_and_values_covariance_sparse(
+    def _solve_covariance_sparse(
             self, alpha, y, sqrt_sw, X_mean, s, V, X):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
@@ -1335,9 +1335,9 @@ class _RidgeGCV(LinearModel):
         (n_features < n_samples and X is sparse).
         """
         if self.fit_intercept:
-            return self._errors_and_values_covariance_sparse_intercept(
+            return self._solve_covariance_sparse_intercept(
                 alpha, y, sqrt_sw, X_mean, s, V, X)
-        return self._errors_and_values_covariance_sparse_no_intercept(
+        return self._solve_covariance_sparse_no_intercept(
             alpha, y, sqrt_sw, X_mean, s, V, X)
 
     def _decompose_covariance_dense(self, X, y, sqrt_sw):
@@ -1354,7 +1354,7 @@ class _RidgeGCV(LinearModel):
         UT_y = np.dot(U.T, y)
         return X_mean, v, U, UT_y
 
-    def _errors_and_values_covariance_dense(
+    def _solve_covariance_dense(
             self, alpha, y, sqrt_sw, v, U, UT_y):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
@@ -1376,22 +1376,22 @@ class _RidgeGCV(LinearModel):
         return G_diag, c
 
     def _errors_covariance_sparse(self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
-        G_diag, c = self._errors_and_values_covariance_sparse(
+        G_diag, c = self._solve_covariance_sparse(
             alpha, y, sqrt_sw, X_mean, v, U, UT_y)
         return (c / G_diag) ** 2, c
 
     def _values_covariance_sparse(self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
-        G_diag, c = self._errors_and_values_covariance_sparse(
+        G_diag, c = self._solve_covariance_sparse(
             alpha, y, sqrt_sw, X_mean, v, U, UT_y)
         return y - (c / G_diag), c
 
     def _errors_covariance_dense(self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
-        G_diag, c = self._errors_and_values_covariance_dense(
+        G_diag, c = self._solve_covariance_dense(
             alpha, y, sqrt_sw, v, U, UT_y)
         return (c / G_diag) ** 2, c
 
     def _values_covariance_dense(self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
-        G_diag, c = self._errors_and_values_covariance_dense(
+        G_diag, c = self._solve_covariance_dense(
             alpha, y, sqrt_sw, v, U, UT_y)
         return y - (c / G_diag), c
 

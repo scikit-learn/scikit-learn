@@ -1049,7 +1049,7 @@ def test_ridge_regression_check_arguments_validity(return_intercept,
         assert_allclose(out, true_coefs, rtol=0, atol=atol)
 
 
-def test_errors_and_values_gram():
+def test_solve_gram():
     ridgecv = _RidgeGCV()
     ridgecv._with_sw = False
     rng = check_random_state(42)
@@ -1061,7 +1061,7 @@ def test_errors_and_values_gram():
     v = rng.randn(n)
     Q = rng.randn(len(v), len(v))
     QT_y = Q.T.dot(y)
-    G_diag, c = ridgecv._errors_and_values_gram(alpha, y, sqrt_sw, v, Q, QT_y)
+    G_diag, c = ridgecv._solve_gram(alpha, y, sqrt_sw, v, Q, QT_y)
 
     # test that helper function behaves as expected
     out, c_ = ridgecv._errors_gram(alpha, y, sqrt_sw, X_m, v, Q, QT_y)
@@ -1073,7 +1073,7 @@ def test_errors_and_values_gram():
     np.testing.assert_array_equal(c_, c)
 
 
-def test_errors_and_values_covariance():
+def test_solve_covariance():
     ridgecv = _RidgeGCV()
     rng = check_random_state(42)
     alpha = 1.
@@ -1084,7 +1084,7 @@ def test_errors_and_values_covariance():
         U = rng.randn(n, p)
         UT_y = U.T.dot(y)
         X_m = np.zeros(p)
-        G_diag, c = ridgecv._errors_and_values_covariance_dense(
+        G_diag, c = ridgecv._solve_covariance_dense(
             alpha, y, sqrt_sw, v, U, UT_y)
 
         # test that helper function behaves as expected
