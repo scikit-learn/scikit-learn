@@ -29,7 +29,7 @@ capability of supporting heterogenous data in one data structure.
 
 Every Scikit-learn estimator/transformer/pipeline
 (for the rest of this section we shall call these primitives)
-supports the use of DataFrames as inputs which is achieved by obtaining a
+supports the use of DataFrames as inputs. Most do this by obtaining a
 `NumPy array <https://docs.scipy.org/doc/numpy/user/>`__ using
 the :meth:`~numpy.asarray` on a DataFrame object. The only exception where a
 a DataFrame is being used explicitly is the
