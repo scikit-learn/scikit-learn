@@ -276,7 +276,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         Returns
         -------
-        y_pred : ndarray, shape (n_samples,)
+        y_pred : ndarray, shape (n_samples,) or (n_samples, n_output)
             Predicted targets.
         """
 
@@ -429,7 +429,8 @@ class StackingClassifier(_BaseStacking, ClassifierMixin):
 
         Returns
         -------
-        probabilities : ndarray, shape (n_samples, n_classes)
+        probabilities : ndarray, shape (n_samples, n_classes) or \
+list of arrays n_output
             The class probabilities of the input samples.
         """
         check_is_fitted(self, ['estimators_', 'final_estimator_'])
