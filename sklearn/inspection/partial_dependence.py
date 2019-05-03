@@ -280,10 +280,6 @@ def partial_dependence(estimator, X, features, response_method='auto',
     :class:`HistGradientBoostingRegressor
     <sklearn.ensemble.HistGradientBoostingRegressor>`, which do not have an
     ``init`` parameter.
-<<<<<<< HEAD
-=======
-
->>>>>>> cd7d64d40190ddeb111da4c011a4b7573ae767cc
     """
 
     if not (is_classifier(estimator) or is_regressor(estimator)):
