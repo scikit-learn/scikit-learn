@@ -176,7 +176,7 @@ example given below::
   array([0, 0, 2, 0, 0])
 
 
-At the time of writing, it is the users responsibility to ensure that the
+At the time of writing, it is the user's responsibility to ensure that the
 column ordering in the data used for training the estimator is the same as the
 ordering of the data used for prediction. There is an ongoing discussion
 whether or not this will change in the future and this
