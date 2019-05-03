@@ -39,6 +39,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`sklearn.ensemble.VotingClassifier` and
+  :class:`sklearn.ensemble.VotingRegressor` were failing during ``fit`` in one
+  of the estimators was set to ``None`` and ``sample_weight`` was not ``None``.
+  :pr:`13779` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changes to estimator checks
 ---------------------------
 
