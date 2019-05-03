@@ -575,7 +575,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         """
         check_is_fitted(self, "classes_")
         if self.break_ties and self.decision_function_shape == 'ovo':
-            raise ValueError("break_ties can only be True if "
+            raise ValueError("break_ties must be False when "
                              "decision_function_shape is 'ovo'")
 
         if (self.break_ties

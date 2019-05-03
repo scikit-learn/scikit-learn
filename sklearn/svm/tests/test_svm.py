@@ -992,7 +992,7 @@ def test_svc_invalid_break_ties_param(SVCClass):
     svm = SVCClass(kernel="linear", decision_function_shape='ovo',
                    break_ties=True, random_state=42).fit(X, y)
 
-    with pytest.raises(ValueError, match="break_ties can only be True"):
+    with pytest.raises(ValueError, match="break_ties must be False"):
         svm.predict(y)
 
 

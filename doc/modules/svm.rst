@@ -236,8 +236,8 @@ then it is advisable to set ``probability=False``
 and use ``decision_function`` instead of ``predict_proba``.
 
 Please note that when ``decision_function_shape='ovr'`` and ``n_classes > 2``,
-unlike ``decision_function``, the ``predict`` does not try to break ties by
-default. You can set ``break_ties=True`` for the output of ``predict`` to be
+unlike ``decision_function``, the ``predict`` method does not try to break ties
+by default. You can set ``break_ties=True`` for the output of ``predict`` to be
 the same as ``np.argmax(clf.decision_function(...), axis=1)``, otherwise the
 first class among the tied classes will always be returned; but have in mind
 that it comes with a computational cost.
