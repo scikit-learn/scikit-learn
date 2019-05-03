@@ -190,7 +190,7 @@ Handling Categorical data
 =========================
 
 For a general guide on how to get started with categorical features please refer
-to :term:`categocrical feature` and :ref:`preprocessing_categorical_features`.
+to :term:`categorical feature` and :ref:`preprocessing_categorical_features`.
 It is worth noting that as of :ref:`changes_0_20_3`, both
 :class:`~sklearn.preprocessing.OneHotEncoder` and
 :class:`~sklearn.preprocessing.OrdinalEncoder`
