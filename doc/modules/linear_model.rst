@@ -140,23 +140,20 @@ cross-validation of the alpha parameter. The object works in the same way
 as GridSearchCV except that it defaults to Generalized Cross-Validation
 (GCV), an efficient form of leave-one-out cross-validation::
 
+    >>> import numpy as np
     >>> from sklearn import linear_model
-    >>> reg = linear_model.RidgeCV(alphas=[1.0, 10.0], store_cv_values=True)
+    >>> reg = linear_model.RidgeCV(alphas=np.logspace(-6, 6, 13))
     >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +NORMALIZE_WHITESPACE
-    RidgeCV(alphas=array([ 1., 10.]), cv=None, fit_intercept=True, gcv_mode=None,
-            normalize=False, scoring=None, store_cv_values=True)
+    RidgeCV(alphas=array([1.e-06, 1.e-05, 1.e-04, 1.e-03, 1.e-02, 1.e-01, 1.e+00, 1.e+01,
+          1.e+02, 1.e+03, 1.e+04, 1.e+05, 1.e+06]),
+            cv=None, fit_intercept=True, gcv_mode=None, normalize=False,
+            scoring=None, store_cv_values=False)
     >>> reg.alpha_
-    1.0
-    >>> reg.cv_values_                                      # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    array([[0.105...   , 0.259...],
-           [0.022...   , 0.125...],
-           [0.902...   , 0.902...]])
+    0.01
 
-In some cases, for example for very large datasets, this is not the most
-efficient way to set the hyperparameter, and k-fold cross-validation can be
-faster. Specifying the value of the `cv` attribute will trigger the use of
+Specifying the value of the `cv` attribute will trigger the use of
 cross-validation with `GridSearchCV`, for example `cv=10` for 10-fold
-cross-validation.
+cross-validation, rather than Generalized Cross-Validation.
 
 .. topic:: References
 
