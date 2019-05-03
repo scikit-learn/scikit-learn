@@ -373,13 +373,14 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                              return_n_iter=return_n_iter,
                              return_intercept=return_intercept,
                              X_scale=None,
-                             X_offset=None)
+                             X_offset=None,
+                             check_input=check_input)
 
 
 def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                       max_iter=None, tol=1e-3, verbose=0, random_state=None,
                       return_n_iter=False, return_intercept=False,
-                      X_scale=None, X_offset=None):
+                      X_scale=None, X_offset=None, check_input=True):
 
     has_sw = sample_weight is not None
 
@@ -425,8 +426,6 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         raise ValueError("Number of samples in X and y does not correspond:"
                          " %d != %d" % (n_samples, n_samples_))
 
-
-
     if has_sw:
         if np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")
@@ -445,7 +444,6 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
-
 
     n_iter = None
     if solver == 'sparse_cg':
@@ -469,7 +467,6 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
-
         else:
             try:
                 coef = _solve_cholesky(X, y, alpha)
