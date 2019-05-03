@@ -441,7 +441,6 @@ def test_plot_partial_dependence():
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
     print('BEFORE MATPLOTLIB IMPORT')
-    import matplotlib.pyplot
     plt = pytest.importorskip('matplotlib.pyplot')
     print('AFTER MATPLOTLIB IMPORT')
     iris = load_iris()
