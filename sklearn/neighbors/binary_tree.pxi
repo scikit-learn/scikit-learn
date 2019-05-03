@@ -1130,6 +1130,7 @@ cdef class BinaryTree:
                 self.idx_array_arr,
                 self.node_data_arr,
                 self.node_bounds_arr,
+                self.sample_weight_arr,
                 int(self.leaf_size),
                 int(self.n_levels),
                 int(self.n_nodes),
@@ -1137,8 +1138,7 @@ cdef class BinaryTree:
                 int(self.n_leaves),
                 int(self.n_splits),
                 int(self.n_calls),
-                self.dist_metric,
-                self.sample_weight_arr)
+                self.dist_metric)
 
     def __setstate__(self, state):
         """
@@ -1148,27 +1148,27 @@ cdef class BinaryTree:
         self.idx_array_arr = state[1]
         self.node_data_arr = state[2]
         self.node_bounds_arr = state[3]
+        self.sample_weight_arr = state[4]
 
         self.data = get_memview_DTYPE_2D(self.data_arr)
         self.idx_array = get_memview_ITYPE_1D(self.idx_array_arr)
         self.node_data = get_memview_NodeData_1D(self.node_data_arr)
         self.node_bounds = get_memview_DTYPE_3D(self.node_bounds_arr)
+        self.sample_weight = get_memview_DTYPE_1D(self.sample_weight_arr)
 
-        self.leaf_size = state[4]
-        self.n_levels = state[5]
-        self.n_nodes = state[6]
-        self.n_trims = state[7]
-        self.n_leaves = state[8]
-        self.n_splits = state[9]
-        self.n_calls = state[10]
-        self.dist_metric = state[11]
+        self.leaf_size = state[5]
+        self.n_levels = state[6]
+        self.n_nodes = state[7]
+        self.n_trims = state[8]
+        self.n_leaves = state[9]
+        self.n_splits = state[10]
+        self.n_calls = state[11]
+        self.dist_metric = state[12]
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
-        self.sample_weight_arr = state[12]
 
         n_samples = self.data.shape[0]
-        if self.sample_weight_arr is not None:
-            self.sample_weight = get_memview_DTYPE_1D(self.sample_weight_arr)
+        if self.sample_weight.size == n_samples:
             self.sum_weight = np.sum(self.sample_weight)
         else:
             self.sample_weight = None
