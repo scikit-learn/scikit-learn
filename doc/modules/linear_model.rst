@@ -142,15 +142,15 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 
     >>> from sklearn import linear_model
     >>> reg = linear_model.RidgeCV(alphas=[1.0, 10.0], store_cv_values=True)
-    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
+    >>> reg.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +NORMALIZE_WHITESPACE
     RidgeCV(alphas=array([ 1., 10.]), cv=None, fit_intercept=True, gcv_mode=None,
             normalize=False, scoring=None, store_cv_values=True)
-    >>> reg.alpha_                                          # doctest: +SKIP
+    >>> reg.alpha_
     1.0
-    >>> reg.cv_values_                                      # doctest: +SKIP
-    array([[0.105625  , 0.25917355],
-          [0.0225    , 0.12570248],
-          [0.9025    , 0.9025    ]])
+    >>> reg.cv_values_                                      # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    array([[0.105...   , 0.259...],
+           [0.022...   , 0.125...],
+           [0.902...   , 0.902...]])
 
 In some cases, for example for very large datasets, this is not the most
 efficient way to set the hyperparameter, and k-fold cross-validation can be
