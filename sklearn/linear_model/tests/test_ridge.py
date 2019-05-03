@@ -426,7 +426,6 @@ def test_ridge_gcv_sample_weights(
 
     assert kfold.alpha_ == pytest.approx(gcv_ridge.alpha_)
     assert_allclose(gcv_errors, kfold_errors, rtol=1e-3)
-    assert_allclose(gcv_errors, kfold_errors, rtol=1e-3)
     assert_allclose(gcv_ridge.coef_, kfold.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
 
