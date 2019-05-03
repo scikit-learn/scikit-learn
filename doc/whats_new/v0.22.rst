@@ -55,8 +55,5 @@ These changes mostly affect library developers.
 
 - Estimators are now expected to raise a ``NotFittedError`` if ``predict`` or
   ``transform`` is called before ``fit``; previously an ``AttributeError`` or
-  ``ValueError`` was acceptable. The old error message in
-  ``check_estimators_unfitted`` "fit" has been changed in favor "not fitted
-  yet. Call 'fit' with appropriate arguments". ``check_is_fitted`` should be
-  called in ``predict`` and ``transform``.
+  ``ValueError`` was acceptable.
   :pr:`13013` by by :user:`Agamemnon Krasoulis <agamemnonc>`.

@@ -1655,19 +1655,14 @@ def check_estimators_unfitted(name, estimator_orig):
 
     Unfitted estimators should raise a NotFittedError.
     """
-
     # Common test for Regressors, Classifiers and Outlier detection estimators
     X, y = _boston_subset()
 
     estimator = clone(estimator_orig)
-
-    msg = "not fitted yet. Call 'fit' with appropriate arguments"
-
     for method in ('decision_function', 'predict', 'predict_proba',
                    'predict_log_proba'):
         if getattr(estimator, method, None) is not None:
-            assert_raises_regex(NotFittedError, msg,
-                                getattr(estimator, method), X)
+            assert_raises(NotFittedError, getattr(estimator, method), X)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
