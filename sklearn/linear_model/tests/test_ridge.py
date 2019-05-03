@@ -425,10 +425,10 @@ def test_ridge_gcv_sample_weights(
         gcv_errors = gcv_ridge.cv_values_[:, alphas.index(kfold.alpha_)]
 
     assert kfold.alpha_ == pytest.approx(gcv_ridge.alpha_)
-    assert_allclose(gcv_errors, kfold_errors, rtol=5e-2)
-    assert_allclose(gcv_errors, kfold_errors, rtol=5e-2)
-    assert_allclose(gcv_ridge.coef_, kfold.coef_, rtol=5e-2)
-    assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=5e-2)
+    assert_allclose(gcv_errors, kfold_errors, rtol=1e-3)
+    assert_allclose(gcv_errors, kfold_errors, rtol=1e-3)
+    assert_allclose(gcv_ridge.coef_, kfold.coef_, rtol=1e-3)
+    assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
 
 
 @pytest.mark.parametrize('mode', [True, 1, 5, 'bad', 'gcv', np.arange(3)])
