@@ -222,7 +222,7 @@ class PCA(_BasePCA):
         The singular values corresponding to each of the selected components.
         The singular values are equal to the 2-norms of the ``n_components``
         variables in the lower-dimensional space.
-        
+
         .. versionadded:: 0.19
 
     mean_ : array, shape (n_features,)
