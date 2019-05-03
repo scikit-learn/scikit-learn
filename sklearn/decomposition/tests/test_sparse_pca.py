@@ -198,7 +198,7 @@ def test_scaling_fit_transform():
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)
     spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
-                          random_state=rng, normalize_components=True)
+                          random_state=rng)
     results_train = spca_lars.fit_transform(Y)
     results_test = spca_lars.transform(Y[:10])
     assert_allclose(results_train[0], results_test[0])
@@ -208,8 +208,7 @@ def test_pca_vs_spca():
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)
     Z, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
-    spca = SparsePCA(alpha=0, ridge_alpha=0, n_components=2,
-                     normalize_components=True)
+    spca = SparsePCA(alpha=0, ridge_alpha=0, n_components=2)
     pca = PCA(n_components=2)
     pca.fit(Y)
     spca.fit(Y)
@@ -222,10 +221,13 @@ def test_pca_vs_spca():
     assert_allclose(results_test_pca, results_test_spca)
 
 
+@pytest.mark.parametrize("normalize_components", [False, True])
 @pytest.mark.parametrize("spca", [SparsePCA, MiniBatchSparsePCA])
-def test_spca_deprecation_warning(spca):
+def test_spca_deprecation_warning(spca, normalize_components):
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
     warn_message = "normalize_components"
-    assert_warns_message(DeprecationWarning, warn_message,
-                         spca(normalize_components=False).fit, Y)
+    assert_warns_message(
+        DeprecationWarning, warn_message,
+        spca(normalize_components=normalize_components).fit, Y
+    )

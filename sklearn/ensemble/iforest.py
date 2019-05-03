@@ -64,15 +64,11 @@ class IsolationForest(BaseBagging, OutlierMixin):
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
-    contamination : float in (0., 0.5), optional (default=0.1)
+    contamination : "auto" or float in (0., 0.5), optional (default="auto")
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set. Used when fitting to define the threshold
         on the decision function. If 'auto', the decision function threshold is
         determined as in the original paper.
-
-        .. versionchanged:: 0.20
-           The default value of ``contamination`` will change from 0.1 in 0.20
-           to ``'auto'`` in 0.22.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
@@ -91,21 +87,11 @@ class IsolationForest(BaseBagging, OutlierMixin):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    behaviour : str, default='old'
-        Behaviour of the ``decision_function`` which can be either 'old' or
-        'new'. Passing ``behaviour='new'`` makes the ``decision_function``
-        change to match other anomaly detection algorithm API which will be
-        the default behaviour in the future. As explained in details in the
-        ``offset_`` attribute documentation, the ``decision_function`` becomes
-        dependent on the contamination parameter, in such a way that 0 becomes
-        its natural threshold to detect outliers.
+    behaviour : str, default='new'
+        This parameter does not have any effect and is deprecated.
 
         .. versionadded:: 0.20
            ``behaviour`` is added in 0.20 for back-compatibility purpose.
-
-        .. deprecated:: 0.20
-           ``behaviour='old'`` is deprecated in 0.20 and will not be possible
-           in 0.22.
 
         .. deprecated:: 0.22
            ``behaviour`` parameter will be deprecated in 0.22 and removed in
@@ -142,16 +128,12 @@ class IsolationForest(BaseBagging, OutlierMixin):
     offset_ : float
         Offset used to define the decision function from the raw scores.
         We have the relation: ``decision_function = score_samples - offset_``.
-        Assuming behaviour == 'new', ``offset_`` is defined as follows.
-        When the contamination parameter is set to "auto", the offset is equal
-        to -0.5 as the scores of inliers are close to 0 and the scores of
-        outliers are close to -1. When a contamination parameter different
-        than "auto" is provided, the offset is defined in such a way we obtain
-        the expected number of outliers (samples with decision function < 0)
-        in training.
-        Assuming the behaviour parameter is set to 'old', we always have
-        ``offset_ = -0.5``, making the decision function independent from the
-        contamination parameter.
+        ``offset_`` is defined as follows: when the contamination parameter is
+        set to "auto", the offset is equal to -0.5 as the scores of inliers are
+        close to 0 and the scores of outliers are close to -1. When a
+        contamination parameter different than "auto" is provided, the offset
+        is defined in such a way we obtain the expected number of outliers
+        (samples with decision function < 0) in training.
 
     Notes
     -----
@@ -173,11 +155,11 @@ class IsolationForest(BaseBagging, OutlierMixin):
     def __init__(self,
                  n_estimators=100,
                  max_samples="auto",
-                 contamination="legacy",
+                 contamination="auto",
                  max_features=1.,
                  bootstrap=False,
                  n_jobs=None,
-                 behaviour='old',
+                 behaviour='deprecated',
                  random_state=None,
                  verbose=0,
                  warm_start=False):
@@ -230,21 +212,16 @@ class IsolationForest(BaseBagging, OutlierMixin):
         -------
         self : object
         """
-        if self.contamination == "legacy":
-            warn('default contamination parameter 0.1 will change '
-                 'in version 0.22 to "auto". This will change the '
-                 'predict method behavior.',
-                 FutureWarning)
-            self._contamination = 0.1
-        else:
-            self._contamination = self.contamination
 
-        if self.behaviour == 'old':
-            warn('behaviour="old" is deprecated and will be removed '
-                 'in version 0.22. Please use behaviour="new", which '
-                 'makes the decision_function change to match '
-                 'other anomaly detection algorithm API.',
-                 FutureWarning)
+        if self.behaviour != 'deprecated':
+            if self.behaviour == 'new':
+                warn("'behaviour' is deprecated in 0.22 and will be removed"
+                     " in 0.24", DeprecationWarning)
+            else:
+                raise ValueError(
+                    "Old behaviour is not available anymore. Remove the "
+                    "behaviour parameter."
+                )
 
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
@@ -287,20 +264,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
                      max_depth=max_depth,
                      sample_weight=sample_weight)
 
-        if self.behaviour == 'old':
-            # in this case, decision_function = 0.5 + self.score_samples(X):
-            if self._contamination == "auto":
-                raise ValueError("contamination parameter cannot be set to "
-                                 "'auto' when behaviour == 'old'.")
-
-            self.offset_ = -0.5
-            self._threshold_ = np.percentile(self.decision_function(X),
-                                             100. * self._contamination)
-
-            return self
-
         # else, self.behaviour == 'new':
-        if self._contamination == "auto":
+        if self.contamination == "auto":
             # 0.5 plays a special role as described in the original paper.
             # we take the opposite as we consider the opposite of their score.
             self.offset_ = -0.5
@@ -309,7 +274,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         # else, define offset_ wrt contamination parameter, so that the
         # threshold_ attribute is implicitly 0 and is not needed anymore:
         self.offset_ = np.percentile(self.score_samples(X),
-                                     100. * self._contamination)
+                                     100. * self.contamination)
 
         return self
 
@@ -332,8 +297,7 @@ class IsolationForest(BaseBagging, OutlierMixin):
         check_is_fitted(self, ["offset_"])
         X = check_array(X, accept_sparse='csr')
         is_inlier = np.ones(X.shape[0], dtype=int)
-        threshold = self.threshold_ if self.behaviour == 'old' else 0
-        is_inlier[self.decision_function(X) < threshold] = -1
+        is_inlier[self.decision_function(X) < 0] = -1
         return is_inlier
 
     def decision_function(self, X):
@@ -405,15 +369,6 @@ class IsolationForest(BaseBagging, OutlierMixin):
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
         return -self._compute_chunked_score_samples(X)
-
-    @property
-    def threshold_(self):
-        if self.behaviour != 'old':
-            raise AttributeError("threshold_ attribute does not exist when "
-                                 "behaviour != 'old'")
-        warn("threshold_ attribute is deprecated in 0.20 and will"
-             " be removed in 0.22.", DeprecationWarning)
-        return self._threshold_
 
     def _compute_chunked_score_samples(self, X):
 

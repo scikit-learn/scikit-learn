@@ -773,7 +773,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
-        self.pooling_func = pooling_func
 
     @deprecated("The ``n_components_`` attribute was deprecated "
                 "in favor of ``n_connected_components_`` in 0.21 "
@@ -797,11 +796,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        if (self.pooling_func != 'deprecated' and
-                not isinstance(self, AgglomerationTransform)):
-            warnings.warn('Agglomerative "pooling_func" parameter is not used.'
-                          ' It has been deprecated in version 0.20 and will be'
-                          'removed in 0.22', DeprecationWarning)
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
@@ -1009,7 +1003,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
             affinity=affinity, distance_threshold=distance_threshold)
-        self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
         """Fit the hierarchical clustering on the data

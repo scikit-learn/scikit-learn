@@ -715,26 +715,6 @@ def _validate_transformers(transformers):
 
     return True
 
-
-def _is_deprecated_tuple_order(tuples):
-    """Checks if the input follows the deprecated tuple order.
-
-    Returns
-    -------
-    Returns true if (transformer, columns) is not a valid assumption for the
-    input, but (columns, transformer) is valid. The latter is deprecated and
-    its support will stop in v0.22.
-
-    XXX Remove in v0.22
-    """
-    transformers, columns = zip(*tuples)
-    if (not _validate_transformers(transformers)
-            and _validate_transformers(columns)):
-        return True
-
-    return False
-
-
 def _get_transformer_list(estimators):
     """
     Construct (name, trans, column) tuples from list
@@ -747,11 +727,6 @@ def _get_transformer_list(estimators):
                'order in v0.22.')
 
     transformers, columns = zip(*estimators)
-
-    # XXX Remove in v0.22
-    if _is_deprecated_tuple_order(estimators):
-        transformers, columns = columns, transformers
-        warnings.warn(message, DeprecationWarning)
 
     names, _ = zip(*_name_estimators(transformers))
 

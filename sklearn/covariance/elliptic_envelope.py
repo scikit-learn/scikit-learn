@@ -131,21 +131,12 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         self.offset_ = np.percentile(-self.dist_, 100. * self.contamination)
         return self
 
-    def decision_function(self, X, raw_values=None):
+    def decision_function(self, X):
         """Compute the decision function of the given observations.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-
-        raw_values : bool, optional
-            Whether or not to consider raw Mahalanobis distances as the
-            decision function. Must be False (default) for compatibility
-            with the others outlier detection tools.
-
-            .. deprecated:: 0.20
-                ``raw_values`` has been deprecated in 0.20 and will be removed
-                in 0.22.
 
         Returns
         -------
@@ -159,15 +150,6 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         """
         check_is_fitted(self, 'offset_')
         negative_mahal_dist = self.score_samples(X)
-
-        # raw_values deprecation:
-        if raw_values is not None:
-            warnings.warn("raw_values parameter is deprecated in 0.20 and will"
-                          " be removed in 0.22.", DeprecationWarning)
-
-            if not raw_values:
-                return (-self.offset_) ** 0.33 - (-negative_mahal_dist) ** 0.33
-
         return negative_mahal_dist - self.offset_
 
     def score_samples(self, X):
@@ -232,8 +214,3 @@ class EllipticEnvelope(MinCovDet, OutlierMixin):
         """
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
-    @property
-    def threshold_(self):
-        warnings.warn("threshold_ attribute is deprecated in 0.20 and will"
-                      " be removed in 0.22.", DeprecationWarning)
-        return self.offset_
