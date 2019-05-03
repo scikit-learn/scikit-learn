@@ -404,8 +404,10 @@ def test_set_params():
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
-def test_set_estimator_none():
-    """VotingClassifier set_params should be able to set estimators as None"""
+@pytest.mark.parametrize("drop", [None, 'drop'])
+def test_set_estimator_none(drop):
+    """VotingClassifier set_params should be able to set estimators as None or
+    drop"""
     # Test predict
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
@@ -417,22 +419,22 @@ def test_set_estimator_none():
     eclf2 = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2),
                                          ('nb', clf3)],
                              voting='hard', weights=[1, 1, 0.5])
-    eclf2.set_params(rf=None).fit(X, y)
+    eclf2.set_params(rf=drop).fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
-    assert dict(eclf2.estimators)["rf"] is None
+    assert dict(eclf2.estimators)["rf"] is drop
     assert len(eclf2.estimators_) == 2
     assert all(isinstance(est, (LogisticRegression, GaussianNB))
                for est in eclf2.estimators_)
-    assert eclf2.get_params()["rf"] is None
+    assert eclf2.get_params()["rf"] is drop
 
     eclf1.set_params(voting='soft').fit(X, y)
     eclf2.set_params(voting='soft').fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
-    msg = 'All estimators are None. At least one is required!'
+    msg = 'All estimators are None or "drop". At least one is required!'
     assert_raise_message(
-        ValueError, msg, eclf2.set_params(lr=None, rf=None, nb=None).fit, X, y)
+        ValueError, msg, eclf2.set_params(lr=drop, rf=drop, nb=drop).fit, X, y)
 
     # Test soft voting transform
     X1 = np.array([[1], [2]])
@@ -444,7 +446,7 @@ def test_set_estimator_none():
     eclf2 = VotingClassifier(estimators=[('rf', clf2), ('nb', clf3)],
                              voting='soft', weights=[1, 0.5],
                              flatten_transform=False)
-    eclf2.set_params(rf=None).fit(X1, y1)
+    eclf2.set_params(rf=drop).fit(X1, y1)
     assert_array_almost_equal(eclf1.transform(X1),
                               np.array([[[0.7, 0.3], [0.3, 0.7]],
                                         [[1., 0.], [0., 1.]]]))

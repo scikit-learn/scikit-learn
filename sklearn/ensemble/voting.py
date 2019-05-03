@@ -53,8 +53,8 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         """Get the weights of not `None` estimators"""
         if self.weights is None:
             return None
-        return [w for est, w in zip(self.estimators,
-                                    self.weights) if est[1] is not None]
+        return [w for est, w in zip(self.estimators, self.weights)
+                if not(est[1] is None or est[1] == 'drop')]
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
@@ -78,7 +78,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
 
         if sample_weight is not None:
             for name, step in self.estimators:
-                if step is None:
+                if step is None or step == 'drop':
                     continue
                 if not has_fit_parameter(step, 'sample_weight'):
                     raise ValueError('Underlying estimator \'%s\' does not'
@@ -87,15 +87,18 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         names, clfs = zip(*self.estimators)
         self._validate_names(names)
 
-        n_isnone = np.sum([clf is None for _, clf in self.estimators])
+        n_isnone = np.sum(
+            [clf is None or clf == 'drop' for _, clf in self.estimators]
+        )
         if n_isnone == len(self.estimators):
-            raise ValueError('All estimators are None. At least one is '
-                             'required!')
+            raise ValueError(
+                'All estimators are None or "drop". At least one is required!'
+            )
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,
                                                  sample_weight=sample_weight)
-                for clf in clfs if clf is not None)
+                for clf in clfs if not (clf is None or clf == 'drop'))
 
         self.named_estimators_ = Bunch()
         for k, e in zip(self.estimators, self.estimators_):
@@ -149,8 +152,8 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
     estimators : list of (string, estimator) tuples
         Invoking the ``fit`` method on the ``VotingClassifier`` will fit clones
         of those original estimators that will be stored in the class attribute
-        ``self.estimators_``. An estimator can be set to `None` using
-        ``set_params``.
+        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
+        using ``set_params``.
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
@@ -381,9 +384,9 @@ class VotingRegressor(_BaseVoting, RegressorMixin):
     Parameters
     ----------
     estimators : list of (string, estimator) tuples
-        Invoking the ``fit`` method on the ``VotingRegressor`` will fit
-        clones of those original estimators that will be stored in the class
-        attribute ``self.estimators_``. An estimator can be set to `None`
+        Invoking the ``fit`` method on the ``VotingRegressor`` will fit clones
+        of those original estimators that will be stored in the class attribute
+        ``self.estimators_``. An estimator can be set to ``None`` or ``'drop'``
         using ``set_params``.
 
     weights : array-like, shape (n_regressors,), optional (default=`None`)
