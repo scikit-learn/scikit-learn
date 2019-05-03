@@ -511,12 +511,16 @@ def test_transform():
     )
 
 
+@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.parametrize(
     "X, y, voter",
-    [(X, y, VotingClassifier([('lr', LogisticRegression()),
-                              ('rf', RandomForestClassifier())])),
-     (X_r, y_r, VotingRegressor([('lr', LinearRegression()),
-                                 ('rf', RandomForestRegressor())]))]
+    [(X, y, VotingClassifier(
+        [('lr', LogisticRegression()),
+         ('rf', RandomForestClassifier(n_estimators=5))])),
+     (X_r, y_r, VotingRegressor(
+         [('lr', LinearRegression()),
+          ('rf', RandomForestRegressor(n_estimators=5))]))]
 )
 def test_none_estimator_with_weights(X, y, voter):
     # check that an estimator can be set to None and passing some weight
