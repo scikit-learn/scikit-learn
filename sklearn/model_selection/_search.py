@@ -321,7 +321,6 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
 
     verbose : int
         Controls the verbosity: the higher, the more messages.
-        verbose should be >= 0.
 
     **fit_params : kwargs
         Additional parameter passed to the fit function of the estimator.
@@ -959,7 +958,6 @@ class GridSearchCV(BaseSearchCV):
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
-        verbose should be >= 0.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -1302,7 +1300,6 @@ class RandomizedSearchCV(BaseSearchCV):
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
-        verbose should be >= 0.
 
     random_state : int, RandomState instance or None, optional, default=None
         Pseudo random number generator state used for random uniform sampling

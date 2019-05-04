@@ -862,7 +862,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
                  positive=False):
         self.fit_intercept = fit_intercept
-        self.verbose = max(0, self.verbose)
+        self.verbose = verbose
         self.normalize = normalize
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs

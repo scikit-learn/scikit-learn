@@ -1945,7 +1945,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.max_iter = max_iter
         self.class_weight = class_weight
         self.n_jobs = n_jobs
-        self.verbose = verbose 
+        self.verbose = verbose
         self.solver = solver
         self.refit = refit
         self.intercept_scaling = intercept_scaling
