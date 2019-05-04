@@ -1431,10 +1431,11 @@ class _RidgeGCV(LinearModel):
             G_diag, c = solve(
                 float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
-                out = (c / G_diag) ** 2
+                squared_errors = (c / G_diag) ** 2
+                cv_values[:, i] = squared_errors.ravel()
             else:
-                out = y - (c / G_diag)
-            cv_values[:, i] = out.ravel()
+                predictions = y - (c / G_diag)
+                cv_values[:, i] = predictions.ravel()
             C.append(c)
 
         if error:
