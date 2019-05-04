@@ -462,15 +462,12 @@ class SVC(BaseSVC):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if 'auto' which uses 1 / n_features,
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -607,7 +604,7 @@ class SVC(BaseSVC):
 
     _impl = 'c_svc'
 
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated',
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
@@ -650,15 +647,12 @@ class NuSVC(BaseSVC):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if 'auto' which uses 1 / n_features,
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -775,7 +769,7 @@ class NuSVC(BaseSVC):
 
     _impl = 'nu_svc'
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto_deprecated',
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, shrinking=True, probability=False, tol=1e-3,
                  cache_size=200, class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', random_state=None):
@@ -816,15 +810,12 @@ class SVR(BaseLibSVM, RegressorMixin):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if 'auto' which uses 1 / n_features,
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -909,7 +900,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     _impl = 'epsilon_svr'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
+    def __init__(self, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
@@ -952,15 +943,12 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if 'auto' which uses 1 / n_features,
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1037,7 +1025,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     _impl = 'nu_svr'
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma='auto_deprecated', coef0=0.0, shrinking=True,
+                 gamma='scale', coef0=0.0, shrinking=True,
                  tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
 
         super().__init__(
@@ -1069,15 +1057,12 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         Degree of the polynomial kernel function ('poly').
         Ignored by all other kernels.
 
-    gamma : float, optional (default='auto')
+    gamma : float, optional (default='scale')
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
-        Current default is 'auto' which uses 1 / n_features,
-        if ``gamma='scale'`` is passed then it uses 1 / (n_features * X.var())
-        as value of gamma. The current default of gamma, 'auto', will change
-        to 'scale' in version 0.22. 'auto_deprecated', a deprecated version of
-        'auto' is used as a default indicating that no explicit value of gamma
-        was passed.
+        - if 'auto' which uses 1 / n_features,
+        - if ``gamma='scale'`` (default) is passed then it uses
+          1 / (n_features * X.var()) as value of gamma.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1137,7 +1122,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
 
     _impl = 'one_class'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
+    def __init__(self, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
 

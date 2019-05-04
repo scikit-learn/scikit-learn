@@ -35,13 +35,10 @@ from .label import MultiLabelBinarizer
 
 from ._discretization import KBinsDiscretizer
 
-from .imputation import Imputer
-
 
 __all__ = [
     'Binarizer',
     'FunctionTransformer',
-    'Imputer',
     'KBinsDiscretizer',
     'KernelCenterer',
     'LabelBinarizer',

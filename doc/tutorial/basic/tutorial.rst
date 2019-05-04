@@ -216,7 +216,7 @@ persistence model, `pickle <https://docs.python.org/2/library/pickle.html>`_::
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
-  >>> clf = svm.SVC(gamma='scale')
+  >>> clf = svm.SVC()
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
@@ -291,7 +291,7 @@ maintained::
     >>> from sklearn import datasets
     >>> from sklearn.svm import SVC
     >>> iris = datasets.load_iris()
-    >>> clf = SVC(gamma='scale')
+    >>> clf = SVC()
     >>> clf.fit(iris.data, iris.target)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
       decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
@@ -335,7 +335,7 @@ once will overwrite what was learned by any previous ``fit()``::
   >>> clf.predict(X[:5])
   array([0, 0, 0, 0, 0])
 
-  >>> clf.set_params(kernel='rbf', gamma='scale').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
+  >>> clf.set_params(kernel='rbf').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
     decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
     max_iter=-1, probability=False, random_state=None, shrinking=True,
@@ -362,8 +362,7 @@ the target data fit upon::
     >>> X = [[1, 2], [2, 4], [4, 5], [3, 2], [3, 1]]
     >>> y = [0, 0, 1, 1, 2]
 
-    >>> classif = OneVsRestClassifier(estimator=SVC(gamma='scale',
-    ...                                             random_state=0))
+    >>> classif = OneVsRestClassifier(estimator=SVC(random_state=0))
     >>> classif.fit(X, y).predict(X)
     array([0, 0, 1, 1, 2])
 
