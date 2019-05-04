@@ -32,7 +32,7 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     if sample_weight is not None:
         try:
             estimator.fit(X, y, sample_weight=sample_weight)
-        except:
+        except TypeError:
             raise ValueError(
                 "Underlying estimator {} does not support sample weights."
                 .format(estimator.__class__.__name__)
@@ -60,7 +60,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         if self.weights is None:
             return None
         return [w for est, w in zip(self.estimators, self.weights)
-                if not est[1] in (None, 'drop')]
+                if est[1] not in (None, 'drop')]
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
@@ -96,7 +96,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,
                                                  sample_weight=sample_weight)
-                for clf in clfs if not clf in (None, 'drop')
+                for clf in clfs if clf not in (None, 'drop')
             )
 
         self.named_estimators_ = Bunch()
