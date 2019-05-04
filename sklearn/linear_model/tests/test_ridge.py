@@ -333,8 +333,9 @@ def _make_sparse_offset_regression(
         n_informative=10, n_targets=1, bias=13., X_offset=30.,
         noise=30., shuffle=True, coef=False, random_state=None):
     X, y, c = make_regression(
-        n_samples=n_samples, n_features=n_features, n_informative=n_informative,
-        n_targets=n_targets, bias=bias, noise=noise, shuffle=shuffle,
+        n_samples=n_samples, n_features=n_features,
+        n_informative=n_informative, n_targets=n_targets, bias=bias,
+        noise=noise, shuffle=shuffle,
         coef=True, random_state=random_state)
     if n_features == 1:
         c = np.asarray([c])
@@ -486,10 +487,6 @@ def _test_ridge_loo(filter_):
     ret = []
 
     fit_intercept = filter_ == DENSE_FILTER
-    if fit_intercept:
-        X_diabetes_ = X_diabetes - X_diabetes.mean(0)
-    else:
-        X_diabetes_ = X_diabetes
     ridge_gcv = _RidgeGCV(fit_intercept=fit_intercept)
 
     # check best alpha
