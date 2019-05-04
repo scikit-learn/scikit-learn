@@ -1223,7 +1223,7 @@ class _RidgeGCV(LinearModel):
         QT_y = np.dot(Q.T, y)
         return X_mean, v, Q, QT_y
 
-    def _solve_gram(self, alpha, y, sqrt_sw, v, Q, QT_y):
+    def _solve_gram(self, alpha, y, sqrt_sw, X_mean, v, Q, QT_y):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
         Used when we have a decomposition of X.X^T (n_features >= n_samples).
@@ -1245,14 +1245,6 @@ class _RidgeGCV(LinearModel):
         if len(y.shape) != 1:
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
-
-    def _errors_gram(self, alpha, y, sqrt_sw, X_mean, v, Q, QT_y):
-        G_diag, c = self._solve_gram(alpha, y, sqrt_sw, v, Q, QT_y)
-        return (c / G_diag) ** 2, c
-
-    def _values_gram(self, alpha, y, sqrt_sw, X_mean, v, Q, QT_y):
-        G_diag, c = self._solve_gram(alpha, y, sqrt_sw, v, Q, QT_y)
-        return y - (c / G_diag), c
 
     def _decompose_covariance_sparse(self, X, y, sqrt_sw):
         """Eigendecomposition of X^T.X, used when n_samples > n_features."""
@@ -1355,7 +1347,7 @@ class _RidgeGCV(LinearModel):
         return X_mean, v, U, UT_y
 
     def _solve_covariance_dense(
-            self, alpha, y, sqrt_sw, v, U, UT_y):
+            self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
         Used when we have an SVD decomposition of X
@@ -1374,26 +1366,6 @@ class _RidgeGCV(LinearModel):
             # handle case where y is 2-d
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
-
-    def _errors_covariance_sparse(self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
-        G_diag, c = self._solve_covariance_sparse(
-            alpha, y, sqrt_sw, X_mean, v, U, UT_y)
-        return (c / G_diag) ** 2, c
-
-    def _values_covariance_sparse(self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
-        G_diag, c = self._solve_covariance_sparse(
-            alpha, y, sqrt_sw, X_mean, v, U, UT_y)
-        return y - (c / G_diag), c
-
-    def _errors_covariance_dense(self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
-        G_diag, c = self._solve_covariance_dense(
-            alpha, y, sqrt_sw, v, U, UT_y)
-        return (c / G_diag) ** 2, c
-
-    def _values_covariance_dense(self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
-        G_diag, c = self._solve_covariance_dense(
-            alpha, y, sqrt_sw, v, U, UT_y)
-        return y - (c / G_diag), c
 
     def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
@@ -1431,19 +1403,16 @@ class _RidgeGCV(LinearModel):
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
 
         if gcv_mode == 'eigen':
-            _decompose = self._decompose_gram
-            _errors = self._errors_gram
-            _values = self._values_gram
+            decompose = self._decompose_gram
+            solve = self._solve_gram
         elif gcv_mode == 'svd':
             # assert n_samples >= n_features
             if sparse.issparse(X):
-                _decompose = self._decompose_covariance_sparse
-                _errors = self._errors_covariance_sparse
-                _values = self._values_covariance_sparse
+                decompose = self._decompose_covariance_sparse
+                solve = self._solve_covariance_sparse
             else:
-                _decompose = self._decompose_covariance_dense
-                _errors = self._errors_covariance_dense
-                _values = self._values_covariance_dense
+                decompose = self._decompose_covariance_dense
+                solve = self._solve_covariance_dense
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
@@ -1457,14 +1426,14 @@ class _RidgeGCV(LinearModel):
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
-        X_mean, *decomposition = _decompose(X, y, sqrt_sw)
+        X_mean, *decomposition = decompose(X, y, sqrt_sw)
         for i, alpha in enumerate(self.alphas):
+            G_diag, c = solve(
+                float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
-                out, c = _errors(
-                    float(alpha), y, sqrt_sw, X_mean, *decomposition)
+                out = (c / G_diag) ** 2
             else:
-                out, c = _values(
-                    float(alpha), y, sqrt_sw, X_mean, *decomposition)
+                out = y - (c / G_diag)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
