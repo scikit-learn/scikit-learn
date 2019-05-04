@@ -878,6 +878,7 @@ def test_sparse_input_convergence_warning():
     assert not record.list
 
 
+@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_verbose_positive_or_null():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
