@@ -328,6 +328,30 @@ def test_x_operator(n_col):
     assert_allclose(reference_operator.T.dot(Y), operator.T.dot(Y))
 
 
+def _make_sparse_offset_regression(
+        n_samples=100, n_features=100, proportion_nonzero=.5,
+        n_informative=10, n_targets=1, bias=13., X_offset=30.,
+        noise=30., shuffle=True, coef=False, random_state=None):
+    X, y, c = make_regression(
+        n_samples=n_samples, n_features=n_features, n_informative=n_informative,
+        n_targets=n_targets, bias=bias, noise=noise, shuffle=shuffle,
+        coef=True, random_state=random_state)
+    if n_features == 1:
+        c = np.asarray([c])
+    X += X_offset
+    mask = np.random.RandomState(random_state).binomial(
+        1, proportion_nonzero, X.shape) > 0
+    removed_X = X.copy()
+    X[~mask] = 0.
+    removed_X[mask] = 0.
+    y -= removed_X.dot(c)
+    if n_features == 1:
+        c = c[0]
+    if coef:
+        return X, y, c
+    return X, y
+
+
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('X_shape', [(11, 8), (11, 20)])
@@ -345,13 +369,11 @@ def test_ridge_gcv_vs_ridge_loo_cv(
         fit_intercept, normalize, noise):
     n_samples, n_features = X_shape
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
-    X, y = make_regression(
+    X, y = _make_sparse_offset_regression(
         n_samples=n_samples, n_features=n_features, n_targets=n_targets,
-        random_state=0, shuffle=False, noise=noise, n_informative=5,
-        bias=13.
+        random_state=0, shuffle=False, noise=noise, n_informative=5
     )
     y = y.reshape(y_shape)
-    X += 30
 
     alphas = [1e-3, .1, 1., 10., 1e3]
     loo_ridge = RidgeCV(cv=n_samples, fit_intercept=fit_intercept,
@@ -383,11 +405,11 @@ def test_ridge_gcv_sample_weights(
     alphas = [1e-3, .1, 1., 10., 1e3]
     rng = np.random.RandomState(0)
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
-    X, y = datasets.make_regression(
+    X, y = _make_sparse_offset_regression(
         n_samples=11, n_features=n_features, n_targets=n_targets,
-        random_state=0, shuffle=False, noise=noise, bias=13.)
+        random_state=0, shuffle=False, noise=noise)
     y = y.reshape(y_shape)
-    X += 30
+
     sample_weight = 3 * rng.randn(len(X))
     sample_weight = (sample_weight - sample_weight.min() + 1).astype(int)
     indices = np.repeat(np.arange(X.shape[0]), sample_weight)
