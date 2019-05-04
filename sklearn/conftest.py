@@ -11,11 +11,11 @@ def pyplot():
 
     Returns
     -------
-    plt : module
+    pyplot : module
         The ``matplotlib.pyplot`` module.
     """
-    pyplot = pytest.importorskip('matplotlib.pyplot')
-    import matplotlib
+    matplotlib = pytest.importorskip('matplotlib')
     matplotlib.use('agg', warn=False, force=True)
+    pyplot = pytest.importorskip('matplotlib.pyplot')
     yield pyplot
     pyplot.close('all')
