@@ -48,6 +48,15 @@ Changelog
   :issue:`11047` by :user:`Guillaume Lemaitre <glemaitre>` and
   :user:`Caio Oliveira <caioaao>`.
 
+:mod:`sklearn.svm`
+..................
+
+- |Enhancement| :class:`svm.SVC` and :class:`svm.NuSVC` now accept a
+  ``break_ties`` parameter. This parameter results in :term:`predict` breaking
+  the ties according to the confidence values of :term:`decision_function`, if
+  ``decision_function_shape='ovr'``, and the number of target classes > 2.
+  :pr:`12557` by `Adrin Jalali`_.
+
 Changes to estimator checks
 ---------------------------
 
