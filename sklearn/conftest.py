@@ -14,8 +14,8 @@ def pyplot():
     plt : module
         The ``matplotlib.pyplot`` module.
     """
-    plt = pytest.importorskip('matplotlib.pyplot')
+    pyplot = pytest.importorskip('matplotlib.pyplot')
     import matplotlib
-    matplotlib.use('Agg', warn=False)
-    yield plt
-    plt.close('all')
+    matplotlib.use('agg', warn=False, force=True)
+    yield pyplot
+    pyplot.close('all')
