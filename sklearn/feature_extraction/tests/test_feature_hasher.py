@@ -110,7 +110,6 @@ def test_hasher_zeros():
     assert_equal(X.data.shape, (0,))
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_hasher_alternate_sign():
     X = [list("Thequickbrownfoxjumped")]
 
