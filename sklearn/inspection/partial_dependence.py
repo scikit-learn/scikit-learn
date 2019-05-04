@@ -552,8 +552,12 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                          'len(feature_names) = {0}, got {1}.'
                          .format(len(feature_names), i))
 
+    # verbose check
+    if self.verbose < 0:
+        raise ValueError("verbose must be >= 0")
+
     # compute averaged predictions
-    pd_result = Parallel(n_jobs=n_jobs, verbose=max(0, verbose))(
+    pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(partial_dependence)(estimator, X, fxs,
                                     response_method=response_method,
                                     method=method,

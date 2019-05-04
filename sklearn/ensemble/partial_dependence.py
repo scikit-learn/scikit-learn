@@ -338,8 +338,12 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
                          'len(feature_names) = {0}, got {1}.'
                          .format(len(feature_names), i))
 
+    # verbose check
+    if verbose < 0:
+        raise ValueError("verbose must be >= 0")
+
     # compute PD functions
-    pd_result = Parallel(n_jobs=n_jobs, verbose=max(0, verbose))(
+    pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(partial_dependence)(gbrt, fxs, X=X,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles)
