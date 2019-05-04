@@ -316,7 +316,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     slices = list(gen_even_slices(n_samples, effective_n_jobs(n_jobs)))
 
     # verbose check
-    if self.verbose < 0:
+    if verbose < 0:
         raise ValueError("verbose must be >= 0")
 
     code_views = Parallel(n_jobs=n_jobs, verbose=verbose)(

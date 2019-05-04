@@ -1528,6 +1528,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             _dtype = [np.float64, np.float32]
 
+        # verbose check
+        if self.verbose < 0:
+            raise ValueError("verbose must be >= 0")
+
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
                          accept_large_sparse=solver != 'liblinear')
         check_classification_targets(y)
@@ -1586,10 +1590,6 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             warm_start_coef = [None] * n_classes
 
         path_func = delayed(_logistic_regression_path)
-
-        # verbose check
-        if self.verbose < 0:
-            raise ValueError("verbose must be >= 0")
 
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.

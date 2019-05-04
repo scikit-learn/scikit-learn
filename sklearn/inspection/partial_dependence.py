@@ -553,7 +553,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                          .format(len(feature_names), i))
 
     # verbose check
-    if self.verbose < 0:
+    if verbose < 0:
         raise ValueError("verbose must be >= 0")
 
     # compute averaged predictions
