@@ -126,7 +126,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self : object
 
         Notes
-        ------
+        -----
         If X and y are not C-ordered and contiguous arrays of np.float64 and
         X is not a scipy.sparse.csr_matrix, X and/or y may be copied.
 
@@ -542,7 +542,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
             n_classes).
 
         Notes
-        ------
+        -----
         If decision_function_shape='ovo', the function values are proportional
         to the distance of the samples X to the separating hyperplane. If the
         exact distances are required, divide the function values by the norm of
