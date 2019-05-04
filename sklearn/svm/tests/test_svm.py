@@ -982,3 +982,64 @@ def test_ovr_decision_function():
     # Test if the first point has lower decision value on every quadrant
     # compared to the second point
     assert np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1])
+
+
+@pytest.mark.parametrize("SVCClass", [svm.SVC, svm.NuSVC])
+def test_svc_invalid_break_ties_param(SVCClass):
+    X, y = make_blobs(random_state=42)
+
+    svm = SVCClass(kernel="linear", decision_function_shape='ovo',
+                   break_ties=True, random_state=42).fit(X, y)
+
+    with pytest.raises(ValueError, match="break_ties must be False"):
+        svm.predict(y)
+
+
+@pytest.mark.parametrize("SVCClass", [svm.SVC, svm.NuSVC])
+def test_svc_ovr_tie_breaking(SVCClass):
+    """Test if predict breaks ties in OVR mode.
+    Related issue: https://github.com/scikit-learn/scikit-learn/issues/8277
+    """
+    X, y = make_blobs(random_state=27)
+
+    xs = np.linspace(X[:, 0].min(), X[:, 0].max(), 1000)
+    ys = np.linspace(X[:, 1].min(), X[:, 1].max(), 1000)
+    xx, yy = np.meshgrid(xs, ys)
+
+    svm = SVCClass(kernel="linear", decision_function_shape='ovr',
+                   break_ties=False, random_state=42).fit(X, y)
+    pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
+    dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
+    assert not np.all(pred == np.argmax(dv, axis=1))
+
+    svm = SVCClass(kernel="linear", decision_function_shape='ovr',
+                   break_ties=True, random_state=42).fit(X, y)
+    pred = svm.predict(np.c_[xx.ravel(), yy.ravel()])
+    dv = svm.decision_function(np.c_[xx.ravel(), yy.ravel()])
+    assert np.all(pred == np.argmax(dv, axis=1))
+
+
+def test_gamma_auto():
+    X, y = [[0.0, 1.2], [1.0, 1.3]], [0, 1]
+
+    msg = ("The default value of gamma will change from 'auto' to 'scale' in "
+           "version 0.22 to account better for unscaled features. Set gamma "
+           "explicitly to 'auto' or 'scale' to avoid this warning.")
+
+    assert_warns_message(FutureWarning, msg,
+                         svm.SVC().fit, X, y)
+    assert_no_warnings(svm.SVC(kernel='linear').fit, X, y)
+    assert_no_warnings(svm.SVC(kernel='precomputed').fit, X, y)
+
+
+def test_gamma_scale():
+    X, y = [[0.], [1.]], [0, 1]
+
+    clf = svm.SVC(gamma='scale')
+    assert_no_warnings(clf.fit, X, y)
+    assert_almost_equal(clf._gamma, 4)
+
+    # X_var ~= 1 shouldn't raise warning, for when
+    # gamma is not explicitly set.
+    X, y = [[1, 2], [3, 2 * np.sqrt(6) / 3 + 2]], [0, 1]
+    assert_no_warnings(clf.fit, X, y)
