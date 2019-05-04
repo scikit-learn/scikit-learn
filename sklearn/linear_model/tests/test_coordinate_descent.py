@@ -881,9 +881,11 @@ def test_sparse_input_convergence_warning():
 def test_verbose_positive_or_null():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, verbose=0).fit(X, y)
+    clf = LassoCV(n_alphas=10, eps=1e-3,
+                  max_iter=max_iter, verbose=0).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
-    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, verbose=1).fit(X, y)
+    clf = LassoCV(n_alphas=10, eps=1e-3,
+                  max_iter=max_iter, verbose=1).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
 
     X, y, _, _ = build_dataset()
@@ -922,6 +924,3 @@ def test_verbose_negative():
                          MultiTaskElasticNetCV(verbose=-1).fit, X, y)
     assert_raise_message(ValueError, msg,
                          MultiTaskLassoCV(verbose=-1).fit, X, y)
-
-
-                         
