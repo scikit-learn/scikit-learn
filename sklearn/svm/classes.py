@@ -429,10 +429,10 @@ class LinearSVR(LinearModel, RegressorMixin):
 class SVC(BaseSVC):
     """C-Support Vector Classification.
 
-    The implementation is based on libsvm. The fit time complexity
-    is more than quadratic with the number of samples which makes it hard
-    to scale to datasets with more than a couple of 10000 samples. For large
-    datasets consider using :class:`sklearn.linear_model.LinearSVC` or
+    The implementation is based on libsvm. The fit time scales at least
+    quadratically with the number of samples and may be impractical
+    beyond tens of thousands of samples. For large datasets
+    consider using :class:`sklearn.linear_model.LinearSVC` or
     :class:`sklearn.linear_model.SGDClassifier` instead, possibly after a
     :class:`sklearn.kernel_approximation.Nystroem` transformer.
 
