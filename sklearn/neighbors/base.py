@@ -62,14 +62,14 @@ def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``
 
     Parameters
-    ===========
+    -----------
     dist : ndarray
         The input distances
     weights : {'uniform', 'distance' or a callable}
         The kind of weighting used
 
     Returns
-    ========
+    --------
     weights_arr : array of the same shape as ``dist``
         if ``weights == 'uniform'``, then returns None
     """
