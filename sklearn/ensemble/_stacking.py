@@ -25,7 +25,6 @@ from ..utils import check_random_state
 from ..utils._joblib import Parallel, delayed
 from ..utils.metaestimators import _BaseComposition
 from ..utils.metaestimators import if_delegate_has_method
-from ..utils.validation import has_fit_parameter
 from ..utils.validation import check_is_fitted
 
 
@@ -157,16 +156,6 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                 "Invalid 'passthrough' attribute, 'passthrough' should be a "
                 "boolean. Got {!r} instead.".format(self.passthrough)
             )
-
-        if sample_weight is not None:
-            for name, est in self.estimators:
-                if est is None or est == 'drop':
-                    continue
-                if not has_fit_parameter(est, 'sample_weight'):
-                    raise ValueError(
-                        "Underlying estimator {} does not support "
-                        "sample weights.".format(name)
-                    )
 
         names, estimators_ = zip(*self.estimators)
         self._validate_names(names)

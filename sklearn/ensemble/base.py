@@ -21,7 +21,13 @@ MAX_RAND_SEED = np.iinfo(np.int32).max
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
-        estimator.fit(X, y, sample_weight=sample_weight)
+        try:
+            estimator.fit(X, y, sample_weight=sample_weight)
+        except:
+            raise ValueError(
+                "Underlying estimator {} does not support sample weights."
+                .format(estimator.__class__.__name__)
+            )
     else:
         estimator.fit(X, y)
     return estimator
