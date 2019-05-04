@@ -232,21 +232,20 @@ def test_verbose_positive_or_null():
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
     ompcv = OrthogonalMatchingPursuitCV(normalize=True, fit_intercept=False,
-                                    max_iter=10, cv=5, verbose=0)
+                                        max_iter=10, cv=5, verbose=0)
     ompcv.fit(X, y_)
     assert_equal(ompcv.n_nonzero_coefs_, n_nonzero_coefs)
     assert_array_almost_equal(ompcv.coef_, gamma_)
-    
+
     ompcv = OrthogonalMatchingPursuitCV(normalize=True, fit_intercept=False,
                                         max_iter=10, cv=5, verbose=1)
-    ompcv.fit(X, y_)                                        
+    ompcv.fit(X, y_)
     assert_equal(ompcv.n_nonzero_coefs_, n_nonzero_coefs)
     assert_array_almost_equal(ompcv.coef_, gamma_)
 
 
 def test_verbose_negative():
     y_ = y[:, 0]
-    gamma_ = gamma[:, 0]
     msg = "verbose must be >= 0"
     ompcv = OrthogonalMatchingPursuitCV(normalize=True, fit_intercept=False,
                                         max_iter=10, cv=5, verbose=-1)
