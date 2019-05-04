@@ -231,7 +231,6 @@ def test_omp_reaches_least_squares():
 def test_verbose_positive_or_null():
     # no assert needed, it just have to not throw error
     y_ = y[:, 0]
-    gamma_ = gamma[:, 0]
     ompcv = OrthogonalMatchingPursuitCV(normalize=True, fit_intercept=False,
                                         max_iter=10, cv=5, verbose=0)
     ompcv.fit(X, y_)
