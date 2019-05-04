@@ -1398,8 +1398,13 @@ def test_verbose_positive_or_null():
 
 def test_verbose_negative():
     msg = "verbose must be >= 0"
-    assert_raise_message(ValueError, msg, ExtraTreesClassifier(verbose=-1).fit, X, y)
-    assert_raise_message(ValueError, msg, ExtraTreesRegressor(verbose=-1).fit, X, y)
-    assert_raise_message(ValueError, msg, RandomForestClassifier(verbose=-1).fit, X, y)
-    assert_raise_message(ValueError, msg, RandomForestRegressor(verbose=-1).fit, X, y)
-    assert_raise_message(ValueError, msg, RandomTreesEmbedding(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg,
+                         ExtraTreesClassifier(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg,
+                         ExtraTreesRegressor(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg,
+                         RandomForestClassifier(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg,
+                         RandomForestRegressor(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg,
+                         RandomTreesEmbedding(verbose=-1).fit, X, y)

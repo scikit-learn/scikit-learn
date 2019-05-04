@@ -895,3 +895,85 @@ def test_bagging_small_max_features():
     bagging = BaggingClassifier(LogisticRegression(),
                                 max_features=0.3, random_state=1)
     bagging.fit(X, y)
+
+
+def test_verbose_positive_or_null():
+    # no assert needed, it just have to not throw error
+    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+                                                        iris.target)
+    grid = ParameterGrid({"max_samples": [1.0]})
+
+    for base_estimator in [None,
+                           DummyClassifier(),
+                           Perceptron(tol=1e-3),
+                           DecisionTreeClassifier(),
+                           KNeighborsClassifier(),
+                           SVC(gamma="scale")]:
+        for params in grid:
+            BaggingClassifier(base_estimator=base_estimator,
+                              verbose=0,
+                              **params).fit(X_train, y_train)
+            BaggingClassifier(base_estimator=base_estimator,
+                              verbose=1,
+                              **params).fit(X_train, y_train)
+
+    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
+                                                        boston.target[:50])
+
+    for base_estimator in [None,
+                           DummyRegressor(),
+                           DecisionTreeRegressor(),
+                           KNeighborsRegressor(),
+                           SVR(gamma='scale')]:
+        for params in grid:
+            BaggingRegressor(base_estimator=base_estimator,
+                             verbose=0,
+                             **params).fit(X_train, y_train)
+            BaggingRegressor(base_estimator=base_estimator,
+                             verbose=1,
+                             **params).fit(X_train, y_train)
+
+
+def test_verbose_negative():
+    msg = "verbose must be >= 0"
+    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+                                                        iris.target)
+    grid = ParameterGrid({"max_samples": [1.0]})
+
+    for base_estimator in [None,
+                           DummyClassifier(),
+                           Perceptron(tol=1e-3),
+                           DecisionTreeClassifier(),
+                           KNeighborsClassifier(),
+                           SVC(gamma="scale")]:
+        for params in grid:
+            assert_raise_message(
+                ValueError, msg,
+                BaggingClassifier(base_estimator=base_estimator,
+                                  verbose=0,
+                                  **params).fit, X_train, y_train)
+            assert_raise_message(
+                ValueError, msg,
+                BaggingClassifier(base_estimator=base_estimator,
+                                  verbose=1,
+                                  **params).fit, X_train, y_train)
+
+    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
+                                                        boston.target[:50])
+
+    for base_estimator in [None,
+                           DummyRegressor(),
+                           DecisionTreeRegressor(),
+                           KNeighborsRegressor(),
+                           SVR(gamma='scale')]:
+        for params in grid:
+            assert_raise_message(
+                ValueError, msg,
+                BaggingRegressor(base_estimator=base_estimator,
+                                 verbose=0,
+                                 **params).fit, X_train, y_train)
+            assert_raise_message(
+                ValueError, msg,
+                BaggingRegressor(base_estimator=base_estimator,
+                                 verbose=1,
+                                 **params).fit, X_train, y_train)
