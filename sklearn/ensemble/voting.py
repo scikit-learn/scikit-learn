@@ -30,7 +30,13 @@ from ..utils import Bunch
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
-        estimator.fit(X, y, sample_weight=sample_weight)
+        try:
+            estimator.fit(X, y, sample_weight=sample_weight)
+        except:
+            raise ValueError(
+                "Underlying estimator {} does not support sample weights."
+                .format(estimator.__class__.__name__)
+            )
     else:
         estimator.fit(X, y)
     return estimator
@@ -54,7 +60,7 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         if self.weights is None:
             return None
         return [w for est, w in zip(self.estimators, self.weights)
-                if not(est[1] is None or est[1] == 'drop')]
+                if not est[1] in (None, 'drop')]
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
@@ -76,19 +82,11 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
                              '; got %d weights, %d estimators'
                              % (len(self.weights), len(self.estimators)))
 
-        if sample_weight is not None:
-            for name, step in self.estimators:
-                if step is None or step == 'drop':
-                    continue
-                if not has_fit_parameter(step, 'sample_weight'):
-                    raise ValueError('Underlying estimator \'%s\' does not'
-                                     ' support sample weights.' % name)
-
         names, clfs = zip(*self.estimators)
         self._validate_names(names)
 
         n_isnone = np.sum(
-            [clf is None or clf == 'drop' for _, clf in self.estimators]
+            [clf in (None, 'drop') for _, clf in self.estimators]
         )
         if n_isnone == len(self.estimators):
             raise ValueError(
@@ -98,7 +96,8 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, y,
                                                  sample_weight=sample_weight)
-                for clf in clfs if not (clf is None or clf == 'drop'))
+                for clf in clfs if not clf in (None, 'drop')
+            )
 
         self.named_estimators_ = Bunch()
         for k, e in zip(self.estimators, self.estimators_):

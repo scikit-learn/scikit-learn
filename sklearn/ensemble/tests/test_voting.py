@@ -345,8 +345,9 @@ def test_sample_weight():
     clf4 = KNeighborsClassifier()
     eclf3 = VotingClassifier(estimators=[
         ('lr', clf1), ('svc', clf3), ('knn', clf4)],
-        voting='soft')
-    msg = ('Underlying estimator \'knn\' does not support sample weights.')
+        voting='soft', n_jobs=-1)
+    msg = ('Underlying estimator KNeighborsClassifier does not support '
+           'sample weights.')
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
 
 
@@ -524,12 +525,13 @@ def test_transform():
          [('lr', LinearRegression()),
           ('rf', RandomForestRegressor(n_estimators=5))]))]
 )
-def test_none_estimator_with_weights(X, y, voter):
+@pytest.mark.parametrize("drop", [None, 'drop'])
+def test_none_estimator_with_weights(X, y, voter, drop):
     # check that an estimator can be set to None and passing some weight
     # regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/13777
     voter.fit(X, y, sample_weight=np.ones(y.shape))
-    voter.set_params(lr=None)
+    voter.set_params(lr=drop)
     voter.fit(X, y, sample_weight=np.ones(y.shape))
     y_pred = voter.predict(X)
     assert y_pred.shape == y.shape
