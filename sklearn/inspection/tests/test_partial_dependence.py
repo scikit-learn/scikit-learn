@@ -395,7 +395,7 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
 
 
-def test_plot_partial_dependence(plt):
+def test_plot_partial_dependence(pyplot):
     # Test partial dependence plot function.
     boston = load_boston()
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
@@ -405,7 +405,7 @@ def test_plot_partial_dependence(plt):
     plot_partial_dependence(clf, boston.data, [0, 1, (0, 1)],
                             grid_resolution=grid_resolution,
                             feature_names=boston.feature_names)
-    fig = plt.gcf()
+    fig = pyplot.gcf()
     axs = fig.get_axes()
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
@@ -416,7 +416,7 @@ def test_plot_partial_dependence(plt):
                             grid_resolution=grid_resolution,
                             feature_names=boston.feature_names)
 
-    fig = plt.gcf()
+    fig = pyplot.gcf()
     axs = fig.get_axes()
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
@@ -427,13 +427,13 @@ def test_plot_partial_dependence(plt):
                                                ('CRIM', 'ZN')],
                             grid_resolution=grid_resolution,
                             feature_names=feature_names)
-    fig = plt.gcf()
+    fig = pyplot.gcf()
     axs = fig.get_axes()
     assert len(axs) == 3
     assert all(ax.has_data for ax in axs)
 
 
-def test_plot_partial_dependence_multiclass(plt):
+def test_plot_partial_dependence_multiclass(pyplot):
     # Test partial dependence plot function on multi-class input.
     iris = load_iris()
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -443,7 +443,7 @@ def test_plot_partial_dependence_multiclass(plt):
     plot_partial_dependence(clf, iris.data, [0, 1],
                             target=0,
                             grid_resolution=grid_resolution)
-    fig = plt.gcf()
+    fig = pyplot.gcf()
     axs = fig.get_axes()
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
@@ -457,13 +457,13 @@ def test_plot_partial_dependence_multiclass(plt):
     plot_partial_dependence(clf, iris.data, [0, 1],
                             target='setosa',
                             grid_resolution=grid_resolution)
-    fig = plt.gcf()
+    fig = pyplot.gcf()
     axs = fig.get_axes()
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
 
 
-def test_plot_partial_dependence_multioutput(plt):
+def test_plot_partial_dependence_multioutput(pyplot):
     # Test partial dependence plot function on multi-output input.
     (X, y), _ = multioutput_regression_data
     clf = LinearRegression()
@@ -473,7 +473,7 @@ def test_plot_partial_dependence_multioutput(plt):
     plot_partial_dependence(clf, X, [0, 1],
                             target=0,
                             grid_resolution=grid_resolution)
-    fig = plt.gcf()
+    fig = pyplot.gcf()
     axs = fig.get_axes()
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
@@ -481,7 +481,7 @@ def test_plot_partial_dependence_multioutput(plt):
     plot_partial_dependence(clf, X, [0, 1],
                             target=1,
                             grid_resolution=grid_resolution)
-    fig = plt.gcf()
+    fig = pyplot.gcf()
     axs = fig.get_axes()
     assert len(axs) == 2
     assert all(ax.has_data for ax in axs)
@@ -516,7 +516,7 @@ def test_plot_partial_dependence_multioutput(plt):
 )
 @pytest.mark.filterwarnings('ignore:Default solver will be changed ')  # 0.22
 @pytest.mark.filterwarnings('ignore:Default multi_class will be')  # 0.22
-def test_plot_partial_dependence_error(plt, data, params, err_msg):
+def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     X, y = data
     estimator = LinearRegression().fit(X, y)
 
@@ -524,15 +524,15 @@ def test_plot_partial_dependence_error(plt, data, params, err_msg):
         plot_partial_dependence(estimator, X, **params)
 
 
-def test_plot_partial_dependence_fig(plt):
+def test_plot_partial_dependence_fig(pyplot):
     # Make sure fig object is correctly used if not None
     (X, y), _ = regression_data
     clf = LinearRegression()
     clf.fit(X, y)
 
-    fig = plt.figure()
+    fig = pyplot.figure()
     grid_resolution = 25
     plot_partial_dependence(
         clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
 
-    assert plt.gcf() is fig
+    assert pyplot.gcf() is fig

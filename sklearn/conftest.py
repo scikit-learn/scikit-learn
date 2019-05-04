@@ -2,7 +2,7 @@ import pytest
 
 
 @pytest.fixture(scope='function')
-def plt():
+def pyplot():
     """Setup fixture for matplotlib.
 
     This fixture check if we can import matplotlib. If not, the tests will be

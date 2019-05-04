@@ -399,7 +399,7 @@ def test_export_text():
     assert export_text(reg, decimals=1, show_weights=True) == expected_report
 
 
-def test_plot_tree(plt):
+def test_plot_tree(pyplot):
     # mostly smoke tests
     # Check correctness of export_graphviz
     clf = DecisionTreeClassifier(max_depth=3,
