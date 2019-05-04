@@ -888,8 +888,6 @@ def test_verbose_positive_or_null():
     LassoCV(n_alphas=10, eps=1e-3,
             max_iter=max_iter, verbose=1).fit(X, y)
 
-    X, y, _, _ = build_dataset()
-    max_iter = 100
     ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
                  l1_ratio=0.5, tol=1e-3, verbose=0).fit(X, y)
     ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
