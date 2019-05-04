@@ -887,7 +887,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
                     if not self.max_iter
                     else self.max_iter)
-        
+
         # verbose check
         if self.verbose < 0:
             raise ValueError("verbose must be >= 0")
