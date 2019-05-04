@@ -320,7 +320,8 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         If ``None`` the estimator's score method is used.
 
     verbose : int
-        Verbosity level.
+        Controls the verbosity: the higher, the more messages.
+        verbose should be >= 0.
 
     **fit_params : kwargs
         Additional parameter passed to the fit function of the estimator.
@@ -630,6 +631,10 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         n_splits = cv.get_n_splits(X, y, groups)
 
         base_estimator = clone(self.estimator)
+
+        # verbose check
+        if self.verbose < 0:
+            raise ValueError("verbose must be >= 0")
 
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             pre_dispatch=self.pre_dispatch)
@@ -954,6 +959,7 @@ class GridSearchCV(BaseSearchCV):
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
+        verbose should be >= 0.
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
@@ -1296,6 +1302,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
+        verbose should be >= 0.
 
     random_state : int, RandomState instance or None, optional, default=None
         Pseudo random number generator state used for random uniform sampling

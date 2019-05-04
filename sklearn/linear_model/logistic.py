@@ -1587,6 +1587,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         path_func = delayed(_logistic_regression_path)
 
+        # verbose check
+        if self.verbose < 0:
+            raise ValueError("verbose must be >= 0")
+
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
         if solver in ['sag', 'saga']:
@@ -1941,7 +1945,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.max_iter = max_iter
         self.class_weight = class_weight
         self.n_jobs = n_jobs
-        self.verbose = verbose
+        self.verbose = verbose 
         self.solver = solver
         self.refit = refit
         self.intercept_scaling = intercept_scaling
@@ -2067,6 +2071,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             prefer = 'threads'
         else:
             prefer = 'processes'
+
+        # verbose check
+        if self.verbose < 0:
+            raise ValueError("verbose must be >= 0")
 
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                **_joblib_parallel_args(prefer=prefer))(

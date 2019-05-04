@@ -218,6 +218,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv='warn',
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorers, _ = _check_multimetric_scoring(estimator, scoring=scoring)
 
+    # verbose check
+    if verbose < 0:
+        raise ValueError("verbose must be >= 0")
+
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -756,6 +760,10 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv='warn',
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
+    # verbose check
+    if verbose < 0:
+        raise ValueError("verbose must be >= 0")
+
     # If classification methods produce multiple columns of output,
     # we need to manually encode classes to ensure consistent column ordering.
     encode = method in ['decision_function', 'predict_proba',
@@ -1077,6 +1085,10 @@ def permutation_test_score(estimator, X, y, groups=None, cv='warn',
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
     random_state = check_random_state(random_state)
+
+    # verbose check
+    if verbose < 0:
+        raise ValueError("verbose must be >= 0")
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.

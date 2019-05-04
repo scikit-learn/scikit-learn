@@ -339,7 +339,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
                          .format(len(feature_names), i))
 
     # compute PD functions
-    pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
+    pd_result = Parallel(n_jobs=n_jobs, verbose=max(0, verbose))(
         delayed(partial_dependence)(gbrt, fxs, X=X,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles)

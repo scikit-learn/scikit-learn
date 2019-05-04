@@ -605,6 +605,11 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin, metaclass=ABCMeta):
         # to non-deterministic behavior
         random_state = check_random_state(self.random_state)
         seeds = random_state.randint(MAX_INT, size=len(self.classes_))
+
+        # verbose check
+        if self.verbose < 0:
+            raise ValueError("verbose must be >= 0")
+
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                           **_joblib_parallel_args(require="sharedmem"))(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,

@@ -553,7 +553,7 @@ def plot_partial_dependence(estimator, X, features, feature_names=None,
                          .format(len(feature_names), i))
 
     # compute averaged predictions
-    pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
+    pd_result = Parallel(n_jobs=n_jobs, verbose=max(0, verbose))(
         delayed(partial_dependence)(estimator, X, fxs,
                                     response_method=response_method,
                                     method=method,

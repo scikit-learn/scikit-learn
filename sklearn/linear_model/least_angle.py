@@ -862,7 +862,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
                  eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
                  positive=False):
         self.fit_intercept = fit_intercept
-        self.verbose = verbose
+        self.verbose = max(0, self.verbose)
         self.normalize = normalize
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
@@ -1402,6 +1402,10 @@ class LarsCV(Lars):
                           '%s. Automatically switch to "auto" instead.'
                           % self.__class__.__name__)
             Gram = 'auto'
+
+        # verbose check
+        if self.verbose < 0:
+            raise ValueError("verbose must be >= 0")
 
         cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_lars_path_residues)(

@@ -323,6 +323,10 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         # Store validated integer feature sampling value
         self._max_features = max_features
 
+        # verbose check
+        if self.verbose < 0:
+            raise ValueError("verbose must be >= 0")
+
         # Other checks
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"

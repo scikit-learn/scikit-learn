@@ -283,6 +283,10 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
             else:
                 sample_weight = expanded_class_weight
 
+        # verbose check
+        if self.verbose < 0:
+            raise ValueError("verbose must be >= 0")
+
         # Check parameters
         self._validate_estimator()
 

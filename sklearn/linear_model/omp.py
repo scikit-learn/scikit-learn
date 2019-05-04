@@ -887,6 +887,11 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
                     if not self.max_iter
                     else self.max_iter)
+        
+        # verbose check
+        if self.verbose < 0:
+            raise ValueError("verbose must be >= 0")
+
         cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_omp_path_residues)(
                 X[train], y[train], X[test], y[test], self.copy,

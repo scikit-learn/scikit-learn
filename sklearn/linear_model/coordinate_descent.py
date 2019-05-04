@@ -1113,6 +1113,10 @@ class LinearModelCV(LinearModel, MultiOutputMixin, metaclass=ABCMeta):
         if self.selection not in ["random", "cyclic"]:
             raise ValueError("selection should be either random or cyclic.")
 
+        # verbose check
+        if self.verbose < 0:
+            raise ValueError("verbose must be >= 0")
+
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a
