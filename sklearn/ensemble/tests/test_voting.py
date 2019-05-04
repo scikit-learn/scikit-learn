@@ -345,7 +345,7 @@ def test_sample_weight():
     clf4 = KNeighborsClassifier()
     eclf3 = VotingClassifier(estimators=[
         ('lr', clf1), ('svc', clf3), ('knn', clf4)],
-        voting='soft', n_jobs=-1)
+        voting='soft')
     msg = ('Underlying estimator KNeighborsClassifier does not support '
            'sample weights.')
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
