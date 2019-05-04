@@ -714,16 +714,6 @@ def set_random_state(estimator, random_state=0):
         estimator.set_params(random_state=random_state)
 
 
-def has_matplotlib():
-    """Check if matplotlib is installed for testing purpose."""
-    try:
-        import matplotlib  # noqa
-        matplotlib.use('Agg', warn=False)
-        return True
-    except ImportError:
-        return False
-
-
 try:
     import pytest
 
@@ -735,9 +725,6 @@ try:
                                       reason='not compatible with PyPy')
     skip_if_no_parallel = pytest.mark.skipif(not joblib.parallel.mp,
                                              reason="joblib is in serial mode")
-    skip_if_no_matplotlib = pytest.mark.skipif(
-        not has_matplotlib(), reason="matplotlib is not installed"
-    )
 
     #  Decorator for tests involving both BLAS calls and multiprocessing.
     #

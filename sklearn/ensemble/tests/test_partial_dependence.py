@@ -7,7 +7,6 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_allclose
 
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import skip_if_no_matplotlib
 from sklearn.ensemble.partial_dependence import partial_dependence
 from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
@@ -264,13 +263,9 @@ def test_plot_partial_dependence_multiclass(pyplot):
 @pytest.mark.parametrize(
     "func, params",
     [(partial_dependence, {'target_variables': [0], 'X': boston.data}),
-     pytest.param(
-         plot_partial_dependence,
-         {'X': boston.data, 'features': [0, 1, (0, 1)]},
-         marks=skip_if_no_matplotlib
-     )]
+     (plot_partial_dependence, {'X': boston.data, 'features': [0, 1, (0, 1)]})]
 )
-def test_raise_deprecation_warning(func, params):
+def test_raise_deprecation_warning(pyplot, func, params):
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(boston.data, boston.target)
     grid_resolution = 25

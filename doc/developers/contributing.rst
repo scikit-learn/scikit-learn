@@ -648,11 +648,11 @@ Available test fixtures in scikit-learn
 .......................................
 
 Test fixtures ensure that a set of tests will be executing with the appropriate
-initialization and cleanup. The scikit-learn test suite implement the following
-fixtures which should be used whenever the testing conditions match:
+initialization and cleanup. The scikit-learn test suite implement a fixture
+which can be used with ``matplotlib``.
 
-`plt`
-    The `plt` fixture should be used when a test function is dealing with
+`pyplot`
+    The `pyplot` fixture should be used when a test function is dealing with
     `matplotlib`. `matplotlib` is a soft dependency and is not required. This
     fixture is in charge of skipping the tests if `matplotlib` is not installed.
     In addition, figures created during the tests will be automatically closed
@@ -661,7 +661,7 @@ fixtures which should be used whenever the testing conditions match:
 To use one of these fixtures in a test function, one needs to pass it as an
 argument::
 
-    def test_requiring_mpl_fixture(plt):
+    def test_requiring_mpl_fixture(pyplot):
         # you can now safely use matplotlib
 
 Workflow to improve test coverage
