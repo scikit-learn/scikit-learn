@@ -62,7 +62,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
     @staticmethod
     def _method_name(name, estimator, method):
-        if estimator is None or estimator == 'drop':
+        if estimator in (None, 'drop'):
             return None
         if method == 'auto':
             if getattr(estimator, 'predict_proba', None):
@@ -161,7 +161,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         self._validate_names(names)
 
         n_isnone = np.sum(
-            [est is None or est == 'drop' for est in estimators_]
+            [est in (None, 'drop') for est in estimators_]
         )
         if n_isnone == len(self.estimators):
             raise ValueError(
@@ -188,15 +188,16 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
 
         self.predict_method_ = [
             self._method_name(name, est, meth)
-            for name, est, meth in zip(names, estimators_,
-                                       predict_method)]
+            for name, est, meth in zip(names, estimators_, predict_method)
+        ]
 
         # Fit the base estimators on the whole training data. Those
         # base estimators will be used in transform, predict, and
         # predict_proba. They are exposed publicly.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_fit_estimator)(clone(est), X, y, sample_weight)
-            for est in estimators_ if not (est is None or est == 'drop'))
+            for est in estimators_ if est not in (None, 'drop')
+        )
 
         # To train the meta-classifier using the most data as possible, we use
         # a cross-validation to obtain the output of the stacked estimators.
@@ -214,7 +215,8 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
                                        method=meth, n_jobs=self.n_jobs,
                                        verbose=self.verbose)
             for est, meth in zip(estimators_, self.predict_method_)
-            if not (est is None or est == 'drop'))
+            if est not in (None, 'drop')
+        )
 
         # Only not None or not 'drop' estimators will be used in transform.
         # Remove the None from the method as well.
@@ -244,7 +246,7 @@ class _BaseStacking(_BaseComposition, MetaEstimatorMixin, TransformerMixin,
         return self._concatenate_predictions(
             X, [getattr(est, meth)(X)
                 for est, meth in zip(self.estimators_, self.predict_method_)
-                if not (est is None or est == 'drop')]
+                if est not in (None, 'drop')]
         )
 
     @if_delegate_has_method(delegate='final_estimator_')

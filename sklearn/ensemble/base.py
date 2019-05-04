@@ -23,7 +23,7 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     if sample_weight is not None:
         try:
             estimator.fit(X, y, sample_weight=sample_weight)
-        except:
+        except TypeError:
             raise ValueError(
                 "Underlying estimator {} does not support sample weights."
                 .format(estimator.__class__.__name__)
