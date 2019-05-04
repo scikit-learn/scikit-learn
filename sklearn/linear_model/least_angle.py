@@ -804,14 +804,6 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
-    positive : boolean (default=False)
-        Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is set True by default.
-
-        .. deprecated:: 0.20
-
-            The option is broken and deprecated. It will be removed in v0.22.
-
     Attributes
     ----------
     alphas_ : array, shape (n_alphas + 1,) | list of n_targets such arrays
@@ -844,7 +836,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True,
-       n_nonzero_coefs=1, normalize=True, positive=False, precompute='auto',
+       n_nonzero_coefs=1, normalize=True, precompute='auto',
        verbose=False)
     >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0. -1.11...]
@@ -856,17 +848,16 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
     """
     method = 'lar'
+    _positive = False
 
     def __init__(self, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False):
+                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
         self.precompute = precompute
         self.n_nonzero_coefs = n_nonzero_coefs
-        self.positive = positive
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
@@ -883,6 +874,8 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
 
     def _fit(self, X, y, max_iter, alpha, fit_path, Xy=None):
         """Auxiliary method to fit the model using X, y as training data"""
+        if hasattr(self, 'positive'):
+            self._positive = self.positive
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
@@ -909,7 +902,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=True,
-                    return_n_iter=True, positive=self.positive)
+                    return_n_iter=True, positive=self._positive)
                 self.alphas_.append(alphas)
                 self.active_.append(active)
                 self.n_iter_.append(n_iter_)
@@ -929,7 +922,7 @@ class Lars(LinearModel, RegressorMixin, MultiOutputMixin):
                     copy_Gram=True, alpha_min=alpha, method=self.method,
                     verbose=max(0, self.verbose - 1), max_iter=max_iter,
                     eps=self.eps, return_path=False, return_n_iter=True,
-                    positive=self.positive)
+                    positive=self._positive)
                 self.alphas_.append(alphas)
                 self.n_iter_.append(n_iter_)
             if n_targets == 1:
@@ -1303,13 +1296,6 @@ class LarsCV(Lars):
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
-    positive : boolean (default=False)
-        Restrict coefficients to be >= 0. Be aware that you might want to
-        remove fit_intercept which is set True by default.
-
-        .. deprecated:: 0.20
-            The option is broken and deprecated. It will be removed in v0.22.
-
     Attributes
     ----------
     coef_ : array, shape (n_features,)
@@ -1360,7 +1346,7 @@ class LarsCV(Lars):
     def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv='warn',
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
-                 copy_X=True, positive=False):
+                 copy_X=True):
         self.max_iter = max_iter
         self.cv = cv
         self.max_n_alphas = max_n_alphas
@@ -1369,8 +1355,7 @@ class LarsCV(Lars):
                          verbose=verbose, normalize=normalize,
                          precompute=precompute,
                          n_nonzero_coefs=500,
-                         eps=eps, copy_X=copy_X, fit_path=True,
-                         positive=positive)
+                         eps=eps, copy_X=copy_X, fit_path=True)
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
@@ -1408,7 +1393,7 @@ class LarsCV(Lars):
                 X[train], y[train], X[test], y[test], Gram=Gram, copy=False,
                 method=self.method, verbose=max(0, self.verbose - 1),
                 normalize=self.normalize, fit_intercept=self.fit_intercept,
-                max_iter=self.max_iter, eps=self.eps, positive=self.positive)
+                max_iter=self.max_iter, eps=self.eps, positive=False)
             for train, test in cv.split(X, y))
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts

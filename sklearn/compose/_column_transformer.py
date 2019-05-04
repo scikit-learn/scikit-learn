@@ -697,35 +697,11 @@ def _is_empty_column_selection(column):
         return False
 
 
-def _validate_transformers(transformers):
-    """Checks if given transformers are valid.
-
-    This is a helper function to support the deprecated tuple order.
-    XXX Remove in v0.22
-    """
-    if not transformers:
-        return True
-
-    for t in transformers:
-        if isinstance(t, str) and t in ('drop', 'passthrough'):
-            continue
-        if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
-                hasattr(t, "transform")):
-            return False
-
-    return True
-
 def _get_transformer_list(estimators):
     """
     Construct (name, trans, column) tuples from list
 
     """
-    message = ('`make_column_transformer` now expects (transformer, columns) '
-               'as input tuples instead of (columns, transformer). This '
-               'has been introduced in v0.20.1. `make_column_transformer` '
-               'will stop accepting the deprecated (columns, transformer) '
-               'order in v0.22.')
-
     transformers, columns = zip(*estimators)
 
     names, _ = zip(*_name_estimators(transformers))
