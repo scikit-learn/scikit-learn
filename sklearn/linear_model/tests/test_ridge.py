@@ -361,8 +361,8 @@ def _make_sparse_offset_regression(
     'y_shape, normalize, noise',
     [
         ((11,), True, 1.),
-        ((11, 1), False, 20.),
-        ((11, 3), False, 30.),
+        ((11, 1), False, 30.),
+        ((11, 3), False, 150.),
     ]
 )
 def test_ridge_gcv_vs_ridge_loo_cv(
@@ -399,7 +399,7 @@ def test_ridge_gcv_vs_ridge_loo_cv(
 @pytest.mark.parametrize('y_shape, fit_intercept, noise',
                          [((11,), True, 1.),
                           ((11, 1), True, 20.),
-                          ((11, 3), True, 30.),
+                          ((11, 3), True, 150.),
                           ((11, 3), False, 30.)])
 def test_ridge_gcv_sample_weights(
         gcv_mode, X_constructor, fit_intercept, n_features, y_shape, noise):
