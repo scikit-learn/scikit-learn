@@ -891,8 +891,8 @@ def test_verbose_positive_or_null():
     ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
                  l1_ratio=0.5, tol=1e-3, verbose=0).fit(X, y)
     ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
-                 l1_ratio=0.5, tol=1e-3, verbose=1).fit(X, y
-
+                 l1_ratio=0.5, tol=1e-3, verbose=1).fit(X, y)
+                 
     X, y, _, _ = build_dataset(n_features=50, n_targets=3)
     MultiTaskElasticNetCV(verbose=0).fit(X, y)
     MultiTaskElasticNetCV(verbose=1).fit(X, y)
