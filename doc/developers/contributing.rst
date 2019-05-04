@@ -654,7 +654,7 @@ fixtures which should be used whenever the testing conditions match:
 `plt`
     The `plt` fixture should be used when a test function is dealing with
     `matplotlib`. `matplotlib` is a soft dependency and is not required. This
-    fixture is charge of skipping the tests if `matplotlib` is not installed.
+    fixture is in charge of skipping the tests if `matplotlib` is not installed.
     In addition, figures created during the tests will be automatically closed
     once the test function has been executed.
 
