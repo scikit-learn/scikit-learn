@@ -876,3 +876,52 @@ def test_sparse_input_convergence_warning():
         Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
     assert not record.list
+
+
+def test_verbose_positive_or_null():
+    X, y, X_test, y_test = build_dataset()
+    max_iter = 150
+    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, verbose=0).fit(X, y)
+    assert_almost_equal(clf.alpha_, 0.056, 2)
+    clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, verbose=1).fit(X, y)
+    assert_almost_equal(clf.alpha_, 0.056, 2)
+
+    X, y, _, _ = build_dataset()
+    max_iter = 100
+    clf = ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
+                       l1_ratio=0.5, tol=1e-3, verbose=0)
+    clf.fit(X, y)  # new params
+    assert_almost_equal(0.5, clf.l1_ratio)
+    clf = ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
+                       l1_ratio=0.5, tol=1e-3, verbose=1)
+    clf.fit(X, y)  # new params
+    assert_almost_equal(0.5, clf.l1_ratio)
+
+    X, y, _, _ = build_dataset(n_features=50, n_targets=3)
+    clf = MultiTaskElasticNetCV(verbose=0).fit(X, y)
+    assert_almost_equal(clf.alpha_, 0.00556, 3)
+    clf = MultiTaskElasticNetCV(verbose=1).fit(X, y)
+    assert_almost_equal(clf.alpha_, 0.00556, 3)
+
+    clf = MultiTaskLassoCV(verbose=0).fit(X, y)
+    assert_almost_equal(clf.alpha_, 0.00278, 3)
+    clf = MultiTaskLassoCV(verbose=1).fit(X, y)
+    assert_almost_equal(clf.alpha_, 0.00278, 3)
+
+
+def test_verbose_negative():
+    X, y, X_test, y_test = build_dataset()
+    msg = "verbose must be >= 0"
+    assert_raise_message(ValueError, msg,
+                         LassoCV(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg,
+                         ElasticNetCV(verbose=-1).fit, X, y)
+
+    X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
+    assert_raise_message(ValueError, msg,
+                         MultiTaskElasticNetCV(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg,
+                         MultiTaskLassoCV(verbose=-1).fit, X, y)
+
+
+                         

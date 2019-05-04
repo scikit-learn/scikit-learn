@@ -1787,3 +1787,14 @@ def test_penalty_none(solver):
         "LogisticRegressionCV",
         lr.fit, X, y
     )
+
+
+def test_verbose_positive_or_null():
+    check_predictions(LogisticRegression(random_state=0, verbose=1), X, Y1)
+    check_predictions(LogisticRegression(random_state=0, verbose=0), X, Y1)
+
+
+def test_verbose_negative():
+    msg = "verbose must be >= 0"
+    assert_raise_message(ValueError, msg,
+                         LogisticRegression(verbose=-1).fit, X, Y1)
