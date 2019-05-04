@@ -662,7 +662,7 @@ To use one of these fixtures in a test function, one needs to pass it as an
 argument::
 
     def test_requiring_mpl_fixture(plt):
-        # you can now use safely matplotlib
+        # you can now safely use matplotlib
 
 Workflow to improve test coverage
 .................................
