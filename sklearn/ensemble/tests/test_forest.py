@@ -35,6 +35,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less, assert_greater
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
@@ -1378,3 +1379,27 @@ def test_forest_degenerate_feature_importances():
     gbr = RandomForestRegressor(n_estimators=10).fit(X, y)
     assert_array_equal(gbr.feature_importances_,
                        np.zeros(10, dtype=np.float64))
+
+
+def test_verbose_positive_or_null():
+    # no assert needed, it just have to not throw error
+    ExtraTreesClassifier(verbose=0).fit(X, y)
+    ExtraTreesRegressor(verbose=0).fit(X, y)
+    RandomForestClassifier(verbose=0).fit(X, y)
+    RandomForestRegressor(verbose=0).fit(X, y)
+    RandomTreesEmbedding(verbose=0).fit(X, y)
+
+    ExtraTreesClassifier(verbose=1).fit(X, y)
+    ExtraTreesRegressor(verbose=1).fit(X, y)
+    RandomForestClassifier(verbose=1).fit(X, y)
+    RandomForestRegressor(verbose=1).fit(X, y)
+    RandomTreesEmbedding(verbose=1).fit(X, y)
+
+
+def test_verbose_negative():
+    msg = "verbose must be >= 0"
+    assert_raise_message(ValueError, msg, ExtraTreesClassifier(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg, ExtraTreesRegressor(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg, RandomForestClassifier(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg, RandomForestRegressor(verbose=-1).fit, X, y)
+    assert_raise_message(ValueError, msg, RandomTreesEmbedding(verbose=-1).fit, X, y)

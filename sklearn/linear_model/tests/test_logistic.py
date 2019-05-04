@@ -1792,8 +1792,9 @@ def test_penalty_none(solver):
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_verbose_positive_or_null():
-    check_predictions(LogisticRegression(random_state=0, verbose=1), X, Y1)
-    check_predictions(LogisticRegression(random_state=0, verbose=0), X, Y1)
+    # no assert needed, it just have to not throw error
+    LogisticRegression(random_state=0, verbose=1).fit(X, Y1)
+    LogisticRegression(random_state=0, verbose=0).fit(X, Y1)
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
