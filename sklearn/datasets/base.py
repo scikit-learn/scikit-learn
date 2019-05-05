@@ -810,7 +810,7 @@ def load_sample_image(image_name):
     Read more in the :ref:`User Guide <sample_images>`.
 
     Parameters
-    -----------
+    ----------
     image_name : {`china.jpg`, `flower.jpg`}
         The name of the sample image loaded
 
@@ -820,7 +820,7 @@ def load_sample_image(image_name):
         The image as a numpy array: height x width x color
 
     Examples
-    ---------
+    --------
 
     >>> from sklearn.datasets import load_sample_image
     >>> china = load_sample_image('china.jpg')   # doctest: +SKIP
@@ -895,7 +895,7 @@ def _fetch_remote(remote, dirname=None):
     downloaded file.
 
     Parameters
-    -----------
+    ----------
     remote : RemoteFileMetadata
         Named tuple containing remote dataset meta information: url, filename
         and checksum
