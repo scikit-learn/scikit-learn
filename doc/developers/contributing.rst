@@ -648,7 +648,7 @@ Writing matplotlib related tests
 ................................
 
 Test fixtures ensure that a set of tests will be executing with the appropriate
-initialization and cleanup. The scikit-learn test suite implement a fixture
+initialization and cleanup. The scikit-learn test suite implements a fixture
 which can be used with ``matplotlib``.
 
 ``pyplot``
