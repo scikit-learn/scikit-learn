@@ -614,6 +614,8 @@ def _get_column(X, key):
         column_names = False
     elif _check_key_type(key, str):
         column_names = True
+    elif _check_key_type(key, tuple):
+        column_names = True
     elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
         column_names = False
@@ -676,6 +678,14 @@ def _get_column_indices(X, key):
         else:
             columns = list(key)
 
+        return [all_columns.index(col) for col in columns]
+    elif _check_key_type(key, tuple):
+        try:
+            all_columns = list(X.columns)
+        except AttributeError:
+            raise ValueError("Specifying the columns using tuples is only "
+                             "supported for pandas DataFrames")
+        columns = [key] if isinstance(key, tuple) else key
         return [all_columns.index(col) for col in columns]
     else:
         raise ValueError("No valid specification of the columns. Only a "
