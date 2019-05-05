@@ -77,10 +77,10 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> y = [0, 1]
     >>> clf = svm.SVC(gamma='scale')
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-        max_iter=-1, probability=False, random_state=None, shrinking=True,
-        tol=0.001, verbose=False)
+        max_iter=-1, probability=False,
+        random_state=None, shrinking=True, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -121,10 +121,10 @@ n_classes)``.
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC(gamma='scale', decision_function_shape='ovo')
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovo', degree=3, gamma='scale', kernel='rbf',
-        max_iter=-1, probability=False, random_state=None, shrinking=True,
-        tol=0.001, verbose=False)
+        max_iter=-1, probability=False,
+        random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -234,6 +234,17 @@ Platt's method is also known to have theoretical issues.
 If confidence scores are required, but these do not have to be probabilities,
 then it is advisable to set ``probability=False``
 and use ``decision_function`` instead of ``predict_proba``.
+
+Please note that when ``decision_function_shape='ovr'`` and ``n_classes > 2``,
+unlike ``decision_function``, the ``predict`` method does not try to break ties
+by default. You can set ``break_ties=True`` for the output of ``predict`` to be
+the same as ``np.argmax(clf.decision_function(...), axis=1)``, otherwise the
+first class among the tied classes will always be returned; but have in mind
+that it comes with a computational cost.
+
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_svm_tie_breaking_001.png
+   :target: ../auto_examples/svm/plot_svm_tie_breaking.html
+   :align: center
 
 .. topic:: References:
 
@@ -530,10 +541,11 @@ test vectors must be provided.
     >>> # linear kernel computation
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
-        kernel='precomputed', max_iter=-1, probability=False,
-        random_state=None, shrinking=True, tol=0.001, verbose=False)
+        kernel='precomputed', max_iter=-1,
+        probability=False, random_state=None, shrinking=True, tol=0.001,
+        verbose=False)
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([0, 1])

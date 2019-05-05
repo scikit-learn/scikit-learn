@@ -126,7 +126,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         self : object
 
         Notes
-        ------
+        -----
         If X and y are not C-ordered and contiguous arrays of np.float64 and
         X is not a scipy.sparse.csr_matrix, X and/or y may be copied.
 
@@ -501,8 +501,10 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
                  shrinking, probability, cache_size, class_weight, verbose,
-                 max_iter, decision_function_shape, random_state):
+                 max_iter, decision_function_shape, random_state,
+                 break_ties):
         self.decision_function_shape = decision_function_shape
+        self.break_ties = break_ties
         super().__init__(
             kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
@@ -540,7 +542,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
             n_classes).
 
         Notes
-        ------
+        -----
         If decision_function_shape='ovo', the function values are proportional
         to the distance of the samples X to the separating hyperplane. If the
         exact distances are required, divide the function values by the norm of
@@ -571,7 +573,17 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         y_pred : array, shape (n_samples,)
             Class labels for samples in X.
         """
-        y = super().predict(X)
+        check_is_fitted(self, "classes_")
+        if self.break_ties and self.decision_function_shape == 'ovo':
+            raise ValueError("break_ties must be False when "
+                             "decision_function_shape is 'ovo'")
+
+        if (self.break_ties
+                and self.decision_function_shape == 'ovr'
+                and len(self.classes_) > 2):
+            y = np.argmax(self.decision_function(X), axis=1)
+        else:
+            y = super().predict(X)
         return self.classes_.take(np.asarray(y, dtype=np.intp))
 
     # Hacky way of getting predict_proba to raise an AttributeError when
