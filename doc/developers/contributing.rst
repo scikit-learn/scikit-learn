@@ -658,7 +658,7 @@ which can be used with ``matplotlib``.
     installed. In addition, figures created during the tests will be
     automatically closed once the test function has been executed.
 
-To use one of these fixtures in a test function, one needs to pass it as an
+To use this fixture in a test function, one needs to pass it as an
 argument::
 
     def test_requiring_mpl_fixture(pyplot):
