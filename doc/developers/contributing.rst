@@ -644,19 +644,19 @@ We expect code coverage of new features to be at least around 90%.
 For guidelines on how to use ``pytest`` efficiently, see the
 :ref:`pytest_tips`.
 
-Available test fixtures in scikit-learn
-.......................................
+Writing matplotlib related tests
+................................
 
 Test fixtures ensure that a set of tests will be executing with the appropriate
 initialization and cleanup. The scikit-learn test suite implement a fixture
 which can be used with ``matplotlib``.
 
-`pyplot`
-    The `pyplot` fixture should be used when a test function is dealing with
-    `matplotlib`. `matplotlib` is a soft dependency and is not required. This
-    fixture is in charge of skipping the tests if `matplotlib` is not installed.
-    In addition, figures created during the tests will be automatically closed
-    once the test function has been executed.
+``pyplot``
+    The ``pyplot`` fixture should be used when a test function is dealing with
+    ``matplotlib``. ``matplotlib`` is a soft dependency and is not required.
+    This fixture is in charge of skipping the tests if ``matplotlib`` is not
+    installed. In addition, figures created during the tests will be
+    automatically closed once the test function has been executed.
 
 To use one of these fixtures in a test function, one needs to pass it as an
 argument::
