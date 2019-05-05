@@ -447,7 +447,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -464,7 +464,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict_proba``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -481,7 +481,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``predict_log_proba``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -498,7 +498,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``decision_function``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -515,7 +515,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``refit=True``.
 
         Parameters
-        -----------
+        ----------
         X : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -532,7 +532,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin, metaclass=ABCMeta):
         ``inverse_transform`` and ``refit=True``.
 
         Parameters
-        -----------
+        ----------
         Xt : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
@@ -1103,7 +1103,7 @@ class GridSearchCV(BaseSearchCV):
         This is present only if ``refit`` is not False.
 
     Notes
-    ------
+    -----
     The parameters selected are those that maximize the score of the left out
     data, unless an explicit score is passed in which case it is used instead.
 

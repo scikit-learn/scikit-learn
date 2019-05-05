@@ -749,7 +749,7 @@ def paired_cosine_distances(X, Y):
     distances : ndarray, shape (n_samples, )
 
     Notes
-    ------
+    -----
     The cosine distance is equivalent to the half the squared
     euclidean distance if each sample is normalized to unit norm
     """
