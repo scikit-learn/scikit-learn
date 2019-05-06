@@ -18,7 +18,7 @@ from .elliptic_envelope import EllipticEnvelope
 
 __all__ = ['EllipticEnvelope',
            'EmpiricalCovariance',
-           GraphicalLasso',
+           'GraphicalLasso',
            'GraphicalLassoCV',
            'LedoitWolf',
            'MinCovDet',
