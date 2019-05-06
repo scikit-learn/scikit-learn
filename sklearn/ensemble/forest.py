@@ -239,12 +239,6 @@ class BaseForest(BaseEnsemble, MultiOutputMixin, metaclass=ABCMeta):
         -------
         self : object
         """
-
-        if self.n_estimators == 'warn':
-            warn("The default value of n_estimators will change from "
-                 "10 in version 0.20 to 100 in 0.22.", FutureWarning)
-            self.n_estimators = 10
-
         # Validate or convert input data
         X = check_array(X, accept_sparse="csc", dtype=DTYPE)
         y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
@@ -769,12 +763,12 @@ class RandomForestClassifier(ForestClassifier):
 
     Parameters
     ----------
-    n_estimators : integer, optional (default=10)
+    n_estimators : integer, optional (default=100)
         The number of trees in the forest.
 
         .. versionchanged:: 0.20
-           The default value of ``n_estimators`` will change from 10 in
-           version 0.20 to 100 in version 0.22.
+           The default value of ``n_estimators`` changed from 10 to 100
+           in 0.22.
 
     criterion : string, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
@@ -999,7 +993,7 @@ class RandomForestClassifier(ForestClassifier):
     DecisionTreeClassifier, ExtraTreesClassifier
     """
     def __init__(self,
-                 n_estimators='warn',
+                 n_estimators=100,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -1061,8 +1055,8 @@ class RandomForestRegressor(ForestRegressor):
         The number of trees in the forest.
 
         .. versionchanged:: 0.20
-           The default value of ``n_estimators`` will change from 10 in
-           version 0.20 to 100 in version 0.22.
+           The default value of ``n_estimators`` changed from 10 to 100
+           in 0.22.
 
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. Supported criteria
@@ -1259,7 +1253,7 @@ class RandomForestRegressor(ForestRegressor):
     DecisionTreeRegressor, ExtraTreesRegressor
     """
     def __init__(self,
-                 n_estimators='warn',
+                 n_estimators=100,
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
@@ -1317,8 +1311,8 @@ class ExtraTreesClassifier(ForestClassifier):
         The number of trees in the forest.
 
         .. versionchanged:: 0.20
-           The default value of ``n_estimators`` will change from 10 in
-           version 0.20 to 100 in version 0.22.
+           The default value of ``n_estimators`` changed from 10 to 100
+           in 0.22.
 
     criterion : string, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
@@ -1514,7 +1508,7 @@ class ExtraTreesClassifier(ForestClassifier):
         splits.
     """
     def __init__(self,
-                 n_estimators='warn',
+                 n_estimators=100,
                  criterion="gini",
                  max_depth=None,
                  min_samples_split=2,
@@ -1574,8 +1568,8 @@ class ExtraTreesRegressor(ForestRegressor):
         The number of trees in the forest.
 
         .. versionchanged:: 0.20
-           The default value of ``n_estimators`` will change from 10 in
-           version 0.20 to 100 in version 0.22.
+           The default value of ``n_estimators`` changed from 10 to 100
+           in 0.22.
 
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. Supported criteria
@@ -1738,7 +1732,7 @@ class ExtraTreesRegressor(ForestRegressor):
     RandomForestRegressor: Ensemble regressor using trees with optimal splits.
     """
     def __init__(self,
-                 n_estimators='warn',
+                 n_estimators=100,
                  criterion="mse",
                  max_depth=None,
                  min_samples_split=2,
@@ -1801,8 +1795,8 @@ class RandomTreesEmbedding(BaseForest):
         Number of trees in the forest.
 
         .. versionchanged:: 0.20
-           The default value of ``n_estimators`` will change from 10 in
-           version 0.20 to 100 in version 0.22.
+           The default value of ``n_estimators`` changed from 10 to 100
+           in 0.22.
 
     max_depth : integer, optional (default=5)
         The maximum depth of each tree. If None, then nodes are expanded until
@@ -1916,7 +1910,7 @@ class RandomTreesEmbedding(BaseForest):
     max_features = 1
 
     def __init__(self,
-                 n_estimators='warn',
+                 n_estimators=100,
                  max_depth=5,
                  min_samples_split=2,
                  min_samples_leaf=1,

@@ -199,7 +199,6 @@ def check_regressor_attributes(name):
     assert not hasattr(r, "n_classes_")
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
 def test_regressor_attributes(name):
     check_regressor_attributes(name)
@@ -446,7 +445,6 @@ def check_oob_score_raise_error(name):
                                                   bootstrap=False).fit, X, y)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_oob_score_raise_error(name):
     check_oob_score_raise_error(name)
@@ -506,7 +504,6 @@ def check_pickle(name, X, y):
     assert_equal(score, score2)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 def test_pickle(name):
     if name in FOREST_CLASSIFIERS:
@@ -544,13 +541,11 @@ def check_multioutput(name):
             assert log_proba[1].shape == (4, 4)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 def test_multioutput(name):
     check_multioutput(name)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_multioutput_string(name):
     # Check estimators on multi-output problems with string outputs.
@@ -599,7 +594,6 @@ def check_classes_shape(name):
     assert_array_equal(clf.classes_, [[-1, 1], [-2, 2]])
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_classes_shape(name):
     check_classes_shape(name)
@@ -790,7 +784,6 @@ def check_min_samples_split(name):
                    "Failed with {0}".format(name))
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_min_samples_split(name):
     check_min_samples_split(name)
@@ -828,7 +821,6 @@ def check_min_samples_leaf(name):
                    "Failed with {0}".format(name))
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_min_samples_leaf(name):
     check_min_samples_leaf(name)
@@ -896,7 +888,6 @@ def check_sparse_input(name, X, X_sparse, y):
                                   dense.fit_transform(X).toarray())
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 @pytest.mark.parametrize('sparse_matrix',
                          (csr_matrix, csc_matrix, coo_matrix))
@@ -954,7 +945,6 @@ def check_memory_layout(name, dtype):
     assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 @pytest.mark.parametrize('dtype', (np.float64, np.float32))
 def test_memory_layout(name, dtype):
@@ -1033,7 +1023,6 @@ def check_class_weights(name):
     clf.fit(iris.data, iris.target, sample_weight=sample_weight)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_class_weights(name):
     check_class_weights(name)
@@ -1053,7 +1042,6 @@ def check_class_weight_balanced_and_bootstrap_multi_output(name):
     clf.fit(X, _y)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_class_weight_balanced_and_bootstrap_multi_output(name):
     check_class_weight_balanced_and_bootstrap_multi_output(name)
@@ -1084,7 +1072,6 @@ def check_class_weight_errors(name):
     assert_raises(ValueError, clf.fit, X, _y)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 def test_class_weight_errors(name):
     check_class_weight_errors(name)
@@ -1222,7 +1209,6 @@ def test_warm_start_oob(name):
     check_warm_start_oob(name)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_dtype_convert(n_classes=15):
     classifier = RandomForestClassifier(random_state=0, bootstrap=False)
 
@@ -1261,7 +1247,6 @@ def test_decision_path(name):
     check_decision_path(name)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_min_impurity_split():
     # Test if min_impurity_split of base estimators is set
     # Regression test for #8006
@@ -1277,7 +1262,6 @@ def test_min_impurity_split():
             assert_equal(tree.min_impurity_split, 0.1)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_min_impurity_decrease():
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     all_estimators = [RandomForestClassifier, RandomForestRegressor,
