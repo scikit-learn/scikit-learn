@@ -65,7 +65,7 @@ def test_early_stopping_regression(scoring, validation_fraction,
 
     max_iter = 200
 
-    X, y = make_regression(random_state=0)
+    X, y = make_regression(n_samples=50, random_state=0)
 
     gb = HistGradientBoostingRegressor(
         verbose=1,  # just for coverage
