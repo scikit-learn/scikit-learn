@@ -32,6 +32,6 @@ export OMP_NUM_THREADS="2"
 
 pip install -vv -e . 
 
-python -m pytest sklearn/
-python -m pytest doc/sphinxext/
-python -m pytest $(find doc -name '*.rst' | sort)
+python -m pytest -vl sklearn/
+python -m pytest -vl doc/sphinxext/
+python -m pytest -vl $(find doc -name '*.rst' | sort)
