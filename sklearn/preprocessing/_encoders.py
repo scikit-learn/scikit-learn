@@ -913,9 +913,12 @@ class OrdinalEncoder(_BaseEncoder):
       between 0 and n_classes-1.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    def __init__(self, categories='auto', handle_unknown='error',
+                 rare_category='rare_value', dtype=np.float64):
         self.categories = categories
         self.dtype = dtype
+        self.handle_unknown = handle_unknown
+        self.rare_category = rare_category
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
@@ -951,7 +954,25 @@ class OrdinalEncoder(_BaseEncoder):
             Transformed input.
 
         """
-        X_int, _ = self._transform(X)
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        if not np.all(X_mask):  # are there any unseen categories
+            if self.handle_unknown == 'treat_as_rare':
+                # iterate over columns with unseen categories
+                for i in np.where(~np.all(X_mask, axis=0))[0]:
+                    # check if  "rare_category" is already a known category
+                    idx = np.argwhere(self.categories_[0] == self.rare_category)
+                    if idx.size > 0:
+                        # replace unknown by index of known category
+                        X_int[~X_mask[:, i], i] = int(idx)
+                    else:
+                        # replace unkown category by index of "rare_category"
+                        X_int[~X_mask[:, i], i] = len(self.categories_[i])
+                        # add "rare_category" to categories list
+                        self.categories_[i] = np.append(self.categories_[i], self.rare_category)
+            if self.handle_unknown == 'ignore':
+                idx = np.where(~np.all(X_mask, axis=1))[0]
+                X_int = np.delete(X_int, idx, axis=0)
+
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
