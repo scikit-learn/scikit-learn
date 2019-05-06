@@ -172,7 +172,7 @@ def test_svr():
 
     # non-regression test; previously, BaseLibSVM would check that
     # len(np.unique(y)) < 2, which must only be done for SVC
-    svm.SVR()).fit(diabetes.data, np.ones(len(diabetes.data)))
+    svm.SVR().fit(diabetes.data, np.ones(len(diabetes.data)))
     svm.LinearSVR().fit(diabetes.data, np.ones(len(diabetes.data)))
 
 
