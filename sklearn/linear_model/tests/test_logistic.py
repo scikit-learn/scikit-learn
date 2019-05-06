@@ -141,7 +141,7 @@ def test_logistic_cv_mock_scorer():
 
 
 def test_logistic_cv_score_does_not_warn_by_default():
-    lr = LogisticRegressionCV(cv=2, multi_class='ovr')
+    lr = LogisticRegressionCV(cv=2)
     lr.fit(X, Y1)
 
     with pytest.warns(None) as record:
@@ -154,7 +154,7 @@ def test_lr_liblinear_warning():
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
 
-    lr = LogisticRegression(solver='liblinear', multi_class='ovr', n_jobs=2)
+    lr = LogisticRegression(solver='liblinear', n_jobs=2)
     assert_warns_message(UserWarning,
                          "'n_jobs' > 1 does not have any effect when"
                          " 'solver' is set to 'liblinear'. Got 'n_jobs'"

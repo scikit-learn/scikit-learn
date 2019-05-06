@@ -111,8 +111,7 @@ def test_majority_label_iris():
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_tie_situation():
     """Check voting classifier selects smaller class label in tie situation."""
-    clf1 = LogisticRegression(random_state=123, multi_class='ovr',
-                              solver='liblinear')
+    clf1 = LogisticRegression(random_state=123, solver='liblinear')
     clf2 = RandomForestClassifier(random_state=123)
     eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)],
                             voting='hard')

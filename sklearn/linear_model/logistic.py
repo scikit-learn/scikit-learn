@@ -483,7 +483,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
                              solver='lbfgs', coef=None,
                              class_weight=None, dual=False, penalty='l2',
-                             intercept_scaling=1., multi_class='warn',
+                             intercept_scaling=1., multi_class='auto',
                              random_state=None, check_input=True,
                              max_squared_sum=None, sample_weight=None,
                              l1_ratio=None):
@@ -1388,8 +1388,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegression
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegression(random_state=0, solver='lbfgs',
-    ...                          multi_class='multinomial').fit(X, y)
+    >>> clf = LogisticRegression(random_state=0, solver='lbfgs').fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]) # doctest: +ELLIPSIS
@@ -1908,8 +1907,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.linear_model import LogisticRegressionCV
     >>> X, y = load_iris(return_X_y=True)
-    >>> clf = LogisticRegressionCV(cv=5, random_state=0,
-    ...                            multi_class='multinomial').fit(X, y)
+    >>> clf = LogisticRegressionCV(cv=5, random_state=0).fit(X, y)
     >>> clf.predict(X[:2, :])
     array([0, 0])
     >>> clf.predict_proba(X[:2, :]).shape
