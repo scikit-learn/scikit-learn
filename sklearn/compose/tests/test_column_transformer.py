@@ -275,7 +275,8 @@ def test_column_transformer_dataframe_multi_index():
     ]
 
     for selection, res in cases:
-        ct = ColumnTransformer([('trans', Trans(), selection)], remainder='drop')
+        ct = ColumnTransformer([('trans', Trans(), selection)],
+                               remainder='drop')
         assert_array_equal(ct.fit_transform(X_df), res)
         assert_array_equal(ct.fit(X_df).transform(X_df), res)
 
