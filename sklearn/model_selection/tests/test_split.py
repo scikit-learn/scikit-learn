@@ -42,7 +42,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.model_selection import GapCrossValidator
-
+from sklearn.model_selection import GapLeavePOut
+from sklearn.model_selection import GapKFold
 
 from sklearn.linear_model import Ridge
 
@@ -1645,3 +1646,62 @@ def test_gap_cross_validator():
     train, test = next(splits)
     assert_array_equal(train, [0, 1, 3, 5])
     assert_array_equal(test, [2, 4])
+
+
+@ignore_warnings
+def test_gap_leave_p_out():
+    splits = GapLeavePOut(3, 1, 1).split([0, 1, 2, 3, 4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [4])
+    assert_array_equal(test, [0, 1, 2])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0])
+    assert_array_equal(test, [2, 3, 4])
+
+    splits = GapLeavePOut(3, 2, 1).split([0, 1, 2, 3, 4])
+    train, test = next(splits)
+    assert_array_equal(train, [4])
+    assert_array_equal(test, [0, 1, 2])
+
+    splits = GapLeavePOut(2, 1, 1).split([0, 1, 2, 3, 4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [3, 4])
+    assert_array_equal(test, [0, 1])
+
+    train, test = next(splits)
+    assert_array_equal(train, [4])
+    assert_array_equal(test, [1, 2])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0])
+    assert_array_equal(test, [2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1])
+    assert_array_equal(test, [3, 4])
+
+    splits = GapLeavePOut(2).split([0, 1, 2, 3, 4])
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3, 4])
+    assert_array_equal(test, [0, 1])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 3, 4])
+    assert_array_equal(test, [1, 2])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 4])
+    assert_array_equal(test, [2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [3, 4])
+
+    assert_equal(GapLeavePOut(3, 1, 1).get_n_splits("abcde"), 2)
+    assert_equal(GapLeavePOut(3, 2, 1).get_n_splits("abcde"), 1)
+    assert_equal(GapLeavePOut(2, 1, 1).get_n_splits("abcde"), 4)
+    assert_equal(GapLeavePOut(2).get_n_splits("abcde"), 4)
