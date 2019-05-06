@@ -615,8 +615,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin, metaclass=ABCMeta):
         -------
         T : array-like, shape (n_samples, n_classes)
             Returns the probability of the sample for each class in
-            the model. The columns correspond to the classes in sorted
-            order, as they appear in the attribute `classes_`.
+            the model. The columns correspond to the classes in reversed
+            sorted order, as they appear in the attribute `classes_`.
 
         Notes
         -----
