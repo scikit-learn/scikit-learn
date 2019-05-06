@@ -85,6 +85,7 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                                  " it has to be of shape (n_features,).")
 
         self.categories_ = []
+        self.unfrequent_= []
 
         for i in range(n_features):
             Xi = X_list[i]
@@ -103,6 +104,9 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                                " during fit".format(diff, i))
                         raise ValueError(msg)
             self.categories_.append(cats)
+            self.unfrequent_.append(self._find_unfrequent_categories(Xi))
+
+    def _find_unfrequent_categories(self):
 
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
@@ -317,7 +321,7 @@ class OneHotEncoder(_BaseEncoder):
 
     def __init__(self, n_values=None, categorical_features=None,
                  categories=None, drop=None, sparse=True, dtype=np.float64,
-                 handle_unknown='error'):
+                 handle_unknown='error', max_levels=None):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
@@ -325,6 +329,7 @@ class OneHotEncoder(_BaseEncoder):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.drop = drop
+        self.max_levels = max_levels
 
     # Deprecated attributes
 
