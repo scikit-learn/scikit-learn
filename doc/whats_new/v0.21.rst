@@ -119,6 +119,12 @@ Support for Python 3.4 and below has been officially dropped.
   parameter which can be used to find the clusters instead of ``n_clusters``.
   :issue:`9069` by :user:`Vathsala Achar <VathsalaAchar>` and `Adrin Jalali`_.
 
+:mod:`sklearn.compose`
+......................
+
+- |Enhancement| Added support for using tuples to select ``MultiIndex`` 
+  columns in :class:`compose.ColumnTransformer` :pr:`13790` by `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
