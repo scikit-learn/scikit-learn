@@ -1550,7 +1550,6 @@ To be removed in 0.22
 
    covariance.GraphLasso
    covariance.GraphLassoCV
-   preprocessing.Imputer
    utils.testing.mock_mldata_urlopen
 
 .. autosummary::
