@@ -47,7 +47,7 @@ def _encode_numpy(values, uniques=None, encode=False, check_unknown=True):
             diff = _encode_check_unknown(values, uniques)
             if diff:
                 raise ValueError("y contains previously unseen labels: %s"
-                                % str(diff))
+                                 % str(diff))
         encoded = np.searchsorted(uniques, values)
         return uniques, encoded
     else:
