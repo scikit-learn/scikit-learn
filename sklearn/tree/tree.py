@@ -557,6 +557,15 @@ class BaseDecisionTree(BaseEstimator, MultiOutputMixin, metaclass=ABCMeta):
             ignored while searching for a split in each node. Splits are also
             ignored if they would result in any single class carrying a
             negative weight in either child node.
+
+        Returns
+        -------
+        ccp_alphas : array-like
+            Effective alphas of subtree during pruning.
+
+        impurities : array-like
+            Sum of the impurities of the subtree leaves for the corresponding
+            alpha value in ``ccp_alphas``.
         """
         est = clone(self).set_params(ccp_alpha=0.0)
         est.fit(X, y, sample_weight=sample_weight)

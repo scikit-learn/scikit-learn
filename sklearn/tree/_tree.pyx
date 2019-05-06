@@ -1239,6 +1239,9 @@ cdef class _CCPPruneController:
     cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
         pass
 
+    cdef int save_impurity(self, DOUBLE_t subtree_impurities) nogil:
+        pass
+
 
 cdef class _AlphaPruning(_CCPPruneController):
     cdef DOUBLE_t ccp_alpha
@@ -1253,22 +1256,32 @@ cdef class _AlphaPruning(_CCPPruneController):
 
 
 cdef class _PathFinder(_CCPPruneController):
-    cdef Stack stack
+    cdef Stack alpha_stack
+    cdef Stack impurity_stack
 
     def __cinit__(self):
-        self.stack = Stack(INITIAL_STACK_SIZE)
+        self.alpha_stack = Stack(INITIAL_STACK_SIZE)
+        self.impurity_stack = Stack(INITIAL_STACK_SIZE)
 
     cdef bint stop_pruning(self, DOUBLE_t effective_alpha) nogil:
         # the sixth element is used because it is a double
-        rc = self.stack.push(0, 0, 0, 0, 0, effective_alpha, 0)
+        rc = self.alpha_stack.push(0, 0, 0, 0, 0, effective_alpha, 0)
         if rc == -1:
             with gil:
                 raise MemoryError()
         return 0
 
+    cdef int save_impurity(self, DOUBLE_t subtree_impurities) nogil:
+        # the sixth element is used because it is a double
+        rc = self.impurity_stack.push(0, 0, 0, 0, 0,
+                                      subtree_impurities, 0)
+        if rc == -1:
+            with gil:
+                raise MemoryError()
+
 cdef _cost_complexity_prune(
     Tree orig_tree,
-    _CCPPruneController ccp_contorller,
+    _CCPPruneController controller,
     unsigned char[:] leaves_in_subtree,
     SIZE_t[:] capacity):
     """Performs cost complexity pruning.
@@ -1300,8 +1313,6 @@ cdef _cost_complexity_prune(
         SIZE_t[:] child_l = orig_tree.children_left
         SIZE_t[:] child_r = orig_tree.children_right
         SIZE_t[:] parent = np.zeros(shape=n_nodes, dtype=np.intp)
-        # unsigned char[:] leaves_in_subtree = np.zeros(
-        #     shape=n_nodes, dtype=np.uint8)
 
         # Only uses the start and parent variables
         Stack stack = Stack(INITIAL_STACK_SIZE)
@@ -1379,6 +1390,11 @@ cdef _cost_complexity_prune(
         for i in range(leaves_in_subtree.shape[0]):
             candidate_nodes[i] = not leaves_in_subtree[i]
 
+        # evaluate subtree before pruning
+        controller.save_impurity(r_branch[0])
+        # effective alpha without pruning is zero
+        controller.stop_pruning(0)
+
         while True:
             # If root node is a leaf
             if not candidate_nodes[0]:
@@ -1394,7 +1410,7 @@ cdef _cost_complexity_prune(
                     effective_alpha = subtree_alpha
                     pruned_branch_node_idx = i
 
-            if ccp_contorller.stop_pruning(effective_alpha):
+            if controller.stop_pruning(effective_alpha):
                 break
 
             # stack uses only the start variable
@@ -1441,6 +1457,9 @@ cdef _cost_complexity_prune(
                 n_leaves[node_idx] -= n_pruned_leaves
                 r_branch[node_idx] += r_diff
                 node_idx = parent[node_idx]
+
+            # evaluate subtree before pruning
+            controller.save_impurity(r_branch[0])
 
         for i in range(in_subtree.shape[0]):
             if in_subtree[i]:
@@ -1495,18 +1514,24 @@ cpdef ccp_pruning_path(Tree orig_tree):
                            leaves_in_subtree, capacity)
 
     cdef:
-        np.ndarray ccp_alphas = np.empty(shape=path_finder.stack.top,
+        np.ndarray ccp_alphas = np.empty(shape=path_finder.alpha_stack.top,
+                                         dtype=np.float64)
+        np.ndarray impurities = np.empty(shape=path_finder.impurity_stack.top,
                                          dtype=np.float64)
         StackRecord stack_record
-        SIZE_t idx = path_finder.stack.top - 1
+        SIZE_t idx = path_finder.alpha_stack.top - 1
 
-    while not path_finder.stack.is_empty():
-        path_finder.stack.pop(&stack_record)
+    # alpha_stack and impurity_stack will have the same number of elements
+    while not path_finder.alpha_stack.is_empty():
+        path_finder.alpha_stack.pop(&stack_record)
         # The impurity element is used for storing alphas
         ccp_alphas[idx] = stack_record.impurity
+
+        path_finder.impurity_stack.pop(&stack_record)
+        impurities[idx] = stack_record.impurity
         idx -= 1
 
-    return ccp_alphas
+    return (ccp_alphas, impurities)
 
 
 cdef _build_pruned_tree(
