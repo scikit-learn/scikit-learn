@@ -33,7 +33,7 @@ __all__ = [
 ]
 
 
-def _encode_numpy(values, uniques=None, encode=False):
+def _encode_numpy(values, uniques=None, encode=False, check_unknown=True):
     # only used in _encode below, see docstring there for details
     if uniques is None:
         if encode:
@@ -43,10 +43,11 @@ def _encode_numpy(values, uniques=None, encode=False):
             # unique sorts
             return np.unique(values)
     if encode:
-        diff = _encode_check_unknown(values, uniques)
-        if diff:
-            raise ValueError("y contains previously unseen labels: %s"
-                             % str(diff))
+        if check_unknown:
+            diff = _encode_check_unknown(values, uniques)
+            if diff:
+                raise ValueError("y contains previously unseen labels: %s"
+                                % str(diff))
         encoded = np.searchsorted(uniques, values)
         return uniques, encoded
     else:
@@ -70,7 +71,7 @@ def _encode_python(values, uniques=None, encode=False):
         return uniques
 
 
-def _encode(values, uniques=None, encode=False):
+def _encode(values, uniques=None, encode=False, check_unknown=True):
     """Helper function to factorize (find uniques) and encode values.
 
     Uses pure python method for object dtype, and numpy method for
@@ -90,6 +91,11 @@ def _encode(values, uniques=None, encode=False):
         already have been determined in fit).
     encode : bool, default False
         If True, also encode the values into integer codes based on `uniques`.
+    check_unknown : bool, default True
+        If True, check for values in values that are not in unique and raise an
+        error. Ignored for object dtype (equivalent to True in this case). This
+        set to False in _BaseEncoder._transform() to avoid calling
+        _encode_check_unknown() twice.
 
     Returns
     -------
@@ -107,7 +113,8 @@ def _encode(values, uniques=None, encode=False):
             raise TypeError("argument must be a string or number")
         return res
     else:
-        return _encode_numpy(values, uniques, encode)
+        return _encode_numpy(values, uniques, encode,
+                             check_unknown=check_unknown)
 
 
 def _encode_check_unknown(values, uniques, return_mask=False):
