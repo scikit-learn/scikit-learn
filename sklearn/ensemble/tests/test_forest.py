@@ -1276,24 +1276,6 @@ def test_min_impurity_decrease():
             assert_equal(tree.min_impurity_decrease, 0.1)
 
 
-@pytest.mark.parametrize('forest',
-                         [RandomForestClassifier, RandomForestRegressor,
-                          ExtraTreesClassifier, ExtraTreesRegressor,
-                          RandomTreesEmbedding])
-def test_nestimators_future_warning(forest):
-    # FIXME: to be removed 0.22
-
-    # When n_estimators default value is used
-    msg_future = ("The default value of n_estimators will change from "
-                  "10 in version 0.20 to 100 in 0.22.")
-    est = forest()
-    est = assert_warns_message(FutureWarning, msg_future, est.fit, X, y)
-
-    # When n_estimators is a valid value not equal to the default
-    est = forest(n_estimators=100)
-    est = assert_no_warnings(est.fit, X, y)
-
-
 class MyBackend(DEFAULT_JOBLIB_BACKEND):
     def __init__(self, *args, **kwargs):
         self.count = 0
@@ -1325,7 +1307,6 @@ def test_backend_respected():
     assert ba.count == 0
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS)
 @pytest.mark.parametrize('oob_score', (True, False))
 def test_multi_target(name, oob_score):

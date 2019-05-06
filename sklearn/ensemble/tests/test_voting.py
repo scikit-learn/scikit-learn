@@ -99,7 +99,6 @@ def test_notfitted():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_majority_label_iris():
     """Check classification by majority label on dataset iris."""
     clf1 = LogisticRegression(random_state=123)
@@ -112,7 +111,6 @@ def test_majority_label_iris():
     assert_almost_equal(scores.mean(), 0.95, decimal=2)
 
 
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_tie_situation():
     """Check voting classifier selects smaller class label in tie situation."""
     clf1 = LogisticRegression(random_state=123, multi_class='ovr',
@@ -127,7 +125,6 @@ def test_tie_situation():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_weights_iris():
     """Check classification by average probabilities on dataset iris."""
     clf1 = LogisticRegression(random_state=123)
@@ -175,7 +172,6 @@ def test_weights_regressor():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_predict_on_toy_problem():
     """Manually check predicted class labels for toy dataset."""
     clf1 = LogisticRegression(random_state=123)
@@ -210,7 +206,6 @@ def test_predict_on_toy_problem():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_predict_proba_on_toy_problem():
     """Calculate predicted probabilities on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
@@ -276,7 +271,6 @@ def test_multilabel():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_gridsearch():
     """Check GridSearch support."""
     clf1 = LogisticRegression(random_state=1)
@@ -296,7 +290,6 @@ def test_gridsearch():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_parallel_fit():
     """Check parallel backend of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
@@ -320,7 +313,6 @@ def test_parallel_fit():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_sample_weight():
     """Tests sample_weight parameter of VotingClassifier"""
     clf1 = LogisticRegression(random_state=123)
@@ -366,7 +358,6 @@ def test_sample_weight_kwargs():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_set_params():
     """set_params should be able to set estimators"""
     clf1 = LogisticRegression(random_state=123, C=1.0)
@@ -403,7 +394,6 @@ def test_set_params():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_set_estimator_none():
     """VotingClassifier set_params should be able to set estimators as None"""
     # Test predict
@@ -459,7 +449,6 @@ def test_set_estimator_none():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_estimator_weights_format():
     # Test estimator weights inputs as list and array
     clf1 = LogisticRegression(random_state=123)
@@ -479,7 +468,6 @@ def test_estimator_weights_format():
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
-@pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_transform():
     """Check transform method of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
