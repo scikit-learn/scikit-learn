@@ -1514,7 +1514,7 @@ stateless
 
 requires_fit
     whether the estimator requires to be fitted before calling one of
-    ``transform``, ``predict``, ``predict_proba``, or ``decision_function``.
+    `transform`, `predict`, `predict_proba`, or `decision_function`.
 
 allow_nan
     whether the estimator supports data with missing values encoded as np.NaN
