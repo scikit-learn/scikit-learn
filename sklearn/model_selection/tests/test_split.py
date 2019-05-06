@@ -44,6 +44,7 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.model_selection import GapCrossValidator
 from sklearn.model_selection import GapLeavePOut
 from sklearn.model_selection import GapKFold
+from sklearn.model_selection import gap_train_test_split
 
 from sklearn.linear_model import Ridge
 
@@ -1775,3 +1776,43 @@ def test_gap_k_fold():
     assert_array_equal(test, [8, 9])
 
     assert_equal(GapKFold(5, 3, 4).get_n_splits(np.arange(10)), 5)
+
+
+@ignore_warnings
+def test_gap_train_test_split():
+    train, test = gap_train_test_split(np.arange(20))
+    assert_equal(len(train), 15)
+    assert_array_equal(test, [15, 16, 17, 18, 19])
+
+    train, test = gap_train_test_split(np.arange(10), gap_size=0.1)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6])
+    assert_array_equal(test, [8, 9])
+
+    train, test = gap_train_test_split(np.arange(10), gap_size=3)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [8, 9])
+
+    train, test = gap_train_test_split(np.arange(10), gap_size=2.1)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5])
+    assert_array_equal(test, [8, 9])
+
+    train, test = gap_train_test_split(np.arange(10), gap_size=0.3)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [8, 9])
+
+    train, test = gap_train_test_split(np.arange(10), gap_size=2.3)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [8, 9])
+
+    train, test = gap_train_test_split(np.arange(10), gap_size=2, test_size=3)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [7, 8, 9])
+
+    train, test = gap_train_test_split(np.arange(10), gap_size=2, train_size=3)
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [5, 6, 7, 8, 9])
+
+    train, test = gap_train_test_split(np.arange(10),
+        gap_size=2, train_size=3, test_size=4)
+    assert_array_equal(train, [0, 1, 2, 3])
+    assert_array_equal(test, [6, 7, 8, 9])
