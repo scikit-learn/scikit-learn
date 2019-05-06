@@ -260,12 +260,10 @@ def test_check_solver_option(LR):
                          [(LogisticRegression, {}),
                           (LogisticRegressionCV, {'cv': 5})])
 def test_logistic_regression_warnings(model, params):
-    clf_solver_warning = model(multi_class='ovr', **params)
-    clf_multi_class_warning = model(solver='lbfgs', **params)
-    clf_no_warnings = model(solver='lbfgs', multi_class='ovr', **params)
+    clf_multi_class_warning = model(**params)
+    clf_no_warnings = model(multi_class='ovr', **params)
 
     multi_class_warning_msg = "Default multi_class will be changed to 'auto"
-
     assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
     assert_warns_message(FutureWarning, multi_class_warning_msg,
                          clf_multi_class_warning.fit, iris.data, iris.target)
@@ -571,7 +569,7 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
     X, y = make_classification(n_samples=100, random_state=0, n_classes=3,
                                n_informative=6)
     train, test = np.arange(80), np.arange(80, 100)
-    lr = LogisticRegression(C=1., solver='lbfgs', multi_class='multinomial')
+    lr = LogisticRegression(C=1., multi_class='multinomial')
     # we use lbfgs to support multinomial
     params = lr.get_params()
     # we store the params to set them further in _log_reg_scoring_path
@@ -597,10 +595,10 @@ def test_multinomial_logistic_regression_string_inputs():
     # For numerical labels, let y values be taken from set (-1, 0, 1)
     y = np.array(y) - 1
     # Test for string labels
-    lr = LogisticRegression(solver='lbfgs', multi_class='multinomial')
-    lr_cv = LogisticRegressionCV(solver='lbfgs', multi_class='multinomial')
-    lr_str = LogisticRegression(solver='lbfgs', multi_class='multinomial')
-    lr_cv_str = LogisticRegressionCV(solver='lbfgs', multi_class='multinomial')
+    lr = LogisticRegression(multi_class='multinomial')
+    lr_cv = LogisticRegressionCV(multi_class='multinomial')
+    lr_str = LogisticRegression(multi_class='multinomial')
+    lr_cv_str = LogisticRegressionCV(multi_class='multinomial')
 
     lr.fit(X_ref, y)
     lr_cv.fit(X_ref, y)
@@ -621,7 +619,7 @@ def test_multinomial_logistic_regression_string_inputs():
 
     # Make sure class weights can be given with string labels
     lr_cv_str = LogisticRegression(
-        solver='lbfgs', class_weight={'bar': 1, 'baz': 2, 'foo': 0},
+        class_weight={'bar': 1, 'baz': 2, 'foo': 0},
         multi_class='multinomial').fit(X_ref, y_str)
     assert_equal(sorted(np.unique(lr_cv_str.predict(X_ref))), ['bar', 'baz'])
 
@@ -857,7 +855,7 @@ def test_logistic_regression_sample_weights():
 
         # Test that sample weights work the same with the lbfgs,
         # newton-cg, and 'sag' solvers
-        clf_sw_lbfgs = LR(solver='lbfgs', fit_intercept=False, random_state=42,
+        clf_sw_lbfgs = LR(fit_intercept=False, random_state=42,
                           multi_class='ovr')
         clf_sw_lbfgs.fit(X, y, sample_weight=sample_weight)
         clf_sw_n = LR(solver='newton-cg', fit_intercept=False, random_state=42,
