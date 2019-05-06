@@ -970,7 +970,7 @@ class OrdinalEncoder(_BaseEncoder):
                 # iterate over columns with unseen categories
                 for i in np.where(~np.all(X_mask, axis=0))[0]:
                     # check if  "rare_category" is already a known category
-                    idx = np.argwhere(self.categories_[0] == self.unknown_category)
+                    idx = np.argwhere(self.categories_[i] == self.unknown_category)
                     if idx.size > 0:
                         # replace unknown by index of known category
                         X_int[~X_mask[:, i], i] = int(idx)
