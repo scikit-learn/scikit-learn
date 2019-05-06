@@ -330,6 +330,46 @@ def test_x_operator(n_col):
     assert_allclose(reference_operator.T.dot(Y), operator.T.dot(Y))
 
 
+@pytest.mark.parametrize('shape', [(10, 1), (13, 9), (3, 7), (2, 2), (20, 20)])
+@pytest.mark.parametrize('uniform_weights', [True, False])
+def test_compute_gram(shape, uniform_weights):
+    rng = np.random.RandomState(0)
+    X = rng.randn(*shape)
+    if uniform_weights:
+        sw = np.ones(X.shape[0])
+    else:
+        sw = rng.chisquare(1, shape[0])
+    sqrt_sw = np.sqrt(sw)
+    X_mean = np.average(X, axis=0, weights=sw)
+    X_centered = (X - X_mean) * sqrt_sw[:, None]
+    true_gram = X_centered.dot(X_centered.T)
+    X_sparse = sp.csr_matrix(X * sqrt_sw[:, None])
+    gcv = _RidgeGCV(fit_intercept=True)
+    computed_gram, computed_mean = gcv._compute_gram(X_sparse, sqrt_sw)
+    assert np.allclose(X_mean, computed_mean)
+    assert np.allclose(true_gram, computed_gram)
+
+
+@pytest.mark.parametrize('shape', [(10, 1), (13, 9), (3, 7), (2, 2), (20, 20)])
+@pytest.mark.parametrize('uniform_weights', [True, False])
+def test_compute_covariance(shape, uniform_weights):
+    rng = np.random.RandomState(0)
+    X = rng.randn(*shape)
+    if uniform_weights:
+        sw = np.ones(X.shape[0])
+    else:
+        sw = rng.chisquare(1, shape[0])
+    sqrt_sw = np.sqrt(sw)
+    X_mean = np.average(X, axis=0, weights=sw)
+    X_centered = (X - X_mean) * sqrt_sw[:, None]
+    true_covariance = X_centered.T.dot(X_centered)
+    X_sparse = sp.csr_matrix(X * sqrt_sw[:, None])
+    gcv = _RidgeGCV(fit_intercept=True)
+    computed_cov, computed_mean = gcv._compute_covariance(X_sparse, sqrt_sw)
+    assert np.allclose(X_mean, computed_mean)
+    assert np.allclose(true_covariance, computed_cov)
+
+
 def _make_sparse_offset_regression(
         n_samples=100, n_features=100, proportion_nonzero=.5,
         n_informative=10, n_targets=1, bias=13., X_offset=30.,
