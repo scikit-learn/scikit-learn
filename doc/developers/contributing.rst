@@ -1513,7 +1513,7 @@ stateless
     an estimator is stateless, it might still need a call to ``fit`` for initialization.
 
 requires_fit
-    whether the estimator requires to be fitted before to call one of
+    whether the estimator requires to be fitted before calling one of
     ``transform``, ``predict``, ``predict_proba``, or ``decision_function``.
 
 allow_nan
