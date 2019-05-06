@@ -281,7 +281,6 @@ class Pipeline(_BaseComposition):
                     "=sample_weight)`.".format(pname))
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
-        Xt = X
         for (step_idx,
              name,
              transformer) in self._iter(with_final=False,
@@ -310,8 +309,8 @@ class Pipeline(_BaseComposition):
             else:
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transfomer
-            Xt, fitted_transformer = fit_transform_one_cached(
-                cloned_transformer, Xt, y, None,
+            X, fitted_transformer = fit_transform_one_cached(
+                cloned_transformer, X, y, None,
                 message_clsname='Pipeline',
                 message=self._log_message(step_idx),
                 **fit_params_steps[name])
@@ -320,8 +319,8 @@ class Pipeline(_BaseComposition):
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
         if self._final_estimator == 'passthrough':
-            return Xt, {}
-        return Xt, fit_params_steps[self.steps[-1][0]]
+            return X, {}
+        return X, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model

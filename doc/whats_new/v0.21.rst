@@ -389,6 +389,10 @@ Support for Python 3.4 and below has been officially dropped.
 :mod:`sklearn.linear_model`
 ...........................
 
+- |Enhancement| :mod:`linear_model.ridge` now preserves ``float32`` and
+  ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
+  :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
+
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
   with the 'saga' solver. :pr:`11646` by :user:`Nicolas Hug <NicolasHug>`.

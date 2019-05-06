@@ -145,7 +145,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         reconstruction_error : float
 
         Notes
-        -------
+        -----
         The cost function of an isomap embedding is
 
         ``E = frobenius_norm[K(D) - K(D_fit)] / n_samples``
