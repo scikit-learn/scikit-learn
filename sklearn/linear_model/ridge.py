@@ -1130,11 +1130,7 @@ class _RidgeGCV(LinearModel):
         X_mean *= n_samples / sqrt_sw.dot(sqrt_sw)
         X_mX = sqrt_sw[:, None] * safe_sparse_dot(
             X_mean, X.T, dense_output=True)
-        X_mX_m = np.full((n_samples, n_samples),
-                         fill_value=np.dot(X_mean, X_mean),
-                         dtype=X.dtype)
-        X_mX_m *= sqrt_sw
-        X_mX_m *= sqrt_sw[:, None]
+        X_mX_m = np.outer(sqrt_sw, sqrt_sw) * np.dot(X_mean, X_mean)
         return (safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m
                 - X_mX - X_mX.T, X_mean)
 
