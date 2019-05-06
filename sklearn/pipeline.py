@@ -95,12 +95,12 @@ class Pipeline(_BaseComposition):
     >>> # For instance, fit using a k of 10 in the SelectKBest
     >>> # and a parameter 'C' of the svm
     >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
-    ...                      # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Pipeline(memory=None,
              steps=[('anova', SelectKBest(...)),
                     ('svc', SVC(...))], verbose=False)
     >>> prediction = anova_svm.predict(X)
-    >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
+    >>> anova_svm.score(X, y)  # doctest: +ELLIPSIS
     0.83
     >>> # getting the selected features chosen by anova_filter
     >>> anova_svm['anova'].get_support()
@@ -281,7 +281,6 @@ class Pipeline(_BaseComposition):
                     "=sample_weight)`.".format(pname))
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
-        Xt = X
         for (step_idx,
              name,
              transformer) in self._iter(with_final=False,
@@ -310,8 +309,8 @@ class Pipeline(_BaseComposition):
             else:
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transfomer
-            Xt, fitted_transformer = fit_transform_one_cached(
-                cloned_transformer, Xt, y, None,
+            X, fitted_transformer = fit_transform_one_cached(
+                cloned_transformer, X, y, None,
                 message_clsname='Pipeline',
                 message=self._log_message(step_idx),
                 **fit_params_steps[name])
@@ -320,8 +319,8 @@ class Pipeline(_BaseComposition):
             # from the cache.
             self.steps[step_idx] = (name, fitted_transformer)
         if self._final_estimator == 'passthrough':
-            return Xt, {}
-        return Xt, fit_params_steps[self.steps[-1][0]]
+            return X, {}
+        return X, fit_params_steps[self.steps[-1][0]]
 
     def fit(self, X, y=None, **fit_params):
         """Fit the model
@@ -671,7 +670,7 @@ def make_pipeline(*steps, **kwargs):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> from sklearn.preprocessing import StandardScaler
     >>> make_pipeline(StandardScaler(), GaussianNB(priors=None))
-    ...     # doctest: +NORMALIZE_WHITESPACE
+    ... # doctest: +NORMALIZE_WHITESPACE
     Pipeline(memory=None,
              steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
@@ -782,7 +781,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     >>> union = FeatureUnion([("pca", PCA(n_components=1)),
     ...                       ("svd", TruncatedSVD(n_components=2))])
     >>> X = [[0., 1., 3], [2., 2., 5]]
-    >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+    >>> union.fit_transform(X)  # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     array([[ 1.5       ,  3.0...,  0.8...],
            [-1.5       ,  5.7..., -0.4...]])
     """
@@ -1008,7 +1007,7 @@ def make_union(*transformers, **kwargs):
     --------
     >>> from sklearn.decomposition import PCA, TruncatedSVD
     >>> from sklearn.pipeline import make_union
-    >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
+    >>> make_union(PCA(), TruncatedSVD())  # doctest: +NORMALIZE_WHITESPACE
     FeatureUnion(n_jobs=None,
            transformer_list=[('pca',
                               PCA(copy=True, iterated_power='auto',

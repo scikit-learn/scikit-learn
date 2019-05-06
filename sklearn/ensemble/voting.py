@@ -78,6 +78,8 @@ class _BaseVoting(_BaseComposition, TransformerMixin):
 
         if sample_weight is not None:
             for name, step in self.estimators:
+                if step is None:
+                    continue
                 if not has_fit_parameter(step, 'sample_weight'):
                     raise ValueError('Underlying estimator \'%s\' does not'
                                      ' support sample weights.' % name)
@@ -281,7 +283,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             The input samples.
 
         Returns
-        ----------
+        -------
         maj : array-like, shape (n_samples,)
             Predicted class labels.
         """
@@ -325,7 +327,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             The input samples.
 
         Returns
-        ----------
+        -------
         avg : array-like, shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """
