@@ -51,8 +51,8 @@ Changelog
 Miscellaneous
 .............
 
-- |API| Replace manual checks with ``check_is_fitted``. Not fitted errors are
-  now more uniform.
+- |API| Replace manual checks with ``check_is_fitted``. Errors thrown when
+  using a non-fitted estimators are now more uniform.
   :pr:`13013` by :user:`Agamemnon Krasoulis <agamemnonc>`.
 
 Changes to estimator checks
