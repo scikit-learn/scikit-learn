@@ -469,6 +469,10 @@ class SVC(BaseSVC):
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
 
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from ``'auto'`` to
+           ``'scale'``.
+
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
@@ -665,6 +669,10 @@ class NuSVC(BaseSVC):
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
 
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from ``'auto'`` to
+           ``'scale'``.
+
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
@@ -839,6 +847,10 @@ class SVR(BaseLibSVM, RegressorMixin):
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
 
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from ``'auto'`` to
+           ``'scale'``.
+
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
@@ -972,6 +984,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
 
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from ``'auto'`` to
+           ``'scale'``.
+
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
         It is only significant in 'poly' and 'sigmoid'.
@@ -1085,6 +1101,10 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
         - if 'auto', uses 1 / n_features.
+
+        .. versionchanged:: 0.22
+           The default value of ``gamma`` changed from ``'auto'`` to
+           ``'scale'``.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
