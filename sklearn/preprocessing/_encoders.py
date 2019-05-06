@@ -966,7 +966,7 @@ class OrdinalEncoder(_BaseEncoder):
         """
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
         if not np.all(X_mask):  # are there any unseen categories
-            if self.handle_unknown == 'treat_as_rare':
+            if self.handle_unknown == 'keep':
                 # iterate over columns with unseen categories
                 for i in np.where(~np.all(X_mask, axis=0))[0]:
                     # check if  "rare_category" is already a known category
