@@ -314,8 +314,8 @@ Vector Regression depends only on a subset of the training data,
 because the cost function for building the model ignores any training
 data close to the model prediction.
 
-There are three different implementations of Support Vector Regression: 
-:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR` 
+There are three different implementations of Support Vector Regression:
+:class:`SVR`, :class:`NuSVR` and :class:`LinearSVR`. :class:`LinearSVR`
 provides a faster implementation than :class:`SVR` but only considers
 linear kernels, while :class:`NuSVR` implements a slightly different
 formulation than :class:`SVR` and :class:`LinearSVR`. See
@@ -331,7 +331,7 @@ floating point values instead of integer values::
     >>> clf = svm.SVR()
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.1,
-        gamma='auto_deprecated', kernel='rbf', max_iter=-1, shrinking=True,
+        gamma='scale', kernel='rbf', max_iter=-1, shrinking=True,
         tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([1.5])
@@ -349,7 +349,7 @@ Density estimation, novelty detection
 =======================================
 
 The class :class:`OneClassSVM` implements a One-Class SVM which is used in
-outlier detection. 
+outlier detection.
 
 See :ref:`outlier_detection` for the description and usage of OneClassSVM.
 
