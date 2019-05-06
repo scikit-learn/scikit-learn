@@ -9,7 +9,6 @@ import pytest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
@@ -346,8 +345,8 @@ def test_compute_gram(shape, uniform_weights):
     X_sparse = sp.csr_matrix(X * sqrt_sw[:, None])
     gcv = _RidgeGCV(fit_intercept=True)
     computed_gram, computed_mean = gcv._compute_gram(X_sparse, sqrt_sw)
-    assert np.allclose(X_mean, computed_mean)
-    assert np.allclose(true_gram, computed_gram)
+    assert_allclose(X_mean, computed_mean)
+    assert_allclose(true_gram, computed_gram)
 
 
 @pytest.mark.parametrize('shape', [(10, 1), (13, 9), (3, 7), (2, 2), (20, 20)])
@@ -366,8 +365,8 @@ def test_compute_covariance(shape, uniform_weights):
     X_sparse = sp.csr_matrix(X * sqrt_sw[:, None])
     gcv = _RidgeGCV(fit_intercept=True)
     computed_cov, computed_mean = gcv._compute_covariance(X_sparse, sqrt_sw)
-    assert np.allclose(X_mean, computed_mean)
-    assert np.allclose(true_covariance, computed_cov)
+    assert_allclose(X_mean, computed_mean)
+    assert_allclose(true_covariance, computed_cov)
 
 
 def _make_sparse_offset_regression(
