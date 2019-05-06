@@ -98,7 +98,7 @@ def test_notfitted():
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_majority_label_iris():
     """Check classification by majority label on dataset iris."""
-    clf1 = LogisticRegression(random_state=123)
+    clf1 = LogisticRegression(solver='liblinear', random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
     eclf = VotingClassifier(estimators=[
