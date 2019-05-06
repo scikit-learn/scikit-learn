@@ -178,7 +178,6 @@ def test_feature_importances():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_sample_weight():
     # Ensure sample weights are passed to underlying estimator
     X, y = datasets.make_classification(
@@ -216,7 +215,6 @@ def test_coef_default_threshold():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @skip_if_32bit
 def test_2d_coef():
     X, y = datasets.make_classification(

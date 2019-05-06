@@ -405,7 +405,6 @@ def test_svr_predict():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_weight():
     # Test class weights
     clf = svm.SVC(gamma='scale', class_weight={1: 0.1})
@@ -446,7 +445,6 @@ def test_sample_weights():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @ignore_warnings(category=UndefinedMetricWarning)
 def test_auto_weight():
     # Test class weights for imbalanced data

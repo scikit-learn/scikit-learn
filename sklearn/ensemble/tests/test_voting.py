@@ -34,7 +34,6 @@ X_r, y_r = boston.data, boston.target
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimator_init():
     eclf = VotingClassifier(estimators=[])
     msg = ('Invalid `estimators` attribute, `estimators` should be'
@@ -67,7 +66,6 @@ def test_estimator_init():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_predictproba_hardvoting():
     eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
                                         ('lr2', LogisticRegression())],
@@ -77,7 +75,6 @@ def test_predictproba_hardvoting():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_notfitted():
     eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
                                         ('lr2', LogisticRegression())],
@@ -98,7 +95,6 @@ def test_notfitted():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_majority_label_iris():
     """Check classification by majority label on dataset iris."""
@@ -126,7 +122,6 @@ def test_tie_situation():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_weights_iris():
     """Check classification by average probabilities on dataset iris."""
@@ -174,7 +169,6 @@ def test_weights_regressor():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_predict_on_toy_problem():
     """Manually check predicted class labels for toy dataset."""
@@ -209,7 +203,6 @@ def test_predict_on_toy_problem():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_predict_proba_on_toy_problem():
     """Calculate predicted probabilities on toy dataset."""
@@ -275,7 +268,6 @@ def test_multilabel():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_gridsearch():
     """Check GridSearch support."""
@@ -295,7 +287,6 @@ def test_gridsearch():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_parallel_fit():
     """Check parallel backend of VotingClassifier on toy dataset."""
@@ -319,7 +310,6 @@ def test_parallel_fit():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_sample_weight():
     """Tests sample_weight parameter of VotingClassifier"""
@@ -365,7 +355,6 @@ def test_sample_weight_kwargs():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_set_params():
     """set_params should be able to set estimators"""
@@ -402,7 +391,6 @@ def test_set_params():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_set_estimator_none():
     """VotingClassifier set_params should be able to set estimators as None"""
@@ -458,7 +446,6 @@ def test_set_estimator_none():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_estimator_weights_format():
     # Test estimator weights inputs as list and array
@@ -478,7 +465,6 @@ def test_estimator_weights_format():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore:The default value of n_estimators')
 def test_transform():
     """Check transform method of VotingClassifier on toy dataset."""
@@ -512,7 +498,6 @@ def test_transform():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.parametrize(
     "X, y, voter",
     [(X, y, VotingClassifier(

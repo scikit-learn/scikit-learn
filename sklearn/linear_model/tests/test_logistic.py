@@ -67,7 +67,6 @@ def check_predictions(clf, X, y):
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_predict_2_classes():
     # Simple sanity check on a 2 classes dataset
     # Make sure it predicts the correct result on simple datasets.
@@ -84,7 +83,6 @@ def test_predict_2_classes():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_error():
     # Test for appropriate exception on errors
     msg = "Penalty term must be positive"
@@ -108,7 +106,6 @@ def test_error():
         assert_raise_message(ValueError, msg, LR(max_iter="test").fit, X, Y1)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_logistic_cv_mock_scorer():
 
     class MockScorer:
@@ -166,7 +163,6 @@ def test_lr_liblinear_warning():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_predict_3_classes():
     check_predictions(LogisticRegression(C=10), X, Y2)
     check_predictions(LogisticRegression(C=10), X_sp, Y2)
@@ -212,7 +208,6 @@ def test_multinomial_validation(solver):
     assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.parametrize('LR', [LogisticRegression, LogisticRegressionCV])
 def test_check_solver_option(LR):
     X, y = iris.data, iris.target
@@ -259,31 +254,6 @@ def test_check_solver_option(LR):
     assert_raise_message(ValueError, msg, lr.fit, X, y)
 
 
-@pytest.mark.parametrize('model, params, warn_solver',
-                         [(LogisticRegression, {}, True),
-                          (LogisticRegressionCV, {'cv': 5}, False)])
-def test_logistic_regression_warnings(model, params, warn_solver):
-    clf_solver_warning = model(multi_class='ovr', **params)
-    clf_multi_class_warning = model(solver='lbfgs', **params)
-    clf_no_warnings = model(solver='lbfgs', multi_class='ovr', **params)
-
-    solver_warning_msg = "Default solver will be changed to 'lbfgs'"
-    multi_class_warning_msg = "Default multi_class will be changed to 'auto"
-
-    if warn_solver:
-        assert_warns_message(FutureWarning, solver_warning_msg,
-                             clf_solver_warning.fit, iris.data, iris.target)
-    else:
-        assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
-
-    assert_warns_message(FutureWarning, multi_class_warning_msg,
-                         clf_multi_class_warning.fit, iris.data, iris.target)
-    # But no warning when binary target:
-    assert_no_warnings(clf_multi_class_warning.fit,
-                       iris.data, iris.target == 0)
-    assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
-
-
 @pytest.mark.parametrize('solver', ['lbfgs', 'newton-cg', 'sag', 'saga'])
 def test_multinomial_binary(solver):
     # Test multinomial LR on a binary problem.
@@ -324,7 +294,6 @@ def test_multinomial_binary_probabilities():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_sparsify():
     # Test sparsify and densify members.
     n_samples, n_features = iris.data.shape
@@ -349,7 +318,6 @@ def test_sparsify():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_inconsistent_input():
     # Test that an exception is raised on inconsistent input
     rng = np.random.RandomState(0)
@@ -369,7 +337,6 @@ def test_inconsistent_input():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_write_parameters():
     # Test that we can write to coef_ and intercept_
     clf = LogisticRegression(random_state=0)
@@ -380,7 +347,6 @@ def test_write_parameters():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_nan():
     # Test proper NaN handling.
     # Regression test for Issue #252: fit used to go into an infinite loop.
@@ -639,7 +605,6 @@ def test_multinomial_logistic_regression_string_inputs():
     assert_equal(sorted(np.unique(lr_cv_str.predict(X_ref))), ['bar', 'baz'])
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_logistic_cv_sparse():
     X, y = make_classification(n_samples=50, n_features=5,
@@ -1072,7 +1037,6 @@ def test_liblinear_logregcv_sparse():
     clf.fit(sparse.csr_matrix(X), y)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_saga_sparse():
     # Test LogRegCV with solver='liblinear' works for sparse matrices
@@ -1095,7 +1059,6 @@ def test_logreg_intercept_scaling():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_logreg_intercept_scaling_zero():
     # Test that intercept_scaling is ignored when fit_intercept is False
 
@@ -1169,7 +1132,6 @@ def test_logreg_l1_sparse_data():
     assert_array_almost_equal(lr_saga.coef_, lr_saga_dense.coef_)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 @pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 @pytest.mark.parametrize("random_seed", [42])
 @pytest.mark.parametrize("penalty", ["l1", "l2"])
@@ -1602,7 +1564,6 @@ def test_LogisticRegressionCV_no_refit(multi_class):
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_LogisticRegressionCV_elasticnet_attribute_shapes():
     # Make sure the shapes of scores_ and coefs_paths_ attributes are correct
     # when using elasticnet (added one dimension for l1_ratios)

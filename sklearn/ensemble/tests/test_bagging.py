@@ -293,7 +293,6 @@ def test_bootstrap_features():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_probability():
     # Predict probabilities.
     rng = check_random_state(0)
@@ -713,7 +712,6 @@ def test_oob_score_consistency():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimators_samples():
     # Check that format of estimators_samples_ is correct and that results
     # generated at fit time can be identically reproduced at a later time
@@ -751,7 +749,6 @@ def test_estimators_samples():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimators_samples_deterministic():
     # This test is a regression test to check that with a random step
     # (e.g. SparseRandomProjection) and a given random state, the results
@@ -885,7 +882,6 @@ def test_bagging_classifier_with_missing_inputs():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_bagging_small_max_features():
     # Check that Bagging estimator can accept low fractional max_features
 

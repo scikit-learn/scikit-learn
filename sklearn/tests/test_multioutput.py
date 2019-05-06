@@ -422,8 +422,6 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
     assert not hasattr(classifier_chain, 'predict_proba')
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_chain_fit_and_predict_with_sparse_data():
     # Fit classifier chain with sparse data
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -441,7 +439,6 @@ def test_classifier_chain_fit_and_predict_with_sparse_data():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classifier_chain_vs_independent_models():
     # Verify that an ensemble of classifier chains (each of length
     # N) can achieve a higher Jaccard similarity score than N independent
@@ -465,7 +462,6 @@ def test_classifier_chain_vs_independent_models():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_fit_and_predict():
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -486,7 +482,6 @@ def test_base_chain_fit_and_predict():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
     # Fit base chain with sparse data cross_val_predict
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -500,7 +495,6 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_random_order():
     # Fit base chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -522,7 +516,6 @@ def test_base_chain_random_order():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_base_chain_crossval_fit_and_predict():
     # Fit chain with cross_val_predict and verify predict
     # performance

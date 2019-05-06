@@ -338,7 +338,6 @@ def test_regression_scorers():
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_thresholded_scorers():
     # Test scorers that take thresholds.
     X, y = make_blobs(random_state=0, centers=2)
@@ -524,7 +523,6 @@ def test_scorer_memmap_input(name):
 
 
 @pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_scoring_is_not_metric():
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          LogisticRegression(), f1_score)

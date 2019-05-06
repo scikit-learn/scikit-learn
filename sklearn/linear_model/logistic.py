@@ -461,12 +461,6 @@ def _check_solver(solver, penalty, dual):
 
 
 def _check_multi_class(multi_class, solver, n_classes):
-    if multi_class == 'warn':
-        multi_class = 'ovr'
-        if n_classes > 2:
-            warnings.warn("Default multi_class will be changed to 'auto' in"
-                          " 0.22. Specify the multi_class option to silence "
-                          "this warning.", FutureWarning)
     if multi_class == 'auto':
         if solver == 'liblinear':
             multi_class = 'ovr'
@@ -593,8 +587,8 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
-        .. versionchanged:: 0.20
-            Default will change from 'ovr' to 'auto' in 0.22.
+        .. versionchanged:: 0.22
+            Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -650,7 +644,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     return _logistic_regression_path(
         X, y, pos_class=None, Cs=10, fit_intercept=True, max_iter=100,
         tol=1e-4, verbose=0, solver='lbfgs', coef=None, class_weight=None,
-        dual=False, penalty='l2', intercept_scaling=1., multi_class='warn',
+        dual=False, penalty='l2', intercept_scaling=1., multi_class='auto',
         random_state=None, check_input=True, max_squared_sum=None,
         sample_weight=None, l1_ratio=None)
 
@@ -659,7 +653,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                               max_iter=100, tol=1e-4, verbose=0,
                               solver='lbfgs', coef=None,
                               class_weight=None, dual=False, penalty='l2',
-                              intercept_scaling=1., multi_class='warn',
+                              intercept_scaling=1., multi_class='auto',
                               random_state=None, check_input=True,
                               max_squared_sum=None, sample_weight=None,
                               l1_ratio=None):
@@ -759,8 +753,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
-        .. versionchanged:: 0.20
-            Default will change from 'ovr' to 'auto' in 0.22.
+        .. versionchanged:: 0.22
+            Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -1009,7 +1003,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
                           max_iter=100, tol=1e-4, class_weight=None,
                           verbose=0, solver='lbfgs', penalty='l2',
                           dual=False, intercept_scaling=1.,
-                          multi_class='warn', random_state=None,
+                          multi_class='auto', random_state=None,
                           max_squared_sum=None, sample_weight=None,
                           l1_ratio=None):
     """Computes scores across logistic_regression_path
@@ -1316,7 +1310,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     max_iter : int, optional (default=100)
         Maximum number of iterations taken for the solvers to converge.
 
-    multi_class : str, {'ovr', 'multinomial', 'auto'}, optional (default='ovr')
+    multi_class : str, {'ovr', 'multinomial', 'auto'}, optional \
+(default='auto')
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -1326,8 +1321,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
-        .. versionchanged:: 0.20
-            Default will change from 'ovr' to 'auto' in 0.22.
+        .. versionchanged:: 0.22
+            Default changed from 'ovr' to 'auto' in 0.22.
 
     verbose : int, optional (default=0)
         For the liblinear and lbfgs solvers set verbose to any positive
@@ -1444,7 +1439,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='warn', max_iter=100,
-                 multi_class='warn', verbose=0, warm_start=False, n_jobs=None,
+                 multi_class='auto', verbose=0, warm_start=False, n_jobs=None,
                  l1_ratio=None):
 
         self.penalty = penalty
@@ -1815,7 +1810,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    multi_class : str, {'ovr', 'multinomial', 'auto'}, optional (default='ovr')
+    multi_class : str, {'ovr', 'multinomial', 'auto'}, optional \
+(default='auto')
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -1825,8 +1821,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
-        .. versionchanged:: 0.20
-            Default will change from 'ovr' to 'auto' in 0.22.
+        .. versionchanged:: 0.22
+            Default changed from 'ovr' to 'auto' in 0.22.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1929,7 +1925,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
     def __init__(self, Cs=10, fit_intercept=True, cv='warn', dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=None, verbose=0,
-                 refit=True, intercept_scaling=1., multi_class='warn',
+                 refit=True, intercept_scaling=1., multi_class='auto',
                  random_state=None, l1_ratios=None):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
