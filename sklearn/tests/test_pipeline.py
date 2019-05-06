@@ -235,7 +235,6 @@ def test_pipeline_init_tuple():
     pipe.score(X)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_pipeline_methods_anova():
     # Test the various methods of the pipeline (anova).
@@ -834,7 +833,6 @@ def test_feature_union_feature_names():
                          'get_feature_names', ft.get_feature_names)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_classes_property():
     iris = load_iris()
@@ -946,7 +944,6 @@ def test_step_name_validation():
                                  [[1]], [1])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_set_params_nested_pipeline():
     estimator = Pipeline([

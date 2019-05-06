@@ -292,7 +292,6 @@ def test_bootstrap_features():
         assert_greater(boston.data.shape[1], np.unique(features).shape[0])
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_probability():
     # Predict probabilities.
@@ -712,7 +711,6 @@ def test_oob_score_consistency():
     assert_equal(bagging.fit(X, y).oob_score_, bagging.fit(X, y).oob_score_)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimators_samples():
     # Check that format of estimators_samples_ is correct and that results
@@ -750,7 +748,6 @@ def test_estimators_samples():
     assert_array_almost_equal(orig_coefs, new_coefs)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimators_samples_deterministic():
     # This test is a regression test to check that with a random step
@@ -884,7 +881,6 @@ def test_bagging_classifier_with_missing_inputs():
     assert_raises(ValueError, bagging_classifier.fit, X, y)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_bagging_small_max_features():
     # Check that Bagging estimator can accept low fractional max_features

@@ -425,12 +425,6 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
 
 
 def _check_solver(solver, penalty, dual):
-    if solver == 'warn':
-        solver = 'liblinear'
-        warnings.warn("Default solver will be changed to 'lbfgs' in 0.22. "
-                      "Specify a solver to silence this warning.",
-                      FutureWarning)
-
     all_solvers = ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga']
     if solver not in all_solvers:
         raise ValueError("Logistic Regression supports only solvers in %s, got"
@@ -1288,7 +1282,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         'liblinear'.
 
     solver : str, {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
-             optional (default='liblinear').
+             optional (default='lbfgs').
 
         Algorithm to use in the optimization problem.
 
@@ -1310,8 +1304,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
-        .. versionchanged:: 0.20
-            Default will change from 'liblinear' to 'lbfgs' in 0.22.
+        .. versionchanged:: 0.22
+            The default solver changed from 'liblinear' to 'lbfgs' in 0.22.
 
     max_iter : int, optional (default=100)
         Maximum number of iterations taken for the solvers to converge.
@@ -1443,7 +1437,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None, solver='warn', max_iter=100,
+                 random_state=None, solver='lbfgs', max_iter=100,
                  multi_class='warn', verbose=0, warm_start=False, n_jobs=None,
                  l1_ratio=None):
 

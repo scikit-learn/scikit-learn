@@ -66,7 +66,6 @@ def check_predictions(clf, X, y):
     assert_array_equal(probabilities.argmax(axis=1), y)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_predict_2_classes():
     # Simple sanity check on a 2 classes dataset
@@ -83,7 +82,6 @@ def test_predict_2_classes():
                                          random_state=0), X_sp, Y1)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_error():
     # Test for appropriate exception on errors
@@ -165,7 +163,6 @@ def test_lr_liblinear_warning():
                          lr.fit, iris.data, target)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_predict_3_classes():
     check_predictions(LogisticRegression(C=10), X, Y2)
@@ -259,23 +256,17 @@ def test_check_solver_option(LR):
     assert_raise_message(ValueError, msg, lr.fit, X, y)
 
 
-@pytest.mark.parametrize('model, params, warn_solver',
-                         [(LogisticRegression, {}, True),
-                          (LogisticRegressionCV, {'cv': 5}, False)])
-def test_logistic_regression_warnings(model, params, warn_solver):
+@pytest.mark.parametrize('model, params',
+                         [(LogisticRegression, {}),
+                          (LogisticRegressionCV, {'cv': 5})])
+def test_logistic_regression_warnings(model, params):
     clf_solver_warning = model(multi_class='ovr', **params)
     clf_multi_class_warning = model(solver='lbfgs', **params)
     clf_no_warnings = model(solver='lbfgs', multi_class='ovr', **params)
 
-    solver_warning_msg = "Default solver will be changed to 'lbfgs'"
     multi_class_warning_msg = "Default multi_class will be changed to 'auto"
 
-    if warn_solver:
-        assert_warns_message(FutureWarning, solver_warning_msg,
-                             clf_solver_warning.fit, iris.data, iris.target)
-    else:
-        assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
-
+    assert_no_warnings(clf_no_warnings.fit, iris.data, iris.target)
     assert_warns_message(FutureWarning, multi_class_warning_msg,
                          clf_multi_class_warning.fit, iris.data, iris.target)
     # But no warning when binary target:
@@ -323,7 +314,6 @@ def test_multinomial_binary_probabilities():
     assert_almost_equal(proba, expected_proba)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_sparsify():
     # Test sparsify and densify members.
@@ -348,7 +338,6 @@ def test_sparsify():
     assert_array_almost_equal(pred_d_d, pred_d_s)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_inconsistent_input():
     # Test that an exception is raised on inconsistent input
@@ -368,7 +357,6 @@ def test_inconsistent_input():
                   rng.random_sample((3, 12)))
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_write_parameters():
     # Test that we can write to coef_ and intercept_
@@ -379,7 +367,6 @@ def test_write_parameters():
     assert_array_almost_equal(clf.decision_function(X), 0)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_nan():
     # Test proper NaN handling.
@@ -1094,7 +1081,6 @@ def test_logreg_intercept_scaling():
         assert_raise_message(ValueError, msg, clf.fit, X, Y1)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
 @pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_logreg_intercept_scaling_zero():
     # Test that intercept_scaling is ignored when fit_intercept is False
