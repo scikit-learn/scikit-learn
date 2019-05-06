@@ -883,6 +883,16 @@ class OrdinalEncoder(_BaseEncoder):
         The categories of each feature determined during fitting
         (in order of the features in X and corresponding with the output
         of ``transform``).
+    handle_unknown : 'error', 'ignore' or 'treat_as_rare', default='error'.
+        Whether to raise an error or ignore if an unknown categorical feature
+        is present during transform (default is to raise). When this parameter
+        is set to 'ignore' and an unknown category is encountered during
+        transform, the resulting one-hot encoded columns for this feature
+        will be all zeros. In the inverse transform, an unknown category
+        will be denoted as None.
+    rare_category : default='unknown'
+    dtype : number type, default=np.float64
+        Desired dtype of output.
 
     Examples
     --------
@@ -914,11 +924,11 @@ class OrdinalEncoder(_BaseEncoder):
     """
 
     def __init__(self, categories='auto', handle_unknown='error',
-                 rare_category='rare_value', dtype=np.float64):
+                 unknown_category='unknown', dtype=np.float64):
         self.categories = categories
         self.dtype = dtype
         self.handle_unknown = handle_unknown
-        self.rare_category = rare_category
+        self.unknown_category = unknown_category
 
     def fit(self, X, y=None):
         """Fit the OrdinalEncoder to X.
@@ -960,7 +970,7 @@ class OrdinalEncoder(_BaseEncoder):
                 # iterate over columns with unseen categories
                 for i in np.where(~np.all(X_mask, axis=0))[0]:
                     # check if  "rare_category" is already a known category
-                    idx = np.argwhere(self.categories_[0] == self.rare_category)
+                    idx = np.argwhere(self.categories_[0] == self.unknown_category)
                     if idx.size > 0:
                         # replace unknown by index of known category
                         X_int[~X_mask[:, i], i] = int(idx)
@@ -968,7 +978,7 @@ class OrdinalEncoder(_BaseEncoder):
                         # replace unkown category by index of "rare_category"
                         X_int[~X_mask[:, i], i] = len(self.categories_[i])
                         # add "rare_category" to categories list
-                        self.categories_[i] = np.append(self.categories_[i], self.rare_category)
+                        self.categories_[i] = np.append(self.categories_[i], self.unknown_category)
             if self.handle_unknown == 'ignore':
                 idx = np.where(~np.all(X_mask, axis=1))[0]
                 X_int = np.delete(X_int, idx, axis=0)
