@@ -455,7 +455,7 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
 
 
-@pytest.mark.parametrize('mode', [True, 1, 5, 'bad', 'gcv', np.arange(3)])
+@pytest.mark.parametrize('mode', [True, 1, 5, 'bad', 'gcv'])
 def test_check_gcv_mode_error(mode):
     X, y = make_regression(n_samples=5, n_features=2)
     gcv = RidgeCV(gcv_mode=mode)

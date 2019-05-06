@@ -930,13 +930,12 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
 def _check_gcv_mode(X, gcv_mode):
     possible_gcv_modes = [None, 'auto', 'svd', 'eigen']
-    if (gcv_mode is not None and not isinstance(gcv_mode, str)) or (
-            gcv_mode not in possible_gcv_modes):
+    if gcv_mode not in possible_gcv_modes:
         raise ValueError(
             "Unknown value for 'gcv_mode'. "
             "Got {} instead of one of {}" .format(
                 gcv_mode, possible_gcv_modes))
-    if gcv_mode not in [None, 'auto']:
+    if gcv_mode in ['eigen', 'svd']:
         return gcv_mode
     # if X has more rows than columns, use decomposition of X^T.X,
     # otherwise X.X^T
@@ -971,8 +970,8 @@ class _X_operator(sparse.linalg.LinearOperator):
     """
 
     def __init__(self, X, X_mean, sqrt_sw):
-        self.n_samples, self.n_features = X.shape
-        super().__init__(X.dtype, (self.n_samples, self.n_features + 1))
+        n_samples, n_features = X.shape
+        super().__init__(X.dtype, (n_samples, n_features + 1))
         self.X = X
         self.X_mean = X_mean
         self.sqrt_sw = sqrt_sw
@@ -1001,15 +1000,16 @@ class _Xt_operator(sparse.linalg.LinearOperator):
     """
 
     def __init__(self, X, X_mean, sqrt_sw):
-        self.n_samples, self.n_features = X.shape
-        super().__init__(X.dtype, (self.n_features + 1, self.n_samples))
+        n_samples, n_features = X.shape
+        super().__init__(X.dtype, (n_features + 1, n_samples))
         self.X = X
         self.X_mean = X_mean
         self.sqrt_sw = sqrt_sw
 
     def _matvec(self, v):
         v = v.ravel()
-        res = np.empty(self.n_features + 1)
+        n_features = self.shape[0]
+        res = np.empty(n_features)
         res[:-1] = (
             safe_sparse_dot(self.X.T, v, dense_output=True) -
             (self.X_mean * self.sqrt_sw.dot(v))
@@ -1018,7 +1018,8 @@ class _Xt_operator(sparse.linalg.LinearOperator):
         return res
 
     def _matmat(self, v):
-        res = np.empty((self.n_features + 1, v.shape[1]))
+        n_features = self.shape[0]
+        res = np.empty((n_features, v.shape[1]))
         res[:-1] = (
             safe_sparse_dot(self.X.T, v, dense_output=True) -
             self.X_mean[:, None] * self.sqrt_sw.dot(v)
@@ -1089,7 +1090,7 @@ class _RidgeGCV(LinearModel):
             D = D[(slice(None), ) + (np.newaxis, ) * (len(B.shape) - 1)]
         return D * B
 
-    def _compute_gram(self, X, sqrt_sw, center=True):
+    def _compute_gram(self, X, sqrt_sw):
         """Computes the Gram matrix with possible centering.
 
         If ``center`` is ``True``, compute
@@ -1098,7 +1099,7 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input uncentered data.
 
         sqrt_sw : ndarray, shape (n_samples,)
@@ -1114,6 +1115,7 @@ class _RidgeGCV(LinearModel):
         X_mean : ndarray, shape (n_feature,)
             The mean of ``X`` for each feature.
         """
+        center = self.fit_intercept and sparse.issparse(X)
         if not center:
             # in this case centering has been done in preprocessing
             # or we are not fitting an intercept.
@@ -1128,14 +1130,15 @@ class _RidgeGCV(LinearModel):
         X_mean *= n_samples / sqrt_sw.dot(sqrt_sw)
         X_mX = sqrt_sw[:, None] * safe_sparse_dot(
             X_mean, X.T, dense_output=True)
-        X_mX_m = np.empty((n_samples, n_samples), dtype=X.dtype)
-        X_mX_m[:, :] = np.dot(X_mean, X_mean)
+        X_mX_m = np.full((n_samples, n_samples),
+                         fill_value=np.dot(X_mean, X_mean),
+                         dtype=X.dtype)
         X_mX_m *= sqrt_sw
         X_mX_m *= sqrt_sw[:, None]
         return (safe_sparse_dot(X, X.T, dense_output=True) + X_mX_m
                 - X_mX - X_mX.T, X_mean)
 
-    def _compute_covariance(self, X, sqrt_sw, center=True):
+    def _compute_covariance(self, X, sqrt_sw):
         """Computes centered covariance matrix.
 
         If ``center`` is ``True``, compute
@@ -1145,7 +1148,7 @@ class _RidgeGCV(LinearModel):
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : sparse matrix, shape (n_samples, n_features)
             The input uncentered data.
 
         sqrt_sw : ndarray, shape (n_samples,)
@@ -1161,12 +1164,12 @@ class _RidgeGCV(LinearModel):
         X_mean : ndarray, shape (n_feature,)
             The mean of ``X`` for each feature.
         """
-        if not center:
+        if not self.fit_intercept:
             # in this case centering has been done in preprocessing
             # or we are not fitting an intercept.
             X_mean = np.zeros(X.shape[1], dtype=X.dtype)
             return safe_sparse_dot(X.T, X, dense_output=True), X_mean
-        # otherwise X is always sparse
+        # this function only gets called for sparse X
         n_samples = X.shape[0]
         sample_weight_matrix = sparse.dia_matrix(
             (sqrt_sw, 0), shape=(n_samples, n_samples))
@@ -1217,11 +1220,10 @@ class _RidgeGCV(LinearModel):
             diag[batch] = (X_batch.dot(A) * X_batch).sum(axis=1)
         return diag
 
-    def _decompose_gram(self, X, y, sqrt_sw):
+    def _eigen_decompose_gram(self, X, y, sqrt_sw):
         """Eigendecomposition of X.X^T, used when n_samples <= n_features"""
         # if X is dense it has already been centered in preprocessing
-        center = self.fit_intercept and sparse.issparse(X)
-        K, X_mean = self._compute_gram(X, sqrt_sw, center=center)
+        K, X_mean = self._compute_gram(X, sqrt_sw)
         if self.fit_intercept:
             # to emulate centering X with sample weights,
             # ie removing the weighted average, we add a column
@@ -1255,12 +1257,11 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _decompose_covariance_sparse(self, X, y, sqrt_sw):
+    def _svd_decompose_covariance(self, X, y, sqrt_sw):
         """Eigendecomposition of X^T.X, used when n_samples > n_features."""
         n_samples, n_features = X.shape
         cov = np.empty((n_features + 1, n_features + 1))
-        cov[:-1, :-1], X_mean = self._compute_covariance(
-            X, sqrt_sw, center=self.fit_intercept)
+        cov[:-1, :-1], X_mean = self._compute_covariance(X, sqrt_sw)
         if not self.fit_intercept:
             cov = cov[:-1, :-1]
         # to emulate centering X with sample weights,
@@ -1286,7 +1287,6 @@ class _RidgeGCV(LinearModel):
         Used when we have a decomposition of X^T.X
         (n_features < n_samples and X is sparse), and not fitting an intercept.
         """
-        n_samples, n_features = X.shape
         w = 1 / (s + alpha)
         A = (V * w).dot(V.T)
         AXy = A.dot(safe_sparse_dot(X.T, y, dense_output=True))
@@ -1305,7 +1305,6 @@ class _RidgeGCV(LinearModel):
         (n_features < n_samples and X is sparse),
         and we are fitting an intercept.
         """
-        n_samples, n_features = X.shape
         # the vector [0, 0, ..., 0, 1]
         # is the eigenvector of X^TX which
         # corresponds to the intercept; we cancel the regularization on
@@ -1341,7 +1340,7 @@ class _RidgeGCV(LinearModel):
         return self._solve_covariance_sparse_no_intercept(
             alpha, y, sqrt_sw, X_mean, s, V, X)
 
-    def _decompose_covariance_dense(self, X, y, sqrt_sw):
+    def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
         # X already centered
         X_mean = np.zeros(X.shape[1], dtype=X.dtype)
         if self.fit_intercept:
@@ -1414,15 +1413,15 @@ class _RidgeGCV(LinearModel):
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
 
         if gcv_mode == 'eigen':
-            decompose = self._decompose_gram
+            decompose = self._eigen_decompose_gram
             solve = self._solve_gram
         elif gcv_mode == 'svd':
             # assert n_samples >= n_features
             if sparse.issparse(X):
-                decompose = self._decompose_covariance_sparse
+                decompose = self._svd_decompose_covariance
                 solve = self._solve_covariance_sparse
             else:
-                decompose = self._decompose_covariance_dense
+                decompose = self._svd_decompose_design_matrix
                 solve = self._solve_covariance_dense
 
         if sample_weight is not None:
