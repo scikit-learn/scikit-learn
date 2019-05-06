@@ -1705,3 +1705,73 @@ def test_gap_leave_p_out():
     assert_equal(GapLeavePOut(3, 2, 1).get_n_splits("abcde"), 1)
     assert_equal(GapLeavePOut(2, 1, 1).get_n_splits("abcde"), 4)
     assert_equal(GapLeavePOut(2).get_n_splits("abcde"), 4)
+
+
+def test_gap_k_fold():
+    splits = GapKFold().split(np.arange(10))
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3, 4, 5, 6, 7, 8, 9])
+    assert_array_equal(test, [0, 1])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 4, 5, 6, 7, 8, 9])
+    assert_array_equal(test, [2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 6, 7, 8, 9])
+    assert_array_equal(test, [4, 5])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 8, 9])
+    assert_array_equal(test, [6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6, 7])
+    assert_array_equal(test, [8, 9])
+
+    splits = GapKFold(5, 1, 1).split(np.arange(10))
+
+    train, test = next(splits)
+    assert_array_equal(train, [3, 4, 5, 6, 7, 8, 9])
+    assert_array_equal(test, [0, 1])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 5, 6, 7, 8, 9])
+    assert_array_equal(test, [2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 7, 8, 9])
+    assert_array_equal(test, [4, 5])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 9])
+    assert_array_equal(test, [6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6])
+    assert_array_equal(test, [8, 9])
+
+    splits = GapKFold(5, 3, 4).split(np.arange(10))
+
+    train, test = next(splits)
+    assert_array_equal(train, [6, 7, 8, 9])
+    assert_array_equal(test, [0, 1])
+
+    train, test = next(splits)
+    assert_array_equal(train, [8, 9])
+    assert_array_equal(test, [2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0])
+    assert_array_equal(test, [4, 5])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2])
+    assert_array_equal(test, [6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [8, 9])
+
+    assert_equal(GapKFold(5, 3, 4).get_n_splits(np.arange(10)), 5)
