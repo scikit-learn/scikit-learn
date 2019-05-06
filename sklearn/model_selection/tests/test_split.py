@@ -1595,7 +1595,7 @@ def test_gap_cross_validator():
     assert_array_equal(next(indices), [])
     assert_array_equal(next(indices), [0])
 
-    masks = cv._GapCrossValidator__indices_to_masks([[1, 2, 3], [5]], 6 )
+    masks = cv._GapCrossValidator__indices_to_masks([[1, 2, 3], [5]], 6)
     assert_array_equal(next(masks), [False, True, True, True, False, False])
     assert_array_equal(next(masks), [False, False, False, False, False, True])
 
@@ -1813,6 +1813,6 @@ def test_gap_train_test_split():
     assert_array_equal(test, [5, 6, 7, 8, 9])
 
     train, test = gap_train_test_split(np.arange(10),
-        gap_size=2, train_size=3, test_size=4)
+                                       gap_size=2, train_size=3, test_size=4)
     assert_array_equal(train, [0, 1, 2, 3])
     assert_array_equal(test, [6, 7, 8, 9])

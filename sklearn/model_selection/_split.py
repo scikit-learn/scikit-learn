@@ -59,6 +59,7 @@ CV_WARNING = (
 
 SINGLETON_WARNING = "Too few samples. Some training set is a singleton."
 
+
 class BaseCrossValidator(metaclass=ABCMeta):
     """Base class for all cross-validators
 
