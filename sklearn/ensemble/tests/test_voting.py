@@ -435,17 +435,11 @@ def test_set_estimator_none(drop):
     eclf2.set_params(rf=drop).fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
-    if isinstance(drop, str):
-        assert dict(eclf2.estimators)["rf"] == drop
-    else:
-        assert dict(eclf2.estimators)["rf"] is drop
+    assert dict(eclf2.estimators)["rf"] is drop
     assert len(eclf2.estimators_) == 2
     assert all(isinstance(est, (LogisticRegression, GaussianNB))
                for est in eclf2.estimators_)
-    if isinstance(drop, str):
-        assert eclf2.get_params()["rf"] == drop
-    else:
-        assert eclf2.get_params()["rf"] is drop
+    assert eclf2.get_params()["rf"] is drop
 
     eclf1.set_params(voting='soft').fit(X, y)
     eclf2.set_params(voting='soft').fit(X, y)
