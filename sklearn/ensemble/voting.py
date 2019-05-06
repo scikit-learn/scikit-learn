@@ -37,8 +37,8 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
                 raise ValueError(
                     "Underlying estimator {} does not support sample weights."
                     .format(estimator.__class__.__name__)
-                )
-            raise exc
+                ) from exc
+            raise
     else:
         estimator.fit(X, y)
     return estimator
