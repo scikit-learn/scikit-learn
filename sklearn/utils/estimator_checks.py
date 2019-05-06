@@ -1661,7 +1661,7 @@ def check_estimators_unfitted(name, estimator_orig):
     estimator = clone(estimator_orig)
     for method in ('decision_function', 'predict', 'predict_proba',
                    'predict_log_proba'):
-        if getattr(estimator, method, None) is not None:
+        if hasattr(estimator, method):
             assert_raises(NotFittedError, getattr(estimator, method), X)
 
 
