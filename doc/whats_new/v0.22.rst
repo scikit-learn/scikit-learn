@@ -48,6 +48,21 @@ Changelog
   ``decision_function_shape='ovr'``, and the number of target classes > 2.
   :pr:`12557` by `Adrin Jalali`_.
 
+:mod:`sklearn.tree`
+...................
+
+- |Feature| Adds minimal cost complexity pruning to
+  :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier`, :class:`tree.ExtraTreeRegressor`,
+  :class:`ensemble.RandomForestClassifier`, 
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, 
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`, 
+  :class:`ensemble.GradientBoostingClassifier`, 
+  and :class:`ensemble.GradientBoostingRegressor`.
+  :issue:`12887` by :user:`Thomas Fan <thomasjpfan>`.
+
 Changes to estimator checks
 ---------------------------
 
