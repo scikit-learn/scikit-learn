@@ -75,7 +75,7 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> from sklearn import svm
     >>> X = [[0, 0], [1, 1]]
     >>> y = [0, 1]
-    >>> clf = svm.SVC(gamma='scale')
+    >>> clf = svm.SVC()
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
@@ -119,7 +119,7 @@ n_classes)``.
 
     >>> X = [[0], [1], [2], [3]]
     >>> Y = [0, 1, 2, 3]
-    >>> clf = svm.SVC(gamma='scale', decision_function_shape='ovo')
+    >>> clf = svm.SVC(decision_function_shape='ovo')
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, break_ties=False, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovo', degree=3, gamma='scale', kernel='rbf',
