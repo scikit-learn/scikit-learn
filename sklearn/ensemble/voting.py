@@ -32,11 +32,13 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     if sample_weight is not None:
         try:
             estimator.fit(X, y, sample_weight=sample_weight)
-        except TypeError:
-            raise ValueError(
-                "Underlying estimator {} does not support sample weights."
-                .format(estimator.__class__.__name__)
-            )
+        except TypeError as exc:
+            if "unexpected keyword argument 'sample_weight'" in str(exc):
+                raise ValueError(
+                    "Underlying estimator {} does not support sample weights."
+                    .format(estimator.__class__.__name__)
+                )
+            raise exc
     else:
         estimator.fit(X, y)
     return estimator

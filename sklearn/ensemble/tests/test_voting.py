@@ -342,13 +342,25 @@ def test_sample_weight():
     assert_array_equal(eclf3.predict(X), clf1.predict(X))
     assert_array_almost_equal(eclf3.predict_proba(X), clf1.predict_proba(X))
 
+    # check that an error is raised and indicative if sample_weight is not
+    # supported.
     clf4 = KNeighborsClassifier()
     eclf3 = VotingClassifier(estimators=[
         ('lr', clf1), ('svc', clf3), ('knn', clf4)],
         voting='soft')
     msg = ('Underlying estimator KNeighborsClassifier does not support '
            'sample weights.')
-    assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
+    with pytest.raises(ValueError, match=msg):
+        eclf3.fit(X, y, sample_weight)
+
+    # check that _parallel_fit_estimator will raise the right error
+    # it should raise the original error if this is not linked to sample_weight
+    class ClassifierErrorFit(BaseEstimator, ClassifierMixin):
+        def fit(self, X, y, sample_weight):
+            raise TypeError('Error unrelated to sample_weight.')
+    clf = ClassifierErrorFit()
+    with pytest.raises(TypeError, match='Error unrelated to sample_weight'):
+        clf.fit(X, y, sample_weight=sample_weight)
 
 
 def test_sample_weight_kwargs():
@@ -423,11 +435,17 @@ def test_set_estimator_none(drop):
     eclf2.set_params(rf=drop).fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
-    assert dict(eclf2.estimators)["rf"] is drop
+    if isinstance(drop, str):
+        assert dict(eclf2.estimators)["rf"] == drop
+    else:
+        assert dict(eclf2.estimators)["rf"] is drop
     assert len(eclf2.estimators_) == 2
     assert all(isinstance(est, (LogisticRegression, GaussianNB))
                for est in eclf2.estimators_)
-    assert eclf2.get_params()["rf"] is drop
+    if isinstance(drop, str):
+        assert eclf2.get_params()["rf"] == drop
+    else:
+        assert eclf2.get_params()["rf"] is drop
 
     eclf1.set_params(voting='soft').fit(X, y)
     eclf2.set_params(voting='soft').fit(X, y)
