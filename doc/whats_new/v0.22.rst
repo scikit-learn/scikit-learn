@@ -39,20 +39,6 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.ensemble`
-.......................
-
-- |Fix| :class:`ensemble.VotingClassifier` and
-  :class:`ensemble.VotingRegressor` were failing during ``fit`` in one
-  of the estimators was set to ``None`` and ``sample_weight`` was not ``None``.
-  :pr:`13779` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-- |API| :class:`ensemble.VotingClassifier` and
-  :class:`ensemble.VotingRegressor` accept ``'drop'`` to disable an estimator
-  in addition to ``None`` to be consistent with other estimators (i.e.,
-  :class:`pipeline.FeatureUnion` and :class:`compose.ColumnTransformer`).
-  :pr:`13780` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 :mod:`sklearn.svm`
 ..................
 

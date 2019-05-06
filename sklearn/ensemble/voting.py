@@ -285,7 +285,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             The input samples.
 
         Returns
-        ----------
+        -------
         maj : array-like, shape (n_samples,)
             Predicted class labels.
         """
@@ -329,7 +329,7 @@ class VotingClassifier(_BaseVoting, ClassifierMixin):
             The input samples.
 
         Returns
-        ----------
+        -------
         avg : array-like, shape (n_samples, n_classes)
             Weighted average probability for each class per sample.
         """

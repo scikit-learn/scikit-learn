@@ -714,28 +714,6 @@ def set_random_state(estimator, random_state=0):
         estimator.set_params(random_state=random_state)
 
 
-def if_matplotlib(func):
-    """Test decorator that skips test if matplotlib not installed.
-
-    Parameters
-    ----------
-    func
-    """
-    @wraps(func)
-    def run_test(*args, **kwargs):
-        try:
-            import matplotlib
-            matplotlib.use('Agg', warn=False)
-            # this fails if no $DISPLAY specified
-            import matplotlib.pyplot as plt
-            plt.figure()
-        except ImportError:
-            raise SkipTest('Matplotlib not available.')
-        else:
-            return func(*args, **kwargs)
-    return run_test
-
-
 try:
     import pytest
 
@@ -1024,21 +1002,3 @@ def assert_run_python_script(source_code, timeout=60):
                                % e.output.decode('utf-8'))
     finally:
         os.unlink(source_file)
-
-
-def close_figure(fig=None):
-    """Close a matplotlibt figure.
-
-    Parameters
-    ----------
-    fig : int or str or Figure, optional (default=None)
-        The figure, figure number or figure name to close. If ``None``, all
-        current figures are closed.
-    """
-    from matplotlib.pyplot import get_fignums, close as _close  # noqa
-
-    if fig is None:
-        for fig in get_fignums():
-            _close(fig)
-    else:
-        _close(fig)
