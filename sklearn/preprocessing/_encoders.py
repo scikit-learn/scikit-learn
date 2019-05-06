@@ -106,7 +106,10 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
             self.categories_.append(cats)
             self.unfrequent_.append(self._find_unfrequent_categories(Xi))
 
-    def _find_unfrequent_categories(self):
+    def _find_unfrequent_categories(self, Xi):
+        unique, counts= np.unique(Xi, return_counts=True)
+        indices = np.argsort(counts)[-self.max_levels:]
+        return unique[indices]
 
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
