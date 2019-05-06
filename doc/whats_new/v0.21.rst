@@ -319,6 +319,11 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`12599` by :user:`Trevor Stephens<trevorstephens>` and
   :user:`Nicolas Hug<NicolasHug>`.
 
+- |Fix| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` were failing during ``fit`` in one
+  of the estimators was set to ``None`` and ``sample_weight`` was not ``None``.
+  :pr:`13779` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.externals`
 ........................
 
