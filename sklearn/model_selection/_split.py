@@ -2213,7 +2213,7 @@ class GapCrossValidator(metaclass=ABCMeta):
 
         By default, delegates to _iter_test_masks(X, y, groups)
         """
-        return GapCrossValidator.__marks_to_indices(
+        return GapCrossValidator.__masks_to_indices(
                                 self._iter_test_masks(X, y, groups))
 
     def _iter_test_masks(self, X=None, y=None, groups=None):
@@ -2221,7 +2221,7 @@ class GapCrossValidator(metaclass=ABCMeta):
 
         By default, delegates to _iter_train_masks(X, y, groups)
         """
-        return self.__complement_marks(self._iter_train_masks(X, y, groups))
+        return self.__complement_masks(self._iter_train_masks(X, y, groups))
 
     def _iter_train_masks(self, X=None, y=None, groups=None):
         """Generates boolean masks corresponding to training sets.
@@ -2232,24 +2232,24 @@ class GapCrossValidator(metaclass=ABCMeta):
                 self._iter_train_indices(X, y, groups), _num_samples(X))
 
     @staticmethod
-    def __marks_to_indices(marks):
-        for mark in marks:
-            index = np.arange(len(mark))
-            yield index[mark]
+    def __masks_to_indices(masks):
+        for mask in masks:
+            index = np.arange(len(mask))
+            yield index[mask]
 
     @staticmethod
     def __indices_to_masks(indices, n_samples):
         for index in indices:
-            mark = np.zeros(n_samples, dtype=np.bool)
-            mark[index] = True
-            yield mark
+            mask = np.zeros(n_samples, dtype=np.bool)
+            mask[index] = True
+            yield mask
 
-    def __complement_marks(self, marks):
+    def __complement_masks(self, masks):
         before, after = self.gap_before, self.gap_after
-        for mark in marks:
-            complement = np.ones(len(mark), dtype=np.bool)
-            for i, marked in enumerate(mark):
-                if marked:   # then make its neighbourhood False
+        for mask in masks:
+            complement = np.ones(len(mask), dtype=np.bool)
+            for i, masked in enumerate(mask):
+                if masked:   # then make its neighbourhood False
                     begin = max(i - before, 0)
                     end = min(i + after + 1, len(complement))
                     complement[np.arange(begin, end)] = False

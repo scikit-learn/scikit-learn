@@ -41,6 +41,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.model_selection import GapCrossValidator
+
 
 from sklearn.linear_model import Ridge
 
@@ -1566,3 +1568,80 @@ def test_leave_p_out_empty_trainset():
             ValueError,
             match='p=2 must be strictly less than the number of samples=2'):
         next(cv.split(X, y, groups=[1, 2]))
+
+
+def test_gap_cross_validator():
+    # Create a dummy subclass for the test
+    class testCV(GapCrossValidator):
+        n_splits = 2
+
+        def get_n_splits(self, X=None, y=None, groups=None):
+            return testCV.n_splits
+
+        def _iter_train_indices(self, X=None, y=None, groups=None):
+            yield [1, 3]
+            yield [2, 4]
+
+    cv = testCV(0, 2)
+    assert_equal(cv.gap_before, 0)
+    assert_equal(cv.gap_after, 2)
+    assert_equal(cv.get_n_splits(), 2)
+
+    indices = cv._GapCrossValidator__masks_to_indices(
+        [[False, True, True, False, True], [False, False], [True]])
+    assert_array_equal(next(indices), [1, 2, 4])
+    assert_array_equal(next(indices), [])
+    assert_array_equal(next(indices), [0])
+
+    masks = cv._GapCrossValidator__indices_to_masks([[1, 2, 3], [5]], 6 )
+    assert_array_equal(next(masks), [False, True, True, True, False, False])
+    assert_array_equal(next(masks), [False, False, False, False, False, True])
+
+    masks = cv._GapCrossValidator__complement_masks(
+        [[False,  True,  True,  True, False, False],
+         [False, False, False, False, False,  True]])
+    assert_array_equal(next(masks), [True, False, False, False, False, False])
+    assert_array_equal(next(masks), [True, True, True, True, True, False])
+
+    indices = cv._GapCrossValidator__complement_indices([[1, 2, 3], [5]], 7)
+    assert_array_equal(next(indices), [0, 6])
+    assert_array_equal(next(indices), [0, 1, 2, 3, 4])
+
+    masks = cv._iter_train_masks("abcde")
+    assert_array_equal(next(masks), [False, True, False, True, False])
+    assert_array_equal(next(masks), [False, False, True, False, True])
+
+    masks = cv._iter_test_masks("abcde")
+    assert_array_equal(next(masks), [True, False, False, False, False])
+    assert_array_equal(next(masks), [True, True, False, False, False])
+
+    indices = cv._iter_test_indices("abcde")
+    assert_array_equal(next(indices), [0])
+    assert_array_equal(next(indices), [0, 1])
+
+    # Another dummy subclass
+    class test2CV(GapCrossValidator):
+        n_splits = 2
+
+        def get_n_splits(self, X=None, y=None, groups=None):
+            return testCV.n_splits
+
+        def _iter_test_indices(self, X=None, y=None, groups=None):
+            yield [1, 3]
+            yield [2, 4]
+
+    cv = test2CV()
+
+    indices = cv._iter_train_indices("abcdef")
+    assert_array_equal(next(indices), [0, 2, 4, 5])
+    assert_array_equal(next(indices), [0, 1, 3, 5])
+
+    splits = cv.split("abcdef")
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 2, 4, 5])
+    assert_array_equal(test, [1, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 3, 5])
+    assert_array_equal(test, [2, 4])
