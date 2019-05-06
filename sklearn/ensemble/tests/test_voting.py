@@ -102,7 +102,7 @@ def test_notfitted():
 def test_majority_label_iris():
     """Check classification by majority label on dataset iris."""
     clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
+    clf2 = RandomForestClassifier(n_estimators=10, random_state=123)
     clf3 = GaussianNB()
     eclf = VotingClassifier(estimators=[
                 ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
@@ -398,7 +398,7 @@ def test_set_estimator_none():
     """VotingClassifier set_params should be able to set estimators as None"""
     # Test predict
     clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
+    clf2 = RandomForestClassifier(n_estimators=10, random_state=123)
     clf3 = GaussianNB()
     eclf1 = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2),
                                          ('nb', clf3)],

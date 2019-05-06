@@ -720,8 +720,7 @@ def test_distribution():
     X[:, 1] = np.random.randint(0, 3, 1000)
     y = rng.rand(1000)
 
-    clf = ExtraTreesRegressor(n_estimators=100, max_features=1,
-                              random_state=1).fit(X, y)
+    clf = ExtraTreesRegressor(max_features=1, random_state=1).fit(X, y)
 
     uniques = defaultdict(int)
     for tree in clf.estimators_:

@@ -954,8 +954,7 @@ class RandomForestClassifier(ForestClassifier):
     >>> X, y = make_classification(n_samples=1000, n_features=4,
     ...                            n_informative=2, n_redundant=0,
     ...                            random_state=0, shuffle=False)
-    >>> clf = RandomForestClassifier(n_estimators=100, max_depth=2,
-    ...                              random_state=0)
+    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
                 max_depth=2, max_features='auto', max_leaf_nodes=None,
@@ -1207,8 +1206,7 @@ class RandomForestRegressor(ForestRegressor):
 
     >>> X, y = make_regression(n_features=4, n_informative=2,
     ...                        random_state=0, shuffle=False)
-    >>> regr = RandomForestRegressor(max_depth=2, random_state=0,
-    ...                              n_estimators=100)
+    >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
     >>> regr.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=2,
                max_features='auto', max_leaf_nodes=None,
