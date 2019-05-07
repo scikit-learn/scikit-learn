@@ -83,7 +83,7 @@ classifiers = [
     (GradientBoostingClassifier(n_estimators=50, random_state=0), {
         'learning_rate': np.logspace(-4, 0, 10)
     }),
-    (SVC(random_state=0, gamma='scale'), {
+    (SVC(random_state=0), {
         'C': np.logspace(-2, 7, 10)
     }),
 ]

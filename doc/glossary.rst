@@ -675,6 +675,19 @@ General Concepts
         but not maintained by the core developer team.
         See https://scikit-learn-contrib.github.io.
 
+    scikit-learn enhancement proposals
+    SLEP
+    SLEPs
+        Changes to the API principles and changes to dependencies or supported
+        versions happen via a :ref:`SLEP <slep>` and follows the
+        decision-making process outlined in :ref:`governance`.
+        For all votes, a proposal must have been made public and discussed before the
+        vote. Such proposal must be a consolidated document, in the form of a
+        ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+        issue. A SLEP must be submitted as a pull-request to
+        `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_ using the
+        `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.
+
     semi-supervised
     semi-supervised learning
     semisupervised

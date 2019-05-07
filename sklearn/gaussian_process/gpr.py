@@ -474,3 +474,6 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin,
             raise ValueError("Unknown optimizer %s." % self.optimizer)
 
         return theta_opt, func_min
+
+    def _more_tags(self):
+        return {'requires_fit': False}

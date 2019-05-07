@@ -180,7 +180,7 @@ def test_ovr_fit_predict_sparse():
         assert_array_equal(pred, Y_pred_sprs.toarray())
 
         # Test decision_function
-        clf = svm.SVC(gamma="scale")
+        clf = svm.SVC()
         clf_sprs = OneVsRestClassifier(clf).fit(X_train, sparse(Y_train))
         dec_pred = (clf_sprs.decision_function(X_test) > 0).astype(int)
         assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
@@ -280,7 +280,7 @@ def test_ovr_binary():
                      Ridge(), ElasticNet()):
         conduct_test(base_clf)
 
-    for base_clf in (MultinomialNB(), SVC(gamma='scale', probability=True),
+    for base_clf in (MultinomialNB(), SVC(probability=True),
                      LogisticRegression()):
         conduct_test(base_clf, test_predict_proba=True)
 
@@ -304,7 +304,7 @@ def test_ovr_multilabel():
 
 
 def test_ovr_fit_predict_svc():
-    ovr = OneVsRestClassifier(svm.SVC(gamma="scale"))
+    ovr = OneVsRestClassifier(svm.SVC())
     ovr.fit(iris.data, iris.target)
     assert_equal(len(ovr.estimators_), 3)
     assert_greater(ovr.score(iris.data, iris.target), .9)
@@ -351,20 +351,18 @@ def test_ovr_multilabel_predict_proba():
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
         # Decision function only estimator.
-        decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')
-                                            ).fit(X_train, Y_train)
+        decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
         assert not hasattr(decision_only, 'predict_proba')
 
         # Estimator with predict_proba disabled, depending on parameters.
-        decision_only = OneVsRestClassifier(svm.SVC(gamma='scale',
-                                                    probability=False))
+        decision_only = OneVsRestClassifier(svm.SVC(probability=False))
         assert not hasattr(decision_only, 'predict_proba')
         decision_only.fit(X_train, Y_train)
         assert not hasattr(decision_only, 'predict_proba')
         assert hasattr(decision_only, 'decision_function')
 
         # Estimator which can get predict_proba enabled after fitting
-        gs = GridSearchCV(svm.SVC(gamma='scale', probability=False),
+        gs = GridSearchCV(svm.SVC(probability=False),
                           param_grid={'probability': [True]})
         proba_after_fit = OneVsRestClassifier(gs)
         assert not hasattr(proba_after_fit, 'predict_proba')
@@ -388,8 +386,7 @@ def test_ovr_single_label_predict_proba():
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
     # Decision function only estimator.
-    decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')
-                                        ).fit(X_train, Y_train)
+    decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
     assert not hasattr(decision_only, 'predict_proba')
 
     Y_pred = clf.predict(X_test)
@@ -412,7 +409,7 @@ def test_ovr_multilabel_decision_function():
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
-    clf = OneVsRestClassifier(svm.SVC(gamma="scale")).fit(X_train, Y_train)
+    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
     assert_array_equal((clf.decision_function(X_test) > 0).astype(int),
                        clf.predict(X_test))
 
@@ -423,7 +420,7 @@ def test_ovr_single_label_decision_function():
                                         random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
-    clf = OneVsRestClassifier(svm.SVC(gamma="scale")).fit(X_train, Y_train)
+    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
     assert_array_equal(clf.decision_function(X_test).ravel() > 0,
                        clf.predict(X_test))
 
