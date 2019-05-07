@@ -518,6 +518,23 @@ def test_bad_input():
     assert_raises(ValueError, clf.predict, Xt)
 
 
+
+@pytest.mark.parametrize(
+    'Estimator, data',
+    [(svm.SVC, datasets.load_iris(return_X_y=True)),
+     (svm.NuSVC, datasets.load_iris(return_X_y=True)),
+     (svm.SVR, datasets.load_diabetes(return_X_y=True)),
+     (svm.NuSVR, datasets.load_diabetes(return_X_y=True)),
+     (svm.OneClassSVM, datasets.load_iris(return_X_y=True))]
+)
+def test_svm_gamma_error(Estimator, data):
+    X, y = data
+    est = Estimator(gamma='auto_deprecated')
+    err_msg = "When 'gamma' is a string, it should be either 'scale' or 'auto'"
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, y)
+
+
 def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError
     clf = svm.SVC(kernel='linear', probability=True)
