@@ -227,7 +227,8 @@ class IsolationForest(BaseBagging, OutlierMixin):
             if self.behaviour == 'new':
                 warn(
                     "'behaviour' is deprecated in 0.22 and will be removed "
-                    "in 0.24. You should not pass or set this parameter."
+                    "in 0.24. You should not pass or set this parameter.",
+                    DeprecationWarning
                 )
             else:
                 raise NotImplementedError(

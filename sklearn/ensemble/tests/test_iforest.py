@@ -127,10 +127,10 @@ def test_iforest_error():
     # test X_test n_features match X_train one:
     assert_raises(ValueError, IsolationForest().fit(X).predict, X[:, 1:])
 
-    # test threshold_ attribute error when behaviour is not old:
-    msg = "threshold_ attribute does not exist when behaviour != 'old'"
-    assert_raises_regex(AttributeError, msg, getattr,
-                        IsolationForest(behaviour='new'), 'threshold_')
+    # test that behaviour='old' will raise an error
+    msg = "The old behaviour of IsolationForest is not implemented anymore."
+    with pytest.raises(NotImplementedError, match=msg):
+        IsolationForest(behaviour='old').fit(X)
 
 
 def test_recalculate_max_depth():
@@ -210,9 +210,7 @@ def test_iforest_works(contamination):
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [6, 3], [-4, 7]]
 
     # Test IsolationForest
-    clf = IsolationForest(
-        behaviour="new", random_state=rng, contamination=contamination
-    )
+    clf = IsolationForest(random_state=rng, contamination=contamination)
     clf.fit(X)
     decision_func = -clf.decision_function(X)
     pred = clf.predict(X)
@@ -291,14 +289,6 @@ def test_iforest_warm_start():
     assert clf.estimators_[0] is tree_1
 
 
-def test_behaviour_param():
-    X_train = [[1, 1], [1, 2], [2, 1]]
-    clf1 = IsolationForest(behaviour='old').fit(X_train)
-    clf2 = IsolationForest(behaviour='new', contamination='auto').fit(X_train)
-    assert_array_equal(clf1.decision_function([[2., 2.]]),
-                       clf2.decision_function([[2., 2.]]))
-
-
 # mock get_chunk_n_rows to actually test more than one chunk (here one
 # chunk = 3 rows:
 @patch(
@@ -328,3 +318,10 @@ def test_iforest_chunks_works2(
 ):
     test_iforest_works(contamination)
     assert mocked_get_chunk.call_count == n_predict_calls
+
+
+def test_iforest_deprecation():
+    iforest = IsolationForest(behaviour='new')
+    warn_msg = "'behaviour' is deprecated in 0.22 and will be removed in 0.24"
+    with pytest.warns(DeprecationWarning, match=warn_msg):
+        iforest.fit(iris.data)
