@@ -641,7 +641,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True, **metric_k
         Indicates if the data will be scaled between 0 and 1. If false, it
         is assumed the data is already scaled.
 
-    metric_kwargs : dict, optional
+    **metric_kwargs : dict, optional
         Keyword arguments with precomputed parameters (MIN, MAX)
         to scale the data.
         
@@ -693,7 +693,6 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True, **metric_k
 
     X, Y = check_pairwise_arrays(X, Y, precomputed=False, dtype=X.dtype,
                                  force_all_finite=False)
-    
 
     n_rows, n_cols = X.shape
 
@@ -729,11 +728,12 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True, **metric_k
     if n_col_num_present:
         MIN_MAX = {}
         if 'MIN' not in metric_kwargs or 'MAX' not in metric_kwargs:
-            MIN_MAX = _precompute_metric_params(X_num, Y_num, metric='gower', **metric_kwargs)
+            MIN_MAX = _precompute_metric_params(X_num, Y_num, metric='gower', 
+			**metric_kwargs)
         else:
             MIN_MAX['MIN'] = metric_kwargs['MIN']
             MIN_MAX['MAX'] = metric_kwargs['MAX']
-            
+
         print(MIN_MAX)
         # Scales the numeric values between 0 and 1.
         if scale:
@@ -1441,7 +1441,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     """Precompute data-derived metric parameters if not provided
     """
     if metric == "gower":
-        MIN_MAX ={}
+        MIN_MAX = {}
         if 'MIN' not in kwds:
             MIN_MAX['MIN'] = np.nanmin((np.vstack([X, Y]), X)[X is Y], axis=0)
         if 'MAX' not in kwds:

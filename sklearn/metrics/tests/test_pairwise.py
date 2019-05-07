@@ -856,12 +856,12 @@ def test_gower_distances():
 
     # The expected normalized values above are:
     Xn = [[0.073765, 0.0],
-         [0.644548, 0.001],
-         [0.0,      0.0]]
+          [0.644548, 0.001],
+          [0.0,      0.0]]
 
     Yn = [[0.073765, 0.0],
-         [0.644548, 0.001],
-         [1.0,      1.0]]
+          [0.644548, 0.001],
+          [1.0,      1.0]]
 
     # Simplified calculation of Gower distance for expected values
     n_rows, n_cols = np.shape(X)
@@ -874,10 +874,9 @@ def test_gower_distances():
     assert_array_almost_equal(D_expected, D)
 
     # Test the use of metric parameters
-    D = gower_distances(X, Y, MIN=[1.0,1.0], MAX=[3000.0, 3000.0])
+    D = gower_distances(X, Y, MIN=[1.0, 1.0], MAX=[3000.0, 3000.0])
 
     assert_array_almost_equal(D_expected, D)
-
 
     # Test to obtain a non-squared distance matrix
     X = np.array([['Syria', 1.0, 0.0, 0.0, True],
@@ -957,7 +956,7 @@ def test_gower_distances():
     with pytest.raises(ValueError):
         gower_distances(X, scale=False)
 
-    
+
 def test_haversine_distances():
     # Check haversine distance with distances computation
     def slow_haversine_distances(x, y):
