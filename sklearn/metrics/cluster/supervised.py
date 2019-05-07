@@ -771,7 +771,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
 
 
 def normalized_mutual_info_score(labels_true, labels_pred,
-                                 average_method='warn'):
+                                 average_method='arithmetic'):
     """Normalized Mutual Information between two clusterings.
 
     Normalized Mutual Information (NMI) is a normalization of the Mutual
@@ -805,8 +805,6 @@ def normalized_mutual_info_score(labels_true, labels_pred,
     average_method : string, optional (default: 'warn')
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
-        If 'warn', 'geometric' will be used. The default will change to
-        'arithmetic' in version 0.22.
 
         .. versionadded:: 0.20
 
@@ -844,12 +842,6 @@ def normalized_mutual_info_score(labels_true, labels_pred,
       0.0
 
     """
-    if average_method == 'warn':
-        warnings.warn("The behavior of NMI will change in version 0.22. "
-                      "To match the behavior of 'v_measure_score', NMI will "
-                      "use average_method='arithmetic' by default.",
-                      FutureWarning)
-        average_method = 'geometric'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)

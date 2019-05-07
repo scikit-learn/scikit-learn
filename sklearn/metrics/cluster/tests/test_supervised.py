@@ -32,16 +32,6 @@ score_funcs = [
 ]
 
 
-def test_future_warning():
-    score_funcs_with_changing_means = [
-        normalized_mutual_info_score
-    ]
-    warning_msg = "The behavior of "
-    args = [0, 0, 0], [0, 0, 0]
-    for score_func in score_funcs_with_changing_means:
-        assert_warns_message(FutureWarning, warning_msg, score_func, *args)
-
-
 @ignore_warnings(category=FutureWarning)
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
