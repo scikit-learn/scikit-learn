@@ -23,7 +23,8 @@ from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
-from sklearn.svm import OneClassSVM, SVC
+from sklearn.svm import SVC
+from sklearn.neighbors import LocalOutlierFactor
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
@@ -330,13 +331,13 @@ def test_pipeline_methods_pca_svm():
     pipe.score(X, y)
 
 
-def test_pipeline_score_samples_pca_oneclass_svm():
+def test_pipeline_score_samples_pca_lof():
     iris = load_iris()
     X = iris.data
     # Test with PCA + OneClassSVM
-    clf = OneClassSVM()
+    clf = LocalOutlierFactor(novelty=True)
     pca = PCA(svd_solver='full', n_components='mle', whiten=True)
-    pipe = Pipeline([('pca', pca), ('oneclass_svm', clf)])
+    pipe = Pipeline([('pca', pca), ('lof', clf)])
     pipe.fit(X)
     pipe.score_samples(X)
 
