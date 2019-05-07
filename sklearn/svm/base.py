@@ -171,7 +171,7 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             if self.gamma == 'scale':
                 # var = E[X^2] - E[X]^2 if sparse
                 X_var = ((X.multiply(X)).mean() - (X.mean()) ** 2
-                          if sparse else X.var())
+                         if sparse else X.var())
                 self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
             elif self.gamma == 'auto':
                 self._gamma = 1.0 / X.shape[1]
