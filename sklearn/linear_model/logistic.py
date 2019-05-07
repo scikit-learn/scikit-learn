@@ -20,7 +20,7 @@ from scipy.special import expit
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from .sag import sag_solver
 from ..preprocessing import LabelEncoder, LabelBinarizer
-from ..svm.base import _fit_liblinear
+from ..svm.base import _fit_liblinear, _get_liblinear_solver_type
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
@@ -30,6 +30,7 @@ from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
 from ..utils import deprecated
+from ..utils.solver_convergence import _check_convergence_params
 from ..exceptions import (NotFittedError, ConvergenceWarning,
                           ChangedBehaviorWarning)
 from ..utils.multiclass import check_classification_targets
@@ -1516,18 +1517,22 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         else:
             C_ = self.C
             penalty = self.penalty
-        if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
-            raise ValueError("Maximum number of iteration must be positive;"
-                             " got (max_iter=%r)" % self.max_iter)
-        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
+        if ((not isinstance(self.max_iter, numbers.Number) and
+             not self.max_iter == 'auto') or 
+            (isinstance(self.max_iter, numbers.Number) and self.max_iter < 0)):
+            raise ValueError("Maximum number of iteration must be positive or "
+                             "'auto'; got (max_iter=%r)" % self.max_iter)
+        if ((not isinstance(self.tol, numbers.Number) and
+             not self.tol == 'auto') or 
+            (isinstance(self.tol, numbers.Number) and self.tol < 0)):
             raise ValueError("Tolerance for stopping criteria must be "
-                             "positive; got (tol=%r)" % self.tol)
+                             "positive or 'auto'; got (tol=%r)" % self.tol)
 
         if solver in ['lbfgs', 'liblinear']:
             _dtype = np.float64
         else:
             _dtype = [np.float64, np.float32]
-
+        
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype, order="C",
                          accept_large_sparse=solver != 'liblinear')
         check_classification_targets(y)
@@ -1537,6 +1542,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         multi_class = _check_multi_class(self.multi_class, solver,
                                          len(self.classes_))
 
+        # Determine the subsolver to use according to estimator params to set
+        # the right default for max_iter and tol. Only liblinear has subsolvers
+        loss = 'logistic_regression'
+        if solver == 'liblinear':
+            internal_solver = _get_liblinear_solver_type(multi_class,
+                    self.penalty, loss, self.dual)
+        else:
+            internal_solver = 0
+        self.tol_, self.max_iter_ = _check_convergence_params(solver, self.tol,
+                self.max_iter, internal_solver)
+
         if solver == 'liblinear':
             if effective_n_jobs(self.n_jobs) != 1:
                 warnings.warn("'n_jobs' > 1 does not have any effect when"
@@ -1545,7 +1561,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
-                self.max_iter, self.tol, self.random_state,
+                self.max_iter_, self.tol_, self.random_state,
                 sample_weight=sample_weight)
             self.n_iter_ = np.array([n_iter_])
             return self
@@ -1597,8 +1613,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                                **_joblib_parallel_args(prefer=prefer))(
             path_func(X, y, pos_class=class_, Cs=[C_],
                       l1_ratio=self.l1_ratio, fit_intercept=self.fit_intercept,
-                      tol=self.tol, verbose=self.verbose, solver=solver,
-                      multi_class=multi_class, max_iter=self.max_iter,
+                      tol=self.tol_, verbose=self.verbose, solver=solver,
+                      multi_class=multi_class, max_iter=self.max_iter_,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
                       penalty=penalty, max_squared_sum=max_squared_sum,
@@ -1971,12 +1987,18 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         """
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
-        if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
-            raise ValueError("Maximum number of iteration must be positive;"
-                             " got (max_iter=%r)" % self.max_iter)
-        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
+        if ((not isinstance(self.max_iter, numbers.Number) and
+             not self.max_iter == 'auto') or 
+            (isinstance(self.max_iter, numbers.Number) and self.max_iter < 0)):
+            raise ValueError("Maximum number of iteration must be positive or "
+                             "'auto'; got (max_iter=%r)" % self.max_iter)
+        
+        if ((not isinstance(self.tol, numbers.Number) and
+             not self.tol == 'auto') or 
+            (isinstance(self.tol, numbers.Number) and self.tol < 0)):
             raise ValueError("Tolerance for stopping criteria must be "
-                             "positive; got (tol=%r)" % self.tol)
+                             "positive or 'auto'; got (tol=%r)" % self.tol)
+
         if self.penalty == 'elasticnet':
             if self.l1_ratios is None or len(self.l1_ratios) == 0 or any(
                     (not isinstance(l1_ratio, numbers.Number) or l1_ratio < 0
@@ -2067,13 +2089,24 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             prefer = 'threads'
         else:
             prefer = 'processes'
+        
+        # Determine the subsolver to use according to estimator params to set
+        # the right default for max_iter and tol. Only liblinear has subsolvers
+        loss = 'logistic_regression'
+        if solver == 'liblinear':
+            internal_solver = _get_liblinear_solver_type(multi_class,
+                    self.penalty, loss, self.dual)
+        else:
+            internal_solver = 0
+        self.tol_, self.max_iter_ = _check_convergence_params(solver, self.tol,
+                self.max_iter, internal_solver)
 
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                **_joblib_parallel_args(prefer=prefer))(
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
-                      dual=self.dual, solver=solver, tol=self.tol,
-                      max_iter=self.max_iter, verbose=self.verbose,
+                      dual=self.dual, solver=solver, tol=self.tol_,
+                      max_iter=self.max_iter_, verbose=self.verbose,
                       class_weight=class_weight, scoring=self.scoring,
                       multi_class=multi_class,
                       intercept_scaling=self.intercept_scaling,
@@ -2171,7 +2204,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 w, _, _ = _logistic_regression_path(
                     X, y, pos_class=encoded_label, Cs=[C_], solver=solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
-                    max_iter=self.max_iter, tol=self.tol,
+                    max_iter=self.max_iter_, tol=self.tol_,
                     penalty=self.penalty,
                     class_weight=class_weight,
                     multi_class=multi_class,

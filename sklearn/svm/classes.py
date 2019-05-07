@@ -1,13 +1,15 @@
 import warnings
 import numpy as np
 
-from .base import _fit_liblinear, BaseSVC, BaseLibSVM
+from .base import (_fit_liblinear, BaseSVC, BaseLibSVM, 
+                  _get_liblinear_solver_type)
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils import check_X_y
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
+from ..utils.solver_convergence import _check_convergence_params
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,
@@ -230,10 +232,18 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
+        # Since Linear SVM solver is liblinear, determine the subsolver to use
+        # according to estimator params to set the right default for max_iter
+        # and tol
+        internal_solver = _get_liblinear_solver_type(self.multi_class,
+                self.penalty, self.loss, self.dual)
+        self.tol_, self.max_iter_ = _check_convergence_params('liblinear', 
+                self.tol, self.max_iter, internal_solver)
+
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             self.class_weight, self.penalty, self.dual, self.verbose,
-            self.max_iter, self.tol, self.random_state, self.multi_class,
+            self.max_iter_, self.tol_, self.random_state, self.multi_class,
             self.loss, sample_weight=sample_weight)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
@@ -416,10 +426,20 @@ class LinearSVR(LinearModel, RegressorMixin):
                          dtype=np.float64, order="C",
                          accept_large_sparse=False)
         penalty = 'l2'  # SVR only accepts l2 penalty
+
+        # Since Linear SVM solver is liblinear, determine the subsolver to use
+        # according to estimator params to set the right default for max_iter
+        # and tol
+        multi_class = 'ovr' # _fit_liblinear default
+        internal_solver = _get_liblinear_solver_type(multi_class,
+                penalty, self.loss, self.dual)
+        self.tol_, self.max_iter_ = _check_convergence_params('liblinear', 
+                self.tol, self.max_iter, internal_solver)
+
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             None, penalty, self.dual, self.verbose,
-            self.max_iter, self.tol, self.random_state, loss=self.loss,
+            self.max_iter_, self.tol_, self.random_state, loss=self.loss,
             epsilon=self.epsilon, sample_weight=sample_weight)
         self.coef_ = self.coef_.ravel()
 

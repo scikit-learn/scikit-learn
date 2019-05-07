@@ -46,6 +46,19 @@ X_sp = sp.csr_matrix(X)
 Y1 = [0, 1, 1]
 Y2 = [2, 1, 0]
 iris = load_iris()
+ALL_SOLVERS = ['liblinear', 'lbfgs', 'sag', 'saga', 'newton-cg']
+DEFAULT_CONV = {'liblinear': {0: (1e-2, 1000), 1: (1e-1, 1000),
+                                2: (1e-2, 1000), 3: (1e-1, 1000),
+                                4: (1e-1, 1000), 5: (1e-2, 1000),
+                                6: (1e-2, 1000), 7: (1e-1, 1000),
+                                11: (1e-3, 1000), 12: (1e-1, 1000),
+                                13: (1e-1, 1000)},
+                'lbfgs': {0: (1e-4, 15000)},
+                'sag': {0: (1e-3, 1000)},
+                'saga': {0: (1e-3, 1000)},
+                'newton-cg': {0: (1e-4, 100)},
+                'logistic': {0: (1e-4, 1e2)},
+                'svm': {0: (1e-4, 1e3)}}
 
 
 def check_predictions(clf, X, y):
@@ -1787,3 +1800,38 @@ def test_penalty_none(solver):
         "LogisticRegressionCV",
         lr.fit, X, y
     )
+
+
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value'
+                            ' for \'cv\'') # 0.22
+@pytest.mark.parametrize('estimator',
+        [LogisticRegression(), LogisticRegressionCV()])
+@pytest.mark.parametrize('solver', ALL_SOLVERS)
+def test_convergence_params_auto(estimator, solver):
+    tol = 'auto'
+    max_iter = 'auto'
+
+    X, y = make_classification(n_samples=1000, random_state=0)
+    estimator.set_params(**{'solver': solver, 'tol': tol, 'max_iter': max_iter})
+    estimator.fit(X, y)
+    assert((estimator.tol, estimator.max_iter) == ('auto', 'auto'))
+    assert((estimator.tol_, estimator.max_iter_) == DEFAULT_CONV[solver][0])
+
+
+@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
+@pytest.mark.filterwarnings('ignore: You should specify a value'
+                            ' for \'cv\'') # 0.22
+@pytest.mark.parametrize('estimator',
+        [LogisticRegression(), LogisticRegressionCV(Cs=[1, 10])])
+def test_convergence_params_liblinear(estimator):
+    tol = 'auto'
+    max_iter = 'auto'
+    solver = 'liblinear'
+
+    X, y = make_classification(n_samples=1000,  random_state=0)
+    estimator.set_params(**{'solver': solver, 'tol': tol,
+                            'max_iter': max_iter, 'dual': True})
+    estimator.fit(X, y)
+    assert((estimator.tol, estimator.max_iter) == ('auto', 'auto'))
+    assert((estimator.tol_, estimator.max_iter_) == DEFAULT_CONV[solver][7])
