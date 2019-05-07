@@ -825,7 +825,7 @@ Miscellaneous
 
 - |Enhancement| Joblib is no longer vendored in scikit-learn, and becomes a
   dependency. Minimal supported version is joblib 0.11, however using
-  version >= 0.13 is strongly recommended. 
+  version >= 0.13 is strongly recommended.
   :pr:`13531` by :user:`Roman Yurchak <rth>`.
 
 
