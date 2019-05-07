@@ -85,7 +85,9 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                                  " it has to be of shape (n_features,).")
 
         self.categories_ = []
-        self.unfrequent_= []
+        self.infrequent_= []
+        self._is_infrequent = []
+        self.infrequent_indices_ = []
 
         for i in range(n_features):
             Xi = X_list[i]
@@ -104,12 +106,14 @@ class _BaseEncoder(BaseEstimator, TransformerMixin):
                                " during fit".format(diff, i))
                         raise ValueError(msg)
             self.categories_.append(cats)
-            self.unfrequent_.append(self._find_unfrequent_categories(Xi))
+            inf, indices = self._find_infrequent_categories(Xi)
+            self.infrequent_.append(inf)
+            self.infrequent_indices_.append(indices)
 
-    def _find_unfrequent_categories(self, Xi):
-        unique, counts= np.unique(Xi, return_counts=True)
-        indices = np.argsort(counts)[-self.max_levels:]
-        return unique[indices]
+    def _find_infrequent_categories(self, Xi):
+        unique, counts = np.unique(Xi, return_counts=True)
+        indices = np.argsort(counts)[:-self.max_levels]
+        return unique[indices], indices
 
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
@@ -685,6 +689,18 @@ class OneHotEncoder(_BaseEncoder):
         """New implementation assuming categorical input"""
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        hello = []
+        for feature_idx in range(X_int.shape[1]):
+            col = X_int[:, feature_idx]
+            if self.infrequent_[feature_idx].size > 0:
+                mapping = np.arange(len(self.categories_[feature_idx]))
+                for i in self.infrequent_indices_[feature_idx]:
+                    mapping[i] = np.iinfo(col.dtype).max
+
+                from .label import _encode_numpy
+                _, encoded_mapping = _encode_numpy(mapping, encode=True)
+                col[:] = encoded_mapping[col]
+                hello.append(encoded_mapping)
 
         n_samples, n_features = X_int.shape
 
@@ -694,12 +710,16 @@ class OneHotEncoder(_BaseEncoder):
             # We remove all the dropped categories from mask, and decrement all
             # categories that occur after them to avoid an empty column.
 
+            if not isinstance(self.drop, str):  # drop is not 'first'
+                for i in range(to_drop.shape[1]):
+                    to_drop[0][i] = hello[i][to_drop[0][i]]
+
             keep_cells = X_int != to_drop
             X_mask &= keep_cells
             X_int[X_int > to_drop] -= 1
-            n_values = [len(cats) - 1 for cats in self.categories_]
+            n_values = [len(cats) - len(inf) for (cats, inf) in zip(self.categories_, self.infrequent_)]
         else:
-            n_values = [len(cats) for cats in self.categories_]
+            n_values = [len(cats) - len(inf) + 1 for (cats, inf) in zip(self.categories_, self.infrequent_)]
 
         mask = X_mask.ravel()
         n_values = np.array([0] + n_values)
