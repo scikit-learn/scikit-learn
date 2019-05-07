@@ -23,7 +23,7 @@ from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
-from sklearn.svm import SVC
+from sklearn.svm import OneClassSVM, SVC
 from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
@@ -328,6 +328,17 @@ def test_pipeline_methods_pca_svm():
     pipe.predict_proba(X)
     pipe.predict_log_proba(X)
     pipe.score(X, y)
+
+
+def test_pipeline_score_samples_pca_oneclass_svm():
+    iris = load_iris()
+    X = iris.data
+    # Test with PCA + OneClassSVM
+    clf = OneClassSVM()
+    pca = PCA(svd_solver='full', n_components='mle', whiten=True)
+    pipe = Pipeline([('pca', pca), ('oneclass_svm', clf)])
+    pipe.fit(X)
+    pipe.score_samples(X)
 
 
 def test_pipeline_methods_preprocessing_svm():
