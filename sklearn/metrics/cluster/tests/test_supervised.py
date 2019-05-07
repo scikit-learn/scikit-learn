@@ -229,8 +229,7 @@ def test_adjusted_mutual_info_score():
     a110 = np.array([list(labels_a) * 110]).flatten()
     b110 = np.array([list(labels_b) * 110]).flatten()
     ami = adjusted_mutual_info_score(a110, b110)
-    # This is not accurate to more than 2 places
-    assert_almost_equal(ami, 0.37, 2)
+    assert_almost_equal(ami, 0.38, 2)
 
 
 def test_expected_mutual_info_overflow():
