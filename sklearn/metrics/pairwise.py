@@ -729,7 +729,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True, **metric_k
         MIN_MAX = {}
         if 'MIN' not in metric_kwargs or 'MAX' not in metric_kwargs:
             MIN_MAX = _precompute_metric_params(X_num, Y_num, metric='gower', 
-			**metric_kwargs)
+            **metric_kwargs)
         else:
             MIN_MAX['MIN'] = metric_kwargs['MIN']
             MIN_MAX['MAX'] = metric_kwargs['MAX']
