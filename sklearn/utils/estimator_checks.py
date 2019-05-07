@@ -185,10 +185,12 @@ def _yield_regressor_checks(name, regressor):
 def _yield_transformer_checks(name, transformer):
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    yield check_transformer_data_not_an_array
+    if not _safe_tags(transformer, "no_validation"):
+        yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
-    yield check_transformer_general
-    yield partial(check_transformer_general, readonly_memmap=True)
+    if not _safe_tags(transformer, "no_validation"):
+        yield check_transformer_general
+        yield partial(check_transformer_general, readonly_memmap=True)
 
     if not _safe_tags(transformer, "stateless"):
         yield check_transformers_unfitted
