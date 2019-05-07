@@ -380,13 +380,6 @@ def set_checking_parameters(estimator):
     if name == "TheilSenRegressor":
         estimator.max_subpopulation = 100
 
-    if estimator.__class__.__name__ == "IsolationForest":
-        # XXX to be removed in 0.22.
-        # this is used because the old IsolationForest does not
-        # respect the outlier detection API and thus and does not
-        # pass the outlier detection common tests.
-        estimator.set_params(behaviour='new')
-
     if isinstance(estimator, BaseRandomProjection):
         # Due to the jl lemma and often very few samples, the number
         # of components of the random matrix projection will be probably
