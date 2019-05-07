@@ -1508,8 +1508,8 @@ decide what tests to run and what input data is appropriate. Tags can depend on
 estimator parameters or even system architecture and can in general only be
 determined at runtime.
 
-The default value of all tags except for ``X_types`` is ``False``. These are
-defined in the ``BaseEstimator`` class.
+The default value of all tags except for ``X_types`` and ``requires_fit`` is
+``False``. These are defined in the ``BaseEstimator`` class.
 
 The current set of estimator tags are:
 
@@ -1531,6 +1531,10 @@ multilabel
 stateless
     whether the estimator needs access to data for fitting. Even though
     an estimator is stateless, it might still need a call to ``fit`` for initialization.
+
+requires_fit
+    whether the estimator requires to be fitted before calling one of
+    `transform`, `predict`, `predict_proba`, or `decision_function`.
 
 allow_nan
     whether the estimator supports data with missing values encoded as np.NaN

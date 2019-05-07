@@ -37,7 +37,7 @@ from ..linear_model import Ridge
 
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                          _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
+                    _DEFAULT_TAGS, RegressorMixin, is_outlier_detector)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 
@@ -45,12 +45,12 @@ from ..random_projection import BaseRandomProjection
 from ..feature_selection import SelectKBest
 from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
+from ..exceptions import NotFittedError
 from ..exceptions import SkipTestWarning
 from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
-from ..metrics.pairwise import (rbf_kernel, linear_kernel,
-                                      pairwise_distances)
+from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
 from .import shuffle
 from .validation import has_fit_parameter, _num_samples
@@ -128,7 +128,8 @@ def _yield_classifier_checks(name, classifier):
     if not tags["no_validation"]:
         yield check_supervised_y_no_nan
         yield check_supervised_y_2d
-    yield check_estimators_unfitted
+    if tags["requires_fit"]:
+        yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
         yield check_class_weight_classifiers
 
@@ -176,7 +177,8 @@ def _yield_regressor_checks(name, regressor):
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
-    yield check_estimators_unfitted
+    if tags["requires_fit"]:
+        yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
 
 
@@ -222,7 +224,8 @@ def _yield_outliers_checks(name, estimator):
         # test outlier detectors can handle non-array data
         yield check_classifier_data_not_an_array
         # test if NotFittedError is raised
-        yield check_estimators_unfitted
+        if _safe_tags(estimator, "requires_fit"):
+            yield check_estimators_unfitted
 
 
 def _yield_all_checks(name, estimator):
@@ -1643,47 +1646,16 @@ def check_estimators_fit_returns_self(name, estimator_orig,
 def check_estimators_unfitted(name, estimator_orig):
     """Check that predict raises an exception in an unfitted estimator.
 
-    Unfitted estimators should raise either AttributeError or ValueError.
-    The specific exception type NotFittedError inherits from both and can
-    therefore be adequately raised for that purpose.
+    Unfitted estimators should raise a NotFittedError.
     """
-
     # Common test for Regressors, Classifiers and Outlier detection estimators
     X, y = _boston_subset()
 
     estimator = clone(estimator_orig)
-
-    msg = "fit"
-    if hasattr(estimator, 'predict'):
-        can_predict = False
-        try:
-            # some models can predict without fitting
-            # like GaussianProcess regressors
-            # in this case, we skip this test
-            pred = estimator.predict(X)
-            assert pred.shape[0] == X.shape[0]
-            can_predict = True
-        except ValueError:
-            pass
-        if can_predict:
-            raise SkipTest(
-                "{} can predict without fitting, skipping "
-                "check_estimator_unfitted.".format(name))
-
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict, X)
-
-    if hasattr(estimator, 'decision_function'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.decision_function, X)
-
-    if hasattr(estimator, 'predict_proba'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict_proba, X)
-
-    if hasattr(estimator, 'predict_log_proba'):
-        assert_raise_message((AttributeError, ValueError), msg,
-                             estimator.predict_log_proba, X)
+    for method in ('decision_function', 'predict', 'predict_proba',
+                   'predict_log_proba'):
+        if hasattr(estimator, method):
+            assert_raises(NotFittedError, getattr(estimator, method), X)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
