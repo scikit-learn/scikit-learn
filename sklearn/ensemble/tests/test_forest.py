@@ -41,6 +41,8 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import skip_if_no_parallel
 
+from sklearn.exceptions import NotFittedError
+
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
 from sklearn.datasets import make_classification
@@ -370,14 +372,12 @@ def test_importances_asymptotic():
     assert_less(np.abs(true_importances - importances).mean(), 0.01)
 
 
-def check_unfitted_feature_importances(name):
-    assert_raises(ValueError, getattr, FOREST_ESTIMATORS[name](random_state=0),
-                  "feature_importances_")
-
-
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_unfitted_feature_importances(name):
-    check_unfitted_feature_importances(name)
+    err_msg = ("This {} instance is not fitted yet. Call 'fit' with "
+               "appropriate arguments before using this method.".format(name))
+    with pytest.raises(NotFittedError, match=err_msg):
+        getattr(FOREST_ESTIMATORS[name](), 'feature_importances_')
 
 
 def check_oob_score(name, X, y, n_estimators=20):

@@ -350,10 +350,10 @@ def test_cross_validate_invalid_scoring_param():
 
     # Multiclass Scorers that return multiple values are not supported yet
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(gamma='scale'), X, y,
+                        cross_validate, SVC(), X, y,
                         scoring=multivalued_scorer)
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(gamma='scale'), X, y,
+                        cross_validate, SVC(), X, y,
                         scoring={"foo": multivalued_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
@@ -567,7 +567,7 @@ def test_cross_val_score_precomputed():
     assert_array_almost_equal(score_precomputed, score_linear)
 
     # test with callable
-    svm = SVC(gamma='scale', kernel=lambda x, y: np.dot(x, y.T))
+    svm = SVC(kernel=lambda x, y: np.dot(x, y.T))
     score_callable = cross_val_score(svm, X, y)
     assert_array_almost_equal(score_precomputed, score_callable)
 

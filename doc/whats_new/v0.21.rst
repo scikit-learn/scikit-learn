@@ -324,6 +324,12 @@ Support for Python 3.4 and below has been officially dropped.
   of the estimators was set to ``None`` and ``sample_weight`` was not ``None``.
   :pr:`13779` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |API| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` accept ``'drop'`` to disable an estimator
+  in addition to ``None`` to be consistent with other estimators (i.e.,
+  :class:`pipeline.FeatureUnion` and :class:`compose.ColumnTransformer`).
+  :pr:`13780` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.externals`
 ........................
 
@@ -819,7 +825,7 @@ Miscellaneous
 
 - |Enhancement| Joblib is no longer vendored in scikit-learn, and becomes a
   dependency. Minimal supported version is joblib 0.11, however using
-  version >= 0.13 is strongly recommended. 
+  version >= 0.13 is strongly recommended.
   :pr:`13531` by :user:`Roman Yurchak <rth>`.
 
 
