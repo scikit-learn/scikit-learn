@@ -613,7 +613,7 @@ def cosine_distances(X, Y=None):
     return S
 
 
-def gower_distances(X, Y=None, categorical_features=None, scale=True):
+def gower_distances(X, Y=None, categorical_features=None, scale=True, **metric_kwargs):
     """Compute the distances between the observations in X and Y,
     that may contain mixed types of data, using an implementation
     of Gower formula.
@@ -641,6 +641,10 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
         Indicates if the data will be scaled between 0 and 1. If false, it
         is assumed the data is already scaled.
 
+    metric_kwargs : dict, optional
+        Keyword arguments with precomputed parameters (MIN, MAX)
+        to scale the data.
+        
     Returns
     -------
     similarities : ndarray, shape (n_samples, n_samples)
@@ -689,6 +693,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
 
     X, Y = check_pairwise_arrays(X, Y, precomputed=False, dtype=X.dtype,
                                  force_all_finite=False)
+    
 
     n_rows, n_cols = X.shape
 
@@ -722,38 +727,25 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True):
     # Calculates the min and max values, and if requested, scale the
     # input values as proposed by the Gower's paper.
     if n_col_num_present:
-        min_of_numeric = np.zeros(num_cols)
-        max_of_numeric = np.zeros(num_cols)
-        for col in range(num_cols):
-            col_array = X_num[:, col]
-            lo = np.nanmin(col_array)
-            hi = np.nanmax(col_array)
-
-            if y_is_not_none:
-                col_array = Y_num[:, col]
-                lo = np.nanmin([lo, np.nanmin(col_array)])
-                hi = np.nanmax([hi, np.nanmax(col_array)])
-
-            if np.isnan(lo):
-                lo = 0.0
-            if np.isnan(hi):
-                hi = 0.0
-
-            min_of_numeric[col] = lo
-            max_of_numeric[col] = hi
-
+        MIN_MAX = {}
+        if 'MIN' not in metric_kwargs or 'MAX' not in metric_kwargs:
+            MIN_MAX = _precompute_metric_params(X_num, Y_num, metric='gower', **metric_kwargs)
+        else:
+            MIN_MAX['MIN'] = metric_kwargs['MIN']
+            MIN_MAX['MAX'] = metric_kwargs['MAX']
+            
+        print(MIN_MAX)
         # Scales the numeric values between 0 and 1.
         if scale:
-            scaler = MinMaxScaler().fit([min_of_numeric, max_of_numeric])
+            scaler = MinMaxScaler().fit([MIN_MAX['MIN'], MIN_MAX['MAX']])
             X_num = scaler.transform(X_num)
             if y_is_not_none:
                 Y_num = scaler.transform(Y_num)
             else:
                 Y_num = X_num
         # If not, checks if the data is scaled.
-        elif np.min(min_of_numeric) < 0 or np.max(max_of_numeric) > 1:
-            warnings.warn("Input data is not scaled between 0 and 1.",
-                          UserWarning)
+        elif np.min(MIN_MAX['MIN']) < 0 or np.max(MIN_MAX['MAX']) > 1:
+            raise ValueError("Input data is not scaled between 0 and 1.")
 
     y_n_rows = Y.shape[0]
     D = np.zeros((n_rows, y_n_rows), dtype=np.float)
@@ -1448,6 +1440,13 @@ def _check_chunk_size(reduced, chunk_size):
 def _precompute_metric_params(X, Y, metric=None, **kwds):
     """Precompute data-derived metric parameters if not provided
     """
+    if metric == "gower":
+        MIN_MAX ={}
+        if 'MIN' not in kwds:
+            MIN_MAX['MIN'] = np.nanmin((np.vstack([X, Y]), X)[X is Y], axis=0)
+        if 'MAX' not in kwds:
+            MIN_MAX['MAX'] = np.nanmax((np.vstack([X, Y]), X)[X is Y], axis=0)
+        return MIN_MAX
     if metric == "seuclidean" and 'V' not in kwds:
         if X is Y:
             V = np.var(X, axis=0, ddof=1)

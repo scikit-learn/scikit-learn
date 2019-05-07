@@ -855,11 +855,11 @@ def test_gower_distances():
     D = gower_distances(X, Y)
 
     # The expected normalized values above are:
-    X = [[0.073765, 0.0],
+    Xn = [[0.073765, 0.0],
          [0.644548, 0.001],
          [0.0,      0.0]]
 
-    Y = [[0.073765, 0.0],
+    Yn = [[0.073765, 0.0],
          [0.644548, 0.001],
          [1.0,      1.0]]
 
@@ -868,10 +868,16 @@ def test_gower_distances():
     D_expected = np.zeros((n_rows, n_rows))
     for i in range(0, n_rows):
         for j in range(0, n_rows):
-            D_expected[i][j] = (abs(X[i][0] - Y[j][0]) +
-                                abs(X[i][1] - Y[j][1])) / n_cols
+            D_expected[i][j] = (abs(Xn[i][0] - Yn[j][0]) +
+                                abs(Xn[i][1] - Yn[j][1])) / n_cols
 
     assert_array_almost_equal(D_expected, D)
+
+    # Test the use of metric parameters
+    D = gower_distances(X, Y, MIN=[1.0,1.0], MAX=[3000.0, 3000.0])
+
+    assert_array_almost_equal(D_expected, D)
+
 
     # Test to obtain a non-squared distance matrix
     X = np.array([['Syria', 1.0, 0.0, 0.0, True],
@@ -948,13 +954,10 @@ def test_gower_distances():
 
     # Test warnings for unexpected non-normalized data
     X = [[1, 20], [0, -10.0]]
-    with pytest.warns(UserWarning) as record:
+    with pytest.raises(ValueError):
         gower_distances(X, scale=False)
-        assert len(record) > 0
-        assert record[0].message.args[0] == \
-            "Input data is not scaled between 0 and 1."
 
-
+    
 def test_haversine_distances():
     # Check haversine distance with distances computation
     def slow_haversine_distances(x, y):
