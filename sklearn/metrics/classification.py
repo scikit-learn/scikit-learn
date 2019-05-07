@@ -1989,7 +1989,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     -----
     In multiclass classification, the Hamming loss corresponds to the Hamming
     distance between ``y_true`` and ``y_pred`` which is equivalent to the
-    subset ``zero_one_loss`` function, when normalize parameter is set to True.
+    subset ``zero_one_loss`` function, when `normalize` parameter is set to True.
 
     In multilabel classification, the Hamming loss is different from the
     subset zero-one loss. The zero-one loss considers the entire set of labels
@@ -1998,7 +1998,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     individual labels.
 
     The Hamming loss is upperbounded by the subset zero-one loss, when
-    normalize parameter is set to True. It is always between 0 and 1,
+    `normalize` parameter is set to True. It is always between 0 and 1,
     lower being better.
 
     References
