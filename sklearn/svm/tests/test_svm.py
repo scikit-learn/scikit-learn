@@ -518,7 +518,6 @@ def test_bad_input():
     assert_raises(ValueError, clf.predict, Xt)
 
 
-
 @pytest.mark.parametrize(
     'Estimator, data',
     [(svm.SVC, datasets.load_iris(return_X_y=True)),
