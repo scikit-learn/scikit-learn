@@ -34,8 +34,7 @@ score_funcs = [
 
 def test_future_warning():
     score_funcs_with_changing_means = [
-        normalized_mutual_info_score,
-        adjusted_mutual_info_score,
+        normalized_mutual_info_score
     ]
     warning_msg = "The behavior of "
     args = [0, 0, 0], [0, 0, 0]
@@ -223,7 +222,7 @@ def test_adjusted_mutual_info_score():
     assert_almost_equal(emi, 0.15042, 5)
     # Adjusted mutual information
     ami = adjusted_mutual_info_score(labels_a, labels_b)
-    assert_almost_equal(ami, 0.27502, 5)
+    assert_almost_equal(ami, 0.27821, 5)
     ami = adjusted_mutual_info_score([1, 1, 2, 2], [2, 2, 3, 3])
     assert_equal(ami, 1.0)
     # Test with a very large array
