@@ -706,13 +706,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         - single uses the minimum of the distances between all observations
           of the two sets.
 
-    pooling_func : callable, default='deprecated'
-        Ignored.
-
-        .. deprecated:: 0.20
-            ``pooling_func`` has been deprecated in 0.20 and will be removed
-            in 0.22.
-
     distance_threshold : float, optional (default=None)
         The linkage distance threshold above which, clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
@@ -764,8 +757,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func='deprecated',
-                 distance_threshold=None):
+                 linkage='ward', distance_threshold=None):
         self.n_clusters = n_clusters
         self.distance_threshold = distance_threshold
         self.memory = memory
@@ -773,7 +765,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
-        self.pooling_func = pooling_func
 
     @deprecated("The ``n_components_`` attribute was deprecated "
                 "in favor of ``n_connected_components_`` in 0.21 "
@@ -797,11 +788,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
-        if (self.pooling_func != 'deprecated' and
-                not isinstance(self, AgglomerationTransform)):
-            warnings.warn('Agglomerative "pooling_func" parameter is not used.'
-                          ' It has been deprecated in version 0.20 and will be'
-                          'removed in 0.22', DeprecationWarning)
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
