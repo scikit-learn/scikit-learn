@@ -1230,7 +1230,7 @@ class _RidgeGCV(LinearModel):
         QT_y = np.dot(Q.T, y)
         return X_mean, v, Q, QT_y
 
-    def _solve_gram(self, alpha, y, sqrt_sw, X_mean, v, Q, QT_y):
+    def _solve_eigen_gram(self, alpha, y, sqrt_sw, X_mean, v, Q, QT_y):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
         Used when we have a decomposition of X.X^T (n_features >= n_samples).
@@ -1253,7 +1253,7 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return G_diag, c
 
-    def _svd_decompose_covariance(self, X, y, sqrt_sw):
+    def _eigen_decompose_covariance(self, X, y, sqrt_sw):
         """Eigendecomposition of X^T.X, used when n_samples > n_features."""
         n_samples, n_features = X.shape
         cov = np.empty((n_features + 1, n_features + 1), dtype=X.dtype)
@@ -1276,7 +1276,7 @@ class _RidgeGCV(LinearModel):
         V = V[:, nullspace_dim:]
         return X_mean, s, V, X
 
-    def _solve_covariance_sparse_no_intercept(
+    def _solve_eigen_covariance_no_intercept(
             self, alpha, y, sqrt_sw, X_mean, s, V, X):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
@@ -1293,7 +1293,7 @@ class _RidgeGCV(LinearModel):
             hat_diag = hat_diag[:, np.newaxis]
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
-    def _solve_covariance_sparse_intercept(
+    def _solve_eigen_covariance_intercept(
             self, alpha, y, sqrt_sw, X_mean, s, V, X):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
@@ -1323,7 +1323,7 @@ class _RidgeGCV(LinearModel):
             hat_diag = hat_diag[:, np.newaxis]
         return (1 - hat_diag) / alpha, (y - y_hat) / alpha
 
-    def _solve_covariance_sparse(
+    def _solve_eigen_covariance(
             self, alpha, y, sqrt_sw, X_mean, s, V, X):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
@@ -1331,9 +1331,9 @@ class _RidgeGCV(LinearModel):
         (n_features < n_samples and X is sparse).
         """
         if self.fit_intercept:
-            return self._solve_covariance_sparse_intercept(
+            return self._solve_eigen_covariance_intercept(
                 alpha, y, sqrt_sw, X_mean, s, V, X)
-        return self._solve_covariance_sparse_no_intercept(
+        return self._solve_eigen_covariance_no_intercept(
             alpha, y, sqrt_sw, X_mean, s, V, X)
 
     def _svd_decompose_design_matrix(self, X, y, sqrt_sw):
@@ -1350,7 +1350,7 @@ class _RidgeGCV(LinearModel):
         UT_y = np.dot(U.T, y)
         return X_mean, v, U, UT_y
 
-    def _solve_covariance_dense(
+    def _solve_svd_design_matrix(
             self, alpha, y, sqrt_sw, X_mean, v, U, UT_y):
         """Compute dual coefficients and diagonal of (Identity - Hat_matrix)
 
@@ -1411,14 +1411,14 @@ class _RidgeGCV(LinearModel):
 
         if gcv_mode == 'eigen':
             decompose = self._eigen_decompose_gram
-            solve = self._solve_gram
+            solve = self._solve_eigen_gram
         elif gcv_mode == 'svd':
             if sparse.issparse(X):
-                decompose = self._svd_decompose_covariance
-                solve = self._solve_covariance_sparse
+                decompose = self._eigen_decompose_covariance
+                solve = self._solve_eigen_covariance
             else:
                 decompose = self._svd_decompose_design_matrix
-                solve = self._solve_covariance_dense
+                solve = self._solve_svd_design_matrix
 
         if sample_weight is not None:
             X, y = _rescale_data(X, y, sample_weight)
