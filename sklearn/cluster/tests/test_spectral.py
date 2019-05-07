@@ -204,16 +204,3 @@ def test_spectral_clustering_with_arpack_amg_solvers():
         assert_raises(
             ValueError, spectral_clustering,
             graph, n_clusters=2, eigen_solver='amg', random_state=0)
-
-
-def test_n_components():
-    # no value passed to n_components
-    sp = SpectralClustering(n_clusters=4, affinity="nearest_neighbors",
-                            random_state=0)
-    assert sp.n_components == sp.n_clusters
-
-    # set n_components value to be 2
-    n_comp = 2
-    sp = SpectralClustering(n_components=n_comp, affinity="nearest_neighbors",
-                            random_state=0)
-    assert sp.n_components == n_comp
