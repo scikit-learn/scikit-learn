@@ -26,8 +26,7 @@ def test_delegate_to_func():
     kwargs_store = {}
     X = np.arange(10).reshape((5, 2))
     assert_array_equal(
-        FunctionTransformer(_make_func(args_store, kwargs_store),
-                            validate=False).transform(X),
+        FunctionTransformer(_make_func(args_store, kwargs_store)).transform(X),
         X, 'transform should have returned X unchanged',
     )
 
@@ -52,7 +51,7 @@ def test_delegate_to_func():
     kwargs_store.clear()
     transformed = FunctionTransformer(
         _make_func(args_store, kwargs_store),
-        validate=False).transform(X)
+    ).transform(X)
 
     assert_array_equal(transformed, X,
                        err_msg='transform should have returned X unchanged')
@@ -74,8 +73,6 @@ def test_delegate_to_func():
     )
 
 
-@ignore_warnings(category=FutureWarning)
-# ignore warning for validate=False 0.22
 def test_np_log():
     X = np.arange(10).reshape((5, 2))
 
@@ -86,8 +83,6 @@ def test_np_log():
     )
 
 
-@ignore_warnings(category=FutureWarning)
-# ignore warning for validate=False 0.22
 def test_kw_arg():
     X = np.linspace(0, 1, num=10).reshape((5, 2))
 
@@ -98,8 +93,6 @@ def test_kw_arg():
                        np.around(X, decimals=3))
 
 
-@ignore_warnings(category=FutureWarning)
-# ignore warning for validate=False 0.22
 def test_kw_arg_update():
     X = np.linspace(0, 1, num=10).reshape((5, 2))
 
@@ -111,8 +104,6 @@ def test_kw_arg_update():
     assert_array_equal(F.transform(X), np.around(X, decimals=1))
 
 
-@ignore_warnings(category=FutureWarning)
-# ignore warning for validate=False 0.22
 def test_kw_arg_reset():
     X = np.linspace(0, 1, num=10).reshape((5, 2))
 
@@ -124,8 +115,6 @@ def test_kw_arg_reset():
     assert_array_equal(F.transform(X), np.around(X, decimals=1))
 
 
-@ignore_warnings(category=FutureWarning)
-# ignore warning for validate=False 0.22
 def test_inverse_transform():
     X = np.array([1, 4, 9, 16]).reshape((2, 2))
 
@@ -140,8 +129,6 @@ def test_inverse_transform():
     )
 
 
-@ignore_warnings(category=FutureWarning)
-# ignore warning for validate=False 0.22
 def test_check_inverse():
     X_dense = np.array([1, 4, 9, 16], dtype=np.float64).reshape((2, 2))
 
@@ -184,23 +171,9 @@ def test_check_inverse():
     assert_no_warnings(trans.fit, X_dense)
 
 
-@pytest.mark.parametrize("validate, expected_warning",
-                         [(None, FutureWarning),
-                          (True, None),
-                          (False, None)])
-def test_function_transformer_future_warning(validate, expected_warning):
-    # FIXME: to be removed in 0.22
-    X = np.random.randn(100, 10)
-    transformer = FunctionTransformer(validate=validate)
-    with pytest.warns(expected_warning) as results:
-        transformer.fit_transform(X)
-    if expected_warning is None:
-        assert len(results) == 0
-
-
 def test_function_transformer_frame():
     pd = pytest.importorskip('pandas')
     X_df = pd.DataFrame(np.random.randn(100, 10))
-    transformer = FunctionTransformer(validate=False)
+    transformer = FunctionTransformer()
     X_df_trans = transformer.fit_transform(X_df)
     assert hasattr(X_df_trans, 'loc')

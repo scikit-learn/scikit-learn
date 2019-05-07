@@ -115,8 +115,7 @@ def test_transform_target_regressor_1d_transformer(X, y):
     # 2D vector. We check the consistency of the data shape using a 1D and 2D y
     # array.
     transformer = FunctionTransformer(func=lambda x: x + 1,
-                                      inverse_func=lambda x: x - 1,
-                                      validate=False)
+                                      inverse_func=lambda x: x - 1)
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       transformer=transformer)
     y_pred = regr.fit(X, y).predict(X)

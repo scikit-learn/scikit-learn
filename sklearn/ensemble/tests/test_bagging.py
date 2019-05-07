@@ -837,8 +837,7 @@ def test_bagging_regressor_with_missing_inputs():
     for y in y_values:
         regressor = DecisionTreeRegressor()
         pipeline = make_pipeline(
-            FunctionTransformer(replace, validate=False),
-            regressor
+            FunctionTransformer(replace), regressor
         )
         pipeline.fit(X, y).predict(X)
         bagging_regressor = BaggingRegressor(pipeline)
@@ -865,8 +864,7 @@ def test_bagging_classifier_with_missing_inputs():
     y = np.array([3, 6, 6, 6, 6])
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(
-        FunctionTransformer(replace, validate=False),
-        classifier
+        FunctionTransformer(replace), classifier
     )
     pipeline.fit(X, y).predict(X)
     bagging_classifier = BaggingClassifier(pipeline)
