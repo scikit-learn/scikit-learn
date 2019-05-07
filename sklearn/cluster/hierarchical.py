@@ -747,8 +747,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     >>> clustering # doctest: +NORMALIZE_WHITESPACE
     AgglomerativeClustering(affinity='euclidean', compute_full_tree='auto',
                             connectivity=None, distance_threshold=None,
-                            linkage='ward', memory=None, n_clusters=2,
-                            pooling_func='deprecated')
+                            linkage='ward', memory=None, n_clusters=2)
     >>> clustering.labels_
     array([1, 1, 1, 0, 0, 0])
 
