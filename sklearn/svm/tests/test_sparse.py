@@ -2,7 +2,7 @@ import pytest
 
 import numpy as np
 from numpy.testing import (assert_array_almost_equal, assert_array_equal,
-                           assert_equal)
+                           assert_equal, assert_allclose)
 from scipy import sparse
 
 from sklearn import datasets, svm, linear_model, base
@@ -13,6 +13,7 @@ from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.testing import (assert_raises, assert_warns,
                                    assert_raise_message, ignore_warnings,
                                    skip_if_32bit)
+from sklearn.utils import shuffle
 
 
 # test sample 1
@@ -145,20 +146,77 @@ def test_svc_with_custom_kernel():
     assert_array_equal(clf_lin.predict(X_sp), clf_mylin.predict(X_sp))
 
 
-def test_svc_iris():
-    # Test the sparse SVC with the iris dataset
-    for k in ('linear', 'poly', 'rbf'):
-        sp_clf = svm.SVC(gamma='scale', kernel=k).fit(iris.data, iris.target)
-        clf = svm.SVC(gamma='scale', kernel=k).fit(iris.data.toarray(),
-                                                   iris.target)
+def _toarray(a):
+    if sparse.issparse(a):
+        return a.toarray()
+    return a
 
-        assert_array_almost_equal(clf.support_vectors_,
-                                  sp_clf.support_vectors_.toarray())
-        assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.toarray())
-        assert_array_almost_equal(
-            clf.predict(iris.data.toarray()), sp_clf.predict(iris.data))
-        if k == 'linear':
-            assert_array_almost_equal(clf.coef_, sp_clf.coef_.toarray())
+
+def _assert_svc_equal(svc1, svc2, atol=1e-7):
+    # Check that 2 support vector machines parametrize the equivalent decision
+    # functions by comparing dual coefficients and support vectors.
+    assert svc1.get_params() == svc2.get_params()
+
+    sv1 = _toarray(svc1.support_vectors_)
+    dc1 = _toarray(svc1.dual_coef_)
+    sv2 = _toarray(svc2.support_vectors_)
+    dc2 = _toarray(svc2.dual_coef_)
+    assert dc1.shape == dc2.shape
+    assert sv1.shape == sv2.shape
+
+    # Consider each OvO binary classification problem in turn.
+    ovo_dim, n_support_vectors = dc1.shape
+    for ovo_idx in range(ovo_dim):
+        # The ordering of the support vectors is arbitrary. Furthermore, if
+        # samples are duplicated with different class labels, they can be
+        # selected as duplicated support vectors with distinct dual
+        # coefficients.
+
+        # Therefore to check that the 2 SVMs parametrize the same decision
+        # function, we concatenate the dual coef with the matching support
+        # vector coordinates for all the support vectors of each classifier so
+        # that we can check that there are matching pairs (dual_coef,
+        # support_vector) in the two models by computing pairwise distances:
+        dc_sv1 = np.hstack([dc1[ovo_idx].reshape(-1, 1), sv1])
+        dc_sv2 = np.hstack([dc2[ovo_idx].reshape(-1, 1), sv2])
+
+        for sv1_idx in range(n_support_vectors):
+            sqdists = np.sum((dc_sv2 - dc_sv1[sv1_idx]) ** 2, axis=1)
+            sv2_idx = sqdists.argmin()
+            assert np.sqrt(sqdists[sv2_idx]) < atol
+
+    # For the linear kernel, also check that the aggregated coefficients of the
+    # linear decision function in the original feature space match.
+    if svc1.kernel == "linear":
+        max_absdiff = np.abs(_toarray(svc1.coef_) - _toarray(svc2.coef_)).max()
+        assert max_absdiff < atol
+
+
+@pytest.mark.parametrize("kernel", ["linear", "poly", "rbf"])
+def test_svc_iris(kernel, svc_tol=1e-12, atol=1e-7):
+    # The optimization results is not deterministic when the order of the iris
+    # samples is permutated as iris has duplicated samples that can be selected
+    # as support vector or not depending on the training set order. However the
+    # resulting decision function should be independent of the training set
+    # ordering.
+    # Order invariance is only guaranteed if the model has properly converged.
+    # hence the small tol value.
+    iris2_data, iris2_target = shuffle(iris.data, iris.target,
+                                       random_state=0)
+    params = {
+        "gamma": 1.,
+        "kernel": kernel,
+        "tol": svc_tol,
+        "C": 0.01,
+    }
+    sp_clf = svm.SVC(**params).fit(iris.data, iris.target)
+    clf = svm.SVC(**params).fit(iris.data.toarray(), iris.target)
+    sp_clf2 = svm.SVC(**params).fit(iris2_data, iris2_target)
+    clf2 = svm.SVC(**params).fit(iris2_data.toarray(), iris2_target)
+
+    _assert_svc_equal(clf, sp_clf, atol=atol)
+    _assert_svc_equal(clf, clf2, atol=atol)
+    _assert_svc_equal(sp_clf, sp_clf2, atol=atol)
 
 
 def test_sparse_decision_function():
@@ -298,7 +356,8 @@ def test_sparse_oneclasssvm(datasets_index, kernel):
     check_svm_model_equal(clf, sp_clf, *dataset)
 
 
-def test_sparse_realdata():
+@pytest.mark.parametrize("C", [0.01, 1, 100])
+def test_sparse_20newsgroups_subset(C, atol=1e-7):
     # Test on a subset from the 20newsgroups dataset.
     # This catches some bugs if input is not correctly converted into
     # sparse format or weights are not correctly initialized.
@@ -320,11 +379,10 @@ def test_sparse_realdata():
          3., 0., 0., 2., 2., 1., 3., 1., 1., 0., 1., 2., 1.,
          1., 3.])
 
-    clf = svm.SVC(kernel='linear').fit(X.toarray(), y)
-    sp_clf = svm.SVC(kernel='linear').fit(sparse.coo_matrix(X), y)
-
-    assert_array_equal(clf.support_vectors_, sp_clf.support_vectors_.toarray())
-    assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.toarray())
+    params = dict(kernel='linear', C=C, tol=1e-12)
+    clf = svm.SVC(**params).fit(X.toarray(), y)
+    sp_clf = svm.SVC(**params).fit(sparse.coo_matrix(X), y)
+    _assert_svc_equal(clf, sp_clf, atol=atol)
 
 
 def test_sparse_svc_clone_with_callable_kernel():

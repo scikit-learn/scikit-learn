@@ -91,7 +91,7 @@ def test_libsvm_iris():
 def test_precomputed():
     # SVC with a precomputed kernel.
     # We test it with a toy dataset and with iris.
-    clf = svm.SVC(kernel='precomputed')
+    clf = svm.SVC(kernel='precomputed', tol=1e-10)
     # Gram matrix for train data (square matrix)
     # (we use just a linear kernel)
     K = np.dot(X, np.array(X).T)
@@ -119,9 +119,10 @@ def test_precomputed():
 
     # same as before, but using a callable function instead of the kernel
     # matrix. kernel is just a linear kernel
+    def kfunc(x, y):
+        return np.dot(x, y.T)
 
-    kfunc = lambda x, y: np.dot(x, y.T)
-    clf = svm.SVC(gamma='scale', kernel=kfunc)
+    clf = svm.SVC(gamma='scale', kernel=kfunc, tol=1e-10)
     clf.fit(X, Y)
     pred = clf.predict(T)
 
@@ -132,15 +133,15 @@ def test_precomputed():
 
     # test a precomputed kernel with the iris dataset
     # and check parameters against a linear SVC
-    clf = svm.SVC(kernel='precomputed')
-    clf2 = svm.SVC(kernel='linear')
+    clf = svm.SVC(kernel='precomputed', tol=1e-10)
+    clf2 = svm.SVC(kernel='linear', tol=1e-10)
     K = np.dot(iris.data, iris.data.T)
     clf.fit(K, iris.target)
     clf2.fit(iris.data, iris.target)
     pred = clf.predict(K)
     assert_array_almost_equal(clf.support_, clf2.support_)
-    assert_array_almost_equal(clf.dual_coef_, clf2.dual_coef_)
-    assert_array_almost_equal(clf.intercept_, clf2.intercept_)
+    assert_array_almost_equal(clf.dual_coef_, clf2.dual_coef_, decimal=4)
+    assert_array_almost_equal(clf.intercept_, clf2.intercept_, decimal=4)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
     # Gram matrix for test data but compute KT[i,j]
@@ -153,7 +154,7 @@ def test_precomputed():
     pred = clf.predict(K)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
-    clf = svm.SVC(gamma='scale', kernel=kfunc)
+    clf = svm.SVC(gamma='scale', kernel=kfunc, tol=1e-10)
     clf.fit(iris.data, iris.target)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
@@ -428,7 +429,7 @@ def test_weight():
 def test_sample_weights():
     # Test weights on individual samples
     # TODO: check on NuSVR, OneClass, etc.
-    clf = svm.SVC(gamma="scale")
+    clf = svm.SVC(gamma="scale", tol=1e-10)
     clf.fit(X, Y)
     assert_array_equal(clf.predict([X[2]]), [1.])
 
@@ -437,7 +438,7 @@ def test_sample_weights():
     assert_array_equal(clf.predict([X[2]]), [2.])
 
     # test that rescaling all samples is the same as changing C
-    clf = svm.SVC(gamma="scale")
+    clf = svm.SVC(gamma="scale", tol=1e-10)
     clf.fit(X, Y)
     dual_coef_no_weight = clf.dual_coef_
     clf.set_params(C=100)
