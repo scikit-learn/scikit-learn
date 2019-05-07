@@ -319,6 +319,17 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`12599` by :user:`Trevor Stephens<trevorstephens>` and
   :user:`Nicolas Hug<NicolasHug>`.
 
+- |Fix| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` were failing during ``fit`` in one
+  of the estimators was set to ``None`` and ``sample_weight`` was not ``None``.
+  :pr:`13779` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| :class:`ensemble.VotingClassifier` and
+  :class:`ensemble.VotingRegressor` accept ``'drop'`` to disable an estimator
+  in addition to ``None`` to be consistent with other estimators (i.e.,
+  :class:`pipeline.FeatureUnion` and :class:`compose.ColumnTransformer`).
+  :pr:`13780` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.externals`
 ........................
 
@@ -383,6 +394,10 @@ Support for Python 3.4 and below has been officially dropped.
 
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Enhancement| :mod:`linear_model.ridge` now preserves ``float32`` and
+  ``float64`` dtypes. :issues:`8769` and :issues:`11000` by
+  :user:`Guillaume Lemaitre <glemaitre>`, and :user:`Joan Massich <massich>`
 
 - |Feature| :class:`linear_model.LogisticRegression` and
   :class:`linear_model.LogisticRegressionCV` now support Elastic-Net penalty,
@@ -810,7 +825,7 @@ Miscellaneous
 
 - |Enhancement| Joblib is no longer vendored in scikit-learn, and becomes a
   dependency. Minimal supported version is joblib 0.11, however using
-  version >= 0.13 is strongly recommended. 
+  version >= 0.13 is strongly recommended.
   :pr:`13531` by :user:`Roman Yurchak <rth>`.
 
 
