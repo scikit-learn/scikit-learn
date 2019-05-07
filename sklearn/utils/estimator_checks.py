@@ -341,14 +341,7 @@ def set_checking_parameters(estimator):
         # randomized lasso
         estimator.set_params(n_resampling=5)
     if "n_estimators" in params:
-        # especially gradient boosting with default 100
-        # FIXME: The default number of trees was changed and is set to 'warn'
-        # for some of the ensemble methods. We need to catch this case to avoid
-        # an error during the comparison. To be reverted in 0.22.
-        if estimator.n_estimators == 'warn':
-            estimator.set_params(n_estimators=5)
-        else:
-            estimator.set_params(n_estimators=min(5, estimator.n_estimators))
+        estimator.set_params(n_estimators=min(5, estimator.n_estimators))
     if "max_trials" in params:
         # RANSAC
         estimator.set_params(max_trials=10)
