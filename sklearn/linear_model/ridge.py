@@ -1009,7 +1009,7 @@ class _Xt_operator(sparse.linalg.LinearOperator):
     def _matvec(self, v):
         v = v.ravel()
         n_features = self.shape[0]
-        res = np.empty(n_features)
+        res = np.empty(n_features, dtype=self.X.dtype)
         res[:-1] = (
             safe_sparse_dot(self.X.T, v, dense_output=True) -
             (self.X_mean * self.sqrt_sw.dot(v))
@@ -1019,7 +1019,7 @@ class _Xt_operator(sparse.linalg.LinearOperator):
 
     def _matmat(self, v):
         n_features = self.shape[0]
-        res = np.empty((n_features, v.shape[1]))
+        res = np.empty((n_features, v.shape[1]), dtype=self.X.dtype)
         res[:-1] = (
             safe_sparse_dot(self.X.T, v, dense_output=True) -
             self.X_mean[:, None] * self.sqrt_sw.dot(v)
@@ -1201,7 +1201,7 @@ class _RidgeGCV(LinearModel):
         intercept_col = sqrt_sw
         scale = sqrt_sw
         batch_size = X.shape[1]
-        diag = np.empty(X.shape[0])
+        diag = np.empty(X.shape[0], dtype=X.dtype)
         for start in range(0, X.shape[0], batch_size):
             batch = slice(start, min(X.shape[0], start + batch_size), 1)
             X_batch = np.empty(
@@ -1256,7 +1256,7 @@ class _RidgeGCV(LinearModel):
     def _svd_decompose_covariance(self, X, y, sqrt_sw):
         """Eigendecomposition of X^T.X, used when n_samples > n_features."""
         n_samples, n_features = X.shape
-        cov = np.empty((n_features + 1, n_features + 1))
+        cov = np.empty((n_features + 1, n_features + 1), dtype=X.dtype)
         cov[:-1, :-1], X_mean = self._compute_covariance(X, sqrt_sw)
         if not self.fit_intercept:
             cov = cov[:-1, :-1]
@@ -1377,10 +1377,10 @@ class _RidgeGCV(LinearModel):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training data
+            Training data. Will be cast to float64 if necessary
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
-            Target values. Will be cast to X's dtype if necessary
+            Target values. Will be cast to float64 if necessary
 
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
@@ -1389,14 +1389,15 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'],
+                         dtype=[np.float64],
+                         multi_output=True, y_numeric=True)
+
         if np.any(self.alphas <= 0):
             raise ValueError(
                 "alphas must be positive. Got {} containing some "
                 "negative or null value instead.".format(self.alphas))
 
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'],
-                         dtype=[np.float64, np.float32],
-                         multi_output=True, y_numeric=True)
         if sample_weight is not None and not isinstance(sample_weight, float):
             sample_weight = check_array(sample_weight, ensure_2d=False,
                                         dtype=X.dtype)
@@ -1412,7 +1413,6 @@ class _RidgeGCV(LinearModel):
             decompose = self._eigen_decompose_gram
             solve = self._solve_gram
         elif gcv_mode == 'svd':
-            # assert n_samples >= n_features
             if sparse.issparse(X):
                 decompose = self._svd_decompose_covariance
                 solve = self._solve_covariance_sparse
@@ -1430,7 +1430,8 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
-        cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
+        cv_values = np.zeros((n_samples * n_y, len(self.alphas)),
+                             dtype=X.dtype)
         C = []
         X_mean, *decomposition = decompose(X, y, sqrt_sw)
         for i, alpha in enumerate(self.alphas):
@@ -1495,7 +1496,8 @@ class _BaseRidgeCV(LinearModel, MultiOutputMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training data
+            Training data. If using GCV, will be cast to float64
+            if necessary.
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
             Target values. Will be cast to X's dtype if necessary
@@ -1782,7 +1784,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         ----------
         X : array-like, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+            and n_features is the number of features. When using GCV,
+            will be cast to float64 if necessary.
 
         y : array-like, shape (n_samples,)
             Target values. Will be cast to X's dtype if necessary
