@@ -401,7 +401,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def score_samples(self):
         """Opposite of the Local Outlier Factor of X.
 
-        It is the opposite as as bigger is better, i.e. large values correspond
+        It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
         Only available for novelty detection (when novelty is set to True).
@@ -437,7 +437,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin,
     def _score_samples(self, X):
         """Opposite of the Local Outlier Factor of X.
 
-        It is the opposite as as bigger is better, i.e. large values correspond
+        It is the opposite as bigger is better, i.e. large values correspond
         to inliers.
 
         Only available for novelty detection (when novelty is set to True).
