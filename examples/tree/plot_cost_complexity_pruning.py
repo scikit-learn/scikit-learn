@@ -16,7 +16,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 
 ###############################################################################
-# Plot total impurity of leaves vs effective alphas of pruned tree
+# Total impurity of leaves vs effective alphas of pruned tree
 # ---------------------------------------------------------------
 # Minimal cost complexity pruning recursively finds the node with the
 # "weakest link". The weakest link is characterized by an effective alpha,
@@ -60,7 +60,7 @@ ax.plot(ccp_alphas, node_counts, marker="o")
 plt.show()
 
 ###############################################################################
-# Plot accuracy vs alpha for training and testing sets
+# Accuracy vs alpha for training and testing sets
 # ----------------------------------------------------
 # We plot the training and testing accuracy as more of the tree is pruned. The
 # last element in ``clfs`` and ``ccp_alphas`` is removed, because it is a tree
