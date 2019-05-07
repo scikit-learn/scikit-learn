@@ -470,8 +470,7 @@ class SVC(BaseSVC):
         - if 'auto', uses 1 / n_features.
 
         .. versionchanged:: 0.22
-           The default value of ``gamma`` changed from ``'auto'`` to
-           ``'scale'``.
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -670,8 +669,7 @@ class NuSVC(BaseSVC):
         - if 'auto', uses 1 / n_features.
 
         .. versionchanged:: 0.22
-           The default value of ``gamma`` changed from ``'auto'`` to
-           ``'scale'``.
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -848,8 +846,7 @@ class SVR(BaseLibSVM, RegressorMixin):
         - if 'auto', uses 1 / n_features.
 
         .. versionchanged:: 0.22
-           The default value of ``gamma`` changed from ``'auto'`` to
-           ``'scale'``.
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -985,8 +982,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         - if 'auto', uses 1 / n_features.
 
         .. versionchanged:: 0.22
-           The default value of ``gamma`` changed from ``'auto'`` to
-           ``'scale'``.
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1103,8 +1099,7 @@ class OneClassSVM(BaseLibSVM, OutlierMixin):
         - if 'auto', uses 1 / n_features.
 
         .. versionchanged:: 0.22
-           The default value of ``gamma`` changed from ``'auto'`` to
-           ``'scale'``.
+           The default value of ``gamma`` changed from 'auto' to 'scale'.
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
