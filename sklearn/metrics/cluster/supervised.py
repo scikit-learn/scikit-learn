@@ -690,7 +690,6 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
     average_method : string, optional (default: 'arithmetic')
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
-        If 'warn', 'max' will be used.
 
         .. versionadded:: 0.20
 
@@ -738,8 +737,6 @@ def adjusted_mutual_info_score(labels_true, labels_pred,
        <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
 
     """
-    if average_method == 'warn':
-        average_method = 'arithmetic'
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
